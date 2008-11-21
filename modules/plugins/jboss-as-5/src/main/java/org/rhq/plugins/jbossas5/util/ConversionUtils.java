@@ -43,6 +43,10 @@ import org.jboss.metatype.api.types.MapCompositeMetaType;
 import org.jboss.metatype.api.types.SimpleMetaType;
 import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.values.CompositeValue;
+import org.jboss.metatype.api.values.SimpleValue;
+import org.jboss.metatype.api.values.EnumValue;
+import org.jboss.metatype.api.values.SimpleValueSupport;
+import org.jboss.metatype.api.values.EnumValueSupport;
 import org.jboss.metatype.plugins.types.MutableCompositeMetaType;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -86,7 +90,7 @@ public class ConversionUtils
         KNOWN_COMPONENT_TYPES.put("Local TX Datasource", KnownComponentTypes.DataSourceTypes.LocalTx.getType());
         KNOWN_COMPONENT_TYPES.put("XA Datasource", KnownComponentTypes.DataSourceTypes.XA.getType());
         KNOWN_COMPONENT_TYPES.put("No TX ConnectionFactory", KnownComponentTypes.ConnectionFactoryTypes.NoTx.getType());
-        KNOWN_COMPONENT_TYPES.put("Transaction ConnectionFactory", KnownComponentTypes.ConnectionFactoryTypes.XA.getType());
+        KNOWN_COMPONENT_TYPES.put("XA ConnectionFactory", KnownComponentTypes.ConnectionFactoryTypes.XA.getType());
         KNOWN_COMPONENT_TYPES.put("Queue", KnownComponentTypes.JMSDestination.Queue.getType());
         KNOWN_COMPONENT_TYPES.put("Topic", KnownComponentTypes.JMSDestination.Topic.getType());
     }
@@ -98,7 +102,7 @@ public class ConversionUtils
         KNOWN_DEPLOYMENT_TYPES.put("Enterprise Application (EAR)", KnownDeploymentTypes.JavaEEApplication.getType());
         KNOWN_DEPLOYMENT_TYPES.put("Client Enterprise Application", KnownDeploymentTypes.JavaEEClientApplication.getType());
         KNOWN_DEPLOYMENT_TYPES.put("EJB 2.x Application", KnownDeploymentTypes.JavaEEEnterpriseBeans2x.getType());
-        KNOWN_DEPLOYMENT_TYPES.put("EJB Application (JAR)", KnownDeploymentTypes.JavaEEEnterpriseBeans3x.getType());
+        KNOWN_DEPLOYMENT_TYPES.put("EJB Application (EJB-JAR)", KnownDeploymentTypes.JavaEEEnterpriseBeans3x.getType());
         KNOWN_DEPLOYMENT_TYPES.put("Perisistence XML (PAR)", KnownDeploymentTypes.JavaEEPersistenceUnit.getType());
         KNOWN_DEPLOYMENT_TYPES.put("Resource Adaptor (RAR)", KnownDeploymentTypes.JavaEEResourceAdaptor.getType());
         KNOWN_DEPLOYMENT_TYPES.put("Web Application (WAR)", KnownDeploymentTypes.JavaEEWebApplication.getType());
@@ -169,7 +173,7 @@ public class ConversionUtils
                         LOG.debug("convertManagedObjectToConfiguration: ManagedProperty.getValue() returned: " + managedProperty.getValue().getClass().getSimpleName()
                                 + " for property: " + propName);
                     }
-                    metaValue = (MetaValue) managedProperty.getValue();
+                    metaValue = managedProperty.getValue();
                 }
                 catch (ClassCastException e)
                 {
@@ -220,11 +224,11 @@ public class ConversionUtils
                 PropertyDefinition propDef = configDef.getPropertyDefinitions().get(customProp.getName());
                 if (prop != null)
                 {
-                    propAdapter.populatePropertyFromMetaValue(prop, (MetaValue) managedProperty.getValue(), propDef);
+                    propAdapter.populatePropertyFromMetaValue(prop, managedProperty.getValue(), propDef);
                 }
                 else
                 {
-                    prop = propAdapter.convertToProperty((MetaValue) managedProperty.getValue(), propDef);
+                    prop = propAdapter.convertToProperty(managedProperty.getValue(), propDef);
                     prop.setName(customProp.getName());
                 }
                 config.put(prop);
@@ -269,6 +273,10 @@ public class ConversionUtils
                             + " to MetaValue with type " + metaType + "...");
                     metaValue = propertyAdapter.convertToMetaValue(property, propertyDefinition, metaType);
                     managedProperty.setValue(metaValue);
+
+                    // TODO: This is a workaround for https://jira.jboss.org/jira/browse/JBAS-6188.
+                    if (metaValue == null)
+                        managedProperties.remove(propName);
                 }
             }
         }
@@ -323,7 +331,7 @@ public class ConversionUtils
         try
         {
             // Temporary check to see which properties are returning MetaValue object and which aren't
-            metaValue = (MetaValue) managedProperty.getValue();
+            metaValue = managedProperty.getValue();
         }
         catch (ClassCastException e)
         {
@@ -344,7 +352,7 @@ public class ConversionUtils
             if (managedProperty != null && property != null)
             {
                 PropertyAdapter propertyAdapter = PropertyAdapterFactory.getCustomPropertyAdapter(customProp);
-                propertyAdapter.populateMetaValueFromProperty(property, (MetaValue) managedProperty.getValue(), null);
+                propertyAdapter.populateMetaValueFromProperty(property, managedProperty.getValue(), null);
             }
         }
     }
@@ -388,7 +396,7 @@ public class ConversionUtils
                     MetaType type = managedParameter.getMetaType();
                     //ManagedParameter should have a MetaValue object returned
                     PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(type);
-                    propertyAdapter.populateMetaValueFromProperty(parameter, (MetaValue) managedParameter.getValue(), parameterPropertyDefinition);
+                    propertyAdapter.populateMetaValueFromProperty(parameter, managedParameter.getValue(), parameterPropertyDefinition);
                 }
             }
         }
@@ -444,7 +452,7 @@ public class ConversionUtils
     {
         String metricName = metricProperty.getName();
         MetaType type = metricProperty.getMetaType();
-        MetaValue value = (MetaValue) metricProperty.getValue();
+        MetaValue value = metricProperty.getValue();
         if (value != null)
         {
             MeasurementAdapter measurementAdapter = MeasurementAdapterFactory.getMeasurementPropertyAdapter(type);

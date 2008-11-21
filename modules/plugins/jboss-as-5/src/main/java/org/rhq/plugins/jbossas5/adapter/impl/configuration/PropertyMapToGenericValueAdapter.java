@@ -79,12 +79,13 @@ public class PropertyMapToGenericValueAdapter extends AbstractPropertyMapAdapter
         }
     }
 
-    public MetaValue convertToMetaValue(PropertyMap propMap, PropertyDefinitionMap propDefMap, MetaType type) {
+    public MetaValue convertToMetaValue(PropertyMap propMap, PropertyDefinitionMap propDefMap, MetaType metaType) {
+        //GenericMetaType genericMetaType = (GenericMetaType)metaType;
         ManagedObjectImpl managedObject = new ManagedObjectImpl(propDefMap.getName());
-        for (PropertyDefinition propDef : propDefMap.getPropertyDefinitions().values()) {
-            ManagedPropertyImpl managedProp = new ManagedPropertyImpl(propDef.getName());
-            MetaType metaType = ConversionUtils.convertPropertyDefinitionToMetaType(propDef);
-            managedProp.setMetaType(metaType);
+        for (PropertyDefinition mapMemberPropDef : propDefMap.getPropertyDefinitions().values()) {
+            ManagedPropertyImpl managedProp = new ManagedPropertyImpl(mapMemberPropDef.getName());
+            MetaType managedPropMetaType = ConversionUtils.convertPropertyDefinitionToMetaType(mapMemberPropDef);
+            managedProp.setMetaType(managedPropMetaType);
             managedProp.setManagedObject(managedObject);
             managedObject.getProperties().put(managedProp.getName(), managedProp);
         }

@@ -56,7 +56,7 @@ public abstract class DebugUtils {
 
     public static String convertMetaValueToString(MetaValue metaValue) {
         StringBuilder buffer = new StringBuilder();
-        convertMetaValueToString(metaValue, buffer, true, 0);
+        convertMetaValueToString(metaValue, buffer, true, 1);
         return buffer.toString();
     }
 
@@ -95,8 +95,9 @@ public abstract class DebugUtils {
             buffer.append(collectionValue).append("\n");
             for (int i = 0; i < indentLevel; i++) buffer.append("  ");
             buffer.append("Elements:\n");
+            indentLevel++;
             for (MetaValue elementMetaValue : collectionValue.getElements()) {
-                convertMetaValueToString(elementMetaValue, buffer, true, indentLevel++);
+                convertMetaValueToString(elementMetaValue, buffer, true, indentLevel);
             }
         } else if (metaValue.getMetaType().isComposite()) {
             CompositeValue compositeValue = (CompositeValue)metaValue;

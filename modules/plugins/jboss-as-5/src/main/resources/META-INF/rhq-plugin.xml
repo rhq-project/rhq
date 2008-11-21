@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<!-- NOTE: For ManagedProperty annotations, see:
-     https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/main/org/jboss/resource/metadata/mcf/DataSourceDeploymentMetaData.java
-     Descriptions of datasource config props can also be culled from:
-     https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/resources/dtd/jboss-ds_5_0.dtd -->
-
 <!DOCTYPE plugin [
 
 <!ENTITY datasourceOperations '
@@ -33,6 +28,14 @@
     <metric property="minSize" measurementType="dynamic" displayType="detail" displayName="Min Size" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
     <metric property="poolJndiName" displayType="summary" displayName="Pool Jndi Name" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
 '>
+
+<!-- NOTE: For Datasource ManagedProperty annotations, see:
+     https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/main/org/jboss/resource/metadata/mcf/DataSourceDeploymentMetaData.java
+     Descriptions of datasource config props can also be culled from:
+     https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/resources/dtd/jboss-ds_5_0.dtd
+     and:
+     http://www.jboss.org/file-access/default/members/jbossas/freezone/docs/Server_Configuration_Guide/beta500/html/ch13s13.html
+  -->
 
 <!ENTITY datasourceConnectionResourceConfigProps '
     <c:simple-property name="jndi-name"
@@ -111,8 +114,9 @@
     </c:simple-property>
 
     <c:simple-property name="idle-timeout-minutes" type="integer" activationPolicy="immediate"
-                       displayName="Idle Timeout" units="minutes" required="false">
-        <c:description>Maximum time in minutes a connection can be idle before it is closed.
+                       displayName="Idle Timeout" units="minutes" required="false" default="15">
+        <c:description>
+            The maximum time, in minutes, a connection may be idle before being closed. Default is 15 minutes.
         </c:description>
         <c:constraint>
             <c:integer-constraint minimum="0"/>
@@ -131,12 +135,16 @@
                        displayName="Query Timeout"
                        description="Any configured query timeout in seconds; the default is no timeout."
                        type="integer"
+                       units="seconds"
                        required="false"
                        activationPolicy="immediate"/>
 
     <c:simple-property name="prepared-statement-cache-size" type="integer" activationPolicy="immediate"
-                       displayName="Prepared Statement Cache Size" required="false">
-        <c:description>The number of prepared statements per connection.</c:description>
+                       displayName="Prepared Statement Cache Size" required="false" default="0">
+        <c:description>
+            The number of prepared statements per connection to be kept open and reused in subsequent requests. They are
+            stored in an LRU cache. The default is 0 (zero), meaning no cache.
+        </c:description>
         <c:constraint>
             <c:integer-constraint minimum="0"/>
         </c:constraint>
@@ -277,13 +285,30 @@
     <c:simple-property name="type-mapping" displayName="Type Mappings" required="false"/>
 
     <c:simple-property type="integer" required="false" name="allocation-retry"/>
-    <c:simple-property type="long" required="false" name="allocation-retry-wait-millis"/>
-    <c:simple-property type="boolean" required="false" name="background-validation"/>
-    <c:simple-property type="long" required="false" name="background-validation-millis"/>
+
+    <c:simple-property type="long" required="false" name="allocation-retry-wait-millis" units="milliseconds"/>
+
+    <c:simple-property type="boolean" required="false" name="background-validation" default="false">
+        <c:description>
+            An element to specify that connections should be validated on a background thread versus being validated
+            prior to use. Background validation is meant to reduce the overall load on the RDBMS system when validating
+            a connection.
+        </c:description>
+    </c:simple-property>
+
+    <c:simple-property type="long" required="false" name="background-validation-millis" units="milliseconds">
+        <c:description>
+            The interval, in milliseconds, at which the ConnectionValidator will run. Default is 10 minutes. Set to 0 to
+            disable background validation.
+        </c:description>
+    </c:simple-property>
 
     <c:simple-property required="false" name="connection-definition"/>
+
     <c:simple-property type="boolean" required="false" name="isSameRM-override-value"/>
+
     <c:simple-property required="false" name="jmx-invoker-name"/>
+
     <c:map-property required="false" name="metadata">
         <c:simple-property required="true" name="typeMapping"
                            description="The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml">
@@ -317,16 +342,32 @@
         </c:simple-property>
     </c:map-property>
 
-    <!-- no child props means this is an "open map" -->
     <c:simple-property type="boolean" required="false" name="prefill"/>
+
     <c:simple-property required="false" name="rar-name"/>
+
     <c:simple-property required="false" name="statistics-formatter"/>
+
     <c:simple-property required="false" name="url-delimiter" description="The DataSource url delimiter"/>
+
     <c:simple-property required="false" name="url-selector-strategy-class-name" description="The DataSource url selector strategy class name"/>
+
     <c:simple-property type="boolean" required="false" name="use-strict-min"/>
-    <c:simple-property type="long" required="true" name="use-try-lock" default="60000"
-                       description="Any configured timeout for internal locks on the resource adapter objects in milliseconds - the default is a 60 seconds."/>
-    <c:simple-property type="boolean" required="false" name="validate-on-match"/>
+
+    <c:simple-property type="long" required="false" name="use-try-lock" default="60000">
+        <c:description>
+            Any configured timeout, in milliseconds, for internal locks on the resource adapter objects - the default is
+            60 seconds.
+        </c:description>
+    </c:simple-property>
+
+    <c:simple-property type="boolean" required="false" name="validate-on-match">
+        <c:description>
+            The validate-on-match element indicates whether or not connection level validation should be done when a
+            connection factory attempts to match a managed connection for a given set. This is typically exclusive to
+            the use of background validation.
+        </c:description>
+    </c:simple-property>
 '>
 
 <!ENTITY nonXaDatasourceConnectionResourceConfigProps '
@@ -356,6 +397,272 @@
     <c:map-property name="metadata">
         <c:simple-property name="typeMapping" default="Oracle9i"/>
     </c:map-property>
+'>
+
+<!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/main/org/jboss/resource/metadata/mcf/ManagedConnectionFactoryDeploymentMetaData.java -->
+
+<!ENTITY connectionFactoryConnectionResourceConfigProps '
+    <c:simple-property required="true" name="jndi-name"
+                       description="The global JNDI name to bind the connection factory under."/>
+
+    <c:simple-property name="min-pool-size"
+                       displayName="Minimum Pool Size"
+                       description="Indicates the minimum number of connections the pool should hold - default is 0."
+                       type="integer"
+                       activationPolicy="immediate"
+                       required="false">
+        <c:constraint>
+            <c:integer-constraint minimum="0"/>
+        </c:constraint>
+    </c:simple-property>
+
+    <c:simple-property name="max-pool-size"
+                       displayName="Maximum Pool Size"
+                       description="Indicates the maximum number of connections the pool should hold - default is 20."
+                       activationPolicy="immediate"
+                       type="integer"
+                       required="false">
+        <c:constraint>
+            <c:integer-constraint minimum="0"/>
+        </c:constraint>
+    </c:simple-property>
+'>
+
+<!ENTITY connectionFactoryAdvancedResourceConfigProps '
+    <c:simple-property type="integer" required="false" name="allocation-retry"/>
+
+    <c:simple-property type="long" required="false" name="allocation-retry-wait-millis"/>
+
+    <c:simple-property name="background-validation"
+                       type="boolean"
+                       activationPolicy="immediate"
+                       displayName="Use Strict Minimum"
+                       required="false">
+        <c:description>Whether on not to perform background validation.</c:description>
+    </c:simple-property>
+
+    <c:simple-property name="background-validation-millis"
+                       displayName="Background Validation Iterval"
+                       units="milliseconds"
+                       activationPolicy="immediate"
+                       type="integer"
+                       required="false">
+        <c:description>
+            Indicates the maximum time in minutes to validate the Connection in the background.
+        </c:description>
+        <c:constraint>
+            <c:integer-constraint minimum="0"/>
+        </c:constraint>
+    </c:simple-property>
+
+    <c:simple-property name="blocking-timeout-millis"
+                       displayName="Blocking Timeout in Milliseconds"
+                       units="milliseconds"
+                       activationPolicy="immediate"
+                       type="integer"
+                       required="false">
+        <c:description>
+            Indicates the maximum time in milliseconds to block while waiting for a connection before throwing
+            an exception. Note that this blocks only while waiting for a permit for a connection, and will never
+            throw an exception if creating a new connection takes an inordinately long time. If nothing is specified
+            the default of 30000 milliseconds is used.
+        </c:description>
+        <c:constraint>
+            <c:integer-constraint minimum="0"/>
+        </c:constraint>
+    </c:simple-property>
+
+    <c:map-property required="false" name="config-property"/>
+
+    <c:simple-property required="false" name="connection-definition"/>
+
+    <c:simple-property name="idle-timeout-minutes"
+                       type="integer"
+                       activationPolicy="immediate"
+                       displayName="Idle Timeout"
+                       units="minutes"
+                       required="false">
+        <c:description>Maximum time in minutes a connection can be idle before it is closed.
+        </c:description>
+        <c:constraint>
+            <c:integer-constraint minimum="0"/>
+        </c:constraint>
+    </c:simple-property>
+
+    <c:simple-property name="isSameRM-override-value"
+                       type="boolean"
+                       activationPolicy="immediate"
+                       displayName="isSameRM Override Value"
+                       required="false">
+        <c:description>Allows one to unconditionally set whether the
+            javax.transaction.xa.XAResource.isSameRMXAResource returns true or false. The default is false.
+        </c:description>
+    </c:simple-property>
+
+    <c:simple-property required="false" name="jmx-invoker-name"/>
+
+    <c:map-property required="false" name="metadata">
+        <c:simple-property required="true" name="typeMapping"
+                           description="The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml">
+            <c:property-options>
+                <c:option name="FirstSQL/J" value="FirstSQL/J"/>
+                <c:option name="Ingres" value="Ingres"/>
+                <c:option name="McKoi" value="McKoi"/>
+                <c:option name="Firebird" value="Firebird"/>
+                <c:option name="InterBase" value="InterBase"/>
+                <c:option name="DB2" value="DB2"/>
+                <c:option name="Derby" value="Derby"/>
+                <c:option name="Oracle9i" value="Oracle9i"/>
+                <c:option name="Oracle8" value="Oracle8"/>
+                <c:option name="Oracle7" value="Oracle7"/>
+                <c:option name="Sybase" value="Sybase"/>
+                <c:option name="PostgreSQL" value="PostgreSQL"/>
+                <c:option name="PostgreSQL 8.0" value="PostgreSQL 8.0"/>
+                <c:option name="PostgreSQL 7.2" value="PostgreSQL 7.2"/>
+                <c:option name="Hypersonic SQL" value="Hypersonic SQL"/>
+                <c:option name="PointBase" value="PointBase"/>
+                <c:option name="SOLID" value="SOLID"/>
+                <c:option name="MS SQLSERVER" value="MS SQLSERVER"/>
+                <c:option name="MS SQLSERVER2000" value="MS SQLSERVER2000"/>
+                <c:option name="DB2/400" value="DB2/400"/>
+                <c:option name="SapDB" value="SapDB"/>
+                <c:option name="MaxDB" value="MaxDB"/>
+                <c:option name="Cloudscape" value="Cloudscape"/>
+                <c:option name="InformixDB" value="InformixDB"/>
+                <c:option name="Mimer SQL" value="Mimer SQL"/>
+            </c:property-options>
+        </c:simple-property>
+    </c:map-property>
+
+    <c:simple-property name="no-tx-separate-pools"
+                       type="boolean"
+                       activationPolicy="immediate"
+                       displayName="No Tx Separate Pools"
+                       required="false">
+        <c:description>Whether or not to use separate pools - default is true.</c:description>
+    </c:simple-property>
+
+    <c:simple-property name="prefill"
+                       type="boolean"
+                       activationPolicy="immediate"
+                       displayName="Prefill"
+                       description="Prefill the pool with Connection objects, or lazy load objects in the pool - default is false."
+                       required="false">
+        <c:description>Whether or not to use prefill.</c:description>
+    </c:simple-property>
+
+    <c:simple-property required="false" name="rar-name" displayName="RAR Name"/>
+
+    <c:map-property name="security-domain" displayName="Security Settings" required="false">
+        <c:description>
+            Security settings
+        </c:description>
+
+        <c:simple-property name="domain" type="string"
+                           required="false">
+            <c:description>
+                The name of the JAAS security manager that will handle
+                authentication (only required if security deployment type is DOMAIN or DOMAIN_AND_APPLICATION).
+                This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute.
+            </c:description>
+        </c:simple-property>
+
+        <c:simple-property name="securityDeploymentType" type="string"
+                           description="the type of security deployment"
+                           required="false">
+            <c:description>
+                Indicates whether Subject (from security domain), application-supplied parameters
+                (such as from getConnection(user, pw)), both Subject and app-supplied parameters,
+                or neither Subject nor app-supplied parameters are used to distinguish connections
+                in the pool.
+            </c:description>
+            <c:property-options>
+                <c:option name="None" value="NONE"/>
+                <c:option name="Application" value="APPLICATION"/>
+                <c:option name="Domain" value="DOMAIN"/>
+                <c:option name="Domain and Application" value="DOMAIN_AND_APPLICATION"/>
+            </c:property-options>
+        </c:simple-property>
+    </c:map-property>
+
+    <c:simple-property required="false" name="statistics-formatter"/>
+
+    <c:simple-property name="track-connection-by-tx"
+                       type="boolean"
+                       activationPolicy="immediate"
+                       displayName="Track Connection By Transaction"
+                       required="false">
+        <c:description>Whether the connection should be locked into the transaction.</c:description>
+    </c:simple-property>
+
+    <c:simple-property required="false" name="type-mapping"/>
+
+    <c:simple-property name="use-java-context"
+                       description="Indicates if the JNDI name should be prefixed with java: - default is true."
+                       type="boolean"
+                       required="false">
+    </c:simple-property>
+
+    <c:simple-property name="use-strict-min"
+                       type="boolean"
+                       activationPolicy="immediate"
+                       displayName="Use Strict Minimum"
+                       required="false">
+        <c:description>Whether on not to use strict minumum - default is false.</c:description>
+    </c:simple-property>
+
+    <c:simple-property name="validate-on-match"
+                       type="boolean"
+                       activationPolicy="immediate"
+                       required="false">
+        <c:description>Whether on not to validate on match - default is false.</c:description>
+    </c:simple-property>
+'>        
+
+<!-- These are the operations that Topics and Queues both have. -->
+<!ENTITY destinationOperations '
+    <operation name="create" displayName="Create" description="Service lifecycle operation"/>
+
+    <operation name="destroy" displayName="Destroy" description="Service lifecycle operation"/>
+
+    <operation name="listAllMessages" displayName="List All Messages" description="List all messages for the specified subscription">
+        <parameters>
+            <c:simple-property required="false" name="arg#0"/>
+        </parameters>
+        <results>
+            <c:list-property name="result">
+                <c:map-property required="false" name="element"/>
+            </c:list-property>
+        </results>
+    </operation>
+
+    <operation name="listDurableMessages" displayName="List Durable Messages" description="List all durable messages for the specified subscription">
+        <parameters>
+            <c:simple-property required="false" name="arg#0"/>
+        </parameters>
+        <results>
+            <c:list-property name="result">
+                <c:map-property required="false" name="element"/>
+            </c:list-property>
+        </results>
+    </operation>
+
+    <operation name="listNonDurableMessages" displayName="List Non Durable Messages" description="List all non durable messages for the specified subscription">
+        <parameters>
+            <c:simple-property required="false" name="arg#0"/>
+        </parameters>
+        <results>
+            <c:list-property name="result">
+                <c:map-property required="false" name="element"/>
+            </c:list-property>
+        </results>
+    </operation>
+
+    <operation name="removeAllMessages" displayName="Remove All Messages" description="Remove all messages"/>
+
+    <operation name="start" displayName="Start" description="Service lifecycle operation"/>
+
+    <operation name="stop" displayName="Stop" description="Service lifecycle operation"/>
 '>
 
 <!ENTITY deploymentResourceConfigProps '
@@ -393,16 +700,16 @@
         <subcategories>
             <subcategory name="Environment"/>
             <subcategory name="Resources"
-                         description="Different types of resources support">
+                         description="Different types of Resources">
                 <subcategory name="Datasources"
-                    description="Different types of Datasources support"/>
+                    description="Different types of Datasources"/>
                 <subcategory name="Connection Factories"
-                    description="Different types of Connection Factory support"/>
+                    description="Different types of Connection Factories"/>
                 <subcategory name="JMS Destinations"
-                             description="Different types of JMS Destinations support"/>
+                             description="Different types of JMS Destinations"/>
             </subcategory>
             <subcategory name="Applications"
-                description="Different applications deployed">                
+                description="Different types of Applications">
             </subcategory>
         </subcategories>
 
@@ -468,8 +775,19 @@
                 <c:group name="advanced" displayName="Advanced">
                     &datasourceAdvancedResourceConfigProps;
 
+                    <c:list-property required="false" name="config-property" displayName="Connection Factory Properties"
+                                     description="The managed connection factory configuration properties">
+                        <c:map-property name="org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData"
+                                        description="Map&lt;String,MetaValue&gt;">
+                            <c:simple-property name="type"/>
+                            <c:simple-property name="name"/>
+                            <c:simple-property name="value"/>
+                        </c:map-property>
+                    </c:list-property>
+            <!--                    
                     <c:map-property required="false" name="config-property" displayName="Connection Factory Properties"
                                     description="The managed connection factory configuration properties"/>
+            -->
                 </c:group>
 
                 <c:template name="Oracle No TX" description="No Transaction Template for Oracle">
@@ -603,6 +921,7 @@
                 <!-- For ManagedProperty annotations, see:
                      https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/main/org/jboss/resource/metadata/mcf/XADataSourceDeploymentMetaData.java -->
                 <c:group name="connection" displayName="Connection Information">
+
                     &datasourceConnectionResourceConfigProps;
 
                     <c:simple-property name="xa-datasource-class"
@@ -643,8 +962,19 @@
                 <c:group name="advanced" displayName="Advanced">
                     &datasourceAdvancedResourceConfigProps;
 
+                    <c:list-property required="false" name="config-property" displayName="Connection Factory Properties"
+                                     description="The managed connection factory configuration properties">
+                        <c:map-property name="org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData"
+                                        description="Map&lt;String,MetaValue&gt;">
+                            <c:simple-property name="type"/>
+                            <c:simple-property name="name"/>
+                            <c:simple-property name="value"/>
+                        </c:map-property>
+                    </c:list-property>
+            <!--
                     <c:map-property required="false" name="config-property" displayName="Connection Factory Properties"
                                     description="The managed connection factory configuration properties"/>
+            -->
                 </c:group>
 
                 <c:template name="Oracle XA" description="XA Transaction Template for Oracle">
@@ -688,10 +1018,6 @@
                          hiddenByDefault="true">
                     <c:map-property name="customProperties"
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
-<!--
-                        <c:simple-property name="config-property"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.ConfigPropertyAdapter"/>
--->
                     </c:map-property>
                     <c:map-property name="customMetrics"
                                     description="Holds a list of custom Metrics, and the Adapter class to use">
@@ -699,295 +1025,28 @@
                 </c:group>
             </plugin-configuration>
 
+            <!-- Traits -->
+            <metric property="local-transaction" displayType="summary"
+                    displayName="Local Transaction" defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
+
             <resource-configuration>
 
                 <c:group name="connection" displayName="Connection Information">
-                    <c:simple-property name="jndi-name"
-                                       displayName="JNDI Name"
-                                       description="The JNDI Name under which the DataSource wrapper will be bound."
-                                       type="string"/>
 
-                    <c:simple-property name="min-pool-size"
-                                       displayName="Minimum Pool Size"
-                                       description="Indicates the minimum number of connections the pool should hold."
-                                       type="integer"
-                                       activationPolicy="immediate"
-                                       required="false">
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                        <c:defaultValueDescription>If nothing is specified, the default of 0 will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
+                    &datasourceConnectionResourceConfigProps;
 
-                    <c:simple-property name="max-pool-size"
-                                       displayName="Maximum Pool Size"
-                                       description="Indicates the maximum number of connections the pool should hold."
-                                       activationPolicy="immediate"
-                                       type="integer"
-                                       required="false">
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                        <c:defaultValueDescription>If nothing is specified, the default of 20 will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
                 </c:group>
 
                 <c:group name="advanced" displayName="Advanced">
 
-                    <c:simple-property name="security-domain"
-                                       type="string"
-                                       activationPolicy="immediate"
-                                       displayName="Security Domain"
-                                       required="false">
-                        <c:description>Indicates Subjects from security domain are used to distinguish connections in
-                            this pool.
-                        </c:description>
-                        <c:defaultValueDescription>If nothing is specified, the default will be to use a single pool of
-                            equivalent connections.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="depends"
-                                        type="string"
-                                        activationPolicy="immediate"
-                                        displayName="Depends"
-                                        description="Any MBeans that this factory has a dependency with."
-                                        required="false"/>
-
-                    <c:simple-property name="rar-name"
-                                        type="string"
-                                        activationPolicy="immediate"
-                                        displayName="Rar Name"
-                                        description="Rar Name"
-                                        required="false"/>
-
-                    <c:simple-property name="connection-definition"
-                                        type="string"
-                                        activationPolicy="immediate"
-                                        displayName="Connection Definition"
-                                        description="Connection Definition"
-                                        required="false"/>
-
-                    <c:simple-property name="jmx-invoker-name"
-                                        type="string"
-                                        activationPolicy="immediate"
-                                        displayName="JMX Invoker Name"
-                                        description="Name of the JMX Invoker"
-                                        required="false"/>
-
-                    <c:simple-property name="statistics-formatter"
-                                        type="string"
-                                        activationPolicy="immediate"
-                                        displayName="Statistics Formatter"
-                                        description="Class to format Statistics"
-                                        required="false"/>
-
-                    <c:simple-property name="type-mapping"
-                                       type="string"
-                                       activationPolicy="immediate"
-                                       displayName="Type Mappings"
-                                       required="false"/>
-
-                    <c:simple-property name="use-java-context"
-                                       displayName="Use Java Context"
-                                       description="Indicates if the JNDI name should be prefixed with java:."
-                                       type="boolean"
-                                       required="false">
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="local-transaction"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Local Transaction"
-                                       required="false">
-                        <c:description>Whether on not to use local transactions.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="no-tx-separate-pools"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="No Tx Separate Pools"
-                                       required="false">
-                        <c:description>Whether or not to use separate pools.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="track-connection-by-tx"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Track Connection By Transaction"
-                                       required="false">
-                        <c:description>Whether the connection should be locked into the transaction.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                    </c:simple-property>
-
-                    <c:simple-property name="isSameRM-override-value"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="isSameRM Override Value"
-                                       required="false">
-                        <c:description>Allows one to unconditionally set whether the
-                            javax.transaction.xa.XAResource.isSameRMXAResource returns true or false. The default is not
-                            to override the return value.
-                        </c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="use-strict-min"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Use Strict Minimum"
-                                       required="false">
-                        <c:description>Whether on not to use strict minumum.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="prefill"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Prefill"
-                                       description="Prefill the Pool with Connection objects, or lazy load objects in the pool" required="false">
-                        <c:description>Whether or not to use prefill.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="validate-on-match"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Use Strict Minimum"
-                                       required="false">
-                        <c:description>Whether on not to use strict minumum.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="background-validation"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Use Strict Minimum"
-                                       required="false">
-                        <c:description>Whether on not to use strict minumum.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="background-validation-minutes"
-                                       displayName="Background Validation Minutes"
-                                       units="minutes"
-                                       activationPolicy="immediate"
-                                       type="integer"
-                                       required="false">
-                        <c:description>
-                            Indicates the maximum time in minutes to validate the Connection in the background.
-                        </c:description>
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-                    <c:simple-property name="blocking-timeout-millis"
-                                       displayName="Blocking Timeout in Milliseconds"
-                                       units="milliseconds"
-                                       activationPolicy="immediate"
-                                       type="integer"
-                                       required="false">
-                        <c:description>
-                            Indicates the maximum time in milliseconds to block while waiting for a connection before throwing
-                            an exception. Note that this blocks only while waiting for a permit for a connection, and will never
-                            throw an exception if creating a new connection takes an inordinately long time. If nothing is specified
-                            the default of 30000 milliseconds is used.
-                        </c:description>
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-                    <c:simple-property name="idle-timeout-minutes"
-                                       type="integer"
-                                       activationPolicy="immediate"
-                                       displayName="Idle Timeout"
-                                       units="minutes"
-                                       required="false">
-                        <c:description>Maximum time in minutes a connection can be idle before it is closed.
-                        </c:description>
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-<!--
-                    <c:list-property name="config-property"
-                                     displayName="Config Property"
-                                     description="Configuration Properties"
-                                     required="false">
-                        <c:map-property name="property-values">
-                            <c:simple-property name="config-property-name"
-                                               displayName="Name"
-                                               description="Name of the Configuration Property"
-                                               required="true"/>
-                            <c:simple-property name="config-property-type"
-                                               displayName="Type"
-                                               description="Type of the Configuration Property"
-                                               required="true"/>
-                            <c:simple-property name="config-property-value"
-                                               displayName="Value"
-                                               description="Value of the Configuration Property"
-                                               required="true"/>
-                        </c:map-property>
-                    </c:list-property>
--->
+                    &datasourceAdvancedResourceConfigProps;
 
                 </c:group>
             </resource-configuration>
 
         </service>
 
-        <service name="Transaction ConnectionFactory"
+        <service name="XA ConnectionFactory"
                  class="ManagedComponentComponent"
                  createDeletePolicy="both"
                  subCategory="Connection Factories"
@@ -1008,10 +1067,6 @@
                          hiddenByDefault="true">
                     <c:map-property name="customProperties"
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
-<!--
-                        <c:simple-property name="config-property"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.custom.ConfigPropertyAdapter"/>
--->
                     </c:map-property>
                     <c:map-property name="customMetrics"
                                     description="Holds a list of custom Metrics, and the Adapter class to use">
@@ -1019,279 +1074,76 @@
                 </c:group>
             </plugin-configuration>
 
+            <operation name="flush" displayName="Flush" description="Flush the connections in the pool"/>
+
+            <operation name="listFormattedSubPoolStatistics" displayName="List Formatted Sub Pool Statistics" description="Obtain a formatted statistics report">
+                <parameters>
+                    <c:simple-property required="false" name="formatClassName" description="The StatisticsFormatter class name"/>
+                </parameters>
+                <results>
+                    <c:simple-property name="result"/>
+                </results>
+            </operation>
+
+            <operation name="listStatistics" displayName="List Statistics" description="Obtain a statistics report">
+                <results>
+                    <c:simple-property name="result"/>
+                </results>
+            </operation>
+
+            <!-- Traits -->
+            <metric property="poolJndiName" displayType="summary" displayName="Pool Jndi Name" defaultOn="true"
+                    defaultInterval="600000" dataType="trait" category="performance"/>
+
+            <!-- Numerics -->
+            <metric property="availableConnectionCount" measurementType="dynamic" displayType="detail"
+                    displayName="Available Connection Count" description="Mumber of available connections."
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+            <metric property="connectionCount" measurementType="dynamic" displayType="detail"
+                    displayName="Connection Count" defaultOn="true" defaultInterval="60000" dataType="measurement"
+                    category="performance"/>
+
+            <metric property="connectionCreatedCount" measurementType="dynamic" displayType="detail"
+                    displayName="Connection Created Count" defaultOn="true" defaultInterval="60000"
+                    dataType="measurement" category="performance"/>
+
+            <metric property="connectionDestroyedCount" measurementType="dynamic" displayType="detail"
+                    displayName="Connection Destroyed Count" defaultOn="true" defaultInterval="60000"
+                    dataType="measurement" category="performance"/>
+
+            <metric property="inUseConnectionCount" measurementType="dynamic" displayType="detail"
+                    displayName="In Use Connection Count" description="Mumber of connections currently in use."
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+            <metric property="maxConnectionsInUseCount" measurementType="dynamic" displayType="detail"
+                    displayName="Max Connections In Use Count" description="Maximum number of maximum connections that have been in use."
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+            <metric property="maxSize" measurementType="dynamic" displayType="detail" displayName="Max Size"
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+            <metric property="minSize" measurementType="dynamic" displayType="detail" displayName="Min Size"
+                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
             <resource-configuration>
 
                 <c:group name="connection" displayName="Connection Information">
-                    <c:simple-property name="jndi-name"
-                                       displayName="JNDI Name"
-                                       description="The JNDI Name under which the DataSource wrapper will be bound."
-                                       type="string"/>
 
-                    <c:simple-property name="min-pool-size"
-                                       displayName="Minimum Pool Size"
-                                       description="Indicates the minimum number of connections the pool should hold."
-                                       type="integer"
-                                       activationPolicy="immediate"
-                                       required="false">
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                        <c:defaultValueDescription>If nothing is specified, the default of 0 will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
+                    &connectionFactoryConnectionResourceConfigProps;
 
-                    <c:simple-property name="max-pool-size"
-                                       displayName="Maximum Pool Size"
-                                       description="Indicates the maximum number of connections the pool should hold."
-                                       activationPolicy="immediate"
-                                       type="integer"
-                                       required="false">
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                        <c:defaultValueDescription>If nothing is specified, the default of 20 will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
                 </c:group>
 
                 <c:group name="advanced" displayName="Advanced">
 
-                    <c:simple-property name="security-domain"
-                                       type="string"
-                                       activationPolicy="immediate"
-                                       displayName="Security Domain"
-                                       required="false">
-                        <c:description>Indicates Subjects from security domain are used to distinguish connections in
-                            this pool.
-                        </c:description>
-                        <c:defaultValueDescription>If nothing is specified, the default will be to use a single pool of
-                            equivalent connections.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="depends"
-                                        type="string"
-                                        activationPolicy="immediate"
-                                        displayName="Depends"
-                                        description="Any MBeans that this factory has a dependency with."
-                                        required="false"/>
-
-                    <c:simple-property name="rar-name"
-                                        type="string"
-                                        activationPolicy="immediate"
-                                        displayName="Rar Name"
-                                        description="Rar Name"
-                                        required="false"/>
-
-                    <c:simple-property name="connection-definition"
-                                        type="string"
-                                        activationPolicy="immediate"
-                                        displayName="Connection Definition"
-                                        description="Connection Definition"
-                                        required="false"/>
-
-                    <c:simple-property name="jmx-invoker-name"
-                                        type="string"
-                                        activationPolicy="immediate"
-                                        displayName="JMX Invoker Name"
-                                        description="Name of the JMX Invoker"
-                                        required="false"/>
-
-                    <c:simple-property name="statistics-formatter"
-                                        type="string"
-                                        activationPolicy="immediate"
-                                        displayName="Statistics Formatter"
-                                        description="Class to format Statistics"
-                                        required="false"/>
-
-                    <c:simple-property name="type-mapping"
-                                       type="string"
-                                       activationPolicy="immediate"
-                                       displayName="Type Mappings"
-                                       required="false"/>
-
-                    <c:simple-property name="use-java-context"
-                                       displayName="Use Java Context"
-                                       description="Indicates if the JNDI name should be prefixed with java:."
-                                       type="boolean"
-                                       required="false">
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="local-transaction"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Local Transaction"
-                                       required="false">
-                        <c:description>Whether on not to use local transactions.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
+                    &connectionFactoryAdvancedResourceConfigProps;
 
                     <c:simple-property name="xa-transaction"
                                        type="boolean"
                                        activationPolicy="immediate"
                                        displayName="XA Transaction"
                                        required="false">
-                        <c:description>Whether on not to use XA transactions.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-                    
-                    <c:simple-property name="no-tx-separate-pools"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="No Tx Separate Pools"
-                                       required="false">
-                        <c:description>Whether or not to use separate pools.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="track-connection-by-tx"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Track Connection By Transaction"
-                                       required="false">
-                        <c:description>Whether the connection should be locked into the transaction.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                    </c:simple-property>
-
-                    <c:simple-property name="isSameRM-override-value"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="isSameRM Override Value"
-                                       required="false">
-                        <c:description>Allows one to unconditionally set whether the
-                            javax.transaction.xa.XAResource.isSameRMXAResource returns true or false. The default is not
-                            to override the return value.
-                        </c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="use-strict-min"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Use Strict Minimum"
-                                       required="false">
-                        <c:description>Whether on not to use strict minumum.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="prefill"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Prefill"
-                                       description="Prefill the Pool with Connection objects, or lazy load objects in the pool" required="false">
-                        <c:description>Whether or not to use prefill.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="validate-on-match"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Use Strict Minimum"
-                                       required="false">
-                        <c:description>Whether on not to use strict minumum.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="background-validation"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Use Strict Minimum"
-                                       required="false">
-                        <c:description>Whether on not to use strict minumum.</c:description>
-                        <c:property-options>
-                            <c:option name="True" value="true"/>
-                            <c:option name="False" value="false"/>
-                        </c:property-options>
-                        <c:defaultValueDescription>If nothing is specified, the default of false will be used.
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-
-                    <c:simple-property name="background-validation-minutes"
-                                       displayName="Background Validation Minutes"
-                                       units="minutes"
-                                       activationPolicy="immediate"
-                                       type="integer"
-                                       required="false">
-                        <c:description>
-                            Indicates the maximum time in minutes to validate the Connection in the background.
-                        </c:description>
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-                    <c:simple-property name="blocking-timeout-millis"
-                                       displayName="Blocking Timeout in Milliseconds"
-                                       units="milliseconds"
-                                       activationPolicy="immediate"
-                                       type="integer"
-                                       required="false">
-                        <c:description>
-                            Indicates the maximum time in milliseconds to block while waiting for a connection before throwing
-                            an exception. Note that this blocks only while waiting for a permit for a connection, and will never
-                            throw an exception if creating a new connection takes an inordinately long time. If nothing is specified
-                            the default of 30000 milliseconds is used.
-                        </c:description>
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
-                    </c:simple-property>
-
-                    <c:simple-property name="idle-timeout-minutes"
-                                       type="integer"
-                                       activationPolicy="immediate"
-                                       displayName="Idle Timeout"
-                                       units="minutes"
-                                       required="false">
-                        <c:description>Maximum time in minutes a connection can be idle before it is closed.
-                        </c:description>
-                        <c:constraint>
-                            <c:integer-constraint minimum="0"/>
-                        </c:constraint>
+                        <c:description>Whether on not to use XA transactions - default is false.</c:description>
                     </c:simple-property>
 
                     <c:simple-property name="xa-resource-timeout"
@@ -1307,27 +1159,13 @@
                         </c:constraint>
                     </c:simple-property>
 
-<!--
-                    <c:list-property name="config-property"
-                                     displayName="Config Property"
-                                     description="Configuration Properties"
-                                     required="false">
-                        <c:map-property name="property-values">
-                            <c:simple-property name="config-property-name"
-                                               displayName="Name"
-                                               description="Name of the Configuration Property"
-                                               required="true"/>
-                            <c:simple-property name="config-property-type"
-                                               displayName="Type"
-                                               description="Type of the Configuration Property"
-                                               required="true"/>
-                            <c:simple-property name="config-property-value"
-                                               displayName="Value"
-                                               description="Value of the Configuration Property"
-                                               required="true"/>
-                        </c:map-property>
-                    </c:list-property>
--->
+                    <c:simple-property name="local-transaction"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="Local Transaction"
+                                       required="false">
+                        <c:description>Whether on not to use local transactions - default is false.</c:description>
+                    </c:simple-property>
 
                 </c:group>
             </resource-configuration>
@@ -1365,58 +1203,23 @@
                 </c:group>
             </plugin-configuration>
 
-            <operation name="create" displayName="Create" description="Service lifecycle operation"/>
-            <operation name="destroy" displayName="Destroy" description="Service lifecycle operation"/>
-            <operation name="listAllMessages" displayName="List All Messages" description="List all messages with selector">
-                <parameters>
-                    <c:simple-property name="arg#0"/>
-                </parameters>
-                <results>
-                    <c:list-property name="result">
-                        <c:simple-property required="false" name="item"/>
-                    </c:list-property>
-                </results>
-            </operation>
-            <operation name="listDurableMessages" displayName="List Durable Messages" description="List all durable mesages using a selector">
-                <parameters>
-                    <c:simple-property name="arg#0"/>
-                </parameters>
-                <results>
-                    <c:list-property name="result">
-                        <c:simple-property required="false" name="item"/>
-                    </c:list-property>
-                </results>
-            </operation>
+            &destinationOperations;
+
             <operation name="listMessageCounterAsHTML" displayName="List Message Counter As HTML" description="Get the message counter as HTML">
                 <results>
                     <c:simple-property name="result"/>
                 </results>
             </operation>
+
             <operation name="listMessageCounterHistoryAsHTML" displayName="List Message Counter History As HTML" description="Get the message counter history as HTML">
                 <results>
                     <c:simple-property name="result"/>
                 </results>
             </operation>
-            <operation name="listNonDurableMessages" displayName="List Non Durable Messages" description="List all non durable mesages using a selector">
-                <parameters>
-                    <c:simple-property name="arg#0"/>
-                </parameters>
-                <results>
-                    <c:list-property name="result">
-                        <c:simple-property required="false" name="item"/>
-                    </c:list-property>
-                </results>
-            </operation>
-            <operation name="removeAllMessages" displayName="Remove All Messages"
-                       description="Remove all messages in the queue"/>
-            <operation name="resetMessageCounter" displayName="Reset Message Counter"
-                       description="Reset the message counter"/>
-            <operation name="resetMessageCounterHistory" displayName="Reset Message Counter History"
-                       description="Reset the message counter history"/>
-            <operation name="start" displayName="Start"
-                       description="Start the queue service"/>
-            <operation name="stop" displayName="Stop"
-                       description="Stop the queue service"/>
+
+            <operation name="resetMessageCounter" displayName="Reset Message Counter" description="Reset the message counter"/>
+
+            <operation name="resetMessageCounterHistory" displayName="Reset Message Counter History" description="Reset the message counter history"/>
 
             <!-- Traits -->
             <metric property="name" displayType="detail" displayName="Name"
@@ -1545,22 +1348,8 @@
                 </c:group>
             </plugin-configuration>
 
-            <operation name="create" displayName="Create"
-                       description="Service lifecycle operation"/>
-            <operation name="destroy" displayName="Destroy"
-                       description="Service lifecycle operation"/>
-            <operation name="listAllMessages" displayName="List All Messages"
-                       description="List all messages for the specified subscription with the specified selector">
-                <parameters>
-                    <c:simple-property name="arg#0"/>
-                    <c:simple-property name="arg#1"/>
-                </parameters>
-                <results>
-                    <c:list-property name="result">
-                        <c:simple-property required="false" name="item"/>
-                    </c:list-property>
-                </results>
-            </operation>
+            &destinationOperations;
+
             <operation name="listAllSubscriptions" displayName="List All Subscriptions"
                        description="Return all subscriptions for the topic">
                 <results>
@@ -1569,24 +1358,14 @@
                     </c:list-property>
                 </results>
             </operation>
+
             <operation name="listAllSubscriptionsAsHTML" displayName="List All Subscriptions As HTML"
                        description="Return all subscriptions for the topic in HTML">
                 <results>
                     <c:simple-property name="result"/>
                 </results>
             </operation>
-            <operation name="listDurableMessages" displayName="List Durable Messages"
-                       description="List all durable messages for the specified subscription with the specified selector">
-                <parameters>
-                    <c:simple-property name="arg#0"/>
-                    <c:simple-property name="arg#1"/>
-                </parameters>
-                <results>
-                    <c:list-property name="result">
-                        <c:simple-property required="false" name="item"/>
-                    </c:list-property>
-                </results>
-            </operation>
+
             <operation name="listDurableSubscriptions" displayName="List Durable Subscriptions"
                        description="Return all durable subscriptions for the topic">
                 <results>
@@ -1595,23 +1374,14 @@
                     </c:list-property>
                 </results>
             </operation>
+
             <operation name="listDurableSubscriptionsAsHTML" displayName="List Durable Subscriptions As HTML"
                        description="Return all durable subscriptions for the topic in HTML">
                 <results>
                     <c:simple-property name="result"/>
                 </results>
             </operation>
-            <operation name="listNonDurableMessages" displayName="List Non Durable Messages"
-                       description="List all non durable messages for the specified subscription">
-                <parameters>
-                    <c:simple-property name="arg#0"/>
-                </parameters>
-                <results>
-                    <c:list-property name="result">
-                        <c:simple-property required="false" name="item"/>
-                    </c:list-property>
-                </results>
-            </operation>
+
             <operation name="listNonDurableSubscriptions" displayName="List Non Durable Subscriptions"
                        description="Return all non durable subscriptions for the topic">
                 <results>
@@ -1620,15 +1390,13 @@
                     </c:list-property>
                 </results>
             </operation>
+
             <operation name="listNonDurableSubscriptionsAsHTML" displayName="List Non Durable Subscriptions As HTML"
                        description="Return all non durable subscriptions for the topic in HTML">
                 <results>
                     <c:simple-property name="result"/>
                 </results>
             </operation>
-            <operation name="removeAllMessages" displayName="Remove All Messages" description="Remove all messages"/>
-            <operation name="start" displayName="Start" description="Start the topic service"/>
-            <operation name="stop" displayName="Stop" description="Stop the topic service"/>
 
             <!-- Traits -->
             <metric property="name" displayType="summary" displayName="Name"

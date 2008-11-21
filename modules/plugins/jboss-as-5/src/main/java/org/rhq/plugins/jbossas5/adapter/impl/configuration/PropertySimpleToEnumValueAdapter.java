@@ -54,6 +54,8 @@ public class PropertySimpleToEnumValueAdapter extends AbstractPropertySimpleAdap
 
     public MetaValue convertToMetaValue(PropertySimple propSimple, PropertyDefinitionSimple propDefSimple, MetaType metaType)
     {
+        if (propSimple.getStringValue() == null)
+            return null;
         EnumValue enumValue = new EnumValueSupport((EnumMetaType) metaType, propSimple.getStringValue());
         populateMetaValueFromProperty(propSimple, enumValue, propDefSimple);
         return enumValue;

@@ -204,9 +204,9 @@ public class ApplicationServerComponent
             Map<String, ManagedProperty> managedProperties = template.getProperties();
             Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(defaultPluginConfig);
 
-            //if (log.isDebugEnabled()) log.debug("BEFORE:\n" + DebugUtils.convertPropertiesToString(template));
+            if (log.isDebugEnabled()) log.debug("BEFORE CREATE:\n" + DebugUtils.convertPropertiesToString(template));
             ConversionUtils.convertConfigurationToManagedProperties(managedProperties, resourceConfig, resourceType, customProps);
-            if (log.isDebugEnabled()) log.debug("AFTER:\n" + DebugUtils.convertPropertiesToString(template));
+            if (log.isDebugEnabled()) log.debug("AFTER CREATE:\n" + DebugUtils.convertPropertiesToString(template));
 
             ConfigurationDefinition pluginConfigDef = resourceType.getPluginConfigurationDefinition();
             Collection<PropertyDefinition> managedPropertyGroup = pluginConfigDef.getPropertiesInGroup(MANAGED_PROPERTY_GROUP);

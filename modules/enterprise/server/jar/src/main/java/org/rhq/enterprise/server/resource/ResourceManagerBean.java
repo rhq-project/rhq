@@ -1780,17 +1780,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
     }
 
-    public ResourceAvailability getLatestAvailability(int resourceId) {
-        Query query = entityManager.createNamedQuery(ResourceAvailability.QUERY_FIND_BY_RESOURCE_ID);
-        query.setParameter("resourceId", resourceId);
-        try {
-            ResourceAvailability result = (ResourceAvailability) query.getSingleResult();
-            return result;
-        } catch (NoResultException nre) {
-            return null;
-        }
-    }
-
     private void prefetchResource(Resource resource, boolean recursive) {
         if (resource == null) {
             return; // Nothing to do on invalid input

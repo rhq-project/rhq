@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -360,12 +359,4 @@ public interface ResourceManagerLocal {
      * @return the platform Resource associated with the specified Agent
      */
     Resource getPlatform(Agent agent);
-
-    /**
-     * Returns the latest availability for the given Resource
-     * 
-     * @param resourceId the id of the resource
-     * @return the latest availability for the given Resource
-     */
-    ResourceAvailability getLatestAvailability(int resourceId);
 }

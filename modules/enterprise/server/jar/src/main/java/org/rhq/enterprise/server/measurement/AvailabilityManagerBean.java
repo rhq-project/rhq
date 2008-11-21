@@ -59,6 +59,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
+import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 
 /**
@@ -85,6 +86,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
     private AuthorizationManagerLocal authorizationManager;
     @EJB
     private ResourceManagerLocal resourceManager;
+    @EJB
+    private ResourceAvailabilityManagerLocal resourceAvailabilityManager;
     @EJB
     private AlertConditionCacheManagerLocal alertConditionCacheManager;
 
@@ -343,8 +346,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
                 }
 
                 // update the last known availability data for this resource
-                ResourceAvailability currentAvailability = resourceManager.getLatestAvailability(reported.getResource()
-                    .getId());
+                ResourceAvailability currentAvailability = resourceAvailabilityManager.getLatestAvailability(reported
+                    .getResource().getId());
                 if (currentAvailability.getAvailabilityType() != reported.getAvailabilityType()) {
                     // but only update the record if necessary (if the AvailabilityType changed)
                     currentAvailability.setAvailabilityType(reported.getAvailabilityType());
@@ -487,6 +490,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
                 newAvailabilities.add(newAvailabilityInterval);
             }
         }
+
+        resourceAvailabilityManager.markResourcesDownForAgent(agentId);
 
         // To handle backfilling process, which will mark them down
         notifyAlertConditionCacheManager("setAllAgentResourceAvailabilities", newAvailabilities

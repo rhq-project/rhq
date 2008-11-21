@@ -176,6 +176,11 @@ public class PluginMetadataManager {
         return getType(resourceType.getName(), resourceType.getPlugin());
     }
 
+    /**
+     * Return the Resource types applicable for a category
+     * @param category ResourceCategory to look up
+     * @return the types for this category or an empty Set
+     */
     public Set<ResourceType> getTypesForCategory(ResourceCategory category) {
         synchronized (this.typesLock) {
             LinkedHashSet<ResourceType> types = this.typesByCategory.get(category);

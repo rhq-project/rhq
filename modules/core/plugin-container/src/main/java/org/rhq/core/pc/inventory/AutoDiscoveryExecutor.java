@@ -139,9 +139,6 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
         Set<ResourceType> serverTypes = pluginManager.getMetadataManager().getTypesForCategory(ResourceCategory.SERVER);
         ResourceComponent platformComponent = inventoryManager.getResourceComponent(inventoryManager.getPlatform());
 
-        if (serverTypes == null) {
-            return; // strange - we must not have any plugins deployed
-        }
 
         for (ResourceType serverType : serverTypes) {
             if (!serverType.getParentResourceTypes().isEmpty()) {
@@ -171,7 +168,7 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                 try {
                     Set<ProcessScan> processScans = serverType.getProcessScans();
                     if (processScans != null && !processScans.isEmpty()) {
-                        ProcessInfoQuery piq = new ProcessInfoQuery(systemInfo.getAllProcesses());                        
+                        ProcessInfoQuery piq = new ProcessInfoQuery(systemInfo.getAllProcesses());
                         for (ProcessScan processScan : processScans) {
                             List<ProcessInfo> queryResults = piq.query(processScan.getQuery());
                             if ((queryResults != null) && (queryResults.size() > 0)) {

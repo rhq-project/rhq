@@ -50,6 +50,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
+import javax.persistence.PostPersist;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.QueryHint;
@@ -879,7 +880,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @OrderBy("startTime")
     private List<Availability> availability;
 
-    @OneToOne(mappedBy = "resource", cascade = { CascadeType.MERGE }, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "resource", cascade = { CascadeType.PERSIST }, fetch = FetchType.LAZY)
     private ResourceAvailability currentAvailability;
 
     // bulk delete @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
@@ -909,12 +910,9 @@ public class Resource implements Comparable<Resource>, Externalizable {
     }
 
     public Resource( //
-        @NotNull
-        String resourceKey, //
-        @NotNull
-        String name, //
-        @NotNull
-        ResourceType type) {
+        @NotNull String resourceKey, //
+        @NotNull String name, //
+        @NotNull ResourceType type) {
         this.resourceKey = resourceKey;
         this.name = name;
         this.resourceType = type;
@@ -947,8 +945,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return this.name;
     }
 
-    public void setName(@NotNull
-    String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 
@@ -1022,6 +1019,11 @@ public class Resource implements Comparable<Resource>, Externalizable {
         this.mtime = this.ctime = System.currentTimeMillis();
     }
 
+    @PostPersist
+    void afterPersist() {
+        initCurrentAvailability();
+    }
+
     /**
      * The time that any part of this resource entity was updated in the database.
      *
@@ -1093,8 +1095,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return parentResource;
     }
 
-    public void setParentResource(@Nullable
-    Resource parentResource) {
+    public void setParentResource(@Nullable Resource parentResource) {
         this.parentResource = parentResource;
     }
 
@@ -1543,5 +1544,10 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void afterUnmarshal(Unmarshaller u, Object parent) {
         this.parentResource = (Resource) parent;
+    }
+
+    // this should only ever be called once, during initial persistence
+    private void initCurrentAvailability() {
+        this.currentAvailability = new ResourceAvailability(this, null);
     }
 }

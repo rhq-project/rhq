@@ -49,7 +49,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
-import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ProductVersion;
@@ -568,10 +567,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         log.debug("New resource [" + resource + "] reported - adding to inventory with status 'NEW'...");
         initAutoDiscoveredResource(resource, parentResource);
         entityManager.persist(resource);
-
-        // there must always exist a row RHQ_RESOURCE_AVAIL for every record in RHQ_RESOURCE
-        ResourceAvailability currentAvailability = new ResourceAvailability(resource, null);
-        entityManager.persist(currentAvailability);
 
         if (parentResource != null) {
             parentResource.addChildResource(resource);

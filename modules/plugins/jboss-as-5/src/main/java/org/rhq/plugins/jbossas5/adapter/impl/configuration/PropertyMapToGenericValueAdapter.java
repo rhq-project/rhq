@@ -41,7 +41,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.adapter.api.AbstractPropertyMapAdapter;
-import org.rhq.plugins.jbossas5.util.ConversionUtil;
+import org.rhq.plugins.jbossas5.util.ConversionUtils;
 
 /**
  * This class provides code that maps back and forth between a {@link PropertyMap} and
@@ -53,7 +53,7 @@ public class PropertyMapToGenericValueAdapter extends AbstractPropertyMapAdapter
         implements PropertyAdapter<PropertyMap, PropertyDefinitionMap> {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public void setMetaValues(PropertyMap propMap, MetaValue metaValue, PropertyDefinitionMap propDefMap) {
+    public void populateMetaValueFromProperty(PropertyMap propMap, MetaValue metaValue, PropertyDefinitionMap propDefMap) {
         GenericValue genericValue = (GenericValue)metaValue;
         if (!(genericValue.getValue() instanceof ManagedObject)) {
             log.error("GenericValue's value [" + genericValue.getValue() + "] is not a ManagedObject - not supported!");
@@ -68,33 +68,33 @@ public class PropertyMapToGenericValueAdapter extends AbstractPropertyMapAdapter
             PropertyDefinition mapMemberPropDef = propDefMap.get(propName);
             if (managedProp.getValue() == null)
             {
-                MetaValue managedPropMetaValue = propertyAdapter.getMetaValue(mapMemberProp, mapMemberPropDef, metaType);
+                MetaValue managedPropMetaValue = propertyAdapter.convertToMetaValue(mapMemberProp, mapMemberPropDef, metaType);
                 managedProp.setValue(managedPropMetaValue);
             }
             else
             {
                 MetaValue managedPropMetaValue = (MetaValue)managedProp.getValue();
-                propertyAdapter.setMetaValues(mapMemberProp, managedPropMetaValue, mapMemberPropDef);
+                propertyAdapter.populateMetaValueFromProperty(mapMemberProp, managedPropMetaValue, mapMemberPropDef);
             }                      
         }
     }
 
-    public MetaValue getMetaValue(PropertyMap propMap, PropertyDefinitionMap propDefMap, MetaType type) {
+    public MetaValue convertToMetaValue(PropertyMap propMap, PropertyDefinitionMap propDefMap, MetaType type) {
         ManagedObjectImpl managedObject = new ManagedObjectImpl(propDefMap.getName());
         for (PropertyDefinition propDef : propDefMap.getPropertyDefinitions().values()) {
             ManagedPropertyImpl managedProp = new ManagedPropertyImpl(propDef.getName());
-            MetaType metaType = ConversionUtil.convertPropertyDefinitionToMetaType(propDef);
+            MetaType metaType = ConversionUtils.convertPropertyDefinitionToMetaType(propDef);
             managedProp.setMetaType(metaType);
             managedProp.setManagedObject(managedObject);
             managedObject.getProperties().put(managedProp.getName(), managedProp);
         }
         GenericValue genericValue = new GenericValueSupport(new GenericMetaType(propDefMap.getName(),
                 propDefMap.getDescription()), managedObject);
-        setMetaValues(propMap, genericValue, propDefMap);
+        populateMetaValueFromProperty(propMap, genericValue, propDefMap);
         return genericValue;
     }
 
-    public void setPropertyValues(PropertyMap propMap, MetaValue metaValue, PropertyDefinitionMap propDefMap) {
+    public void populatePropertyFromMetaValue(PropertyMap propMap, MetaValue metaValue, PropertyDefinitionMap propDefMap) {
         GenericValue genericValue = (GenericValue)metaValue;
         ManagedObject managedObject = (ManagedObject)genericValue.getValue();
         for (String propName : propDefMap.getPropertyDefinitions().keySet()) {

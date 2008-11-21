@@ -32,46 +32,30 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.plugins.jbossas5.adapter.api.AbstractPropertySimpleAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
  /**
  * @author Ian Springer
  */
 public class PropertySimpleToEnumValueAdapter extends AbstractPropertySimpleAdapter implements PropertyAdapter<PropertySimple, PropertyDefinitionSimple>
 {
-    private static final Log LOG = LogFactory.getLog(PropertySimpleToEnumValueAdapter.class);
-
-    public void setMetaValues(PropertySimple property, MetaValue metaValue, PropertyDefinitionSimple propertyDefinition)
+    public void populateMetaValueFromProperty(PropertySimple propSimple, MetaValue metaValue, PropertyDefinitionSimple propDefSimple)
     {
+        if (propSimple == null || metaValue == null)
+            return;
         EnumValueSupport enumValueSupport = (EnumValueSupport) metaValue;
-        if (property != null)
-        {
-            String value = property.getStringValue();
-            if (value != null && !value.equals(""))
-            {
-                if (metaValue != null)
-                    enumValueSupport.setValue(property.getStringValue());
-            }
-        }
+        enumValueSupport.setValue(propSimple.getStringValue());
     }
 
-    public void setPropertyValues(PropertySimple property, MetaValue metaValue, PropertyDefinitionSimple propertyDefinition)
+    public void populatePropertyFromMetaValue(PropertySimple propSimple, MetaValue metaValue, PropertyDefinitionSimple propDefSimple)
     {
         Object value = (metaValue != null) ? ((EnumValue) metaValue).getValue() : null;
-        property.setValue(value);
+        propSimple.setValue(value);
     }
 
-    public MetaValue getMetaValue(PropertySimple property, PropertyDefinitionSimple propertyDefinition, MetaType type)
+    public MetaValue convertToMetaValue(PropertySimple propSimple, PropertyDefinitionSimple propDefSimple, MetaType metaType)
     {
-        String value = property.getStringValue();
-        MetaValue metaValue = null;
-        if (value != null && !value.equals(""))
-        {
-            metaValue = new EnumValueSupport((EnumMetaType) type, value);
-            setMetaValues(property, metaValue, propertyDefinition);
-            LOG.debug("Delegating property adapter because metaValue was passed in as null for property: " + property.getName() + " value: " + property.getStringValue());
-        }
-        return metaValue;
+        EnumValue enumValue = new EnumValueSupport((EnumMetaType) metaType, propSimple.getStringValue());
+        populateMetaValueFromProperty(propSimple, enumValue, propDefSimple);
+        return enumValue;
     }
 }

@@ -42,7 +42,7 @@ import org.jboss.deployers.spi.management.ManagementView;
  *
  * @author Mark Spritzler
  */
-public class ProfileJBossServerDiscoveryComponent
+public class ApplicationServerDiscoveryComponent
         implements ResourceDiscoveryComponent
 {
     private final Log log = LogFactory.getLog(this.getClass());

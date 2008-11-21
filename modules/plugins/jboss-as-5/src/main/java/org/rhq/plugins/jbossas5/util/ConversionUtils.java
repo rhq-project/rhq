@@ -74,9 +74,9 @@ import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
  * @author Mark Spritzler
  * @author Ian Springer
  */
-public class ConversionUtil
+public class ConversionUtils
 {
-    private static final Log LOG = LogFactory.getLog(ConversionUtil.class);
+    private static final Log LOG = LogFactory.getLog(ConversionUtils.class);
 
     // Key is the RHQ plugin ResourceType name. Make sure if the ResourceType name changes that this map changes too.
     private static final Map<String, ComponentType> KNOWN_COMPONENT_TYPES = new HashMap<String, ComponentType>();
@@ -191,11 +191,11 @@ public class ConversionUtil
                     Property customProp = customProps.get(propName);
                     if (customProp != null)
                     {
-                        propertyAdapter.setPropertyValues(customProp, metaValue, propertyDefinition);
+                        propertyAdapter.populatePropertyFromMetaValue(customProp, metaValue, propertyDefinition);
                     }
                     else
                     {
-                        customProp = propertyAdapter.getProperty(metaValue, propertyDefinition);
+                        customProp = propertyAdapter.convertToProperty(metaValue, propertyDefinition);
                         customProp.setName(propertyDefinition.getName());
                     }
                     config.put(customProp);
@@ -220,11 +220,11 @@ public class ConversionUtil
                 PropertyDefinition propDef = configDef.getPropertyDefinitions().get(customProp.getName());
                 if (prop != null)
                 {
-                    propAdapter.setPropertyValues(prop, (MetaValue) managedProperty.getValue(), propDef);
+                    propAdapter.populatePropertyFromMetaValue(prop, (MetaValue) managedProperty.getValue(), propDef);
                 }
                 else
                 {
-                    prop = propAdapter.getProperty((MetaValue) managedProperty.getValue(), propDef);
+                    prop = propAdapter.convertToProperty((MetaValue) managedProperty.getValue(), propDef);
                     prop.setName(customProp.getName());
                 }
                 config.put(prop);
@@ -251,7 +251,7 @@ public class ConversionUtil
                 if (metaValue != null)
                 {
                     PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaValue);
-                    propertyAdapter.setMetaValues(property, metaValue, propertyDefinition);
+                    propertyAdapter.populateMetaValueFromProperty(property, metaValue, propertyDefinition);
                 }
                 else
                 {
@@ -267,7 +267,7 @@ public class ConversionUtil
                     PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaType);
                     LOG.debug("Converting property " + property + " with definition " + propertyDefinition
                             + " to MetaValue with type " + metaType + "...");
-                    metaValue = propertyAdapter.getMetaValue(property, propertyDefinition, metaType);
+                    metaValue = propertyAdapter.convertToMetaValue(property, propertyDefinition, metaType);
                     managedProperty.setValue(metaValue);
                 }
             }
@@ -344,7 +344,7 @@ public class ConversionUtil
             if (managedProperty != null && property != null)
             {
                 PropertyAdapter propertyAdapter = PropertyAdapterFactory.getCustomPropertyAdapter(customProp);
-                propertyAdapter.setMetaValues(property, (MetaValue) managedProperty.getValue(), null);
+                propertyAdapter.populateMetaValueFromProperty(property, (MetaValue) managedProperty.getValue(), null);
             }
         }
     }
@@ -388,7 +388,7 @@ public class ConversionUtil
                     MetaType type = managedParameter.getMetaType();
                     //ManagedParameter should have a MetaValue object returned
                     PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(type);
-                    propertyAdapter.setMetaValues(parameter, (MetaValue) managedParameter.getValue(), parameterPropertyDefinition);
+                    propertyAdapter.populateMetaValueFromProperty(parameter, (MetaValue) managedParameter.getValue(), parameterPropertyDefinition);
                 }
             }
         }
@@ -399,7 +399,7 @@ public class ConversionUtil
     {
         OperationDefinition operationDefinition = getOperationDefinition(resourceType, operation.getName());
         if (operationDefinition == null) {
-            LOG.warn("ConversionUtil was not able to find the operation " + operation.getName()
+            LOG.warn("ConversionUtils was not able to find the operation " + operation.getName()
                     + ", so no results can be reported.");
             return;
         }
@@ -420,7 +420,7 @@ public class ConversionUtil
 
             if (propertyDefinition != null)
             {
-                Property property = propertyAdapter.getProperty(result, propertyDefinition);
+                Property property = propertyAdapter.convertToProperty(result, propertyDefinition);
                 complexResults.put(property);
             }
         }

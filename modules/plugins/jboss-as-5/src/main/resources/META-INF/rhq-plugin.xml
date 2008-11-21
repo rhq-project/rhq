@@ -358,30 +358,47 @@
     </c:map-property>
 '>
 
+<!ENTITY deploymentResourceConfigProps '
+    <c:simple-property type="boolean" required="false" name="blackList"/>
+    <c:simple-property type="boolean" required="false" name="cache"/>
+    <c:simple-property required="false" name="domain"/>
+    <c:simple-property required="false" name="excluded"/>
+    <c:simple-property required="false" name="excludedExport"/>
+    <c:simple-property required="false" name="exportAll">
+        <c:property-options>
+            <c:option name="all" value="ALL"/>
+            <c:option name="non-empty" value="NON_EMPTY"/>
+        </c:property-options>
+    </c:simple-property>
+    <c:simple-property type="boolean" required="false" name="importAll"/>
+    <c:simple-property required="false" name="included"/>
+    <c:simple-property required="false" name="name"/>
+    <c:simple-property required="false" name="parentDomain"/>
+    <c:simple-property type="boolean" required="false" name="parentFirst"/>
+    <c:simple-property required="false" name="version"/>
+'>
+
 ]>
 
-<plugin name="ProfileService" displayName="JBoss AS 5 ProfileService" package="org.rhq.plugins.jbossas5"
+<plugin name="JBossAS5" displayName="JBoss Application Server 5.x" package="org.rhq.plugins.jbossas5"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
-    <!-- Server and service names to not conflict with mockplugin-->
-    <!--depends plugin="JMX"/>-->
-   <!-- <depends plugin="Tomcat"/>-->
 
-    <server name="JBoss App Server"
-            class="ProfileJBossServerComponent"
-            discovery="ProfileJBossServerDiscoveryComponent"
-            description="Application Server 5.0">
+    <server name="JBossAS Server"
+            class="ApplicationServerComponent"
+            discovery="ApplicationServerDiscoveryComponent"
+            description="JBoss Application Server">
 
         <subcategories>
             <subcategory name="Environment"/>
             <subcategory name="Resources"
                          description="Different types of resources support">
-                <subcategory name="Datasource"
+                <subcategory name="Datasources"
                     description="Different types of Datasources support"/>
-                <subcategory name="Connection Factory"
+                <subcategory name="Connection Factories"
                     description="Different types of Connection Factory support"/>
-                <subcategory name="Destination"
+                <subcategory name="JMS Destinations"
                              description="Different types of JMS Destinations support"/>
             </subcategory>
             <subcategory name="Applications"
@@ -403,10 +420,10 @@
         </content>-->
 
         <service name="No TX Datasource"
-                 class="JndiResourceComponent"
-                 discovery="JndiResourceDiscoveryComponent"
+                 class="ManagedComponentComponent"
+                 discovery="ManagedComponentDiscoveryComponent"
                  createDeletePolicy="both"
-                 subCategory="Datasource"
+                 subCategory="Datasources"
                  description="No Transaction Datasources deployed in the instance of JBoss AS">
 
             <plugin-configuration>
@@ -464,10 +481,10 @@
         </service>
 
         <service name="Local TX Datasource"
-                 class="JndiResourceComponent"
-                 discovery="JndiResourceDiscoveryComponent"
+                 class="ManagedComponentComponent"
+                 discovery="ManagedComponentDiscoveryComponent"
                  createDeletePolicy="both"
-                 subCategory="Datasource"
+                 subCategory="Datasources"
                  description="Local Transaction Datasources deployed in the instance of JBoss AS">
 
             <plugin-configuration>
@@ -539,10 +556,10 @@
         </service>
 
         <service name="XA Datasource"
-                 class="JndiResourceComponent"
-                 discovery="JndiResourceDiscoveryComponent"
+                 class="ManagedComponentComponent"
+                 discovery="ManagedComponentDiscoveryComponent"
                  createDeletePolicy="both"
-                 subCategory="Datasource"
+                 subCategory="Datasources"
                  description="XA Datasources deployed in the instance of JBoss AS">
 
             <plugin-configuration>
@@ -651,10 +668,10 @@
         </service>
 
         <service name="No TX ConnectionFactory"
-                 class="JndiResourceComponent"
+                 class="ManagedComponentComponent"
                  createDeletePolicy="both"
-                 subCategory="Connection Factory"
-                 discovery="JndiResourceDiscoveryComponent">
+                 subCategory="Connection Factories"
+                 discovery="ManagedComponentDiscoveryComponent">
 
             <plugin-configuration>
                 <c:simple-property name="componentParentType" default="ConnectionFactory" readOnly="true"/>
@@ -971,10 +988,10 @@
         </service>
 
         <service name="Transaction ConnectionFactory"
-                 class="JndiResourceComponent"
+                 class="ManagedComponentComponent"
                  createDeletePolicy="both"
-                 subCategory="Connection Factory"
-                 discovery="JndiResourceDiscoveryComponent">
+                 subCategory="Connection Factories"
+                 discovery="ManagedComponentDiscoveryComponent">
 
             <plugin-configuration>
                 <c:simple-property name="componentParentType" default="ConnectionFactory" readOnly="true"/>
@@ -1318,10 +1335,10 @@
         </service>
 
         <service name="Queue"
-                 class="JndiResourceComponent"
+                 class="ManagedComponentComponent"
                  createDeletePolicy="both"
-                 subCategory="Destination"
-                 discovery="JndiResourceDiscoveryComponent">
+                 subCategory="JMS Destinations"
+                 discovery="ManagedComponentDiscoveryComponent">
 
             <plugin-configuration>
                 <c:simple-property name="componentParentType" default="JMSDestination" readOnly="true"/>
@@ -1498,10 +1515,10 @@
         </service>
 
         <service name="Topic"
-                 class="JndiResourceComponent"
+                 class="ManagedComponentComponent"
                  createDeletePolicy="both"
-                 subCategory="Destination"
-                 discovery="JndiResourceDiscoveryComponent">
+                 subCategory="JMS Destinations"
+                 discovery="ManagedComponentDiscoveryComponent">
 
             <plugin-configuration>
                 <c:simple-property name="componentParentType" default="JMSDestination" readOnly="true"/>
@@ -1706,8 +1723,8 @@
 
         <service name="Enterprise Application (EAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.DeploymentResourceComponent"
-                 discovery="org.rhq.plugins.jbossas5.DeploymentResourceDiscoveryComponent"
+                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
                  description="Enterprise Application"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -1723,15 +1740,27 @@
                 </c:group>
             </plugin-configuration>
 
+            <metric property="custom.path" displayName="Path"
+                    dataType="trait" displayType="summary"
+                    description="the absolute path of this EAR file or directory"/>
+
+            <metric property="custom.exploded" displayName="Exploded?"
+                    dataType="trait" displayType="summary"
+                    description="whether this EAR is deployed exploded (i.e. as a directory)"/>
+
             <content name="file" displayName="Ear File" category="deployable" isCreationType="true">
             </content>
+
+            <resource-configuration>
+                &deploymentResourceConfigProps;
+            </resource-configuration>
 
         </service>
 
         <service name="Web Application (WAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.DeploymentResourceComponent"
-                 discovery="org.rhq.plugins.jbossas5.DeploymentResourceDiscoveryComponent"
+                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
                  description="Web Applications"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -1758,12 +1787,16 @@
             <content name="file" displayName="War File" category="deployable" isCreationType="true">
             </content>
 
+            <resource-configuration>
+                &deploymentResourceConfigProps;
+            </resource-configuration>
+
         </service>
 
-        <service name="EJB Application (JAR)"
+        <service name="EJB Application (EJB JAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.DeploymentResourceComponent"
-                 discovery="org.rhq.plugins.jbossas5.DeploymentResourceDiscoveryComponent"
+                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
                  description="EJB Applications"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -1781,21 +1814,25 @@
 
             <metric property="custom.path" displayName="Path"
                     dataType="trait" displayType="summary"
-                    description="the absolute path of this EAR file or directory"/>
+                    description="the absolute path of this EJB JAR file or directory"/>
 
             <metric property="custom.exploded" displayName="Exploded?"
                     dataType="trait" displayType="summary"
-                    description="whether this EAR is deployed exploded (i.e. as a directory)"/>
+                    description="whether this EJB JAR is deployed exploded (i.e. as a directory)"/>
 
             <content name="file" displayName="Jar File" category="deployable" isCreationType="true">
             </content>
+
+            <resource-configuration>
+                &deploymentResourceConfigProps;
+            </resource-configuration>
 
         </service>
 
         <service name="JBoss Service (SAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.DeploymentResourceComponent"
-                 discovery="org.rhq.plugins.jbossas5.DeploymentResourceDiscoveryComponent"
+                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
                  description="JBoss Services"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -1822,12 +1859,16 @@
             <content name="file" displayName="Sar File" category="deployable" isCreationType="true">
             </content>
 
+            <resource-configuration>
+                &deploymentResourceConfigProps;
+            </resource-configuration>
+
         </service>
 
         <service name="Resource Adaptor (RAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.DeploymentResourceComponent"
-                 discovery="org.rhq.plugins.jbossas5.DeploymentResourceDiscoveryComponent"
+                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
                  description="Resource Adaptors"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -1854,12 +1895,16 @@
             <content name="file" displayName="Rar File" category="deployable" isCreationType="true">
             </content>
 
+            <resource-configuration>
+                &deploymentResourceConfigProps;
+            </resource-configuration>
+
         </service>
 
         <service name="Persistence Unit (PAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.DeploymentResourceComponent"
-                 discovery="org.rhq.plugins.jbossas5.DeploymentResourceDiscoveryComponent"
+                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
                  description="JPA Persistence Units"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -1886,12 +1931,16 @@
             <content name="file" displayName="Par File" category="deployable" isCreationType="true">
             </content>
 
+            <resource-configuration>
+                &deploymentResourceConfigProps;
+            </resource-configuration>
+
         </service>
 
         <service name="Microcontainer Beans (MC Beans)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.DeploymentResourceComponent"
-                 discovery="org.rhq.plugins.jbossas5.DeploymentResourceDiscoveryComponent"
+                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
                  description="Microcontainer Beans"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -1917,6 +1966,10 @@
 
             <content name="file" displayName=".beans File" category="deployable" isCreationType="true">
             </content>
+
+            <resource-configuration>
+                &deploymentResourceConfigProps;
+            </resource-configuration>
 
         </service>
 
@@ -2139,7 +2192,7 @@
         </service>
         -->
         <!-- Not sure now if this nested service is needed with the Profile Service-->
-        <!--service name="log4j" class="JndiResourceComponent" discovery="JndiResourceDiscoveryComponent"
+        <!--service name="log4j" class="ManagedComponentComponent" discovery="ManagedComponentDiscoveryComponent"
                  subCategory="teaser" description="Log4J Setting of Appenders, Root, and Categories">
 
             <plugin-configuration>

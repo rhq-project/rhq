@@ -53,21 +53,22 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
-import org.rhq.plugins.jbossas5.util.ConversionUtil;
+import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
+import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
 import java.util.Collection;
 import java.util.Map;
 import java.io.*;
 
-/**
+ /**
  * ResourceComponent for a JBossAS 5.x Server.
  *
  * @author Jason Dobies
  * @author Mark Spritzler
  * @author Ian Springer
  */
-public class ProfileJBossServerComponent
+public class ApplicationServerComponent
         implements ResourceComponent, CreateChildResourceFacet, ConfigurationFacet, ProgressListener
 {
     private final Log log = LogFactory.getLog(this.getClass());
@@ -77,9 +78,6 @@ public class ProfileJBossServerComponent
     private static final String TEMPLATE_NAME_PROPERTY = "templateName";
     private static final String RESOURCE_NAME_PROPERTY = "resourceName";
     private static final String MANAGED_PROPERTY_GROUP = "managedPropertyGroup";
-
-    private static final String RESOURCE_TYPE_EAR = "Enterprise Application (EAR)";
-    private static final String RESOURCE_TYPE_WAR = "Web Application (WAR)";
 
     private ResourceContext resourceContext;
     //private ContentContext contentContext;
@@ -151,7 +149,7 @@ public class ProfileJBossServerComponent
             if (managedProperty != null && property != null)
             {
                 PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(managedProperty.getMetaType());
-                propertyAdapter.setMetaValues(property, (MetaValue) managedProperty.getValue(), propertyDefinition);
+                propertyAdapter.populateMetaValueFromProperty(property, (MetaValue) managedProperty.getValue(), propertyDefinition);
             }
         }
     }
@@ -172,7 +170,7 @@ public class ProfileJBossServerComponent
 
     private String getResourceKey(ResourceType resourceType, String resourceName)
     {
-        ComponentType componentType = ConversionUtil.getComponentType(resourceType);
+        ComponentType componentType = ConversionUtils.getComponentType(resourceType);
         if (componentType == null)
             throw new IllegalStateException("Unable to map " + resourceType + " to a ComponentType.");
         // TODO (ips): I think the key can just be the resource name.
@@ -184,7 +182,7 @@ public class ProfileJBossServerComponent
         Configuration defaultPluginConfig = getDefaultPluginConfiguration(resourceType);
         Configuration resourceConfig = createResourceReport.getResourceConfiguration();
         String resourceName = getResourceName(defaultPluginConfig, resourceConfig);
-        if (ProfileServiceFactory.isManagedComponent(resourceName, ConversionUtil.getComponentType(resourceType))) {
+        if (ProfileServiceFactory.isManagedComponent(resourceName, ConversionUtils.getComponentType(resourceType))) {
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
             createResourceReport.setErrorMessage("A " + resourceType.getName() + " named '" + resourceName
                     + "' already exists.");
@@ -207,7 +205,7 @@ public class ProfileJBossServerComponent
             Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(defaultPluginConfig);
 
             //if (log.isDebugEnabled()) log.debug("BEFORE:\n" + DebugUtils.convertPropertiesToString(template));
-            ConversionUtil.convertConfigurationToManagedProperties(managedProperties, resourceConfig, resourceType, customProps);
+            ConversionUtils.convertConfigurationToManagedProperties(managedProperties, resourceConfig, resourceType, customProps);
             if (log.isDebugEnabled()) log.debug("AFTER:\n" + DebugUtils.convertPropertiesToString(template));
 
             ConfigurationDefinition pluginConfigDef = resourceType.getPluginConfigurationDefinition();
@@ -253,7 +251,7 @@ public class ProfileJBossServerComponent
         String archiveName = key.getName();
 
         try {
-            if (isCorrectExtension(resourceType, archiveName)) {
+            if (DeploymentUtils.isCorrectExtension(resourceType, archiveName)) {
                 createResourceReport.setStatus(CreateResourceStatus.FAILURE);
                 createResourceReport.setErrorMessage("Incorrect extension specified on filename [" + archiveName +
                     "]");
@@ -262,71 +260,21 @@ public class ProfileJBossServerComponent
 
             File tempFile = new File(archiveName);
 
-            deployArchive(tempFile, createResourceReport);
+            DeploymentStatus status = DeploymentUtils.deployArchive(tempFile);
 
-            createResourceReport.setResourceName(archiveName);
-            createResourceReport.setResourceKey(archiveName);
-            createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
+            if (status.getState() == DeploymentStatus.StateType.COMPLETED) {
+                createResourceReport.setResourceName(archiveName);
+                createResourceReport.setResourceKey(archiveName);
+                createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
+            } else {
+                createResourceReport.setStatus(CreateResourceStatus.FAILURE);
+                createResourceReport.setErrorMessage(status.getMessage());
+                createResourceReport.setException(status.getFailure());
+            }
         } catch (Throwable t) {
             log.error("Error deploying application for report: " + createResourceReport, t);
-            createResourceReport.setException(t);
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
-        }
-    }
-
-    private boolean isCorrectExtension(ResourceType resourceType, String archiveName)
-    {
-        String resourceTypeName = resourceType.getName();
-        String expectedExtension;
-        if (resourceTypeName.equals(RESOURCE_TYPE_EAR)) {
-            expectedExtension = "ear";
-        } else if (resourceTypeName.equals(RESOURCE_TYPE_WAR)){
-            expectedExtension = "war";
-        } else {
-            expectedExtension = "jar";
-        }
-
-        int lastPeriod = archiveName.lastIndexOf(".");
-        String extension = archiveName.substring(lastPeriod + 1);
-        return (lastPeriod == -1 || !expectedExtension.equals(extension));
-    }
-
-    private void deployArchive(File tempFile, CreateResourceReport createResourceReport) throws Exception
-    {
-        DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
-        String archiveName = tempFile.getName();
-        boolean copyContent = true;
-        DeploymentProgress progress = deploymentManager.distribute(archiveName, ManagedDeployment.DeploymentPhase.APPLICATION,
-                tempFile.toURL(), copyContent);
-        progress.addProgressListener(this);
-        progress.run();        
-
-        DeploymentStatus status = progress.getDeploymentStatus();
-        if (status.getState().equals(DeploymentStatus.StateType.FAILED))
-        {
-            createResourceReport.setStatus(CreateResourceStatus.FAILURE);
-            Exception exceptionThrown = status.getFailure();
-            if (exceptionThrown != null)
-            {
-                createResourceReport.setException(exceptionThrown);
-                log.error("", exceptionThrown);
-            }
-            else
-            {
-                createResourceReport.setErrorMessage(status.getMessage());
-            }
-        }
-
-        String[] names = {archiveName};
-        progress = deploymentManager.start(ManagedDeployment.DeploymentPhase.APPLICATION, names);
-        progress.addProgressListener(this);
-        progress.run();
-
-        status = progress.getDeploymentStatus();
-        if (status.getState().equals(DeploymentStatus.StateType.FAILED))
-        {
-            createResourceReport.setStatus(CreateResourceStatus.FAILURE);
-            createResourceReport.setErrorMessage(status.getMessage());
+            createResourceReport.setException(t);            
         }
     }
 }

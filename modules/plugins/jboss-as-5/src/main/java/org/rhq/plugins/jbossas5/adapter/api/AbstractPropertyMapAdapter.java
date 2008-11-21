@@ -32,10 +32,10 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
  */
 public abstract class AbstractPropertyMapAdapter implements PropertyAdapter<PropertyMap, PropertyDefinitionMap>
 {
-    public PropertyMap getProperty(MetaValue metaValue, PropertyDefinitionMap propDefMap)
+    public PropertyMap convertToProperty(MetaValue metaValue, PropertyDefinitionMap propDefMap)
     {
         PropertyMap propMap = new PropertyMap(propDefMap.getName());
-        setPropertyValues(propMap, metaValue, propDefMap);
+        populatePropertyFromMetaValue(propMap, metaValue, propDefMap);
         return propMap;
     }
 }

@@ -27,7 +27,7 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.plugins.jbossas5.util.ConversionUtil;
+import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,15 +43,15 @@ import java.util.HashSet;
  *
  * @author Mark Spritzler
  */
-public class DeploymentResourceDiscoveryComponent implements ResourceDiscoveryComponent<ProfileJBossServerComponent> {
+public class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryComponent<ApplicationServerComponent> {
     private final Log log = LogFactory.getLog(this.getClass());    
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ProfileJBossServerComponent> resourceDiscoveryContext)
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApplicationServerComponent> resourceDiscoveryContext)
     {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
         ResourceType resourceType = resourceDiscoveryContext.getResourceType();
         log.info("Discovering " + resourceType.getName() + " Resources..." );
-        String deploymentTypeString = ConversionUtil.getDeploymentTypeString(resourceType);
+        String deploymentTypeString = ConversionUtils.getDeploymentTypeString(resourceType);
 
         // TODO (ips): Only refresh the ManagementView *once* per runtime discovery scan, rather than every time this
         //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.
@@ -98,7 +98,7 @@ public class DeploymentResourceDiscoveryComponent implements ResourceDiscoveryCo
                                     null);
                     // example of a deployment name: vfszip:/C:/opt/jboss-5.0.0.GA/server/default/deploy/foo.war
                     resource.getPluginConfiguration().put(
-                            new PropertySimple(DeploymentResourceComponent.DEPLOYMENT_NAME_PROPERTY, deploymentName));
+                            new PropertySimple(ManagedDeploymentComponent.DEPLOYMENT_NAME_PROPERTY, deploymentName));
                     discoveredResources.add(resource);
                 }
                 catch (NoSuchDeploymentException e)

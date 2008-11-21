@@ -46,25 +46,25 @@ import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
  * @author Ian Springer
  */
 public abstract class AbstractPropertyMapToCompositeValueAdapter extends AbstractPropertyMapAdapter implements PropertyAdapter<PropertyMap, PropertyDefinitionMap> {
-    public void setMetaValues(PropertyMap propMap, MetaValue metaValue, PropertyDefinitionMap propDefMap) {
+    public void populateMetaValueFromProperty(PropertyMap propMap, MetaValue metaValue, PropertyDefinitionMap propDefMap) {
         CompositeValue compositeValue = (CompositeValue)metaValue;
         for (String mapMemberPropName : propMap.getMap().keySet()) {
             Property mapMemberProp = propMap.get(mapMemberPropName);
             PropertyDefinition mapMemberPropDef = propDefMap.get(mapMemberPropName);
             MetaType mapMemberMetaType = compositeValue.getMetaType().getType(mapMemberPropName);
             PropertyAdapter adapter = PropertyAdapterFactory.getPropertyAdapter(mapMemberMetaType);
-            MetaValue mapMemberMetaValue = adapter.getMetaValue(mapMemberProp, mapMemberPropDef, mapMemberMetaType);
+            MetaValue mapMemberMetaValue = adapter.convertToMetaValue(mapMemberProp, mapMemberPropDef, mapMemberMetaType);
             putValue(compositeValue, mapMemberPropName, mapMemberMetaValue);
         }
     }
 
-    public MetaValue getMetaValue(PropertyMap propMap, PropertyDefinitionMap propDefMap, MetaType metaType) {
+    public MetaValue convertToMetaValue(PropertyMap propMap, PropertyDefinitionMap propDefMap, MetaType metaType) {
         CompositeValue compositeValue = createCompositeValue(propDefMap, metaType);
-        setMetaValues(propMap, compositeValue, propDefMap);
+        populateMetaValueFromProperty(propMap, compositeValue, propDefMap);
         return compositeValue;
     }
 
-    public void setPropertyValues(PropertyMap propMap, MetaValue metaValue, PropertyDefinitionMap propDefMap) {
+    public void populatePropertyFromMetaValue(PropertyMap propMap, MetaValue metaValue, PropertyDefinitionMap propDefMap) {
         if (metaValue == null)
             return;
         CompositeValue compositeValue = (CompositeValue)metaValue;
@@ -78,12 +78,12 @@ public abstract class AbstractPropertyMapToCompositeValueAdapter extends Abstrac
             PropertyDefinition mapMemberPropDef = propDefMap.get(mapMemberPropName);
             if (mapMemberProp == null) {
                 if (mapMemberPropDef != null)
-                    mapMemberProp = propertyAdapter.getProperty(mapMemberMetaValue, mapMemberPropDef);
+                    mapMemberProp = propertyAdapter.convertToProperty(mapMemberMetaValue, mapMemberPropDef);
                 else {
                     // If the member prop has no associated prop def, this is probably an "open map".
                     mapMemberProp = new PropertySimple(mapMemberPropName, null);
                     // Populate the member prop.
-                    propertyAdapter.setPropertyValues(mapMemberProp, mapMemberMetaValue, mapMemberPropDef);
+                    propertyAdapter.populatePropertyFromMetaValue(mapMemberProp, mapMemberMetaValue, mapMemberPropDef);
                 }
                 propMap.put(mapMemberProp);
             }

@@ -32,7 +32,7 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
-import org.rhq.plugins.jbossas5.util.ConversionUtil;
+import org.rhq.plugins.jbossas5.util.ConversionUtils;
 
 /**
  * This class provides code that maps back and forth between a {@link PropertyMap} and
@@ -63,7 +63,7 @@ public class PropertyMapToCompositeValueSupportAdapter extends AbstractPropertyM
             if (propDefMap != null) {
                 for (PropertyDefinition mapMemberPropDef : propDefMap.getPropertyDefinitions().values()) {
                     String mapMemberDesc = (propDefMap.getDescription() != null) ? propDefMap.getDescription() : "none";
-                    MetaType mapMemberMetaType = ConversionUtil.convertPropertyDefinitionToMetaType(mapMemberPropDef);
+                    MetaType mapMemberMetaType = ConversionUtils.convertPropertyDefinitionToMetaType(mapMemberPropDef);
                     compositeMetaType.addItem(mapMemberPropDef.getName(), mapMemberDesc, mapMemberMetaType);
                 }
             }

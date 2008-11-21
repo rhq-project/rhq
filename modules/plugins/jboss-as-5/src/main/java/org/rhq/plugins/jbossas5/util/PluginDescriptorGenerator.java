@@ -41,6 +41,8 @@ import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
+import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.profileservice.spi.NoSuchDeploymentException;
 
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
@@ -90,6 +92,45 @@ public class PluginDescriptorGenerator {
 
     public static void generatePluginDescriptor(ManagementView managementView, File tempDir) throws Exception {
         PluginDescriptor pluginDescriptor = new PluginDescriptor();
+        addDeploymentsToDescriptor(managementView, pluginDescriptor);
+        addComponentsToDescriptor(managementView, pluginDescriptor);
+        File tempFile = File.createTempFile("rhq-plugin", ".xml", tempDir);
+        writeToFile(pluginDescriptor, tempFile);
+    }
+
+    private static void addDeploymentsToDescriptor(ManagementView managementView, PluginDescriptor pluginDescriptor) throws Exception {
+        Set<String> knownDeploymentTypeNames = getKnownDeploymentTypeNames();
+        for (String deploymentTypeName : knownDeploymentTypeNames) {
+            Set<String> deploymentNames = managementView.getDeploymentNamesForType(deploymentTypeName);
+            if (deploymentNames == null || deploymentNames.isEmpty()) {
+                LOG.warn("No deployments of type [" + deploymentTypeName + "] found.");
+                continue;
+            }
+            ManagedDeployment deployment = null;
+            for (String deploymentName : deploymentNames) {
+                try {
+                    // Use the first one we successfully retrieve as a representative sample of the type.
+                    deployment = managementView.getDeployment(deploymentName, null);
+                    break;
+                }
+                catch (NoSuchDeploymentException e) {
+                    LOG.warn(e);
+                }
+            }
+            if (deployment == null) {
+                LOG.warn("Unable to successfully retrieve a Deployment of type [" + deploymentTypeName
+                        + "] due to https://jira.jboss.org/jira/browse/JBAS-5640.");
+                continue;
+            }
+            // First convert ManagedDeployment to ResourceType...
+            ResourceType resourceType = MetadataConversionUtils.convertDeploymentToResourceType(deploymentTypeName,
+                    deployment);
+            // Then convert ResourceType to JAXB ServiceDescriptor object.
+            convertAndMergeResourceType(pluginDescriptor, resourceType);
+        }
+    }
+    
+    private static void addComponentsToDescriptor(ManagementView managementView, PluginDescriptor pluginDescriptor) throws Exception {
         Set<ComponentType> knownComponentTypes = getKnownComponentTypes();
         for (ComponentType componentType : knownComponentTypes) {
             Set<ManagedComponent> components = managementView.getComponentsForType(componentType);
@@ -104,10 +145,6 @@ public class PluginDescriptorGenerator {
             // Then convert ResourceType to JAXB ServiceDescriptor object.
             convertAndMergeResourceType(pluginDescriptor, resourceType);
         }
-        File tempFile = File.createTempFile("rhq-plugin", ".xml", tempDir);
-        writeToFile(pluginDescriptor, tempFile);
-        Set<String> knownDeploymentTypeNames = getKnownDeploymentTypeNames();
-        // TODO: Anything we can do with deployment types?
     }
 
     private static void convertAndMergeResourceType(PluginDescriptor pluginDescriptor, ResourceType resourceType) {

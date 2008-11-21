@@ -33,7 +33,7 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
-import org.rhq.plugins.jbossas5.util.ConversionUtil;
+import org.rhq.plugins.jbossas5.util.ConversionUtils;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -44,17 +44,17 @@ import java.util.Set;
  * @author Jason Dobies
  * @author Mark Spritzer
  */
-public class JndiResourceDiscoveryComponent
-        implements ResourceDiscoveryComponent<ProfileJBossServerComponent>
+public class ManagedComponentDiscoveryComponent
+        implements ResourceDiscoveryComponent<ApplicationServerComponent>
 {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ProfileJBossServerComponent> resourceDiscoveryContext)
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApplicationServerComponent> resourceDiscoveryContext)
     {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
         ResourceType resourceType = resourceDiscoveryContext.getResourceType();
         log.info("Discovering " + resourceType.getName() + " Resources..." );
-        ComponentType componentType = ConversionUtil.getComponentType(resourceType);
+        ComponentType componentType = ConversionUtils.getComponentType(resourceType);
 
         // TODO (ips): Only refresh the ManagementView *once* per runtime discovery scan, rather than every time this
         //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.
@@ -97,7 +97,7 @@ public class JndiResourceDiscoveryComponent
                                 resourceDiscoveryContext.getDefaultPluginConfiguration(),
                                 null);
 
-                resource.getPluginConfiguration().put(new PropertySimple(JndiResourceComponent.COMPONENT_NAME_PROPERTY,
+                resource.getPluginConfiguration().put(new PropertySimple(ManagedComponentComponent.COMPONENT_NAME_PROPERTY,
                         component.getName()));
 
                 discoveredResources.add(resource);

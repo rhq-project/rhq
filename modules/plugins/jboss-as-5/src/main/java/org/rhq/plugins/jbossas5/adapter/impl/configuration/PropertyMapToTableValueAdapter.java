@@ -43,17 +43,17 @@ package org.rhq.plugins.jbossas5.adapter.impl.configuration;
 /**
  * @author Mark Spritzler
  */
-public class PropertyMapToTableMetaValueAdapter extends AbstractPropertyMapAdapter implements PropertyAdapter<PropertyMap, PropertyDefinitionMap>
+public class PropertyMapToTableValueAdapter extends AbstractPropertyMapAdapter implements PropertyAdapter<PropertyMap, PropertyDefinitionMap>
 {
-    public PropertyMap getProperty(MetaValue metaValue, PropertyDefinitionMap propertyDefinition)
+    public PropertyMap convertToProperty(MetaValue metaValue, PropertyDefinitionMap propertyDefinition)
     {
         PropertyMap property = new PropertyMap();
-        setPropertyValues(property, metaValue, propertyDefinition);
+        populatePropertyFromMetaValue(property, metaValue, propertyDefinition);
         return property;
     }
 
     //@todo need to implement this like the other Map to Composite, but not until there is an actual property that needs this
-    public void setMetaValues(PropertyMap property, MetaValue metaValue, PropertyDefinitionMap propertyDefinition)
+    public void populateMetaValueFromProperty(PropertyMap property, MetaValue metaValue, PropertyDefinitionMap propertyDefinition)
     {
         if (metaValue != null)
         {
@@ -67,18 +67,18 @@ public class PropertyMapToTableMetaValueAdapter extends AbstractPropertyMapAdapt
                 MetaValue value = tableValueSupport.get(getKey);
                 Property innerProperty = properties.get(key);
                 PropertyAdapter adapter = PropertyAdapterFactory.getPropertyAdapter(value);
-                adapter.setMetaValues(innerProperty, value, definition);
+                adapter.populateMetaValueFromProperty(innerProperty, value, definition);
             }
         }
     }
 
     //@todo need to implement this like the other Map to Composite, but not until there is an actual property that needs this
-    public MetaValue getMetaValue(PropertyMap property, PropertyDefinitionMap propertyDefinition, MetaType type)
+    public MetaValue convertToMetaValue(PropertyMap property, PropertyDefinitionMap propertyDefinition, MetaType type)
     {
         return null;
     }
 
-    public void setPropertyValues(PropertyMap property, MetaValue metaValue, PropertyDefinitionMap propertyDefinition)
+    public void populatePropertyFromMetaValue(PropertyMap property, MetaValue metaValue, PropertyDefinitionMap propertyDefinition)
     {
         // Not important at this moment to implement as there sin't a need for this mapping yet.
         if (metaValue != null)

@@ -22,51 +22,47 @@
   */
 package org.rhq.plugins.jbossas5;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.jboss.deployers.spi.management.ManagementView;
-import org.jboss.managed.api.ComponentType;
-import org.jboss.managed.api.ManagedComponent;
-import org.jboss.managed.api.ManagedDeployment;
-import org.jboss.managed.api.ManagedOperation;
-import org.jboss.managed.api.ManagedProperty;
-import org.jboss.metatype.api.values.MetaValue;
-import org.jboss.metatype.api.values.SimpleValue;
-import org.jboss.metatype.api.values.CompositeValue;
+ import java.util.Map;
+ import java.util.Set;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationFacet;
-import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
-import org.rhq.plugins.jbossas5.util.ConversionUtil;
-import org.rhq.plugins.jbossas5.util.DebugUtils;
+ import org.apache.commons.logging.Log;
+ import org.apache.commons.logging.LogFactory;
 
-import java.util.Map;
-import java.util.Set;
+ import org.jboss.deployers.spi.management.ManagementView;
+ import org.jboss.managed.api.ComponentType;
+ import org.jboss.managed.api.ManagedComponent;
+ import org.jboss.managed.api.ManagedDeployment;
+ import org.jboss.managed.api.ManagedOperation;
+ import org.jboss.managed.api.ManagedProperty;
+ import org.jboss.metatype.api.values.CompositeValue;
+ import org.jboss.metatype.api.values.MetaValue;
+ import org.jboss.metatype.api.values.SimpleValue;
 
-/**
+ import org.rhq.core.domain.configuration.Configuration;
+ import org.rhq.core.domain.measurement.AvailabilityType;
+ import org.rhq.core.domain.measurement.DataType;
+ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+ import org.rhq.core.domain.measurement.MeasurementDataTrait;
+ import org.rhq.core.domain.measurement.MeasurementReport;
+ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
+ import org.rhq.core.pluginapi.inventory.ResourceComponent;
+ import org.rhq.core.pluginapi.inventory.ResourceContext;
+ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+ import org.rhq.core.pluginapi.operation.OperationFacet;
+ import org.rhq.core.pluginapi.operation.OperationResult;
+ import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
+ import org.rhq.plugins.jbossas5.util.ConversionUtils;
+
+ /**
  * Service ResourceComponent for all {@link ManagedComponent}s in a Profile.
  *
  * @author Jason Dobies
  * @author Mark Spritzler
  * @author Ian Springer
  */
-public class JndiResourceComponent
+public class ManagedComponentComponent extends AbstractManagedComponent
         implements ResourceComponent, ConfigurationFacet, DeleteResourceFacet, OperationFacet, MeasurementFacet
 {
     static final String COMPONENT_NAME_PROPERTY = "componentName";
@@ -75,8 +71,6 @@ public class JndiResourceComponent
 
     private String componentName;
     private ComponentType componentType;
-    private ResourceContext resourceContext;
-    private ResourceType resourceType;
 
     // ResourceComponent Implementation  --------------------------------------------
 
@@ -91,59 +85,17 @@ public class JndiResourceComponent
         }
     }
 
-    public void start(ResourceContext resourceContext)
-    {
-        this.resourceContext = resourceContext;
-        this.resourceType = resourceContext.getResourceType();
-
+    public void start(ResourceContext resourceContext) throws Exception {
+        super.start(resourceContext);
         // Convert the resource type into the component type
         Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
         this.componentName = pluginConfiguration.getSimple(COMPONENT_NAME_PROPERTY).getStringValue();
-        this.componentType = ConversionUtil.getComponentType(resourceType);
+        this.componentType = ConversionUtils.getComponentType(getResourceContext().getResourceType());
     }
 
     public void stop()
     {
         return;
-    }
-
-    // ConfigurationComponent Implementation  --------------------------------------------
-
-    public Configuration loadResourceConfiguration()
-    {
-        ManagedComponent managedComponent = getManagedComponent();
-        Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
-        Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(this.resourceContext.getPluginConfiguration());
-        if (log.isDebugEnabled()) log.debug("*** BEFORE LOAD:\n" + DebugUtils.convertPropertiesToString(managedComponent));
-        @SuppressWarnings({"UnnecessaryLocalVariable"})
-        Configuration resourceConfig = ConversionUtil.convertManagedObjectToConfiguration(managedProperties,
-                customProps, this.resourceType);
-        return resourceConfig;
-    }
-
-    public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport)
-    {
-        Configuration resourceConfig = configurationUpdateReport.getConfiguration();
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
-        try
-        {
-            ManagedComponent managedComponent = getManagedComponent();
-            Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
-            Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(pluginConfig);
-            if (log.isDebugEnabled()) log.debug("*** BEFORE UPDATE:\n" + DebugUtils.convertPropertiesToString(managedComponent));
-            ConversionUtil.convertConfigurationToManagedProperties(managedProperties, resourceConfig, this.resourceType,
-                    customProps);
-            if (log.isDebugEnabled()) log.debug("*** AFTER UPDATE:\n" + DebugUtils.convertPropertiesToString(managedComponent));
-            managementView.updateComponent(managedComponent);
-            managementView.process();
-            configurationUpdateReport.setStatus(ConfigurationUpdateStatus.SUCCESS);
-        }
-        catch (Exception e)
-        {
-            configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
-            configurationUpdateReport.setErrorMessageFromThrowable(e);
-        }
     }
 
     // DeleteResourceFacet Implementation  --------------------------------------------
@@ -171,15 +123,15 @@ public class JndiResourceComponent
             if (operationName.equals(name))
             {
                 // Convert parameters into MetaValue array.
-                MetaValue[] params = ConversionUtil.convertOperationsParametersToMetaValues(operation, parameters,
-                        this.resourceType);
+                MetaValue[] params = ConversionUtils.convertOperationsParametersToMetaValues(operation, parameters,
+                        getResourceContext().getResourceType());
                 if (params == null)
                     params = new MetaValue[0];
                 Object result = operation.invoke(params);
                 //Convert result to Correct Property type
                 Configuration complexResults = results.getComplexResults();
-                ConversionUtil.convertManagedOperationResults(operation, (MetaValue) result, complexResults,
-                        this.resourceType);
+                ConversionUtils.convertManagedOperationResults(operation, (MetaValue) result, complexResults,
+                        getResourceContext().getResourceType());
             }
         }
         return results;
@@ -201,6 +153,24 @@ public class JndiResourceComponent
                 log.error("Failed to collect metric for " + request, e);
             }
         }
+    }
+
+    // ------------ AbstractManagedComponent implementation -------------
+
+    protected Map<String, ManagedProperty> getManagedProperties() {
+        return getManagedComponent().getProperties();
+    }
+
+    protected Log getLog() {
+        return this.log;
+    }
+
+    protected void updateComponent() throws Exception {
+        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        ManagedComponent managedComponent = ProfileServiceFactory.getManagedComponent(managementView,
+                this.componentType, this.componentName);
+        managementView.updateComponent(managedComponent);
+        managementView.process();
     }
 
     // ------------------------------------------------------------------------------

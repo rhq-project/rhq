@@ -31,46 +31,31 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.plugins.jbossas5.adapter.api.AbstractPropertySimpleAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
  /**
  * @author Mark Spritzler
  */
-public class PropertySimpleToSimpleMetaValueAdapter extends AbstractPropertySimpleAdapter implements PropertyAdapter<PropertySimple, PropertyDefinitionSimple>
+public class PropertySimpleToSimpleValueAdapter extends AbstractPropertySimpleAdapter implements PropertyAdapter<PropertySimple, PropertyDefinitionSimple>
 {
-    private static final Log LOG = LogFactory.getLog(PropertySimpleToSimpleMetaValueAdapter.class);
-
-    public void setMetaValues(PropertySimple property, MetaValue metaValue, PropertyDefinitionSimple propertyDefinition)
+    public void populateMetaValueFromProperty(PropertySimple propSimple, MetaValue metaValue, PropertyDefinitionSimple propDefSimple)
     {
+        if (propSimple == null || metaValue == null)
+            return;
         SimpleValueSupport simpleValueSupport = (SimpleValueSupport) metaValue;
-        if (property != null)
-        {
-            String value = property.getStringValue();
-            if (value != null && !value.equals(""))
-            {
-                if (metaValue != null)
-                    simpleValueSupport.setValue(property.getStringValue());
-            }
-        }
+        simpleValueSupport.setValue(propSimple.getStringValue());
     }
 
-    public void setPropertyValues(PropertySimple property, MetaValue metaValue, PropertyDefinitionSimple propertyDefinition)
+    public void populatePropertyFromMetaValue(PropertySimple propSimple, MetaValue metaValue, PropertyDefinitionSimple propDefSimple)
     {
         Object value = (metaValue != null) ? ((SimpleValue) metaValue).getValue() : null;
-        property.setValue(value);
+        propSimple.setValue(value);
     }
 
-    public MetaValue getMetaValue(PropertySimple property, PropertyDefinitionSimple propertyDefinition, MetaType type)
+    public MetaValue convertToMetaValue(PropertySimple propSimple, PropertyDefinitionSimple propDefSimple, MetaType metaType)
     {
-        String value = property.getStringValue();
-        MetaValue metaValue = null;
-        if (value != null && !value.equals(""))
-        {
-            metaValue = new SimpleValueSupport((SimpleMetaType) type, value);
-            setMetaValues(property, metaValue, propertyDefinition);
-            LOG.debug("Delegating property adapter because metaValue was passed in as null for property: " + property.getName() + " value: " + property.getStringValue());
-        }
-        return metaValue;
+        String propValue = propSimple.getStringValue();
+        SimpleValue simpleValue = new SimpleValueSupport((SimpleMetaType) metaType, propValue);
+        populateMetaValueFromProperty(propSimple, simpleValue, propDefSimple);                    
+        return simpleValue;
     }
 }

@@ -28,46 +28,60 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 
 /**
- * TODO: Javadoc!
+ * An adapter that can convert back and forth between a specific type of {@link MetaValue} and a specific
+ * type of {@link Property}.
  *
  * @author Mark Spritzler
+ * @author Ian Springer
  */ 
 public interface PropertyAdapter<P extends Property, D extends PropertyDefinition>
 {
     /**
-     * TODO: Javadoc!
+     * Given a {@link Property} and its {@link PropertyDefinition}, as well as a {@link MetaValue}, populate that
+     * MetaValue so it corresponds to the Property. If the Property is a list or a map, all descendant Property's should
+     * be added as descendants of the MetaValue.
      *
-     * @param property
-     * @param metaValue
-     * @param propertyDefinition
+     * @param property the property to be copied
+     * @param metaValue the MetaValue to be populated; should not be null
+     * @param propertyDefinition the property's definition
      */
-    public void setMetaValues(P property, MetaValue metaValue, D propertyDefinition);
+    public void populateMetaValueFromProperty(P property, MetaValue metaValue, D propertyDefinition);
 
     /**
-     * TODO: Javadoc!
+     * Given a {@link Property} and its {@link PropertyDefinition}, create and return a corresponding {@link MetaValue}
+     * with the specified {@link MetaType}. If the Property is a list or a map, all descendant Property's should
+     * be represented as descendants of the returned MetaValue. Generally this method can simply create an empty
+     * MetaValue object and then delegate the population of the guts of the object to
+     * {@link #populateMetaValueFromProperty(Property, MetaValue, PropertyDefinition)}.
      *
-     * @param property
-     * @param propertyDefinition
-     * @param type
-     * @return
+     * @param property the property to be converted
+     * @param propertyDefinition the property's definition
+     * @param metaType the type of MetaValue that should be created and returned
+     * @return the MetaValue representation of the given Property
      */
-    public MetaValue getMetaValue(P property, D propertyDefinition, MetaType type);
+    public MetaValue convertToMetaValue(P property, D propertyDefinition, MetaType metaType);
 
     /**
-     * TODO: Javadoc!
+     * Given a {@link Property} and its {@link PropertyDefinition}, as well as a {@link MetaValue}, populate the
+     * Property so it corresponds to the MetaValue. If the MetaValue is a from of list or map, all descendant
+     * MetaValue's should be added as descendants of the Property.
      *
-     * @param property
-     * @param metaValue
-     * @param propertyDefinition
+     * @param property the property to be populated; should not be null
+     * @param metaValue the MetaValue to be copied
+     * @param propertyDefinition the property's definition
      */
-    public void setPropertyValues(P property, MetaValue metaValue, D propertyDefinition);
+    public void populatePropertyFromMetaValue(P property, MetaValue metaValue, D propertyDefinition);
 
     /**
-     * TODO: Javadoc!
+     * Given a {@link MetaValue}, create and return a corresponding {@link Property}
+     * with the specified {@link PropertyDefinition}. If the MetaValue is a form of list or map, all descendant
+     * MetaValue's should be represented as descendants of the returned Property. Generally this method can simply
+     * create an empty Property object and then delegate the population of the guts of the object to
+     * {@link #populatePropertyFromMetaValue(Property, MetaValue, PropertyDefinition)}.
      *
-     * @param metaValue
-     * @param propertyDefinition
-     * @return
+     * @param metaValue the metaValue to be converted
+     * @param propertyDefinition the definition of the property to be created and returned
+     * @return the Property representation of the given MetaValue
      */
-    public P getProperty(MetaValue metaValue, D propertyDefinition);
+    public P convertToProperty(MetaValue metaValue, D propertyDefinition);
 }

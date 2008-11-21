@@ -32,9 +32,14 @@ import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedOperation;
 import org.jboss.managed.api.ManagedParameter;
 import org.jboss.managed.api.ManagedProperty;
+import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.managed.api.annotation.ViewUse;
 import org.jboss.metatype.api.types.CompositeMetaType;
 import org.jboss.metatype.api.types.MetaType;
+import org.jboss.metatype.api.types.CollectionMetaType;
+import org.jboss.metatype.api.types.ArrayMetaType;
+import org.jboss.metatype.api.types.MapCompositeMetaType;
+import org.jboss.metatype.api.types.TableMetaType;
 import org.jboss.metatype.api.values.CompositeValue;
 import org.jboss.metatype.api.values.MetaValue;
 
@@ -43,6 +48,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.constraint.FloatRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
 import org.rhq.core.domain.measurement.DataType;
@@ -56,7 +62,8 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.StringUtils;
 
 /**
- * Utility class for converting a JBAS5 ManagedComponent to an RHQ ResourceType.
+ * Utility class for converting JBAS5 Profile Service {@link ManagedComponent}s and {@link ManagedDeployment}s to RHQ
+ * {@link ResourceType}s.
  *
  * @author Ian Springer
  */
@@ -74,16 +81,27 @@ public class MetadataConversionUtils {
         TYPE_MAP.put(Double.class.getName(), PropertySimpleType.DOUBLE);
     }
 
+    public static ResourceType convertDeploymentToResourceType(String deploymentTypeName, ManagedDeployment deployment) {
+        LOG.debug("Creating ResourceType for ManagedDeployment type [" + deploymentTypeName + "]...");
+        ResourceType resourceType = new ResourceType(deploymentTypeName, PLUGIN_NAME, ResourceCategory.SERVICE, null);
+        Set<MeasurementDefinition> metricDefs = convertMetricPropertiesToMeasurementDefinitions(deployment);
+        resourceType.setMetricDefinitions(metricDefs);
+        ConfigurationDefinition resourceConfigDef = convertConfigurationPropertiesToConfigurationDefinition(deployment);
+        resourceType.setResourceConfigurationDefinition(resourceConfigDef);
+        return resourceType;
+    }
+
     public static ResourceType convertComponentToResourceType(ManagedComponent component)
     {
+        LOG.debug("Creating ResourceType for ManagedComponent type [" + component.getType() + "]...");
         ComponentType componentType = component.getType();
         String name = componentType.getSubtype() + " " + componentType.getType();
         ResourceType resourceType = new ResourceType(name, PLUGIN_NAME, ResourceCategory.SERVICE, null);
         Set<OperationDefinition> opDefs = convertManagedOperationsToOperationDefinitions(component);
         for (OperationDefinition opDef : opDefs)
             resourceType.addOperationDefinition(opDef);
-        Set<MeasurementDefinition> measurementDefs = convertMetricPropertiesToMeasurementDefinitions(component);
-        resourceType.setMetricDefinitions(measurementDefs);
+        Set<MeasurementDefinition> metricDefs = convertMetricPropertiesToMeasurementDefinitions(component);
+        resourceType.setMetricDefinitions(metricDefs);
         ConfigurationDefinition resourceConfigDef = convertConfigurationPropertiesToConfigurationDefinition(component);
         resourceType.setResourceConfigurationDefinition(resourceConfigDef);
         return resourceType;
@@ -98,7 +116,7 @@ public class MetadataConversionUtils {
         return opDefs;
     }
 
-    public static OperationDefinition convertOperationToOperationDefinition(ManagedOperation operation) {
+    private static OperationDefinition convertOperationToOperationDefinition(ManagedOperation operation) {
         String desc = (!operation.getName().equals(operation.getDescription())) ? operation.getDescription() : null;
         OperationDefinition opDef = new OperationDefinition(operation.getName(), null, desc);
         opDef.setDisplayName(StringUtils.deCamelCase(operation.getName()));
@@ -109,7 +127,7 @@ public class MetadataConversionUtils {
         return opDef;
     }
 
-    public static ConfigurationDefinition convertParametersToConfigurationDefinition(ManagedOperation operation)
+    private static ConfigurationDefinition convertParametersToConfigurationDefinition(ManagedOperation operation)
     {
         if (operation.getParameters() == null || operation.getParameters().length == 0)
             return null;
@@ -122,34 +140,57 @@ public class MetadataConversionUtils {
     }
 
     private static PropertyDefinition convertParameterToPropertyDefinition(ManagedParameter parameter) {
-        PropertyDefinition propDef;
+        PropertyDefinition propDef = convertMetaTypeToPropertyDefinition(parameter.getMetaType(), parameter.getName());
         String desc = (!parameter.getName().equals(parameter.getDescription())) ? parameter.getDescription() : null;
-        if (parameter.getMetaType().isArray() || parameter.getMetaType().isCollection()) {
-            propDef = createPropertyDefinitionList(parameter.getName(), desc);
-        } else {
-            propDef = convertSimpleParameterToPropertyDefinitionSimple(parameter, desc);
+        propDef.setDescription(desc);
+        // TODO: Convert parameter.getLegalValues() to enum defs.
+        if (propDef instanceof PropertyDefinitionSimple) {
+            PropertyDefinitionSimple propDefSimple = (PropertyDefinitionSimple)propDef;
+            addConstraints(propDefSimple, parameter.getMinimumValue(), parameter.getMaximumValue());
         }
         return propDef;
     }
 
-    private static PropertyDefinitionList createPropertyDefinitionList(String name, String desc) {
-        PropertySimpleType propType = convertClassToPropertySimpleType(Object.class.getName());
-        PropertyDefinitionSimple propDefSimple = new PropertyDefinitionSimple("item", null, false, propType);
-        propDefSimple.setDisplayName(StringUtils.deCamelCase(propDefSimple.getName()));
+    private static PropertyDefinitionList convertMetaTypeToPropertyDefinitionList(MetaType metaType, String name) {
+        MetaType elementType;
+        if (metaType.isCollection()) {
+            CollectionMetaType collectionMetaType = (CollectionMetaType)metaType;
+            elementType = collectionMetaType.getElementType();
+        } else if (metaType.isArray()) {
+            ArrayMetaType arrayMetaType = (ArrayMetaType)metaType;
+            elementType = arrayMetaType.getElementType();
+        } else {
+            throw new IllegalStateException("Unsupported MetaType: " + metaType);
+        }
+        PropertyDefinition elementPropDef = convertMetaTypeToPropertyDefinition(elementType, "element");
         @SuppressWarnings({"UnnecessaryLocalVariable"})
-        PropertyDefinitionList propDefList = new PropertyDefinitionList(name, desc, true, propDefSimple);
+        PropertyDefinitionList propDefList = new PropertyDefinitionList(name, null, true, elementPropDef);
         return propDefList;
     }
 
-    private static PropertyDefinitionSimple convertSimpleParameterToPropertyDefinitionSimple(ManagedParameter parameter,
-                                                                                             String desc) {
-        PropertySimpleType propType = convertClassToPropertySimpleType(parameter.getMetaType().getClassName());
-        PropertyDefinitionSimple propDefSimple = new PropertyDefinitionSimple(parameter.getName(), desc,
-                true, propType);
-        propDefSimple.setDisplayName(StringUtils.deCamelCase(parameter.getName()));
-        addConstraints(propDefSimple, parameter.getMinimumValue(), parameter.getMaximumValue());
-        // TODO: Convert parameter.getLegalValues() to enum defs.
-        return propDefSimple;
+    private static PropertyDefinitionMap convertMetaTypeToPropertyDefinitionMap(MetaType metaType, String name) {
+        PropertyDefinitionMap propDefMap = new PropertyDefinitionMap(name, null, false);
+        if (metaType.isComposite()) {
+            if (!(metaType instanceof MapCompositeMetaType)) {
+                CompositeMetaType compositeMetaType = (CompositeMetaType)metaType;
+                for (String itemName : compositeMetaType.itemSet()) {
+                    MetaType itemMetaType = compositeMetaType.getType(itemName);
+                    PropertyDefinition itemPropDef = convertMetaTypeToPropertyDefinition(itemMetaType, itemName);
+                    propDefMap.put(itemPropDef);
+                    String desc = (!itemName.equals(compositeMetaType.getDescription(itemName))) ?
+                            compositeMetaType.getDescription(itemName) : null;
+                    itemPropDef.setDescription(desc);
+                }
+            } else if (metaType.isTable()) {
+                TableMetaType tableMetaType = (TableMetaType)metaType;
+                CompositeMetaType itemMetaType = tableMetaType.getRowType();
+                for (String itemName : tableMetaType.getIndexNames()) {
+                    PropertyDefinition itemPropDef = convertMetaTypeToPropertyDefinition(itemMetaType, itemName);
+                    propDefMap.put(itemPropDef);
+                }
+            }
+        }
+        return propDefMap;
     }
 
     private static ConfigurationDefinition convertResultToConfigurationDefinition(ManagedOperation operation)
@@ -160,7 +201,7 @@ public class MetadataConversionUtils {
         }
         PropertyDefinition propDef;
         if (returnType.isArray() || returnType.isCollection()) {
-            propDef = createPropertyDefinitionList("result", null);
+            propDef = convertMetaTypeToPropertyDefinitionList(returnType, "result");
         } else {
             PropertySimpleType propType = convertClassToPropertySimpleType(returnType.getClassName());
             propDef = new PropertyDefinitionSimple("result", null, true, propType);
@@ -171,27 +212,39 @@ public class MetadataConversionUtils {
         return configDef;
     }
 
-    private static Set<MeasurementDefinition> convertMetricPropertiesToMeasurementDefinitions(ManagedComponent component)
-    {
+    private static Set<MeasurementDefinition> convertMetricPropertiesToMeasurementDefinitions(Map<String, ManagedProperty> props) {
         Set<MeasurementDefinition> measurementDefs = new TreeSet(new MeasurementDefinitionComparator());
-        for(ManagedProperty property : component.getProperties().values()) {
-            if (!property.hasViewUse(ViewUse.STATISTIC) && !property.hasViewUse(ViewUse.RUNTIME))
-                continue;
-            if (property.getMetaType().isSimple()) {
-                DataType dataType = (property.hasViewUse(ViewUse.STATISTIC)) ? DataType.MEASUREMENT : DataType.TRAIT;
-                DisplayType displayType = (property.hasViewUse(ViewUse.STATISTIC)) ? DisplayType.DETAIL : DisplayType.SUMMARY;
-                MeasurementDefinition measurementDef = new MeasurementDefinition(property.getName(),
-                            MeasurementCategory.PERFORMANCE, MeasurementUnits.NONE, dataType, true, 60000,
+        if (props == null)
+            return measurementDefs;
+        for(ManagedProperty prop : props.values()) {
+            if (!prop.hasViewUse(ViewUse.STATISTIC) && !prop.hasViewUse(ViewUse.RUNTIME))
+                continue; // not a metric prop
+            if (prop.getMetaType().isSimple()) {
+                DataType dataType = (prop.hasViewUse(ViewUse.STATISTIC)) ? DataType.MEASUREMENT : DataType.TRAIT;
+                int defaultInterval = (prop.hasViewUse(ViewUse.STATISTIC)) ? 60000 : 600000;
+                DisplayType displayType = (prop.hasViewUse(ViewUse.STATISTIC)) ? DisplayType.DETAIL : DisplayType.SUMMARY;
+                MeasurementDefinition measurementDef = new MeasurementDefinition(prop.getName(),
+                            MeasurementCategory.PERFORMANCE, MeasurementUnits.NONE, dataType, true, defaultInterval,
                             displayType);
                 measurementDefs.add(measurementDef);
-                measurementDef.setDisplayName(StringUtils.deCamelCase(property.getName()));
-                String desc = (!property.getName().equals(property.getDescription())) ? property.getDescription() : null;
+                measurementDef.setDisplayName(StringUtils.deCamelCase(prop.getName()));
+                String desc = (!prop.getName().equals(prop.getDescription())) ? prop.getDescription() : null;
                 measurementDef.setDescription(desc);
-            } else if (property.getMetaType().isComposite()) {
-                addMeasurementDefinitionsForCompositeManagedProperty(property, measurementDefs);
+            } else if (prop.getMetaType().isComposite()) {
+                addMeasurementDefinitionsForCompositeManagedProperty(prop, measurementDefs);
             }
         }
         return measurementDefs;
+    }
+
+    private static Set<MeasurementDefinition> convertMetricPropertiesToMeasurementDefinitions(ManagedDeployment deployment)
+    {
+       return convertMetricPropertiesToMeasurementDefinitions(deployment.getProperties());
+    }
+
+    private static Set<MeasurementDefinition> convertMetricPropertiesToMeasurementDefinitions(ManagedComponent component)
+    {
+       return convertMetricPropertiesToMeasurementDefinitions(component.getProperties());
     }
 
     private static void addMeasurementDefinitionsForCompositeManagedProperty(ManagedProperty property, Set<MeasurementDefinition> measurementDefs) {
@@ -217,27 +270,63 @@ public class MetadataConversionUtils {
          }
     }
 
-    public static ConfigurationDefinition convertConfigurationPropertiesToConfigurationDefinition(ManagedComponent component)
+    private static ConfigurationDefinition convertConfigurationPropertiesToConfigurationDefinition(String configName, Map<String, ManagedProperty> managedProps)
     {
         Set<PropertyDefinition> propDefs = new TreeSet(new PropertyDefinitionComparator());
-        for(ManagedProperty prop : component.getProperties().values()) {
+        for(ManagedProperty prop : managedProps.values()) {
             if (!prop.hasViewUse(ViewUse.CONFIGURATION))
                 continue;
-            String desc = (!prop.getName().equals(prop.getDescription())) ? prop.getDescription() : null;
-            PropertySimpleType propType = convertClassToPropertySimpleType(prop.getMetaType().getClassName());
-            PropertyDefinitionSimple propDefSimple = new PropertyDefinitionSimple(prop.getName(),
-                    desc, prop.isMandatory(), propType);
-            propDefs.add(propDefSimple);
-            propDefSimple.setDisplayName(StringUtils.deCamelCase(prop.getName()));
-            addConstraints(propDefSimple, prop.getMinimumValue(), prop.getMaximumValue());
-            // TODO: Convert parameter.getLegalValues() to enum defs.
+            PropertyDefinition propDef = convertManagedPropertyToPropertyDefinition(prop);
+            propDefs.add(propDef);
         }
         if (propDefs.isEmpty())
             return null;
-        ConfigurationDefinition configDef = new ConfigurationDefinition(component.getName(), null);
+        ConfigurationDefinition configDef = new ConfigurationDefinition(configName, null);
         for (PropertyDefinition propDef : propDefs)
            configDef.getPropertyDefinitions().put(propDef.getName(), propDef);
         return configDef;
+    }
+
+    private static PropertyDefinition convertManagedPropertyToPropertyDefinition(ManagedProperty prop) {
+        PropertyDefinition propDef;
+        propDef = convertMetaTypeToPropertyDefinition(prop.getMetaType(), prop.getName());
+        String desc = (!prop.getName().equals(prop.getDescription())) ? prop.getDescription() : null;
+        propDef.setDescription(desc);
+        propDef.setRequired(prop.isMandatory());
+        // TODO: Convert prop.getLegalValues() to enum defs.
+        if (propDef instanceof PropertyDefinitionSimple) {
+            PropertyDefinitionSimple propDefSimple = (PropertyDefinitionSimple)propDef;
+            addConstraints(propDefSimple, prop.getMinimumValue(), prop.getMaximumValue());
+        }
+        return propDef;
+    }
+
+    private static PropertyDefinition convertMetaTypeToPropertyDefinition(MetaType metaType, String propName) {
+        PropertyDefinition propDef;
+        if (metaType.isSimple() || metaType.isEnum()) {
+            PropertySimpleType propType = convertClassToPropertySimpleType(metaType.getClassName());
+            propDef = new PropertyDefinitionSimple(propName, null, false, propType);
+        } else if (metaType.isCollection() || metaType.isArray()) {
+            propDef = convertMetaTypeToPropertyDefinitionList(metaType, propName);
+        } else if (metaType.isComposite() || metaType.isGeneric() || metaType.isTable()) {
+            propDef = convertMetaTypeToPropertyDefinitionMap(metaType, propName);
+        } else {
+            throw new IllegalStateException("Unsupported MetaType: " + metaType);
+        }
+        propDef.setDisplayName(StringUtils.deCamelCase(propName));
+        return propDef;
+    }
+
+    private static ConfigurationDefinition convertConfigurationPropertiesToConfigurationDefinition(ManagedDeployment deployment)
+    {
+        return convertConfigurationPropertiesToConfigurationDefinition(deployment.getName() + " resource config",
+                deployment.getProperties());
+    }
+
+    private static ConfigurationDefinition convertConfigurationPropertiesToConfigurationDefinition(ManagedComponent component)
+    {
+        return convertConfigurationPropertiesToConfigurationDefinition(component.getName() + " resource config",
+                component.getProperties());
     }
 
     private static PropertySimpleType convertClassToPropertySimpleType(String className) {

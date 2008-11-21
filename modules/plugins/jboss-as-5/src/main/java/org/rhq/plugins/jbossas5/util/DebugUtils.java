@@ -27,6 +27,7 @@ import java.util.Comparator;
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.managed.api.DeploymentTemplateInfo;
+import org.jboss.managed.api.annotation.ViewUse;
 import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.values.CollectionValue;
 import org.jboss.metatype.api.values.CompositeValue;
@@ -59,7 +60,7 @@ public abstract class DebugUtils {
         return buffer.toString();
     }
 
-    private static String convertPropertiesToString(Map<String, ManagedProperty> managedProps) {
+    public static String convertPropertiesToString(Map<String, ManagedProperty> managedProps) {
         StringBuilder buf = new StringBuilder();
         List<ManagedProperty> props = new ArrayList<ManagedProperty>(managedProps.values());
         Collections.sort(props, new ManagedPropertyComparator()); // sort by name
@@ -67,6 +68,11 @@ public abstract class DebugUtils {
             buf.append("  name=").append(managedProperty.getName());
             if (!managedProperty.getName().equals(managedProperty.getMappedName()))
                 buf.append(", mappedName=").append(managedProperty.getMappedName());
+            String viewUse = "NONE";
+            for (ViewUse value : ViewUse.values())
+                if (managedProperty.hasViewUse(value))
+                    viewUse = value.name();
+            buf.append(", viewUse=").append(viewUse);
             buf.append(", required=").append(managedProperty.isMandatory());
             Object value = managedProperty.getValue();
             if (value != null && !(value instanceof MetaValue))

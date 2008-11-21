@@ -31,21 +31,21 @@ import org.jboss.metatype.api.types.MetaType;
 
 public class JMSSecurityConfigAdapter implements PropertyAdapter<PropertyList, PropertyDefinitionList>
 {
-    public MetaValue getMetaValue(PropertyList property, PropertyDefinitionList propertyDefinition, MetaType type)
+    public MetaValue convertToMetaValue(PropertyList property, PropertyDefinitionList propertyDefinition, MetaType type)
     {
         return null;
     }
 
-    public PropertyList getProperty(MetaValue metaValue, PropertyDefinitionList propertyDefinition)
+    public PropertyList convertToProperty(MetaValue metaValue, PropertyDefinitionList propertyDefinition)
     {
         return null;
     }
 
-    public void setMetaValues(PropertyList property, MetaValue metaValue, PropertyDefinitionList propertyDefinition)
+    public void populateMetaValueFromProperty(PropertyList property, MetaValue metaValue, PropertyDefinitionList propertyDefinition)
     {
     }
 
-    public void setPropertyValues(PropertyList property, MetaValue metaValue, PropertyDefinitionList propertyDefinition)
+    public void populatePropertyFromMetaValue(PropertyList property, MetaValue metaValue, PropertyDefinitionList propertyDefinition)
     {
     }
 }

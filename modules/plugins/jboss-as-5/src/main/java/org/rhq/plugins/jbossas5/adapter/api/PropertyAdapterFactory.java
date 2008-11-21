@@ -30,11 +30,11 @@ package org.rhq.plugins.jbossas5.adapter.api;
  import org.jboss.metatype.api.values.MetaValue;
 
  import org.rhq.core.domain.configuration.PropertySimple;
- import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToArrayMetaValueAdapter;
- import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToCollectionMetaValueAdapter;
+ import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToArrayValueAdapter;
+ import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToCollectionValueAdapter;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToMapCompositeValueSupportAdapter;
- import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToTableMetaValueAdapter;
- import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToSimpleMetaValueAdapter;
+ import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToTableValueAdapter;
+ import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToSimpleValueAdapter;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToGenericValueAdapter;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToEnumValueAdapter;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToCompositeValueSupportAdapter;
@@ -62,7 +62,7 @@ public class PropertyAdapterFactory
         PropertyAdapter propertyAdapter = null;
         if (metaType.isSimple())
         {
-            propertyAdapter = new PropertySimpleToSimpleMetaValueAdapter();
+            propertyAdapter = new PropertySimpleToSimpleValueAdapter();
         }
         else if (metaType.isGeneric())
         {
@@ -77,15 +77,15 @@ public class PropertyAdapterFactory
         }
         else if (metaType.isTable())
         {
-            propertyAdapter = new PropertyMapToTableMetaValueAdapter();
+            propertyAdapter = new PropertyMapToTableValueAdapter();
         }
         else if (metaType.isCollection())
         {
-            propertyAdapter = new PropertyListToCollectionMetaValueAdapter();
+            propertyAdapter = new PropertyListToCollectionValueAdapter();
         }
         else if (metaType.isArray())
         {
-            propertyAdapter = new PropertyListToArrayMetaValueAdapter();
+            propertyAdapter = new PropertyListToArrayValueAdapter();
         }
         else if (metaType.isEnum())
         {

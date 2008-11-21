@@ -23,7 +23,6 @@
 package org.rhq.plugins.jbossas5.adapter.api;
 
 import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 
 import org.jboss.metatype.api.values.MetaValue;
@@ -33,10 +32,10 @@ import org.jboss.metatype.api.values.MetaValue;
  */
 public abstract class AbstractPropertyListAdapter implements PropertyAdapter<PropertyList, PropertyDefinitionList>
 {
-    public PropertyList getProperty(MetaValue metaValue, PropertyDefinitionList propDefList)
+    public PropertyList convertToProperty(MetaValue metaValue, PropertyDefinitionList propDefList)
     {
         PropertyList propList = new PropertyList(propDefList.getName());
-        setPropertyValues(propList, metaValue, propDefList);
+        populatePropertyFromMetaValue(propList, metaValue, propDefList);
         return propList;
     }
 }

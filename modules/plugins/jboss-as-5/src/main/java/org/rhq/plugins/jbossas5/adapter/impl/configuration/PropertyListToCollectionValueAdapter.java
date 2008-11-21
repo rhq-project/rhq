@@ -45,10 +45,10 @@ import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
  * @author Mark Spritzler
  * @author Ian Springer
  */
-public class PropertyListToCollectionMetaValueAdapter extends AbstractPropertyListAdapter implements PropertyAdapter<PropertyList, PropertyDefinitionList> {
-    private static final Log LOG = LogFactory.getLog(PropertyListToCollectionMetaValueAdapter.class);
+public class PropertyListToCollectionValueAdapter extends AbstractPropertyListAdapter implements PropertyAdapter<PropertyList, PropertyDefinitionList> {
+    private static final Log LOG = LogFactory.getLog(PropertyListToCollectionValueAdapter.class);
 
-    public void setMetaValues(PropertyList property, MetaValue metaValue, PropertyDefinitionList propertyDefinition) {
+    public void populateMetaValueFromProperty(PropertyList property, MetaValue metaValue, PropertyDefinitionList propertyDefinition) {
         PropertyDefinition listMemberPropDef = propertyDefinition.getMemberDefinition();
         List<Property> listMemberProps = property.getList();
         CollectionValueSupport collectionValue = (CollectionValueSupport)metaValue;
@@ -57,24 +57,24 @@ public class PropertyListToCollectionMetaValueAdapter extends AbstractPropertyLi
         PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(listMemberMetaType);
         int memberIndex = 0;
         for (Property listMemberProp : listMemberProps) {
-            MetaValue listMemberValue = propertyAdapter.getMetaValue(listMemberProp, listMemberPropDef, listMemberMetaType);
+            MetaValue listMemberValue = propertyAdapter.convertToMetaValue(listMemberProp, listMemberPropDef, listMemberMetaType);
             listMemberValues[memberIndex++] = listMemberValue;
         }
         // Replace the existing elements with the new ones.
         collectionValue.setElements(listMemberValues);
     }
 
-    public MetaValue getMetaValue(PropertyList propertyList, PropertyDefinitionList propertyListDefinition, MetaType metaType) {
+    public MetaValue convertToMetaValue(PropertyList propertyList, PropertyDefinitionList propertyListDefinition, MetaType metaType) {
         LOG.debug("GetMetaValue for property: " + propertyList.getName() + " values: " + propertyList.getList().toString());
         CollectionMetaType collectionMetaType = (CollectionMetaType)metaType;
         MetaType memberMetaType = collectionMetaType.getElementType();
         CollectionMetaType collectionType = new CollectionMetaType(propertyListDefinition.getName(), memberMetaType);
         CollectionValue collectionValue = new CollectionValueSupport(collectionType);
-        setMetaValues(propertyList, collectionValue, propertyListDefinition);
+        populateMetaValueFromProperty(propertyList, collectionValue, propertyListDefinition);
         return collectionValue;
     }
 
-    public void setPropertyValues(PropertyList propList, MetaValue metaValue, PropertyDefinitionList propDefList) {
+    public void populatePropertyFromMetaValue(PropertyList propList, MetaValue metaValue, PropertyDefinitionList propDefList) {
         PropertyDefinition memberPropDef = propDefList.getMemberDefinition();
         if (propList != null) {
             // Since we want to load the PropertyList with fresh values, we want it cleared out.
@@ -85,7 +85,7 @@ public class PropertyListToCollectionMetaValueAdapter extends AbstractPropertyLi
                 MetaValue[] listMemberValues = collectionValue.getElements();
                 PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(listMemberMetaType);
                 for (MetaValue listMemberValue : listMemberValues) {
-                    Property listMemberProp = propertyAdapter.getProperty(listMemberValue, memberPropDef);
+                    Property listMemberProp = propertyAdapter.convertToProperty(listMemberValue, memberPropDef);
                     propList.add(listMemberProp);
                 }
             }

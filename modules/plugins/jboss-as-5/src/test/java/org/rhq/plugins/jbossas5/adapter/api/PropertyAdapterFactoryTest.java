@@ -28,10 +28,10 @@ import org.jboss.metatype.api.values.GenericValue;
 import org.jboss.metatype.api.values.GenericValueSupport;
 import org.jboss.metatype.api.values.SimpleValue;
 import org.jboss.metatype.api.values.SimpleValueSupport;
-import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToArrayMetaValueAdapter;
-import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToCollectionMetaValueAdapter;
+import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToArrayValueAdapter;
+import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToCollectionValueAdapter;
 import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToMapCompositeValueSupportAdapter;
-import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToSimpleMetaValueAdapter;
+import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToSimpleValueAdapter;
 import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToGenericValueAdapter;
 import org.rhq.plugins.jbossas5.util.ProfileServiceTestUtil;
 import org.testng.annotations.Test;
@@ -50,7 +50,7 @@ public class PropertyAdapterFactoryTest
 
         SimpleValue simpleValue = SimpleValueSupport.wrap("SimpleValue");
         PropertyAdapter adapter2 = PropertyAdapterFactory.getPropertyAdapter(simpleValue);
-        assert adapter2 instanceof PropertySimpleToSimpleMetaValueAdapter : "Should be the PropertySimple to Simple adapter";
+        assert adapter2 instanceof PropertySimpleToSimpleValueAdapter : "Should be the PropertySimple to Simple adapter";
 
     }
 
@@ -64,20 +64,20 @@ public class PropertyAdapterFactoryTest
 
         MetaType simpleMetaType = metaTypeInstances.get(ProfileServiceTestUtil.SIMPLE_TYPE);
         PropertyAdapter adapter2 = PropertyAdapterFactory.getPropertyAdapter(simpleMetaType);
-        assert adapter2 instanceof PropertySimpleToSimpleMetaValueAdapter : "Should be the PropertySimple to Simple adapter";
+        assert adapter2 instanceof PropertySimpleToSimpleValueAdapter : "Should be the PropertySimple to Simple adapter";
 
         MetaType compositeMetaType = metaTypeInstances.get(ProfileServiceTestUtil.COMPOSITE_TYPE);
         PropertyAdapter adapter3 = PropertyAdapterFactory.getPropertyAdapter(compositeMetaType);
         assert adapter3 instanceof PropertyMapToMapCompositeValueSupportAdapter : "Should be the PropertyMap to Composite adapter";
 
         PropertyAdapter adapter4 = PropertyAdapterFactory.getPropertyAdapter(metaTypeInstances.get(ProfileServiceTestUtil.COLLECTION_TYPE));
-        assert adapter4 instanceof PropertyListToCollectionMetaValueAdapter : "Should be the PropertyList to Collection adapter";
+        assert adapter4 instanceof PropertyListToCollectionValueAdapter : "Should be the PropertyList to Collection adapter";
 
         PropertyAdapter adapter5 = PropertyAdapterFactory.getPropertyAdapter(metaTypeInstances.get(ProfileServiceTestUtil.ARRAY_TYPE));
-        assert adapter5 instanceof PropertyListToArrayMetaValueAdapter : "Should be the PropertyList to Array adapter";
+        assert adapter5 instanceof PropertyListToArrayValueAdapter : "Should be the PropertyList to Array adapter";
 
         //PropertyAdapter adapter6 = PropertyAdapterFactory.getPropertyAdapter(metaTypeInstances.get(ProfileServiceTestUtil.TABLE_TYPE));
-        //assert adapter6 instanceof PropertyMapToTableMetaValueAdapter : "Should be the PropertyMap to Table adapter";
+        //assert adapter6 instanceof PropertyMapToTableValueAdapter : "Should be the PropertyMap to Table adapter";
     }
 
     @Test

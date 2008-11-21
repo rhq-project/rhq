@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,11 +54,6 @@ public class ProcessExecution {
     public ProcessExecution(String executable) {
         if (executable == null)
             throw new IllegalArgumentException("executable cannot be null");
-
-        StringTokenizer splitter = new StringTokenizer(executable);
-        if (splitter.countTokens() > 1) {
-            throw new IllegalArgumentException("executable cannot contain whitespace. Executable: [" + executable + "]");
-        }
 
         setExecutable(executable);
     }

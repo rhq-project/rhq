@@ -11,6 +11,8 @@
 <%@ page import="org.rhq.enterprise.server.test.ResourceGroupTestBeanLocal" %>
 <%@ page import="org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.core.AgentManagerLocal" %>
+<%@ page import="org.rhq.enterprise.server.system.SystemManagerLocal" %>
+<%@ page import="org.rhq.enterprise.server.auth.SubjectManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob"%>
 <%@ page import="javax.naming.NamingException" %>
@@ -51,6 +53,8 @@
    AlertTemplateTestLocal alertTemplateTestBean;
    MeasurementBaselineManagerLocal measurementBaselineManager;
    AgentManagerLocal agentManager;
+   SystemManagerLocal systemManager;
+   SubjectManagerLocal subjectManager;
    
    coreTestBean = LookupUtil.getCoreTest();
    discoveryTestBean = LookupUtil.getDiscoveryTest();
@@ -61,6 +65,8 @@
    alertTemplateTestBean = LookupUtil.getAlertTemplateTestBean();
    measurementBaselineManager = LookupUtil.getMeasurementBaselineManager();
    agentManager = LookupUtil.getAgentManager();
+   systemManager = LookupUtil.getSystemManager();
+   subjectManager = LookupUtil.getSubjectManager();
 
    String result = null;
    String mode = pageContext.getRequest().getParameter("mode");
@@ -138,6 +144,11 @@
       }
       else if ("calculateAutoBaselines".equals(mode))
       {
+         // for now, baselines aren't calculated until we hit our day limit, we force it here
+         java.util.Properties props = systemManager.getSystemConfiguration();
+         props.put("CAM_BASELINE_LASTTIME", "0");
+         systemManager.setSystemConfiguration(subjectManager.getOverlord(), props);
+
          measurementBaselineManager.calculateAutoBaselines();
       }
       else if ("checkForSuspectAgents".equals(mode))

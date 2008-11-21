@@ -31,10 +31,9 @@
 
     <properties>
         <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
-
-        <jbas5.version>5.0.0-SNAPSHOT</jbas5.version>      
+        
         <!-- NOTE: Do *not* use 2.0.0-SNAPSHOT here anymore! - snapshots are no longer being produced -->
-        <jboss-man.version>2.0.0.CR4</jboss-man.version>        
+        <jboss-man.version>2.0.0.CR5</jboss-man.version>        
     </properties>
 
     <dependencies>
@@ -45,15 +44,14 @@
 		  <version>${rhq.version}</version>			
           <scope>provided</scope>
 		</dependency>
-
+        
         <dependency>
-          <groupId>org.jboss.jbossas</groupId>
-          <artifactId>jboss-as-system</artifactId>
-          <classifier>profileservice-spi</classifier> 
-          <version>${jbas5.version}</version>
+          <groupId>org.jboss.integration</groupId>
+          <artifactId>jboss-profileservice-spi</artifactId>          
+          <version>5.0.3.GA</version>
           <scope>provided</scope>
         </dependency>
-
+        
         <dependency>
           <groupId>org.jboss.man</groupId>
           <artifactId>jboss-managed</artifactId>

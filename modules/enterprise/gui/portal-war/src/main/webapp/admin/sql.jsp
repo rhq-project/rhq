@@ -320,7 +320,7 @@ try {
 
 <tr>
 <td align="right" valign="top"><font face="Verdana,Arial,Helvetica">SQL:</font></td>
-<td><font face="Verdana,Arial,Helvetica" size="-2"> <textarea rows=20 cols=80 name="sql"><%=changeNull(request.getParameter("sql"),"")%></textarea><br>
+<td><font face="Verdana,Arial,Helvetica" size="-2"> <textarea rows=25 cols=100 name="sql"><%=changeNull(request.getParameter("sql"),"")%></textarea><br>
 </tr>
 
 <tr>

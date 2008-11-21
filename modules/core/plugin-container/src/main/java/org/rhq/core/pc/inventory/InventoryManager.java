@@ -1720,7 +1720,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (parentResourceContainer == null) {
                 parentResourceContainer = getResourceContainer(resource.getParentResource().getId());
             }
-            parentResource = parentResourceContainer.getResource();
+            if (parentResourceContainer != null)
+                parentResource = parentResourceContainer.getResource();
+            else
+                parentResource = null; // TODO right thing to do? Or directly return?
         } else {
             parentResource = null;
         }

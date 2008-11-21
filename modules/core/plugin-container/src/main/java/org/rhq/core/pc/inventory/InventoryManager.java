@@ -691,6 +691,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     public void performServiceScan(int resourceId) {
         ResourceContainer resourceContainer = getResourceContainer(resourceId);
+        if (resourceContainer==null) {
+            if (log.isDebugEnabled())
+                log.debug("No resource container for resource with id " + resourceId + " found, not performing a serviceScan");
+            return;
+        }
         Resource resource = resourceContainer.getResource();
         RuntimeDiscoveryExecutor oneTimeExecutor = new RuntimeDiscoveryExecutor(this, configuration, resource);
 
@@ -838,7 +843,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         // Add the Resource to the Resource hierarchy.
-        // (log services at DEBUG, servers and platforms at INFO) 
+        // (log services at DEBUG, servers and platforms at INFO)
         String logMessage = String.format("Detected new %s [%s] - adding to local inventory...", resource
             .getResourceType().getCategory(), resource);
         if (parent != null) {
@@ -1789,11 +1794,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private void purgeObsoleteResources(Set<String> allUuids) {
         // Remove previously synchronized Resources that no longer exist in the Server's inventory...
         log.debug("Purging obsolete Resources...");
+        if (this.resourceContainers == null) {
+            log.debug("No containers present, immediately returning ..");
+            return;
+        }
         this.inventoryLock.writeLock().lock();
         try {
             int removedResources = 0;
-            /* 
-             * use a separate map for iterating, so that later calls to resourceContainers.remove(ResourceContainer) 
+            /*
+             * use a separate map for iterating, so that later calls to resourceContainers.remove(ResourceContainer)
              * can be called later without throwing ConcurrentModificationException
              */
             Map<String, ResourceContainer> mapForIterating = new HashMap<String, ResourceContainer>(
@@ -1801,11 +1810,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
             for (String uuid : mapForIterating.keySet()) {
                 if (!allUuids.contains(uuid)) {
                     ResourceContainer resourceContainer = this.resourceContainers.get(uuid);
-                    Resource resource = resourceContainer.getResource();
-                    // Only purge stuff that was synchronized at some point. Other stuff may just be newly discovered.
-                    if (resource.getId() != 0) {
-                        removeResource(resource.getId());
-                        removedResources++;
+                    if (resourceContainer != null) {
+                        Resource resource = resourceContainer.getResource();
+                        // Only purge stuff that was synchronized at some point. Other stuff may just be newly discovered.
+                        if (resource.getId() != 0) {
+                            removeResource(resource.getId());
+                            removedResources++;
+                        }
+                    }
+                    else {
+                        log.debug("No container found for uuid: " + uuid);
                     }
                 }
             }

@@ -787,8 +787,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 newPlatformWasDeletedRecently = true;
                 scanIsNeeded = true;
             } else {
-                boolean isTopLevelServer = (this.platform != null)
-                    && (this.platform.equals(resource.getParentResource()))
+                boolean isTopLevelServer = (this.platform.equals(resource.getParentResource()))
                     && (resource.getResourceType().getCategory() != ResourceCategory.SERVICE);
                 if (isTopLevelServer) {
                     if (log.isDebugEnabled()) {

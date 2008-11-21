@@ -343,8 +343,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
                 }
 
                 // update the last known availability data for this resource
-                ResourceAvailability currentAvailability = entityManager.find(ResourceAvailability.class, reported
-                    .getResource().getId());
+                ResourceAvailability currentAvailability = resourceManager.getLatestAvailability(reported.getResource()
+                    .getId());
                 if (currentAvailability.getAvailabilityType() != reported.getAvailabilityType()) {
                     // but only update the record if necessary (if the AvailabilityType changed)
                     currentAvailability.setAvailabilityType(reported.getAvailabilityType());

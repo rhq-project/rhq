@@ -29,9 +29,14 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.rhq.core.domain.resource.Resource;
@@ -43,15 +48,25 @@ import org.rhq.core.domain.resource.Resource;
  */
 @Entity
 @Table(name = "RHQ_RESOURCE_AVAIL")
+@NamedQueries( { @NamedQuery(name = ResourceAvailability.QUERY_FIND_BY_RESOURCE_ID, query = "" //
+    + "  SELECT ra FROM ResourceAvailability ra WHERE ra.resourceId = :resourceId ") })
+@SequenceGenerator(name = "RHQ_RESOURCE_AVAIL_SEQ", sequenceName = "RHQ_RESOURCE_AVAIL_ID_SEQ", allocationSize = 100)
 public class ResourceAvailability implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    public static final String QUERY_FIND_BY_RESOURCE_ID = "ResourceAvailability.findByResourceId";
+
+    @SuppressWarnings("unused")
+    @Column(name = "ID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_RESOURCE_AVAIL_SEQ")
+    @Id
+    private int id;
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
     @OneToOne(fetch = FetchType.LAZY)
     private Resource resource;
 
     @Column(name = "RESOURCE_ID", insertable = false, updatable = false)
-    @Id
     private int resourceId;
 
     /**

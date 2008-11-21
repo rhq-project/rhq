@@ -78,6 +78,7 @@ public class ResourceAvailability implements Serializable {
         }
 
         this.resource = resource;
+        this.resourceId = resource.getId();
         this.availabilityType = type;
     }
 

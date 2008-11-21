@@ -938,6 +938,49 @@ DB Upgrade:
          </statement>
       </schema-directSQL>
    </schemaSpec>
+	
+   <schemaSpec version="2.30">
+      <!-- RHQ_RESOURCE_AVAIL -->
+      <schema-directSQL>
+         <statement desc="Creating table RHQ_RESOURCE_AVAIL">
+            CREATE TABLE RHQ_RESOURCE_AVAIL ( RESOURCE_ID INTEGER )
+         </statement>
+      </schema-directSQL>
+      <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="RESOURCE_ID" nullable="FALSE" />
+      <schema-directSQL>
+         <statement desc="Creating primary key for RHQ_RESOURCE_AVAIL">
+            ALTER TABLE RHQ_RESOURCE_AVAIL ADD PRIMARY KEY ( RESOURCE_ID )
+         </statement>
+      </schema-directSQL>
+      <schema-directSQL>
+         <statement desc="Creating RHQ_RESOURCE_AVAIL foreign key relation to RHQ_RESOURCE">
+            ALTER TABLE RHQ_RESOURCE_AVAIL
+            ADD CONSTRAINT RHQ_PD_RESOURCE_ID_FK
+            FOREIGN KEY ( RESOURCE_ID )
+            REFERENCES RHQ_RESOURCE ( ID )
+            ON UPDATE NO ACTION 
+            ON DELETE CASCADE
+         </statement>
+      </schema-directSQL>
+      <schema-addColumn   table="RHQ_RESOURCE_AVAIL" column="AVAILABILITY_TYPE" columnType="SMALLINT" />
+      <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="AVAILABILITY_TYPE" nullable="TRUE" />
+      <schema-directSQL>
+         <statement desc="Inserting known, current availability data into RHQ_RESOURCE_AVAIL">
+            INSERT INTO RHQ_RESOURCE_AVAIL ( RESOURCE_ID, AVAILABILITY_TYPE )
+            SELECT RES.ID, AVAIL.AVAILABILITY_TYPE
+            FROM RHQ_RESOURCE RES 
+            LEFT JOIN RHQ_AVAILABILITY AVAIL ON AVAIL.RESOURCE_ID = RES.ID
+            WHERE AVAIL.START_TIME = ( SELECT MAX( A.START_TIME ) 
+                                       FROM RHQ_AVAILABILITY A 
+                                       WHERE A.RESOURCE_ID = RES.ID )
+         </statement>
+      </schema-directSQL>
+      <schema-directSQL>
+         <statement desc="Creating RHQ_RESOURCE_AVAIL index on RESOURCE_ID">
+            CREATE INDEX RHQ_RESOURCE_AVAIL_IDX ON RHQ_RESOURCE_AVAIL ( RESOURCE_ID )
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
 
 </dbupgrade>
 

@@ -46,6 +46,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceIdWithAvailabilityComposite;
@@ -311,7 +312,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         }
 
         notifyAlertConditionCacheManager("mergeAvailabilityReport", report.getResourceAvailability().toArray(
-                new Availability[report.getResourceAvailability().size()]));
+            new Availability[report.getResourceAvailability().size()]));
 
         boolean askForFullReport = false;
         Agent agentToUpdate = agentManager.getAgentByName(agentName);
@@ -339,6 +340,15 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
                 if ((count++ % 100) == 0) {
                     entityManager.flush();
                     entityManager.clear();
+                }
+
+                // update the last known availability data for this resource
+                ResourceAvailability currentAvailability = entityManager.find(ResourceAvailability.class, reported
+                    .getResource().getId());
+                if (currentAvailability.getAvailabilityType() != reported.getAvailabilityType()) {
+                    // but only update the record if necessary (if the AvailabilityType changed)
+                    currentAvailability.setAvailabilityType(reported.getAvailabilityType());
+                    entityManager.merge(currentAvailability);
                 }
 
                 // availability reports only tell us the current state at the start time - end time is ignored/must be null
@@ -480,7 +490,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
 
         // To handle backfilling process, which will mark them down
         notifyAlertConditionCacheManager("setAllAgentResourceAvailabilities", newAvailabilities
-                .toArray(new Availability[newAvailabilities.size()]));
+            .toArray(new Availability[newAvailabilities.size()]));
 
         log.debug("Resources for agent #[" + agentId + "] have been fully backfilled with [" + typeString + "]");
 

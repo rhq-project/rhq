@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.resource.group;
 
 import java.util.ArrayList;
@@ -66,10 +66,9 @@ import org.rhq.core.domain.resource.ResourceType;
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY, query = "" //
         + "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(DISTINCT res)) "
         + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s "
-        + "LEFT JOIN g.implicitResources res LEFT JOIN res.availability a "
+        + "LEFT JOIN g.implicitResources res JOIN res.currentAvailability a "
         + "LEFT JOIN g.resourceType type "
-        + "WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
-        + "AND s = :subject " + "AND g.groupCategory = :groupCategory " + "AND "
+        + "WHERE s = :subject " + "AND g.groupCategory = :groupCategory " + "AND "
         + "(UPPER(g.name) LIKE :search "
         + "OR UPPER(g.description) LIKE :search " + "OR :search is null) "
         + "AND ( type is null OR ( "
@@ -89,10 +88,9 @@ import org.rhq.core.domain.resource.ResourceType;
         + "      (:resourceType is null AND :category is null ) " + "     ) ) "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_ADMIN, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(res)) "
         + "FROM ResourceGroup g "
-        + "LEFT JOIN g.implicitResources res LEFT JOIN res.availability a "
+        + "LEFT JOIN g.implicitResources res JOIN res.currentAvailability a "
         + "LEFT JOIN g.resourceType type "
-        + "WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
-        + "AND g.groupCategory = :groupCategory "
+        + "WHERE g.groupCategory = :groupCategory "
         + "AND "
         + "(UPPER(g.name) LIKE :search "
         + "OR UPPER(g.description) LIKE :search "
@@ -155,26 +153,22 @@ import org.rhq.core.domain.resource.ResourceType;
     // TODO: Add authz checks to the following two queries (i.e. only return groups that are viewable by the specified subject).
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_RESOURCE_ID_COMPOSITE, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), rg, COUNT(memberRes)) "
         + "FROM Resource AS res JOIN res.implicitGroups rg "
-        + "LEFT JOIN rg.implicitResources memberRes LEFT JOIN memberRes.availability a "
-        + "WHERE res.id = :resourceId "
-        + "AND (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where memberRes.id = aa.resource.id)) "
-        + "GROUP BY rg, rg.name, rg.description "),
+        + "LEFT JOIN rg.implicitResources memberRes JOIN memberRes.currentAvailability a "
+        + "WHERE res.id = :resourceId " + "GROUP BY rg, rg.name, rg.description "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_RESOURCE_ID_COMPOSITE_COUNT, query = "SELECT COUNT(rg) "
         + "FROM Resource AS res JOIN res.implicitGroups rg " + "WHERE res.id = :resourceId "),
 
     /* the following two are for auto-groups summary */
     @NamedQuery(name = ResourceGroup.QUERY_FIND_AUTOGROUP_BY_ID, query = "SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(AVG(a.availabilityType), res.resourceType, COUNT(res)) "
-        + "FROM Resource res JOIN res.implicitGroups irg JOIN irg.roles r JOIN r.subjects s JOIN res.availability a "
-        + "WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
-        + "AND s = :subject " + "AND res.id = :resourceId " + "GROUP BY res.resourceType "),
+        + "FROM Resource res JOIN res.implicitGroups irg JOIN irg.roles r JOIN r.subjects s JOIN res.currentAvailability a "
+        + "WHERE s = :subject " + "AND res.id = :resourceId " + "GROUP BY res.resourceType "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_AUTOGROUP_BY_ID_ADMIN, query = "SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(AVG(a.availabilityType), res.resourceType, COUNT(res)) "
-        + "FROM Resource res JOIN res.availability a "
-        + "WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
-        + "AND res.id = :resourceId " + "GROUP BY res.resourceType "),
+        + "FROM Resource res JOIN res.currentAvailability a "
+        + "WHERE res.id = :resourceId "
+        + "GROUP BY res.resourceType "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_GROUP_COMPOSITE_BY_ID, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(res)) "
-        + "FROM ResourceGroup g LEFT JOIN g.implicitResources res LEFT JOIN res.availability a "
-        + "WHERE (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
-        + "AND g.id = :groupId " + "GROUP BY g "),
+        + "FROM ResourceGroup g LEFT JOIN g.implicitResources res JOIN res.currentAvailability a "
+        + "WHERE g.id = :groupId " + "GROUP BY g "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_RESOURCE_NAMES_BY_GROUP_ID, query = "SELECT new org.rhq.core.domain.common.composite.IntegerOptionItem(res.id, res.name) "
         + "  FROM ResourceGroup g " + "  JOIN g.implicitResources res " + " WHERE g.id = :groupId "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_GROUP_DEFINITION_AND_EXPRESSION, query = "SELECT g "
@@ -262,14 +256,12 @@ public class ResourceGroup extends Group {
     protected ResourceGroup() {
     }
 
-    public ResourceGroup(@NotNull
-    String name) {
+    public ResourceGroup(@NotNull String name) {
         super(name);
         setResourceType(null);
     }
 
-    public ResourceGroup(@NotNull
-    String name, ResourceType type) {
+    public ResourceGroup(@NotNull String name, ResourceType type) {
         super(name);
         setResourceType(type);
     }
@@ -282,8 +274,7 @@ public class ResourceGroup extends Group {
         this.id = id;
     }
 
-    public void addExplicitResource(@NotNull
-    Resource resource) {
+    public void addExplicitResource(@NotNull Resource resource) {
         getExplicitResources().add(resource);
         resource.addExplicitGroup(this);
     }
@@ -301,15 +292,13 @@ public class ResourceGroup extends Group {
         return this.explicitResources;
     }
 
-    public boolean removeExplicitResource(@NotNull
-    Resource resource) {
+    public boolean removeExplicitResource(@NotNull Resource resource) {
         boolean removed = getExplicitResources().remove(resource);
         resource.removeExplicitGroup(this);
         return removed;
     }
 
-    public void addImplicitResource(@NotNull
-    Resource resource) {
+    public void addImplicitResource(@NotNull Resource resource) {
         getImplicitResources().add(resource);
         resource.addImplicitGroup(this);
     }
@@ -335,8 +324,7 @@ public class ResourceGroup extends Group {
         return this.implicitResources;
     }
 
-    public boolean removeImplicitResource(@NotNull
-    Resource resource) {
+    public boolean removeImplicitResource(@NotNull Resource resource) {
         boolean removed = getImplicitResources().remove(resource);
         resource.removeImplicitGroup(this);
         return removed;
@@ -359,8 +347,7 @@ public class ResourceGroup extends Group {
         return operationHistories;
     }
 
-    public void setOperationHistories(@NotNull
-    List<GroupOperationHistory> operationHistories) {
+    public void setOperationHistories(@NotNull List<GroupOperationHistory> operationHistories) {
         this.operationHistories = operationHistories;
     }
 
@@ -369,8 +356,7 @@ public class ResourceGroup extends Group {
         return configurationUpdates;
     }
 
-    public void setConfigurationUpdates(@NotNull
-    List<AbstractAggregateConfigurationUpdate> configurationUpdates) {
+    public void setConfigurationUpdates(@NotNull List<AbstractAggregateConfigurationUpdate> configurationUpdates) {
         this.configurationUpdates = configurationUpdates;
     }
 

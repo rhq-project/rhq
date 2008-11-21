@@ -76,6 +76,7 @@ import org.rhq.core.domain.content.ResourceChannel;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
@@ -878,6 +879,9 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @OrderBy("startTime")
     private List<Availability> availability;
 
+    @OneToOne(mappedBy = "resource", cascade = { CascadeType.MERGE }, fetch = FetchType.LAZY)
+    private ResourceAvailability currentAvailability;
+
     // bulk delete @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY)
     private List<ResourceError> resourceErrors = new ArrayList<ResourceError>();
@@ -1302,6 +1306,10 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public List<Availability> getAvailability() {
         return availability;
+    }
+
+    public ResourceAvailability getCurrentAvailability() {
+        return currentAvailability;
     }
 
     /**

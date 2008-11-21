@@ -178,6 +178,15 @@
       </index>
    </table>
 
+   <table name="RHQ_RESOURCE_AVAIL">
+      <column name="RESOURCE_ID" type="INTEGER" required="true" primarykey="true" references="RHQ_RESOURCE(ID)" 
+              ondelete="cascade"/>
+      <column name="AVAILABILITY_TYPE" type="SMALLINT" required="false" />
+      <index name="RHQ_RESOURCE_AVAIL_IDX">
+         <field ref="RESOURCE_ID" />
+      </index>
+   </table>
+
    <!-- !!!!! REMOVED !!!!! -->
    <table name="RHQ_MEASUREMENT_OOB" obsolete="true">
       <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>

@@ -533,7 +533,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 6), " // we want CREATE_CHILD_RESOURCES, 6
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 5)) " // we want DELETE_RESOURCES, 5
         + "FROM Resource res " //
-        + "     LEFT JOIN res.availability a WITH a.endTime is null " //
+        + "     LEFT JOIN res.currentAvailability a " //
         + "WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "  AND (:category = res.resourceType.category OR :category is null) " //
         + "  AND (:parentResource = res.parentResource OR :parentResource is null)" //
@@ -554,7 +554,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 5)) " // we want DELETE_RESOURCES, 5
         + "FROM Resource res " //
         + "     LEFT JOIN res.parentResource parent " //
-        + "     LEFT JOIN res.availability a WITH a.endTime is null " //
+        + "     LEFT JOIN res.currentAvailability a " //
         + "WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "  AND (:category = res.resourceType.category OR :category is null) " //
         + "  AND (:parentResource = res.parentResource OR :parentResource is null)" //
@@ -572,7 +572,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_ADMIN, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite(res, a.availabilityType) " //
         + "  FROM Resource res " //
-        + "       LEFT JOIN res.availability a WITH a.endTime is null " //
+        + "       LEFT JOIN res.currentAvailability a " //
         + " WHERE (:category = res.resourceType.category OR :category is null) " //
         + "   AND (:parentResource = res.parentResource OR :parentResource is null)" //
         + "   AND (:resourceType = res.resourceType OR :resourceType is null) " //
@@ -584,7 +584,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "       a.availabilityType ) " //
         + "  FROM Resource res " //
         + "       LEFT JOIN res.parentResource parent " //
-        + "       LEFT JOIN res.availability a WITH a.endTime is null " //
+        + "       LEFT JOIN res.currentAvailability a " //
         + " WHERE (:category = res.resourceType.category OR :category is null) " //
         + "   AND (:parentResource = res.parentResource OR :parentResource is null)" //
         + "   AND (:resourceType = res.resourceType OR :resourceType is null) " //

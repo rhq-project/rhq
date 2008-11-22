@@ -433,10 +433,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         Resource existingResource = getExistingResource(resource);
 
         if (existingResource != null) {
-            log.info("MERGE --- Updating previous " + resource.getId());
             updatePreviouslyInventoriedResource(resource, existingResource, parentResource);
         } else {
-            log.info("MERGE --- Add to inventory " + resource.getId());
             presetAgent(resource, agent);
             addResourceToInventory(resource, parentResource);
         }

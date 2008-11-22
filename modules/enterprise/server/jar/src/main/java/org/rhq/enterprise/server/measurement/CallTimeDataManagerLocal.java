@@ -44,5 +44,5 @@ public interface CallTimeDataManagerLocal {
     PageList<CallTimeDataComposite> getCallTimeDataForAutoGroup(Subject subject, int parentResourceId,
         int childResourceTypeId, int measurementDefinitionId, long beginTime, long endTime, PageControl pageControl);
 
-    void purgeCallTimeData(Date deleteUpToTime) throws SQLException;
+    int purgeCallTimeData(Date deleteUpToTime) throws SQLException;
 }

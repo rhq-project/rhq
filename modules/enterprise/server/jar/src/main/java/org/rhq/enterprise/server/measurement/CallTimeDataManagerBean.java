@@ -89,8 +89,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
     private SessionContext sessionContext;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void addCallTimeData(@NotNull
-    Set<CallTimeData> callTimeDataSet) {
+    public void addCallTimeData(@NotNull Set<CallTimeData> callTimeDataSet) {
         if (callTimeDataSet.isEmpty()) {
             return;
         }
@@ -167,7 +166,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(30 * 60 * 1000)
-    public void purgeCallTimeData(Date deleteUpToTime) throws SQLException {
+    public int purgeCallTimeData(Date deleteUpToTime) throws SQLException {
         log.debug("Purging call-time data older than " + TimeUtil.toString(deleteUpToTime.getTime()) + " from table "
             + DATA_VALUE_TABLE_NAME + "...");
         long startTime = System.currentTimeMillis();
@@ -196,6 +195,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
         MeasurementMonitor.getMBean().incrementPurgeTime(elapsedMillis);
         log.info("Done purging [" + ((deletedRowCount >= 0) ? deletedRowCount : "?") + "] rows older than "
             + deleteUpToTime + " from table " + DATA_VALUE_TABLE_NAME + " (" + elapsedMillis + " ms)");
+        return deletedRowCount;
     }
 
     private void insertCallTimeDataKeys(Set<CallTimeData> callTimeDataSet, Connection conn) throws SQLException {

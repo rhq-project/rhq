@@ -157,15 +157,27 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         // Purge, we never store more than 1 year of data.
         compressionManager.purgeMeasurements(TAB_DATA_1D, now - this.purge1d);
 
+        Date deleteUpToTime;
+
         // Purge call-time data.
-        Date deleteUpToTime = new Date(now - this.purgeCallTime);
-        callTimeDataManager.purgeCallTimeData(deleteUpToTime);
+        try {
+            log.info("Purging calltime data older than " + TimeUtil.toString(now - this.purgeEvent));
+            deleteUpToTime = new Date(now - this.purgeCallTime);
+            int deletedCallTimeDataCount = callTimeDataManager.purgeCallTimeData(deleteUpToTime);
+            log.info("Deleted [" + deletedCallTimeDataCount + "] calltime data");
+        } catch (Exception e) {
+            log.error("Unable to purge calltime data: " + e, e);
+        }
 
         // Purge Event data
-        log.info("Purging events older than " + TimeUtil.toString(now - this.purgeEvent));
-        deleteUpToTime = new Date(now - this.purgeEvent);
-        int deleted = eventManager.purgeEventData(deleteUpToTime);
-        log.info("Deleted [" + deleted + "] events");
+        try {
+            log.info("Purging events older than " + TimeUtil.toString(now - this.purgeEvent));
+            deleteUpToTime = new Date(now - this.purgeEvent);
+            int deleted = eventManager.purgeEventData(deleteUpToTime);
+            log.info("Deleted [" + deleted + "] events");
+        } catch (Exception e) {
+            log.error("Unable to purge events data: " + e, e);
+        }
 
         // Purge alerts
         try {

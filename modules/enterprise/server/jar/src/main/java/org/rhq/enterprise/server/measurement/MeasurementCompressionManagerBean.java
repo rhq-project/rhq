@@ -41,12 +41,12 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 import org.rhq.core.clientapi.util.TimeUtil;
 import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.TimingVoodoo;
 
 /**
@@ -79,6 +79,8 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
     private CallTimeDataManagerLocal callTimeDataManager;
     @EJB
     private EventManagerLocal eventManager;
+    @EJB
+    private AlertManagerLocal alertManager;
 
     private long purge1h;
     private long purge6h;
@@ -168,7 +170,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         // Purge alerts
         try {
             log.info("Purging alerts older than " + TimeUtil.toString(now - this.purgeAlert));
-            int alertsDeleted = LookupUtil.getAlertManager().deleteAlerts(0, now - this.purgeAlert);
+            int alertsDeleted = alertManager.deleteAlerts(0, now - this.purgeAlert);
             log.info("Deleted [" + alertsDeleted + "] alerts");
         } catch (Exception e) {
             log.error("Unable to purge alerts: " + e, e);

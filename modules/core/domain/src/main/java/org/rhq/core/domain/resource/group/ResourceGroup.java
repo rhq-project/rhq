@@ -66,7 +66,7 @@ import org.rhq.core.domain.resource.ResourceType;
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY, query = "" //
         + "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(DISTINCT res)) "
         + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s "
-        + "LEFT JOIN g.implicitResources res JOIN res.currentAvailability a "
+        + "LEFT JOIN g.implicitResources res LEFT JOIN res.currentAvailability a "
         + "LEFT JOIN g.resourceType type "
         + "WHERE s = :subject " + "AND g.groupCategory = :groupCategory " + "AND "
         + "(UPPER(g.name) LIKE :search "
@@ -88,7 +88,7 @@ import org.rhq.core.domain.resource.ResourceType;
         + "      (:resourceType is null AND :category is null ) " + "     ) ) "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_ADMIN, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(res)) "
         + "FROM ResourceGroup g "
-        + "LEFT JOIN g.implicitResources res JOIN res.currentAvailability a "
+        + "LEFT JOIN g.implicitResources res LEFT JOIN res.currentAvailability a "
         + "LEFT JOIN g.resourceType type "
         + "WHERE g.groupCategory = :groupCategory "
         + "AND "

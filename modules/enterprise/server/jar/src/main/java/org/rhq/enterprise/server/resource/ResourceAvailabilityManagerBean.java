@@ -117,7 +117,6 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
             ps = conn.prepareStatement(query);
             JDBCUtil.bindNTimes(ps, values, 1);
             ps.execute();
-            JDBCUtil.safeClose(ps);
         } catch (SQLException e) {
             log.warn("Could not create default  metrics for schedules: " + e.getMessage());
         } finally {

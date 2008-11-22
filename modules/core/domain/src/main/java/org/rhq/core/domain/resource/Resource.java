@@ -384,7 +384,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + " a.availabilityType, " //
         + " 1, (SELECT count(iir) FROM rg.implicitResources iir WHERE iir = res)) " //
         + "  FROM ResourceGroup rg JOIN rg.explicitResources res LEFT JOIN res.parentResource parent " //
-        + "  LEFT JOIN res.availability a WITH a.endTime is null " //
+        + "  LEFT JOIN res.currentAvailability a " //
         + " WHERE rg.id = :groupId " //
         + "   AND rg.id IN (SELECT irg.id FROM ResourceGroup irg JOIN irg.roles r JOIN r.subjects s WHERE s = :subject) " //
         + "   AND res.inventoryStatus = 'COMMITTED' "), //
@@ -394,7 +394,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + " a.availabilityType, 1, " //
         + "(SELECT count(iir) FROM rg.implicitResources iir WHERE iir = res)) " //
         + "  FROM ResourceGroup rg JOIN rg.explicitResources res LEFT JOIN res.parentResource parent " //
-        + "  LEFT JOIN res.availability a WITH a.endTime is null " //
+        + "  LEFT JOIN res.currentAvailability a " //
         + " WHERE rg.id = :groupId " + //
         "   AND res.inventoryStatus = 'COMMITTED' "), //
     @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_WITH_AVAILABILITY_FOR_RESOURCE_GROUP, query = "" //
@@ -403,7 +403,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + " a.availabilityType, " //
         + "(SELECT count(ier) FROM rg.explicitResources ier WHERE ier = res), 1) " //
         + "  FROM ResourceGroup rg JOIN rg.implicitResources res LEFT JOIN res.parentResource parent " //
-        + "  LEFT JOIN res.availability a WITH a.endTime is null " //
+        + "  LEFT JOIN res.currentAvailability a " //
         + " WHERE rg.id = :groupId " //
         + "   AND rg.id IN (SELECT irg.id FROM ResourceGroup irg JOIN irg.roles r JOIN r.subjects s WHERE s = :subject) "
         + "   AND res.inventoryStatus = 'COMMITTED' "), //
@@ -413,7 +413,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + " a.availabilityType, " //
         + "(SELECT count(ier) FROM rg.explicitResources ier WHERE ier = res), 1) " //
         + "  FROM ResourceGroup rg JOIN rg.implicitResources res LEFT JOIN res.parentResource parent " //
-        + "  LEFT JOIN res.availability a WITH a.endTime is null " //
+        + "  LEFT JOIN res.currentAvailability a " //
         + " WHERE rg.id = :groupId " //
         + "   AND res.inventoryStatus = 'COMMITTED' "), //
     @NamedQuery(name = Resource.QUERY_FIND_IMPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT, query = "" //

@@ -81,9 +81,6 @@ public class ServerInformation {
     private static final String UNDEPLOYED_EMBEDDED_AGENT_FILENAME = DEPLOYED_EMBEDDED_AGENT_FILENAME + ".rej";
     private static final String DEPLOYED_MAIL_SERVICE_FILENAME = "mail-service.xml";
     private static final String UNDEPLOYED_MAIL_SERVICE_FILENAME = DEPLOYED_MAIL_SERVICE_FILENAME + ".rej";
-    private static final String DEPLOYED_ALERT_CACHE_SERVICE_FILENAME = "alert-cache-service.xml";
-    private static final String UNDEPLOYED_ALERT_CACHE_SERVICE_FILENAME = DEPLOYED_ALERT_CACHE_SERVICE_FILENAME
-        + ".rej";
     private static final String DEPLOYED_JMS_FILENAME = "jms";
     private static final String UNDEPLOYED_POSTGRES_JMS_FILENAME = "jms-postgres.rej";
     private static final String UNDEPLOYED_ORACLE_JMS_FILENAME = "jms-oracle.rej";
@@ -355,13 +352,6 @@ public class ServerInformation {
                 deleteFile(jms);
             }
 
-            // ALERT CACHE SERVICE
-            File alertCache = getAlertCacheServiceFile(!deploy);
-            File alertCacheRenameTo = getAlertCacheServiceFile(deploy);
-            if (!alertCacheRenameTo.exists()) {
-                alertCache.renameTo(alertCacheRenameTo);
-            }
-
             // EAR
             File ear = getEarFile(!deploy);
             File earRenameTo = getEarFile(deploy);
@@ -387,9 +377,8 @@ public class ServerInformation {
         File jms = getJmsFile(true);
         File ds = getDataSourceFile(true);
         File mail = getMailServiceFile(true);
-        File alert = getAlertCacheServiceFile(true);
 
-        return ds.exists() && jms.exists() && ear.exists() && agent.exists() && mail.exists() && alert.exists();
+        return ds.exists() && jms.exists() && ear.exists() && agent.exists() && mail.exists();
     }
 
     private File getEarFile(boolean deployed) {
@@ -401,13 +390,6 @@ public class ServerInformation {
     private File getMailServiceFile(boolean deployed) {
         File deployDir = getDeployDirectory();
         File file = new File(deployDir, deployed ? DEPLOYED_MAIL_SERVICE_FILENAME : UNDEPLOYED_MAIL_SERVICE_FILENAME);
-        return file;
-    }
-
-    private File getAlertCacheServiceFile(boolean deployed) {
-        File deployDir = getDeployDirectory();
-        File file = new File(deployDir, deployed ? DEPLOYED_ALERT_CACHE_SERVICE_FILENAME
-            : UNDEPLOYED_ALERT_CACHE_SERVICE_FILENAME);
         return file;
     }
 

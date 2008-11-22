@@ -568,11 +568,6 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("-PartitionUDPEJB3EntityCacheMulticastPort")
     String PROP_CLUSTER_EJB3CACHE_PORT_HELP = "propertyClusterEjb3CachePortHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "Cluster - Partition UDP Alert Cache Multicast Port") })
-    String PROP_CLUSTER_ALERTCACHE_PORT = "propertyClusterAlertCachePort";
-    @I18NMessage("-PartitionUDPAlertCacheMulticastPort")
-    String PROP_CLUSTER_ALERTCACHE_PORT_HELP = "propertyClusterAlertCachePortHelp";
-
     @I18NMessages( { @I18NMessage(locale = "en", value = "Cluster - Partition UDP Loopback") })
     String PROP_CLUSTER_UDP_LOOPBACK = "propertyClusterUdpLoopback";
     @I18NMessage("-PartitionUDPLoopback")

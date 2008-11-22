@@ -358,6 +358,7 @@
       name="jboss:service=TransactionManager">
       <attribute name="TransactionTimeout">600</attribute> <!-- RHQ -->
       <attribute name="ObjectStoreDir">${jboss.server.data.dir}/tx-object-store</attribute> 
+      <attribute name="StatisticsEnabled">true</attribute> 
    </mbean>
 
    <!--

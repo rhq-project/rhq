@@ -18,11 +18,18 @@
  */
 package org.rhq.enterprise.server.resource;
 
+import java.util.List;
+
 import javax.ejb.Local;
+import javax.persistence.EntityManager;
+import javax.persistence.PostPersist;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
+import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 
 /**
  * A manager that provides methods for manipulating and querying the cached current availability for resources.
@@ -31,6 +38,23 @@ import org.rhq.core.domain.measurement.ResourceAvailability;
  */
 @Local
 public interface ResourceAvailabilityManagerLocal {
+
+    /**
+     * The first time an agent is started and its platform and top-level servers are discovered,
+     * the {@link DiscoveryBossBean#mergeInventoryReport(InventoryReport)} will use the 
+     * {@link EntityManager} to persist the resource.  A {@link PostPersist} hook exists on the
+     * {@link Resource} entity to create a corresponding default {@link ResourceAvailability}
+     * entity.  However, when a platform or top-level server is removed from inventory, the agent
+     * might rediscover the resource so quickly that {@link InventoryReport} merges the resource
+     * instead of persisting new ones, bypassing the {@link PostPersist} hook.  As a result, this
+     * method should be called when resources are imported from the auto-discovery portlet (the
+     * {@link InventoryStatus} is changed from NEW to COMMITTED, which will add the necessary
+     * default {@link ResourceAvailability} objects to those resources missing them.
+     * 
+     * @param resourceIds a list of resource ids which should have default {@link ResourceAvailability}
+     *                    objects created for them, only if the corresponding data doesn't already exist.
+     */
+    void insertNeededAvailabilityForImportedResources(List<Integer> resourceIds);
 
     /**
      * Returns the latest availability type for the given resource.

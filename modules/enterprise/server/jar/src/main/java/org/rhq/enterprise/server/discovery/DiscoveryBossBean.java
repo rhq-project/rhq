@@ -68,6 +68,7 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceAlreadyExistsException;
+import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -95,6 +96,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
     private ResourceGroupManagerLocal groupManager;
     @EJB
     private ResourceManagerLocal resourceManager;
+    @EJB
+    private ResourceAvailabilityManagerLocal resourceAvailabilityManager;
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
     @EJB
@@ -281,6 +284,16 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         for (Resource server : servers) {
             resourceManager.setResourceStatus(user, server, status, true);
         }
+        if (status == InventoryStatus.COMMITTED) {
+            List<Integer> allResourceIds = new ArrayList<Integer>();
+            for (Resource platform : platforms) {
+                allResourceIds.add(platform.getId());
+            }
+            for (Resource server : servers) {
+                allResourceIds.add(server.getId());
+            }
+            resourceAvailabilityManager.insertNeededAvailabilityForImportedResources(allResourceIds);
+        }
     }
 
     @NotNull
@@ -420,8 +433,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         Resource existingResource = getExistingResource(resource);
 
         if (existingResource != null) {
+            log.info("MERGE --- Updating previous " + resource.getId());
             updatePreviouslyInventoriedResource(resource, existingResource, parentResource);
         } else {
+            log.info("MERGE --- Add to inventory " + resource.getId());
             presetAgent(resource, agent);
             addResourceToInventory(resource, parentResource);
         }

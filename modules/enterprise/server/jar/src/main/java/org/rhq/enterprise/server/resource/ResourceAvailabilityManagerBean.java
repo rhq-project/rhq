@@ -18,19 +18,33 @@
  */
 package org.rhq.enterprise.server.resource;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.db.DatabaseType;
+import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.OracleDatabaseType;
+import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -41,15 +55,76 @@ import org.rhq.enterprise.server.authz.PermissionException;
  * @author Joseph Marques
  */
 @Stateless
+@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class ResourceAvailabilityManagerBean implements ResourceAvailabilityManagerLocal {
-    @SuppressWarnings("unused")
+
     private final Log log = LogFactory.getLog(ResourceAvailabilityManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
+    @javax.annotation.Resource(name = "RHQ_DS")
+    private DataSource rhqDs;
+    private DatabaseType dbType;
+
     @EJB
     private AuthorizationManagerLocal authorizationManager;
+
+    @PostConstruct
+    public void init() {
+        Connection conn = null;
+        try {
+            conn = rhqDs.getConnection();
+            dbType = DatabaseTypeFactory.getDatabaseType(conn);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            JDBCUtil.safeClose(conn);
+        }
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void insertNeededAvailabilityForImportedResources(List<Integer> resourceIds) {
+        // Hibernate diddn't want to swallow ResourceAvailability.INSERT_BY_RESOURCE_IDS, so had to go native
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try {
+            int[] values = new int[resourceIds.size()];
+            for (int i = 0; i < resourceIds.size(); i++) {
+                values[i] = resourceIds.get(i);
+            }
+
+            String query = "" //
+                + "INSERT INTO RHQ_RESOURCE_AVAIL ( ID, RESOURCE_ID ) " //
+                + "     SELECT %s, res.ID " //
+                + "       FROM RHQ_RESOURCE res " //
+                + "  LEFT JOIN RHQ_RESOURCE_AVAIL avail ON res.ID = avail.RESOURCE_ID " //
+                + "      WHERE res.ID IN ( :resourceIds ) " //
+                + "        AND avail.ID IS NULL ";
+
+            conn = rhqDs.getConnection();
+            String nextValSqlFragment = null;
+            if (dbType instanceof PostgresqlDatabaseType) {
+                nextValSqlFragment = "nextval('%s_id_seq'::text)";
+            } else if (dbType instanceof OracleDatabaseType) {
+                nextValSqlFragment = "%s_id_seq.nextval";
+            } else {
+                log.error("insertNeededAvailabilityForImportedResources does not support " + dbType);
+            }
+            String nextValSql = String.format(nextValSqlFragment, ResourceAvailability.TABLE_NAME);
+            query = String.format(query, nextValSql);
+            query = JDBCUtil.transformQueryForMultipleInParameters(query, ":resourceIds", values.length);
+            ps = conn.prepareStatement(query);
+            JDBCUtil.bindNTimes(ps, values, 1);
+            ps.execute();
+            JDBCUtil.safeClose(ps);
+        } catch (SQLException e) {
+            log.warn("Could not create default  metrics for schedules: " + e.getMessage());
+        } finally {
+            JDBCUtil.safeClose(ps);
+            JDBCUtil.safeClose(conn);
+        }
+    }
 
     public AvailabilityType getLatestAvailabilityType(Subject whoami, int resourceId) {
         if (!authorizationManager.canViewResource(whoami, resourceId)) {
@@ -76,5 +151,4 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
         query.setParameter("agentId", agentId);
         query.executeUpdate();
     }
-
 }

@@ -47,7 +47,7 @@ import org.rhq.core.domain.resource.Resource;
  * @author Joseph Marques
  */
 @Entity
-@Table(name = "RHQ_RESOURCE_AVAIL")
+@Table(name = ResourceAvailability.TABLE_NAME)
 @NamedQueries( //
 { @NamedQuery(name = ResourceAvailability.QUERY_FIND_BY_RESOURCE_ID, query = "" //
     + "  SELECT ra FROM ResourceAvailability ra WHERE ra.resourceId = :resourceId "),
@@ -56,13 +56,23 @@ import org.rhq.core.domain.resource.Resource;
         + "     SET availabilityType = :availabilityType " //
         + "   WHERE resourceId IN ( SELECT res.id " //
         + "                           FROM Resource res " //
-        + "                          WHERE res.agent.id = :agentId ) ") })
+        + "                          WHERE res.agent.id = :agentId ) "),
+    @NamedQuery(name = ResourceAvailability.INSERT_BY_RESOURCE_IDS, query = "" //
+        + "  INSERT INTO ResourceAvailability ( resourceId ) " //
+        + "       SELECT res.id " //
+        + "         FROM Resource res " //
+        + "    LEFT JOIN res.currentAvailability avail " //
+        + "        WHERE res.id IN ( :resourceIds ) " //
+        + "          AND avail IS NULL ") })
 @SequenceGenerator(name = "RHQ_RESOURCE_AVAIL_SEQ", sequenceName = "RHQ_RESOURCE_AVAIL_ID_SEQ", allocationSize = 100)
 public class ResourceAvailability implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    public static final String TABLE_NAME = "RHQ_RESOURCE_AVAIL";
+
     public static final String QUERY_FIND_BY_RESOURCE_ID = "ResourceAvailability.findByResourceId";
     public static final String UPDATE_BY_AGENT_ID = "ResourceAvailability.updateByAgentId";
+    public static final String INSERT_BY_RESOURCE_IDS = "ResourceAvailability.insertByResourceIds";
 
     @SuppressWarnings("unused")
     @Column(name = "ID", nullable = false)

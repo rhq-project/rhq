@@ -91,7 +91,7 @@
     <module>hosts</module>
     <module>hudson</module>
     <module>jira</module>
-    <module>mock-jboss</module>        
+<!-- no longer needed - to be purged in the future <module>mock-jboss</module> -->        
     <module>mysql</module>
     <module>netservices</module>
 <!-- non-public dependency        <module>onewire</module> -->

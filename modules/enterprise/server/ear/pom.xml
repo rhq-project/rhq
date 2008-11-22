@@ -283,12 +283,6 @@
                  
                               <artifactItem>
                                  <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-mock-jboss-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
-                 
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
                                  <artifactId>rhq-mysql-plugin</artifactId>
                                  <version>${project.version}</version>
                               </artifactItem>

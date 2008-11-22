@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.measurement;
 
 import java.io.Serializable;
@@ -47,6 +47,11 @@ import org.rhq.core.domain.resource.Resource;
  * that the {@link #getAvailabilityType() availability state} (e.g. UP or DOWN) changed at the
  * {@link #getStartTime() start time}.
  *
+ * This provides historical data regarding when a resource was up or down.  To get the current availability
+ * of a resource, it is best to use the {@link ResourceAvailability} entity instead.
+ *  
+ * @see ResourceAvailability
+ * 
  * @author Heiko W. Rupp
  * @author John Mazzitelli
  */
@@ -67,10 +72,7 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = Availability.FIND_FOR_RESOURCE_WITHIN_INTERVAL, query = "SELECT av FROM Availability av "
         + " WHERE av.resource.id = :resourceId "
         + "   AND ((av.startTime <= :start AND (av.endTime >= :start OR av.endTime IS NULL) ) " /* availability straddles :start */
-        + "       OR (av.startTime BETWEEN :start AND :end)) " /* interval
-                                                                                                                                                                            * straddles
-                                                                                                                                                                            * availability.startTime
-                                                                                                                                                                            */
+        + "       OR (av.startTime BETWEEN :start AND :end)) " /* interval straddles availability.startTime */
         + "ORDER BY av.startTime ASC"),
     @NamedQuery(name = Availability.FIND_BY_RESOURCE_AND_DATE, query = "SELECT av FROM Availability av "
         + " WHERE av.resource.id = :resourceId " + "   AND av.startTime <= :aTime "

@@ -114,7 +114,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
     }
 
     public AvailabilityType getCurrentAvailabilityTypeForResource(Subject whoami, int resourceId) {
-        return getCurrentAvailabilityForResource(whoami, resourceId).getAvailabilityType();
+        return resourceAvailabilityManager.getLatestAvailabilityType(whoami, resourceId);
     }
 
     public Availability getCurrentAvailabilityForResource(Subject whoami, int resourceId) {

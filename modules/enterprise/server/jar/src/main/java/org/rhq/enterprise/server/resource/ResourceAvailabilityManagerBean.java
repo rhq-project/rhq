@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.resource;
 
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -27,9 +28,12 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.PermissionException;
 
 /**
  * A manager that provides methods for manipulating and querying the cached current availability for resources.
@@ -43,6 +47,17 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
+
+    @EJB
+    private AuthorizationManagerLocal authorizationManager;
+
+    public AvailabilityType getLatestAvailabilityType(Subject whoami, int resourceId) {
+        if (!authorizationManager.canViewResource(whoami, resourceId)) {
+            throw new PermissionException("User [" + whoami.getName() + "] does not have permission to view resource");
+        }
+        ResourceAvailability ra = getLatestAvailability(resourceId);
+        return (ra != null) ? ra.getAvailabilityType() : null;
+    }
 
     public ResourceAvailability getLatestAvailability(int resourceId) {
         Query query = entityManager.createNamedQuery(ResourceAvailability.QUERY_FIND_BY_RESOURCE_ID);

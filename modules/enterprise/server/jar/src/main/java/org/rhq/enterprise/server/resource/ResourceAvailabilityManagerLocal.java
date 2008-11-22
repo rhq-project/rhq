@@ -20,6 +20,8 @@ package org.rhq.enterprise.server.resource;
 
 import javax.ejb.Local;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 
 /**
@@ -29,6 +31,17 @@ import org.rhq.core.domain.measurement.ResourceAvailability;
  */
 @Local
 public interface ResourceAvailabilityManagerLocal {
+
+    /**
+     * Returns the latest availability type for the given resource.
+     * This tells you the currently known state of a resource - whether
+     * it is UP or DOWN.
+     * 
+     * @param whoami the user asking for the data
+     * @param resourceId the id of the resource
+     * @return the latest availability type for the given resource, <code>null</code> if not known
+     */
+    AvailabilityType getLatestAvailabilityType(Subject whoami, int resourceId);
 
     /**
      * Returns the latest availability for the given Resource

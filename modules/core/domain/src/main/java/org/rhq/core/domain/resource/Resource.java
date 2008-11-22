@@ -139,7 +139,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_TYPE, query = "" //
         + "  SELECT res, a.availabilityType "
         + "    FROM Resource res " //
-        + "    LEFT OUTER JOIN res.availability a WITH a.endTime is null "
+        + "    JOIN res.currentAvailability a "
         + "   WHERE res.parentResource = :parent " //
         + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "     AND res.resourceType = :type " //
@@ -147,7 +147,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "ORDER BY res.name"),
     @NamedQuery(name = Resource.QUERY_FIND_BY_PARENT_AND_TYPE_ADMIN, query = "" //
         + "  SELECT res, a.availabilityType " + "    FROM Resource res " //
-        + "    LEFT OUTER JOIN res.availability a WITH a.endTime is null " //
+        + "    JOIN res.currentAvailability a " //
         + "   WHERE res.parentResource = :parent " //
         + "     AND res.resourceType = :type " //
         + "     AND res.inventoryStatus = :inventoryStatus " //

@@ -261,7 +261,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES, query = ""
         + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
         + "    FROM Resource res "
-        + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory LEFT JOIN res.availability a WITH a.endTime is null "
+        + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory JOIN res.currentAvailability a "
         + "   WHERE res.parentResource = :parent " //
         + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "     AND res.inventoryStatus = :inventoryStatus " //
@@ -269,7 +269,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_ADMIN, query = "" //
         + "   SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
         + "     FROM Resource res " //
-        + "LEFT JOIN res.availability a WITH a.endTime is null " //
+        + "     JOIN res.currentAvailability a " //
         + "     JOIN res.resourceType rt LEFT JOIN rt.subCategory " //
         + "    WHERE res.parentResource = :parent " //
         + "      AND res.inventoryStatus = :inventoryStatus GROUP BY rt"),

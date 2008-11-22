@@ -151,11 +151,11 @@ id - the id of the Resource being accessed
          <h:panelGroup layout="block">
             <h:outputText value="Availability: " styleClass="BoldText"/>
             <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up"
-                            rendered="#{ResourceUIBean.availability.availabilityType == 'UP'}"/>
+                            rendered="#{ResourceUIBean.availabilityType == 'UP'}"/>
             <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down"
-                            rendered="#{ResourceUIBean.availability.availabilityType == 'DOWN'}"/>
+                            rendered="#{ResourceUIBean.availabilityType == 'DOWN'}"/>
             <h:graphicImage value="/images/icon_available_grey.png" alt="Unknown" title="Unknown"
-                            rendered="#{ResourceUIBean.availability.availabilityType == null}"/>
+                            rendered="#{ResourceUIBean.availabilityType == null}"/>
          </h:panelGroup>
 
          <h:outputLink rendered="#{ResourceUIBean.favorite}" value="/resource/common/QuickFavorites.do"

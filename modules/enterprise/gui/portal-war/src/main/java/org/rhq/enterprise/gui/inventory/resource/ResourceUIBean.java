@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -171,10 +171,10 @@ public class ResourceUIBean {
         return this.isFavorite;
     }
 
-    public Availability getAvailability() {
+    public AvailabilityType getAvailabilityType() {
         AvailabilityManagerLocal manager = LookupUtil.getAvailabilityManager();
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        Availability avail = manager.getCurrentAvailabilityForResource(subject, getId());
+        AvailabilityType avail = manager.getCurrentAvailabilityTypeForResource(subject, getId());
         return avail;
     }
 

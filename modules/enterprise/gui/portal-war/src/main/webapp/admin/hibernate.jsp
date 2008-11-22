@@ -22,6 +22,7 @@
 
 <%--
   Author: Greg Hinkle
+  Author: Joseph Marques
   Copyright: 2008 Red Hat
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
@@ -49,6 +50,8 @@
     String hql = request.getParameter("hql");
     String namedQuery = request.getParameter("namedQuery");
     List results = null;
+    boolean isDMLStyle = true;
+    int resultSize = 0;
     long executionTime = 0;
     String error = null;
     QueryTranslator qt = null;
@@ -120,7 +123,11 @@
             qt.compile(null, false);
             sql = qt.getSQLString();
 
-            out.write("<b>SQL: </b><textarea rows=\"10\" cols=\"120\">" + sql + "</textarea>");
+            if (sql == null) {
+               out.write("Could not get SQL translation for DML-style operation");
+            } else {
+               out.write("<b>SQL: </b><textarea rows=\"10\" cols=\"120\">" + sql + "</textarea>");
+            }
 
             ParameterTranslations pt = qt.getParameterTranslations();
             if (pt != null) {
@@ -150,7 +157,9 @@
     </table>
 </c:if>
 <%
-
+        if (hql.replaceAll("\\s*", "").trim().toLowerCase().startsWith("select")) {
+            isDMLStyle = false;
+        }
 
         if (request.getParameter("execute") != null) {
 
@@ -171,8 +180,15 @@
                     //out.println("parameter " + pn + " = " + paramterValue);
                     q.setParameter(pn, paramterValue);
                 }
-                q.setMaxResults(MAX_ROWS);
-                results = q.list();
+                
+                if (isDMLStyle) {
+                    resultSize = q.executeUpdate();
+                    results = new ArrayList();
+                } else {
+                    q.setMaxResults(MAX_ROWS);
+                    results = q.list();
+                    resultSize = results.size();
+                }
 
                 request.setAttribute("results", results);
 
@@ -192,14 +208,14 @@
 <br/>
 
 <c:if test="${param['execute'] != null and results != null}">
-    <b>Executed in <%=executionTime%>ms. Found <%=results.size()%> rows. <%=executedSQL.size()%> round trips.</b>
+    <b>Executed in <%=executionTime%>ms. Found or updated <%=resultSize%> rows. <%=executedSQL.size()%> round trips.</b>
 </c:if>
 
 
 <c:if test="${error != null}">
     <pre>${error}</pre>
 </c:if>
-<c:if test="${results != null}">
+<c:if test="${(isDMLStyle == false) and (results != null)}">
     <hr>
 
     <table border="1">

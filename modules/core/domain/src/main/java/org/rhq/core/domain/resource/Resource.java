@@ -239,31 +239,25 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUP_COMPOSITE, query = ""
         + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
         + "    FROM Resource res "
-        + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory JOIN res.availability a "
+        + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory JOIN res.currentAvailability a "
         + "   WHERE res.id = :id "
         + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
-        + "     AND (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
         + "GROUP BY rt "),
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUPS_COMPOSITE, query = "" //
         + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
         + "    FROM Resource res "
-        + "    JOIN res.resourceType rt  JOIN res.availability a "
+        + "    JOIN res.resourceType rt  JOIN res.currentAvailability a "
         + "   WHERE res.id IN ( :ids ) "
         + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
-        + "     AND (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
         + "GROUP BY rt "),
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUP_COMPOSITE_ADMIN, query = "" //
         + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
-        + "    FROM Resource res JOIN res.availability a JOIN res.resourceType rt LEFT JOIN rt.subCategory "
-        + "   WHERE res.id = :id "
-        + "     AND (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
-        + "GROUP BY rt"),
+        + "    FROM Resource res JOIN res.currentAvailability a JOIN res.resourceType rt LEFT JOIN rt.subCategory "
+        + "   WHERE res.id = :id " + "GROUP BY rt"),
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUPS_COMPOSITE_ADMIN, query = "" //
         + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
-        + "    FROM Resource res JOIN res.availability a JOIN res.resourceType rt LEFT JOIN rt.subCategory "
-        + "   WHERE res.id IN ( :ids ) "
-        + "     AND (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
-        + "GROUP BY rt"),
+        + "    FROM Resource res JOIN res.currentAvailability a JOIN res.resourceType rt LEFT JOIN rt.subCategory "
+        + "   WHERE res.id IN ( :ids ) " + "GROUP BY rt"),
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES, query = ""
         + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
         + "    FROM Resource res "

@@ -109,7 +109,8 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
             } else if (dbType instanceof OracleDatabaseType) {
                 nextValSqlFragment = "%s_id_seq.nextval";
             } else {
-                log.error("insertNeededAvailabilityForImportedResources does not support " + dbType);
+                throw new IllegalStateException("insertNeededAvailabilityForImportedResources does not support "
+                    + dbType);
             }
             String nextValSql = String.format(nextValSqlFragment, ResourceAvailability.TABLE_NAME);
             query = String.format(query, nextValSql);

@@ -204,9 +204,9 @@
 
    <mbean code="org.jboss.web.WebService"
       name="jboss:service=WebService">
-      <attribute name="Port">${rhq.server.startup.webservice.port:9093}</attribute> <!-- JON -->
+      <attribute name="Port">${rhq.server.startup.webservice.port:9093}</attribute> <!-- RHQ -->
       <!-- Should non-EJB .class files be downloadable -->
-      <attribute name="DownloadServerClasses">false</attribute> <!-- JON -->
+      <attribute name="DownloadServerClasses">false</attribute> <!-- RHQ -->
       <!-- Should resources other than .class files be downloadable. Both
          DownloadServerClasses and DownloadResources must be true for resources
          to be downloadable. This is false by default because its generally a
@@ -244,13 +244,13 @@
       <!-- The listening port for the bootstrap JNP service. Set this to -1
         to run the NamingService without the JNP invoker listening port.
       -->
-      <attribute name="Port">${rhq.server.startup.namingservice.port:2099}</attribute> <!-- JON -->
+      <attribute name="Port">${rhq.server.startup.namingservice.port:2099}</attribute> <!-- RHQ -->
       <!-- The bootstrap JNP server bind address. This also sets the default
       RMI service bind address. Empty == all addresses
        -->
       <attribute name="BindAddress">${jboss.bind.address}</attribute>
       <!-- The port of the RMI naming service, 0 == anonymous -->
-      <attribute name="RmiPort">${rhq.server.startup.namingservice.rmiport:2098}</attribute> <!-- JON -->
+      <attribute name="RmiPort">${rhq.server.startup.namingservice.rmiport:2098}</attribute> <!-- RHQ -->
       <!-- The RMI service bind address. Empty == all addresses
        -->
       <attribute name="RmiBindAddress">${jboss.bind.address}</attribute>
@@ -356,7 +356,7 @@
    <!-- JBoss Transactions JTA -->
    <mbean code="com.arjuna.ats.jbossatx.jta.TransactionManagerService"
       name="jboss:service=TransactionManager">
-      <attribute name="TransactionTimeout">600</attribute> <!-- JON -->
+      <attribute name="TransactionTimeout">600</attribute> <!-- RHQ -->
       <attribute name="ObjectStoreDir">${jboss.server.data.dir}/tx-object-store</attribute> 
    </mbean>
 
@@ -419,7 +419,7 @@
    <!-- RMI/JRMP invoker -->
    <mbean code="org.jboss.invocation.jrmp.server.JRMPInvoker"
       name="jboss:service=invoker,type=jrmp">
-      <attribute name="RMIObjectPort">${rhq.server.startup.jrmpinvoker.rmiport:7444}</attribute> <!-- JON -->
+      <attribute name="RMIObjectPort">${rhq.server.startup.jrmpinvoker.rmiport:7444}</attribute> <!-- RHQ -->
       <attribute name="ServerAddress">${jboss.bind.address}</attribute>
       <!--
       <attribute name="RMIClientSocketFactory">custom</attribute>
@@ -443,7 +443,7 @@
       <attribute name="ClientMaxPoolSize">300</attribute>
       <attribute name="SocketTimeout">60000</attribute>
       <attribute name="ServerBindAddress">${jboss.bind.address}</attribute>
-      <attribute name="ServerBindPort">${rhq.server.startup.pooledinvoker.rmiport:7445}</attribute> <!-- JON -->
+      <attribute name="ServerBindPort">${rhq.server.startup.pooledinvoker.rmiport:7445}</attribute> <!-- RHQ -->
       <attribute name="ClientConnectAddress">${jboss.bind.address}</attribute>
       <attribute name="ClientConnectPort">0</attribute>
       <attribute name="ClientRetryCount">1</attribute>
@@ -503,7 +503,7 @@
                <!-- <attribute name="clientMaxPoolSize" isParam="true">304</attribute>-->
                <attribute name="socketTimeout" isParam="true">600000</attribute>
                <attribute name="serverBindAddress">${jboss.bind.address}</attribute>
-               <attribute name="serverBindPort">${rhq.server.startup.unifiedinvoker.port:5446}</attribute> <!-- JON -->
+               <attribute name="serverBindPort">${rhq.server.startup.unifiedinvoker.port:5446}</attribute> <!-- RHQ -->
                <!-- <attribute name="clientConnectAddress">216.23.33.2</attribute> -->
                <!-- <attribute name="clientConnectPort">7777</attribute> -->
                <attribute name="enableTcpNoDelay" isParam="true">true</attribute>

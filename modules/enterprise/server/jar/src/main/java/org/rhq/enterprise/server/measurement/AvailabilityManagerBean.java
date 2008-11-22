@@ -104,7 +104,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
             conn = dataSource.getConnection();
             stmt = conn.prepareStatement(Availability.NATIVE_QUERY_PURGE);
             stmt.setLong(1, oldest);
+            long startTime = System.currentTimeMillis();
             int deleted = stmt.executeUpdate();
+            MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
             return deleted;
         } catch (Exception e) {
             throw new RuntimeException("Failed to purge availabilities older than [" + oldest + "]", e);

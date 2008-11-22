@@ -161,7 +161,9 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
             conn = rhqDs.getConnection();
             stmt = conn.prepareStatement(MeasurementDataTrait.NATIVE_QUERY_PURGE);
             stmt.setLong(1, oldest);
+            long startTime = System.currentTimeMillis();
             int deleted = stmt.executeUpdate();
+            MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
             return deleted;
         } catch (Exception e) {
             throw new RuntimeException("Failed to purge traits older than [" + oldest + "]", e);

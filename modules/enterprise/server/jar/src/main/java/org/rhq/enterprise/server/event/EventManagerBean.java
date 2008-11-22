@@ -65,6 +65,7 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
+import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 
 /**
@@ -196,7 +197,9 @@ public class EventManagerBean implements EventManagerLocal {
     public int purgeEventData(Date deleteUpToTime) throws SQLException {
         Query q = entityManager.createQuery("DELETE FROM Event e WHERE e.timestamp < :cutOff");
         q.setParameter("cutOff", deleteUpToTime.getTime());
+        long startTime = System.currentTimeMillis();
         int deleted = q.executeUpdate();
+        MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
         return deleted;
     }
 

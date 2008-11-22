@@ -75,6 +75,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
+import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -233,6 +234,7 @@ public class AlertManagerBean implements AlertManagerLocal {
         log.debug("Performance: Deleted [" + deletedAlerts + "] alerts in [" + (end - start) + "]ms");
         totalTime += (end - start);
 
+        MeasurementMonitor.getMBean().incrementPurgeTime(totalTime);
         log.debug("Deleted [" + (deletedAlerts + conditionsDeleted + deletedNotifications) + "] "
             + "alert audit records in [" + (totalTime) + "]ms");
 

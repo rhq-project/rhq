@@ -167,7 +167,7 @@ import org.rhq.core.domain.resource.ResourceType;
         + "WHERE res.id = :resourceId "
         + "GROUP BY res.resourceType "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_GROUP_COMPOSITE_BY_ID, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(res)) "
-        + "FROM ResourceGroup g LEFT JOIN g.implicitResources res JOIN res.currentAvailability a "
+        + "FROM ResourceGroup g LEFT JOIN g.implicitResources res LEFT JOIN res.currentAvailability a "
         + "WHERE g.id = :groupId " + "GROUP BY g "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_RESOURCE_NAMES_BY_GROUP_ID, query = "SELECT new org.rhq.core.domain.common.composite.IntegerOptionItem(res.id, res.name) "
         + "  FROM ResourceGroup g " + "  JOIN g.implicitResources res " + " WHERE g.id = :groupId "),

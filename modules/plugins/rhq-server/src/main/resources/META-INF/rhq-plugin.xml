@@ -66,12 +66,19 @@
       <metric property="ScheduledMeasurementsPerMinute"/>
       <metric property="MeasurementInsertTime" units="milliseconds" displayType="summary" measurementType="trendsup"/>
       <metric property="BaselineCalculationTime" units="milliseconds" measurementType="trendsup"/>
-      <metric property="MeasurementCompressionTime" units="milliseconds" displayType="summary"
-              measurementType="trendsup"/>
+      <metric property="MeasurementCompressionTime" units="milliseconds" displayType="summary" measurementType="trendsup"/>
       <metric property="PurgeTime" displayType="summary" units="milliseconds" measurementType="trendsup"/>
 
       <metric property="AvailabilityInsertTime" displayType="summary" units="milliseconds" measurementType="trendsup"/>
       <metric property="AvailabilitiesInserted" displayType="summary" measurementType="trendsup"/>
+
+      <metric property="PurgedAlerts" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of alerts purged by the last purge job"/>
+      <metric property="PurgedAlertConditions" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of alert conditions purged by the last purge job"/>
+      <metric property="PurgedAlertNotifications" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of alert notifications purged by the last purge job"/>
+      <metric property="PurgedAvailabilities" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of availabilities purged by the last purge job"/>
+      <metric property="PurgedCallTimeData" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of call time data purged by the last purge job"/>
+      <metric property="PurgedEvents" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of events purged by the last purge job"/>
+      <metric property="PurgedMeasurementTraits" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of traits purged by the last purge job"/>
    </service>
 
    <service name="RHQ Server Communications Subsystem"

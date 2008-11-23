@@ -96,6 +96,8 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         }
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(6 * 60 * 60)
     public void compressData() throws SQLException {
         loadPurgeDefaults();
 
@@ -148,7 +150,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
      * @return The last timestamp that was compressed
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(30 * 60 * 1000)
+    @TransactionTimeout(6 * 60 * 60)
     public long compressData(String fromTable, String toTable, long interval, long now) throws SQLException {
 
         // First determine the window to operate on.  If no previous compression
@@ -334,7 +336,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
      * Purge data older than a given time.
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(30 * 60 * 1000)
+    @TransactionTimeout(6 * 60 * 60)
     public void purgeMeasurements(String tableName, long purgeAfter) throws SQLException {
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -362,7 +364,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(30 * 60 * 1000)
+    @TransactionTimeout(6 * 60 * 60)
     public void truncateMeasurements(String tableName) throws SQLException {
         // Make sure we only truncate the dead table... other tables may have live data in them
         if (tableName.equals(MeasurementDataManagerUtility.getDeadTable(System.currentTimeMillis()))) {

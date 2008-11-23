@@ -193,7 +193,7 @@ public class EventManagerBean implements EventManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(30 * 60 * 1000)
+    @TransactionTimeout(6 * 60 * 60)
     public int purgeEventData(Date deleteUpToTime) throws SQLException {
         Query q = entityManager.createQuery("DELETE FROM Event e WHERE e.timestamp < :cutOff");
         q.setParameter("cutOff", deleteUpToTime.getTime());

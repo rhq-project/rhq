@@ -164,7 +164,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
      * @param deleteUpToTime call-time data older than this time will be deleted
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(30 * 60 * 1000)
+    @TransactionTimeout(6 * 60 * 60)
     public int purgeCallTimeData(Date deleteUpToTime) throws SQLException {
         // NOTE: Apparently, Hibernate does not support DML JPQL queries, so we're stuck using JDBC.
         Connection conn = null;

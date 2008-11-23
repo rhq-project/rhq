@@ -818,7 +818,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return persistedRequest;
     }
 
-    @TransactionTimeout(1000 * 60 * 30)
+    @TransactionTimeout(45 * 60)
     public void completeRetrievePackageBitsRequest(ContentServiceResponse response, InputStream bitStream) {
         log.info("Completing retrieve package bits response: " + response);
 

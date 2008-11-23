@@ -33,18 +33,8 @@ public interface MeasurementCompressionManagerLocal {
 
     void compressData() throws SQLException;
 
-    /*
-     * MeasurmeentCompressionManagerBean is annotated with:
-     *
-     * @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW) @TransactionTimeout(30 * 60 * 1000)
-     */
     long compressData(String fromTable, String toTable, long interval, long now) throws SQLException;
 
-    /*
-     * MeasurmeentCompressionManagerBean is annotated with:
-     *
-     * @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW) @TransactionTimeout(30 * 60 * 1000)
-     */
     void purgeMeasurements(String tableName, long purgeAfter) throws SQLException;
 
     void truncateMeasurements(String tableName) throws SQLException;

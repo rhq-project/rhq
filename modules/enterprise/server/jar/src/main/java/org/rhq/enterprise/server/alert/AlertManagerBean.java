@@ -152,7 +152,7 @@ public class AlertManagerBean implements AlertManagerLocal {
 
     // gonna use bulk delete, make sure we are in new tx to not screw up caller's hibernate session
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(30 * 60 * 1000)
+    @TransactionTimeout(30 * 60)
     public int deleteAlerts(Subject user, int resourceId) {
         if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_ALERTS, resourceId)) {
             throw new PermissionException("User [" + user.getName() + "] does not have permissions to delete alerts "
@@ -203,6 +203,7 @@ public class AlertManagerBean implements AlertManagerLocal {
      */
     // gonna use bulk delete, make sure we are in new tx to not screw up caller's hibernate session
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(6 * 60 * 60)
     public int deleteAlerts(long beginTime, long endTime) {
         long totalTime = 0;
 

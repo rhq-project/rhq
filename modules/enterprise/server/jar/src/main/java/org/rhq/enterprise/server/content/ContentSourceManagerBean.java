@@ -581,7 +581,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(1000 * 60 * 30)
+    @TransactionTimeout(45 * 60)
     public PackageBits downloadPackageBits(Subject subject, PackageVersionContentSource pvcs) {
         PackageVersionContentSourcePK pk = pvcs.getPackageVersionContentSourcePK();
         int contentSourceId = pk.getContentSource().getId();
@@ -1237,14 +1237,14 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(1000 * 60 * 30)
+    @TransactionTimeout(45 * 60)
     public long outputPackageVersionBitsGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream) {
         return outputPackageVersionBitsRangeGivenResource(resourceId, packageDetailsKey, outputStream, 0, -1);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(1000 * 60 * 30)
+    @TransactionTimeout(45 * 60)
     public long outputPackageBitsForChildResource(int parentResourceId, String resourceTypeName,
         PackageDetailsKey packageDetailsKey, OutputStream outputStream) {
         Resource parentResource = entityManager.find(Resource.class, parentResourceId);
@@ -1270,7 +1270,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(1000 * 60 * 30)
+    @TransactionTimeout(45 * 60)
     public long outputPackageVersionBitsRangeGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream, long startByte, long endByte) {
         if (startByte < 0) {

@@ -177,7 +177,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    //@TransactionTimeout( 1000 * 60 * 60 )
+    //@TransactionTimeout( 60 * 60 )
     public int _calculateAutoBaselinesDELETE(long startTime, long endTime) throws Exception {
         Connection conn = null;
         PreparedStatement deleteQuery = null;
@@ -223,7 +223,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    //@TransactionTimeout( 1000 * 60 * 60 )
+    //@TransactionTimeout( 60 * 60 )
     public int _calculateAutoBaselinesINSERT(long startTime, long endTime, long computeTime) throws Exception {
         Connection conn = null;
         PreparedStatement insertQuery = null;
@@ -269,7 +269,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    //@TransactionTimeout( 1000 * 60 * 60 )
+    //@TransactionTimeout( 60 * 60 )
     private int _calculateAutoBaselinesDELETE_HQL(long startTime, long endTime) throws Exception {
         Query query = entityManager.createNamedQuery(MeasurementBaseline.QUERY_DELETE_EXISTING_AUTOBASELINES);
 
@@ -282,7 +282,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    //@TransactionTimeout( 1000 * 60 * 60 )
+    //@TransactionTimeout( 60 * 60 )
     private int _calculateAutoBaselinesINSERT_HQL(long startTime, long endTime, long computeTime) throws Exception {
         Query query = entityManager.createNamedQuery(MeasurementBaseline.QUERY_CALC_FIRST_AUTOBASELINE);
 

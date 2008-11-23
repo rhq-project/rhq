@@ -93,10 +93,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
 
     // doing a bulk delete in here, need to be in its own tx
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(30 * 60 * 1000)
+    @TransactionTimeout(6 * 60 * 60)
     public int purgeAvailabilities(long oldest) {
-        log.info("Purging availabilities that are older than " + new Date(oldest));
-
         Connection conn = null;
         PreparedStatement stmt = null;
 

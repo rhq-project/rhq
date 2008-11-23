@@ -30,8 +30,12 @@ import org.quartz.JobExecutionException;
 import org.quartz.SimpleTrigger;
 import org.quartz.StatefulJob;
 
+import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
+import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementCompressionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
@@ -70,49 +74,47 @@ public class DataPurgeJob extends AbstractStatefulJob {
 
     @Override
     public void executeJobCode(JobExecutionContext context) throws JobExecutionException {
-        long start = System.currentTimeMillis();
+        long timeStart = System.currentTimeMillis();
         LOG.info("Data Purge Job STARTING");
-        try {
-            compressData();
-            calculateAutoBaselines();
-        } catch (Exception e) {
-            LOG.error("Data Purge Job Failed. Cause: " + e);
-        }
-        LOG.info("Data Purge Job FINISHED [" + (System.currentTimeMillis() - start) + "]ms");
-    }
 
-    private void calculateAutoBaselines() {
         try {
-            LOG.info("Initiating the calculation of auto-baselines");
-            LookupUtil.getMeasurementBaselineManager().calculateAutoBaselines();
+            Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration();
+            compressMeasurementData(LookupUtil.getMeasurementCompressionManager());
+            purgeEverything(systemConfig);
+            performDatabaseMaintenance(LookupUtil.getSystemManager(), systemConfig);
+            calculateAutoBaselines(LookupUtil.getMeasurementBaselineManager());
         } catch (Exception e) {
-            LOG.error("Failed to auto-calculate baselines. Cause: " + e);
+            LOG.error("Data Purge Job FAILED TO COMPLETE. Cause: " + e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Data Purge Job FINISHED [" + duration + "]ms");
         }
     }
 
-    private void compressData() {
-        SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-        MeasurementCompressionManagerLocal compressionManager = LookupUtil.getMeasurementCompressionManager();
-        MeasurementDataManagerLocal measurementDataManager = LookupUtil.getMeasurementDataManager();
-        AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
-
-        // COMPRESS MEASUREMENT DATA
+    private void compressMeasurementData(MeasurementCompressionManagerLocal compressionManager) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Measurement data compression starting at " + new Date(timeStart));
 
         try {
             compressionManager.compressData();
         } catch (Exception e) {
-            LOG.error("Unable to compress measurement data: " + e, e);
+            LOG.error("Failed to compress measurement data. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Measurement data compression completed in [" + duration + "]ms");
         }
+    }
 
-        long timeEnd = System.currentTimeMillis();
-        LOG.info("Measurement data compression completed in [" + (timeEnd - timeStart) + "]ms");
+    private void purgeEverything(Properties systemConfig) {
+        purgeCallTimeData(LookupUtil.getCallTimeDataManager(), systemConfig);
+        purgeEventData(LookupUtil.getEventManager(), systemConfig);
+        purgeAlertData(LookupUtil.getAlertManager(), systemConfig);
+        purgeMeasurementTraitData(LookupUtil.getMeasurementDataManager(), systemConfig);
+        purgeAvailabilityData(LookupUtil.getAvailabilityManager(), systemConfig);
+    }
 
-        Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration();
-
-        // PURGE OLD TRAIT DATA
-        timeStart = System.currentTimeMillis();
+    private void purgeMeasurementTraitData(MeasurementDataManagerLocal measurementDataManager, Properties systemConfig) {
+        long timeStart = System.currentTimeMillis();
         LOG.info("Trait data purge starting at " + new Date(timeStart));
         int traitsPurged = 0;
 
@@ -129,14 +131,15 @@ public class DataPurgeJob extends AbstractStatefulJob {
             LOG.info("Purging traits that are older than " + new Date(threshold));
             traitsPurged = measurementDataManager.purgeTraits(threshold);
         } catch (Exception e) {
-            LOG.error("Unable to purge trait data: " + e, e);
+            LOG.error("Failed to purge trait data. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Traits data purged [" + traitsPurged + "] - completed in [" + duration + "]ms");
         }
+    }
 
-        timeEnd = System.currentTimeMillis();
-        LOG.info("Traits data purged [" + traitsPurged + "] - completed in [" + (timeEnd - timeStart) + "]ms");
-
-        // PURGE OLD AVAILABILITY DATA
-        timeStart = System.currentTimeMillis();
+    private void purgeAvailabilityData(AvailabilityManagerLocal availabilityManager, Properties systemConfig) {
+        long timeStart = System.currentTimeMillis();
         LOG.info("Availability data purge starting at " + new Date(timeStart));
         int availsPurged = 0;
 
@@ -152,55 +155,125 @@ public class DataPurgeJob extends AbstractStatefulJob {
             LOG.info("Purging availablities that are older than " + new Date(threshold));
             availsPurged = availabilityManager.purgeAvailabilities(threshold);
         } catch (Exception e) {
-            LOG.error("Unable to purge availability data: " + e, e);
+            LOG.error("Failed to purge availability data. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Availability data purged [" + availsPurged + "] - completed in [" + duration + "]ms");
         }
+    }
 
-        timeEnd = System.currentTimeMillis();
-        LOG.info("Availability data purged [" + availsPurged + "] - completed in [" + (timeEnd - timeStart) + "]ms");
+    private void purgeCallTimeData(CallTimeDataManagerLocal callTimeDataManager, Properties systemConfig) {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Measurement calltime data purge starting at " + new Date(timeStart));
+        int calltimePurged = 0;
 
-        // Once compression finishes, we check to see if database maintenance
-        // should be performed.  This is defaulted to 1 hour, so it should
-        // always run unless changed by the user.  This is only a safeguard,
-        // as usually an ANALYZE only takes a fraction of what a full VACUUM
-        // takes.
-        //
-        // VACUUM will occur every day at midnight.
-
-        String dataMaintenance = systemConfig.getProperty(HQConstants.DataMaintenance);
-        if (dataMaintenance == null) {
-            LOG.error("No data maintenance interval found - will not perform db maintenance");
-            return;
+        try {
+            long threshold = timeStart - Long.parseLong(systemConfig.getProperty(HQConstants.RtDataPurge));
+            LOG.info("Purging calltime data that is older than " + new Date(threshold));
+            calltimePurged = callTimeDataManager.purgeCallTimeData(new Date(threshold));
+        } catch (Exception e) {
+            LOG.error("Failed to purge calltime data. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Calltime purged [" + calltimePurged + "] - completed in [" + duration + "]ms");
         }
+    }
 
-        long maintInterval = Long.parseLong(dataMaintenance);
+    private void purgeEventData(EventManagerLocal eventManager, Properties systemConfig) {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Event data purge starting at " + new Date(timeStart));
+        int eventsPurged = 0;
 
-        // At midnight we always perform a VACUUM, otherwise we check to see if it is time to
-        // perform normal database maintenance. (On postgres we just rebuild indices using an ANALYZE)
-        Calendar cal = Calendar.getInstance();
-        if (cal.get(Calendar.HOUR_OF_DAY) == 0) {
-            LOG.info("Performing database maintenance (VACUUM ANALYZE)");
-            timeStart = System.currentTimeMillis();
+        try {
+            long threshold = timeStart - Long.parseLong(systemConfig.getProperty(HQConstants.EventPurge));
+            LOG.info("Purging event data older than " + new Date(threshold));
+            eventsPurged = eventManager.purgeEventData(new Date(threshold));
+        } catch (Exception e) {
+            LOG.error("Failed to purge event data. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Event data purged [" + eventsPurged + "] - completed in [" + duration + "]ms");
+        }
+    }
 
-            systemManager.vacuum(LookupUtil.getSubjectManager().getOverlord());
+    private void purgeAlertData(AlertManagerLocal alertManager, Properties systemConfig) {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Alert data purge starting at " + new Date(timeStart));
+        int alertsPurged = 0;
 
-            String reindexStr = systemConfig.getProperty(HQConstants.DataReindex);
-            boolean reindexNightly = Boolean.valueOf(reindexStr);
-            if (reindexNightly) {
-                LOG.info("Re-indexing data tables...");
-                systemManager.reindex(LookupUtil.getSubjectManager().getOverlord());
+        try {
+            long threshold = timeStart - Long.parseLong(systemConfig.getProperty(HQConstants.AlertPurge));
+            LOG.info("Purging alert data older than " + new Date(threshold));
+            alertsPurged = alertManager.deleteAlerts(0, threshold);
+        } catch (Exception e) {
+            LOG.error("Failed to purge alert data. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Alert data purged [" + alertsPurged + "] - completed in [" + duration + "]ms");
+        }
+    }
+
+    private void performDatabaseMaintenance(SystemManagerLocal systemManager, Properties systemConfig) {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Database maintenance starting at " + new Date(timeStart));
+
+        try {
+            // Once compression finishes, we need to check to see if database maintenance
+            // should be performed.  This is defaulted to 1 hour, so it should
+            // always run unless changed by the user.  This is only a safeguard,
+            // as usually an ANALYZE only takes a fraction of what a full VACUUM
+            // takes. VACUUM will occur every day at midnight.
+
+            String dataMaintenance = systemConfig.getProperty(HQConstants.DataMaintenance);
+            if (dataMaintenance == null) {
+                LOG.error("No data maintenance interval found - will not perform db maintenance");
+                return;
             }
+            long maintInterval = Long.parseLong(dataMaintenance);
 
-            LOG.info("Database maintenance (VACUUM ANALYZE) completed in [" + (System.currentTimeMillis() - timeStart)
-                + "]ms");
-        } else if (TimingVoodoo.roundDownTime(timeStart, HOUR) == TimingVoodoo.roundDownTime(timeStart, maintInterval)) {
-            LOG.info("Performing database maintenance (ANALYZE)");
-            timeStart = System.currentTimeMillis();
-            systemManager.analyze(LookupUtil.getSubjectManager().getOverlord());
-            LOG
-                .info("Database maintenance (ANALYZE) completed in [" + (System.currentTimeMillis() - timeStart)
-                    + "]ms");
-        } else {
-            LOG.debug("Not performing any database maintenance now");
+            // At midnight we always perform a VACUUM, otherwise we check to see if it is time to
+            // perform normal database maintenance. (On postgres we just rebuild indices using an ANALYZE)
+            Calendar cal = Calendar.getInstance();
+            if (cal.get(Calendar.HOUR_OF_DAY) == 0) {
+                LOG.info("Performing daily database maintenance");
+                systemManager.vacuum(LookupUtil.getSubjectManager().getOverlord());
+
+                String reindexStr = systemConfig.getProperty(HQConstants.DataReindex);
+                boolean reindexNightly = Boolean.valueOf(reindexStr);
+                if (reindexNightly) {
+                    LOG.info("Re-indexing data tables");
+                    systemManager.reindex(LookupUtil.getSubjectManager().getOverlord());
+                } else {
+                    LOG.info("Skipping re-indexing of data tables");
+                }
+            } else if (TimingVoodoo.roundDownTime(timeStart, HOUR) == TimingVoodoo.roundDownTime(timeStart,
+                maintInterval)) {
+                LOG.info("Performing hourly database maintenance");
+                systemManager.analyze(LookupUtil.getSubjectManager().getOverlord());
+            } else {
+                LOG.debug("Not performing any database maintenance now");
+            }
+        } catch (Exception e) {
+            LOG.error("Failed to perform database maintenance. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Database maintenance completed in [" + duration + "]ms");
+        }
+
+        return;
+    }
+
+    private void calculateAutoBaselines(MeasurementBaselineManagerLocal measurementBaselineManager) {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Auto-calculation of baselines starting at " + new Date(timeStart));
+
+        try {
+            measurementBaselineManager.calculateAutoBaselines();
+        } catch (Exception e) {
+            LOG.error("Failed to auto-calculate baselines. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Auto-calculation of baselines completed in [" + duration + "]ms");
         }
     }
 }

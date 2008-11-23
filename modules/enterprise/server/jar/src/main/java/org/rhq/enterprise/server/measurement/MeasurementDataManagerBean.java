@@ -133,8 +133,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
     @IgnoreDependency
     private AgentManagerLocal agentClientManager;
     @EJB
-    private MeasurementProblemManagerLocal measurementProblemManager;
-    @EJB
     @IgnoreDependency
     private ResourceManagerLocal resourceManager;
     @EJB

@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 
 import org.jboss.annotation.ejb.TransactionTimeout;
 
-import org.rhq.core.clientapi.util.TimeUtil;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
@@ -167,21 +166,20 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(30 * 60 * 1000)
     public int purgeCallTimeData(Date deleteUpToTime) throws SQLException {
-        log.debug("Purging call-time data older than " + TimeUtil.toString(deleteUpToTime.getTime()) + " from table "
-            + DATA_VALUE_TABLE_NAME + "...");
-        long startTime = System.currentTimeMillis();
-
         // NOTE: Apparently, Hibernate does not support DML JPQL queries, so we're stuck using JDBC.
         Connection conn = null;
         PreparedStatement stmt = null;
-        int deletedRowCount;
         try {
             conn = ((DataSource) this.sessionContext.lookup(RHQConstants.DATASOURCE_JNDI_NAME)).getConnection();
 
             // Purge old rows from RHQ_CALLTIME_DATA_VALUE.
             stmt = conn.prepareStatement(CALLTIME_VALUE_PURGE_STATEMENT);
             stmt.setLong(1, deleteUpToTime.getTime());
-            deletedRowCount = stmt.executeUpdate();
+
+            long startTime = System.currentTimeMillis();
+            int deletedRowCount = stmt.executeUpdate();
+            MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
+            return deletedRowCount;
 
             // NOTE: We do not purge unreferenced rows from RHQ_CALLTIME_DATA_KEY, because this can cause issues
             //       (see http://jira.jboss.com/jira/browse/JBNADM-1606). Once we limit the number of keys per
@@ -190,12 +188,6 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
         } finally {
             JDBCUtil.safeClose(conn, stmt, null);
         }
-
-        long elapsedMillis = System.currentTimeMillis() - startTime;
-        MeasurementMonitor.getMBean().incrementPurgeTime(elapsedMillis);
-        log.info("Done purging [" + ((deletedRowCount >= 0) ? deletedRowCount : "?") + "] rows older than "
-            + deleteUpToTime + " from table " + DATA_VALUE_TABLE_NAME + " (" + elapsedMillis + " ms)");
-        return deletedRowCount;
     }
 
     private void insertCallTimeDataKeys(Set<CallTimeData> callTimeDataSet, Connection conn) throws SQLException {

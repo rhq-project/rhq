@@ -23,7 +23,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Date;
 import java.util.Properties;
 
 import javax.ejb.EJB;
@@ -41,8 +40,6 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 import org.rhq.core.clientapi.util.TimeUtil;
 import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
@@ -75,24 +72,14 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
     private SystemManagerLocal systemManager;
     @EJB
     private MeasurementCompressionManagerLocal compressionManager;
-    @EJB
-    private CallTimeDataManagerLocal callTimeDataManager;
-    @EJB
-    private EventManagerLocal eventManager;
-    @EJB
-    private AlertManagerLocal alertManager;
 
     private long purge1h;
     private long purge6h;
     private long purge1d;
-    private long purgeCallTime;
-    private long purgeEvent;
-    private long purgeAlert;
 
     /**
      * Get the server purge configuration, loaded on startup.
      */
-    @SuppressWarnings("deprecation")
     private void loadPurgeDefaults() {
         this.log.debug("Loading default purge intervals");
 
@@ -103,9 +90,6 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
             this.purge1h = Long.parseLong(conf.getProperty(HQConstants.DataPurge1Hour));
             this.purge6h = Long.parseLong(conf.getProperty(HQConstants.DataPurge6Hour));
             this.purge1d = Long.parseLong(conf.getProperty(HQConstants.DataPurge1Day));
-            this.purgeCallTime = Long.parseLong(conf.getProperty(HQConstants.RtDataPurge));
-            this.purgeAlert = Long.parseLong(conf.getProperty(HQConstants.AlertPurge));
-            this.purgeEvent = Long.parseLong(conf.getProperty(HQConstants.EventPurge));
         } catch (NumberFormatException e) {
             // Shouldn't happen unless the config table was manually edited.
             throw new IllegalArgumentException("Invalid purge interval: " + e);
@@ -156,37 +140,6 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
 
         // Purge, we never store more than 1 year of data.
         compressionManager.purgeMeasurements(TAB_DATA_1D, now - this.purge1d);
-
-        Date deleteUpToTime;
-
-        // Purge call-time data.
-        try {
-            log.info("Purging calltime data older than " + TimeUtil.toString(now - this.purgeEvent));
-            deleteUpToTime = new Date(now - this.purgeCallTime);
-            int deletedCallTimeDataCount = callTimeDataManager.purgeCallTimeData(deleteUpToTime);
-            log.info("Deleted [" + deletedCallTimeDataCount + "] calltime data");
-        } catch (Exception e) {
-            log.error("Unable to purge calltime data: " + e, e);
-        }
-
-        // Purge Event data
-        try {
-            log.info("Purging events older than " + TimeUtil.toString(now - this.purgeEvent));
-            deleteUpToTime = new Date(now - this.purgeEvent);
-            int deleted = eventManager.purgeEventData(deleteUpToTime);
-            log.info("Deleted [" + deleted + "] events");
-        } catch (Exception e) {
-            log.error("Unable to purge events data: " + e, e);
-        }
-
-        // Purge alerts
-        try {
-            log.info("Purging alerts older than " + TimeUtil.toString(now - this.purgeAlert));
-            int alertsDeleted = alertManager.deleteAlerts(0, now - this.purgeAlert);
-            log.info("Deleted [" + alertsDeleted + "] alerts");
-        } catch (Exception e) {
-            log.error("Unable to purge alerts: " + e, e);
-        }
     }
 
     /**
@@ -419,7 +372,9 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
                 conn = ((DataSource) ctx.lookup(DATASOURCE_NAME)).getConnection();
                 log.info("Truncating table: " + tableName);
                 stmt = conn.createStatement();
+                long startTime = System.currentTimeMillis();
                 stmt.executeUpdate("TRUNCATE TABLE " + tableName);
+                MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
             } finally {
                 close(stmt);
                 close(conn);

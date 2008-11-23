@@ -212,7 +212,7 @@ public class AlertManagerBean implements AlertManagerLocal {
         query.setParameter("end", endTime);
         int conditionsDeleted = query.executeUpdate();
         long end = System.currentTimeMillis();
-        log.debug("Performance: Deleted [" + conditionsDeleted + "] alert condition logs in [" + (end - start) + "]ms");
+        log.debug("Deleted [" + conditionsDeleted + "] alert condition logs in [" + (end - start) + "]ms");
         totalTime += (end - start);
 
         start = System.currentTimeMillis();
@@ -221,8 +221,7 @@ public class AlertManagerBean implements AlertManagerLocal {
         query.setParameter("end", endTime);
         int deletedNotifications = query.executeUpdate();
         end = System.currentTimeMillis();
-        log.debug("Performance: Deleted [" + deletedNotifications + "] alert notifications in [" + (end - start)
-            + "]ms");
+        log.debug("Deleted [" + deletedNotifications + "] alert notifications in [" + (end - start) + "]ms");
         totalTime += (end - start);
 
         start = System.currentTimeMillis();
@@ -231,7 +230,7 @@ public class AlertManagerBean implements AlertManagerLocal {
         query.setParameter("end", endTime);
         int deletedAlerts = query.executeUpdate();
         end = System.currentTimeMillis();
-        log.debug("Performance: Deleted [" + deletedAlerts + "] alerts in [" + (end - start) + "]ms");
+        log.debug("Deleted [" + deletedAlerts + "] alerts in [" + (end - start) + "]ms");
         totalTime += (end - start);
 
         MeasurementMonitor.getMBean().incrementPurgeTime(totalTime);

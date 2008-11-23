@@ -423,6 +423,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
 
             MeasurementMonitor.getMBean().incrementAvailabilitiesInserted(numInserted);
             MeasurementMonitor.getMBean().incrementAvailabilityInsertTime(watch.getElapsed());
+            watch.reset();
         }
 
         // a single report comes from a single agent - update the agent's last availability report timestamp

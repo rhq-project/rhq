@@ -240,7 +240,6 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
 
             dependencyGraph.addPlugin(descriptor.getName(), dependencies);
 
-
             try {
                 String md5 = MD5Generator.getDigestString(deploymentInfo.url.openStream());
                 Plugin plugin = metadataManager.getPlugin(pluginName);
@@ -278,8 +277,8 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
 
                 Subject superuser = LookupUtil.getSubjectManager().getOverlord();
                 SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-                systemManager.vacuum(superuser, new String[]{"RHQ_MEASUREMENT_DEF", "RHQ_CONFIG_DEF",
-                        "RHQ_RESOURCE_TYPE", "RHQ_RESOURCE_TYPE_PARENTS"});
+                systemManager.vacuum(superuser, new String[] { "RHQ_MEASUREMENT_DEF", "RHQ_CONFIG_DEF",
+                    "RHQ_RESOURCE_TYPE", "RHQ_RESOURCE_TYPE_PARENTS" });
             } else {
                 log.warn(error.toString());
                 log.warn(dependencyGraph.toString());
@@ -339,7 +338,8 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         }
         long endDeployTime = System.currentTimeMillis();
 
-        log.info("PluginDependencyGraph deploy time was " + (endDeployTime - startDeployTime) + " millis");
+        log.info("PluginDependencyGraph deploy time for " + dependencyGraph.getPlugins().size() + " plugins was "
+            + (endDeployTime - startDeployTime) + " millis");
     }
 
     private LatchedPluginDeploymentService getServiceIfExists(String name,
@@ -582,21 +582,21 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         }
     }
 
-    private ComparableVersion getPluginVersion(DeploymentInfo deploymentInfo, PluginDescriptor descriptor) throws DeploymentException {
+    private ComparableVersion getPluginVersion(DeploymentInfo deploymentInfo, PluginDescriptor descriptor)
+        throws DeploymentException {
         String pluginJarFileName = deploymentInfo.url.getFile();
         String version = descriptor.getVersion();
         if (version == null) {
             log.debug("No version is specified in the plugin descriptor; falling back to '"
-                + Attributes.Name.IMPLEMENTATION_VERSION
-                + "' attribute from MANIFEST.MF of plugin jar (" + pluginJarFileName + ")...");
+                + Attributes.Name.IMPLEMENTATION_VERSION + "' attribute from MANIFEST.MF of plugin jar ("
+                + pluginJarFileName + ")...");
             Manifest manifest = deploymentInfo.getManifest();
             version = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
         }
         ComparableVersion comparableVersion;
         if (version == null) {
             throw new DeploymentException("No version is defined for plugin jar '" + pluginJarFileName
-                + "'. A version must be defined either via the MANIFEST.MF '"
-                + Attributes.Name.IMPLEMENTATION_VERSION
+                + "'. A version must be defined either via the MANIFEST.MF '" + Attributes.Name.IMPLEMENTATION_VERSION
                 + "' attribute or via the plugin descriptor 'version' attribute.");
         }
         try {

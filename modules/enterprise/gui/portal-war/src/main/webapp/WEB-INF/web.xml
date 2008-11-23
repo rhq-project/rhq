@@ -219,7 +219,7 @@
    </filter-mapping>
    <filter-mapping>
       <filter-name>Authentication-Filter</filter-name>
-      <url-pattern>/admin/sql.jsp</url-pattern>
+      <url-pattern>/admin/test/*</url-pattern>
    </filter-mapping>
 
    <!-- This is the object that reads the /WEB-INF/rhq-server-internals.properties for internal configuration settings. -->

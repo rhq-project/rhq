@@ -21,6 +21,8 @@
 </head>
 <body>
 
+<jsp:include page="/admin/include/adminTestLinks.html" flush="true" />
+
 <h1>Testing Agent Communications</h1>
 
 <p>

@@ -276,11 +276,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
             List<MeasurementDataTrait> persistedTraits = LookupUtil.getMeasurementDataManager()
                 .getAllTraitDataForResourceAndDefinition(res.getId(), traitSchedule.getDefinition().getId());
-            // TODO our purge should blow away all by the last trait since our trait history is very old
-            // today, we do NOT purge old trait data - they only delete when you delete a resource
-            // so I've commented out this assert test.  We'll want to enable this assert test once we
-            // implement trait purging
-            //assert persistedTraits.size() == 1 : "bad purged trait data:" + persistedTraits.size();
+            assert persistedTraits.size() == 1 : "bad purge of trait data: " + persistedTraits.size();
 
         } finally {
             getTransactionManager().rollback();

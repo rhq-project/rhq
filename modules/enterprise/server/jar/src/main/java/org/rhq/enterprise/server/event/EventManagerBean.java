@@ -200,6 +200,7 @@ public class EventManagerBean implements EventManagerLocal {
         long startTime = System.currentTimeMillis();
         int deleted = q.executeUpdate();
         MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
+        MeasurementMonitor.getMBean().setPurgedEvents(deleted);
         return deleted;
     }
 

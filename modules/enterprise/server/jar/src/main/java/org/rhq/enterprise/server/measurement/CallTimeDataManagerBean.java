@@ -179,6 +179,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal {
             long startTime = System.currentTimeMillis();
             int deletedRowCount = stmt.executeUpdate();
             MeasurementMonitor.getMBean().incrementPurgeTime(System.currentTimeMillis() - startTime);
+            MeasurementMonitor.getMBean().setPurgedCallTimeData(deletedRowCount);
             return deletedRowCount;
 
             // NOTE: We do not purge unreferenced rows from RHQ_CALLTIME_DATA_KEY, because this can cause issues

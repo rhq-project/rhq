@@ -19,10 +19,12 @@
 package org.rhq.enterprise.server.measurement.instrumentation;
 
 import java.util.concurrent.atomic.AtomicLong;
+
 import javax.management.MBeanRegistration;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
+
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -42,6 +44,23 @@ public class MeasurementMonitor implements MeasurementMonitorMBean, MBeanRegistr
     private AtomicLong purgeTime = new AtomicLong();
 
     private AtomicLong baselineCalculationTime = new AtomicLong();
+
+    // all of the purgedXYZ attributes will contain the number of purged items during the LAST purge
+    // they are not an aggregation over multiple purges - it only tracks the LAST purge that was run
+
+    private AtomicLong purgedAlerts = new AtomicLong();
+
+    private AtomicLong purgedAlertConditions = new AtomicLong();
+
+    private AtomicLong purgedAlertNotifications = new AtomicLong();
+
+    private AtomicLong purgedAvailabilities = new AtomicLong();
+
+    private AtomicLong purgedCallTimeData = new AtomicLong();
+
+    private AtomicLong purgedEvents = new AtomicLong();
+
+    private AtomicLong purgedMeasurementTraits = new AtomicLong();
 
     private static MBeanServer mbeanServer;
     private static ObjectName objectName;
@@ -120,6 +139,62 @@ public class MeasurementMonitor implements MeasurementMonitorMBean, MBeanRegistr
 
     public void incrementBaselineCalculationTime(long delta) {
         this.baselineCalculationTime.addAndGet(delta);
+    }
+
+    public long getPurgedAlerts() {
+        return this.purgedAlerts.get();
+    }
+
+    public void setPurgedAlerts(long delta) {
+        this.purgedAlerts.set(delta);
+    }
+
+    public long getPurgedAlertConditions() {
+        return this.purgedAlertConditions.get();
+    }
+
+    public void setPurgedAlertConditions(long delta) {
+        this.purgedAlertConditions.set(delta);
+    }
+
+    public long getPurgedAlertNotifications() {
+        return this.purgedAlertNotifications.get();
+    }
+
+    public void setPurgedAlertNotifications(long delta) {
+        this.purgedAlertNotifications.set(delta);
+    }
+
+    public long getPurgedAvailabilities() {
+        return this.purgedAvailabilities.get();
+    }
+
+    public void setPurgedAvailabilities(long delta) {
+        this.purgedAvailabilities.set(delta);
+    }
+
+    public long getPurgedCallTimeData() {
+        return this.purgedCallTimeData.get();
+    }
+
+    public void setPurgedCallTimeData(long delta) {
+        this.purgedCallTimeData.set(delta);
+    }
+
+    public long getPurgedEvents() {
+        return this.purgedEvents.get();
+    }
+
+    public void setPurgedEvents(long delta) {
+        this.purgedEvents.set(delta);
+    }
+
+    public long getPurgedMeasurementTraits() {
+        return this.purgedMeasurementTraits.get();
+    }
+
+    public void setPurgedMeasurementTraits(long delta) {
+        this.purgedMeasurementTraits.set(delta);
     }
 
     public ObjectName preRegister(MBeanServer server, ObjectName name) throws Exception {

@@ -234,6 +234,9 @@ public class AlertManagerBean implements AlertManagerLocal {
         totalTime += (end - start);
 
         MeasurementMonitor.getMBean().incrementPurgeTime(totalTime);
+        MeasurementMonitor.getMBean().setPurgedAlerts(deletedAlerts);
+        MeasurementMonitor.getMBean().setPurgedAlertConditions(conditionsDeleted);
+        MeasurementMonitor.getMBean().setPurgedAlertNotifications(deletedNotifications);
         log.debug("Deleted [" + (deletedAlerts + conditionsDeleted + deletedNotifications) + "] "
             + "alert audit records in [" + (totalTime) + "]ms");
 

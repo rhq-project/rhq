@@ -22,11 +22,12 @@ package org.rhq.enterprise.server.measurement.instrumentation;
  * @author Greg Hinkle
  */
 public interface MeasurementMonitorMBean {
-    long getMeasurementsInserted();
+
+    long getMeasurementInsertTime();
 
     void incrementMeasurementInsertTime(long delta);
 
-    long getMeasurementInsertTime();
+    long getMeasurementsInserted();
 
     void incrementMeasurementsInserted(long delta);
 
@@ -51,4 +52,32 @@ public interface MeasurementMonitorMBean {
     long getAvailabilitiesInserted();
 
     void incrementAvailabilitiesInserted(long delta);
+
+    long getPurgedAlerts();
+
+    void setPurgedAlerts(long delta);
+
+    long getPurgedAlertConditions();
+
+    void setPurgedAlertConditions(long delta);
+
+    long getPurgedAlertNotifications();
+
+    void setPurgedAlertNotifications(long delta);
+
+    long getPurgedEvents();
+
+    void setPurgedEvents(long delta);
+
+    long getPurgedAvailabilities();
+
+    void setPurgedAvailabilities(long delta);
+
+    long getPurgedCallTimeData();
+
+    void setPurgedCallTimeData(long delta);
+
+    long getPurgedMeasurementTraits();
+
+    void setPurgedMeasurementTraits(long delta);
 }

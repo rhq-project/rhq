@@ -167,7 +167,7 @@
 
 <h2>Administration</h2>
 
-<c:url var="url" value="/admin/TestControl.jsp?mode=addSubjectsAndRoles"/>
+<c:url var="url" value="/admin/test/control.jsp?mode=addSubjectsAndRoles"/>
 Add Lots of Users and Roles
 <form action="<c:out value="${url}"/>" method="get">
    <input type="hidden" name="mode" value="addSubjectsAndRoles"/>
@@ -178,46 +178,46 @@ Add Lots of Users and Roles
 
 
 <ul>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=addSubjectsAndRoles"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=addSubjectsAndRoles"/>
       <a href="<c:out value="${url}"/>">Report Test Agent</a> (done = <c:out value="${testAgentReported}"/>)</li>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=registerTestPluginAndTypeInfo"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=registerTestPluginAndTypeInfo"/>
       <a href="<c:out value="${url}"/>">Register test plugin metadata</a></li>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=removeTestPluginAndTypeInfo"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=removeTestPluginAndTypeInfo"/>
       <a href="<c:out value="${url}"/>">Remove test plugin metadata</a></li>
 </ul>
 
 <h2>Core</h2>
 
 <ul>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=registerTestAgent"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=registerTestAgent"/>
       <a href="<c:out value="${url}"/>">Report Test Agent</a> (done = <c:out value="${testAgentReported}"/>)</li>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=registerTestPluginAndTypeInfo"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=registerTestPluginAndTypeInfo"/>
       <a href="<c:out value="${url}"/>">Register test plugin metadata</a></li>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=removeTestPluginAndTypeInfo"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=removeTestPluginAndTypeInfo"/>
       <a href="<c:out value="${url}"/>">Remove test plugin metadata</a></li>
 </ul>
 
 <h2>Cluster</h2>
 
 <ul>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=clusterGetIdentity"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=clusterGetIdentity"/>
       <a href="<c:out value="${url}"/>">Get Identity</a> <c:out value="${serverName}"/></li>
 </ul>
 
 <h2>Inventory</h2>
 
 <ul>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=sendTestFullInventoryReport"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=sendTestFullInventoryReport"/>
       <a href="<c:out value="${url}"/>">Send Full Inventory Report</a></li>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=sendTestRuntimeInventoryReport"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=sendTestRuntimeInventoryReport"/>
       <a href="<c:out value="${url}"/>">Send Runtime Inventory Report</a></li>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=setupCompatibleGroups"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=setupCompatibleGroups"/>
       <a href="<c:out value="${url}"/>">Setup Compatible Groups</a></li>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=setupUberMixedGroup"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=setupUberMixedGroup"/>
       <a href="<c:out value="${url}"/>">Setup Uber Mixed Group</a></li>
 </ul>
 
-<c:url var="url" value="/admin/TestControl.jsp?mode=sendNewPlatform"/>
+<c:url var="url" value="/admin/test/control.jsp?mode=sendNewPlatform"/>
 Send New Platform Inventory Report
 <form action="<c:out value="${url}"/>" method="get">
    <input type="hidden" name="mode" value="sendNewPlatform"/>
@@ -231,25 +231,25 @@ Send New Platform Inventory Report
 <h2>Measurement</h2>
 
 <ul>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=calculateAutoBaselines"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=calculateAutoBaselines"/>
       <a href="<c:out value="${url}"/>">Calculate Auto Baselines</a></li>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=sendTestMeasurementReport"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=sendTestMeasurementReport"/>
       <a href="<c:out value="${url}"/>">Send Measurement Report</a></li>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=addProblemResource"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=addProblemResource"/>
       <a href="<c:out value="${url}"/>">Add problem Resource</a></li>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=setAgentCurrentlyScheduledMetrics&v=100"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=setAgentCurrentlyScheduledMetrics&v=100"/>
       <a href="<c:out value="${url}"/>">Set RHQ Agent 'CurrentlyScheduleMetrics' to 100</a></li>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=setAgentCurrentlyScheduledMetrics&v=50"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=setAgentCurrentlyScheduledMetrics&v=50"/>
       <a href="<c:out value="${url}"/>">Set RHQ Agent 'CurrentlyScheduleMetrics' to 50</a></li>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=checkForSuspectAgents"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=checkForSuspectAgents"/>
       <a href="<c:out value="${url}"/>">Check For Suspect Agents</a></li>
-  <li><c:url var="url" value="/admin/TestControl.jsp?mode=dataPurgeJob"/>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=dataPurgeJob"/>
       <a href="<c:out value="${url}"/>">Force Data Purge Now</a></li>
 </ul>
 
 <h2>Alerts</h2>
 
-<c:url var="url" value="/admin/TestControl.jsp?mode=cloneAlertTemplate"/>
+<c:url var="url" value="/admin/test/control.jsp?mode=cloneAlertTemplate"/>
 Template Cloning
 <form action="<c:out value="${url}"/>" method="get">
    <input type="hidden" name="mode" value="cloneAlertTemplate"/>
@@ -262,7 +262,7 @@ Template Cloning
 
 <h2>Utilities</h2>
 <ul>
-   <li><c:url var="url" value="/admin/TestControl.jsp?mode=startStats"/>
+   <li><c:url var="url" value="/admin/test/control.jsp?mode=startStats"/>
       <a href="<c:out value="${url}"/>">Start Hibernate Statistics Collection</a></li>
 </ul>
 

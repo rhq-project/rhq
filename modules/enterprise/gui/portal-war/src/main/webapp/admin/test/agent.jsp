@@ -73,7 +73,7 @@ The sendThrottled field determines if you want to throttle the messages that are
    }
 %>
 
-<form action="TestAgentComm.jsp" method="get">
+<form action="agent.jsp" method="get">
    <table border="1">
    <tr><td>Agent Name: </td><td><input name="agentName" type="text" size="40" value="<%= agentName %>" /></td></tr>
    <tr><td>Agent Host: </td><td><input name="agentHost" type="text" size="40" value="<%= agentHost %>" /></td></tr>

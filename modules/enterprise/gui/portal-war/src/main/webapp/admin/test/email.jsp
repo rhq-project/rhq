@@ -68,7 +68,7 @@
          }
       %>
       
-      <form action="TestEmail.jsp" method="get">
+      <form action="email.jsp" method="get">
          <table border="1">
             <tr><td>Recipient Addresses: </td><td><input name="to" type="text" size="100" value="<%= toAddresses %>" /></td></tr>
             <tr><td>Message Subject: </td><td><input name="subject" type="text" size="100" value="<%= messageSubject %>" /></td></tr>

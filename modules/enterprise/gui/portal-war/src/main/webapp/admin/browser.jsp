@@ -33,6 +33,8 @@
     </head>
     <body>
 
+    <jsp:include page="/admin/include/adminTestLinks.html" flush="true" />
+
     <%
        boolean isAdmin = LookupUtil.getAuthorizationManager().isSystemSuperuser(SessionUtils.getWebUser(session).getSubject());
        if (!isAdmin) {

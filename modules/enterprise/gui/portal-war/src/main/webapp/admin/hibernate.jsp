@@ -30,6 +30,8 @@
 <head><title>JPQL Translation and Execution Tool</title></head>
 <body>
 
+<jsp:include page="/admin/include/adminTestLinks.html" flush="true" />
+
 <%!
     public static final String ENTITY_MANAGER_FACTORY_JNDI = "java:/RHQEntityManagerFactory";
     public static final int MAX_ROWS = 100;

@@ -18,6 +18,8 @@
    </head>
    <body>
 
+      <jsp:include page="/admin/include/adminTestLinks.html" flush="true" />
+
       <h1>Testing RHQ Email Configuration</h1>
    
       <p>

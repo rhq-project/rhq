@@ -33,15 +33,7 @@
 <head><title>RHQ Test Control Page</title></head>
 <body>
 
-<ul>
-<li>[<a href="/Dashboard.do">Go to Dashboard</a>]</li>
-<li>[<a href="browser.jsp">Want to Browse Domain Entities?</a>]</li>
-<li>[<a href="sql.jsp">Want to Execute SQL?</a>]</li>
-<li>[<a href="hibernate.jsp">Want to Execute JPQL/ Hibernate HQL?</a>]</li>
-<li>[<a href="TestEmail.jsp">Want to test EMail Config?</a>]</li>
-</ul>
-
-<hr>
+<jsp:include page="/admin/include/adminTestLinks.html" flush="true" />
 
 <%
    CoreTestLocal coreTestBean;

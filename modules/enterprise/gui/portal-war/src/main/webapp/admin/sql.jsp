@@ -298,6 +298,7 @@ try {
 </head>
 <body>
 
+<jsp:include page="/admin/include/adminTestLinks.html" flush="true" />
 
 <font face="Verdana,Arial,Helvetica" size="-2">
 <b><%=results.toString()%></b>

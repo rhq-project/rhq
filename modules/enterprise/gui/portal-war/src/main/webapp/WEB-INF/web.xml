@@ -205,9 +205,13 @@
    <!-- The Authentication Filter to support our custom login stuff -->
    <filter>
       <filter-name>Authentication-Filter</filter-name>
-      <filter-class>
-         org.rhq.enterprise.gui.legacy.AuthenticationFilter
-      </filter-class>
+      <filter-class>org.rhq.enterprise.gui.legacy.AuthenticationFilter</filter-class>
+   </filter>
+   <!-- The Admin-User-Filter ensures only administrators (not just authenticated users) access certain resources,
+        depends on the Authentication-Filter coming earlier in the chain -->
+   <filter>
+      <filter-name>Admin-User-Filter</filter-name>
+      <filter-class>org.rhq.enterprise.gui.legacy.AdminUserFilter</filter-class>
    </filter>
    <filter-mapping>
       <filter-name>Authentication-Filter</filter-name>
@@ -219,6 +223,10 @@
    </filter-mapping>
    <filter-mapping>
       <filter-name>Authentication-Filter</filter-name>
+      <url-pattern>/admin/test/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Admin-User-Filter</filter-name>
       <url-pattern>/admin/test/*</url-pattern>
    </filter-mapping>
 

@@ -245,14 +245,7 @@ StringBuffer continueonerrBuf = null;
 boolean isAdmin = true;
 
 try {
-    // Before doing anything, check for admin permissions
     if (ctx == null) initCtx();
-    if (!LookupUtil.getAuthorizationManager().isSystemSuperuser(SessionUtils.getWebUser(session).getSubject())) // no one but rhqadmin can view this page
-    {
-       isAdmin = false;
-       out.println("<b>You do not have the necessary access privileges to view this page</b>");
-       return;
-    }
 
     if ( request.getParameter("ok") != null ) {
         continueonerrBuf = new StringBuffer("");

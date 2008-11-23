@@ -21,14 +21,6 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-<%
-    boolean isAdmin = LookupUtil.getAuthorizationManager().isSystemSuperuser(SessionUtils.getWebUser(session).getSubject());
-    if (!isAdmin) {
-      out.println("<b>You do not have the necessary access privileges to view this page</b>");
-      return;
-    }
-%>
-
 <html>
 <head><title>RHQ Test Control Page</title></head>
 <body>

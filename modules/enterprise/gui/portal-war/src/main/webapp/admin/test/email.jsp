@@ -27,14 +27,7 @@
       is correct and can send emails successfully.
       </p>
       
-      <%
-         boolean isAdmin = LookupUtil.getAuthorizationManager().isSystemSuperuser(SessionUtils.getWebUser(session).getSubject());
-         if (!isAdmin)
-         {
-           out.println("<b>You do not have the necessary access privileges to view this page</b>");
-            return;
-         }
-   
+      <%   
          String  toAddresses      = request.getParameter("to");
          String  messageSubject   = request.getParameter("subject");
          String  messageBody      = request.getParameter("body");

@@ -35,14 +35,6 @@
 
     <jsp:include page="/admin/include/adminTestLinks.html" flush="true" />
 
-    <%
-       boolean isAdmin = LookupUtil.getAuthorizationManager().isSystemSuperuser(SessionUtils.getWebUser(session).getSubject());
-       if (!isAdmin) {
-         out.println("<b>You do not have the necessary access privileges to view this page</b>");
-         return;
-       }
-    %>
-
     <h1>Entity browser</h1>
     ${param.entityClass}
 

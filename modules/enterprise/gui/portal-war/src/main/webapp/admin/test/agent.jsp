@@ -40,13 +40,6 @@ The sendThrottled field determines if you want to throttle the messages that are
 </p>
 
 <%
-   boolean isAdmin = LookupUtil.getAuthorizationManager().isSystemSuperuser(SessionUtils.getWebUser(session).getSubject());
-   if (!isAdmin)
-   {
-      out.println("<b>You do not have the necessary access privileges to view this page</b>");
-      return;
-   }
-
    String  agentName       = request.getParameter("agentName");
    String  agentHost       = request.getParameter("agentHost");
    String  agentPort       = request.getParameter("agentPort");

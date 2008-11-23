@@ -21,16 +21,18 @@ package org.rhq.enterprise.gui.legacy;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.auth.SessionManager;
@@ -42,9 +44,8 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public final class AuthenticationFilter extends BaseFilter {
-    private static Log log = LogFactory.getLog(AuthenticationFilter.class.getName());
 
-    private FilterConfig filterConfig;
+    private static Log log = LogFactory.getLog(AuthenticationFilter.class);
 
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException,
@@ -91,7 +92,7 @@ public final class AuthenticationFilter extends BaseFilter {
                 // forwarded to the originally requested page after authorization
                 Map parameters = request.getParameterMap();
                 if (!parameters.isEmpty()) {
-                    Map<String,String> newMap = new HashMap<String,String>();
+                    Map<String, String> newMap = new HashMap<String, String>();
                     for (Object keyObj : parameters.keySet()) {
                         String key = (String) keyObj;
                         newMap.put(key, request.getParameter(key));
@@ -132,9 +133,4 @@ public final class AuthenticationFilter extends BaseFilter {
         }
     }
 
-    @Override
-    public void init(FilterConfig filterConfig) {
-        super.init(filterConfig);
-        this.filterConfig = filterConfig;
-    }
 }

@@ -55,7 +55,7 @@
       <tiles:put name="location" beanName="location"/>
    </tiles:insert>
 
-   <div id="content-full" class="brandBackground">
+   <div id="content-full">
 	   <div id="Breadcrumb">
 	      <tiles:insert attribute="breadcrumb">
 	         <tiles:put name="location" beanName="location"/>
@@ -64,6 +64,5 @@
 	   <tiles:insert attribute='body'/>
    </div>
 
-   <!--<tiles:insert attribute="footer"/>-->
    </body>
 </html:html>

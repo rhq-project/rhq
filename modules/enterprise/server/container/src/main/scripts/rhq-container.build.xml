@@ -118,7 +118,7 @@
            toDir="${jboss.deploy.dir}/jbossws.sar" verbose="true" />
 
     <echo>Installing patched hibernate jar ...</echo>
-    <copy file="${settings.localRepository}/hibernate/hibernate3/3.2.r14201-1/hibernate3-3.2.r14201-1.jar"
+    <copy file="${settings.localRepository}/hibernate/hibernate3/3.2.r14201-2/hibernate3-3.2.r14201-2.jar"
           tofile="${jboss.home}/server/default/lib/hibernate3.jar" verbose="true"/>
 
     <property name="jboss.lib.dir" location="${jboss.home}/server/default/lib" />

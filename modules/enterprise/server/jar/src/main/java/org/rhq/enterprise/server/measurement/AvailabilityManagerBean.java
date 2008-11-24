@@ -341,7 +341,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
 
             int count = 0;
             for (Availability reported : report.getResourceAvailability()) {
-                if ((count++ % 100) == 0) {
+                if ((++count % 100) == 0) {
                     entityManager.flush();
                     entityManager.clear();
                 }

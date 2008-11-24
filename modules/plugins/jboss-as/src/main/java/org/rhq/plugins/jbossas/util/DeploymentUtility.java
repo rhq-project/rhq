@@ -275,6 +275,52 @@ public class DeploymentUtility {
         return retDeploymentInformationMap;
     }
 
+    /**
+     * Return the path where the passed objectnames are deployed
+     * @param connection 
+     * @param fileNames The objectNames of the EAR files we are interested in
+     * @return a Map with objectname as key and path as value. This map may be empty on error.
+     */
+    public static Map<String,String> getEarDeploymentPath(EmsConnection connection, List<String> fileNames) {
+
+        Collection deploymentInfos =null;
+        String separator = System.getProperty("file.separator");
+        boolean isOnWin = separator.equals("\\");
+        Map<String,String> results = new HashMap<String,String>(fileNames.size());
+
+        try {
+            // Get the list of deployed modules
+            deploymentInfos = getDeploymentInformations(connection);
+            for (Object sdi : deploymentInfos) {
+                String file = getFieldValue(sdi, "url", URL.class).toString();
+
+                // loop over the input, find the matchin entry and add to the results.
+                for (String earName : fileNames) {
+
+                    if (!file.endsWith(earName))
+                        continue;
+
+                    if (file.startsWith("file:/")) {
+                       if (isOnWin) {
+                          file = file.substring(6);
+                          // listDeployed() always delivers / as path separator, so we need to correct this.
+                          File tmp = new File(file);
+                          file = tmp.getCanonicalPath();
+                       }
+                       else
+                          file = file.substring(5);
+                    }
+                    results.put(earName,file);
+                }
+            }
+        }
+        catch (Exception e) {
+            return new HashMap<String,String>();
+        }
+
+        return results;
+    }
+
     public static boolean isDuplicateJndiName(EmsConnection connection, String mbeanType, String jndiName) {
         if ((jndiName != null) && (mbeanType != null)) {
             String name = mbeanType + ",name=" + jndiName;

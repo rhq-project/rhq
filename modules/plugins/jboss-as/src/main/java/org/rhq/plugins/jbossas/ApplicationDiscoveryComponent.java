@@ -22,20 +22,27 @@
   */
  package org.rhq.plugins.jbossas;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.util.HashSet;
-import java.util.Set;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.inventory.ApplicationServerComponent;
-import org.rhq.plugins.jmx.JMXComponent;
-import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
+ import java.io.File;
+ import java.io.FilenameFilter;
+ import java.util.ArrayList;
+ import java.util.HashSet;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Set;
 
-/**
+ import org.mc4j.ems.connection.EmsConnection;
+
+ import org.rhq.core.domain.configuration.Configuration;
+ import org.rhq.core.domain.configuration.PropertySimple;
+ import org.rhq.core.domain.resource.ResourceType;
+ import org.rhq.core.pluginapi.inventory.ApplicationServerComponent;
+ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+ import org.rhq.plugins.jbossas.util.DeploymentUtility;
+ import org.rhq.plugins.jmx.JMXComponent;
+ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
+
+ /**
  * Discovery component used to discover both enterprise and web applications.
  *
  * @author Jason Dobies
@@ -50,12 +57,24 @@ public class ApplicationDiscoveryComponent extends MBeanResourceDiscoveryCompone
         // JMX resources don't set the filename property, so munge them before going on
         JMXComponent parentComponent = context.getParentResourceComponent();
         ApplicationServerComponent applicationServerComponent = (ApplicationServerComponent) parentComponent;
+        EmsConnection emsConnection = parentComponent.getEmsConnection();
         String deployDirectoryPath = generateDeployDirectory(applicationServerComponent.getConfigurationPath().getPath());
+
+        List<String> earNames = new ArrayList<String>();
+        for (DiscoveredResourceDetails jmxResource : jmxResources) {
+            earNames.add(jmxResource.getResourceName());
+        }
+        Map<String,String> pathMap = DeploymentUtility.getEarDeploymentPath(emsConnection,earNames);
 
         for (DiscoveredResourceDetails jmxResource : jmxResources) {
             Configuration pluginConfiguration = jmxResource.getPluginConfiguration();
+            String path;
+            if (pathMap.containsKey(jmxResource.getResourceName()))
+                path = pathMap.get(jmxResource.getResourceName());
+            else
+                path = deployDirectoryPath + jmxResource.getResourceName(); // Fallback, just in case
             pluginConfiguration
-                .put(new PropertySimple("filename", deployDirectoryPath + jmxResource.getResourceName()));
+                .put(new PropertySimple("filename", path));
         }
 
         // Find all deployed but unstarted applications

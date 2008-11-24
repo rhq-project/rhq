@@ -41,6 +41,7 @@ import org.jboss.metatype.api.types.GenericMetaType;
 import org.jboss.metatype.api.types.CollectionMetaType;
 import org.jboss.metatype.api.types.MapCompositeMetaType;
 import org.jboss.metatype.api.types.SimpleMetaType;
+import org.jboss.metatype.api.types.CompositeMetaType;
 import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.values.CompositeValue;
 import org.jboss.metatype.api.values.SimpleValue;
@@ -256,6 +257,12 @@ public class ConversionUtils
                 {
                     PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaValue);
                     propertyAdapter.populateMetaValueFromProperty(property, metaValue, propertyDefinition);
+
+                    // TODO: This is a workaround for https://jira.jboss.org/jira/browse/JBAS-6188.
+                    if ((metaValue instanceof SimpleValueSupport && ((SimpleValue)metaValue).getValue() == null) ||
+                        (metaValue instanceof EnumValueSupport && ((EnumValue)metaValue).getValue() == null))
+                        managedProperty.setValue(null);
+
                 }
                 else
                 {
@@ -273,10 +280,6 @@ public class ConversionUtils
                             + " to MetaValue with type " + metaType + "...");
                     metaValue = propertyAdapter.convertToMetaValue(property, propertyDefinition, metaType);
                     managedProperty.setValue(metaValue);
-
-                    // TODO: This is a workaround for https://jira.jboss.org/jira/browse/JBAS-6188.
-                    if (metaValue == null)
-                        managedProperties.remove(propName);
                 }
             }
         }
@@ -403,7 +406,8 @@ public class ConversionUtils
         return null;
     }
 
-    public static void convertManagedOperationResults(ManagedOperation operation, MetaValue result, Configuration complexResults, ResourceType resourceType)
+    public static void convertManagedOperationResults(ManagedOperation operation, MetaValue resultMetaValue,
+                                                      Configuration complexResults, ResourceType resourceType)
     {
         OperationDefinition operationDefinition = getOperationDefinition(resourceType, operation.getName());
         if (operationDefinition == null) {
@@ -411,27 +415,50 @@ public class ConversionUtils
                     + ", so no results can be reported.");
             return;
         }
-        ConfigurationDefinition resultDefinition = operationDefinition.getResultsConfigurationDefinition();
-        if (resultDefinition != null)
+        ConfigurationDefinition resultConfigDef = operationDefinition.getResultsConfigurationDefinition();
+        if (resultConfigDef != null)
         {
-            Map<String, PropertyDefinition> resultPropertyDefinitions = resultDefinition.getPropertyDefinitions();
-            PropertyDefinition propertyDefinition = null;
-            // There should and must be only one definition to map to the results from the Profile Service,
-            // otherwise there will be a huge mismatch
-            for (PropertyDefinition definition : resultPropertyDefinitions.values())
-            {
-                propertyDefinition = definition;
-            }
-
-            MetaType type = operation.getReturnType();
-            PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(type);
-
-            if (propertyDefinition != null)
-            {
-                Property property = propertyAdapter.convertToProperty(result, propertyDefinition);
-                complexResults.put(property);
-            }
+            Map<String, PropertyDefinition> resultPropDefs = resultConfigDef.getPropertyDefinitions();
+            if (resultPropDefs.isEmpty())
+                return;
+            // There should and must be only one property definition to map to the results from the Profile Service,
+            // otherwise there will be a huge mismatch.
+            if (resultPropDefs.size() > 1)
+                LOG.error("Operation [" + operationDefinition.getName()
+                        + "] is defined with multiple result properties: " + resultPropDefs.values());
+            PropertyDefinition resultPropDef = resultPropDefs.values().iterator().next();
+            MetaType resultMetaType = operation.getReturnType();
+            if (!instanceOf(resultMetaValue, resultMetaType))
+                LOG.debug("Profile Service Error: Result type (" + resultMetaType + ") of [" + operation.getName()
+                        + "] ManagedOperation does not match the type of the value returned by invoke() (" 
+                        + resultMetaValue + ").");
+            PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(resultMetaValue);
+            Property resultProp = propertyAdapter.convertToProperty(resultMetaValue, resultPropDef);
+            complexResults.put(resultProp);
         }
+    }
+
+    private static boolean instanceOf(MetaValue metaValue, MetaType metaType) {
+        MetaType valueType = metaValue.getMetaType();
+        if (valueType.isSimple() && metaType.isSimple())
+            return true;
+        else if (valueType.isSimple() && metaType.isSimple())
+            return true;
+        else if (valueType.isEnum() && metaType.isEnum())
+            return true;
+        else if (valueType.isCollection() && metaType.isCollection())
+            return true;
+        else if (valueType.isArray() && metaType.isArray())
+            return true;
+        else if (valueType.isComposite() && metaType.isComposite()) {
+            return (valueType instanceof MapCompositeMetaType && metaType instanceof MapCompositeMetaType) ||
+                   (!(valueType instanceof CompositeMetaType) && !(metaType instanceof CompositeMetaType));
+        } else if (valueType.isGeneric() && metaType.isGeneric())
+            return true;
+        else if (valueType.isTable() && metaType.isTable())
+            return true;
+        else
+            return false;
     }
 
     private static OperationDefinition getOperationDefinition(ResourceType resourceType, String operationName) {

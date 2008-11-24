@@ -24,6 +24,9 @@ package org.rhq.plugins.jbossas5.adapter.impl.configuration;
 
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.jboss.metatype.api.types.MetaType;
 import org.jboss.metatype.api.values.CompositeValue;
 import org.jboss.metatype.api.values.MetaValue;
@@ -45,7 +48,10 @@ import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
  * @author Mark Spritzler
  * @author Ian Springer
  */
-public abstract class AbstractPropertyMapToCompositeValueAdapter extends AbstractPropertyMapAdapter implements PropertyAdapter<PropertyMap, PropertyDefinitionMap> {
+public abstract class AbstractPropertyMapToCompositeValueAdapter extends AbstractPropertyMapAdapter
+        implements PropertyAdapter<PropertyMap, PropertyDefinitionMap> {
+    private final Log log = LogFactory.getLog(this.getClass());
+
     public void populateMetaValueFromProperty(PropertyMap propMap, MetaValue metaValue, PropertyDefinitionMap propDefMap) {
         CompositeValue compositeValue = (CompositeValue)metaValue;
         for (String mapMemberPropName : propMap.getMap().keySet()) {
@@ -80,9 +86,15 @@ public abstract class AbstractPropertyMapToCompositeValueAdapter extends Abstrac
                 if (mapMemberPropDef != null)
                     mapMemberProp = propertyAdapter.convertToProperty(mapMemberMetaValue, mapMemberPropDef);
                 else {
-                    // If the member prop has no associated prop def, this is probably an "open map".
+                    // If the member prop has no associated prop def, this is an "open map".
+                    if (!mapMemberMetaType.isSimple() && !mapMemberMetaType.isEnum()) {
+                        log.debug("Map member prop [" + mapMemberMetaType + "] is not a simple type - skipping...");
+                        continue;
+                    }
+                    // Create a PropertySimple and populate it.
                     mapMemberProp = new PropertySimple(mapMemberPropName, null);
-                    // Populate the member prop.
+                    // NOTE: It's ok that the propDef is null - PropertySimple*Adapter.populatePropertyFromMetaValue()
+                    //       doesn't use it for anything.
                     propertyAdapter.populatePropertyFromMetaValue(mapMemberProp, mapMemberMetaValue, mapMemberPropDef);
                 }
                 propMap.put(mapMemberProp);

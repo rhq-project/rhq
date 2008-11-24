@@ -2,16 +2,23 @@
 
 <!DOCTYPE plugin [
 
-<!ENTITY datasourceOperations '
-    <operation name="flush" displayName="Flush" description="Flush the connections in the pool"/>
-    <operation name="listFormattedSubPoolStatistics" displayName="List Formatted Sub Pool Statistics" description="Obtain a formatted statistics report">
+<!ENTITY datasourceAndConnectionFactoryOperations '
+    <operation name="flush" displayName="Flush"
+               description="Flush the connections in the pool"/>
+
+    <operation name="listFormattedSubPoolStatistics" displayName="List Formatted Sub Pool Statistics"
+               description="Obtain a formatted statistics report">
+        <parameters>
+            <c:simple-property required="false" name="formatClassName" description="The StatisticsFormatter class name"/>
+        </parameters>
         <results>
-            <c:simple-property name="result"/>
+            <c:simple-property name="result" type="longString"/>
         </results>
     </operation>
+
     <operation name="listStatistics" displayName="List Statistics" description="Obtain a statistics report">
         <results>
-            <c:simple-property name="result"/>
+            <c:map-property name="result"/>
         </results>
     </operation>
 '>
@@ -758,7 +765,7 @@
                 </c:group>
             </plugin-configuration>
 
-            &datasourceOperations;
+            &datasourceAndConnectionFactoryOperations;
 
             &datasourceMetrics;
 
@@ -830,7 +837,7 @@
                 </c:group>
             </plugin-configuration>
 
-            &datasourceOperations;
+            &datasourceAndConnectionFactoryOperations;
 
             &datasourceMetrics;
 
@@ -905,7 +912,7 @@
                 </c:group>
             </plugin-configuration>
 
-            &datasourceOperations;
+            &datasourceAndConnectionFactoryOperations;
 
             &datasourceMetrics;
 
@@ -1074,23 +1081,8 @@
                 </c:group>
             </plugin-configuration>
 
-            <operation name="flush" displayName="Flush" description="Flush the connections in the pool"/>
-
-            <operation name="listFormattedSubPoolStatistics" displayName="List Formatted Sub Pool Statistics" description="Obtain a formatted statistics report">
-                <parameters>
-                    <c:simple-property required="false" name="formatClassName" description="The StatisticsFormatter class name"/>
-                </parameters>
-                <results>
-                    <c:simple-property name="result"/>
-                </results>
-            </operation>
-
-            <operation name="listStatistics" displayName="List Statistics" description="Obtain a statistics report">
-                <results>
-                    <c:simple-property name="result"/>
-                </results>
-            </operation>
-
+            &datasourceAndConnectionFactoryOperations;
+            
             <!-- Traits -->
             <metric property="poolJndiName" displayType="summary" displayName="Pool Jndi Name" defaultOn="true"
                     defaultInterval="600000" dataType="trait" category="performance"/>

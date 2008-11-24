@@ -196,18 +196,10 @@ public class MetadataConversionUtils {
     private static ConfigurationDefinition convertResultToConfigurationDefinition(ManagedOperation operation)
     {
         MetaType returnType = operation.getReturnType();
-        if (returnType.getClassName().equals(Void.class.getName())) {
-            return null;
-        }
-        PropertyDefinition propDef;
-        if (returnType.isArray() || returnType.isCollection()) {
-            propDef = convertMetaTypeToPropertyDefinitionList(returnType, "result");
-        } else {
-            PropertySimpleType propType = convertClassToPropertySimpleType(returnType.getClassName());
-            propDef = new PropertyDefinitionSimple("result", null, true, propType);
-        }
-        propDef.setDisplayName(StringUtils.deCamelCase(propDef.getName()));
-        ConfigurationDefinition configDef = new ConfigurationDefinition(operation.getName(), null);
+        if (returnType.getClassName().equals(Void.class.getName()))
+            return null;        
+        PropertyDefinition propDef = convertMetaTypeToPropertyDefinition(returnType, "result");
+        ConfigurationDefinition configDef = new ConfigurationDefinition(operation.getName(), operation.getDescription());
         configDef.put(propDef);
         return configDef;
     }

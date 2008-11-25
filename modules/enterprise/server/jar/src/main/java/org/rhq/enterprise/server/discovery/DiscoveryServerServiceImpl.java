@@ -87,7 +87,8 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         AvailabilityReportSerializer.getSingleton().lock(availabilityReport.getAgentName());
         try {
             String reportToString = availabilityReport.toString(false);
-            log.debug("Processing " + reportToString);
+            if (log.isDebugEnabled())
+                log.debug("Processing " + reportToString);
 
             long start = System.currentTimeMillis();
             AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();

@@ -113,6 +113,8 @@ import org.rhq.enterprise.server.perspective.PerspectiveManagerBean;
 import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
 import org.rhq.enterprise.server.resource.ProductVersionManagerBean;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerBean;
+import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceBossBean;
 import org.rhq.enterprise.server.resource.ResourceBossLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerBean;
@@ -359,6 +361,10 @@ public final class LookupUtil {
         return lookupLocal(ResourceManagerBean.class);
     }
 
+    public static ResourceAvailabilityManagerLocal getResourceAvailabilityManager() {
+        return lookupLocal(ResourceAvailabilityManagerBean.class);
+    }
+
     public static ResourceFactoryManagerLocal getResourceFactoryManager() {
         return lookupLocal(ResourceFactoryManagerBean.class);
     }
@@ -430,8 +436,7 @@ public final class LookupUtil {
         return jonServer;
     }
 
-    private static <T> String getLocalJNDIName(@NotNull
-    Class<? super T> beanClass) {
+    private static <T> String getLocalJNDIName(@NotNull Class<? super T> beanClass) {
         return (embeddedDeployment ? "" : (RHQConstants.EAR_NAME + "/")) + beanClass.getSimpleName() + "/local";
     }
 
@@ -442,8 +447,7 @@ public final class LookupUtil {
      *
      * @return JNDI name that the remote interface is registered as
      */
-    private static <T> String getRemoteJNDIName(@NotNull
-    Class<? super T> beanClass) {
+    private static <T> String getRemoteJNDIName(@NotNull Class<? super T> beanClass) {
         return (embeddedDeployment ? "" : (RHQConstants.EAR_NAME + "/")) + beanClass.getSimpleName() + "/remote";
     }
 

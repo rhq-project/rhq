@@ -872,7 +872,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @OrderBy("startTime")
     private List<Availability> availability;
 
-    @OneToOne(mappedBy = "resource", cascade = { CascadeType.PERSIST }, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "resource", cascade = { CascadeType.PERSIST, CascadeType.REMOVE }, fetch = FetchType.LAZY)
     private ResourceAvailability currentAvailability;
 
     // bulk delete @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE })
@@ -1539,7 +1539,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     }
 
     // this should only ever be called once, during initial persistence
-    private void initCurrentAvailability() {
+    public void initCurrentAvailability() {
         this.currentAvailability = new ResourceAvailability(this, null);
     }
 }

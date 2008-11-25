@@ -80,5 +80,5 @@ public interface ResourceAvailabilityManagerLocal {
      * 
      * @param agentId the id of the agent
      */
-    void markResourcesDownForAgent(int agentId);
+    void updateAllResourcesAvailabilitiesForAgent(int agentId, AvailabilityType availabilityType);
 }

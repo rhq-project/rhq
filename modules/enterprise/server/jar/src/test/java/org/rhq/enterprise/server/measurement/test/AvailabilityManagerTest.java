@@ -35,12 +35,14 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityPoint;
+import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -58,6 +60,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     private static final AvailabilityType DOWN = AvailabilityType.DOWN;
 
     private AvailabilityManagerLocal availabilityManager;
+    private ResourceAvailabilityManagerLocal resourceAvailabilityManager;
     private ResourceManagerLocal resourceManager;
 
     private Subject overlord;
@@ -74,6 +77,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             prepareScheduler();
 
             this.availabilityManager = LookupUtil.getAvailabilityManager();
+            this.resourceAvailabilityManager = LookupUtil.getResourceAvailabilityManager();
             this.resourceManager = LookupUtil.getResourceManager();
             this.overlord = LookupUtil.getSubjectManager().getOverlord();
         } catch (Throwable t) {
@@ -133,6 +137,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
         try {
             setupResource(em);
+            commitAndClose(em);
 
             Availability aThen = new Availability(theResource, then, AvailabilityType.UP);
             aThen.setEndTime(middle);
@@ -142,10 +147,10 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             Availability aNow = new Availability(theResource, now, AvailabilityType.UP);
 
-            em.persist(aThen);
-            em.persist(aMiddle);
-            em.persist(aNow);
-            commitAndClose(em);
+            persistAvailability(aThen);
+            persistAvailability(aMiddle);
+            persistAvailability(aNow);
+
             em = beginTx();
 
             int purged = availabilityManager.purgeAvailabilities(new Long(now.getTime() - 29999)); // keeps aMiddle and aNow
@@ -329,13 +334,12 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
         try {
             setupResource(em);
+            commitAndClose(em);
+            em = null;
 
             // setAllAgentResourceAvails will only operate on those that have at least 1 avail row
             Availability avail = new Availability(theResource, new Date(), null);
-            em.persist(avail);
-
-            commitAndClose(em);
-            em = null;
+            persistAvailability(avail);
 
             assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == null;
             availabilityManager.setAllAgentResourceAvailabilities(theAgent.getId(), UP);
@@ -460,9 +464,29 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             for (int i = 0; i < 100; i++) {
                 allResources.add(setupAnotherResource(em, i));
             }
+            em.flush();
 
             commitAndClose(em);
             em = null;
+
+            for (Resource res : allResources) {
+                int resId = res.getId();
+                Availability currentAvailability = availabilityManager.getCurrentAvailabilityForResource(overlord,
+                    resId);
+                assert currentAvailability != null : "Current Availability was null for " + resId;
+                assert currentAvailability.getAvailabilityType() == null : "Current AvailabilityType should have been null for "
+                    + resId;
+
+                List<Availability> allData = availabilityManager.findAvailabilityWithinInterval(resId, new Date(0),
+                    new Date(Long.MAX_VALUE));
+                assert allData != null : "All availabilities was null for " + resId;
+                assert allData.size() == 0 : "All availabilities size was " + allData.size() + " for " + resId;
+
+                ResourceAvailability currentResAvail = resourceAvailabilityManager.getLatestAvailability(resId);
+                assert currentResAvail != null : "Current ResourceAvailability was null for " + resId;
+                assert currentResAvail.getAvailabilityType() == null : "Current ResourceAvailabilityType should have been null for "
+                    + resId;
+            }
 
             // let's pretend we haven't heard from the agent in a few minutes
             em = beginTx();
@@ -661,59 +685,32 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             commitAndClose(em);
             em = null;
 
-            Availability avail;
             long now = System.currentTimeMillis();
 
             // add a report that says the resource is down - reports can't have the same resource in it twice,
             // so just create a size=1 report multiple times
-            AvailabilityReport report = new AvailabilityReport(false, theAgent.getName());
-            report.addAvailability(new Availability(theResource, new Date(now - 1000000), UP));
-            availabilityManager.mergeAvailabilityReport(report);
-
-            report = new AvailabilityReport(false, theAgent.getName());
-            report.addAvailability(new Availability(theResource, new Date(now - 900000), DOWN));
-            availabilityManager.mergeAvailabilityReport(report);
-
-            report = new AvailabilityReport(false, theAgent.getName());
-            report.addAvailability(new Availability(theResource, new Date(now - 800000), UP));
-            availabilityManager.mergeAvailabilityReport(report);
-
-            report = new AvailabilityReport(false, theAgent.getName());
-            report.addAvailability(new Availability(theResource, new Date(now - 50000), DOWN));
-            availabilityManager.mergeAvailabilityReport(report);
-
-            report = new AvailabilityReport(false, theAgent.getName());
-            report.addAvailability(new Availability(theResource, new Date(now - 30000), UP));
-            availabilityManager.mergeAvailabilityReport(report);
-
-            report = new AvailabilityReport(false, theAgent.getName());
-            report.addAvailability(new Availability(theResource, new Date(now), DOWN));
-            availabilityManager.mergeAvailabilityReport(report);
+            persistAvailability(new Availability(theResource, new Date(now - 1000000), UP));
+            persistAvailability(new Availability(theResource, new Date(now - 900000), DOWN));
+            persistAvailability(new Availability(theResource, new Date(now - 800000), UP));
+            persistAvailability(new Availability(theResource, new Date(now - 50000), DOWN));
+            persistAvailability(new Availability(theResource, new Date(now - 30000), UP));
+            persistAvailability(new Availability(theResource, new Date(now), DOWN));
 
             // now pretend the agent sent us a report from a previous time period - should insert this in the past
-            avail = new Availability(theResource, new Date(now - 600000), UP);
-            report = new AvailabilityReport(false, theAgent.getName());
-            report.addAvailability(avail);
-            availabilityManager.mergeAvailabilityReport(report);
+            persistAvailability(new Availability(theResource, new Date(now - 600000), UP));
 
             // its still down though - since we've received a more recent report saying it was down
             assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == DOWN;
 
-            // now pretend the agent sent us reports from inbetween our existing time periods
+            // now pretend the agent sent us reports from in between our existing time periods
             // this UP record combines with the UP we added previously
-            avail = new Availability(theResource, new Date(now - 300000), UP);
-            report = new AvailabilityReport(false, theAgent.getName());
-            report.addAvailability(avail);
-            availabilityManager.mergeAvailabilityReport(report);
+            persistAvailability(new Availability(theResource, new Date(now - 300000), UP));
 
             // its still down though - since we've received a more recent report saying it was down
             assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == DOWN;
 
             // this DOWN record combines with the current DOWN
-            avail = new Availability(theResource, new Date(now - 100000), DOWN);
-            report = new AvailabilityReport(false, theAgent.getName());
-            report.addAvailability(avail);
-            availabilityManager.mergeAvailabilityReport(report);
+            persistAvailability(new Availability(theResource, new Date(now - 100000), DOWN));
 
             // this DOWN record is between the two UPs we added earlier. However, because we are RLE,
             // we actually lost the information that we had an UP at both -60000 and -30000.  We just
@@ -721,19 +718,13 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // that will indicate we were only UP fro -60000 to -45000 and DOWN thereafter.  This is
             // an odd test and probably will never occur in the wild (why would an agent tell us
             // we were one status in the past but another status further back in the past?)
-            avail = new Availability(theResource, new Date(now - 450000), DOWN);
-            report = new AvailabilityReport(false, theAgent.getName());
-            report.addAvailability(avail);
-            availabilityManager.mergeAvailabilityReport(report);
+            persistAvailability(new Availability(theResource, new Date(now - 450000), DOWN));
 
             // its still down
             assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == DOWN;
 
             // let's insert one in the very beginning that is the same type as the current first interval
-            avail = new Availability(theResource, new Date(now - 700000), UP);
-            report = new AvailabilityReport(false, theAgent.getName());
-            report.addAvailability(avail);
-            availabilityManager.mergeAvailabilityReport(report);
+            persistAvailability(new Availability(theResource, new Date(now - 700000), UP));
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -753,6 +744,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             Availability avail;
 
             setupResource(em);
+            commitAndClose(em);
+            em = null;
 
             Calendar cal = Calendar.getInstance();
             cal.set(Calendar.YEAR, 2000);
@@ -786,29 +779,26 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             avail = new Availability(theResource, date1, AvailabilityType.UP);
             avail.setEndTime(date2);
-            em.persist(avail);
+            persistAvailability(avail);
 
             avail = new Availability(theResource, date2, AvailabilityType.DOWN);
             avail.setEndTime(date3);
-            em.persist(avail);
+            persistAvailability(avail);
 
             avail = new Availability(theResource, date3, AvailabilityType.UP);
             avail.setEndTime(date4);
-            em.persist(avail);
+            persistAvailability(avail);
 
             avail = new Availability(theResource, date4, AvailabilityType.DOWN);
             avail.setEndTime(date5);
-            em.persist(avail);
+            persistAvailability(avail);
 
             avail = new Availability(theResource, date5, AvailabilityType.UP);
             avail.setEndTime(date6);
-            em.persist(avail);
+            persistAvailability(avail);
 
             avail = new Availability(theResource, date6, AvailabilityType.DOWN);
-            em.persist(avail);
-
-            commitAndClose(em);
-            em = null;
+            persistAvailability(avail);
 
             List<AvailabilityPoint> points = availabilityManager.getAvailabilitiesForResource(overlord, theResource
                 .getId(), date1.getTime(), date6.getTime(), 5);
@@ -843,9 +833,10 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             AvailabilityReport report;
 
             setupResource(em);
-            long allAvailCount = setUpAvailabilities(em);
             commitAndClose(em);
             em = null;
+
+            long allAvailCount = setUpAvailabilities(em);
 
             // we now have 1:00 UP, 1:20 DOWN, 1:40 UP
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -919,6 +910,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             for (int i = 0; i < 100; i++) {
                 allResources.add(setupAnotherResource(em, i));
             }
+            em.flush();
 
             commitAndClose(em);
             em = null;
@@ -1155,19 +1147,32 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
         availability1 = new Availability(theResource, start, AvailabilityType.UP);
         availability1.setEndTime(splitStart);
-        em.persist(availability1);
+        persistAvailability(availability1);
 
         availability2 = new Availability(theResource, splitStart, AvailabilityType.DOWN);
         availability2.setEndTime(splitEnd);
-        em.persist(availability2);
+        persistAvailability(availability2);
 
         availability3 = new Availability(theResource, splitEnd, AvailabilityType.UP);
-        em.persist(availability3);
+        persistAvailability(availability3);
 
         long countNow = countAvailabilitiesInDB(em);
 
         assert countNow == (count + 3) : "Did not find three availabilities - instead found: " + countNow;
 
         return countNow;
+    }
+
+    /**
+     * Convenience method for persisting availability.  Availability data can no longer be directly merged
+     * by the EntityManager because it does not update the corresponding currentAvailability data on the 
+     * Resource entity.  This method will update the necessary objects for you.
+     */
+    private void persistAvailability(Availability... availabilities) {
+        AvailabilityReport report = new AvailabilityReport(false, theAgent.getName());
+        for (Availability avail : availabilities) {
+            report.addAvailability(avail);
+        }
+        availabilityManager.mergeAvailabilityReport(report);
     }
 }

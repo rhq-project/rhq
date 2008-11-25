@@ -346,15 +346,6 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
                     entityManager.clear();
                 }
 
-                // update the last known availability data for this resource
-                ResourceAvailability currentAvailability = resourceAvailabilityManager.getLatestAvailability(reported
-                    .getResource().getId());
-                if (currentAvailability.getAvailabilityType() != reported.getAvailabilityType()) {
-                    // but only update the record if necessary (if the AvailabilityType changed)
-                    currentAvailability.setAvailabilityType(reported.getAvailabilityType());
-                    entityManager.merge(currentAvailability);
-                }
-
                 // availability reports only tell us the current state at the start time - end time is ignored/must be null
                 reported.setEndTime(null);
 
@@ -373,6 +364,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
 
                             latest.setEndTime(reported.getStartTime());
                             latest = entityManager.merge(latest);
+
+                            updateResourceAvailability(reported);
                         }
 
                         // our last known state was unknown, ask for a full report to ensure we are in sync with agent
@@ -393,6 +386,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
                     }
                 } catch (NoResultException nre) {
                     entityManager.persist(reported);
+                    updateResourceAvailability(reported);
                     numInserted++;
                 } catch (NonUniqueResultException nure) {
                     // This condition should never happen.  In my world of la-la land, I've done everything
@@ -414,6 +408,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
                     for (int i = 0; i < (latestCount - 1); i++) {
                         entityManager.remove(latest.get(i));
                     }
+                    updateResourceAvailability(latest.get(latestCount - 1));
 
                     // this is an unusual report - ask the agent for a full report so as to ensure we are in sync with agent
                     askForFullReport = true;
@@ -439,6 +434,17 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         }
 
         return true; // everything is OK and things look to be in sync
+    }
+
+    private void updateResourceAvailability(Availability reported) {
+        // update the last known availability data for this resource
+        ResourceAvailability currentAvailability = resourceAvailabilityManager.getLatestAvailability(reported
+            .getResource().getId());
+        if (currentAvailability.getAvailabilityType() != reported.getAvailabilityType()) {
+            // but only update the record if necessary (if the AvailabilityType changed)
+            currentAvailability.setAvailabilityType(reported.getAvailabilityType());
+            entityManager.merge(currentAvailability);
+        }
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -493,7 +499,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
             }
         }
 
-        resourceAvailabilityManager.markResourcesDownForAgent(agentId);
+        resourceAvailabilityManager.updateAllResourcesAvailabilitiesForAgent(agentId, availabilityType);
 
         // To handle backfilling process, which will mark them down
         notifyAlertConditionCacheManager("setAllAgentResourceAvailabilities", newAvailabilities

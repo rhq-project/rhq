@@ -145,9 +145,9 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
         }
     }
 
-    public void markResourcesDownForAgent(int agentId) {
+    public void updateAllResourcesAvailabilitiesForAgent(int agentId, AvailabilityType availabilityType) {
         Query query = entityManager.createNamedQuery(ResourceAvailability.UPDATE_BY_AGENT_ID);
-        query.setParameter("availabilityType", AvailabilityType.DOWN);
+        query.setParameter("availabilityType", availabilityType);
         query.setParameter("agentId", agentId);
         query.executeUpdate();
     }

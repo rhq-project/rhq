@@ -81,6 +81,7 @@
          /WEB-INF/jsf-managed-beans/admin-beans.xml,
          /WEB-INF/jsf-managed-beans/measurement-beans.xml,
          /WEB-INF/jsf-managed-beans/operation-beans.xml,
+         /WEB-INF/jsf-managed-beans/event-beans.xml,
          /WEB-INF/jsf-managed-beans/test-beans.xml,
          
          /WEB-INF/jsf-managed-beans-definition/group-definition-beans.xml,

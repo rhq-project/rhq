@@ -5,25 +5,50 @@
       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://java.sun.com/jsf/html"
-      xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:c="http://java.sun.com/jstl/core"
-      xmlns:onc="http://jboss.org/on/component"
-      xmlns:onf="http://jboss.org/on/function"
-      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
-      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:c="http://java.sun.com/jstl/core"
+	xmlns:onc="http://jboss.org/on/component"
+	xmlns:onf="http://jboss.org/on/function"
+	xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+	xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
-<ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Events History"/>
-<ui:param name="selectedTabName" value="Events.History"/>
+	<ui:param name="pageTitle"
+		value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Events History" />
+	<ui:param name="selectedTabName" value="Events.History" />
 
-<ui:define name="content">
+	<ui:define name="content">
+		<h:form>
+			<rich:panel>
+				<f:facet name="header">
+					<h:outputText
+						value="${msg['resource.common.monitor.events.FilterBy']}" />
+				</f:facet>
+			
+				<h:outputText value="Severity:" />				
+				<h:selectOneMenu id="sevFilter" value="#{EventHistoryUIBean.sevFilter}">
+					<f:selectItem itemValue="ALL" />
+					<f:selectItem itemValue="DEBUG" />
+					<f:selectItem itemValue="INFO" />
+					<f:selectItem itemValue="WARN" />
+					<f:selectItem itemValue="ERROR" />
+					<f:selectItem itemValue="FATAL" />
+				</h:selectOneMenu>
+			
+				<h:outputText value="Source:"  />
+				<h:inputText value="#{EventHistoryUIBean.sevFilter}"/>
+			
+				<h:outputText value="Search:" />
+				<h:inputText value="#{EventHistoryUIBean.searchString}" />
+				
+			</rich:panel>
+			
+		</h:form>
 
-Not Implemented Yet
-
-</ui:define>
+	</ui:define>
 
 </ui:composition>
 

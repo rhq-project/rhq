@@ -19,11 +19,11 @@
 package org.rhq.enterprise.server.test;
 
 import java.util.List;
+
 import javax.ejb.Stateless;
-import javax.jws.WebService;
 
 @Stateless
-@WebService(endpointInterface = "org.rhq.enterprise.server.test.WebServiceTestRemote")
+// @WebService(endpointInterface = "org.rhq.enterprise.server.test.WebServiceTestRemote")
 public class WebServiceTestBean implements WebServiceTestLocal, WebServiceTestRemote {
     public String addPerson(Person p) {
         String result = "person (" + p.name.first + "," + p.name.last + ") at age " + p.age + " with phone numbers (";

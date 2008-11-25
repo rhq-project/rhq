@@ -25,10 +25,12 @@ import java.text.MessageFormat;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
 import javax.ejb.Stateless;
-import javax.jws.WebService;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.descriptor.perspective.Perspective;
 import org.rhq.core.clientapi.descriptor.perspective.Task;
 
@@ -36,7 +38,7 @@ import org.rhq.core.clientapi.descriptor.perspective.Task;
  * Implementation of PerspectiveManager functionality.
  */
 @Stateless
-@WebService(endpointInterface = "org.rhq.enterprise.server.perspective.PerspectiveManagerRemote")
+// @WebService(endpointInterface = "org.rhq.enterprise.server.perspective.PerspectiveManagerRemote")
 public class PerspectiveManagerBean implements PerspectiveManagerLocal, PerspectiveManagerRemote {
     private Log log = LogFactory.getLog(PerspectiveManagerBean.class.getName());
 

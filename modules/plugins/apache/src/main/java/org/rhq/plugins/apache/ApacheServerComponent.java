@@ -95,6 +95,7 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
     private SNMPClient snmpClient;
     private URL url;
     private ApacheBinaryInfo binaryInfo;
+    private long availPingTime = -1;
 
     /**
      * Delegate instance for handling all calls to invoke operations on this component.
@@ -112,8 +113,11 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         if (!snmpSession.ping()) {
             log.warn(
                 "Failed to connect to SNMP agent at "
-                    + snmpSession
-                    + ". Make sure 1) the managed Apache server has been instrumented with the JON SNMP module, 2) the Apache server is running, and 3) the SNMP agent host, port, and community are set correctly in this resource's connection properties.");
+                    + snmpSession + "\n"
+                    + ". Make sure\n1) the managed Apache server has been instrumented with the JON SNMP module,\n"
+                    + "2) the Apache server is running, and\n"
+                    + "3) the SNMP agent host, port, and community are set correctly in this resource's connection properties.\n"
+                    + "The agent will not be able to record metrics from apache httpd without SNMP");
         }
         else
             configured = true;
@@ -166,7 +170,15 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         //       process is running.
         boolean available;
         try {
-            available = (this.url != null) ? WWWUtils.isAvailable(this.url) : getSNMPSession().ping();
+            if (this.url != null ) {
+                long t1 = System.currentTimeMillis();
+                available = WWWUtils.isAvailable(this.url);
+                availPingTime =System.currentTimeMillis()-t1;
+            }
+            else {
+                available = getSNMPSession().ping();
+                availPingTime = -1;
+            }
         } catch (Exception e) {
             available = false;
         }
@@ -176,18 +188,23 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
         SNMPSession snmpSession = getSNMPSession();
-        if (!snmpSession.ping()) {
-            throw new Exception("Failed to connect to SNMP agent at " + snmpSession
-                + " - aborting metric collection...");
-        }
+        boolean snmpPresent = snmpSession.ping();
 
         for (MeasurementScheduleRequest schedule : schedules) {
             String metricName = schedule.getName();
             if (metricName.equals(SERVER_BUILT_TRAIT)) {
                 MeasurementDataTrait trait = new MeasurementDataTrait(schedule, this.binaryInfo.getBuilt());
                 report.addData(trait);
+            } else if (metricName.equals("rhq_avail_ping_time")) {
+                if (availPingTime == -1)
+                    continue; // Skip if we have no data
+                MeasurementDataNumeric num = new MeasurementDataNumeric(schedule, (double) availPingTime);
+                report.addData(num);
             } else {
                 // Assume anything else is an SNMP metric.
+                if (!snmpPresent)
+                    continue; // Skip this metric if no SNMP present
+
                 try {
                     //noinspection UnnecessaryLocalVariable
                     String mibName = metricName;

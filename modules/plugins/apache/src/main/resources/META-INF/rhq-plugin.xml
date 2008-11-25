@@ -25,7 +25,7 @@
          <c:simple-property name="executablePath" required="false"
                             description="the path to the Apache executable - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default value is 'bin/httpd' on UNIX or 'bin\Apache.exe' on Windows"/>
          <c:simple-property name="controlScriptPath" required="false"
-                            description="the path to the Apache control script - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'bin/apachectl' on UNIX or the Apache executable on Windows"/>         
+                            description="the path to the Apache control script - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'bin/apachectl' on UNIX or the Apache executable on Windows"/>
          <c:simple-property name="url" displayName="URL" required="false"
                             description="the http or https URL that will be used to check availability for this Apache server; if not set, availablity will be determined based on whether plugin can connect to the Apache server's SNMP agent"/>
          <c:simple-property name="snmpAgentHost" displayName="SNMP Agent Host" default="127.0.0.1"
@@ -60,7 +60,7 @@
                                               detail."/>
 
           </c:group>
-          
+
       </plugin-configuration>
 
       <!-- all httpd processes that are not child processes of another httpd process -->
@@ -133,9 +133,9 @@
             <c:simple-property name="output" type="longString" description="the control script's output (stdout and stderr interleaved)"/>
          </results>
       </operation>
-      
+
        <metric displayName="Number of Concurrent Connections" property="applInboundAssociations"
-                 defaultOn="true" defaultInterval="300000" displayType="summary" units="none"/>  
+                 defaultOn="true" defaultInterval="300000" displayType="summary" units="none"/>
 
       <!-- traits determined via "httpd -V" -->
 
@@ -148,6 +148,11 @@
       <metric displayName="Start Time" property="wwwServiceStartTime"
               description="the date and time this Apache server was last started"
               dataType="trait" defaultOn="true" displayType="summary"/>
+
+      <!-- Metric collected by pinging availability over http -->
+      <metric property="rhq_avail_ping_time" displayType="summary" units="milliseconds"
+              displayName="Time to ping the server for availability"
+              description="Time it took to ping the server for availability over http; this includes DNS lookup time."/>
 
       <event name="errorLogEntry" description="an entry in the error log file"/>
 
@@ -304,7 +309,7 @@
          <metric property="ResponseTime" displayName="HTTP Response Time"
                  dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
                  description="the minimum, maximum, and average response times for HTTP requests serviced by this virtual host"/>
-         
+
       </service>
 
    </server>

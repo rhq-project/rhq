@@ -21,6 +21,8 @@ package org.rhq.enterprise.gui.event;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.event.composite.EventComposite;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.alert.ListAlertHistoryUIBean;
 
 public class EventHistoryUIBean {
@@ -28,9 +30,19 @@ public class EventHistoryUIBean {
 
     public static final String MANAGED_BEAN_NAME = "EventHistoryUIBean";
 
+    private int id;
     private String sevFilter;
     private String sourceFilter;
     private String searchString;
+    private PageList<EventComposite> events;
+
+    public int getId() {
+        return this.id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public String getSevFilter() {
         return sevFilter;
@@ -55,4 +67,13 @@ public class EventHistoryUIBean {
     public void setSearchString(String searchString) {
         this.searchString = searchString;
     }
+
+    public PageList<EventComposite> getEvents() {
+        return events;
+    }
+
+    public void setEvents(PageList<EventComposite> events) {
+        this.events = events;
+    }
+
 }

@@ -17,19 +17,21 @@
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
 	<ui:param name="pageTitle"
-		value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Events History" />
-	<ui:param name="selectedTabName" value="Events.History" />
+	     	 value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Events History" />
+	<ui:param name="selectedTabName" 
+	         value="Events.History" />
 
 	<ui:define name="content">
 		<h:form>
+			<input type="hidden" name="id" value="${param.id}"/>
+
 			<rich:panel>
 				<f:facet name="header">
-					<h:outputText
-						value="${msg['resource.common.monitor.events.FilterBy']}" />
+					<h:outputText value="${msg['resource.common.monitor.events.FilterBy']}" />
 				</f:facet>
-			
+						
 				<h:outputText value="Severity:" />				
-				<h:selectOneMenu id="sevFilter" value="#{EventHistoryUIBean.sevFilter}">
+				<h:selectOneMenu id="sevFilter" value="#{EventHistoryUIBean.sevFilter}" onchange="this.form.submit(); return true;">
 					<f:selectItem itemValue="ALL" />
 					<f:selectItem itemValue="DEBUG" />
 					<f:selectItem itemValue="INFO" />
@@ -39,11 +41,10 @@
 				</h:selectOneMenu>
 			
 				<h:outputText value="Source:"  />
-				<h:inputText value="#{EventHistoryUIBean.sevFilter}"/>
+				<h:inputText value="#{EventHistoryUIBean.sourceFilter}"/>
 			
 				<h:outputText value="Search:" />
 				<h:inputText value="#{EventHistoryUIBean.searchString}" />
-				
 			</rich:panel>
 			
 		</h:form>

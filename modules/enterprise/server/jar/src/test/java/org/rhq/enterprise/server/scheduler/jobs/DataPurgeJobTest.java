@@ -178,11 +178,11 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             try {
                 // add alerts
                 AlertDefinition ad = newResource.getAlertDefinitions().iterator().next();
-                for (long timestamp = 0; timestamp < 200; timestamp++) {
+                for (long timestamp = 0L; timestamp < 200L; timestamp++) {
                     Alert newAlert = createNewAlert(em, ad, timestamp);
                     assert newAlert.getCtime() == timestamp : "bad alert persisted:" + newAlert;
                     assert newAlert.getId() > 0 : "alert not persisted:" + newAlert;
-                    if (timestamp % 50 == 0) {
+                    if (timestamp % 50L == 0) {
                         em.flush();
                         em.clear();
                     }
@@ -191,12 +191,12 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 em.clear();
 
                 // add availabilities
-                for (long timestamp = 0; timestamp < 2000; timestamp += 2) {
-                    Availability newAvail = createNewAvailability(em, newResource, timestamp, timestamp + 1);
+                for (long timestamp = 0L; timestamp < 2000L; timestamp += 2L) {
+                    Availability newAvail = createNewAvailability(em, newResource, timestamp, timestamp + 1L);
                     assert newAvail.getStartTime().getTime() == timestamp : "bad avail persisted:" + newAvail;
-                    assert newAvail.getEndTime().getTime() == (timestamp + 1) : "bad avail persisted:" + newAvail;
+                    assert newAvail.getEndTime().getTime() == (timestamp + 1L) : "bad avail persisted:" + newAvail;
                     assert newAvail.getId() > 0 : "avail not persisted:" + newAvail;
-                    if (timestamp % 50 == 0) {
+                    if (timestamp % 50L == 0) {
                         em.flush();
                         em.clear();
                     }
@@ -211,7 +211,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 createNewCalltimeData(newResource, 0, 1000);
 
                 // add trait data
-                createNewTraitData(newResource, 0, 100);
+                createNewTraitData(newResource, 0L, 100);
 
                 getTransactionManager().commit();
             } catch (Throwable t) {
@@ -321,7 +321,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         return;
     }
 
-    private void createNewTraitData(Resource res, int timestamp, int count) {
+    private void createNewTraitData(Resource res, long timestamp, int count) {
         MeasurementSchedule traitSchedule = null;
         for (MeasurementSchedule sched : res.getSchedules()) {
             if (sched.getDefinition().getDataType() == DataType.TRAIT) {
@@ -374,7 +374,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         mgr.addCallTimeData(dataset);
 
         PageList<CallTimeDataComposite> persistedData = mgr.getCallTimeDataForResource(LookupUtil.getSubjectManager()
-            .getOverlord(), calltimeSchedule.getId(), timestamp - 1, timestamp + count + 1, new PageControl());
+            .getOverlord(), calltimeSchedule.getId(), timestamp - 1L, timestamp + count + 1L, new PageControl());
         // just a few sanity checks
         assert persistedData.getTotalSize() == count : "did not persist all calltime data, only persisted: "
             + persistedData.getTotalSize();
@@ -395,7 +395,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         EventManagerLocal mgr = LookupUtil.getEventManager();
         mgr.addEventData(eventMap);
         PageList<EventComposite> persistedEvents = mgr.getEvents(LookupUtil.getSubjectManager().getOverlord(),
-            new int[] { res.getId() }, timestamp - 1, timestamp + count + 1, EventSeverity.DEBUG, -1, null, null,
+            new int[] { res.getId() }, timestamp - 1L, timestamp + count + 1L, EventSeverity.DEBUG, -1, null, null,
             new PageControl());
         assert persistedEvents.getTotalSize() == count : "did not persist all events, only persisted: "
             + persistedEvents.getTotalSize();

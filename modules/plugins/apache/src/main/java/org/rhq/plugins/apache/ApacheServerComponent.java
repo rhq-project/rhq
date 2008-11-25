@@ -106,14 +106,17 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         this.resourceContext = resourceContext;
         this.eventContext = resourceContext.getEventContext();
         this.snmpClient = new SNMPClient();
+        boolean configured = false;
 
         SNMPSession snmpSession = getSNMPSession();
         if (!snmpSession.ping()) {
-            throw new InvalidPluginConfigurationException(
+            log.warn(
                 "Failed to connect to SNMP agent at "
                     + snmpSession
                     + ". Make sure 1) the managed Apache server has been instrumented with the JON SNMP module, 2) the Apache server is running, and 3) the SNMP agent host, port, and community are set correctly in this resource's connection properties.");
         }
+        else
+            configured = true;
 
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String url = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_URL, null);
@@ -121,16 +124,22 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
             try {
                 this.url = new URL(url);
                 if (this.url.getPort() == 0) {
-                    throw new InvalidPluginConfigurationException(
+                    log.error(
                         "The 'url' connection property is invalid - 0 is not a valid port; please change the value to the " +
                         "port the \"main\" Apache server is listening on. NOTE: If the 'url' property was set this way " +
                         "after autodiscovery, you most likely did not include the port in the ServerName directive for " +
                         "the \"main\" Apache server in httpd.conf.");
                 }
+                else
+                    configured = true;
             } catch (MalformedURLException e) {
                 throw new InvalidPluginConfigurationException("Value of '" + PLUGIN_CONFIG_PROP_URL
                     + "' connection property ('" + url + "') is not a valid URL.");
             }
+        }
+
+        if (!configured) {
+            throw new InvalidPluginConfigurationException("Neither SNMP nor an URL for checking availability has been configured");
         }
 
         File executablePath = getExecutablePath();

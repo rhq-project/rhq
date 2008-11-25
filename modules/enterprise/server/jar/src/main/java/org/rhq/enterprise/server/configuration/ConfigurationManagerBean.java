@@ -169,6 +169,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             resource.setConnected(true);
 
             removeAnyExistingInvalidPluginConfigurationErrors(subjectManager.getOverlord(), resource);
+            // Flush before merging to ensure the update has been persisted and avoid StaleStateExceptions.
+            entityManager.flush();
+            entityManager.merge(update);
+
         } else {
             handlePluginConfiguratonUpdateRemoteException(resource, response.getStatus().toString(), response
                 .getErrorMessage());
@@ -176,10 +180,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             update.setStatus(response.getStatus());
             update.setErrorMessage(response.getErrorMessage());
         }
-
-        // Flush before merging to ensure the update has been persisted and avoid StaleStateExceptions.
-        entityManager.flush();
-        entityManager.merge(update);
     }
 
     // use requires new so that exceptions bubbling up from the agent.updatePluginConfiguration don't force callers to rollback as well

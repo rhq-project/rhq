@@ -69,7 +69,6 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataKey;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -176,10 +175,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         entityManager.persist(resource);
-
-        // there must always exist a row RHQ_RESOURCE_AVAIL for every record in RHQ_RESOURCE
-        ResourceAvailability currentAvailability = new ResourceAvailability(resource, null);
-        entityManager.persist(currentAvailability);
 
         // Execute sub-methods as overlord to bypass additional security checks.
         Subject overlord = this.subjectManager.getOverlord();

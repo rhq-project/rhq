@@ -410,24 +410,7 @@
           <trimStackTrace>false</trimStackTrace>
         </configuration>
       </plugin>
-
-      <plugin>
-         <groupId>org.codehaus.mojo</groupId>
-         <artifactId>buildnumber-maven-plugin</artifactId>                 
-         <executions>
-           <execution>
-             <phase>validate</phase>        
-             <goals>
-               <goal>create</goal>
-             </goals>
-           </execution>
-         </executions>
-         <configuration>
-           <doCheck>false</doCheck>
-           <doUpdate>false</doUpdate>
-         </configuration>
-      </plugin>
-              
+                    
       <plugin>
         <artifactId>maven-idea-plugin</artifactId>
         <version>2.1</version>
@@ -590,6 +573,44 @@
               </plugin>
             </plugins>  
           </build>             
+      </profile>
+            
+      <!--  Unless -DbuildNumber is supplied on the command line, generate the buildNumber as the SVN rev -->
+      <profile>
+         <id>build-number-generation</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>buildnumber-maven-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <phase>validate</phase>        
+                        <goals>
+                           <goal>create</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+                  <configuration>         
+                     <doCheck>false</doCheck>
+                     <doUpdate>false</doUpdate>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+      <!-- If SVN is not configured, supply -DbuildNumber manually. It should be an integer >= 0 -->      
+      <profile>
+         <id>build-number-provided</id>
+         <activation>
+            <property>
+               <name>buildNumber</name>
+            </property>
+         </activation>
       </profile>
       
   </profiles>

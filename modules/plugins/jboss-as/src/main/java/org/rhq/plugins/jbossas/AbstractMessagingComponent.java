@@ -126,6 +126,8 @@ public abstract class AbstractMessagingComponent extends MBeanResourceComponent<
         JBossASServerComponent jasco = getOurJBossASComponent();
         File deploymentFile = jasco.getDeploymentFilePath(resourceKey);
         Configuration loadedConfiguration = xmlEditor.loadConfiguration(deploymentFile, this.name);
+        if (loadedConfiguration==null)
+            return null;
         String boundJNDIName = DeploymentUtility.getJndiNameBinding(getEmsBean());
         loadedConfiguration.put(new PropertySimple("JNDIBinding", boundJNDIName));
         return loadedConfiguration;

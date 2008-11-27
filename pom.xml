@@ -575,11 +575,13 @@
           </build>             
       </profile>
             
-      <!--  Unless -DbuildNumber is supplied on the command line, generate the buildNumber as the SVN rev -->
+      <!--  use buildnumber plugin only if SVN metadata is present -->
       <profile>
          <id>build-number-generation</id>
          <activation>
-            <activeByDefault>true</activeByDefault>
+            <file>
+               <exists>.svn</exists>
+            </file>
          </activation>
          <build>
             <plugins>
@@ -593,8 +595,11 @@
                            <goal>create</goal>
                         </goals>
                      </execution>
-                  </executions>
-                  <configuration>         
+                     </executions>
+                     <configuration>
+                     <!--  use this when it becomes available      
+                     <revisionOnScmFailure>0</revisionOnScmFailure>
+                     -->   
                      <doCheck>false</doCheck>
                      <doUpdate>false</doUpdate>
                   </configuration>
@@ -603,14 +608,18 @@
          </build>
       </profile>
 
-      <!-- If SVN is not configured, supply -DbuildNumber manually. It should be an integer >= 0 -->      
+      <!-- If SVN meta data is not configured, set buildNumber to 0 -->      
       <profile>
          <id>build-number-provided</id>
          <activation>
-            <property>
-               <name>buildNumber</name>
-            </property>
+            <file>
+               <missing>.svn</missing>
+            </file>
          </activation>
+         
+         <properties>
+            <buildNumber>0</buildNumber>         
+         </properties>
       </profile>
       
   </profiles>

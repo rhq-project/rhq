@@ -375,6 +375,9 @@ public class AbstractMessagingConfigurationEditor {
     }
 
     public Configuration loadConfiguration(File file, String name) {
+        if (file==null)
+            return null;
+
         deploymentFile = file;
         try {
             SAXBuilder builder = new SAXBuilder();

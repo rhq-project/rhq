@@ -62,7 +62,10 @@
     </condition>
 
     <condition property="copy.dev.resources" value="true">
-       <equals arg1="${dev.profile.active}" arg2="true" />
+       <or>
+          <equals arg1="${dev.profile.active}" arg2="true" />
+          <equals arg1="${developer}" arg2="true" />
+       </or>
     </condition>
 
     <condition property="predeploy-postgres" value="true">

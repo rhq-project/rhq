@@ -216,15 +216,15 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
             conn = rhqDs.getConnection();
             dbType = DatabaseTypeFactory.getDatabaseType(conn);
 
-            Statement st = null;
-            try {
-                if (dbType instanceof Postgresql83DatabaseType) {
+            if (dbType instanceof Postgresql83DatabaseType) {
+                Statement st = null;
+                try {
                     // Take advantage of async commit here
                     st = conn.createStatement();
                     st.execute("SET synchronous_commit = off");
+                } finally {
+                    JDBCUtil.safeClose(st);
                 }
-            } finally {
-                JDBCUtil.safeClose(st);
             }
 
             for (MeasurementDataNumeric aData : data) {

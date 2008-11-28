@@ -143,6 +143,12 @@
       {
          DataPurgeJob.purgeNow();
       }
+      else if ("dbMaintenance".equals(mode))
+      {
+         systemManager.vacuum(subjectManager.getOverlord());
+         systemManager.reindex(subjectManager.getOverlord());
+         systemManager.analyze(subjectManager.getOverlord());
+      }
    }
    catch (Exception e)
    {
@@ -195,6 +201,8 @@ Add Lots of Users and Roles
       <a href="<c:out value="${url}"/>">Register test plugin metadata</a></li>
   <li><c:url var="url" value="/admin/test/control.jsp?mode=removeTestPluginAndTypeInfo"/>
       <a href="<c:out value="${url}"/>">Remove test plugin metadata</a></li>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=dbMaintenance"/>
+      <a href="<c:out value="${url}"/>">Perform All Database Maintenance Now</a></li>
 </ul>
 
 <h2>Cluster</h2>

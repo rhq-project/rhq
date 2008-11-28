@@ -301,10 +301,13 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
             SystemInfo systemInfo = this.resourceContext.getSystemInformation();
             if (systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) // UNIX
             {
-                if (this.binaryInfo.getVersion().startsWith("2.")) {
+                // Try some combinations in turn
+                executableFile = new File(serverRoot, "bin/httpd");
+                if (!executableFile.exists()) {
                     executableFile = new File(serverRoot, "bin/apache2");
-                } else {
-                    executableFile = new File(serverRoot, "bin/httpd");
+                }
+                if (!executableFile.exists()) {
+                    executableFile = new File(serverRoot, "bin/apache");
                 }
             } else // Windows
             {
@@ -334,10 +337,13 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
             if (systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) // UNIX
             {
                 String serverRoot = getRequiredPropertyValue(pluginConfig, PLUGIN_CONFIG_PROP_SERVER_ROOT);
-                if (this.binaryInfo.getVersion().startsWith("2.")) {
+                // Try different possibilities, as even on apache2 this is not always apache2ctl
+                controlScriptFile = new File(serverRoot, "bin/apachectl");
+                if (!controlScriptFile.exists()) {
                     controlScriptFile = new File(serverRoot, "bin/apache2ctl");
-                } else {
-                    controlScriptFile = new File(serverRoot, "bin/apachectl");
+                }
+                if (!controlScriptFile.exists()) {
+                    controlScriptFile = getExecutablePath(); // fall back to the httpd binary
                 }
             } else // Windows
             {

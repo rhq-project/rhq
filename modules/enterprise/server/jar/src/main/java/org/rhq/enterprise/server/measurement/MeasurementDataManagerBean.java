@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.measurement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,6 +55,7 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.Postgresql83DatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -207,12 +209,20 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
 
         Connection conn = null;
         DatabaseType dbType = null;
+        Statement st = null;
 
         Map<String, PreparedStatement> statements = new HashMap<String, PreparedStatement>();
 
         try {
             conn = rhqDs.getConnection();
             dbType = DatabaseTypeFactory.getDatabaseType(conn);
+
+            if (dbType instanceof Postgresql83DatabaseType) {
+                // Take advantage of async commit here
+                st = conn.createStatement();
+                st.execute("SET synchronous_commit = off");
+                st.close();
+            }
 
             for (MeasurementDataNumeric aData : data) {
                 if (aData.getValue() == null || Double.isNaN(aData.getValue())) {
@@ -270,6 +280,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
                 JDBCUtil.safeClose(ps);
             }
 
+            JDBCUtil.safeClose(st);
             JDBCUtil.safeClose(conn);
         }
     }

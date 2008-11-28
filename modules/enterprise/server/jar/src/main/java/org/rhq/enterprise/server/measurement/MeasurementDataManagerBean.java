@@ -209,7 +209,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
 
         Connection conn = null;
         DatabaseType dbType = null;
-        Statement st = null;
 
         Map<String, PreparedStatement> statements = new HashMap<String, PreparedStatement>();
 
@@ -217,11 +216,15 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
             conn = rhqDs.getConnection();
             dbType = DatabaseTypeFactory.getDatabaseType(conn);
 
-            if (dbType instanceof Postgresql83DatabaseType) {
-                // Take advantage of async commit here
-                st = conn.createStatement();
-                st.execute("SET synchronous_commit = off");
-                st.close();
+            Statement st = null;
+            try {
+                if (dbType instanceof Postgresql83DatabaseType) {
+                    // Take advantage of async commit here
+                    st = conn.createStatement();
+                    st.execute("SET synchronous_commit = off");
+                }
+            } finally {
+                JDBCUtil.safeClose(st);
             }
 
             for (MeasurementDataNumeric aData : data) {
@@ -280,7 +283,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
                 JDBCUtil.safeClose(ps);
             }
 
-            JDBCUtil.safeClose(st);
             JDBCUtil.safeClose(conn);
         }
     }

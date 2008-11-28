@@ -18,16 +18,17 @@
  */
 package org.rhq.plugins.apache.util;
 
+import java.io.File;
+import java.util.Collections;
+import java.util.List;
+
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
-import java.util.Collections;
-import java.io.File;
+import org.jetbrains.annotations.Nullable;
 
 /**
+ * Utility class to obtain the executable path of a process with the help of Sigar.
  * @author Ian Springer
  */
 public abstract class OsProcessUtility {
@@ -92,6 +93,7 @@ public abstract class OsProcessUtility {
      * and returns an empty array if the SigarException
      * is caught.
      * @param pid Process identifier
+     * @param sigar The Sigar instance to use
      * @return Arguments that were passed to the process.
      */
     @NotNull
@@ -108,6 +110,7 @@ public abstract class OsProcessUtility {
      * and returns an empty list if the SigarException
      * is caught.
      * @param pid Process identifier
+     * @param sigar The Sigar instance to use
      */
     @NotNull
     private static List<String> getProcModules(long pid, Sigar sigar) {

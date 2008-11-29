@@ -1,32 +1,29 @@
 <?xml version="1.0"?>
 
-<!-- $Id: rhq-ds.xml 8921 2008-01-28 04:35:42Z jmazzitelli $ -->
+<!-- The RHQ datasources for POSTGRES -->
 
 <datasources>
 
-  <local-tx-datasource>
+  <xa-datasource>
     <jndi-name>RHQDS</jndi-name>
-    <connection-url>${rhq.server.database.connection-url}</connection-url>
-    <driver-class>${rhq.server.database.driver-class}</driver-class>
+    <xa-datasource-class>${rhq.server.database.xa-datasource-class}</xa-datasource-class>
+    <xa-datasource-property name="User">${rhq.server.database.user-name}</xa-datasource-property>
+    <xa-datasource-property name="Password">${rhq.server.database.password}</xa-datasource-property>
+    <xa-datasource-property name="ServerName">${rhq.server.database.server-name}</xa-datasource-property>
+    <xa-datasource-property name="PortNumber">${rhq.server.database.port}</xa-datasource-property>
+    <xa-datasource-property name="DatabaseName">${rhq.server.database.db-name}</xa-datasource-property>
+    
+    <track-connection-by-tx/>
     <user-name>${rhq.server.database.user-name}</user-name>
     <password>${rhq.server.database.password}</password>
-    
-    <!-- You can include connection properties that will get passed in 
-         the DriverManager.getConnection(props) call;
-         look at your Driver docs to see what these might be. -->
-    <connection-property name="char.encoding">UTF-8</connection-property>
-    <!-- Tells an Oracle 10g driver to properly implement clobs. -->
-    <connection-property name="SetBigStringTryClob">true</connection-property>
-
     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
     <min-pool-size>5</min-pool-size>
     <max-pool-size>50</max-pool-size>
     <blocking-timeout-millis>30000</blocking-timeout-millis>
     <idle-timeout-minutes>15</idle-timeout-minutes>
     <prepared-statement-cache-size>75</prepared-statement-cache-size>
-    <check-valid-connection-sql>@@@rhq-server-connection-checker-sql@@@</check-valid-connection-sql>
-    
-  </local-tx-datasource>
+    <check-valid-connection-sql>;</check-valid-connection-sql>
+  </xa-datasource>
 
   <!-- Quartz needs a no-tx datasource defined -->
   <no-tx-datasource>
@@ -35,22 +32,14 @@
     <driver-class>${rhq.server.database.driver-class}</driver-class>
     <user-name>${rhq.server.database.user-name}</user-name>
     <password>${rhq.server.database.password}</password>
-    
-    <!-- You can include connection properties that will get passed in 
-         the DriverManager.getConnection(props) call;
-         look at your Driver docs to see what these might be. -->
     <connection-property name="char.encoding">UTF-8</connection-property>
-    <!-- Tells an Oracle 10g driver to properly implement clobs. -->
-    <connection-property name="SetBigStringTryClob">true</connection-property>
-
     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
     <min-pool-size>2</min-pool-size>
     <max-pool-size>5</max-pool-size>
     <blocking-timeout-millis>30000</blocking-timeout-millis>
     <idle-timeout-minutes>15</idle-timeout-minutes>
     <prepared-statement-cache-size>75</prepared-statement-cache-size>
-    <check-valid-connection-sql>@@@rhq-server-connection-checker-sql@@@</check-valid-connection-sql>
-    
+    <check-valid-connection-sql>;</check-valid-connection-sql>
   </no-tx-datasource>
 
 </datasources>

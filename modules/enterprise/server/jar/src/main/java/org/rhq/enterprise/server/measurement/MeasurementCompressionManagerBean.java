@@ -363,7 +363,10 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
             + " in (" + ((watch.getElapsed()) / SECOND) + " seconds)");
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    // this is "NOT_SUPPORTED" because the database will auto-commit the DDL "truncate table"
+    // and this causes havoc with the XA transaction when set to "REQUIRES_NEW"
+    // for example, on oracle, this method would throw SQLException: ORA-02089: COMMIT is not allowed in a subordinate session
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     @TransactionTimeout(6 * 60 * 60)
     public void truncateMeasurements(String tableName) throws SQLException {
         // Make sure we only truncate the dead table... other tables may have live data in them

@@ -19,21 +19,15 @@
 package org.rhq.enterprise.installer;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.Writer;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -75,8 +69,9 @@ public class ServerInformation {
 
     private static final String DEPLOYED_EAR_FILENAME = "rhq.ear";
     private static final String UNDEPLOYED_EAR_FILENAME = DEPLOYED_EAR_FILENAME + ".rej";
-    private static final String DEPLOYED_DATASOURCE_FILENAME = "rhq-ds.xml";
-    private static final String UNDEPLOYED_DATASOURCE_FILENAME = DEPLOYED_DATASOURCE_FILENAME + ".rej";
+    private static final String DEPLOYED_DS_FILENAME = "rhq-ds.xml";
+    private static final String UNDEPLOYED_POSTGRES_DS_FILENAME = DEPLOYED_DS_FILENAME + ".postgres.rej";
+    private static final String UNDEPLOYED_ORACLE_DS_FILENAME = DEPLOYED_DS_FILENAME + ".oracle.rej";
     private static final String DEPLOYED_EMBEDDED_AGENT_FILENAME = "rhq-agent.sar";
     private static final String UNDEPLOYED_EMBEDDED_AGENT_FILENAME = DEPLOYED_EMBEDDED_AGENT_FILENAME + ".rej";
     private static final String DEPLOYED_MAIL_SERVICE_FILENAME = "mail-service.xml";
@@ -300,43 +295,16 @@ public class ServerInformation {
             }
 
             // DATA SOURCE
-            File ds = getDataSourceFile(!deploy);
-            File dsRenameTo = getDataSourceFile(deploy);
-            if (!dsRenameTo.exists()) {
-                // purpose of this is to copy the .rej so we can modify it (the connection checker string is db-specific)
-                // we only need to do this if we are deploying; if we are undeploying, just do the rename
-                if (deploy) {
-                    String replacement;
-                    String db = getServerProperties().getProperty(ServerProperties.PROP_DATABASE_TYPE);
-                    if (db.toLowerCase().indexOf("postgres") > -1) {
-                        replacement = ";";
-                    } else {
-                        replacement = "select 1 from dual";
-                    }
-
-                    File dsTmp = new File(ds.getAbsolutePath() + ".rej"); // makes a .rej.rej tmp file in the same location
-                    Reader reader = new FileReader(ds);
-                    BufferedReader bufR = new BufferedReader(reader);
-                    Writer writer = new FileWriter(dsTmp);
-                    BufferedWriter bufW = new BufferedWriter(writer);
-                    String line;
-                    while ((line = bufR.readLine()) != null) {
-                        line = line.replace("@@@rhq-server-connection-checker-sql@@@", replacement);
-                        bufW.write(line);
-                        bufW.newLine();
-                    }
-
-                    bufW.flush();
-                    bufW.close();
-                    writer.close();
-                    bufR.close();
-                    reader.close();
-                    if (dsTmp.renameTo(dsRenameTo)) {
-                        ds.delete();
-                    }
-                } else {
-                    ds.renameTo(dsRenameTo);
-                }
+            // we leave the undeployed versions - there is one per supported database
+            // to undeploy, we just delete the deployed datasource file
+            // to deploy, we copy one of the undeployed versions for the DB to be used
+            File ds = getDataSourceFile(true);
+            if (deploy) {
+                File undeployedDataSource = getDataSourceFile(false); // gets the DB specific one
+                copySingleFile(undeployedDataSource, ds);
+            } else {
+                // being told to undeploy - delete the deployed datasource file if exists
+                deleteFile(ds);
             }
 
             // JMS
@@ -402,7 +370,21 @@ public class ServerInformation {
 
     private File getDataSourceFile(boolean deployed) {
         File deployDir = getDeployDirectory();
-        File file = new File(deployDir, deployed ? DEPLOYED_DATASOURCE_FILENAME : UNDEPLOYED_DATASOURCE_FILENAME);
+        File file;
+
+        if (deployed) {
+            file = new File(deployDir, DEPLOYED_DS_FILENAME);
+        } else {
+            String db = getServerProperties().getProperty(ServerProperties.PROP_DATABASE_TYPE);
+            if (db.toLowerCase().indexOf("postgres") > -1) {
+                file = new File(deployDir, UNDEPLOYED_POSTGRES_DS_FILENAME);
+            } else if (db.toLowerCase().indexOf("oracle") > -1) {
+                file = new File(deployDir, UNDEPLOYED_ORACLE_DS_FILENAME);
+            } else {
+                throw new RuntimeException("Unsupported database: " + db);
+            }
+        }
+
         return file;
     }
 
@@ -490,7 +472,7 @@ public class ServerInformation {
         return mbeanServer;
     }
 
-    private static void deleteFile(File file) {
+    private void deleteFile(File file) {
         if (file != null) {
             if (file.isDirectory()) {
                 File[] doomedFiles = file.listFiles();

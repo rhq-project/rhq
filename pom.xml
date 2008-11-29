@@ -68,9 +68,13 @@
          these may be overridden in ~/.m2/settings.xml -->
     <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhq</rhq.test.ds.connection-url>
     <rhq.test.ds.driver-class>org.postgresql.Driver</rhq.test.ds.driver-class>
+    <rhq.test.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.test.ds.xa-datasource-class>
     <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
     <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
     <rhq.test.ds.type-mapping>PostgreSQL</rhq.test.ds.type-mapping>
+    <rhq.test.ds.server-name>127.0.0.1</rhq.test.ds.server-name>
+    <rhq.test.ds.port>5432</rhq.test.ds.port>
+    <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
 
      <!-- default port numbers for RHQ server -->
     <rhq.server.http.port>7080</rhq.server.http.port>

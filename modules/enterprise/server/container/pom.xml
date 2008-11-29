@@ -39,7 +39,13 @@
       <artifactId>safe-invoker</artifactId>
       <version>${project.version}</version>
     </dependency>
-    
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-container-lib</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
     <!-- 3rd Party Deps -->
 
     <dependency>
@@ -66,7 +72,7 @@
       <artifactId>jboss-faces</artifactId>
       <version>4.2.3.GA</version>
     </dependency>
-    
+
     <dependency>
       <groupId>jgroups</groupId>
       <artifactId>jgroups-all</artifactId>
@@ -106,13 +112,13 @@
         <executions>
           <execution>
             <id>move-src</id>
-            <phase>process-resources</phase>          
+            <phase>process-resources</phase>
             <goals>
               <goal>resources</goal>
             </goals>
           </execution>
         </executions>
-      </plugin>       
+      </plugin>
 
       <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
@@ -129,12 +135,12 @@
                 <ant antfile="src/main/scripts/rhq-container.build.xml" target="prepare-container">
                   <property name="settings.localRepository" value="${settings.localRepository}" />
                   <property name="project.build.outputDirectory" value="${project.build.outputDirectory}" />
-                  <property name="project.version" value="${project.version}" />                  
+                  <property name="project.version" value="${project.version}" />
                   <property name="dev.profile.active" value="${dev.profile.active}" />
-                  <property name="developer" value="${developer}" />                  
+                  <property name="developer" value="${developer}" />
                   <property name="rhq.earName" value="${rhq.earName}" />
-                  <property name="package-connectors" value="${package-connectors}" />                  
-                  
+                  <property name="package-connectors" value="${package-connectors}" />
+
                   <!-- dependency versions -->
                   <property name="rhq.version" value="${project.version}" />
                   <property name="jboss.version" value="${jboss.version}" />
@@ -147,14 +153,18 @@
                   <!-- dev/test DB settings (used to init rhq-server.properties if dev profile is active or developer prop is set) -->
                   <property name="rhq.test.ds.connection-url" value="${rhq.test.ds.connection-url}" />
                   <property name="rhq.test.ds.driver-class" value="${rhq.test.ds.driver-class}" />
+                  <property name="rhq.test.ds.xa-datasource-class" value="${rhq.test.ds.xa-datasource-class}" />
                   <property name="rhq.test.ds.user-name" value="${rhq.test.ds.user-name}" />
                   <property name="rhq.test.ds.password" value="${rhq.test.ds.password}" />
                   <property name="rhq.test.ds.type-mapping" value="${rhq.test.ds.type-mapping}" />
-                                    
+                  <property name="rhq.test.ds.server-name" value="${rhq.test.ds.server-name}" />
+                  <property name="rhq.test.ds.port" value="${rhq.test.ds.port}" />
+                  <property name="rhq.test.ds.db-name" value="${rhq.test.ds.db-name}" />
+
                   <!-- default server settings used by installer -->
                   <property name="rhq.server.http.port" value="${rhq.server.http.port}" />
                   <property name="rhq.server.https.port" value="${rhq.server.https.port}" />
-                  
+
                   <property name="rhq.server.enable.web.services" value="${rhq.server.enable.ws}" />
                 </ant>
               </tasks>
@@ -180,12 +190,12 @@
                   <!-- developers will normally want to do this to avoid having to run the installer -->
                   <!-- [mazz] added the ability to say -Ddeveloper to also predeploy, even if not in dev profile -->
                   <property name="dev.profile.active" value="${dev.profile.active}" />
-                  <property name="developer" value="${developer}" />                  
+                  <property name="developer" value="${developer}" />
                   <property name="rhq.earName" value="${rhq.earName}" />
-                  
+
                   <!-- dev/test DB type (needed to init rhq-ds.xml) -->
                   <property name="rhq.test.ds.type-mapping" value="${rhq.test.ds.type-mapping}" />
-                  
+
                   <property name="rhq.server.enable.web.services" value="${rhq.server.enable.ws}" />
                 </ant>
               </tasks>
@@ -204,18 +214,18 @@
           <descriptors>
             <descriptor>src/main/scripts/rhq-container.assembly.xml</descriptor>
           </descriptors>
-          <finalName>${project.build.finalName}</finalName>       
+          <finalName>${project.build.finalName}</finalName>
         </configuration>
         <executions>
           <execution>
             <id>assemble-server-container-zip</id>
-            <phase>package</phase>          
+            <phase>package</phase>
             <goals>
               <goal>attached</goal>
             </goals>
           </execution>
         </executions>
-      </plugin>       
+      </plugin>
 
     </plugins>
   </build>
@@ -305,7 +315,7 @@
 
     <profile>
       <id>dist</id>
-      <properties>         
+      <properties>
         <package-connectors>true</package-connectors>
       </properties>
     </profile>

@@ -24,6 +24,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
@@ -156,9 +158,10 @@ public class ConfigurationBean {
 
     /**
      * Loads in the server's current configuration and returns all the settings except
-     * database related properties.
+     * database related properties. This additionally strips out hidden properties too,
+     * so the caller will not see any of the hidden properties in the returned list.
      *
-     * @return current server settings, minus database related settings
+     * @return current server settings, minus database related settings and hidden settings.
      * 
      * @see #getDatabaseConfiguration()
      * @see #getConfiguration()
@@ -452,6 +455,46 @@ public class ConfigurationBean {
             }
         } catch (Exception e) {
             LOG.fatal("Could not save the settings for some reason", e);
+            lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.SAVE_ERROR, ThrowableUtil.getAllMessages(e));
+
+            return StartPageResults.ERROR;
+        }
+
+        try {
+            String url = getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_CONNECTION_URL)
+                .getValue();
+            String db = getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_TYPE).getValue();
+            Pattern pattern = null;
+            if (db.toLowerCase().indexOf("postgres") > -1) {
+                pattern = Pattern.compile(".*://(.*):([0123456789]+)/(.*)"); // jdbc:postgresql://host.name:5432/rhq
+            } else if (db.toLowerCase().indexOf("oracle") > -1) {
+                LOG.info("Oracle does not need to have server-name, port and db-name individually set, skipping");
+                // if we ever find that we'll need these props set, uncomment below and it should all work
+                //pattern = Pattern.compile(".*@(.*):([0123456789]+):(.*)"); // jdbc:oracle:thin:@host.name:1521:rhq
+            } else {
+                LOG.info("Unknown database type - will not set server-name, port and db-name");
+                // don't bother throwing error; these three extra settings are only for postgres anyway
+            }
+            if (pattern != null) {
+                Matcher match = pattern.matcher(url);
+                if (match.find() && (match.groupCount() == 3)) {
+                    String serverName = match.group(1);
+                    String port = match.group(2);
+                    String dbName = match.group(3);
+                    getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_SERVER_NAME).setValue(
+                        serverName);
+                    getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_PORT).setValue(port);
+                    getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_DB_NAME).setValue(dbName);
+                } else {
+                    throw new Exception("Cannot get server, port or db name from connection URL: " + url);
+                }
+            } else {
+                getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_SERVER_NAME).setValue("");
+                getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_PORT).setValue("");
+                getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_DB_NAME).setValue("");
+            }
+        } catch (Exception e) {
+            LOG.fatal("JDBC connection URL seems to be invalid", e);
             lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.SAVE_ERROR, ThrowableUtil.getAllMessages(e));
 
             return StartPageResults.ERROR;

@@ -62,6 +62,7 @@
         <module>gui</module>
         <module>server/plugins</module>
         <module>server/ear</module>
+        <module>server/container-lib</module>
         <module>server/container</module>
       </modules>
     </profile>

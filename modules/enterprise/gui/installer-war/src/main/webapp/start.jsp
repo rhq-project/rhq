@@ -48,12 +48,15 @@
                              onchange="if (this.options[this.selectedIndex].value == 'PostgreSQL'){
                                           document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:postgresql://127.0.0.1:5432/rhq';
                                           document.getElementById('propForm:databasedriverclass').value = 'org.postgresql.Driver';
+                                          document.getElementById('propForm:databasexadatasourceclass').value = 'org.postgresql.xa.PGXADataSource';
                                        } else if (this.options[this.selectedIndex].value == 'Oracle10g') {
                                           document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:oracle:thin:@127.0.0.1:1521:rhq';
                                           document.getElementById('propForm:databasedriverclass').value = 'oracle.jdbc.driver.OracleDriver';
+                                          document.getElementById('propForm:databasexadatasourceclass').value = 'oracle.jdbc.xa.client.OracleXADataSource';
                                        } else if (this.options[this.selectedIndex].value == 'MySQL') {
                                           document.getElementById('propForm:databaseconnectionurl').value = 'jdbc:mysql://127.0.0.1/rhq';
                                           document.getElementById('propForm:databasedriverclass').value = 'com.mysql.jdbc.Driver';
+                                          document.getElementById('propForm:databasexadatasourceclass').value = 'com.mysql.jdbc.jdbc2.optional.MysqlXADataSource';
                                        }
                                       ">
                <f:selectItems value="#{configurationBean.databaseConfiguration[0].itemDefinition.options}" />
@@ -76,16 +79,23 @@
             <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[3].itemDefinition.help}', 'propertyHelp')">
                <h:outputText value="#{configurationBean.databaseConfiguration[3].itemDefinition.propertyLabel}" />
             </h:outputLink>
-            <h:inputText id="databaseusername"
+            <h:inputText id="databasexadatasourceclass"
                          size="#{configurationBean.databaseConfiguration[3].itemDefinition.fieldSize}"
                          value="#{configurationBean.databaseConfiguration[3].value}" />
 
             <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[4].itemDefinition.help}', 'propertyHelp')">
                <h:outputText value="#{configurationBean.databaseConfiguration[4].itemDefinition.propertyLabel}" />
             </h:outputLink>
-            <h:inputText id="databasepassword"
+            <h:inputText id="databaseusername"
                          size="#{configurationBean.databaseConfiguration[4].itemDefinition.fieldSize}"
                          value="#{configurationBean.databaseConfiguration[4].value}" />
+
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[5].itemDefinition.help}', 'propertyHelp')">
+               <h:outputText value="#{configurationBean.databaseConfiguration[5].itemDefinition.propertyLabel}" />
+            </h:outputLink>
+            <h:inputText id="databasepassword"
+                         size="#{configurationBean.databaseConfiguration[5].itemDefinition.fieldSize}"
+                         value="#{configurationBean.databaseConfiguration[5].value}" />
          </h:panelGrid>
 
          <h:panelGrid columns="2" border="1">

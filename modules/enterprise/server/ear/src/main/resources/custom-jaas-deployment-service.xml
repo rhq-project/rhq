@@ -6,7 +6,7 @@
 
     <mbean code="org.rhq.enterprise.server.core.CustomJaasDeploymentService"
            name="rhq:service=CustomJaasDeployment">
-        <depends>jboss.jca:service=LocalTxCM,name=RHQDS</depends>
+        <depends>jboss.jca:service=XATxCM,name=RHQDS</depends>
     </mbean>
 
 </server>

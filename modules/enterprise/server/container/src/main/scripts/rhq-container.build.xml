@@ -6,9 +6,14 @@
 
   <property name="default.rhq.server.database.connection-url" value="jdbc:postgresql://127.0.0.1:5432/rhq"/>
   <property name="default.rhq.server.database.driver-class" value="org.postgresql.Driver"/>
+  <property name="default.rhq.server.database.xa-datasource-class" value="org.postgresql.xa.PGXADataSource"/>
   <property name="default.rhq.server.database.user-name" value="rhqadmin"/>
   <property name="default.rhq.server.database.password" value="rhqadmin"/>
   <property name="default.rhq.server.database.type-mapping" value="PostgreSQL"/>
+  <!-- these are needed for the PostgreSQL XADataSource setup -->
+  <property name="default.rhq.server.database.server-name" value="127.0.0.1"/>
+  <property name="default.rhq.server.database.port" value="5432"/>
+  <property name="default.rhq.server.database.db-name" value="rhq"/>
 
   <target name="set-predeploy-prop">
     <condition property="predeploy" value="true">
@@ -23,22 +28,30 @@
      <echo>*** Using dev database settings in rhq-server.properties...</echo>
      <property name="rhq.server.database.connection-url" value="${rhq.test.ds.connection-url}"/>
      <property name="rhq.server.database.driver-class" value="${rhq.test.ds.driver-class}"/>
+     <property name="rhq.server.database.xa-datasource-class" value="${rhq.test.ds.xa-datasource-class}"/>
      <property name="rhq.server.database.user-name" value="${rhq.test.ds.user-name}"/>
      <property name="rhq.server.database.password" value="${rhq.test.ds.password}"/>
      <property name="rhq.server.database.type-mapping" value="${rhq.test.ds.type-mapping}"/>
+     <property name="rhq.server.database.server-name" value="${rhq.test.ds.server-name}"/>
+     <property name="rhq.server.database.port" value="${rhq.test.ds.port}"/>
+     <property name="rhq.server.database.db-name" value="${rhq.test.ds.db-name}"/>
   </target>
 
   <target name="set-default-server-props" unless="predeploy">
      <echo>*** Using default database settings in rhq-server.properties...</echo>
      <property name="rhq.server.database.connection-url" value="${default.rhq.server.database.connection-url}"/>
      <property name="rhq.server.database.driver-class" value="${default.rhq.server.database.driver-class}"/>
+     <property name="rhq.server.database.xa-datasource-class" value="${default.rhq.server.database.xa-datasource-class}"/>
      <property name="rhq.server.database.user-name" value="${default.rhq.server.database.user-name}"/>
      <property name="rhq.server.database.password" value="${default.rhq.server.database.password}"/>
      <property name="rhq.server.database.type-mapping" value="${default.rhq.server.database.type-mapping}"/>
+     <property name="rhq.server.database.server-name" value="${default.rhq.server.database.server-name}"/>
+     <property name="rhq.server.database.port" value="${default.rhq.server.database.port}"/>
+     <property name="rhq.server.database.db-name" value="${default.rhq.server.database.db-name}"/>
   </target>
 
   <target name="initialize" depends="set-predeploy-prop, set-dev-server-props, set-default-server-props">
-    <echo>*** Database type is ${default.rhq.server.database.type-mapping}</echo>
+    <echo>*** Database type is ${rhq.server.database.type-mapping}</echo>
 
     <property name="jboss.home" location="${project.build.outputDirectory}/jbossas" />
 
@@ -56,6 +69,9 @@
 
     <property name="jms.oracle.dir" value="jms-oracle.rej"/>
     <property name="jms.postgres.dir" value="jms-postgres.rej"/>
+
+    <property name="ds.oracle.file" value="rhq-ds.xml.oracle.rej"/>
+    <property name="ds.postgres.file" value="rhq-ds.xml.postgres.rej"/>
 
     <condition property="use-postgres" value="true">
        <not><contains string="${rhq.server.database.type-mapping}" substring="Oracle" casesensitive="false" /></not>
@@ -127,6 +143,10 @@
     <copy file="${settings.localRepository}/hibernate/hibernate3/3.2.r14201-2/hibernate3-3.2.r14201-2.jar"
           tofile="${jboss.home}/server/default/lib/hibernate3.jar" verbose="true"/>
 
+    <echo>Installing custom container library...</echo>
+    <copy file="${settings.localRepository}/org/rhq/rhq-container-lib/${rhq.version}/rhq-container-lib-${rhq.version}.jar"
+          tofile="${jboss.home}/server/default/lib/rhq-container-lib-${rhq.version}.jar" verbose="true"/>
+
     <property name="jboss.lib.dir" location="${jboss.home}/server/default/lib" />
     <echo>Copying additional libs to ${jboss.lib.dir} ...</echo>
     <copy file="${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar"
@@ -162,9 +182,9 @@
       </fileset>
     </delete>
 
-    <delete file="${jboss.deploy.dir}/cache-invalidatirhq-service.xml" />
     <delete dir="${jboss.deploy.dir}/uuid-key-generator.sar" />
-    <delete file="${jboss.deploy.dir}/jboss-xa-jdbc.rar" />  <!-- We manage our own transactions. -->
+    <delete file="${jboss.deploy.dir}/jboss-ha-local-jdbc.rar" />
+    <delete file="${jboss.deploy.dir}/jboss-ha-xa-jdbc.rar" />
 
     <!-- Remove old web console, leave the JMX console (we will delete it later for releases) -->
     <delete dir="${jboss.deploy.dir}/management" />
@@ -202,7 +222,7 @@
     <unjar src="${settings.localRepository}/org/rhq/rhq-enterprise-server-ear/${rhq.version}/rhq-enterprise-server-ear-${rhq.version}.ear"
            dest="${jboss.deploy.dir}/${rhq.earName}" />
 
-    <echo>Removing Tomcat ROOT.war to prepare for JBoss ON replacement ...</echo>
+    <echo>Removing Tomcat ROOT.war to prepare for RHQ replacement ...</echo>
     <delete dir="${jboss.deploy.dir}/jboss-web.deployer/ROOT.war" />
 
     <echo>Deploying installer webapp ...</echo>
@@ -290,9 +310,13 @@
 # Database
 rhq.server.database.connection-url=${rhq.server.database.connection-url}
 rhq.server.database.driver-class=${rhq.server.database.driver-class}
+rhq.server.database.xa-datasource-class=${rhq.server.database.xa-datasource-class}
 rhq.server.database.user-name=${rhq.server.database.user-name}
 rhq.server.database.password=${rhq.server.database.password}
 rhq.server.database.type-mapping=${rhq.server.database.type-mapping}
+rhq.server.database.server-name=${rhq.server.database.server-name}
+rhq.server.database.port=${rhq.server.database.port}
+rhq.server.database.db-name=${rhq.server.database.db-name}
 
 # Container configuration
 # ********************************** NOTE ************************************
@@ -463,9 +487,15 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
     <move file="${jboss.deploy.dir}/${jms.postgres.dir}/hsqldb-jdbc-state-service.xml"
           tofile="${jboss.deploy.dir}/${jms.postgres.dir}/rhq-jdbc-state-service.xml" verbose="true" failonerror="false"/>
     <replace file="${jboss.deploy.dir}/${jms.postgres.dir}/rhq-jdbc-state-service.xml" token="DefaultDS" value="RHQDS"/>
+    <replace file="${jboss.deploy.dir}/${jms.postgres.dir}/rhq-jdbc-state-service.xml"
+             token="CREATE_TABLES_ON_STARTUP = TRUE"
+             value="CREATE_TABLES_ON_STARTUP = FALSE"/>
     <copy file="${jboss.home}/docs/examples/jms/postgres-jdbc2-service.xml"
           tofile="${jboss.deploy.dir}/${jms.postgres.dir}/rhq-jdbc2-service.xml" verbose="true" failonerror="false" />
     <replace file="${jboss.deploy.dir}/${jms.postgres.dir}/rhq-jdbc2-service.xml" token="PostgresDS" value="RHQDS"/>
+    <replace file="${jboss.deploy.dir}/${jms.postgres.dir}/rhq-jdbc2-service.xml"
+             token="CREATE_TABLES_ON_STARTUP = TRUE"
+             value="CREATE_TABLES_ON_STARTUP = FALSE" />
   </target>
 
   <target name="make-default-jms-backend-postgres" if="use-postgres">
@@ -481,9 +511,15 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
     <move file="${jboss.deploy.dir}/${jms.oracle.dir}/hsqldb-jdbc-state-service.xml"
           tofile="${jboss.deploy.dir}/${jms.oracle.dir}/rhq-jdbc-state-service.xml" verbose="true" failonerror="false"/>
     <replace file="${jboss.deploy.dir}/${jms.oracle.dir}/rhq-jdbc-state-service.xml" token="DefaultDS" value="RHQDS"/>
+    <replace file="${jboss.deploy.dir}/${jms.oracle.dir}/rhq-jdbc-state-service.xml"
+             token="CREATE_TABLES_ON_STARTUP = TRUE"
+             value="CREATE_TABLES_ON_STARTUP = FALSE"/>
     <copy file="${jboss.home}/docs/examples/jms/oracle-jdbc2-service.xml"
           tofile="${jboss.deploy.dir}/${jms.oracle.dir}/rhq-jdbc2-service.xml" verbose="true" failonerror="false" />
     <replace file="${jboss.deploy.dir}/${jms.oracle.dir}/rhq-jdbc2-service.xml" token="OracleDS" value="RHQDS"/>
+    <replace file="${jboss.deploy.dir}/${jms.oracle.dir}/rhq-jdbc2-service.xml"
+             token="CREATE_TABLES_ON_STARTUP = TRUE"
+             value="CREATE_TABLES_ON_STARTUP = FALSE"/>
   </target>
 
   <target name="make-default-jms-backend-oracle" unless="use-postgres">
@@ -510,6 +546,7 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
                    fix-perms,
                    developer-release-message,
                    copy-dev-resources,
+                   process-ds-files,
                    deploy-postgres-ds,
                    deploy-oracle-ds,
                    undeploy-jmx-console,
@@ -532,6 +569,13 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
     <!-- Make sure shell scripts are readable and executable. -->
     <chmod dir="${project.build.outputDirectory}/bin" includes="*.sh" perm="ug+x" verbose="true" />
     <chmod dir="${jboss.home}/bin" includes="*.sh" perm="ug+x" verbose="true" />
+  </target>
+
+  <target name="process-ds-files">
+    <!-- SVN will ignore resources with '.rej' so we checked in the files as '.reject' -->
+    <!-- We need to rename them to '.rej' so JBossAS will not deploy them -->
+    <move file="${jboss.deploy.dir}/${ds.oracle.file}ect" tofile="${jboss.deploy.dir}/${ds.oracle.file}"/>
+    <move file="${jboss.deploy.dir}/${ds.postgres.file}ect" tofile="${jboss.deploy.dir}/${ds.postgres.file}"/>
   </target>
 
   <target name="developer-release-message" if="predeploy">
@@ -577,18 +621,18 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
   </target>
 
   <target name="undeploy-ds" unless="predeploy">
-     <echo>Preparing for release - undeploying Data Source...</echo>
-     <move file="${jboss.deploy.dir}/rhq-ds.xml" tofile="${jboss.deploy.dir}/rhq-ds.xml.rej"/>
+     <echo>Preparing for release - making sure Data Source is not deployed...</echo>
+     <delete file="${jboss.deploy.dir}/rhq-ds.xml" />
   </target>
 
   <target name="deploy-postgres-ds" if="predeploy-postgres">
      <echo>Postgres will be your datasource backend!</echo>
-     <replace file="${jboss.deploy.dir}/rhq-ds.xml" token="@@@rhq-server-connection-checker-sql@@@" value=";"/>
+     <copy file="${jboss.deploy.dir}/${ds.postgres.file}" tofile="${jboss.deploy.dir}/rhq-ds.xml" verbose="true"/>
   </target>
 
   <target name="deploy-oracle-ds" if="predeploy-oracle">
      <echo>Oracle will be your datasource backend!</echo>
-     <replace file="${jboss.deploy.dir}/rhq-ds.xml" token="@@@rhq-server-connection-checker-sql@@@" value="select 1 from dual"/>
+     <copy file="${jboss.deploy.dir}/${ds.oracle.file}" tofile="${jboss.deploy.dir}/rhq-ds.xml" verbose="true"/>
   </target>
 
 </project>

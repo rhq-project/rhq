@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- the schema matches that which would be automatically created by the JMS subsystem -->
+<!-- see deploy/jms/rhq-jdbc-state-service.xml and rhq-jdbc2-service.xml -->
+
+<dbsetup name="jms-schema.xml">
+
+    <table name="JMS_MESSAGES">
+        <column name="MESSAGEID"   required="true"  type="INTEGER" />
+        <column name="DESTINATION" required="true"  type="VARCHAR2" size="255" />
+        <column name="TXID"        required="false" type="INTEGER" />
+        <column name="TXOP"        required="false" type="CHAR" size="1" />
+        <column name="MESSAGEBLOB" required="false" type="BLOB" />
+
+        <constraint name="JMS_MESSAGES_PKEY">
+            <primaryKey>
+                <field ref="MESSAGEID"/>
+                <field ref="DESTINATION"/>
+            </primaryKey>
+        </constraint>
+
+        <index name="JMS_MESSAGES_TXOP_TXID">
+            <field ref="TXOP"/>
+            <field ref="TXID"/>
+        </index>
+        <index name="JMS_MESSAGES_DESTINATION">
+            <field ref="DESTINATION"/>
+        </index>
+    </table>
+
+    <table name="JMS_TRANSACTIONS">
+        <column name="TXID" required="true" type="INTEGER" primarykey="true" />
+    </table>
+
+    <table name="JMS_USERS">
+        <column name="USERID"   required="true"  type="VARCHAR2" size="32" primarykey="true" />
+        <column name="PASSWD"   required="true"  type="VARCHAR2" size="32" />
+        <column name="CLIENTID" required="false" type="VARCHAR2" size="128" />
+    </table>
+
+    <table name="JMS_ROLES">
+        <column name="ROLEID" required="true" type="VARCHAR2" size="32" />
+        <column name="USERID" required="true" type="VARCHAR2" size="32" />
+
+        <constraint name="JMS_ROLES_PKEY">
+            <primaryKey>
+                <field ref="USERID"/>
+                <field ref="ROLEID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+    <table name="JMS_SUBSCRIPTIONS">
+        <column name="CLIENTID" required="true"  type="VARCHAR2" size="128" />
+        <column name="SUBNAME"  required="true"  type="VARCHAR2" size="128" />
+        <column name="TOPIC"    required="true"  type="VARCHAR2" size="255" />
+        <column name="SELECTOR" required="false" type="VARCHAR2" size="255" />
+
+        <constraint name="JMS_SUBSCRIPTIONS_PKEY">
+            <primaryKey>
+                <field ref="CLIENTID"/>
+                <field ref="SUBNAME"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+</dbsetup>

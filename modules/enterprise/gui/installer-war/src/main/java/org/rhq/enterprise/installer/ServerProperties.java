@@ -35,6 +35,10 @@ public class ServerProperties {
     public static final String PROP_DATABASE_DRIVER_CLASS = PREFIX_PROP_DATABASE + "driver-class";
     public static final String PROP_DATABASE_USERNAME = PREFIX_PROP_DATABASE + "user-name";
     public static final String PROP_DATABASE_PASSWORD = PREFIX_PROP_DATABASE + "password";
+    public static final String PROP_DATABASE_XA_DS_CLASS = PREFIX_PROP_DATABASE + "xa-datasource-class";
+    public static final String PROP_DATABASE_SERVER_NAME = PREFIX_PROP_DATABASE + "server-name";
+    public static final String PROP_DATABASE_PORT = PREFIX_PROP_DATABASE + "port";
+    public static final String PROP_DATABASE_DB_NAME = PREFIX_PROP_DATABASE + "db-name";
 
     public static final String PROP_SERVER_BIND_ADDRESS = "jboss.bind.address";
     public static final String PROP_HTTP_PORT = "rhq.server.startup.web.http.port";
@@ -151,10 +155,15 @@ public class ServerProperties {
         new PropertyItem(PROP_DATABASE_DRIVER_CLASS, String.class,
             InstallerI18NResourceKeys.PROP_DATABASE_DRIVER_CLASS,
             InstallerI18NResourceKeys.PROP_DATABASE_DRIVER_CLASS_HELP, false, false, false),
+        new PropertyItem(PROP_DATABASE_XA_DS_CLASS, String.class, InstallerI18NResourceKeys.PROP_DATABASE_XA_DS_CLASS,
+            InstallerI18NResourceKeys.PROP_DATABASE_XA_DS_CLASS_HELP, false, false, false),
         new PropertyItem(PROP_DATABASE_USERNAME, String.class, InstallerI18NResourceKeys.PROP_DATABASE_USERNAME,
             InstallerI18NResourceKeys.PROP_DATABASE_USERNAME_HELP, false, false, false),
         new PropertyItem(PROP_DATABASE_PASSWORD, String.class, InstallerI18NResourceKeys.PROP_DATABASE_PASSWORD,
             InstallerI18NResourceKeys.PROP_DATABASE_PASSWORD_HELP, false, true, false),
+        new PropertyItem(PROP_DATABASE_SERVER_NAME, String.class, "", "", false, true, false, true),
+        new PropertyItem(PROP_DATABASE_PORT, String.class, "", "", false, true, false, true),
+        new PropertyItem(PROP_DATABASE_DB_NAME, String.class, "", "", false, true, false, true),
 
         new PropertyItem(PROP_SERVER_BIND_ADDRESS, String.class, InstallerI18NResourceKeys.PROP_SERVER_BIND_ADDRESS,
             InstallerI18NResourceKeys.PROP_SERVER_BIND_ADDRESS_HELP, true, false, false),

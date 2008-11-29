@@ -157,6 +157,10 @@
         <!--
 			com.arjuna.ats.internal.jta.transaction.jts.UserTransactionImple
 			-->
+
+        <!-- RHQ - add the ability to recover our transactions -->
+        <property name="com.arjuna.ats.jta.recovery.XAResourceRecoveryJDBC" value="org.rhq.jbossatx.jta.recovery.AppServerJDBCXARecovery;RHQDS"/>
+        <property name="com.arjuna.ats.jta.xaRecoveryNode" value="1"/>
     </properties>
     <properties depends="arjuna,txoj,jta" name="recoverymanager">
         <!--

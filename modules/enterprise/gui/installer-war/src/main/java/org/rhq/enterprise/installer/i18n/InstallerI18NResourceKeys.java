@@ -255,6 +255,12 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("-DatabaseJDBCDriverClass")
     String PROP_DATABASE_DRIVER_CLASS_HELP = "propertyDatabaseDriverClassHelp";
 
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Database XA DataSource Class"),
+        @I18NMessage(locale = "de", value = "Klassnname des XA-Datenbanktreibers") })
+    String PROP_DATABASE_XA_DS_CLASS = "propertyDatabaseXADataSourceClass";
+    @I18NMessage("-DatabaseXADataSourceClass")
+    String PROP_DATABASE_XA_DS_CLASS_HELP = "propertyDatabaseXADataSourceClassHelp";
+
     @I18NMessages( { @I18NMessage(locale = "en", value = "Database User Name"),
         @I18NMessage(locale = "de", value = "Name des Datenbankbenutzers") })
     String PROP_DATABASE_USERNAME = "propertyDatabaseUserName";

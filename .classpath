@@ -30,6 +30,7 @@
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/yum/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/sars/agent-sar/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/safe-invoker/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/container-lib/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/portal-war/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/portal-war/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/installer-war/src/main/java"/>
@@ -136,6 +137,8 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/postgresql/postgresql/8.3-603.jdbc3/postgresql-8.3-603.jdbc3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jboss-cache/1.4.1.SP3/jboss-cache-1.4.1.SP3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hyperic/sigar/1.5.0.3/sigar-1.5.0.3.jar" sourcepath="/M2_REPO/org/hyperic/sigar/1.5.0.1/sigar-1.5.0.1-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/transaction/jboss-jta/4.2.3.SP5/jboss-jta-4.2.3.SP5.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/transaction/jboss-jts-common/4.2.3.SP5/jboss-jts-common-4.2.3.SP5.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jboss-jaxws/2.0.1.SP2/jboss-jaxws-2.0.1.SP2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jbossws-spi/1.0.0.GA/jbossws-spi-1.0.0.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jbossws-client/2.0.1.SP2/jbossws-client-2.0.1.SP2.jar"/>

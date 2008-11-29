@@ -3,7 +3,7 @@
 <server>
   <mbean code="org.rhq.enterprise.server.scheduler.SchedulerService"
          name="rhq:service=scheduler">
-    <depends>jboss.jca:service=LocalTxCM,name=RHQDS</depends>
+    <depends>jboss.jca:service=XATxCM,name=RHQDS</depends>
 
     <attribute name="QuartzProperties">
 # RHQ custom property that defines the default timeout for all operations.

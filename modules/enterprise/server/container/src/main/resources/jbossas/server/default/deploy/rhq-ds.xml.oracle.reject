@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+
+<!-- The RHQ datasources for ORACLE -->
+
+<datasources>
+
+  <xa-datasource>
+    <jndi-name>RHQDS</jndi-name>
+    <xa-datasource-class>${rhq.server.database.xa-datasource-class}</xa-datasource-class>
+    <xa-datasource-property name="User">${rhq.server.database.user-name}</xa-datasource-property>
+    <xa-datasource-property name="Password">${rhq.server.database.password}</xa-datasource-property>
+    <xa-datasource-property name="URL">${rhq.server.database.connection-url}</xa-datasource-property>
+
+    <isSameRM-override-value>false</isSameRM-override-value>
+    <!-- Uses the pingDatabase method to check a connection is still valid before handing it out from the pool -->
+    <valid-connection-checker-class-name>org.jboss.resource.adapter.jdbc.vendor.OracleValidConnectionChecker</valid-connection-checker-class-name>
+    <!-- Checks the Oracle error codes and messages for fatal errors -->
+    <exception-sorter-class-name>org.jboss.resource.adapter.jdbc.vendor.OracleExceptionSorter</exception-sorter-class-name>
+    <!-- Oracles XA datasource cannot reuse a connection outside a transaction once enlisted in a global transaction and vice-versa -->
+    
+    <track-connection-by-tx/>
+    <user-name>${rhq.server.database.user-name}</user-name>
+    <password>${rhq.server.database.password}</password>
+    <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+    <min-pool-size>5</min-pool-size>
+    <max-pool-size>50</max-pool-size>
+    <blocking-timeout-millis>30000</blocking-timeout-millis>
+    <idle-timeout-minutes>15</idle-timeout-minutes>
+    <prepared-statement-cache-size>75</prepared-statement-cache-size>
+    <check-valid-connection-sql>select 1 from dual</check-valid-connection-sql>
+  </xa-datasource>
+
+  <!-- this currently isn't supported by the JBoss transaction manager
+  <mbean code="org.jboss.resource.adapter.jdbc.vendor.OracleXAExceptionFormatter" 
+         name="jboss.jca:service=OracleXAExceptionFormatter">
+    <depends optional-attribute-name="TransactionManagerService">jboss:service=TransactionManager</depends>
+  </mbean>
+  -->
+
+  <!-- Quartz needs a no-tx datasource defined -->
+  <no-tx-datasource>
+    <jndi-name>NoTxRHQDS</jndi-name>
+    <connection-url>${rhq.server.database.connection-url}</connection-url>
+    <driver-class>${rhq.server.database.driver-class}</driver-class>
+    <user-name>${rhq.server.database.user-name}</user-name>
+    <password>${rhq.server.database.password}</password>
+    <connection-property name="char.encoding">UTF-8</connection-property>
+    <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+    <min-pool-size>2</min-pool-size>
+    <max-pool-size>5</max-pool-size>
+    <blocking-timeout-millis>30000</blocking-timeout-millis>
+    <idle-timeout-minutes>15</idle-timeout-minutes>
+    <prepared-statement-cache-size>75</prepared-statement-cache-size>
+    <check-valid-connection-sql>select 1 from dual</check-valid-connection-sql>
+
+    <!-- Tells an Oracle 10g driver to properly implement clobs. -->
+    <connection-property name="SetBigStringTryClob">true</connection-property>    
+  </no-tx-datasource>
+
+</datasources>

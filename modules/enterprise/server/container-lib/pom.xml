@@ -1,0 +1,104 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>1.2.0-SNAPSHOT</version>
+   </parent>
+
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-container-lib</artifactId>
+   <packaging>jar</packaging>
+
+   <name>RHQ Enterprise Container Library</name>
+   <description>A library of classes that will be deployed in the server container itself, above the main EAR</description>
+
+   <scm>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/container-lib/</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/container-lib/</developerConnection>
+   </scm>
+
+   <properties>
+      <scm.module.path>modules/enterprise/server/container-lib/</scm.module.path>
+   </properties>
+
+   <dependencies>
+
+      <dependency>
+         <groupId>org.jboss.transaction</groupId>
+         <artifactId>jboss-jta</artifactId>
+         <version>4.2.3.SP5</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+    <dependency>
+      <groupId>jboss</groupId>
+      <artifactId>jboss-common</artifactId>
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      <scope>provided</scope> <!-- by JBossAS -->
+    </dependency>
+
+   </dependencies>
+
+   <profiles>
+
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/lib</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <tasks>
+                            <mkdir dir="${rhq.deploymentDir}" />
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Updating ${deployment.file}...</echo>
+                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Deleting ${deployment.file}...</echo>
+                            <delete file="${deployment.file}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                  </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+
+   </profiles>
+
+</project>

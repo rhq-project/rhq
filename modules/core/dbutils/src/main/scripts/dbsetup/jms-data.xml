@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- the schema matches that which would be automatically created by the JMS subsystem -->
+<!-- see deploy/jms/rhq-jdbc-state-service.xml and rhq-jdbc2-service.xml -->
+<!-- the data must match that which is expected in conf/login-config.xml  -->
+
+<dbsetup name="jms-data.xml">
+
+    <table name="JMS_USERS">
+        <data USERID="guest" PASSWD="guest" />
+    </table>
+
+    <table name="JMS_ROLES">
+        <data ROLEID="guest" USERID="guest" />
+    </table>
+
+</dbsetup>

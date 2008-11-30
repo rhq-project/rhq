@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<!DOCTYPE log4j:configuration PUBLIC 
+<!DOCTYPE log4j:configuration PUBLIC
           "-//log4j/log4j configuration//EN"
           "http://logging.apache.org/log4j/docs/api/org/apache/log4j/xml/log4j.dtd">
 
@@ -21,7 +21,7 @@
    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
       <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>
       <param name="Target" value="System.out"/>
-      <!-- Appender will not log any messages with priority lower than INFO even if the category's priority is set lower. 
+      <!-- Appender will not log any messages with priority lower than INFO even if the category's priority is set lower.
            So essentially, this means DEBUG and TRACE messages will never be output to the console -->
       <param name="Threshold" value="INFO"/>
 
@@ -81,7 +81,7 @@
       <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!-- trace commands coming in from agents -->
    <!--
    <category name="org.rhq.enterprise.communications.command.server.CommandProcessor">
@@ -150,91 +150,91 @@
      <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!--
    <category name="org.rhq.enterprise.server.authz">
      <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!--
    <category name="org.rhq.enterprise.server.cluster">
      <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!--
    <category name="org.rhq.enterprise.server.configuration">
      <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!--
    <category name="org.rhq.enterprise.server.content">
      <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!--
    <category name="org.rhq.enterprise.server.core">
      <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!--
    <category name="org.rhq.enterprise.server.discovery">
      <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!--
    <category name="org.rhq.enterprise.server.event">
      <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!--
    <category name="org.rhq.enterprise.server.measurement">
      <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!--
    <category name="org.rhq.enterprise.server.operation">
      <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!--
    <category name="org.rhq.enterprise.server.plugin">
      <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!--
    <category name="org.rhq.enterprise.server.resource">
      <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!--
    <category name="org.rhq.enterprise.server.scheduler">
      <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!--
    <category name="org.rhq.enterprise.server.system">
      <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!--
    <category name="org.rhq.enterprise.server.util">
      <priority value="DEBUG"/>
    </category>
    -->
-   
+
    <!-- ============================================= -->
    <!-- Categories for the various JBossAS subsystems -->
    <!-- ============================================= -->
@@ -266,11 +266,11 @@
    <category name="jacorb">
       <priority value="WARN"/>
    </category>
-   
+
    <category name="org.hibernate.cfg">
       <priority value="WARN"/>
    </category>
-   
+
    <!-- JBNADM-2090: suppress warnings -->
    <category name="org.hibernate.engine.loading.LoadContexts">
       <priority value="OFF"/>
@@ -356,30 +356,30 @@
 
    <!-- JSF RI (i.e. com.sun.faces.*) -->
    <category name="javax.enterprise.resource.webcontainer.jsf.application">
-     <priority value="WARN" />     
-   </category>   
+     <priority value="WARN" />
+   </category>
    <category name="javax.enterprise.resource.webcontainer.jsf.config">
-     <priority value="WARN" />     
+     <priority value="WARN" />
    </category>
    <category name="javax.enterprise.resource.webcontainer.jsf.context">
-     <priority value="WARN" />     
+     <priority value="WARN" />
    </category>
    <category name="javax.enterprise.resource.webcontainer.jsf.lifecycle">
-     <priority value="WARN" />     
+     <priority value="WARN" />
    </category>
    <category name="javax.enterprise.resource.webcontainer.jsf.managedbean">
-     <priority value="WARN" />     
+     <priority value="WARN" />
    </category>
    <category name="javax.enterprise.resource.webcontainer.jsf.renderkit">
-     <priority value="WARN" />     
+     <priority value="WARN" />
    </category>
    <category name="javax.enterprise.resource.webcontainer.jsf.taglib">
-     <priority value="WARN" />     
+     <priority value="WARN" />
    </category>
    <category name="javax.enterprise.resource.webcontainer.jsf.timing">
-     <priority value="WARN" />     
+     <priority value="WARN" />
    </category>
-      
+
    <!-- ===================================================== -->
    <!-- Categories for the various 3rd-party libs used by RHQ -->
    <!-- ===================================================== -->

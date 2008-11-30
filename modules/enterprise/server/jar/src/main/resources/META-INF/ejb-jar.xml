@@ -14,6 +14,10 @@
          <ejb-name>*</ejb-name>
          <interceptor-class>org.rhq.enterprise.server.authz.RequiredPermissionsInterceptor</interceptor-class>
       </interceptor-binding>
+      <interceptor-binding>
+         <ejb-name>*</ejb-name>
+         <interceptor-class>org.rhq.enterprise.server.common.TransactionInterruptInterceptor</interceptor-class>
+      </interceptor-binding>
 
    </assembly-descriptor>
 

@@ -212,6 +212,14 @@
          <version>3.1.1</version>
       </dependency>
 
+      <!-- for the transaction interrupt EJB3 interceptor -->
+      <dependency>
+         <groupId>org.jboss.transaction</groupId>
+         <artifactId>jboss-jta</artifactId>
+         <version>4.2.3.SP5</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
       <!-- TODO: remove this - tests should all be moved under the test source tree -->
       <dependency>
          <groupId>junit</groupId>

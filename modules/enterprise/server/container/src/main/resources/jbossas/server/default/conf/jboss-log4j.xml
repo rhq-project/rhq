@@ -138,6 +138,12 @@
    </category>
    -->
 
+   <!-- INFO level gives full stacks to all threads active in aborted transactions -->
+   <!-- Set to WARN to only log these events with single-line messages -->
+   <category name="org.rhq.enterprise.server.common.TransactionInterruptInterceptor">
+     <priority value="WARN"/>
+   </category>
+
    <!-- Top category for the server-side code, including SLSBs -->
    <!--
    <category name="org.rhq.enterprise.server">

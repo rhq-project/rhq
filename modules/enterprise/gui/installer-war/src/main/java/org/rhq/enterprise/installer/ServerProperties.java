@@ -109,6 +109,7 @@ public class ServerProperties {
     //    public static final String PROP_CLUSTER_UDP_GROUP = "jgroups.udp.mcast_addr";
     //    public static final String PROP_CLUSTER_HAPARTITION_PORT = "jboss.hapartition.mcast_port";
     //    public static final String PROP_CLUSTER_EJB3CACHE_PORT = "jboss.ejb3entitypartition.mcast_port";
+    //    public static final String PROP_CLUSTER_ALERTCACHE_PORT = "jboss.alertcachepartition.mcast_port";
     //    public static final String PROP_CLUSTER_UDP_LOOPBACK = "rhq.server.startup.partition.udpLoopback";
     //    public static final String PROP_CLUSTER_HAJNDI_PORT = "rhq.server.startup.hajndi.port";
     //    public static final String PROP_CLUSTER_HAJNDI_RMIPORT = "rhq.server.startup.hajndi.rmiport";
@@ -327,6 +328,9 @@ public class ServerProperties {
         //        new PropertyItem(PROP_CLUSTER_EJB3CACHE_PORT, Integer.class,
         //            InstallerI18NResourceKeys.PROP_CLUSTER_EJB3CACHE_PORT,
         //            InstallerI18NResourceKeys.PROP_CLUSTER_EJB3CACHE_PORT_HELP, true, false, true),
+        //        new PropertyItem(PROP_CLUSTER_ALERTCACHE_PORT, Integer.class,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_ALERTCACHE_PORT,
+        //            InstallerI18NResourceKeys.PROP_CLUSTER_ALERTCACHE_PORT_HELP, true, false, true),
         //        new PropertyItem(PROP_CLUSTER_UDP_LOOPBACK, Boolean.class, InstallerI18NResourceKeys.PROP_CLUSTER_UDP_LOOPBACK,
         //            InstallerI18NResourceKeys.PROP_CLUSTER_UDP_LOOPBACK_HELP, true, false, true),
         //        new PropertyItem(PROP_CLUSTER_HAJNDI_PORT, Integer.class, InstallerI18NResourceKeys.PROP_CLUSTER_HAJNDI_PORT,

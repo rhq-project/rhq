@@ -348,6 +348,7 @@ rhq.server.startup.aspectdeployer.bind-port=4873
 #jgroups.udp.mcast_addr=228.1.2.4
 #jboss.hapartition.mcast_port=55566
 #jboss.ejb3entitypartition.mcast_port=53333
+#jboss.alertcachepartition.mcast_port=58899
 #rhq.server.startup.partition.udpLoopback=false
 #rhq.server.startup.hajndi.port=2100
 #rhq.server.startup.hajndi.rmiport=2101
@@ -552,6 +553,7 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
                    undeploy-jmx-console,
                    undeploy-mail-service,
                    undeploy-cluster-service,
+                   undeploy-alert-cache-service,
                    undeploy-embedded-agent,
                    undeploy-jms,
                    undeploy-ear,
@@ -608,6 +610,11 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
      <move failonerror="false"
            file="${jboss.deploy.dir}/cluster-service.xml"
            tofile="${jboss.deploy.dir}/cluster-service.xml.rej"/>
+  </target>
+
+  <target name="undeploy-alert-cache-service" unless="predeploy">
+     <echo>Preparing for release - undeploying Alert Cache Service...</echo>
+     <move file="${jboss.deploy.dir}/alert-cache-service.xml" tofile="${jboss.deploy.dir}/alert-cache-service.xml.rej"/>
   </target>
 
   <target name="undeploy-embedded-agent" unless="predeploy">

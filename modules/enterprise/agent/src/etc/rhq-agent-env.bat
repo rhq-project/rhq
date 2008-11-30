@@ -62,7 +62,7 @@ rem
 rem set RHQ_AGENT_CMDLINE_OPTS=--nonative
 
 rem ===========================================================================
-rem THE FOLLOWING ARE USED SOLEY FOR THE rhq-agent-wrapper.bat SCRIPT
+rem THE FOLLOWING ARE USED SOLELY FOR THE rhq-agent-wrapper.bat SCRIPT
 
 rem    RHQ_AGENT_INSTANCE_NAME - The name of the Windows Service; it must
 rem                              conform to the Windows Service naming

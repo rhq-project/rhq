@@ -14,49 +14,10 @@ rem prompt you for some configuration settings - you therefore need to run
 rem the agent in a console for this).  Once the agent is fully configured,
 rem you can then install and run it as a Windows Service.
 rem
-rem This script is customizable by setting the following environment variables:
+rem This script is customizable by setting certain environment variables, which
+rem are described in comments in rhq-agent-env.bat. The variables can also be
+rem set via rhq-agent-env.bat, which is sourced by this script.
 rem
-rem    RHQ_AGENT_DEBUG - If this is defined (with any value), the script
-rem                      will emit debug messages. It will also enable debug
-rem                      messages to be emitted from the agent itself.
-rem
-rem    RHQ_AGENT_HOME - Defines where the agent's home install directory is.
-rem                     If not defined, it will be assumed to be the parent
-rem                     directory of the directory where this script lives.
-rem
-rem    RHQ_AGENT_JAVA_HOME - The location of the JRE that the agent will
-rem                          use. This will be ignored if
-rem                          RHQ_AGENT_JAVA_EXE_FILE_PATH is set.
-rem                          If this and RHQ_AGENT_JAVA_EXE_FILE_PATH are
-rem                          not set, the agent's embedded JRE will be used.
-rem
-rem    RHQ_AGENT_JAVA_EXE_FILE_PATH - Defines the full path to the Java
-rem                                   executable to use. If this is set,
-rem                                   RHQ_AGENT_JAVA_HOME is ignored.
-rem                                   If this is not set, then
-rem                                   %RHQ_AGENT_JAVA_HOME%\bin\java.exe
-rem                                   is used. If this and
-rem                                   RHQ_AGENT_JAVA_HOME are not set, the
-rem                                   agent's embedded JRE will be used.
-rem
-rem    RHQ_AGENT_INSTANCE_NAME - The name of the Windows Service; it must
-rem                              conform to the Windows Service naming
-rem                              conventions. By default, this is the
-rem                              name "rhqagent-%COMPUTERNAME%"
-rem
-rem    RHQ_AGENT_WRAPPER_LOG_DIR_PATH - The full path to the location where
-rem                                     the wrapper log file will go.
-rem
-rem    RHQ_AGENT_RUN_AS - if defined, then when the Windows Service is
-rem                       installed, the value is the domain\username of the
-rem                       user that the Windows Service will run as 
-rem                       
-rem    RHQ_AGENT_RUN_AS_ME - if defined, then when the Windows Service is
-rem                          installed, the domain\username of the
-rem                          user that the Windows Service will run as will
-rem                          be the current user (.\%USERNAME%).  This takes
-rem                          precedence over RHQ_AGENT_RUN_AS.
-rem                       
 rem Note that you cannot define custom Java VM parameters or agent
 rem command line arguments to pass to the RHQ Agent VM.  If you wish to
 rem pass in specific arguments, modify the rhq-agent-wrapper.conf file
@@ -70,6 +31,19 @@ rem ===========================================================================
 setlocal
 
 rem ----------------------------------------------------------------------
+rem Let's load in the env script first. We assume our custom environment
+rem script is located in the same place as this script. We do this first
+rem because even though the "rhq-agent.bat _SETENV_ONLY" does it too,
+rem it only prepares some variables but doesn't pass through some
+rem that may (or may not) be defined in the env.bat.
+rem ----------------------------------------------------------------------
+
+set _ENV_SCRIPT_PATH=%~dp0
+if exist "%_ENV_SCRIPT_PATH%\rhq-agent-env.bat" (
+   call "%_ENV_SCRIPT_PATH%\rhq-agent-env.bat"
+)
+
+rem ----------------------------------------------------------------------
 rem Call the agent start script but have it only setup our environment.
 rem Note that this script is assumed to be in the same directory as the
 rem agent start script.
@@ -77,6 +51,8 @@ rem This script will set up the following environment variables for us:
 rem    RHQ_AGENT_HOME
 rem    RHQ_AGENT_BIN_DIR_PATH
 rem    RHQ_AGENT_JAVA_EXE_FILE_PATH
+rem Some other RHQ_AGENT_ variables might also be set due to the
+rem calling of the custom environment script earlier.
 rem ----------------------------------------------------------------------
 
 set _SCRIPT_DIR=%~dp0
@@ -137,6 +113,7 @@ if defined RHQ_AGENT_DEBUG set _DEBUG_OPTS=wrapper.debug=true wrapper.java.addit
 rem Determine what user the Windows Service will run as
 if defined RHQ_AGENT_RUN_AS set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=%RHQ_AGENT_RUN_AS%"
 if defined RHQ_AGENT_RUN_AS_ME set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=.\%USERNAME%"
+if not defined RHQ_AGENT_PASSWORD_PROMPT set RHQ_AGENT_PASSWORD_PROMPT=true
 
 if /i "%1"=="install" (
 

@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -87,20 +88,27 @@ public class JarContentDelegate extends FileContentDelegate {
                 Configuration config = new Configuration();
                 jf = new JarFile(file);
 
-                String version = jf.getManifest().getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+                Manifest manifest = jf.getManifest();
+                String version=null;
 
-                config.put(new PropertySimple("version", version));
-                config.put(new PropertySimple("title", jf.getManifest().getMainAttributes().getValue(
-                    Attributes.Name.IMPLEMENTATION_TITLE)));
-                config.put(new PropertySimple("url", jf.getManifest().getMainAttributes().getValue(
-                    Attributes.Name.IMPLEMENTATION_URL)));
-                config.put(new PropertySimple("vendor", jf.getManifest().getMainAttributes().getValue(
-                    Attributes.Name.IMPLEMENTATION_VENDOR)));
+                if (manifest!=null) {
+                    Attributes attributes = manifest.getMainAttributes();
+                    
+                    version = attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
 
-                config.put(new PropertySimple("classpath", jf.getManifest().getMainAttributes().getValue(
-                    Attributes.Name.CLASS_PATH)));
-                config.put(new PropertySimple("sealed", jf.getManifest().getMainAttributes().getValue(
-                    Attributes.Name.SEALED)));
+                    config.put(new PropertySimple("version", version));
+                    config.put(new PropertySimple("title", attributes.getValue(
+                        Attributes.Name.IMPLEMENTATION_TITLE)));
+                    config.put(new PropertySimple("url", attributes.getValue(
+                        Attributes.Name.IMPLEMENTATION_URL)));
+                    config.put(new PropertySimple("vendor", attributes.getValue(
+                        Attributes.Name.IMPLEMENTATION_VENDOR)));
+
+                    config.put(new PropertySimple("classpath", attributes.getValue(
+                        Attributes.Name.CLASS_PATH)));
+                    config.put(new PropertySimple("sealed", attributes.getValue(
+                        Attributes.Name.SEALED)));
+                }
 
                 if (version == null) {
                     version = "1.0";

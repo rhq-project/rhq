@@ -33,7 +33,7 @@ import java.util.TreeSet;
 
 /**
  * This class determines the deployment order for plugins by building the dependency graph of the plugins. You use this
- * class by first {@link #addPlugin(String, String) adding} plugins to the graph, and then when all plugins have been
+ * class by first {@link #addPlugin(String, String[])} adding} plugins to the graph, and then when all plugins have been
  * added you can get the {@link #getDeploymentOrder() deployment order} that lists all the plugins in the order in which
  * they should be deployed.
  *
@@ -105,7 +105,7 @@ public class PluginDependencyGraph {
      * plugins this plugin explicitly depends on). The list will be empty if there are no dependencies. <code>
      * null</code> will be returned if the plugin does not exist in this graph.
      *
-     * @param  pluginName
+     * @param  pluginName the plugin name
      *
      * @return list of plugin dependencies (<code>null</code> if the plugin doesn't exist yet in the graph)
      */
@@ -132,7 +132,7 @@ public class PluginDependencyGraph {
      *
      * @throws IllegalStateException if a circular dependency has been detected
      */
-    public boolean isComplete(StringBuffer errorBuffer) throws IllegalStateException {
+    public boolean isComplete(StringBuilder errorBuffer) throws IllegalStateException {
         try {
             getDeploymentOrder();
             return true;

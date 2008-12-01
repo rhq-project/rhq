@@ -34,7 +34,7 @@ public interface ProductPluginDeployerMBean extends org.jboss.deployment.SubDepl
     /**
      * Sets the directory where the plugin jars are located.
      *
-     * @param name
+     * @param name the name of the plugins dir, relative to the rhq.ear/rhq-downloads dir
      */
     void setPluginDir(String name);
 
@@ -53,7 +53,7 @@ public interface ProductPluginDeployerMBean extends org.jboss.deployment.SubDepl
     List<String> getRegisteredPluginNames();
 
     /**
-     * Start the deployer process. This is a separate method from the mbean's start() lifecycle method because we only
+     * Start the deployer process. This is a separate method from the mbean's start() lifecycle method, because we only
      * invoke this method when we are assured all EJBs are available.
      */
     void startDeployer();

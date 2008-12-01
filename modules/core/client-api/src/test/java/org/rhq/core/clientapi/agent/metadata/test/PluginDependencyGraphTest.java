@@ -223,7 +223,7 @@ public class PluginDependencyGraphTest {
 
     public void testBadGraph() {
         PluginDependencyGraph graph = new PluginDependencyGraph();
-        StringBuffer error = new StringBuffer();
+        StringBuilder error = new StringBuilder();
 
         graph.addPlugin("A", "B");
         assert graph.getPlugins().size() == 1;

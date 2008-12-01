@@ -95,11 +95,11 @@ public class PluginMetadataManager {
     }
 
     /**
-     * Transforms the pluginDescriptor into domain object form and stores into this objects type system.
+     * Transforms the pluginDescriptor into domain object form and stores into this object's type system.
      *
      * @param  pluginDescriptor the descriptor to transform
      *
-     * @return the root resource types represented by this descriptor
+     * @return the root resource types represented by this descriptor, or null on failure
      */
     public synchronized Set<ResourceType> loadPlugin(PluginDescriptor pluginDescriptor) {
         try {

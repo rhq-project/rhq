@@ -107,7 +107,7 @@ public class PluginMetadataParser {
 
         // Plugin's Servers
         for (ServerDescriptor serverDescriptor : pluginDescriptor.getServers()) {
-            rootResourceTypes.add(parseServerDescriptor(serverDescriptor, null, null));
+            rootResourceTypes.add(parseServerDescriptor(serverDescriptor, null));
         }
 
         // Plugin's Services
@@ -134,8 +134,8 @@ public class PluginMetadataParser {
         return platformResourceType;
     }
 
-    private ResourceType parseServerDescriptor(ServerDescriptor serverDescriptor, ResourceType parentServerType,
-        String parentSource) throws InvalidPluginDescriptorException {
+    private ResourceType parseServerDescriptor(ServerDescriptor serverDescriptor, ResourceType parentServerType)
+            throws InvalidPluginDescriptorException {
         ResourceType serverResourceType;
         String sourcePlugin = serverDescriptor.getSourcePlugin();
         String sourceServer = serverDescriptor.getSourceType();
@@ -209,7 +209,7 @@ public class PluginMetadataParser {
 
             // Look for child server types
             for (ServerDescriptor childServerDescriptor : serverDescriptor.getServers()) {
-                parseServerDescriptor(childServerDescriptor, serverResourceType, null);
+                parseServerDescriptor(childServerDescriptor, serverResourceType);
             }
 
             // Look for child server types
@@ -464,7 +464,7 @@ public class PluginMetadataParser {
         // Look for child types
         if (resourceDescriptor instanceof PlatformDescriptor) {
             for (ServerDescriptor serverDescriptor : ((PlatformDescriptor) resourceDescriptor).getServers()) {
-                parseServerDescriptor(serverDescriptor, resourceType, sourcePlugin);
+                parseServerDescriptor(serverDescriptor, resourceType);
             }
 
             for (ServiceDescriptor serviceDescriptor : ((PlatformDescriptor) resourceDescriptor).getServices()) {
@@ -474,7 +474,7 @@ public class PluginMetadataParser {
 
         if (resourceDescriptor instanceof ServerDescriptor) {
             for (ServerDescriptor serverDescriptor : ((ServerDescriptor) resourceDescriptor).getServers()) {
-                parseServerDescriptor(serverDescriptor, resourceType, sourcePlugin);
+                parseServerDescriptor(serverDescriptor, resourceType);
             }
 
             for (ServiceDescriptor serviceDescriptor : ((ServerDescriptor) resourceDescriptor).getServices()) {
@@ -501,10 +501,24 @@ public class PluginMetadataParser {
         return packageName + '.' + baseClassName;
     }
 
+    /**
+     * Returns the fully qualified name of the resource discovery component class for the given ResourceType.
+     * This method is only called by the Plugin Container.
+     *
+     * @param resourceType the ResourceType
+     * @return the resource discovery component class name
+     */
     public String getDiscoveryComponentClass(ResourceType resourceType) {
         return this.discoveryClasses.get(resourceType);
     }
 
+    /**
+     * Returns the fully qualified name of the resource component class for the given ResourceType.
+     * This method is only called by the Plugin Container.
+     *
+     * @param resourceType the ResourceType
+     * @return the resource component class name
+     */
     public String getComponentClass(ResourceType resourceType) {
         return this.componentClasses.get(resourceType);
     }

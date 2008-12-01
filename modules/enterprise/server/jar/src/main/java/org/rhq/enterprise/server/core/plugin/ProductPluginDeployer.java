@@ -19,15 +19,21 @@
 package org.rhq.enterprise.server.core.plugin;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.FileInputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.jar.JarFile;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.MBeanNotificationInfo;
@@ -49,6 +55,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.xml.sax.SAXException;
+import org.jetbrains.annotations.NotNull;
 
 import org.jboss.deployment.DeploymentException;
 import org.jboss.deployment.DeploymentInfo;
@@ -93,9 +100,9 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
 
     private String pluginDir = PLUGIN_DIR;
     private String licenseFile = null;
-    private LicenseManager licenseManager = null;
+
     /** Map of plugin names to the corresponding plugins' JBAS deployment infos */
-    private Map<String, DeploymentInfo> pluginsToBeRegistered = new HashMap<String, DeploymentInfo>();
+    private Map<String, DeploymentInfo> deploymentInfos = new HashMap<String, DeploymentInfo>();
     /** Map of plugin names to the corresponding plugins' JAXB plugin descriptors */
     private Map<String, PluginDescriptor> pluginDescriptors = new HashMap<String, PluginDescriptor>();
     /** Map of plugin names to the corresponding plugins' versions */
@@ -104,6 +111,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     private boolean isReady = false;
     private NotificationBroadcasterSupport broadcaster = new NotificationBroadcasterSupport();
     private AtomicLong notifSequence = new AtomicLong(0);
+    private Set<String> namesOfPluginsToBeRegistered = new HashSet<String>();
 
     private static String NOTIF_TYPE(String type) {
         return PRODUCT + ".plugin." + type;
@@ -213,119 +221,114 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     public void startDeployer() {
         pluginNotify("deployer", DEPLOYER_READY);
 
-        // Do startup license checking
-        this.licenseManager = LicenseManager.instance();
-        this.licenseManager.doStartupCheck(this.licenseFile);
+        // Do startup license checking. TODO: Move this code somewhere else.
+        LicenseManager licenseManager = LicenseManager.instance();
+        licenseManager.doStartupCheck(this.licenseFile);
 
-        // now that we have started, we are being told all EJBs are ready, so register
-        // any plugins we've already been told about
-        // note that we deploy the plugins in their proper deployment order based on dependencies
-        Map<String, DeploymentInfo> pluginDeploymentInfos = new HashMap<String, DeploymentInfo>();
+        registerPlugins();
+
+        pluginNotify("deployer", DEPLOYER_CLEARED);
+
+        this.isReady = true;
+        return;
+    }
+
+    // NOTE: This method must only be called after this.isReady == true!
+    private void registerPlugins() {
+        for (Iterator<String> it = this.namesOfPluginsToBeRegistered.iterator(); it.hasNext();) {
+            String pluginName = it.next();
+            if (!isNewOrUpdated(pluginName)) {
+                log.debug("Plugin [" + pluginName + "] has not been updated.");
+                it.remove();
+            }
+        }
+
+        if (this.namesOfPluginsToBeRegistered.isEmpty()) {
+            log.info("All plugins were already up to date in the database.");
+            return;
+        }
+
+        log.info("Registering the following new or updated plugins: " + this.namesOfPluginsToBeRegistered);
+        PluginDependencyGraph dependencyGraph = buildDependencyGraph();
+        StringBuilder errorBuffer = new StringBuilder();
+        if (!dependencyGraph.isComplete(errorBuffer)) {
+            // TODO: Doesn't it make more sense to throw an exception here?
+            log.error(errorBuffer.toString());
+            log.error(dependencyGraph.toString());
+            return;
+        }
+        registerPlugins(dependencyGraph);
+        this.namesOfPluginsToBeRegistered.clear();
+
+        // Trigger vacuums on some tables as the initial deployment might have changed a lot of things.
+        // There are probably more tables involved though.
+        // First wait to give Hibernate a chance to close all transactions etc.
+        try {
+            Thread.sleep(2 * 1000);
+        } catch (InterruptedException ignored) {
+            // no problem
+        }
+        Subject superuser = LookupUtil.getSubjectManager().getOverlord();
+        SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+        systemManager.vacuum(superuser, new String[] { "RHQ_MEASUREMENT_DEF", "RHQ_CONFIG_DEF",
+            "RHQ_RESOURCE_TYPE", "RHQ_RESOURCE_TYPE_PARENTS" });
+    }
+
+    private PluginDependencyGraph buildDependencyGraph() {
         PluginDependencyGraph dependencyGraph = new PluginDependencyGraph();
-
-        boolean changed = false;
-
-        ResourceMetadataManagerLocal metadataManager = LookupUtil.getResourceMetadataManager();
-
-        for (String pluginName : this.pluginsToBeRegistered.keySet()) {
-            DeploymentInfo deploymentInfo = this.pluginsToBeRegistered.get(pluginName);
+        for (String pluginName : this.deploymentInfos.keySet()) {
             PluginDescriptor descriptor = this.pluginDescriptors.get(pluginName);
-            pluginDeploymentInfos.put(descriptor.getName(), deploymentInfo);
-
             List<PluginDependencyGraph.PluginDependency> dependencies = new ArrayList<PluginDependencyGraph.PluginDependency>();
             for (PluginDescriptor.Depends dependency : descriptor.getDepends()) {
                 dependencies.add(new PluginDependencyGraph.PluginDependency(dependency.getPlugin(), dependency
                     .isUseClasses()));
             }
-
-            dependencyGraph.addPlugin(descriptor.getName(), dependencies);
-
-            try {
-                String md5 = MD5Generator.getDigestString(deploymentInfo.url.openStream());
-                Plugin plugin = metadataManager.getPlugin(pluginName);
-                if (plugin == null || !plugin.getMd5().equals(md5)) {
-                    changed = true;
-                    log.debug("Plugin changed detected for plugin: " + pluginName);
-                }
-            } catch (Exception e) {
-                // Plugin has not yet been deployed
-                changed = true;
-            }
+            dependencyGraph.addPlugin(pluginName, dependencies);
         }
-
-        StringBuffer error = new StringBuffer();
-        if (changed) {
-            if (dependencyGraph.isComplete(error)) {
-                deployDependencyGraph(pluginDeploymentInfos, dependencyGraph);
-
-                this.pluginsToBeRegistered.clear();
-                this.pluginDescriptors.clear();
-
-                //generally means we are done deploying plugins at startup.
-                //but we are not "done" since a plugin can be dropped into
-                //the plugins directory at anytime.
-                pluginNotify("deployer", DEPLOYER_CLEARED);
-
-                // Trigger vacuums on some tables as the initial deployment might have changed a lot of things
-                // there are probably more tables involved though
-                // First wait to give Hibernate a chance to close all transactions etc.
-                try {
-                    Thread.sleep(2 * 1000);
-                } catch (InterruptedException e) {
-                    ; // no problem
-                }
-
-                Subject superuser = LookupUtil.getSubjectManager().getOverlord();
-                SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-                systemManager.vacuum(superuser, new String[] { "RHQ_MEASUREMENT_DEF", "RHQ_CONFIG_DEF",
-                    "RHQ_RESOURCE_TYPE", "RHQ_RESOURCE_TYPE_PARENTS" });
-            } else {
-                log.warn(error.toString());
-                log.warn(dependencyGraph.toString());
-            }
-        } else {
-            log.info("All plugins up to date");
-        }
-
-        this.isReady = true;
-
-        return;
+        log.debug("Dependency graph deployment order: " + dependencyGraph.getDeploymentOrder());
+        return dependencyGraph;
     }
 
-    class LatchedPluginDeploymentService extends LatchedServiceController.LatchedService {
-
-        private final DeploymentInfo pluginDeploymentInfo;
-        private final PluginDescriptor pluginDescriptor;
-
-        public LatchedPluginDeploymentService(String pluginName, DeploymentInfo deploymentInfo,
-            PluginDescriptor descriptor) {
-            super(pluginName);
-            this.pluginDeploymentInfo = deploymentInfo;
-            this.pluginDescriptor = descriptor;
+    private boolean isNewOrUpdated(String pluginName) {
+        DeploymentInfo deploymentInfo = this.deploymentInfos.get(pluginName);
+        if (deploymentInfo == null)
+            throw new IllegalStateException("DeploymentInfo was not found for plugin [" + pluginName
+                    + " ] - it should have been initialized by preprocessPlugin().");
+        String md5 = null;
+        try {
+            md5 = MD5Generator.getDigestString(deploymentInfo.url.openStream());
         }
-
-        @Override
-        public void executeService() throws LatchedServiceException {
-            try {
-                registerPluginJar(pluginDescriptor, pluginDeploymentInfo);
-            } catch (Throwable t) {
-                throw new LatchedServiceException(t);
-            }
+        catch (IOException e) {
+            log.error("Error generating MD5 for plugin [" + pluginName + "].");
         }
-
+        ResourceMetadataManagerLocal metadataManager = LookupUtil.getResourceMetadataManager();
+        Plugin plugin;
+        try {
+            plugin = metadataManager.getPlugin(pluginName);
+        } catch (RuntimeException e) {
+            log.debug("New plugin [" + pluginName + "] detected.");
+            return true;
+        }
+        if (!plugin.getMd5().equals(md5)) {
+            log.debug("Updated plugin [" + pluginName + "] detected.");
+            return true;
+        }
+        return false;
     }
 
-    private void deployDependencyGraph(Map<String, DeploymentInfo> pluginDeploymentInfos,
-        PluginDependencyGraph dependencyGraph) {
-
-        Map<String, LatchedPluginDeploymentService> latchedDependencyMap = new HashMap<String, LatchedPluginDeploymentService>();
-        for (String name : dependencyGraph.getPlugins()) {
-            LatchedPluginDeploymentService nextService = getServiceIfExists(name, pluginDeploymentInfos,
-                latchedDependencyMap);
-            for (String nextDependency : dependencyGraph.getPluginDependencies(name)) {
-                LatchedPluginDeploymentService dependency = getServiceIfExists(nextDependency, pluginDeploymentInfos,
-                    latchedDependencyMap);
-                nextService.addDependency(dependency);
+    private void registerPlugins(PluginDependencyGraph dependencyGraph) {
+        Map<String, LatchedPluginDeploymentService> latchedDependencyMap =
+                new HashMap<String, LatchedPluginDeploymentService>();
+        for (String pluginName : this.namesOfPluginsToBeRegistered) {
+            LatchedPluginDeploymentService service = getServiceIfExists(pluginName, latchedDependencyMap);
+            // We need to register dependencies also even if they aren't new or updated. This is because
+            // PluginMetadataManager requires dependency plugins to be loaded in its pluginsByParser map.
+            // ResourceMetadataManagerBean.register() will be smart enough to pass these plugins to
+            // PluginMetadataManager to be parsed, but not to unnecessarily merge their types into the DB.
+            for (String dependencyPluginName : dependencyGraph.getPluginDependencies(pluginName)) {
+                LatchedPluginDeploymentService dependencyService = getServiceIfExists(dependencyPluginName,
+                        latchedDependencyMap);
+                service.addDependency(dependencyService);
             }
         }
 
@@ -338,42 +341,33 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         }
         long endDeployTime = System.currentTimeMillis();
 
-        log.info("PluginDependencyGraph deploy time for " + dependencyGraph.getPlugins().size() + " plugins was "
-            + (endDeployTime - startDeployTime) + " millis");
+        log.debug("Registered [" + dependencyGraph.getPlugins().size() + "] plugins in "
+            + (endDeployTime - startDeployTime) + " millis.");
     }
 
-    private LatchedPluginDeploymentService getServiceIfExists(String name,
-        Map<String, DeploymentInfo> pluginDeploymentInfos, Map<String, LatchedPluginDeploymentService> latchedServiceMap) {
-
-        LatchedPluginDeploymentService result = latchedServiceMap.get(name);
-
+    private LatchedPluginDeploymentService getServiceIfExists(String pluginName,
+                                                              Map<String, LatchedPluginDeploymentService> latchedServiceMap) {
+        LatchedPluginDeploymentService result = latchedServiceMap.get(pluginName);
         if (result == null) {
-            DeploymentInfo deploymentInfo = pluginDeploymentInfos.get(name);
-            PluginDescriptor descriptor = this.pluginDescriptors.get(name);
-
-            result = new LatchedPluginDeploymentService(name, deploymentInfo, descriptor);
-
-            latchedServiceMap.put(name, result);
+            DeploymentInfo deploymentInfo = this.deploymentInfos.get(pluginName);
+            PluginDescriptor descriptor = this.pluginDescriptors.get(pluginName);
+            result = new LatchedPluginDeploymentService(pluginName, deploymentInfo, descriptor
+            );
+            latchedServiceMap.put(pluginName, result);
         }
-
         return result;
     }
 
     /**
      * This is the mechanism to kick off the registration of a new plugin. You must ensure you call this at the
      * appropriate time such that the plugin getting registered already has its dependencies registered.
-     *
-     * @param  pluginDescriptor
-     * @param  deploymentInfo
-     *
-     * @return the name of the plugin
      */
-    private String registerPluginJar(PluginDescriptor pluginDescriptor, DeploymentInfo deploymentInfo) {
+    private void registerPluginJar(PluginDescriptor pluginDescriptor, DeploymentInfo deploymentInfo) {
         String pluginJar = deploymentInfo.url.getFile();
 
         if (pluginDescriptor == null) {
             log.error("Could not find a valid plugin descriptor -- is this a plugin archive at " + pluginJar + " ?");
-            return null;
+            return;
         }
 
         try {
@@ -381,15 +375,15 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             String pluginNameDisplayName = pluginName + " (" + pluginDescriptor.getDisplayName() + ")";
             ComparableVersion comparableVersion = this.pluginVersions.get(pluginName);
             String version = (comparableVersion != null) ? comparableVersion.toString() : null;
-            log.info("Deploying RHQ plugin " + pluginNameDisplayName + ", "
+            log.debug("Registering RHQ plugin " + pluginNameDisplayName + ", "
                 + ((version != null) ? "version " + version : "undefined version") + "...");
             checkVersionCompatibility(pluginDescriptor.getAmpsVersion());
 
             // make sure the path is only the filename
             String filename = new File(deploymentInfo.url.getPath()).getName();
-            Plugin plugin = new Plugin(pluginDescriptor.getName(), filename);
+            Plugin plugin = new Plugin(pluginName, filename);
             plugin.setDisplayName((pluginDescriptor.getDisplayName() != null) ? pluginDescriptor.getDisplayName()
-                : pluginDescriptor.getName());
+                : pluginName);
             plugin.setEnabled(true);
             plugin.setDescription(pluginDescriptor.getDescription());
 
@@ -407,11 +401,8 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             metadataManager.registerPlugin(plugin, pluginDescriptor);
 
             pluginNotify(pluginNameDisplayName, PLUGIN_REGISTERED);
-
-            return plugin.getName();
         } catch (Exception e) {
-            log.error("Unable to deploy RHQ plugin [" + pluginJar + "]", e);
-            return null;
+            log.error("Failed to register RHQ plugin [" + pluginJar + "]", e);
         }
     }
 
@@ -475,7 +466,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         if (isStarted) {
             super.stop();
             pluginNotify("deployer", DEPLOYER_SUSPENDED);
-            this.pluginsToBeRegistered.clear();
+            this.deploymentInfos.clear();
             isStarted = false;
             isReady = false;
         }
@@ -487,33 +478,32 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     @Override
     public void start(DeploymentInfo deploymentInfo) throws DeploymentException {
         try {
+            // TODO: Do we really need to call start() - I'd think the app server would do that for us...
             this.start();
         } catch (Exception e) {
             throw new DeploymentException(e);
         }
 
-        if (isLicenseFile(deploymentInfo)) {
+        if (isLicenseFile(deploymentInfo))
             return;
-        }
 
         String pluginJarFileName = deploymentInfo.url.getFile();
-        log.debug("start: " + pluginJarFileName);
-
-        // plugin metadata cannot be deployed until EJBs are ready
-        if (isReady) {
+        log.debug("start(): " + pluginJarFileName);
+        String pluginName = preprocessPlugin(deploymentInfo);
+        if (this.isReady) {            
+            // isReady == true means startDeployer() has already been called, so this is a hot deploy.
+            // Call registerPlugins() ourselves.
+            log.debug("Hot deploying plugin [" + pluginName + "]...");
             try {
-                // note that hot deploying a plugin whose dependencies aren't yet deployed will fail
-                PluginDescriptor descriptor = getPluginDescriptor(deploymentInfo);
-                if (registerPluginJar(descriptor, deploymentInfo) == null) {
-                    throw new DeploymentException("Unable to hot deploy RHQ plugin [" + pluginJarFileName + "]");
-                }
-            } catch (JAXBException e) {
-                throw new DeploymentException("Unable to hot deploy RHQ plugin [" + pluginJarFileName + "]", e);
+                registerPlugins();
+            } catch (Exception e) {
+                throw new DeploymentException("Unable to deploy RHQ plugin [" + pluginName + "]", e);
             }
         } else {
-            preprocessPlugin(deploymentInfo);
+            // Otherwise, startDeployer() has not been called yet. Once it is called, it will take care
+            // of calling registerPlugins().
+            log.debug("Performing initial deploy of plugin [" + pluginName + "]...");
         }
-
         return;
     }
 
@@ -521,17 +511,16 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
      * @see org.jboss.deployment.SubDeployerSupport#stop(org.jboss.deployment.DeploymentInfo)
      */
     @Override
-    public void stop(DeploymentInfo di) throws DeploymentException {
-        if (isLicenseFile(di)) {
+    public void stop(DeploymentInfo deploymentInfo) throws DeploymentException {
+        if (isLicenseFile(deploymentInfo))
             return;
-        }
 
-        log.debug("stop: " + di.url.getFile());
+        String pluginJarFileName = deploymentInfo.url.getFile();
+        log.debug("stop: " + pluginJarFileName);
 
         try {
-            String jar = di.url.getFile();
-
-            pluginNotify(new File(jar).getName(), PLUGIN_UNDEPLOYED);
+            // TODO: Actually undeploy the plugin from the DB (this will be a lot of work...).
+            pluginNotify(new File(pluginJarFileName).getName(), PLUGIN_UNDEPLOYED);
         } catch (Exception e) {
             throw new DeploymentException(e);
         }
@@ -539,23 +528,26 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         return;
     }
 
-    private void pluginNotify(String name, String type) {
-        String action = type.substring(type.lastIndexOf(".") + 1);
-        String msg = "Plugin " + name + " " + action;
-
-        Notification notif = new Notification(type, this, this.notifSequence.incrementAndGet(), msg);
-
+    private void pluginNotify(String name, String notifType) {
+        String action = notifType.substring(notifType.lastIndexOf(".") + 1);
+        String msg = "Plugin " + name + " " + action + ".";
+        Notification notif = new Notification(notifType, this, this.notifSequence.incrementAndGet(), msg);
         log.debug(msg);
-
         broadcaster.sendNotification(notif);
     }
 
-    private boolean isLicenseFile(DeploymentInfo di) {
+    private static boolean isLicenseFile(DeploymentInfo deploymentInfo) {
         String name = LicenseManager.getLicenseFileName();
-        return di.url.getFile().endsWith(name);
+        return deploymentInfo.url.getFile().endsWith(name);
     }
 
-    private void preprocessPlugin(DeploymentInfo deploymentInfo) throws DeploymentException {
+    /**
+     * Process the specified plugin jar to figure out the plugin name and version. If it is the only plugin with this
+     * name, or if it has the newest version among other plugins with the same name, then add it to our master set of
+     * plugins to be registered. Once all EJBs are started, {@link #startDeployer()} will be called and will take care
+     * of registering the plugins.
+     */
+    private String preprocessPlugin(DeploymentInfo deploymentInfo) throws DeploymentException {
         String pluginJarFileName = deploymentInfo.url.getFile();
         PluginDescriptor descriptor;
         try {
@@ -564,35 +556,47 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             throw new DeploymentException("Failed to parse plugin descriptor for plugin jar '" + pluginJarFileName
                 + "'.", e);
         }
-        ComparableVersion version = getPluginVersion(deploymentInfo, descriptor);
         String pluginName = descriptor.getName();
-        ComparableVersion existingVersion = this.pluginVersions.get(pluginName);
-        boolean newerThanExistingVersion = false;
-        if (existingVersion != null) {
-            if (version != null && version.compareTo(existingVersion) > 0) {
-                newerThanExistingVersion = true;
-                log.debug("Newer version of '" + pluginName + "' plugin found (version " + version
-                    + ") - older version (" + existingVersion + ") will be ignored.");
-            }
-        }
-        if (existingVersion == null || newerThanExistingVersion) {
+        boolean initialDeploy = !this.deploymentInfos.containsKey(pluginName);
+        ComparableVersion version = getPluginVersion(deploymentInfo, descriptor);
+        if (initialDeploy)
+            log.info("Deploying RHQ plugin [" + pluginName + "]...");
+        else
+            log.info("Redeploying RHQ plugin [" + pluginName + "]...");
+        if (initialDeploy || isNewestVersion(pluginName, version)) {
+            this.deploymentInfos.put(pluginName, deploymentInfo);
             this.pluginDescriptors.put(pluginName, descriptor);
             this.pluginVersions.put(pluginName, version);
-            this.pluginsToBeRegistered.put(pluginName, deploymentInfo);
+            this.namesOfPluginsToBeRegistered.add(pluginName);
         }
+        return pluginName;
     }
 
+    private boolean isNewestVersion(String pluginName, ComparableVersion version) {
+        boolean newestVersion;
+        ComparableVersion existingVersion = this.pluginVersions.get(pluginName);
+        if (existingVersion != null) {
+            newestVersion = (version.compareTo(existingVersion) >= 0);
+            if (newestVersion)
+                log.debug("Newer version of '" + pluginName + "' plugin found (version " + version
+                    + ") - older version (" + existingVersion + ") will be ignored.");
+        } else {
+            newestVersion = false;
+        }
+        return newestVersion;
+    }
+
+    @NotNull
     private ComparableVersion getPluginVersion(DeploymentInfo deploymentInfo, PluginDescriptor descriptor)
         throws DeploymentException {
-        String pluginJarFileName = deploymentInfo.url.getFile();
+        // First, see if a version is defined in the plugin descriptor.
         String version = descriptor.getVersion();
         if (version == null) {
-            log.debug("No version is specified in the plugin descriptor; falling back to '"
-                + Attributes.Name.IMPLEMENTATION_VERSION + "' attribute from MANIFEST.MF of plugin jar ("
-                + pluginJarFileName + ")...");
-            Manifest manifest = deploymentInfo.getManifest();
+            // If not, check the plugin jar's MANIFEST.MF file.
+            Manifest manifest = getManifest(deploymentInfo);
             version = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
         }
+        String pluginJarFileName = deploymentInfo.url.getFile();
         ComparableVersion comparableVersion;
         if (version == null) {
             throw new DeploymentException("No version is defined for plugin jar '" + pluginJarFileName
@@ -606,5 +610,52 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
                 + pluginJarFileName + "'.", e);
         }
         return comparableVersion;
+    }
+
+    // Use this method rather than calling deploymentInfo.getManifest()
+    // (workaround for https://jira.jboss.org/jira/browse/JBAS-6266).
+    private static Manifest getManifest(DeploymentInfo deploymentInfo) {
+        try {
+            File file = new File(deploymentInfo.localUrl.getFile());
+            Manifest manifest;
+            if (file.isDirectory()) {
+                FileInputStream fis = new FileInputStream(new File(file, "META-INF/MANIFEST.MF"));
+                manifest = new Manifest(fis);
+                fis.close();
+            }
+            else {  // a jar
+                JarFile jarFile = new JarFile(file);
+                manifest = jarFile.getManifest();
+                jarFile.close();
+            }
+            return manifest;
+        }
+        // It is ok to barf at any time in the above, means no manifest
+        catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    class LatchedPluginDeploymentService extends LatchedServiceController.LatchedService {
+
+        private final DeploymentInfo pluginDeploymentInfo;
+        private final PluginDescriptor pluginDescriptor;
+
+        public LatchedPluginDeploymentService(String pluginName, DeploymentInfo deploymentInfo,
+                                              PluginDescriptor descriptor) {
+            super(pluginName);
+            this.pluginDeploymentInfo = deploymentInfo;
+            this.pluginDescriptor = descriptor;
+        }
+
+        @Override
+        public void executeService() throws LatchedServiceException {
+            try {
+                registerPluginJar(pluginDescriptor, pluginDeploymentInfo);
+            } catch (Throwable t) {
+                throw new LatchedServiceException(t);
+            }
+        }
+
     }
 }

@@ -21,13 +21,16 @@ package org.rhq.enterprise.gui.legacy.portlet.addcontent;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 
 public class AddPortletAction extends BaseAction {
@@ -36,28 +39,29 @@ public class AddPortletAction extends BaseAction {
         HttpServletResponse response) throws Exception {
         HttpSession session = request.getSession();
         WebUser user = (WebUser) session.getAttribute(Constants.WEBUSER_SES_ATTR);
+        WebUserPreferences preferences = user.getPreferences();
         String portletName = request.getParameter(Constants.REM_PORTLET_PARAM);
         PropertiesForm pForm = (PropertiesForm) form;
 
-        String preferences = Constants.DASHBOARD_DELIMITER;
-        preferences += pForm.getPortlet();
+        String prefs = Constants.DASHBOARD_DELIMITER;
+        prefs += pForm.getPortlet();
 
         if ((pForm.getPortlet() == null) || "bad".equals(pForm.getPortlet())) {
             return mapping.findForward(RetCodeConstants.SUCCESS_URL);
         }
 
         if (pForm.isWide()) {
-            user.setPreference(Constants.USER_PORTLETS_SECOND, user.getPreference(Constants.USER_PORTLETS_SECOND)
-                + preferences);
+            String value = preferences.getPreference(Constants.USER_PORTLETS_SECOND) + prefs;
+            preferences.setPreference(Constants.USER_PORTLETS_SECOND, value);
         } else {
-            user.setPreference(Constants.USER_PORTLETS_FIRST, user.getPreference(Constants.USER_PORTLETS_FIRST)
-                + preferences);
+            String value = preferences.getPreference(Constants.USER_PORTLETS_FIRST) + prefs;
+            preferences.setPreference(Constants.USER_PORTLETS_FIRST, value);
         }
 
         LogFactory.getLog("user.preferences").trace(
             "Invoking setUserPrefs" + " in AddPortletAction " + " for " + user.getId() + " at "
                 + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
-        user.persistPreferences();
+        preferences.persistPreferences();
 
         session.removeAttribute(Constants.USERS_SES_PORTAL);
 

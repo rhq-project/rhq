@@ -80,7 +80,7 @@ public abstract class MetricsDisplayFormPrepareAction extends MetricsControlForm
                 GroupCategory.COMPATIBLE);
 
             // Can we put the ResourceType in the Request so we don't need another EJB call in MetricsControlFormPrepareAction.java
-            if (resources.size()>0) {
+            if (resources.size() > 0) {
                 ResourceType resourceType = resources.get(0).getResourceType();
                 request.setAttribute(AttrConstants.RESOURCE_TYPE_ATTR, resourceType);
             }
@@ -97,7 +97,7 @@ public abstract class MetricsDisplayFormPrepareAction extends MetricsControlForm
 
         if ((begin == null) || (end == null)) {
             // get the "metric range" user pref
-            Map range = user.getMetricRangePreference();
+            Map<String, ?> range = user.getPreferences().getMetricRangePreference();
             if (range != null) {
                 begin = (Long) range.get(MonitorUtils.BEGIN);
                 end = (Long) range.get(MonitorUtils.END);
@@ -210,7 +210,7 @@ public abstract class MetricsDisplayFormPrepareAction extends MetricsControlForm
         WebUser user = SessionUtils.getWebUser(request.getSession());
 
         // set threshold default
-        Integer threshold = user.getMetricThresholdPreference();
+        Integer threshold = user.getPreferences().getMetricThresholdPreference();
         switch (threshold) {
         case MonitorUtils.THRESHOLD_HIGH_RANGE_VALUE: {
             form.setDisplayHighRange(Boolean.TRUE);

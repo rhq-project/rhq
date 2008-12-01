@@ -20,10 +20,13 @@ package org.rhq.enterprise.gui.legacy.portlet.controlactions;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
@@ -34,11 +37,14 @@ public class PrepareAction extends BaseAction {
         PropertiesForm pForm = (PropertiesForm) form;
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
 
-        Integer lastCompleted = new Integer(user.getPreference(".dashContent.operations.lastCompleted"));
-        Integer nextScheduled = new Integer(user.getPreference(".dashContent.operations.nextScheduled"));
-        Boolean useLastCompleted = Boolean.valueOf(user.getPreference(".dashContent.operations.useLastCompleted"));
-        Boolean useNextScheduled = Boolean.valueOf(user.getPreference(".dashContent.operations.useNextScheduled"));
+        Integer lastCompleted = new Integer(preferences.getPreference(".dashContent.operations.lastCompleted"));
+        Integer nextScheduled = new Integer(preferences.getPreference(".dashContent.operations.nextScheduled"));
+        Boolean useLastCompleted = Boolean.valueOf(preferences
+            .getPreference(".dashContent.operations.useLastCompleted"));
+        Boolean useNextScheduled = Boolean.valueOf(preferences
+            .getPreference(".dashContent.operations.useNextScheduled"));
 
         pForm.setLastCompleted(lastCompleted);
         pForm.setNextScheduled(nextScheduled);

@@ -22,8 +22,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -33,6 +35,7 @@ import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionMessages;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
@@ -61,7 +64,7 @@ public class ViewAction extends TilesAction {
         PageControl pageControl;
 
         try {
-            int size = Integer.parseInt(webUser.getPreference(".dashContent.autoDiscovery.range"));
+            int size = Integer.parseInt(webUser.getPreferences().getPreference(".dashContent.autoDiscovery.range"));
             if (size < 1) {
                 pageControl = PageControl.getUnlimitedInstance();
             } else {

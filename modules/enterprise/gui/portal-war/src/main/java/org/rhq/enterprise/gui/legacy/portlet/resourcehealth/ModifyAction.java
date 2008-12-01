@@ -20,12 +20,15 @@ package org.rhq.enterprise.gui.legacy.portlet.resourcehealth;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -36,6 +39,7 @@ public class ModifyAction extends BaseAction {
         HttpServletResponse response) throws Exception {
         PropertiesForm pForm = (PropertiesForm) form;
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
 
         String forwardStr = RetCodeConstants.SUCCESS_URL;
 
@@ -57,9 +61,9 @@ public class ModifyAction extends BaseAction {
         String availability = Boolean.toString(pForm.isAvailability());
         String alerts = Boolean.toString(pForm.isAlerts());
 
-        user.setPreference(".dashContent.resourcehealth.availability", availability);
-        user.setPreference(".dashContent.resourcehealth.alerts", alerts);
-        user.persistPreferences();
+        preferences.setPreference(".dashContent.resourcehealth.availability", availability);
+        preferences.setPreference(".dashContent.resourcehealth.alerts", alerts);
+        preferences.persistPreferences();
 
         request.getSession().removeAttribute(Constants.USERS_SES_PORTAL);
 

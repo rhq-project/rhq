@@ -20,13 +20,16 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -72,7 +75,7 @@ public class PerformanceFormPrepareAction extends MetricsControlFormPrepareActio
         if (range == null) {
             // this is the first time out. get the "metric range" user pref.
             WebUser user = SessionUtils.getWebUser(request.getSession());
-            Map pref = user.getMetricRangePreference();
+            Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
             range = new MetricRange();
             range.setBegin((Long) pref.get(MonitorUtils.BEGIN));
             range.setEnd((Long) pref.get(MonitorUtils.END));

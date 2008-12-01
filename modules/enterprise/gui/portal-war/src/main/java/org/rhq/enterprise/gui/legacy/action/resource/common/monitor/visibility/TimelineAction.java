@@ -59,7 +59,7 @@ public class TimelineAction extends TilesAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         WebUser user = (WebUser) request.getSession().getAttribute(AttrConstants.WEBUSER_SES_ATTR);
-        Map range = user.getMetricRangePreference();
+        Map<String, ?> range = user.getPreferences().getMetricRangePreference();
         long begin = ((Long) range.get(MonitorUtils.BEGIN)).longValue();
         long end = ((Long) range.get(MonitorUtils.END)).longValue();
         long[] intervals = new long[DefaultConstants.DEFAULT_CHART_POINTS];

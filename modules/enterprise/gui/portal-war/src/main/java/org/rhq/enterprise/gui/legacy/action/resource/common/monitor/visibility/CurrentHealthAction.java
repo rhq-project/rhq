@@ -19,8 +19,10 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
 import java.util.StringTokenizer;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -29,6 +31,7 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
 import org.apache.struts.util.MessageResources;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.KeyConstants;
@@ -101,7 +104,7 @@ public class CurrentHealthAction extends TilesAction {
         String[] views;
 
         try {
-            String viewsPref = user.getPreference(KeyConstants.INDICATOR_VIEWS + key);
+            String viewsPref = user.getPreferences().getPreference(KeyConstants.INDICATOR_VIEWS + key);
             StringTokenizer st = new StringTokenizer(viewsPref, DashboardUtils.DASHBOARD_DELIMITER);
 
             views = new String[st.countTokens()];

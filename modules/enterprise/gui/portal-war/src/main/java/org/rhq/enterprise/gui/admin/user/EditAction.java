@@ -20,14 +20,17 @@ package org.rhq.enterprise.gui.admin.user;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -71,7 +74,7 @@ public class EditAction extends BaseAction {
             saveMyPreferences(currentUser, userForm);
 
             // put the preferences into the user so the update will flush them to the DB
-            user.setUserConfiguration(currentUser.getPreferences());
+            user.setUserConfiguration(currentUser.getPreferences().getPreferences());
         }
 
         log.trace("Saving modified user: " + user);
@@ -93,7 +96,8 @@ public class EditAction extends BaseAction {
     private void saveMyPreferences(WebUser currentUser, EditForm userForm) throws Exception {
         try {
             Integer pageRefreshPeriod = Integer.valueOf(userForm.getPageRefreshPeriod());
-            currentUser.setPreference(WebUser.PREF_PAGE_REFRESH_PERIOD, String.valueOf(pageRefreshPeriod));
+            currentUser.getPreferences().setPreference(WebUserPreferences.PREF_PAGE_REFRESH_PERIOD,
+                String.valueOf(pageRefreshPeriod));
         } catch (NumberFormatException e) {
             throw new RuntimeException(
                 "pageRefreshPeriod is not an integer, this should have been caught earlier by the form validation.");

@@ -43,6 +43,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.Portal;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.taglib.display.StringUtil;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
@@ -190,8 +191,8 @@ public class ResourceHubPortalAction extends BaseAction {
         addTypeMenuItems(hubForm, resourceTypes);
     }
 
-    protected LabelValueBean buildResourceTypeMenuCategoryLabel(HttpServletRequest request, @NotNull
-    ResourceCategory resourceCategory) {
+    protected LabelValueBean buildResourceTypeMenuCategoryLabel(HttpServletRequest request,
+        @NotNull ResourceCategory resourceCategory) {
         String key = null;
         switch (resourceCategory) {
         case PLATFORM: {
@@ -221,8 +222,9 @@ public class ResourceHubPortalAction extends BaseAction {
 
     private void initView(ResourceHubForm hubForm, WebUser user) throws Exception {
         HubView prefView;
+        WebUserPreferences preferences = user.getPreferences();
         try {
-            prefView = HubView.valueOf(user.getPreference(VIEW_ATTRIB));
+            prefView = HubView.valueOf(preferences.getPreference(VIEW_ATTRIB));
         } catch (IllegalArgumentException ioe) {
             prefView = HubView.LIST;
         }
@@ -234,8 +236,8 @@ public class ResourceHubPortalAction extends BaseAction {
 
         HubView view = HubView.valueOf(hubForm.getView().toUpperCase());
         if (!view.equals(prefView)) {
-            user.setPreference(VIEW_ATTRIB, view); // Save new preference.
-            user.persistPreferences();
+            preferences.setPreference(VIEW_ATTRIB, view); // Save new preference.
+            preferences.persistPreferences();
         }
     }
 

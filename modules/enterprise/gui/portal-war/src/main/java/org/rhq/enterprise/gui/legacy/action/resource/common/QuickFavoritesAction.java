@@ -19,14 +19,18 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common;
 
 import java.util.HashMap;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -37,6 +41,7 @@ public class QuickFavoritesAction extends BaseAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
         int id = WebUtility.getResourceId(request);
         Boolean isFavorite = QuickFavoritesUtil.isFavorite(user, id);
         String mode = request.getParameter("mode");
@@ -56,9 +61,10 @@ public class QuickFavoritesAction extends BaseAction {
 
             // Add to favorites and save
             String favorites;
-            favorites = user.getPreferences().getSimple(Constants.USERPREF_KEY_FAVORITE_RESOURCES).getStringValue();
+            favorites = preferences.getPreferences().getSimple(Constants.USERPREF_KEY_FAVORITE_RESOURCES)
+                .getStringValue();
             favorites += DashboardUtils.DASHBOARD_DELIMITER + id;
-            user.setPreference(Constants.USERPREF_KEY_FAVORITE_RESOURCES, favorites);
+            preferences.setPreference(Constants.USERPREF_KEY_FAVORITE_RESOURCES, favorites);
         } else if (mode.equals("remove")) {
             if (!isFavorite.booleanValue()) {
                 // not already a favorite - should not happen but just return, it's already gone
@@ -72,7 +78,7 @@ public class QuickFavoritesAction extends BaseAction {
             return returnFailure(request, mapping, forwardParams);
         }
 
-        user.persistPreferences();
+        preferences.persistPreferences();
 
         return returnSuccess(request, mapping, forwardParams, BaseAction.YES_RETURN_PATH);
     }

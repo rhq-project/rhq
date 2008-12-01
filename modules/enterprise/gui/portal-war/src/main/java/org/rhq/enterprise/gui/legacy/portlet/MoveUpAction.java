@@ -19,16 +19,20 @@
 package org.rhq.enterprise.gui.legacy.portlet;
 
 import java.util.StringTokenizer;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -55,7 +59,9 @@ public class MoveUpAction extends BaseAction {
     }
 
     private boolean tryMoveUp(WebUser user, String portlet, HttpSession session, String columnKey) throws Exception {
-        String portlets = user.getPreferences().getSimple(columnKey).getStringValue();
+        WebUserPreferences preferences = user.getPreferences();
+
+        String portlets = preferences.getPreferences().getSimple(columnKey).getStringValue();
 
         // portlet is not in this column
         if (portlets.indexOf(portlet) == -1) {
@@ -90,8 +96,8 @@ public class MoveUpAction extends BaseAction {
             newColumn.append(delim).append(lastToken);
         }
 
-        user.setPreference(columnKey, newColumn.toString());
-        user.persistPreferences();
+        preferences.setPreference(columnKey, newColumn.toString());
+        preferences.persistPreferences();
         session.removeAttribute(Constants.USERS_SES_PORTAL);
         return true;
     }

@@ -19,16 +19,20 @@
 package org.rhq.enterprise.gui.legacy.portlet.addresource;
 
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
@@ -48,6 +52,7 @@ public class AddResourcesAction extends BaseAction {
         Log log = LogFactory.getLog(AddResourcesAction.class);
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
+        WebUserPreferences preferences = user.getPreferences();
         AddResourcesForm addForm = (AddResourcesForm) form;
 
         ActionForward forward = checkSubmit(request, mapping, form, Constants.USER_PARAM, user.getId());
@@ -83,11 +88,11 @@ public class AddResourcesAction extends BaseAction {
 
         RequestUtils.setConfirmation(request, "admin.user.confirm.AddResource");
 
-        user.setPreference(addForm.getKey(), resourcesAsString);
+        preferences.setPreference(addForm.getKey(), resourcesAsString);
         LogFactory.getLog("user.preferences").trace(
             "Invoking setUserPrefs" + " in " + getClass().getSimpleName() + " for " + user.getId() + " at "
                 + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
-        user.persistPreferences();
+        preferences.persistPreferences();
 
         return returnSuccess(request, mapping);
     }

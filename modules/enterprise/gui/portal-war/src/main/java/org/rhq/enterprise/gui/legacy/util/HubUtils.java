@@ -19,7 +19,9 @@
 package org.rhq.enterprise.gui.legacy.util;
 
 import java.util.Set;
+
 import org.apache.struts.util.LabelValueBean;
+
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.legacy.HubConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -33,7 +35,7 @@ public class HubUtils {
     public static void initView(HubForm hubForm, WebUser user) throws Exception {
         HubView prefView;
         try {
-            prefView = HubView.valueOf(user.getPreference(HubConstants.VIEW_ATTRIB).toUpperCase());
+            prefView = HubView.valueOf(user.getPreferences().getPreference(HubConstants.VIEW_ATTRIB).toUpperCase());
         } catch (IllegalArgumentException iae) {
             prefView = HubView.LIST;
         }
@@ -45,7 +47,7 @@ public class HubUtils {
 
         HubView view = HubView.valueOf(hubForm.getView().toUpperCase());
         if (!view.equals(prefView)) {
-            user.setPreference(HubConstants.VIEW_ATTRIB, view); // Save new preference.
+            user.getPreferences().setPreference(HubConstants.VIEW_ATTRIB, view); // Save new preference.
 
             // AuthzBoss authzBoss = ContextUtils.getAuthzBoss(ctx);
             // authzBoss.setUserPrefs(user.getSessionId(), user.getId(),

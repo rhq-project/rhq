@@ -9,7 +9,7 @@
 <tiles:importAttribute name="tabListName" ignore="true"/>
 <tiles:importAttribute name="entityType" ignore="true"/>
 
-<c:set var="id" value="${Resource.id}"/>
+<c:set var="id" value="${param.id}"/>
 <c:set var="ctype" value="${param.type}"/>
 <c:set var="view" value="${IndicatorViewsForm.view}"/>
 
@@ -23,7 +23,7 @@
 </tiles:insert>
 
  <c:url var="indicatorUrl" value="/resource/common/monitor/visibility/AllIndicators.do">
-  <c:param name="id" value="${Resource.id}" />
+  <c:param name="id" value="${param.id}" />
   <c:if test="${not empty type}">
     <c:param name="ctype" value="${type}" />
     <c:param name="type" value="${type}" />

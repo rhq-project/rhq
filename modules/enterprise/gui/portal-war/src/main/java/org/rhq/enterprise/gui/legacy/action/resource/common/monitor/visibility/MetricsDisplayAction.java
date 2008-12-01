@@ -23,19 +23,23 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.util.ActionUtils;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
@@ -64,6 +68,7 @@ public class MetricsDisplayAction extends MetricsControlAction {
 
         Integer id = displayForm.getId();
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
         Subject subject = RequestUtils.getSubject(request);
 
         MeasurementBaselineManagerLocal baselineManager = LookupUtil.getMeasurementBaselineManager();
@@ -75,16 +80,16 @@ public class MetricsDisplayAction extends MetricsControlAction {
             return returnChart(request, mapping, forwardParams);
         } else if (displayForm.isThresholdClicked()) {
             Integer threshold = displayForm.getT();
-            user.setPreference(WebUser.PREF_METRIC_THRESHOLD, threshold);
+            preferences.setPreference(WebUserPreferences.PREF_METRIC_THRESHOLD, threshold);
             log.trace("saving threshold pref [" + threshold + "]");
             LogFactory.getLog("user.preferences").trace(
                 "Invoking setUserPrefs" + " in MetricsDisplayAction " + " for " + user.getId() + " at "
                     + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
-            user.persistPreferences();
+            preferences.persistPreferences();
         } else if (displayForm.isUsersetClicked()) {
             Integer[] m = displayForm.getM();
             if ((m != null) && (m.length > 0)) {
-                Map range = user.getMetricRangePreference();
+                Map<String, ?> range = user.getPreferences().getMetricRangePreference();
                 if (range != null) {
                     Long begin = (Long) range.get(MonitorUtils.BEGIN);
                     Long end = (Long) range.get(MonitorUtils.END);
@@ -121,7 +126,7 @@ public class MetricsDisplayAction extends MetricsControlAction {
                 LogFactory.getLog("user.preferences").trace(
                     "Invoking setUserPrefs" + " in MetricsDisplayAction " + " for " + user.getId() + " at "
                         + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
-                user.persistPreferences();
+                preferences.persistPreferences();
             }
 
             RequestUtils.setConfirmation(request, Constants.CNF_FAVORITE_METRICS_ADDED);
@@ -132,7 +137,7 @@ public class MetricsDisplayAction extends MetricsControlAction {
                 LogFactory.getLog("user.preferences").trace(
                     "Invoking setUserPrefs" + " in MetricsDisplayAction " + " for " + user.getId() + " at "
                         + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
-                user.persistPreferences();
+                preferences.persistPreferences();
             }
 
             RequestUtils.setConfirmation(request, Constants.CNF_FAVORITE_METRICS_REMOVED);
@@ -159,11 +164,11 @@ public class MetricsDisplayAction extends MetricsControlAction {
         return constructForward(request, mapping, Constants.CHART_URL, params, NO_RETURN_PATH);
     }
 
-    private void addFavoriteMetrics(Integer[] selectedIds, WebUser user, String entityType)
+    private void addFavoriteMetrics(Integer[] selectedIds, WebUserPreferences preferences, String entityType)
         throws IllegalArgumentException {
         List favIds;
         try {
-            favIds = user.getResourceFavoriteMetricsPreference(entityType);
+            favIds = preferences.getResourceFavoriteMetricsPreference(entityType);
         } catch (IllegalArgumentException e) {
             favIds = new ArrayList();
         }
@@ -188,16 +193,16 @@ public class MetricsDisplayAction extends MetricsControlAction {
             favIds.add(id);
         }
 
-        String prefKey = user.getResourceFavoriteMetricsKey(entityType);
+        String prefKey = preferences.getResourceFavoriteMetricsKey(entityType);
         log.trace("setting " + entityType + " favorite metrics: " + favIds);
-        user.setPreference(prefKey, favIds);
+        preferences.setPreference(prefKey, favIds);
     }
 
-    private void removeFavoriteMetrics(Integer[] selectedIds, WebUser user, String entityType)
+    private void removeFavoriteMetrics(Integer[] selectedIds, WebUserPreferences preferences, String entityType)
         throws IllegalArgumentException {
         List favIds;
         try {
-            favIds = user.getResourceFavoriteMetricsPreference(entityType);
+            favIds = preferences.getResourceFavoriteMetricsPreference(entityType);
         } catch (IllegalArgumentException e) {
             favIds = new ArrayList();
         }
@@ -222,8 +227,8 @@ public class MetricsDisplayAction extends MetricsControlAction {
             newFavIds.add(new Integer(id));
         }
 
-        String prefKey = user.getResourceFavoriteMetricsKey(entityType);
+        String prefKey = preferences.getResourceFavoriteMetricsKey(entityType);
         log.trace("setting " + entityType + " favorite metrics: " + newFavIds);
-        user.setPreference(prefKey, newFavIds);
+        preferences.setPreference(prefKey, newFavIds);
     }
 }

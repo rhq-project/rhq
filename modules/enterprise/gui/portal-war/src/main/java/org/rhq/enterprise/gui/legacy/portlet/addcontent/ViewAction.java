@@ -21,15 +21,19 @@ package org.rhq.enterprise.gui.legacy.portlet.addcontent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
 public class ViewAction extends TilesAction {
@@ -38,6 +42,7 @@ public class ViewAction extends TilesAction {
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         List portlets = (List) context.getAttribute("portlets");
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
 
         ArrayList availablePortlets = new ArrayList();
         String userPortlets = new String();
@@ -45,9 +50,9 @@ public class ViewAction extends TilesAction {
         Boolean wide = new Boolean((String) context.getAttribute("wide"));
 
         if (wide.booleanValue()) {
-            userPortlets = user.getPreference(Constants.USER_PORTLETS_SECOND);
+            userPortlets = preferences.getPreference(Constants.USER_PORTLETS_SECOND);
         } else {
-            userPortlets = user.getPreference(Constants.USER_PORTLETS_FIRST);
+            userPortlets = preferences.getPreference(Constants.USER_PORTLETS_FIRST);
         }
 
         for (Iterator i = portlets.iterator(); i.hasNext();) {

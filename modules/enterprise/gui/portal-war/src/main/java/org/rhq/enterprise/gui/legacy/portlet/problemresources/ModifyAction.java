@@ -20,11 +20,14 @@ package org.rhq.enterprise.gui.legacy.portlet.problemresources;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -35,6 +38,7 @@ public class ModifyAction extends BaseAction implements PortletConstants {
         HttpServletResponse response) throws Exception {
         PropertiesForm pForm = (PropertiesForm) form;
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
 
         String forwardStr = Constants.SUCCESS_URL;
 
@@ -48,10 +52,10 @@ public class ModifyAction extends BaseAction implements PortletConstants {
             DashboardUtils.removePortlet(user, pForm.getPortletName());
         }
 
-        user.setPreference(ROWS, String.valueOf(pForm.getRows()));
-        user.setPreference(HOURS, String.valueOf(pForm.getHours()));
+        preferences.setPreference(ROWS, String.valueOf(pForm.getRows()));
+        preferences.setPreference(HOURS, String.valueOf(pForm.getHours()));
 
-        user.persistPreferences();
+        preferences.persistPreferences();
 
         request.getSession().removeAttribute(Constants.USERS_SES_PORTAL);
         return mapping.findForward(forwardStr);

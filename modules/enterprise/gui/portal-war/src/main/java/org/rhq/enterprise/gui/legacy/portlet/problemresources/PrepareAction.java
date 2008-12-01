@@ -20,12 +20,15 @@ package org.rhq.enterprise.gui.legacy.portlet.problemresources;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
 public class PrepareAction extends TilesAction implements PortletConstants {
@@ -35,13 +38,14 @@ public class PrepareAction extends TilesAction implements PortletConstants {
         PropertiesForm pForm = (PropertiesForm) form;
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
 
         pForm.setDisplayOnDash(true);
 
-        int rows = Integer.parseInt(user.getPreference(ROWS));
+        int rows = Integer.parseInt(preferences.getPreference(ROWS));
         pForm.setRows(rows);
 
-        int hours = Integer.parseInt(user.getPreference(HOURS));
+        int hours = Integer.parseInt(preferences.getPreference(HOURS));
         pForm.setHours(hours);
 
         return null;

@@ -79,7 +79,7 @@ public class AddResourcesPrepareAction extends Action {
         if (pendingResourceList == null) {
             // if hitting the page for the first time, load resources already associated with user via preferences
             log.debug("get pending resources from user preferences");
-            pendingResourceList = user.getPreferenceAsList(addForm.getKey(), "|");
+            pendingResourceList = user.getPreferences().getPreferenceAsList(addForm.getKey(), "|");
 
             if (pendingResourceList != null) {
                 // otherwise, we've been here for a while but the user paged, performed changed LHS<->RHS, etc

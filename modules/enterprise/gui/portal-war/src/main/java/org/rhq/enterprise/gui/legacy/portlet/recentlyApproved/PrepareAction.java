@@ -22,13 +22,16 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 
 public class PrepareAction extends BaseAction {
@@ -40,9 +43,10 @@ public class PrepareAction extends BaseAction {
 
         HttpSession session = request.getSession();
         WebUser user = (WebUser) session.getAttribute(Constants.WEBUSER_SES_ATTR);
+        WebUserPreferences preferences = user.getPreferences();
 
         // XXX: make this a constant
-        Integer range = new Integer(user.getPreference(".dashContent." + "recentlyApproved.range"));
+        Integer range = new Integer(preferences.getPreference(".dashContent.recentlyApproved.range"));
 
         pForm.setRange(range);
 

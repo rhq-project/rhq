@@ -19,17 +19,21 @@
 package org.rhq.enterprise.gui.legacy.portlet.resourcehealth;
 
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
@@ -41,6 +45,7 @@ public class PrepareAction extends TilesAction {
         PropertiesForm pForm = (PropertiesForm) form;
         PageControl pc = WebUtility.getPageControl(request);
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
 
         //this guarantees that the session doesn't contain any resources it shouldn't
         String key = Constants.USERPREF_KEY_FAVORITE_RESOURCES;
@@ -48,8 +53,9 @@ public class PrepareAction extends TilesAction {
         SessionUtils.removeList(request.getSession(), Constants.PENDING_RESOURCES_SES_ATTR); // what is this?
         pForm.setDisplayOnDash(true);
 
-        boolean availability = Boolean.parseBoolean(user.getPreference(".dashContent.resourcehealth.availability"));
-        boolean alerts = Boolean.parseBoolean(user.getPreference(".dashContent.resourcehealth.alerts"));
+        boolean availability = Boolean.parseBoolean(preferences
+            .getPreference(".dashContent.resourcehealth.availability"));
+        boolean alerts = Boolean.parseBoolean(preferences.getPreference(".dashContent.resourcehealth.alerts"));
         pForm.setAvailability(availability);
         pForm.setAlerts(alerts);
 

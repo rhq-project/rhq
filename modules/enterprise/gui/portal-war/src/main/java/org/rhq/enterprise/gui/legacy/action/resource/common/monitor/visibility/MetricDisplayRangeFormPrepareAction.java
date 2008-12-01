@@ -21,15 +21,18 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
+
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.action.WorkflowPrepareAction;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
@@ -51,7 +54,7 @@ public class MetricDisplayRangeFormPrepareAction extends WorkflowPrepareAction {
         MetricDisplayRangeForm rangeForm = (MetricDisplayRangeForm) form;
         try {
             WebUser user = SessionUtils.getWebUser(request.getSession());
-            Map pref = user.getMetricRangePreference(false);
+            Map pref = user.getPreferences().getMetricRangePreference(false);
 
             if (rangeForm.isResetClicked() || (rangeForm.getRn() == null)) {
                 rangeForm.setRn((Integer) pref.get(MonitorUtils.LASTN));

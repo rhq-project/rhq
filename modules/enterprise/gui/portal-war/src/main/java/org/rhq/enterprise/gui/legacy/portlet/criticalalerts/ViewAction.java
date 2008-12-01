@@ -20,16 +20,19 @@ package org.rhq.enterprise.gui.legacy.portlet.criticalalerts;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
@@ -42,12 +45,13 @@ public class ViewAction extends TilesAction {
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         // get the logged in user
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
 
         // get the user's preferences for the alerts portlet
-        int count = new Integer(user.getPreference(".dashContent.criticalalerts.numberOfAlerts")).intValue();
-        int priority = new Integer(user.getPreference(".dashContent.criticalalerts.priority")).intValue();
-        long timeRange = new Long(user.getPreference(".dashContent.criticalalerts.past")).longValue();
-        boolean all = "all".equals(user.getPreference(".dashContent.criticalalerts.selectedOrAll"));
+        int count = new Integer(preferences.getPreference(".dashContent.criticalalerts.numberOfAlerts")).intValue();
+        int priority = new Integer(preferences.getPreference(".dashContent.criticalalerts.priority")).intValue();
+        long timeRange = new Long(preferences.getPreference(".dashContent.criticalalerts.past")).longValue();
+        boolean all = "all".equals(preferences.getPreference(".dashContent.criticalalerts.selectedOrAll"));
 
         Integer[] resourceIds = null;
         if (all == false) {

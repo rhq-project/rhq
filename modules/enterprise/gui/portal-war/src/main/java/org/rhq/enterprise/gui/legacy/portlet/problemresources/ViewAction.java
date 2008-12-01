@@ -38,6 +38,7 @@ import org.apache.struts.tiles.actions.TilesAction;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
@@ -54,16 +55,17 @@ public class ViewAction extends TilesAction implements PortletConstants {
         try {
             WebUser user = SessionUtils.getWebUser(request.getSession());
             Subject subject = user.getSubject();
+            WebUserPreferences preferences = user.getPreferences();
 
             int hours = 8;
             int rows = 10;
             try {
-                rows = Integer.parseInt(user.getPreference(ROWS));
-                hours = Integer.parseInt(user.getPreference(HOURS));
+                rows = Integer.parseInt(preferences.getPreference(ROWS));
+                hours = Integer.parseInt(preferences.getPreference(HOURS));
             } catch (NumberFormatException e) {
-                user.setPreference(ROWS, String.valueOf(rows));
-                user.setPreference(HOURS, String.valueOf(hours));
-                user.persistPreferences();
+                preferences.setPreference(ROWS, String.valueOf(rows));
+                preferences.setPreference(HOURS, String.valueOf(hours));
+                preferences.persistPreferences();
             }
 
             String timeRange;

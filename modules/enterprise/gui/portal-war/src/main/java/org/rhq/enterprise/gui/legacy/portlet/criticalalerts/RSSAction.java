@@ -19,25 +19,29 @@
 package org.rhq.enterprise.gui.legacy.portlet.criticalalerts;
 
 import java.text.SimpleDateFormat;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.MessageResources;
-import org.rhq.core.clientapi.util.units.DateFormatter.DateSpecifics;
+
 import org.rhq.core.clientapi.util.units.FormattedNumber;
 import org.rhq.core.clientapi.util.units.ScaleConstants;
 import org.rhq.core.clientapi.util.units.UnitNumber;
 import org.rhq.core.clientapi.util.units.UnitsConstants;
 import org.rhq.core.clientapi.util.units.UnitsFormat;
-import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.clientapi.util.units.DateFormatter.DateSpecifics;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.BaseRSSAction;
 import org.rhq.enterprise.gui.legacy.portlet.RSSFeed;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
@@ -56,21 +60,22 @@ public class RSSAction extends BaseRSSAction {
 
         // Get the alerts
         Subject subject = getSubject(request);
-        WebUser webUser = new WebUser(subject);
+        WebUser user = new WebUser(subject);
+        WebUserPreferences preferences = user.getPreferences();
 
-        int count = Integer.parseInt(webUser.getPreference(".dashContent.criticalalerts.numberOfAlerts"));
-        int priority = Integer.parseInt(webUser.getPreference(".dashContent.criticalalerts.priority"));
-        long timeRange = Long.parseLong(webUser.getPreference(".dashContent.criticalalerts.past"));
-        boolean all = "all".equals(webUser.getPreference(".dashContent.criticalalerts.selectedOrAll"));
+        int count = Integer.parseInt(preferences.getPreference(".dashContent.criticalalerts.numberOfAlerts"));
+        int priority = Integer.parseInt(preferences.getPreference(".dashContent.criticalalerts.priority"));
+        long timeRange = Long.parseLong(preferences.getPreference(".dashContent.criticalalerts.past"));
+        boolean all = "all".equals(preferences.getPreference(".dashContent.criticalalerts.selectedOrAll"));
 
         Integer[] resourceIds = null;
         if (all == false) {
-            resourceIds = DashboardUtils.preferencesAsResourceIds(".dashContent.criticalalerts.resources", webUser);
+            resourceIds = DashboardUtils.preferencesAsResourceIds(".dashContent.criticalalerts.resources", user);
         }
 
         PageControl pageControl = new PageControl(0, count);
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-        PageList<Alert> alerts = alertManager.findAlerts(webUser.getSubject(), resourceIds, AlertPriority
+        PageList<Alert> alerts = alertManager.findAlerts(user.getSubject(), resourceIds, AlertPriority
             .getByLegacyIndex(priority), timeRange, pageControl);
 
         if ((alerts != null) && (alerts.size() > 0)) {

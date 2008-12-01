@@ -89,7 +89,7 @@ public class MetricsControlFormPrepareAction extends TilesAction {
         WebUser user = SessionUtils.getWebUser(request.getSession());
 
         // set metric range defaults
-        Map pref = user.getMetricRangePreference(true);
+        Map pref = user.getPreferences().getMetricRangePreference(true);
         form.setReadOnly((Boolean) pref.get(MonitorUtils.RO));
         form.setRn((Integer) pref.get(MonitorUtils.LASTN));
         form.setRu((Integer) pref.get(MonitorUtils.UNIT));

@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.admin.user;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -28,6 +29,7 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -110,8 +112,7 @@ public class EditUserFormPrepareAction extends TilesAction {
 
             // if we've already got sthg set here, don't overwrite it
             if (userForm.getPageRefreshPeriod() == null) {
-                int pageRefreshPeriod = currentUser.getIntPref(WebUser.PREF_PAGE_REFRESH_PERIOD,
-                    WebUser.DONT_REFRESH_PAGE);
+                int pageRefreshPeriod = currentUser.getPreferences().getPageRefreshPeriod();
 
                 userForm.setPageRefreshPeriod(String.valueOf(pageRefreshPeriod));
             }

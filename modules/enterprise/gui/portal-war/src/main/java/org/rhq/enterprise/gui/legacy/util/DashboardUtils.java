@@ -27,6 +27,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -51,7 +52,7 @@ public class DashboardUtils {
 
     public static Integer[] preferencesAsResourceIds(String key, WebUser user) {
         try {
-            List<String> resourceIdStrings = user.getPreferenceAsList(key, DASHBOARD_DELIMITER);
+            List<String> resourceIdStrings = user.getPreferences().getPreferenceAsList(key, DASHBOARD_DELIMITER);
 
             Integer[] resourceIds = new Integer[resourceIdStrings.size()];
             for (int i = 0; i < resourceIds.length; i++) {
@@ -68,7 +69,7 @@ public class DashboardUtils {
 
     public static PageList<Resource> preferencesAsResources(String key, WebUser user, PageControl pc) throws Exception {
         try {
-            List<String> resourceList = user.getPreferenceAsList(key, DASHBOARD_DELIMITER);
+            List<String> resourceList = user.getPreferences().getPreferenceAsList(key, DASHBOARD_DELIMITER);
             return listAsResources(resourceList, user, pc);
         } catch (Exception e) {
             return new PageList<Resource>(pc);
@@ -77,7 +78,7 @@ public class DashboardUtils {
 
     public static List<String> getUserPreferences(String key, WebUser user) throws Exception {
         try {
-            List<String> resourceList = user.getPreferenceAsList(key, DASHBOARD_DELIMITER);
+            List<String> resourceList = user.getPreferences().getPreferenceAsList(key, DASHBOARD_DELIMITER);
             return resourceList;
         } catch (Exception e) {
             return new ArrayList<String>();
@@ -85,8 +86,9 @@ public class DashboardUtils {
     }
 
     public static void removePortlet(WebUser user, String PortletName) throws Exception {
-        String first = user.getPreference(Constants.USER_PORTLETS_FIRST);
-        String second = user.getPreference(Constants.USER_PORTLETS_SECOND);
+        WebUserPreferences preferences = user.getPreferences();
+        String first = preferences.getPreference(Constants.USER_PORTLETS_FIRST);
+        String second = preferences.getPreference(Constants.USER_PORTLETS_SECOND);
 
         first = StringUtil.remove(first, PortletName);
         second = StringUtil.remove(second, PortletName);
@@ -94,8 +96,8 @@ public class DashboardUtils {
         first = StringUtil.replace(first, DASHBOARD_DELIMITER + DASHBOARD_DELIMITER, DASHBOARD_DELIMITER);
         second = StringUtil.replace(second, DASHBOARD_DELIMITER + DASHBOARD_DELIMITER, DASHBOARD_DELIMITER);
 
-        user.setPreference(Constants.USER_PORTLETS_FIRST, first);
-        user.setPreference(Constants.USER_PORTLETS_SECOND, second);
+        preferences.setPreference(Constants.USER_PORTLETS_FIRST, first);
+        preferences.setPreference(Constants.USER_PORTLETS_SECOND, second);
     }
 
     /**
@@ -111,14 +113,15 @@ public class DashboardUtils {
      * @throws Exception
      */
     public static void removeResources(String[] resourceIds, String key, WebUser user) throws Exception {
-        String resources = user.getPreference(key);
+        WebUserPreferences preferences = user.getPreferences();
+        String resources = preferences.getPreference(key);
 
         for (String resourceId : resourceIds) {
             resources = StringUtil.remove(resources, resourceId);
             resources = StringUtil.replace(resources, DASHBOARD_DELIMITER + DASHBOARD_DELIMITER, DASHBOARD_DELIMITER);
         }
 
-        user.setPreference(key, resources);
+        preferences.setPreference(key, resources);
     }
 
     /**
@@ -147,7 +150,7 @@ public class DashboardUtils {
         }
 
         if (didUpdatePrefs) {
-            user.persistPreferences();
+            user.getPreferences().persistPreferences();
         }
     }
 }

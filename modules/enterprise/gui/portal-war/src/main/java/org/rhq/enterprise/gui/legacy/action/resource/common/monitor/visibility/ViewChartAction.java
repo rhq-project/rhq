@@ -410,7 +410,7 @@ public class ViewChartAction extends MetricDisplayRangeAction {
                 "Invoking setUserPrefs" + " in ViewChartAction " + " for " + user.getId() + " at "
                     + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
         }
-        user.persistPreferences();
+        user.getPreferences().persistPreferences();
     }
 
 }

@@ -19,7 +19,7 @@
 <tiles:importAttribute name="service"/>
 <tiles:importAttribute name="groupCompat"/>
 <tiles:importAttribute name="groupMixed"/>
-<tiles:importAttribute name="software"/>
+<tiles:importAttribute name="groupDefinition"/>
 
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr>
@@ -81,25 +81,16 @@
           </tr>
         </c:if>
 
-<%-- Old software system, got removed
-        <c:if test="${software}">
+        <c:if test="${groupDefinition}">      
           <tr>
             <td colspan="2">&nbsp;</td>
           </tr>
           <tr>
-            <td class="FormLabel"><html:link page="/resource/software/inventory/List.do?mode=viewSoftware"><fmt:message key="dash.home.DisplayCategory.Software"/></html:link></td>
-            <td></td>
-          </tr>
-          <tr>
-            <td class="FormLabel">&nbsp;-&nbsp;<html:link page="/resource/software/inventory/List.do?mode=viewSoftware"><fmt:message key="dash.home.DisplayCategory.Software.LatestPatches"/></html:link></td>
-            <td class="FormLabelRight"><html:link page="/resource/software/inventory/List.do?mode=viewSoftware"><c:out value="${summary.softwareUpdateCount}"/></html:link></td>
-          </tr>
-          <tr>
-            <td class="FormLabel">&nbsp;-&nbsp;<html:link page="/resource/software/inventory/List.do?mode=viewSoftware"><fmt:message key="dash.home.DisplayCategory.Software.LatestProducts"/></html:link></td>
-            <td class="FormLabelRight"><html:link page="/resource/software/inventory/List.do?mode=viewSoftware"><c:out value="${summary.softwareProductCount}"/></html:link></td>
+            <td class="FormLabel"><html:link page="/rhq/definition/group/list.xhtml"><fmt:message key="dash.home.DisplayCategory.group.GroupDefinitionTotal"/></html:link></td>
+            <td class="FormLabelRight"><html:link page="/rhq/definition/group/list.xhtml"><c:out value="${summary.groupDefinitionCount}"/></html:link></td>
           </tr>
         </c:if>
---%>        
+
     <tr>
       <td colspan="2">&nbsp;</td>
     </tr>

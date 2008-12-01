@@ -22,14 +22,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -58,7 +61,7 @@ public class CompareMetricsFormPrepareAction extends WorkflowPrepareAction {
         CompareMetricsForm cform = (CompareMetricsForm) form;
         Subject subject = WebUtility.getSubject(request);
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        Map range = user.getMetricRangePreference();
+        Map<String, ?> range = user.getPreferences().getMetricRangePreference();
 
         long begin = ((Long) range.get(MonitorUtils.BEGIN));
         long end = ((Long) range.get(MonitorUtils.END));
@@ -80,7 +83,7 @@ public class CompareMetricsFormPrepareAction extends WorkflowPrepareAction {
         WebUser user = SessionUtils.getWebUser(request.getSession());
 
         // set metric range defaults
-        Map pref = user.getMetricRangePreference(true);
+        Map pref = user.getPreferences().getMetricRangePreference(true);
         form.setReadOnly((Boolean) pref.get(MonitorUtils.RO));
         form.setRn((Integer) pref.get(MonitorUtils.LASTN));
         form.setRu((Integer) pref.get(MonitorUtils.UNIT));

@@ -19,16 +19,20 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.action.BaseActionMapping;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -50,6 +54,7 @@ public class MetricsControlAction extends BaseAction {
 
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
+        WebUserPreferences preferences = user.getPreferences();
 
         // See if this is part of a workflow
         if (mapping instanceof BaseActionMapping) {
@@ -69,9 +74,9 @@ public class MetricsControlAction extends BaseAction {
             Integer lastN = controlForm.getRn();
             Integer unit = controlForm.getRu();
 
-            user.setPreference(WebUser.PREF_METRIC_RANGE_LASTN, lastN);
-            user.setPreference(WebUser.PREF_METRIC_RANGE_UNIT, unit);
-            user.setPreference(WebUser.PREF_METRIC_RANGE, null);
+            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_LASTN, lastN);
+            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_UNIT, unit);
+            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE, null);
 
             if (log.isDebugEnabled()) {
                 log.debug("updating metric display .. lastN [" + lastN + "] .. unit [" + unit + "]");
@@ -80,9 +85,9 @@ public class MetricsControlAction extends BaseAction {
                         + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
             }
 
-            user.persistPreferences();
+            preferences.persistPreferences();
         } else if (controlForm.isSimpleClicked()) {
-            user.setPreference(WebUser.PREF_METRIC_RANGE_RO, Boolean.FALSE);
+            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_RO, Boolean.FALSE);
 
             if (log.isDebugEnabled()) {
                 LogFactory.getLog("user.preferences").debug(
@@ -90,7 +95,7 @@ public class MetricsControlAction extends BaseAction {
                         + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
             }
 
-            user.persistPreferences();
+            preferences.persistPreferences();
         }
 
         // assume the return path has been set- don't use forwardParams

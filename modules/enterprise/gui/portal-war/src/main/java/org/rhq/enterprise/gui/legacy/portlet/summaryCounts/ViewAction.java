@@ -20,12 +20,16 @@ package org.rhq.enterprise.gui.legacy.portlet.summaryCounts;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.SummaryCountPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.resource.InventorySummary;
 import org.rhq.enterprise.server.resource.ResourceBossLocal;
@@ -36,20 +40,22 @@ public class ViewAction extends TilesAction {
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
 
         ResourceBossLocal resourceBoss = LookupUtil.getResourceBoss();
         InventorySummary summary = resourceBoss.getInventorySummary(user.getSubject());
         context.putAttribute("summary", summary);
 
+        SummaryCountPreferences counts = preferences.getSummaryCounts();
+
         //get all the displayed subtypes
-        context.putAttribute("platform", Boolean.valueOf(user.getPreference(".dashContent.summaryCounts.platform")));
-        context.putAttribute("server", Boolean.valueOf(user.getPreference(".dashContent.summaryCounts.server")));
-        context.putAttribute("service", Boolean.valueOf(user.getPreference(".dashContent.summaryCounts.service")));
-        context.putAttribute("software", Boolean.valueOf(user.getPreference(".dashContent.summaryCounts.software")));
-        context.putAttribute("groupCompat", Boolean.valueOf(user
-            .getPreference(".dashContent.summaryCounts.group.compat")));
-        context.putAttribute("groupMixed", Boolean
-            .valueOf(user.getPreference(".dashContent.summaryCounts.group.mixed")));
+        context.putAttribute("platform", Boolean.valueOf(counts.showPlatforms));
+        context.putAttribute("server", Boolean.valueOf(counts.showServers));
+        context.putAttribute("service", Boolean.valueOf(counts.showServices));
+        context.putAttribute("groupCompat", Boolean.valueOf(counts.showCompatibleGroups));
+        context.putAttribute("groupMixed", Boolean.valueOf(counts.showMixedGroups));
+        context.putAttribute("groupDefinition", Boolean.valueOf(counts.showGroupDefinitions));
+
         return null;
     }
 }

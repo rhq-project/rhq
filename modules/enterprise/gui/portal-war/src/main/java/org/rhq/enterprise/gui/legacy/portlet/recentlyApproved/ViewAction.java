@@ -22,8 +22,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -31,9 +33,11 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -48,16 +52,17 @@ public class ViewAction extends TilesAction {
         Log log = LogFactory.getLog(ViewAction.class.getName());
 
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        WebUser webUser = SessionUtils.getWebUser(request.getSession());
-        Subject user = webUser.getSubject();
+        WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
+        Subject subject = user.getSubject();
 
         try {
             // Based on the user preference, generate a timestamp of the oldest resource to display.
-            long range = Long.parseLong(webUser.getPreference(RANGE));
+            long range = Long.parseLong(preferences.getPreference(RANGE));
             long ts = System.currentTimeMillis() - (range * 60 * 60 * 1000); // range encoded as hours (UI shows days)
 
             List<RecentlyAddedResourceComposite> platformList;
-            platformList = resourceManager.getRecentlyAddedPlatforms(user, ts);
+            platformList = resourceManager.getRecentlyAddedPlatforms(subject, ts);
 
             Map<Integer, RecentlyAddedResourceComposite> platformMap;
             platformMap = new HashMap<Integer, RecentlyAddedResourceComposite>();
@@ -68,7 +73,7 @@ public class ViewAction extends TilesAction {
 
             // Set the show servers flag on all expanded platforms.
             // Find the list of expanded platforms for this user and make it available to the jsp.
-            List<String> expandedPlatforms = webUser.getPreferenceAsList(EXPANDED_PLATFORMS);
+            List<String> expandedPlatforms = preferences.getPreferenceAsList(EXPANDED_PLATFORMS);
             List<String> removeExpandedPlatforms = new ArrayList<String>();
 
             for (String expandedPlatform : expandedPlatforms) {
@@ -76,7 +81,8 @@ public class ViewAction extends TilesAction {
                 RecentlyAddedResourceComposite miniPlatform = platformMap.get(platformId);
                 if (miniPlatform != null) {
                     miniPlatform.setShowChildren(true);
-                    miniPlatform.setChildren(resourceManager.getRecentlyAddedServers(user, ts, platformId.intValue()));
+                    miniPlatform.setChildren(resourceManager
+                        .getRecentlyAddedServers(subject, ts, platformId.intValue()));
                 } else {
                     removeExpandedPlatforms.add(expandedPlatform);
                 }

@@ -21,9 +21,11 @@ package org.rhq.enterprise.gui.legacy.portlet.autodiscovery;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
@@ -44,7 +46,7 @@ public class PrepareAction extends BaseAction {
         HttpSession session = request.getSession();
         WebUser user = (WebUser) session.getAttribute(Constants.WEBUSER_SES_ATTR);
 
-        Integer range = new Integer(user.getPreference(".dashContent.autoDiscovery.range"));
+        Integer range = new Integer(user.getPreferences().getPreference(".dashContent.autoDiscovery.range"));
 
         propsForm.setRange(range);
         return null;

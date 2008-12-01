@@ -19,13 +19,17 @@
 package org.rhq.enterprise.gui.legacy.portlet.recentlyApproved;
 
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
@@ -36,8 +40,9 @@ public class ProcessRAList extends BaseAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
         RAListForm listForm = (RAListForm) form;
-        List<String> expandedPlatforms = user.getPreferenceAsList(EXPANDED_PLATFORMS);
+        List<String> expandedPlatforms = preferences.getPreferenceAsList(EXPANDED_PLATFORMS);
         String platformId = new Integer(listForm.getPlatformId()).toString();
 
         if (expandedPlatforms.contains(platformId)) {
@@ -47,9 +52,9 @@ public class ProcessRAList extends BaseAction {
         }
 
         // Store in user properties as a list.
-        user.setPreference(EXPANDED_PLATFORMS, expandedPlatforms);
+        preferences.setPreference(EXPANDED_PLATFORMS, expandedPlatforms);
 
-        user.persistPreferences();
+        preferences.persistPreferences();
 
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);
     }

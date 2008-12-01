@@ -20,18 +20,21 @@ package org.rhq.enterprise.gui.legacy.portlet.resourcehealth;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.MessageResources;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.BaseRSSAction;
 import org.rhq.enterprise.gui.legacy.portlet.RSSFeed;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
@@ -53,13 +56,13 @@ public class RSSAction extends BaseRSSAction {
 
         // Get the resources health
         Subject subject = getSubject(request);
-        WebUser webUser = new WebUser(subject);
+        WebUser user = new WebUser(subject);
+        WebUserPreferences preferences = user.getPreferences();
 
-        Boolean availability = Boolean.valueOf(webUser.getPreference(".dashContent.resourcehealth.availability"));
-        Boolean alerts = Boolean.valueOf(webUser.getPreference(".dashContent.resourcehealth.alerts"));
+        Boolean availability = Boolean.valueOf(preferences.getPreference(".dashContent.resourcehealth.availability"));
+        Boolean alerts = Boolean.valueOf(preferences.getPreference(".dashContent.resourcehealth.alerts"));
 
-        Integer[] resources = DashboardUtils.preferencesAsResourceIds(Constants.USERPREF_KEY_FAVORITE_RESOURCES,
-            webUser);
+        Integer[] resources = DashboardUtils.preferencesAsResourceIds(Constants.USERPREF_KEY_FAVORITE_RESOURCES, user);
 
         PageList<ResourceHealthComposite> results = manager.getResourceHealth(subject, resources, PageControl
             .getUnlimitedInstance());

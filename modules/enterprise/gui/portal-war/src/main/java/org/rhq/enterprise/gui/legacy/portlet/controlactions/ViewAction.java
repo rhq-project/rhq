@@ -36,6 +36,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -45,14 +46,15 @@ public class ViewAction extends TilesAction {
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
 
         String property;
         int lastCompletedCount;
         int nextScheduledCount;
 
         try {
-            property = user.getPreference(".dashContent.operations.useLastCompleted");
-            lastCompletedCount = Integer.parseInt(user.getPreference(".dashContent.operations.lastCompleted"));
+            property = preferences.getPreference(".dashContent.operations.useLastCompleted");
+            lastCompletedCount = Integer.parseInt(preferences.getPreference(".dashContent.operations.lastCompleted"));
         } catch (Exception e) {
             // for some reason the preferences are screwed, give the user a sensible default for now
             property = "true";
@@ -63,8 +65,8 @@ public class ViewAction extends TilesAction {
         context.putAttribute("displayLastCompleted", lastCompleted);
 
         try {
-            property = user.getPreference(".dashContent.operations.useNextScheduled");
-            nextScheduledCount = Integer.parseInt(user.getPreference(".dashContent.operations.nextScheduled"));
+            property = preferences.getPreference(".dashContent.operations.useNextScheduled");
+            nextScheduledCount = Integer.parseInt(preferences.getPreference(".dashContent.operations.nextScheduled"));
         } catch (Exception e) {
             // for some reason the preferences are screwed, give the user a sensible default for now
             property = "true";

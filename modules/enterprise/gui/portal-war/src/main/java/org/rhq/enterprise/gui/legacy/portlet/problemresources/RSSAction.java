@@ -33,6 +33,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.BaseRSSAction;
 import org.rhq.enterprise.gui.legacy.portlet.RSSFeed;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
@@ -51,10 +52,11 @@ public class RSSAction extends BaseRSSAction {
 
         // Get the problem resources
         Subject subject = getSubject(request);
-        WebUser webUser = new WebUser(subject);
+        WebUser user = new WebUser(subject);
+        WebUserPreferences preferences = user.getPreferences();
 
-        int rows = Integer.parseInt(webUser.getPreference(PortletConstants.ROWS));
-        int hours = Integer.parseInt(webUser.getPreference(PortletConstants.HOURS));
+        int rows = Integer.parseInt(preferences.getPreference(PortletConstants.ROWS));
+        int hours = Integer.parseInt(preferences.getPreference(PortletConstants.HOURS));
         long begin = 0; // beginning of time, unless configured otherwise
 
         if (hours > 0) {

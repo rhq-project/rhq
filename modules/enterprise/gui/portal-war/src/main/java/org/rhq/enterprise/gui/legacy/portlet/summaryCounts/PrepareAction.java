@@ -20,10 +20,14 @@ package org.rhq.enterprise.gui.legacy.portlet.summaryCounts;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.SummaryCountPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
@@ -33,20 +37,10 @@ public class PrepareAction extends BaseAction {
         HttpServletResponse response) throws Exception {
         PropertiesForm pForm = (PropertiesForm) form;
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
 
-        boolean platform = Boolean.valueOf(user.getPreference(".dashContent.summaryCounts.platform"));
-        boolean server = Boolean.valueOf(user.getPreference(".dashContent.summaryCounts.server"));
-        boolean service = Boolean.valueOf(user.getPreference(".dashContent.summaryCounts.service"));
-        boolean groupCompat = Boolean.valueOf(user.getPreference(".dashContent.summaryCounts.group.compat"));
-        boolean groupMixed = Boolean.valueOf(user.getPreference(".dashContent.summaryCounts.group.mixed"));
-        boolean software = Boolean.valueOf(user.getPreference(".dashContent.summaryCounts.software"));
-
-        pForm.setPlatform(platform);
-        pForm.setServer(server);
-        pForm.setService(service);
-        pForm.setGroupCompat(groupCompat);
-        pForm.setGroupMixed(groupMixed);
-        pForm.setSoftware(software);
+        SummaryCountPreferences counts = preferences.getSummaryCounts();
+        pForm.setSummaryCounts(counts);
 
         return null;
     }

@@ -21,12 +21,16 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
+import org.rhq.enterprise.gui.uibeans.UIConstants;
 
 /**
  * Entry point action for displaying availability, charts and log indicators
@@ -38,7 +42,12 @@ public class AllIndicatorsAction extends BaseAction {
 
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
-        user.setPageRefreshPeriodOnRequest(request);
+        WebUserPreferences preferences = user.getPreferences();
+
+        int refreshPeriod = preferences.getPageRefreshPeriod();
+        if (UIConstants.DONT_REFRESH_PAGE != refreshPeriod) {
+            request.setAttribute("refreshPeriod", String.valueOf(refreshPeriod));
+        }
 
         return forward;
     }

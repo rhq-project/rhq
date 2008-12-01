@@ -20,13 +20,14 @@ package org.rhq.enterprise.gui.legacy.portlet.savedqueries;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
-import org.rhq.core.clientapi.util.StringUtil;
-import org.rhq.enterprise.gui.legacy.Constants;
+
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ChartUtility;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
@@ -37,6 +38,7 @@ public class ModifyAction extends BaseAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
         PropertiesForm pForm = (PropertiesForm) form;
         ActionForward forward = checkSubmit(request, mapping, form);
         String returnString = RetCodeConstants.SUCCESS_URL;
@@ -51,16 +53,16 @@ public class ModifyAction extends BaseAction {
         String[] charts = pForm.getCharts();
 
         if (charts != null) {
-            ChartUtility chartUtility = new ChartUtility( user );
-//            String userCharts = user.getPreference(Constants.USER_DASHBOARD_CHARTS);
+            ChartUtility chartUtility = new ChartUtility(user);
+            //            String userCharts = user.getPreference(Constants.USER_DASHBOARD_CHARTS);
             for (int i = 0; i < charts.length; i++) {
-                chartUtility.remove( charts[i]);
+                chartUtility.remove(charts[i]);
             }
 
             returnString = "remove";
         }
 
-        user.persistPreferences();
+        preferences.persistPreferences();
         return mapping.findForward(returnString);
     }
 }

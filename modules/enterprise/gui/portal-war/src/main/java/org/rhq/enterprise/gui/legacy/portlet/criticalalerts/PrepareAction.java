@@ -34,6 +34,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
@@ -47,6 +48,7 @@ public class PrepareAction extends TilesAction {
         Log log = LogFactory.getLog(PrepareAction.class);
         PropertiesForm pForm = (PropertiesForm) form;
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
         String key = ".dashContent.criticalalerts.resources";
 
         //this guarantees that the session dosen't contain any resources it shouldn't
@@ -55,10 +57,10 @@ public class PrepareAction extends TilesAction {
         //set all the form properties
         pForm.setDisplayOnDash(true);
 
-        String numberOfAlerts = user.getPreference(".dashContent.criticalalerts.numberOfAlerts");
-        String past = user.getPreference(".dashContent.criticalalerts.past");
-        String prioritity = user.getPreference(".dashContent.criticalalerts.priority");
-        String selectedOrAll = user.getPreference(".dashContent.criticalalerts.selectedOrAll");
+        String numberOfAlerts = preferences.getPreference(".dashContent.criticalalerts.numberOfAlerts");
+        String past = preferences.getPreference(".dashContent.criticalalerts.past");
+        String prioritity = preferences.getPreference(".dashContent.criticalalerts.priority");
+        String selectedOrAll = preferences.getPreference(".dashContent.criticalalerts.selectedOrAll");
 
         DashboardUtils.verifyResources(key, user);
 

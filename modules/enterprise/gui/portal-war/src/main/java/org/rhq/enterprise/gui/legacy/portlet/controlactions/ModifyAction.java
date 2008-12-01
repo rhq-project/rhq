@@ -20,12 +20,15 @@ package org.rhq.enterprise.gui.legacy.portlet.controlactions;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -35,6 +38,7 @@ public class ModifyAction extends BaseAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
 
         ActionForward forward = checkSubmit(request, mapping, form);
 
@@ -53,12 +57,12 @@ public class ModifyAction extends BaseAction {
         String useLastCompleted = Boolean.toString(pForm.isUseLastCompleted());
         String useNextScheduled = Boolean.toString(pForm.isUseNextScheduled());
 
-        user.setPreference(".dashContent.operations.lastCompleted", lastCompleted);
-        user.setPreference(".dashContent.operations.nextScheduled", nextScheduled);
-        user.setPreference(".dashContent.operations.useLastCompleted", useLastCompleted);
-        user.setPreference(".dashContent.operations.useNextScheduled", useNextScheduled);
+        preferences.setPreference(".dashContent.operations.lastCompleted", lastCompleted);
+        preferences.setPreference(".dashContent.operations.nextScheduled", nextScheduled);
+        preferences.setPreference(".dashContent.operations.useLastCompleted", useLastCompleted);
+        preferences.setPreference(".dashContent.operations.useNextScheduled", useNextScheduled);
 
-        user.persistPreferences();
+        preferences.persistPreferences();
 
         request.getSession().removeAttribute(Constants.USERS_SES_PORTAL);
 

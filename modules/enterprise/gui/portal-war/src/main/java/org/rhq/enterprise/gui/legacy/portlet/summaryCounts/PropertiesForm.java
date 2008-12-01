@@ -18,61 +18,66 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.summaryCounts;
 
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.SummaryCountPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.DashboardBaseForm;
 
 public class PropertiesForm extends DashboardBaseForm {
-    private boolean platform;
-    private boolean server;
-    private boolean service;
-    private boolean groupCompat;
-    private boolean groupMixed;
-    private boolean software;
+
+    SummaryCountPreferences counts = new SummaryCountPreferences();
 
     public boolean isPlatform() {
-        return this.platform;
+        return this.counts.showPlatforms;
     }
 
     public void setPlatform(boolean platform) {
-        this.platform = platform;
+        this.counts.showPlatforms = platform;
     }
 
     public boolean isServer() {
-        return this.server;
+        return this.counts.showServers;
     }
 
     public void setServer(boolean server) {
-        this.server = server;
+        this.counts.showServers = server;
     }
 
     public boolean isService() {
-        return this.service;
+        return this.counts.showServices;
     }
 
     public void setService(boolean service) {
-        this.service = service;
+        this.counts.showServices = service;
     }
 
     public boolean isGroupCompat() {
-        return this.groupCompat;
+        return this.counts.showCompatibleGroups;
     }
 
     public void setGroupCompat(boolean flag) {
-        this.groupCompat = flag;
+        this.counts.showCompatibleGroups = flag;
     }
 
     public boolean isGroupMixed() {
-        return this.groupMixed;
+        return this.counts.showMixedGroups;
     }
 
     public void setGroupMixed(boolean groupMixed) {
-        this.groupMixed = groupMixed;
+        this.counts.showMixedGroups = groupMixed;
     }
 
-    public boolean isSoftware() {
-        return software;
+    public boolean isGroupDefinition() {
+        return this.counts.showGroupDefinitions;
     }
 
-    public void setSoftware(boolean software) {
-        this.software = software;
+    public void setGroupDefinition(boolean groupDefinition) {
+        this.counts.showGroupDefinitions = groupDefinition;
+    }
+
+    public SummaryCountPreferences getSummaryCounts() {
+        return this.counts;
+    }
+
+    public void setSummaryCounts(SummaryCountPreferences counts) {
+        this.counts = counts;
     }
 }

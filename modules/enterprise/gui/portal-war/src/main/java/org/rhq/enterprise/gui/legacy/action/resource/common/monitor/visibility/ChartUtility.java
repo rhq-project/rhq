@@ -19,12 +19,13 @@
 
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
-import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.KeyConstants;
+import java.util.ArrayList;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.ArrayList;
+import org.rhq.enterprise.gui.legacy.KeyConstants;
+import org.rhq.enterprise.gui.legacy.WebUser;
 
 /**
  * Utility class to get / save / remove charts from the dashboard
@@ -38,32 +39,28 @@ public class ChartUtility {
 
     WebUser webUser = null;
 
-    public ChartUtility( WebUser webUser )
-    {
+    public ChartUtility(WebUser webUser) {
         this.webUser = webUser;
     }
-
 
     /**
      * Retrieves all charts stored in the user preferences and returns them as a list
      * @return ArrayList of chart names and urls
      * @throws Exception
      */
-    public ArrayList<String> getAllChartsAsList() throws Exception
-    {
+    public ArrayList<String> getAllChartsAsList() throws Exception {
         ArrayList<String> chartsList = new ArrayList<String>(2);
         int counter = 0;
         try {
             String chart = null;
-            do
-            {
-                chart = webUser.getPreference(KeyConstants.USER_DASHBOARD_CHARTS + "." + counter);
-                if( chart != null && !chart.equals(""))
-                {
-                    chartsList.add( counter, webUser.getPreference(KeyConstants.USER_DASHBOARD_CHARTS + "." + counter) );
+            do {
+                chart = webUser.getPreferences().getPreference(KeyConstants.USER_DASHBOARD_CHARTS + "." + counter);
+                if (chart != null && !chart.equals("")) {
+                    chartsList.add(counter, webUser.getPreferences().getPreference(
+                        KeyConstants.USER_DASHBOARD_CHARTS + "." + counter));
                 }
                 counter++;
-            } while ( chart != null && !chart.equals("") );
+            } while (chart != null && !chart.equals(""));
 
         } catch (IllegalArgumentException e) {
             if (log.isDebugEnabled())
@@ -73,7 +70,6 @@ public class ChartUtility {
         return chartsList;
     }
 
-
     /**
      * Saves the new chart to the user's preferences
      * @param newChart the new chart to be stored
@@ -82,7 +78,8 @@ public class ChartUtility {
      */
     public void saveNewChart(String newChart, ArrayList<String> chartsList) throws Exception {
         try {
-            webUser.setPreference(KeyConstants.USER_DASHBOARD_CHARTS +"." + chartsList.size(), newChart );
+            webUser.getPreferences().setPreference(KeyConstants.USER_DASHBOARD_CHARTS + "." + chartsList.size(),
+                newChart);
 
         } catch (IllegalArgumentException e) {
             if (log.isDebugEnabled())
@@ -90,7 +87,6 @@ public class ChartUtility {
         }
 
     }
-
 
     /**
      * Removes the given chart from the user's preferences
@@ -98,20 +94,17 @@ public class ChartUtility {
      * @return true if the chart is removed successfully, false otherwise
      * @throws Exception
      */
-    public boolean remove( String removeChart) throws Exception
-    {
+    public boolean remove(String removeChart) throws Exception {
         boolean removed = false;
         try {
             ArrayList<String> chartsList = this.getAllChartsAsList();
-            for( int i = 0; i < chartsList.size(); i++ )
-            {
+            for (int i = 0; i < chartsList.size(); i++) {
                 //remove all the charts, then add them all back except the one to be removed
-                webUser.unsetPreference(KeyConstants.USER_DASHBOARD_CHARTS + "." + i);
+                webUser.getPreferences().unsetPreference(KeyConstants.USER_DASHBOARD_CHARTS + "." + i);
             }
             removed = chartsList.remove(removeChart);
-            for( int i = 0; i < chartsList.size(); i++ )
-            {
-                webUser.setPreference(KeyConstants.USER_DASHBOARD_CHARTS + "." + i, chartsList.get(i) );
+            for (int i = 0; i < chartsList.size(); i++) {
+                webUser.getPreferences().setPreference(KeyConstants.USER_DASHBOARD_CHARTS + "." + i, chartsList.get(i));
             }
         } catch (IllegalArgumentException e) {
             if (log.isDebugEnabled())
@@ -119,5 +112,5 @@ public class ChartUtility {
         }
         return removed;
     }
-    
+
 }

@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.uibeans;
 
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+
 /**
  * Declares constants used by bizapp beans.
  */
@@ -36,4 +38,9 @@ public class UIConstants {
      * Identifies a <code>ResourceTypeDisplaySummary</code> representing a single resource.
      */
     public static final int SUMMARY_TYPE_SINGLETON = 3;
+
+    /**
+     * The {@link WebUserPreferences#getPageRefreshPeriod()} value indicates no page refresh. 
+     */
+    public static final int DONT_REFRESH_PAGE = 0;
 }

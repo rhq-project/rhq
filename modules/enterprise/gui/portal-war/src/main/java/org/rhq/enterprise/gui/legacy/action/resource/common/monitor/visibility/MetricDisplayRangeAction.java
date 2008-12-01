@@ -21,15 +21,19 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
@@ -57,18 +61,19 @@ public class MetricDisplayRangeAction extends BaseAction {
         }
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
 
         if (displayForm.isLastnSelected()) {
             Integer lastN = displayForm.getRn();
             Integer unit = displayForm.getRu();
 
             log.trace("updating metric display .. lastN [" + lastN + "] .. unit [" + unit + "]");
-            user.setPreference(WebUser.PREF_METRIC_RANGE_LASTN, lastN);
-            user.setPreference(WebUser.PREF_METRIC_RANGE_UNIT, unit);
-            user.setPreference(WebUser.PREF_METRIC_RANGE, null);
+            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_LASTN, lastN);
+            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_UNIT, unit);
+            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE, null);
 
             // set simple mode
-            user.setPreference(WebUser.PREF_METRIC_RANGE_RO, Boolean.FALSE);
+            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_RO, Boolean.FALSE);
         } else if (displayForm.isDateRangeSelected()) {
             Date begin = displayForm.getStartDate();
             Date end = displayForm.getEndDate();
@@ -78,19 +83,19 @@ public class MetricDisplayRangeAction extends BaseAction {
             range.add(end.getTime());
 
             log.trace("updating metric display date range [" + begin + ":" + end + "]");
-            user.setPreference(WebUser.PREF_METRIC_RANGE, range);
-            user.setPreference(WebUser.PREF_METRIC_RANGE_LASTN, null);
-            user.setPreference(WebUser.PREF_METRIC_RANGE_UNIT, null);
+            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE, range);
+            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_LASTN, null);
+            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_UNIT, null);
 
             // set advanced mode
-            user.setPreference(WebUser.PREF_METRIC_RANGE_RO, Boolean.TRUE);
+            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_RO, Boolean.TRUE);
         } else {
             throw new ServletException("invalid date range action [" + displayForm.getA() + "] selected");
         }
 
         log.trace("Invoking setUserPrefs" + " in MetricDisplayRangeAction " + " for " + user.getId() + " at "
             + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
-        user.persistPreferences();
+        preferences.persistPreferences();
 
         // XXX: assume return path is set, don't use forward params
         return returnSuccess(request, mapping);

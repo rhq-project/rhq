@@ -76,7 +76,7 @@
             
           <table cellpadding="0" cellspacing="0" border="0" width="100%">
             <tr>
-              <td colspan="2" width="100%" class="FormLabel"><html:checkbox property="software" styleClass="softwareParent" onclick="checkParent(this)"/><fmt:message key="dash.home.DisplayCategory.group.SoftwareShowTotal"/></td>
+              <td colspan="2" width="100%" class="FormLabel"><html:checkbox property="groupDefinition" styleClass="groupDefinitionParent" onclick="checkParent(this)"/><fmt:message key="dash.home.DisplayCategory.group.GroupDefinitionShowTotal"/></td>
             </tr>
           </table>
 

@@ -20,8 +20,10 @@ package org.rhq.enterprise.gui.legacy.action.resource.group.monitor;
 
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -29,6 +31,7 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -63,7 +66,7 @@ public class ListChildrenAction extends TilesAction {
         WebUser user = SessionUtils.getWebUser(request.getSession());
         Subject subject = user.getSubject();
 
-        Map<String, ?> pref = user.getMetricRangePreference(true);
+        Map<String, ?> pref = user.getPreferences().getMetricRangePreference(true);
         long begin = (Long) pref.get(MonitorUtils.BEGIN);
         long end = (Long) pref.get(MonitorUtils.END);
 

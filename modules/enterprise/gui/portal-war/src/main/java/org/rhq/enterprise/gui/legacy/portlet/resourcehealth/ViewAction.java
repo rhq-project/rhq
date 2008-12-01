@@ -20,16 +20,19 @@ package org.rhq.enterprise.gui.legacy.portlet.resourcehealth;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
@@ -41,6 +44,7 @@ public class ViewAction extends TilesAction {
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
         PageControl pc = WebUtility.getPageControl(request);
         String key = Constants.USERPREF_KEY_FAVORITE_RESOURCES;
 
@@ -54,8 +58,8 @@ public class ViewAction extends TilesAction {
 
         context.putAttribute("resourceHealth", list);
 
-        Boolean availability = new Boolean(user.getPreference(".dashContent.resourcehealth.availability"));
-        Boolean alerts = new Boolean(user.getPreference(".dashContent.resourcehealth.alerts"));
+        Boolean availability = new Boolean(preferences.getPreference(".dashContent.resourcehealth.availability"));
+        Boolean alerts = new Boolean(preferences.getPreference(".dashContent.resourcehealth.alerts"));
 
         context.putAttribute("availability", availability);
         context.putAttribute("alerts", alerts);

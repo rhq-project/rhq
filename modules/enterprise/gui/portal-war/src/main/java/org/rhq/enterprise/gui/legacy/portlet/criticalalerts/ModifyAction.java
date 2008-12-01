@@ -20,12 +20,15 @@ package org.rhq.enterprise.gui.legacy.portlet.criticalalerts;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -36,6 +39,7 @@ public class ModifyAction extends BaseAction {
         HttpServletResponse response) throws Exception {
         PropertiesForm pForm = (PropertiesForm) form;
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
         String forwardStr = RetCodeConstants.SUCCESS_URL;
 
         if (pForm.isRemoveClicked()) {
@@ -58,11 +62,11 @@ public class ModifyAction extends BaseAction {
         String prioritity = pForm.getPriority();
         String selectedOrAll = pForm.getSelectedOrAll();
 
-        user.setPreference(".dashContent.criticalalerts.numberOfAlerts", numberOfAlerts.toString());
-        user.setPreference(".dashContent.criticalalerts.past", past);
-        user.setPreference(".dashContent.criticalalerts.priority", prioritity);
-        user.setPreference(".dashContent.criticalalerts.selectedOrAll", selectedOrAll);
-        user.persistPreferences();
+        preferences.setPreference(".dashContent.criticalalerts.numberOfAlerts", numberOfAlerts.toString());
+        preferences.setPreference(".dashContent.criticalalerts.past", past);
+        preferences.setPreference(".dashContent.criticalalerts.priority", prioritity);
+        preferences.setPreference(".dashContent.criticalalerts.selectedOrAll", selectedOrAll);
+        preferences.persistPreferences();
 
         request.getSession().removeAttribute(Constants.USERS_SES_PORTAL); // clean-up
 

@@ -201,7 +201,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void addNumericData(Set<MeasurementDataNumeric> data) {
-        if ((data == null) || (data.size() == 0)) {
+        if ((data == null) || (data.isEmpty())) {
             return;
         }
 
@@ -289,7 +289,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void addTraitData(Set<MeasurementDataTrait> data) {
-        if ((data == null) || (data.size() == 0)) {
+        if ((data == null) || (data.isEmpty())) {
             return;
         }
 
@@ -406,7 +406,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void removeGatheredMetricsForSchedules(List<MeasurementSchedule> schedules) {
-        if (schedules.size() == 0) {
+        if (schedules.isEmpty()) {
             if (log.isDebugEnabled()) {
                 log.debug("removeGatheredMetricsForSchedules: nothing to do");
             }
@@ -591,7 +591,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
     public Map<Integer, List<MetricDisplaySummary>> getNarrowedMetricDisplaySummariesForResourcesAndParent(
         Subject subject, int resourceTypeId, int parentId, List<Integer> resourceIds, long begin, long end) {
         Map<Integer, List<MetricDisplaySummary>> sumMap = new HashMap<Integer, List<MetricDisplaySummary>>();
-        if ((parentId <= 0) || (resourceIds == null) || (resourceIds.size() == 0) || (end < begin)) {
+        if ((parentId <= 0) || (resourceIds == null) || (resourceIds.isEmpty()) || (end < begin)) {
             return sumMap;
         }
 
@@ -712,11 +712,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
         summary.setDescription(definition.getDescription());
         summary.setMetricSource(schedule.getResource().getName());
 
-        List<Resource> resources = new ArrayList<Resource>(1);
-        resources.add(schedule.getResource());
-        //      summary.setAlertCount( alertManager.getAlertCountByMeasurementDefinitionAndResources(
-        //               definition.getId(), resources, begin, end));
-
         switch (definition.getDataType()) {
         case MEASUREMENT: {
             MeasurementUnits units = definition.getUnits();
@@ -751,7 +746,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
 
             summary.setCollectionType(collectionType);
 
-            if (narrowed == false) {
+            if (!narrowed) {
                 MeasurementAggregate compositeHighLow = getAggregate(schedule, begin, end);
                 if (compositeHighLow.isEmpty()) {
                     summary.setValuesPresent(false);
@@ -932,7 +927,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
         if (resources.isEmpty()) {
             return data;
         }
-        if (measurementDefinitionIds == null || measurementDefinitionIds.length == 0) {
+        if (measurementDefinitionIds.length == 0) {
             return data;
         }
 
@@ -989,7 +984,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
              * of the group), skip over this metric.
              */
             MeasurementAggregate aggregate;
-            if (scheduleIds == null || scheduleIds.length == 0) {
+            if (scheduleIds.length == 0) {
                 aggregate = new MeasurementAggregate(null, null, null);
                 log.warn("No metric schedules found for def=[" + definition + "] and resources [" + resources
                     + "], using empty aggregate");
@@ -1073,7 +1068,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
         Subject subject, Collection<Resource> resources, long beginTime, long endTime) {
         Map<Integer, List<MetricDisplaySummary>> resMap = new HashMap<Integer, List<MetricDisplaySummary>>();
 
-        if ((resources == null) || (resources.size() == 0)) {
+        if ((resources == null) || (resources.isEmpty())) {
             return resMap;
         }
 

@@ -47,6 +47,47 @@
 				<h:inputText value="#{EventHistoryUIBean.searchString}" />
 			</rich:panel>
 			
+			<ui:param name="eventHistoryDataModel" value="#{EventHistoryUIBean.dataModel}"/>
+			
+			
+			<rich:dataTable binding="#{EventHistoryUIBean.dataTable}"
+								 id="eventHistoryDataTable"
+			    			   rows="10"
+                              value="#{eventHistoryDataModel}"
+                                var="item"
+                              width="100%"
+                        headerClass="tableRowHeader"
+                        footerClass="on-pager-footer">
+             
+				<rich:column>
+                	<f:facet name="header">
+                    	<h:outputText styleClass="headerText" value="Severity" />
+                  	</f:facet>
+                	<h:outputText value="#{item.severity}" />
+                </rich:column>
+               
+				<rich:column>
+					<f:facet name="header">
+                    	<h:outputText styleClass="headerText" value="Source" />
+                  	</f:facet>
+                  	<h:outputText value="#{item.sourceLocation}" />
+				</rich:column>
+				
+				<rich:column>
+					<f:facet name="header">
+                    	<h:outputText styleClass="headerText" value="Detail" />
+                  	</f:facet>
+                  	<h:outputText value="#{item.eventDetail}" />
+				</rich:column>
+				
+				<rich:column>
+					<f:facet name="header">
+                    	<h:outputText styleClass="headerText" value="Time occurred" />
+                  	</f:facet>
+                  	<h:outputText value="#{item.timestamp}" />
+				</rich:column>
+				
+			</rich:dataTable>
 		</h:form>
 
 	</ui:define>

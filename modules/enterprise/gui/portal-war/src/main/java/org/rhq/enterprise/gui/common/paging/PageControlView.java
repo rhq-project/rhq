@@ -50,6 +50,7 @@ import org.rhq.enterprise.gui.content.ShowContentServiceRequestUIBean;
 import org.rhq.enterprise.gui.definition.group.GroupDefinitionUIBean;
 import org.rhq.enterprise.gui.definition.group.ListGroupDefinitionsUIBean;
 import org.rhq.enterprise.gui.discovery.AutoDiscoveryQueueUIBean;
+import org.rhq.enterprise.gui.event.EventHistoryUIBean;
 import org.rhq.enterprise.gui.ha.AffinityGroupSubscribedAgentsUIBean;
 import org.rhq.enterprise.gui.ha.AffinityGroupSubscribedServersUIBean;
 import org.rhq.enterprise.gui.ha.AffinityGroupUnsubscribedAgentsUIBean;
@@ -229,7 +230,9 @@ public enum PageControlView {
     /** */
     ResourceMeasuremntScheduleList(ListResourceMeasurementScheduleUIBean.class, true),
     /** */
-    ResourceGroupMeasuremntScheduleList(ListResourceGroupMeasurementScheduleUIBean.class, true);
+    ResourceGroupMeasuremntScheduleList(ListResourceGroupMeasurementScheduleUIBean.class, true),
+    /** */
+    EventsHistoryList(EventHistoryUIBean.class);
 
     private Class<? extends PagedDataTableUIBean> beanClass;
     private boolean showAll = false;;

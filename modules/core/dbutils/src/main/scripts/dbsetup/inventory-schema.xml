@@ -162,7 +162,14 @@
         <column name="GROUP_BY" size="500" type="VARCHAR2"/>
 
         <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>
+        
+        <!--  These two only set if this is a backing group for a resource cluster -->
+        <column name="CLUSTER_RESOURCE_GROUP_ID" type="INTEGER" references="RHQ_RESOURCE_GROUP"/>
+        <!--  Max bytes for Oracle Varchar2 -->
+        <column name="CLUSTER_KEY" size="4000" type="VARCHAR2"/>
 
+        <column name="VISIBLE" type="BOOLEAN"/>
+        
         <index name="RHQ_RES_GROUP_NAME" unique="true">
             <field ref="NAME"/>
         </index>
@@ -210,7 +217,7 @@
 
     <table name="RHQ_CONFIG_UPDATE">
         <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
-        <column name="CONFIGURATION_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
+        <column name="CONFIGURATION_ID" type="INTEGER" required="true" references="RHQ_CONFIG"  ondelete="cascade"/>
         <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
         <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>
         <column name="SUBJECT_NAME" type="VARCHAR2" required="false" size="100"/>

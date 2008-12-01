@@ -23,7 +23,7 @@
 debug_msg ()
 {
    if [ -n "$RHQ_AGENT_DEBUG" ]; then
-      echo $1
+      echo "rhq-agent.sh: $1"
    fi
 }
 

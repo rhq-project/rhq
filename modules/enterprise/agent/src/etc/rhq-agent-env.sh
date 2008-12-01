@@ -2,8 +2,6 @@
 # RHQ Agent UNIX Startup Script Configuration File
 #===========================================================================
 #
-# This file is optional; it may be removed if not needed.
-#
 
 #    RHQ_AGENT_DEBUG - If this is defined (with any value), the script
 #                      will emit debug messages. It will also enable debug
@@ -72,6 +70,72 @@
 #                              pid value. If this is not defined, the VM is
 #                              launched in foreground and this script blocks
 #                              until the VM exits, at which time this
-#                              script will also exit.
+#                              script will also exit. NOTE: this should only
+#                              be used by the rhq-agent-wrapper.sh script.
+#                              If you want to launch the agent in the
+#                              background, use that script to do so instead of
+#                              setting this variable.
 #
 #RHQ_AGENT_IN_BACKGROUND=rhq-agent.pid
+
+#===========================================================================
+# THE FOLLOWING ARE USED SOLELY FOR THE rhq-agent-wrapper.sh SCRIPT
+
+#    RHQ_AGENT_PIDFILE_DIR - When rhq-agent-wrapper.sh is used to start
+#                            the agent, it runs the process in background
+#                            and writes its pid to a pidfile. The default
+#                            location of this pidfile is in the agent's
+#                            /bin directory. If you want to have the pidfile
+#                            written to another location, set this environment
+#                            variable. This value must be a full path to a
+#                            directory with write permissions.
+#
+#RHQ_AGENT_PIDFILE_DIR=/var/run
+
+#    RHQ_AGENT_RUN_AS - if defined, then the background process will
+#                       be run as the given user via "su".
+#
+#RHQ_AGENT_RUN_AS=$USER
+
+#    RHQ_AGENT_RUN_AS_ME - if defined, then the background process will
+#                          be run as the current user (as defined
+#                          by the $USER environment variable) via "su".
+#                          This takes precedence over RHQ_AGENT_RUN_AS.
+#
+#RHQ_AGENT_RUN_AS_ME=true
+
+#    RHQ_AGENT_PASSWORD_PROMPT - if "true", this indicates that the user
+#                                that is to run the agent must type the
+#                                password on the console in order to run.
+#                                Therefore, "true" forces a prompt message
+#                                to appear on the console. If this is
+#                                defined, but not equal to "true", the value
+#                                itself will be used as the prompt string. 
+#                                This is not defined by default.
+#
+#RHQ_AGENT_PASSWORD_PROMPT=true
+
+#    RHQ_AGENT_RUN_PREFIX - If defined, this will prefix the agent
+#                           start command when it is executed. Use
+#                           this to customize how the agent process
+#                           is started (e.g. with "su" or "sudo").
+#                           If this is set, it completely overrides the
+#                           RHQ_AGENT_RUN_AS and RHQ_AGENT_RUN_AS_ME
+#                           variables. Note that you can still pipe
+#                           the password if you set the RHQ_AGENT_PASSWORD
+#                           and RHQ_AGENT_PASSWORD_PROMPT variables properly.
+#                           The command to start the agent will be appended
+#                           to the end of this prefix string.
+#RHQ_AGENT_RUN_PREFIX=su -m - ${RHQ_AGENT_RUN_AS} -c
+
+#    RHQ_AGENT_RUN_PREFIX_QUOTED - If "true", this will wrap the agent
+#                                  start command with single quotes
+#                                  before being appended to the run prefix.
+#                                  If this is defined but not "true", its
+#                                  value will be used to wrap the start command.
+#                                  (allowing for a value such as \"). 
+#                                  This is ignored if RHQ_AGENT_RUN_PREFIX
+#                                  is not defined - the purpose of this value
+#                                  is to wrap the command so it can look like
+#                                  a single argument to the run prefix.
+#RHQ_AGENT_RUN_PREFIX_QUOTED=true

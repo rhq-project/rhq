@@ -11,6 +11,7 @@
     <xa-datasource-property name="Password">${rhq.server.database.password}</xa-datasource-property>
     <xa-datasource-property name="URL">${rhq.server.database.connection-url}</xa-datasource-property>
 
+    <xa-datasource-property name="ConnectionProperties">SetBigStringTryClob=true</xa-datasource-property>
     <isSameRM-override-value>false</isSameRM-override-value>
     <!-- Uses the pingDatabase method to check a connection is still valid before handing it out from the pool -->
     <valid-connection-checker-class-name>org.jboss.resource.adapter.jdbc.vendor.OracleValidConnectionChecker</valid-connection-checker-class-name>

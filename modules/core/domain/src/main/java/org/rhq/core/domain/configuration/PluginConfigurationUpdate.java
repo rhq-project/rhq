@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.configuration;
 
 import javax.persistence.CascadeType;
@@ -58,7 +58,10 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID, query = "SELECT cu.status "
         + "  FROM PluginConfigurationUpdate cu "
         + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId GROUP BY cu.status"),
-    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM PluginConfigurationUpdate pcu WHERE pcu.resource IN (:resources))"),
+    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, query = "" //
+        + "DELETE FROM Configuration c WHERE c IN " //
+        + "( SELECT pcu.configuration FROM PluginConfigurationUpdate pcu WHERE pcu.resource IN (:resources) AND NOT pcu.configuration = pcu.resource.pluginConfiguration)"),
+    @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, query = "DELETE FROM PluginConfigurationUpdate pcu WHERE pcu.resource IN (:resources))"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP, query = "UPDATE PluginConfigurationUpdate pcu SET pcu.aggregateConfigurationUpdate = null WHERE pcu.aggregateConfigurationUpdate IN ( select apcu FROM AggregatePluginConfigurationUpdate apcu WHERE apcu.group.id = :groupId )"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "UPDATE PluginConfigurationUpdate pcu SET pcu.aggregateConfigurationUpdate = null WHERE pcu.aggregateConfigurationUpdate IN ( select apcu FROM AggregatePluginConfigurationUpdate apcu WHERE apcu.id = :apcuId )") })
 public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpdate {
@@ -70,7 +73,8 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
     public static final String QUERY_FIND_COMPOSITE_BY_PARENT_UPDATE_ID = "PluginConfigurationUpdate.findCompositeByParentUpdateId";
     public static final String QUERY_FIND_BY_PARENT_UPDATE_ID = "PluginConfigurationUpdate.findByParentUpdateId";
     public static final String QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID = "PluginConfigurationUpdate.findStatusByParentUpdateId";
-    public static final String QUERY_DELETE_BY_RESOURCES = "PluginConfigurationUpdate.deleteByResources";
+    public static final String QUERY_DELETE_BY_RESOURCES_1 = "PluginConfigurationUpdate.deleteByResources1";
+    public static final String QUERY_DELETE_BY_RESOURCES_2 = "PluginConfigurationUpdate.deleteByResources2";
     public static final String QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP = "pluginConfigurationUpdate.deleteUpdateAggregateByGroup";
     public static final String QUERY_DELETE_UPDATE_AGGREGATE = "pluginConfigurationUpdate.deleteUpdateAggregate";
 

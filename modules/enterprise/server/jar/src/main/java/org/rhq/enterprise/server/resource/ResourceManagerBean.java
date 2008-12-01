@@ -503,13 +503,23 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         q.setParameter("resources", resources);
         q.executeUpdate();
 
-        // bulk delete: Config update
-        q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES);
+        // bulk delete: Config update (part 1)
+        q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
-        // bulk delete: Plugin Config update
-        q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES);
+        // bulk delete: Config update (part 2)
+        q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2);
+        q.setParameter("resources", resources);
+        q.executeUpdate();
+
+        // bulk delete: Plugin Config update (part 1)
+        q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1);
+        q.setParameter("resources", resources);
+        q.executeUpdate();
+
+        // bulk delete: Plugin Config update (part 2)
+        q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
@@ -907,15 +917,18 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     public PageList<ResourceComposite> findResourceComposites(Subject user, ResourceCategory category, String typeName,
         int parentResourceId, String searchString, PageControl pageControl) {
-        ResourceType type = (ResourceType) entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME)
-            .setParameter("name", typeName).getSingleResult();
+
+        ResourceType type = null;
         Resource parentResource = null;
 
+        if (null != typeName) {
+            type = (ResourceType) entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME).setParameter("name",
+                typeName).getSingleResult();
+            type = entityManager.find(ResourceType.class, type.getId());
+        }
         if (parentResourceId > 0) {
             parentResource = getResourceById(user, parentResourceId);
         }
-
-        type = entityManager.find(ResourceType.class, type.getId());
 
         return findResourceComposites(user, category, type, parentResource, searchString, false, pageControl);
     }

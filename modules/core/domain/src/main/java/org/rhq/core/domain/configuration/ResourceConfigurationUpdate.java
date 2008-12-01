@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.configuration;
 
 import javax.persistence.DiscriminatorValue;
@@ -48,7 +48,8 @@ import org.rhq.core.domain.resource.Resource;
         + "  FROM ResourceConfigurationUpdate cu " + " WHERE cu.resource.id = :resourceId "
         + "   AND cu.modifiedTime = ( SELECT MAX(cu2.modifiedTime) " + "   FROM ResourceConfigurationUpdate cu2 "
         + "  WHERE cu2.resource.id = :resourceId) "),
-    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM ResourceConfigurationUpdate rcu WHERE rcu.resource IN (:resources))"),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, query = "DELETE FROM Configuration c WHERE c IN ( SELECT rcu.configuration FROM ResourceConfigurationUpdate rcu WHERE rcu.resource IN (:resources) AND NOT rcu.configuration = rcu.resource.resourceConfiguration)"),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, query = "DELETE FROM ResourceConfigurationUpdate rcu WHERE rcu.resource IN (:resources))"),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "UPDATE ResourceConfigurationUpdate rcu SET rcu.aggregateConfigurationUpdate = null WHERE rcu.aggregateConfigurationUpdate IN ( select arcu FROM AggregateResourceConfigurationUpdate arcu WHERE arcu.group.id = :groupId )") })
 public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUpdate {
     private static final long serialVersionUID = 1L;
@@ -57,7 +58,8 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
     public static final String QUERY_FIND_ALL_BY_RESOURCE_ID = "ResourceConfigurationUpdate.findAllByResourceId";
     public static final String QUERY_FIND_CURRENTLY_ACTIVE_CONFIG = "ResourceConfigurationUpdate.findCurrentlyActiveConfig";
     public static final String QUERY_FIND_LATEST_BY_RESOURCE_ID = "ResourceConfigurationUpdate.findByResource";
-    public static final String QUERY_DELETE_BY_RESOURCES = "ResourceConfigurationUpdate.deleteByResources";
+    public static final String QUERY_DELETE_BY_RESOURCES_1 = "ResourceConfigurationUpdate.deleteByResources1";
+    public static final String QUERY_DELETE_BY_RESOURCES_2 = "ResourceConfigurationUpdate.deleteByResources2";
     public static final String QUERY_DELETE_UPDATE_AGGREGATE = "ResourceConfigurationUpdate.deleteUpdateAggregate";
 
     @JoinColumn(name = "CONFIG_RES_ID", referencedColumnName = "ID", nullable = true)

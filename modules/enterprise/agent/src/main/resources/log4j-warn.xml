@@ -57,7 +57,7 @@
 
    <!-- RHQ -->
    <category name="org.rhq">
-      <priority value="INFO"/>
+      <priority value="WARN"/>
    </category>
 
    <!-- RHQ outgoing command tracing  - set to TRACE to trace commands sent by the agent -->
@@ -91,7 +91,7 @@
    <!-- ======================= -->
 
    <root>
-      <priority value="INFO"/>
+      <priority value="WARN"/>
       <appender-ref ref="FILE"/>
       <!-- <appender-ref ref="CONSOLE"/> -->
    </root>

@@ -655,6 +655,44 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("An error occurred during shutdown. Cause: {0}")
     String EXIT_SHUTDOWN_ERROR = "PromptCommand.exit.shutdown-error";
 
+    @I18NMessage("debug")
+    String DEBUG = "PromptCommand.debug";
+
+    @I18NMessage("debug [--file=<logfile>] [--comm=true|false]")
+    String DEBUG_SYNTAX = "PromptCommand.debug.syntax";
+
+    @I18NMessage("Provides features to help debug the agent.")
+    String DEBUG_HELP = "PromptCommand.debug.help";
+
+    @I18NMessage("Provides features to help debug the agent.\\n\\\n"
+        + "-c|--comm=true|false: enables or disables server-agent communications trace.\\n\\\n"
+        + "-f|--file=<logfile>: reconfigures the logging system with the given file.\\n\\\n"
+        + "\\                     Typically, <logfile> can be 'log4j.xml'\\n\\\n"
+        + "\\                     'log4j-debug.xml', but you can use your own by\\n\\\n"
+        + "\\                     placing your log files in the /conf directory.\\n\\\n")
+    String DEBUG_DETAILED_HELP = "PromptCommand.debug.detailed-help";
+
+    @I18NMessage("Switched to log file [{0}]. Root log level is [{1}]")
+    String DEBUG_LOG_FILE_LOADED = "PromptCommand.debug.log-file-loaded";
+
+    @I18NMessage("Cannot load log file [{0}]. Cause: {1}")
+    String DEBUG_CANNOT_LOAD_LOG_FILE = "PromptCommand.debug.cannot-load-log-file";
+
+    @I18NMessage("Agent-server communications tracing has been enabled.\\n\\\n"
+        + "You may set the following, additional configuration settings\\n\\\n"
+        + "to collect more detailed trace data. You can set these\\n\\\n"
+        + "using the 'setconfig' prompt command. Please refer to the\\n\\\n"
+        + "documentation for more information on these settings. The\\n\\\n"
+        + "values you see here are the current settings:\\n\\\n" //
+        + "\\   rhq.trace-command-config={0}\\n\\\n" //
+        + "\\   rhq.trace-command-response-results={1,number,#}\\n\\\n" //
+        + "\\   rhq.trace-command-size-threshold={2,number,#}\\n\\\n" //
+        + "\\   rhq.trace-command-response-size-threshold={3,number,#}")
+    String DEBUG_CMD_TRACING_ENABLED = "PromptCommand.debug.cmd-tracing-enabled";
+
+    @I18NMessage("Agent-server communications tracing has been disabled.")
+    String DEBUG_CMD_TRACING_DISABLED = "PromptCommand.debug.cmd-tracing-disabled";
+
     @I18NMessage("failover")
     String FAILOVER = "PromptCommand.failover";
 

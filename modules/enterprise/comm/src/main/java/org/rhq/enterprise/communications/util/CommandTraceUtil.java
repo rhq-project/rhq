@@ -39,10 +39,10 @@ import org.rhq.enterprise.communications.command.impl.stream.RemoteOutputStreamC
  */
 public class CommandTraceUtil {
 
-    // name of system property that, when set to anything, dumps the configuration properties of all commands
+    // name of system property that, when set to true, dumps the configuration properties of all commands
     private static final String SYSPROP_TRACE_COMMAND_CONFIG = "rhq.trace-command-config";
 
-    // name of system property that, when set to anything, dumps the results of all command responses
+    // name of system property that, when set to a number, dumps the results of all command responses
     private static final String SYSPROP_TRACE_COMMAND_RESPONSE_RESULTS = "rhq.trace-command-response-results";
 
     // name of system property that, when set to a number, dumps the size of the command when larger than the prop value
@@ -54,6 +54,44 @@ public class CommandTraceUtil {
     // just a simple cache so we can avoid having to parse the interface names all the time
     private static Map<String, String> interfaceSimpleNames = null;
 
+    public static Boolean getSettingTraceCommandConfig() {
+        if (System.getProperty(SYSPROP_TRACE_COMMAND_CONFIG) != null) {
+            return Boolean.getBoolean(SYSPROP_TRACE_COMMAND_CONFIG);
+        }
+        return null; // we want to return null if not set
+    }
+
+    public static void setSettingTraceCommandConfig(Boolean val) {
+        System.setProperty(SYSPROP_TRACE_COMMAND_CONFIG, (val != null) ? Boolean.toString(val) : "false");
+    }
+
+    public static Integer getSettingTraceCommandResponseResults() {
+        int val = getPropertyInt(SYSPROP_TRACE_COMMAND_RESPONSE_RESULTS);
+        return (val != -1) ? Integer.valueOf(val) : null; // returns null if not set, numeric otherwise
+    }
+
+    public static void setSettingTraceCommandResponseResults(Integer val) {
+        System.setProperty(SYSPROP_TRACE_COMMAND_RESPONSE_RESULTS, (val != null) ? Integer.toString(val) : "-1");
+    }
+
+    public static Integer getSettingTraceCommandSizeThreshold() {
+        int val = getPropertyInt(SYSPROP_TRACE_COMMAND_SIZE_THRESHOLD);
+        return (val != -1) ? Integer.valueOf(val) : null; // returns null if not set, numeric otherwise
+    }
+
+    public static void setSettingTraceCommandSizeThreshold(Integer val) {
+        System.setProperty(SYSPROP_TRACE_COMMAND_SIZE_THRESHOLD, (val != null) ? Integer.toString(val) : "-1");
+    }
+
+    public static Integer getSettingTraceCommandResponseSizeThreshold() {
+        int val = getPropertyInt(SYSPROP_TRACE_COMMAND_RESPONSE_SIZE_THRESHOLD);
+        return (val != -1) ? Integer.valueOf(val) : null; // returns null if not set, numeric otherwise
+    }
+
+    public static void setSettingTraceCommandResponseSizeThreshold(Integer val) {
+        System.setProperty(SYSPROP_TRACE_COMMAND_RESPONSE_SIZE_THRESHOLD, (val != null) ? Integer.toString(val) : "-1");
+    }
+
     /**
      * Returns the string that represents the command configuration.
      * 
@@ -63,7 +101,7 @@ public class CommandTraceUtil {
      */
     public static String getConfigString(Command command) {
         Properties config = null;
-        if (command != null && System.getProperty(SYSPROP_TRACE_COMMAND_CONFIG) != null) {
+        if (command != null && Boolean.getBoolean(SYSPROP_TRACE_COMMAND_CONFIG)) {
             config = command.getConfiguration();
         }
         return (config != null) ? config.toString() : "?";

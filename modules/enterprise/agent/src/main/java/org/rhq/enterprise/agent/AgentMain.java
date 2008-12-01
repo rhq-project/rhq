@@ -26,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -37,6 +38,7 @@ import java.io.StreamTokenizer;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -57,6 +59,10 @@ import javax.management.ObjectName;
 
 import mazz.i18n.Logger;
 import mazz.i18n.Msg;
+
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.xml.DOMConfigurator;
 
 import org.jboss.remoting.InvokerLocator;
 import org.jboss.remoting.invocation.NameBasedInvocation;
@@ -95,6 +101,7 @@ import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 import org.rhq.enterprise.agent.promptcmd.AgentPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.AvailabilityPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.ConfigPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.DebugPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.DiscoveryPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.DownloadPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.DumpSpoolPromptCommand;
@@ -134,9 +141,12 @@ import org.rhq.enterprise.communications.command.client.ClientCommandSenderState
 import org.rhq.enterprise.communications.command.client.ClientRemotePojoFactory;
 import org.rhq.enterprise.communications.command.client.CommandPreprocessor;
 import org.rhq.enterprise.communications.command.client.JBossRemotingRemoteCommunicator;
+import org.rhq.enterprise.communications.command.client.OutgoingCommandTrace;
 import org.rhq.enterprise.communications.command.client.RemoteCommunicator;
 import org.rhq.enterprise.communications.command.impl.remotepojo.RemotePojoInvocationCommand;
 import org.rhq.enterprise.communications.command.server.CommandListener;
+import org.rhq.enterprise.communications.command.server.IncomingCommandTrace;
+import org.rhq.enterprise.communications.util.CommandTraceUtil;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.communications.util.prefs.PromptInput;
 
@@ -787,6 +797,71 @@ public class AgentMain {
      */
     public AgentManagement getAgentManagementMBean() {
         return m_managementMBean;
+    }
+
+    /**
+     * This will enable/disable agent-server communication tracing. This is for
+     * use mainly in development but can also be used for troubleshooting problems.
+     *  
+     * @param enabled whether or not to turn on agent comm tracing
+     */
+    public void agentServerCommunicationsTrace(boolean enabled) {
+        org.apache.log4j.Logger outLogger = LogManager.getLogger(OutgoingCommandTrace.class);
+        org.apache.log4j.Logger inLogger = LogManager.getLogger(IncomingCommandTrace.class);
+        Level newLevel = (enabled) ? Level.TRACE : Level.OFF;
+
+        // set it up so the trace is more detailed, but don't override any properties already set
+        if (enabled) {
+            if (CommandTraceUtil.getSettingTraceCommandConfig() == null) {
+                CommandTraceUtil.setSettingTraceCommandConfig(Boolean.TRUE);
+            }
+            if (CommandTraceUtil.getSettingTraceCommandResponseResults() == null) {
+                CommandTraceUtil.setSettingTraceCommandResponseResults(Integer.valueOf(256));
+            }
+            if (CommandTraceUtil.getSettingTraceCommandSizeThreshold() == null) {
+                CommandTraceUtil.setSettingTraceCommandSizeThreshold(Integer.valueOf(99999));
+            }
+            if (CommandTraceUtil.getSettingTraceCommandResponseSizeThreshold() == null) {
+                CommandTraceUtil.setSettingTraceCommandResponseSizeThreshold(Integer.valueOf(99999));
+            }
+        }
+
+        outLogger.setLevel(newLevel);
+        inLogger.setLevel(newLevel);
+    }
+
+    /**
+     * This will hot-deploy a new log4j log configuration file.  Use this to change, at runtime,
+     * the log settings so you can, for example, begin logging DEBUG messages to help troubleshoot
+     * problems.
+     * 
+     * @param logFilePath the path to the log file - relative to the classloader or filesystem
+     *
+     * @throws Exception if failed to hot deploy the new log config
+     */
+    public void hotDeployLogConfigurationFile(String logFilePath) throws Exception {
+        URL logFileUrl;
+
+        // the logfile is probably in classpath, check there first; if not, assume its on the filesystem
+        logFileUrl = getClass().getClassLoader().getResource(logFilePath);
+        if (logFileUrl == null) {
+            File file = new File(logFilePath);
+            if (!file.exists()) {
+                throw new FileNotFoundException(logFilePath);
+            }
+            logFileUrl = file.toURI().toURL();
+        }
+
+        try {
+            LogManager.resetConfiguration();
+            DOMConfigurator.configure(logFileUrl);
+        } catch (Exception e) {
+            // something bad happened, let's load the file we know we have in the agent jar
+            hotDeployLogConfigurationFile("log4j-debug.xml");
+            throw e;
+        }
+
+        return;
     }
 
     /**
@@ -2660,7 +2735,7 @@ public class AgentMain {
             new AvailabilityPromptCommand(), new PiqlPromptCommand(), new IdentifyPromptCommand(),
             new LogPromptCommand(), new TimerPromptCommand(), new PingPromptCommand(), new DownloadPromptCommand(),
             new DumpSpoolPromptCommand(), new SenderPromptCommand(), new FailoverPromptCommand(),
-            new UpdatePromptCommand() };
+            new UpdatePromptCommand(), new DebugPromptCommand() };
 
         // hold the conflicts
         StringBuilder conflicts = new StringBuilder();

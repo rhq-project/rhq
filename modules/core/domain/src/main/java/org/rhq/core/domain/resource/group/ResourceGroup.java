@@ -250,18 +250,32 @@ public class ResourceGroup extends Group {
 
     @JoinColumn(name = "RESOURCE_TYPE_ID", nullable = true)
     @ManyToOne
-    private ResourceType resourceType; // if non-null, it implies a compatible gorup
+    private ResourceType resourceType; // if non-null, it implies a compatible group
+
+    // The root compatible group of which this is a child resource cluster
+    // If the parent is removed this should go away too.
+    @JoinColumn(name = "CLUSTER_RESOURCE_GROUP_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne
+    private ResourceGroup clusterResourceGroup = null;
+
+    @Column(name = "CLUSTER_KEY", nullable = true)
+    private String clusterKey = null;
+
+    // When false hide this group from the UI. For example, for a Resource Cluster backing group. 
+    private boolean visible = true;
 
     /* no-arg constructor required by EJB spec */
     protected ResourceGroup() {
     }
 
-    public ResourceGroup(@NotNull String name) {
+    public ResourceGroup(@NotNull
+    String name) {
         super(name);
         setResourceType(null);
     }
 
-    public ResourceGroup(@NotNull String name, ResourceType type) {
+    public ResourceGroup(@NotNull
+    String name, ResourceType type) {
         super(name);
         setResourceType(type);
     }
@@ -274,7 +288,8 @@ public class ResourceGroup extends Group {
         this.id = id;
     }
 
-    public void addExplicitResource(@NotNull Resource resource) {
+    public void addExplicitResource(@NotNull
+    Resource resource) {
         getExplicitResources().add(resource);
         resource.addExplicitGroup(this);
     }
@@ -292,13 +307,15 @@ public class ResourceGroup extends Group {
         return this.explicitResources;
     }
 
-    public boolean removeExplicitResource(@NotNull Resource resource) {
+    public boolean removeExplicitResource(@NotNull
+    Resource resource) {
         boolean removed = getExplicitResources().remove(resource);
         resource.removeExplicitGroup(this);
         return removed;
     }
 
-    public void addImplicitResource(@NotNull Resource resource) {
+    public void addImplicitResource(@NotNull
+    Resource resource) {
         getImplicitResources().add(resource);
         resource.addImplicitGroup(this);
     }
@@ -324,7 +341,8 @@ public class ResourceGroup extends Group {
         return this.implicitResources;
     }
 
-    public boolean removeImplicitResource(@NotNull Resource resource) {
+    public boolean removeImplicitResource(@NotNull
+    Resource resource) {
         boolean removed = getImplicitResources().remove(resource);
         resource.removeImplicitGroup(this);
         return removed;
@@ -347,7 +365,8 @@ public class ResourceGroup extends Group {
         return operationHistories;
     }
 
-    public void setOperationHistories(@NotNull List<GroupOperationHistory> operationHistories) {
+    public void setOperationHistories(@NotNull
+    List<GroupOperationHistory> operationHistories) {
         this.operationHistories = operationHistories;
     }
 
@@ -356,7 +375,8 @@ public class ResourceGroup extends Group {
         return configurationUpdates;
     }
 
-    public void setConfigurationUpdates(@NotNull List<AbstractAggregateConfigurationUpdate> configurationUpdates) {
+    public void setConfigurationUpdates(@NotNull
+    List<AbstractAggregateConfigurationUpdate> configurationUpdates) {
         this.configurationUpdates = configurationUpdates;
     }
 
@@ -396,4 +416,29 @@ public class ResourceGroup extends Group {
             setGroupCategory(GroupCategory.COMPATIBLE);
         }
     }
+
+    public ResourceGroup getClusterResourceGroup() {
+        return clusterResourceGroup;
+    }
+
+    public void setClusterResourceGroup(ResourceGroup clusterResourceGroup) {
+        this.clusterResourceGroup = clusterResourceGroup;
+    }
+
+    public String getClusterKey() {
+        return clusterKey;
+    }
+
+    public void setClusterKey(String clusterKey) {
+        this.clusterKey = clusterKey;
+    }
+
+    public boolean isVisible() {
+        return visible;
+    }
+
+    public void setVisible(boolean visible) {
+        this.visible = visible;
+    }
+
 }

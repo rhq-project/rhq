@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -84,6 +85,8 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 
 /**
  * EJB that handles content subsystem interaction with resources, including content discovery reports and create/delete
@@ -119,6 +122,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @EJB
     private ContentManagerLocal contentManager;
+
+    @EJB
+    private ResourceTypeManagerLocal resourceTypeManager;
 
     // ContentManagerLocal Implementation  --------------------------------------------
 
@@ -992,6 +998,30 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     @SuppressWarnings("unchecked")
+    public List<Architecture> getArchitectures(Subject subject) {
+        Query q = entityManager.createNamedQuery(Architecture.QUERY_FIND_ALL);
+        List<Architecture> architectures = q.getResultList();
+
+        return architectures;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<PackageType> getPackageTypes(Subject subject, String resourceTypeName, String pluginName)
+        throws ResourceTypeNotFoundException {
+
+        ResourceType rt = resourceTypeManager.getResourceTypeByNameAndPlugin(resourceTypeName, pluginName);
+        if (null == rt) {
+            throw new ResourceTypeNotFoundException(resourceTypeName);
+        }
+
+        Query query = entityManager.createNamedQuery(PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID);
+        query.setParameter("typeId", rt.getId());
+        List<PackageType> result = query.getResultList();
+
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
     public void checkForTimedOutRequests(Subject subject) {
         if (!authorizationManager.isOverlord(subject)) {
             log.debug("Unauthorized user " + subject + " tried to execute checkForTimedOutRequests; "
@@ -1057,6 +1087,19 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         } catch (Throwable e) {
             log.error("Error while processing timed out requests", e);
         }
+    }
+
+    public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
+        int architectureId, byte[] packageBytes) {
+
+        // Check permissions first
+        if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_CONTENT)) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to create package versions");
+        }
+
+        return createPackageVersion(packageName, packageTypeId, version, architectureId, new ByteArrayInputStream(
+            packageBytes));
     }
 
     @SuppressWarnings("unchecked")

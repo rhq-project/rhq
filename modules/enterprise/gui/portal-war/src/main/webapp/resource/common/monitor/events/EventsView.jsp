@@ -37,7 +37,7 @@
     Subject subject = user.getSubject();
 
 
-    Map pref = user.getMetricRangePreference(true);
+    Map<String, ?> pref = user.getPreferences().getMetricRangePreference(true);
     long begin = (Long) pref.get(MonitorUtils.BEGIN);
     long end = (Long) pref.get(MonitorUtils.END);
 

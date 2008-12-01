@@ -1,4 +1,5 @@
 <%@ page import="org.rhq.enterprise.gui.legacy.WebUser"%>
+<%@ page import="org.rhq.enterprise.gui.legacy.WebUserPreferences"%>
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils"%>
 <%@ page language="java" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-tiles" prefix="tiles" %>
@@ -116,7 +117,8 @@ function reviewAction(option) {
       function registerRefresh() {
           <%
           WebUser u = SessionUtils.getWebUser(session);
-          int refresh = u.getIntPref(WebUser.PREF_PAGE_REFRESH_PERIOD,0);
+          WebUserPreferences prefs = u.getPreferences();
+          int refresh = prefs.getPageRefreshPeriod();
           if (refresh > 0)
             pageContext.setAttribute("refreshPeriod", String.valueOf(refresh));
           %>

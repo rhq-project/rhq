@@ -242,8 +242,30 @@ public class ApplicationComponent
         if (!file.exists()) {
             throw new Exception("Cannot find application file to delete: " + fullFileName);
         }
-
-        FileUtils.purge(file, true);        
+        
+        try {
+        	getParentResourceComponent().undeployFile(file);            
+        }
+        catch (Exception e) {
+            log.error("Failed to undeploy file [" + file + "].", e);
+            throw e;
+        }
+        finally
+        {
+            try {
+            	FileUtils.purge(file, true);
+            }
+            catch(IOException e) {
+            	log.error("Failed to delete file [" + file + "].", e);
+            	// if the undeploy also failed that exception will be lost
+            	// and this one will be seen by the caller instead.
+            	// arguably both these conditions indicate failure, since
+            	// not being able to delete the file will mean that it will
+            	// likely get picked up again by the deployment scanner
+                throw e;
+            }
+        }
+             
     }
 
     // MeasurementFacet Implementation  --------------------------------------------

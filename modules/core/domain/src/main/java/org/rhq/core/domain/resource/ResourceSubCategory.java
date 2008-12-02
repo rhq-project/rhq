@@ -44,6 +44,8 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -53,9 +55,16 @@ import org.jetbrains.annotations.NotNull;
 @Entity
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RESOURCE_SUBCAT_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_SUBCAT")
+@NamedQueries({
+    @NamedQuery(name = ResourceSubCategory.QUERY_FIND_BY_NAME_AND_PLUGIN,
+    query = "SELECT rsc FROM ResourceSubCategory AS rsc WHERE rsc.name = :name AND rsc.resourceType.plugin = :plugin")
+})
+
 public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Serializable {
     private static final long serialVersionUID = 1L;
 
+    public static final String QUERY_FIND_BY_NAME_AND_PLUGIN = "ResourceSubCategory.findByNameAndPlugin";
+    
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ")
     @Id
@@ -137,14 +146,12 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
     // TODO enterprise may want to do this differently using a query
     @NotNull
     public ResourceType findParentResourceType() {
-        ResourceType resourceType = getResourceType();
-        ResourceSubCategory parent = getParentSubCategory();
-        while (parent != null) {
-            resourceType = parent.getResourceType();
-            parent = parent.getParentSubCategory();
-        }
-
-        return resourceType;
+        ResourceSubCategory subCategory = this;
+        while (subCategory != null && subCategory.getResourceType() == null)
+            subCategory = subCategory.getParentSubCategory();
+        if (subCategory == null)
+            throw new IllegalStateException(this + " has no parent resource type.");
+        return subCategory.getResourceType();
     }
 
     // TODO enterprise may want to do this differently using a query
@@ -251,6 +258,11 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
         this.parentSubCategory = parentSubCategory;
     }
 
+    /**
+     * Returns this subcategory's parent subcategory, or null if this subcateogry has no parent.
+     *
+     * @return this subcategory's parent subcategory, or null if this subcateogry has no parent
+     */
     public ResourceSubCategory getParentSubCategory() {
         return parentSubCategory;
     }

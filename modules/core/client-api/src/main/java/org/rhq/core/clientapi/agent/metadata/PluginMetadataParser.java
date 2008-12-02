@@ -55,6 +55,7 @@ import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.ResourceSubCategory;
 
 /**
  * This is a stateful class intended to hold the related metadata for a single plugin descriptor. It is designed to be
@@ -120,8 +121,7 @@ public class PluginMetadataParser {
         throws InvalidPluginDescriptorException {
         ResourceType platformResourceType = new ResourceType(platformDescriptor.getName(), pluginDescriptor.getName(),
             ResourceCategory.PLATFORM, null);
-        platformResourceType.setSubCategory(SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
-            platformResourceType, platformDescriptor.getSubCategory()));
+
         platformResourceType.setDescription(platformDescriptor.getDescription());
         LOG.debug("Parsed platform resource type: " + platformResourceType);
         parseResourceDescriptor(platformDescriptor, platformResourceType, null, null, null);
@@ -147,16 +147,14 @@ public class PluginMetadataParser {
             // not using Embedded extension model
             serverResourceType = new ResourceType(serverDescriptor.getName(), pluginDescriptor.getName(),
                 ResourceCategory.SERVER, parentServerType);
-            serverResourceType.setSubCategory(SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
-                serverResourceType, serverDescriptor.getSubCategory()));
             serverResourceType.setDescription(serverDescriptor.getDescription());
             serverResourceType.setCreationDataType(convertCreationDataType(serverDescriptor.getCreationDataType()));
             serverResourceType
                 .setCreateDeletePolicy(convertCreateDeletePolicy(serverDescriptor.getCreateDeletePolicy()));
             serverResourceType.setSingleton(serverDescriptor.isSingleton());
 
-            LOG.debug("Parsed server resource type: " + serverResourceType);
             parseResourceDescriptor(serverDescriptor, serverResourceType, null, null, null);
+            LOG.debug("Parsed server Resource type: " + serverResourceType);
         } else if ((sourcePlugin.length() > 0) && (sourceServer.length() > 0)) {
             // using Embedded extension model - the defined type is actually a copy of another plugin's server type
             Map<String, ServerDescriptor> pluginServerDescriptors = getPluginServerDescriptors(sourcePlugin);
@@ -171,13 +169,11 @@ public class PluginMetadataParser {
             serverResourceType = new ResourceType(serverDescriptor.getName(), pluginDescriptor.getName(),
                 ResourceCategory.SERVER, parentServerType);
 
-            // let the plugin writer override these, if not, pick up the source type's values
-            serverResourceType.setDescription((serverDescriptor.getDescription() != null) ? serverDescriptor
-                .getDescription() : sourceServerDescriptor.getDescription());
-            serverResourceType.setSubCategory((serverDescriptor.getSubCategory() != null) ? SubCategoriesMetadataParser
-                .findSubCategoryOnResourceTypeAncestor(serverResourceType, serverDescriptor.getSubCategory())
-                : SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(serverResourceType,
-                    sourceServerDescriptor.getSubCategory()));
+            // Let the plugin writer override these, or if not, parseResourceDescriptor() will pick up the source type's
+            // values.
+            serverResourceType.setDescription(serverDescriptor.getDescription());
+            setSubCategory(serverDescriptor, serverResourceType);
+
             serverResourceType.setCreationDataType(convertCreationDataType(serverDescriptor.getCreationDataType()));
             serverResourceType
                 .setCreateDeletePolicy(convertCreateDeletePolicy(serverDescriptor.getCreateDeletePolicy()));
@@ -266,16 +262,14 @@ public class PluginMetadataParser {
             // not using Embedded extension model
             serviceResourceType = new ResourceType(serviceDescriptor.getName(), pluginDescriptor.getName(),
                 ResourceCategory.SERVICE, parentType);
-            serviceResourceType.setSubCategory(SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
-                serviceResourceType, serviceDescriptor.getSubCategory()));
             serviceResourceType.setDescription(serviceDescriptor.getDescription());
             serviceResourceType.setCreationDataType(convertCreationDataType(serviceDescriptor.getCreationDataType()));
             serviceResourceType.setCreateDeletePolicy(convertCreateDeletePolicy(serviceDescriptor
                 .getCreateDeletePolicy()));
             serviceResourceType.setSingleton(serviceDescriptor.isSingleton());
 
-            LOG.debug("Parsed service resource type: " + serviceResourceType);
             parseResourceDescriptor(serviceDescriptor, serviceResourceType, null, null, null);
+            LOG.debug("Parsed service Resource type: " + serviceResourceType);
 
             if ((serviceResourceType.getProcessScans() != null) && (serviceResourceType.getProcessScans().size() > 0)) {
                 LOG.warn("Child services are not auto-discovered via process scans. "
@@ -302,14 +296,11 @@ public class PluginMetadataParser {
             serviceResourceType = new ResourceType(serviceDescriptor.getName(), pluginDescriptor.getName(),
                 ResourceCategory.SERVICE, parentType);
 
-            // let the plugin writer override these, if not, pick up the source type's values
-            serviceResourceType.setDescription((serviceDescriptor.getDescription() != null) ? serviceDescriptor
-                .getDescription() : sourceServiceDescriptor.getDescription());
-            serviceResourceType
-                .setSubCategory((serviceDescriptor.getSubCategory() != null) ? SubCategoriesMetadataParser
-                    .findSubCategoryOnResourceTypeAncestor(serviceResourceType, serviceDescriptor.getSubCategory())
-                    : SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(serviceResourceType,
-                        sourceServiceDescriptor.getSubCategory()));
+            // Let the plugin writer override these, or if not, parseResourceDescriptor() will pick up the source type's
+            // values.
+            serviceResourceType.setDescription(serviceDescriptor.getDescription());
+            setSubCategory(serviceDescriptor, serviceResourceType);
+
             serviceResourceType.setCreationDataType(convertCreationDataType(serviceDescriptor.getCreationDataType()));
             serviceResourceType.setCreateDeletePolicy(convertCreateDeletePolicy(serviceDescriptor
                 .getCreateDeletePolicy()));
@@ -371,6 +362,20 @@ public class PluginMetadataParser {
         return serviceResourceType;
     }
 
+    private static void setSubCategory(ResourceDescriptor resourceDescriptor, ResourceType resourceType)
+            throws InvalidPluginDescriptorException {
+        String subCatName = resourceDescriptor.getSubCategory();
+        if (subCatName != null) {
+            ResourceSubCategory subCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
+                    resourceType, subCatName);
+            if (subCat == null)
+                throw new InvalidPluginDescriptorException("Resource type [" + resourceType.getName()
+                        + "] specified a subcategory (" + subCatName
+                        + ") that is not defined as a child subcategory of one of its ancestor resource types.");
+            resourceType.setSubCategory(subCat);
+        }
+    }
+
     /**
      * Parses the resource descriptor and registers the type and its component classes.
      *
@@ -385,15 +390,23 @@ public class PluginMetadataParser {
      */
     private void parseResourceDescriptor(ResourceDescriptor resourceDescriptor, ResourceType resourceType,
         String discoveryClass, String componentClass, String sourcePlugin) throws InvalidPluginDescriptorException {
-        // 0) classes
-        // 1) Plugin config
-        // 2) Resource config
-        // 3) Metrics
-        // 4) Control operations
-        // 5) Process matches (for process scan auto-discovery)
-        // 6) Artifacts
-        // 7) Sub categories
+        // 1) Subcategory
+        // 2) Classes
+        // 3) Plugin config
+        // 4) Resource config
+        // 5) Metrics
+        // 6) Control operations
+        // 7) Process matches (for process scan auto-discovery)
+        // 8) Artifacts
+        // 9) Child subcategories
 
+        // Only set the description, subCategory, etc. if they have not already been set. This is in
+        if (resourceType.getDescription() == null)
+            resourceType.setDescription(resourceDescriptor.getDescription());
+        // TODO (ips): I don't think platforms can have a subcategory.
+        if (resourceType.getSubCategory() == null)
+            setSubCategory(resourceDescriptor, resourceType);
+        
         if (discoveryClass == null) {
             discoveryClass = getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(), resourceDescriptor
                 .getDiscovery());
@@ -449,7 +462,7 @@ public class PluginMetadataParser {
             if (resourceDescriptor.getSubcategories() != null) {
                 for (SubCategoryDescriptor subCategoryDescriptor : resourceDescriptor.getSubcategories()
                     .getSubcategory()) {
-                    resourceType.addSubCategory(SubCategoriesMetadataParser.getSubCategory(subCategoryDescriptor,
+                    resourceType.addChildSubCategory(SubCategoriesMetadataParser.getSubCategory(subCategoryDescriptor,
                         resourceType));
                 }
             }
@@ -535,7 +548,7 @@ public class PluginMetadataParser {
     private Map<String, ServerDescriptor> getPluginServerDescriptors(String pluginName) {
         Map<String, ServerDescriptor> pluginServerDescriptors = new HashMap<String, ServerDescriptor>();
 
-        PluginMetadataParser pluginParser = null;
+        PluginMetadataParser pluginParser;
 
         // get the plugin parser that corresponds to the plugin (which could be this plugin parser)
         if (pluginName.equals(this.pluginDescriptor.getName())) {
@@ -556,7 +569,7 @@ public class PluginMetadataParser {
     private Map<String, ServiceDescriptor> getPluginServiceDescriptors(String pluginName) {
         Map<String, ServiceDescriptor> pluginServiceDescriptors = new HashMap<String, ServiceDescriptor>();
 
-        PluginMetadataParser pluginParser = null;
+        PluginMetadataParser pluginParser;
 
         // get the plugin parser that corresponds to the plugin (which could be this plugin parser)
         if (pluginName.equals(this.pluginDescriptor.getName())) {
@@ -575,7 +588,7 @@ public class PluginMetadataParser {
 
     private String getPluginPackage(String pluginName) {
         String packageName = null;
-        PluginMetadataParser pluginParser = null;
+        PluginMetadataParser pluginParser;
 
         // get the plugin parser that corresponds to the plugin (which could be this plugin parser)
         if (pluginName.equals(this.pluginDescriptor.getName())) {
@@ -614,7 +627,7 @@ public class PluginMetadataParser {
 
     private ResourceType getResourceTypeFromPlugin(String resourceTypeName, String pluginName) {
         if ((resourceTypeName != null) && (pluginName != null)) {
-            PluginMetadataParser pluginParser = null;
+            PluginMetadataParser pluginParser;
 
             // get the plugin parser that corresponds to the plugin that has the type (which could be this plugin parser)
             if (pluginName.equals(this.pluginDescriptor.getName())) {

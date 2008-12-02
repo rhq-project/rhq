@@ -147,7 +147,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     }
 
     protected int getPluginId(EntityManager entityManager) {
-        Plugin existingPlugin = null;
+        Plugin existingPlugin;
         try {
             existingPlugin = (Plugin) entityManager.createNamedQuery("Plugin.findByName").setParameter("name",
                 PLUGIN_NAME).getSingleResult();

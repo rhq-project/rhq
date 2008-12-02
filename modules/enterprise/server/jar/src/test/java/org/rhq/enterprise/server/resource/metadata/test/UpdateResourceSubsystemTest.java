@@ -41,7 +41,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             assertAppsSubCategory(subCat);
         } finally {
             getTransactionManager().rollback();
@@ -58,7 +58,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             assertAppsSubCategory(subCat);
         } finally {
             getTransactionManager().rollback();
@@ -75,10 +75,10 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 2, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 2, 0);
             assertAppsSubCategory(subCat);
 
-            subCat = assertSubCategory(server1.getSubCategories(), 2, 1);
+            subCat = assertSubCategory(server1.getChildSubCategories(), 2, 1);
             assertServicesSubCategory(subCat);
         } finally {
             getTransactionManager().rollback();
@@ -95,7 +95,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             assertServicesSubCategory(subCat);
         } finally {
             getTransactionManager().rollback();
@@ -112,7 +112,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             assertServicesSubCategory(subCat);
         } finally {
             getTransactionManager().rollback();
@@ -129,7 +129,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             assertApps2SubCategory(subCat);
         } finally {
             getTransactionManager().rollback();
@@ -146,7 +146,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            assertSubCategory(server1.getSubCategories(), 0, null);
+            assertSubCategory(server1.getChildSubCategories(), 0, null);
         } finally {
             getTransactionManager().rollback();
         }
@@ -162,7 +162,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
             assertServicesSubCategory(childSubCat);
         } finally {
@@ -180,7 +180,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
             assertAppsSubCategory(childSubCat);
         } finally {
@@ -198,7 +198,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
             assertServicesSubCategory(childSubCat);
         } finally {
@@ -216,7 +216,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 2, 1);
             assertAppsSubCategory(childSubCat);
         } finally {
@@ -234,7 +234,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
 
             assertServicesSubCategory(childSubCat);
@@ -253,7 +253,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
             ResourceSubCategory grandChildSubCat = assertSubCategory(childSubCat.getChildSubCategories(), 1, 0);
             assertAppsSubCategory(grandChildSubCat);
@@ -272,7 +272,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
 
             assertApps2SubCategory(childSubCat);
@@ -291,7 +291,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
 
             assertApps2SubCategory(childSubCat);
@@ -308,7 +308,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             ResourceSubCategory childSubCat = assertSubCategory(subCat.getChildSubCategories(), 1, 0);
 
             assertApps2SubCategory(childSubCat);
@@ -326,7 +326,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
             registerPlugin("no-subcat.xml");
 
             ResourceType server1 = getResourceType("testServer1");
-            assertSubCategory(server1.getSubCategories(), 0, null);
+            assertSubCategory(server1.getChildSubCategories(), 0, null);
         } finally {
             getTransactionManager().rollback();
         }
@@ -381,7 +381,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
             ResourceType server1 = getResourceType("testServer1");
             Set<ResourceType> children = server1.getChildResourceTypes();
             assert children.size() == 3;
-            List<ResourceSubCategory> subCategories = server1.getSubCategories();
+            List<ResourceSubCategory> subCategories = server1.getChildSubCategories();
             assert subCategories != null;
             assert subCategories.size() == 1; // subcat with name "parent"
             // TODO check for 2 children of this subcategory
@@ -391,7 +391,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
             server1 = getResourceType("testServer1");
             children = server1.getChildResourceTypes();
             assert children.size() == 2 : "Expected 2 children, but got " + children.size();
-            subCategories = server1.getSubCategories(); // "testServer1"
+            subCategories = server1.getChildSubCategories(); // "testServer1"
             assert subCategories != null;
             assert subCategories.size() == 1; // Subcat with name "parent"
             ResourceSubCategory parent = subCategories.get(0);
@@ -408,7 +408,7 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
             ResourceType service2 = getResourceType("testService2");
             assert service2 != null;
             assert service2.getParentResourceTypes().iterator().next().equals(server1);
-            subCategories = service2.getSubCategories();
+            subCategories = service2.getChildSubCategories();
             assert subCategories.isEmpty() : "Expected subcategories to be empty, but was " + subCategories;
 
             ResourceSubCategory subCategory = service2.getSubCategory(); // the subcategory attribute
@@ -448,15 +448,15 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
 
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             assert subCat.getName().equals("applications");
 
             ResourceType server2 = getResourceType("testServer2");
 
-            assert server2.getSubCategories() != null;
-            assert server2.getSubCategories().size() == 2 : "Unexpected number of subcategories ["
-                + server2.getSubCategories().size() + "]";
-            subCat = server2.getSubCategories().get(1);
+            assert server2.getChildSubCategories() != null;
+            assert server2.getChildSubCategories().size() == 2 : "Unexpected number of subcategories ["
+                + server2.getChildSubCategories().size() + "]";
+            subCat = server2.getChildSubCategories().get(1);
             assert subCat.getName().equals("resource");
 
             List<ResourceSubCategory> childSubCats = subCat.getChildSubCategories();
@@ -480,19 +480,19 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
             // now test how the subcategories got updated
             ResourceType server1 = getResourceType("testServer1");
 
-            ResourceSubCategory subCat = assertSubCategory(server1.getSubCategories(), 1, 0);
+            ResourceSubCategory subCat = assertSubCategory(server1.getChildSubCategories(), 1, 0);
             assertApps2SubCategory(subCat);
 
             ResourceType server2 = getResourceType("testServer2");
 
-            assert server2.getSubCategories() != null;
+            assert server2.getChildSubCategories() != null;
 
-            assert server2.getSubCategories().size() == 2 : "Unexpected number of subcategories ["
-                + server2.getSubCategories().size() + "]";
+            assert server2.getChildSubCategories().size() == 2 : "Unexpected number of subcategories ["
+                + server2.getChildSubCategories().size() + "]";
             int found = 0;
             ResourceSubCategory resourceSubCat = null;
             for (int i = 0; i <= 1; i++) {
-                ResourceSubCategory subCategory = server2.getSubCategories().get(i);
+                ResourceSubCategory subCategory = server2.getChildSubCategories().get(i);
                 String name = subCategory.getName();
                 if ("services2".equals(name) || "resource".equals(name))
                     found++;

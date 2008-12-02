@@ -21,7 +21,6 @@ package org.rhq.core.tool.plugindoc;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.ArrayList;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -317,7 +316,7 @@ public class PluginDescriptorProcessor {
             if (resourceDescriptor.getSubcategories() != null) {
                 for (SubCategoryDescriptor subCategoryDescriptor : resourceDescriptor.getSubcategories()
                     .getSubcategory()) {
-                    resourceType.addSubCategory(SubCategoriesMetadataParser.getSubCategory(subCategoryDescriptor,
+                    resourceType.addChildSubCategory(SubCategoriesMetadataParser.getSubCategory(subCategoryDescriptor,
                         resourceType));
                 }
             }

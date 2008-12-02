@@ -37,7 +37,7 @@ public interface ResourceMetadataManagerLocal {
      * @param plugin   The plugin object being deployed
      * @param metadata The plugin descriptor file
      */
-    public void registerPlugin(Plugin plugin, PluginDescriptor metadata);
+    public void registerPlugin(Plugin plugin, PluginDescriptor metadata) throws Exception;
 
     /**
      * Returns the list of all plugins deployed in the server.

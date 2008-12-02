@@ -72,7 +72,7 @@ public class SubCategoriesMetadataParser {
 
     /**
      * Given a resourceType this method looks on the parent resourcetypes/grandparent resourcetypes... of the specified
-     * resourceType to see if a ResourceSubCategory with the specified subCategoryName has been defined on one of them.
+     * resourceType to see if a child ResourceSubCategory with the specified name has been defined on one of them.
      * If the ResourceSubCategory cannot be found, null will be returned
      *
      * @param  resourceType
@@ -89,7 +89,7 @@ public class SubCategoriesMetadataParser {
         if (subCategoryName != null) {
             Set<ResourceType> parents = resourceType.getParentResourceTypes();
             for (ResourceType parent : parents) {
-                List<ResourceSubCategory> ownedSubCategories = parent.getSubCategories();
+                List<ResourceSubCategory> ownedSubCategories = parent.getChildSubCategories();
                 if (ownedSubCategories != null) {
                     for (ResourceSubCategory ownedSubCategory : ownedSubCategories) {
                         // need to check whether this subCat or any of its children match
@@ -100,7 +100,7 @@ public class SubCategoriesMetadataParser {
                         }
                     }
                 }
-
+                // Recurse...
                 selectedSubCategory = findSubCategoryOnResourceTypeAncestor(parent, subCategoryName);
                 if (selectedSubCategory != null) {
                     break; // found the category in one of the ancestors of the parent
@@ -112,7 +112,7 @@ public class SubCategoriesMetadataParser {
     }
 
     /**
-     * Checks whether a ResourceSubCategory with name subCategoryName can be found in the tree of ResourceSubCategories
+     * Checks whether a ResourceSubCategory with the specified name can be found in the tree of ResourceSubCategories
      * who's top level parent is specified by parentSubCategory.
      */
     @Nullable

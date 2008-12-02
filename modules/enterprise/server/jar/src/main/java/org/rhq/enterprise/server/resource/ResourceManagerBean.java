@@ -1251,7 +1251,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         List<AutoGroupComposite> fullComposites = new ArrayList<AutoGroupComposite>();
 
-        calculateSubcategorySummary(parentResource.getResourceType().getSubCategories(), resourceAutoGroups, 0,
+        calculateSubcategorySummary(parentResource.getResourceType().getChildSubCategories(), resourceAutoGroups, 0,
             fullComposites);
         fullComposites.addAll(resourceAutoGroups);
 

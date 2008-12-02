@@ -427,8 +427,10 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
 
     /**
      * Returns the ResourceSubCategory, if any, which this ResourceType
-     * has been tagged with
+     * has been tagged with. If the ResourceType has not been tagged with
+     * a subcategory, null is returned.
      */
+    @Nullable
     public ResourceSubCategory getSubCategory() {
         return this.subCategory;
     }
@@ -644,31 +646,31 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     }
 
     /**
-     * Returns the List of ResourceSubCategory's which have been defined
+     * Returns the List of child ResourceSubCategorys which have been defined
      * on this ResourceType. These ResourceSubCategory's are available to
-     * tag any child ResourceType's of this one
+     * tag any child ResourceTypes of this ResourceType.
      *
      * @return the list of ResourceSubCategory's which have been defined
      *         on this ResourceType
      */
-    public List<ResourceSubCategory> getSubCategories() {
+    public List<ResourceSubCategory> getChildSubCategories() {
         return this.subCategories;
     }
 
     /**
-     * Sets the List of ResourceSubCategory's for this ResourceType.
+     * Sets the List of child ResourceSubCategorys for this ResourceType.
      *
      * @param subCategories the List of ResourceSubCategory's for this ResourceType
      */
-    public void setSubCategories(List<ResourceSubCategory> subCategories) {
+    public void setChildSubCategories(List<ResourceSubCategory> subCategories) {
         this.subCategories = subCategories;
     }
 
     /**
-     * Adds a ResourceSubCategory to the List which have been defined
+     * Adds a child ResourceSubCategory to the List which has been defined
      * on this ResourceType.
      */
-    public void addSubCategory(ResourceSubCategory subCategory) {
+    public void addChildSubCategory(ResourceSubCategory subCategory) {
         if (this.subCategories == null) {
             this.subCategories = new ArrayList<ResourceSubCategory>();
         }

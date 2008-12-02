@@ -58,7 +58,7 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
-import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
  * Provides functionality to access and manipulate subjects and principals, mainly for authentication purposes.
@@ -75,6 +75,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
+    @EJB
+    private SystemManagerLocal systemManager;
+
     private SessionManager sessionManager = SessionManager.getInstance();
 
     /**
@@ -273,7 +276,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         }
 
         // get the configuration properties and use the JAAS modules to perform the login
-        Properties config = LookupUtil.getSystemManager().getSystemConfiguration();
+        Properties config = systemManager.getSystemConfiguration();
         UsernamePasswordHandler handler = new UsernamePasswordHandler(username, password.toCharArray());
         LoginContext loginContext = new LoginContext(CustomJaasDeploymentServiceMBean.SECURITY_DOMAIN_NAME, handler);
         loginContext.login();

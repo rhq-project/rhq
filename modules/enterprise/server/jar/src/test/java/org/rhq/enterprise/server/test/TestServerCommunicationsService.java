@@ -34,6 +34,7 @@ import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.communications.ServiceContainer;
+import org.rhq.enterprise.communications.command.server.CommandProcessorMetrics.Calltime;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.core.comm.ServerConfiguration;
 
@@ -135,6 +136,9 @@ public class TestServerCommunicationsService implements TestServerCommunications
     public void setMeasurementScheduleRequestConcurrencyLimit(Integer maxConcurrency) {
     }
 
+    public void clear() {
+    }
+
     public long getNumberDroppedCommandsReceived() {
         return 0;
     }
@@ -157,6 +161,10 @@ public class TestServerCommunicationsService implements TestServerCommunications
 
     public long getAverageExecutionTimeReceived() {
         return 0;
+    }
+
+    public Map<String, Calltime> getCallTimeDataReceived() {
+        return null;
     }
 
     public ServerConfiguration getConfiguration() {

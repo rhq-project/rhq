@@ -63,6 +63,7 @@ import org.rhq.enterprise.communications.ServiceContainerMetricsMBean;
 import org.rhq.enterprise.communications.command.client.ClientCommandSender;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderConfiguration;
 import org.rhq.enterprise.communications.command.client.ClientRemotePojoFactory;
+import org.rhq.enterprise.communications.command.server.CommandProcessorMetrics.Calltime;
 import org.rhq.enterprise.communications.command.server.discovery.AutoDiscoveryListener;
 import org.rhq.enterprise.communications.util.ConcurrencyManager;
 import org.rhq.enterprise.communications.util.SecurityUtil;
@@ -588,45 +589,59 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
     }
 
     /*
-     * @see org.rhq.enterprise.communications.ServiceContainerMetricsMBean#getNumberDroppedCommandsReceived()
+     * @see ServiceContainerMetricsMBean#clear()
+     */
+    public void clear() {
+        getServiceContainerMetricsMBean().clear();
+    }
+
+    /*
+     * @see ServiceContainerMetricsMBean#getNumberDroppedCommandsReceived()
      */
     public long getNumberDroppedCommandsReceived() {
         return getServiceContainerMetricsMBean().getNumberDroppedCommandsReceived();
     }
 
     /*
-     * @see org.rhq.enterprise.communications.ServiceContainerMetricsMBean#getNumberNotProcessedCommandsReceived()
+     * @see ServiceContainerMetricsMBean#getNumberNotProcessedCommandsReceived()
      */
     public long getNumberNotProcessedCommandsReceived() {
         return getServiceContainerMetricsMBean().getNumberNotProcessedCommandsReceived();
     }
 
     /*
-     * @see org.rhq.enterprise.communications.ServiceContainerMetricsMBean#getNumberFailedCommandsReceived()
+     * @see ServiceContainerMetricsMBean#getNumberFailedCommandsReceived()
      */
     public long getNumberFailedCommandsReceived() {
         return getServiceContainerMetricsMBean().getNumberFailedCommandsReceived();
     }
 
     /*
-     * @see org.rhq.enterprise.communications.ServiceContainerMetricsMBean#getNumberSuccessfulCommandsReceived()
+     * @see ServiceContainerMetricsMBean#getNumberSuccessfulCommandsReceived()
      */
     public long getNumberSuccessfulCommandsReceived() {
         return getServiceContainerMetricsMBean().getNumberSuccessfulCommandsReceived();
     }
 
     /*
-     * @see org.rhq.enterprise.communications.ServiceContainerMetricsMBean#getNumberTotalCommandsReceived()
+     * @see ServiceContainerMetricsMBean#getNumberTotalCommandsReceived()
      */
     public long getNumberTotalCommandsReceived() {
         return getServiceContainerMetricsMBean().getNumberTotalCommandsReceived();
     }
 
     /*
-     * @see org.rhq.enterprise.communications.ServiceContainerMetricsMBean#getAverageExecutionTimeReceived()
+     * @see ServiceContainerMetricsMBean#getAverageExecutionTimeReceived()
      */
     public long getAverageExecutionTimeReceived() {
         return getServiceContainerMetricsMBean().getAverageExecutionTimeReceived();
+    }
+
+    /*
+     * @see ServiceContainerMetricsMBean#getCallTimeDataReceived()
+     */
+    public Map<String, Calltime> getCallTimeDataReceived() {
+        return getServiceContainerMetricsMBean().getCallTimeDataReceived();
     }
 
     /**

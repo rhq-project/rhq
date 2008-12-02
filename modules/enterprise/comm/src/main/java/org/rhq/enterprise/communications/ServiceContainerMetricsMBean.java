@@ -18,11 +18,14 @@
  */
 package org.rhq.enterprise.communications;
 
+import java.util.Map;
+
 import javax.management.ObjectName;
 
 import org.jboss.mx.util.ObjectNameFactory;
 
-import org.rhq.enterprise.communications.command.server.CommandProcessor;
+import org.rhq.enterprise.communications.command.server.CommandProcessorMetrics;
+import org.rhq.enterprise.communications.command.server.CommandProcessorMetrics.Calltime;
 
 /**
  * This is the interface to the MBean that emits metric information on the server-side comm components.
@@ -36,34 +39,38 @@ public interface ServiceContainerMetricsMBean {
     ObjectName OBJECTNAME_METRICS = ObjectNameFactory.create(ServiceContainer.JMX_DOMAIN + ":type=CommServerMetrics");
 
     /**
+     * Clears the metrics data, starting all values back to 0 as if starting fresh.
+     */
+    void clear();
+
+    /**
      * Returns the total number of commands that were received but failed to be processed succesfully.
+     * This does not count {@link #getNumberDroppedCommandsReceived() dropped} or
+     * {@link #getNumberNotProcessedCommandsReceived() unprocessed} commands.
      *
      * @return count of failed commands
      *
-     * @see    CommandProcessor#getNumberFailedCommands()
+     * @see CommandProcessorMetrics#getNumberFailedCommands()
      */
     long getNumberFailedCommandsReceived();
 
     /**
      * Returns the total number of commands that were received but were dropped, usually due to a limit reached in the
-     * server that prohibits more commands to be invoked until current invocations finish. This will always be equal to
-     * or less than {@link #getNumberFailedCommandsReceived()} because a dropped command is also considered a failed
-     * command.
+     * server that prohibits more commands to be invoked until current invocations finish.
      *
      * @return count of dropped commands
      *
-     * @see    CommandProcessor#getNumberDroppedCommands()
+     * @see CommandProcessorMetrics#getNumberDroppedCommands()
      */
     long getNumberDroppedCommandsReceived();
 
     /**
      * Returns the total number of commands that were received but were not processed, usually due to global suspension of
-     * command processing. This will always be equal to or less than {@link #getNumberFailedCommandsReceived()} because an
-     * unprocessed command is also considered a failed command.
+     * command processing.
      *
      * @return count of dropped commands
      *
-     * @see    CommandProcessor#getNumberNotProcessedCommands()
+     * @see CommandProcessorMetrics#getNumberNotProcessedCommands()
      */
     long getNumberNotProcessedCommandsReceived();
 
@@ -72,14 +79,14 @@ public interface ServiceContainerMetricsMBean {
      *
      * @return count of commands successfully processed
      *
-     * @see    CommandProcessor#getNumberSuccessfulCommands()
+     * @see CommandProcessorMetrics#getNumberSuccessfulCommands()
      */
     long getNumberSuccessfulCommandsReceived();
 
     /**
-     * Returns the sum of {@link #getNumberSuccessfulCommandsReceived()} and {@link #getNumberFailedCommandsReceived()}.
+     * Returns the sum of all commands received, successful or not.
      *
-     * @return total number of commands received and processed
+     * @return total number of commands received
      */
     long getNumberTotalCommandsReceived();
 
@@ -88,6 +95,18 @@ public interface ServiceContainerMetricsMBean {
      * {@link #getNumberSuccessfulCommandsReceived() successful commands received}.
      *
      * @return average execute time for all successful commands.
+     * 
+     * @see CommandProcessorMetrics#getAverageExecutionTime()
      */
     long getAverageExecutionTimeReceived();
+
+    /**
+     * Returns a map of individual command types/pojo invocations and their metrics such
+     * as number of times invoked, min/max/avg execution times.
+     * 
+     * @return calltime data
+     *
+     * @see CommandProcessorMetrics#getCallTimeDataReceived()
+     */
+    public Map<String, Calltime> getCallTimeDataReceived();
 }

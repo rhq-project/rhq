@@ -22,7 +22,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
@@ -42,6 +41,7 @@ import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.CommandType;
 import org.rhq.enterprise.communications.command.impl.generic.GenericCommandResponse;
 import org.rhq.enterprise.communications.command.impl.identify.IdentifyCommand;
+import org.rhq.enterprise.communications.command.impl.remotepojo.RemotePojoInvocationCommand;
 import org.rhq.enterprise.communications.i18n.CommI18NFactory;
 import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
 import org.rhq.enterprise.communications.util.NotPermittedException;
@@ -98,29 +98,9 @@ public class CommandProcessor implements StreamInvocationHandler {
     private final List<CommandListener> m_commandListeners;
 
     /**
-     * The average time (in milliseconds) that successful commands take to complete.
+     * Where all the statistics are stored.
      */
-    private AtomicLong m_averageExecutionTime;
-
-    /**
-     * The total number of incoming commands this command processor has received and successfully processed.
-     */
-    private AtomicLong m_numberSuccessfulCommands;
-
-    /**
-     * The total number of commands that were received but were not successfully processed.
-     */
-    private AtomicLong m_numberFailedCommands;
-
-    /**
-     * The total number of commands that were not permitted to execute due to high concurrency.
-     */
-    private AtomicLong m_numberDroppedCommands;
-
-    /**
-     * The total number of commands that were not permitted to execute due to processing suspension.
-     */
-    private AtomicLong m_numberNotProcessedCommands;
+    private CommandProcessorMetrics m_metrics;
 
     /**
      * Constructor for {@link CommandProcessor}.
@@ -130,11 +110,7 @@ public class CommandProcessor implements StreamInvocationHandler {
         m_directoryService = null;
         m_authenticator = null;
         m_commandListeners = new ArrayList<CommandListener>();
-        m_numberSuccessfulCommands = new AtomicLong(0L);
-        m_averageExecutionTime = new AtomicLong(0L);
-        m_numberFailedCommands = new AtomicLong(0L);
-        m_numberDroppedCommands = new AtomicLong(0L);
-        m_numberNotProcessedCommands = new AtomicLong(0L);
+        m_metrics = new CommandProcessorMetrics();
     }
 
     /**
@@ -187,59 +163,13 @@ public class CommandProcessor implements StreamInvocationHandler {
     }
 
     /**
-     * Returns the total number of commands that were received but failed to be processed succesfully. This count is
-     * incremented when a command was executed by its command service but the command response was
-     * {@link CommandResponse#isSuccessful() not succesful}.
-     *
-     * @return count of failed commands
+     * Returns the metrics object which contains all statistics for the command processor.
+     * 
+     * @return the object containing all the metric data - this is the live object and will be updated
+     *         as more data is collected
      */
-    public long getNumberFailedCommands() {
-        return m_numberFailedCommands.get();
-    }
-
-    /**
-     * Returns the total number of commands that were received but were not permitted to be executed and were dropped.
-     * This normally occurs when the limit of concurrent command invocations has been reached. This number will always
-     * be equal to or less than {@link #getNumberFailedCommands()} because a dropped command counts as a failed command
-     * also.
-     *
-     * @return count of commands not permitted to complete
-     */
-    public long getNumberDroppedCommands() {
-        return m_numberDroppedCommands.get();
-    }
-
-    /**
-     * Returns the total number of commands that were received but were not processed.
-     * This normally occurs when blobal processing of commands has been suspended. This number will always
-     * be equal to or less than {@link #getNumberFailedCommands()} because a command not processed counts as a failed command
-     * also.
-     *
-     * @return count of commands not processed.
-     */
-    public long getNumberNotProcessedCommands() {
-        return m_numberNotProcessedCommands.get();
-    }
-
-    /**
-     * Returns the total number of commands that were received and processed succesfully. This count is incremented when
-     * a command was executed by its command service and the command response was
-     * {@link CommandResponse#isSuccessful() succesful}.
-     *
-     * @return count of commands succesfully processed
-     */
-    public long getNumberSuccessfulCommands() {
-        return m_numberSuccessfulCommands.get();
-    }
-
-    /**
-     * Returns the average execution time (in milliseconds) it took to execute all
-     * {@link #getNumberSuccessfulCommands() successful commands}.
-     *
-     * @return average execute time for all successful commands.
-     */
-    public long getAverageExecutionTime() {
-        return m_averageExecutionTime.get();
+    public CommandProcessorMetrics getCommandProcessorMetrics() {
+        return m_metrics;
     }
 
     /**
@@ -320,7 +250,7 @@ public class CommandProcessor implements StreamInvocationHandler {
                         if ((cmd.getCommandType() == null)
                             || !cmd.getCommandType().getName().equals(IdentifyCommand.COMMAND_TYPE.getName())) {
                             LOG.warn(CommI18NResourceKeys.COMMAND_PROCESSOR_FAILED_AUTHENTICATION, cmd);
-                            m_numberFailedCommands.incrementAndGet();
+                            m_metrics.numberFailedCommands++;
                         }
 
                         String err = LOG
@@ -390,27 +320,7 @@ public class CommandProcessor implements StreamInvocationHandler {
                     "results are null"));
             }
 
-            // now that we processed the command, update the appropriate metrics
-            if (ret_response.isSuccessful()) {
-                long num = m_numberSuccessfulCommands.incrementAndGet();
-
-                // calculate the running average - num is the current command count
-                // this may not be accurate if we execute this code concurrently,
-                // but its good enough for our simple monitoring needs
-                long currentAvg = m_averageExecutionTime.get();
-                currentAvg = (((num - 1) * currentAvg) + elapsed) / num;
-                m_averageExecutionTime.set(currentAvg);
-            } else {
-                m_numberFailedCommands.incrementAndGet();
-
-                if (ret_response.getException() instanceof NotPermittedException) {
-                    m_numberDroppedCommands.incrementAndGet();
-                }
-
-                if (ret_response.getException() instanceof NotProcessedException) {
-                    m_numberNotProcessedCommands.incrementAndGet();
-                }
-            }
+            updateMetrics(cmd, ret_response, elapsed);
 
             notifyListenersOfProcessedCommand(cmd, ret_response);
         } catch (Throwable t) {
@@ -419,6 +329,57 @@ public class CommandProcessor implements StreamInvocationHandler {
         }
 
         return ret_response;
+    }
+
+    /**
+     * Stores the metric data.
+     * 
+     * @param command the command that was executed (might be null in error conditions)
+     * @param response the response that resulted in the command execution
+     * @param elapsed the amount of milliseconds that it took to execute the command and get the response
+     */
+    private void updateMetrics(Command cmd, CommandResponse response, long elapsed) {
+        boolean success = response.isSuccessful();
+
+        // now that we processed the command, update the appropriate metrics
+        m_metrics.writeLock();
+        try {
+            if (success) {
+                long num = m_metrics.numberSuccessfulCommands++;
+
+                // calculate the running average - num is the current command count
+                // this may not be accurate if we execute this code concurrently,
+                // but its good enough for our simple monitoring needs
+                long currentAvg = m_metrics.averageExecutionTime;
+                currentAvg = (((num - 1) * currentAvg) + elapsed) / num;
+                m_metrics.averageExecutionTime = currentAvg;
+            } else {
+                if (response.getException() instanceof NotPermittedException) {
+                    m_metrics.numberDroppedCommands++;
+                } else if (response.getException() instanceof NotProcessedException) {
+                    m_metrics.numberNotProcessedCommands++;
+                } else {
+                    m_metrics.numberFailedCommands++;
+                }
+            }
+
+            // cmd might be null under odd, error edge cases, have to just be protective here.
+            if (cmd != null) {
+                CommandType cmdType = cmd.getCommandType();
+                m_metrics.addCallTimeData(cmdType.getName(), elapsed, !success);
+                if (cmd instanceof RemotePojoInvocationCommand) {
+                    // add additional metrics for the individual pojo method that was invoked
+                    RemotePojoInvocationCommand pojoCmd = (RemotePojoInvocationCommand) cmd;
+                    String ifaceName = pojoCmd.getTargetInterfaceName();
+                    ifaceName = ifaceName.substring(ifaceName.lastIndexOf('.') + 1);
+                    String methodName = pojoCmd.getNameBasedInvocation().getMethodName();
+                    m_metrics.addCallTimeData(ifaceName + '.' + methodName, elapsed, !success);
+                }
+            }
+        } finally {
+            m_metrics.writeUnlock();
+        }
+        return;
     }
 
     private void notifyListenersOfReceivedCommand(Command command) {

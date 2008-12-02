@@ -18,7 +18,10 @@
  */
 package org.rhq.enterprise.communications;
 
+import java.util.Map;
+
 import org.rhq.enterprise.communications.command.server.CommandProcessor;
+import org.rhq.enterprise.communications.command.server.CommandProcessorMetrics.Calltime;
 
 /**
  * MBean implementation that emits metrics from the server-side comm components.
@@ -38,28 +41,38 @@ public class ServiceContainerMetrics implements ServiceContainerMetricsMBean {
         commandProcessor = command_processor;
     }
 
+    public void clear() {
+        commandProcessor.getCommandProcessorMetrics().clear();
+    }
+
     public long getNumberSuccessfulCommandsReceived() {
-        return commandProcessor.getNumberSuccessfulCommands();
+        return commandProcessor.getCommandProcessorMetrics().getNumberSuccessfulCommands();
     }
 
     public long getNumberFailedCommandsReceived() {
-        return commandProcessor.getNumberFailedCommands();
+        return commandProcessor.getCommandProcessorMetrics().getNumberFailedCommands();
     }
 
     public long getNumberDroppedCommandsReceived() {
-        return commandProcessor.getNumberDroppedCommands();
+        return commandProcessor.getCommandProcessorMetrics().getNumberDroppedCommands();
     }
 
     public long getNumberNotProcessedCommandsReceived() {
-        return commandProcessor.getNumberNotProcessedCommands();
+        return commandProcessor.getCommandProcessorMetrics().getNumberNotProcessedCommands();
     }
 
     public long getNumberTotalCommandsReceived() {
         // not truely atomic, but we aren't looking to provide exact, up-to-the-nanosecond, accuracy
-        return getNumberSuccessfulCommandsReceived() + getNumberFailedCommandsReceived();
+        return getNumberSuccessfulCommandsReceived() + getNumberFailedCommandsReceived()
+            + getNumberDroppedCommandsReceived() + getNumberNotProcessedCommandsReceived();
     }
 
     public long getAverageExecutionTimeReceived() {
-        return commandProcessor.getAverageExecutionTime();
+        return commandProcessor.getCommandProcessorMetrics().getAverageExecutionTime();
+    }
+
+    public Map<String, Calltime> getCallTimeDataReceived() {
+        Map<String, Calltime> callTimeData = commandProcessor.getCommandProcessorMetrics().getCallTimeData();
+        return callTimeData;
     }
 }

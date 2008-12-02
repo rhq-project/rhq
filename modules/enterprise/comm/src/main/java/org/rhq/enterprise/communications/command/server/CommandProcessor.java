@@ -280,8 +280,8 @@ public class CommandProcessor implements StreamInvocationHandler {
                     // now delegate the execution of the command to the command service
                     CommandServiceMBean executor;
 
-                    executor = MBeanServerInvocationHandler.newProxyInstance(m_mBeanServer, cmdServiceName,
-                        CommandServiceMBean.class, false);
+                    executor = (CommandServiceMBean) MBeanServerInvocationHandler.newProxyInstance(m_mBeanServer,
+                        cmdServiceName, CommandServiceMBean.class, false);
 
                     LOG.debug(CommI18NResourceKeys.COMMAND_PROCESSOR_EXECUTING, cmd);
                     long start = System.currentTimeMillis();
@@ -458,8 +458,8 @@ public class CommandProcessor implements StreamInvocationHandler {
                 // we don't care if there happens to be more than one (there really should not be but...), use the first one
                 ObjectName directoryName = (ObjectName) names.iterator().next();
 
-                m_directoryService = MBeanServerInvocationHandler.newProxyInstance(m_mBeanServer, directoryName,
-                    CommandServiceDirectoryMBean.class, false);
+                m_directoryService = (CommandServiceDirectoryMBean) MBeanServerInvocationHandler.newProxyInstance(
+                    m_mBeanServer, directoryName, CommandServiceDirectoryMBean.class, false);
             } else {
                 throw new InstanceNotFoundException(LOG.getMsgString(
                     CommI18NResourceKeys.COMMAND_PROCESSOR_NO_DIRECTORY, query));

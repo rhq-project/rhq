@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
@@ -117,13 +117,13 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "                        LEFT JOIN cpv.channel.resourceChannels rc "
         + "                  WHERE rc.resource.id = :resourceId) "),
 
-    // returns the identified package version, but only if it is orphaned and has no assoicated content sources or channels
+    // returns the identified package version, but only if it is orphaned and has no associated content sources or channels
     // and is not installed anywhere
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_CHANNELS, query = "SELECT pv "
         + "  FROM PackageVersion pv " + " WHERE pv.id = :id " + "   AND pv.id NOT IN (SELECT pvcs.packageVersion.id "
         + "                       FROM PackageVersionContentSource pvcs "
         + "                      WHERE pvcs.packageVersion.id = :id) " + "   AND pv.channelPackageVersions IS EMPTY "
-        + "   AND pv.installedPackages IS EMPTY "),
+        + "   AND pv.installedPackages IS EMPTY " + "   AND pv.installedPackageHistory IS EMPTY "),
     @NamedQuery(name = PackageVersion.QUERY_GET_PKG_BITS_LENGTH_BY_PKG_DETAILS_AND_RES_ID, query = "SELECT pv.fileSize "
         + "  FROM PackageVersion AS pv "
         + "       JOIN pv.generalPackage.packageType.resourceType.resources r "
@@ -136,14 +136,16 @@ import org.rhq.core.domain.resource.ProductVersion;
     @NamedQuery(name = PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_CHANNELS, query = "DELETE PackageVersion pv "
         + " WHERE pv.id NOT IN (SELECT pvcs.packageVersion.id "
         + "                       FROM PackageVersionContentSource pvcs) "
-        + "   AND pv.channelPackageVersions IS EMPTY " + "   AND pv.installedPackages IS EMPTY "),
+        + "   AND pv.channelPackageVersions IS EMPTY " + "   AND pv.installedPackages IS EMPTY "
+        + "   AND pv.installedPackageHistory IS EMPTY "),
 
     // the bulk delete that removes the PVPV mapping from orphaned package versions
     @NamedQuery(name = PackageVersion.DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_CHANNELS, query = "DELETE ProductVersionPackageVersion pvpv "
         + " WHERE pvpv.packageVersion.id NOT IN (SELECT pvcs.packageVersion.id "
         + "                                        FROM PackageVersionContentSource pvcs) "
         + "   AND pvpv.packageVersion.channelPackageVersions IS EMPTY "
-        + "   AND pvpv.packageVersion.installedPackages IS EMPTY "),
+        + "   AND pvpv.packageVersion.installedPackages IS EMPTY "
+        + "   AND pvpv.packageVersion.installedPackageHistory IS EMPTY "),
 
     // finds all orphaned PVs that have extra props configurations (so the configs can be deleted)
     @NamedQuery(name = PackageVersion.FIND_EXTRA_PROPS_IF_NO_CONTENT_SOURCES_OR_CHANNELS, query = "SELECT pv "
@@ -151,7 +153,7 @@ import org.rhq.core.domain.resource.ProductVersion;
         + " WHERE pv.id NOT IN (SELECT pvcs.packageVersion.id "
         + "                       FROM PackageVersionContentSource pvcs) "
         + "   AND pv.channelPackageVersions IS EMPTY " + "   AND pv.installedPackages IS EMPTY "
-        + "   AND pv.extraProperties IS NOT NULL "),
+        + "   AND pv.installedPackageHistory IS EMPTY " + "   AND pv.extraProperties IS NOT NULL "),
 
     // finds all orphaned PVs that have its bits loaded on the filesystem
     @NamedQuery(name = PackageVersion.FIND_FILES_IF_NO_CONTENT_SOURCES_OR_CHANNELS, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionFile( "
@@ -163,7 +165,7 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "                       FROM PackageVersionContentSource pvcs) "
         + "   AND pv.channelPackageVersions IS EMPTY "
         + "   AND pv.installedPackages IS EMPTY "
-        + "   AND pb.bits IS NULL "),
+        + "   AND pv.installedPackageHistory IS EMPTY " + "   AND pb.bits IS NULL "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_COMPOSITE_BY_ID, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionComposite( "
         + "          pv, "
         + "          pv.generalPackage.packageType.name, "
@@ -317,6 +319,10 @@ public class PackageVersion implements Serializable {
     // this mapping is here mainly to support our JPA queries
     @OneToMany(mappedBy = "packageVersion", fetch = FetchType.LAZY)
     private Set<InstalledPackage> installedPackages;
+
+    // this mapping is here mainly to support our JPA queries
+    @OneToMany(mappedBy = "packageVersion", fetch = FetchType.LAZY)
+    private Set<InstalledPackageHistory> installedPackageHistory;
 
     @JoinColumn(name = "PACKAGE_BITS_ID", referencedColumnName = "ID", nullable = true)
     @OneToOne(cascade = { CascadeType.REMOVE, CascadeType.PERSIST }, fetch = FetchType.LAZY)

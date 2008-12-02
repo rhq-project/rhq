@@ -62,7 +62,7 @@ public class ListResourceMeasurementScheduleUIBean extends PagedDataTableUIBean 
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ListResourceMeasurementScheduleDataModel(PageControlView.ResourceMeasuremntScheduleList,
+            dataModel = new ListResourceMeasurementScheduleDataModel(PageControlView.ResourceMeasurementScheduleList,
                 MANAGED_BEAN_NAME);
         }
 

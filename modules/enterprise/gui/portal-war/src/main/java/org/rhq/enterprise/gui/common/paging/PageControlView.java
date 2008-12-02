@@ -228,9 +228,9 @@ public enum PageControlView {
     // Monitor
 
     /** */
-    ResourceMeasuremntScheduleList(ListResourceMeasurementScheduleUIBean.class, true),
+    ResourceMeasurementScheduleList(ListResourceMeasurementScheduleUIBean.class, true),
     /** */
-    ResourceGroupMeasuremntScheduleList(ListResourceGroupMeasurementScheduleUIBean.class, true),
+    ResourceGroupMeasurementScheduleList(ListResourceGroupMeasurementScheduleUIBean.class, true),
     /** */
     EventsHistoryList(EventHistoryUIBean.class);
 

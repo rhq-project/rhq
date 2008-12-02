@@ -64,7 +64,7 @@ public class ListResourceGroupMeasurementScheduleUIBean extends PagedDataTableUI
     public DataModel getDataModel() {
         if (dataModel == null) {
             dataModel = new ListResourceGroupMeasurementScheduleDataModel(
-                PageControlView.ResourceGroupMeasuremntScheduleList, MANAGED_BEAN_NAME);
+                PageControlView.ResourceGroupMeasurementScheduleList, MANAGED_BEAN_NAME);
         }
 
         return dataModel;

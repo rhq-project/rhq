@@ -34,7 +34,7 @@
             <ui:param name="resourceGroupSchedulesDataModel" value="#{ListResourceGroupMeasurementScheduleUIBean.dataModel}"/>
             <rich:dataTable binding="#{ListResourceGroupMeasurementScheduleUIBean.dataTable}"
                             id="resourceGroupSchedulesDataTable"
-                            rows="#{PageControl.ResourceGroupMeasuremntScheduleList.pageSize}"
+                            rows="#{PageControl.ResourceGroupMeasurementScheduleList.pageSize}"
                             value="#{resourceGroupSchedulesDataModel}"
                             var="item"
                             width="100%"
@@ -43,7 +43,7 @@
                             footerClass="on-pager-footer">
 
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="ResourceGroupMeasuremntScheduleList" />
+                  <onc:paginationControl id="ResourceGroupMeasurementScheduleList" />
                </f:facet>
       
                <rich:column>
@@ -114,7 +114,7 @@
                         </h:panelGrid>
                         <ui:param name="paginationDataTableName" value="resourceGroupSchedulesDataTable"/>
                         <ui:param name="paginationDataModel" value="#{resourceGroupSchedulesDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.ResourceGroupMeasuremntScheduleList}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ResourceGroupMeasurementScheduleList}"/>
                         <ui:include src="/rhq/resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>

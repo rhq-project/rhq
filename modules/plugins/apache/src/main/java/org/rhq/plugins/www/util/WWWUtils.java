@@ -23,12 +23,14 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
+ * Helper class that contains methods that send http requests and evaluate results
  * @author Ian Springer
  */
 public abstract class WWWUtils {
+
     /**
-     * @param  httpURL an http or https URL
-     *
+     * Sends a HEAD request to the passed url and returns if the server was reachable
+     * @param  httpURL a http or https URL to check
      * @return true if connecting to the URL succeeds, or false otherwise
      */
     public static boolean isAvailable(URL httpURL) {
@@ -44,5 +46,28 @@ public abstract class WWWUtils {
         }
 
         return true;
+    }
+
+    /**
+     * Get the content of the 'Server:' header
+     * @param httpURL a http or https URL to get the header from
+     * @return The contents of the header or null if anything went wrong or the field was not present.
+     */
+    public static String getServerHeader(URL httpURL) {
+        String ret;
+
+        try {
+            HttpURLConnection connection = (HttpURLConnection) httpURL.openConnection();
+            connection.setRequestMethod("HEAD");
+            connection.setConnectTimeout(3000);
+            connection.connect();
+            // get the respone code to actually trigger sending the Request.
+            connection.getResponseCode();
+            ret = connection.getHeaderField("Server");
+        }
+        catch (IOException e) {
+            ret = null;
+        }
+        return ret;
     }
 }

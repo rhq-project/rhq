@@ -50,13 +50,7 @@
          <version>${rhq.version}</version>
          <scope>provided</scope>
       </dependency>
-   
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>jopr-tomcat-plugin</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-   
+      
       <!-- 3rd-party -->
 
       <dependency>

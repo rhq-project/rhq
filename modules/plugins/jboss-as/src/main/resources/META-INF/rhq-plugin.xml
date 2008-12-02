@@ -9,7 +9,6 @@
         xmlns:c="urn:xmlns:rhq-configuration">
 
    <depends plugin="JMX"/>
-   <depends plugin="Tomcat"/>
 
    <server name="JBossAS Server"
            discovery="JBossASDiscoveryComponent"
@@ -18,11 +17,7 @@
            supportsManualAdd="true">
 
       <subcategories>
-         <subcategory name="Environment"/>
-         <subcategory name="Services"/>
-         <subcategory name="Resources" >
-            <subcategory name="Messaging" />
-         </subcategory>
+         <subcategory name="Resources"/>
          <subcategory name="Applications"/>
       </subcategories>
 
@@ -274,9 +269,7 @@
 
       <server name="Embedded Tomcat Server"
               description="Tomcat Web Application Container embedded in a JBossAS Server"
-              subCategory="Services"
-              sourcePlugin="Tomcat"
-              sourceType="Tomcat Server"
+              subCategory="Resources"
               discovery="JBossASTomcatDiscoveryComponent"
               class="JBossASTomcatServerComponent"
               singleton="true">
@@ -347,16 +340,13 @@
          </service>
       </server>
 
-
       <server name="JBoss AS JVM"
               description="The JVM that JBossAS is running on"
-              subCategory="Environment"
               sourcePlugin="JMX"
               sourceType="JMX Server"
               discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
               class="org.rhq.plugins.jmx.JMXServerComponent"
-              singleton="true">
-      </server>
+              singleton="true"/>
 
       <service name="Datasource" class="DatasourceComponent"
                discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
@@ -844,7 +834,7 @@
 
       <service name="JBossMQ"
                class="JMSComponent"
-               subCategory="Messaging"
+               subCategory="Resources"
                discovery="JBossMQDiscoveryComponent"
                description="The JBossMQ subsystem"
                singleton="true">
@@ -1423,7 +1413,7 @@
 
       <service name="JBossMessaging"
                class="JBossMessagingComponent"
-               subCategory="Messaging"
+               subCategory="Resources"
                discovery="JBossMessagingDiscoveryComponent"
                description="The JBoss Messaging subsystem"
                singleton="true">
@@ -2350,7 +2340,7 @@
       </service>
 
       <service name="EJB3 Entity Tree Cache"
-               subCategory="Services"
+               subCategory="Resources"
                class="org.rhq.plugins.jmx.MBeanResourceComponent"
                discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
                description="The entity cache">
@@ -2406,6 +2396,7 @@
                discovery="org.rhq.plugins.jbossas.script.ScriptDiscoveryComponent"
                class="org.rhq.plugins.jbossas.script.ScriptComponent"
                supportsManualAdd="true"
+               subCategory="Resources"
                description="provides the ability to execute a script that performs some task related to its parent JBossAS server">
 
          <plugin-configuration>

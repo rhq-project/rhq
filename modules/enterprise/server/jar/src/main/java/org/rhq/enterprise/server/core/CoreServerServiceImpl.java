@@ -367,10 +367,20 @@ public class CoreServerServiceImpl implements CoreServerService {
             boolean ping = sc.pingEndpoint(endpoint, 10000L);
 
             if (!ping) {
-                failure = new AgentRegistrationException("Server cannot ping the agent's endpoint. "
-                    + "The agent's endpoint is probably invalid "
-                    + "or there is a firewall preventing the server from connecting to the agent. " + "Endpoint: "
-                    + endpoint);
+                // this is mainly to support agentspawn environments but I suppose this could happen
+                // on "real" systems.  If the agent's machine is heavily loaded, it is possible that
+                // the agent wasn't given enough time to respond to the ping.  Let's at least try
+                // one more time, because once this ping failure is confirmed, it means the agent
+                // will be dead in the water and hang until an admin can reconfigure it (a second
+                // failure probably means it really is a configuration problem) 
+                ping = sc.pingEndpoint(endpoint, 20000L);
+
+                if (!ping) {
+                    failure = new AgentRegistrationException("Server cannot ping the agent's endpoint. "
+                        + "The agent's endpoint is probably invalid "
+                        + "or there is a firewall preventing the server from connecting to the agent. " + "Endpoint: "
+                        + endpoint);
+                }
             }
         } catch (Exception e) {
             failure = new AgentRegistrationException("Cannot verify agent endpoint due to internal error.",

@@ -35,7 +35,6 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -111,17 +110,11 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
             Resource requestResource = EnterpriseFacesContextUtility.getResourceIfExists();
             EventManagerLocal manager = LookupUtil.getEventManager();
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            Resource resource = EnterpriseFacesContextUtility.getResource();
-
             WebUser user = EnterpriseFacesContextUtility.getWebUser();
-
-            Map pref = user.getPreferences().getMetricRangePreference(true);
+            Map<String, ?> pref = user.getPreferences().getMetricRangePreference(true);
             long begin = (Long) pref.get(MonitorUtils.BEGIN);
             long end = (Long) pref.get(MonitorUtils.END);
-            Integer lastN = (Integer) pref.get(MonitorUtils.LASTN);
 
-            int resourceId = FacesContextUtility.getRequiredRequestParameter(ParamConstants.RESOURCE_ID_PARAM,
-                Integer.class);
             int eventId = -1;
             try {
                 eventId = FacesContextUtility.getRequiredRequestParameter("eventId", Integer.class);

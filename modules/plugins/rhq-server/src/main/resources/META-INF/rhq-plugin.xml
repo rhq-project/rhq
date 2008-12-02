@@ -83,7 +83,7 @@
 
    <service name="RHQ Server Communications Subsystem"
             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-            class="org.rhq.plugins.jmx.MBeanResourceComponent"
+            class="CommunicationsResourceComponent"
             description="Details on communications with agents">
 
       <runs-inside>
@@ -96,14 +96,34 @@
          <c:simple-property name="descriptionTemplate" default="Details on communications with agents"/>
       </plugin-configuration>
 
+      <operation name="clear" displayName="Clear Metrics" description="Clear the collected metric data and start collecting anew"/>
+
+      <operation name="viewReceivedCallTimeData" description="View statistical information about each subsystem call into the server">
+         <results>
+            <c:list-property name="commands">
+               <c:map-property name="command">
+                  <c:simple-property name="command" summary="true" type="string"/>
+                  <c:simple-property name="totalCount" summary="true" type="long"/>
+                  <c:simple-property name="successCount" summary="true" type="long"/>
+                  <c:simple-property name="failureCount" summary="true" type="long"/>
+                  <c:simple-property name="executionMinTime" summary="true" type="long"/>
+                  <c:simple-property name="executionMaxTime" summary="true" type="long"/>
+                  <c:simple-property name="executionAvgTime" summary="true" type="long"/>
+               </c:map-property>
+            </c:list-property>
+         </results>
+      </operation>
+
       <metric property="NumberFailedCommandsReceived" category="throughput" displayType="summary" measurementType="trendsup"
-              description="Total number of commands that were received but failed to be processed fully"/>
+              description="Total number of commands that were received but failed to be processed successfully"/>
       <metric property="NumberSuccessfulCommandsReceived" category="throughput" displayType="summary" measurementType="trendsup"
               description="Total number of commands that were received and successfully processed"/>
       <metric property="NumberTotalCommandsReceived" category="throughput" displayType="summary" measurementType="trendsup"
               description="Total number of commands that were received regardless of their success or failure"/>
       <metric property="NumberDroppedCommandsReceived" category="throughput" displayType="summary" measurementType="trendsup"
               description="Total number of commands that were received but were dropped, usually due to a limit reached in the server that prohibits more commands from being processed until commands currently being processed are finished."/>
+      <metric property="NumberNotProcessedCommandsReceived" category="throughput" displayType="summary" measurementType="trendsup"
+              description="Total number of commands that were received but were not processed usually due to the suspension of global command processing."/>
       <metric property="AverageExecutionTimeReceived" category="performance" displayType="summary" measurementType="dynamic" units="milliseconds"
               description="Average time it took (in milliseconds) to process incoming commands that are ultimately successful"/>
 

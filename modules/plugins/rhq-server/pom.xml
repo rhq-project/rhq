@@ -32,6 +32,13 @@
           <version>${rhq.version}</version>
           <scope>provided</scope>
         </dependency>
+
+        <dependency>
+          <groupId>${rhq.groupId}</groupId>
+          <artifactId>rhq-enterprise-comm</artifactId>
+          <version>${rhq.version}</version>
+          <scope>provided</scope> <!-- by the agent itself -->
+        </dependency>
    </dependencies>
    
    <profiles>

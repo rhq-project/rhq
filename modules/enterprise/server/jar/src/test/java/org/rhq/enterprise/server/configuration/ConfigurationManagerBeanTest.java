@@ -196,12 +196,12 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = ENABLE_TESTS)
-    public void testLastestConfiguration() throws Exception {
+    public void testLatestConfiguration() throws Exception {
         int resourceId = newResource1.getId();
 
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
-        // create a config, the another that spends some time in INPROGRESS before succeeding
+        // create a config, then another that spends some time in INPROGRESS before succeeding
         Configuration configuration1 = new Configuration();
         configuration1.put(new PropertySimple("myboolean", "true"));
 
@@ -221,31 +221,41 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         // now update to that second config - the "agent" will sleep for a bit before it completes
         // so we will have an INPROGRESS configuration for a few seconds before it goes to SUCCESS
+        ResourceConfigurationUpdate history2 = null;
+        boolean inProgress = false;
+        boolean inProgressTested = false;
+
         configurationManager.updateResourceConfiguration(overlord, resourceId, configuration2);
 
-        // still INPROGRESS - this should the first config still
-        // we sleep for a tiny bit to allow the live config to be different from the last SUCCESS config
-        Thread.sleep(3000);
-        ResourceConfigurationUpdate history2 = configurationManager.getLatestResourceConfigurationUpdate(overlord,
-            resourceId);
-        assert history2 != null;
-        assert history2.getId() == history1.getId();
-        myprop = history2.getConfiguration().getSimple("myboolean");
-        assert myprop != null;
-        assert myprop.getStringValue().equals("true");
-        myprop = history2.getConfiguration().getSimple("mysleep"); // this wasn't in the first config
-        assert myprop == null;
+        do {
+            history2 = configurationManager.getLatestResourceConfigurationUpdate(overlord, resourceId);
+            inProgress = configurationManager.isResourceConfigurationUpdateInProgress(overlord, resourceId);
 
-        // wait for the test agent to complete the request that is in INPROGRESS
-        Thread.sleep(6000);
-        history2 = configurationManager.getLatestResourceConfigurationUpdate(overlord, resourceId);
-        assert history2 != null;
-        assert history2.getId() != history1.getId();
-        myprop = history2.getConfiguration().getSimple("myboolean");
-        assert myprop != null;
-        assert myprop.getStringValue().equals("false");
-        myprop = history2.getConfiguration().getSimple("mysleep");
-        assert myprop.getLongValue() == 7000L;
+            if (inProgress) {
+                // history2 should be history1 since the update is not complete                
+                assert history2 != null;
+                assert history2.getId() == history1.getId();
+                myprop = history2.getConfiguration().getSimple("myboolean");
+                assert myprop != null;
+                assert myprop.getStringValue().equals("true");
+                myprop = history2.getConfiguration().getSimple("mysleep"); // this wasn't in the first config
+                assert myprop == null;
+                // record that this test case ran, we expect it will if the agent delay is there 
+                inProgressTested = true;
+            } else {
+                // update is complete, history 2 should be different
+                history2 = configurationManager.getLatestResourceConfigurationUpdate(overlord, resourceId);
+                assert history2 != null;
+                assert history2.getId() != history1.getId();
+                myprop = history2.getConfiguration().getSimple("myboolean");
+                assert myprop != null;
+                assert myprop.getStringValue().equals("false");
+                myprop = history2.getConfiguration().getSimple("mysleep");
+                assert myprop.getLongValue() == 7000L;
+            }
+        } while (inProgress);
+
+        assertTrue(inProgressTested);
     }
 
     @Test(enabled = ENABLE_TESTS)

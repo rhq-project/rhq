@@ -49,11 +49,10 @@
 			
 			<ui:param name="eventHistoryDataModel" value="#{EventHistoryUIBean.dataModel}"/>
 			
-			
 			<rich:dataTable binding="#{EventHistoryUIBean.dataTable}"
 								 id="eventHistoryDataTable"
-			    			   rows="10"
                               value="#{eventHistoryDataModel}"
+                               rows="#{PageControl.EventsHistoryList.pageSize}"
                                 var="item"
                               width="100%"
                         headerClass="tableRowHeader"
@@ -87,6 +86,17 @@
                   	<h:outputText value="#{item.timestamp}" />
 				</rich:column>
 				
+				
+				<f:facet name="footer">
+					<rich:columnGroup>
+                    	<rich:column colspan="8" width="100%">
+                        	<ui:param name="paginationDataTableName" value="eventHistoryDataTable"/>
+                        	<ui:param name="paginationDataModel" value="#{eventHistoryDataModel}"/>
+                        	<ui:param name="paginationPageControl" value="#{PageControl.EventsHistoryList}"/>
+                        	<ui:include src="../include/pagination.xhtml"/>
+                     	</rich:column>
+                  	</rich:columnGroup>
+               </f:facet>
 			</rich:dataTable>
 		</h:form>
 

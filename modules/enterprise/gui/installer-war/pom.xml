@@ -264,6 +264,7 @@
                             <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                <fileset dir="${basedir}/target/${project.build.finalName}" />
                             </copy>
+                            <delete dir="${deployment.dir}.rej" /> <!-- need to remove any residual backups -->
                           </tasks>
                         </configuration>
                         <goals>

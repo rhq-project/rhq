@@ -382,7 +382,7 @@ public class EventManagerBean implements EventManagerLocal {
             return pl;
 
         String query = "SELECT detail, id, substr(location, 1, 30) ";
-        query += ", severity, timestamp, res_id , FROM ( ";
+        query += ", severity, timestamp, res_id  FROM ( ";
         String innerQuery1 = " SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, evs.resource_id as res_id "
             + " FROM rhq_event e1, rhq_event e  ";
         innerQuery1 += "JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id ";

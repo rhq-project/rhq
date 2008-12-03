@@ -122,6 +122,12 @@ public interface SystemManagerLocal {
      */
     long vacuumAppdef(Subject whoami);
 
+    /**
+     * Ensures the installer has been undeployed. Installer must be undeployed
+     * to ensure the server deployment is secure.
+     */
+    void undeployInstaller();
+
     //////////////////////////////////
     // license specific methods follow
 

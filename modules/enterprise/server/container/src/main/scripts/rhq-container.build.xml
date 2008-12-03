@@ -545,6 +545,7 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
           depends="initialize,
                    prepare-web-services-1,
                    fix-perms,
+                   prepare-postinstaller-war,
                    developer-release-message,
                    copy-dev-resources,
                    process-ds-files,
@@ -571,6 +572,12 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
     <!-- Make sure shell scripts are readable and executable. -->
     <chmod dir="${project.build.outputDirectory}/bin" includes="*.sh" perm="ug+x" verbose="true" />
     <chmod dir="${jboss.home}/bin" includes="*.sh" perm="ug+x" verbose="true" />
+  </target>
+
+  <target name="prepare-postinstaller-war">
+    <!-- SVN will ignore resources with '.rej' so we checked in the war as '.reject' -->
+    <!-- We need to rename it to '.rej' so JBossAS will not deploy it -->
+    <move file="${jboss.deploy.dir}/rhq-postinstaller.war.reject" tofile="${jboss.deploy.dir}/rhq-postinstaller.war.rej" verbose="true"/>
   </target>
 
   <target name="process-ds-files">

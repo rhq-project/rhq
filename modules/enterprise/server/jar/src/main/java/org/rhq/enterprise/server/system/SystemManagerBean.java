@@ -45,6 +45,7 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.deployment.MainDeployerMBean;
 import org.jboss.mx.util.MBeanServerLocator;
 import org.jboss.system.server.ServerConfig;
 
@@ -229,11 +230,11 @@ public class SystemManagerBean implements SystemManagerLocal {
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void reconfigureSystem(Subject whoami) {
         try {
-            CustomJaasDeploymentServiceMBean mbean;
+            Object mbean;
 
-            mbean = (CustomJaasDeploymentServiceMBean)MBeanServerInvocationHandler.newProxyInstance(MBeanServerLocator.locateJBoss(),
+            mbean = MBeanServerInvocationHandler.newProxyInstance(MBeanServerLocator.locateJBoss(),
                 CustomJaasDeploymentServiceMBean.OBJECT_NAME, CustomJaasDeploymentServiceMBean.class, false);
-            mbean.installJaasModules();
+            ((CustomJaasDeploymentServiceMBean) mbean).installJaasModules();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -365,6 +366,79 @@ public class SystemManagerBean implements SystemManagerLocal {
         } finally {
             dbtype.closeStatement(stmt);
         }
+    }
+
+    /**
+     * Ensures the installer is no longer deployed.
+     */
+    public void undeployInstaller() {
+        try {
+            MBeanServer mbs = MBeanServerLocator.locateJBoss();
+            ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
+            Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
+
+            File deployDirectory = new File(((ServerConfig) mbean).getServerHomeDir(), "deploy");
+
+            if (deployDirectory.exists()) {
+                File deployedInstallWar = new File(deployDirectory.getAbsolutePath(), "rhq-installer.war");
+                File undeployedInstallWar = new File(deployDirectory.getAbsolutePath(), "rhq-installer.war.rej");
+
+                if (deployedInstallWar.exists()) {
+                    // we need to undeploy it first - on windows the files are locked and can't be renamed until undeployed
+                    name = ObjectNameFactory.create("jboss.system:service=MainDeployer");
+                    mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, MainDeployerMBean.class, false);
+                    ((MainDeployerMBean) mbean).undeploy(deployedInstallWar.toURI().toURL());
+                    log.info("Installer war has been undeployed");
+
+                    if (!deployedInstallWar.renameTo(undeployedInstallWar)) {
+                        throw new RuntimeException(
+                            "Cannot undeploy the installer war! Please manually remove it to secure your deployment: "
+                                + deployedInstallWar);
+                    }
+                    // I don't trust it - make sure we removed it
+                    if (deployedInstallWar.exists()) {
+                        throw new RuntimeException(
+                            "Failed to undeploy the installer war! Please manually remove it to secure your deployment: "
+                                + deployedInstallWar);
+                    }
+
+                    // now that the installer is removed, put something in its place to avoid
+                    // getting tomcat errors and to at least point the user back to the GUI
+                    File deployedPostInstallWar = new File(deployDirectory.getAbsolutePath(), "rhq-postinstaller.war");
+                    File undeployedPostInstallWar = new File(deployDirectory.getAbsolutePath(),
+                        "rhq-postinstaller.war.rej");
+                    if (!deployedPostInstallWar.exists()) {
+                        if (undeployedPostInstallWar.exists()) {
+                            if (undeployedPostInstallWar.renameTo(deployedPostInstallWar)) {
+                                log.debug("Post-install notification war has been deployed");
+                            } else {
+                                log.info("Post-install notification war failed to deploy - this can be ignored");
+                            }
+                        } else {
+                            log.info("Post-install notification war not found and not deployed - this can be ignored");
+                        }
+                    } else {
+                        log.info("Post-install notification war already deployed");
+                    }
+                } else if (undeployedInstallWar.exists()) {
+                    log.debug("Installer looks to be undeployed already, this is good: " + undeployedInstallWar);
+                } else {
+                    log.debug("Installer can't be found - assume it has been completely purged: " + deployedInstallWar);
+                }
+            } else {
+                throw new RuntimeException(
+                    "Failed to undeploy the installer war! Your deployment seems corrupted - missing deploy dir: "
+                        + deployDirectory);
+            }
+        } catch (RuntimeException re) {
+            throw re;
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
+
+        // we only get here if we are SURE we removed it!
+        log.info("Confirmed that the installer has been undeployed");
+        return;
     }
 
     /**

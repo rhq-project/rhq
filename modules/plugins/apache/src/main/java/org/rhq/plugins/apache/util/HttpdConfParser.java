@@ -43,6 +43,7 @@ public class HttpdConfParser {
     private boolean modJkInstalled;
     private String workerPropertiesFile;
     private String uriWorkerLocation;
+    private String mainServer;
 
 
 
@@ -65,6 +66,7 @@ public class HttpdConfParser {
             String line;
             String tmp;
             while ((line=reader.readLine())!=null) {
+                line=line.trim();
                 tmp = getValueFrom2ndArg(line);
 
                 if (line.startsWith("LoadModule") && line.contains("jk_module")) {
@@ -85,8 +87,13 @@ public class HttpdConfParser {
                         uriWorkerLocation = tmp;
                     }
                 }
-                else if (line.startsWith("JkMount")) {
+                else if (line.startsWith("JkMount") && !line.startsWith("JkMountFile")) {
                     // TODO
+                }
+                else if (line.startsWith("Listen")) {
+                    if (tmp!=null) {
+                        mainServer=tmp;
+                    }
                 }
             }
         }
@@ -142,11 +149,16 @@ public class HttpdConfParser {
         return uriWorkerLocation;
     }
 
+    public String getMainServer() {
+        return mainServer;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("HttpdConfParser");
-        sb.append("{vhosts=").append(vhosts);
+        sb.append("{listen=").append(mainServer);
+        sb.append(", vhosts=").append(vhosts);
         sb.append(", modJkInstalled=").append(modJkInstalled);
         sb.append(", workerPropertiesFile='").append(workerPropertiesFile).append('\'');
         sb.append(", uriWorkerLocation='").append(uriWorkerLocation).append('\'');

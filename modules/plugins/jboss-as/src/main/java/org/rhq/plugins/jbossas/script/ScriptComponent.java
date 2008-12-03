@@ -61,9 +61,6 @@ public class ScriptComponent implements ResourceComponent<JBossASServerComponent
 
     public static final String COMMAND_LINE_ARGUMENTS_PARAM_PROP = "commandLineArguments";
 
-    public static final String EXIT_CODE_RESULT_PROP = "exitCode";
-    public static final String OUTPUT_RESULT_PROP = "output";
-
     private final Log log = LogFactory.getLog(this.getClass());
 
     private ResourceContext<JBossASServerComponent> resourceContext;
@@ -109,9 +106,9 @@ public class ScriptComponent implements ResourceComponent<JBossASServerComponent
             }
 
             Integer exitCode = processExecutionResults.getExitCode();
-            operationResult.getComplexResults().put(new PropertySimple(EXIT_CODE_RESULT_PROP, exitCode));
+            operationResult.setExitCode(exitCode);
             String output = processExecutionResults.getCapturedOutput(); // NOTE: this is stdout + stderr
-            operationResult.getComplexResults().put(new PropertySimple(OUTPUT_RESULT_PROP, output));
+            operationResult.setOutput(output);
 
             return operationResult;
         } else {

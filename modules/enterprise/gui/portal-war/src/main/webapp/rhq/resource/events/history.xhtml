@@ -58,16 +58,24 @@
                         headerClass="tableRowHeader"
                         footerClass="on-pager-footer">
              
+				<f:facet name="PageControlView">
+                  <onc:paginationControl id="EventsHistoryList" />
+               	</f:facet>
+               
 				<rich:column>
                 	<f:facet name="header">
-                    	<h:outputText styleClass="headerText" value="Severity" />
+                		<onc:sortableColumnHeader sort="ev.severity">
+                    		<h:outputText styleClass="headerText" value="Severity" />
+                    	</onc:sortableColumnHeader>
                   	</f:facet>
                 	<h:outputText value="#{item.severity}" />
                 </rich:column>
                
 				<rich:column>
 					<f:facet name="header">
-                    	<h:outputText styleClass="headerText" value="Source" />
+						<onc:sortableColumnHeader sort="ev.source">
+                    		<h:outputText styleClass="headerText" value="Source" />
+                    	</onc:sortableColumnHeader>
                   	</f:facet>
                   	<h:outputText value="#{item.sourceLocation}" />
 				</rich:column>
@@ -81,15 +89,16 @@
 				
 				<rich:column>
 					<f:facet name="header">
-                    	<h:outputText styleClass="headerText" value="Time occurred" />
+						<onc:sortableColumnHeader sort="ev.timestamp">
+                    		<h:outputText styleClass="headerText" value="Time occurred" />
+                    	</onc:sortableColumnHeader>
                   	</f:facet>
                   	<h:outputText value="#{item.timestamp}" />
 				</rich:column>
 				
-				
 				<f:facet name="footer">
 					<rich:columnGroup>
-                    	<rich:column colspan="8" width="100%">
+                    	<rich:column colspan="4" width="100%">
                         	<ui:param name="paginationDataTableName" value="eventHistoryDataTable"/>
                         	<ui:param name="paginationDataModel" value="#{eventHistoryDataModel}"/>
                         	<ui:param name="paginationPageControl" value="#{PageControl.EventsHistoryList}"/>

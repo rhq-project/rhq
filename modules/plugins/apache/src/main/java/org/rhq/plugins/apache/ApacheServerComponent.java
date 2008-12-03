@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -70,6 +71,7 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
     public static final String PLUGIN_CONFIG_PROP_EXECUTABLE_PATH = "executablePath";
     public static final String PLUGIN_CONFIG_PROP_CONTROL_SCRIPT_PATH = "controlScriptPath";
     public static final String PLUGIN_CONFIG_PROP_URL = "url";
+    public static final String PLUGIN_CONFIG_PROP_HTTPD_CONF = "configFile";
 
     public static final String PLUGIN_CONFIG_PROP_SNMP_AGENT_HOST = "snmpAgentHost";
     public static final String PLUGIN_CONFIG_PROP_SNMP_AGENT_PORT = "snmpAgentPort";
@@ -316,6 +318,18 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         }
 
         return executableFile;
+    }
+
+    /**
+     * Returns the httpd.conf file
+     * @return A File object that represents the httpd.conf file or null in case of error 
+     */
+    public File getHttpdConfFile() {
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        PropertySimple prop = pluginConfig.getSimple(PLUGIN_CONFIG_PROP_HTTPD_CONF);
+        if (prop==null || prop.getStringValue()==null)
+            return null;
+        return resolvePathRelativeToServerRoot(pluginConfig,prop.getStringValue());
     }
 
     /**

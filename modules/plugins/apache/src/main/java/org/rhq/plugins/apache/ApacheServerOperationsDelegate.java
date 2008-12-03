@@ -21,7 +21,6 @@ package org.rhq.plugins.apache;
 import java.io.File;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -61,6 +60,12 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
     }
 
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
+
+        if ("install_mod_jk".equals(name)) {
+            return ModJKComponent.installModJk(serverComponent, params);
+        }
+
+        // Continue with generic operations
         Operation operation = getOperation(name);
         File controlScriptPath = this.serverComponent.getControlScriptPath();
         validateScriptFile(controlScriptPath);
@@ -125,9 +130,9 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
     private OperationResult createOperationResult(ProcessExecutionResults processExecutionResults) {
         OperationResult operationResult = new OperationResult();
         Integer exitCode = processExecutionResults.getExitCode();
-        operationResult.getComplexResults().put(new PropertySimple(EXIT_CODE_RESULT_PROP, exitCode));
+        operationResult.setExitCode(exitCode);
         String output = processExecutionResults.getCapturedOutput(); // NOTE: this is stdout + stderr
-        operationResult.getComplexResults().put(new PropertySimple(OUTPUT_RESULT_PROP, output));
+        operationResult.setOutput(output);
         return operationResult;
     }
 

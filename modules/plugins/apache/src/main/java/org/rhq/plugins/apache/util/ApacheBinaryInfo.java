@@ -197,6 +197,7 @@ public class ApacheBinaryInfo {
 
         this.version = findVersion((libHttpd != null) ? libHttpd.getPath() : this.binaryPath);
         this.root = findRoot(binaryPath);
+        this.ctl = findDefine(binaryPath, SERVER_CONFIG_FILE_DEFINE);
     }
 
     private File getHttpdSharedLibrary(File binaryFile) throws Exception {

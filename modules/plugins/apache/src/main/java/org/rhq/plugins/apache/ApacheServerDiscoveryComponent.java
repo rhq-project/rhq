@@ -103,6 +103,10 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 Property urlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url);
                 pluginConfig.put(urlProp);
 
+                PropertySimple configFile = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF,
+                        binaryInfo.getCtl());
+                pluginConfig.put(configFile);
+
                 discoveredResources.add(createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(),
                     binaryInfo));
             }

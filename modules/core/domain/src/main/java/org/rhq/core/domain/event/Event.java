@@ -61,7 +61,7 @@ import org.rhq.core.domain.resource.Resource;
         + " JOIN ev.source evs JOIN evs.resource res WHERE res.id = :resourceId AND ev.severity = :severity "
         + " AND ev.timestamp BETWEEN :start AND :end "),
     @NamedQuery(name = Event.GET_DETAILS_FOR_EVENT_IDS, query = "SELECT "
-        + " new org.rhq.core.domain.event.composite.EventComposite(ev.detail, res.id, ev.id, evs.location, ev.ackUser, ev.ackTime) "
+        + " new org.rhq.core.domain.event.composite.EventComposite(ev.detail, res.id, ev.id, evs.location) "
         + " FROM Event ev JOIN ev.source evs JOIN evs.resource res WHERE ev.id IN (:eventIds) AND evs.id = ev.source"
         + "  AND res.id = evs.resource ") })
 @Entity
@@ -97,12 +97,6 @@ public class Event implements Serializable {
 
     @Column(name = "DETAIL", length = 4000, nullable = false)
     private String detail; // TODO lazify
-
-    @Column(name = "ACK_TIME")
-    private Long ackTime;
-
-    @Column(name = "ACK_USER", length = 100)
-    private String ackUser;
 
     @Transient
     private transient String detailExcerpt;

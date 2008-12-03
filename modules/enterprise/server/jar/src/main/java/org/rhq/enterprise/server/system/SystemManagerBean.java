@@ -25,6 +25,7 @@ import java.lang.management.ManagementFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +33,11 @@ import java.util.Map;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.Timeout;
+import javax.ejb.Timer;
+import javax.ejb.TimerService;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.management.MBeanServer;
@@ -93,13 +98,54 @@ public class SystemManagerBean implements SystemManagerLocal {
     @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource dataSource;
 
+    @javax.annotation.Resource
+    private TimerService timerService;
+
     private LicenseManager licenseManager;
 
+    @EJB
+    private SystemManagerLocal systemManager;
     private static Properties systemConfigurationCache = null;
+    private final String TIMER_DATA = "SystemManagerBean.reloadConfigCache";
 
     @PostConstruct
     public void initialize() {
         licenseManager = LicenseManager.instance();
+    }
+
+    public void scheduleConfigCacheReloader() {
+        // each time the webapp is reloaded, we don't want to create duplicate jobs
+        Collection<Timer> timers = timerService.getTimers();
+        for (Timer existingTimer : timers) {
+            log.debug("Found timer - attempting to cancel: " + existingTimer.toString());
+            try {
+                existingTimer.cancel();
+            } catch (Exception e) {
+                log.warn("Failed in attempting to cancel timer: " + existingTimer.toString());
+            }
+        }
+
+        // single-action timer that will trigger in 60 seconds
+        timerService.createTimer(60000L, TIMER_DATA);
+    }
+
+    @Timeout
+    public void reloadConfigCache(Timer timer) {
+        try {
+            // note: I could have added a timestamp column, looked at it and see if its newer than our
+            //       currently cached config and if so, load in the config then. But that's still
+            //       1 roundtrip to the database, and maybe 2 (if the config is different). So we
+            //       still have the same amount of roundtrips, and to make the code easier, without
+            //       a need for the timestamp column/checking, we just load in the full config now.
+            //       We never need 2 round trips, and this table is small enough that selecting the
+            //       all its rows is really not going to effect performance much.
+            systemManager.loadSystemConfigurationCache();
+        } catch (Throwable t) {
+            log.error("Failed to reload the system config cache - will try again later. Cause: " + t);
+        } finally {
+            // reschedule ourself to trigger in another 60 seconds
+            timerService.createTimer(60000L, TIMER_DATA);
+        }
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
@@ -123,33 +169,36 @@ public class SystemManagerBean implements SystemManagerLocal {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public Properties getSystemConfiguration() {
 
         if (systemConfigurationCache == null) {
-            List<SystemConfiguration> configs;
-            configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL).getResultList();
-
-            Properties properties = new Properties();
-
-            for (SystemConfiguration config : configs) {
-                if (config.getPropertyValue() == null) {
-                    // for some reason, the configuration is not found in the DB, so fallback to the persisted default.
-                    // if there isn't even a persisted default, just use an empty string.
-                    String defaultValue = config.getDefaultPropertyValue();
-                    properties.put(config.getPropertyKey(), (defaultValue != null) ? defaultValue : "");
-                } else {
-                    properties.put(config.getPropertyKey(), config.getPropertyValue());
-                }
-            }
-
-            systemConfigurationCache = properties;
+            loadSystemConfigurationCache();
         }
 
-        // this is the only time we actually access the systemConfiguration cache object, no need to synchronize
         Properties copy = new Properties();
         copy.putAll(systemConfigurationCache);
         return copy;
+    }
+
+    public void loadSystemConfigurationCache() {
+        // After this is done, the systemConfigurationCache contains the latest config.
+        List<SystemConfiguration> configs;
+        configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL).getResultList();
+
+        Properties properties = new Properties();
+
+        for (SystemConfiguration config : configs) {
+            if (config.getPropertyValue() == null) {
+                // for some reason, the configuration is not found in the DB, so fallback to the persisted default.
+                // if there isn't even a persisted default, just use an empty string.
+                String defaultValue = config.getDefaultPropertyValue();
+                properties.put(config.getPropertyKey(), (defaultValue != null) ? defaultValue : "");
+            } else {
+                properties.put(config.getPropertyKey(), config.getPropertyValue());
+            }
+        }
+
+        systemConfigurationCache = properties;
     }
 
     @SuppressWarnings("unchecked")

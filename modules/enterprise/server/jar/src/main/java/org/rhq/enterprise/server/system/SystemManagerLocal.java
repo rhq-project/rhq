@@ -44,6 +44,13 @@ public interface SystemManagerLocal {
     DatabaseType getDatabaseType();
 
     /**
+     * Schedules the internal timer job that periodically refreshes the configuration cache.
+     * This is needed in case a user changed the system configuration on another server in the HA
+     * cloud - this config cache reloader will load in that new configuration.
+     */
+    void scheduleConfigCacheReloader();
+
+    /**
      * Get the server cloud configuration. These are the server configurations that will be
      * the same for all servers in the HA server cloud.
      *
@@ -127,6 +134,13 @@ public interface SystemManagerLocal {
      * to ensure the server deployment is secure.
      */
     void undeployInstaller();
+
+    /**
+     * Grabs the current system configuration from the database and reloads the cache with it.
+     * This is meant for internal use only! You probably want to use {@link #getSystemConfiguration()}
+     * instead.
+     */
+    void loadSystemConfigurationCache();
 
     //////////////////////////////////
     // license specific methods follow

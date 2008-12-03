@@ -144,7 +144,8 @@
                   <!-- dependency versions -->
                   <property name="rhq.version" value="${project.version}" />
                   <property name="jboss.version" value="${jboss.version}" />
-                  <property name="ojdbc14.version" value="${ojdbc14.version}" />
+                  <!--<property name="ojdbc14.version" value="${ojdbc14.version}" />-->
+                  <property name="ojdbc5.version" value="${ojdbc5.version}" />
                   <property name="postgresql.version" value="${postgresql.version}" />
                   <property name="jsf-api.version" value="${jsf-api.version}" />
                   <property name="jsf-impl.version" value="${jsf-impl.version}" />
@@ -284,6 +285,8 @@
                                <fileset dir="${deployment.dir}/bin" includes="*.sh" />
                                <fileset dir="${deployment.dir}/jbossas/bin" includes="*.sh" />
                             </chmod>
+                            <!-- Delete old ojdbc14 jar(s). -->
+                            <delete verbose="true"><fileset dir="${deployment.dir}/jbossas/server/default/lib" includes="ojdbc14-*.jar" /></delete>
                           </tasks>
                         </configuration>
                         <goals>

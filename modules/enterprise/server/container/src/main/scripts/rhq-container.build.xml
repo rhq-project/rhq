@@ -149,8 +149,11 @@
 
     <property name="jboss.lib.dir" location="${jboss.home}/server/default/lib" />
     <echo>Copying additional libs to ${jboss.lib.dir} ...</echo>
-    <copy file="${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar"
-          toDir="${jboss.lib.dir}" failonerror="false" verbose="true" />
+    <!--<copy file="${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar"
+          toDir="${jboss.lib.dir}" failonerror="false" verbose="true" />-->
+    <delete verbose="true"><fileset dir="${jboss.lib.dir}" includes="ojdbc14-*.jar" /></delete>
+    <copy file="${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar"
+          toDir="${jboss.lib.dir}" failonerror="false" verbose="true" />      
     <copy file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
           toDir="${jboss.lib.dir}" verbose="true" />
 

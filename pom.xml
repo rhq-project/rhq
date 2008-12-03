@@ -56,6 +56,7 @@
     <jsf-api.version>1.2_06</jsf-api.version>
     <jsf-impl.version>1.2_06</jsf-impl.version>
     <ojdbc14.version>10.2.0.4.0</ojdbc14.version>
+    <ojdbc5.version>11.1.0.7.0</ojdbc5.version>
     <ems.version>1.2.6</ems.version>
     <postgresql.version>8.3-604.jdbc3</postgresql.version>
     <richfaces.version>3.2.0.GA</richfaces.version>
@@ -488,15 +489,22 @@
          
         <dependencies>
             <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle.
-                 Add a top level dependency if oracle profile is active to allow for db-required tests in any module.
-                 The driver can not be packaged for OpenSource distributions due to licensing issues and as such this
-                 profile should not be active -->
+                 Add a top level dependency if this profile is active to allow for db-required tests in any module.
+                 The driver can not be packaged for OpenSource distributions due to licensing issues, and as such,
+                 this profile should not be active by default. -->            
             <dependency>
                 <groupId>ojdbc14</groupId>
                 <artifactId>ojdbc14</artifactId>
                 <version>${ojdbc14.version}</version>                  
                 <scope>provided</scope>
             </dependency>        
+            
+            <dependency>
+                <groupId>com.oracle</groupId>
+                <artifactId>ojdbc5</artifactId>
+                <version>${ojdbc5.version}</version>                  
+                <scope>provided</scope>
+            </dependency>                    
         </dependencies>
     </profile>     
 

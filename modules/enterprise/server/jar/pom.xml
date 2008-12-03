@@ -546,7 +546,7 @@ Build-OS-Version=${os.version}
                      </systemProperties>
                      <additionalClasspathElements>
                         <!-- The below is required for tests to run against Oracle. -->               
-                        <additionalClasspathElement>${settingslocalRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar</additionalClasspathElement>
+                        <additionalClasspathElement>${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar</additionalClasspathElement>
                      </additionalClasspathElements>
                   </configuration>               
                </plugin>

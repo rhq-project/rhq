@@ -55,7 +55,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
 public class EJB3BeanComponent extends MBeanResourceComponent<JBossASServerComponent> {
     private final Log log = LogFactory.getLog(EJB3BeanComponent.class);
 
-    private Map<Integer, CallTimeData> previousRawCallTimeDatas = new HashMap();
+    private Map<Integer, CallTimeData> previousRawCallTimeDatas = new HashMap<Integer,CallTimeData>();
 
     @Override
     public AvailabilityType getAvailability() {

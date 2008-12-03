@@ -333,7 +333,7 @@
       &metrics;
    </platform>
 
-   <service name="Network Adapter" discovery="NetworkAdapterDiscoveryComponent" class="NetworkAdapterComponent" subCategory="platformServices">
+   <service name="Network Adapter" discovery="NetworkAdapterDiscoveryComponent" class="NetworkAdapterComponent">
             
       <runs-inside>
          <parent-resource-type name="Windows"  plugin="Platforms"/>
@@ -373,7 +373,7 @@
 
    </service>
 
-   <service name="File System" discovery="FileSystemDiscoveryComponent" class="FileSystemComponent" subCategory="platformServices">
+   <service name="File System" discovery="FileSystemDiscoveryComponent" class="FileSystemComponent">
 
       <runs-inside>
          <parent-resource-type name="Windows"  plugin="Platforms"/>
@@ -402,7 +402,7 @@
 
    </service>
 
-   <service name="CPU" discovery="CpuDiscoveryComponent" class="CpuComponent" subCategory="platformServices">
+   <service name="CPU" discovery="CpuDiscoveryComponent" class="CpuComponent">
 
       <runs-inside>
          <parent-resource-type name="Windows"  plugin="Platforms"/>

@@ -534,14 +534,17 @@ public class UpdateResourceSubsystemTest extends UpdateSubsytemTestBase {
     }
 
     @Test
-    public void testAutoCreateChildSubCategory() throws Exception {
-        System.out.println("= testAutoCreateChildSubCategory");
+    public void testReferenceToUndefinedChildSubCategory() throws Exception {
+        System.out.println("= testReferenceToUndefinedChildSubCategory");
         getTransactionManager().begin();
         try {
-            registerPlugin("autocreate-child-subcat-1.xml");
-            System.out.println("Done with v1");
-            registerPlugin("autocreate-child-subcat-1.xml");
-            System.out.println("Done with v1 (2)");
+            try {
+                registerPlugin("undefined-child-subcat-1.xml");
+                fail("Exception was not thrown.");
+            }
+            catch (Exception ignored) {
+                Exception e = ignored;
+            }
         } finally {
             getTransactionManager().rollback();
         }

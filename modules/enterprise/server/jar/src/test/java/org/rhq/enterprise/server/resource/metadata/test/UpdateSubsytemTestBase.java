@@ -27,6 +27,7 @@ import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
+import javax.persistence.PersistenceContext;
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -47,13 +48,18 @@ import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.MD5Generator;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.RHQConstants;
 
 public class UpdateSubsytemTestBase extends AbstractEJB3Test {
+
+    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+    private EntityManager entityManager;
 
     @EJB
     protected ResourceManagerLocal resMgr;
@@ -93,7 +99,6 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     protected ResourceType getResourceType(String typeName) {
         Query q1 = getEntityManager().createQuery("Select rt from ResourceType rt");
         List<ResourceType> types = q1.getResultList();
-        String lookup = "==== Lookup: " + typeName + "Found:\n" + types;
 
         Query q = getEntityManager().createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN);
         q.setParameter("name", typeName).setParameter("plugin", PLUGIN_NAME);
@@ -101,7 +106,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
             ResourceType type = (ResourceType) q.getSingleResult();
             return type;
         } catch (NoResultException nre) {
-            throw new NoResultException(lookup);
+            throw new NoResultException("==== Failed to lookup ResourceType [" + typeName + "] from Plugin [" + PLUGIN_NAME + "] - found: " + types);
         }
     }
 
@@ -111,8 +116,10 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
     protected void registerPlugin(String pathToDescriptor) throws Exception {
         pathToDescriptor = COMMON_PATH_PREFIX + getSubsystemDirectory() + "/" + pathToDescriptor;
-        Plugin testPlugin = new Plugin(PLUGIN_NAME, "foo.jar", "123561RE1652EF165E");
-        testPlugin.setDisplayName("ResourceMetaDataManagerBeanTest" + pathToDescriptor);
+        System.out.println("Registering plugin with descriptor [" + pathToDescriptor + "]...");
+        String md5 = MD5Generator.getDigestString(pathToDescriptor);
+        Plugin testPlugin = new Plugin(PLUGIN_NAME, "foo.jar", md5);
+        testPlugin.setDisplayName("ResourceMetaDataManagerBeanTest: " + pathToDescriptor);
         PluginDescriptor descriptor = loadPluginDescriptor(pathToDescriptor);
         metadataManager.registerPlugin(testPlugin, descriptor);
         getEntityManager().flush();
@@ -122,7 +129,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         URL descriptorUrl = this.getClass().getClassLoader().getResource(descriptorFile);
 
         JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
-        URL pluginSchemaURL = getClass().getClassLoader().getResource("rhq-plugin.xsd");
+        URL pluginSchemaURL = this.getClass().getClassLoader().getResource("rhq-plugin.xsd");
         Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(pluginSchemaURL);
 
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();

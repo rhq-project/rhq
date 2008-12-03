@@ -30,7 +30,6 @@ import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.DeploymentTemplateInfo;
 import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.managed.api.ManagedProperty;
-import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -123,6 +122,7 @@ public class ApplicationServerComponent
 
     public CreateResourceReport createResource(CreateResourceReport createResourceReport)
     {
+        ProfileServiceFactory.refreshCurrentProfileView();
         ResourceType resourceType = createResourceReport.getResourceType();
         if (resourceType.getCreationDataType() == ResourceCreationDataType.CONTENT)
             createContentBasedResource(createResourceReport, resourceType);
@@ -149,7 +149,7 @@ public class ApplicationServerComponent
             if (managedProperty != null && property != null)
             {
                 PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(managedProperty.getMetaType());
-                propertyAdapter.populateMetaValueFromProperty(property, (MetaValue) managedProperty.getValue(), propertyDefinition);
+                propertyAdapter.populateMetaValueFromProperty(property, managedProperty.getValue(), propertyDefinition);
             }
         }
     }
@@ -239,9 +239,10 @@ public class ApplicationServerComponent
     }
 
     private static Configuration getDefaultPluginConfiguration(ResourceType resourceType) {
-        ConfigurationTemplate pluginConfigDefaultTemplate = resourceType.getPluginConfigurationDefinition().getDefaultTemplate();
-        Configuration defaultPluginConfig = (pluginConfigDefaultTemplate != null) ? pluginConfigDefaultTemplate.createConfiguration() : new Configuration();
-        return defaultPluginConfig;
+        ConfigurationTemplate pluginConfigDefaultTemplate =
+                resourceType.getPluginConfigurationDefinition().getDefaultTemplate();
+        return (pluginConfigDefaultTemplate != null) ?
+                pluginConfigDefaultTemplate.createConfiguration() : new Configuration();
     }
 
     private void createContentBasedResource(CreateResourceReport createResourceReport, ResourceType resourceType)
@@ -269,6 +270,7 @@ public class ApplicationServerComponent
             } else {
                 createResourceReport.setStatus(CreateResourceStatus.FAILURE);
                 createResourceReport.setErrorMessage(status.getMessage());
+                //noinspection ThrowableResultOfMethodCallIgnored
                 createResourceReport.setException(status.getFailure());
             }
         } catch (Throwable t) {

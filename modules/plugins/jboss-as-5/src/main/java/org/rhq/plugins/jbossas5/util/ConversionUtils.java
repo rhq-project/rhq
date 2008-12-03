@@ -442,8 +442,6 @@ public class ConversionUtils
         MetaType valueType = metaValue.getMetaType();
         if (valueType.isSimple() && metaType.isSimple())
             return true;
-        else if (valueType.isSimple() && metaType.isSimple())
-            return true;
         else if (valueType.isEnum() && metaType.isEnum())
             return true;
         else if (valueType.isCollection() && metaType.isCollection())

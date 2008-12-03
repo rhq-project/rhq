@@ -23,6 +23,7 @@ import java.beans.PropertyEditorManager;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Properties;
@@ -200,15 +201,21 @@ public class AppServerJDBCXARecovery implements XAResourceRecovery {
                 }
             }
 
-            boolean isConnectionValid;
+            Boolean isConnectionValid;
             try {
-                isConnectionValid = (_connection != null && _connection.getConnection().isValid(5));
+                if (_connection != null) {
+                    Connection connection = _connection.getConnection();
+                    Method method = connection.getClass().getMethod("isValid", Integer.class);
+                    isConnectionValid = (Boolean) method.invoke(connection, Integer.valueOf(5));
+                } else {
+                    isConnectionValid = Boolean.FALSE;
+                }
             } catch (Throwable t) {
-                isConnectionValid = false;
+                isConnectionValid = Boolean.FALSE;
                 log.debug("XA connection is invalid - will recreate a new one. Cause: " + t);
             }
 
-            if (!isConnectionValid) {
+            if (!isConnectionValid.booleanValue()) {
                 if (_connection != null) {
                     try {
                         _connection.close(); // just attempt to clean up anything that we can

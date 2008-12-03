@@ -50,7 +50,6 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
     private EventSeverity sevFilter;
     private String sourceFilter;
     private String searchString;
-    private PageList<EventComposite> events;
 
     public int getId() {
         return this.id;
@@ -82,14 +81,6 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
     public void setSearchString(String searchString) {
         this.searchString = searchString;
-    }
-
-    public PageList<EventComposite> getEvents() {
-        return events;
-    }
-
-    public void setEvents(PageList<EventComposite> events) {
-        this.events = events;
     }
 
     @Override

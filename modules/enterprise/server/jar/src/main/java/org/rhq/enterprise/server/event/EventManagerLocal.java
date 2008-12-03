@@ -166,13 +166,6 @@ public interface EventManagerLocal {
      */
     public EventComposite getEventDetailForEventId(Subject subject, int eventId);
 
-    /**
-     * Acknowledge that the {@link Event} with the passed id has been seen by the user calling this
-     * @param subject
-     * @param eventIds
-     */
-    public EventComposite ackEvent(Subject subject, int eventId);
-
     public void deleteEventSourcesForDefinition(EventDefinition def);
 
     public int getEventDefinitionCountForResourceType(int resourceTypeId);

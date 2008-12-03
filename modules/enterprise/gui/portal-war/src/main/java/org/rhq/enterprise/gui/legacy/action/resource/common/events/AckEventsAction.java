@@ -31,7 +31,6 @@ import org.apache.struts.actions.DispatchAction;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.event.Event;
-import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -50,11 +49,11 @@ public class AckEventsAction extends DispatchAction {
         EventManagerLocal eventManager = LookupUtil.getEventManager();
         Subject subject = WebUtility.getSubject(request);
 
-        EventComposite comp = eventManager.ackEvent(subject, eventId);
+        //EventComposite comp = eventManager.ackEvent(subject, eventId);
 
         StringBuffer buf = new StringBuffer();
         buf.append("<div>");
-        buf.append(comp.getAckUser() + "/ " + comp.getAckTime());
+        // buf.append(comp.getAckUser() + "/ " + comp.getAckTime());
         buf.append("</div>");
 
         Writer w = response.getWriter();

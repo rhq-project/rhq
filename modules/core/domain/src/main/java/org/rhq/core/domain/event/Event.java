@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.event;
 
 import java.io.Serializable;
@@ -126,12 +126,8 @@ public class Event implements Serializable {
      * @param severity the severity of this event
      * @param detail the details of this event
      */
-    public Event(@NotNull
-    String type, @NotNull
-    String sourceLocation, @NotNull
-    long timestamp, @NotNull
-    EventSeverity severity, @NotNull
-    String detail) {
+    public Event(@NotNull String type, @NotNull String sourceLocation, @NotNull long timestamp,
+        @NotNull EventSeverity severity, @NotNull String detail) {
         if (type == null)
             throw new IllegalArgumentException("type parameter must not be null.");
         if (sourceLocation == null)
@@ -183,54 +179,6 @@ public class Event implements Serializable {
     @NotNull
     public String getDetail() {
         return this.detail;
-    }
-
-    /**
-     * Sets the time this Event was acknowledged. Set to null to indicate the Event has not been acknowledged.
-     *
-     * NOTE: This method is not intended to be called by plugins or the Plugin Container.
-     *
-     * @param ackTime the time this Event was acknowledged
-     */
-    public void setAckTime(@Nullable
-    Long ackTime) {
-        this.ackTime = ackTime;
-    }
-
-    /**
-     * Returns the time this Event was acknowledged. Returns null to indicate the Event has not been acknowledged.
-     *
-     * NOTE: This method is not intended to be called by plugins or the Plugin Container.
-     *
-     * @return the time this Event was acknowledged, or null if the Event has not been acknowledged
-     */
-    @Nullable
-    public Long getAckTime() {
-        return ackTime;
-    }
-
-    /**
-     * Sets the user who acknowledged this Event. Set to null to indicate the Event has not been acknowledged.
-     *
-     * NOTE: This method is not intended to be called by plugins or the Plugin Container.
-     *
-     * @param ackUser the user who acknowledged this Event
-     */
-    public void setAckUser(@Nullable
-    String ackUser) {
-        this.ackUser = ackUser;
-    }
-
-    /**
-     * Returns the user who acknowledged this Event. Set to null to indicate the Event has not been acknowledged.
-     *
-     * NOTE: This method is not intended to be called by plugins or the Plugin Container.
-     *
-     * @return the user who acknowledged this Event, or null if the Event has not been acknowledged
-     */
-    @Nullable
-    public String getAckUser() {
-        return ackUser;
     }
 
     public String getDetailExcerpt() { // TODO get from DB

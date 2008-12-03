@@ -171,7 +171,8 @@ public class EventManagerBean implements EventManagerLocal {
                         ps.addBatch();
                     }
 
-                    notifyAlertConditionCacheManager("addEventData", eventSource, eventData.toArray(new Event[eventData.size()]));
+                    notifyAlertConditionCacheManager("addEventData", eventSource, eventData.toArray(new Event[eventData
+                        .size()]));
                 }
                 ps.executeBatch();
             } finally {
@@ -643,23 +644,6 @@ public class EventManagerBean implements EventManagerLocal {
             log.warn("getEventDetailForEventId: found " + composites.size() + " details");
             return new EventComposite();
         }
-    }
-
-    public EventComposite ackEvent(Subject subject, int eventId) {
-
-        EventComposite comp = new EventComposite();
-        try {
-            Event e = entityManager.find(Event.class, eventId);
-            long now = System.currentTimeMillis();
-            e.setAckTime(now);
-            e.setAckUser(subject.getName());
-            comp.setAckTime(new Date(now));
-            comp.setAckUser(subject.getName());
-        } catch (NoResultException nre) {
-            if (log.isDebugEnabled())
-                log.debug("ackEvent: Event with id " + eventId + " not found");
-        }
-        return comp;
     }
 
     @SuppressWarnings("unchecked")

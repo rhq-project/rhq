@@ -30,22 +30,36 @@
 					<h:outputText value="${msg['resource.common.monitor.events.FilterBy']}" />
 				</f:facet>
 						
-				<h:outputText value="Severity:" />				
-				<h:selectOneMenu id="sevFilter" value="#{EventHistoryUIBean.sevFilter}" onchange="this.form.submit(); return true;">
-					<f:selectItem itemValue="ALL" />
-					<f:selectItem itemValue="DEBUG" />
-					<f:selectItem itemValue="INFO" />
-					<f:selectItem itemValue="WARN" />
-					<f:selectItem itemValue="ERROR" />
-					<f:selectItem itemValue="FATAL" />
-				</h:selectOneMenu>
-			
-				<h:outputText value="Source:"  />
-				<h:inputText value="#{EventHistoryUIBean.sourceFilter}"/>
-			
-				<h:outputText value="Search:" />
-				<h:inputText value="#{EventHistoryUIBean.searchString}" />
+				<table width="100%">
+					<tr>
+						<td width="33%">
+							<h:outputText value="Severity:" />				
+							<h:selectOneMenu id="sevFilter" value="#{EventHistoryUIBean.sevFilter}">
+								<f:selectItem itemValue="ALL" />
+								<f:selectItem itemValue="DEBUG" />
+								<f:selectItem itemValue="INFO" />
+								<f:selectItem itemValue="WARN" />
+								<f:selectItem itemValue="ERROR" />
+								<f:selectItem itemValue="FATAL" />
+								<a4j:support event="onchange" reRender="eventHistoryDataTable"/>
+							</h:selectOneMenu>
+						</td>
+						
+						<td width="33%">
+							<h:outputText value="Source:"  />
+							<h:inputText value="#{EventHistoryUIBean.sourceFilter}"/>	
+						</td>
+						
+						<td width="33%">
+							<h:outputText value="Search:" />
+							<h:inputText value="#{EventHistoryUIBean.searchString}" />
+						</td>
+					</tr>
+				</table>
 			</rich:panel>
+			
+			<rich:spacer />
+			<rich:spacer />
 			
 			<ui:param name="eventHistoryDataModel" value="#{EventHistoryUIBean.dataModel}"/>
 			

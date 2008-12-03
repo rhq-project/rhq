@@ -38,6 +38,8 @@ import org.rhq.core.domain.configuration.PropertySimple;
  */
 public class OperationResult {
     public static final String SIMPLE_OPERATION_RESULT_NAME = "operationResult";
+    public static final String OPERATION_OUTPUT = "output";
+    public static final String EXIT_CODE = "exitCode";
 
     private final Configuration complexResults = new Configuration();
 
@@ -103,6 +105,24 @@ public class OperationResult {
     public Configuration getComplexResults() {
         return complexResults;
     }
+
+    /**
+     * Sets the passed output from the operation in the result
+     * @param output output from the operation that was running
+     */
+    public void setOutput(String output) {
+        complexResults.put(new PropertySimple(OPERATION_OUTPUT,output));
+    }
+
+    /**
+     * Sets the passed exit code from the operation in the result
+     * @param code exit code from the running operation
+     */
+    public void setExitCode(int code) {
+        complexResults.put(new PropertySimple(EXIT_CODE,code));
+    }
+
+
 
     @Override
     public String toString() {

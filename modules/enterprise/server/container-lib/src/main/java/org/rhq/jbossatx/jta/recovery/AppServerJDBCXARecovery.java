@@ -200,9 +200,25 @@ public class AppServerJDBCXARecovery implements XAResourceRecovery {
                 }
             }
 
-            if (_connection == null) {
+            boolean isConnectionValid;
+            try {
+                isConnectionValid = (_connection != null && _connection.getConnection().isValid(5));
+            } catch (Throwable t) {
+                isConnectionValid = false;
+                log.debug("XA connection is invalid - will recreate a new one. Cause: " + t);
+            }
+
+            if (!isConnectionValid) {
+                if (_connection != null) {
+                    try {
+                        _connection.close(); // just attempt to clean up anything that we can
+                    } catch (Throwable t) {
+                    }
+                }
+
                 _connection = _dataSource.getXAConnection();
                 _connection.addConnectionEventListener(_connectionEventListener);
+                log.debug("Created new XAConnection");
             }
         } catch (SQLException ex) {
             log.error("AppServerJDBCXARecovery.createConnection got exception " + ex.toString(), ex);

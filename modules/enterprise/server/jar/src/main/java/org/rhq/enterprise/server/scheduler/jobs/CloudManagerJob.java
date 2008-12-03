@@ -26,13 +26,13 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 import org.rhq.core.domain.cluster.Server;
-import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
+import org.rhq.enterprise.server.cluster.CloudManagerLocal;
 import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-public class ClusterManagerJob extends AbstractStatefulJob {
+public class CloudManagerJob extends AbstractStatefulJob {
 
-    private final Log log = LogFactory.getLog(ClusterManagerJob.class);
+    private final Log log = LogFactory.getLog(CloudManagerJob.class);
 
     // A time sufficient to determine whether a server is down.  Can be based on the initial delay set for the server instance
     // job updating the server mtimes. See StartupServlet. 
@@ -41,15 +41,15 @@ public class ClusterManagerJob extends AbstractStatefulJob {
     @Override
     public void executeJobCode(JobExecutionContext arg0) throws JobExecutionException {
 
-        ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
+        CloudManagerLocal cloudManager = LookupUtil.getCloudManager();
         PartitionEventManagerLocal partitionEventManager = LookupUtil.getPartitionEventManager();
 
         // Look for downed server instances and update their mode prior to any partition request processing
-        List<Server> servers = clusterManager.getAllServers();
+        List<Server> servers = cloudManager.getAllServers();
 
         long now = System.currentTimeMillis();
 
-        log.debug("ClusterManagerJob running at " + System.currentTimeMillis());
+        log.debug("CloudManagerJob running at " + System.currentTimeMillis());
         for (Server server : servers) {
             // We're only looking for NORMNAL servers that may have gone down unexpectedly. A MM server can go up
             // and down while still in MM.  DOWN servers will come up as NORMAL.
@@ -57,7 +57,7 @@ public class ClusterManagerJob extends AbstractStatefulJob {
                 long timeSinceServerHeartbeat = (now - server.getMtime());
 
                 if (timeSinceServerHeartbeat > SERVER_DOWN_INTERVAL) {
-                    clusterManager.updateServerMode(new Integer[] { server.getId() }, Server.OperationMode.DOWN);
+                    cloudManager.updateServerMode(new Integer[] { server.getId() }, Server.OperationMode.DOWN);
                 }
             }
         }

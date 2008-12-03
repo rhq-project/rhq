@@ -56,8 +56,8 @@ import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.cluster.AffinityGroupManagerBean;
 import org.rhq.enterprise.server.cluster.AffinityGroupManagerLocal;
-import org.rhq.enterprise.server.cluster.ClusterManagerBean;
-import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
+import org.rhq.enterprise.server.cluster.CloudManagerBean;
+import org.rhq.enterprise.server.cluster.CloudManagerLocal;
 import org.rhq.enterprise.server.cluster.FailoverListManagerBean;
 import org.rhq.enterprise.server.cluster.FailoverListManagerLocal;
 import org.rhq.enterprise.server.cluster.PartitionEventManagerBean;
@@ -333,8 +333,8 @@ public final class LookupUtil {
         return lookupLocal(AffinityGroupManagerBean.class);
     }
 
-    public static ClusterManagerLocal getClusterManager() {
-        return lookupLocal(ClusterManagerBean.class);
+    public static CloudManagerLocal getCloudManager() {
+        return lookupLocal(CloudManagerBean.class);
     }
 
     public static ServerManagerLocal getServerManager() {
@@ -436,7 +436,8 @@ public final class LookupUtil {
         return jonServer;
     }
 
-    private static <T> String getLocalJNDIName(@NotNull Class<? super T> beanClass) {
+    private static <T> String getLocalJNDIName(@NotNull
+    Class<? super T> beanClass) {
         return (embeddedDeployment ? "" : (RHQConstants.EAR_NAME + "/")) + beanClass.getSimpleName() + "/local";
     }
 
@@ -447,7 +448,8 @@ public final class LookupUtil {
      *
      * @return JNDI name that the remote interface is registered as
      */
-    private static <T> String getRemoteJNDIName(@NotNull Class<? super T> beanClass) {
+    private static <T> String getRemoteJNDIName(@NotNull
+    Class<? super T> beanClass) {
         return (embeddedDeployment ? "" : (RHQConstants.EAR_NAME + "/")) + beanClass.getSimpleName() + "/remote";
     }
 

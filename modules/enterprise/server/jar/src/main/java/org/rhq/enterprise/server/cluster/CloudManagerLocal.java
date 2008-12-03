@@ -34,11 +34,11 @@ import org.rhq.core.domain.util.PageList;
  * @author Joseph Marques
  */
 @Local
-public interface ClusterManagerLocal {
+public interface CloudManagerLocal {
 
-    void deleteServers(Integer[] serverIds) throws ClusterManagerException;
+    void deleteServers(Integer[] serverIds) throws CloudManagerException;
 
-    void deleteServer(Integer serverId) throws ClusterManagerException;
+    void deleteServer(Integer serverId) throws CloudManagerException;
 
     List<Agent> getAgentsByServerName(String serverName);
 

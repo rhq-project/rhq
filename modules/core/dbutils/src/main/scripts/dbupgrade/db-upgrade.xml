@@ -1048,6 +1048,17 @@ DB Upgrade:
       
    </schemaSpec>
 
+   <schemaSpec version="2.32">
+      <!-- Remove the ClusterManagerJob from the Quartz tables. It has been renamed. Note that deleting the job
+           removes other rows by cascade delete. --> 
+      <schema-directSQL>
+         <statement desc="Remove the ClusterManagerJob from the Quartz tables. It has been renamed.">
+            DELETE FROM rhq_qrtz_job_details WHERE job_name = 'org.rhq.enterprise.server.scheduler.jobs.ClusterManagerJob'
+         </statement>      	
+      </schema-directSQL>
+
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

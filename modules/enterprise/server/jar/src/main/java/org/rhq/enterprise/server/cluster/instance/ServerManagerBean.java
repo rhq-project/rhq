@@ -40,7 +40,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.communications.GlobalSuspendCommandListener;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
-import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
+import org.rhq.enterprise.server.cluster.CloudManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -72,7 +72,7 @@ public class ServerManagerBean implements ServerManagerLocal {
     private EntityManager entityManager;
 
     @EJB
-    ClusterManagerLocal clusterManager;
+    CloudManagerLocal cloudManager;
 
     @EJB
     AgentStatusManagerLocal agentStatusManager;
@@ -111,7 +111,7 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     public List<Agent> getAgents() {
         String identity = getIdentity();
-        List<Agent> results = clusterManager.getAgentsByServerName(identity);
+        List<Agent> results = cloudManager.getAgentsByServerName(identity);
         return results;
     }
 
@@ -123,7 +123,7 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     public Server getServer() throws ServerNotFoundException {
         String identity = getIdentity();
-        Server result = clusterManager.getServerByName(identity);
+        Server result = cloudManager.getServerByName(identity);
         if (result == null) {
             throw new ServerNotFoundException("Could not find server; is the " + RHQ_SERVER_NAME_PROPERTY
                 + " property set in rhq-server.properties?");
@@ -174,7 +174,7 @@ public class ServerManagerBean implements ServerManagerLocal {
 
                 // The server must have just been installed and must be coming for the first time
                 // up as of this call. So, update the mode to NORMAL and update mtime as an initial heart beat.
-                // This will prevent a running ClusterManagerJob from resetting to DOWN before the real
+                // This will prevent a running CloudManagerJob from resetting to DOWN before the real
                 // ServerManagerJob starts updating the heart beat regularly.
                 lastEstablishedServerMode = serverMode;
                 serverMode = Server.OperationMode.NORMAL;
@@ -185,7 +185,7 @@ public class ServerManagerBean implements ServerManagerLocal {
 
                 // The server can't be DOWN if this code is executing, it means the server must be coming
                 // up as of this call. So, update the mode to NORMAL and update mtime as an initial heart beat.
-                // This will prevent a running ClusterManagerJob from resetting to DOWN before the real
+                // This will prevent a running CloudManagerJob from resetting to DOWN before the real
                 // ServerManagerJob starts updating the heart beat regularly.
                 lastEstablishedServerMode = serverMode;
                 serverMode = Server.OperationMode.NORMAL;

@@ -58,7 +58,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
     private FailoverListManagerLocal failoverListManager;
     private AgentManagerLocal agentManager;
     private PartitionEventManagerLocal partitionEventManager;
-    private ClusterManagerLocal clusterManager;
+    private CloudManagerLocal cloudManager;
     private AffinityGroupManagerLocal affinityGroupManager;
     private Subject overlord;
 
@@ -76,7 +76,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         agentManager = LookupUtil.getAgentManager();
         failoverListManager = LookupUtil.getFailoverListManager();
         partitionEventManager = LookupUtil.getPartitionEventManager();
-        clusterManager = LookupUtil.getClusterManager();
+        cloudManager = LookupUtil.getCloudManager();
         affinityGroupManager = LookupUtil.getAffinityGroupManager();
         overlord = LookupUtil.getSubjectManager().getOverlord();
 
@@ -109,8 +109,8 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
             try {
                 for (Server server : servers) {
                     // must set to down to allow for a delete
-                    clusterManager.updateServerMode(new Integer[] { server.getId() }, Server.OperationMode.DOWN);
-                    clusterManager.deleteServer(server.getId());
+                    cloudManager.updateServerMode(new Integer[] { server.getId() }, Server.OperationMode.DOWN);
+                    cloudManager.deleteServer(server.getId());
                 }
 
                 for (Agent agent : agents) {

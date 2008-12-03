@@ -19,17 +19,18 @@
 package org.rhq.enterprise.gui.ha;
 
 import javax.faces.model.DataModel;
-import org.rhq.core.domain.resource.Agent;
+
 import org.rhq.core.domain.cluster.FailoverListDetails;
-import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
+import org.rhq.enterprise.gui.common.paging.PageControlView;
+import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.server.cluster.CloudManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
-import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
-import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.common.paging.PageControlView;
 
 /**
  * Bean responsible for the agent details display page. This bean will also provide a pagable list of the
@@ -42,7 +43,7 @@ public class ViewAgentUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ViewAgentUIBean";
 
     private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
-    private ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
+    private CloudManagerLocal cloudManager = LookupUtil.getCloudManager();
 
     private Agent agent;
 
@@ -54,6 +55,7 @@ public class ViewAgentUIBean extends PagedDataTableUIBean {
         return agent;
     }
 
+    @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
             dataModel = new ViewAgentUIBeanDataModel(PageControlView.AgentFailoverListView, MANAGED_BEAN_NAME);
@@ -68,9 +70,10 @@ public class ViewAgentUIBean extends PagedDataTableUIBean {
             super(view, beanName);
         }
 
+        @Override
         public PageList<FailoverListDetails> fetchPage(PageControl pc) {
             int agentId = getAgent().getId();
-            PageList<FailoverListDetails> pageList = clusterManager.getFailoverListDetailsByAgentId(agentId, pc);
+            PageList<FailoverListDetails> pageList = cloudManager.getFailoverListDetailsByAgentId(agentId, pc);
 
             return pageList;
         }

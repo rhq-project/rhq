@@ -31,13 +31,13 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
+import org.rhq.enterprise.server.cluster.CloudManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ListServersUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ListServersUIBean";
 
-    private ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
+    private CloudManagerLocal cloudManager = LookupUtil.getCloudManager();
 
     public ListServersUIBean() {
     }
@@ -49,7 +49,7 @@ public class ListServersUIBean extends PagedDataTableUIBean {
 
         if (ids.length > 0) {
             try {
-                clusterManager.deleteServers(ids);
+                cloudManager.deleteServers(ids);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Removed [" + ids.length
                     + "] servers from the cloud.");
@@ -70,7 +70,7 @@ public class ListServersUIBean extends PagedDataTableUIBean {
 
         if (ids.length > 0) {
             try {
-                clusterManager.updateServerMode(ids, mode);
+                cloudManager.updateServerMode(ids, mode);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Set [" + ids.length + "] servers to mode "
                     + mode);
@@ -109,7 +109,7 @@ public class ListServersUIBean extends PagedDataTableUIBean {
         public PageList<ServerWithAgentCountComposite> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
 
-            PageList<ServerWithAgentCountComposite> results = clusterManager.getServerComposites(subject, pc);
+            PageList<ServerWithAgentCountComposite> results = cloudManager.getServerComposites(subject, pc);
             return results;
         }
     }

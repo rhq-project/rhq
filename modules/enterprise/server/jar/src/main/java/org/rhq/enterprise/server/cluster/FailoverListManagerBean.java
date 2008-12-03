@@ -75,7 +75,7 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
 
     @EJB
     @IgnoreDependency
-    ClusterManagerLocal clusterManager;
+    CloudManagerLocal cloudManager;
 
     @EJB
     AgentManagerLocal agentManager;
@@ -130,7 +130,7 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     }
 
     private FailoverListComposite generateServerList(PartitionEvent event, Agent agent) {
-        List<Server> servers = clusterManager.getAllCloudServers();
+        List<Server> servers = cloudManager.getAllCloudServers();
         List<Agent> agents = new ArrayList<Agent>(1);
 
         agents.add(agent);
@@ -150,7 +150,7 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     }
 
     public Map<Agent, FailoverListComposite> refresh(PartitionEvent event) {
-        List<Server> servers = clusterManager.getAllCloudServers();
+        List<Server> servers = cloudManager.getAllCloudServers();
         List<Agent> agents = agentManager.getAllAgents();
 
         // clear out the existing server lists because we're going to generate new ones for all agents        

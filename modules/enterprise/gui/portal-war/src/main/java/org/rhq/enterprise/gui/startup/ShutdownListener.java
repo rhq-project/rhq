@@ -54,7 +54,7 @@ public class ShutdownListener implements NotificationListener {
             // Set the server operation mode to DOWN unless in MM
             Server server = LookupUtil.getServerManager().getServer();
             if (Server.OperationMode.MAINTENANCE != server.getOperationMode()) {
-                LookupUtil.getClusterManager().updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
+                LookupUtil.getCloudManager().updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
             }
         }
     }

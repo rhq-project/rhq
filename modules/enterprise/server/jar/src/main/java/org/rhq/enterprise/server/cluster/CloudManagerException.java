@@ -21,22 +21,22 @@ package org.rhq.enterprise.server.cluster;
 /**
  * @author Joseph Marques
  */
-public class ClusterManagerException extends AffinityGroupException {
+public class CloudManagerException extends AffinityGroupException {
 
     private static final long serialVersionUID = 1L;
 
-    public ClusterManagerException() {
+    public CloudManagerException() {
     }
 
-    public ClusterManagerException(String message) {
+    public CloudManagerException(String message) {
         super(message);
     }
 
-    public ClusterManagerException(Throwable cause) {
+    public CloudManagerException(Throwable cause) {
         super(cause);
     }
 
-    public ClusterManagerException(String message, Throwable cause) {
+    public CloudManagerException(String message, Throwable cause) {
         super(message, cause);
     }
 

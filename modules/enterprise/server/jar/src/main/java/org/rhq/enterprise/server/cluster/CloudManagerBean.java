@@ -55,14 +55,14 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Joseph Marques
  */
 @Stateless
-public class ClusterManagerBean implements ClusterManagerLocal {
-    private final Log log = LogFactory.getLog(ClusterManagerBean.class);
+public class CloudManagerBean implements CloudManagerLocal {
+    private final Log log = LogFactory.getLog(CloudManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
     @EJB
-    ClusterManagerLocal clusterManager;
+    CloudManagerLocal cloudManager;
 
     @EJB
     FailoverListManagerLocal failoverListManager;
@@ -75,7 +75,7 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     ServerManagerLocal serverManager;
 
     public List<Agent> getAgentsByServerName(String serverName) {
-        Server server = clusterManager.getServerByName(serverName);
+        Server server = cloudManager.getServerByName(serverName);
         List<Agent> agents = server.getAgents();
         return agents;
     }
@@ -137,22 +137,22 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         }
     }
 
-    public void deleteServers(Integer[] serverIds) throws ClusterManagerException {
+    public void deleteServers(Integer[] serverIds) throws CloudManagerException {
         if (serverIds == null) {
             return;
         }
 
         for (Integer nextServerId : serverIds) {
-            clusterManager.deleteServer(nextServerId);
+            cloudManager.deleteServer(nextServerId);
         }
     }
 
-    public void deleteServer(Integer serverId) throws ClusterManagerException {
+    public void deleteServer(Integer serverId) throws CloudManagerException {
         try {
             Server server = entityManager.find(Server.class, serverId);
 
             if (Server.OperationMode.NORMAL == server.getOperationMode()) {
-                throw new ClusterManagerException("Could not delete server " + server.getName()
+                throw new CloudManagerException("Could not delete server " + server.getName()
                     + ". Server must be down or in maintenance mode. Current operating mode is: "
                     + server.getOperationMode().name());
             }
@@ -180,7 +180,7 @@ public class ClusterManagerBean implements ClusterManagerLocal {
                 PartitionEventType.SERVER_DELETION, server.getName());
 
         } catch (Exception e) {
-            throw new ClusterManagerException("Could not delete server[id=" + serverId + "]: " + e.getMessage(), e);
+            throw new CloudManagerException("Could not delete server[id=" + serverId + "]: " + e.getMessage(), e);
         }
     }
 
@@ -204,7 +204,7 @@ public class ClusterManagerBean implements ClusterManagerLocal {
                     }
 
                     // Audit servers being set to DOWN since the state change can't be reported any other way. Servers
-                    // be set to any other mode will be handled when the cluster job established the current operating mode.
+                    // be set to any other mode will be handled when the cloud job established the current operating mode.
                     if (Server.OperationMode.DOWN == mode) {
                         String audit = server.getName() + ": " + server.getOperationMode().name() + " --> " + mode;
 

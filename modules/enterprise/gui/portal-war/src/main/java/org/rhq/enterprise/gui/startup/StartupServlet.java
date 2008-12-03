@@ -50,7 +50,7 @@ import org.rhq.enterprise.server.scheduler.jobs.CheckForSuspectedAgentsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutContentRequestsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutOperationsJob;
-import org.rhq.enterprise.server.scheduler.jobs.ClusterManagerJob;
+import org.rhq.enterprise.server.scheduler.jobs.CloudManagerJob;
 import org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -115,7 +115,7 @@ public class StartupServlet extends HttpServlet {
      */
     private void createDefaultServerIfNecessary() {
         String identity = LookupUtil.getServerManager().getIdentity();
-        Server server = LookupUtil.getClusterManager().getServerByName(identity);
+        Server server = LookupUtil.getCloudManager().getServerByName(identity);
         if (server == null) {
             server = new Server();
             server.setName(identity);
@@ -250,9 +250,9 @@ public class StartupServlet extends HttpServlet {
             // Long enough to allow the server instance jobs to start executing first.
             final long initialDelay = 1000L * 60 * 2;
             final long interval = 1000L * 30;
-            scheduler.scheduleSimpleRepeatingJob(ClusterManagerJob.class, true, false, initialDelay, interval);
+            scheduler.scheduleSimpleRepeatingJob(CloudManagerJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
-            throw new ServletException("Cannot schedule cluster management job", e);
+            throw new ServletException("Cannot schedule cloud management job", e);
         }
 
         // Suspected Agents Job

@@ -29,7 +29,7 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.server.cluster.ClusterManagerLocal;
+import org.rhq.enterprise.server.cluster.CloudManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -37,12 +37,12 @@ public class ViewServerUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ViewServerUIBean";
 
     private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
-    private ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
+    private CloudManagerLocal cloudManager = LookupUtil.getCloudManager();
     private Server server;
 
     public ViewServerUIBean() {
         int serverId = FacesContextUtility.getRequiredRequestParameter("serverId", Integer.class);
-        server = clusterManager.getServerById(serverId);
+        server = cloudManager.getServerById(serverId);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class ViewServerUIBean extends PagedDataTableUIBean {
 
     public String save() {
         try {
-            clusterManager.updateServer(getSubject(), getServer());
+            cloudManager.updateServer(getSubject(), getServer());
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
                 "This server's public address and ports have been updated.");
         } catch (Exception e) {

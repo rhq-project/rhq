@@ -33,7 +33,7 @@
         <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
         
         <!-- NOTE: Do *not* use 2.0.0-SNAPSHOT here anymore! - snapshots are no longer being produced -->
-        <jboss-man.version>2.0.0.CR5</jboss-man.version>        
+        <jboss-man.version>2.0.0.GA</jboss-man.version>        
     </properties>
 
     <dependencies>

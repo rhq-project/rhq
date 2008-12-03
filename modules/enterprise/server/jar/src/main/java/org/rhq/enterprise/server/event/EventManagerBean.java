@@ -382,8 +382,8 @@ public class EventManagerBean implements EventManagerLocal {
             return pl;
 
         String query = "SELECT detail, id, substr(location, 1, 30) ";
-        query += ", severity, timestamp, res_id , ack_user, ack_time  FROM ( ";
-        String innerQuery1 = " SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, evs.resource_id as res_id, e1.ack_user as ack_user, e1.ack_time as ack_time "
+        query += ", severity, timestamp, res_id , FROM ( ";
+        String innerQuery1 = " SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, evs.resource_id as res_id "
             + " FROM rhq_event e1, rhq_event e  ";
         innerQuery1 += "JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id ";
         innerQuery1 += "WHERE e1.timestamp < e.timestamp AND e.id = ? AND evs.resource_id IN ( ";
@@ -393,7 +393,7 @@ public class EventManagerBean implements EventManagerLocal {
         innerQuery1 = addResultsLimitToQuery(innerQuery1, DEFAULT_EVENTS_PAGE_SIZE / 2);
         query += innerQuery1;
         query += ") inner1 UNION (";
-        String innerQuery2 = "SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, evs.resource_id as res_id, e1.ack_user as ack_user, e1.ack_time as ack_time "
+        String innerQuery2 = "SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, evs.resource_id as res_id "
             + " FROM rhq_event e1, rhq_event e ";
         innerQuery2 += " JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id "
             + " WHERE e1.timestamp >= e.timestamp AND e.id = ? AND evs.resource_id IN ( ";
@@ -495,7 +495,7 @@ public class EventManagerBean implements EventManagerLocal {
             rs = stm.executeQuery();
             while (rs.next()) {
                 EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(2), rs.getString(3), EventSeverity
-                    .valueOf(rs.getString(4)), rs.getLong(5), rs.getInt(6), rs.getString(7), rs.getLong(8));
+                    .valueOf(rs.getString(4)), rs.getLong(5), rs.getInt(6));
                 pl.add(ec);
             }
 
@@ -556,7 +556,7 @@ public class EventManagerBean implements EventManagerLocal {
             query = "SELECT count(ev.id) ";
         } else {
             query = "SELECT ev.detail, ev.id, substr(evs.location, 1, 30) "
-                + ", ev.severity, ev.timestamp, evs.resource_id, ev.ack_user, ev.ack_time ";
+                + ", ev.severity, ev.timestamp, evs.resource_id ";
         }
         query += "FROM RHQ_Event ev INNER JOIN RHQ_Event_Source evs ON evs.id = ev.event_source_id "
             + "WHERE evs.resource_id IN ( ";

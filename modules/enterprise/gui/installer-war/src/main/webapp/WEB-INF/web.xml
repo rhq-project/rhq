@@ -5,8 +5,8 @@
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
          version="2.5">
 
-  <display-name>JBoss ON Installer</display-name>
-  <description>JBoss Operations Network Installer</description>
+  <display-name>RHQ Server Installer</display-name>
+  <description>RHQ Server Installer</description>
   
    <!-- JSF RI -->
 

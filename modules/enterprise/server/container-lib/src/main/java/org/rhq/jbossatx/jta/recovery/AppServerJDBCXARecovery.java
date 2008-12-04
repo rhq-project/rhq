@@ -160,6 +160,7 @@ public class AppServerJDBCXARecovery implements XAResourceRecovery {
 
                 try {
                     _dataSource = getXADataSource(className, properties);
+                    _supportsIsValidMethod = true; // assume it does; we'll lazily check the first time we try to connect
                 } catch (Exception e) {
                     _dataSource = null;
                     log.error("AppServerJDBCXARecovery.createDataSource got exception during getXADataSource call: "
@@ -203,13 +204,17 @@ public class AppServerJDBCXARecovery implements XAResourceRecovery {
 
             Boolean isConnectionValid;
             try {
-                if (_connection != null) {
+                if (_connection != null && _supportsIsValidMethod) {
                     Connection connection = _connection.getConnection();
                     Method method = connection.getClass().getMethod("isValid", Integer.class);
                     isConnectionValid = (Boolean) method.invoke(connection, Integer.valueOf(5));
                 } else {
                     isConnectionValid = Boolean.FALSE;
                 }
+            } catch (NoSuchMethodException nsme) {
+                isConnectionValid = Boolean.FALSE;
+                _supportsIsValidMethod = false;
+                log.info("XA datasource does not support isValid method - connection will always be recreated");
             } catch (Throwable t) {
                 isConnectionValid = Boolean.FALSE;
                 log.debug("XA connection is invalid - will recreate a new one. Cause: " + t);
@@ -297,6 +302,8 @@ public class AppServerJDBCXARecovery implements XAResourceRecovery {
         }
         return xads;
     }
+
+    private boolean _supportsIsValidMethod;
 
     private XAConnection _connection;
     private XADataSource _dataSource;

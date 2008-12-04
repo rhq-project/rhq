@@ -26,9 +26,10 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
+import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
 public class PrepareAction extends BaseAction {
     /**
@@ -44,11 +45,11 @@ public class PrepareAction extends BaseAction {
         PropertiesForm propsForm = (PropertiesForm) form;
 
         HttpSession session = request.getSession();
-        WebUser user = (WebUser) session.getAttribute(Constants.WEBUSER_SES_ATTR);
+        WebUser user = SessionUtils.getWebUser(session);
+        WebUserPreferences preferences = user.getPreferences();
 
-        Integer range = new Integer(user.getPreferences().getPreference(".dashContent.autoDiscovery.range"));
+        propsForm.setRange(preferences.getAutoDiscoveryRange());
 
-        propsForm.setRange(range);
         return null;
     }
 }

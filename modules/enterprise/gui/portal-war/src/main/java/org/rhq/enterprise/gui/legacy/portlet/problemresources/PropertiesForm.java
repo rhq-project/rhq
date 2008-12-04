@@ -18,25 +18,34 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.problemresources;
 
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.ProblemResourcesPortletPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.DashboardBaseForm;
 
 public class PropertiesForm extends DashboardBaseForm {
-    private int rows;
-    private int hours;
+
+    ProblemResourcesPortletPreferences prefs = new ProblemResourcesPortletPreferences();
 
     public int getHours() {
-        return hours;
+        return this.prefs.hours;
     }
 
     public void setHours(int hours) {
-        this.hours = hours;
+        this.prefs.hours = hours;
     }
 
     public int getRows() {
-        return rows;
+        return this.prefs.range;
     }
 
     public void setRows(int rows) {
-        this.rows = rows;
+        this.prefs.range = rows;
+    }
+
+    public ProblemResourcesPortletPreferences getProblemResourcesPortletPreferences() {
+        return prefs;
+    }
+
+    public void setProblemResourcesPortletPreferences(ProblemResourcesPortletPreferences prefs) {
+        this.prefs = prefs;
     }
 }

@@ -47,6 +47,10 @@ public class StringUtility {
     }
 
     public static Integer[] getIntegerArray(List<String> list) {
+        if (list == null) {
+            return new Integer[0];
+        }
+
         Integer[] results = new Integer[list.size()];
         int i = 0;
         for (String item : list) {

@@ -33,14 +33,13 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.AlertsPortletPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAction extends TilesAction {
     @Override
-    @SuppressWarnings( { "unchecked", "deprecation" })
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         // get the logged in user
@@ -48,20 +47,13 @@ public class ViewAction extends TilesAction {
         WebUserPreferences preferences = user.getPreferences();
 
         // get the user's preferences for the alerts portlet
-        int count = new Integer(preferences.getPreference(".dashContent.criticalalerts.numberOfAlerts")).intValue();
-        int priority = new Integer(preferences.getPreference(".dashContent.criticalalerts.priority")).intValue();
-        long timeRange = new Long(preferences.getPreference(".dashContent.criticalalerts.past")).longValue();
-        boolean all = "all".equals(preferences.getPreference(".dashContent.criticalalerts.selectedOrAll"));
+        AlertsPortletPreferences alertPrefs = preferences.getAlertsPortletPreferences();
 
-        Integer[] resourceIds = null;
-        if (all == false) {
-            resourceIds = DashboardUtils.preferencesAsResourceIds(".dashContent.criticalalerts.resources", user);
-        }
-
-        PageControl pageControl = new PageControl(0, count);
+        PageControl pageControl = new PageControl(0, alertPrefs.count);
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-        PageList<Alert> alerts = alertManager.findAlerts(user.getSubject(), resourceIds, AlertPriority
-            .getByLegacyIndex(priority), timeRange, pageControl);
+        PageList<Alert> alerts = alertManager.findAlerts(user.getSubject(), ("all".equals(alertPrefs.displayAll) ? null
+            : alertPrefs.asArray()), AlertPriority.getByLegacyIndex(alertPrefs.priority), alertPrefs.timeRange,
+            pageControl);
 
         context.putAttribute("criticalAlerts", alerts);
 

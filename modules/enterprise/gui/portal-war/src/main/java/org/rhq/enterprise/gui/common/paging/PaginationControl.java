@@ -20,6 +20,9 @@ package org.rhq.enterprise.gui.common.paging;
 
 import javax.faces.component.UIComponentBase;
 
+/**
+ * @author Joseph Marques
+ */
 public class PaginationControl extends UIComponentBase {
     public static final String COMPONENT_TYPE = "org.jboss.on.PaginationControl";
     public static final String COMPONENT_FAMILY = "org.jboss.on.PaginationControl";

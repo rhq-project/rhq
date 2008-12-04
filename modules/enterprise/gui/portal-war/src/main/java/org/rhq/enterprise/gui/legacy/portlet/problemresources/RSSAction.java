@@ -33,7 +33,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.ProblemResourcesPortletPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.BaseRSSAction;
 import org.rhq.enterprise.gui.legacy.portlet.RSSFeed;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
@@ -53,20 +53,18 @@ public class RSSAction extends BaseRSSAction {
         // Get the problem resources
         Subject subject = getSubject(request);
         WebUser user = new WebUser(subject);
-        WebUserPreferences preferences = user.getPreferences();
+        ProblemResourcesPortletPreferences preferences = user.getPreferences().getProblemResourcesPortletPreferences();
 
-        int rows = Integer.parseInt(preferences.getPreference(PortletConstants.ROWS));
-        int hours = Integer.parseInt(preferences.getPreference(PortletConstants.HOURS));
         long begin = 0; // beginning of time, unless configured otherwise
 
-        if (hours > 0) {
-            List bounds = MonitorUtils.calculateTimeFrame(hours, MonitorUtils.UNIT_HOURS);
+        if (preferences.hours > 0) {
+            List bounds = MonitorUtils.calculateTimeFrame(preferences.hours, MonitorUtils.UNIT_HOURS);
             begin = (Long) bounds.get(0);
         }
 
         MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
         List<ProblemResourceComposite> results;
-        results = problemManager.findProblemResources(subject, begin, rows);
+        results = problemManager.findProblemResources(subject, begin, preferences.range);
 
         if ((results != null) && (results.size() > 0)) {
             for (ProblemResourceComposite problem : results) {

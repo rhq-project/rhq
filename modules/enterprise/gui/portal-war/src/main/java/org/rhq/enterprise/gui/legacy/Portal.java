@@ -22,7 +22,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import org.rhq.core.clientapi.util.StringUtil;
+import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 
 /**
  * A class representing an individual page layout.
@@ -234,7 +236,7 @@ public class Portal {
         Portal portal = createPortal();
         portal.setName(portalName);
 
-        List definitions = new ArrayList();
+        List<String> definitions = new ArrayList<String>();
         definitions.add(portletName);
         portal.addPortlets(definitions);
 
@@ -242,18 +244,16 @@ public class Portal {
     }
 
     public void addPortletsFromString(String stringList, int column) {
-        //convert string to portlets then call addPortlets().
+        String[] portlets = StringUtil.explodeToArray(stringList, DashboardUtils.DASHBOARD_DELIMITER);
 
-        List StringColumn = StringUtil.explode(stringList, "|");
-
-        for (int i = 0; i < StringColumn.size(); i++) {
-            String tile = (String) StringColumn.get(i);
+        for (int i = 0; i < portlets.length; i++) {
+            String tile = portlets[i];
             Portlet portlet = new Portlet(tile);
             if (i == 0) {
                 portlet.setIsFirst();
             }
 
-            if (i == (StringColumn.size() - 1)) {
+            if (i == (portlets.length - 1)) {
                 portlet.setIsLast();
             }
 

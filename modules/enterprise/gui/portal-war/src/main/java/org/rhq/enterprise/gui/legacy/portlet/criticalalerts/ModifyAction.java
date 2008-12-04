@@ -29,6 +29,7 @@ import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.AlertsPortletPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -37,36 +38,31 @@ public class ModifyAction extends BaseAction {
     @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
+
         PropertiesForm pForm = (PropertiesForm) form;
-        WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
-        String forwardStr = RetCodeConstants.SUCCESS_URL;
-
-        if (pForm.isRemoveClicked()) {
-            DashboardUtils.removeResources(pForm.getIds(), ".dashContent.criticalalerts.resources", user);
-            forwardStr = "review";
-        }
-
         ActionForward forward = checkSubmit(request, mapping, form);
 
         if (forward != null) {
             return forward;
         }
 
+        WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
+
+        String forwardStr = RetCodeConstants.SUCCESS_URL;
+        if (pForm.isRemoveClicked()) {
+            AlertsPortletPreferences alertPrefs = preferences.getAlertsPortletPreferences();
+            for (Integer doomedResourceId : pForm.getIds()) {
+                alertPrefs.resourceIds.remove(doomedResourceId);
+            }
+            preferences.setAlertsPortletPreferences(alertPrefs);
+            preferences.persistPreferences();
+            forwardStr = "review";
+        }
+
         if (!pForm.isDisplayOnDash()) {
             DashboardUtils.removePortlet(user, pForm.getPortletName());
         }
-
-        Integer numberOfAlerts = pForm.getNumberOfAlerts();
-        String past = pForm.getPast();
-        String prioritity = pForm.getPriority();
-        String selectedOrAll = pForm.getSelectedOrAll();
-
-        preferences.setPreference(".dashContent.criticalalerts.numberOfAlerts", numberOfAlerts.toString());
-        preferences.setPreference(".dashContent.criticalalerts.past", past);
-        preferences.setPreference(".dashContent.criticalalerts.priority", prioritity);
-        preferences.setPreference(".dashContent.criticalalerts.selectedOrAll", selectedOrAll);
-        preferences.persistPreferences();
 
         request.getSession().removeAttribute(Constants.USERS_SES_PORTAL); // clean-up
 

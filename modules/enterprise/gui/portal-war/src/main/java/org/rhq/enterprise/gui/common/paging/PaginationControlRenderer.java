@@ -19,11 +19,15 @@
 package org.rhq.enterprise.gui.common.paging;
 
 import java.io.IOException;
+
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
 
+/**
+ * @author Joseph Marques
+ */
 public class PaginationControlRenderer extends Renderer {
     @Override
     public void encodeBegin(FacesContext facesContext, UIComponent component) throws IOException {

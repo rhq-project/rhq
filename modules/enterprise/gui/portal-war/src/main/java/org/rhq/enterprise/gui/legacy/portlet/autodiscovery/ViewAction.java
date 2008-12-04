@@ -42,6 +42,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -58,13 +59,14 @@ public class ViewAction extends TilesAction {
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
-        WebUser webUser = SessionUtils.getWebUser(request.getSession());
-        Subject user = webUser.getSubject();
+        WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
+        Subject subject = user.getSubject();
         AIQueueForm queueForm = (AIQueueForm) form;
         PageControl pageControl;
 
         try {
-            int size = Integer.parseInt(webUser.getPreferences().getPreference(".dashContent.autoDiscovery.range"));
+            int size = preferences.getAutoDiscoveryRange();
             if (size < 1) {
                 pageControl = PageControl.getUnlimitedInstance();
             } else {
@@ -72,13 +74,13 @@ public class ViewAction extends TilesAction {
             }
         } catch (Exception e) {
             // should never happen but if somehow there is a bogus number, just fallback to the default
-            pageControl = new PageControl(0, 2);
+            pageControl = new PageControl(0, 10);
         }
 
         Map<Resource, List<Resource>> queuedResources;
 
         try {
-            queuedResources = discoveryBoss.getQueuedPlatformsAndServers(user, pageControl);
+            queuedResources = discoveryBoss.getQueuedPlatformsAndServers(subject, pageControl);
 
             // If the queue is empty, check to see if there are ANY agents defined in inventory.
             if (queuedResources.isEmpty()) {

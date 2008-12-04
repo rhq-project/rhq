@@ -38,13 +38,12 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.RecentlyApprovedPortletPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAction extends TilesAction {
-    private static String RANGE = ".dashContent.recentlyApproved.range";
-    private static String EXPANDED_PLATFORMS = ".dashContent.recentlyApproved.expandedPlatforms";
 
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
@@ -54,11 +53,13 @@ public class ViewAction extends TilesAction {
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
         WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getPreferences();
+        RecentlyApprovedPortletPreferences recentlyApprovedPreferences = preferences
+            .getRecentlyApprovedPortletPreferences();
         Subject subject = user.getSubject();
 
         try {
             // Based on the user preference, generate a timestamp of the oldest resource to display.
-            long range = Long.parseLong(preferences.getPreference(RANGE));
+            long range = recentlyApprovedPreferences.range;
             long ts = System.currentTimeMillis() - (range * 60 * 60 * 1000); // range encoded as hours (UI shows days)
 
             List<RecentlyAddedResourceComposite> platformList;
@@ -73,7 +74,7 @@ public class ViewAction extends TilesAction {
 
             // Set the show servers flag on all expanded platforms.
             // Find the list of expanded platforms for this user and make it available to the jsp.
-            List<String> expandedPlatforms = preferences.getPreferenceAsList(EXPANDED_PLATFORMS);
+            List<String> expandedPlatforms = recentlyApprovedPreferences.expandedPlatforms;
             List<String> removeExpandedPlatforms = new ArrayList<String>();
 
             for (String expandedPlatform : expandedPlatforms) {

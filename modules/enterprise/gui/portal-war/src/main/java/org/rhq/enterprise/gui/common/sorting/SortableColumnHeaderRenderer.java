@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.common.sorting;
 
 import java.io.IOException;
 import java.util.List;
+
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIData;
 import javax.faces.component.UIGraphic;
@@ -27,12 +28,15 @@ import javax.faces.component.UIOutput;
 import javax.faces.component.html.HtmlOutputLabel;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
+
 import com.sun.faces.renderkit.html_basic.CommandLinkRenderer;
+
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 
 public class SortableColumnHeaderRenderer extends CommandLinkRenderer {
@@ -138,9 +142,10 @@ public class SortableColumnHeaderRenderer extends CommandLinkRenderer {
         String viewName = facet.getId();
 
         PageControlView currentView = PageControlView.valueOf(viewName);
-        WebUser webUser = EnterpriseFacesContextUtility.getWebUser();
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        WebUserPreferences preferences = user.getPreferences();
 
-        return webUser.getPageControl(currentView);
+        return preferences.getPageControl(currentView);
     }
 
     private UIData getEnclosingUIData(UIComponent component) {

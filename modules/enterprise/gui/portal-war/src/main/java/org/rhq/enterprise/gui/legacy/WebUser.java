@@ -18,17 +18,10 @@
  */
 package org.rhq.enterprise.gui.legacy;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.util.OrderingField;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.common.paging.PageControlView;
 
 /**
  * A representation of the person currently interacting with the application.
@@ -205,55 +198,6 @@ public class WebUser {
 
     public void setHasPrincipal(boolean hasPrincipal) {
         this.hasPrincipal = hasPrincipal;
-    }
-
-    public PageControl getPageControl(PageControlView view) {
-        if (view == PageControlView.NONE) {
-            return PageControl.getUnlimitedInstance();
-        }
-
-        List<String> pageControlProperties = preferences.getPreferenceAsList(view.toString());
-        if (pageControlProperties.size() == 0) {
-            PageControl defaultControl = null;
-            if (view.getShowAll()) {
-                defaultControl = PageControl.getUnlimitedInstance();
-            } else {
-                defaultControl = new PageControl(0, 15);
-            }
-            setPageControl(view, defaultControl);
-            return defaultControl;
-        } else {
-            int pageSize = Integer.valueOf(pageControlProperties.get(0));
-            PageControl pageControl = new PageControl(0, pageSize);
-
-            int i = 2;
-            while (i < pageControlProperties.size()) {
-                String pageOrdering = pageControlProperties.get(i - 1);
-                String sortColumn = pageControlProperties.get(i);
-
-                pageControl.addDefaultOrderingField(sortColumn, PageOrdering.valueOf(pageOrdering));
-
-                i += 2;
-            }
-            return pageControl;
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public void setPageControl(PageControlView view, PageControl pageControl) {
-        if (view == PageControlView.NONE) {
-            return; // nothing is stored in session for the special NONE view
-        }
-
-        List pageControlProperties = new ArrayList();
-        pageControlProperties.add(pageControl.getPageSize());
-
-        for (OrderingField field : pageControl.getOrderingFieldsAsArray()) {
-            pageControlProperties.add(field.getOrdering().toString());
-            pageControlProperties.add(field.getField());
-        }
-
-        preferences.setPreference(view.toString(), pageControlProperties);
     }
 
     public WebUserPreferences getPreferences() {

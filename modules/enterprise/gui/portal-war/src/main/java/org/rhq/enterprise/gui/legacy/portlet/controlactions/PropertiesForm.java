@@ -18,43 +18,50 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.controlactions;
 
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.OperationPortletPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.DashboardBaseForm;
 
 public class PropertiesForm extends DashboardBaseForm {
-    private Integer lastCompleted;
-    private Integer nextScheduled;
-    private boolean useLastCompleted;
-    private boolean useNextScheduled;
+
+    OperationPortletPreferences prefs = new OperationPortletPreferences();
 
     public Integer getLastCompleted() {
-        return this.lastCompleted;
+        return this.prefs.lastCompleted;
     }
 
     public void setLastCompleted(Integer lastCompleted) {
-        this.lastCompleted = lastCompleted;
+        this.prefs.lastCompleted = lastCompleted;
     }
 
     public Integer getNextScheduled() {
-        return this.nextScheduled;
+        return this.prefs.nextScheduled;
     }
 
     public void setNextScheduled(Integer nextScheduled) {
-        this.nextScheduled = nextScheduled;
+        this.prefs.nextScheduled = nextScheduled;
     }
 
     public boolean isUseLastCompleted() {
-        return this.useLastCompleted;
+        return this.prefs.useLastCompleted;
     }
 
     public void setUseLastCompleted(boolean useLastCompleted) {
-        this.useLastCompleted = useLastCompleted;
+        this.prefs.useLastCompleted = useLastCompleted;
     }
 
     public boolean isUseNextScheduled() {
-        return this.useNextScheduled;
+        return this.prefs.useNextScheduled;
     }
 
     public void setUseNextScheduled(boolean useNextScheduled) {
-        this.useNextScheduled = useNextScheduled;
+        this.prefs.useNextScheduled = useNextScheduled;
+    }
+
+    public OperationPortletPreferences getOperationPortletPreferences() {
+        return this.prefs;
+    }
+
+    public void setOperationPortletPreferences(OperationPortletPreferences prefs) {
+        this.prefs = prefs;
     }
 }

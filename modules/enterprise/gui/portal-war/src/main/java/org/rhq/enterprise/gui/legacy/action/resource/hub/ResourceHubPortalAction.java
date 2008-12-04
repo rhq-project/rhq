@@ -43,9 +43,9 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.Portal;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.taglib.display.StringUtil;
+import org.rhq.enterprise.gui.legacy.util.HubUtils;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
@@ -70,8 +70,6 @@ public class ResourceHubPortalAction extends BaseAction {
     private static final String DEFAULT_RESOURCE_NAME = null;
 
     private static final String HIERARCHY_SEPARATOR = " > ";
-
-    private static final String VIEW_ATTRIB = "Resource Hub View";
 
     private static final ResourceType ALL_RESOURCE_TYPES = null;
 
@@ -98,7 +96,7 @@ public class ResourceHubPortalAction extends BaseAction {
         WebUser user = (WebUser) session.getAttribute(Constants.WEBUSER_SES_ATTR);
 
         // Setup whether we're displaying list view or chart view.
-        initView(hubForm, user);
+        HubUtils.initView(hubForm, user);
 
         // Find resources specified by category and potentially type.
         // Collect query params and replace invalid ones with defaults.
@@ -218,27 +216,6 @@ public class ResourceHubPortalAction extends BaseAction {
     protected LabelValueBean createMenuLabel(HttpServletRequest req, String key, String value) {
         MessageResources messages = getResources(req);
         return new LabelValueBean(messages.getMessage(key), value);
-    }
-
-    private void initView(ResourceHubForm hubForm, WebUser user) throws Exception {
-        HubView prefView;
-        WebUserPreferences preferences = user.getPreferences();
-        try {
-            prefView = HubView.valueOf(preferences.getPreference(VIEW_ATTRIB));
-        } catch (IllegalArgumentException ioe) {
-            prefView = HubView.LIST;
-        }
-
-        String viewStr = hubForm.getView();
-        if (viewStr == null) {
-            hubForm.setView(prefView.name());
-        }
-
-        HubView view = HubView.valueOf(hubForm.getView().toUpperCase());
-        if (!view.equals(prefView)) {
-            preferences.setPreference(VIEW_ATTRIB, view); // Save new preference.
-            preferences.persistPreferences();
-        }
     }
 
     protected void addTypeMenuItems(ResourceHubForm hubForm, List<ResourceType> resourceTypes) {

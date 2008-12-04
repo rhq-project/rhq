@@ -29,7 +29,7 @@ import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.SummaryCountPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.SummaryCountPortletPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -53,7 +53,7 @@ public class ModifyAction extends BaseAction {
             DashboardUtils.removePortlet(user, pForm.getPortletName());
         }
 
-        SummaryCountPreferences counts = pForm.getSummaryCounts();
+        SummaryCountPortletPreferences counts = pForm.getSummaryCounts();
         preferences.setSummaryCounts(counts);
 
         preferences.persistPreferences();

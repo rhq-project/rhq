@@ -28,11 +28,12 @@ import org.apache.struts.action.ActionMapping;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.ProblemResourcesPortletPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
-public class ModifyAction extends BaseAction implements PortletConstants {
+public class ModifyAction extends BaseAction {
     @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
@@ -52,8 +53,8 @@ public class ModifyAction extends BaseAction implements PortletConstants {
             DashboardUtils.removePortlet(user, pForm.getPortletName());
         }
 
-        preferences.setPreference(ROWS, String.valueOf(pForm.getRows()));
-        preferences.setPreference(HOURS, String.valueOf(pForm.getHours()));
+        ProblemResourcesPortletPreferences problemResourcePreferences = pForm.getProblemResourcesPortletPreferences();
+        preferences.setProblemResourcesPortletPreferences(problemResourcePreferences);
 
         preferences.persistPreferences();
 

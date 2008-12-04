@@ -1346,6 +1346,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @SuppressWarnings("unchecked")
     public List<ResourceIdFlyWeight> getFlyWeights(Integer[] resourceIds) {
+        if (resourceIds.length == 0) {
+            return new ArrayList<ResourceIdFlyWeight>();
+        }
+
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS);
         query.setParameter("resourceIds", Arrays.asList(resourceIds));
 

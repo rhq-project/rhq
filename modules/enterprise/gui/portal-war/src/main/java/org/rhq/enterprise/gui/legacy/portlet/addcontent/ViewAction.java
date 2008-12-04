@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.legacy.portlet.addcontent;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,33 +30,35 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
 
-import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.DashboardPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
 public class ViewAction extends TilesAction {
+
     @Override
+    @SuppressWarnings("unchecked")
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
-        List portlets = (List) context.getAttribute("portlets");
+        List<String> portlets = (List<String>) context.getAttribute("portlets");
         WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getPreferences();
+        DashboardPreferences dashboardPreferences = preferences.getDashboardPreferences();
 
-        ArrayList availablePortlets = new ArrayList();
-        String userPortlets = new String();
+        List<String> availablePortlets = new ArrayList<String>();
+        String userPortlets = null;
 
         Boolean wide = new Boolean((String) context.getAttribute("wide"));
 
         if (wide.booleanValue()) {
-            userPortlets = preferences.getPreference(Constants.USER_PORTLETS_SECOND);
+            userPortlets = dashboardPreferences.rightColumnPortletNames;
         } else {
-            userPortlets = preferences.getPreference(Constants.USER_PORTLETS_FIRST);
+            userPortlets = dashboardPreferences.leftColumnPortletNames;
         }
 
-        for (Iterator i = portlets.iterator(); i.hasNext();) {
-            String portlet = (String) i.next();
-
+        for (String portlet : portlets) {
+            // make it available only if it's not already on the dashboard
             if (userPortlets.indexOf(portlet) == -1) {
                 availablePortlets.add(portlet);
             }

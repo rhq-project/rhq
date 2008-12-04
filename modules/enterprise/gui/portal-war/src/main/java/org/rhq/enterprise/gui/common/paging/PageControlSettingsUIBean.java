@@ -20,6 +20,9 @@ package org.rhq.enterprise.gui.common.paging;
 
 import javax.faces.model.SelectItem;
 
+/**
+ * @author Joseph Marques
+ */
 public class PageControlSettingsUIBean {
     private SelectItem[] pageSizes = new SelectItem[] { new SelectItem("15", "15"), new SelectItem("30", "30"),
         new SelectItem("45", "45") };

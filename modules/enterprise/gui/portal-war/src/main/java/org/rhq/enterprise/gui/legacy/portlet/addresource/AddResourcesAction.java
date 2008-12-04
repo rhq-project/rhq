@@ -35,6 +35,7 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
+import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
@@ -79,9 +80,13 @@ public class AddResourcesAction extends BaseAction {
             Constants.PENDING_RESOURCES_SES_ATTR);
 
         StringBuffer resourcesAsString = new StringBuffer();
+        int count = 0;
         for (String pendingId : pendingResourceIds) {
-            resourcesAsString.append("|");
+            if (count != 0) {
+                resourcesAsString.append(DashboardUtils.DASHBOARD_DELIMITER);
+            }
             resourcesAsString.append(pendingId);
+            count++;
         }
 
         SessionUtils.removeList(session, Constants.PENDING_RESOURCES_SES_ATTR);
@@ -89,9 +94,7 @@ public class AddResourcesAction extends BaseAction {
         RequestUtils.setConfirmation(request, "admin.user.confirm.AddResource");
 
         preferences.setPreference(addForm.getKey(), resourcesAsString);
-        LogFactory.getLog("user.preferences").trace(
-            "Invoking setUserPrefs" + " in " + getClass().getSimpleName() + " for " + user.getId() + " at "
-                + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
+
         preferences.persistPreferences();
 
         return returnSuccess(request, mapping);

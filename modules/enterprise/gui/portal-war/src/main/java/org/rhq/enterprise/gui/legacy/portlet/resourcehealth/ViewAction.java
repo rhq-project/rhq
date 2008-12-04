@@ -30,10 +30,9 @@ import org.apache.struts.tiles.actions.TilesAction;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.FavoriteResourcePortletPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -46,31 +45,19 @@ public class ViewAction extends TilesAction {
         WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getPreferences();
         PageControl pc = WebUtility.getPageControl(request);
-        String key = Constants.USERPREF_KEY_FAVORITE_RESOURCES;
 
-        PageList<ResourceHealthComposite> list;
-        try {
-            list = getStuff(key, user, pc);
-        } catch (Exception e) {
-            DashboardUtils.verifyResources(key, user);
-            list = getStuff(key, user, pc);
-        }
+        FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
+            .getFavoriteResourcePortletPreferences();
 
+        ResourceManagerLocal manager = LookupUtil.getResourceManager();
+        PageList<ResourceHealthComposite> list = manager.getResourceHealth(user.getSubject(),
+            favoriteResourcePreferences.asArray(), pc);
         context.putAttribute("resourceHealth", list);
 
-        Boolean availability = new Boolean(preferences.getPreference(".dashContent.resourcehealth.availability"));
-        Boolean alerts = new Boolean(preferences.getPreference(".dashContent.resourcehealth.alerts"));
-
-        context.putAttribute("availability", availability);
-        context.putAttribute("alerts", alerts);
+        context.putAttribute("availability", favoriteResourcePreferences.showAvailability);
+        context.putAttribute("alerts", favoriteResourcePreferences.showAlerts);
 
         return null;
     }
 
-    private PageList<ResourceHealthComposite> getStuff(String key, WebUser user, PageControl pc) throws Exception {
-        Integer[] resources = DashboardUtils.preferencesAsResourceIds(key, user);
-        ResourceManagerLocal manager = LookupUtil.getResourceManager();
-        PageList<ResourceHealthComposite> results = manager.getResourceHealth(user.getSubject(), resources, pc);
-        return results;
-    }
 }

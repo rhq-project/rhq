@@ -27,6 +27,7 @@ import org.apache.struts.action.ActionMapping;
 
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.OperationPortletPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
@@ -39,17 +40,8 @@ public class PrepareAction extends BaseAction {
         WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getPreferences();
 
-        Integer lastCompleted = new Integer(preferences.getPreference(".dashContent.operations.lastCompleted"));
-        Integer nextScheduled = new Integer(preferences.getPreference(".dashContent.operations.nextScheduled"));
-        Boolean useLastCompleted = Boolean.valueOf(preferences
-            .getPreference(".dashContent.operations.useLastCompleted"));
-        Boolean useNextScheduled = Boolean.valueOf(preferences
-            .getPreference(".dashContent.operations.useNextScheduled"));
-
-        pForm.setLastCompleted(lastCompleted);
-        pForm.setNextScheduled(nextScheduled);
-        pForm.setUseLastCompleted(useLastCompleted.booleanValue());
-        pForm.setUseNextScheduled(useNextScheduled.booleanValue());
+        OperationPortletPreferences prefs = preferences.getOperationPortletPreferences();
+        pForm.setOperationPortletPreferences(prefs);
 
         return null;
     }

@@ -29,9 +29,10 @@ import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.ProblemResourcesPortletPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
-public class PrepareAction extends TilesAction implements PortletConstants {
+public class PrepareAction extends TilesAction {
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -42,11 +43,9 @@ public class PrepareAction extends TilesAction implements PortletConstants {
 
         pForm.setDisplayOnDash(true);
 
-        int rows = Integer.parseInt(preferences.getPreference(ROWS));
-        pForm.setRows(rows);
-
-        int hours = Integer.parseInt(preferences.getPreference(HOURS));
-        pForm.setHours(hours);
+        ProblemResourcesPortletPreferences problemResourcePreferences = preferences
+            .getProblemResourcesPortletPreferences();
+        pForm.setProblemResourcesPortletPreferences(problemResourcePreferences);
 
         return null;
     }

@@ -53,6 +53,8 @@ import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.DefaultConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.SavedChartsPortletPreferences;
 import org.rhq.enterprise.gui.legacy.beans.ChartDataBean;
 import org.rhq.enterprise.gui.legacy.beans.ChartedMetricBean;
 import org.rhq.enterprise.gui.legacy.beans.NumericMetricDataPoint;
@@ -288,6 +290,8 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
             return removeBadDashboardLink(request);
         }
 
+        request.setAttribute("canSaveChart", "true");
+
         _setupPageData(request, chartForm, allResources, subject);
         _setupBaselineExpectedRange(request, chartForm, allResources.get(0), subject);
 
@@ -309,8 +313,10 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         // This was probably a bad favorites chart
         String query = request.getQueryString();
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        ChartUtility chartUtility = new ChartUtility(user);
-        chartUtility.remove(query);
+        WebUserPreferences preferences = user.getPreferences();
+        SavedChartsPortletPreferences savedCharts = preferences.getSavedChartsPortletPreferences();
+        savedCharts.removeByURL(query);
+        preferences.persistPreferences();
         return null;
     }
 

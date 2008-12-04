@@ -18,12 +18,12 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.summaryCounts;
 
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.SummaryCountPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.SummaryCountPortletPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.DashboardBaseForm;
 
 public class PropertiesForm extends DashboardBaseForm {
 
-    SummaryCountPreferences counts = new SummaryCountPreferences();
+    SummaryCountPortletPreferences counts = new SummaryCountPortletPreferences();
 
     public boolean isPlatform() {
         return this.counts.showPlatforms;
@@ -73,11 +73,11 @@ public class PropertiesForm extends DashboardBaseForm {
         this.counts.showGroupDefinitions = groupDefinition;
     }
 
-    public SummaryCountPreferences getSummaryCounts() {
+    public SummaryCountPortletPreferences getSummaryCounts() {
         return this.counts;
     }
 
-    public void setSummaryCounts(SummaryCountPreferences counts) {
+    public void setSummaryCounts(SummaryCountPortletPreferences counts) {
         this.counts = counts;
     }
 }

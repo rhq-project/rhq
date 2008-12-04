@@ -29,8 +29,12 @@ import javax.el.PropertyNotWritableException;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 
+/**
+ * @author Joseph Marques
+ */
 public class PageControlELResolver extends ELResolver {
     @Override
     public Class<?> getCommonPropertyType(ELContext context, Object base) {
@@ -97,10 +101,10 @@ public class PageControlELResolver extends ELResolver {
             // allows simple mispellings for developer productivity
             if ("pageSize".equalsIgnoreCase(methodName)) {
                 // find the user for this session-based operation
-                WebUser webUser = EnterpriseFacesContextUtility.getWebUser();
-
+                WebUser user = EnterpriseFacesContextUtility.getWebUser();
+                WebUserPreferences preferences = user.getPreferences();
                 // get it
-                result = webUser.getPageControl(view).getPageSize();
+                result = preferences.getPageControl(view).getPageSize();
 
                 // don't let other resolvers touch this
                 context.setPropertyResolved(true);
@@ -145,15 +149,16 @@ public class PageControlELResolver extends ELResolver {
                      */
 
                     // find the user for this session-based operation
-                    WebUser webUser = EnterpriseFacesContextUtility.getWebUser();
+                    WebUser user = EnterpriseFacesContextUtility.getWebUser();
+                    WebUserPreferences preferences = user.getPreferences();
 
                     // update it
-                    PageControl pc = webUser.getPageControl(view);
+                    PageControl pc = preferences.getPageControl(view);
 
                     int pageSize = (Integer) value;
                     pc.setPageSize(pageSize);
 
-                    webUser.setPageControl(view, pc);
+                    preferences.setPageControl(view, pc);
                 }
 
                 // don't let other resolvers touch this

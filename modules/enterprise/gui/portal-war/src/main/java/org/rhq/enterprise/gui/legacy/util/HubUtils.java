@@ -25,6 +25,7 @@ import org.apache.struts.util.LabelValueBean;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.legacy.HubConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.resource.hub.HubForm;
 import org.rhq.enterprise.gui.legacy.action.resource.hub.HubView;
 import org.rhq.enterprise.gui.legacy.taglib.display.StringUtil;
@@ -33,10 +34,12 @@ public class HubUtils {
     public static final String BLANK = "";
 
     public static void initView(HubForm hubForm, WebUser user) throws Exception {
+        WebUserPreferences preferences = user.getPreferences();
+
         HubView prefView;
         try {
-            prefView = HubView.valueOf(user.getPreferences().getPreference(HubConstants.VIEW_ATTRIB).toUpperCase());
-        } catch (IllegalArgumentException iae) {
+            prefView = HubView.valueOf(preferences.getResourceBrowserViewMode());
+        } catch (IllegalArgumentException ioe) {
             prefView = HubView.LIST;
         }
 
@@ -46,12 +49,9 @@ public class HubUtils {
         }
 
         HubView view = HubView.valueOf(hubForm.getView().toUpperCase());
-        if (!view.equals(prefView)) {
-            user.getPreferences().setPreference(HubConstants.VIEW_ATTRIB, view); // Save new preference.
-
-            // AuthzBoss authzBoss = ContextUtils.getAuthzBoss(ctx);
-            // authzBoss.setUserPrefs(user.getSessionId(), user.getId(),
-            // user.getPreferences());
+        if (view != prefView) {
+            preferences.setResourceBrowserViewMode(view.name()); // Save new preference.
+            preferences.persistPreferences();
         }
     }
 

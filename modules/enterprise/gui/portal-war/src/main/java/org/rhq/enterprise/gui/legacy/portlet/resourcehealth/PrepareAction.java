@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.resourcehealth;
 
-import java.util.List;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -31,12 +29,14 @@ import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.FavoriteResourcePortletPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 public class PrepareAction extends TilesAction {
     @Override
@@ -47,23 +47,20 @@ public class PrepareAction extends TilesAction {
         WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getPreferences();
 
-        //this guarantees that the session doesn't contain any resources it shouldn't
-        String key = Constants.USERPREF_KEY_FAVORITE_RESOURCES;
-        DashboardUtils.verifyResources(key, user);
-        SessionUtils.removeList(request.getSession(), Constants.PENDING_RESOURCES_SES_ATTR); // what is this?
+        // start a new flow, overriding an previous work that the user might have abandoned
+        SessionUtils.removeList(request.getSession(), Constants.PENDING_RESOURCES_SES_ATTR);
+
         pForm.setDisplayOnDash(true);
 
-        boolean availability = Boolean.parseBoolean(preferences
-            .getPreference(".dashContent.resourcehealth.availability"));
-        boolean alerts = Boolean.parseBoolean(preferences.getPreference(".dashContent.resourcehealth.alerts"));
-        pForm.setAvailability(availability);
-        pForm.setAlerts(alerts);
+        FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
+            .getFavoriteResourcePortletPreferences();
+        pForm.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
 
-        Integer[] resourceIds = DashboardUtils.preferencesAsResourceIds(key, user); // all the resources
-        List<Resource> resources = DashboardUtils.preferencesAsResources(key, user, pc); // paged, not all resources
+        PageList<Resource> resources = LookupUtil.getResourceManager().getResourceByIds(user.getSubject(),
+            favoriteResourcePreferences.asArray(), false, pc);
 
         request.setAttribute("resourceHealthList", resources);
-        request.setAttribute("resourceHealthTotalSize", resourceIds.length);
+        request.setAttribute("resourceHealthTotalSize", resources.getTotalSize());
 
         return null;
     }

@@ -18,50 +18,50 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.criticalalerts;
 
+import java.util.Arrays;
+
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.AlertsPortletPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.DashboardBaseForm;
 
 public class PropertiesForm extends DashboardBaseForm {
-    private Integer numberOfAlerts;
-    private String priority;
-    private String past;
-    private String selectedOrAll;
+
+    private AlertsPortletPreferences prefs = new AlertsPortletPreferences();
     private String key;
-    private String[] ids;
 
     public PropertiesForm() {
         super();
     }
 
     public Integer getNumberOfAlerts() {
-        return this.numberOfAlerts;
+        return this.prefs.count;
     }
 
     public void setNumberOfAlerts(Integer numberOfAlerts) {
-        this.numberOfAlerts = numberOfAlerts;
+        this.prefs.count = numberOfAlerts;
     }
 
-    public String getPriority() {
-        return this.priority;
+    public Integer getPriority() {
+        return this.prefs.priority;
     }
 
-    public void setPriority(String priority) {
-        this.priority = priority;
+    public void setPriority(Integer priority) {
+        this.prefs.priority = priority;
     }
 
-    public String getPast() {
-        return this.past;
+    public Long getPast() {
+        return this.prefs.timeRange;
     }
 
-    public void setPast(String past) {
-        this.past = past;
+    public void setPast(Long past) {
+        this.prefs.timeRange = past;
     }
 
     public String getSelectedOrAll() {
-        return this.selectedOrAll;
+        return this.prefs.displayAll;
     }
 
     public void setSelectedOrAll(String selectedOrAll) {
-        this.selectedOrAll = selectedOrAll;
+        this.prefs.displayAll = selectedOrAll;
     }
 
     public String getKey() {
@@ -72,11 +72,19 @@ public class PropertiesForm extends DashboardBaseForm {
         this.key = key;
     }
 
-    public String[] getIds() {
-        return this.ids;
+    public Integer[] getIds() {
+        return this.prefs.asArray();
     }
 
-    public void setIds(String[] ids) {
-        this.ids = ids;
+    public void setIds(Integer[] ids) {
+        this.prefs.resourceIds = Arrays.asList(ids);
+    }
+
+    public AlertsPortletPreferences getAlertsPortletPreferences() {
+        return prefs;
+    }
+
+    public void setAlertsPortletPreferences(AlertsPortletPreferences prefs) {
+        this.prefs = prefs;
     }
 }

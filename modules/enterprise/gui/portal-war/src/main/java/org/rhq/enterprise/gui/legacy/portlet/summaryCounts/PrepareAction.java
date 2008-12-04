@@ -27,7 +27,7 @@ import org.apache.struts.action.ActionMapping;
 
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.SummaryCountPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.SummaryCountPortletPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
@@ -39,7 +39,7 @@ public class PrepareAction extends BaseAction {
         WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getPreferences();
 
-        SummaryCountPreferences counts = preferences.getSummaryCounts();
+        SummaryCountPortletPreferences counts = preferences.getSummaryCounts();
         pForm.setSummaryCounts(counts);
 
         return null;

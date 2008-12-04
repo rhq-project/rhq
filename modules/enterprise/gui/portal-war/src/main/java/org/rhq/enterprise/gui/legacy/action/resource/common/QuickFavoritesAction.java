@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -27,12 +28,11 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.FavoriteResourcePortletPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
-import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 
@@ -42,13 +42,14 @@ public class QuickFavoritesAction extends BaseAction {
         HttpServletResponse response) throws Exception {
         WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getPreferences();
-        int id = WebUtility.getResourceId(request);
-        Boolean isFavorite = QuickFavoritesUtil.isFavorite(user, id);
+
+        int resourceId = WebUtility.getResourceId(request);
+        Boolean isFavorite = QuickFavoritesUtil.isFavorite(user, resourceId);
+
+        Map<String, Object> forwardParams = new HashMap<String, Object>(1);
+        forwardParams.put(ParamConstants.RESOURCE_ID_PARAM, resourceId);
+
         String mode = request.getParameter("mode");
-
-        HashMap forwardParams = new HashMap(1);
-        forwardParams.put(ParamConstants.RESOURCE_ID_PARAM, id);
-
         if (mode == null) {
             return returnFailure(request, mapping, forwardParams);
         }
@@ -60,11 +61,10 @@ public class QuickFavoritesAction extends BaseAction {
             }
 
             // Add to favorites and save
-            String favorites;
-            favorites = preferences.getPreferences().getSimple(Constants.USERPREF_KEY_FAVORITE_RESOURCES)
-                .getStringValue();
-            favorites += DashboardUtils.DASHBOARD_DELIMITER + id;
-            preferences.setPreference(Constants.USERPREF_KEY_FAVORITE_RESOURCES, favorites);
+            FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
+                .getFavoriteResourcePortletPreferences();
+            favoriteResourcePreferences.resourceIds.add(resourceId);
+            preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
         } else if (mode.equals("remove")) {
             if (!isFavorite.booleanValue()) {
                 // not already a favorite - should not happen but just return, it's already gone
@@ -72,8 +72,10 @@ public class QuickFavoritesAction extends BaseAction {
             }
 
             // Remove from favorites and save
-            DashboardUtils.removeResources(new String[] { String.valueOf(id) },
-                Constants.USERPREF_KEY_FAVORITE_RESOURCES, user);
+            FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
+                .getFavoriteResourcePortletPreferences();
+            favoriteResourcePreferences.resourceIds.remove(resourceId);
+            preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
         } else {
             return returnFailure(request, mapping, forwardParams);
         }

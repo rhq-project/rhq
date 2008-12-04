@@ -79,6 +79,9 @@ import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationPend
 import org.rhq.enterprise.gui.operation.history.resource.ResourceOperationCompletedHistoryUIBean;
 import org.rhq.enterprise.gui.operation.history.resource.ResourceOperationPendingHistoryUIBean;
 
+/**
+ * @author Joseph Marques
+ */
 public enum PageControlView {
     // Use this across any view that doesn't want paging of tabular data
 

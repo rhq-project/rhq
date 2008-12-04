@@ -39,13 +39,14 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.ProblemResourcesPortletPreferences;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-public class ViewAction extends TilesAction implements PortletConstants {
-    private static final Log LOG = LogFactory.getLog(ViewAction.class.getName());
+public class ViewAction extends TilesAction {
+    private static final Log LOG = LogFactory.getLog(ViewAction.class);
 
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
@@ -57,22 +58,15 @@ public class ViewAction extends TilesAction implements PortletConstants {
             Subject subject = user.getSubject();
             WebUserPreferences preferences = user.getPreferences();
 
-            int hours = 8;
-            int rows = 10;
-            try {
-                rows = Integer.parseInt(preferences.getPreference(ROWS));
-                hours = Integer.parseInt(preferences.getPreference(HOURS));
-            } catch (NumberFormatException e) {
-                preferences.setPreference(ROWS, String.valueOf(rows));
-                preferences.setPreference(HOURS, String.valueOf(hours));
-                preferences.persistPreferences();
-            }
+            ProblemResourcesPortletPreferences problemResourcePreferences = preferences
+                .getProblemResourcesPortletPreferences();
 
             String timeRange;
             long begin = 0;
 
-            if (hours > 0) {
-                List bounds = MonitorUtils.calculateTimeFrame(hours, MonitorUtils.UNIT_HOURS);
+            if (problemResourcePreferences.hours > 0) {
+                List bounds = MonitorUtils
+                    .calculateTimeFrame(problemResourcePreferences.hours, MonitorUtils.UNIT_HOURS);
                 begin = (Long) bounds.get(0);
                 long end = (Long) bounds.get(1);
 
@@ -89,9 +83,10 @@ public class ViewAction extends TilesAction implements PortletConstants {
             try {
                 MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
                 long start = System.currentTimeMillis();
-                list = problemManager.findProblemResources(subject, begin, rows);
+                list = problemManager.findProblemResources(subject, begin, problemResourcePreferences.range);
                 long end = System.currentTimeMillis();
-                LOG.debug("Performance: Took [" + (end - start) + "]ms to find " + rows + " problem resources");
+                LOG.debug("Performance: Took [" + (end - start) + "]ms to find " + problemResourcePreferences.range
+                    + " problem resources");
             } catch (Exception e) {
                 throw new ServletException("Error finding problem resources", e);
             }

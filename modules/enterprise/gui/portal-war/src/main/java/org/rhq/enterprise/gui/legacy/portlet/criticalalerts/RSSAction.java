@@ -41,10 +41,9 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.AlertsPortletPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.BaseRSSAction;
 import org.rhq.enterprise.gui.legacy.portlet.RSSFeed;
-import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -54,6 +53,8 @@ public class RSSAction extends BaseRSSAction {
         HttpServletResponse response) throws Exception {
         RSSFeed feed = getNewRSSFeed(request);
 
+        AlertManagerLocal alertManager = LookupUtil.getAlertManager();
+
         // Set title
         MessageResources res = getResources(request);
         feed.setTitle(res.getMessage("dash.home.CriticalAlerts"));
@@ -61,22 +62,12 @@ public class RSSAction extends BaseRSSAction {
         // Get the alerts
         Subject subject = getSubject(request);
         WebUser user = new WebUser(subject);
-        WebUserPreferences preferences = user.getPreferences();
+        AlertsPortletPreferences prefs = user.getPreferences().getAlertsPortletPreferences();
 
-        int count = Integer.parseInt(preferences.getPreference(".dashContent.criticalalerts.numberOfAlerts"));
-        int priority = Integer.parseInt(preferences.getPreference(".dashContent.criticalalerts.priority"));
-        long timeRange = Long.parseLong(preferences.getPreference(".dashContent.criticalalerts.past"));
-        boolean all = "all".equals(preferences.getPreference(".dashContent.criticalalerts.selectedOrAll"));
+        PageControl pageControl = new PageControl(0, prefs.count);
 
-        Integer[] resourceIds = null;
-        if (all == false) {
-            resourceIds = DashboardUtils.preferencesAsResourceIds(".dashContent.criticalalerts.resources", user);
-        }
-
-        PageControl pageControl = new PageControl(0, count);
-        AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-        PageList<Alert> alerts = alertManager.findAlerts(user.getSubject(), resourceIds, AlertPriority
-            .getByLegacyIndex(priority), timeRange, pageControl);
+        PageList<Alert> alerts = alertManager.findAlerts(subject, ("all".equals(prefs.displayAll) ? null : prefs
+            .asArray()), AlertPriority.getByLegacyIndex(prefs.priority), prefs.timeRange, pageControl);
 
         if ((alerts != null) && (alerts.size() > 0)) {
             for (Alert alert : alerts) {

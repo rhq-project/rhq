@@ -22,7 +22,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -53,11 +52,9 @@ public class ModifyAction extends BaseAction {
             DashboardUtils.removePortlet(user, propsForm.getPortletName());
         }
 
-        preferences.setPreference(".dashContent.autoDiscovery.range", range);
-        LogFactory.getLog("user.preferences").trace(
-            "Invoking setUserPrefs" + " in autoDisc/ModifyAction " + " for " + user.getId() + " at "
-                + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
+        preferences.setAutoDiscoveryRange(Integer.parseInt(range));
         preferences.persistPreferences();
+
         session.removeAttribute(Constants.USERS_SES_PORTAL);
 
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);

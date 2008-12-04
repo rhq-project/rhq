@@ -19,7 +19,10 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.struts.action.ActionMapping;
+
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 
 /**
  * The form object which captures the view name used for the indicator charts
@@ -42,6 +45,8 @@ public class IndicatorViewsForm extends MetricDisplayRangeForm {
     }
 
     public String getView() {
+        if (view == null || "".equals(view))
+            view = WebUserPreferences.PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT;
         return view;
     }
 

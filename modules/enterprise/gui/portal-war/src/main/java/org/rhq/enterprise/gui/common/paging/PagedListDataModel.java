@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.common.paging;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -42,6 +43,7 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
  * <p>Adapted from - http://wiki.apache.org/myfaces/WorkingWithLargeTables</p>
  *
  * @param <T> the data type to be stored in the dataset
+ * @author Joseph Marques
  */
 public abstract class PagedListDataModel<T> extends DataModel {
     private int currentRowIndex;

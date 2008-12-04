@@ -22,8 +22,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -32,6 +30,7 @@ import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.RecentlyApprovedPortletPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -40,13 +39,13 @@ public class ModifyAction extends BaseAction {
     @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
-        Log log = LogFactory.getLog(ModifyAction.class.getName());
 
         PropertiesForm pForm = (PropertiesForm) form;
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
         WebUserPreferences preferences = user.getPreferences();
-        String range = pForm.getRange().toString();
+        RecentlyApprovedPortletPreferences recentlyApprovedPreferences = preferences
+            .getRecentlyApprovedPortletPreferences();
 
         ActionForward forward = checkSubmit(request, mapping, form);
 
@@ -58,13 +57,10 @@ public class ModifyAction extends BaseAction {
             DashboardUtils.removePortlet(user, pForm.getPortletName());
         }
 
-        preferences.setPreference(".dashContent.recentlyApproved.range", range);
-
-        LogFactory.getLog("user.preferences").trace(
-            "Invoking setUserPrefs" + " in recentlyApproved/ModifyAction " + " for " + user.getId() + " at "
-                + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
-
+        recentlyApprovedPreferences.range = pForm.getRange();
+        preferences.setRecentlyApprovedPortletPreferences(recentlyApprovedPreferences);
         preferences.persistPreferences();
+
         session.removeAttribute(Constants.USERS_SES_PORTAL);
 
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);

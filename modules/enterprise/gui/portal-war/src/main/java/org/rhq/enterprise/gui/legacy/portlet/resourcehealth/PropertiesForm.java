@@ -18,34 +18,44 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.resourcehealth;
 
+import java.util.Arrays;
+
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.FavoriteResourcePortletPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.DashboardBaseForm;
 
 public class PropertiesForm extends DashboardBaseForm {
-    private boolean availability;
-    private boolean alerts;
-    private String[] ids;
+
+    FavoriteResourcePortletPreferences prefs = new FavoriteResourcePortletPreferences();
 
     public boolean isAvailability() {
-        return this.availability;
+        return this.prefs.showAvailability;
     }
 
     public void setAvailability(boolean availability) {
-        this.availability = availability;
+        this.prefs.showAvailability = availability;
     }
 
     public boolean isAlerts() {
-        return this.alerts;
+        return this.prefs.showAlerts;
     }
 
     public void setAlerts(boolean flag) {
-        this.alerts = flag;
+        this.prefs.showAlerts = flag;
     }
 
-    public String[] getIds() {
-        return this.ids;
+    public Integer[] getIds() {
+        return this.prefs.asArray();
     }
 
-    public void setIds(String[] ids) {
-        this.ids = ids;
+    public void setIds(Integer[] ids) {
+        this.prefs.resourceIds = Arrays.asList(ids);
+    }
+
+    public FavoriteResourcePortletPreferences getFavoriteResourcePortletPreferences() {
+        return prefs;
+    }
+
+    public void setFavoriteResourcePortletPreferences(FavoriteResourcePortletPreferences prefs) {
+        this.prefs = prefs;
     }
 }

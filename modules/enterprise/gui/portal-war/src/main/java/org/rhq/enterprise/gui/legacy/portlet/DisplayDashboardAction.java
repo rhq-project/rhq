@@ -18,13 +18,10 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -35,21 +32,19 @@ import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.Portal;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.DashboardPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.uibeans.UIConstants;
 
-/**
- */
 public class DisplayDashboardAction extends TilesAction {
-    private static final Log log = LogFactory.getLog(DisplayDashboardAction.class.getName());
 
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
-        ServletContext ctx = getServlet().getServletContext();
 
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
         WebUserPreferences preferences = user.getPreferences();
+        DashboardPreferences dashboardPreferences = preferences.getDashboardPreferences();
 
         int refreshPeriod = preferences.getPageRefreshPeriod();
         if (UIConstants.DONT_REFRESH_PAGE != refreshPeriod) {
@@ -63,10 +58,10 @@ public class DisplayDashboardAction extends TilesAction {
             portal.setColumns(2);
 
             //construct from user preferences.
-            portal.addPortletsFromString(preferences.getPreference(Constants.USER_PORTLETS_FIRST), 1);
+            portal.addPortletsFromString(dashboardPreferences.leftColumnPortletNames, 1);
             portal.addPortletsFromString(".dashContent.addContent.narrow", 1);
 
-            portal.addPortletsFromString(preferences.getPreference(Constants.USER_PORTLETS_SECOND), 2);
+            portal.addPortletsFromString(dashboardPreferences.rightColumnPortletNames, 2);
             portal.addPortletsFromString(".dashContent.addContent.wide", 2);
 
             session.setAttribute(Constants.USERS_SES_PORTAL, portal);

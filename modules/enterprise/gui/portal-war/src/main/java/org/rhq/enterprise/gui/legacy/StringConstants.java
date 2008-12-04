@@ -18,17 +18,11 @@
  */
 package org.rhq.enterprise.gui.legacy;
 
-import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 
 /**
  * Simple string constants
  */
 public interface StringConstants {
-    /**
-     * @deprecated use {@link DashboardUtils#DASHBOARD_DELIMITER} instead
-     */
-    @Deprecated
-    public static final String DASHBOARD_DELIMITER = DashboardUtils.DASHBOARD_DELIMITER;
 
     public static final String GUIDE_WINDOW_PROPS = "height=500,width=350,menubar=no,toolbar=no,status=no,resizable=yes,scrollbars=yes";
 

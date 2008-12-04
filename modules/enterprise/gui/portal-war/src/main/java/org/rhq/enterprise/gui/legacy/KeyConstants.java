@@ -28,22 +28,6 @@ public interface KeyConstants {
      * ones defined here are still hardcoded in the JSPs, because it's often difficult to reference constants in the
      * contexts in which they are used.
      */
-    public static final String USERPREF_KEY_FAVORITE_RESOURCES = ".dashContent.resourcehealth.resources";
-
-    /**
-     * The key that holds the user's chart queries
-     */
-    public static final String USER_DASHBOARD_CHARTS = ".dashContent.charts";
-
-    /**
-     * the the user preferences key that holds the users portal second column choices.
-     */
-    public static final String USER_PORTLETS_SECOND = ".dashcontent.portal.portlets.second";
-
-    /**
-     * the the user preferences key that holds the users portal first column portlet choices.
-     */
-    public static final String USER_PORTLETS_FIRST = ".dashcontent.portal.portlets.first";
 
     public static final String HELP_BASE_URL_KEY = "helpBaseURL";
 
@@ -159,10 +143,4 @@ public interface KeyConstants {
      */
     public static final String MOCK_MEASUREMENT_BOSS = "net.hyperic.hq.system.mockMeasurementBoss";
 
-    /**
-     * key values for indicator views
-     */
-    public static final String INDICATOR_VIEWS = "monitor.visibility.indicator.views.";
-
-    public static final String DEFAULT_INDICATOR_VIEW = "resource.common.monitor.visibility.defaultview";
 }

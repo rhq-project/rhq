@@ -29,7 +29,7 @@ import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.SummaryCountPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.SummaryCountPortletPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.resource.InventorySummary;
 import org.rhq.enterprise.server.resource.ResourceBossLocal;
@@ -46,7 +46,7 @@ public class ViewAction extends TilesAction {
         InventorySummary summary = resourceBoss.getInventorySummary(user.getSubject());
         context.putAttribute("summary", summary);
 
-        SummaryCountPreferences counts = preferences.getSummaryCounts();
+        SummaryCountPortletPreferences counts = preferences.getSummaryCounts();
 
         //get all the displayed subtypes
         context.putAttribute("platform", Boolean.valueOf(counts.showPlatforms));

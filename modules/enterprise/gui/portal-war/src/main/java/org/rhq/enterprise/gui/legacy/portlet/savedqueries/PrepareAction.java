@@ -18,20 +18,23 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.savedqueries;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
-import org.rhq.core.clientapi.util.StringUtil;
-import org.rhq.enterprise.gui.legacy.Constants;
+
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ChartUtility;
-import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.SavedChartsPortletPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
+import org.rhq.enterprise.server.alert.engine.internal.Tuple;
 
 public class PrepareAction extends TilesAction {
     @Override
@@ -39,19 +42,14 @@ public class PrepareAction extends TilesAction {
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         PropertiesForm pForm = (PropertiesForm) form;
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
+        SavedChartsPortletPreferences savedCharts = preferences.getSavedChartsPortletPreferences();
 
-        ChartUtility chartUtility = new ChartUtility(user);
         pForm.setDisplayOnDash(true);
 
-        ArrayList<String> chartList = chartUtility.getAllChartsAsList();
-
-        HashMap charts = new HashMap();
-
-        for (Iterator i = chartList.iterator(); i.hasNext();) {
-            StringTokenizer st = new StringTokenizer((String) i.next(), ",");
-            if (st.countTokens() >= 2) {
-                charts.put(st.nextToken(), st.nextToken());
-            }
+        Map<String, String> charts = new HashMap<String, String>();
+        for (Tuple<String, String> chart : savedCharts.chartList) {
+            charts.put(chart.lefty, chart.righty);
         }
 
         request.setAttribute("charts", charts);

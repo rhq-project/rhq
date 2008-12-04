@@ -30,30 +30,30 @@ import org.apache.struts.action.ActionMapping;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.RecentlyApprovedPortletPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
 public class ProcessRAList extends BaseAction {
-    private static String EXPANDED_PLATFORMS = ".dashContent.recentlyApproved.expandedPlatforms";
 
     @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getPreferences();
+        RecentlyApprovedPortletPreferences recentlyApprovedPreferences = preferences
+            .getRecentlyApprovedPortletPreferences();
+
         RAListForm listForm = (RAListForm) form;
-        List<String> expandedPlatforms = preferences.getPreferenceAsList(EXPANDED_PLATFORMS);
         String platformId = new Integer(listForm.getPlatformId()).toString();
 
+        List<String> expandedPlatforms = recentlyApprovedPreferences.expandedPlatforms;
         if (expandedPlatforms.contains(platformId)) {
             expandedPlatforms.remove(platformId);
         } else {
             expandedPlatforms.add(platformId);
         }
-
-        // Store in user properties as a list.
-        preferences.setPreference(EXPANDED_PLATFORMS, expandedPlatforms);
-
+        preferences.setRecentlyApprovedPortletPreferences(recentlyApprovedPreferences);
         preferences.persistPreferences();
 
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);

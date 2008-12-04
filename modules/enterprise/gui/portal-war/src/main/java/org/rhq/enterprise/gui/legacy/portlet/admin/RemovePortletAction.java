@@ -22,7 +22,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -39,14 +38,10 @@ public class RemovePortletAction extends BaseAction {
         HttpServletResponse response) throws Exception {
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
+
         String portletName = request.getParameter(Constants.REM_PORTLET_PARAM);
 
         DashboardUtils.removePortlet(user, portletName);
-
-        LogFactory.getLog("user.preferences").trace(
-            "Invoking setUserPrefs" + " in RemovePortletAction " + " for " + user.getId() + " at "
-                + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
-        user.getPreferences().persistPreferences();
 
         session.removeAttribute(Constants.USERS_SES_PORTAL);
 

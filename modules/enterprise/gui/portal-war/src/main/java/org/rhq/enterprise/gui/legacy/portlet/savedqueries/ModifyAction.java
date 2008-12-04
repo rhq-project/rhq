@@ -28,8 +28,8 @@ import org.apache.struts.action.ActionMapping;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.SavedChartsPortletPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
-import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ChartUtility;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
@@ -53,16 +53,16 @@ public class ModifyAction extends BaseAction {
         String[] charts = pForm.getCharts();
 
         if (charts != null) {
-            ChartUtility chartUtility = new ChartUtility(user);
-            //            String userCharts = user.getPreference(Constants.USER_DASHBOARD_CHARTS);
-            for (int i = 0; i < charts.length; i++) {
-                chartUtility.remove(charts[i]);
+            SavedChartsPortletPreferences savedCharts = preferences.getSavedChartsPortletPreferences();
+            for (String chartToRemove : charts) {
+                savedCharts.removeByTuple(chartToRemove);
             }
+            preferences.setSavedChartsPortletPreferences(savedCharts);
+            preferences.persistPreferences();
 
             returnString = "remove";
         }
 
-        preferences.persistPreferences();
         return mapping.findForward(returnString);
     }
 }

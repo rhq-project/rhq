@@ -20,10 +20,13 @@ package org.rhq.enterprise.gui.legacy.action.resource.hub;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.LabelValueBean;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
 
 /**

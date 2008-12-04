@@ -35,7 +35,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.AlertsPortletPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -49,7 +49,6 @@ public class PrepareAction extends TilesAction {
         PropertiesForm pForm = (PropertiesForm) form;
         WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getPreferences();
-        String key = ".dashContent.criticalalerts.resources";
 
         //this guarantees that the session dosen't contain any resources it shouldn't
         SessionUtils.removeList(request.getSession(), Constants.PENDING_RESOURCES_SES_ATTR);
@@ -57,24 +56,13 @@ public class PrepareAction extends TilesAction {
         //set all the form properties
         pForm.setDisplayOnDash(true);
 
-        String numberOfAlerts = preferences.getPreference(".dashContent.criticalalerts.numberOfAlerts");
-        String past = preferences.getPreference(".dashContent.criticalalerts.past");
-        String prioritity = preferences.getPreference(".dashContent.criticalalerts.priority");
-        String selectedOrAll = preferences.getPreference(".dashContent.criticalalerts.selectedOrAll");
-
-        DashboardUtils.verifyResources(key, user);
-
-        pForm.setNumberOfAlerts(Integer.valueOf(numberOfAlerts));
-        pForm.setPast(past);
-        pForm.setPriority(prioritity);
-        pForm.setSelectedOrAll(selectedOrAll);
-
-        Integer[] resourcesIds = DashboardUtils.preferencesAsResourceIds(key, user);
+        AlertsPortletPreferences alertPrefs = preferences.getAlertsPortletPreferences();
+        pForm.setAlertsPortletPreferences(alertPrefs);
 
         PageControl pageControl = WebUtility.getPageControl(request);
 
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        PageList<Resource> resources = resourceManager.getResourceByIds(user.getSubject(), resourcesIds, false,
+        PageList<Resource> resources = resourceManager.getResourceByIds(user.getSubject(), alertPrefs.asArray(), false,
             pageControl);
 
         request.setAttribute("criticalAlertsList", resources);

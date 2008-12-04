@@ -35,9 +35,9 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.FavoriteResourcePortletPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.BaseRSSAction;
 import org.rhq.enterprise.gui.legacy.portlet.RSSFeed;
-import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -58,14 +58,11 @@ public class RSSAction extends BaseRSSAction {
         Subject subject = getSubject(request);
         WebUser user = new WebUser(subject);
         WebUserPreferences preferences = user.getPreferences();
+        FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
+            .getFavoriteResourcePortletPreferences();
 
-        Boolean availability = Boolean.valueOf(preferences.getPreference(".dashContent.resourcehealth.availability"));
-        Boolean alerts = Boolean.valueOf(preferences.getPreference(".dashContent.resourcehealth.alerts"));
-
-        Integer[] resources = DashboardUtils.preferencesAsResourceIds(Constants.USERPREF_KEY_FAVORITE_RESOURCES, user);
-
-        PageList<ResourceHealthComposite> results = manager.getResourceHealth(subject, resources, PageControl
-            .getUnlimitedInstance());
+        PageList<ResourceHealthComposite> results = manager.getResourceHealth(subject, favoriteResourcePreferences
+            .asArray(), PageControl.getUnlimitedInstance());
 
         if ((results != null) && (results.size() > 0)) {
             for (ResourceHealthComposite summary : results) {
@@ -84,11 +81,11 @@ public class RSSAction extends BaseRSSAction {
                 StringBuffer desc = new StringBuffer();
                 desc.append("<table><tr><td align=\"left\">").append(typeText).append("</td></tr>");
 
-                if (availability.booleanValue()) {
+                if (favoriteResourcePreferences.showAvailability) {
                     desc.append("<tr><td align=\"left\">").append(availText).append("</td></tr>");
                 }
 
-                if (alerts.booleanValue()) {
+                if (favoriteResourcePreferences.showAlerts) {
                     desc.append("<tr><td align=\"left\">").append(alertsText).append("</td></tr>");
                 }
 

@@ -37,6 +37,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.OperationPortletPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -48,60 +49,37 @@ public class ViewAction extends TilesAction {
         WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getPreferences();
 
-        String property;
-        int lastCompletedCount;
-        int nextScheduledCount;
+        OperationPortletPreferences operationPreferences = preferences.getOperationPortletPreferences();
 
-        try {
-            property = preferences.getPreference(".dashContent.operations.useLastCompleted");
-            lastCompletedCount = Integer.parseInt(preferences.getPreference(".dashContent.operations.lastCompleted"));
-        } catch (Exception e) {
-            // for some reason the preferences are screwed, give the user a sensible default for now
-            property = "true";
-            lastCompletedCount = 5;
-        }
-
-        Boolean lastCompleted = Boolean.valueOf(property);
-        context.putAttribute("displayLastCompleted", lastCompleted);
-
-        try {
-            property = preferences.getPreference(".dashContent.operations.useNextScheduled");
-            nextScheduledCount = Integer.parseInt(preferences.getPreference(".dashContent.operations.nextScheduled"));
-        } catch (Exception e) {
-            // for some reason the preferences are screwed, give the user a sensible default for now
-            property = "true";
-            nextScheduledCount = 5;
-        }
-
-        Boolean nextScheduled = Boolean.valueOf(property);
-        context.putAttribute("displayNextScheduled", nextScheduled);
+        context.putAttribute("displayLastCompleted", operationPreferences.useLastCompleted);
+        context.putAttribute("displayNextScheduled", operationPreferences.useNextScheduled);
 
         try {
             OperationManagerLocal manager = LookupUtil.getOperationManager();
 
-            if (lastCompleted) {
+            if (operationPreferences.useLastCompleted) {
                 PageList<ResourceOperationLastCompletedComposite> rlist;
-                PageControl pageControl = new PageControl(0, lastCompletedCount);
+                PageControl pageControl = new PageControl(0, operationPreferences.lastCompleted);
                 pageControl.initDefaultOrderingField("ro.createdTime", PageOrdering.DESC);
                 rlist = manager.getRecentlyCompletedResourceOperations(user.getSubject(), pageControl);
                 context.putAttribute("lastCompletedResource", rlist);
 
                 PageList<GroupOperationLastCompletedComposite> glist;
-                pageControl = new PageControl(0, lastCompletedCount);
+                pageControl = new PageControl(0, operationPreferences.lastCompleted);
                 pageControl.initDefaultOrderingField("go.createdTime", PageOrdering.DESC);
                 glist = manager.getRecentlyCompletedGroupOperations(user.getSubject(), pageControl);
                 context.putAttribute("lastCompletedGroup", glist);
             }
 
-            if (nextScheduled) {
+            if (operationPreferences.useNextScheduled) {
                 PageList<ResourceOperationScheduleComposite> rlist;
-                rlist = manager.getCurrentlyScheduledResourceOperations(user.getSubject(), new PageControl(0,
-                    nextScheduledCount));
+                PageControl pageControl = new PageControl(0, operationPreferences.nextScheduled);
+                rlist = manager.getCurrentlyScheduledResourceOperations(user.getSubject(), pageControl);
                 context.putAttribute("nextScheduledResource", rlist);
 
                 PageList<GroupOperationScheduleComposite> glist;
-                glist = manager.getCurrentlyScheduledGroupOperations(user.getSubject(), new PageControl(0,
-                    nextScheduledCount));
+                pageControl = new PageControl(0, operationPreferences.nextScheduled);
+                glist = manager.getCurrentlyScheduledGroupOperations(user.getSubject(), pageControl);
                 context.putAttribute("nextScheduledGroup", glist);
             }
         } catch (Exception e) {

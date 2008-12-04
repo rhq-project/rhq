@@ -47,11 +47,10 @@ public class EditAction extends BaseAction {
         log.trace("modifying user properties action");
 
         EditForm userForm = (EditForm) form;
+        ActionForward forward = checkSubmit(request, mapping, form, Constants.USER_PARAM, userForm.getId());
 
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         Subject user = subjectManager.loadUserConfiguration(userForm.getId());
-
-        ActionForward forward = checkSubmit(request, mapping, form, Constants.USER_PARAM, userForm.getId());
 
         if (forward != null) {
             request.setAttribute(Constants.USER_ATTR, user);
@@ -71,7 +70,14 @@ public class EditAction extends BaseAction {
         WebUser currentUser = RequestUtils.getWebUser(request);
         if (currentUser.getId().equals(userForm.getId())) {
             // update the in-memory preferences of the webuser so it takes effect for this session
-            saveMyPreferences(currentUser, userForm);
+            try {
+                Integer pageRefreshPeriod = Integer.valueOf(userForm.getPageRefreshPeriod());
+                WebUserPreferences preferences = currentUser.getPreferences();
+                preferences.setPageRefreshPeriod(pageRefreshPeriod);
+            } catch (NumberFormatException e) {
+                throw new RuntimeException(
+                    "pageRefreshPeriod is not an integer, this should have been caught earlier by the form validation.");
+            }
 
             // put the preferences into the user so the update will flush them to the DB
             user.setUserConfiguration(currentUser.getPreferences().getPreferences());
@@ -81,28 +87,5 @@ public class EditAction extends BaseAction {
         subjectManager.updateSubject(RequestUtils.getSubject(request), user);
 
         return returnSuccess(request, mapping, Constants.USER_PARAM, userForm.getId());
-    }
-
-    /**
-     * Saves the preferences of the user who is logged in if they are editing their own user. This only saves the
-     * preferences in the in-memory WebUser object. It will not persist anything to the DB.
-     *
-     * @param  currentUser
-     * @param  userForm
-     *
-     * @throws Exception
-     * @throws RuntimeException
-     */
-    private void saveMyPreferences(WebUser currentUser, EditForm userForm) throws Exception {
-        try {
-            Integer pageRefreshPeriod = Integer.valueOf(userForm.getPageRefreshPeriod());
-            currentUser.getPreferences().setPreference(WebUserPreferences.PREF_PAGE_REFRESH_PERIOD,
-                String.valueOf(pageRefreshPeriod));
-        } catch (NumberFormatException e) {
-            throw new RuntimeException(
-                "pageRefreshPeriod is not an integer, this should have been caught earlier by the form validation.");
-        }
-
-        return;
     }
 }

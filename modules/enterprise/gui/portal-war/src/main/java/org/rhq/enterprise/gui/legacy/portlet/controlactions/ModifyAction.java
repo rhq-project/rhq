@@ -29,6 +29,7 @@ import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.OperationPortletPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -52,15 +53,8 @@ public class ModifyAction extends BaseAction {
             DashboardUtils.removePortlet(user, pForm.getPortletName());
         }
 
-        String lastCompleted = pForm.getLastCompleted().toString();
-        String nextScheduled = pForm.getNextScheduled().toString();
-        String useLastCompleted = Boolean.toString(pForm.isUseLastCompleted());
-        String useNextScheduled = Boolean.toString(pForm.isUseNextScheduled());
-
-        preferences.setPreference(".dashContent.operations.lastCompleted", lastCompleted);
-        preferences.setPreference(".dashContent.operations.nextScheduled", nextScheduled);
-        preferences.setPreference(".dashContent.operations.useLastCompleted", useLastCompleted);
-        preferences.setPreference(".dashContent.operations.useNextScheduled", useNextScheduled);
+        OperationPortletPreferences prefs = pForm.getOperationPortletPreferences();
+        preferences.setOperationPortletPreferences(prefs);
 
         preferences.persistPreferences();
 

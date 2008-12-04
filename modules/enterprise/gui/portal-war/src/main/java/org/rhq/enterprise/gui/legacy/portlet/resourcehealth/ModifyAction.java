@@ -29,6 +29,7 @@ import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.FavoriteResourcePortletPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -37,33 +38,32 @@ public class ModifyAction extends BaseAction {
     @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
+
         PropertiesForm pForm = (PropertiesForm) form;
-        WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
-
-        String forwardStr = RetCodeConstants.SUCCESS_URL;
-
-        if (pForm.isRemoveClicked()) {
-            DashboardUtils.removeResources(pForm.getIds(), Constants.USERPREF_KEY_FAVORITE_RESOURCES, user);
-            forwardStr = "review";
-        }
-
         ActionForward forward = checkSubmit(request, mapping, form);
 
         if (forward != null) {
             return forward;
         }
 
+        WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
+
+        String forwardStr = RetCodeConstants.SUCCESS_URL;
+        if (pForm.isRemoveClicked()) {
+            FavoriteResourcePortletPreferences favoriteResourcePreferences = pForm
+                .getFavoriteResourcePortletPreferences();
+            for (Integer doomedResourceId : pForm.getIds()) {
+                favoriteResourcePreferences.resourceIds.remove(doomedResourceId);
+            }
+            preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
+            preferences.persistPreferences();
+            forwardStr = "review";
+        }
+
         if (!pForm.isDisplayOnDash()) {
             DashboardUtils.removePortlet(user, pForm.getPortletName());
         }
-
-        String availability = Boolean.toString(pForm.isAvailability());
-        String alerts = Boolean.toString(pForm.isAlerts());
-
-        preferences.setPreference(".dashContent.resourcehealth.availability", availability);
-        preferences.setPreference(".dashContent.resourcehealth.alerts", alerts);
-        preferences.persistPreferences();
 
         request.getSession().removeAttribute(Constants.USERS_SES_PORTAL);
 

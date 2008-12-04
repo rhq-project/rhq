@@ -38,7 +38,6 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.actions.DispatchAction;
-import org.apache.struts.util.MessageResources;
 
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
@@ -51,6 +50,7 @@ import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricViewsPreferences;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
@@ -83,7 +83,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Heiko W. Rupp (for the RHQ rewrite)
  */
 public class IndicatorChartsAction extends DispatchAction {
-    private static final String EWWW = "ewww";
 
     private final static Log log = LogFactory.getLog(IndicatorChartsAction.class);
 
@@ -129,7 +128,6 @@ public class IndicatorChartsAction extends DispatchAction {
 
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
 
-        String key = KeyConstants.INDICATOR_VIEWS + generateSessionKey(request, viewName);
         WebUser user = SessionUtils.getWebUser(request.getSession());
         Subject subject = user.getSubject();
         List<MeasurementSchedule> scheds;
@@ -138,7 +136,8 @@ public class IndicatorChartsAction extends DispatchAction {
          * schedule ids from it. If this fails, fall back to defaults.
          */
         try {
-            String metricsStr = user.getPreferences().getPreference(generatePrefsMetricsKey(key, viewName));
+            String context = generateSessionKey(request, viewName);
+            String metricsStr = user.getPreferences().getMeasuremntIndicatorViewChartList(context, viewName);
             if ("".equals(metricsStr))
                 throw new IllegalArgumentException("No metrics defined"); // Use defaults then from below
             List<String> tokens = StringUtil.explode(metricsStr, PREF_DELIMITER);
@@ -186,20 +185,21 @@ public class IndicatorChartsAction extends DispatchAction {
     private String generateSessionKey(IndicatorViewsForm form, boolean isViewsList) {
         String view;
 
-        String viewName = form.getView();
-        if (viewName == null || "".equals(viewName))
-            viewName = DEFAULT_VIEW;
-
-        if (form.getId() != null && form.getId() > 0)
+        if (form.getId() != null && form.getId() > 0) {
             view = String.valueOf(form.getId());
-        else if (form.getGroupId() > 0)
+        } else if (form.getGroupId() > 0) {
             view = "cg=" + form.getGroupId();
-        else if (form.getCtype() != null && form.getCtype() > 0 && form.getParent() > 0)
+        } else if (form.getCtype() != null && form.getCtype() > 0 && form.getParent() > 0) {
             view = "ag=" + form.getParent() + ":" + form.getCtype();
-        else
-            view = EWWW;
+        } else {
+            throw new IllegalArgumentException("Unknown or unsupported IndicatorViewsForm mode '" + form + "'");
+        }
 
-        if (isViewsList == false && !(EWWW.equals(view))) {
+        if (isViewsList == false) {
+            String viewName = form.getView();
+            if (viewName == null || "".equals(viewName)) {
+                viewName = DEFAULT_VIEW;
+            }
             view += "." + viewName;
         }
         return view;
@@ -214,31 +214,17 @@ public class IndicatorChartsAction extends DispatchAction {
     private String generateSessionKey(HttpServletRequest request, String viewName) {
         MetricsDisplayMode mode = WebUtility.getMetricsDisplayMode(request);
 
-        if (viewName == null || "".equals(viewName))
-            viewName = DEFAULT_VIEW;
-
-        String view;
         switch (mode) {
         case RESOURCE:
-            view = WebUtility.getResourceId(request) + "." + viewName;
-            break;
+            return String.valueOf(WebUtility.getResourceId(request));
         case COMPGROUP:
-            view = "cg=" + WebUtility.getOptionalIntRequestParameter(request, "groupId", -1);
-            view += "." + viewName;
-            break;
+            return "cg=" + WebUtility.getOptionalIntRequestParameter(request, "groupId", -1);
         case AUTOGROUP:
             int type = getChildTypeId(request);
-            view = "ag=" + WebUtility.getRequiredRequestParameter(request, "parent") + ":" + type;
-            view += "." + viewName;
-            break;
+            return "ag=" + WebUtility.getRequiredRequestParameter(request, "parent") + ":" + type;
         default:
-            view = EWWW;
+            throw new IllegalArgumentException("Unknown or unsupported MetricsDisplayMode '" + mode + "'");
         }
-        return view;
-    }
-
-    private String generatePrefsMetricsKey(String key, String view) {
-        return key + "." + view;
     }
 
     /**
@@ -252,23 +238,20 @@ public class IndicatorChartsAction extends DispatchAction {
      * @see #parseMetricToken(String)
      */
     private String generateMetricToken(MetricDisplaySummary summary) {
-        String ret = EWWW;
         MetricsDisplayMode mode = getDisplayModeForSummary(summary);
+
         switch (mode) {
         case RESOURCE:
             if (summary.getScheduleId() != null)
-                ret = summary.getResourceId() + "," + summary.getScheduleId().toString();
-            break;
+                return summary.getResourceId() + "," + summary.getScheduleId().toString();
+            throw new IllegalStateException("MetricsDisplayMode was 'RESOURCE', but the scheduleId was null");
         case COMPGROUP:
-            ret = "cg," + summary.getGroupId() + "," + summary.getDefinitionId();
-            break;
+            return "cg," + summary.getGroupId() + "," + summary.getDefinitionId();
         case AUTOGROUP:
-            ret = "ag," + summary.getParentId() + "," + summary.getDefinitionId() + "," + summary.getChildTypeId();
-            break;
+            return "ag," + summary.getParentId() + "," + summary.getDefinitionId() + "," + summary.getChildTypeId();
         default:
-            log.warn("storeMetrics: Unknown mode for " + summary);
+            throw new IllegalArgumentException("Unknown or unsupported MetricsDisplayMode '" + mode + "'");
         }
-        return ret;
     }
 
     /**
@@ -289,8 +272,7 @@ public class IndicatorChartsAction extends DispatchAction {
         // Set the metrics in the session
         String key = this.generateSessionKey(form, false);
         HttpSession session = request.getSession();
-        if (EWWW.equals(key))
-            key = (String) session.getAttribute("metricKey");
+
         session.setAttribute(key, metrics);
         session.setAttribute("metricKey", key);
 
@@ -364,6 +346,7 @@ public class IndicatorChartsAction extends DispatchAction {
         HttpServletResponse response) throws Exception {
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
+        WebUserPreferences preferences = user.getPreferences();
 
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
         String viewName = ivf.getView();
@@ -374,9 +357,9 @@ public class IndicatorChartsAction extends DispatchAction {
          * First try to load the metrics from the user preferences for that key.
          * If that fails, we load defaults for it.
          */
-        String key = KeyConstants.INDICATOR_VIEWS + generateSessionKey(request, ivf.getView());
         try {
-            String metricsStr = user.getPreferences().getPreference(generatePrefsMetricsKey(key, viewName));
+            String metricsStr = preferences.getMeasuremntIndicatorViewChartList(generateSessionKey(request, viewName),
+                viewName);
             if (metricsStr != null && !("".equals(metricsStr))) {
                 List<String> metricTokens = StringUtil.explode(metricsStr, PREF_DELIMITER);
                 for (String token : metricTokens) {
@@ -450,15 +433,15 @@ public class IndicatorChartsAction extends DispatchAction {
         String viewName) {
         WebUser user = SessionUtils.getWebUser(request.getSession());
         Subject subject = user.getSubject();
-        String key = KeyConstants.INDICATOR_VIEWS + generateSessionKey(request, viewName);
 
-        Map pref = user.getPreferences().getMetricRangePreference(true);
+        Map<String, ?> pref = user.getPreferences().getMetricRangePreference(true);
         long begin = (Long) pref.get(MonitorUtils.BEGIN);
         long end = (Long) pref.get(MonitorUtils.END);
 
         int[] measurementDefinitionIds;
         try {
-            measurementDefinitionIds = fillDefinitionIdsFromUserPreferences(viewName, user, key);
+            String context = generateSessionKey(request, viewName);
+            measurementDefinitionIds = fillDefinitionIdsFromUserPreferences(context, viewName, user);
         } catch (IllegalArgumentException iae) {
             // If we can't get stuff from preferences, get the defaults.
             measurementDefinitionIds = groupManager.getDefinitionsForAutoGroup(subject, parent, type, true);
@@ -481,7 +464,7 @@ public class IndicatorChartsAction extends DispatchAction {
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
         Subject subject = user.getSubject();
-        String key = KeyConstants.INDICATOR_VIEWS + generateSessionKey(request, viewName);
+        String key = WebUserPreferences.PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + generateSessionKey(request, viewName);
 
         Map pref = user.getPreferences().getMetricRangePreference(true);
         long begin = (Long) pref.get(MonitorUtils.BEGIN);
@@ -493,7 +476,8 @@ public class IndicatorChartsAction extends DispatchAction {
          */
         int[] measurementDefinitionIds;
         try {
-            measurementDefinitionIds = fillDefinitionIdsFromUserPreferences(viewName, user, key);
+            String context = generateSessionKey(request, viewName);
+            measurementDefinitionIds = fillDefinitionIdsFromUserPreferences(context, viewName, user);
         } catch (IllegalArgumentException iae) {
             // If we can't get stuff from preferences, get the defaults.
             measurementDefinitionIds = groupManager.getDefinitionsForCompatibleGroup(subject, groupId, true);
@@ -513,9 +497,9 @@ public class IndicatorChartsAction extends DispatchAction {
     /**
      * Get the definition ids (for groups) from the metrics stored in the preferences, which are separated by a vertical bar.
      */
-    private int[] fillDefinitionIdsFromUserPreferences(String viewName, WebUser user, String key) {
+    private int[] fillDefinitionIdsFromUserPreferences(String context, String viewName, WebUser user) {
         int[] measurementDefinitionIds;
-        String metricsStr = user.getPreferences().getPreference(generatePrefsMetricsKey(key, viewName));
+        String metricsStr = user.getPreferences().getMeasuremntIndicatorViewChartList(context, viewName);
         if ("".equals(metricsStr))
             throw new IllegalArgumentException("No metrics defined"); // Use defaults then from the caller
         List<String> metrics = StringUtil.explode(metricsStr, PREF_DELIMITER);
@@ -854,45 +838,30 @@ public class IndicatorChartsAction extends DispatchAction {
         HttpServletResponse response) throws Exception {
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
 
         // A couple of checks
-        if (ivf.getView().length() == 0) {
+        String newViewName = ivf.getView();
+        if (newViewName.length() == 0) {
             return error(mapping, request, "resource.common.monitor.visibility.view.error.empty");
         }
 
-        if (indexOfSpecialChars(ivf.getView()) > -1) {
+        if (indexOfSpecialChars(newViewName) > -1) {
             return error(mapping, request, "error.input.badchars");
         }
-        String key = KeyConstants.INDICATOR_VIEWS + generateSessionKey(ivf, true);
 
-        String views = "";
-        try {
-            views = user.getPreferences().getPreference(key);
+        String key = generateSessionKey(ivf, true);
+        MetricViewsPreferences metricViews = preferences.getMetricViewsPreferences(key);
 
-            if (views.length() > 0) {
-                // Make sure that we're not duplicating names
-                List<String> viewNames = StringUtil.explode(views, PREF_DELIMITER);
-                for (Iterator<String> it = viewNames.iterator(); it.hasNext();) {
-                    if (ivf.getView().equals(it.next())) {
-                        return error(mapping, request, "resource.common.monitor.visibility.view.error.exists");
-                    }
-                }
-
-                views += PREF_DELIMITER;
-            }
-        } catch (IllegalArgumentException e) {
-            // If this is the first new one, then let's create a default one,
-            // too
-            MessageResources res = getResources(request);
-            String defName = res.getMessage(KeyConstants.DEFAULT_INDICATOR_VIEW);
-
-            if (!defName.equals(ivf.getView()))
-                views = defName + PREF_DELIMITER;
+        // Make sure that we're not duplicating names
+        if (metricViews.views.contains(newViewName)) {
+            return error(mapping, request, "resource.common.monitor.visibility.view.error.exists");
         }
 
-        views += ivf.getView();
-        user.getPreferences().setPreference(key, views);
-        ivf.setViews(views.split(PREF_DELIMITER_SPLIT));
+        metricViews.views.add(newViewName);
+        preferences.setMetricViewsPreferences(metricViews, key);
+
+        ivf.setViews(metricViews.views.toArray(new String[metricViews.views.size()]));
 
         // Call update to save the metrics to be viewed
         return update(mapping, ivf, request, response);
@@ -926,11 +895,9 @@ public class IndicatorChartsAction extends DispatchAction {
         // Set the user preferences now
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
-        String sKey = generateSessionKey(ivf, false);
-        if (EWWW.equals(sKey))
-            sKey = (String) session.getAttribute("metricKey");
-        String key = KeyConstants.INDICATOR_VIEWS + sKey;
-        user.getPreferences().setPreference(generatePrefsMetricsKey(key, ivf.getView()), viewMetrics.toString());
+
+        String key = WebUserPreferences.PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + generateSessionKey(ivf, false);
+        user.getPreferences().setPreference(key + "." + ivf.getView(), viewMetrics.toString());
 
         user.getPreferences().persistPreferences();
     }
@@ -941,36 +908,18 @@ public class IndicatorChartsAction extends DispatchAction {
         WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getPreferences();
 
-        String key = KeyConstants.INDICATOR_VIEWS + generateSessionKey(ivf, true);
+        String doomedView = ivf.getUpdate();
+        String key = generateSessionKey(ivf, true);
 
-        String views;
         try {
-            views = user.getPreferences().getPreference(key);
+            MetricViewsPreferences metricViews = preferences.getMetricViewsPreferences(key);
+            metricViews.views.remove(doomedView);
         } catch (IllegalArgumentException e) {
             // See, this is the "default"
             return mapping.findForward(KeyConstants.MODE_MON_CUR);
         }
 
-        // Parse the views
-        List<String> viewNames = StringUtil.explode(views, PREF_DELIMITER);
-
-        for (Iterator<String> it = viewNames.iterator(); it.hasNext();) {
-            String view = it.next();
-
-            if (view.equals(ivf.getUpdate()))
-                it.remove();
-        }
-
-        if (viewNames.size() > 0) {
-            views = StringUtil.listToString(viewNames, PREF_DELIMITER);
-            preferences.setPreference(key, views);
-        } else {
-            preferences.unsetPreference(key);
-        }
-
-        // Now unset the metrics
-        preferences.unsetPreference(key + generatePrefsMetricsKey(key, ivf.getUpdate()));
-
+        preferences.unsetPreference(key + "." + doomedView);
         preferences.persistPreferences();
 
         return mapping.findForward(KeyConstants.MODE_MON_CUR);

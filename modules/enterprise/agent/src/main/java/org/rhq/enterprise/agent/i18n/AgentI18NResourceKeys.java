@@ -301,6 +301,12 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("The server has rejected the agent registration request. Cause: [{0}]")
     String AGENT_REGISTRATION_REJECTED = "AgentMain.agent-registration-rejected";
 
+    @I18NMessage("Will retry the agent registration request soon...")
+    String AGENT_REGISTRATION_RETRY = "AgentMain.agent-registration-retry";
+
+    @I18NMessage("The agent cannot register with the server. Admin intervention needed!")
+    String AGENT_CANNOT_REGISTER = "AgentMain.agent-cannot-register";
+
     @I18NMessage("started")
     String PROMPT_STRING_STARTED = "AgentMain.prompt-string.started";
 
@@ -376,11 +382,17 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Failed to start the agent")
     String AGENT_START_FAILURE = "AgentMain.start-failure";
 
+    @I18NMessage("Agent will be restarted soon to see if the failure condition cleared up")
+    String AGENT_START_RETRY_AFTER_FAILURE = "AgentMain.start-retry-after-failure";
+
     @I18NMessage("Agent being created now")
     String CREATING_AGENT = "AgentMain.creating-agent";
 
     @I18NMessage("The plugin container has been initialized with the following configuration: {0}")
     String PLUGIN_CONTAINER_INITIALIZED = "AgentMain.plugin-container-initialized";
+
+    @I18NMessage("The plugin container has not been initialized. Check the log for further errors.")
+    String PLUGIN_CONTAINER_NOT_INITIALIZED = "AgentMain.plugin-container-not-initialized";
 
     @I18NMessage("The plugin container initialization was interrupted - it will not be started.")
     String PLUGIN_CONTAINER_INITIALIZATION_INTERRUPTED = "AgentMain.plugin-container-initialization-interrupted";

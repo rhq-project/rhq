@@ -32,12 +32,15 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.prefs.Preferences;
+
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 import javax.management.ObjectName;
+
 import mazz.i18n.Logger;
+
 import org.jboss.remoting.InvalidConfigurationException;
 import org.jboss.remoting.InvokerLocator;
 import org.jboss.remoting.ServerInvocationHandler;
@@ -49,6 +52,7 @@ import org.jboss.remoting.security.SSLServerSocketFactoryService;
 import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.Connector;
 import org.jboss.remoting.transport.coyote.ssl.RemotingSSLImplementation;
+
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.communications.command.client.ClientCommandSender;
 import org.rhq.enterprise.communications.command.client.ClientCommandSenderConfiguration;
@@ -632,17 +636,17 @@ public class ServiceContainer {
                 if (m_mbsCreated) {
                     MBeanServerFactory.releaseMBeanServer(m_mbs);
                 } else {
-                    // unregister the services we know are registered
-                    m_mbs.unregisterMBean(OBJECTNAME_CONNECTOR);
-                    m_mbs.unregisterMBean(OBJECTNAME_CMDSERVICE_DIRECTORY);
-                    m_mbs.unregisterMBean(ServiceContainerMetricsMBean.OBJECTNAME_METRICS);
-
-                    // now unregister any other services that were added to our JMX domain
+                    // unregister the services we know are registered, if we fail in any step, just keep going with the rest
+                    // its possible we didn't fully initialize our MBS at startup; we just have to clean up the remaining
                     Set obj_names = m_mbs.queryNames(new ObjectName(JMX_DOMAIN + ":*"), null);
 
                     for (Iterator iter = obj_names.iterator(); iter.hasNext();) {
-                        ObjectName obj_name = (ObjectName) iter.next();
-                        m_mbs.unregisterMBean(obj_name);
+                        try {
+                            ObjectName obj_name = (ObjectName) iter.next();
+                            m_mbs.unregisterMBean(obj_name);
+                        } catch (Exception e) {
+                            LOG.warn(e, CommI18NResourceKeys.SERVICE_CONTAINER_SHUTDOWN_MBS_FAILURE);
+                        }
                     }
                 }
             } catch (Exception e) {

@@ -354,51 +354,66 @@ public class AgentMain {
      */
     public static void main(String[] args) {
         AgentMain agent = null;
+        int retries = 0;
+        final int MAX_RETRIES = 5;
 
-        try {
-            agent = new AgentMain(args);
+        while (retries++ < MAX_RETRIES) {
+            try {
+                agent = new AgentMain(args);
 
-            // immediately show/log the version information
-            String productNameAndVersion = Version.getProductNameAndVersion();
-            String buildNumber = Version.getBuildNumber();
-            Date buildDate = Version.getBuildDate();
-            agent.getOut().println(productNameAndVersion + " [" + buildNumber + "] (" + buildDate + ")");
-            LOG.info(AgentI18NResourceKeys.IDENTIFY_VERSION, productNameAndVersion, buildNumber, buildDate);
+                // immediately show/log the version information
+                String productNameAndVersion = Version.getProductNameAndVersion();
+                String buildNumber = Version.getBuildNumber();
+                Date buildDate = Version.getBuildDate();
+                agent.getOut().println(productNameAndVersion + " [" + buildNumber + "] (" + buildDate + ")");
+                LOG.info(AgentI18NResourceKeys.IDENTIFY_VERSION, productNameAndVersion, buildNumber, buildDate);
 
-            // ask the user to setup the agent if the agent hasn't been setup yet or we are being forced to
-            if (agent.m_forcedSetup || (!agent.m_daemonMode && !agent.m_configuration.isAgentConfigurationSetup())) {
-                SetupPromptCommand setup_cmd = new SetupPromptCommand();
+                // ask the user to setup the agent if the agent hasn't been setup yet or we are being forced to
+                if (agent.m_forcedSetup || (!agent.m_daemonMode && !agent.m_configuration.isAgentConfigurationSetup())) {
+                    SetupPromptCommand setup_cmd = new SetupPromptCommand();
 
-                if (agent.m_advancedSetup) {
-                    setup_cmd.performAdvancedSetup(agent.m_configuration.getPreferences(), agent.getNativeIn(), agent
-                        .getOut());
-                } else {
-                    setup_cmd.performBasicSetup(agent.m_configuration.getPreferences(), agent.getNativeIn(), agent
-                        .getOut());
+                    if (agent.m_advancedSetup) {
+                        setup_cmd.performAdvancedSetup(agent.m_configuration.getPreferences(), agent.getNativeIn(),
+                            agent.getOut());
+                    } else {
+                        setup_cmd.performBasicSetup(agent.m_configuration.getPreferences(), agent.getNativeIn(), agent
+                            .getOut());
+                    }
                 }
-            }
 
-            // start the agent automatically only if we are configured to do so; otherwise, just start the user input loop
-            if (agent.m_startAtBoot) {
-                agent.start();
-                agent.m_agentRestartCounter.restartedAgent(AgentRestartReason.PROCESS_START);
-            } else {
-                agent.inputLoop();
-            }
-        } catch (HelpException he) {
-            // do nothing
-        } catch (Exception e) {
-            LOG.fatal(e, AgentI18NResourceKeys.AGENT_START_FAILURE);
+                // start the agent automatically only if we are configured to do so; otherwise, just start the user input loop
+                if (agent.m_startAtBoot) {
+                    agent.start();
+                    agent.m_agentRestartCounter.restartedAgent(AgentRestartReason.PROCESS_START);
+                } else {
+                    agent.inputLoop();
+                }
+                retries = MAX_RETRIES; // no need to retry...we're good to go
+            } catch (HelpException he) {
+                retries = MAX_RETRIES; // do nothing but exit the thread
+            } catch (Exception e) {
+                LOG.fatal(e, AgentI18NResourceKeys.AGENT_START_FAILURE);
 
-            if (agent != null) {
-                agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
-                e.printStackTrace(agent.getOut());
-            } else {
-                System.err.println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
-                e.printStackTrace(System.err);
+                if (agent != null) {
+                    agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
+                    e.printStackTrace(agent.getOut());
+                    if (retries < MAX_RETRIES) {
+                        LOG.error(AgentI18NResourceKeys.AGENT_START_RETRY_AFTER_FAILURE);
+                        agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_RETRY_AFTER_FAILURE));
+                        try {
+                            Thread.sleep(60000L);
+                        } catch (InterruptedException e1) {
+                        }
+                    }
+                } else {
+                    System.err.println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
+                    e.printStackTrace(System.err);
+                    retries = MAX_RETRIES; // agent could not even be instantiated, this is unrecoverable, just exit
+                }
+
+                agent = null;
             }
         }
-
         return;
     }
 
@@ -536,7 +551,9 @@ public class AgentMain {
 
                     if (!m_configuration.doNotStartPluginContainerAtStartup()) {
                         // block indefinitely - we cannot continue until we are registered, we have plugins and the PC starts
-                        startPluginContainer(0L);
+                        if (!startPluginContainer(0L)) {
+                            throw new Exception(MSG.getMsg(AgentI18NResourceKeys.PLUGIN_CONTAINER_NOT_INITIALIZED));
+                        }
                     } else {
                         LOG.info(AgentI18NResourceKeys.NOT_STARTING_PLUGIN_CONTAINER_AT_STARTUP);
                     }
@@ -1169,6 +1186,8 @@ public class AgentMain {
                 boolean retry = true;
                 long retry_interval = 1000L;
                 boolean got_registered = false;
+                int registrationFailures = 0;
+                final int MAX_ALLOWED_REGISTRATION_FAILURES = 5;
 
                 while (retry) {
                     try {
@@ -1260,7 +1279,6 @@ public class AgentMain {
                         getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, cause));
                     } catch (AgentRegistrationException are) {
                         m_registration = null;
-                        retry = false;
 
                         String cause = ThrowableUtil.getAllMessages(are);
                         LOG.error(AgentI18NResourceKeys.AGENT_REGISTRATION_REJECTED, cause);
@@ -1268,6 +1286,21 @@ public class AgentMain {
                         // this error is bad - if the agent is starting up, this failure will cause it to hang forever
                         // so let's print a message to the console in addition to the logs to make sure the user sees it
                         getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_REGISTRATION_REJECTED, cause));
+
+                        // under certain conditions we actually should retry this.
+                        // For example, if this agent can't ack the server's ping fast enough, the server will think
+                        // this agent cannot be connected to and thus reject the registration. If we simply retry
+                        // we could eventually succeed with the registration request.
+                        registrationFailures++;
+                        if (registrationFailures < MAX_ALLOWED_REGISTRATION_FAILURES) {
+                            retry = true;
+                            retry_interval = 30000L;
+                            LOG.error(AgentI18NResourceKeys.AGENT_REGISTRATION_RETRY);
+                            getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_REGISTRATION_RETRY));
+                        } else {
+                            getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_CANNOT_REGISTER));
+                            retry = false;
+                        }
                     } catch (InterruptedException ie) {
                         LOG.debug(AgentI18NResourceKeys.AGENT_REGISTRATION_ABORTED);
                         retry = false;
@@ -1435,7 +1468,7 @@ public class AgentMain {
      */
     private boolean prepareStartupWorkRequiringServer() {
         // First determine if the agent is configured to register with the server automatically at startup.
-        // If it is not, we need to make sure that, if it needs to be, it has been registered alread. We do so by
+        // If it is not, we need to make sure that, if it needs to be, it has been registered already. We do so by
         // first determining if there is a security preprocessor configured and if so, make sure it has a token available.
         // If there is no token available and the agent needs one, it has to register, whether or not we were told to.
         // This happens when someone clears the security token.
@@ -1530,6 +1563,7 @@ public class AgentMain {
             pc_config.setServerServices(serverServices);
         } catch (Exception e) {
             LOG.error(e, AgentI18NResourceKeys.FAILED_TO_CREATE_PLUGIN_CONTAINER_SERVER_SERVICES, e);
+            return false;
         }
 
         try {

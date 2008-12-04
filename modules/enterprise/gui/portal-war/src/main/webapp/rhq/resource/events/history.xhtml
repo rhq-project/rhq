@@ -4,126 +4,108 @@
       PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml"
-	xmlns:h="http://java.sun.com/jsf/html"
-	xmlns:f="http://java.sun.com/jsf/core"
-	xmlns:ui="http://java.sun.com/jsf/facelets"
-	xmlns:c="http://java.sun.com/jstl/core"
-	xmlns:onc="http://jboss.org/on/component"
-	xmlns:onf="http://jboss.org/on/function"
-	xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
-	xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://java.sun.com/jsf/html" xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:c="http://java.sun.com/jstl/core"
+    xmlns:onc="http://jboss.org/on/component" xmlns:onf="http://jboss.org/on/function"
+    xmlns:a4j="https://ajax4jsf.dev.java.net/ajax" xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
-	<ui:param name="pageTitle"
-	     	 value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Events History" />
-	<ui:param name="selectedTabName" 
-	         value="Events.History" />
+    <ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Events History" />
+    <ui:param name="selectedTabName" value="Events.History" />
 
-	<ui:define name="content">
-		<h:form>
-			<input type="hidden" name="id" value="${param.id}"/>
+    <ui:define name="content">
+        <h:form>
+            <input type="hidden" name="id" value="${param.id}" />
 
-			<rich:panel>
-				<f:facet name="header">
-					<h:outputText value="${msg['resource.common.monitor.events.FilterBy']}" />
-				</f:facet>
-						
-				<table width="100%">
-					<tr>
-						<td width="33%">
-							<h:outputText value="Severity:" />				
-							<h:selectOneMenu id="sevFilter" value="#{EventHistoryUIBean.sevFilter}">
-								<f:selectItem itemValue="ALL" />
-								<f:selectItem itemValue="DEBUG" />
-								<f:selectItem itemValue="INFO" />
-								<f:selectItem itemValue="WARN" />
-								<f:selectItem itemValue="ERROR" />
-								<f:selectItem itemValue="FATAL" />
-								<a4j:support event="onchange" reRender="eventHistoryDataTable"/>
-							</h:selectOneMenu>
-						</td>
-						
-						<td width="33%">
-							<h:outputText value="Source:"  />
-							<h:inputText value="#{EventHistoryUIBean.sourceFilter}"/>	
-						</td>
-						
-						<td width="33%">
-							<h:outputText value="Search:" />
-							<h:inputText value="#{EventHistoryUIBean.searchString}" />
-						</td>
-					</tr>
-				</table>
-			</rich:panel>
-			
-			<rich:spacer />
-			<rich:spacer />
-			
-			<ui:param name="eventHistoryDataModel" value="#{EventHistoryUIBean.dataModel}"/>
-			
-			<rich:dataTable binding="#{EventHistoryUIBean.dataTable}"
-								 id="eventHistoryDataTable"
-                              value="#{eventHistoryDataModel}"
-                               rows="#{PageControl.EventsHistoryList.pageSize}"
-                                var="item"
-                              width="100%"
-                        headerClass="tableRowHeader"
-                        footerClass="on-pager-footer">
-             
-				<f:facet name="PageControlView">
-                  <onc:paginationControl id="EventsHistoryList" />
-               	</f:facet>
-               
-				<rich:column>
-                	<f:facet name="header">
-                		<onc:sortableColumnHeader sort="ev.severity">
-                    		<h:outputText styleClass="headerText" value="Severity" />
-                    	</onc:sortableColumnHeader>
-                  	</f:facet>
-                	<h:outputText value="#{item.severity}" />
+            <rich:panel>
+                <f:facet name="header">
+                    <h:outputText value="${msg['resource.common.monitor.events.FilterBy']}" />
+                </f:facet>
+
+                <table width="100%">
+                    <tr>
+                        <td width="33%"><h:outputText value="Severity:" /> <h:selectOneMenu id="sevFilter"
+                            value="#{EventHistoryUIBean.sevFilter}">
+                            <f:selectItem itemValue="ALL" />
+                            <f:selectItem itemValue="DEBUG" />
+                            <f:selectItem itemValue="INFO" />
+                            <f:selectItem itemValue="WARN" />
+                            <f:selectItem itemValue="ERROR" />
+                            <f:selectItem itemValue="FATAL" />
+                            <a4j:support event="onchange" reRender="eventHistoryDataTable" />
+                        </h:selectOneMenu></td>
+
+                        <td width="33%"><h:outputText value="Source:" /> <h:inputText
+                            value="#{EventHistoryUIBean.sourceFilter}" /></td>
+
+                        <td width="33%"><h:outputText value="Search:" /> <h:inputText
+                            value="#{EventHistoryUIBean.searchString}" /></td>
+                    </tr>
+                </table>
+            </rich:panel>
+
+            <rich:spacer />
+            <rich:spacer />
+
+            <ui:param name="eventHistoryDataModel" value="#{EventHistoryUIBean.dataModel}" />
+
+            <rich:dataTable binding="#{EventHistoryUIBean.dataTable}" id="eventHistoryDataTable"
+                value="#{eventHistoryDataModel}" rows="#{PageControl.EventsHistoryList.pageSize}" var="item"
+                width="100%" headerClass="tableRowHeader" footerClass="on-pager-footer">
+
+                <f:facet name="PageControlView">
+                    <onc:paginationControl id="EventsHistoryList" />
+                </f:facet>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="ev.severity">
+                            <h:outputText styleClass="headerText" value="Severity" />
+                        </onc:sortableColumnHeader>
+                    </f:facet>
+                    <h:outputText value="#{item.severity}" />
                 </rich:column>
-               
-				<rich:column>
-					<f:facet name="header">
-						<onc:sortableColumnHeader sort="ev.source">
-                    		<h:outputText styleClass="headerText" value="Source" />
-                    	</onc:sortableColumnHeader>
-                  	</f:facet>
-                  	<h:outputText value="#{item.sourceLocation}" />
-				</rich:column>
-				
-				<rich:column>
-					<f:facet name="header">
-                    	<h:outputText styleClass="headerText" value="Detail" />
-                  	</f:facet>
-                  	<h:outputText value="#{item.eventDetail}" />
-				</rich:column>
-				
-				<rich:column>
-					<f:facet name="header">
-						<onc:sortableColumnHeader sort="ev.timestamp">
-                    		<h:outputText styleClass="headerText" value="Time occurred" />
-                    	</onc:sortableColumnHeader>
-                  	</f:facet>
-                  	<h:outputText value="#{item.timestamp}" />
-				</rich:column>
-				
-				<f:facet name="footer">
-					<rich:columnGroup>
-                    	<rich:column colspan="4" width="100%">
-                        	<ui:param name="paginationDataTableName" value="eventHistoryDataTable"/>
-                        	<ui:param name="paginationDataModel" value="#{eventHistoryDataModel}"/>
-                        	<ui:param name="paginationPageControl" value="#{PageControl.EventsHistoryList}"/>
-                        	<ui:include src="../include/pagination.xhtml"/>
-                     	</rich:column>
-                  	</rich:columnGroup>
-               </f:facet>
-			</rich:dataTable>
-		</h:form>
 
-	</ui:define>
+                <rich:column>
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="ev.source">
+                            <h:outputText styleClass="headerText" value="Source" />
+                        </onc:sortableColumnHeader>
+                    </f:facet>
+                    <h:outputText value="#{item.sourceLocation}" />
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Detail" />
+                    </f:facet>
+                    <h:outputText value="#{item.eventDetail}" />
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="ev.timestamp">
+                            <h:outputText styleClass="headerText" value="Time occurred" />
+                        </onc:sortableColumnHeader>
+                    </f:facet>
+                    <h:outputText value="#{item.timestamp}" />
+                </rich:column>
+
+                <f:facet name="footer">
+                    <rich:columnGroup>
+                        <rich:column colspan="4" width="100%">
+                            <ui:param name="paginationDataTableName" value="eventHistoryDataTable" />
+                            <ui:param name="paginationDataModel" value="#{eventHistoryDataModel}" />
+                            <ui:param name="paginationPageControl" value="#{PageControl.EventsHistoryList}" />
+                            <ui:include src="../include/pagination.xhtml" />
+                        </rich:column>
+                    </rich:columnGroup>
+                </f:facet>
+            </rich:dataTable>
+        </h:form>
+
+    </ui:define>
 
 </ui:composition>
 

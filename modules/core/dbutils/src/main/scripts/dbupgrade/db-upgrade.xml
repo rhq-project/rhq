@@ -1059,10 +1059,10 @@ DB Upgrade:
 
    </schemaSpec>
 	
-	<schemaSpec version="2.33">
-		<schema-deleteColumn table="RHQ_EVENT" column="ACK_TIME" />
-		<schema-deleteColumn table="RHQ_EVENT" column="ACK_USER" />
-	</schemaSpec>
+   <schemaSpec version="2.33">
+      <schema-deleteColumn table="RHQ_EVENT" column="ACK_TIME" />
+      <schema-deleteColumn table="RHQ_EVENT" column="ACK_USER" />
+   </schemaSpec>
 
 </dbupgrade>
 

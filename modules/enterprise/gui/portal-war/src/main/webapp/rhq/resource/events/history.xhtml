@@ -49,10 +49,16 @@
             <rich:spacer />
 
             <ui:param name="eventHistoryDataModel" value="#{EventHistoryUIBean.dataModel}" />
-
-            <rich:dataTable binding="#{EventHistoryUIBean.dataTable}" id="eventHistoryDataTable"
-                value="#{eventHistoryDataModel}" rows="#{PageControl.EventsHistoryList.pageSize}" var="item"
-                width="100%" headerClass="tableRowHeader" footerClass="on-pager-footer">
+            
+            <rich:dataTable binding="#{EventHistoryUIBean.dataTable}" 
+                                 id="eventHistoryDataTable"
+                              value="#{eventHistoryDataModel}" 
+                               rows="#{PageControl.EventsHistoryList.pageSize}" 
+                                var="item"
+                              width="100%" 
+                        headerClass="tableRowHeader" 
+                        footerClass="on-pager-footer"
+                           rendered="#{eventHistoryDataModel.rowCount > 0 }">
 
                 <f:facet name="PageControlView">
                     <onc:paginationControl id="EventsHistoryList" />

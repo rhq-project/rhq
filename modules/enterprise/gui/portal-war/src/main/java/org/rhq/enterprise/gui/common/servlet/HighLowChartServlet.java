@@ -120,7 +120,7 @@ public class HighLowChartServlet extends ChartServlet {
         MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
 
         // set metric range defaults
-        Map metricRangePrefs = user.getPreferences().getMetricRangePreference(true);
+        Map<String, ?> metricRangePrefs = user.getPreferences().getMetricRangePreference();
         long beginTime = (Long) metricRangePrefs.get(MonitorUtils.BEGIN);
         long endTime = (Long) metricRangePrefs.get(MonitorUtils.END);
         List<MeasurementDataNumericHighLowComposite> dataPoints = null;

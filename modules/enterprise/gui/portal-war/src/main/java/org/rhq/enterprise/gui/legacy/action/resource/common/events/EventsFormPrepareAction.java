@@ -73,7 +73,7 @@ public class EventsFormPrepareAction extends MetricsControlFormPrepareAction {
         Subject subject = user.getSubject();
 
         // Get metric range defaults
-        Map pref = user.getPreferences().getMetricRangePreference(true);
+        Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
         long begin = (Long) pref.get(MonitorUtils.BEGIN);
         long end = (Long) pref.get(MonitorUtils.END);
         Integer lastN = (Integer) pref.get(MonitorUtils.LASTN);

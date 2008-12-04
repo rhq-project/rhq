@@ -54,7 +54,7 @@ public class MetricDisplayRangeFormPrepareAction extends WorkflowPrepareAction {
         MetricDisplayRangeForm rangeForm = (MetricDisplayRangeForm) form;
         try {
             WebUser user = SessionUtils.getWebUser(request.getSession());
-            Map pref = user.getPreferences().getMetricRangePreference(false);
+            Map<String, ?> pref = user.getPreferences().getMetricRangePreference(false);
 
             if (rangeForm.isResetClicked() || (rangeForm.getRn() == null)) {
                 rangeForm.setRn((Integer) pref.get(MonitorUtils.LASTN));

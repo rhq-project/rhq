@@ -102,7 +102,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
             EventManagerLocal manager = LookupUtil.getEventManager();
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             WebUser user = EnterpriseFacesContextUtility.getWebUser();
-            Map<String, ?> pref = user.getPreferences().getMetricRangePreference(true);
+            Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
             long begin = (Long) pref.get(MonitorUtils.BEGIN);
             long end = (Long) pref.get(MonitorUtils.END);
 

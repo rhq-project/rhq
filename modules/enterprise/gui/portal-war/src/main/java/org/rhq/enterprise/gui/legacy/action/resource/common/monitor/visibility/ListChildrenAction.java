@@ -74,7 +74,7 @@ public class ListChildrenAction extends TilesAction {
         Resource resource = (Resource) request.getAttribute(AttrConstants.RESOURCE_ATTR);
 
         // Get metric time range
-        Map<String, ?> pref = user.getPreferences().getMetricRangePreference(true);
+        Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
         long begin = (Long) pref.get(MonitorUtils.BEGIN);
         long end = (Long) pref.get(MonitorUtils.END);
 

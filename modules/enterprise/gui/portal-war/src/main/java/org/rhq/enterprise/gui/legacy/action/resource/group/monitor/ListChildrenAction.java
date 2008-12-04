@@ -66,7 +66,7 @@ public class ListChildrenAction extends TilesAction {
         WebUser user = SessionUtils.getWebUser(request.getSession());
         Subject subject = user.getSubject();
 
-        Map<String, ?> pref = user.getPreferences().getMetricRangePreference(true);
+        Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
         long begin = (Long) pref.get(MonitorUtils.BEGIN);
         long end = (Long) pref.get(MonitorUtils.END);
 

@@ -100,7 +100,7 @@ public class IndicatorChartsAction extends DispatchAction {
         Subject subject = user.getSubject();
 
         // Get metric range defaults
-        Map pref = user.getPreferences().getMetricRangePreference(true);
+        Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
         long begin = (Long) pref.get(MonitorUtils.BEGIN);
         long end = (Long) pref.get(MonitorUtils.END);
 
@@ -434,7 +434,7 @@ public class IndicatorChartsAction extends DispatchAction {
         WebUser user = SessionUtils.getWebUser(request.getSession());
         Subject subject = user.getSubject();
 
-        Map<String, ?> pref = user.getPreferences().getMetricRangePreference(true);
+        Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
         long begin = (Long) pref.get(MonitorUtils.BEGIN);
         long end = (Long) pref.get(MonitorUtils.END);
 
@@ -466,7 +466,7 @@ public class IndicatorChartsAction extends DispatchAction {
         Subject subject = user.getSubject();
         String key = WebUserPreferences.PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + generateSessionKey(request, viewName);
 
-        Map pref = user.getPreferences().getMetricRangePreference(true);
+        Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
         long begin = (Long) pref.get(MonitorUtils.BEGIN);
         long end = (Long) pref.get(MonitorUtils.END);
 
@@ -527,7 +527,7 @@ public class IndicatorChartsAction extends DispatchAction {
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
         Subject subject = user.getSubject();
-        Map pref = user.getPreferences().getMetricRangePreference(true);
+        Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
         long begin = (Long) pref.get(MonitorUtils.BEGIN);
         long end = (Long) pref.get(MonitorUtils.END);
 
@@ -652,7 +652,7 @@ public class IndicatorChartsAction extends DispatchAction {
             Subject subject = user.getSubject();
 
             // Get metric range defaults
-            Map pref = user.getPreferences().getMetricRangePreference(true);
+            Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
             long begin = (Long) pref.get(MonitorUtils.BEGIN);
             long end = (Long) pref.get(MonitorUtils.END);
 

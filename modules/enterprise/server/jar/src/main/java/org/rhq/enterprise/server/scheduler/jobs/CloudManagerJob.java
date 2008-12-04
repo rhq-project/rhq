@@ -25,9 +25,9 @@ import org.apache.commons.logging.LogFactory;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
-import org.rhq.core.domain.cluster.Server;
-import org.rhq.enterprise.server.cluster.CloudManagerLocal;
-import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
+import org.rhq.core.domain.cloud.Server;
+import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class CloudManagerJob extends AbstractStatefulJob {

@@ -164,7 +164,7 @@
    -->
 
    <!--
-   <category name="org.rhq.enterprise.server.cluster">
+   <category name="org.rhq.enterprise.server.cloud">
      <priority value="DEBUG"/>
    </category>
    -->

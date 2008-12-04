@@ -25,7 +25,7 @@ package org.rhq.core.clientapi.server.core;
 import java.io.InputStream;
 import java.util.List;
 
-import org.rhq.core.domain.cluster.composite.FailoverListComposite;
+import org.rhq.core.domain.cloud.composite.FailoverListComposite;
 import org.rhq.core.domain.plugin.Plugin;
 
 /**

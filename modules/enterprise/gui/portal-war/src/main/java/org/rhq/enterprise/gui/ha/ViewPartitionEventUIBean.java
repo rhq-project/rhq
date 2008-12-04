@@ -20,8 +20,8 @@ package org.rhq.enterprise.gui.ha;
 
 import javax.faces.model.DataModel;
 
-import org.rhq.core.domain.cluster.PartitionEvent;
-import org.rhq.core.domain.cluster.PartitionEventDetails;
+import org.rhq.core.domain.cloud.PartitionEvent;
+import org.rhq.core.domain.cloud.PartitionEventDetails;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -29,7 +29,7 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
+import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -52,6 +52,7 @@ public class ViewPartitionEventUIBean extends PagedDataTableUIBean {
         return partitionEvent;
     }
 
+    @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
             dataModel = new PartitionEventDetailsDataModel(PageControlView.PartitionEventsDetailsView,
@@ -67,6 +68,7 @@ public class ViewPartitionEventUIBean extends PagedDataTableUIBean {
             super(view, beanName);
         }
 
+        @Override
         public PageList<PartitionEventDetails> fetchPage(PageControl pc) {
             EnterpriseFacesContextUtility.getSubject();
 

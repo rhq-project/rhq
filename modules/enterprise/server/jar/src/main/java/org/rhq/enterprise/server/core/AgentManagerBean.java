@@ -63,7 +63,7 @@ import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.cluster.FailoverListManagerLocal;
+import org.rhq.enterprise.server.cloud.FailoverListManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;

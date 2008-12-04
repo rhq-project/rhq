@@ -50,7 +50,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
+import org.rhq.enterprise.server.cloud.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.system.SystemManagerLocal;

@@ -19,17 +19,18 @@
 package org.rhq.enterprise.gui.ha;
 
 import javax.faces.model.DataModel;
-import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
-import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.common.paging.PageControlView;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.cluster.AffinityGroupManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.core.domain.cluster.Server;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageControl;
+
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
+import org.rhq.enterprise.gui.common.paging.PageControlView;
+import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Jason Dobies
@@ -43,7 +44,8 @@ public class AffinityGroupUnsubscribedServersUIBean extends PagedDataTableUIBean
     public String subscribeServers() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String affinityGroupIdString = FacesContextUtility.getRequest().getParameter("affinityGroupId");
-        String[] selectedServerIdStrings = FacesContextUtility.getRequest().getParameterValues("selectedServersToSubscribe");
+        String[] selectedServerIdStrings = FacesContextUtility.getRequest().getParameterValues(
+            "selectedServersToSubscribe");
 
         // Parse the server IDs to ints
         Integer[] selectedServerIds = new Integer[selectedServerIdStrings.length];
@@ -58,9 +60,11 @@ public class AffinityGroupUnsubscribedServersUIBean extends PagedDataTableUIBean
         return "successOrFailure";
     }
 
+    @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new AffinityGroupUnsubscribedServersDataModel(PageControlView.AffinityGroupUnsubscribedServers, MANAGED_BEAN_NAME);
+            dataModel = new AffinityGroupUnsubscribedServersDataModel(PageControlView.AffinityGroupUnsubscribedServers,
+                MANAGED_BEAN_NAME);
         }
 
         return dataModel;
@@ -72,6 +76,7 @@ public class AffinityGroupUnsubscribedServersUIBean extends PagedDataTableUIBean
             super(view, beanName);
         }
 
+        @Override
         public PageList<Server> fetchPage(PageControl pc) {
             int affinityGroupId = FacesContextUtility.getRequiredRequestParameter("affinityGroupId", Integer.class);
             PageList<Server> results = affinityGroupManager.getServerNonMembers(getSubject(), affinityGroupId, pc);

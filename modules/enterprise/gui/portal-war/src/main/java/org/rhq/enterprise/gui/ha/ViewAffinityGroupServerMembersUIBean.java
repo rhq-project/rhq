@@ -20,14 +20,14 @@ package org.rhq.enterprise.gui.ha;
 
 import javax.faces.model.DataModel;
 
-import org.rhq.core.domain.cluster.Server;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.server.cluster.AffinityGroupManagerLocal;
+import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAffinityGroupServerMembersUIBean extends PagedDataTableUIBean {

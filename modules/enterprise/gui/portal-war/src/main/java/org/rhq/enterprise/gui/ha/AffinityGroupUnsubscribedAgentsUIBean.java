@@ -19,18 +19,18 @@
 package org.rhq.enterprise.gui.ha;
 
 import javax.faces.model.DataModel;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.cluster.AffinityGroupManagerLocal;
+import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.cluster.AffinityGroup;
-import org.rhq.core.gui.util.FacesContextUtility;
 
 /**
  * @author Jason Dobies
@@ -44,7 +44,8 @@ public class AffinityGroupUnsubscribedAgentsUIBean extends PagedDataTableUIBean 
     public String subscribeAgents() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String affinityGroupIdString = FacesContextUtility.getRequest().getParameter("affinityGroupId");
-        String[] selectedAgentIdStrings = FacesContextUtility.getRequest().getParameterValues("selectedAgentsToSubscribe");
+        String[] selectedAgentIdStrings = FacesContextUtility.getRequest().getParameterValues(
+            "selectedAgentsToSubscribe");
 
         // Parse the agent IDs to ints
         Integer[] selectedAgentIds = new Integer[selectedAgentIdStrings.length];
@@ -59,9 +60,11 @@ public class AffinityGroupUnsubscribedAgentsUIBean extends PagedDataTableUIBean 
         return "successOrFailure";
     }
 
+    @Override
     public DataModel getDataModel() {
         if (null == dataModel) {
-            dataModel = new AffinityGroupUnsubscribedAgentsDataModel(PageControlView.AffinityGroupUnsubscribedAgents, MANAGED_BEAN_NAME);
+            dataModel = new AffinityGroupUnsubscribedAgentsDataModel(PageControlView.AffinityGroupUnsubscribedAgents,
+                MANAGED_BEAN_NAME);
         }
 
         return dataModel;
@@ -73,6 +76,7 @@ public class AffinityGroupUnsubscribedAgentsUIBean extends PagedDataTableUIBean 
             super(view, beanName);
         }
 
+        @Override
         public PageList<Agent> fetchPage(PageControl pc) {
             int affinityGroupId = FacesContextUtility.getRequiredRequestParameter("affinityGroupId", Integer.class);
             PageList<Agent> results = affinityGroupManager.getAgentNonMembers(getSubject(), affinityGroupId, pc);

@@ -26,8 +26,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.cluster.PartitionEvent;
-import org.rhq.core.domain.cluster.PartitionEventType;
+import org.rhq.core.domain.cloud.PartitionEvent;
+import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -37,7 +37,7 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
+import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -123,6 +123,7 @@ public class ListPartitionEventsUIBean extends PagedDataTableUIBean {
 
     // end filter stuff
 
+    @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
             dataModel = new ListPartitionEventsDataModel(PageControlView.ListPartitionEventsView, MANAGED_BEAN_NAME);
@@ -185,6 +186,7 @@ public class ListPartitionEventsUIBean extends PagedDataTableUIBean {
             super(view, beanName);
         }
 
+        @Override
         public PageList<PartitionEvent> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
 

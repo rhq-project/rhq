@@ -99,7 +99,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
+import org.rhq.enterprise.server.cloud.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;

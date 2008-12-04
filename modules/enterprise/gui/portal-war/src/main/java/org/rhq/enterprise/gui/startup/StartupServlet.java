@@ -34,12 +34,12 @@ import org.quartz.SchedulerException;
 
 import org.jboss.mx.util.MBeanServerLocator;
 
-import org.rhq.core.domain.cluster.Server;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 import org.rhq.enterprise.communications.util.SecurityUtil;
-import org.rhq.enterprise.server.cluster.instance.ServerManagerLocal;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;

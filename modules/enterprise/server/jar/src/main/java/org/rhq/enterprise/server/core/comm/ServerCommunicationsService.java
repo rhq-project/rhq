@@ -49,7 +49,7 @@ import org.jboss.util.StringPropertyReplacer;
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
-import org.rhq.core.domain.cluster.Server;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.PropertiesFileUpdate;

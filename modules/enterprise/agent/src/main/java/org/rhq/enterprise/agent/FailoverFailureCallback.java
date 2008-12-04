@@ -26,7 +26,7 @@ import mazz.i18n.Logger;
 import org.jboss.remoting.CannotConnectException;
 import org.jboss.remoting.transport.http.WebServerError;
 
-import org.rhq.core.domain.cluster.composite.FailoverListComposite;
+import org.rhq.core.domain.cloud.composite.FailoverListComposite;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 import org.rhq.enterprise.communications.command.Command;

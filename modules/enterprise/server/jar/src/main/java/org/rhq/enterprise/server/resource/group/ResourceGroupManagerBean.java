@@ -175,7 +175,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         ResourceGroupDeleteException {
         ResourceGroup group = getResourceGroupById(user, groupId, null);
 
-        // first unschedule all jobs for this group (only compatible groups have operations, mixed do not)
+        // for compatible groups, first recursively remove any referring backing groups for auto-clusters
+        if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
+            for (ResourceGroup referringGroup : group.getclusterBackingGroups()) {
+                deleteResourceGroup(user, referringGroup.getId());
+            }
+        }
+
+        // unschedule all jobs for this group (only compatible groups have operations, mixed do not)
         if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
             Subject overlord = subjectManager.getOverlord();
             try {
@@ -329,7 +336,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         // list to hold the different types of errors
         List<Integer> alreadyMemberIds = new ArrayList<Integer>();
 
-        List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(uniqueResourceIds.toArray(new Integer[uniqueResourceIds.size()]));
+        List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(uniqueResourceIds
+            .toArray(new Integer[uniqueResourceIds.size()]));
 
         for (ResourceIdFlyWeight fly : flyWeights) {
             // if resource is already in the explicit list, no work needs to be done
@@ -376,7 +384,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         // list to hold the different types of errors
         List<Integer> notValidMemberIds = new ArrayList<Integer>();
 
-        List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(uniqueResourceIds.toArray(new Integer[uniqueResourceIds.size()]));
+        List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(uniqueResourceIds
+            .toArray(new Integer[uniqueResourceIds.size()]));
         // prepare structures for remove*Helper
 
         for (ResourceIdFlyWeight fly : flyWeights) {

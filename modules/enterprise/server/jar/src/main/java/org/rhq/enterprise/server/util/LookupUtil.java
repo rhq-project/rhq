@@ -54,18 +54,18 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerBean;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
-import org.rhq.enterprise.server.cluster.AffinityGroupManagerBean;
-import org.rhq.enterprise.server.cluster.AffinityGroupManagerLocal;
-import org.rhq.enterprise.server.cluster.CloudManagerBean;
-import org.rhq.enterprise.server.cluster.CloudManagerLocal;
-import org.rhq.enterprise.server.cluster.FailoverListManagerBean;
-import org.rhq.enterprise.server.cluster.FailoverListManagerLocal;
-import org.rhq.enterprise.server.cluster.PartitionEventManagerBean;
-import org.rhq.enterprise.server.cluster.PartitionEventManagerLocal;
-import org.rhq.enterprise.server.cluster.instance.CacheConsistencyManagerBean;
-import org.rhq.enterprise.server.cluster.instance.CacheConsistencyManagerLocal;
-import org.rhq.enterprise.server.cluster.instance.ServerManagerBean;
-import org.rhq.enterprise.server.cluster.instance.ServerManagerLocal;
+import org.rhq.enterprise.server.cloud.AffinityGroupManagerBean;
+import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
+import org.rhq.enterprise.server.cloud.CloudManagerBean;
+import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.FailoverListManagerBean;
+import org.rhq.enterprise.server.cloud.FailoverListManagerLocal;
+import org.rhq.enterprise.server.cloud.PartitionEventManagerBean;
+import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
+import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerBean;
+import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerBean;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.common.EntityManagerFacade;
 import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
@@ -123,6 +123,8 @@ import org.rhq.enterprise.server.resource.ResourceManagerBean;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerBean;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.cluster.ClusterManagerBean;
+import org.rhq.enterprise.server.resource.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerBean;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionExpressionBuilderManagerBean;
@@ -335,6 +337,10 @@ public final class LookupUtil {
 
     public static CloudManagerLocal getCloudManager() {
         return lookupLocal(CloudManagerBean.class);
+    }
+
+    public static ClusterManagerLocal getClusterManager() {
+        return lookupLocal(ClusterManagerBean.class);
     }
 
     public static ServerManagerLocal getServerManager() {

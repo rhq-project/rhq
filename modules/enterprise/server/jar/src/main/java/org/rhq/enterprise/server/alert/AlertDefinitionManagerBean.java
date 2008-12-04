@@ -48,7 +48,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.cluster.AgentStatusManagerLocal;
+import org.rhq.enterprise.server.cloud.AgentStatusManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**

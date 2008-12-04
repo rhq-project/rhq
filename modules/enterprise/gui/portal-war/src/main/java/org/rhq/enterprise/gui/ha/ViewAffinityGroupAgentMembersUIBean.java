@@ -27,7 +27,7 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.server.cluster.AffinityGroupManagerLocal;
+import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAffinityGroupAgentMembersUIBean extends PagedDataTableUIBean {

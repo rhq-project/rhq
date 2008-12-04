@@ -127,6 +127,7 @@ import org.rhq.core.domain.resource.ResourceType;
         + "  FROM ResourceGroup g " + "       LEFT JOIN g.explicitResources er "
         + "       LEFT JOIN g.implicitResources ir " + " WHERE er.id = :id " + "    OR ir.id = :id "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_NAME, query = "SELECT rg FROM ResourceGroup AS rg WHERE LOWER(rg.name) = LOWER(:name)"),
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY, query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.clusterKey = :clusterKey"),
     @NamedQuery(name = ResourceGroup.QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE, query = "SELECT DISTINCT rg "
         + "FROM ResourceGroup AS rg LEFT JOIN rg.roles AS r " + "WHERE rg.id NOT IN " + "( SELECT irg.id "
         + "  FROM Role ir JOIN ir.resourceGroups AS irg " + "  WHERE ir.id = :roleId )"),
@@ -189,6 +190,7 @@ public class ResourceGroup extends Group {
 
     public static final String QUERY_FIND_GROUP_IDS_BY_RESOURCE_ID = "ResourceGroup.findGroupIdsByResourceId";
     public static final String QUERY_FIND_BY_NAME = "ResourceGroup.findByName";
+    public static final String QUERY_FIND_BY_CLUSTER_KEY = "ResourceGroup.findByClusterKey";
     public static final String QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE_WITH_EXCLUDES = "ResourceGroup.getAvailableResourceGroupsForRoleWithExcludes";
     public static final String QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE = "ResourceGroup.getAvailableResourceGroupsForRole";
     public static final String QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE = "ResourceGroup.getResourceGroupsAssignedToRole";
@@ -252,8 +254,7 @@ public class ResourceGroup extends Group {
     @ManyToOne
     private ResourceType resourceType; // if non-null, it implies a compatible group
 
-    // The root compatible group of which this is a child resource cluster
-    // If the parent is removed this should go away too.
+    // The compatible group for which this is an auto-cluster backing group
     @JoinColumn(name = "CLUSTER_RESOURCE_GROUP_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
     private ResourceGroup clusterResourceGroup = null;
@@ -263,6 +264,10 @@ public class ResourceGroup extends Group {
 
     // When false hide this group from the UI. For example, for a Resource Cluster backing group. 
     private boolean visible = true;
+
+    // When a compatible group is removed any referring backing groups should also be removed
+    @OneToMany(mappedBy = "clusterResourceGroup")
+    private List<ResourceGroup> clusterBackingGroups = null;
 
     /* no-arg constructor required by EJB spec */
     protected ResourceGroup() {
@@ -439,6 +444,14 @@ public class ResourceGroup extends Group {
 
     public void setVisible(boolean visible) {
         this.visible = visible;
+    }
+
+    public List<ResourceGroup> getclusterBackingGroups() {
+        return clusterBackingGroups;
+    }
+
+    public void setclusterBackingGroups(List<ResourceGroup> clusterBackingGroups) {
+        this.clusterBackingGroups = clusterBackingGroups;
     }
 
 }

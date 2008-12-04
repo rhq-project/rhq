@@ -24,15 +24,15 @@ import javax.faces.model.DataModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.cluster.composite.AffinityGroupCountComposite;
+import org.rhq.core.domain.cloud.composite.AffinityGroupCountComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.server.cluster.AffinityGroupManagerBean;
-import org.rhq.enterprise.server.cluster.AffinityGroupManagerLocal;
+import org.rhq.enterprise.server.cloud.AffinityGroupManagerBean;
+import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ListAffinityGroupsUIBean extends PagedDataTableUIBean {

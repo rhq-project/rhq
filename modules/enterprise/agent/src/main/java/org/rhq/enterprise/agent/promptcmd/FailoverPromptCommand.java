@@ -25,7 +25,7 @@ import java.io.PrintWriter;
 
 import mazz.i18n.Msg;
 
-import org.rhq.core.domain.cluster.composite.FailoverListComposite;
+import org.rhq.core.domain.cloud.composite.FailoverListComposite;
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;

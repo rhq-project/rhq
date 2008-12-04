@@ -21,10 +21,10 @@ package org.rhq.enterprise.gui.ha;
 import javax.faces.application.FacesMessage;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.cluster.AffinityGroup;
+import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.cluster.AffinityGroupManagerLocal;
+import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAffinityGroupDetailsUIBean {

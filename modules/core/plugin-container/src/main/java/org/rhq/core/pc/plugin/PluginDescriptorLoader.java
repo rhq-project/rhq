@@ -26,6 +26,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.io.File;
 import java.io.InputStream;
+import java.io.IOException;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -120,12 +121,15 @@ public class PluginDescriptorLoader {
         if (this.pluginJarUrl == null) {
             throw new PluginContainerException("A valid plugin JAR URL must be supplied.");
         }
+        log.debug("Loading plugin descriptor from plugin jar at [" + this.pluginJarUrl + "]...");
+
+        testPluginJarIsReadable();
 
         JAXBContext jaxbContext;
-
         try {
             jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
         } catch (JAXBException e) {
+            //noinspection ThrowableInstanceNeverThrown
             throw new PluginContainerException("Could not instantiate the JAXB Context.",
                 new WrappedRemotingException(e));
         }
@@ -139,7 +143,8 @@ public class PluginDescriptorLoader {
 
             is = pluginOnlyClassloader.getResourceAsStream(PLUGIN_DESCRIPTOR_PATH);
             if (is == null) {
-                log.warn("Could not load plugin descriptor [" + PLUGIN_DESCRIPTOR_PATH + "] from URL: " + pluginJarUrl);
+                throw new PluginContainerException("Could not load plugin descriptor [" + PLUGIN_DESCRIPTOR_PATH
+                        + "] from pluigin jar at [" + this.pluginJarUrl + "].");
             }
 
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
@@ -163,8 +168,9 @@ public class PluginDescriptorLoader {
 
             return pluginDescriptor;
         } catch (Exception e) {
-            throw new PluginContainerException("Could not successfully parse the plugin descriptor [" + PLUGIN_DESCRIPTOR_PATH
-                + " found in URL [" + pluginJarUrl + "]", new WrappedRemotingException(e));
+            throw new PluginContainerException("Could not successfully parse the plugin descriptor ["
+                    + PLUGIN_DESCRIPTOR_PATH + " found in plugin jar at [" + this.pluginJarUrl + "]",
+                    new WrappedRemotingException(e));
         } finally {
             if (is != null) {
                 try {
@@ -187,5 +193,24 @@ public class PluginDescriptorLoader {
     public String toString() {
         return this.getClass().getSimpleName() + "[pluginJarUrl=" + this.pluginJarUrl + ", pluginClassLoader=" +
                 this.pluginClassLoader + "]";
+    }
+
+    private void testPluginJarIsReadable() throws PluginContainerException {
+        InputStream inputStream = null;
+        try {
+            inputStream = this.pluginJarUrl.openStream();
+        }
+        catch (IOException e) {
+            throw new PluginContainerException("Unable to open plugin jar at [" + this.pluginJarUrl + "] for reading.");
+        }
+        finally {
+            try {
+                if (inputStream != null)
+                    inputStream.close();
+            }
+            catch (IOException e) {
+                log.error("Failed to close input stream for plugin jar at [" + this.pluginJarUrl + "].");
+            }
+        }
     }
 }

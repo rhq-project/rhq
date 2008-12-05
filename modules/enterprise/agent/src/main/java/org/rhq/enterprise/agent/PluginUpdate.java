@@ -26,6 +26,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import mazz.i18n.Logger;
 
@@ -52,6 +56,11 @@ public class PluginUpdate {
     private static final Logger LOG = AgentI18NFactory.getLogger(PluginUpdate.class);
 
     private static final String MARKER_FILENAME = ".updatelock";
+
+    /**
+     * Static lock that prohibits concurrent plugin updates.
+     */
+    private static final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final CoreServerService coreServerService;
     private final PluginContainerConfiguration config;
@@ -137,59 +146,69 @@ public class PluginUpdate {
 
         List<Plugin> updated_plugins = new ArrayList<Plugin>();
 
-        createMarkerFile();
+        // block if some other thread is updating, too - we can only ever have one thread updating plugins
+        if (!PluginUpdate.lock.writeLock().tryLock(60, TimeUnit.MINUTES)) {
+            // it should never take this long to update plugins. But if it does, just barf
+            throw new TimeoutException();
+        }
 
         try {
-            // find out what plugins we already have locally
-            Map<String, Plugin> current_plugins = getCurrentPlugins();
+            createMarkerFile();
 
-            // find out what the latest plugins are available to us
-            List<Plugin> latest_plugins = coreServerService.getLatestPlugins();
-            Map<String, Plugin> latest_plugins_map = new HashMap<String, Plugin>(latest_plugins.size());
+            try {
+                // find out what plugins we already have locally
+                Map<String, Plugin> current_plugins = getCurrentPlugins();
 
-            // determine if we need to upgrade any of our current plugins to the latest versions
-            for (Plugin latest_plugin : latest_plugins) {
-                String plugin_filename = latest_plugin.getPath();
-                latest_plugins_map.put(plugin_filename, latest_plugin);
-                Plugin current_plugin = current_plugins.get(plugin_filename);
+                // find out what the latest plugins are available to us
+                List<Plugin> latest_plugins = coreServerService.getLatestPlugins();
+                Map<String, Plugin> latest_plugins_map = new HashMap<String, Plugin>(latest_plugins.size());
 
-                if (current_plugin == null) {
-                    updated_plugins.add(latest_plugin); // we don't have any version of this plugin, we'll need to get it
-                    LOG.debug(AgentI18NResourceKeys.NEED_MISSING_PLUGIN, plugin_filename);
-                } else {
-                    String latest_md5 = latest_plugin.getMD5();
-                    String current_md5 = current_plugin.getMD5();
+                // determine if we need to upgrade any of our current plugins to the latest versions
+                for (Plugin latest_plugin : latest_plugins) {
+                    String plugin_filename = latest_plugin.getPath();
+                    latest_plugins_map.put(plugin_filename, latest_plugin);
+                    Plugin current_plugin = current_plugins.get(plugin_filename);
 
-                    if (!current_md5.equals(latest_md5)) {
-                        updated_plugins.add(latest_plugin);
-                        LOG.debug(AgentI18NResourceKeys.PLUGIN_NEEDS_TO_BE_UPDATED, plugin_filename, current_md5,
-                            latest_md5);
+                    if (current_plugin == null) {
+                        updated_plugins.add(latest_plugin); // we don't have any version of this plugin, we'll need to get it
+                        LOG.debug(AgentI18NResourceKeys.NEED_MISSING_PLUGIN, plugin_filename);
                     } else {
-                        LOG.debug(AgentI18NResourceKeys.PLUGIN_ALREADY_AT_LATEST, plugin_filename);
+                        String latest_md5 = latest_plugin.getMD5();
+                        String current_md5 = current_plugin.getMD5();
+
+                        if (!current_md5.equals(latest_md5)) {
+                            updated_plugins.add(latest_plugin);
+                            LOG.debug(AgentI18NResourceKeys.PLUGIN_NEEDS_TO_BE_UPDATED, plugin_filename, current_md5,
+                                latest_md5);
+                        } else {
+                            LOG.debug(AgentI18NResourceKeys.PLUGIN_ALREADY_AT_LATEST, plugin_filename);
+                        }
                     }
                 }
-            }
 
-            deleteIllegitimatePlugins(current_plugins, latest_plugins_map);
+                deleteIllegitimatePlugins(current_plugins, latest_plugins_map);
 
-            // Let's go ahead and download all the plugins that we need.
-            // Try to update all plugins, even if one or more fails to update. At the end,
-            // if an exception was thrown, we'll rethrow it but only after all update attempts were made
-            Exception last_error = null;
+                // Let's go ahead and download all the plugins that we need.
+                // Try to update all plugins, even if one or more fails to update. At the end,
+                // if an exception was thrown, we'll rethrow it but only after all update attempts were made
+                Exception last_error = null;
 
-            for (Plugin updated_plugin : updated_plugins) {
-                try {
-                    downloadPluginWithRetries(updated_plugin); // tries our very best to get it
-                } catch (Exception e) {
-                    last_error = e;
+                for (Plugin updated_plugin : updated_plugins) {
+                    try {
+                        downloadPluginWithRetries(updated_plugin); // tries our very best to get it
+                    } catch (Exception e) {
+                        last_error = e;
+                    }
                 }
-            }
 
-            if (last_error != null) {
-                throw last_error;
+                if (last_error != null) {
+                    throw last_error;
+                }
+            } finally {
+                deleteMarkerFile();
             }
         } finally {
-            deleteMarkerFile();
+            PluginUpdate.lock.writeLock().unlock();
         }
 
         LOG.info(AgentI18NResourceKeys.UPDATING_PLUGINS_COMPLETE);
@@ -373,13 +392,17 @@ public class PluginUpdate {
     }
 
     private void deleteMarkerFile() {
-        File marker = new File(config.getPluginDirectory(), MARKER_FILENAME);
+        try {
+            File marker = new File(config.getPluginDirectory(), MARKER_FILENAME);
 
-        // it should exist, but if it doesn't oh well, just skip trying to delete it
-        if (marker.exists()) {
-            if (!marker.delete()) {
-                LOG.warn(AgentI18NResourceKeys.UPDATING_PLUGINS_MARKER_DELETE_FAILURE, marker);
+            // it should exist, but if it doesn't oh well, just skip trying to delete it
+            if (marker.exists()) {
+                if (!marker.delete()) {
+                    LOG.warn(AgentI18NResourceKeys.UPDATING_PLUGINS_MARKER_DELETE_FAILURE, marker);
+                }
             }
+        } catch (Throwable t) {
+            LOG.warn(AgentI18NResourceKeys.UPDATING_PLUGINS_MARKER_DELETE_FAILURE, MARKER_FILENAME);
         }
 
         return;

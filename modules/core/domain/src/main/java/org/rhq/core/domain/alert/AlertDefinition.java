@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.alert;
 
 import java.io.Serializable;
@@ -109,7 +109,6 @@ public class AlertDefinition implements Serializable {
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_ALERT_DEFINITION_ID_SEQ")
     @Id
-    @SuppressWarnings( { "unused" })
     private int id;
 
     @Column(name = "NAME", nullable = false)
@@ -195,7 +194,6 @@ public class AlertDefinition implements Serializable {
      * deleting a Resource from inventory.
      */
     @OneToMany(mappedBy = "alertDefinition", cascade = CascadeType.REFRESH)
-    @SuppressWarnings("unused")
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
     private Set<AlertDampeningEvent> alertDampeningEvents = new HashSet<AlertDampeningEvent>();
 
@@ -228,6 +226,10 @@ public class AlertDefinition implements Serializable {
     }
 
     public void update(AlertDefinition alertDef) {
+        if (getId() == alertDef.getId()) {
+            return; // no-op if i'm updating my already attached self
+        }
+
         /*
          * Don't copy the id, ctime, or mtime.
          */
@@ -267,8 +269,8 @@ public class AlertDefinition implements Serializable {
             copiedConditions.add(newCondition);
         }
 
-        removeAllConditions();
-        getConditions().addAll(copiedConditions);
+        this.removeAllConditions();
+        this.getConditions().addAll(copiedConditions);
 
         Set<AlertNotification> copiedNotifications = new HashSet<AlertNotification>();
         for (AlertNotification oldNotification : alertDef.getAlertNotifications()) {
@@ -277,14 +279,18 @@ public class AlertDefinition implements Serializable {
             copiedNotifications.add(newNotification);
         }
 
-        removeAllAlertNotifications();
-        getAlertNotifications().addAll(copiedNotifications);
+        this.removeAllAlertNotifications();
+        this.getAlertNotifications().addAll(copiedNotifications);
 
         this.operationDefinition = alertDef.operationDefinition;
     }
 
     public int getId() {
         return this.id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getName() {

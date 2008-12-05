@@ -114,6 +114,9 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     public List<Resource> getAutoClusterResources(Subject subject, ClusterKey clusterKey) {
         // Build the query
         String queryString = getClusterKeyQuery(clusterKey);
+        System.out.println();
+        System.out.println(queryString);
+        System.out.println();
         Query query = entityManager.createQuery(queryString);
         List<Resource> rs = query.getResultList();
 
@@ -150,13 +153,14 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         ClusterKey.Node node = nodes.get(size - 1);
         String alias = "r" + size;
 
+        // TODO: Change subquery syntax to be like the JOIN below.
         query.append(" SELECT " + alias + " FROM Resource " + alias + " WHERE ");
         query.append(alias + ".resourceKey = '" + node.getResourceKey() + "' AND ");
         query.append(alias + ".resourceType = " + node.getResourceTypeId() + " AND ");
         query.append(alias + ".parentResource IN ( ");
 
         if (1 == size) {
-            query.append(" SELECT rg.implicitResources FROM ResourceGroup rg WHERE rg = "
+            query.append(" SELECT rgir FROM ResourceGroup rg JOIN rg.implicitResources rgir WHERE rg = "
                 + clusterKey.getClusterGroupId());
         } else {
             buildQuery(query, clusterKey, nodes.subList(0, size - 1));

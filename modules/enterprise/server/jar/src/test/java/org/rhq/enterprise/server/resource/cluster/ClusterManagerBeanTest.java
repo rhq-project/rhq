@@ -112,8 +112,8 @@ public class ClusterManagerBeanTest extends AbstractEJB3Test {
             System.out.println("named clusterKey=" + clusterKey.toNamedString(em));
             assert ClusterKey.valueOf(clusterKey.toString()) != null;
 
-            /*
             List<Resource> resources = clusterManager.getAutoClusterResources(subject, clusterKey);
+            /*
             assert resources.size() == 2;
             assert resources.get(0).getId() != resources.get(0).getId();
             assert resources.get(0).getParentResource().getId() != resources.get(1).getParentResource().getId();

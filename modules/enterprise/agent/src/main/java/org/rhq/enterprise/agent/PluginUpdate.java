@@ -147,7 +147,7 @@ public class PluginUpdate {
         List<Plugin> updated_plugins = new ArrayList<Plugin>();
 
         // block if some other thread is updating, too - we can only ever have one thread updating plugins
-        if (!PluginUpdate.lock.writeLock().tryLock(60, TimeUnit.MINUTES)) {
+        if (!PluginUpdate.lock.writeLock().tryLock(3600, TimeUnit.SECONDS)) {
             // it should never take this long to update plugins. But if it does, just barf
             throw new TimeoutException();
         }

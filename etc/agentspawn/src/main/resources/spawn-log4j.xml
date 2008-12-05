@@ -23,7 +23,7 @@
    <appender name="FILE" class="org.apache.log4j.RollingFileAppender">
 
       <param name="Threshold"      value="INFO"/>
-      <param name="File"           value="spawn/logs/spawned-agents.log"/>
+      <param name="File"           value="AGENTSPAWN.LOG"/>
       <param name="MaxBackupIndex" value="2"/>
       <param name="MaxFileSize"    value="5000KB"/>
       <param name="Append"         value="true"/>
@@ -35,11 +35,14 @@
    </appender>
 
    <!-- ====================================== -->
-   <!-- Append command trace to the console    -->
+   <!-- Append command trace to the file       -->
    <!-- ====================================== -->
-   <appender name="COMMANDTRACE" class="org.apache.log4j.ConsoleAppender">
+   <appender name="COMMANDTRACE" class="org.apache.log4j.RollingFileAppender">
       <param name="Threshold" value="TRACE"/>
-      <param name="Target" value="System.out"/>
+      <param name="File"           value="AGENTSPAWN-COMMANDTRACE.LOG"/>
+      <param name="MaxBackupIndex" value="2"/>
+      <param name="MaxFileSize"    value="5000KB"/>
+      <param name="Append"         value="true"/>
 
       <layout class="org.apache.log4j.PatternLayout">
          <param name="ConversionPattern" value="* %d{MMM-dd HH:mm:ss,SSS} %m%n"/>
@@ -76,10 +79,10 @@
 
    <root>
       <priority value="DEBUG"/>
-      <!--
       <appender-ref ref="FILE"/>
-      -->
+      <!--
       <appender-ref ref="CONSOLE"/>
+      -->
    </root>
 
 </log4j:configuration>

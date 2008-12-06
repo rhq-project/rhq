@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.alert.notification;
 
 import javax.persistence.DiscriminatorValue;
@@ -28,9 +28,11 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+
 import org.jetbrains.annotations.NotNull;
-import org.rhq.core.domain.authz.Role;
+
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.authz.Role;
 
 @DiscriminatorValue("ROLE")
 @Entity
@@ -42,6 +44,9 @@ import org.rhq.core.domain.alert.AlertDefinition;
     @NamedQuery(name = RoleNotification.QUERY_FIND_BY_ROLE_IDS, query = "SELECT rn " + "  FROM RoleNotification rn "
         + " WHERE rn.role.id IN ( :ids )") })
 public class RoleNotification extends AlertNotification {
+
+    private static final long serialVersionUID = 1L;
+
     public static final String QUERY_FIND_ALL_BY_ALERT_DEFINITION_ID = "RoleNotification.findAllByAlertDefinitionId";
     public static final String QUERY_FIND_BY_IDS = "RoleNotification.findByIds";
     public static final String QUERY_FIND_BY_ROLE_IDS = "SubjectNotification.findByRoleIds";
@@ -57,10 +62,7 @@ public class RoleNotification extends AlertNotification {
         this(roleNotification.getAlertDefinition(), roleNotification.role);
     }
 
-    @SuppressWarnings( { "ConstantConditions" })
-    public RoleNotification(@NotNull
-    AlertDefinition alertDefinition, @NotNull
-    Role role) {
+    public RoleNotification(@NotNull AlertDefinition alertDefinition, @NotNull Role role) {
         super(alertDefinition);
         if (role == null) {
             throw new IllegalArgumentException("role must be non-null.");

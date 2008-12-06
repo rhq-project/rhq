@@ -43,7 +43,7 @@ import org.rhq.enterprise.server.RHQConstants;
 
 @Stateless
 public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
-    @SuppressWarnings("unused")
+
     private final Log log = LogFactory.getLog(AlertDampeningManagerBean.class);
 
     @EJB

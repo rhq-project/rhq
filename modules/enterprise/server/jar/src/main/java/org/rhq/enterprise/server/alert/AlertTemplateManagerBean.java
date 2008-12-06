@@ -52,7 +52,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 
 @Stateless
 public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
-    @SuppressWarnings("unused")
+
     private static final Log LOG = LogFactory.getLog(AlertTemplateManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -210,7 +210,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
             // cascading is a system side effects, and so should be performed by the overlord
             List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
             alertDefinitionManager.removeAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
-                    .toArray(new Integer[alertDefinitions.size()]));
+                .toArray(new Integer[alertDefinitions.size()]));
         }
         //        }
     }
@@ -224,7 +224,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
             // cascading is a system side effects, and so should be performed by the overlord
             List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
             alertDefinitionManager.enableAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
-                    .toArray(new Integer[alertDefinitions.size()]));
+                .toArray(new Integer[alertDefinitions.size()]));
             //            }
         }
     }
@@ -238,7 +238,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
             // cascading is a system side effects, and so should be performed by the overlord
             List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
             alertDefinitionManager.disableAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
-                    .toArray(new Integer[alertDefinitions.size()]));
+                .toArray(new Integer[alertDefinitions.size()]));
             //            }
         }
     }

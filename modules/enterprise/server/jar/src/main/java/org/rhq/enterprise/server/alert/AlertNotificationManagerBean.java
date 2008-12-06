@@ -89,7 +89,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         }
     }
 
-    @SuppressWarnings("unchecked")
     public int addEmailNotifications(Subject subject, Integer alertDefinitionId, String[] emails,
         boolean isAlertTemplate) {
         AlertDefinition alertDefinition = alertDefinitionManager.getAlertDefinitionById(subjectManager.getOverlord(),
@@ -161,7 +160,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return new PageList<EmailNotification>(results, (int) count, pageControl);
     }
 
-    @SuppressWarnings("unchecked")
     public int addRoleNotifications(Subject subject, Integer alertDefinitionId, Integer[] roleIds,
         boolean isAlertTemplate) {
         AlertDefinition alertDefinition = alertDefinitionManager.getAlertDefinitionById(subjectManager.getOverlord(),
@@ -255,7 +253,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return new PageList<RoleNotification>(results, (int) count, pageControl);
     }
 
-    @SuppressWarnings("unchecked")
     public int addSubjectNotifications(Subject user, Integer alertDefinitionId, Integer[] subjectIds,
         boolean isAlertTemplate) {
         AlertDefinition alertDefinition = alertDefinitionManager.getAlertDefinitionById(subjectManager.getOverlord(),

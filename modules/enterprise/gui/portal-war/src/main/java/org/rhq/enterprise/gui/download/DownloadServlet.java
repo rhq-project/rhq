@@ -37,8 +37,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.jboss.mx.util.MBeanServerLocator;
 import org.jboss.system.server.ServerConfig;
 
+import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Serves the static content found in rhq-downloads.
@@ -62,20 +64,23 @@ public class DownloadServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String pathInfo = req.getPathInfo();
-        if (pathInfo != null && !pathInfo.equals("") && !pathInfo.equals("/")) {
-            numActiveDownloads++;
-            download(req, resp);
-            numActiveDownloads--;
-        } else {
-            if (showDownloadsListing) {
-                outputFileList(req, resp);
+        if (isServerAcceptingRequests()) {
+            String pathInfo = req.getPathInfo();
+            if (pathInfo != null && !pathInfo.equals("") && !pathInfo.equals("/")) {
+                numActiveDownloads++;
+                download(req, resp);
+                numActiveDownloads--;
             } else {
-                disableBrowserCache(resp);
-                resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Listing disabled");
+                if (showDownloadsListing) {
+                    outputFileList(req, resp);
+                } else {
+                    disableBrowserCache(resp);
+                    resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Listing disabled");
+                }
             }
+        } else {
+            sendErrorServerNotAcceptingRequests(resp);
         }
-
         return;
     }
 
@@ -148,6 +153,11 @@ public class DownloadServlet extends HttpServlet {
         }
     }
 
+    private void sendErrorServerNotAcceptingRequests(HttpServletResponse resp) throws IOException {
+        disableBrowserCache(resp);
+        resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Server Is Down For Maintenance");
+    }
+
     private void disableBrowserCache(HttpServletResponse resp) {
         resp.setHeader("Cache-Control", "no-cache");
         resp.setHeader("Expires", "-1");
@@ -184,5 +194,14 @@ public class DownloadServlet extends HttpServlet {
 
     private MBeanServer getMBeanServer() {
         return MBeanServerLocator.locateJBoss();
+    }
+
+    private boolean isServerAcceptingRequests() {
+        try {
+            OperationMode mode = LookupUtil.getServerManager().getServer().getOperationMode();
+            return mode == OperationMode.NORMAL;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

@@ -115,7 +115,6 @@ public class ServerManagerBean implements ServerManagerLocal {
         return results;
     }
 
-    @SuppressWarnings("unchecked")
     public List<Integer> getAndClearAgentsWithStatus() {
         List<Integer> results = agentStatusManager.getAndClearAgentsWithStatusForServer(getIdentity());
         return results;

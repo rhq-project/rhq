@@ -256,7 +256,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                threshold is set to 0.90, the agent's VM health check thread
                will consider the agent critically low on memory if the agent
                is using over 90MB of heap space.
-               Note that he heap and non-heap memory thresholds are specified
+               Note that the heap and non-heap memory thresholds are specified
                as separate preferences.
                -->
                <entry key="rhq.agent.vm-health-check.low-heap-mem-threshold" value="0.90" />
@@ -799,6 +799,12 @@ commands named "config", "setconfig" and "setup" and the command line options
                that can be specified.  Note that because this is an XML file,
                you must specify "&amp;" in the transport-params value
                when needing an ampersand to separate the parameters.
+               
+               If you do not define the bind-address, the agent will, at
+               runtime, pick an address to bind to based on the network
+               adapters that are available. If you want the agent to use
+               a specific IP or address, then you must define the
+               bind-address here.
                -->
                <entry key="rhq.communications.connector.rhqtype"          value="agent" />
                <entry key="rhq.communications.connector.transport"        value="socket" />

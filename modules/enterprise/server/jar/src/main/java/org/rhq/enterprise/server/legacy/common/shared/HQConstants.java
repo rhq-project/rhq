@@ -18,15 +18,11 @@
  */
 package org.rhq.enterprise.server.legacy.common.shared;
 
-import org.rhq.enterprise.server.core.jaas.JDBCLoginModule;
-import org.rhq.enterprise.server.core.jaas.LdapLoginModule;
-
 /**
  * Global constants file to be used for Config Properties, as well as any other constant used across subsystems
- *
- * @deprecated
+ * 
+ * NOTE: The defaults for these properties can be found in sysconfig-data.xml in the dbutils module.
  */
-@Deprecated
 public class HQConstants {
     public static final String JAASProvider = "CAM_JAAS_PROVIDER";
 
@@ -35,12 +31,6 @@ public class HQConstants {
      */
     public static final String JDBCJAASProvider = "JDBC";
     public static final String LDAPJAASProvider = "LDAP";
-
-    /**
-     * JAAS Provider class names *
-     */
-    public static final String JDBCJAASProviderClass = JDBCLoginModule.class.getName();
-    public static final String LDAPJAASProviderClass = LdapLoginModule.class.getName();
 
     // LDAP Configuration props
     public static final String LDAPFactory = "CAM_LDAP_NAMING_FACTORY_INITIAL";
@@ -63,14 +53,6 @@ public class HQConstants {
     // how long can an agent be quiet (i.e. not send an avail report) before we consider it down and backfill it
     public static final String EnableAgentAutoUpdate = "ENABLE_AGENT_AUTO_UPDATE";
 
-    // Data storage options (All in ms)
-    // How long do we keep raw metric data?
-    /**
-     * @deprecated
-     */
-    @Deprecated
-    public static final String DataPurgeRaw = "CAM_DATA_PURGE_RAW";
-
     // How long do we keep data compressed in hourly intervals?
     public static final String DataPurge1Hour = "CAM_DATA_PURGE_1H";
 
@@ -82,9 +64,6 @@ public class HQConstants {
 
     // How often to perform database maintainence
     public static final String DataMaintenance = "CAM_DATA_MAINTENANCE";
-
-    // Whether or not to store every data point
-    public static final String DataStoreAll = "DATA_STORE_ALL";
 
     // Whether or not to reindex nightly
     public static final String DataReindex = "DATA_REINDEX_NIGHTLY";
@@ -117,10 +96,6 @@ public class HQConstants {
     // Help related
     public static final String HelpUser = "CAM_HELP_USER";
     public static final String HelpUserPassword = "CAM_HELP_PASSWORD";
-
-    // High Availability related
-    public static final String HighAvailAddress = "CAM_MULTICAST_ADDRESS";
-    public static final String HighAvailPort = "CAM_MULTICAST_PORT";
 
     // Syslog Actions enabled
     public static final String SyslogActionsEnabled = "CAM_SYSLOG_ACTIONS_ENABLED";

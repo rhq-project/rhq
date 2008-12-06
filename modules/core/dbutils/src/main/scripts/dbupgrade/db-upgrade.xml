@@ -1064,6 +1064,28 @@ DB Upgrade:
       <schema-deleteColumn table="RHQ_EVENT" column="ACK_USER" />
    </schemaSpec>
 
+   <!-- delete all constant data no longer used -->
+   <schemaSpec version="2.34">
+      <schema-directSQL>
+         <statement desc="Removing configuration data property no longer used">
+            DELETE FROM rhq_system_config 
+            WHERE property_key = 'CAM_DATA_PURGE_RAW'
+         </statement>
+         <statement desc="Removing configuration data property no longer used">
+            DELETE FROM rhq_system_config 
+            WHERE property_key = 'CAM_MULTICAST_ADDRESS'
+         </statement>
+         <statement desc="Removing configuration data property no longer used">
+            DELETE FROM rhq_system_config 
+            WHERE property_key = 'CAM_MULTICAST_PORT'
+         </statement>
+         <statement desc="Removing configuration data property no longer used">
+            DELETE FROM rhq_system_config 
+            WHERE property_key = 'DATA_STORE_ALL'
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

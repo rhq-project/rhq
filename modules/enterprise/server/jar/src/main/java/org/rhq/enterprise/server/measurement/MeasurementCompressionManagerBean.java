@@ -86,7 +86,6 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         Properties conf = systemManager.getSystemConfiguration();
 
         try {
-            // NOTE: The defaults for these properties can be found in sysconfig-data.xml in the dbutils module.
             this.purge1h = Long.parseLong(conf.getProperty(HQConstants.DataPurge1Hour));
             this.purge6h = Long.parseLong(conf.getProperty(HQConstants.DataPurge6Hour));
             this.purge1d = Long.parseLong(conf.getProperty(HQConstants.DataPurge1Day));

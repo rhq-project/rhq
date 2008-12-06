@@ -50,15 +50,6 @@
               PROPERTY_VALUE="@@@LDAPSEARCHFILTER@@@" DEFAULT_PROPERTY_VALUE=""
               FREAD_ONLY="FALSE"/>
 
-        <!-- Multicast address for HighAvail CAM -->
-        <!-- TODO CHANGE ME... INTEGRATE INTO INSTALLER -->
-        <data ID="19" PROPERTY_KEY="CAM_MULTICAST_ADDRESS"
-              PROPERTY_VALUE="@@@MULTICAST_ADDR@@@" DEFAULT_PROPERTY_VALUE=""
-              FREAD_ONLY="FALSE"/>
-        <data ID="20" PROPERTY_KEY="CAM_MULTICAST_PORT"
-              PROPERTY_VALUE="@@@MULTICAST_PORT@@@" DEFAULT_PROPERTY_VALUE=""
-              FREAD_ONLY="FALSE"/>
-
         <!-- Does this build support Syslog actions? -->
         <data ID="21" PROPERTY_KEY="CAM_SYSLOG_ACTIONS_ENABLED"
               PROPERTY_VALUE="false" DEFAULT_PROPERTY_VALUE="false"
@@ -71,10 +62,6 @@
               DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
 
         <!-- Default data storage options -->
-        <!-- Default 2 days -->
-        <data ID="25" PROPERTY_KEY="CAM_DATA_PURGE_RAW"
-              PROPERTY_VALUE="172800000" DEFAULT_PROPERTY_VALUE="172800000"
-              FREAD_ONLY="FALSE"/>
         <!-- Default 14 days -->
         <data ID="26" PROPERTY_KEY="CAM_DATA_PURGE_1H"
               PROPERTY_VALUE="1209600000" DEFAULT_PROPERTY_VALUE="1209600000"
@@ -105,10 +92,6 @@
         <!-- How often to run database maintainence routines -->
         <data ID="32" PROPERTY_KEY="CAM_DATA_MAINTENANCE"
               PROPERTY_VALUE="3600000" DEFAULT_PROPERTY_VALUE="3600000" FREAD_ONLY="FALSE"/>
-
-        <!-- Whether or not to track metric values that have not changed -->
-        <data ID="33" PROPERTY_KEY="DATA_STORE_ALL"
-              PROPERTY_VALUE="true" DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
 
         <!-- How long to keep RT data around -->
         <data ID="34" PROPERTY_KEY="RT_DATA_PURGE" PROPERTY_VALUE="2678400000"

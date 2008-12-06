@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
@@ -84,18 +85,22 @@ public class AgentUpdateServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String servletPath = req.getServletPath();
         if (servletPath != null) {
-            if (servletPath.endsWith("version")) {
-                getVersion(req, resp);
-            } else if (servletPath.endsWith("download")) {
-                try {
-                    numActiveDownloads++;
-                    getDownload(req, resp);
-                } finally {
-                    numActiveDownloads--;
+            if (isServerAcceptingRequests()) {
+                if (servletPath.endsWith("version")) {
+                    getVersion(req, resp);
+                } else if (servletPath.endsWith("download")) {
+                    try {
+                        numActiveDownloads++;
+                        getDownload(req, resp);
+                    } finally {
+                        numActiveDownloads--;
+                    }
+                } else {
+                    resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid servlet path [" + servletPath
+                        + "] - please contact administrator");
                 }
             } else {
-                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid servlet path [" + servletPath
-                    + "] - please contact administrator");
+                sendErrorServerNotAcceptingRequests(resp);
             }
         } else {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid servlet path - please contact administrator");
@@ -180,6 +185,11 @@ public class AgentUpdateServlet extends HttpServlet {
         resp.setHeader("Pragma", "no-cache");
     }
 
+    private void sendErrorServerNotAcceptingRequests(HttpServletResponse resp) throws IOException {
+        disableBrowserCache(resp);
+        resp.sendError(ERROR_CODE_AGENT_UPDATE_DISABLED, "Server Is Down For Maintenance");
+    }
+
     private void sendErrorAgentUpdateDisabled(HttpServletResponse resp) throws IOException {
         disableBrowserCache(resp);
         resp.sendError(ERROR_CODE_AGENT_UPDATE_DISABLED, "Agent Updates Has Been Disabled");
@@ -204,5 +214,14 @@ public class AgentUpdateServlet extends HttpServlet {
             this.agentManager = LookupUtil.getAgentManager();
         }
         return this.agentManager;
+    }
+
+    private boolean isServerAcceptingRequests() {
+        try {
+            OperationMode mode = LookupUtil.getServerManager().getServer().getOperationMode();
+            return mode == OperationMode.NORMAL;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

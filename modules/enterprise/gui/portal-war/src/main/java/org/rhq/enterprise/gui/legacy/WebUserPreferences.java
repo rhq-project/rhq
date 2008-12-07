@@ -1,6 +1,5 @@
 package org.rhq.enterprise.gui.legacy;
 
-import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,7 +25,7 @@ import org.rhq.enterprise.server.alert.engine.internal.Tuple;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-public class WebUserPreferences implements Serializable {
+public class WebUserPreferences {
 
     private final Log log = LogFactory.getLog(WebUserPreferences.class);
 
@@ -133,7 +132,7 @@ public class WebUserPreferences implements Serializable {
         if (value != null) {
             value = value.trim();
         }
-        log.info("Getting " + key + "[" + value + "]");
+        log.debug("Getting " + key + "[" + value + "]");
 
         return value;
     }
@@ -236,10 +235,10 @@ public class WebUserPreferences implements Serializable {
 
         PropertySimple existingProp = this.subject.getUserConfiguration().getSimple(key);
         if (existingProp == null) {
-            log.info("Setting " + key + "[" + value + "]");
+            log.debug("Setting " + key + "[" + value + "]");
             this.subject.getUserConfiguration().put(new PropertySimple(key, val));
         } else {
-            log.info("Overriding " + key + "[" + value + "]");
+            log.debug("Overriding " + key + "[" + value + "]");
             existingProp.setStringValue(val);
         }
     }

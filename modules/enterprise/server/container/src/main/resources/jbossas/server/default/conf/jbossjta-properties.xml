@@ -40,8 +40,22 @@
         <!--
         (default is ShadowNoFileLockStore)
       -->
+
+        <!-- RHQ - ObjectStores -->
+        <!-- http://www.redhat.com/docs/en-US/JBoss_Enterprise_Application_Platform/
+             4.2.0.cp05/html/JBoss_TS_Programmers_Guide/Persistent_object_stores.html -->
         <property
             name="com.arjuna.ats.arjuna.objectstore.objectStoreType" value="ShadowNoFileLockStore"/>
+        <!--
+        <property name="com.arjuna.ats.arjuna.objectstore.objectStoreType" value="CachedStore"/>
+        <property name="com.arjuna.ats.internal.arjuna.objectstore.cacheStore.hash" value="128" />
+        <property name="com.arjuna.ats.internal.arjuna.objectstore.cacheStore.size" value="250000" />
+        <property name="com.arjuna.ats.internal.arjuna.objectstore.cacheStore.removedItems" value="256" />
+        <property name="com.arjuna.ats.internal.arjuna.objectstore.cacheStore.workItems" value="100" />
+        <property name="com.arjuna.ats.internal.arjuna.objectstore.cacheStore.scanPeriod" value="120000" />
+        <property name="com.arjuna.ats.internal.arjuna.objectstore.cacheStore.sync" value="OFF" />
+        -->
+
         <!--
         (default is 255)
       -->

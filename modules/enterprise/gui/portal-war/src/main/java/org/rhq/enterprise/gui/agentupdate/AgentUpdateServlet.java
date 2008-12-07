@@ -30,8 +30,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -162,7 +162,7 @@ public class AgentUpdateServlet extends HttpServlet {
     private int getDownloadLimit() {
         // if the server cloud was configured to disallow updates, return 0
         Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration();
-        if (!Boolean.parseBoolean(systemConfig.getProperty(HQConstants.EnableAgentAutoUpdate))) {
+        if (!Boolean.parseBoolean(systemConfig.getProperty(RHQConstants.EnableAgentAutoUpdate))) {
             return 0;
         }
 

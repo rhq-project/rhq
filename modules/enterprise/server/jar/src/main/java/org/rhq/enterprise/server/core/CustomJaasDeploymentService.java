@@ -35,10 +35,10 @@ import javax.security.auth.login.AppConfigurationEntry;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.core.jaas.JDBCLoginModule;
 import org.rhq.enterprise.server.core.jaas.LdapLoginModule;
 import org.rhq.enterprise.server.core.jaas.TempSessionLoginModule;
-import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -122,9 +122,9 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             this.log.info("Enabled the temporary session login module");
             configEntries.add(ace);
 
-            String provider = conf.getProperty(HQConstants.JAASProvider);
+            String provider = conf.getProperty(RHQConstants.JAASProvider);
 
-            if ((provider != null) && provider.equals(HQConstants.LDAPJAASProvider)) {
+            if ((provider != null) && provider.equals(RHQConstants.LDAPJAASProvider)) {
                 configOptions = getLdapOptions(conf);
                 try {
                     validateLdapOptions(configOptions);
@@ -160,14 +160,14 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
     private Map<String, String> getLdapOptions(Properties conf) {
         Map<String, String> configOptions = new HashMap<String, String>();
 
-        configOptions.put(Context.INITIAL_CONTEXT_FACTORY, conf.getProperty(HQConstants.LDAPFactory));
-        configOptions.put(Context.PROVIDER_URL, conf.getProperty(HQConstants.LDAPUrl));
-        configOptions.put(Context.SECURITY_PROTOCOL, conf.getProperty(HQConstants.LDAPProtocol));
-        configOptions.put("LoginProperty", conf.getProperty(HQConstants.LDAPLoginProperty));
-        configOptions.put("Filter", conf.getProperty(HQConstants.LDAPFilter));
-        configOptions.put("BaseDN", conf.getProperty(HQConstants.LDAPBaseDN));
-        configOptions.put("BindDN", conf.getProperty(HQConstants.LDAPBindDN));
-        configOptions.put("BindPW", conf.getProperty(HQConstants.LDAPBindPW));
+        configOptions.put(Context.INITIAL_CONTEXT_FACTORY, conf.getProperty(RHQConstants.LDAPFactory));
+        configOptions.put(Context.PROVIDER_URL, conf.getProperty(RHQConstants.LDAPUrl));
+        configOptions.put(Context.SECURITY_PROTOCOL, conf.getProperty(RHQConstants.LDAPProtocol));
+        configOptions.put("LoginProperty", conf.getProperty(RHQConstants.LDAPLoginProperty));
+        configOptions.put("Filter", conf.getProperty(RHQConstants.LDAPFilter));
+        configOptions.put("BaseDN", conf.getProperty(RHQConstants.LDAPBaseDN));
+        configOptions.put("BindDN", conf.getProperty(RHQConstants.LDAPBindDN));
+        configOptions.put("BindPW", conf.getProperty(RHQConstants.LDAPBindPW));
 
         return configOptions;
     }

@@ -53,11 +53,11 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
-import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
@@ -309,7 +309,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             // user is logging in for the first time and must go through a special
             // GUI workflow to create a subject record.  Let's create a dummy
             // placeholder subject in here for now.
-            if (config.getProperty(HQConstants.JAASProvider).equals(HQConstants.LDAPJAASProvider)) {
+            if (config.getProperty(RHQConstants.JAASProvider).equals(RHQConstants.LDAPJAASProvider)) {
                 subject = new Subject();
                 subject.setId(0);
                 subject.setName(username);

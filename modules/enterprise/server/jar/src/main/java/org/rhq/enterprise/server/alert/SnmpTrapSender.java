@@ -73,7 +73,7 @@ import org.snmp4j.util.PDUFactory;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.notification.SnmpNotification;
-import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -526,7 +526,7 @@ public class SnmpTrapSender implements PDUFactory {
     private boolean init() {
         Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration();
 
-        String snmpVersion = systemConfig.getProperty(HQConstants.SNMPVersion);
+        String snmpVersion = systemConfig.getProperty(RHQConstants.SNMPVersion);
         if ((snmpVersion != null) && (snmpVersion.length() > 0)) {
             if (snmpVersion.equals("1")) {
                 this.version = SnmpConstants.version1;
@@ -546,7 +546,7 @@ public class SnmpTrapSender implements PDUFactory {
             throw new IllegalStateException("V1TRAP PDU type is only available for SNMP version 1");
         }
 
-        String snmpAuthProtocol = systemConfig.getProperty(HQConstants.SNMPAuthProtocol);
+        String snmpAuthProtocol = systemConfig.getProperty(RHQConstants.SNMPAuthProtocol);
         if ((snmpAuthProtocol != null) && (snmpAuthProtocol.length() > 0)) {
             if (snmpAuthProtocol.equals("MD5")) {
                 this.authProtocol = AuthMD5.ID;
@@ -557,62 +557,62 @@ public class SnmpTrapSender implements PDUFactory {
             }
         }
 
-        snmpAuthProtocol = systemConfig.getProperty(HQConstants.SNMPAuthPassphrase);
+        snmpAuthProtocol = systemConfig.getProperty(RHQConstants.SNMPAuthPassphrase);
         if ((snmpAuthProtocol != null) && (snmpAuthProtocol.length() > 0)) {
             this.authPassphrase = createOctetString(snmpAuthProtocol);
         }
 
-        snmpAuthProtocol = systemConfig.getProperty(HQConstants.SNMPPrivacyPassphrase);
+        snmpAuthProtocol = systemConfig.getProperty(RHQConstants.SNMPPrivacyPassphrase);
         if ((snmpAuthProtocol != null) && (snmpAuthProtocol.length() > 0)) {
             this.privPassphrase = createOctetString(snmpAuthProtocol);
         }
 
-        snmpAuthProtocol = systemConfig.getProperty(HQConstants.SNMPCommunity);
+        snmpAuthProtocol = systemConfig.getProperty(RHQConstants.SNMPCommunity);
         if ((snmpAuthProtocol != null) && (snmpAuthProtocol.length() > 0)) {
             this.community = createOctetString(snmpAuthProtocol);
         }
 
-        snmpAuthProtocol = systemConfig.getProperty(HQConstants.SNMPEngineID);
+        snmpAuthProtocol = systemConfig.getProperty(RHQConstants.SNMPEngineID);
         if ((snmpAuthProtocol != null) && (snmpAuthProtocol.length() > 0)) {
             this.contextEngineID = createOctetString(snmpAuthProtocol);
         }
 
-        snmpAuthProtocol = systemConfig.getProperty(HQConstants.SNMPContextName);
+        snmpAuthProtocol = systemConfig.getProperty(RHQConstants.SNMPContextName);
         if ((snmpAuthProtocol != null) && (snmpAuthProtocol.length() > 0)) {
             this.contextName = createOctetString(snmpAuthProtocol);
         }
 
-        snmpAuthProtocol = systemConfig.getProperty(HQConstants.SNMPSecurityName);
+        snmpAuthProtocol = systemConfig.getProperty(RHQConstants.SNMPSecurityName);
         if ((snmpAuthProtocol != null) && (snmpAuthProtocol.length() > 0)) {
             this.securityName = createOctetString(snmpAuthProtocol);
         }
 
-        snmpAuthProtocol = systemConfig.getProperty(HQConstants.SNMPTrapOID);
+        snmpAuthProtocol = systemConfig.getProperty(RHQConstants.SNMPTrapOID);
         if ((snmpAuthProtocol != null) && (snmpAuthProtocol.length() > 0)) {
             this.trapOID = new OID(snmpAuthProtocol);
         }
 
-        snmpAuthProtocol = systemConfig.getProperty(HQConstants.SNMPEnterpriseOID);
+        snmpAuthProtocol = systemConfig.getProperty(RHQConstants.SNMPEnterpriseOID);
         if ((snmpAuthProtocol != null) && (snmpAuthProtocol.length() > 0)) {
             this.v1TrapPDU.setEnterprise(new OID(snmpAuthProtocol));
         }
 
-        snmpAuthProtocol = systemConfig.getProperty(HQConstants.SNMPGenericID);
+        snmpAuthProtocol = systemConfig.getProperty(RHQConstants.SNMPGenericID);
         if ((snmpAuthProtocol != null) && (snmpAuthProtocol.length() > 0)) {
             this.v1TrapPDU.setGenericTrap(Integer.parseInt(snmpAuthProtocol));
         }
 
-        snmpAuthProtocol = systemConfig.getProperty(HQConstants.SNMPSpecificID);
+        snmpAuthProtocol = systemConfig.getProperty(RHQConstants.SNMPSpecificID);
         if ((snmpAuthProtocol != null) && (snmpAuthProtocol.length() > 0)) {
             this.v1TrapPDU.setSpecificTrap(Integer.parseInt(snmpAuthProtocol));
         }
 
-        snmpAuthProtocol = systemConfig.getProperty(HQConstants.SNMPAgentAddress);
+        snmpAuthProtocol = systemConfig.getProperty(RHQConstants.SNMPAgentAddress);
         if ((snmpAuthProtocol != null) && (snmpAuthProtocol.length() > 0)) {
             this.v1TrapPDU.setAgentAddress(new IpAddress(snmpAuthProtocol));
         }
 
-        snmpAuthProtocol = systemConfig.getProperty(HQConstants.SNMPPrivacyProtocol);
+        snmpAuthProtocol = systemConfig.getProperty(RHQConstants.SNMPPrivacyProtocol);
         if ((snmpAuthProtocol != null) && (snmpAuthProtocol.length() > 0)) {
             if (snmpAuthProtocol.equals("DES")) {
                 this.privProtocol = PrivDES.ID;

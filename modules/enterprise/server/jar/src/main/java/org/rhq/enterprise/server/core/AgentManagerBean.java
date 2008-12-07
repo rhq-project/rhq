@@ -61,12 +61,12 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.cloud.FailoverListManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
-import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -191,7 +191,7 @@ public class AgentManagerBean implements AgentManagerLocal {
 
         long maximumQuietTimeAllowed = 120000L;
         try {
-            String prop = systemManager.getSystemConfiguration().getProperty(HQConstants.AgentMaxQuietTimeAllowed);
+            String prop = systemManager.getSystemConfiguration().getProperty(RHQConstants.AgentMaxQuietTimeAllowed);
             if (prop != null) {
                 maximumQuietTimeAllowed = Long.parseLong(prop);
             }

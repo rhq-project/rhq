@@ -41,7 +41,7 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataPK;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.util.jdbc.JDBCUtil;
-import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.measurement.MeasurementAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -201,11 +201,11 @@ public class MeasurementDataManagerUtility {
 
         try {
             Properties conf = LookupUtil.getSystemManager().getSystemConfiguration();
-            purge1h = Long.parseLong(conf.getProperty(HQConstants.DataPurge1Hour));
-            purge6h = Long.parseLong(conf.getProperty(HQConstants.DataPurge6Hour));
-            purge1d = Long.parseLong(conf.getProperty(HQConstants.DataPurge1Day));
-            purgeRt = Long.parseLong(conf.getProperty(HQConstants.RtDataPurge));
-            purgeAlert = Long.parseLong(conf.getProperty(HQConstants.AlertPurge));
+            purge1h = Long.parseLong(conf.getProperty(RHQConstants.DataPurge1Hour));
+            purge6h = Long.parseLong(conf.getProperty(RHQConstants.DataPurge6Hour));
+            purge1d = Long.parseLong(conf.getProperty(RHQConstants.DataPurge1Day));
+            purgeRt = Long.parseLong(conf.getProperty(RHQConstants.RtDataPurge));
+            purgeAlert = Long.parseLong(conf.getProperty(RHQConstants.AlertPurge));
         } catch (Exception e) {
             // Shouldn't happen unless manual edit of config table
             //throw new IllegalArgumentException("Invalid purge interval: " + e);

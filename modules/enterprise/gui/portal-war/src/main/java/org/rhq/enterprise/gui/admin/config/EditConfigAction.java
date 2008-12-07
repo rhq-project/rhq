@@ -36,7 +36,7 @@ import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -70,9 +70,9 @@ public class EditConfigAction extends BaseAction {
 
                 if (cForm.getLdapEnabled() != null) {
                     // cache in servlet context
-                    ctx.setAttribute(AttrConstants.JAAS_PROVIDER_CTX_ATTR, HQConstants.LDAPJAASProvider);
+                    ctx.setAttribute(AttrConstants.JAAS_PROVIDER_CTX_ATTR, RHQConstants.LDAPJAASProvider);
                 } else {
-                    ctx.setAttribute(AttrConstants.JAAS_PROVIDER_CTX_ATTR, HQConstants.JDBCJAASProvider);
+                    ctx.setAttribute(AttrConstants.JAAS_PROVIDER_CTX_ATTR, RHQConstants.JDBCJAASProvider);
                 }
             } catch (Exception e) {
                 String throwableMsgs = ThrowableUtil.getAllMessages(e, true);

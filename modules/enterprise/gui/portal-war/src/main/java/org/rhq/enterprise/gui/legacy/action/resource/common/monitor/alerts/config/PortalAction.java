@@ -44,7 +44,7 @@ import org.rhq.enterprise.gui.legacy.util.ActionUtils;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -124,8 +124,8 @@ public class PortalAction extends ResourceController {
         Properties props = LookupUtil.getSystemManager().getSystemConfiguration();
 
         // See if the property exists
-        if (props.containsKey(HQConstants.SNMPVersion)) {
-            String ver = props.getProperty(HQConstants.SNMPVersion);
+        if (props.containsKey(RHQConstants.SNMPVersion)) {
+            String ver = props.getProperty(RHQConstants.SNMPVersion);
             request.setAttribute("snmpEnabled", ver.length() > 0);
         }
     }

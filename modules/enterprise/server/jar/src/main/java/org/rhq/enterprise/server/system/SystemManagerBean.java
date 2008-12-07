@@ -63,9 +63,9 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
-import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.license.FeatureUnavailableException;
 import org.rhq.enterprise.server.license.License;
 import org.rhq.enterprise.server.license.LicenseManager;
@@ -256,13 +256,13 @@ public class SystemManagerBean implements SystemManagerLocal {
      */
     @SuppressWarnings("deprecation")
     private void verifyNewSystemConfigurationProperty(String name, String value, Properties properties) {
-        if (HQConstants.BaselineDataSet.equals(name)) {
+        if (RHQConstants.BaselineDataSet.equals(name)) {
             // 1h table holds at most 14 days worth of data, make sure we don't set a dataset more than that
             long freq = Long.parseLong(value);
             if (freq > (1000L * 60 * 60 * 24 * 14)) {
                 throw new IllegalArgumentException("Baseline dataset must be less than 14 days");
             }
-        } else if (HQConstants.AgentMaxQuietTimeAllowed.endsWith(name)) {
+        } else if (RHQConstants.AgentMaxQuietTimeAllowed.endsWith(name)) {
             long time = Long.parseLong(value);
             if (time < 1000L * 60 * 2) {
                 throw new IllegalArgumentException("Agent Max Quiet Time Allowed must be at least 2 minutes");

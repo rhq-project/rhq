@@ -7,8 +7,8 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/WEB-INF/tld/hq.tld" prefix="hq" %>
 
-<hq:constant classname="org.rhq.enterprise.server.legacy.common.shared.HQConstants" symbol="JDBCJAASProvider" var="camProvider"/>
-<hq:constant classname="org.rhq.enterprise.server.legacy.common.shared.HQConstants" symbol="LDAPJAASProvider" var="ldapProvider"/>
+<hq:constant classname="org.rhq.enterprise.server.legacy.common.shared.RHQConstants" symbol="JDBCJAASProvider" var="camProvider"/>
+<hq:constant classname="org.rhq.enterprise.server.legacy.common.shared.RHQConstants" symbol="LDAPJAASProvider" var="ldapProvider"/>
 
 <hq:config var="ldapAuth" prop="CAM_JAAS_PROVIDER" value="${ldapProvider}"/>
 <hq:config var="camAuth" prop="CAM_JAAS_PROVIDER" value="${camProvider}"/>

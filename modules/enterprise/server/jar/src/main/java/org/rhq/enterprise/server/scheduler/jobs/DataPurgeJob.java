@@ -30,9 +30,9 @@ import org.quartz.JobExecutionException;
 import org.quartz.SimpleTrigger;
 import org.quartz.StatefulJob;
 
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
-import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
@@ -120,7 +120,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
 
         try {
             long threshold;
-            String traitPurgeThresholdStr = systemConfig.getProperty(HQConstants.TraitPurge);
+            String traitPurgeThresholdStr = systemConfig.getProperty(RHQConstants.TraitPurge);
             if (traitPurgeThresholdStr == null) {
                 threshold = timeStart - (1000L * 60 * 60 * 24 * 365);
                 LOG.debug("No purge traits threshold found - will purge traits older than one year");
@@ -145,7 +145,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
 
         try {
             long threshold;
-            String availPurgeThresholdStr = systemConfig.getProperty(HQConstants.AvailabilityPurge);
+            String availPurgeThresholdStr = systemConfig.getProperty(RHQConstants.AvailabilityPurge);
             if (availPurgeThresholdStr == null) {
                 threshold = timeStart - (1000L * 60 * 60 * 24 * 365);
                 LOG.debug("No purge avails threshold found - will purge availabilities older than one year");
@@ -168,7 +168,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         int calltimePurged = 0;
 
         try {
-            long threshold = timeStart - Long.parseLong(systemConfig.getProperty(HQConstants.RtDataPurge));
+            long threshold = timeStart - Long.parseLong(systemConfig.getProperty(RHQConstants.RtDataPurge));
             LOG.info("Purging calltime data that is older than " + new Date(threshold));
             calltimePurged = callTimeDataManager.purgeCallTimeData(new Date(threshold));
         } catch (Exception e) {
@@ -185,7 +185,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         int eventsPurged = 0;
 
         try {
-            long threshold = timeStart - Long.parseLong(systemConfig.getProperty(HQConstants.EventPurge));
+            long threshold = timeStart - Long.parseLong(systemConfig.getProperty(RHQConstants.EventPurge));
             LOG.info("Purging event data older than " + new Date(threshold));
             eventsPurged = eventManager.purgeEventData(new Date(threshold));
         } catch (Exception e) {
@@ -202,7 +202,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         int alertsPurged = 0;
 
         try {
-            long threshold = timeStart - Long.parseLong(systemConfig.getProperty(HQConstants.AlertPurge));
+            long threshold = timeStart - Long.parseLong(systemConfig.getProperty(RHQConstants.AlertPurge));
             LOG.info("Purging alert data older than " + new Date(threshold));
             alertsPurged = alertManager.deleteAlerts(0, threshold);
         } catch (Exception e) {
@@ -224,7 +224,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
             // as usually an ANALYZE only takes a fraction of what a full VACUUM
             // takes. VACUUM will occur every day at midnight.
 
-            String dataMaintenance = systemConfig.getProperty(HQConstants.DataMaintenance);
+            String dataMaintenance = systemConfig.getProperty(RHQConstants.DataMaintenance);
             if (dataMaintenance == null) {
                 LOG.error("No data maintenance interval found - will not perform db maintenance");
                 return;
@@ -238,7 +238,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
                 LOG.info("Performing daily database maintenance");
                 systemManager.vacuum(LookupUtil.getSubjectManager().getOverlord());
 
-                String reindexStr = systemConfig.getProperty(HQConstants.DataReindex);
+                String reindexStr = systemConfig.getProperty(RHQConstants.DataReindex);
                 boolean reindexNightly = Boolean.valueOf(reindexStr);
                 if (reindexNightly) {
                     LOG.info("Re-indexing data tables");

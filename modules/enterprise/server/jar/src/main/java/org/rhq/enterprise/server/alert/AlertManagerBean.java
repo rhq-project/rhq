@@ -68,13 +68,13 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NFactory;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NResourceKeys;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
-import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -722,7 +722,7 @@ public class AlertManagerBean implements AlertManagerLocal {
     private String prettyPrintAlertURL(Alert alert) {
         StringBuilder builder = new StringBuilder();
 
-        String baseUrl = systemManager.getSystemConfiguration().getProperty(HQConstants.BaseURL);
+        String baseUrl = systemManager.getSystemConfiguration().getProperty(RHQConstants.BaseURL);
         builder.append(baseUrl);
         if (baseUrl.endsWith("/") == false) {
             builder.append("/");

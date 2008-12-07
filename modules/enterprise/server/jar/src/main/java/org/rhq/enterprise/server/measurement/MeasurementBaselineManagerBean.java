@@ -47,11 +47,11 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cloud.AgentStatusManagerLocal;
-import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
@@ -96,9 +96,9 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         // frequency of 3 days and data set of 10 days means "every 3 days, recalculate baselines automatically.
         // For each scheduled measurement, take their last 10 days worth of data and use that data set
         // as the portion that will be used to get the min/max/average".
-        String baselineFrequencyString = conf.getProperty(HQConstants.BaselineFrequency);
-        String baselineDataSetString = conf.getProperty(HQConstants.BaselineDataSet);
-        String baselineLastCalcTimeString = conf.getProperty(HQConstants.BaselineLastCalculationTime);
+        String baselineFrequencyString = conf.getProperty(RHQConstants.BaselineFrequency);
+        String baselineDataSetString = conf.getProperty(RHQConstants.BaselineDataSet);
+        String baselineLastCalcTimeString = conf.getProperty(RHQConstants.BaselineLastCalculationTime);
 
         log.debug("Found baseline defaults: " + "frequency=" + baselineFrequencyString + " dataset="
             + baselineDataSetString + " last-calc-time=" + baselineLastCalcTimeString);
@@ -138,7 +138,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
         // everything was calculated successfully, remember this time
         conf = systemManager.getSystemConfiguration(); // reload the config in case it was changed since we started
-        conf.setProperty(HQConstants.BaselineLastCalculationTime, String.valueOf(computeTime));
+        conf.setProperty(RHQConstants.BaselineLastCalculationTime, String.valueOf(computeTime));
         systemManager.setSystemConfiguration(subjectManager.getOverlord(), conf);
 
         log.info("Auto-calculation of baselines done. Next scheduled for " + new Date(computeTime + frequency));

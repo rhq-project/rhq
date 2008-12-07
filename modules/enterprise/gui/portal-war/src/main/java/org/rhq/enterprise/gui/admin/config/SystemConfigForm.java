@@ -29,7 +29,7 @@ import org.apache.struts.action.ActionMessage;
 import org.rhq.enterprise.gui.legacy.NumberConstants;
 import org.rhq.enterprise.gui.legacy.StringConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
-import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
+import org.rhq.enterprise.server.RHQConstants;
 
 public class SystemConfigForm extends BaseValidatorForm {
     private String baseUrl = "";
@@ -169,88 +169,88 @@ public class SystemConfigForm extends BaseValidatorForm {
     }
 
     public void loadConfigProperties(Properties prop) {
-        baseUrl = prop.getProperty(HQConstants.BaseURL);
-        helpUserId = prop.getProperty(HQConstants.HelpUser);
-        helpPassword = prop.getProperty(HQConstants.HelpUserPassword);
+        baseUrl = prop.getProperty(RHQConstants.BaseURL);
+        helpUserId = prop.getProperty(RHQConstants.HelpUser);
+        helpPassword = prop.getProperty(RHQConstants.HelpUserPassword);
 
-        String agentMaxQuietTimeAllowedValStr = prop.getProperty(HQConstants.AgentMaxQuietTimeAllowed);
+        String agentMaxQuietTimeAllowedValStr = prop.getProperty(RHQConstants.AgentMaxQuietTimeAllowed);
         Long agentMaxQuietTimeAllowedLong = new Long(agentMaxQuietTimeAllowedValStr);
         agentMaxQuietTimeAllowed = findTimeUnit(agentMaxQuietTimeAllowedLong.longValue());
         agentMaxQuietTimeAllowedVal = calcTimeUnit(agentMaxQuietTimeAllowedLong.longValue());
 
-        String enableAgentAutoUpdateStr = prop.getProperty(HQConstants.EnableAgentAutoUpdate);
+        String enableAgentAutoUpdateStr = prop.getProperty(RHQConstants.EnableAgentAutoUpdate);
         enableAgentAutoUpdate = Boolean.valueOf(enableAgentAutoUpdateStr).booleanValue();
 
-        String maintIntervalValStr = prop.getProperty(HQConstants.DataMaintenance);
+        String maintIntervalValStr = prop.getProperty(RHQConstants.DataMaintenance);
         Long maintIntervalLong = new Long(maintIntervalValStr);
         maintInterval = findTimeUnit(maintIntervalLong.longValue());
         maintIntervalVal = calcTimeUnit(maintIntervalLong.longValue());
 
-        String nightlyReindexStr = prop.getProperty(HQConstants.DataReindex);
+        String nightlyReindexStr = prop.getProperty(RHQConstants.DataReindex);
         reindex = Boolean.valueOf(nightlyReindexStr).booleanValue();
 
-        String rtPurgeValStr = prop.getProperty(HQConstants.RtDataPurge);
+        String rtPurgeValStr = prop.getProperty(RHQConstants.RtDataPurge);
         Long rtPurgeLong = new Long(rtPurgeValStr);
         rtPurge = findTimeUnit(rtPurgeLong.longValue());
         rtPurgeVal = calcTimeUnit(rtPurgeLong.longValue());
 
-        String alertPurgeValStr = prop.getProperty(HQConstants.AlertPurge);
+        String alertPurgeValStr = prop.getProperty(RHQConstants.AlertPurge);
         Long alertPurgeLong = new Long(alertPurgeValStr);
         alertPurge = findTimeUnit(alertPurgeLong.longValue());
         alertPurgeVal = calcTimeUnit(alertPurgeLong.longValue());
 
-        String eventPurgeValStr = prop.getProperty(HQConstants.EventPurge);
+        String eventPurgeValStr = prop.getProperty(RHQConstants.EventPurge);
         Long eventPurgeLong = new Long(eventPurgeValStr);
         eventPurge = findTimeUnit(eventPurgeLong.longValue());
         eventPurgeVal = calcTimeUnit(eventPurgeLong.longValue());
 
-        String traitPurgeValStr = prop.getProperty(HQConstants.TraitPurge);
+        String traitPurgeValStr = prop.getProperty(RHQConstants.TraitPurge);
         Long traitPurgeLong = new Long(traitPurgeValStr);
         traitPurge = findTimeUnit(traitPurgeLong.longValue());
         traitPurgeVal = calcTimeUnit(traitPurgeLong.longValue());
 
-        String availPurgeValStr = prop.getProperty(HQConstants.AvailabilityPurge);
+        String availPurgeValStr = prop.getProperty(RHQConstants.AvailabilityPurge);
         Long availPurgeLong = new Long(availPurgeValStr);
         availPurge = findTimeUnit(availPurgeLong.longValue());
         availPurgeVal = calcTimeUnit(availPurgeLong.longValue());
 
-        String baselineFrequencyValStr = prop.getProperty(HQConstants.BaselineFrequency);
+        String baselineFrequencyValStr = prop.getProperty(RHQConstants.BaselineFrequency);
         Long baselineFrequencyLong = new Long(baselineFrequencyValStr);
         baselineFrequency = findTimeUnit(baselineFrequencyLong.longValue());
         baselineFrequencyVal = calcTimeUnit(baselineFrequencyLong.longValue());
 
-        String baselineDataSetValStr = prop.getProperty(HQConstants.BaselineDataSet);
+        String baselineDataSetValStr = prop.getProperty(RHQConstants.BaselineDataSet);
         Long baselineDataSetLong = new Long(baselineDataSetValStr);
         baselineDataSet = findTimeUnit(baselineDataSetLong.longValue());
         baselineDataSetVal = calcTimeUnit(baselineDataSetLong.longValue());
 
-        ldapUrl = prop.getProperty(HQConstants.LDAPUrl);
-        ldapLoginProperty = prop.getProperty(HQConstants.LDAPLoginProperty);
-        ldapSearchBase = prop.getProperty(HQConstants.LDAPBaseDN);
-        ldapSearchFilter = prop.getProperty(HQConstants.LDAPFilter);
-        ldapUsername = prop.getProperty(HQConstants.LDAPBindDN);
-        ldapPassword = prop.getProperty(HQConstants.LDAPBindPW);
+        ldapUrl = prop.getProperty(RHQConstants.LDAPUrl);
+        ldapLoginProperty = prop.getProperty(RHQConstants.LDAPLoginProperty);
+        ldapSearchBase = prop.getProperty(RHQConstants.LDAPBaseDN);
+        ldapSearchFilter = prop.getProperty(RHQConstants.LDAPFilter);
+        ldapUsername = prop.getProperty(RHQConstants.LDAPBindDN);
+        ldapPassword = prop.getProperty(RHQConstants.LDAPBindPW);
 
-        String ldapProtocol = prop.getProperty(HQConstants.LDAPProtocol);
+        String ldapProtocol = prop.getProperty(RHQConstants.LDAPProtocol);
         ldapSsl = ldapProtocol.equals("ssl");
 
-        String jaasProvider = prop.getProperty(HQConstants.JAASProvider);
-        ldapEnabled = HQConstants.LDAPJAASProvider.equals(jaasProvider) ? Boolean.TRUE : null;
+        String jaasProvider = prop.getProperty(RHQConstants.JAASProvider);
+        ldapEnabled = RHQConstants.LDAPJAASProvider.equals(jaasProvider) ? Boolean.TRUE : null;
 
-        snmpAuthProtocol = prop.getProperty(HQConstants.SNMPAuthProtocol);
-        snmpAuthPassphrase = prop.getProperty(HQConstants.SNMPAuthPassphrase);
-        snmpPrivacyPassphrase = prop.getProperty(HQConstants.SNMPPrivacyPassphrase);
-        snmpCommunity = prop.getProperty(HQConstants.SNMPCommunity);
-        snmpEngineID = prop.getProperty(HQConstants.SNMPEngineID);
-        snmpContextName = prop.getProperty(HQConstants.SNMPContextName);
-        snmpSecurityName = prop.getProperty(HQConstants.SNMPSecurityName);
-        snmpTrapOID = prop.getProperty(HQConstants.SNMPTrapOID);
-        snmpEnterpriseOID = prop.getProperty(HQConstants.SNMPEnterpriseOID);
-        snmpGenericID = prop.getProperty(HQConstants.SNMPGenericID);
-        snmpSpecificID = prop.getProperty(HQConstants.SNMPSpecificID);
-        snmpAgentAddress = prop.getProperty(HQConstants.SNMPAgentAddress);
-        snmpVersion = prop.getProperty(HQConstants.SNMPVersion);
-        snmpPrivacyProtocol = prop.getProperty(HQConstants.SNMPPrivacyProtocol);
+        snmpAuthProtocol = prop.getProperty(RHQConstants.SNMPAuthProtocol);
+        snmpAuthPassphrase = prop.getProperty(RHQConstants.SNMPAuthPassphrase);
+        snmpPrivacyPassphrase = prop.getProperty(RHQConstants.SNMPPrivacyPassphrase);
+        snmpCommunity = prop.getProperty(RHQConstants.SNMPCommunity);
+        snmpEngineID = prop.getProperty(RHQConstants.SNMPEngineID);
+        snmpContextName = prop.getProperty(RHQConstants.SNMPContextName);
+        snmpSecurityName = prop.getProperty(RHQConstants.SNMPSecurityName);
+        snmpTrapOID = prop.getProperty(RHQConstants.SNMPTrapOID);
+        snmpEnterpriseOID = prop.getProperty(RHQConstants.SNMPEnterpriseOID);
+        snmpGenericID = prop.getProperty(RHQConstants.SNMPGenericID);
+        snmpSpecificID = prop.getProperty(RHQConstants.SNMPSpecificID);
+        snmpAgentAddress = prop.getProperty(RHQConstants.SNMPAgentAddress);
+        snmpVersion = prop.getProperty(RHQConstants.SNMPVersion);
+        snmpPrivacyProtocol = prop.getProperty(RHQConstants.SNMPPrivacyProtocol);
     }
 
     /**
@@ -299,77 +299,77 @@ public class SystemConfigForm extends BaseValidatorForm {
     }
 
     public Properties saveConfigProperties(Properties prop) {
-        prop.setProperty(HQConstants.BaseURL, baseUrl);
-        prop.setProperty(HQConstants.HelpUser, helpUserId);
-        prop.setProperty(HQConstants.HelpUserPassword, helpPassword);
+        prop.setProperty(RHQConstants.BaseURL, baseUrl);
+        prop.setProperty(RHQConstants.HelpUser, helpUserId);
+        prop.setProperty(RHQConstants.HelpUserPassword, helpPassword);
 
-        prop.setProperty(HQConstants.DataReindex, String.valueOf(reindex));
+        prop.setProperty(RHQConstants.DataReindex, String.valueOf(reindex));
 
         long agentMaxQuietTimeAllowedLong = convertToMillisecond(Integer.parseInt(agentMaxQuietTimeAllowedVal),
             agentMaxQuietTimeAllowed);
-        prop.setProperty(HQConstants.AgentMaxQuietTimeAllowed, String.valueOf(agentMaxQuietTimeAllowedLong));
+        prop.setProperty(RHQConstants.AgentMaxQuietTimeAllowed, String.valueOf(agentMaxQuietTimeAllowedLong));
 
-        prop.setProperty(HQConstants.EnableAgentAutoUpdate, String.valueOf(enableAgentAutoUpdate));
+        prop.setProperty(RHQConstants.EnableAgentAutoUpdate, String.valueOf(enableAgentAutoUpdate));
 
         long maintIntervalLong = convertToMillisecond(Integer.parseInt(maintIntervalVal), maintInterval);
-        prop.setProperty(HQConstants.DataMaintenance, String.valueOf(maintIntervalLong));
+        prop.setProperty(RHQConstants.DataMaintenance, String.valueOf(maintIntervalLong));
 
         long rtPurgeLong = convertToMillisecond(Long.parseLong(rtPurgeVal), rtPurge);
-        prop.setProperty(HQConstants.RtDataPurge, String.valueOf(rtPurgeLong));
+        prop.setProperty(RHQConstants.RtDataPurge, String.valueOf(rtPurgeLong));
 
         long alertPurgeLong = convertToMillisecond(Long.parseLong(alertPurgeVal), alertPurge);
-        prop.setProperty(HQConstants.AlertPurge, String.valueOf(alertPurgeLong));
+        prop.setProperty(RHQConstants.AlertPurge, String.valueOf(alertPurgeLong));
 
         long eventPurgeLong = convertToMillisecond(Long.parseLong(eventPurgeVal), eventPurge);
-        prop.setProperty(HQConstants.EventPurge, String.valueOf(eventPurgeLong));
+        prop.setProperty(RHQConstants.EventPurge, String.valueOf(eventPurgeLong));
 
         long traitPurgeLong = convertToMillisecond(Long.parseLong(traitPurgeVal), traitPurge);
-        prop.setProperty(HQConstants.TraitPurge, String.valueOf(traitPurgeLong));
+        prop.setProperty(RHQConstants.TraitPurge, String.valueOf(traitPurgeLong));
 
         long availPurgeLong = convertToMillisecond(Long.parseLong(availPurgeVal), availPurge);
-        prop.setProperty(HQConstants.AvailabilityPurge, String.valueOf(availPurgeLong));
+        prop.setProperty(RHQConstants.AvailabilityPurge, String.valueOf(availPurgeLong));
 
         long baselineFrequencyLong = convertToMillisecond(Integer.parseInt(baselineFrequencyVal), baselineFrequency);
-        prop.setProperty(HQConstants.BaselineFrequency, String.valueOf(baselineFrequencyLong));
+        prop.setProperty(RHQConstants.BaselineFrequency, String.valueOf(baselineFrequencyLong));
 
         long baselineDataSetLong = convertToMillisecond(Integer.parseInt(baselineDataSetVal), baselineDataSet);
-        prop.setProperty(HQConstants.BaselineDataSet, String.valueOf(baselineDataSetLong));
+        prop.setProperty(RHQConstants.BaselineDataSet, String.valueOf(baselineDataSetLong));
 
-        prop.setProperty(HQConstants.LDAPUrl, ldapUrl);
-        prop.setProperty(HQConstants.LDAPLoginProperty, ldapLoginProperty);
-        prop.setProperty(HQConstants.LDAPBaseDN, ldapSearchBase);
-        prop.setProperty(HQConstants.LDAPFilter, ldapSearchFilter);
-        prop.setProperty(HQConstants.LDAPBindDN, ldapUsername);
-        prop.setProperty(HQConstants.LDAPBindPW, ldapPassword);
-        prop.setProperty(HQConstants.LDAPProtocol, ldapSsl ? "ssl" : "");
+        prop.setProperty(RHQConstants.LDAPUrl, ldapUrl);
+        prop.setProperty(RHQConstants.LDAPLoginProperty, ldapLoginProperty);
+        prop.setProperty(RHQConstants.LDAPBaseDN, ldapSearchBase);
+        prop.setProperty(RHQConstants.LDAPFilter, ldapSearchFilter);
+        prop.setProperty(RHQConstants.LDAPBindDN, ldapUsername);
+        prop.setProperty(RHQConstants.LDAPBindPW, ldapPassword);
+        prop.setProperty(RHQConstants.LDAPProtocol, ldapSsl ? "ssl" : "");
 
         if (ldapEnabled != null) {
-            prop.setProperty(HQConstants.JAASProvider, HQConstants.LDAPJAASProvider);
+            prop.setProperty(RHQConstants.JAASProvider, RHQConstants.LDAPJAASProvider);
         } else {
-            prop.setProperty(HQConstants.JAASProvider, HQConstants.JDBCJAASProvider);
+            prop.setProperty(RHQConstants.JAASProvider, RHQConstants.JDBCJAASProvider);
         }
 
-        prop.setProperty(HQConstants.SNMPVersion, snmpVersion);
+        prop.setProperty(RHQConstants.SNMPVersion, snmpVersion);
 
         if (snmpVersion.length() > 0) {
-            prop.setProperty(HQConstants.SNMPTrapOID, snmpTrapOID);
+            prop.setProperty(RHQConstants.SNMPTrapOID, snmpTrapOID);
 
             if ("3".equals(snmpVersion)) {
-                prop.setProperty(HQConstants.SNMPAuthProtocol, snmpAuthProtocol);
-                prop.setProperty(HQConstants.SNMPAuthPassphrase, snmpAuthPassphrase);
-                prop.setProperty(HQConstants.SNMPPrivacyPassphrase, snmpPrivacyPassphrase);
-                prop.setProperty(HQConstants.SNMPPrivacyProtocol, snmpPrivacyProtocol);
-                prop.setProperty(HQConstants.SNMPContextName, snmpContextName);
-                prop.setProperty(HQConstants.SNMPSecurityName, snmpSecurityName);
+                prop.setProperty(RHQConstants.SNMPAuthProtocol, snmpAuthProtocol);
+                prop.setProperty(RHQConstants.SNMPAuthPassphrase, snmpAuthPassphrase);
+                prop.setProperty(RHQConstants.SNMPPrivacyPassphrase, snmpPrivacyPassphrase);
+                prop.setProperty(RHQConstants.SNMPPrivacyProtocol, snmpPrivacyProtocol);
+                prop.setProperty(RHQConstants.SNMPContextName, snmpContextName);
+                prop.setProperty(RHQConstants.SNMPSecurityName, snmpSecurityName);
             } else {
-                prop.setProperty(HQConstants.SNMPCommunity, snmpCommunity);
+                prop.setProperty(RHQConstants.SNMPCommunity, snmpCommunity);
 
                 if ("1".equals(snmpVersion)) {
-                    prop.setProperty(HQConstants.SNMPEngineID, snmpEngineID);
-                    prop.setProperty(HQConstants.SNMPEnterpriseOID, snmpEnterpriseOID);
-                    prop.setProperty(HQConstants.SNMPGenericID, snmpGenericID);
-                    prop.setProperty(HQConstants.SNMPSpecificID, snmpSpecificID);
-                    prop.setProperty(HQConstants.SNMPAgentAddress, snmpAgentAddress);
+                    prop.setProperty(RHQConstants.SNMPEngineID, snmpEngineID);
+                    prop.setProperty(RHQConstants.SNMPEnterpriseOID, snmpEnterpriseOID);
+                    prop.setProperty(RHQConstants.SNMPGenericID, snmpGenericID);
+                    prop.setProperty(RHQConstants.SNMPSpecificID, snmpSpecificID);
+                    prop.setProperty(RHQConstants.SNMPAgentAddress, snmpAgentAddress);
                 }
             }
         }

@@ -29,7 +29,7 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.actions.TilesAction;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
-import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -42,9 +42,9 @@ public class ViewDefinitionSyslogActionAction extends TilesAction {
         HttpServletResponse response) throws Exception {
         Properties config = LookupUtil.getSystemManager().getSystemConfiguration();
 
-        String enabledStr = config.getProperty(HQConstants.SyslogActionsEnabled);
+        String enabledStr = config.getProperty(RHQConstants.SyslogActionsEnabled);
         Boolean syslogActionsEnabled = Boolean.valueOf(enabledStr);
-        request.setAttribute(HQConstants.SyslogActionsEnabled, syslogActionsEnabled);
+        request.setAttribute(RHQConstants.SyslogActionsEnabled, syslogActionsEnabled);
 
         if (syslogActionsEnabled) {
             AlertDefinition alertDef = AlertDefUtil.getAlertDefinition(request);

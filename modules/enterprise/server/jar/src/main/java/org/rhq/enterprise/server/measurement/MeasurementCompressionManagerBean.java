@@ -40,7 +40,7 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 import org.rhq.core.clientapi.util.TimeUtil;
 import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.legacy.common.shared.HQConstants;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -86,9 +86,9 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         Properties conf = systemManager.getSystemConfiguration();
 
         try {
-            this.purge1h = Long.parseLong(conf.getProperty(HQConstants.DataPurge1Hour));
-            this.purge6h = Long.parseLong(conf.getProperty(HQConstants.DataPurge6Hour));
-            this.purge1d = Long.parseLong(conf.getProperty(HQConstants.DataPurge1Day));
+            this.purge1h = Long.parseLong(conf.getProperty(RHQConstants.DataPurge1Hour));
+            this.purge6h = Long.parseLong(conf.getProperty(RHQConstants.DataPurge6Hour));
+            this.purge1d = Long.parseLong(conf.getProperty(RHQConstants.DataPurge1Day));
         } catch (NumberFormatException e) {
             // Shouldn't happen unless the config table was manually edited.
             throw new IllegalArgumentException("Invalid purge interval: " + e);

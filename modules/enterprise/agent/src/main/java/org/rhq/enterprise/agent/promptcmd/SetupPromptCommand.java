@@ -42,7 +42,7 @@ import org.rhq.enterprise.communications.util.prefs.DefaultSetupInstruction;
 import org.rhq.enterprise.communications.util.prefs.FloatSetupValidityChecker;
 import org.rhq.enterprise.communications.util.prefs.InetAddressSetupValidityChecker;
 import org.rhq.enterprise.communications.util.prefs.IntegerSetupValidityChecker;
-import org.rhq.enterprise.communications.util.prefs.LocalInetAddressSetupInstruction;
+import org.rhq.enterprise.communications.util.prefs.LocalInetAddressNoDefaultSetupInstruction;
 import org.rhq.enterprise.communications.util.prefs.LocalInetHostnameSetupInstruction;
 import org.rhq.enterprise.communications.util.prefs.LongSetupValidityChecker;
 import org.rhq.enterprise.communications.util.prefs.PromptIfEnabledSetupInstruction;
@@ -183,8 +183,9 @@ public class SetupPromptCommand implements AgentPromptCommand {
             SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_AGENTNAME_PROMPT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_AGENTNAME_HELP)));
 
-        instr.add(new LocalInetAddressSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_CONNECTORBINDADDR_PREF,
-            SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_CONNECTORBINDADDR_PROMPT), SETUPMSG
+        instr.add(new LocalInetAddressNoDefaultSetupInstruction(
+            AgentSetupInstructions.SETUP_INSTRUCTION_CONNECTORBINDADDR_PREF, SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_CONNECTORBINDADDR_PROMPT), SETUPMSG
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_CONNECTORBINDADDR_HELP)));
 
         instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_CONNECTORPORT_PREF,

@@ -358,7 +358,13 @@ public interface AgentSetupInstructions {
     @I18NMessages( { @I18NMessage("Agent Hostname or IP Address") })
     String SETUP_INSTRUCTION_CONNECTORBINDADDR_PROMPT = "PromptCommand.setup.instruction.connector.bindaddr.prompt";
     @I18NMessages( { @I18NMessage("The hostname or IP address the agent will bind to in order to\\n\\\n"
-        + "listen for incoming messages.") })
+        + "listen for incoming messages. Usually, you will want to leave this undefined so\\n\\\n"
+        + "the agent picks up its default local IP address as it is currently configured\\n\\\n"
+        + "in the operation system. If, for some reason, the operating system default IP\\n\\\n"
+        + "address is not the one you want to use, then you can set an explicit value\\n\\\n"
+        + "here. Realize that if you do this, and the agent later changes its assigned IP,\\n\\\n"
+        + "you must reconfigure the agent to use the new IP; otherwise, the agent will not\\n\\\n"
+        + "be able to communicate with the server.") })
     String SETUP_INSTRUCTION_CONNECTORBINDADDR_HELP = "PromptCommand.setup.instruction.connector.bindaddr.help";
 
     // CONNECTOR PORT

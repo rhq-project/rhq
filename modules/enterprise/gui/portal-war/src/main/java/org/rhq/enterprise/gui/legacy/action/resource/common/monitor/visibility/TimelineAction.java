@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
-import java.util.Map;
-
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -37,8 +35,9 @@ import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.DefaultConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.beans.TimelineBean;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -50,18 +49,14 @@ public class TimelineAction extends TilesAction {
 
     Log log = LogFactory.getLog(TimelineAction.class);
 
-    /* (non-Javadoc)
-     * @see org.apache.struts.action.Action#execute(org.apache.struts.action.ActionMapping,
-     * org.apache.struts.action.ActionForm, javax.servlet.http.HttpServletRequest,
-     * javax.servlet.http.HttpServletResponse)
-     */
     @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         WebUser user = (WebUser) request.getSession().getAttribute(AttrConstants.WEBUSER_SES_ATTR);
-        Map<String, ?> range = user.getPreferences().getMetricRangePreference();
-        long begin = ((Long) range.get(MonitorUtils.BEGIN)).longValue();
-        long end = ((Long) range.get(MonitorUtils.END)).longValue();
+        WebUserPreferences preferences = user.getPreferences();
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+        long begin = rangePreferences.begin;
+        long end = rangePreferences.end;
         long[] intervals = new long[DefaultConstants.DEFAULT_CHART_POINTS];
 
         // Get the events count

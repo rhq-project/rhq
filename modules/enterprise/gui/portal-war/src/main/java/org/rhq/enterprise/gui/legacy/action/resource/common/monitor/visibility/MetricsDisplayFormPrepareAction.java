@@ -40,6 +40,8 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
@@ -97,13 +99,11 @@ public abstract class MetricsDisplayFormPrepareAction extends MetricsControlForm
 
         if ((begin == null) || (end == null)) {
             // get the "metric range" user pref
-            Map<String, ?> range = user.getPreferences().getMetricRangePreference();
-            if (range != null) {
-                begin = (Long) range.get(MonitorUtils.BEGIN);
-                end = (Long) range.get(MonitorUtils.END);
-            } else {
-                log.error("no appropriate display range begin and end");
-            }
+            WebUserPreferences preferences = user.getPreferences();
+            MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+
+            begin = rangePreferences.begin;
+            end = rangePreferences.end;
         }
 
         List<MetricDisplaySummary> metrics;

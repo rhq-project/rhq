@@ -37,64 +37,40 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.action.WorkflowPrepareAction;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
-import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplayValue;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class CompareMetricsFormPrepareAction extends WorkflowPrepareAction {
-    protected static Log log = LogFactory.getLog(CompareMetricsFormPrepareAction.class.getName());
+    protected static Log log = LogFactory.getLog(CompareMetricsFormPrepareAction.class);
 
-    /* (non-Javadoc)
-     * @see
-     * org.rhq.enterprise.gui.legacy.action.WorkflowPrepareAction#workflow(org.apache.struts.tiles.ComponentContext,
-     * org.apache.struts.action.ActionMapping, org.apache.struts.action.ActionForm,
-     * javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
-     */
     @Override
     public ActionForward workflow(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         CompareMetricsForm cform = (CompareMetricsForm) form;
-        Subject subject = WebUtility.getSubject(request);
-        WebUser user = SessionUtils.getWebUser(request.getSession());
-        Map<String, ?> range = user.getPreferences().getMetricRangePreference();
 
-        long begin = ((Long) range.get(MonitorUtils.BEGIN));
-        long end = ((Long) range.get(MonitorUtils.END));
+        WebUser user = SessionUtils.getWebUser(request.getSession());
+
+        WebUserPreferences preferences = user.getPreferences();
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
         if ((cform.childResourceIds != null) && (cform.childResourceIds.length > 0)) {
-            int[] definitionIds = LookupUtil.getResourceGroupManager().getDefinitionsForCompatibleGroup(subject,
-                cform.getGroupId(), false);
+            int[] definitionIds = LookupUtil.getResourceGroupManager().getDefinitionsForCompatibleGroup(
+                user.getSubject(), cform.getGroupId(), false);
             Locale userLocale = request.getLocale();
-            cform.setMetrics(getMetrics(subject, cform.childResourceIds, definitionIds, begin, end, userLocale));
-            MetricRange mr = new MetricRange(begin, end);
-            prepareForm(request, cform, mr);
+            cform.setMetrics(getMetrics(user.getSubject(), cform.childResourceIds, definitionIds,
+                rangePreferences.begin, rangePreferences.end, userLocale));
+            cform.setRb(rangePreferences.begin);
+            cform.setRe(rangePreferences.end);
         }
 
         return null;
-    }
-
-    protected void prepareForm(HttpServletRequest request, MetricsControlForm form, MetricRange range)
-        throws IllegalArgumentException {
-        WebUser user = SessionUtils.getWebUser(request.getSession());
-
-        // set metric range defaults
-        Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
-        form.setReadOnly((Boolean) pref.get(MonitorUtils.RO));
-        form.setRn((Integer) pref.get(MonitorUtils.LASTN));
-        form.setRu((Integer) pref.get(MonitorUtils.UNIT));
-
-        if (range != null) {
-            form.setRb(range.getBegin());
-            form.setRe(range.getEnd());
-        } else {
-            form.setRb((Long) pref.get(MonitorUtils.BEGIN));
-            form.setRe((Long) pref.get(MonitorUtils.END));
-        }
     }
 
     private Map<MeasurementCategory, Map<MeasurementDefinition, List<MetricDisplaySummary>>> getMetrics(

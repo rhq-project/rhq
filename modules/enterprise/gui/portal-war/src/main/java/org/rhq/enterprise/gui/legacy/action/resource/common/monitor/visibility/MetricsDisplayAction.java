@@ -18,10 +18,6 @@
  */
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -40,8 +36,9 @@ import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.FavoriteResourcePortletPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.ActionUtils;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
@@ -89,23 +86,19 @@ public class MetricsDisplayAction extends MetricsControlAction {
         } else if (displayForm.isUsersetClicked()) {
             Integer[] m = displayForm.getM();
             if ((m != null) && (m.length > 0)) {
-                Map<String, ?> range = user.getPreferences().getMetricRangePreference();
-                if (range != null) {
-                    Long begin = (Long) range.get(MonitorUtils.BEGIN);
-                    Long end = (Long) range.get(MonitorUtils.END);
+                MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
-                    Integer[] resourceIds = displayForm.getR();
-                    Resource[] resources = null; // TODO hwr: fix this
+                Long begin = rangePreferences.begin;
+                Long end = rangePreferences.end;
 
-                    // TODO what do we really want here?
-                    // this looks like users want to see old baselines at display time
-                    //                    bb.saveBaselines(sessionId.intValue(), resources, m,
-                    //                                     begin.longValue(), end.longValue());
-                    log.trace("Set baselines in MetricsDisplayAction " + " for " + id + ": "
-                        + StringUtil.arrayToString(m));
-                } else {
-                    log.error("no appropriate display range at all");
-                }
+                Integer[] resourceIds = displayForm.getR();
+                Resource[] resources = null; // TODO hwr: fix this
+
+                // TODO what do we really want here?
+                // this looks like users want to see old baselines at display time
+                //                    bb.saveBaselines(sessionId.intValue(), resources, m,
+                //                                     begin.longValue(), end.longValue());
+                log.trace("Set baselines in MetricsDisplayAction " + " for " + id + ": " + StringUtil.arrayToString(m));
             }
 
             RequestUtils.setConfirmation(request, Constants.CNF_METRICS_BASELINE_SET);
@@ -166,69 +159,30 @@ public class MetricsDisplayAction extends MetricsControlAction {
 
     private void addFavoriteMetrics(Integer[] selectedIds, WebUserPreferences preferences, String entityType)
         throws IllegalArgumentException {
-        List favIds;
-        try {
-            favIds = preferences.getResourceFavoriteMetricsPreference(entityType);
-        } catch (IllegalArgumentException e) {
-            favIds = new ArrayList();
-        }
+        FavoriteResourcePortletPreferences prefs = preferences.getFavoriteResourcePortletPreferences();
 
-        // build an index of existing favorite ids
-        HashMap index = new HashMap(favIds.size());
-        Iterator fi = favIds.iterator();
-        while (fi.hasNext()) {
-            String id = (String) fi.next();
-            index.put(id, Boolean.TRUE);
-        }
-
-        // add selected metrics, discarding any that are already
-        // favorites
-        for (int i = 0; i < selectedIds.length; i++) {
-            Integer id = selectedIds[i];
-            Boolean indexed = (Boolean) index.get(id.toString());
-            if (indexed != null) {
+        // add selected metrics, discarding any that are already favorites
+        for (Integer resourceIdToAdd : selectedIds) {
+            if (prefs.resourceIds.contains(resourceIdToAdd)) {
                 continue;
             }
-
-            favIds.add(id);
+            prefs.resourceIds.add(resourceIdToAdd);
         }
 
-        String prefKey = preferences.getResourceFavoriteMetricsKey(entityType);
-        log.trace("setting " + entityType + " favorite metrics: " + favIds);
-        preferences.setPreference(prefKey, favIds);
+        preferences.setFavoriteResourcePortletPreferences(prefs);
+        preferences.persistPreferences();
     }
 
     private void removeFavoriteMetrics(Integer[] selectedIds, WebUserPreferences preferences, String entityType)
         throws IllegalArgumentException {
-        List favIds;
-        try {
-            favIds = preferences.getResourceFavoriteMetricsPreference(entityType);
-        } catch (IllegalArgumentException e) {
-            favIds = new ArrayList();
+        FavoriteResourcePortletPreferences prefs = preferences.getFavoriteResourcePortletPreferences();
+
+        // add selected metrics, discarding any that are already favorites
+        for (Integer resourceIdToAdd : selectedIds) {
+            prefs.resourceIds.remove(resourceIdToAdd);
         }
 
-        // build an index of ids to remove
-        HashMap index = new HashMap(selectedIds.length);
-        for (int i = 0; i < selectedIds.length; i++) {
-            Integer id = selectedIds[i];
-            index.put(id.toString(), Boolean.TRUE);
-        }
-
-        // grep out those ids that were selected
-        List newFavIds = new ArrayList();
-        Iterator fi = favIds.iterator();
-        while (fi.hasNext()) {
-            String id = (String) fi.next();
-            Boolean indexed = (Boolean) index.get(id);
-            if (indexed != null) {
-                continue;
-            }
-
-            newFavIds.add(new Integer(id));
-        }
-
-        String prefKey = preferences.getResourceFavoriteMetricsKey(entityType);
-        log.trace("setting " + entityType + " favorite metrics: " + newFavIds);
-        preferences.setPreference(prefKey, newFavIds);
+        preferences.setFavoriteResourcePortletPreferences(prefs);
+        preferences.persistPreferences();
     }
 }

@@ -38,13 +38,6 @@
       </tiles:insert>--%>
     </td>
   </tr>
-  <c:if test="${showProblems}">
-  <tr>
-    <td>
-      <%--<tiles:insert definition=".resource.common.monitor.visibility.problemmetrics"/>--%>
-    </td>
-  </tr>
-  </c:if>
   <c:if test="${showOptions}">
   <tr>
     <td>

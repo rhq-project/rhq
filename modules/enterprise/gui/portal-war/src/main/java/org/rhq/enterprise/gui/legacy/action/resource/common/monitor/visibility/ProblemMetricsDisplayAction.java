@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
-import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -34,7 +32,8 @@ import org.apache.struts.tiles.actions.TilesAction;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -55,15 +54,16 @@ public class ProblemMetricsDisplayAction extends TilesAction {
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         WebUser user = (WebUser) request.getSession().getAttribute(Constants.WEBUSER_SES_ATTR);
+        WebUserPreferences preferences = user.getPreferences();
 
         Subject subject = RequestUtils.getSubject(request);
 
         MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
 
         // Now fetch the display range
-        Map<String, ?> range = user.getPreferences().getMetricRangePreference();
-        long beginTime = (Long) range.get(MonitorUtils.BEGIN);
-        long endTime = (Long) range.get(MonitorUtils.END);
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+        long beginTime = rangePreferences.begin;
+        long endTime = rangePreferences.end;
 
         ProblemMetricsDisplayForm probForm = (ProblemMetricsDisplayForm) form;
 

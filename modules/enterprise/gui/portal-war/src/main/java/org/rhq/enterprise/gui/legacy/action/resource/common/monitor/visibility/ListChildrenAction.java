@@ -42,7 +42,8 @@ import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.MessageConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.uibeans.AutoGroupCompositeDisplaySummary;
@@ -74,9 +75,10 @@ public class ListChildrenAction extends TilesAction {
         Resource resource = (Resource) request.getAttribute(AttrConstants.RESOURCE_ATTR);
 
         // Get metric time range
-        Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
-        long begin = (Long) pref.get(MonitorUtils.BEGIN);
-        long end = (Long) pref.get(MonitorUtils.END);
+        WebUserPreferences preferences = user.getPreferences();
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+        long begin = rangePreferences.begin;
+        long end = rangePreferences.end;
 
         List<AutoGroupComposite> children;
         List<AutoGroupCompositeDisplaySummary> displaySummary;

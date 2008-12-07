@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.common.servlet;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -36,7 +35,8 @@ import org.rhq.enterprise.gui.image.chart.DataPointCollection;
 import org.rhq.enterprise.gui.image.chart.HighLowChart;
 import org.rhq.enterprise.gui.legacy.DefaultConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
@@ -114,15 +114,16 @@ public class HighLowChartServlet extends ChartServlet {
         definitionId = WebUtility.getOptionalIntRequestParameter(request, "definitionId", -1);
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
         Subject subject = user.getSubject();
 
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
         MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
 
         // set metric range defaults
-        Map<String, ?> metricRangePrefs = user.getPreferences().getMetricRangePreference();
-        long beginTime = (Long) metricRangePrefs.get(MonitorUtils.BEGIN);
-        long endTime = (Long) metricRangePrefs.get(MonitorUtils.END);
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+        long beginTime = rangePreferences.begin;
+        long endTime = rangePreferences.end;
         List<MeasurementDataNumericHighLowComposite> dataPoints = null;
 
         if (scheduleId > 0) // single resource

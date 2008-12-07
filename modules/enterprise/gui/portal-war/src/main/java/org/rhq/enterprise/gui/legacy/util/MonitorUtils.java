@@ -20,12 +20,8 @@ package org.rhq.enterprise.gui.legacy.util;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,7 +39,7 @@ import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 
 public class MonitorUtils {
 
-    private static Log log = LogFactory.getLog(MonitorUtils.class.getName());
+    private static Log log = LogFactory.getLog(MonitorUtils.class);
     public static final String RO = "ro";
     public static final String LASTN = "lastN";
     public static final String UNIT = "unit";
@@ -111,185 +107,6 @@ public class MonitorUtils {
         l.add(new Long(now));
 
         return l;
-    }
-
-    /**
-     * Method getSubMiniTabs
-     * <p/>
-     * Returns a list of <code>SubMiniTab</code> objects to be displayed below the Monitor mini tabs. The properties of
-     * each <code>SubMiniTab</code> will be set by examining the corresponding <code>AppdefResourceTypeValue</code>:
-     * <p/>
-     * <ul> <li>id: resource type id <li>name: resource type name <li>count: number of resources of this type (defaults
-     * to 0) <li>selected: if this type is the one identified by the selectedId (if any) </ul>
-     *
-     * @param resourceTypes  a <code>List</code> of <code>AppdefResourceTypeValue</code> objects
-     * @param resourceCounts a <code>Map</code> of resource counts keyed by resource type name
-     * @param selectedId     a <code>Integer</code> identifying the particular resource type that is being currently
-     *                       viewed 8 @return List
-     */
-    public static List getSubMiniTabs(List resourceTypes, Map resourceCounts, Integer selectedId) {
-        List subtabs = new ArrayList();
-
-        //      if (resourceTypes != null & resourceCounts != null)
-        //      {
-        //         for (Iterator i = resourceTypes.iterator(); i.hasNext();)
-        //         {
-        //            AppdefResourceTypeValue type =
-        //                  (AppdefResourceTypeValue)i.next();
-        //
-        //            SubMiniTab subtab = new SubMiniTab();
-        //            subtab.setName(type.getName());
-        //
-        //            Integer typeId = type.getId();
-        //            subtab.setId(AppdefEntityConstants.APPDEF_TYPE_SERVICE
-        //                  + ":" + typeId.toString());
-        //            subtab.setSelected(isSubMiniTabSelected(typeId, selectedId));
-        //
-        //            Object count = resourceCounts.get(type.getName());
-        //            if (count == null)
-        //            {
-        //               count = new Integer(0);
-        //            }
-        //            subtab.setCount(count.toString());
-        //
-        //            subtabs.add(subtab);
-        //         }
-        //      }
-
-        return subtabs;
-    }
-
-    private static Boolean isSubMiniTabSelected(Integer tabId, Integer selectedId) {
-        return new Boolean(selectedId != null && selectedId.intValue() == tabId.intValue());
-    }
-
-    /**
-     * Method findDefaultChildResourceId
-     * <p/>
-     * Return the id of the first child resource type (according to whatever order in which the BizApp lists them) for
-     * which the parent resource has one or more defined child resources.
-     *
-     * @param resourceTypes  a <code>List</code> of <code>AppdefResourceTypeValue</code> objects
-     * @param resourceCounts a <code>Map</code> of resource counts keyed by resource type name
-     * @return Integer
-     */
-    public static Integer findDefaultChildResourceId(List resourceTypes, Map resourceCounts) {
-        //      if (resourceTypes != null && resourceCounts != null)
-        //      {
-        //         Iterator i = resourceTypes.iterator();
-        //         while (i.hasNext())
-        //         {
-        //            AppdefResourceTypeValue type =
-        //                  (AppdefResourceTypeValue)i.next();
-        //
-        //            Integer count = (Integer)resourceCounts.get(type.getName());
-        //            if (count != null && count.intValue() > 0)
-        //            {
-        //               return type.getId();
-        //            }
-        //         }
-        //      }
-
-        return null;
-    }
-
-    /**
-     * Method findServiceTypes.
-     * <p/>
-     * Given a List of services associated with an application or server, filter through them for the  service types so
-     * we can link to showing selections by type. The returned List has the ServiceTypeValue as elements.
-     * <p/>
-     * This should eventually get pushed into the bizapp
-     *
-     * @param services
-     * @return List
-     */
-    public static List findServiceTypes(List services, Boolean internal) {
-        TreeMap serviceTypeSet = new TreeMap();
-        //      for (Iterator i = services.iterator(); i.hasNext();)
-        //      {
-        //         AppdefResourceValue svcCandidate = (AppdefResourceValue)i.next();
-        //         int thisType = svcCandidate.getEntityId().getType();
-        //         if (thisType == AppdefEntityConstants.APPDEF_TYPE_SERVICE ||
-        //               thisType == AppdefEntityConstants.APPDEF_TYPE_GROUP)
-        //         {
-        //            AppdefResourceValue service = (AppdefResourceValue)svcCandidate;
-        //            if (service != null && service.getAppdefResourceTypeValue() != null)
-        //            {
-        //               // if we don't have a group that is a compat group of services, then this
-        //               // better throw a ClassCastException
-        //               ServiceTypeValue svcType = (ServiceTypeValue)service.getAppdefResourceTypeValue();
-        //               if (internal == null)
-        //               {
-        //                  // if we're not discriminating between internal and deployed, we'll just
-        //                  // return them all
-        //                  serviceTypeSet.put(svcType.getName(), svcType);
-        //               }
-        //               else if (internal != null && new Boolean(svcType.getIsInternal()).equals(internal))
-        //               {
-        //                  serviceTypeSet.put(svcType.getName(), svcType);
-        //               }
-        //            }
-        //         }
-        //         else
-        //         {
-        //            throw new IllegalStateException("Did not get a valid service: " + svcCandidate);
-        //         }
-        //      }
-        return new ArrayList(serviceTypeSet.values());
-    }
-
-    public static List findServerTypes(List servers) {
-        TreeMap serverTypeSet = new TreeMap();
-        //      for (Iterator i = servers.iterator(); i.hasNext();)
-        //      {
-        //         ServerValue thisAppSvc = (ServerValue)i.next();
-        //         if (thisAppSvc != null && thisAppSvc.getServerType() != null)
-        //         {
-        //            ServerTypeValue svcType = thisAppSvc.getServerType();
-        //            serverTypeSet.put(svcType.getName(), svcType);
-        //         }
-        //      }
-        return new ArrayList(serverTypeSet.values());
-    }
-
-    /**
-     * Sometimes, it's useful to just get a dump of all of the metrics returned by the backend.
-     *
-     * @param logger
-     * @param metrics a Map keyed on the category (String), values are List's of MetricDisplaySummary beans
-     */
-    public static void traceMetricDisplaySummaryMap(Log logger, Map metrics) {
-        logger.trace("Dumping metric map (from " + MonitorUtils.class.getName() + "):");
-        for (Iterator categoryIter = metrics.keySet().iterator(); categoryIter.hasNext();) {
-            String categoryName = (String) categoryIter.next();
-            logger.trace("Category: " + categoryName);
-            int i = 0;
-            Collection metricList = (Collection) metrics.get(categoryName);
-            for (Iterator iter = metricList.iterator(); iter.hasNext();) {
-                MetricDisplaySummary summaryBean = (MetricDisplaySummary) iter.next();
-                ++i;
-                logger.trace("\t " + i + ": " + summaryBean);
-            }
-        }
-    }
-
-    public static void traceResourceTypeDisplaySummaryList(Log logger, List healths) {
-        logger.trace("Dumping list of ResourceTypeDisplaySummary's (from " + MonitorUtils.class.getName() + "):");
-        if (healths == null) {
-            logger.trace("'healths' list was null!");
-            return;
-        }
-        if (healths.size() < 1) {
-            logger.trace("'healths' list was empty!");
-            return;
-        }
-        int i = 0;
-        for (Object health : healths) {
-            //         ResourceTypeDisplaySummary summaryBean = (ResourceTypeDisplaySummary)health;
-            //         ++i;
-            //         logger.trace("\t" + i + ":" + summaryBean);
-        }
     }
 
     public static Integer formatMetrics(List<MetricDisplaySummary> metricDisplaySummaries, Locale userLocale,

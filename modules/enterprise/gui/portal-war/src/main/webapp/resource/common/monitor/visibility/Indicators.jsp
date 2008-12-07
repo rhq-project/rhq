@@ -198,7 +198,7 @@ function reviewAction(option) {
 </script>
 
 <html:form action="/resource/common/monitor/visibility/IndicatorCharts.do" method="GET" onsubmit="this.view.disabled=false">
-<input type="hidden" name="id" value="<c:out value="${id}"/>">
+<input type="hidden" name="id" value="<c:out value="${param.id}"/>">
 <c:if test="${not empty ctype}">
   <input type="hidden" name="ctype" value="<c:out value="${ctype}"/>"> <%-- TODO straighten that out JBNADM-2630--%>
   <input type="hidden" name="type" value="<c:out value="${ctype}"/>">

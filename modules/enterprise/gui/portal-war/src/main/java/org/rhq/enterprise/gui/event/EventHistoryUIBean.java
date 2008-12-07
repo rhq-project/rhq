@@ -18,17 +18,13 @@
  */
 package org.rhq.enterprise.gui.event;
 
-import java.util.Map;
-
 import javax.faces.model.DataModel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.composite.EventComposite;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -36,7 +32,8 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -98,24 +95,17 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
         @Override
         public PageList<EventComposite> fetchPage(PageControl pc) {
-            Resource requestResource = EnterpriseFacesContextUtility.getResourceIfExists();
+
             EventManagerLocal manager = LookupUtil.getEventManager();
-            Subject subject = EnterpriseFacesContextUtility.getSubject();
+
             WebUser user = EnterpriseFacesContextUtility.getWebUser();
-            Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
-            long begin = (Long) pref.get(MonitorUtils.BEGIN);
-            long end = (Long) pref.get(MonitorUtils.END);
+            WebUserPreferences preferences = user.getPreferences();
+            MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
-            int eventId = -1;
-            try {
-                eventId = FacesContextUtility.getRequiredRequestParameter("eventId", Integer.class);
-            } catch (IllegalStateException isex) {
-                eventId = -1;
-            }
-            PageList<EventComposite> results = null;
+            int eventId = FacesContextUtility.getOptionalRequestParameter("eventId", Integer.class, -1);
 
-            results = manager.getEvents(subject, new int[] { requestResource.getId() }, begin, end, sevFilter, eventId,
-                getSourceFilter(), searchString, pc);
+            PageList<EventComposite> results = manager.getEvents(getSubject(), new int[] { getResource().getId() },
+                rangePreferences.begin, rangePreferences.end, sevFilter, eventId, getSourceFilter(), searchString, pc);
             return results;
         }
     }

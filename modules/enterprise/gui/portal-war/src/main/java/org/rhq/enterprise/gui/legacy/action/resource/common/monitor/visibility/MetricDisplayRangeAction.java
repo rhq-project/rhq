@@ -34,6 +34,7 @@ import org.apache.struts.action.ActionMapping;
 
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
@@ -41,7 +42,7 @@ import org.rhq.enterprise.gui.legacy.util.SessionUtils;
  * A <code>BaseAction</code> that handles metrics-specific form gestures.
  */
 public class MetricDisplayRangeAction extends BaseAction {
-    private final Log log = LogFactory.getLog(MetricDisplayRangeAction.class.getName());
+    private final Log log = LogFactory.getLog(MetricDisplayRangeAction.class);
 
     /**
      * Modify the metrics summary display as specified in the given <code>MetricDisplayRangeForm</code>.
@@ -62,18 +63,17 @@ public class MetricDisplayRangeAction extends BaseAction {
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getPreferences();
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
         if (displayForm.isLastnSelected()) {
             Integer lastN = displayForm.getRn();
             Integer unit = displayForm.getRu();
 
-            log.trace("updating metric display .. lastN [" + lastN + "] .. unit [" + unit + "]");
-            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_LASTN, lastN);
-            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_UNIT, unit);
-            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE, null);
+            rangePreferences.lastN = lastN;
+            rangePreferences.unit = unit;
 
             // set simple mode
-            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_RO, Boolean.FALSE);
+            rangePreferences.readOnly = false;
         } else if (displayForm.isDateRangeSelected()) {
             Date begin = displayForm.getStartDate();
             Date end = displayForm.getEndDate();
@@ -82,19 +82,16 @@ public class MetricDisplayRangeAction extends BaseAction {
             range.add(begin.getTime());
             range.add(end.getTime());
 
-            log.trace("updating metric display date range [" + begin + ":" + end + "]");
-            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE, range);
-            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_LASTN, null);
-            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_UNIT, null);
+            rangePreferences.begin = begin.getTime();
+            rangePreferences.end = end.getTime();
 
             // set advanced mode
-            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_RO, Boolean.TRUE);
+            rangePreferences.readOnly = true;
         } else {
             throw new ServletException("invalid date range action [" + displayForm.getA() + "] selected");
         }
 
-        log.trace("Invoking setUserPrefs" + " in MetricDisplayRangeAction " + " for " + user.getId() + " at "
-            + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
+        preferences.setMetricRangePreferences(rangePreferences);
         preferences.persistPreferences();
 
         // XXX: assume return path is set, don't use forward params

@@ -1,10 +1,10 @@
 package org.rhq.enterprise.gui.legacy;
 
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -133,18 +133,39 @@ public class WebUserPreferences implements Serializable {
         if (value != null) {
             value = value.trim();
         }
+        log.info("Getting " + key + "[" + value + "]");
 
         return value;
     }
 
-    private String getPreference(String key, String defaultValue) {
-        String value;
+    @SuppressWarnings( { "unchecked" })
+    private <T> T getPreference(String key, T defaultValue) {
+        T result;
         try {
-            value = getPreference(key);
+            String preferenceValue = getPreference(key);
+
+            Class<T> type = (Class<T>) defaultValue.getClass();
+            if (type == String.class) {
+                result = (T) preferenceValue; // cast string to self-type
+            } else {
+                if (type == Boolean.class) {
+                    if (preferenceValue.equalsIgnoreCase("on") || preferenceValue.equalsIgnoreCase("yes")) {
+                        preferenceValue = "true"; // flexible support for boolean translations from forms
+                    }
+                }
+
+                try {
+                    Method m = type.getMethod("valueOf", String.class);
+                    result = (T) m.invoke(null, preferenceValue); // static method
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("No support for automatic conversion of preferences of type "
+                        + type);
+                }
+            }
         } catch (IllegalArgumentException iae) {
-            value = defaultValue;
+            result = defaultValue;
         }
-        return value;
+        return result;
     }
 
     /**
@@ -215,8 +236,10 @@ public class WebUserPreferences implements Serializable {
 
         PropertySimple existingProp = this.subject.getUserConfiguration().getSimple(key);
         if (existingProp == null) {
+            log.info("Setting " + key + "[" + value + "]");
             this.subject.getUserConfiguration().put(new PropertySimple(key, val));
         } else {
+            log.info("Overriding " + key + "[" + value + "]");
             existingProp.setStringValue(val);
         }
     }
@@ -228,105 +251,74 @@ public class WebUserPreferences implements Serializable {
         }
     }
 
-    /**
-     * Returns a list of metric ids saved as favorites for a particular appdef
-     * type
-     */
-    public List getResourceFavoriteMetricsPreference(String appdefTypeName) throws IllegalArgumentException {
-        return getPreferenceAsList(getResourceFavoriteMetricsKey(appdefTypeName));
+    public static class MetricRangePreferences {
+        /* 
+         * if readOnly is set to true, the beginning and ending range
+         * dates are specified with explicit dates.  if readOnly is
+         * false, then the time is relative to NOW and is specified as
+         * <lastN> units of <unit> time
+         */
+        public boolean readOnly;
+
+        // simple, when readOnly is false
+        public int lastN;
+        public int unit;
+
+        // advanced, when readOnly is true
+        public Long begin;
+        public Long end;
     }
 
-    /**
-     * Method getResourceFavoriteMetricsKey.
-     *
-     * Encapsulates the logic for how the favorite metrics key for a particular appdef
-     * type is calculated
-     *
-     * @param appdefTypeName i.e. application, platform, server, service
-     * @return String the calculated preferences key
-     */
-    public String getResourceFavoriteMetricsKey(String appdefTypeName) {
-        StringBuffer sb = new StringBuffer(PREF_FAV_RESOURCE_METRICS_PREFIX);
-        sb.append('.').append(appdefTypeName);
-        return sb.toString();
-    }
+    public MetricRangePreferences getMetricRangePreferences(boolean defaultRange) {
+        MetricRangePreferences prefs = new MetricRangePreferences();
 
-    /**
-     * Returns a Map of pref values:
-     *
-     * <ul>
-     *   <li><code>MonitorUtils.RO</code>: Boolean
-     *   <li><code>MonitorUtils.LASTN</code>: Integer
-     *   <li><code>MonitorUtils.UNIT</code>: Unit
-     *   <li><code>MonitorUtils.BEGIN</code>: Long
-     *   <li><code>MonitorUtils.END</code>: Long
-     * </ul>
-     */
-    public Map<String, ?> getMetricRangePreference(boolean defaultRange) throws IllegalArgumentException {
-        Map<String, Object> m = new HashMap<String, Object>();
+        prefs.readOnly = getPreference(PREF_METRIC_RANGE_RO, MonitorUtils.DEFAULT_VALUE_RANGE_RO);
+        prefs.lastN = getPreference(PREF_METRIC_RANGE_LASTN, MonitorUtils.DEFAULT_VALUE_RANGE_LASTN);
+        prefs.unit = getPreference(PREF_METRIC_RANGE_UNIT, MonitorUtils.DEFAULT_VALUE_RANGE_UNIT);
 
-        //  properties may be empty or unparseable strings (ex:
-        //  "null"). if so, use their default values.
-        Boolean ro;
-        try {
-            ro = Boolean.valueOf(getPreference(PREF_METRIC_RANGE_RO));
-        } catch (IllegalArgumentException nfe) {
-            ro = MonitorUtils.DEFAULT_VALUE_RANGE_RO;
-        }
-        m.put(MonitorUtils.RO, ro);
-
-        Integer lastN = null;
-        try {
-            lastN = Integer.valueOf(getPreference(PREF_METRIC_RANGE_LASTN));
-        } catch (IllegalArgumentException nfe) {
-            lastN = MonitorUtils.DEFAULT_VALUE_RANGE_LASTN;
-        }
-        m.put(MonitorUtils.LASTN, lastN);
-
-        Integer unit = null;
-        try {
-            unit = Integer.valueOf(getPreference(PREF_METRIC_RANGE_UNIT));
-        } catch (IllegalArgumentException nfe) {
-            unit = MonitorUtils.DEFAULT_VALUE_RANGE_UNIT;
-        }
-        m.put(MonitorUtils.UNIT, unit);
-
-        List range = null;
+        List<?> range = null;
         try {
             range = getPreferenceAsList(PREF_METRIC_RANGE);
         } catch (IllegalArgumentException iae) {
-            // that's ok
+            // that's OK, range will remain null and we might use the lastN / unit
         }
-        Long begin = null;
-        Long end = null;
+
         if (range != null && range.size() > 0) {
             try {
-                begin = new Long((String) range.get(0));
-                end = new Long((String) range.get(1));
+                prefs.begin = new Long((String) range.get(0));
+                prefs.end = new Long((String) range.get(1));
             } catch (NumberFormatException nfe) {
-                begin = null;
-                end = null;
+                // also OK, errors still might default to lastN / unit
             }
         }
 
-        // sometimes we are satisfied with no range. other times we
-        // need to calculate the "last n" units range and return
-        // that.
-        if (defaultRange && begin == null && end == null) {
-            range = MonitorUtils.calculateTimeFrame(lastN.intValue(), unit.intValue());
+        /* 
+         * sometimes we are satisfied with no range. other times we
+         * need to calculate the "last n" units range and return that
+         */
+        if (defaultRange && prefs.begin == null && prefs.end == null) {
+            range = MonitorUtils.calculateTimeFrame(prefs.lastN, prefs.unit);
 
-            begin = (Long) range.get(0);
-            end = (Long) range.get(1);
+            prefs.begin = (Long) range.get(0);
+            prefs.end = (Long) range.get(1);
         }
 
-        m.put(MonitorUtils.BEGIN, begin);
-        m.put(MonitorUtils.END, end);
-
-        return m;
+        return prefs;
     }
 
-    public Map<String, ?> getMetricRangePreference() throws IllegalArgumentException {
-        return getMetricRangePreference(true);
+    public MetricRangePreferences getMetricRangePreferences() {
+        return getMetricRangePreferences(true);
+    }
+
+    public void setMetricRangePreferences(MetricRangePreferences prefs) {
+        setPreference(PREF_METRIC_RANGE_RO, prefs.readOnly);
+        if (prefs.readOnly) {
+            // persist advanced mode
+            setPreference(PREF_METRIC_RANGE, Arrays.asList(prefs.begin, prefs.end));
+        } else {
+            setPreference(PREF_METRIC_RANGE_LASTN, prefs.lastN);
+            setPreference(PREF_METRIC_RANGE_UNIT, prefs.unit);
+        }
     }
 
     /**
@@ -686,7 +678,7 @@ public class WebUserPreferences implements Serializable {
         public List<String> views;
     }
 
-    public MetricViewsPreferences getMetricViewsPreferences(String key) {
+    public MetricViewsPreferences getMetricViews(String key) {
         MetricViewsPreferences prefs = new MetricViewsPreferences();
         //TODO: jmarques - externalize default view name
         // instead of PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME
@@ -697,7 +689,7 @@ public class WebUserPreferences implements Serializable {
         return prefs;
     }
 
-    public void setMetricViewsPreferences(MetricViewsPreferences prefs, String key) {
+    public void setMetricViews(MetricViewsPreferences prefs, String key) {
         StringBuilder builder = new StringBuilder();
         int index = 0;
         for (String viewName : prefs.views) {
@@ -705,36 +697,45 @@ public class WebUserPreferences implements Serializable {
                 builder.append(DashboardUtils.DASHBOARD_DELIMITER);
             }
             builder.append(viewName);
+            index++;
         }
         setPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + key, builder.toString());
     }
 
-    public String getMeasuremntIndicatorView(String context) {
-        return getPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context);
+    public static class MetricViewData {
+        public List<String> charts;
     }
 
-    public void setMeasuremntIndicatorView(String context, String value) {
-        setPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context, value);
-    }
-
-    public String getMeasuremntIndicatorViewChartList(String context, String viewName) {
+    public MetricViewData getMetricViewData(String context, String viewName) {
         //TODO: jmarques - externalize default view name
         // instead of PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME
         // lookup PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT from the bundle
         if (viewName == null || "".equals(viewName)) {
             viewName = "default";
         }
-        return getPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context + "." + viewName);
+        MetricViewData chartPreferences = new MetricViewData();
+        String data = getPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context + "." + viewName);
+        chartPreferences.charts = StringUtil.explode(data, DashboardUtils.DASHBOARD_DELIMITER);
+        return chartPreferences;
     }
 
-    public void setMeasuremntIndicatorViewChartList(String context, String viewName, String value) {
+    public void setMetricViewData(String context, String viewName, MetricViewData prefs) {
         //TODO: jmarques - externalize default view name
         // instead of PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME
         // lookup PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT from the bundle
         if (viewName == null || "".equals(viewName)) {
             viewName = "default";
         }
-        setPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context + "." + viewName, value);
+        StringBuilder builder = new StringBuilder();
+        int index = 0;
+        for (String chart : prefs.charts) {
+            if (index != 0) {
+                builder.append(DashboardUtils.DASHBOARD_DELIMITER);
+            }
+            builder.append(chart);
+            index++;
+        }
+        setPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context + "." + viewName, builder.toString());
     }
 
     public static class SavedChartsPortletPreferences {

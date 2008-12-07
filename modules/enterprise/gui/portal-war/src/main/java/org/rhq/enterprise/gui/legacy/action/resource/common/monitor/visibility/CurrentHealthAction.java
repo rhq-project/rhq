@@ -84,7 +84,7 @@ public class CurrentHealthAction extends TilesAction {
         WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getPreferences();
 
-        MetricViewsPreferences metricViews = preferences.getMetricViewsPreferences(key);
+        MetricViewsPreferences metricViews = preferences.getMetricViews(key);
         ivf.setViews(metricViews.views.toArray(new String[metricViews.views.size()]));
 
         String viewName = RequestUtils.getStringParameter(request, ParamConstants.PARAM_VIEW, metricViews.views.get(0));

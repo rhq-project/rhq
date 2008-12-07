@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
 import java.util.Date;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -37,7 +36,8 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 
@@ -45,7 +45,7 @@ import org.rhq.enterprise.gui.util.WebUtility;
  * A base class for <code>Action</code>s that prepare pages containing the metrics control form.
  */
 public class MetricsControlFormPrepareAction extends TilesAction {
-    protected static Log log = LogFactory.getLog(MetricsControlFormPrepareAction.class.getName());
+    protected static Log log = LogFactory.getLog(MetricsControlFormPrepareAction.class);
 
     // ---------------------------------------------------- Public Methods
 
@@ -84,35 +84,18 @@ public class MetricsControlFormPrepareAction extends TilesAction {
 
     // ---------------------------------------------------- Protected Methods
 
-    protected void prepareForm(HttpServletRequest request, MetricsControlForm form, MetricRange range)
-        throws IllegalArgumentException {
-        WebUser user = SessionUtils.getWebUser(request.getSession());
-
-        // set metric range defaults
-        Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
-        form.setReadOnly((Boolean) pref.get(MonitorUtils.RO));
-        form.setRn((Integer) pref.get(MonitorUtils.LASTN));
-        form.setRu((Integer) pref.get(MonitorUtils.UNIT));
-
-        Long begin;
-        Long end;
-
-        if (range != null) {
-            begin = range.getBegin();
-            end = range.getEnd();
-        } else {
-            begin = (Long) pref.get(MonitorUtils.BEGIN);
-            end = (Long) pref.get(MonitorUtils.END);
-        }
-
-        form.setRb(begin);
-        form.setRe(end);
-
-        form.populateStartDate(new Date(begin), request.getLocale());
-        form.populateEndDate(new Date(end), request.getLocale());
-    }
-
     protected void prepareForm(HttpServletRequest request, MetricsControlForm form) throws IllegalArgumentException {
-        prepareForm(request, form, null);
+        WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+
+        form.setReadOnly(rangePreferences.readOnly);
+        form.setRn(rangePreferences.lastN);
+        form.setRu(rangePreferences.unit);
+        form.setRb(rangePreferences.begin);
+        form.setRe(rangePreferences.end);
+
+        form.populateStartDate(new Date(rangePreferences.begin), request.getLocale());
+        form.populateEndDate(new Date(rangePreferences.end), request.getLocale());
     }
 }

@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -42,8 +41,9 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.ChartData;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
@@ -56,7 +56,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public class PerformanceFormPrepareAction extends MetricsControlFormPrepareAction {
-    protected static Log log = LogFactory.getLog(PerformanceFormPrepareAction.class.getName());
+    protected static Log log = LogFactory.getLog(PerformanceFormPrepareAction.class);
 
     // ---------------------------------------------------- Public Methods
 
@@ -69,16 +69,16 @@ public class PerformanceFormPrepareAction extends MetricsControlFormPrepareActio
         HttpServletResponse response) throws Exception {
         super.execute(mapping, form, request, response);
 
-        // decide what timeframe we're showing. it may have been
-        // shifted on previous views of this page.
+        // decide what timeframe we're showing. it may have been shifted on previous views of this page.
         MetricRange range = (MetricRange) request.getAttribute(Constants.METRIC_RANGE);
         if (range == null) {
             // this is the first time out. get the "metric range" user pref.
             WebUser user = SessionUtils.getWebUser(request.getSession());
-            Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
+            WebUserPreferences preferences = user.getPreferences();
+            MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
             range = new MetricRange();
-            range.setBegin((Long) pref.get(MonitorUtils.BEGIN));
-            range.setEnd((Long) pref.get(MonitorUtils.END));
+            range.setBegin(rangePreferences.begin);
+            range.setEnd(rangePreferences.end);
         }
 
         Subject subject = WebUtility.getSubject(request);
@@ -88,7 +88,7 @@ public class PerformanceFormPrepareAction extends MetricsControlFormPrepareActio
             subject, resource.getId(), DataType.CALLTIME, null, false);
 
         PerformanceForm perfForm = (PerformanceForm) form;
-        prepareForm(request, perfForm, range, callTimeSchedules);
+        prepareForm(request, perfForm, callTimeSchedules);
 
         MeasurementSchedule selectedSchedule = null;
         if ((perfForm.getScheduleId() != null) && !perfForm.getScheduleId().equals(PerformanceForm.DEFAULT_SCHEDULE_ID)) {
@@ -108,7 +108,7 @@ public class PerformanceFormPrepareAction extends MetricsControlFormPrepareActio
             callTimeDataComposites = callTimeDataManager.getCallTimeDataForResource(subject, selectedSchedule.getId(),
                 range.getBegin(), range.getEnd(), pageControl);
         } else {
-            callTimeDataComposites = new PageList();
+            callTimeDataComposites = new PageList<CallTimeDataComposite>();
         }
 
         if (log.isDebugEnabled()) {
@@ -130,8 +130,8 @@ public class PerformanceFormPrepareAction extends MetricsControlFormPrepareActio
 
     // ---------------------------------------------------- Protected Methods
 
-    protected void prepareForm(HttpServletRequest request, PerformanceForm form, MetricRange range,
-        List<MeasurementSchedule> schedules) throws IllegalArgumentException {
+    protected void prepareForm(HttpServletRequest request, PerformanceForm form, List<MeasurementSchedule> schedules)
+        throws IllegalArgumentException {
         if (!form.isAnythingClicked()) {
             form.setLow(PerformanceForm.DEFAULT_LOW);
             form.setAvg(PerformanceForm.DEFAULT_AVG);
@@ -152,7 +152,7 @@ public class PerformanceFormPrepareAction extends MetricsControlFormPrepareActio
             form.setScheduleId(schedules.get(0).getId());
         }
 
-        super.prepareForm(request, form, range);
+        super.prepareForm(request, form);
     }
 
     protected ChartData createChartData(PageList<CallTimeDataComposite> callTimeDataComposites, PerformanceForm form,

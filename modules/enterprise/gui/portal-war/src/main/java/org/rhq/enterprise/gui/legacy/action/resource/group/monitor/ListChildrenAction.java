@@ -39,7 +39,8 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.uibeans.CompGroupCompositeDisplaySummary;
 import org.rhq.enterprise.gui.util.WebUtility;
@@ -58,17 +59,17 @@ public class ListChildrenAction extends TilesAction {
     private Log log = LogFactory.getLog(ListChildrenAction.class);
 
     @Override
-    @SuppressWarnings("unchecked")
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         int groupId = WebUtility.getOptionalIntRequestParameter(request, "groupId", -1);
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
         Subject subject = user.getSubject();
 
-        Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
-        long begin = (Long) pref.get(MonitorUtils.BEGIN);
-        long end = (Long) pref.get(MonitorUtils.END);
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+        long begin = rangePreferences.begin;
+        long end = rangePreferences.end;
 
         ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();

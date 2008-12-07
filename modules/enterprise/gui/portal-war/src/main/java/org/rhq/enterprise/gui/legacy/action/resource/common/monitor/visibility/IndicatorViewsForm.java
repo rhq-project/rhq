@@ -46,7 +46,7 @@ public class IndicatorViewsForm extends MetricDisplayRangeForm {
 
     public String getView() {
         if (view == null || "".equals(view))
-            view = WebUserPreferences.PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT;
+            view = WebUserPreferences.PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME;
         return view;
     }
 

@@ -20,7 +20,6 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.events;
 
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -38,8 +37,9 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsControlFormPrepareAction;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.event.EventManagerLocal;
@@ -70,18 +70,17 @@ public class EventsFormPrepareAction extends MetricsControlFormPrepareAction {
         int type = WebUtility.getOptionalIntRequestParameter(request, "type", -1);
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
         Subject subject = user.getSubject();
 
         // Get metric range defaults
-        Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
-        long begin = (Long) pref.get(MonitorUtils.BEGIN);
-        long end = (Long) pref.get(MonitorUtils.END);
-        Integer lastN = (Integer) pref.get(MonitorUtils.LASTN);
-        eForm.setRn(lastN);
-        request.getSession().setAttribute("rn", lastN);
-        Integer unit = (Integer) pref.get(MonitorUtils.UNIT);
-        eForm.setRu(unit);
-        request.getSession().setAttribute("ru", unit);
+        long begin = rangePreferences.begin;
+        long end = rangePreferences.end;
+        eForm.setRn(rangePreferences.lastN);
+        request.getSession().setAttribute("rn", rangePreferences.lastN);
+        eForm.setRu(rangePreferences.unit);
+        request.getSession().setAttribute("ru", rangePreferences.unit);
 
         PageControl pc = WebUtility.getPageControl(request);
 

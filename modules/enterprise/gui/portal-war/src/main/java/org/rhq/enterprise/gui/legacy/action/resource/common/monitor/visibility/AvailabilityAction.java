@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -35,12 +34,12 @@ import org.apache.struts.tiles.actions.TilesAction;
 import org.rhq.core.clientapi.util.units.UnitNumber;
 import org.rhq.core.clientapi.util.units.UnitsConstants;
 import org.rhq.core.clientapi.util.units.UnitsFormat;
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.DefaultConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.legacy.measurement.MeasurementConstants;
@@ -53,24 +52,22 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * moved from org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.CurrentHealthAction
  */
 public class AvailabilityAction extends TilesAction {
-    protected final Log log = LogFactory.getLog(AvailabilityAction.class.getName());
+    protected final Log log = LogFactory.getLog(AvailabilityAction.class);
 
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         // Get the resource availability
-        Subject subject = RequestUtils.getSubject(request);
         AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
         WebUser user = SessionUtils.getWebUser(request.getSession());
+        WebUserPreferences preferences = user.getPreferences();
 
         int resourceId = RequestUtils.getResourceId(request);
         try {
-            Map<String, ?> pref = user.getPreferences().getMetricRangePreference();
-            long begin = (Long) pref.get(MonitorUtils.BEGIN);
-            long end = (Long) pref.get(MonitorUtils.END);
+            MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
-            List<AvailabilityPoint> data = availabilityManager.getAvailabilitiesForResource(subject, resourceId, begin,
-                end, DefaultConstants.DEFAULT_CHART_POINTS);
+            List<AvailabilityPoint> data = availabilityManager.getAvailabilitiesForResource(user.getSubject(),
+                resourceId, rangePreferences.begin, rangePreferences.end, DefaultConstants.DEFAULT_CHART_POINTS);
 
             request.setAttribute(AttrConstants.AVAILABILITY_METRICS_ATTR, data);
             request.setAttribute(AttrConstants.AVAIL_METRICS_ATTR, getFormattedAvailability(data));

@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.legacy.action.resource.common.events;
 
-import java.util.Map;
 import java.util.StringTokenizer;
 
 import javax.servlet.http.HttpServletRequest;
@@ -44,8 +43,9 @@ import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.StringConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -71,9 +71,10 @@ public class EventDetailsAction extends BaseAction {
         HttpServletResponse response) throws Exception {
 
         WebUser user = (WebUser) request.getSession().getAttribute(AttrConstants.WEBUSER_SES_ATTR);
-        Map<String, ?> range = user.getPreferences().getMetricRangePreference();
-        long begin = (Long) range.get(MonitorUtils.BEGIN);
-        long end = (Long) range.get(MonitorUtils.END);
+        WebUserPreferences preferences = user.getPreferences();
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+        long begin = rangePreferences.begin;
+        long end = rangePreferences.end;
         long interval = TimeUtil.getInterval(begin, end, DefaultConstants.DEFAULT_CHART_POINTS);
 
         begin = Long.parseLong(WebUtility.getOptionalRequestParameter(request, "begin", "0"));

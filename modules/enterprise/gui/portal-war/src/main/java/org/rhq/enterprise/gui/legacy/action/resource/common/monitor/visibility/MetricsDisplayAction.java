@@ -77,7 +77,7 @@ public class MetricsDisplayAction extends MetricsControlAction {
             return returnChart(request, mapping, forwardParams);
         } else if (displayForm.isThresholdClicked()) {
             Integer threshold = displayForm.getT();
-            preferences.setPreference(WebUserPreferences.PREF_METRIC_THRESHOLD, threshold);
+            preferences.setMetricThresholdPreference(threshold);
             log.trace("saving threshold pref [" + threshold + "]");
             LogFactory.getLog("user.preferences").trace(
                 "Invoking setUserPrefs" + " in MetricsDisplayAction " + " for " + user.getId() + " at "

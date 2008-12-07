@@ -99,14 +99,6 @@ public class WebUserPreferences {
         this.subject = subject;
     }
 
-    public Configuration getPreferences() {
-        return this.subject.getUserConfiguration();
-    }
-
-    public void setPreferences(Configuration preferences) {
-        this.subject.setUserConfiguration(preferences);
-    }
-
     /**
      * This forces a flush of the user preferences to the database.
      */
@@ -196,7 +188,7 @@ public class WebUserPreferences {
         return (pref != null) ? StringUtil.explode(pref, delimiter) : new ArrayList<String>();
     }
 
-    public List<Integer> getPreferenceAsIntegerList(String key, String delimiter) {
+    private List<Integer> getPreferenceAsIntegerList(String key, String delimiter) {
         try {
             List<String> value = getPreferenceAsList(key, delimiter);
 
@@ -214,11 +206,11 @@ public class WebUserPreferences {
         }
     }
 
-    public void setPreference(String key, List<?> values) throws IllegalArgumentException {
+    private void setPreference(String key, List<?> values) throws IllegalArgumentException {
         setPreference(key, values, PREF_LIST_DELIM);
     }
 
-    public void setPreference(String key, List<?> values, String delim) throws IllegalArgumentException {
+    private void setPreference(String key, List<?> values, String delim) throws IllegalArgumentException {
         String stringified = StringUtil.listToString(values, delim);
         setPreference(key, stringified);
     }
@@ -243,7 +235,7 @@ public class WebUserPreferences {
         }
     }
 
-    public void unsetPreference(String key) {
+    private void unsetPreference(String key) {
         Configuration config = subject.getUserConfiguration();
         if (config != null) {
             config.remove(key);
@@ -321,11 +313,17 @@ public class WebUserPreferences {
     }
 
     /**
-     * Returns a list of metric ids saved as favorites for a particular appdef
-     * type
+     * Returns a list of metric ids saved as favorites for a particular appdef type
      */
     public Integer getMetricThresholdPreference() throws IllegalArgumentException {
         return new Integer(getPreference(PREF_METRIC_THRESHOLD));
+    }
+
+    /**
+     * Set a list of metric ids saved as favorites for a particular appdef type
+     */
+    public void setMetricThresholdPreference(Integer value) throws IllegalArgumentException {
+        setPreference(PREF_METRIC_THRESHOLD, value);
     }
 
     /**
@@ -335,7 +333,7 @@ public class WebUserPreferences {
      * @return the boolean value of 'key', or if key is null, returns the
      * 'ifNull' value.
      */
-    public boolean getBooleanPref(String key) {
+    private boolean getBooleanPref(String key) {
         String val = getPreference(key);
         return Boolean.valueOf(val).booleanValue();
     }
@@ -347,7 +345,7 @@ public class WebUserPreferences {
      * @return the boolean value of 'key', or if key is null, returns the
      * 'ifNull' value.
      */
-    public boolean getBooleanPref(String key, boolean ifNull) {
+    private boolean getBooleanPref(String key, boolean ifNull) {
         String val;
         try {
             val = getPreference(key);
@@ -374,7 +372,7 @@ public class WebUserPreferences {
      * @return the int value of 'key', or if key is null, returns the
      * 'ifNull' value.
      */
-    public int getIntPref(String key, int ifNull) {
+    private int getIntPref(String key, int ifNull) {
         String val;
         try {
             val = getPreference(key);
@@ -392,7 +390,7 @@ public class WebUserPreferences {
      * @param key the preference to get
      * @return the long value of 'key'
      */
-    public Long getLongPref(String key) {
+    private Long getLongPref(String key) {
         String val = getPreference(key);
         return Long.parseLong(val);
     }

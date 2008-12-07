@@ -33,6 +33,7 @@ import org.apache.struts.action.ActionMapping;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.action.BaseActionMapping;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -74,26 +75,18 @@ public class MetricsControlAction extends BaseAction {
             Integer lastN = controlForm.getRn();
             Integer unit = controlForm.getRu();
 
-            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_LASTN, lastN);
-            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_UNIT, unit);
-            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE, null);
-
-            if (log.isDebugEnabled()) {
-                log.debug("updating metric display .. lastN [" + lastN + "] .. unit [" + unit + "]");
-                LogFactory.getLog("user.preferences").debug(
-                    "Invoking setUserPrefs in MetricsControlAction " + " for " + user.getId() + " at "
-                        + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
-            }
+            MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+            rangePreferences.lastN = lastN;
+            rangePreferences.unit = unit;
+            rangePreferences.readOnly = false;
+            preferences.setMetricRangePreferences(rangePreferences);
 
             preferences.persistPreferences();
         } else if (controlForm.isSimpleClicked()) {
-            preferences.setPreference(WebUserPreferences.PREF_METRIC_RANGE_RO, Boolean.FALSE);
 
-            if (log.isDebugEnabled()) {
-                LogFactory.getLog("user.preferences").debug(
-                    "Invoking setUserPrefs in MetricsControlAction " + " for " + user.getId() + " at "
-                        + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
-            }
+            MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+            rangePreferences.readOnly = false;
+            preferences.setMetricRangePreferences(rangePreferences);
 
             preferences.persistPreferences();
         }

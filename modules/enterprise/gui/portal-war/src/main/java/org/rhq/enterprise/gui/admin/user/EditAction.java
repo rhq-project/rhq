@@ -74,17 +74,14 @@ public class EditAction extends BaseAction {
                 Integer pageRefreshPeriod = Integer.valueOf(userForm.getPageRefreshPeriod());
                 WebUserPreferences preferences = currentUser.getPreferences();
                 preferences.setPageRefreshPeriod(pageRefreshPeriod);
+                preferences.persistPreferences();
             } catch (NumberFormatException e) {
                 throw new RuntimeException(
                     "pageRefreshPeriod is not an integer, this should have been caught earlier by the form validation.");
             }
-
-            // put the preferences into the user so the update will flush them to the DB
-            user.setUserConfiguration(currentUser.getPreferences().getPreferences());
         }
 
-        log.trace("Saving modified user: " + user);
-        subjectManager.updateSubject(RequestUtils.getSubject(request), user);
+        subjectManager.updateSubject(currentUser.getSubject(), user);
 
         return returnSuccess(request, mapping, Constants.USER_PARAM, userForm.getId());
     }

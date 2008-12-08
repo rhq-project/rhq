@@ -670,7 +670,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("debug")
     String DEBUG = "PromptCommand.debug";
 
-    @I18NMessage("debug [--file=<logfile>] [--comm=true|false]")
+    @I18NMessage("debug [--file=<logfile>] [--comm=true|false] [--threaddump]")
     String DEBUG_SYNTAX = "PromptCommand.debug.syntax";
 
     @I18NMessage("Provides features to help debug the agent.")
@@ -681,7 +681,8 @@ public interface AgentI18NResourceKeys {
         + "-f|--file=<logfile>: reconfigures the logging system with the given file.\\n\\\n"
         + "\\                     Typically, <logfile> can be 'log4j.xml'\\n\\\n"
         + "\\                     'log4j-debug.xml', but you can use your own by\\n\\\n"
-        + "\\                     placing your log files in the /conf directory.\\n\\\n")
+        + "\\                     placing your log files in the /conf directory.\\n\\\n"
+        + "-t|--threaddump: dumps the stacks for all threads in the agent VM.\\n\\\n")
     String DEBUG_DETAILED_HELP = "PromptCommand.debug.detailed-help";
 
     @I18NMessage("Switched to log file [{0}]. Root log level is [{1}]")
@@ -689,6 +690,9 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("Cannot load log file [{0}]. Cause: {1}")
     String DEBUG_CANNOT_LOAD_LOG_FILE = "PromptCommand.debug.cannot-load-log-file";
+
+    @I18NMessage("Cannot dump thread stack traces. Cause: {0}")
+    String DEBUG_CANNOT_DUMP_THREADS = "PromptCommand.debug.cannot-dump-threads";
 
     @I18NMessage("Agent-server communications tracing has been enabled.\\n\\\n"
         + "You may set the following, additional configuration settings\\n\\\n"

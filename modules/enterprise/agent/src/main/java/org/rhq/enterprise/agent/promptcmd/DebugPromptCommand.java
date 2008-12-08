@@ -22,6 +22,8 @@ import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
 import java.io.PrintWriter;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
 
 import mazz.i18n.Msg;
 
@@ -86,8 +88,9 @@ public class DebugPromptCommand implements AgentPromptCommand {
             return;
         }
 
-        String sopts = "c:f:";
+        String sopts = "tc:f:";
         LongOpt[] lopts = { new LongOpt("comm", LongOpt.REQUIRED_ARGUMENT, null, 'c'), // trace comm messages
+            new LongOpt("threaddump", LongOpt.NO_ARGUMENT, null, 't'), // dump thread stacks
             new LongOpt("file", LongOpt.REQUIRED_ARGUMENT, null, 'f') }; // reconfigure with new log file
 
         Getopt getopt = new Getopt(getPromptCommandString(), args, sopts, lopts);
@@ -129,6 +132,18 @@ public class DebugPromptCommand implements AgentPromptCommand {
                         .getAllMessages(e)));
                 }
                 break;
+            }
+
+            case 't': {
+                try {
+                    ThreadInfo[] allInfo = ManagementFactory.getThreadMXBean().dumpAllThreads(false, false);
+                    for (ThreadInfo threadInfo : allInfo) {
+                        out.println(threadInfo);
+                    }
+                } catch (Exception e) {
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.DEBUG_CANNOT_DUMP_THREADS, ThrowableUtil
+                        .getAllMessages(e)));
+                }
             }
             }
         }

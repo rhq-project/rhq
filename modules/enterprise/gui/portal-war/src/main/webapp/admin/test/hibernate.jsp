@@ -186,6 +186,7 @@
                 }
 
                 request.setAttribute("results", results);
+                request.setAttribute("isDMLStyle", isDMLStyle);
 
             } catch (Exception e) {
                 error = getExceptionString(e);

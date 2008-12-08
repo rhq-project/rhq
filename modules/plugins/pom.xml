@@ -90,7 +90,7 @@
 <!-- not behaving       <module>hardware</module> -->
     <module>hosts</module>
     <module>hudson</module>
-    <module>jira</module>
+<!-- error in code generation (see RHQ-1225)  <module>jira</module> -->
 <!-- no longer needed - to be purged in the future <module>mock-jboss</module> -->        
     <module>mysql</module>
     <module>netservices</module>

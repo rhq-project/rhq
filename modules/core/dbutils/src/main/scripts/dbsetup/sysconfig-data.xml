@@ -4,8 +4,7 @@
 
     <!--
     This file contains the seed data for the configuration table.
-    All keys mentioned here should be referenced via the
-    HQConstants class
+    All keys mentioned here should be referenced via the RHQConstants class
     -->
     <table name="RHQ_SYSTEM_CONFIG">
         <data ID="1" PROPERTY_KEY="SERVER_VERSION" PROPERTY_VALUE="@@@SERVER_VERSION@@@"

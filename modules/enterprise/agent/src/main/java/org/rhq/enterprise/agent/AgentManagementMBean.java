@@ -21,6 +21,7 @@ package org.rhq.enterprise.agent;
 import java.util.List;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutionException;
 
 import javax.management.ObjectName;
 
@@ -196,6 +197,24 @@ public interface AgentManagementMBean {
      * @see TimeZone#getTimeZone(String)
      */
     String retrieveCurrentDateTime(String timeZone);
+
+    /**
+     * Executes an agent prompt command.  The given <code>command</code> is the prompt command
+     * plus any additional command arguments, separated by spaces (just as if you typed the command
+     * in the console window). The results will be a string that contains the text that you would
+     * have seen in the console output had the prompt command been executed from the console.
+     * 
+     * @param command the command to execute along with any command line arguments.
+     * 
+     * @return the output results of the executed prompt command
+     * 
+     * @throws ExecutionException if the prompt command threw an exception, this method will throw an exception
+     *         whose message is the output text that was written by the prompt command up until the error
+     *         occurred. The cause of the thrown exception will be the actual exception thrown by
+     *         the prompt command. This way you can see what the prompt command output was as well as
+     *         the exception that occurred.
+     */
+    String executePromptCommand(String command) throws ExecutionException;
 
     /**
      * Returns the number of times the agent has been restarted for the entire lifetime of

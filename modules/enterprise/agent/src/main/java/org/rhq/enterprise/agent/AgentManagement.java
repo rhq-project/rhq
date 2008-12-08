@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.agent;
 
+import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutionException;
 import java.util.prefs.Preferences;
 
 import javax.management.MBeanRegistration;
@@ -262,6 +264,22 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         return df.format(new Date());
     }
 
+    public String executePromptCommand(String command) throws ExecutionException {
+        CharArrayWriter listener = new CharArrayWriter();
+        AgentPrintWriter apw = m_agent.getOut();
+        try {
+            apw.addListener(listener);
+            m_agent.executePromptCommand(command); // TODO should we do something if false is returned? (i.e. kill agent?)
+        } catch (Exception e) {
+            throw new ExecutionException(listener.toString(), e); // the message is the output, cause is the thrown exception
+        } finally {
+            apw.removeListener(listener);
+        }
+
+        String output = listener.toString();
+        return output;
+    }
+
     public int getNumberAgentRestarts() {
         return m_agent.getAgentRestartCounter().getNumberOfRestarts();
     }
@@ -483,8 +501,9 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
     private ServiceContainerMetricsMBean getServerSideMetrics() {
         try {
             MBeanServer mbs = m_agent.getServiceContainer().getMBeanServer();
-            return (ServiceContainerMetricsMBean) MBeanServerInvocationHandler.newProxyInstance(mbs,
+            Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs,
                 ServiceContainerMetricsMBean.OBJECTNAME_METRICS, ServiceContainerMetricsMBean.class, false);
+            return (ServiceContainerMetricsMBean) mbean;
         } catch (Exception e) {
             throw new IllegalStateException(e); // should never happen
         }

@@ -33,7 +33,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.io.StreamTokenizer;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
@@ -199,7 +198,7 @@ public class AgentMain {
     /**
      * The output stream where results are printed.
      */
-    private PrintWriter m_output;
+    private AgentPrintWriter m_output;
 
     /**
      * Configuration settings for the agent, including the communications services configuration.
@@ -439,7 +438,7 @@ public class AgentMain {
 
         m_daemonMode = false;
         m_input = new BufferedReader(new InputStreamReader(System.in));
-        m_output = new PrintWriter(System.out, true);
+        m_output = new AgentPrintWriter(System.out, true);
         m_stdinInput = true;
         m_configuration = null;
         m_started = new boolean[] { false };
@@ -718,7 +717,7 @@ public class AgentMain {
      *
      * @return writer to which you can print messages to the user
      */
-    public PrintWriter getOut() {
+    public AgentPrintWriter getOut() {
         return m_output;
     }
 
@@ -2484,7 +2483,7 @@ public class AgentMain {
      * A public method that allows any container object that has embedded this agent to execute prompt commands on this
      * agent. This is useful if the container has another means by which it takes input from a user. Note, however, that
      * if a prompt command requires additional input, it will use {@link #getIn()} to read the input; so the caller must
-     * either ensure the input stream is valid or it is must expect errors if it tries to execute those commands that
+     * either ensure the input stream is valid or it must expect errors if it tries to execute those commands that
      * require additional input.
      *
      * @param  command the full command to execute, including the command name and arguments
@@ -2679,7 +2678,7 @@ public class AgentMain {
                         parentDir.mkdirs();
                     }
 
-                    m_output = new PrintWriter(new FileWriter(output), true);
+                    m_output = new AgentPrintWriter(new FileWriter(output), true);
                 } catch (Exception e) {
                     throw new IllegalArgumentException(MSG.getMsg(AgentI18NResourceKeys.BAD_OUTPUT_FILE, output, e));
                 }

@@ -112,6 +112,18 @@
          </results>
       </operation>
 
+      <operation name="executePromptCommand"
+                 displayName="Execute Prompt Command"
+                 description="Executes an agent prompt command, just as if you invoked the command at the agent prompt in a console. Note that you must ensure the prompt command does not require additional input, since the agent will look for that input from another source (e.g. console keyboard).">
+         <parameters>
+            <c:simple-property name="command" type="string" default="" required="true" description="The prompt command to execute"/>
+         </parameters>
+         <results>
+            <c:simple-property name="output" type="longString" required="true" description="The results of the prompt command. This will typically be the output that you would have seen in the console, had this prompt command been executed directly on the agent console." />
+            <c:simple-property name="error" type="longString" required="false" description="If the prompt command execution had an error, this will be information on the error." />
+         </results>
+      </operation>
+
       <metric property="Trait.SigarVersion"
               displayName="SIGAR Version"
               dataType="trait"

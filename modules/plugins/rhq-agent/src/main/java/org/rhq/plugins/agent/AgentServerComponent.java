@@ -18,15 +18,21 @@
  */
 package org.rhq.plugins.agent;
 
+import java.io.CharArrayWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+
+import javax.management.MBeanException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mc4j.ems.connection.EmsInvocationException;
 import org.mc4j.ems.connection.bean.EmsBean;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -138,6 +144,28 @@ public class AgentServerComponent extends JMXServerComponent implements JMXCompo
                     result = new OperationResult();
                     result.getComplexResults().put(
                         new PropertySimple("dateTime", getAgentBean().getOperation(name).invoke(timeZone)));
+                } else if (name.equals("executePromptCommand")) {
+                    String command = params.getSimple("command").getStringValue();
+                    result = new OperationResult();
+                    try {
+                        Object output = getAgentBean().getOperation(name).invoke(command);
+                        result.getComplexResults().put(new PropertySimple("output", output));
+                    } catch (EmsInvocationException eie) {
+                        if (eie.getCause() instanceof MBeanException
+                            && eie.getCause().getCause() instanceof ExecutionException) {
+                            // the prompt command threw the exception - in this case:
+                            // the message is the prompt output and the cause is the actual prompt exception
+                            ExecutionException ee = (ExecutionException) eie.getCause().getCause();
+                            String output = ee.getMessage();
+                            CharArrayWriter caw = new CharArrayWriter();
+                            ee.getCause().printStackTrace(new PrintWriter(caw));
+                            String error = caw.toString();
+                            result.getComplexResults().put(new PropertySimple("output", output));
+                            result.getComplexResults().put(new PropertySimple("error", error));
+                        } else {
+                            throw eie;
+                        }
+                    }
                 } else {
                     // this should really never happen
                     throw new IllegalArgumentException("Operation [" + name + "] does not support params");
@@ -146,7 +174,6 @@ public class AgentServerComponent extends JMXServerComponent implements JMXCompo
         } catch (Exception e) {
             throw new RuntimeException("Failed to invoke operation [" + name + "]", e);
         }
-
         return result;
     }
 

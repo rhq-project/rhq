@@ -144,6 +144,7 @@ public class DebugPromptCommand implements AgentPromptCommand {
                     out.println(MSG.getMsg(AgentI18NResourceKeys.DEBUG_CANNOT_DUMP_THREADS, ThrowableUtil
                         .getAllMessages(e)));
                 }
+                break;
             }
             }
         }

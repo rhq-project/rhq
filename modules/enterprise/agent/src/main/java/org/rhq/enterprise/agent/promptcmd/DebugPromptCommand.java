@@ -24,6 +24,7 @@ import gnu.getopt.LongOpt;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 
 import mazz.i18n.Msg;
 
@@ -136,9 +137,13 @@ public class DebugPromptCommand implements AgentPromptCommand {
 
             case 't': {
                 try {
-                    ThreadInfo[] allInfo = ManagementFactory.getThreadMXBean().dumpAllThreads(false, false);
+                    ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+                    long[] allIds = threadMXBean.getAllThreadIds();
+                    ThreadInfo[] allInfo = threadMXBean.getThreadInfo(allIds, 256);
                     for (ThreadInfo threadInfo : allInfo) {
-                        out.println(threadInfo);
+                        if (threadInfo != null) {
+                            out.println(threadInfo);
+                        }
                     }
                 } catch (Exception e) {
                     out.println(MSG.getMsg(AgentI18NResourceKeys.DEBUG_CANNOT_DUMP_THREADS, ThrowableUtil

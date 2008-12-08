@@ -36,6 +36,19 @@
 <script language="JavaScript">
   var baseUrl = "<html:rewrite page="/resource/common/monitor/visibility/IndicatorCharts.do"/>";
 
+baseUrl += "?id=<c:out value="${id}"/>";
+<c:if test="${not empty ctype}">
+  baseUrl += "&ctype=<c:out value="${ctype}"/>";
+</c:if>
+<c:if test="${not empty groupId}">
+  baseUrl += "&groupId=<c:out value="${groupId}"/>";
+</c:if>
+<c:if test="${not empty parent}">
+  baseUrl += "&parent=<c:out value="${parent}"/>";
+</c:if>
+
+baseUrl +=  "&view=<c:out value="${view}"/>"
+
   // Register the remove metric chart method
   ajaxEngine.registerRequest( 'indicatorCharts', baseUrl );
 

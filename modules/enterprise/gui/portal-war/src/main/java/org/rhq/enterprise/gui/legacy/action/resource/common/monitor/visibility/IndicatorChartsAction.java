@@ -21,8 +21,6 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -200,6 +198,16 @@ public class IndicatorChartsAction extends DispatchAction {
         }
     }
 
+    private MeasurementViewContext getContext(HttpServletRequest request) {
+        int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
+        int groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
+        int parentResourceId = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
+        int resourceTypeId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_TYPE_ID_PARAM,
+            -1);
+
+        return new MeasurementViewContext(resourceId, groupId, parentResourceId, resourceTypeId);
+    }
+
     /**
      * Stores the metric in the session and also in the passed form, so it can be
      * identified in moveUp()/moveDown()/remove() 
@@ -238,23 +246,26 @@ public class IndicatorChartsAction extends DispatchAction {
         Subject subject = WebUtility.getSubject(request);
         try {
             String viewName = form.getView();
-            MetricsDisplayMode mode = WebUtility.getMetricsDisplayMode(request);
-            switch (mode) {
-            case RESOURCE:
+            MeasurementViewContext context = null;
+            try {
+                context = new MeasurementViewContext(form.getId(), form.getGroupId(), form.getParent(), form.getCtype());
+            } catch (IllegalArgumentException iae) {
+                // ok, the form didn't have what we wanted, let's fallback on the request
+                context = getContext(request);
+            }
+
+            if (context.category == MeasurementViewContext.Category.Resource) {
                 int resourceId = WebUtility.getResourceId(request);
                 metrics = getViewMetricsForSingleResource(request, resourceId, viewName);
-                break;
-            case COMPGROUP:
+            } else if (context.category == MeasurementViewContext.Category.ResourceGroup) {
                 int groupId = WebUtility.getRequiredIntRequestParameter(request, AttrConstants.GROUP_ID);
                 metrics = chartsManager.getMetricDisplaySummariesForCompatibleGroup(subject, groupId, viewName);
-                break;
-            case AUTOGROUP:
+            } else if (context.category == MeasurementViewContext.Category.AutoGroup) {
                 int parent = WebUtility.getRequiredIntRequestParameter(request, "parent");
                 int type = getChildTypeId(request);
                 metrics = chartsManager.getMetricDisplaySummariesForAutoGroup(subject, parent, type, viewName);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown or unsupported MetricsDisplayMode '" + mode + "'");
+            } else {
+                throw new IllegalArgumentException("Unknown or unsupported context: " + context);
             }
         } catch (Exception e) {
             log.error("Error loading metrics (they were not found in the session)", e);
@@ -520,20 +531,12 @@ public class IndicatorChartsAction extends DispatchAction {
         HttpServletResponse response) throws Exception {
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
 
-        // Look up the metrics from the session
+        Subject subject = WebUtility.getSubject(request);
+        MeasurementViewContext context = new MeasurementViewContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf
+            .getCtype());
+        viewManager.removeChart(subject, context, ivf.getView(), ivf.getMetric()[0]);
+
         List<MetricDisplaySummary> metrics = retrieveMetricsFromSession(request, ivf);
-
-        String oldMetric = ivf.getMetric()[0];
-
-        // Go through and remove the metric
-        for (Iterator<MetricDisplaySummary> it = metrics.iterator(); it.hasNext();) {
-            MetricDisplaySummary summary = it.next();
-            if (summary.getMetricToken().equals(oldMetric)) {
-                it.remove();
-                break;
-            }
-        }
-
         // Now store the metrics back
         storeMetricsInSession(request, metrics, ivf);
 
@@ -544,27 +547,12 @@ public class IndicatorChartsAction extends DispatchAction {
         HttpServletResponse response) throws Exception {
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
 
-        // Look up the metrics from the session
-        List<MetricDisplaySummary> metrics = this.retrieveMetricsFromSession(request, ivf);
+        Subject subject = WebUtility.getSubject(request);
+        MeasurementViewContext context = new MeasurementViewContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf
+            .getCtype());
+        viewManager.moveChartUp(subject, context, ivf.getView(), ivf.getMetric()[0]);
 
-        String oldMetric = ivf.getMetric()[0];
-
-        // Go through and reorder the metric
-        MetricDisplaySummary[] orderedMetrics = new MetricDisplaySummary[metrics.size()];
-
-        Iterator<MetricDisplaySummary> it = metrics.iterator();
-        for (int i = 0; it.hasNext(); i++) {
-            MetricDisplaySummary summary = it.next();
-            if (summary.getMetricToken().equals(oldMetric)) {
-                orderedMetrics[i] = orderedMetrics[i - 1];
-                orderedMetrics[i - 1] = summary;
-            } else {
-                orderedMetrics[i] = summary;
-            }
-        }
-
-        metrics = new ArrayList<MetricDisplaySummary>(Arrays.asList(orderedMetrics));
-
+        List<MetricDisplaySummary> metrics = retrieveMetricsFromSession(request, ivf);
         // Now store the metrics back
         storeMetricsInSession(request, metrics, ivf);
 
@@ -575,25 +563,12 @@ public class IndicatorChartsAction extends DispatchAction {
         HttpServletResponse response) throws Exception {
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
 
-        // Look up the metrics from the session
-        List<MetricDisplaySummary> metrics = this.retrieveMetricsFromSession(request, ivf);
+        Subject subject = WebUtility.getSubject(request);
+        MeasurementViewContext context = new MeasurementViewContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf
+            .getCtype());
+        viewManager.moveChartDown(subject, context, ivf.getView(), ivf.getMetric()[0]);
 
-        String oldMetric = ivf.getMetric()[0];
-
-        // Go through and reorder the metric
-        MetricDisplaySummary[] orderedMetrics = new MetricDisplaySummary[metrics.size()];
-
-        Iterator<MetricDisplaySummary> it = metrics.iterator();
-        for (int i = 0; it.hasNext(); i++) {
-            MetricDisplaySummary summary = it.next();
-            if (summary.getMetricToken().equals(oldMetric) && it.hasNext())
-                orderedMetrics[i++] = it.next();
-
-            orderedMetrics[i] = summary;
-        }
-
-        metrics = new ArrayList<MetricDisplaySummary>(Arrays.asList(orderedMetrics));
-
+        List<MetricDisplaySummary> metrics = retrieveMetricsFromSession(request, ivf);
         // Now store the metrics back
         storeMetricsInSession(request, metrics, ivf);
 

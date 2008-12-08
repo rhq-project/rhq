@@ -434,6 +434,34 @@ Build-OS-Version=${os.version}
             </configuration>
          </plugin>
 
+           <!--  run the standard tests, by default, unless we are specifically running the remote API tests 
+                 (activate the ws-test profile to run just the remote API tests) -->
+           <plugin>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <!-- Everything but the web service tests, this is the standard test execution -->
+              <configuration>         
+                 <excludes>  
+                    <exclude>com/**/*.java</exclude>
+                 </excludes>
+                 <excludedGroups>${rhq.testng.excludedGroups},WS</excludedGroups>
+                 <systemProperties>
+                    <property>
+                       <name>embeddedDeployment</name>
+                       <value>true</value>
+                    </property>
+                    <property>
+                       <name>deploymentDirectory</name>
+                       <value>target/classes</value>
+                    </property>
+                 </systemProperties>
+                 <additionalClasspathElements>
+                    <!-- The below is required for tests to run against Oracle. -->               
+                    <!--<additionalClasspathElement>${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar</additionalClasspathElement>-->
+                    <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
+                 </additionalClasspathElements>
+              </configuration>               
+           </plugin>
+         
       </plugins>
    </build>
 
@@ -516,45 +544,6 @@ Build-OS-Version=${os.version}
          </build>
       </profile>
       
-      <!--  run the standard tests, by default, unless we are specifically running the remote API tests -->
-      <profile>
-         <id>standard-tests</id>
-          
-         <activation>
-            <activeByDefault>true</activeByDefault>
-         </activation>
-
-         <build>
-            <plugins>
-               <plugin>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <!-- Everything but the web service tests, this is the standard test execution -->
-                  <configuration>         
-                     <excludes>  
-                        <exclude>com/**/*.java</exclude>
-                     </excludes>
-                     <excludedGroups>WS</excludedGroups>
-                     <systemProperties>
-                        <property>
-                           <name>embeddedDeployment</name>
-                           <value>true</value>
-                        </property>
-                        <property>
-                           <name>deploymentDirectory</name>
-                           <value>target/classes</value>
-                        </property>
-                     </systemProperties>
-                     <additionalClasspathElements>
-                        <!-- The below is required for tests to run against Oracle. -->               
-                        <!--<additionalClasspathElement>${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar</additionalClasspathElement>-->
-                        <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
-                     </additionalClasspathElements>
-                  </configuration>               
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-
       <!-- 
       Just for running Web Service / Remote API tests. To run the tests execute them explicitly via
         -Dtest=TestRemoteInterface

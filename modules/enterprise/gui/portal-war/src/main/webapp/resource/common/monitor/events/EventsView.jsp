@@ -3,6 +3,8 @@
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.Date" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.WebUser" %>
+<%@ page import="org.rhq.enterprise.gui.legacy.WebUserPreferences" %>
+<%@ page import="org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences" %>
 <%@ page import="org.rhq.core.domain.auth.Subject" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
@@ -37,9 +39,9 @@
     Subject subject = user.getSubject();
 
 
-    Map<String, ?> pref = user.getPreferences().getMetricRangePreference(true);
-    long begin = (Long) pref.get(MonitorUtils.BEGIN);
-    long end = (Long) pref.get(MonitorUtils.END);
+    MetricRangePreferences pref = user.getPreferences().getMetricRangePreferences();
+    long begin = pref.begin;
+    long end = pref.end;
 
       // System.out.println("Displaying from " + new Date(begin) + " to " + new Date(end));
 //    long end = System.currentTimeMillis();

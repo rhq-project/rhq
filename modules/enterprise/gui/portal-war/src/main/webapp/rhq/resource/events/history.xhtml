@@ -4,10 +4,15 @@
       PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://java.sun.com/jsf/html" xmlns:f="http://java.sun.com/jsf/core"
-    xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:c="http://java.sun.com/jstl/core"
-    xmlns:onc="http://jboss.org/on/component" xmlns:onf="http://jboss.org/on/function"
-    xmlns:a4j="https://ajax4jsf.dev.java.net/ajax" xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax" 
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
@@ -36,11 +41,24 @@
                             <a4j:support event="onchange" reRender="eventHistoryDataTable" />
                         </h:selectOneMenu></td>
 
-                        <td width="33%"><h:outputText value="Source:" /> <h:inputText
-                            value="#{EventHistoryUIBean.sourceFilter}" /></td>
+                        <td width="33%">
+                            <h:outputText value="Source:" /> 
+                            <h:inputText value="#{EventHistoryUIBean.sourceFilter}">
+                                <a4j:support event="onchange" reRender="eventHistoryDataTable" />
+                            </h:inputText>
+                        </td>
 
-                        <td width="33%"><h:outputText value="Search:" /> <h:inputText
-                            value="#{EventHistoryUIBean.searchString}" /></td>
+                        <td width="33%">
+                            <h:outputText value="Search:" /> 
+                            <h:inputText value="#{EventHistoryUIBean.searchString}">
+                                <a4j:support event="onchange" reRender="eventHistoryDataTable" />
+                            </h:inputText>
+                            <a4j:status>
+                                <f:facet name="start">
+                                    &nbsp; &nbsp; <h:graphicImage value="/images/status_bar.gif"/>
+                                 </f:facet>
+                            </a4j:status>
+                        </td>
                     </tr>
                 </table>
             </rich:panel>
@@ -58,7 +76,10 @@
                               width="100%" 
                         headerClass="tableRowHeader" 
                         footerClass="on-pager-footer"
-                           rendered="#{eventHistoryDataModel.rowCount > 0 }">
+                           rendered="#{eventHistoryDataModel.rowCount > 0 }"
+                         onRowClick="alert('hello morron)"
+                     onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                      onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
 
                 <f:facet name="PageControlView">
                     <onc:paginationControl id="EventsHistoryList" />
@@ -86,7 +107,7 @@
                     <f:facet name="header">
                         <h:outputText styleClass="headerText" value="Detail" />
                     </f:facet>
-                    <h:outputText value="#{item.eventDetail}" />
+                    <h:outputText value="#{onf:trimString(item.eventDetail,160)}" />
                 </rich:column>
 
                 <rich:column>
@@ -109,6 +130,20 @@
                     </rich:columnGroup>
                 </f:facet>
             </rich:dataTable>
+            
+            <br />
+            
+            <rich:panel>
+                
+                <f:facet name="header">
+                    <h:outputText value="${msg['resource.common.monitor.events.DetailsHeader']}" />
+                </f:facet>
+                
+                <h:outputText value="Source:" />
+                <br />
+                <h:outputText value="Detail:" />
+            </rich:panel>
+            
         </h:form>
 
     </ui:define>

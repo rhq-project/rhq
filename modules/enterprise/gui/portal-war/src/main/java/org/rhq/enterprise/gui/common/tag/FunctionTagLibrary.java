@@ -197,4 +197,12 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
 
         return "1";
     }
+
+    public static String trimString(String str, int numChars) {
+        if (str == null)
+            throw new IllegalArgumentException("cannot retrieve characters of a null string");
+        if (numChars > str.length())
+            return str;
+        return str.substring(0, numChars);
+    }
 }

@@ -268,13 +268,13 @@
                    <artifactId>rhq-iis-plugin</artifactId>
                    <version>${project.version}</version>
                  </artifactItem>
-
+<!-- comment out until errors from RHQ-1226 are fixed
                               <artifactItem>
                                  <groupId>org.rhq</groupId>
                                  <artifactId>rhq-jira-plugin</artifactId>
                                  <version>${project.version}</version>
                               </artifactItem>
-
+ -->
                  <artifactItem>
                    <groupId>org.rhq</groupId>
                    <artifactId>rhq-jmx-plugin</artifactId>

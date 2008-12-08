@@ -39,7 +39,7 @@ public class ModifyAction extends BaseAction {
         HttpServletResponse response) throws Exception {
         PropertiesForm pForm = (PropertiesForm) form;
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
 
         String forwardStr = Constants.SUCCESS_URL;
 

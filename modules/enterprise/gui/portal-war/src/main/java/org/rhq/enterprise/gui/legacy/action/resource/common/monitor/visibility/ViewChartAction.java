@@ -376,7 +376,7 @@ public class ViewChartAction extends MetricDisplayRangeAction {
 
     private boolean _saveUserChart(String url, String name, HttpServletRequest request) throws Exception {
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
         SavedChartsPortletPreferences savedCharts = preferences.getSavedChartsPortletPreferences();
 
         boolean changed = savedCharts.add(name, url);

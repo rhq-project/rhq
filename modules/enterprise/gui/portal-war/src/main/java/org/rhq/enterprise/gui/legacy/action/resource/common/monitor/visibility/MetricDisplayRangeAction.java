@@ -33,10 +33,10 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 
 /**
  * A <code>BaseAction</code> that handles metrics-specific form gestures.
@@ -62,7 +62,7 @@ public class MetricDisplayRangeAction extends BaseAction {
         }
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
         MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
         if (displayForm.isLastnSelected()) {

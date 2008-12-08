@@ -53,7 +53,7 @@ public class AddResourcesAction extends BaseAction {
         Log log = LogFactory.getLog(AddResourcesAction.class);
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
         AddResourcesForm addForm = (AddResourcesForm) form;
 
         ActionForward forward = checkSubmit(request, mapping, form, Constants.USER_PARAM, user.getId());

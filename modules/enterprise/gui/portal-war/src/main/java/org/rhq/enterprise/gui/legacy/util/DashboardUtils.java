@@ -29,7 +29,7 @@ public class DashboardUtils {
     public static final String DASHBOARD_DELIMITER = "|";
 
     public static void removePortlet(WebUser user, String portletName) throws Exception {
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
         DashboardPreferences dashboardPreferences = preferences.getDashboardPreferences();
         dashboardPreferences.removePortlet(portletName);
         preferences.setDashboardPreferences(dashboardPreferences);

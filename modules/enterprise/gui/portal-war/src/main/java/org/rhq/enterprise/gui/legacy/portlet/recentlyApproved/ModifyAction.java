@@ -43,7 +43,7 @@ public class ModifyAction extends BaseAction {
         PropertiesForm pForm = (PropertiesForm) form;
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
         RecentlyApprovedPortletPreferences recentlyApprovedPreferences = preferences
             .getRecentlyApprovedPortletPreferences();
 

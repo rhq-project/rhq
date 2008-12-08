@@ -34,7 +34,6 @@ import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits
 import org.rhq.core.domain.measurement.composite.MeasurementValueAndUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.enterprise.gui.legacy.Constants;
-import org.rhq.enterprise.gui.legacy.NumberConstants;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 
 public class MonitorUtils {
@@ -48,15 +47,6 @@ public class MonitorUtils {
 
     public static final int DEFAULT_CURRENTHEALTH_LASTN = 8;
 
-    public static final Boolean DEFAULT_VALUE_RANGE_RO = Boolean.FALSE;
-    public static final Integer DEFAULT_VALUE_RANGE_LASTN = 8;
-    public static final Integer DEFAULT_VALUE_RANGE_UNIT = 3;
-
-    public static final int UNIT_COLLECTION_POINTS = 1;
-    public static final int UNIT_MINUTES = 2;
-    public static final int UNIT_HOURS = 3;
-    public static final int UNIT_DAYS = 4;
-
     public static final int THRESHOLD_BASELINE_VALUE = 1;
     public static final String THRESHOLD_BASELINE_LABEL = "Baseline";
     public static final int THRESHOLD_HIGH_RANGE_VALUE = 2;
@@ -66,48 +56,6 @@ public class MonitorUtils {
 
     public static final int THRESHOLD_UNDER_VALUE = 1;
     public static final int THRESHOLD_OVER_VALUE = 2;
-
-    /**
-     * Method calculateTimeFrame
-     * <p/>
-     * Returns a two element<code>List</code> of <code>Long</code> objects representing the begin and end times (in
-     * milliseconds since the epoch) of the timeframe. Returns null instead if the time unit is indicated as
-     * <code>UNIT_COLLECTION_POINTS</code>.
-     *
-     * @param lastN the number of time units in the time frame
-     * @param unit  the unit of time (as defined by <code>UNIT_*</code> constants
-     * @return List
-     */
-    public static List<Long> calculateTimeFrame(int lastN, int unit) {
-        List<Long> l = new ArrayList<Long>(0);
-
-        if (unit == UNIT_COLLECTION_POINTS) {
-            return null;
-        }
-
-        long now = System.currentTimeMillis();
-
-        long retrospective = lastN;
-        switch (unit) {
-        case UNIT_MINUTES:
-            retrospective *= NumberConstants.MINUTES;
-            break;
-        case UNIT_HOURS:
-            retrospective *= NumberConstants.HOURS;
-            break;
-        case UNIT_DAYS:
-            retrospective *= NumberConstants.DAYS;
-            break;
-        default:
-            retrospective = -1;
-            break;
-        }
-
-        l.add(new Long(now - retrospective));
-        l.add(new Long(now));
-
-        return l;
-    }
 
     public static Integer formatMetrics(List<MetricDisplaySummary> metricDisplaySummaries, Locale userLocale,
         MessageResources msgs) {

@@ -40,9 +40,9 @@ import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.ProblemResourcesPortletPreferences;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
+import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAction extends TilesAction {
@@ -56,7 +56,7 @@ public class ViewAction extends TilesAction {
         try {
             WebUser user = SessionUtils.getWebUser(request.getSession());
             Subject subject = user.getSubject();
-            WebUserPreferences preferences = user.getPreferences();
+            WebUserPreferences preferences = user.getWebPreferences();
 
             ProblemResourcesPortletPreferences problemResourcePreferences = preferences
                 .getProblemResourcesPortletPreferences();
@@ -65,8 +65,7 @@ public class ViewAction extends TilesAction {
             long begin = 0;
 
             if (problemResourcePreferences.hours > 0) {
-                List bounds = MonitorUtils
-                    .calculateTimeFrame(problemResourcePreferences.hours, MonitorUtils.UNIT_HOURS);
+                List bounds = MeasurementUtils.calculateTimeFrame(problemResourcePreferences.hours, MeasurementUtils.UNIT_HOURS);
                 begin = (Long) bounds.get(0);
                 long end = (Long) bounds.get(1);
 

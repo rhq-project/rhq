@@ -33,11 +33,11 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricViewsPreferences;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricViewsPreferences;
 
 /**
  * An <code>TilesAction</code> that retrieves metric data to facilitate display of a current health page. Input is
@@ -82,7 +82,7 @@ public class CurrentHealthAction extends TilesAction {
      */
     protected void setupViews(HttpServletRequest request, IndicatorViewsForm ivf, String key) {
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
 
         MetricViewsPreferences metricViews = preferences.getMetricViews(key);
         ivf.setViews(metricViews.views.toArray(new String[metricViews.views.size()]));

@@ -32,10 +32,10 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.action.WorkflowPrepareAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 
 /**
  * An <code>Action</code> that retrieves data from the BizApp to facilitate display of the various pages that provide
@@ -53,7 +53,7 @@ public class MetricDisplayRangeFormPrepareAction extends WorkflowPrepareAction {
         MetricDisplayRangeForm rangeForm = (MetricDisplayRangeForm) form;
         try {
             WebUser user = SessionUtils.getWebUser(request.getSession());
-            WebUserPreferences preferences = user.getPreferences();
+            MeasurementPreferences preferences = user.getMeasurementPreferences();
             MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
             if (rangeForm.isResetClicked()) {

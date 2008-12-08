@@ -48,7 +48,7 @@ public class PrepareAction extends TilesAction {
         Log log = LogFactory.getLog(PrepareAction.class);
         PropertiesForm pForm = (PropertiesForm) form;
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
 
         //this guarantees that the session dosen't contain any resources it shouldn't
         SessionUtils.removeList(request.getSession(), Constants.PENDING_RESOURCES_SES_ATTR);

@@ -43,7 +43,7 @@ public class ViewAction extends TilesAction {
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         List<String> portlets = (List<String>) context.getAttribute("portlets");
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
         DashboardPreferences dashboardPreferences = preferences.getDashboardPreferences();
 
         List<String> availablePortlets = new ArrayList<String>();

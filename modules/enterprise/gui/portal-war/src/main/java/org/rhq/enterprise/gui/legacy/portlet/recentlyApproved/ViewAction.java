@@ -52,7 +52,7 @@ public class ViewAction extends TilesAction {
 
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
         RecentlyApprovedPortletPreferences recentlyApprovedPreferences = preferences
             .getRecentlyApprovedPortletPreferences();
         Subject subject = user.getSubject();

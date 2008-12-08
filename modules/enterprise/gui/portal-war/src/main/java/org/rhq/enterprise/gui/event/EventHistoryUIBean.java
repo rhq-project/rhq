@@ -32,10 +32,10 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.event.EventManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class EventHistoryUIBean extends PagedDataTableUIBean {
@@ -99,7 +99,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
             EventManagerLocal manager = LookupUtil.getEventManager();
 
             WebUser user = EnterpriseFacesContextUtility.getWebUser();
-            WebUserPreferences preferences = user.getPreferences();
+            MeasurementPreferences preferences = user.getMeasurementPreferences();
             MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
             int eventId = FacesContextUtility.getOptionalRequestParameter("eventId", Integer.class, -1);

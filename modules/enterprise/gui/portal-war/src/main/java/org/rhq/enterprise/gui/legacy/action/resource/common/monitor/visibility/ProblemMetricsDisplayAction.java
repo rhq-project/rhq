@@ -32,10 +32,10 @@ import org.apache.struts.tiles.actions.TilesAction;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -54,7 +54,7 @@ public class ProblemMetricsDisplayAction extends TilesAction {
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         WebUser user = (WebUser) request.getSession().getAttribute(Constants.WEBUSER_SES_ATTR);
-        WebUserPreferences preferences = user.getPreferences();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
 
         Subject subject = RequestUtils.getSubject(request);
 

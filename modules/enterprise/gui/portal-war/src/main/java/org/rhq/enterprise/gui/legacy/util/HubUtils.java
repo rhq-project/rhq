@@ -34,7 +34,7 @@ public class HubUtils {
     public static final String BLANK = "";
 
     public static void initView(HubForm hubForm, WebUser user) throws Exception {
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
 
         HubView prefView;
         try {

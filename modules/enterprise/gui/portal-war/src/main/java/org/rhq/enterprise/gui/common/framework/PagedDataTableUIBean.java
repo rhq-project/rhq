@@ -35,14 +35,14 @@ public abstract class PagedDataTableUIBean extends EnterpriseFacesContextUIBean 
 
     public PageControl getPageControl(WebUser user, PageControlView view) {
         if (pageControl == null) {
-            pageControl = user.getPreferences().getPageControl(view);
+            pageControl = user.getWebPreferences().getPageControl(view);
         }
 
         return pageControl;
     }
 
     public void setPageControl(WebUser user, PageControlView view, PageControl pageControl) {
-        user.getPreferences().setPageControl(view, pageControl);
+        user.getWebPreferences().setPageControl(view, pageControl);
         this.pageControl = pageControl;
     }
 

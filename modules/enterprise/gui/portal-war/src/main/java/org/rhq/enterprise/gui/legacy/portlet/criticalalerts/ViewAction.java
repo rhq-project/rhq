@@ -44,7 +44,7 @@ public class ViewAction extends TilesAction {
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         // get the logged in user
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
 
         // get the user's preferences for the alerts portlet
         AlertsPortletPreferences alertPrefs = preferences.getAlertsPortletPreferences();

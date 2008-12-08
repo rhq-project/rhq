@@ -21,13 +21,17 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
@@ -77,6 +81,7 @@ public class ResourceMetricsFormPrepareAction extends MetricsDisplayFormPrepareA
 
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
         MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+        MeasurementChartsManagerLocal chartsManager = LookupUtil.getMeasurementChartsManager();
 
         if (log.isTraceEnabled()) {
             log.trace("finding metric summaries for resource [" + Arrays.toString(resourceIds) + "] for range " + begin
@@ -89,12 +94,12 @@ public class ResourceMetricsFormPrepareAction extends MetricsDisplayFormPrepareA
         if (myGroupId > 0) {
             ResourceGroupManagerLocal resGrpMgr = LookupUtil.getResourceGroupManager();
             int[] definitionIds = resGrpMgr.getDefinitionsForCompatibleGroup(subject, myGroupId, false);
-            metricSummaries = dataManager.getMetricDisplaySummariesForCompatibleGroup(subject, myGroupId,
+            metricSummaries = chartsManager.getMetricDisplaySummariesForCompatibleGroup(subject, myGroupId,
                 definitionIds, begin, end, false);
         } else if ((parent > 0) && (type > 0)) {
             ResourceGroupManagerLocal resGrpMgr = LookupUtil.getResourceGroupManager();
             int[] definitionIds = resGrpMgr.getDefinitionsForAutoGroup(subject, parent, type, false);
-            metricSummaries = dataManager.getMetricDisplaySummariesForAutoGroup(subject, parent, type, definitionIds,
+            metricSummaries = chartsManager.getMetricDisplaySummariesForAutoGroup(subject, parent, type, definitionIds,
                 begin, end, false);
         } else if ((resourceIds != null) && (resourceIds.length > 0)) {
             int resourceId = resourceIds[0];
@@ -111,7 +116,7 @@ public class ResourceMetricsFormPrepareAction extends MetricsDisplayFormPrepareA
                 }
             }
 
-            metricSummaries = dataManager.getMetricDisplaySummariesForSchedules(subject, resourceId, scheduleIds,
+            metricSummaries = chartsManager.getMetricDisplaySummariesForSchedules(subject, resourceId, scheduleIds,
                 begin, end, false);
         } else {
             throw new IllegalArgumentException("Unknown operation mode");

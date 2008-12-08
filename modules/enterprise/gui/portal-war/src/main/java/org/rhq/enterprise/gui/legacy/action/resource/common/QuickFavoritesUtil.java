@@ -53,7 +53,7 @@ public class QuickFavoritesUtil {
 
     public static Boolean isFavorite(WebUser user, int id) {
         try {
-            FavoriteResourcePortletPreferences favoriteResources = user.getPreferences()
+            FavoriteResourcePortletPreferences favoriteResources = user.getWebPreferences()
                 .getFavoriteResourcePortletPreferences();
             return favoriteResources.resourceIds.contains(id);
         } catch (Exception e) {

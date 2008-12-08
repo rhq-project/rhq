@@ -42,7 +42,7 @@ public class AllIndicatorsAction extends BaseAction {
 
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
 
         int refreshPeriod = preferences.getPageRefreshPeriod();
         if (UIConstants.DONT_REFRESH_PAGE != refreshPeriod) {

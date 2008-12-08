@@ -143,7 +143,7 @@ public class SortableColumnHeaderRenderer extends CommandLinkRenderer {
 
         PageControlView currentView = PageControlView.valueOf(viewName);
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
 
         return preferences.getPageControl(currentView);
     }

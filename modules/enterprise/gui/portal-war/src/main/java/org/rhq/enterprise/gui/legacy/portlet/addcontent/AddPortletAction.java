@@ -41,7 +41,7 @@ public class AddPortletAction extends BaseAction {
         PropertiesForm pForm = (PropertiesForm) form;
         HttpSession session = request.getSession();
         WebUser user = (WebUser) session.getAttribute(Constants.WEBUSER_SES_ATTR);
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
 
         if ((pForm.getPortlet() == null) || "bad".equals(pForm.getPortlet())) {
             return mapping.findForward(RetCodeConstants.SUCCESS_URL);

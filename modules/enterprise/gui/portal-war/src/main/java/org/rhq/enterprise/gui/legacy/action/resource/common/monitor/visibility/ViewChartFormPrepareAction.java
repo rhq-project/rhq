@@ -68,6 +68,7 @@ import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityPoint;
 import org.rhq.enterprise.server.measurement.BaselineCreationException;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementNotFoundException;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
@@ -91,6 +92,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
     private final Log log = LogFactory.getLog(ViewChartFormPrepareAction.class);
 
     MeasurementDataManagerLocal dataManager;
+    MeasurementChartsManagerLocal chartsManager;
     ResourceManagerLocal resMgr;
     ResourceGroupManagerLocal resGrpMgr;
     ResourceTypeManagerLocal resTypeMgr;
@@ -121,6 +123,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         }
 
         dataManager = LookupUtil.getMeasurementDataManager();
+        chartsManager = LookupUtil.getMeasurementChartsManager();
         resMgr = LookupUtil.getResourceManager();
         resGrpMgr = LookupUtil.getResourceGroupManager();
         resTypeMgr = LookupUtil.getResourceTypeManager();
@@ -313,7 +316,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         // This was probably a bad favorites chart
         String query = request.getQueryString();
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
         SavedChartsPortletPreferences savedCharts = preferences.getSavedChartsPortletPreferences();
         savedCharts.removeByURL(query);
         preferences.persistPreferences();
@@ -566,9 +569,9 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
 
         List<MetricDisplaySummary> allMetricSummaries = new ArrayList<MetricDisplaySummary>();
         for (Resource resource : resources) {
-            List<MetricDisplaySummary> metricSummariesList = dataManager.getMetricDisplaySummariesForResource(subject,
-                resource.getId(), metricDefinitionIds, chartForm.getStartDate().getTime(), chartForm.getEndDate()
-                    .getTime());
+            List<MetricDisplaySummary> metricSummariesList = chartsManager.getMetricDisplaySummariesForResource(
+                subject, resource.getId(), metricDefinitionIds, chartForm.getStartDate().getTime(), chartForm
+                    .getEndDate().getTime());
             MonitorUtils.formatMetrics(metricSummariesList, request.getLocale(), getResources(request));
             allMetricSummaries.addAll(metricSummariesList);
         }

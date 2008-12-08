@@ -38,7 +38,7 @@ public class PrepareAction extends BaseAction {
         PropertiesForm pForm = (PropertiesForm) form;
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
 
         OperationPortletPreferences prefs = preferences.getOperationPortletPreferences();
         pForm.setOperationPortletPreferences(prefs);

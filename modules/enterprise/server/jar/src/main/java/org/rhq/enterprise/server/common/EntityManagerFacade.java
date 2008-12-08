@@ -46,4 +46,16 @@ public class EntityManagerFacade implements EntityManagerFacadeLocal {
         entityManager.flush();
     }
 
+    public void persist(Object o) {
+        entityManager.persist(o);
+    }
+
+    public <T> T merge(T o) {
+        return entityManager.merge(o);
+    }
+
+    public void remove(Object o) {
+        entityManager.remove(o);
+    }
+
 }

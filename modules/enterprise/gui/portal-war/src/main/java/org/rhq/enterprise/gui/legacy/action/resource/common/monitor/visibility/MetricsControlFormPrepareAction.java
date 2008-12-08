@@ -36,10 +36,10 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 
 /**
  * A base class for <code>Action</code>s that prepare pages containing the metrics control form.
@@ -86,7 +86,7 @@ public class MetricsControlFormPrepareAction extends TilesAction {
 
     protected void prepareForm(HttpServletRequest request, MetricsControlForm form) throws IllegalArgumentException {
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
         MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
         form.setReadOnly(rangePreferences.readOnly);

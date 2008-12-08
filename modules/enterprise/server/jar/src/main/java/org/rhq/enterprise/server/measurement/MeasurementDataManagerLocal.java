@@ -28,7 +28,6 @@ import javax.ejb.Local;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -94,9 +93,6 @@ public interface MeasurementDataManagerLocal {
      */
     void removeGatheredMetricsForSchedules(List<MeasurementSchedule> schedules);
 
-    List<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId,
-        int[] measurementDefinitionIds, long begin, long end) throws MeasurementException;
-
     List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForResource(Subject subject, int resourceId,
         int[] measurementDefinitionIds, long beginTime, long endTime, int dataPoints);
 
@@ -156,19 +152,6 @@ public interface MeasurementDataManagerLocal {
         long endTime, int numberOfDataPoints, boolean aggregateOverAutoGroup);
 
     /**
-     * TODO hwr document me !!!
-     *
-     * @param narrowed if true, no measurement values are obtained from the database. This is useful for the List of
-     *                 Children that does not need them.
-     */
-    @Deprecated
-    List<MetricDisplaySummary> getMetricDisplaySummariesForSchedules(Subject subject, int resourceId,
-        List<Integer> scheduleIds, long begin, long end, boolean narrowed) throws MeasurementException;
-
-    List<MetricDisplaySummary> getMetricDisplaySummariesForMetrics(Subject subject, int resourceId, DataType dataType,
-        long begin, long end, boolean narrowed, boolean enabledOnly) throws MeasurementException;
-
-    /**
      * Return the Traits for the passed resource. This method will for each trait only return the 'youngest' entry. If
      * there are no traits found for that resource, an empty list is returned. If displayType is null, no displayType is
      * honoured, else the traits will be filtered for the given displayType
@@ -210,42 +193,6 @@ public interface MeasurementDataManagerLocal {
     public List<MeasurementDataTrait> getAllTraitDataForResourceAndDefinition(int resourceId, int definitionId);
 
     /**
-     * Get metric display summaries for a compatible group
-     *
-     * @param  subject
-     * @param  groupId
-     * @param  measurementDefinitionIds
-     * @param  begin
-     * @param  end
-     * @param  enabledOnly              only show results for metric that are actually enabled
-     *
-     * @return
-     *
-     * @throws MeasurementException
-     */
-    List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, int groupId,
-        int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws MeasurementException;
-
-    /**
-     * Get metric display summaries for an autogroup.
-     *
-     * @param  subject
-     * @param  autoGroupParentResourceId
-     * @param  autoGroupChildResourceTypeId
-     * @param  measurementDefinitionIds
-     * @param  begin
-     * @param  end
-     * @param  enabledOnly                  only show results for metric that are actually enabled
-     *
-     * @return
-     *
-     * @throws MeasurementException
-     */
-    List<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(Subject subject, int autoGroupParentResourceId,
-        int autoGroupChildResourceTypeId, int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly)
-        throws MeasurementException;
-
-    /**
      * Get metric display summaries for the resources of the passed compatible group, where the
      * {@link MetricDisplaySummary} only contains the metric name and number of alerts. All other fields
      * are not set.
@@ -257,23 +204,6 @@ public interface MeasurementDataManagerLocal {
      */
     Map<Integer, List<MetricDisplaySummary>> getNarrowedMetricsDisplaySummaryForCompGroup(Subject subject,
         ResourceGroup group, long beginTime, long endTime);
-
-    /**
-     * Get metric display summaries for the resources and measurements that are passed
-     *
-     * @param  subject                  subject of the caller
-     * @param  resourceIds              Array of resource Ids that were selected to compare
-     * @param  measurementDefinitionIds Array of measurment Ids
-     * @param  begin                    begin time for the display time range
-     * @param  end                      end time for the displays time range
-     *
-     * @return Map<MeasurementDefinition, List<MetricDisplaySummary>> Map holds the Metric in the key, then the
-     *         resources values in a List for the value.
-     *
-     * @throws MeasurementException throws Measurement exception
-     */
-    Map<MeasurementDefinition, List<MetricDisplaySummary>> getMetricDisplaySummariesForMetricsCompare(Subject subject,
-        Integer[] resourceIds, int[] measurementDefinitionIds, long begin, long end) throws MeasurementException;
 
     /**
      * Get the {@link MetricDisplaySummary}s for the resources passed in, that all need to be of the same

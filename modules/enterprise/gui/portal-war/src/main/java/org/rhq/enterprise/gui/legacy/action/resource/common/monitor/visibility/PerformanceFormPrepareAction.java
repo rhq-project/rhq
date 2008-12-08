@@ -41,13 +41,13 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.ChartData;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -74,7 +74,7 @@ public class PerformanceFormPrepareAction extends MetricsControlFormPrepareActio
         if (range == null) {
             // this is the first time out. get the "metric range" user pref.
             WebUser user = SessionUtils.getWebUser(request.getSession());
-            WebUserPreferences preferences = user.getPreferences();
+            MeasurementPreferences preferences = user.getMeasurementPreferences();
             MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
             range = new MetricRange();
             range.setBegin(rangePreferences.begin);

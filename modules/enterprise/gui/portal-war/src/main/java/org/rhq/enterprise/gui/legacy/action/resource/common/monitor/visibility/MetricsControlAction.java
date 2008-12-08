@@ -32,11 +32,11 @@ import org.apache.struts.action.ActionMapping;
 
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.action.BaseActionMapping;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 
 /**
  * A <code>BaseAction</code> that handles metrics control form submissions.
@@ -55,7 +55,7 @@ public class MetricsControlAction extends BaseAction {
 
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
-        WebUserPreferences preferences = user.getPreferences();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
 
         // See if this is part of a workflow
         if (mapping instanceof BaseActionMapping) {

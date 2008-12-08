@@ -37,12 +37,12 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.action.WorkflowPrepareAction;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
-import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplayValue;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -57,7 +57,7 @@ public class CompareMetricsFormPrepareAction extends WorkflowPrepareAction {
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
 
-        WebUserPreferences preferences = user.getPreferences();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
         MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
         if ((cform.childResourceIds != null) && (cform.childResourceIds.length > 0)) {
@@ -75,8 +75,8 @@ public class CompareMetricsFormPrepareAction extends WorkflowPrepareAction {
 
     private Map<MeasurementCategory, Map<MeasurementDefinition, List<MetricDisplaySummary>>> getMetrics(
         Subject subject, Integer[] rids, int[] definitionIds, long begin, long end, Locale locale) {
-        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
-        Map<MeasurementDefinition, List<MetricDisplaySummary>> data = dataManager
+        MeasurementChartsManagerLocal chartsManager = LookupUtil.getMeasurementChartsManager();
+        Map<MeasurementDefinition, List<MetricDisplaySummary>> data = chartsManager
             .getMetricDisplaySummariesForMetricsCompare(subject, rids, definitionIds, begin, end);
         Map<MeasurementCategory, Map<MeasurementDefinition, List<MetricDisplaySummary>>> compareMetrics = new HashMap<MeasurementCategory, Map<MeasurementDefinition, List<MetricDisplaySummary>>>();
         for (MeasurementDefinition definition : data.keySet()) {

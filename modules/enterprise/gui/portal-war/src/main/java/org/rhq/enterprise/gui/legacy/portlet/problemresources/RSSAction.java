@@ -36,8 +36,8 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.ProblemResourcesPortletPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.BaseRSSAction;
 import org.rhq.enterprise.gui.legacy.portlet.RSSFeed;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
+import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class RSSAction extends BaseRSSAction {
@@ -53,12 +53,13 @@ public class RSSAction extends BaseRSSAction {
         // Get the problem resources
         Subject subject = getSubject(request);
         WebUser user = new WebUser(subject);
-        ProblemResourcesPortletPreferences preferences = user.getPreferences().getProblemResourcesPortletPreferences();
+        ProblemResourcesPortletPreferences preferences = user.getWebPreferences()
+            .getProblemResourcesPortletPreferences();
 
         long begin = 0; // beginning of time, unless configured otherwise
 
         if (preferences.hours > 0) {
-            List bounds = MonitorUtils.calculateTimeFrame(preferences.hours, MonitorUtils.UNIT_HOURS);
+            List bounds = MeasurementUtils.calculateTimeFrame(preferences.hours, MeasurementUtils.UNIT_HOURS);
             begin = (Long) bounds.get(0);
         }
 

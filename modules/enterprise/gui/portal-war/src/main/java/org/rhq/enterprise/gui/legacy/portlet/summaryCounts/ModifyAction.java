@@ -47,7 +47,7 @@ public class ModifyAction extends BaseAction {
         }
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
 
         if (!pForm.isDisplayOnDash()) {
             DashboardUtils.removePortlet(user, pForm.getPortletName());

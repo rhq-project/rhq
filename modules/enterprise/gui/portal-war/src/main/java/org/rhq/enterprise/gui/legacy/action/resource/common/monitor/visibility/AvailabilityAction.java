@@ -38,13 +38,13 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.DefaultConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.legacy.measurement.MeasurementConstants;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityPoint;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -60,7 +60,7 @@ public class AvailabilityAction extends TilesAction {
         // Get the resource availability
         AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
 
         int resourceId = RequestUtils.getResourceId(request);
         try {

@@ -31,8 +31,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.ImageButtonBean;
 
-import org.rhq.enterprise.gui.legacy.NumberConstants;
 import org.rhq.enterprise.gui.legacy.action.resource.ResourceForm;
+import org.rhq.enterprise.server.measurement.util.NumberConstants;
 
 /**
  * Form for setting the collection interval for metrics in resource/monitoring/configuration areas of the application,

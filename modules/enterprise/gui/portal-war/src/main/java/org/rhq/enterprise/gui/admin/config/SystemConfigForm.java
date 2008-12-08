@@ -26,10 +26,10 @@ import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessage;
 
-import org.rhq.enterprise.gui.legacy.NumberConstants;
 import org.rhq.enterprise.gui.legacy.StringConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.measurement.util.NumberConstants;
 
 public class SystemConfigForm extends BaseValidatorForm {
     private String baseUrl = "";

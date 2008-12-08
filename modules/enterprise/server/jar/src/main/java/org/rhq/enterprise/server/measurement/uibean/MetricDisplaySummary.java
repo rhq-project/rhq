@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.measurement.uibean;
 import java.util.Date;
 
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.server.measurement.MeasurementViewContext;
 
 public class MetricDisplaySummary extends BaseMetricDisplay implements java.io.Serializable {
 
@@ -206,5 +207,16 @@ public class MetricDisplaySummary extends BaseMetricDisplay implements java.io.S
 
     public void setMetricToken(String metricToken) {
         this.metricToken = metricToken;
+    }
+
+    public MeasurementViewContext getContext() {
+        return new MeasurementViewContext(resourceId, groupId, parentId, childTypeId);
+    }
+
+    public void init(MeasurementViewContext context) {
+        this.resourceId = context.resourceId;
+        this.groupId = context.groupId;
+        this.parentId = context.parentResourceId;
+        this.childTypeId = context.resourceTypeId;
     }
 }

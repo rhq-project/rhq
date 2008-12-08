@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,12 +39,12 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.legacy.measurement.MeasurementConstants;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -99,7 +98,7 @@ public abstract class MetricsDisplayFormPrepareAction extends MetricsControlForm
 
         if ((begin == null) || (end == null)) {
             // get the "metric range" user pref
-            WebUserPreferences preferences = user.getPreferences();
+            MeasurementPreferences preferences = user.getMeasurementPreferences();
             MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
             begin = rangePreferences.begin;
@@ -210,7 +209,8 @@ public abstract class MetricsDisplayFormPrepareAction extends MetricsControlForm
         WebUser user = SessionUtils.getWebUser(request.getSession());
 
         // set threshold default
-        Integer threshold = user.getPreferences().getMetricThresholdPreference();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
+        Integer threshold = preferences.getMetricThresholdPreference();
         switch (threshold) {
         case MonitorUtils.THRESHOLD_HIGH_RANGE_VALUE: {
             form.setDisplayHighRange(Boolean.TRUE);

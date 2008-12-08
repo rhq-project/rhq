@@ -39,7 +39,7 @@ public class PrepareAction extends TilesAction {
         PropertiesForm pForm = (PropertiesForm) form;
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
 
         pForm.setDisplayOnDash(true);
 

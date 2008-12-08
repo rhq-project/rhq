@@ -41,7 +41,7 @@ public class MoveUpAction extends BaseAction {
 
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
 
         String portlet = request.getParameter("portletName");
         DashboardPreferences dashboardPreferences = preferences.getDashboardPreferences();

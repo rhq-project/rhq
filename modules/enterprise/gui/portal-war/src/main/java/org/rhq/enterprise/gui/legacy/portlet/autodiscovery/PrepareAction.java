@@ -46,7 +46,7 @@ public class PrepareAction extends BaseAction {
 
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
 
         propsForm.setRange(preferences.getAutoDiscoveryRange());
 

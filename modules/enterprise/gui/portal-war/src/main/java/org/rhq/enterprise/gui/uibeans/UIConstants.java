@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.uibeans;
 
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-
 /**
  * Declares constants used by bizapp beans.
  */

@@ -45,7 +45,7 @@ public class PrepareAction extends TilesAction {
         PropertiesForm pForm = (PropertiesForm) form;
         PageControl pc = WebUtility.getPageControl(request);
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
 
         // start a new flow, overriding an previous work that the user might have abandoned
         SessionUtils.removeList(request.getSession(), Constants.PENDING_RESOURCES_SES_ATTR);

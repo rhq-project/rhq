@@ -40,7 +40,7 @@ public class ModifyAction extends BaseAction {
         PropertiesForm propsForm = (PropertiesForm) form;
         HttpSession session = request.getSession();
         WebUser user = (WebUser) session.getAttribute(Constants.WEBUSER_SES_ATTR);
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
         String range = propsForm.getRange().toString();
 
         ActionForward forward = checkSubmit(request, mapping, form);

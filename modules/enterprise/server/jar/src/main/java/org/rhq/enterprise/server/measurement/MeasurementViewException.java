@@ -16,22 +16,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.legacy;
+package org.rhq.enterprise.server.measurement;
 
 /**
- * Numeral constants used in the UI
+ * @author Joseph Marques
  */
+public class MeasurementViewException extends Exception {
 
-public interface NumberConstants {
-    /*
-     * show units in terms of milliseconds
-     */
-    public static final long MINUTES = 60000;
-    public static final long HOURS = 3600000;
-    public static final long DAYS = 86400000;
+    private static final long serialVersionUID = 1L;
 
-    /**
-     * five minutes in millisecond increments
-     */
-    public static final long FIVE_MINUTES = 300000;
+    public MeasurementViewException() {
+    }
+
+    public MeasurementViewException(String message) {
+        super(message);
+    }
+
+    public MeasurementViewException(Throwable cause) {
+        super(cause);
+    }
+
+    public MeasurementViewException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
 }

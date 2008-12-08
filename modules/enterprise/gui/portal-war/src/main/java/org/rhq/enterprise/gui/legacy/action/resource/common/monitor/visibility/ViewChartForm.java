@@ -29,8 +29,9 @@ import org.apache.struts.util.ImageButtonBean;
 import org.apache.struts.util.LabelValueBean;
 
 import org.rhq.enterprise.gui.legacy.DefaultConstants;
-import org.rhq.enterprise.gui.legacy.NumberConstants;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
+import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
+import org.rhq.enterprise.server.measurement.util.NumberConstants;
 
 /**
  * Represents the controls on the metric chart page(s).
@@ -583,17 +584,17 @@ public class ViewChartForm extends MetricDisplayRangeForm {
                 setA(ACTION_LASTN);
                 int days = (int) (diff / NumberConstants.DAYS);
                 setRn(days);
-                setRu(MonitorUtils.UNIT_DAYS);
+                setRu(MeasurementUtils.UNIT_DAYS);
             } else if ((diff % NumberConstants.HOURS) == 0) {
                 setA(ACTION_LASTN);
                 int hours = (int) (diff / NumberConstants.HOURS);
                 setRn(hours);
-                setRu(MonitorUtils.UNIT_HOURS);
+                setRu(MeasurementUtils.UNIT_HOURS);
             } else if ((diff % NumberConstants.MINUTES) == 0) {
                 setA(ACTION_LASTN);
                 int minutes = (int) (diff / NumberConstants.MINUTES);
                 setRn(minutes);
-                setRu(MonitorUtils.UNIT_MINUTES);
+                setRu(MeasurementUtils.UNIT_MINUTES);
             }
         } else {
             setA(ACTION_DATE_RANGE);
@@ -613,7 +614,7 @@ public class ViewChartForm extends MetricDisplayRangeForm {
 
         // If we are doing "Last N collection points", N must be
         // between 1 and 60.
-        if (ACTION_LASTN.equals(getA()) && (getRu() == MonitorUtils.UNIT_COLLECTION_POINTS)) {
+        if (ACTION_LASTN.equals(getA()) && (getRu() == MeasurementUtils.UNIT_COLLECTION_POINTS)) {
             if (getRn() != null) {
                 int numPoints = getRn();
                 if ((numPoints < 1) || (numPoints > DefaultConstants.DEFAULT_CHART_POINTS)) {

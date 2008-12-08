@@ -35,12 +35,12 @@ import org.rhq.enterprise.gui.image.chart.DataPointCollection;
 import org.rhq.enterprise.gui.image.chart.HighLowChart;
 import org.rhq.enterprise.gui.legacy.DefaultConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -114,7 +114,7 @@ public class HighLowChartServlet extends ChartServlet {
         definitionId = WebUtility.getOptionalIntRequestParameter(request, "definitionId", -1);
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
         Subject subject = user.getSubject();
 
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();

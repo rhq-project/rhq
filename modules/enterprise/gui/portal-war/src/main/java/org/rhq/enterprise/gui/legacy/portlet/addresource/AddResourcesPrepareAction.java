@@ -41,7 +41,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.StringUtility;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -80,8 +80,8 @@ public class AddResourcesPrepareAction extends Action {
         if (pendingResourceList == null) {
             // if hitting the page for the first time, load resources already associated with user via preferences
             log.debug("get pending resources from user preferences");
-            pendingResourceList = user.getPreferences().getPreferenceAsList(addForm.getKey(),
-                DashboardUtils.DASHBOARD_DELIMITER);
+            WebUserPreferences preferences = user.getWebPreferences();
+            pendingResourceList = preferences.getPreferenceAsList(addForm.getKey());
 
             if (pendingResourceList != null) {
                 // otherwise, we've been here for a while but the user paged, performed changed LHS<->RHS, etc

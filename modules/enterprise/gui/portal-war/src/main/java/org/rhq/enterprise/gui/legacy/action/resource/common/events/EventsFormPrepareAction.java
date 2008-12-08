@@ -37,12 +37,12 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsControlFormPrepareAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.event.EventManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -70,7 +70,7 @@ public class EventsFormPrepareAction extends MetricsControlFormPrepareAction {
         int type = WebUtility.getOptionalIntRequestParameter(request, "type", -1);
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
         MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
         Subject subject = user.getSubject();
 

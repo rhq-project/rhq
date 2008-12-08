@@ -112,7 +112,7 @@ public class EditUserFormPrepareAction extends TilesAction {
 
             // if we've already got sthg set here, don't overwrite it
             if (userForm.getPageRefreshPeriod() == null) {
-                int pageRefreshPeriod = currentUser.getPreferences().getPageRefreshPeriod();
+                int pageRefreshPeriod = currentUser.getWebPreferences().getPageRefreshPeriod();
 
                 userForm.setPageRefreshPeriod(String.valueOf(pageRefreshPeriod));
             }

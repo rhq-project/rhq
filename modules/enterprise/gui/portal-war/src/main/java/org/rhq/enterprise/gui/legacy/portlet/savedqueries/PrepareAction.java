@@ -42,7 +42,7 @@ public class PrepareAction extends TilesAction {
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         PropertiesForm pForm = (PropertiesForm) form;
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
         SavedChartsPortletPreferences savedCharts = preferences.getSavedChartsPortletPreferences();
 
         pForm.setDisplayOnDash(true);

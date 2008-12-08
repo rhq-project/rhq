@@ -43,7 +43,7 @@ public class DisplayDashboardAction extends TilesAction {
 
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
         DashboardPreferences dashboardPreferences = preferences.getDashboardPreferences();
 
         int refreshPeriod = preferences.getPageRefreshPeriod();

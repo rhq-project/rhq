@@ -57,7 +57,7 @@ public class RSSAction extends BaseRSSAction {
         // Get the resources health
         Subject subject = getSubject(request);
         WebUser user = new WebUser(subject);
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
         FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
             .getFavoriteResourcePortletPreferences();
 

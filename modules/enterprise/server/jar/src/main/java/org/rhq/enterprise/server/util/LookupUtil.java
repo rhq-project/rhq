@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.util;
 
 import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
@@ -27,11 +26,9 @@ import javax.persistence.EntityManagerFactory;
 
 import org.jetbrains.annotations.NotNull;
 
-import org.jboss.cache.aop.PojoCacheMBean;
 import org.jboss.mx.util.MBeanProxyExt;
 import org.jboss.mx.util.MBeanServerLocator;
 
-import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertConditionManagerBean;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
@@ -97,6 +94,8 @@ import org.rhq.enterprise.server.measurement.CallTimeDataManagerBean;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementChartsManagerBean;
+import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementCompressionManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementCompressionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerBean;
@@ -107,6 +106,8 @@ import org.rhq.enterprise.server.measurement.MeasurementProblemManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementViewManagerBean;
+import org.rhq.enterprise.server.measurement.MeasurementViewManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.perspective.PerspectiveManagerBean;
@@ -295,12 +296,20 @@ public final class LookupUtil {
         return lookupLocal(MeasurementDataManagerBean.class);
     }
 
+    public static MeasurementChartsManagerLocal getMeasurementChartsManager() {
+        return lookupLocal(MeasurementChartsManagerBean.class);
+    }
+
     public static MeasurementCompressionManagerLocal getMeasurementCompressionManager() {
         return lookupLocal(MeasurementCompressionManagerBean.class);
     }
 
     public static MeasurementProblemManagerLocal getMeasurementProblemManager() {
         return lookupLocal(MeasurementProblemManagerBean.class);
+    }
+
+    public static MeasurementViewManagerLocal getMeasurementViewManager() {
+        return lookupLocal(MeasurementViewManagerBean.class);
     }
 
     public static MeasurementBaselineManagerLocal getMeasurementBaselineManager() {
@@ -442,8 +451,7 @@ public final class LookupUtil {
         return jonServer;
     }
 
-    private static <T> String getLocalJNDIName(@NotNull
-    Class<? super T> beanClass) {
+    private static <T> String getLocalJNDIName(@NotNull Class<? super T> beanClass) {
         return (embeddedDeployment ? "" : (RHQConstants.EAR_NAME + "/")) + beanClass.getSimpleName() + "/local";
     }
 
@@ -454,8 +462,7 @@ public final class LookupUtil {
      *
      * @return JNDI name that the remote interface is registered as
      */
-    private static <T> String getRemoteJNDIName(@NotNull
-    Class<? super T> beanClass) {
+    private static <T> String getRemoteJNDIName(@NotNull Class<? super T> beanClass) {
         return (embeddedDeployment ? "" : (RHQConstants.EAR_NAME + "/")) + beanClass.getSimpleName() + "/remote";
     }
 
@@ -488,14 +495,6 @@ public final class LookupUtil {
      */
     private static Object lookup(String name) throws NamingException {
         return new InitialContext().lookup(name);
-    }
-
-    public static PojoCacheMBean getAlertCache() {
-        MBeanServer jBossMBeanServer = MBeanServerLocator.locate();
-        PojoCacheMBean pcMBean;
-        ObjectName cacheName = ObjectNameFactory.create("rhq.cache:subsystem=alerts,service=cache");
-        pcMBean = (PojoCacheMBean) MBeanProxyExt.create(PojoCacheMBean.class, cacheName, jBossMBeanServer);
-        return pcMBean;
     }
 
 }

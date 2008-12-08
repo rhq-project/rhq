@@ -22,6 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 
 /**
  * A representation of the person currently interacting with the application.
@@ -42,7 +43,8 @@ public class WebUser {
      * If false, it means this user is to be authenticated via LDAP.
      */
     private boolean hasPrincipal;
-    private WebUserPreferences preferences;
+    private WebUserPreferences webPreferences;
+    private MeasurementPreferences measurementPreferences;
 
     public WebUser() {
         this(null);
@@ -51,7 +53,8 @@ public class WebUser {
     public WebUser(Subject subject) {
         this.subject = subject;
         this.hasPrincipal = false;
-        this.preferences = new WebUserPreferences(this.subject);
+        this.webPreferences = new WebUserPreferences(this.subject);
+        this.measurementPreferences = new MeasurementPreferences(this.subject);
     }
 
     public WebUser(Subject subject, Integer sessionId, String password, boolean hasPrincipal) {
@@ -59,7 +62,8 @@ public class WebUser {
         this.subject.setSessionId(sessionId);
         this.setPassword(password);
         this.hasPrincipal = hasPrincipal;
-        this.preferences = new WebUserPreferences(this.subject);
+        this.webPreferences = new WebUserPreferences(this.subject);
+        this.measurementPreferences = new MeasurementPreferences(this.subject);
     }
 
     /**
@@ -200,7 +204,11 @@ public class WebUser {
         this.hasPrincipal = hasPrincipal;
     }
 
-    public WebUserPreferences getPreferences() {
-        return this.preferences;
+    public WebUserPreferences getWebPreferences() {
+        return this.webPreferences;
+    }
+
+    public MeasurementPreferences getMeasurementPreferences() {
+        return this.measurementPreferences;
     }
 }

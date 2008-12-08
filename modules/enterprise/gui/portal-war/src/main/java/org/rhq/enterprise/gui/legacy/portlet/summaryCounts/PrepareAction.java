@@ -37,7 +37,7 @@ public class PrepareAction extends BaseAction {
         HttpServletResponse response) throws Exception {
         PropertiesForm pForm = (PropertiesForm) form;
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
 
         SummaryCountPortletPreferences counts = preferences.getSummaryCounts();
         pForm.setSummaryCounts(counts);

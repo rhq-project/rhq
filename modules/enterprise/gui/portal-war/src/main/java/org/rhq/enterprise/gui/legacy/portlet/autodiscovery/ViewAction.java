@@ -60,7 +60,7 @@ public class ViewAction extends TilesAction {
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
         Subject subject = user.getSubject();
         AIQueueForm queueForm = (AIQueueForm) form;
         PageControl pageControl;

@@ -38,7 +38,7 @@ public class ModifyAction extends BaseAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
         PropertiesForm pForm = (PropertiesForm) form;
         ActionForward forward = checkSubmit(request, mapping, form);
         String returnString = RetCodeConstants.SUCCESS_URL;

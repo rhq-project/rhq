@@ -52,7 +52,7 @@ public class ViewAction extends TilesAction {
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
         SavedChartsPortletPreferences savedCharts = preferences.getSavedChartsPortletPreferences();
 
         Map<String, String> charts = new HashMap<String, String>();

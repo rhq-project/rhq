@@ -37,11 +37,12 @@ import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.FavoriteResourcePortletPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.ActionUtils;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -65,7 +66,7 @@ public class MetricsDisplayAction extends MetricsControlAction {
 
         Integer id = displayForm.getId();
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
         Subject subject = RequestUtils.getSubject(request);
 
         MeasurementBaselineManagerLocal baselineManager = LookupUtil.getMeasurementBaselineManager();
@@ -81,7 +82,7 @@ public class MetricsDisplayAction extends MetricsControlAction {
             log.trace("saving threshold pref [" + threshold + "]");
             LogFactory.getLog("user.preferences").trace(
                 "Invoking setUserPrefs" + " in MetricsDisplayAction " + " for " + user.getId() + " at "
-                    + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
+                    + System.currentTimeMillis() + " user.prefs = " + user.getWebPreferences());
             preferences.persistPreferences();
         } else if (displayForm.isUsersetClicked()) {
             Integer[] m = displayForm.getM();
@@ -118,7 +119,7 @@ public class MetricsDisplayAction extends MetricsControlAction {
                 //addFavoriteMetrics(m, user, id.getTypeName());
                 LogFactory.getLog("user.preferences").trace(
                     "Invoking setUserPrefs" + " in MetricsDisplayAction " + " for " + user.getId() + " at "
-                        + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
+                        + System.currentTimeMillis() + " user.prefs = " + user.getWebPreferences());
                 preferences.persistPreferences();
             }
 
@@ -129,7 +130,7 @@ public class MetricsDisplayAction extends MetricsControlAction {
                 //removeFavoriteMetrics(m, user, entityId.getTypeName());
                 LogFactory.getLog("user.preferences").trace(
                     "Invoking setUserPrefs" + " in MetricsDisplayAction " + " for " + user.getId() + " at "
-                        + System.currentTimeMillis() + " user.prefs = " + user.getPreferences());
+                        + System.currentTimeMillis() + " user.prefs = " + user.getWebPreferences());
                 preferences.persistPreferences();
             }
 

@@ -16,25 +16,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.common;
-
-import javax.ejb.Local;
-import javax.persistence.Query;
+package org.rhq.enterprise.server.measurement.util;
 
 /**
- * @author Joseph Marques
+ * Numeral constants used in the UI
  */
-@Local
-public interface EntityManagerFacadeLocal {
-    Query createQuery(String queryStr);
 
-    void clear();
+public interface NumberConstants {
+    /*
+     * show units in terms of milliseconds
+     */
+    public static final long MINUTES = 60000;
+    public static final long HOURS = 3600000;
+    public static final long DAYS = 86400000;
 
-    void flush();
-
-    void persist(Object o);
-
-    <T> T merge(T o);
-
-    void remove(Object o);
+    /**
+     * five minutes in millisecond increments
+     */
+    public static final long FIVE_MINUTES = 300000;
 }

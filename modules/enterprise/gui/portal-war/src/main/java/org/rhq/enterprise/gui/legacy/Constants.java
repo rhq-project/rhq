@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.legacy;
 
+import org.rhq.enterprise.server.measurement.util.NumberConstants;
+
 /**
  * Manifest constants for the UI of the HQ application. The constants are actually organized into more digestable chunks
  * in logical interfaces, e.g. attributes are in AttributeConstants and numbers are in NumberConstants

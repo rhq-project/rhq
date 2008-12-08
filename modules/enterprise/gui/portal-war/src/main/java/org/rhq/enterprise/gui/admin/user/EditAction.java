@@ -72,7 +72,7 @@ public class EditAction extends BaseAction {
             // update the in-memory preferences of the webuser so it takes effect for this session
             try {
                 Integer pageRefreshPeriod = Integer.valueOf(userForm.getPageRefreshPeriod());
-                WebUserPreferences preferences = currentUser.getPreferences();
+                WebUserPreferences preferences = currentUser.getWebPreferences();
                 preferences.setPageRefreshPeriod(pageRefreshPeriod);
                 preferences.persistPreferences();
             } catch (NumberFormatException e) {

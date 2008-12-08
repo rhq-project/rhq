@@ -42,14 +42,15 @@ import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.MessageConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.uibeans.AutoGroupCompositeDisplaySummary;
 import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementException;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -60,8 +61,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * Fetch the children resources for the server
  */
 public class ListChildrenAction extends TilesAction {
-    protected static final Log log = LogFactory.getLog(ListChildrenAction.class.getName());
+    protected static final Log log = LogFactory.getLog(ListChildrenAction.class);
     MeasurementDataManagerLocal dataManager;
+    MeasurementChartsManagerLocal chartsManager;
 
     @SuppressWarnings("unchecked")
     @Override
@@ -69,13 +71,14 @@ public class ListChildrenAction extends TilesAction {
         HttpServletRequest request, HttpServletResponse response) throws Exception {
 
         dataManager = LookupUtil.getMeasurementDataManager();
+        chartsManager = LookupUtil.getMeasurementChartsManager();
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
         Subject subject = user.getSubject();
         Resource resource = (Resource) request.getAttribute(AttrConstants.RESOURCE_ATTR);
 
         // Get metric time range
-        WebUserPreferences preferences = user.getPreferences();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
         MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
         long begin = rangePreferences.begin;
         long end = rangePreferences.end;
@@ -101,7 +104,7 @@ public class ListChildrenAction extends TilesAction {
                 if (parentComposite != null) {
                     parentComposite.setMainResource(true);
                     List<MetricDisplaySummary> metricSummaries = null;
-                    metricSummaries = dataManager.getMetricDisplaySummariesForMetrics(subject, parentId,
+                    metricSummaries = chartsManager.getMetricDisplaySummariesForMetrics(subject, parentId,
                         DataType.MEASUREMENT, begin, end, true, true);
                     displaySummary.add(0, new AutoGroupCompositeDisplaySummary(parentComposite, metricSummaries));
                 }
@@ -168,8 +171,8 @@ public class ListChildrenAction extends TilesAction {
         if ((resources != null) && (resources.size() == 1)) {
             ResourceWithAvailability resource = (ResourceWithAvailability) resources.get(0);
 
-            metricSummaries = dataManager.getMetricDisplaySummariesForMetrics(subject, resource.getResource().getId(),
-                DataType.MEASUREMENT, beginTime, endTime, true, true);
+            metricSummaries = chartsManager.getMetricDisplaySummariesForMetrics(subject,
+                resource.getResource().getId(), DataType.MEASUREMENT, beginTime, endTime, true, true);
         } else if ((resources != null) && (resources.size() > 1)) {
             List<Resource> res = new ArrayList<Resource>();
             for (Object o : resources) {

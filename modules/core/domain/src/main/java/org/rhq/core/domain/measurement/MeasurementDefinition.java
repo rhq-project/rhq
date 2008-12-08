@@ -43,6 +43,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Version;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +67,7 @@ import org.rhq.core.domain.resource.ResourceType;
 @SequenceGenerator(name = "id", sequenceName = "RHQ_MEASUREMENT_DEF_ID_SEQ")
 @Table(name = "RHQ_MEASUREMENT_DEF")
 public class MeasurementDefinition implements Serializable {
-    @SuppressWarnings("unused")
+
     private static final long serialVersionUID = 1L;
 
     /**
@@ -197,7 +198,7 @@ public class MeasurementDefinition implements Serializable {
     /**
      * Version for optimistic locking. Don't ever set this yourself
      */
-    @SuppressWarnings({"unused", "UnusedDeclaration"})
+    @SuppressWarnings( { "unused" })
     @Version
     private int version;
 
@@ -278,8 +279,7 @@ public class MeasurementDefinition implements Serializable {
         this.destinationType = def.destinationType;
     }
 
-    public MeasurementDefinition(ResourceType resourceType, @NotNull
-    String name) {
+    public MeasurementDefinition(ResourceType resourceType, @NotNull String name) {
         this.resourceType = resourceType;
         this.name = name;
     }
@@ -366,8 +366,7 @@ public class MeasurementDefinition implements Serializable {
         return name;
     }
 
-    public void setName(@NotNull
-    String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 
@@ -506,8 +505,7 @@ public class MeasurementDefinition implements Serializable {
         return destinationType;
     }
 
-    public void setDestinationType(@Nullable
-    String destinationType) {
+    public void setDestinationType(@Nullable String destinationType) {
         this.destinationType = destinationType;
     }
 

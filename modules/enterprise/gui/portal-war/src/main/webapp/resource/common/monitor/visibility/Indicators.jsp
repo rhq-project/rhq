@@ -117,7 +117,7 @@ function reviewAction(option) {
       function registerRefresh() {
           <%
           WebUser u = SessionUtils.getWebUser(session);
-          WebUserPreferences prefs = u.getPreferences();
+          WebUserPreferences prefs = u.getWebPreferences();
           int refresh = prefs.getPageRefreshPeriod();
           if (refresh > 0)
             pageContext.setAttribute("refreshPeriod", String.valueOf(refresh));

@@ -37,7 +37,7 @@ public class PrepareAction extends BaseAction {
 
         HttpSession session = request.getSession();
         WebUser user = (WebUser) session.getAttribute(Constants.WEBUSER_SES_ATTR);
-        RecentlyApprovedPortletPreferences preferences = user.getPreferences().getRecentlyApprovedPortletPreferences();
+        RecentlyApprovedPortletPreferences preferences = user.getWebPreferences().getRecentlyApprovedPortletPreferences();
 
         PropertiesForm pForm = (PropertiesForm) form;
         pForm.setRange(preferences.range);

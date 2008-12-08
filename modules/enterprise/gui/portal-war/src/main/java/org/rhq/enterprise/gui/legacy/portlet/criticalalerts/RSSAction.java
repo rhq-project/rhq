@@ -62,7 +62,7 @@ public class RSSAction extends BaseRSSAction {
         // Get the alerts
         Subject subject = getSubject(request);
         WebUser user = new WebUser(subject);
-        AlertsPortletPreferences prefs = user.getPreferences().getAlertsPortletPreferences();
+        AlertsPortletPreferences prefs = user.getWebPreferences().getAlertsPortletPreferences();
 
         PageControl pageControl = new PageControl(0, prefs.count);
 

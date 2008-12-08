@@ -39,12 +39,12 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.uibeans.CompGroupCompositeDisplaySummary;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -64,7 +64,7 @@ public class ListChildrenAction extends TilesAction {
         int groupId = WebUtility.getOptionalIntRequestParameter(request, "groupId", -1);
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
         Subject subject = user.getSubject();
 
         MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();

@@ -41,7 +41,7 @@ public class QuickFavoritesAction extends BaseAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getPreferences();
+        WebUserPreferences preferences = user.getWebPreferences();
 
         int resourceId = WebUtility.getResourceId(request);
         Boolean isFavorite = QuickFavoritesUtil.isFavorite(user, resourceId);

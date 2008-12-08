@@ -102,7 +102,7 @@ public class PageControlELResolver extends ELResolver {
             if ("pageSize".equalsIgnoreCase(methodName)) {
                 // find the user for this session-based operation
                 WebUser user = EnterpriseFacesContextUtility.getWebUser();
-                WebUserPreferences preferences = user.getPreferences();
+                WebUserPreferences preferences = user.getWebPreferences();
                 // get it
                 result = preferences.getPageControl(view).getPageSize();
 
@@ -150,7 +150,7 @@ public class PageControlELResolver extends ELResolver {
 
                     // find the user for this session-based operation
                     WebUser user = EnterpriseFacesContextUtility.getWebUser();
-                    WebUserPreferences preferences = user.getPreferences();
+                    WebUserPreferences preferences = user.getWebPreferences();
 
                     // update it
                     PageControl pc = preferences.getPageControl(view);

@@ -4,7 +4,8 @@
 <%@ page import="java.util.Date" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.WebUser" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.WebUserPreferences" %>
-<%@ page import="org.rhq.enterprise.gui.legacy.WebUserPreferences.MetricRangePreferences" %>
+<%@ page import="org.rhq.enterprise.server.measurement.MeasurementPreferences" %>
+<%@ page import="org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences" %>
 <%@ page import="org.rhq.core.domain.auth.Subject" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
@@ -38,10 +39,10 @@
     WebUser user = SessionUtils.getWebUser(request.getSession());
     Subject subject = user.getSubject();
 
-
-    MetricRangePreferences pref = user.getPreferences().getMetricRangePreferences();
-    long begin = pref.begin;
-    long end = pref.end;
+    MeasurementPreferences preferences = user.getMeasurementPreferences();
+    MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+    long begin = rangePreferences.begin;
+    long end = rangePreferences.end;
 
       // System.out.println("Displaying from " + new Date(begin) + " to " + new Date(end));
 //    long end = System.currentTimeMillis();

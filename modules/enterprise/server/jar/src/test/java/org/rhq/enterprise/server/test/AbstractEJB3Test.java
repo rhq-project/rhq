@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.test;
 
 import java.util.Hashtable;
 import java.util.Properties;
+
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 import javax.naming.InitialContext;
@@ -27,6 +28,7 @@ import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.transaction.TransactionManager;
+
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
 import org.testng.AssertJUnit;
@@ -34,9 +36,11 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
+
 import org.jboss.ejb3.embedded.EJB3StandaloneBootstrap;
 import org.jboss.ejb3.embedded.EJB3StandaloneDeployer;
 import org.jboss.mx.util.MBeanServerLocator;
+
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;

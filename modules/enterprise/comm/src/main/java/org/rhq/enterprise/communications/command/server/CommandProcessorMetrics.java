@@ -212,11 +212,12 @@ public class CommandProcessorMetrics implements Serializable {
      *
      * @param type the type of invocation whose min/max/avg is to be stored
      * @param executionTime the time, in milliseconds, that the type invocation took
-     * @param failure will be <code>true</code> if the invocation that was executed
-     *        actually resulted in a failure; this will be <code>false</code> if
+     * @param unsuccessfulReason will be non-null if the invocation that was executed
+     *        actually resulted in a failure - the reason for the unsuccessful invocation
+     *        is the value of the parameter. This will be <code>null</code> if
      *        the invocation succeeded
      */
-    void addCallTimeData(String type, long executionTime, boolean failure) {
+    void addCallTimeData(String type, long executionTime, UnsuccessfulReason unsuccessfulReason) {
         Calltime calltime = calltimes.get(type);
         if (calltime == null) {
             calltime = new Calltime();
@@ -224,8 +225,14 @@ public class CommandProcessorMetrics implements Serializable {
         }
 
         calltime.count++;
-        if (failure) {
-            calltime.failures++;
+        if (unsuccessfulReason != null) {
+            if (unsuccessfulReason == UnsuccessfulReason.DROPPED) {
+                calltime.dropped++;
+            } else if (unsuccessfulReason == UnsuccessfulReason.NOT_PROCESSED) {
+                calltime.unprocessed++;
+            } else {
+                calltime.failures++;
+            }
         } else {
             if (executionTime > calltime.max) {
                 calltime.max = executionTime;
@@ -233,7 +240,7 @@ public class CommandProcessorMetrics implements Serializable {
             if (executionTime < calltime.min) {
                 calltime.min = executionTime;
             }
-            long successes = calltime.count - calltime.failures;
+            long successes = calltime.getSuccesses();
             calltime.avg = (((successes - 1) * calltime.avg) + executionTime) / successes;
         }
 
@@ -302,6 +309,15 @@ public class CommandProcessorMetrics implements Serializable {
         }
     }
 
+    public enum UnsuccessfulReason {
+        /** the command encountered an error that caused it to fail */
+        FAILED,
+        /** the server is currently under high load and dropped the command */
+        DROPPED,
+        /** the server is in maintenance mode and not currently accepting any commands */
+        NOT_PROCESSED
+    }
+
     /**
      * Used to store the minimum, maximum and average times (in milliseconds)
      * for invocations to a particular command. The count of the number
@@ -313,6 +329,8 @@ public class CommandProcessorMetrics implements Serializable {
 
         private long count = 0;
         private long failures = 0;
+        private long dropped = 0;
+        private long unprocessed = 0;
         private long min = Long.MAX_VALUE;
         private long max = Long.MIN_VALUE;
         private long avg = 0;
@@ -325,8 +343,16 @@ public class CommandProcessorMetrics implements Serializable {
             return failures;
         }
 
+        public long getDropped() {
+            return dropped;
+        }
+
+        public long getNotProcessed() {
+            return unprocessed;
+        }
+
         public long getSuccesses() {
-            return count - failures; // ok if not thread-safe, good enough for what we need
+            return count - (failures + dropped + unprocessed); // ok if not thread-safe, good enough for what we need
         }
 
         public long getMinimum() {
@@ -343,7 +369,7 @@ public class CommandProcessorMetrics implements Serializable {
 
         @Override
         public String toString() {
-            return "" + count + ':' + failures + ':' + min + ':' + max + ':' + avg;
+            return "" + count + ':' + failures + ':' + dropped + ':' + unprocessed + ':' + min + ':' + max + ':' + avg;
         }
     }
 }

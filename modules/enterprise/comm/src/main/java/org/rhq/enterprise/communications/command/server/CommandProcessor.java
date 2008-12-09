@@ -42,6 +42,7 @@ import org.rhq.enterprise.communications.command.CommandType;
 import org.rhq.enterprise.communications.command.impl.generic.GenericCommandResponse;
 import org.rhq.enterprise.communications.command.impl.identify.IdentifyCommand;
 import org.rhq.enterprise.communications.command.impl.remotepojo.RemotePojoInvocationCommand;
+import org.rhq.enterprise.communications.command.server.CommandProcessorMetrics.UnsuccessfulReason;
 import org.rhq.enterprise.communications.i18n.CommI18NFactory;
 import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
 import org.rhq.enterprise.communications.util.NotPermittedException;
@@ -340,6 +341,7 @@ public class CommandProcessor implements StreamInvocationHandler {
      */
     private void updateMetrics(Command cmd, CommandResponse response, long elapsed) {
         boolean success = response.isSuccessful();
+        CommandProcessorMetrics.UnsuccessfulReason unsuccessfulReason = null;
 
         // now that we processed the command, update the appropriate metrics
         m_metrics.writeLock();
@@ -356,24 +358,27 @@ public class CommandProcessor implements StreamInvocationHandler {
             } else {
                 if (response.getException() instanceof NotPermittedException) {
                     m_metrics.numberDroppedCommands++;
+                    unsuccessfulReason = UnsuccessfulReason.DROPPED;
                 } else if (response.getException() instanceof NotProcessedException) {
                     m_metrics.numberNotProcessedCommands++;
+                    unsuccessfulReason = UnsuccessfulReason.NOT_PROCESSED;
                 } else {
                     m_metrics.numberFailedCommands++;
+                    unsuccessfulReason = UnsuccessfulReason.FAILED;
                 }
             }
 
             // cmd might be null under odd, error edge cases, have to just be protective here.
             if (cmd != null) {
                 CommandType cmdType = cmd.getCommandType();
-                m_metrics.addCallTimeData(cmdType.getName(), elapsed, !success);
+                m_metrics.addCallTimeData(cmdType.getName(), elapsed, unsuccessfulReason);
                 if (cmd instanceof RemotePojoInvocationCommand) {
                     // add additional metrics for the individual pojo method that was invoked
                     RemotePojoInvocationCommand pojoCmd = (RemotePojoInvocationCommand) cmd;
                     String ifaceName = pojoCmd.getTargetInterfaceName();
                     ifaceName = ifaceName.substring(ifaceName.lastIndexOf('.') + 1);
                     String methodName = pojoCmd.getNameBasedInvocation().getMethodName();
-                    m_metrics.addCallTimeData(ifaceName + '.' + methodName, elapsed, !success);
+                    m_metrics.addCallTimeData(ifaceName + '.' + methodName, elapsed, unsuccessfulReason);
                 }
             }
         } finally {

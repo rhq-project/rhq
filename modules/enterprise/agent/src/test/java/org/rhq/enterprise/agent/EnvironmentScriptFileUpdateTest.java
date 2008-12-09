@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
 
 @Test
 public class EnvironmentScriptFileUpdateTest {
-    private static final boolean DELETE_TEST_FILES_ON_SUCCESS = false;
+    private static final boolean DELETE_TEST_FILES_ON_SUCCESS = true;
 
     public void testUnix() throws Exception {
         File file = setupTestUnixFile();

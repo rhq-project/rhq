@@ -422,7 +422,7 @@ public class EventManagerBean implements EventManagerLocal {
             rs = stm.executeQuery();
             while (rs.next()) {
                 EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(2), rs.getString(3), EventSeverity
-                    .valueOf(rs.getString(4)), rs.getLong(5), rs.getInt(6), rs.getString(7), rs.getLong(8));
+                    .valueOf(rs.getString(4)), rs.getLong(5), rs.getInt(6));
                 pl.add(ec);
             }
 

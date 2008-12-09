@@ -37,7 +37,7 @@ import org.rhq.enterprise.agent.AgentManagement;
 import org.rhq.enterprise.agent.Version;
 
 /**
- * This is the main discovery component for the agent plugin that discovers the agent core.
+ * This is the discovery component for the agent environment setup script.
  *
  * @author John Mazzitelli
  */
@@ -51,7 +51,7 @@ public class AgentEnvironmentScriptDiscoveryComponent implements ResourceDiscove
     static final String PLUGINCONFIG_PATHNAME = "Pathname";
 
     /**
-     * Simply returns the agent resource.
+     * Simply returns the agent env script resource.
      *
      * @see ResourceDiscoveryComponent#discoverResources(ResourceDiscoveryContext)
      */

@@ -46,6 +46,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     private static final String INVALID_EXPRESSION_FORM_MSG = "Expression must be in the form of 'condition = value' or 'groupBy condition'";
 
     private static final String PROP_SIMPLE_ALIAS = "simple";
+    private static final String PROP_SIMPLE_DEF_ALIAS = "simpleDef";
     private static final String TRAIT_ALIAS = "trait";
     private static final String METRIC_DEF_ALIAS = "def";
 
@@ -53,7 +54,10 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         RESOURCE_CONFIGURATION(".resourceConfiguration", "conf"), // 
         PLUGIN_CONFIGURATION(".pluginConfiguration", "pluginConf"), //
         SCHEDULES(".schedules", "sched"), //
-        RESOURCE_CHILD(".childResources", "child");
+        RESOURCE_CHILD(".childResources", "child"), //
+        AVAILABILITY(".availability", "avail"), //
+        RESOURCE_CONFIGURATION_DEFINITION(".resourceType.resourceConfigurationDefinition", "confDef"), //
+        PLUGIN_CONFIGURATION_DEFINITION(".resourceType.pluginConfigurationDefinition", "pluginConfDef");
 
         String subexpression;
         String alias;
@@ -386,13 +390,16 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             } else if (context == ParseContext.Configuration) {
                 String prefix;
                 JoinCondition joinCondition;
+                JoinCondition definitionJoinCondition;
 
                 if (subcontext == ParseSubContext.PluginConfiguration) {
                     prefix = "pluginconfiguration";
                     joinCondition = JoinCondition.PLUGIN_CONFIGURATION;
+                    definitionJoinCondition = JoinCondition.PLUGIN_CONFIGURATION_DEFINITION;
                 } else if (subcontext == ParseSubContext.ResourceConfiguration) {
                     prefix = "resourceconfiguration";
                     joinCondition = JoinCondition.RESOURCE_CONFIGURATION;
+                    definitionJoinCondition = JoinCondition.RESOURCE_CONFIGURATION_DEFINITION;
                 } else {
                     throw new InvalidExpressionException("Invalid 'configuration' subexpression: " + subcontext);
                 }
@@ -410,9 +417,16 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 String propertyName = suffix.substring(1, suffix.length() - 1);
 
                 joinConditions.add(joinCondition);
+                joinConditions.add(definitionJoinCondition);
+
                 populatePredicateCollections(PROP_SIMPLE_ALIAS + ".name", propertyName, false);
                 populatePredicateCollections(PROP_SIMPLE_ALIAS + ".stringValue", value);
+
                 whereStatics.add(PROP_SIMPLE_ALIAS + ".configuration = " + joinCondition.alias);
+                whereStatics.add(PROP_SIMPLE_DEF_ALIAS + ".configurationDefinition = " + definitionJoinCondition.alias);
+                whereStatics.add(PROP_SIMPLE_ALIAS + ".name = " + PROP_SIMPLE_DEF_ALIAS + ".name");
+                whereStatics.add(PROP_SIMPLE_DEF_ALIAS + ".type != 'PASSWORD'");
+
             } else if (context == ParseContext.StringMatch) {
                 if (expressionType != String.class) {
                     throw new InvalidExpressionException(
@@ -729,14 +743,33 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
     private String getQueryJoinConditions() {
         String result = "";
-        for (JoinCondition joinCondition : joinConditions) {
+
+        JoinCondition[] orderedConditionProcessing = new JoinCondition[] { JoinCondition.RESOURCE_CHILD,
+            JoinCondition.AVAILABILITY, JoinCondition.SCHEDULES, JoinCondition.PLUGIN_CONFIGURATION,
+            JoinCondition.PLUGIN_CONFIGURATION_DEFINITION, JoinCondition.RESOURCE_CONFIGURATION,
+            JoinCondition.RESOURCE_CONFIGURATION_DEFINITION };
+
+        /* 
+         * process JoinConditions in a specific order, because hibernate AST parsing requires
+         * tokens to have been identified in the JPQL before their first use; in this case,
+         * JoinCondition.RESOURCE_CHILD must be first because ANY of the others might be joining 
+         * down the resource hierarchy (note: joining up the resource hierarchy doesn't require 
+         * any special processing because it follows from the "many" to the "one" side of the 
+         * relationship, for instance "resource.parent.parent" for grandparents. 
+         */
+        for (JoinCondition joinCondition : orderedConditionProcessing) {
+            if (joinConditions.contains(joinCondition) == false) {
+                continue;
+            }
+
             result += " JOIN res" + joinCondition.subexpression + " " + joinCondition.alias;
             if (joinCondition == JoinCondition.SCHEDULES) {
                 result += " JOIN " + joinCondition.alias + ".definition " + METRIC_DEF_ALIAS;
                 result += ", MeasurementDataTrait " + TRAIT_ALIAS + " ";
             } else if (joinCondition == JoinCondition.PLUGIN_CONFIGURATION
                 || joinCondition == JoinCondition.RESOURCE_CONFIGURATION) {
-                result += ", PropertySimple " + PROP_SIMPLE_ALIAS + " ";
+                result += ", PropertySimple " + PROP_SIMPLE_ALIAS;
+                result += ", PropertyDefinition " + PROP_SIMPLE_DEF_ALIAS;
             }
         }
 

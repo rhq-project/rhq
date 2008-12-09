@@ -19,12 +19,15 @@
 package org.rhq.plugins.agent;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -109,7 +112,9 @@ public class AgentJavaServiceWrapperComponent implements ResourceComponent<Agent
 
     public void updateResourceConfiguration(ConfigurationUpdateReport request) {
         try {
-            throw new UnsupportedOperationException();
+            updateConfigurationFileConfiguration(request);
+            updateEnvironmentFileConfiguration(request);
+            updateIncludeFileConfiguration(request);
         } catch (Exception e) {
             request.setErrorMessage(new ExceptionPackage(Severity.Severe, e).toString());
         }
@@ -181,5 +186,140 @@ public class AgentJavaServiceWrapperComponent implements ResourceComponent<Agent
         }
 
         return list;
+    }
+
+    private void updateConfigurationFileConfiguration(ConfigurationUpdateReport request) {
+        try {
+            List<NameValuePair> newSettings = new ArrayList<NameValuePair>();
+
+            Configuration configuration = request.getConfiguration();
+            PropertyList list = configuration.getList("mainConfigurationSettings");
+
+            if (list == null) {
+                throw new Exception("Missing main config");
+            }
+
+            for (Property item : list.getList()) {
+                PropertyMap map = (PropertyMap) item;
+                PropertySimple name = map.getSimple("name");
+                PropertySimple value = map.getSimple("value");
+
+                if (name == null || name.getStringValue() == null) {
+                    log.error("Missing a config name: " + configuration.toString(true));
+                    throw new IllegalArgumentException("Missing the name of a main config setting");
+                }
+
+                if (value != null && value.getStringValue() != null) {
+                    newSettings.add(new NameValuePair(name.getStringValue(), value.getStringValue()));
+                }
+            }
+
+            // update the env script file so it includes the new settings.
+            // note that we require the request to contain ALL settings, not a subset; any settings
+            // missing in the request config that currently exist in the script will be removed from the script,
+            // which would be bad - but that should never occur unless something bad happens in the UI
+            EnvironmentScriptFileUpdate updater = EnvironmentScriptFileUpdate.create(configFile.getAbsolutePath());
+            updater.update(newSettings, true);
+
+            request.setStatus(ConfigurationUpdateStatus.SUCCESS);
+        } catch (Exception e) {
+            request.setErrorMessage(new ExceptionPackage(Severity.Severe, e).toString());
+        }
+
+        return;
+    }
+
+    private void updateEnvironmentFileConfiguration(ConfigurationUpdateReport request) {
+        try {
+            List<NameValuePair> newSettings = new ArrayList<NameValuePair>();
+
+            Configuration configuration = request.getConfiguration();
+            PropertyList list = configuration.getList("environmentSettings");
+
+            // if there is no config, the file should be deleted
+            if (list == null || list.getList() == null || list.getList().isEmpty()) {
+                if (environmentFile.exists()) {
+                    if (!environmentFile.delete()) {
+                        throw new Exception("Failed to remove the env file: " + environmentFile);
+                    }
+                }
+                return;
+            }
+
+            for (Property item : list.getList()) {
+                PropertyMap map = (PropertyMap) item;
+                PropertySimple name = map.getSimple("name");
+                PropertySimple value = map.getSimple("value");
+
+                if (name == null || name.getStringValue() == null) {
+                    log.error("Missing a env name: " + configuration.toString(true));
+                    throw new IllegalArgumentException("Missing the name of a env setting");
+                }
+
+                if (value != null && value.getStringValue() != null) {
+                    newSettings.add(new NameValuePair(name.getStringValue(), value.getStringValue()));
+                }
+            }
+
+            // update the env script file so it includes the new settings.
+            // note that we require the request to contain ALL settings, not a subset; any settings
+            // missing in the request config that currently exist in the script will be removed from the script,
+            // which would be bad - but that should never occur unless something bad happens in the UI
+            EnvironmentScriptFileUpdate updater = EnvironmentScriptFileUpdate.create(environmentFile.getAbsolutePath());
+            updater.update(newSettings, true);
+
+            request.setStatus(ConfigurationUpdateStatus.SUCCESS);
+        } catch (Exception e) {
+            request.setErrorMessage(new ExceptionPackage(Severity.Severe, e).toString());
+        }
+
+        return;
+    }
+
+    private void updateIncludeFileConfiguration(ConfigurationUpdateReport request) {
+        try {
+            List<NameValuePair> newSettings = new ArrayList<NameValuePair>();
+
+            Configuration configuration = request.getConfiguration();
+            PropertyList list = configuration.getList("includeSettings");
+
+            // if there is no config, the file should be deleted
+            if (list == null || list.getList() == null || list.getList().isEmpty()) {
+                if (includeFile.exists()) {
+                    if (!includeFile.delete()) {
+                        throw new Exception("Failed to remove the include file: " + includeFile);
+                    }
+                }
+                return;
+            }
+
+            for (Property item : list.getList()) {
+                PropertyMap map = (PropertyMap) item;
+                PropertySimple name = map.getSimple("name");
+                PropertySimple value = map.getSimple("value");
+
+                if (name == null || name.getStringValue() == null) {
+                    log.error("Missing a inc name: " + configuration.toString(true));
+                    throw new IllegalArgumentException("Missing the name of a include setting");
+                }
+
+                if (value != null && value.getStringValue() != null) {
+                    newSettings.add(new NameValuePair(name.getStringValue(), value.getStringValue()));
+                }
+            }
+
+            // update the env script file so it includes the new settings.
+            // note that we require the request to contain ALL settings, not a subset; any settings
+            // missing in the request config that currently exist in the script will be removed from the script,
+            // which would be bad - but that should never occur unless something bad happens in the UI
+            EnvironmentScriptFileUpdate updater = EnvironmentScriptFileUpdate.create(includeFile.getAbsolutePath());
+            updater.update(newSettings, true);
+
+            request.setStatus(ConfigurationUpdateStatus.SUCCESS);
+        } catch (Exception e) {
+            request.setErrorMessage(new ExceptionPackage(Severity.Severe, e).toString());
+        }
+
+        return;
     }
 }

@@ -108,6 +108,10 @@ public class AgentEnvironmentScriptComponent implements ResourceComponent<AgentS
             Configuration configuration = request.getConfiguration();
             PropertyList list = configuration.getList("environmentVariables");
 
+            if (list == null || list.getList() == null) {
+                throw new Exception("Missing env vars config");
+            }
+
             for (Property item : list.getList()) {
                 PropertyMap map = (PropertyMap) item;
                 PropertySimple name = map.getSimple("name");

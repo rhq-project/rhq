@@ -640,10 +640,10 @@
          </plugin-configuration>
          <resource-configuration>
             <c:group name="mainConfiguration" >
-               <c:list-property name="mainConfigurationSettings" description="The main JSW configuration" readOnly="true">
-                  <c:map-property name="mainConfigurationSetting">
-                     <c:simple-property name="name" type="string" required="true" summary="true"/>
-                     <c:simple-property name="value" type="string" required="true" summary="true"/>
+               <c:list-property name="mainConfigurationSettings" description="The main JSW configuration. This is read-only - to customize the configuration, add settings to the environment and/or includes." readOnly="true">
+                  <c:map-property name="mainConfigurationSetting" readOnly="true">
+                     <c:simple-property name="name" type="string" required="true" summary="true" readOnly="true"/>
+                     <c:simple-property name="value" type="string" required="true" summary="true" readOnly="true"/>
                   </c:map-property>
                </c:list-property>
             </c:group>

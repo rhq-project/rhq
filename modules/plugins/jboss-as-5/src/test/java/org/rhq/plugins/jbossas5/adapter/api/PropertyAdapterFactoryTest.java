@@ -33,6 +33,7 @@ import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyListToCollect
 import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToMapCompositeValueSupportAdapter;
 import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToSimpleValueAdapter;
 import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToGenericValueAdapter;
+import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToCompositeValueSupportAdapter;
 import org.rhq.plugins.jbossas5.util.ProfileServiceTestUtil;
 import org.testng.annotations.Test;
 
@@ -68,7 +69,11 @@ public class PropertyAdapterFactoryTest
 
         MetaType compositeMetaType = metaTypeInstances.get(ProfileServiceTestUtil.COMPOSITE_TYPE);
         PropertyAdapter adapter3 = PropertyAdapterFactory.getPropertyAdapter(compositeMetaType);
-        assert adapter3 instanceof PropertyMapToMapCompositeValueSupportAdapter : "Should be the PropertyMap to Composite adapter";
+        assert adapter3 instanceof PropertyMapToCompositeValueSupportAdapter : "Should be the PropertyMap to Composite adapter";
+
+        MetaType mapCompositeMetaType = metaTypeInstances.get(ProfileServiceTestUtil.MAP_COMPOSITE_TYPE);
+        PropertyAdapter adapter3b = PropertyAdapterFactory.getPropertyAdapter(mapCompositeMetaType);
+        assert adapter3b instanceof PropertyMapToMapCompositeValueSupportAdapter : "Should be the PropertyMap to MapComposite adapter";
 
         PropertyAdapter adapter4 = PropertyAdapterFactory.getPropertyAdapter(metaTypeInstances.get(ProfileServiceTestUtil.COLLECTION_TYPE));
         assert adapter4 instanceof PropertyListToCollectionValueAdapter : "Should be the PropertyList to Collection adapter";

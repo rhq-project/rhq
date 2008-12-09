@@ -48,21 +48,6 @@ import java.util.Properties;
  * @author John Mazzitelli
  */
 public abstract class EnvironmentScriptFileUpdate {
-    public static void main(String[] args) throws Exception {
-        EnvironmentScriptFileUpdate fsh;
-        fsh = EnvironmentScriptFileUpdate.create("C:/mazz/tmp/rhq-agent-env.sh");
-        java.util.Properties psh = fsh.loadExisting();
-        fsh.update("FOO_SH", "foo sh value");
-        psh.put("RHQ_AGENT_HOME", "/another/agent/home");
-        fsh.update(psh);
-
-        EnvironmentScriptFileUpdate fbat;
-        fbat = EnvironmentScriptFileUpdate.create("C:/mazz/tmp/rhq-agent-env.bat");
-        java.util.Properties pbat = fbat.loadExisting();
-        fbat.update("FOO_BAT", "foo bat value");
-        pbat.put("RHQ_AGENT_HOME", "/another/agent/home");
-        fbat.update(pbat);
-    }
 
     private File file;
 

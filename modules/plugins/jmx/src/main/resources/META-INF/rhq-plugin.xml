@@ -117,18 +117,40 @@
             <c:simple-property name="nameTemplate" default="Threading"/>
          </plugin-configuration>
 
-         <operation displayName="Reset Peak Thread Metrics" name="resetPeakThreadCount" description="Reset the peak number of threads"/>
-         <operation name="findMonitorDeadlockedThreads" description="Finds cycles of threads that are in deadlock waiting to acquire object monitors"/>
+         <operation displayName="Reset Peak Thread Metrics" name="resetPeakThreadCount"
+                    description="Reset the peak number of threads"/>
 
-         <operation name="threadDump">
+         <operation name="findMonitorDeadlockedThreads"
+                    description="Finds cycles of threads that are in deadlock waiting to acquire object monitors"/>
+
+         <operation name="threadDump"
+                    description="Returns a summary of all live threads, including both daemon and non-daemon threads">
             <results>
-               <c:simple-property name="totalCount"/>
+               <c:simple-property name="totalCount">
+                   <c:description>
+                       The number of live threads, including both daemon and non-daemon threads, at the time the
+                       threadDump operation was invoked
+                   </c:description>
+               </c:simple-property>
+
                <c:list-property name="threadList">
                   <c:map-property name="thread">
-                     <c:simple-property name="name" summary="true"/>
-                     <c:simple-property name="id" summary="true"/>
-                     <c:simple-property name="state" summary="true"/>
-                     <c:simple-property name="stack" type="longString"/>
+                     <c:simple-property name="name" summary="true" description="The name of this thread"/>
+                     <c:simple-property name="id" summary="true" description="The id of this thread"/>
+                     <c:simple-property name="state" summary="true">
+                         <c:description>
+                             The state of this thread at the time the threadDump operation was invoked.
+                             A thread can be in one of the following states:
+                             NEW (A thread that has not yet started),
+                             RUNNABLE (a thread executing in the Java virtual machine),
+                             BLOCKED (a thread that is blocked waiting for a monitor lock),
+                             WAITING (a thread that is waiting indefinitely for another thread to perform a particular action),
+                             TIMED_WAITING (a thread that is waiting for another thread to perform an action for up to a specified waiting time),
+                             TERMINATED (a thread that has exited)
+                         </c:description>
+                     </c:simple-property>
+                     <c:simple-property name="stack" type="longString"
+                                        description="The stack trace of this thread at the time the threadDump operation was invoked, if available"/>
                   </c:map-property>
                </c:list-property>
             </results>
@@ -139,7 +161,7 @@
                  displayType="summary"
                  category="performance"
                  property="ThreadCount"
-                 description="Active threads in the system"/>
+                 description="Number of active threads in the system"/>
          <metric displayName="Peak Thread Count"
                  defaultOn="true"
                  category="performance"

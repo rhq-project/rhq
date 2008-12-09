@@ -51,7 +51,6 @@ public class AgentEnvironmentScriptComponent implements ResourceComponent<AgentS
 
     private File script;
 
-    @Override
     public void start(ResourceContext<AgentServerComponent> resourceContext) throws Exception {
         Configuration pc = resourceContext.getPluginConfiguration();
         PropertySimple pathnameProp = pc.getSimple(AgentEnvironmentScriptDiscoveryComponent.PLUGINCONFIG_PATHNAME);
@@ -73,12 +72,10 @@ public class AgentEnvironmentScriptComponent implements ResourceComponent<AgentS
         return;
     }
 
-    @Override
     public void stop() {
         // nothing to do
     }
 
-    @Override
     public AvailabilityType getAvailability() {
         return (script.exists()) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }

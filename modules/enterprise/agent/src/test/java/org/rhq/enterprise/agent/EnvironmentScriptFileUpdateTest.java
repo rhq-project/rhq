@@ -50,11 +50,18 @@ public class EnvironmentScriptFileUpdateTest {
         assert "testUnixValue".equals(existing.getProperty("testUnix")) : "Failed to update: " + existing;
 
         existing.put("quoted2", "\"four five six\"");
-        up.update(existing);
+        up.update(existing, false);
         assert file.length() > originalLength : "Should have modified the test file: " + file;
         originalLength = file.length();
         existing = up.loadExisting();
         assert "\"four five six\"".equals(existing.getProperty("quoted2")) : "Failed to update: " + existing;
+
+        existing.remove("quoted2");
+        up.update(existing, true);
+        assert file.length() < originalLength : "Should have deleted the setting: " + file;
+        originalLength = file.length();
+        existing = up.loadExisting();
+        assert existing.getProperty("quoted2") == null : "Failed to delete setting: " + existing;
 
         if (DELETE_TEST_FILES_ON_SUCCESS) {
             file.delete(); // only delete the file if we succeed - leave the file around on failure for diagnosis
@@ -83,11 +90,18 @@ public class EnvironmentScriptFileUpdateTest {
         assert "testWinValue".equals(existing.getProperty("testWin")) : "Failed to update: " + existing;
 
         existing.put("quoted2", "\"four five six\"");
-        up.update(existing);
+        up.update(existing, false);
         assert file.length() > originalLength : "Should have modified the test file: " + file;
         originalLength = file.length();
         existing = up.loadExisting();
         assert "\"four five six\"".equals(existing.getProperty("quoted2")) : "Failed to update: " + existing;
+
+        existing.remove("quoted2");
+        up.update(existing, true);
+        assert file.length() < originalLength : "Should have deleted the setting: " + file;
+        originalLength = file.length();
+        existing = up.loadExisting();
+        assert existing.getProperty("quoted2") == null : "Failed to delete setting: " + existing;
 
         if (DELETE_TEST_FILES_ON_SUCCESS) {
             file.delete(); // only delete the file if we succeed - leave the file around on failure for diagnosis

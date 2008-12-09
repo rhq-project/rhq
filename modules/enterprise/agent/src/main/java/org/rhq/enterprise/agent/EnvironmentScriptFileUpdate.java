@@ -105,7 +105,7 @@ public abstract class EnvironmentScriptFileUpdate {
         } else if (!value.equals(existing.getProperty(key))) {
             Properties newKey = new Properties();
             newKey.setProperty(key, value);
-            update(newKey);
+            update(newKey, false);
         }
 
         return;
@@ -117,11 +117,15 @@ public abstract class EnvironmentScriptFileUpdate {
      * <code>newValues</code> that does not yet exist in the file will be added. Currently existing settings
      * in the script file that are not found in <code>newValues</code> will remain as-is.
      *
-     * @param  newValues environment variable settings that are added or updated in the file
-     *
+     * @param newValues environment variable settings that are added or updated in the file
+     * @param deleteMissing if <code>true</code>, any settings found in the existing file that are missing
+     *                      from the given <code>newValues</code> will be removed from the existing file.
+     *                      if <code>false</code>, then <code>newValues</code> is assumed to be only a subset
+     *                      of the settings that can go in the file and thus any settings found in the
+     *                      existing file but are missing from the new values will not be deleted.
      * @throws IOException
      */
-    public void update(Properties newValues) throws IOException {
+    public void update(Properties newValues, boolean deleteMissing) throws IOException {
         // make our own copy - we will eventually empty out our copy (also avoids concurrent mod exceptions later)
         Properties settingsToUpdate = new Properties();
         settingsToUpdate.putAll(newValues);
@@ -154,7 +158,9 @@ public abstract class EnvironmentScriptFileUpdate {
             } else {
                 String existingKey = nameValue[0];
                 if (!settingsToUpdate.containsKey(existingKey)) {
-                    out.println(line); // property that is not being updated; leave it alone and write it out as-is
+                    if (!deleteMissing || newValues.getProperty(existingKey) != null) {
+                        out.println(line); // property that is not being updated or removed; leave it alone and write it out as-is
+                    }
                 } else {
                     out.println(createEnvironmentVariableLine(existingKey, settingsToUpdate.getProperty(existingKey)));
                     settingsToUpdate.remove(existingKey); // done with it so we can remove it from our copy

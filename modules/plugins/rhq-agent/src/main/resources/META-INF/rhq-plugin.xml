@@ -2,6 +2,7 @@
 
 <plugin name="RHQAgent"
         displayName="RHQ Agent"
+        version="1.2"
         package="org.rhq.plugins.agent"
         description="Management and monitoring of the RHQ Agent"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -627,6 +628,43 @@
             </c:list-property>
          </resource-configuration>
       </service>
+      <service name="Java Service Wrapper"
+               description="The Java Service Wrapper that can run the agent as a daemon service"
+               discovery="AgentJavaServiceWrapperDiscoveryComponent"
+               class="AgentJavaServiceWrapperComponent"
+               singleton="true">
+         <plugin-configuration>
+            <c:simple-property name="configurationFile" type="file" description="The full path to the configuration file" required="true"/>
+            <c:simple-property name="environmentFile" type="file" description="The full path to the environment setup file" required="false"/>
+            <c:simple-property name="includeFile" type="file" description="The full path to the include file" required="false"/>
+         </plugin-configuration>
+         <resource-configuration>
+            <c:group name="mainConfiguration" >
+               <c:list-property name="mainConfigurationSettings" description="The main JSW configuration" readOnly="true">
+                  <c:map-property name="mainConfigurationSetting">
+                     <c:simple-property name="name" type="string" required="true" summary="true"/>
+                     <c:simple-property name="value" type="string" required="true" summary="true"/>
+                  </c:map-property>
+               </c:list-property>
+            </c:group>
+            <c:group name="environment" >
+               <c:list-property name="environmentSettings" description="Environment settings to further customize the JSW. These are set prior to applying the main configuration and include settings. Variables set here can be placed in the main config or includes using the %VAR% notation.">
+                  <c:map-property name="environmentSetting">
+                     <c:simple-property name="name" type="string" required="true" summary="true"/>
+                     <c:simple-property name="value" type="string" required="true" summary="true"/>
+                  </c:map-property>
+               </c:list-property>
+            </c:group>
+            <c:group name="includes" >
+               <c:list-property name="includeSettings" description="Override settings that augment the existing JSW configuration. These are applied after the main configuration is set.">
+                  <c:map-property name="includeSetting">
+                     <c:simple-property name="name" type="string" required="true" summary="true"/>
+                     <c:simple-property name="value" type="string" required="true" summary="true"/>
+                  </c:map-property>
+               </c:list-property>
+            </c:group>
+         </resource-configuration>
+      </service>
+      
    </server>
-
 </plugin>

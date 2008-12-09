@@ -39,15 +39,15 @@ public class JavaServiceWrapperConfigurationFileUpdate extends EnvironmentScript
     }
 
     @Override
-    protected String createEnvironmentVariableLine(String key, String value) {
-        if (!key.startsWith("wrapper.")) {
+    protected String createEnvironmentVariableLine(NameValuePair nvp) {
+        if (!nvp.name.startsWith("wrapper.")) {
             throw new IllegalArgumentException("All JSW configuration keys must start with 'wrapper.'");
         }
-        return key + "=" + value;
+        return nvp.name + "=" + nvp.value;
     }
 
     @Override
-    protected String[] parseEnvironmentVariableLine(String line) {
+    protected NameValuePair parseEnvironmentVariableLine(String line) {
         // it can't match what we are looking for if it doesn't have an "=" in it
         if (line == null || !line.contains("=")) {
             return null;
@@ -61,6 +61,6 @@ public class JavaServiceWrapperConfigurationFileUpdate extends EnvironmentScript
         }
 
         String[] nameValue = trimmed.split("=", 2);
-        return nameValue;
+        return new NameValuePair(nameValue[0], nameValue[1]);
     }
 }

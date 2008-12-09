@@ -19,8 +19,8 @@
 package org.rhq.plugins.agent;
 
 import java.io.File;
-import java.util.Map;
-import java.util.Properties;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,6 +40,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.util.exception.ExceptionPackage;
 import org.rhq.core.util.exception.Severity;
 import org.rhq.enterprise.agent.EnvironmentScriptFileUpdate;
+import org.rhq.enterprise.agent.EnvironmentScriptFileUpdate.NameValuePair;
 
 /**
  * The component that represents the agent's environment setup script.
@@ -83,17 +84,17 @@ public class AgentEnvironmentScriptComponent implements ResourceComponent<AgentS
     public Configuration loadResourceConfiguration() throws Exception {
         // read in the env script file and get all the env vars it defines
         EnvironmentScriptFileUpdate updater = EnvironmentScriptFileUpdate.create(script.getAbsolutePath());
-        Properties variables = updater.loadExisting();
+        List<NameValuePair> variables = updater.loadExisting();
 
         // put the env var definitions in a config object
         Configuration config = new Configuration();
         PropertyList list = new PropertyList("environmentVariables");
         config.put(list);
 
-        for (Map.Entry<Object, Object> pref : variables.entrySet()) {
+        for (NameValuePair var : variables) {
             PropertyMap map = new PropertyMap("environmentVariable");
-            map.put(new PropertySimple("name", pref.getKey()));
-            map.put(new PropertySimple("value", pref.getValue()));
+            map.put(new PropertySimple("name", var.name));
+            map.put(new PropertySimple("value", var.value));
             list.add(map);
         }
 
@@ -102,7 +103,7 @@ public class AgentEnvironmentScriptComponent implements ResourceComponent<AgentS
 
     public void updateResourceConfiguration(ConfigurationUpdateReport request) {
         try {
-            Properties newSettings = new Properties();
+            List<NameValuePair> newSettings = new ArrayList<NameValuePair>();
 
             Configuration configuration = request.getConfiguration();
             PropertyList list = configuration.getList("environmentVariables");
@@ -118,7 +119,7 @@ public class AgentEnvironmentScriptComponent implements ResourceComponent<AgentS
                 }
 
                 if (value != null && value.getStringValue() != null) {
-                    newSettings.setProperty(name.getStringValue(), value.getStringValue());
+                    newSettings.add(new NameValuePair(name.getStringValue(), value.getStringValue()));
                 }
             }
 

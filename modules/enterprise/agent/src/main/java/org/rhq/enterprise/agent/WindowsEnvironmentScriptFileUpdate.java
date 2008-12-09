@@ -39,12 +39,12 @@ public class WindowsEnvironmentScriptFileUpdate extends EnvironmentScriptFileUpd
     }
 
     @Override
-    protected String createEnvironmentVariableLine(String key, String value) {
-        return "set " + key + "=" + value;
+    protected String createEnvironmentVariableLine(NameValuePair nvp) {
+        return "set " + nvp.name + "=" + nvp.value;
     }
 
     @Override
-    protected String[] parseEnvironmentVariableLine(String line) {
+    protected NameValuePair parseEnvironmentVariableLine(String line) {
         // it can't match what we are looking for if it doesn't have an "=" in it
         if (line == null || !line.contains("=")) {
             return null;
@@ -66,6 +66,6 @@ public class WindowsEnvironmentScriptFileUpdate extends EnvironmentScriptFileUpd
         trimmed = trimmed.substring(4).trim(); // trim it again in case the line is "set   N=V"
 
         String[] nameValue = trimmed.split("=", 2);
-        return nameValue;
+        return new NameValuePair(nameValue[0], nameValue[1]);
     }
 }

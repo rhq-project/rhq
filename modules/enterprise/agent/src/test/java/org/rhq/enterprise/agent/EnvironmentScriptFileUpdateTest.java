@@ -37,10 +37,10 @@ public class EnvironmentScriptFileUpdateTest {
         assert !file.exists() : "should not have created the file yet: " + file;
         assert up.loadExisting().size() == 0 : "There should not be any existing settings: " + file;
 
-        up.update("one", "one value");
+        up.update(new EnvironmentScriptFileUpdate.NameValuePair("one", "one value"));
         assert file.exists() : "file should be created now: " + file;
         assert file.length() > 0 : "file should have something in it: " + file;
-        Properties existing = up.loadExisting();
+        Properties existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert existing.size() == 1 : "There should 1 setting now: " + file;
         assert existing.getProperty("one").equals("one value") : "Bad one setting: " + file;
 
@@ -50,10 +50,10 @@ public class EnvironmentScriptFileUpdateTest {
         existing.put("two", "two value");
         existing.put("three", "three value");
         existing.remove("one");
-        up.update(existing, false);
+        up.update(up.convertPropertiesToNameValuePairList(existing), false);
         assert file.exists() : "file should be created again: " + file;
         assert file.length() > 0 : "file should have something in it again: " + file;
-        existing = up.loadExisting();
+        existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert existing.size() == 2 : "There should be 2 settings now: " + file;
         assert existing.getProperty("two").equals("two value") : "Bad two setting: " + file;
         assert existing.getProperty("three").equals("three value") : "Bad three setting: " + file;
@@ -69,7 +69,7 @@ public class EnvironmentScriptFileUpdateTest {
         long originalLength = file.length();
         assert originalLength > 0 : "Test file wasn't written properly: " + file;
 
-        Properties existing = up.loadExisting();
+        Properties existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert existing.size() == 5 : "Missing test props: " + existing.toString();
         assert "true".equals(existing.getProperty("wrapper.JSW")) : existing.toString();
         assert existing.getProperty("UNIX") == null : "test is mixing up the wrong test file";
@@ -79,24 +79,24 @@ public class EnvironmentScriptFileUpdateTest {
         assert "lastvalue".equals(existing.getProperty("wrapper.LAST")) : existing.toString();
         assert "\"one two three\"".equals(existing.getProperty("wrapper.QUOTED")) : existing.toString();
 
-        up.update("wrapper.testJSWConf", "testJSWConfValue");
+        up.update(new EnvironmentScriptFileUpdate.NameValuePair("wrapper.testJSWConf", "testJSWConfValue"));
         assert file.length() > originalLength : "Should have modified the test file: " + file;
         originalLength = file.length();
-        existing = up.loadExisting();
+        existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert "testJSWConfValue".equals(existing.getProperty("wrapper.testJSWConf")) : "Failed to update: " + existing;
 
         existing.put("wrapper.quoted2", "\"four five six\"");
-        up.update(existing, false);
+        up.update(up.convertPropertiesToNameValuePairList(existing), false);
         assert file.length() > originalLength : "Should have modified the test file: " + file;
         originalLength = file.length();
-        existing = up.loadExisting();
+        existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert "\"four five six\"".equals(existing.getProperty("wrapper.quoted2")) : "Failed to update: " + existing;
 
         existing.remove("wrapper.quoted2");
-        up.update(existing, true);
+        up.update(up.convertPropertiesToNameValuePairList(existing), true);
         assert file.length() < originalLength : "Should have deleted the setting: " + file;
         originalLength = file.length();
-        existing = up.loadExisting();
+        existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert existing.getProperty("wrapper.quoted2") == null : "Failed to delete setting: " + existing;
 
         if (DELETE_TEST_FILES_ON_SUCCESS) {
@@ -110,7 +110,7 @@ public class EnvironmentScriptFileUpdateTest {
         long originalLength = file.length();
         assert originalLength > 0 : "Test file wasn't written properly: " + file;
 
-        Properties existing = up.loadExisting();
+        Properties existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert existing.size() == 5 : "Missing test props: " + existing.toString();
         assert "true".equals(existing.getProperty("JSWENV")) : existing.toString();
         assert existing.getProperty("wrapper.JSW") == null : "test is mixing up the wrong test file";
@@ -120,24 +120,24 @@ public class EnvironmentScriptFileUpdateTest {
         assert "lastvalue".equals(existing.getProperty("LAST")) : existing.toString();
         assert "\"one two three\"".equals(existing.getProperty("QUOTED")) : existing.toString();
 
-        up.update("testJSWEnv", "testJSWEnvValue");
+        up.update(new EnvironmentScriptFileUpdate.NameValuePair("testJSWEnv", "testJSWEnvValue"));
         assert file.length() > originalLength : "Should have modified the test file: " + file;
         originalLength = file.length();
-        existing = up.loadExisting();
+        existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert "testJSWEnvValue".equals(existing.getProperty("testJSWEnv")) : "Failed to update: " + existing;
 
         existing.put("quoted2", "\"four five six\"");
-        up.update(existing, false);
+        up.update(up.convertPropertiesToNameValuePairList(existing), false);
         assert file.length() > originalLength : "Should have modified the test file: " + file;
         originalLength = file.length();
-        existing = up.loadExisting();
+        existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert "\"four five six\"".equals(existing.getProperty("quoted2")) : "Failed to update: " + existing;
 
         existing.remove("quoted2");
-        up.update(existing, true);
+        up.update(up.convertPropertiesToNameValuePairList(existing), true);
         assert file.length() < originalLength : "Should have deleted the setting: " + file;
         originalLength = file.length();
-        existing = up.loadExisting();
+        existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert existing.getProperty("quoted2") == null : "Failed to delete setting: " + existing;
 
         if (DELETE_TEST_FILES_ON_SUCCESS) {
@@ -151,7 +151,7 @@ public class EnvironmentScriptFileUpdateTest {
         long originalLength = file.length();
         assert originalLength > 0 : "Test file wasn't written properly: " + file;
 
-        Properties existing = up.loadExisting();
+        Properties existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert existing.size() == 5 : "Missing test props: " + existing.toString();
         assert "true".equals(existing.getProperty("UNIX")) : existing.toString();
         assert existing.getProperty("WINDOWS") == null : "test is mixing up the wrong test file";
@@ -160,24 +160,24 @@ public class EnvironmentScriptFileUpdateTest {
         assert "lastvalue".equals(existing.getProperty("LAST")) : existing.toString();
         assert "\"one two three\"".equals(existing.getProperty("QUOTED")) : existing.toString();
 
-        up.update("testUnix", "testUnixValue");
+        up.update(new EnvironmentScriptFileUpdate.NameValuePair("testUnix", "testUnixValue"));
         assert file.length() > originalLength : "Should have modified the test file: " + file;
         originalLength = file.length();
-        existing = up.loadExisting();
+        existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert "testUnixValue".equals(existing.getProperty("testUnix")) : "Failed to update: " + existing;
 
         existing.put("quoted2", "\"four five six\"");
-        up.update(existing, false);
+        up.update(up.convertPropertiesToNameValuePairList(existing), false);
         assert file.length() > originalLength : "Should have modified the test file: " + file;
         originalLength = file.length();
-        existing = up.loadExisting();
+        existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert "\"four five six\"".equals(existing.getProperty("quoted2")) : "Failed to update: " + existing;
 
         existing.remove("quoted2");
-        up.update(existing, true);
+        up.update(up.convertPropertiesToNameValuePairList(existing), true);
         assert file.length() < originalLength : "Should have deleted the setting: " + file;
         originalLength = file.length();
-        existing = up.loadExisting();
+        existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert existing.getProperty("quoted2") == null : "Failed to delete setting: " + existing;
 
         if (DELETE_TEST_FILES_ON_SUCCESS) {
@@ -191,7 +191,7 @@ public class EnvironmentScriptFileUpdateTest {
         long originalLength = file.length();
         assert originalLength > 0 : "Test file wasn't written properly: " + file;
 
-        Properties existing = up.loadExisting();
+        Properties existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert existing.size() == 5 : "Missing test props: " + existing.toString();
         assert "true".equals(existing.getProperty("WINDOWS")) : existing.toString();
         assert existing.getProperty("UNIX") == null : "test is mixing up the wrong test file";
@@ -200,24 +200,24 @@ public class EnvironmentScriptFileUpdateTest {
         assert "lastvalue".equals(existing.getProperty("LAST")) : existing.toString();
         assert "\"one two three\"".equals(existing.getProperty("QUOTED")) : existing.toString();
 
-        up.update("testWin", "testWinValue");
+        up.update(new EnvironmentScriptFileUpdate.NameValuePair("testWin", "testWinValue"));
         assert file.length() > originalLength : "Should have modified the test file: " + file;
         originalLength = file.length();
-        existing = up.loadExisting();
+        existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert "testWinValue".equals(existing.getProperty("testWin")) : "Failed to update: " + existing;
 
         existing.put("quoted2", "\"four five six\"");
-        up.update(existing, false);
+        up.update(up.convertPropertiesToNameValuePairList(existing), false);
         assert file.length() > originalLength : "Should have modified the test file: " + file;
         originalLength = file.length();
-        existing = up.loadExisting();
+        existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert "\"four five six\"".equals(existing.getProperty("quoted2")) : "Failed to update: " + existing;
 
         existing.remove("quoted2");
-        up.update(existing, true);
+        up.update(up.convertPropertiesToNameValuePairList(existing), true);
         assert file.length() < originalLength : "Should have deleted the setting: " + file;
         originalLength = file.length();
-        existing = up.loadExisting();
+        existing = up.convertNameValuePairListToProperties(up.loadExisting());
         assert existing.getProperty("quoted2") == null : "Failed to delete setting: " + existing;
 
         if (DELETE_TEST_FILES_ON_SUCCESS) {

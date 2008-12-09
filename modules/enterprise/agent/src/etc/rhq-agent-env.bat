@@ -34,6 +34,10 @@ rem                                   agent's embedded JRE will be used.
 rem
 rem set RHQ_AGENT_JAVA_EXE_FILE_PATH=C:\WINDOWS\system32\java.exe
 
+rem ===========================================================================
+rem THE FOLLOWING ARE USED SOLELY FOR THE rhq-agent.bat SCRIPT
+rem THESE ARE NOT USED/IGNORED BY rhq-agent-wrapper.bat SCRIPT
+
 rem    RHQ_AGENT_JAVA_OPTS - Java VM command line options to be
 rem                          passed into the agent's VM. If this is not defined
 rem                          this script will pass in a default set of options.

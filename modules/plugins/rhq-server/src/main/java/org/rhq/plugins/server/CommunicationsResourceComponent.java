@@ -56,6 +56,8 @@ public class CommunicationsResourceComponent extends MBeanResourceComponent {
                     new PropertySimple("totalCount", calltime.getCount()), //
                     new PropertySimple("successCount", calltime.getSuccesses()), //
                     new PropertySimple("failureCount", calltime.getFailures()), //
+                    new PropertySimple("droppedCount", calltime.getDropped()), //
+                    new PropertySimple("notProcessedCount", calltime.getNotProcessed()), //
                     new PropertySimple("executionMinTime", calltime.getMinimum()), //
                     new PropertySimple("executionMaxTime", calltime.getMaximum()), //
                     new PropertySimple("executionAvgTime", calltime.getAverage()));

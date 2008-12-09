@@ -106,6 +106,8 @@
                   <c:simple-property name="totalCount" summary="true" type="long"/>
                   <c:simple-property name="successCount" summary="true" type="long"/>
                   <c:simple-property name="failureCount" summary="true" type="long"/>
+                  <c:simple-property name="droppedCount" summary="true" type="long"/>
+                  <c:simple-property name="notProcessedCount" summary="true" type="long"/>
                   <c:simple-property name="executionMinTime" summary="true" type="long"/>
                   <c:simple-property name="executionMaxTime" summary="true" type="long"/>
                   <c:simple-property name="executionAvgTime" summary="true" type="long"/>

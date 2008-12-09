@@ -53,12 +53,12 @@ import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.auth.SessionNotFoundException;
 import org.rhq.enterprise.server.auth.SessionTimeoutException;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementException;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementViewContext;
 import org.rhq.enterprise.server.measurement.MeasurementViewException;
 import org.rhq.enterprise.server.measurement.MeasurementViewManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
@@ -131,7 +131,7 @@ public class IndicatorChartsAction extends DispatchAction {
          * schedule ids from it. If this fails, fall back to defaults.
          */
         try {
-            MeasurementViewContext context = WebUtility.getContext(request);
+            EntityContext context = WebUtility.getContext(request);
             List<String> charts = viewManager.getCharts(subject, context, viewName);
             if (charts.isEmpty())
                 throw new IllegalArgumentException("No metrics defined"); // Use defaults then from below
@@ -198,14 +198,14 @@ public class IndicatorChartsAction extends DispatchAction {
         }
     }
 
-    private MeasurementViewContext getContext(HttpServletRequest request) {
+    private EntityContext getContext(HttpServletRequest request) {
         int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
         int groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
         int parentResourceId = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
         int resourceTypeId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_TYPE_ID_PARAM,
             -1);
 
-        return new MeasurementViewContext(resourceId, groupId, parentResourceId, resourceTypeId);
+        return new EntityContext(resourceId, groupId, parentResourceId, resourceTypeId);
     }
 
     /**
@@ -224,7 +224,7 @@ public class IndicatorChartsAction extends DispatchAction {
         form.setMetric(scheduleIds);
 
         // Set the metrics in the session
-        MeasurementViewContext context = new MeasurementViewContext(form.getId(), form.getGroupId(), form.getParent(),
+        EntityContext context = new EntityContext(form.getId(), form.getGroupId(), form.getParent(),
             form.getCtype());
         String key = context.getLegacyKey() + "." + form.getView();
         HttpSession session = request.getSession();
@@ -246,21 +246,21 @@ public class IndicatorChartsAction extends DispatchAction {
         Subject subject = WebUtility.getSubject(request);
         try {
             String viewName = form.getView();
-            MeasurementViewContext context = null;
+            EntityContext context = null;
             try {
-                context = new MeasurementViewContext(form.getId(), form.getGroupId(), form.getParent(), form.getCtype());
+                context = new EntityContext(form.getId(), form.getGroupId(), form.getParent(), form.getCtype());
             } catch (IllegalArgumentException iae) {
                 // ok, the form didn't have what we wanted, let's fallback on the request
                 context = getContext(request);
             }
 
-            if (context.category == MeasurementViewContext.Category.Resource) {
+            if (context.category == EntityContext.Category.Resource) {
                 int resourceId = WebUtility.getResourceId(request);
                 metrics = getViewMetricsForSingleResource(request, resourceId, viewName);
-            } else if (context.category == MeasurementViewContext.Category.ResourceGroup) {
+            } else if (context.category == EntityContext.Category.ResourceGroup) {
                 int groupId = WebUtility.getRequiredIntRequestParameter(request, AttrConstants.GROUP_ID);
                 metrics = chartsManager.getMetricDisplaySummariesForCompatibleGroup(subject, groupId, viewName);
-            } else if (context.category == MeasurementViewContext.Category.AutoGroup) {
+            } else if (context.category == EntityContext.Category.AutoGroup) {
                 int parent = WebUtility.getRequiredIntRequestParameter(request, "parent");
                 int type = getChildTypeId(request);
                 metrics = chartsManager.getMetricDisplaySummariesForAutoGroup(subject, parent, type, viewName);
@@ -289,7 +289,7 @@ public class IndicatorChartsAction extends DispatchAction {
          * First try to load the metrics from the user preferences for that key.
          * If that fails, we load defaults for it.
          */
-        MeasurementViewContext context = WebUtility.getContext(request);
+        EntityContext context = WebUtility.getContext(request);
         try {
 
             List<String> charts = viewManager.getCharts(user.getSubject(), context, viewName);
@@ -315,12 +315,12 @@ public class IndicatorChartsAction extends DispatchAction {
         // The load from prefs / session and then get the MetricDisplaySummary stuff 
         // can be reused for refresh()
 
-        if (context.category == MeasurementViewContext.Category.Resource) {
+        if (context.category == EntityContext.Category.Resource) {
             metrics = getViewMetricsForSingleResource(request, context.resourceId, viewName);
             for (MetricDisplaySummary summary : metrics) {
                 summary.setMetricToken(getContextKeyChart(summary));
             }
-        } else if (context.category == MeasurementViewContext.Category.ResourceGroup) {
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
             metrics = chartsManager.getMetricDisplaySummariesForCompatibleGroup(user.getSubject(), context.groupId,
                 viewName);
             // loop over the metrics, put the groupId in and format the provided value
@@ -330,7 +330,7 @@ public class IndicatorChartsAction extends DispatchAction {
             }
 
             request.setAttribute(AttrConstants.CHART_DATA_KEYS, metrics); // for the big charts and DashCharts.jsp
-        } else if (context.category == MeasurementViewContext.Category.AutoGroup) {
+        } else if (context.category == EntityContext.Category.AutoGroup) {
             metrics = chartsManager.getMetricDisplaySummariesForAutoGroup(user.getSubject(), context.parentResourceId,
                 context.resourceTypeId, viewName);
             for (MetricDisplaySummary summary : metrics) {
@@ -532,7 +532,7 @@ public class IndicatorChartsAction extends DispatchAction {
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
 
         Subject subject = WebUtility.getSubject(request);
-        MeasurementViewContext context = new MeasurementViewContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf
+        EntityContext context = new EntityContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf
             .getCtype());
         viewManager.removeChart(subject, context, ivf.getView(), ivf.getMetric()[0]);
 
@@ -548,7 +548,7 @@ public class IndicatorChartsAction extends DispatchAction {
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
 
         Subject subject = WebUtility.getSubject(request);
-        MeasurementViewContext context = new MeasurementViewContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf
+        EntityContext context = new EntityContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf
             .getCtype());
         viewManager.moveChartUp(subject, context, ivf.getView(), ivf.getMetric()[0]);
 
@@ -564,7 +564,7 @@ public class IndicatorChartsAction extends DispatchAction {
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
 
         Subject subject = WebUtility.getSubject(request);
-        MeasurementViewContext context = new MeasurementViewContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf
+        EntityContext context = new EntityContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf
             .getCtype());
         viewManager.moveChartDown(subject, context, ivf.getView(), ivf.getMetric()[0]);
 
@@ -641,7 +641,7 @@ public class IndicatorChartsAction extends DispatchAction {
             return mapping.findForward(KeyConstants.MODE_MON_CUR);
         }
 
-        MeasurementViewContext context = new MeasurementViewContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf
+        EntityContext context = new EntityContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf
             .getCtype());
 
         try {
@@ -684,7 +684,7 @@ public class IndicatorChartsAction extends DispatchAction {
         // Set the user preferences now
         Subject subject = WebUtility.getSubject(request);
 
-        MeasurementViewContext context = new MeasurementViewContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf
+        EntityContext context = new EntityContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf
             .getCtype());
         viewManager.saveCharts(subject, context, ivf.getView(), data.charts);
     }
@@ -695,7 +695,7 @@ public class IndicatorChartsAction extends DispatchAction {
         Subject subject = WebUtility.getSubject(request);
 
         String doomedView = ivf.getUpdate();
-        MeasurementViewContext context = new MeasurementViewContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf
+        EntityContext context = new EntityContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf
             .getCtype());
         viewManager.deleteView(subject, context, doomedView);
 

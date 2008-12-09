@@ -23,6 +23,7 @@ import java.util.List;
 import javax.ejb.Stateless;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricViewData;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricViewsPreferences;
 
@@ -33,14 +34,14 @@ import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricViewsP
 @Stateless
 public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
 
-    public List<String> getViewNames(Subject user, MeasurementViewContext context) {
+    public List<String> getViewNames(Subject user, EntityContext context) {
         String key = context.getLegacyKey();
         MeasurementPreferences measurementPreferences = new MeasurementPreferences(user);
         MetricViewsPreferences prefs = measurementPreferences.getMetricViews(key);
         return prefs.views;
     }
 
-    public void createView(Subject user, MeasurementViewContext context, String viewName)
+    public void createView(Subject user, EntityContext context, String viewName)
         throws MeasurementViewException {
         String key = context.getLegacyKey();
         MeasurementPreferences measurementPreferences = new MeasurementPreferences(user);
@@ -53,7 +54,7 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         measurementPreferences.persistPreferences();
     }
 
-    public void deleteView(Subject user, MeasurementViewContext context, String viewName) {
+    public void deleteView(Subject user, EntityContext context, String viewName) {
         String key = context.getLegacyKey();
         MeasurementPreferences measurementPreferences = new MeasurementPreferences(user);
         MetricViewsPreferences prefs = measurementPreferences.getMetricViews(key);
@@ -63,7 +64,7 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         measurementPreferences.persistPreferences();
     }
 
-    public List<String> getCharts(Subject user, MeasurementViewContext context, String viewName)
+    public List<String> getCharts(Subject user, EntityContext context, String viewName)
         throws MeasurementViewException {
         try {
             String key = context.getLegacyKey();
@@ -76,7 +77,7 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         }
     }
 
-    public void saveCharts(Subject user, MeasurementViewContext context, String viewName, List<String> charts) {
+    public void saveCharts(Subject user, EntityContext context, String viewName, List<String> charts) {
         String key = context.getLegacyKey();
         MeasurementPreferences measurementPreferences = new MeasurementPreferences(user);
         MetricViewData viewData = new MetricViewData();
@@ -86,7 +87,7 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         measurementPreferences.persistPreferences();
     }
 
-    public void moveChartUp(Subject user, MeasurementViewContext context, String viewName, String viewKey) {
+    public void moveChartUp(Subject user, EntityContext context, String viewName, String viewKey) {
         String key = context.getLegacyKey();
         MeasurementPreferences measurementPreferences = new MeasurementPreferences(user);
         MetricViewData viewData = measurementPreferences.getMetricViewData(key, viewName);
@@ -102,7 +103,7 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         measurementPreferences.persistPreferences();
     }
 
-    public void moveChartDown(Subject user, MeasurementViewContext context, String viewName, String viewKey) {
+    public void moveChartDown(Subject user, EntityContext context, String viewName, String viewKey) {
         String key = context.getLegacyKey();
         MeasurementPreferences measurementPreferences = new MeasurementPreferences(user);
         MetricViewData viewData = measurementPreferences.getMetricViewData(key, viewName);
@@ -118,7 +119,7 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         measurementPreferences.persistPreferences();
     }
 
-    public void addChart(Subject user, MeasurementViewContext context, String viewName, String viewKey) {
+    public void addChart(Subject user, EntityContext context, String viewName, String viewKey) {
         String key = context.getLegacyKey();
         MeasurementPreferences measurementPreferences = new MeasurementPreferences(user);
         MetricViewData viewData = measurementPreferences.getMetricViewData(key, viewName);
@@ -127,7 +128,7 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         measurementPreferences.persistPreferences();
     }
 
-    public void removeChart(Subject user, MeasurementViewContext context, String viewName, String viewKey) {
+    public void removeChart(Subject user, EntityContext context, String viewName, String viewKey) {
         String key = context.getLegacyKey();
         MeasurementPreferences measurementPreferences = new MeasurementPreferences(user);
         MetricViewData viewData = measurementPreferences.getMetricViewData(key, viewName);

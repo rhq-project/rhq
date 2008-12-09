@@ -23,6 +23,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.common.EntityContext;
 
 /**
  * @author Joseph Marques
@@ -31,22 +32,22 @@ import org.rhq.core.domain.auth.Subject;
 @Local
 public interface MeasurementViewManagerLocal {
 
-    List<String> getViewNames(Subject user, MeasurementViewContext context);
+    List<String> getViewNames(Subject user, EntityContext context);
 
-    void createView(Subject user, MeasurementViewContext context, String viewName) throws MeasurementViewException;
+    void createView(Subject user, EntityContext context, String viewName) throws MeasurementViewException;
 
-    void deleteView(Subject user, MeasurementViewContext context, String viewName);
+    void deleteView(Subject user, EntityContext context, String viewName);
 
-    List<String> getCharts(Subject user, MeasurementViewContext context, String viewName)
+    List<String> getCharts(Subject user, EntityContext context, String viewName)
         throws MeasurementViewException;
 
-    void saveCharts(Subject user, MeasurementViewContext context, String viewName, List<String> charts);
+    void saveCharts(Subject user, EntityContext context, String viewName, List<String> charts);
 
-    void moveChartUp(Subject user, MeasurementViewContext context, String viewName, String viewKey);
+    void moveChartUp(Subject user, EntityContext context, String viewName, String viewKey);
 
-    void moveChartDown(Subject user, MeasurementViewContext context, String viewName, String viewKey);
+    void moveChartDown(Subject user, EntityContext context, String viewName, String viewKey);
 
-    void addChart(Subject user, MeasurementViewContext context, String viewName, String viewKey);
+    void addChart(Subject user, EntityContext context, String viewName, String viewKey);
 
-    void removeChart(Subject user, MeasurementViewContext context, String viewName, String viewKey);
+    void removeChart(Subject user, EntityContext context, String viewName, String viewKey);
 }

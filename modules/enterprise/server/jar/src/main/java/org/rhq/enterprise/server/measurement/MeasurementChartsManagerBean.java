@@ -52,6 +52,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
@@ -143,7 +144,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
 
         int[] measurementDefinitionIds;
         try {
-            MeasurementViewContext context = new MeasurementViewContext(-1, -1, parent, type);
+            EntityContext context = new EntityContext(-1, -1, parent, type);
             measurementDefinitionIds = fillDefinitionIdsFromUserPreferences(context, viewName, subject);
         } catch (IllegalArgumentException iae) {
             // If we can't get stuff from preferences, get the defaults.
@@ -175,7 +176,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
          */
         int[] measurementDefinitionIds;
         try {
-            MeasurementViewContext context = new MeasurementViewContext(-1, groupId, -1, -1);
+            EntityContext context = new EntityContext(-1, groupId, -1, -1);
             measurementDefinitionIds = fillDefinitionIdsFromUserPreferences(context, viewName, subject);
         } catch (IllegalArgumentException iae) {
             // If we can't get stuff from preferences, get the defaults.
@@ -196,7 +197,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
     /**
      * Get the definition ids (for groups) from the metrics stored in the preferences, which are separated by a vertical bar.
      */
-    private int[] fillDefinitionIdsFromUserPreferences(MeasurementViewContext context, String viewName, Subject subject) {
+    private int[] fillDefinitionIdsFromUserPreferences(EntityContext context, String viewName, Subject subject) {
         List<String> charts;
         try {
             charts = viewManager.getCharts(subject, context, viewName);

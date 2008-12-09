@@ -16,13 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.measurement;
-
+package org.rhq.enterprise.server.common;
 
 /**
  * @author Joseph Marques
  */
-public class MeasurementViewContext {
+public class EntityContext {
 
     public enum Category {
         Resource, // 
@@ -37,7 +36,7 @@ public class MeasurementViewContext {
     public final int parentResourceId;
     public final int resourceTypeId;
 
-    public MeasurementViewContext(Integer resourceId, Integer groupId, Integer parentResourceId, Integer resourceTypeId) {
+    public EntityContext(Integer resourceId, Integer groupId, Integer parentResourceId, Integer resourceTypeId) {
         int rId = (resourceId != null && resourceId > 0) ? resourceId : -1;
         int gId = (groupId != null && groupId > 0) ? groupId : -1;
         int prId = (parentResourceId != null && parentResourceId > 0) ? parentResourceId : -1;
@@ -59,8 +58,8 @@ public class MeasurementViewContext {
                 category = Category.AutoGroup;
             }
         } else {
-            throw new IllegalArgumentException("Unknown or unsupported " + MeasurementViewContext.class.getSimpleName()
-                + " '" + this + "'");
+            throw new IllegalArgumentException("Unknown or unsupported " + EntityContext.class.getSimpleName() + " '"
+                + this + "'");
         }
     }
 
@@ -78,8 +77,8 @@ public class MeasurementViewContext {
     }
 
     public String toString() {
-        return MeasurementViewContext.class.getSimpleName() + "[category=" + category + ",resourceId =" + resourceId
-            + "," + "groupId =" + groupId + "," + "parentResourceId =" + parentResourceId + "," + "resourceTypeId ="
+        return EntityContext.class.getSimpleName() + "[category=" + category + ",resourceId =" + resourceId + ","
+            + "groupId =" + groupId + "," + "parentResourceId =" + parentResourceId + "," + "resourceTypeId ="
             + resourceTypeId + "]";
     }
 }

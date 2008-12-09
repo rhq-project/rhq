@@ -35,7 +35,7 @@ import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.exception.ParameterNotFoundException;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
-import org.rhq.enterprise.server.measurement.MeasurementViewContext;
+import org.rhq.enterprise.server.common.EntityContext;
 
 /**
  * Utilities for the web tier. Named such so as not to clash with
@@ -218,13 +218,13 @@ public abstract class WebUtility {
         return mode;
     }
 
-    public static MeasurementViewContext getContext(HttpServletRequest request) {
+    public static EntityContext getContext(HttpServletRequest request) {
         int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
         int groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
         int parentResourceId = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
         int resourceTypeId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_TYPE_ID_PARAM,
             -1);
 
-        return new MeasurementViewContext(resourceId, groupId, parentResourceId, resourceTypeId);
+        return new EntityContext(resourceId, groupId, parentResourceId, resourceTypeId);
     }
 }

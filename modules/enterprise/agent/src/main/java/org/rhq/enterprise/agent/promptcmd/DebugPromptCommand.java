@@ -141,9 +141,11 @@ public class DebugPromptCommand implements AgentPromptCommand {
                     //       (introduced in Java 6) here instead.
                     ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
                     long[] allIds = threadMXBean.getAllThreadIds();
-                    ThreadInfo[] allInfo = threadMXBean.getThreadInfo(allIds, Integer.MAX_VALUE);
+                    ThreadInfo[] allInfo = threadMXBean.getThreadInfo(allIds, 256);
                     for (ThreadInfo threadInfo : allInfo) {
-                        out.println(threadInfo);
+                        if (threadInfo != null) {
+                            out.println(threadInfo);
+                        }
                     }
                 } catch (Exception e) {
                     out.println(MSG.getMsg(AgentI18NResourceKeys.DEBUG_CANNOT_DUMP_THREADS, ThrowableUtil

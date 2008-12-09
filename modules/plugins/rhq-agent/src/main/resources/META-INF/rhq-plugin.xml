@@ -610,6 +610,23 @@
 
       </service>
 
+      <service name="Environment Setup Script"
+               description="The agent startup script that sets up the agent environment"
+               discovery="AgentEnvironmentScriptDiscoveryComponent"
+               class="AgentEnvironmentScriptComponent"
+               singleton="true">
+         <plugin-configuration>
+            <c:simple-property name="Pathname" type="file" description="The full path to the script" required="true"/>
+         </plugin-configuration>
+         <resource-configuration>
+            <c:list-property name="environmentVariables" description="Environment variables that are set when starting the RHQ Agent JVM process">
+               <c:map-property name="environmentVariable">
+                  <c:simple-property name="name" type="string" required="true" summary="true"/>
+                  <c:simple-property name="value" type="string" required="true" summary="true"/>
+               </c:map-property>
+            </c:list-property>
+         </resource-configuration>
+      </service>
    </server>
 
 </plugin>

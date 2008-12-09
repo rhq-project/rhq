@@ -54,13 +54,25 @@ public abstract class EnvironmentScriptFileUpdate {
     /**
      * Factory method that creates an update object that is appropriate
      * to update the given file.
-     *  
+     * This creates update options for files that have these extensions:
+     *
+     * <ul>
+     * <li>.conf/inc = {@link JavaServiceWrapperConfigurationFileUpdate}</li>
+     * <li>.env = {@link JavaServiceWrapperEnvironmentScriptFileUpdate}</li>
+     * <li>.bat/cmd = {@link WindowsEnvironmentScriptFileUpdate}</li>
+     * <li>anything else = {@link UnixEnvironmentScriptFileUpdate}</li>
+     * </ul>
+     * 
      * @param location location of the script file
      * 
      * @return the update object that is appropriate to update the file
      */
     public static EnvironmentScriptFileUpdate create(String location) {
-        if (location.endsWith(".bat") || location.endsWith(".cmd")) {
+        if (location.endsWith(".env")) {
+            return new JavaServiceWrapperEnvironmentScriptFileUpdate(location);
+        } else if (location.endsWith(".inc") || location.endsWith(".conf")) {
+            return new JavaServiceWrapperConfigurationFileUpdate(location);
+        } else if (location.endsWith(".bat") || location.endsWith(".cmd")) {
             return new WindowsEnvironmentScriptFileUpdate(location);
         } else {
             return new UnixEnvironmentScriptFileUpdate(location);
@@ -130,46 +142,53 @@ public abstract class EnvironmentScriptFileUpdate {
         Properties settingsToUpdate = new Properties();
         settingsToUpdate.putAll(newValues);
 
-        // load these in so we don't have to parse out the =value ourselves
-        Properties existing = loadExisting();
-
-        // Immediately eliminate new settings whose values are the same as the existing properties.
-        // Once we finish this, we are assured all new properties are always different than existing properties.
-        for (Map.Entry<Object, Object> entry : newValues.entrySet()) {
-            if (entry.getValue().equals(existing.get(entry.getKey()))) {
-                settingsToUpdate.remove(entry.getKey());
-            }
-        }
-
-        // Now go line-by-line in the script file, updating name=value settings as we go along.
-        // When we get to the end of the existing file, append any new settings that didn't exist before.
+        // prepare the in-memory buffer where we will store the new file contents.
+        // yes this means we expect to load the entire file contents in memory, but these
+        // files are very small and this should not be a problem.
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(baos, true);
-        InputStreamReader isr = new InputStreamReader(new FileInputStream(file));
-        BufferedReader in = new BufferedReader(isr);
 
-        for (String line = in.readLine(); line != null; line = in.readLine()) {
-            String[] nameValue = parseEnvironmentVariableLine(line);
+        if (file.exists()) {
+            // load these in so we don't have to parse out the =value ourselves
+            Properties existing = loadExisting();
 
-            // echo lines that are not name=value settings;
-            // this includes blank lines, comments, etc
-            if (nameValue == null) {
-                out.println(line);
-            } else {
-                String existingKey = nameValue[0];
-                if (!settingsToUpdate.containsKey(existingKey)) {
-                    if (!deleteMissing || newValues.getProperty(existingKey) != null) {
-                        out.println(line); // property that is not being updated or removed; leave it alone and write it out as-is
-                    }
-                } else {
-                    out.println(createEnvironmentVariableLine(existingKey, settingsToUpdate.getProperty(existingKey)));
-                    settingsToUpdate.remove(existingKey); // done with it so we can remove it from our copy
+            // Immediately eliminate new settings whose values are the same as the existing properties.
+            // Once we finish this, we are assured all new properties are always different than existing properties.
+            for (Map.Entry<Object, Object> entry : newValues.entrySet()) {
+                if (entry.getValue().equals(existing.get(entry.getKey()))) {
+                    settingsToUpdate.remove(entry.getKey());
                 }
             }
-        }
 
-        // done reading the file, we can close it now
-        in.close();
+            // Now go line-by-line in the script file, updating name=value settings as we go along.
+            // When we get to the end of the existing file, append any new settings that didn't exist before.
+            InputStreamReader isr = new InputStreamReader(new FileInputStream(file));
+            BufferedReader in = new BufferedReader(isr);
+
+            for (String line = in.readLine(); line != null; line = in.readLine()) {
+                String[] nameValue = parseEnvironmentVariableLine(line);
+
+                // echo lines that are not name=value settings;
+                // this includes blank lines, comments, etc
+                if (nameValue == null) {
+                    out.println(line);
+                } else {
+                    String existingKey = nameValue[0];
+                    if (!settingsToUpdate.containsKey(existingKey)) {
+                        if (!deleteMissing || newValues.getProperty(existingKey) != null) {
+                            out.println(line); // property that is not being updated or removed; leave it alone and write it out as-is
+                        }
+                    } else {
+                        out.println(createEnvironmentVariableLine(existingKey, settingsToUpdate
+                            .getProperty(existingKey)));
+                        settingsToUpdate.remove(existingKey); // done with it so we can remove it from our copy
+                    }
+                }
+            }
+
+            // done reading the file, we can close it now
+            in.close();
+        }
 
         // append to the output any new properties that did not exist before
         for (Map.Entry<Object, Object> entry : settingsToUpdate.entrySet()) {
@@ -190,7 +209,8 @@ public abstract class EnvironmentScriptFileUpdate {
 
     /**
      * Loads and returns the properties that exist currently in the properties file.
-     *
+     * If the file does not exist, an empty set of properties is returned.
+     * 
      * @return properties that exist in the properties file
      *
      * @throws IOException

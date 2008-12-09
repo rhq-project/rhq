@@ -11,8 +11,7 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
-      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
-      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax">
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
       
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
@@ -136,7 +135,10 @@
                         <onc:selectCommandButton action="#{ResourceOperationPendingHistoryUIBean.cancel}"
                                                  value="CANCEL SELECTED" target="pendingSelectedItems" styleClass="on-pager-button buttonsmall"/>
 
-
+                        <ui:param name="paginationDataTableName" value="resourceOperationPendingHistoryDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{resourceOperationPendingHistoryDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ResourceOperationPendingHistory}"/>
+                        <ui:include src="../include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>
                </f:facet>

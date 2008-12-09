@@ -13,14 +13,14 @@
       xmlns:onf="http://jboss.org/on/function"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax" 
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
-
+      
 <ui:composition template="/rhq/resource/layout/main.xhtml">
-
+       
     <ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Events History" />
     <ui:param name="selectedTabName" value="Events.History" />
 
     <ui:define name="content">
-        <h:form>
+        <a4j:form ajaxSubmit="true">
             <input type="hidden" name="id" value="${param.id}" />
 
             <rich:panel>
@@ -30,16 +30,19 @@
 
                 <table width="100%">
                     <tr>
-                        <td width="33%"><h:outputText value="Severity:" /> <h:selectOneMenu id="sevFilter"
-                            value="#{EventHistoryUIBean.sevFilter}">
-                            <f:selectItem itemValue="ALL" />
-                            <f:selectItem itemValue="DEBUG" />
-                            <f:selectItem itemValue="INFO" />
-                            <f:selectItem itemValue="WARN" />
-                            <f:selectItem itemValue="ERROR" />
-                            <f:selectItem itemValue="FATAL" />
-                            <a4j:support event="onchange" reRender="eventHistoryDataTable" />
-                        </h:selectOneMenu></td>
+                        <td width="33%">
+                            <h:outputText value="Severity:" /> 
+                            <h:selectOneMenu id="sevFilter"
+                                          value="#{EventHistoryUIBean.sevFilter}">
+                                <f:selectItem itemValue="ALL" />
+                                <f:selectItem itemValue="DEBUG" />
+                                <f:selectItem itemValue="INFO" />
+                                <f:selectItem itemValue="WARN" />
+                                <f:selectItem itemValue="ERROR" />
+                                <f:selectItem itemValue="FATAL" />
+                                <a4j:support event="onchange" reRender="eventHistoryDataTable" />
+                            </h:selectOneMenu>
+                        </td>
 
                         <td width="33%">
                             <h:outputText value="Source:" /> 
@@ -102,13 +105,16 @@
                     <h:outputText value="#{item.sourceLocation}" />
                 </rich:column>
 
-                <rich:column>
+                <rich:column>                    
                     <f:facet name="header">
                         <h:outputText styleClass="headerText" value="Detail" />
                     </f:facet>
-                    <span onclick="alert('hello');" onmouseover="this.style.textDecoration='underline'; this.style.cursor='pointer';" onmouseout="this.style.textDecoration='none';">
+                    
+                    <h:outputLink>
+                        <f:param name="id" value="${param.id}" />
+                        <f:param name="eventId" value="#{item.eventId}" />
                         <h:outputText value="#{onf:trimString(item.eventDetail,160)}" />
-                    </span>
+                    </h:outputLink>
                 </rich:column>
 
                 <rich:column>
@@ -133,22 +139,25 @@
             </rich:dataTable>
             
             <br />
-            
-            <rich:panel>
-                
-                <f:facet name="header">
-                    <h:outputText value="${msg['resource.common.monitor.events.DetailsHeader']}" />
-                </f:facet>
-                
-                <h:outputText value="Source:" />
+        </a4j:form>
+        
+        <h:outputText value="#{EventHistoryUIBean.eventInfo}" />
+        
+        <rich:panel id="eventDetailPanel" rendered="#{param.eventId gt 0}">
+            <f:facet name="header">
+                <h:outputText value="${msg['resource.common.monitor.events.DetailsHeader']}" />
+            </f:facet>
+            <p>
+                <b>Source:</b>
+                <h:outputText value="#{EventHistoryUIBean.eventSource}" />
+            </p>
+        
+            <p>
+                <b>Event Detail:</b>
                 <br />
-                <h:outputText value="Detail:" />
-            </rich:panel>
-            
-        </h:form>
-
+                <h:outputText value="#{EventHistoryUIBean.eventDetails}" />
+            </p>
+        </rich:panel>
     </ui:define>
-
 </ui:composition>
-
 </html>

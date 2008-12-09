@@ -20,9 +20,6 @@ package org.rhq.enterprise.gui.event;
 
 import javax.faces.model.DataModel;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -39,14 +36,14 @@ import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangeP
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class EventHistoryUIBean extends PagedDataTableUIBean {
-    private static final Log log = LogFactory.getLog(EventHistoryUIBean.class);
-
     public static final String MANAGED_BEAN_NAME = "EventHistoryUIBean";
 
     private int id;
     private EventSeverity sevFilter;
     private String sourceFilter;
     private String searchString;
+    private String eventSource;
+    private String eventDetails;
 
     public int getId() {
         return this.id;
@@ -80,6 +77,26 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
         this.searchString = searchString;
     }
 
+    public int getEventId() {
+        return FacesContextUtility.getOptionalRequestParameter("eventId", Integer.class, -1);
+    }
+
+    public String getEventSource() {
+        return this.eventSource;
+    }
+
+    public String getEventDetails() {
+        return this.eventDetails;
+    }
+
+    private void setEventDetails(String eventDetails) {
+        this.eventDetails = eventDetails;
+    }
+
+    private void setEventSource(String eventSource) {
+        this.eventSource = eventSource;
+    }
+
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
@@ -97,16 +114,23 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
         public PageList<EventComposite> fetchPage(PageControl pc) {
 
             EventManagerLocal manager = LookupUtil.getEventManager();
-
             WebUser user = EnterpriseFacesContextUtility.getWebUser();
             MeasurementPreferences preferences = user.getMeasurementPreferences();
             MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
-
             int eventId = FacesContextUtility.getOptionalRequestParameter("eventId", Integer.class, -1);
-
             PageList<EventComposite> results = manager.getEvents(getSubject(), new int[] { getResource().getId() },
                 rangePreferences.begin, rangePreferences.end, sevFilter, eventId, getSourceFilter(), searchString, pc);
             return results;
         }
+    }
+
+    public String getEventInfo() {
+        int eventId = FacesContextUtility.getOptionalRequestParameter("eventId", Integer.class, -1);
+        EventManagerLocal manager = LookupUtil.getEventManager();
+        EventComposite eventComposite = manager.getEventDetailForEventId(getSubject(), eventId);
+        this.setEventDetails(eventComposite.getEventDetail());
+        this.setEventSource(eventComposite.getSourceLocation());
+        return "";
+
     }
 }

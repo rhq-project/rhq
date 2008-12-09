@@ -33,35 +33,33 @@ public class EnvironmentScriptFileUpdateTest {
         assert file.delete() : "could not delete our tmp file - this test needs a missing file";
         assert !file.exists() : "how is this still here? this test needs a missing file";
 
-        try {
-            EnvironmentScriptFileUpdate up = EnvironmentScriptFileUpdate.create(file.getAbsolutePath());
-            assert !file.exists() : "should not have created the file yet: " + file;
-            assert up.loadExisting().size() == 0 : "There should not be any existing settings: " + file;
+        EnvironmentScriptFileUpdate up = EnvironmentScriptFileUpdate.create(file.getAbsolutePath());
+        assert !file.exists() : "should not have created the file yet: " + file;
+        assert up.loadExisting().size() == 0 : "There should not be any existing settings: " + file;
 
-            up.update("one", "one value");
-            assert file.exists() : "file should be created now: " + file;
-            assert file.length() > 0 : "file should have something in it: " + file;
-            Properties existing = up.loadExisting();
-            assert existing.size() == 1 : "There should 1 setting now: " + file;
-            assert existing.getProperty("one").equals("one value") : "Bad one setting: " + file;
+        up.update("one", "one value");
+        assert file.exists() : "file should be created now: " + file;
+        assert file.length() > 0 : "file should have something in it: " + file;
+        Properties existing = up.loadExisting();
+        assert existing.size() == 1 : "There should 1 setting now: " + file;
+        assert existing.getProperty("one").equals("one value") : "Bad one setting: " + file;
 
-            assert file.delete() : "could not delete - this test needs a missing file again: " + file;
-            assert !file.exists() : "could not delete - this test needs a missing file: " + file;
+        assert file.delete() : "could not delete - this test needs a missing file again: " + file;
+        assert !file.exists() : "could not delete - this test needs a missing file: " + file;
 
-            existing.put("two", "two value");
-            existing.put("three", "three value");
-            existing.remove("one");
-            up.update(existing, false);
-            assert file.exists() : "file should be created again: " + file;
-            assert file.length() > 0 : "file should have something in it again: " + file;
-            existing = up.loadExisting();
-            assert existing.size() == 2 : "There should be 2 settings now: " + file;
-            assert existing.getProperty("two").equals("two value") : "Bad two setting: " + file;
-            assert existing.getProperty("three").equals("three value") : "Bad three setting: " + file;
-        } finally {
-            if (DELETE_TEST_FILES_ON_SUCCESS) {
-                file.delete();
-            }
+        existing.put("two", "two value");
+        existing.put("three", "three value");
+        existing.remove("one");
+        up.update(existing, false);
+        assert file.exists() : "file should be created again: " + file;
+        assert file.length() > 0 : "file should have something in it again: " + file;
+        existing = up.loadExisting();
+        assert existing.size() == 2 : "There should be 2 settings now: " + file;
+        assert existing.getProperty("two").equals("two value") : "Bad two setting: " + file;
+        assert existing.getProperty("three").equals("three value") : "Bad three setting: " + file;
+
+        if (DELETE_TEST_FILES_ON_SUCCESS) {
+            file.delete();
         }
     }
 

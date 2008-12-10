@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>1.1.2.GA</version>
+    <version>1.1.2.SP1</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
   <description>RHQ enterprise server plugins parent POM</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_2_GA/modules/enterprise/server/plugins</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_2_GA/modules/enterprise/server/plugins</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_2_SP1/modules/enterprise/server/plugins</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_2_SP1/modules/enterprise/server/plugins</developerConnection>
   </scm>
 
   <properties>

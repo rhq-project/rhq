@@ -31,10 +31,10 @@
          <input type="hidden" name="groupId" value="${param.groupId}"/>
          <input type="hidden" name="category" value="#{param.category}" />
       
-        <rich:panel>
+        <rich:panel styleClass="BlockContent">
             <f:facet name="header">In Progress Operations</f:facet>
             
-            <h:panelGrid columns="1" width="100%" style="min-width: 800px;">
+            <h:panelGrid columns="1" styleClass="data-table">
             
             <ui:param name="resourceGroupOperationPendingHistoryDataModel" value="#{ResourceGroupOperationPendingHistoryUIBean.dataModel}"/>
             
@@ -49,6 +49,7 @@
                             var="pendingItem"
                             width="100%"
                             columnsWidth="1%, 20%, 20%, 20%, 20%, 19%"
+                            styleClass="resources-table"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
                             
@@ -157,10 +158,10 @@
          <input type="hidden" name="groupId" value="${param.groupId}"/>
          <input type="hidden" name="category" value="#{param.category}" />
             
-         <rich:panel>
+         <rich:panel styleClass="BlockContent">
             <f:facet name="header">Completed Operations</f:facet>
             
-            <h:panelGrid columns="1" width="100%" style="min-width: 800px;">
+            <h:panelGrid columns="1" styleClass="data-table">
 
             <ui:param name="resourceGroupOperationCompletedHistoryDataModel" value="#{ResourceGroupOperationCompletedHistoryUIBean.dataModel}"/>
             
@@ -179,6 +180,7 @@
                             width="100%"
                             columnsWidth="1%, 17%, 17%, 17%, 17%, 16%, 16%"
                             rowKeyVar="rowIndex"
+                            styleClass="resources-table"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
                             

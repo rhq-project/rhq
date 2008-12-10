@@ -30,7 +30,7 @@
          <h:outputText value="&lt; Return to Operation Schedules"/>
       </h:outputLink>
          
- 	  <rich:panel>
+ 	  <rich:panel styleClass="BlockContent">
 	     <f:facet name="header">General Info</f:facet>
 	     <table>
 	        <tr>
@@ -54,7 +54,7 @@
 	     </table>
 	  </rich:panel>
          
-	  <rich:panel>
+	  <rich:panel styleClass="BlockContent">
 	     <f:facet name="header">Parameters</f:facet>
 	     <onc:config configurationDefinition="#{ResourceGroupOperationScheduleDetailsUIBean.parameters.configurationDefinition}"
                      configuration="#{ResourceGroupOperationScheduleDetailsUIBean.parameters.configuration}"
@@ -64,7 +64,7 @@
                      nullConfigurationStyle="InfoBlock"/>
       </rich:panel>
         
-      <rich:panel>
+      <rich:panel styleClass="BlockContent">
          <f:facet name="header">
             <h:outputText value="Resource Operation Order"/>
          </f:facet>
@@ -90,7 +90,7 @@
          </h:panelGrid> 
       </rich:panel>
          
-      <rich:panel>
+      <rich:panel styleClass="BlockContent">
          <f:facet name="header">Schedule Details</f:facet>
          <onc:simpleTrigger binding="#{ResourceGroupOperationScheduleDetailsUIBean.trigger}" 
                             renderType="classic"

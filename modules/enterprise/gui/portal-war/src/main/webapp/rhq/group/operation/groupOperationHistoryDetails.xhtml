@@ -45,7 +45,7 @@
              <h:outputText value="&lt; Return to Operation History"/>
           </h:outputLink>
             
- 	      <rich:panel>
+ 	      <rich:panel styleClass="BlockContent">
 	         <f:facet name="header">Details</f:facet>
 	         <table>
 	            <tr>
@@ -91,7 +91,7 @@
 	         </table>
 	      </rich:panel>
 	      
-	      <rich:panel>
+	      <rich:panel styleClass="BlockContent">
 	         <f:facet name="header">Parameters</f:facet>
              <onc:config configurationDefinition="#{ResourceGroupOperationHistoryDetailsUIBean.parameters.configurationDefinition}"
                          configuration="#{ResourceGroupOperationHistoryDetailsUIBean.parameters.configuration}"
@@ -101,10 +101,10 @@
                          nullConfigurationStyle="InfoBlock"/>
 	      </rich:panel>
 
-          <rich:panel>
+          <rich:panel styleClass="BlockContent">
             <f:facet name="header">Resource Operation Results</f:facet>
             
-            <h:panelGrid columns="1" width="100%" style="min-width: 800px;">
+            <h:panelGrid columns="1" styleClass="data-table">
             
             <ui:param name="resourceGroupOperationHistoryDetailsDataModel" value="#{ResourceGroupOperationHistoryDetailsUIBean.dataModel}"/>
             

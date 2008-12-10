@@ -31,11 +31,11 @@
       <h:form id="pendingForm">
          <input type="hidden" name="id" value="${param.id}"/>
       
-        <rich:panel>
+        <rich:panel styleClass="BlockContent">
             <f:facet name="header">In Progress Operations</f:facet>
-            
-            <h:panelGrid columns="1" width="100%" style="min-width: 800px;">
-            
+
+            <h:panelGrid columns="1" styleClass="data-table">
+
             <ui:param name="resourceOperationPendingHistoryDataModel" value="#{ResourceOperationPendingHistoryUIBean.dataModel}"/>
 
             <a4j:poll id="resourceOperationPendingHistoryDataTableReRenderer"
@@ -49,6 +49,7 @@
                             var="pendingItem"
                             width="100%"
                             columnsWidth="1%, 15%, 15%, 20%, 30%, 19%"
+                            styleClass="resources-table"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
                             
@@ -129,7 +130,7 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="6" width="100%">
+                     <rich:column colspan="6">
                         <onc:selectCommandButton action="#{ResourceOperationPendingHistoryUIBean.cancel}"
                                                  value="CANCEL SELECTED" target="pendingSelectedItems" styleClass="on-pager-button buttonsmall"/>
 
@@ -142,8 +143,8 @@
                </f:facet>
                
                </rich:dataTable>
-
-            </h:panelGrid>
+               
+               </h:panelGrid>
 
          </rich:panel>
       </h:form>
@@ -155,10 +156,10 @@
       <h:form id="historyForm">
          <input type="hidden" name="id" value="${param.id}"/>
             
-         <rich:panel>
+         <rich:panel styleClass="BlockContent">
             <f:facet name="header">Completed Operations</f:facet>
             
-            <h:panelGrid columns="1" width="100%" style="min-width: 800px;">
+            <h:panelGrid columns="1" width="100%" styleClass="data-table">
 
             <ui:param name="resourceOperationCompletedHistoryDataModel" value="#{ResourceOperationCompletedHistoryUIBean.dataModel}"/>
             
@@ -176,6 +177,7 @@
                             width="100%"
                             columnsWidth="1%, 12%, 12%, 17%, 37%, 11%, 11%"
                             rowKeyVar="rowIndex"
+                            styleClass="resources-table"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
                             

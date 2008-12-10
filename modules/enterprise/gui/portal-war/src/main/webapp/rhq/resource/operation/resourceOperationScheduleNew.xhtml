@@ -31,10 +31,10 @@
             <input type="hidden" name="opId" value="#{param.opId}" />
          </c:if>
       
-        <rich:panel>
+        <rich:panel styleClass="BlockContent">
             <f:facet name="header">Supported Operations</f:facet>
             
-            <h:panelGrid columns="1" width="90%" style="min-width: 800px;">
+            <h:panelGrid columns="1" styleClass="data-table">
             
             <rich:dataTable binding="#{ResourceOperationDefinitionUIBean.dataTable}"
                             id="resourceOperationDefinitionDataTable" 
@@ -43,6 +43,7 @@
                             var="item"
                             width="100%"
                             columnsWidth="35%, 65%"
+                            styleClass="resources-table"
                             headerClass="tableRowHeader">
 
                <f:facet name="PageControlView">
@@ -83,7 +84,7 @@
                   </h:outputLink>
                   
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="od.description">
@@ -98,8 +99,8 @@
 
             </h:panelGrid>
          </rich:panel>
-         
-         <rich:panel rendered="#{not empty param.opId}">
+
+         <rich:panel rendered="#{not empty param.opId}"  styleClass="BlockContent">
             <f:facet name="header">
                <h:outputText value="Operation Parameters"/>
             </f:facet>
@@ -110,17 +111,8 @@
                         nullConfigurationMessage="#{OperationDefinitionParametersUIBean.nullConfigurationMessage}"
                         nullConfigurationStyle="InfoBlock"/>
          </rich:panel>
-         
-         <rich:panel rendered="#{not empty param.opId}">
-            <f:facet name="header">
-               <h:outputText value="Operation Schedule Details"/>
-            </f:facet>
-            <!-- bug in rich:panel renders children even if the panel isn't rendered -->
-            <onc:simpleTrigger binding="#{ResourceOperationScheduleUIBean.trigger}" 
-                               renderType="classic" />
-         </rich:panel>
-         
-         <rich:panel rendered="#{not empty param.opId}"> 
+
+         <rich:panel rendered="#{not empty param.opId}"  styleClass="BlockContent"> 
             <f:facet name="header">
                <h:outputText value="Other Options"/>
             </f:facet>
@@ -137,16 +129,25 @@
                <h:outputText value="Optional notes about the scheduled operation" />            
             </h:panelGrid>
          </rich:panel>
-         
-         <h:panelGrid rendered="#{not empty param.opId}"
-                      columns="3" cellspacing="3"
-                      styleClass="buttons-table" columnClasses="button-cell">
-            <h:commandButton action="#{ResourceOperationScheduleUIBean.schedule}" value="SCHEDULE" styleClass="buttonmed"
-                             rendered="#{ResourceUIBean.permissions.control}"/>
-            <h:outputText value="Sorry, you do not have permission to execute or schedule operations against this resource"
-                          styleClass="InfoBlock"
-                          rendered="#{!ResourceUIBean.permissions.control}"/>              
-         </h:panelGrid>
+
+         <rich:panel rendered="#{not empty param.opId}"  styleClass="BlockContent">
+            <f:facet name="header">
+               <h:outputText value="Operation Schedule Details"/>
+            </f:facet>
+            <!-- bug in rich:panel renders children even if the panel isn't rendered -->
+            <onc:simpleTrigger binding="#{ResourceOperationScheduleUIBean.trigger}" 
+                               renderType="classic" />
+            <hr  />
+            <h:panelGrid rendered="#{not empty param.opId}"
+                         columns="2" cellspacing="3"
+                         styleClass="buttons-table" columnClasses="button-cell">
+               <h:commandButton action="#{ResourceOperationScheduleUIBean.schedule}" value="SCHEDULE" styleClass="buttonmed"
+                                rendered="#{ResourceUIBean.permissions.control}"/>
+               <h:outputText value="Sorry, you do not have permission to execute or schedule operations against this resource"
+                             styleClass="InfoBlock"
+                             rendered="#{!ResourceUIBean.permissions.control}"/>
+            </h:panelGrid>
+         </rich:panel>
 
       </h:form>
 

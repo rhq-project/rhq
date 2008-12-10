@@ -24,10 +24,10 @@
          <input type="hidden" name="id" value="${param.id}"/>
          
          <!-- Operation Schedule Table -->
-         <rich:panel>
+         <rich:panel styleClass="BlockContent">
             <f:facet name="header">Resource Operation Schedules</f:facet>
             
-            <h:panelGrid columns="1" width="90%" style="min-width: 800px;">
+            <h:panelGrid columns="1" styleClass="data-table">
 
             <ui:param name="resourceOperationScheduleDataModel" value="#{ResourceOperationScheduleUIBean.dataModel}"/>
             <rich:dataTable binding="#{ResourceOperationScheduleUIBean.dataTable}"
@@ -37,6 +37,7 @@
                             var="item"
                             width="100%"
                             columnsWidth="1%, 30%, 39%, 30%"
+                            styleClass="resources-table"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
                             
@@ -97,11 +98,6 @@
 
             </rich:dataTable>
 
-            </h:panelGrid>
-
-            <h:panelGrid columns="1" width="90%" style="min-width: 800px;">
-               <h:panelGrid columns="2" cellspacing="3">
-               </h:panelGrid>
             </h:panelGrid>
 
          </rich:panel>

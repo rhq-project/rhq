@@ -42,7 +42,7 @@
              <h:outputText value="&lt; Return to Operation History"/>
           </h:outputLink>
             
- 	      <rich:panel>
+ 	      <rich:panel styleClass="BlockContent">
 	         <f:facet name="header">Details</f:facet>
 	         <table>
 	            <tr>
@@ -88,7 +88,7 @@
 	         </table>
 	      </rich:panel>
 	      
-	      <rich:panel>
+	      <rich:panel styleClass="BlockContent">
 	         <f:facet name="header">Parameters</f:facet>
             <onc:config configurationDefinition="#{ResourceOperationHistoryDetailsUIBean.parameters.configurationDefinition}"
                         configuration="#{ResourceOperationHistoryDetailsUIBean.parameters.configuration}"
@@ -98,7 +98,7 @@
                         nullConfigurationStyle="InfoBlock"/>
 	      </rich:panel>
 
-	      <rich:panel>
+	      <rich:panel styleClass="BlockContent">
 	         <f:facet name="header">Results</f:facet>
             <onc:config configurationDefinition="#{ResourceOperationHistoryDetailsUIBean.results.configurationDefinition}"
                         configuration="#{ResourceOperationHistoryDetailsUIBean.results.configuration}"

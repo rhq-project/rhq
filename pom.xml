@@ -320,7 +320,7 @@
            <artifactId>maven-release-plugin</artifactId>
            <!-- WARNING: Do *not* upgrade to a version later than 2.0-beta-6 until 
                          http://jira.codehaus.org/browse/MRELEASE-300 has been fixed! -->
-           <version>2.0-beta-6</version>
+           <version>2.0-beta-8</version>
          </plugin>
          <plugin>                
            <artifactId>maven-resources-plugin</artifactId>

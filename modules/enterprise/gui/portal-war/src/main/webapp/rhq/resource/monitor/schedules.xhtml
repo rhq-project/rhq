@@ -24,12 +24,12 @@
       <h:form id="resourceSchedulesForm">
          <input type="hidden" name="id" value="${param.id}"/>
          
-         <rich:panel>
+         <rich:panel styleClass="BlockContent">
             <f:facet name="header">
                <h:outputText value="Configure Metric Collection Schedules"/>
             </f:facet>
 
-            <h:panelGrid columns="1" width="100%">
+            <h:panelGrid columns="1" styleClass="data-table">
 
             <ui:param name="resourceSchedulesDataModel" value="#{ListResourceMeasurementScheduleUIBean.dataModel}"/>
             <rich:dataTable binding="#{ListResourceMeasurementScheduleUIBean.dataTable}"
@@ -39,6 +39,7 @@
                             var="item"
                             width="100%"
                             columnsWidth="1%, 20%, 30%, 20%, 9%, 20%"
+                            styleClass="resources-table"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 

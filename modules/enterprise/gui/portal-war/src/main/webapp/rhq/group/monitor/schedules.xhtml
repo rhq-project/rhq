@@ -24,12 +24,12 @@
       <h:form id="resourceGroupSchedulesForm">
          <input type="hidden" name="groupId" value="${param.groupId}"/>
          
-         <rich:panel>
+         <rich:panel styleClass="BlockContent">
             <f:facet name="header">
                <h:outputText value="Configure Metric Collection Schedules"/>
             </f:facet>
 
-            <h:panelGrid columns="1" width="100%">
+            <h:panelGrid columns="1" styleClass="data-table">
 
             <ui:param name="resourceGroupSchedulesDataModel" value="#{ListResourceGroupMeasurementScheduleUIBean.dataModel}"/>
             <rich:dataTable binding="#{ListResourceGroupMeasurementScheduleUIBean.dataTable}"
@@ -39,6 +39,7 @@
                             var="item"
                             width="100%"
                             columnsWidth="1%, 20%, 30%, 20%, 9%, 20%"
+                            styleClass="resources-table"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 
@@ -98,7 +99,7 @@
 
                <f:facet name="footer" rendered="false">
                   <rich:columnGroup>
-                     <rich:column colspan="6">
+                     <rich:column colspan="#{resourceGroupSchedulesDataTable.columns}">
                         <h:panelGrid columns="4">
                            <onc:selectCommandButton action="#{ListResourceGroupMeasurementScheduleUIBean.disableSelected}"
                                                     value="DISABLE" target="selectedResourceGroupSchedules" 

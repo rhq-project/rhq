@@ -21,12 +21,12 @@
       <h:form id="alertDefinitionsListForm">
          <input type="hidden" name="id" value="${param.id}"/>
          
-         <rich:panel>
+         <rich:panel styleClass="BlockContent">
             <f:facet name="header">
                <h:outputText value="Alert Definitions"/>
             </f:facet>
 
-            <h:panelGrid columns="1" width="100%">
+            <h:panelGrid columns="1" styleClass="data-table">
 
             <ui:param name="alertDefinitionsDataModel" value="#{ListAlertDefinitionsUIBean.dataModel}"/>
             <rich:dataTable binding="#{ListAlertDefinitionsUIBean.dataTable}"
@@ -36,6 +36,7 @@
                             var="item"
                             width="100%"
                             columnsWidth="1%, 25%, 30%, 20%, 12%, 12%"
+                            styleClass="resources-table"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 

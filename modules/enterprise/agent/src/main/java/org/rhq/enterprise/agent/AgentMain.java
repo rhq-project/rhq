@@ -1330,9 +1330,9 @@ public class AgentMain {
 
                         String cause = ThrowableUtil.getAllMessages(anse);
                         LOG.fatal(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, cause);
+                        getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, cause));
 
                         // TODO: THIS AGENT IS DEAD IN THE WATER! it needs to be updated
-                        getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, cause));
                     } catch (AgentRegistrationException are) {
                         m_registration = null;
 
@@ -1929,7 +1929,9 @@ public class AgentMain {
                 LOG.error(AgentI18NResourceKeys.TIME_UNKNOWN, ThrowableUtil.getAllMessages(t));
             }
         } catch (AgentNotSupportedException anse) {
-            LOG.fatal(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, ThrowableUtil.getAllMessages(anse));
+            String cause = ThrowableUtil.getAllMessages(anse);
+            LOG.fatal(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, cause);
+            getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, cause));
 
             // TODO: THIS AGENT IS DEAD IN THE WATER! It can never connect, we need to shutdown and update the agent!
             // for now, aimlessly loop until someone kills the agent

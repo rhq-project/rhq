@@ -182,5 +182,14 @@ Firefox and other Gecko-based browsers to render the page in "Almost Standards" 
 
 </f:view>
 
+<script type="text/javascript">
+    function maxContentWidth(){
+        var remainder = document.documentElement.clientWidth - 225;
+        document.getElementById("content").style.width = remainder + "px";
+    }
+    window.onload = maxContentWidth;
+    window.onresize = maxContentWidth;
+</script>
+
 </body>
 </html>

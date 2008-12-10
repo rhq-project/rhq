@@ -23,7 +23,7 @@
         <a4j:form ajaxSubmit="true">
             <input type="hidden" name="id" value="${param.id}" />
 
-            <rich:panel>
+            <rich:panel styleClass="BlockContent">
                 <f:facet name="header">
                     <h:outputText value="${msg['resource.common.monitor.events.FilterBy']}" />
                 </f:facet>
@@ -76,7 +76,8 @@
                               value="#{eventHistoryDataModel}" 
                                rows="#{PageControl.EventsHistoryList.pageSize}" 
                                 var="item"
-                              width="100%" 
+                              width="100%"
+                         styleClass="resources-table"
                         headerClass="tableRowHeader" 
                         footerClass="on-pager-footer"
                            rendered="#{eventHistoryDataModel.rowCount > 0 }"
@@ -143,7 +144,7 @@
         
         <h:outputText value="#{EventHistoryUIBean.eventInfo}" />
         
-        <rich:panel id="eventDetailPanel" rendered="#{param.eventId gt 0}">
+        <rich:panel id="eventDetailPanel"  rendered="#{param.eventId gt 0}" styleClass="BlockContent">
             <f:facet name="header">
                 <h:outputText value="${msg['resource.common.monitor.events.DetailsHeader']}" />
             </f:facet>

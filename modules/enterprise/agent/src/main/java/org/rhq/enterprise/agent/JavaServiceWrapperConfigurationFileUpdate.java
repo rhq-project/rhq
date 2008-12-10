@@ -41,7 +41,7 @@ public class JavaServiceWrapperConfigurationFileUpdate extends EnvironmentScript
     @Override
     protected String createEnvironmentVariableLine(NameValuePair nvp) {
         if (!nvp.name.startsWith("wrapper.")) {
-            throw new IllegalArgumentException("All JSW configuration keys must start with 'wrapper.'");
+            throw new IllegalArgumentException("All JSW configuration keys must start with (wrapper.)");
         }
         return nvp.name + "=" + nvp.value;
     }

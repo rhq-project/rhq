@@ -29,13 +29,13 @@
     </td>
     <logic:messagesPresent property="name">
     <td width="30%" class="ErrorField">
-      <html:text size="30" maxlength="40" property="name"/>
+      <html:text size="30" property="name"/>
       <br><span class="ErrorFieldContent">- <html:errors property="name"/></span>
     </td>
     </logic:messagesPresent>
     <logic:messagesNotPresent property="name">
     <td width="30%" class="BlockContent">
-      <html:text size="30" maxlength="40" property="name"/>
+      <html:text size="30" property="name"/>
     </td>
     </logic:messagesNotPresent>
 

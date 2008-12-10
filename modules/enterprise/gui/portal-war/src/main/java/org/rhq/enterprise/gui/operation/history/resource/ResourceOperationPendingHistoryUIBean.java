@@ -22,8 +22,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
@@ -42,7 +44,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ResourceOperationPendingHistoryUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ResourceOperationPendingHistoryUIBean";
 
-    private Resource resource;
     private OperationManagerLocal manager = LookupUtil.getOperationManager();
 
     /*
@@ -122,18 +123,10 @@ public class ResourceOperationPendingHistoryUIBean extends PagedDataTableUIBean 
 
         @Override
         public PageList<ResourceOperationHistory> fetchPage(PageControl pc) {
-            Subject subject = EnterpriseFacesContextUtility.getSubject();
-            Resource requestResource = EnterpriseFacesContextUtility.getResourceIfExists();
             OperationManagerLocal manager = LookupUtil.getOperationManager();
 
-            if (requestResource == null) {
-                requestResource = resource; // request not associated with a resource - use the resource we used before
-            } else {
-                resource = requestResource; // request switched the resource this UI bean is using
-            }
-
             PageList<ResourceOperationHistory> results;
-            results = manager.getPendingResourceOperationHistories(subject, requestResource.getId(), pc);
+            results = manager.getPendingResourceOperationHistories(getSubject(), getResource().getId(), pc);
             return results;
         }
     }

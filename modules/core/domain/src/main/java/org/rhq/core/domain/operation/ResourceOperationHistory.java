@@ -77,7 +77,7 @@ public class ResourceOperationHistory extends OperationHistory {
     private Resource resource;
 
     @JoinColumn(name = "RESULTS_CONFIG_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     private Configuration results;
 
     @JoinColumn(name = "GROUP_HISTORY_ID", referencedColumnName = "ID")

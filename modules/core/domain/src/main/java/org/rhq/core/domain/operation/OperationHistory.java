@@ -62,7 +62,7 @@ import org.rhq.core.domain.configuration.Configuration;
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @NamedQueries( {
-    @NamedQuery(name = OperationHistory.QUERY_FIND_BY_JOB_ID, query = "SELECT h FROM OperationHistory h "
+    @NamedQuery(name = OperationHistory.QUERY_FIND_BY_JOB_ID, query = "SELECT h FROM OperationHistory h LEFT JOIN FETCH h.parameters "
         + " WHERE h.jobName = :jobName " + "   AND h.jobGroup = :jobGroup " + "   AND h.createdTime = :createdTime"),
     @NamedQuery(name = OperationHistory.QUERY_GET_RECENTLY_COMPLETED_RESOURCE_ADMIN, query = "SELECT DISTINCT new org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite( "
         + "    ro.id, "
@@ -149,7 +149,7 @@ public abstract class OperationHistory implements Serializable {
     private OperationDefinition operationDefinition;
 
     @JoinColumn(name = "PARAMETERS_CONFIG_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.REMOVE }, fetch = FetchType.EAGER)
+    @OneToOne(cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
     private Configuration parameters;
 
     protected OperationHistory() {

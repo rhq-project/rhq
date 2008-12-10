@@ -20,8 +20,10 @@ package org.rhq.enterprise.server.operation;
 
 import java.util.Date;
 import java.util.List;
+
 import javax.ejb.EJBException;
 import javax.persistence.EntityManager;
+
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 import org.testng.annotations.AfterClass;
@@ -29,10 +31,11 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.operation.CancelResults;
-import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
+import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
 import org.rhq.core.clientapi.server.operation.OperationServerService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -725,6 +728,9 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert history.getStatus() == OperationRequestStatus.SUCCESS : history;
         assert history.getSubjectName().equals(superuser.getName()) : history;
         assert history.getGroup().getId() == newGroup.getId();
+
+        // parameters and results are lazily loaded in the paginated queries, but are eagerly individually
+        history = (GroupOperationHistory) operationManager.getOperationHistoryByHistoryId(superuser, history.getId());
         assert history.getParameters().getId() != scheduleParamId : "params should be copies - not shared";
 
         // get the one resource history from the group
@@ -739,6 +745,10 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert rHistory.getErrorMessage() == null : rHistory;
         assert rHistory.getStatus() == OperationRequestStatus.SUCCESS : rHistory;
         assert rHistory.getSubjectName().equals(superuser.getName()) : rHistory;
+
+        // parameters and results are lazily loaded in the paginated queries, but are eagerly individually
+        rHistory = (ResourceOperationHistory) operationManager.getOperationHistoryByHistoryId(superuser, rHistory
+            .getId());
         assert rHistory.getResults() != null;
         assert rHistory.getResults().getSimple("param1echo") != null;
         assert rHistory.getResults().getSimple("param1echo").getStringValue().equals("group-test");
@@ -1394,7 +1404,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), PageControl
             .getUnlimitedInstance());
         assert results != null;
-        assert results.size() == 1;
+        assert results.size() == 1 : "size was " + results.size();
         ResourceOperationHistory history = results.get(0);
         assert history.getId() > 0 : history;
         assert history.getJobId() != null : history;
@@ -1403,6 +1413,10 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert history.getErrorMessage() == null : history;
         assert history.getStatus() == OperationRequestStatus.SUCCESS : history;
         assert history.getSubjectName().equals(superuser.getName()) : history;
+
+        // parameters and results are lazily loaded in the paginated queries, but are eagerly individually
+        history = (ResourceOperationHistory) operationManager
+            .getOperationHistoryByHistoryId(superuser, history.getId());
         assert history.getResults() != null;
         assert history.getResults().getSimple("param1echo").getStringValue().equals("test-value!");
         assert history.getParameters().getId() != scheduleParamId : "params should be copies - not shared";

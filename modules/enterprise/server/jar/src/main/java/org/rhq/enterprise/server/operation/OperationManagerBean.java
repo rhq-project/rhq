@@ -509,6 +509,17 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     public OperationHistory getOperationHistoryByHistoryId(Subject whoami, int historyId) {
         OperationHistory history = entityManager.find(OperationHistory.class, historyId);
 
+        if (history.getParameters() != null) {
+            history.getParameters().getId(); // eagerly load it
+        }
+
+        if (history instanceof ResourceOperationHistory) {
+            ResourceOperationHistory resourceHistory = (ResourceOperationHistory) history;
+            if (resourceHistory.getResults() != null) {
+                resourceHistory.getResults().getId(); // eagerly load it
+            }
+        }
+
         if (history == null) {
             throw new RuntimeException("Cannot get history - it does not exist: " + historyId);
         }
@@ -703,6 +714,11 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
 
         history = entityManager.merge(history); // merge will persist if it doesn't exist yet
+
+        if (history.getParameters() != null) {
+            history.getParameters().getId(); // eagerly reload the parameters
+        }
+
         notifyAlertConditionCacheManager("updateOperationHistory", history);
         checkForCompletedGroupOperation(history);
         return history;

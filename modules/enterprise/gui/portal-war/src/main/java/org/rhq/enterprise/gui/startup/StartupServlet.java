@@ -71,6 +71,9 @@ public class StartupServlet extends HttpServlet {
     public void init() throws ServletException {
         log("All business tier deployments are complete - finishing the startup");
 
+        // As a security measure, make sure the installer has been undeployed
+        LookupUtil.getSystemManager().undeployInstaller();
+
         // Before starting determine the operating mode of this server and
         // take any necessary initialization action. Must happen before comm startup since listeners
         // may be added.

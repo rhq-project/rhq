@@ -19,11 +19,6 @@
    <ui:param name="pageTitle" value="View Operations History for ResourceGroup '#{ResourceGroupUIBean.name}'"/>
    <ui:param name="selectedTabName" value="Operations.History"/>
    
-   <ui:define name="metaHeaders">
-      <!-- must always refresh to move things from pending to completed, and to recognize newly pending ops -->
-      <meta http-equiv="refresh" content="60" />
-   </ui:define>
-   
    <ui:define name="content">
    
       <!-- 

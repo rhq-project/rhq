@@ -280,7 +280,8 @@ public class Setup {
      */
     protected String prompt(String prompt_message, String pref_name, String help_message, String default_value,
         PromptInput in, PrintWriter out, boolean no_echo) {
-        String full_prompt = prompt_message + " [" + default_value + "] : ";
+        String full_prompt = prompt_message + " ["
+            + ((default_value != null) ? default_value : INTERNAL_DEFAULT_PROMPT_VALUE) + "] : ";
         String new_value = "";
         boolean keep_asking = true;
 

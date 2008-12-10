@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>1.1.2.SP1</version>
+    <version>1.1.2.SP1-SNAPSHOT</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
   <description>parent POM for all RHQ helpers</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_2_SP1/modules/helpers</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_2_SP1/modules/helpers</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_SP/modules/helpers</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_SP/modules/helpers</developerConnection>
   </scm>
 
   <properties>

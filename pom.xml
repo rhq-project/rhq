@@ -4,7 +4,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-parent</artifactId>
-  <version>1.1.2.GA</version>
+  <version>1.1.2.SP1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>RHQ</name>
@@ -18,8 +18,8 @@
   </organization>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_2_GA</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_2_GA</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_SP</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_SP</developerConnection>
   </scm>
 
   <issueManagement>
@@ -320,7 +320,7 @@
            <artifactId>maven-release-plugin</artifactId>
            <!-- WARNING: Do *not* upgrade to a version later than 2.0-beta-6 until 
                          http://jira.codehaus.org/browse/MRELEASE-300 has been fixed! -->
-           <version>2.0-beta-6</version>
+           <version>2.0-beta-8</version>
          </plugin>
          <plugin>                
            <artifactId>maven-resources-plugin</artifactId>

@@ -58,24 +58,18 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
     { "resource.pluginConfiguration[partition] = cluster-1",
 
     "SELECT res.id FROM Resource res " + //
-        "  JOIN res.pluginConfiguration pluginConf, PropertySimple simple, PropertyDefinition simpleDef " + //
-        "  JOIN res.resourceType.pluginConfigurationDefinition pluginConfDef " + // 
+        "  JOIN res.pluginConfiguration pluginConf, PropertySimple simple " + //
         " WHERE simple.name = :arg1 " + //
         "   AND simple.stringValue = :arg2 " + //
-        "   AND simple.configuration = pluginConf " + //
-        "   AND simpleDef.configurationDefinition = pluginConfDef " + //
-        "   AND simple.name = simpleDef.name AND simpleDef.type != 'PASSWORD' " },
+        "   AND simple.configuration = pluginConf " },
 
-    { "resource.resourceConfiguration[partition].contains = cluster-1",
+    { "resource.resourceConfiguration[partition] = cluster-1",
 
     "SELECT res.id FROM Resource res " + //
-        "  JOIN res.resourceConfiguration conf, PropertySimple simple, PropertyDefinition simpleDef " + //
-        "  JOIN res.resourceType.resourceConfigurationDefinition confDef " + // 
+        "  JOIN res.resourceConfiguration conf, PropertySimple simple " + //
         " WHERE simple.name = :arg1 " + //
-        "   AND simple.stringValue like :arg2 " + //
-        "   AND simple.configuration = conf " + //
-        "   AND simpleDef.configurationDefinition = confDef " + //
-        "   AND simple.name = simpleDef.name AND simpleDef.type != 'PASSWORD' " },
+        "   AND simple.stringValue = :arg2 " + //
+        "   AND simple.configuration = conf " },
 
     { "groupBy resource.type.plugin; " + //
         "groupBy resource.type.name",
@@ -91,22 +85,16 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
     { "groupBy resource.resourceConfiguration[partition-name]",
 
     "  SELECT simple.stringValue FROM Resource res " + //
-        "    JOIN res.resourceConfiguration conf, PropertySimple simple, PropertyDefinition simpleDef " + //
-        "    JOIN res.resourceType.resourceConfigurationDefinition confDef " + // 
+        "    JOIN res.resourceConfiguration conf, PropertySimple simple " + //
         "   WHERE simple.name = :arg1 " + //
         "     AND simple.configuration = conf " + //
-        "     AND simpleDef.configurationDefinition = confDef " + //
-        "     AND simple.name = simpleDef.name AND simpleDef.type != 'PASSWORD' " + //
         "GROUP BY simple.stringValue ",
 
     "  SELECT res.id FROM Resource res " + //
-        "  JOIN res.resourceConfiguration conf, PropertySimple simple, PropertyDefinition simpleDef " + //
-        "  JOIN res.resourceType.resourceConfigurationDefinition confDef " + // 
+        "  JOIN res.resourceConfiguration conf, PropertySimple simple " + //
         " WHERE simple.name = :arg1 " + //
         "   AND simple.stringValue = :arg2 " + //
-        "   AND simple.configuration = conf " + //
-        "   AND simpleDef.configurationDefinition = confDef " + //
-        "   AND simple.name = simpleDef.name AND simpleDef.type != 'PASSWORD' " },
+        "   AND simple.configuration = conf " },
 
     { "resource.type.name = Windows;" + //
         "resource.trait[Trait.osversion] = 5.1",
@@ -118,7 +106,15 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         " AND trait.value = :arg3 " + //
         " AND trait.schedule = sched " + //
         " AND trait.id.timestamp = " + //
-        "     (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)" } };
+        "     (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)" },
+
+    { "resource.pluginConfiguration[partition].contains = cluster-1",
+
+    "SELECT res.id FROM Resource res " + //
+        "  JOIN res.pluginConfiguration pluginConf, PropertySimple simple " + //
+        " WHERE simple.name = :arg1 " + //
+        "   AND simple.stringValue like :arg2 " + //
+        "   AND simple.configuration = pluginConf " } };
 
     @Test(groups = "integration.session")
     public void testWellFormedExpressions() throws Exception {

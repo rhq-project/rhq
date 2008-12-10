@@ -80,8 +80,6 @@ public interface SystemManagerLocal {
      */
     long vacuumAppdef(Subject whoami);
 
-    void undeployInstaller();
-
     /**
      * Run a REINDEX command on all HQ data tables
      *

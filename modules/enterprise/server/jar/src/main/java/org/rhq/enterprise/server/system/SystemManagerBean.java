@@ -48,7 +48,6 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.deployment.MainDeployerMBean;
 import org.jboss.mx.util.MBeanServerLocator;
 import org.jboss.system.server.ServerConfig;
 
@@ -345,60 +344,6 @@ public class SystemManagerBean implements SystemManagerLocal {
         } finally {
             dbtype.closeStatement(stmt);
         }
-    }
-
-    /**
-     * Ensures the installer is no longer deployed.
-     */
-    public void undeployInstaller() {
-        try {
-            MBeanServer mbs = MBeanServerLocator.locateJBoss();
-            ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
-            Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
-
-            File deployDirectory = new File(((ServerConfig) mbean).getServerHomeDir(), "deploy");
-
-            if (deployDirectory.exists()) {
-                File deployedInstallWar = new File(deployDirectory.getAbsolutePath(), "rhq-installer.war");
-                File undeployedInstallWar = new File(deployDirectory.getAbsolutePath(), "rhq-installer.war.rej");
-
-                if (deployedInstallWar.exists()) {
-                    // we need to undeploy it first - on windows the files are locked and can't be renamed until undeployed
-                    name = ObjectNameFactory.create("jboss.system:service=MainDeployer");
-                    mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, MainDeployerMBean.class, false);
-                    ((MainDeployerMBean) mbean).undeploy(deployedInstallWar.toURI().toURL());
-                    log.info("Installer war has been undeployed");
-
-                    if (!deployedInstallWar.renameTo(undeployedInstallWar)) {
-                        throw new RuntimeException(
-                            "Cannot undeploy the installer war! Please manually remove it to secure your deployment: "
-                                + deployedInstallWar);
-                    }
-                    // I don't trust it - make sure we removed it
-                    if (deployedInstallWar.exists()) {
-                        throw new RuntimeException(
-                            "Failed to undeploy the installer war! Please manually remove it to secure your deployment: "
-                                + deployedInstallWar);
-                    }
-                } else if (undeployedInstallWar.exists()) {
-                    log.debug("Installer looks to be undeployed already, this is good: " + undeployedInstallWar);
-                } else {
-                    log.debug("Installer can't be found - assume it has been completely purged: " + deployedInstallWar);
-                }
-            } else {
-                throw new RuntimeException(
-                    "Failed to undeploy the installer war! Your deployment seems corrupted - missing deploy dir: "
-                        + deployDirectory);
-            }
-        } catch (RuntimeException re) {
-            throw re;
-        } catch (Throwable t) {
-            throw new RuntimeException(t);
-        }
-
-        // we only get here if we are SURE we removed it!
-        log.info("Confirmed that the installer has been undeployed");
-        return;
     }
 
     /**

@@ -21,12 +21,12 @@
       <h:form id="groupDefinitionsListForm">
          <input type="hidden" name="id" value="${param.id}"/>
          
-         <rich:panel>
+         <rich:panel styleClass="BlockContent">
             <f:facet name="header">
                <h:outputText value="Group Definitions"/>
             </f:facet>
 
-            <h:panelGrid columns="1" width="100%">
+            <h:panelGrid columns="1" styleClass="data-table">
 
             <ui:param name="groupDefinitionsDataModel" value="#{ListGroupDefinitionsUIBean.dataModel}"/>
             <rich:dataTable binding="#{ListGroupDefinitionsUIBean.dataTable}"

@@ -11,17 +11,13 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
-      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax">
       
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
    <ui:param name="pageTitle" value="View Operations History for Resource '#{ResourceUIBean.name}'"/>
    <ui:param name="selectedTabName" value="Operations.History"/>
-   
-   <ui:define name="metaHeaders">
-      <!-- must always refresh to move things from pending to completed, and to recognize newly pending ops -->
-      <meta http-equiv="refresh" content="60" />
-   </ui:define>
    
    <ui:define name="content">
    
@@ -29,7 +25,8 @@
         Resource Operation Pending History
         -->
 
-      <ui:param name="currentOperation" value="#{ResourceOperationPendingHistoryUIBean.oldestInProgressResourceOperation}" />
+      <ui:param name="currentOperation" 
+                value="#{ResourceOperationPendingHistoryUIBean.oldestInProgressResourceOperation}" />
             
       <h:form id="pendingForm">
          <input type="hidden" name="id" value="${param.id}"/>
@@ -40,11 +37,12 @@
             <h:panelGrid columns="1" width="100%" style="min-width: 800px;">
             
             <ui:param name="resourceOperationPendingHistoryDataModel" value="#{ResourceOperationPendingHistoryUIBean.dataModel}"/>
-            
-            <h:outputText value="There are no currently executing operations" rendered="#{resourceOperationPendingHistoryDataModel.rowCount eq 0}"/>
 
-            <rich:dataTable rendered="#{resourceOperationPendingHistoryDataModel.rowCount gt 0}"
-                            binding="#{ResourceOperationPendingHistoryUIBean.dataTable}"
+            <a4j:poll id="resourceOperationPendingHistoryDataTableReRenderer"
+                      interval="60000"
+                      ignoreDupResponses="true"
+                      reRender="resourceOperationPendingHistoryDataTable" />
+            <rich:dataTable binding="#{ResourceOperationPendingHistoryUIBean.dataTable}"
                             id="resourceOperationPendingHistoryDataTable" 
                             rows="#{PageControl.ResourceOperationPendingHistory.pageSize}"
                             value="#{resourceOperationPendingHistoryDataModel}"
@@ -166,8 +164,11 @@
             
             <h:outputText value="There are no completed operations" rendered="#{resourceOperationCompletedHistoryDataModel.rowCount eq 0}"/>
             
-            <rich:dataTable rendered="#{resourceOperationCompletedHistoryDataModel.rowCount gt 0}"
-                            binding="#{ResourceOperationCompletedHistoryUIBean.dataTable}"
+            <a4j:poll id="resourceOperationCompletedHistoryDataTableReRenderer"
+                      interval="60000"
+                      ignoreDupResponses="true"
+                      reRender="resourceOperationCompletedHistoryDataTable" />
+            <rich:dataTable binding="#{ResourceOperationCompletedHistoryUIBean.dataTable}"
                             id="resourceOperationCompletedHistoryDataTable" 
                             rows="#{PageControl.ResourceOperationCompletedHistory.pageSize}"
                             value="#{resourceOperationCompletedHistoryDataModel}"

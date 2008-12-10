@@ -11,7 +11,8 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
-      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax">
       
 <ui:composition template="/rhq/group/layout/main.xhtml">
 
@@ -42,10 +43,11 @@
             
             <ui:param name="resourceGroupOperationPendingHistoryDataModel" value="#{ResourceGroupOperationPendingHistoryUIBean.dataModel}"/>
             
-            <h:outputText value="There are no currently executing operations" rendered="#{resourceGroupOperationPendingHistoryDataModel.rowCount eq 0}"/>
-            
-            <rich:dataTable rendered="#{resourceGroupOperationPendingHistoryDataModel.rowCount gt 0}"
-                            binding="#{ResourceGroupOperationPendingHistoryUIBean.dataTable}"
+            <a4j:poll id="resourceGroupOperationPendingHistoryDataTableReRenderer"
+                      interval="60000"
+                      ignoreDupResponses="true"
+                      reRender="resourceGroupOperationPendingHistoryDataTable" />
+            <rich:dataTable binding="#{ResourceGroupOperationPendingHistoryUIBean.dataTable}"
                             id="resourceGroupOperationPendingHistoryDataTable" 
                             rows="#{PageControl.ResourceGroupOperationPendingHistory.pageSize}"
                             value="#{resourceGroupOperationPendingHistoryDataModel}"
@@ -169,6 +171,10 @@
             
             <h:outputText value="There are no completed operations" rendered="#{resourceGroupOperationCompletedHistoryDataModel.rowCount eq 0}"/>
             
+            <a4j:poll id="resourceGroupOperationCompletedHistoryDataTableReRenderer"
+                      interval="60000"
+                      ignoreDupResponses="true"
+                      reRender="resourceGroupOperationCompletedHistoryDataTable" />
             <rich:dataTable rendered="#{resourceGroupOperationCompletedHistoryDataModel.rowCount gt 0}"
                             binding="#{ResourceGroupOperationCompletedHistoryUIBean.dataTable}"
                             id="resourceGroupOperationCompletedHistoryDataTable" 

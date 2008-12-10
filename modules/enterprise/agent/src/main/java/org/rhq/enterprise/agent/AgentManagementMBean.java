@@ -217,6 +217,14 @@ public interface AgentManagementMBean {
     String executePromptCommand(String command) throws ExecutionException;
 
     /**
+     * Returns the directory that is considered the "agent home" (i.e. the directory
+     * where the agent is installed).
+     * 
+     * @return agent home directory
+     */
+    String getAgentHomeDirectory();
+
+    /**
      * Returns the number of times the agent has been restarted for the entire lifetime of
      * the agent's JVM.  Reasons for a restart can include the execution of the agent
      * plugin's "restart" operation or the VM Health Check detected a critical problem and

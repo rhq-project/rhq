@@ -19,7 +19,6 @@
 package org.rhq.plugins.agent;
 
 import java.io.File;
-import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,7 +32,6 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.SystemInfo;
-import org.rhq.enterprise.agent.AgentManagement;
 import org.rhq.enterprise.agent.Version;
 
 /**
@@ -72,13 +70,8 @@ public class AgentEnvironmentScriptDiscoveryComponent implements ResourceDiscove
 
             // we know our agent plugin is running in the same process as our agent
             // so the env script file must be on the same box that we are running on.
-            // try to find the script in one of several ways - but once we find it, stop (there is only ever one of them)
             if (!findInAgentHome(context, version, baseName, set)) {
-                if (!findInDataDir(context, version, baseName, set)) {
-                    if (!findInLibDir(context, version, baseName, set)) {
-                        log.warn("Could not find the agent environment setup script anywhere");
-                    }
-                }
+                log.warn("Could not find the agent environment setup script anywhere");
             }
         } catch (Exception e) {
             log.error("An error occurred while attempting to auto-discover the agent's environment setup script", e);
@@ -101,9 +94,11 @@ public class AgentEnvironmentScriptDiscoveryComponent implements ResourceDiscove
         String baseName, HashSet<DiscoveredResourceDetails> discoveries) {
 
         try {
-            String agentHome = System.getenv("RHQ_AGENT_HOME");
+            EmsAttribute home = context.getParentResourceComponent().getAgentBean().getAttribute("AgentHomeDirectory");
+            home.refresh();
+            Object agentHome = home.getValue();
             if (agentHome != null) {
-                File file = new File(agentHome, "bin/" + baseName);
+                File file = new File(agentHome.toString(), "bin/" + baseName);
                 if (file.exists()) {
                     discoveries.add(createDetails(context, version, file));
                 }
@@ -112,76 +107,6 @@ public class AgentEnvironmentScriptDiscoveryComponent implements ResourceDiscove
             return discoveries.size() > 0;
         } catch (Exception e) {
             log.debug("Cannot use agent home to find environment script. Cause: " + e);
-            return false;
-        }
-    }
-
-    /**
-     * Looks for the script relative to the agent data directory.
-     * 
-     * @param context
-     * @param version
-     * @param baseName
-     * @param discoveries where the new details are stored if the script is discovered
-     * 
-     * @return <code>true</code> if this method discovers the script; <code>false</code> if not
-     */
-    private boolean findInDataDir(ResourceDiscoveryContext<AgentServerComponent> context, String version,
-        String baseName, HashSet<DiscoveredResourceDetails> discoveries) {
-
-        try {
-            File dataDir = context.getParentResourceContext().getDataDirectory();
-            if (dataDir != null) {
-                // the data directory is something like ".../data/RHQAgent" because each
-                // plugin is given its own subdirectory under /data
-                if (dataDir.getParentFile() != null) {
-                    File file = new File(dataDir.getParentFile().getParentFile(), "bin/" + baseName);
-                    if (file.exists()) {
-                        discoveries.add(createDetails(context, version, file));
-                    }
-                }
-            }
-
-            return discoveries.size() > 0;
-        } catch (Exception e) {
-            log.debug("Cannot use data dir to find environment script. Cause: " + e);
-            return false;
-        }
-    }
-
-    /**
-     * Looks for the script relative to the lib directory.
-     * 
-     * @param context
-     * @param version
-     * @param baseName
-     * @param discoveries where the new details are stored if the script is discovered
-     * 
-     * @return <code>true</code> if this method discovers the script; <code>false</code> if not
-     */
-    private boolean findInLibDir(ResourceDiscoveryContext<AgentServerComponent> context, String version,
-        String baseName, HashSet<DiscoveredResourceDetails> discoveries) {
-
-        try {
-            // find a class that we know is in a jar located in the agent's main lib directory
-            String resource = AgentManagement.class.getName().replace('.', '/').concat(".class");
-            URL classUrl = AgentManagement.class.getClassLoader().getResource(resource);
-            if (classUrl != null) {
-                String pathStr = classUrl.toString();
-                int lastIndexOfLib = pathStr.lastIndexOf("/lib");
-                if (lastIndexOfLib >= 0) {
-                    int lastIndexOfFileProtocol = pathStr.lastIndexOf("file:") + 5;
-                    pathStr = pathStr.substring(lastIndexOfFileProtocol, lastIndexOfLib);
-                    File file = new File(pathStr, "bin/" + baseName);
-                    if (file.exists()) {
-                        discoveries.add(createDetails(context, version, file));
-                    }
-                }
-            }
-
-            return discoveries.size() > 0;
-        } catch (Exception e) {
-            log.debug("Cannot use lib dir to find environment script. Cause: " + e);
             return false;
         }
     }

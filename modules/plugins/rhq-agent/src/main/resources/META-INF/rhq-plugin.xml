@@ -137,6 +137,14 @@
               displayType="summary"
               description="Indicates what caused the last agent restart" />
 
+      <metric property="Trait.AgentHomeDirectory"
+              displayName="Agent Home Directory"
+              dataType="trait"
+              displayType="detail"
+              defaultInterval="86400000"
+              defaultOn="true"
+              description="The directory where the agent is installed" />
+
       <metric property="NumberAgentRestarts"
               displayName="Number of Agent Restarts"
               description="Number of times the agent was restarted during the lifetime of its Java Virtual Machine"

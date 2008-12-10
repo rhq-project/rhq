@@ -174,6 +174,11 @@ public class AgentMain {
     private static final String FILENAME_SERVER_FAILOVER_LIST = "failover-list.dat";
 
     /**
+     * The directory where this agent is installed.
+     */
+    private String m_agentHomeDirectory;
+
+    /**
      * The command line arguments specified by the user.
      */
     private String[] m_commandLineArgs;
@@ -436,6 +441,7 @@ public class AgentMain {
     public AgentMain(String[] args) throws Exception {
         LOG.debug(AgentI18NResourceKeys.CREATING_AGENT);
 
+        m_agentHomeDirectory = null;
         m_daemonMode = false;
         m_input = new BufferedReader(new InputStreamReader(System.in));
         m_output = new AgentPrintWriter(System.out, true);
@@ -462,6 +468,57 @@ public class AgentMain {
         prepareNativeSystem();
 
         return;
+    }
+
+    /**
+     * Returns the directory that is considered the "agent home" (i.e. the directory
+     * where the agent is installed).
+     * 
+     * @return agent home directory
+     */
+    public String getAgentHomeDirectory() {
+        if (m_agentHomeDirectory != null) {
+            return m_agentHomeDirectory;
+        }
+
+        File agentHomeDir = null;
+
+        String env = System.getenv("RHQ_AGENT_HOME");
+        if (env != null) {
+            agentHomeDir = new File(env);
+        } else {
+            // usually, RHQ_AGENT_HOME is defined, but it doesn't have to be, so let's try to find it other ways.
+            // if AgentMain is in a jar file located in a lib directory then agent home is the lib dir's parent.
+            try {
+                String resource = AgentMain.class.getName().replace('.', '/').concat(".class");
+                URL classUrl = AgentMain.class.getClassLoader().getResource(resource);
+                if (classUrl != null) {
+                    String pathStr = classUrl.toString();
+                    int lastIndexOfLib = pathStr.lastIndexOf("/lib");
+                    if (lastIndexOfLib >= 0) {
+                        int lastIndexOfFileProtocol = pathStr.lastIndexOf("file:") + 5;
+                        pathStr = pathStr.substring(lastIndexOfFileProtocol, lastIndexOfLib);
+                        File file = new File(pathStr);
+                        if (file.exists()) {
+                            agentHomeDir = file;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                // lots of reasons to get here but the short of it is, we can't find the agent home this way
+            }
+        }
+
+        if (agentHomeDir != null) {
+            try {
+                m_agentHomeDirectory = agentHomeDir.getCanonicalPath(); // try to get canonical path...
+            } catch (Exception e) {
+                m_agentHomeDirectory = agentHomeDir.getAbsolutePath(); // ...but use absolute as a fallback
+            }
+            return m_agentHomeDirectory;
+        } else {
+            return "?";
+        }
     }
 
     /**

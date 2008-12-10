@@ -280,6 +280,10 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         return output;
     }
 
+    public String getAgentHomeDirectory() {
+        return m_agent.getAgentHomeDirectory();
+    }
+
     public int getNumberAgentRestarts() {
         return m_agent.getAgentRestartCounter().getNumberOfRestarts();
     }

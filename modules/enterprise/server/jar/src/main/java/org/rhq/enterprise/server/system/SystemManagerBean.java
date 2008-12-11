@@ -370,15 +370,11 @@ public class SystemManagerBean implements SystemManagerLocal {
                     log.info("Installer war has been undeployed");
 
                     if (!deployedInstallWar.renameTo(undeployedInstallWar)) {
-                        throw new RuntimeException(
-                            "Cannot undeploy the installer war! Please manually remove it to secure your deployment: "
-                                + deployedInstallWar);
+                        throw new RuntimeException("Cannot undeploy the installer war: " + deployedInstallWar);
                     }
                     // I don't trust it - make sure we removed it
                     if (deployedInstallWar.exists()) {
-                        throw new RuntimeException(
-                            "Failed to undeploy the installer war! Please manually remove it to secure your deployment: "
-                                + deployedInstallWar);
+                        throw new RuntimeException("Failed to undeploy the installer war: " + deployedInstallWar);
                     }
                 } else if (undeployedInstallWar.exists()) {
                     log.debug("Installer looks to be undeployed already, this is good: " + undeployedInstallWar);
@@ -386,14 +382,11 @@ public class SystemManagerBean implements SystemManagerLocal {
                     log.debug("Installer can't be found - assume it has been completely purged: " + deployedInstallWar);
                 }
             } else {
-                throw new RuntimeException(
-                    "Failed to undeploy the installer war! Your deployment seems corrupted - missing deploy dir: "
-                        + deployDirectory);
+                throw new RuntimeException("Your deployment seems corrupted - missing deploy dir: " + deployDirectory);
             }
-        } catch (RuntimeException re) {
-            throw re;
-        } catch (Throwable t) {
-            throw new RuntimeException(t);
+        } catch (Exception e) {
+            log.warn("Please manually remove installer war to secure your deployment: " + e);
+            return;
         }
 
         // we only get here if we are SURE we removed it!

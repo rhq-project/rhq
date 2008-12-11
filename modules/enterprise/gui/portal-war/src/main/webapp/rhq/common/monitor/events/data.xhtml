@@ -44,15 +44,64 @@
       </div>
    </td>
    </tr>
-    
-    <!--  if not hideLogs, insert EventsLogs here -->
+
+   <c:if test="#{not empty AvailabilityUIBean.data}">
+   <tr>
+   <td colspan="62" style="height: 2px;"></td>
+   </tr>
+   
+   <tr style="height: 12px;">
+   <td></td>
+   <c:forEach var="timeTick" items="#{EventsTimelineUIBean.data}" varStatus="status">
+      <c:set var="count" value="#{status.index}"/>
+      <c:set var="icon" value="/images/no_event.gif"/>
+      <c:if test="#{not empty timeTick.severity}">
+         <c:set var="sev" value="#{timeTick.severity.ordinal}"/>
+         <c:choose>
+            <c:when test="#{sev == 0 }">
+               <c:set var="icon" value="/images/event_debug.gif"/>
+            </c:when>
+            <c:when test="#{sev == 1 }">
+               <c:set var="icon" value="/images/event_info.gif"/>
+            </c:when>
+            <c:when test="#{sev == 2 }">
+               <c:set var="icon" value="/images/event_warn.gif"/>
+            </c:when>
+            <c:when test="#{sev == 3 }">
+               <c:set var="icon" value="/images/event_error.gif"/>
+            </c:when>
+            <c:when test="#{sev == 4 }">
+               <c:set var="icon" value="/images/event_fatal.gif"/>
+            </c:when>
+            <c:otherwise>
+               <c:set var="icon" value="/images/no_event.gif"/>
+            </c:otherwise>
+         </c:choose>
+      </c:if>
+      <td background="#{icon}" align="center" valign="middle">
+      
+      <c:if test="#{not empty timeTick.severity}">
+         <ui:param name="formattedTimeTick" value="#{onf:formatTimestamp(timeTick.time)}"/>
+         <div class="eventBlock" 
+              onmousedown="overlay.delayTimePopup('#{count}','#{formattedTimeTick}');showEventsDetails(#{timeTick.time});overlay.moveOverlay(this)"></div>
+      </c:if>
+   </td>
+   </c:forEach>
+   <td align="right">
+      <h:outputFormat value="#{msg['resource.common.monitor.label.elc']}" />
+   </td>
+   </tr>
+   
+   <tr>
+   <td colspan="62" style="height: 3px;"></td>
+   </tr>
+   </c:if>
     
    <tr>
    <td width="10">
       <img src="/images/timeline_ll.gif" height="10"/>
       <div id="timetop"></div> 
    </td>
-   
    <c:forEach var="timeTick" items="#{EventsTimelineUIBean.data}" varStatus="status">
       <c:set var="count" value="#{status.index}"/>
       <ui:param name="formattedTimeTick" value="#{onf:formatTimestamp(timeTick.time)}"/>
@@ -68,7 +117,6 @@
       </div>
    </td>
    </c:forEach>
-    
    <td width="100%">
       <img src="/images/timeline_lr.gif" height="10"/> 
    </td>

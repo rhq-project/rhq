@@ -26,9 +26,14 @@ public class EventsTimelineUIBean {
     private EventManagerLocal eventManager = LookupUtil.getEventManager();
 
     private List<TimelineBean> data;
+    private boolean showLogs = false;
 
     public List<TimelineBean> getData() {
         return data;
+    }
+
+    public boolean getShowLogs() {
+        return showLogs;
     }
 
     public EventsTimelineUIBean() {
@@ -46,6 +51,7 @@ public class EventsTimelineUIBean {
         if (context.category == EntityContext.Category.Resource) {
             eventsCounts = eventManager.getSeverityBuckets(user.getSubject(), context.resourceId, begin, end,
                 numberOfBuckets);
+            showLogs = true;
         } else if (context.category == EntityContext.Category.ResourceGroup) {
             eventsCounts = eventManager.getSeverityBucketsForCompGroup(user.getSubject(), context.groupId, begin, end,
                 numberOfBuckets);

@@ -63,7 +63,6 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.license.FeatureUnavailableException;
@@ -440,15 +439,12 @@ public class SystemManagerBean implements SystemManagerLocal {
                     log.info("Installer war has been undeployed");
 
                     if (!deployedInstallWar.renameTo(undeployedInstallWar)) {
-                        throw new RuntimeException(
-                            "Cannot undeploy the installer war! Please manually remove it to secure your deployment: "
-                                + deployedInstallWar);
+                        throw new RuntimeException("Cannot undeploy the installer war: " + deployedInstallWar);
                     }
+
                     // I don't trust it - make sure we removed it
                     if (deployedInstallWar.exists()) {
-                        throw new RuntimeException(
-                            "Failed to undeploy the installer war! Please manually remove it to secure your deployment: "
-                                + deployedInstallWar);
+                        throw new RuntimeException("Failed to undeploy the installer war: " + deployedInstallWar);
                     }
 
                     // now that the installer is removed, put something in its place to avoid
@@ -475,14 +471,11 @@ public class SystemManagerBean implements SystemManagerLocal {
                     log.debug("Installer can't be found - assume it has been completely purged: " + deployedInstallWar);
                 }
             } else {
-                throw new RuntimeException(
-                    "Failed to undeploy the installer war! Your deployment seems corrupted - missing deploy dir: "
-                        + deployDirectory);
+                throw new RuntimeException("Your deployment seems corrupted - missing deploy dir: " + deployDirectory);
             }
-        } catch (RuntimeException re) {
-            throw re;
-        } catch (Throwable t) {
-            throw new RuntimeException(t);
+        } catch (Exception e) {
+            log.warn("Please manually remove installer war to secure your deployment: " + e);
+            return;
         }
 
         // we only get here if we are SURE we removed it!

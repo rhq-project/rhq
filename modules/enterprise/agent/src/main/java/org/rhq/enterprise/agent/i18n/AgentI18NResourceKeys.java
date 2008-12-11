@@ -825,17 +825,17 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("version")
     String VERSION = "PromptCommand.version";
 
-    @I18NMessage("version [sysprops]")
+    @I18NMessage("version [--sysprops] [--env]")
     String VERSION_SYNTAX = "PromptCommand.version.syntax";
 
     @I18NMessage("Shows agent version information")
     String VERSION_HELP = "PromptCommand.version.help";
 
-    @I18NMessage("sysprops")
-    String VERSION_SYSPROPS = "PromptCommand.version.sysprops";
-
     @I18NMessage("System Properties:")
     String VERSION_SYSPROPS_LABEL = "PromptCommand.version.sysprops-label";
+
+    @I18NMessage("Environment Variables:")
+    String VERSION_ENV_LABEL = "PromptCommand.version.env-label";
 
     @I18NMessage("identify")
     String IDENTIFY = "PromptCommand.identify";

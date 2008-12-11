@@ -18,10 +18,16 @@
  */
 package org.rhq.enterprise.agent.promptcmd;
 
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
+
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
 import mazz.i18n.Msg;
+
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.Version;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
@@ -47,20 +53,59 @@ public class VersionPromptCommand implements AgentPromptCommand {
      */
     public boolean execute(AgentMain agent, String[] args) {
         PrintWriter out = agent.getOut();
-        String version_string = Version.getVersionPropertiesAsString();
+        String versionString = Version.getVersionPropertiesAsString();
 
-        if (args.length == 1) {
-            out.println(version_string);
-        } else if ((args.length == 2) && args[1].equals(MSG.getMsg(AgentI18NResourceKeys.VERSION_SYSPROPS))) {
-            out.println(version_string);
-            out.println(MSG.getMsg(AgentI18NResourceKeys.VERSION_SYSPROPS_LABEL));
-            out.println();
+        if (args.length <= 1) {
+            out.println(versionString);
+            return true;
+        }
 
-            Properties sysprops = System.getProperties();
-            for (Map.Entry sysprop : sysprops.entrySet()) {
-                out.println(sysprop.getKey() + "=" + sysprop.getValue());
+        String sopts = "se";
+        LongOpt[] lopts = { new LongOpt("sysprops", LongOpt.NO_ARGUMENT, null, 's'),
+            new LongOpt("env", LongOpt.NO_ARGUMENT, null, 'e') };
+
+        Getopt getopt = new Getopt(getPromptCommandString(), args, sopts, lopts);
+        int code;
+
+        while ((code = getopt.getopt()) != -1) {
+            switch (code) {
+            case ':':
+            case '?':
+            case 1: {
+                out.println(MSG.getMsg(AgentI18NResourceKeys.HELP_SYNTAX_LABEL, getSyntax()));
+                break;
             }
-        } else {
+
+            case 's': {
+                out.println(versionString);
+                out.println(MSG.getMsg(AgentI18NResourceKeys.VERSION_SYSPROPS_LABEL));
+                out.println();
+
+                Properties sysprops = System.getProperties();
+                for (Map.Entry<Object, Object> sysprop : sysprops.entrySet()) {
+                    out.println(sysprop.getKey() + "=" + sysprop.getValue());
+                }
+                break;
+            }
+
+            case 'e': {
+                out.println(versionString);
+                out.println(MSG.getMsg(AgentI18NResourceKeys.VERSION_ENV_LABEL));
+                out.println();
+
+                Map<String, String> envvars = System.getenv();
+                if (envvars == null) {
+                    envvars = new HashMap<String, String>();
+                }
+                for (Map.Entry<String, String> sysprop : envvars.entrySet()) {
+                    out.println(sysprop.getKey() + "=" + sysprop.getValue());
+                }
+                break;
+            }
+            }
+        }
+
+        if ((getopt.getOptind() + 1) < args.length) {
             out.println(MSG.getMsg(AgentI18NResourceKeys.HELP_SYNTAX_LABEL, getSyntax()));
         }
 

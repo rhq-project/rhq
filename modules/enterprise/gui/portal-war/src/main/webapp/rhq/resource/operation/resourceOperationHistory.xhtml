@@ -162,9 +162,7 @@
             <h:panelGrid columns="1" width="100%" styleClass="data-table">
 
             <ui:param name="resourceOperationCompletedHistoryDataModel" value="#{ResourceOperationCompletedHistoryUIBean.dataModel}"/>
-            
-            <h:outputText value="There are no completed operations" rendered="#{resourceOperationCompletedHistoryDataModel.rowCount eq 0}"/>
-            
+
             <a4j:poll id="resourceOperationCompletedHistoryDataTableReRenderer"
                       interval="60000"
                       ignoreDupResponses="true"

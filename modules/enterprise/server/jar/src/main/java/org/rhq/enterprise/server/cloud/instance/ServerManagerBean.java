@@ -66,16 +66,18 @@ public class ServerManagerBean implements ServerManagerLocal {
     static private Server.OperationMode lastEstablishedServerMode = null;
 
     @Resource
-    TimerService timerService;
+    private TimerService timerService;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
     @EJB
-    CloudManagerLocal cloudManager;
+    private CloudManagerLocal cloudManager;
 
     @EJB
-    AgentStatusManagerLocal agentStatusManager;
+    private AgentStatusManagerLocal agentStatusManager;
+
+    private final String TIMER_DATA = "ServerManagerBean.beat";
 
     @SuppressWarnings("unchecked")
     public void scheduleServerHeartbeat() {
@@ -84,16 +86,26 @@ public class ServerManagerBean implements ServerManagerLocal {
          */
         Collection<Timer> timers = timerService.getTimers();
         for (Timer existingTimer : timers) {
-            log.debug("Found timer: " + existingTimer.toString());
-            existingTimer.cancel();
+            log.debug("Found timer - attempting to cancel: " + existingTimer.toString());
+            try {
+                existingTimer.cancel();
+            } catch (Exception e) {
+                log.warn("Failed in attempting to cancel timer: " + existingTimer.toString());
+            }
         }
-        // start it now, and repeat every 30 seconds
-        timerService.createTimer(0, 30000, "ServerManagerBean.beat");
+        // single-action timer that will trigger in 30 seconds
+        timerService.createTimer(30000, TIMER_DATA);
     }
 
     @Timeout
     public void handleHeartbeatTimer(Timer timer) {
-        beat();
+        try {
+            beat();
+        } finally {
+            // reschedule ourself to trigger in another 30 seconds
+            timerService.createTimer(30000, TIMER_DATA);
+        }
+
     }
 
     public int create(Server server) {

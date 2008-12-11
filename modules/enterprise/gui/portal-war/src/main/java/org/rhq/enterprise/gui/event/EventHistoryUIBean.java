@@ -112,12 +112,11 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
         @Override
         public PageList<EventComposite> fetchPage(PageControl pc) {
-
             EventManagerLocal manager = LookupUtil.getEventManager();
             WebUser user = EnterpriseFacesContextUtility.getWebUser();
             MeasurementPreferences preferences = user.getMeasurementPreferences();
             MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
-            int eventId = FacesContextUtility.getOptionalRequestParameter("eventId", Integer.class, -1);
+            int eventId = -1;
             PageList<EventComposite> results = manager.getEvents(getSubject(), new int[] { getResource().getId() },
                 rangePreferences.begin, rangePreferences.end, sevFilter, eventId, getSourceFilter(), searchString, pc);
             return results;

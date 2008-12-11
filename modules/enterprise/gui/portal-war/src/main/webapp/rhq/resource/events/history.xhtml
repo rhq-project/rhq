@@ -64,81 +64,79 @@
                         </td>
                     </tr>
                 </table>
+            
+               <br />
+    
+                <ui:param name="eventHistoryDataModel" value="#{EventHistoryUIBean.dataModel}" />
+                
+                <rich:dataTable binding="#{EventHistoryUIBean.dataTable}" 
+                                     id="eventHistoryDataTable"
+                                  value="#{eventHistoryDataModel}" 
+                                   rows="#{PageControl.EventsHistoryList.pageSize}" 
+                                    var="item"
+                                  width="100%"
+                             styleClass="resources-table"
+                            headerClass="tableRowHeader" 
+                            footerClass="on-pager-footer"
+                               rendered="#{eventHistoryDataModel.rowCount > 0 }"
+                         onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                          onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+    
+                    <f:facet name="PageControlView">
+                        <onc:paginationControl id="EventsHistoryList" />
+                    </f:facet>
+    
+                    <rich:column>
+                        <f:facet name="header">
+                            <onc:sortableColumnHeader sort="ev.severity">
+                                <h:outputText styleClass="headerText" value="Severity" />
+                            </onc:sortableColumnHeader>
+                        </f:facet>
+                        <h:outputText value="#{item.severity}" />
+                    </rich:column>
+    
+                    <rich:column>
+                        <f:facet name="header">
+                            <onc:sortableColumnHeader sort="ev.source">
+                                <h:outputText styleClass="headerText" value="Source" />
+                            </onc:sortableColumnHeader>
+                        </f:facet>
+                        <h:outputText value="#{item.sourceLocation}" />
+                    </rich:column>
+    
+                    <rich:column>                    
+                        <f:facet name="header">
+                            <h:outputText styleClass="headerText" value="Detail" />
+                        </f:facet>
+                        
+                        <h:outputLink>
+                            <f:param name="id" value="${param.id}" />
+                            <f:param name="eventId" value="#{item.eventId}" />
+                            <h:outputText value="#{onf:trimString(item.eventDetail,160)}" />
+                        </h:outputLink>
+                    </rich:column>
+    
+                    <rich:column>
+                        <f:facet name="header">
+                            <onc:sortableColumnHeader sort="ev.timestamp">
+                                <h:outputText styleClass="headerText" value="Time occurred" />
+                            </onc:sortableColumnHeader>
+                        </f:facet>
+                        <h:outputText value="#{item.timestamp}" />
+                    </rich:column>
+    
+                    <f:facet name="footer">
+                        <rich:columnGroup>
+                            <rich:column colspan="4" width="100%">
+                                <ui:param name="paginationDataTableName" value="eventHistoryDataTable" />
+                                <ui:param name="paginationDataModel" value="#{eventHistoryDataModel}" />
+                                <ui:param name="paginationPageControl" value="#{PageControl.EventsHistoryList}" />
+                                <ui:include src="../include/pagination.xhtml" />
+                            </rich:column>
+                        </rich:columnGroup>
+                    </f:facet>
+                </rich:dataTable>
             </rich:panel>
-
-            <rich:spacer />
-            <rich:spacer />
-
-            <ui:param name="eventHistoryDataModel" value="#{EventHistoryUIBean.dataModel}" />
-            
-            <rich:dataTable binding="#{EventHistoryUIBean.dataTable}" 
-                                 id="eventHistoryDataTable"
-                              value="#{eventHistoryDataModel}" 
-                               rows="#{PageControl.EventsHistoryList.pageSize}" 
-                                var="item"
-                              width="100%"
-                         styleClass="resources-table"
-                        headerClass="tableRowHeader" 
-                        footerClass="on-pager-footer"
-                           rendered="#{eventHistoryDataModel.rowCount > 0 }"
-                     onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
-                      onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
-
-                <f:facet name="PageControlView">
-                    <onc:paginationControl id="EventsHistoryList" />
-                </f:facet>
-
-                <rich:column>
-                    <f:facet name="header">
-                        <onc:sortableColumnHeader sort="ev.severity">
-                            <h:outputText styleClass="headerText" value="Severity" />
-                        </onc:sortableColumnHeader>
-                    </f:facet>
-                    <h:outputText value="#{item.severity}" />
-                </rich:column>
-
-                <rich:column>
-                    <f:facet name="header">
-                        <onc:sortableColumnHeader sort="ev.source">
-                            <h:outputText styleClass="headerText" value="Source" />
-                        </onc:sortableColumnHeader>
-                    </f:facet>
-                    <h:outputText value="#{item.sourceLocation}" />
-                </rich:column>
-
-                <rich:column>                    
-                    <f:facet name="header">
-                        <h:outputText styleClass="headerText" value="Detail" />
-                    </f:facet>
-                    
-                    <h:outputLink>
-                        <f:param name="id" value="${param.id}" />
-                        <f:param name="eventId" value="#{item.eventId}" />
-                        <h:outputText value="#{onf:trimString(item.eventDetail,160)}" />
-                    </h:outputLink>
-                </rich:column>
-
-                <rich:column>
-                    <f:facet name="header">
-                        <onc:sortableColumnHeader sort="ev.timestamp">
-                            <h:outputText styleClass="headerText" value="Time occurred" />
-                        </onc:sortableColumnHeader>
-                    </f:facet>
-                    <h:outputText value="#{item.timestamp}" />
-                </rich:column>
-
-                <f:facet name="footer">
-                    <rich:columnGroup>
-                        <rich:column colspan="4" width="100%">
-                            <ui:param name="paginationDataTableName" value="eventHistoryDataTable" />
-                            <ui:param name="paginationDataModel" value="#{eventHistoryDataModel}" />
-                            <ui:param name="paginationPageControl" value="#{PageControl.EventsHistoryList}" />
-                            <ui:include src="../include/pagination.xhtml" />
-                        </rich:column>
-                    </rich:columnGroup>
-                </f:facet>
-            </rich:dataTable>
-            
             <br />
         </a4j:form>
         

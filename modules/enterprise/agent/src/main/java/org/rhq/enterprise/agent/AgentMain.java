@@ -474,7 +474,7 @@ public class AgentMain {
      * Returns the directory that is considered the "agent home" (i.e. the directory
      * where the agent is installed).
      * 
-     * @return agent home directory
+     * @return agent home directory, or empty string if it cannot be determined
      */
     public String getAgentHomeDirectory() {
         if (m_agentHomeDirectory != null) {
@@ -517,7 +517,7 @@ public class AgentMain {
             }
             return m_agentHomeDirectory;
         } else {
-            return "?";
+            return "";
         }
     }
 

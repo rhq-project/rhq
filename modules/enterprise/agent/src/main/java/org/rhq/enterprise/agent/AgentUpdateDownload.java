@@ -77,6 +77,21 @@ public class AgentUpdateDownload {
     }
 
     /**
+     * Returns the location on the local file system where any downloaded
+     * files will be stored.
+     * 
+     * @return local file system location where the downloaded files are stored
+     */
+    public File getLocalDownloadDirectory() {
+        String agentHome = this.agent.getAgentHomeDirectory();
+        if (agentHome == null || agentHome.length() == 0) {
+            agentHome = System.getProperty("java.io.tmpdir");
+        }
+        File dir = new File(agentHome);
+        return dir;
+    }
+
+    /**
      * This will validate the MD5 of the {@link #getAgentUpdateBinaryFile() downloaded binary file}.
      * If it validates, this method returns normally, otherwise, an exception is thrown.
      * You must first download the file first before calling this method.
@@ -138,7 +153,6 @@ public class AgentUpdateDownload {
                 // put the update content in the local file system
                 // determine what the name should be of the agent update binary based on the header
                 // Content-Disposition: attachment; filename=<filename.is.here>
-                File tmpDir = new File(System.getProperty("java.io.tmpdir"));
                 String fileName = conn.getHeaderField("Content-Disposition");
 
                 if (fileName != null) {
@@ -159,7 +173,8 @@ public class AgentUpdateDownload {
                     LOG.info(AgentI18NResourceKeys.UPDATE_DOWNLOAD_NO_NAME, fileName);
                 }
 
-                binaryFile = new File(tmpDir, fileName);
+                File dir = getLocalDownloadDirectory();
+                binaryFile = new File(dir, fileName);
 
                 // don't bother downloading if we already have it!
                 if (validateFile(binaryFile, info.getUpdateMd5())) {

@@ -28,6 +28,20 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
+    @I18NMessage("The agent cannot restart after the aborted update: {0}")
+    String UPDATE_THREAD_CANNOT_RESTART = "AgentUpdateThread.cannot-restart";
+
+    @I18NMessage("The agent update thread encountered an exception: {0}")
+    String UPDATE_THREAD_EXCEPTION = "AgentUpdateThread.exception";
+
+    @I18NMessage("The agent update thread has started - will begin the agent auto-update now!")
+    String UPDATE_THREAD_STARTED = "AgentUpdateThread.started";
+
+    @I18NMessage("AGENT AUTO-UPDATE FAILED! This agent cannot update itself!\\n\\\n"
+        + "The agent is probably no longer able to talk to the server cloud successfully.\\n\\\n"
+        + "Manual intervention by an administrator is usually required now.")
+    String UPDATE_THREAD_FAILURE = "AgentUpdateThread.failure";
+
     @I18NMessage("Cannot validate agent update binary - it has not been downloaded yet [{0}]")
     String UPDATE_DOWNLOAD_MD5_MISSING_FILE = "AgentUpdateDownload.md5.missing-file";
 
@@ -760,13 +774,14 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("update")
     String UPDATE = "PromptCommand.update";
 
-    @I18NMessage("update <--version | --enable | --disable | --download | --status>")
+    @I18NMessage("update <--update | --version | --enable | --disable | --download | --status>")
     String UPDATE_SYNTAX = "PromptCommand.update.syntax";
 
     @I18NMessage("Provides agent update functionality")
     String UPDATE_HELP = "PromptCommand.update.help";
 
     @I18NMessage("Provides agent update functionality.\\n\\\n"
+        + "-u, --update:   Updates the agent now. The current agent will exit.\\n\\\n"
         + "-v, --version:  Checks the version information for the available agent update\\n\\\n"
         + "-e, --enable:   Enables the agent to be able to update itself\\n\\\n"
         + "-d, --disable:  Disallow the agent from being able to update itself\\n\\\n"

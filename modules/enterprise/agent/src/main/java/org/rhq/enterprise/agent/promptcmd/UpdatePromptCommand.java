@@ -33,6 +33,7 @@ import org.rhq.enterprise.agent.AgentConfigurationConstants;
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.AgentUpdateDownload;
 import org.rhq.enterprise.agent.AgentUpdateInformation;
+import org.rhq.enterprise.agent.AgentUpdateThread;
 import org.rhq.enterprise.agent.AgentUpdateVersion;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
@@ -75,8 +76,9 @@ public class UpdatePromptCommand implements AgentPromptCommand {
             return;
         }
 
-        String sopts = "vdeos";
+        String sopts = "vudeos";
         LongOpt[] lopts = { new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'v'), // check the version info
+            new LongOpt("update", LongOpt.NO_ARGUMENT, null, 'u'), // updates the agent right now
             new LongOpt("disable", LongOpt.NO_ARGUMENT, null, 'd'), // disable agent updates
             new LongOpt("enable", LongOpt.NO_ARGUMENT, null, 'e'), // enable agent updates
             new LongOpt("download", LongOpt.NO_ARGUMENT, null, 'o'), // downloads the agent update binary
@@ -92,6 +94,12 @@ public class UpdatePromptCommand implements AgentPromptCommand {
             case '?':
             case 1: {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.HELP_SYNTAX_LABEL, getSyntax()));
+                break;
+            }
+
+            case 'u': {
+                // this method outputs messages to the user; it also will not return if successful
+                AgentUpdateThread.updateAgentNow(agent, true);
                 break;
             }
 

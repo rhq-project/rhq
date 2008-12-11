@@ -33,11 +33,10 @@ var overlay = {
     moveOverlay: function (anchor) {
         var ovl = $('overlay');
         var anchorY = this.findPosY(anchor);
-        var left = this.findPosX(anchor);
-
-        var top = this.findPosY($('charttop')) - 4;
-
-        var bottom = this.findPosY($('timetop')) + 4;
+        
+        var left = this.findPosX(anchor) - 225;
+        var top = this.findPosY($('charttop')) - 85;
+        var bottom = this.findPosY($('timetop')) - 85;
 
         ovl.style.visibility='visible';
         ovl.style.left = left + 'px';
@@ -50,10 +49,12 @@ var overlay = {
             this.curPopup.style.visibility='hidden';
         }
         var anchor = $('timePopup_' + index);
-        var left = this.findPosX(anchor) - 35;
-        var top = this.findPosY(anchor) + 10;
+        
+        var left = this.findPosX(anchor) - 225 - 50;
+        var top = this.findPosY(anchor) - 85 + 10;
+        
         this.curPopup = $('timePopup');
-        this.curPopup.innerHTML = time; //this.times[index];
+        this.curPopup.innerHTML = time; 
         this.curPopup.style.left = left + 'px';
         this.curPopup.style.top = top + 'px';
         this.curPopup.style.visibility ='visible';

@@ -15,7 +15,7 @@
 
 <ui:composition>
 
-<div id="overlay" class="overlay" style="z-index: 1000"></div>
+<div id="overlay" class="overlay"></div>
 
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
    <tr>
@@ -49,8 +49,8 @@
     
    <tr>
    <td width="10">
-      <div id="timetop"></div>
-      <img src="/images/timeline_ll.gif" height="10"/> 
+      <img src="/images/timeline_ll.gif" height="10"/>
+      <div id="timetop"></div> 
    </td>
    
    <c:forEach var="timeTick" items="#{EventsTimelineUIBean.data}" varStatus="status">
@@ -78,7 +78,7 @@
       <td></td>
       <td colspan="30" valign="top">
          <onc:userFormatter value="#{EventsTimelineUIBean.data[0].time}"/>
-            <div id="timePopup" class="timepopup" onmousedown="overlay.hideTimePopup()" style="height: 16px;"></div>
+            <div id="timePopup" class="timepopup" onmousedown="overlay.hideTimePopup()"></div>
       </td>
       <td colspan="30" align="right" valign="top">
          <onc:userFormatter value="#{EventsTimelineUIBean.data[59].time}"/>

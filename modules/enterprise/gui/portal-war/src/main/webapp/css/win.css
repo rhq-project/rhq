@@ -1356,9 +1356,8 @@ div.overlay {
 div.timepopup {
    position: absolute;
    visibility: hidden;
-   width: 70px;
-   left: 0;
-   top: -20px;
+   width: 100px;
+   height: 35px;
    font-size: 10px;
    padding: 3px;
    text-align: center;

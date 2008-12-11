@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -366,8 +367,14 @@ public class SystemManagerBean implements SystemManagerLocal {
                     // we need to undeploy it first - on windows the files are locked and can't be renamed until undeployed
                     name = ObjectNameFactory.create("jboss.system:service=MainDeployer");
                     mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, MainDeployerMBean.class, false);
-                    ((MainDeployerMBean) mbean).undeploy(deployedInstallWar.toURI().toURL());
-                    log.info("Installer war has been undeployed");
+                    URL url = deployedInstallWar.toURI().toURL();
+                    String urlString = url.toString().replace("%20", " "); // bug in undeployer doesn't like %20 - it wants a real space
+                    ((MainDeployerMBean) mbean).undeploy(urlString);
+                    if (((MainDeployerMBean) mbean).isDeployed(urlString) == false) {
+                        log.info("Installer war has been hot-undeployed from memory");
+                    } else {
+                        log.warn("Installer hot-undeploy failed - full installer undeploy may not work...");
+                    }
 
                     if (!deployedInstallWar.renameTo(undeployedInstallWar)) {
                         throw new RuntimeException("Cannot undeploy the installer war: " + deployedInstallWar);

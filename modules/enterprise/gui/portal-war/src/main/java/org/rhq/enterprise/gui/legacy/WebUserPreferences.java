@@ -212,6 +212,17 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         setPreference(PREF_DASH_RECENTLY_APPROVED_EXPANDED_PLATFORMS, prefs.expandedPlatforms);
     }
 
+    public static class DateTimeDisplayPreferences {
+        // TODO: jmarques - make DateTimeDisplayPreferences configurable
+        public final String dateFormat = "M/d/yy";
+        public final String timeFormat = "h:mm:ss aa, zzz";
+        public final String dateTimeFormat = "M/d/yy, h:mm:ss aa, zzz";
+    }
+
+    public DateTimeDisplayPreferences getDateTimeDisplayPreferences() {
+        return new DateTimeDisplayPreferences();
+    }
+
     public static class FavoriteResourcePortletPreferences {
         public boolean showAvailability;
         public boolean showAlerts;

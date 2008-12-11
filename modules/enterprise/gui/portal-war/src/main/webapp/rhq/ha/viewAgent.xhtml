@@ -210,9 +210,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.server.mtime}">
-                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                  </h:outputText>
+                  <onc:userFormatter value="#{item.server.mtime}" />
                </rich:column>
 
                <f:facet name="footer">

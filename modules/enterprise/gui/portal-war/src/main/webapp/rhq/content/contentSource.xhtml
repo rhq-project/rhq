@@ -328,9 +328,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{syncitem.startTime}">
-                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                  </h:outputText>
+                  <onc:userFormatter value="#{syncitem.startTime}" />
                </rich:column>
                
                <rich:column>
@@ -340,9 +338,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{syncitem.endTime}">
-                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                  </h:outputText>
+                  <onc:userFormatter value="#{syncitem.endTime}" />
                </rich:column>
                
                <rich:column>

@@ -95,17 +95,13 @@
                <tr>
                   <td align="right"><b>Installation Date:</b></td>
                   <td align="left">
-                     <h:outputText value="#{serverDetails.ctime}">
-                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                     </h:outputText>
+                     <onc:userFormatter value="#{serverDetails.ctime}" />
                   </td>
                </tr>
                <tr>
                   <td align="right"><b>Last Update Time:</b></td>
                   <td align="left">
-                     <h:outputText value="#{serverDetails.mtime}">
-                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                     </h:outputText>
+                     <onc:userFormatter value="#{serverDetails.mtime}" />
                   </td>
                </tr>
             </table>

@@ -46,12 +46,14 @@
 	            </tr>
 	            <tr>
 	               <td align="right">Date Submitted:</td>
-	               <td align="left"><h:outputText value="#{latestConfig.createdTime}" /></td>
+	               <td align="left">
+	                  <onc:userFormatter value="#{latestConfig.createdTime}" />
+	               </td>
 	            </tr>
 	            <tr>
 	               <td align="right">Date Completed:</td>
 	               <td align="left">
-	                  <h:outputText value="#{latestConfig.modifiedTime}"  rendered="#{latestConfig.status ne 'INPROGRESS'}"/>
+	                  <onc:userFormatter value="#{latestConfig.modifiedTime}"  rendered="#{latestConfig.status ne 'INPROGRESS'}"/>
 	                  <h:outputText value="(in progress)"  rendered="#{latestConfig.status eq 'INPROGRESS'}"/>
 	               </td>
 	            </tr>
@@ -110,7 +112,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputText value="#{item.createdTime}"/>
+                  <onc:userFormatter value="#{item.createdTime}"/>
                </rich:column>
                
                <rich:column>
@@ -120,7 +122,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputText value="#{item.modifiedTime}"  rendered="#{item.status ne 'INPROGRESS'}"/>
+                  <onc:userFormatter value="#{item.modifiedTime}"  rendered="#{item.status ne 'INPROGRESS'}"/>
                </rich:column>
                
                <rich:column>

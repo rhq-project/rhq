@@ -41,9 +41,7 @@
 
       <h:panelGroup layout="block">
          <b>Date Created: </b>
-         <h:outputText value="#{ResourceUIBean.ctime}">
-            <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-         </h:outputText>
+         <onc:userFormatter value="#{ResourceUIBean.ctime}" />
       </h:panelGroup>
 
       <h:panelGroup layout="block">
@@ -54,9 +52,7 @@
 
       <h:panelGroup layout="block">
          <b>Date Last Modified: </b>
-         <h:outputText value="#{ResourceUIBean.mtime}">
-            <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-         </h:outputText>
+         <onc:userFormatter value="#{ResourceUIBean.mtime}" />
       </h:panelGroup>
       
       <h:panelGroup layout="block">
@@ -413,9 +409,7 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="#{createItem.createdTime}">
-      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-   </h:outputText>
+   <onc:userFormatter value="#{createItem.createdTime}" />
 </rich:column>
 
 <ui:remove><!-- Last Modified Time --></ui:remove>
@@ -426,9 +420,7 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="#{createItem.lastModifiedTime}">
-      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-   </h:outputText>
+   <onc:userFormatter value="#{createItem.lastModifiedTime}" />
 </rich:column>
 
 <ui:remove><!-- User --></ui:remove>
@@ -534,9 +526,7 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="#{deleteItem.createdTime}">
-      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-   </h:outputText>
+   <onc:userFormatter value="#{deleteItem.createdTime}" />
 </rich:column>
 
 <ui:remove><!-- Request Updated Time --></ui:remove>
@@ -547,9 +537,7 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <h:outputText value="#{deleteItem.lastModifiedTime}">
-      <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-   </h:outputText>
+   <onc:userFormatter value="#{deleteItem.lastModifiedTime}" />
 </rich:column>
 
 <ui:remove><!-- User --></ui:remove>

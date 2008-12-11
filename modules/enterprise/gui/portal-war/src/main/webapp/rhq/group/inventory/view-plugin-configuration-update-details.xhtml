@@ -116,9 +116,7 @@
                
                   <h:outputLink value="/rhq/resource/inventory/view.xhtml">
                      <f:param name="id" value="#{item.resourceId}" />
-                     <h:outputText value="#{item.update.createdTime}">
-                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                     </h:outputText>
+                     <onc:userFormatter value="#{item.update.createdTime}" />
                   </h:outputLink>
                </rich:column>
 
@@ -129,7 +127,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.update.modifiedTime}" />
+                  <onc:userFormatter value="#{item.update.modifiedTime}" />
                </rich:column>
                
                <rich:column>

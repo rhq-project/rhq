@@ -57,17 +57,13 @@
 	            <tr>
 	               <td align="right">Date Submitted:</td>
 	               <td align="left">
-	                  <h:outputText value="#{item.createdTime}">
-	                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-	                  </h:outputText>
+	                  <onc:userFormatter value="#{item.createdTime}" />
 	               </td>
 	            </tr>
 	            <tr>
 	               <td align="right">Date Completed:</td>
 	               <td align="left">
-	                  <h:outputText value="#{item.modifiedTime}" rendered="#{item.status ne 'INPROGRESS'}">
-	                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-	                  </h:outputText>
+	                  <onc:userFormatter value="#{item.modifiedTime}" rendered="#{item.status ne 'INPROGRESS'}" />
 	               </td>
 	            </tr>
 	            <tr>
@@ -143,9 +139,7 @@
                      </onc:sortableColumnHeader>                     
                   </f:facet>
                   
-                  <h:outputText value="#{resourceHistoryItem.createdTime}">
-                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                  </h:outputText>
+                  <onc:userFormatter value="#{resourceHistoryItem.createdTime}" />
                </rich:column>
                
                <rich:column>

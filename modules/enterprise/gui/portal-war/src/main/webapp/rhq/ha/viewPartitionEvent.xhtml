@@ -56,9 +56,7 @@
                <tr>
                   <td align="right"><b>Event Execution Time:</b></td>
                   <td align="left">
-                     <h:outputText value="#{eventDetails.ctime}">
-                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                     </h:outputText>
+                     <onc:userFormatter value="#{eventDetails.ctime}" />
                   </td>
                </tr>
                <tr>

@@ -216,9 +216,7 @@
                            <h:outputText styleClass="headerText" value="Date Detected" />
                         </onc:sortableColumnHeader>                     
                      </f:facet>
-                     <h:outputText value="#{platformQueueItem.ctime}">
-                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                     </h:outputText>
+                     <onc:userFormatter value="#{platformQueueItem.ctime}" />
                   </rich:column>
 
                   <rich:column>
@@ -260,9 +258,7 @@
                      </rich:column>
 
                      <rich:column>
-                        <h:outputText value="#{serverQueueItem.ctime}">
-                           <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                        </h:outputText>
+                        <onc:userFormatter value="#{serverQueueItem.ctime}" />
                      </rich:column>
 
                      <rich:column>

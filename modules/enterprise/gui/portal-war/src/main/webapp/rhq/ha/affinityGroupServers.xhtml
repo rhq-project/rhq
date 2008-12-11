@@ -157,9 +157,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{serverItem.ctime}">
-                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                  </h:outputText>
+                  <onc:userFormatter value="#{serverItem.ctime}" />
                </rich:column>
 
                <f:facet name="footer">
@@ -292,9 +290,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{serverItem.ctime}">
-                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                  </h:outputText>
+                  <onc:userFormatter value="#{serverItem.ctime}" />
                </rich:column>
 
                <f:facet name="footer">

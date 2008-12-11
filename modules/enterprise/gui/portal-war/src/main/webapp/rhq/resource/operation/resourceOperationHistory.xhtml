@@ -82,9 +82,7 @@
                      </onc:sortableColumnHeader>                     
                   </f:facet>
                   
-                  <h:outputText value="#{pendingItem.createdTime}">
-                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                  </h:outputText>
+                  <onc:userFormatter value="#{pendingItem.createdTime}" />
                </rich:column>
                
                <rich:column>
@@ -208,9 +206,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputText value="#{historyItem.createdTime}">
-                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                  </h:outputText>
+                  <onc:userFormatter value="#{historyItem.createdTime}" />
                </rich:column>
                
                <rich:column>
@@ -220,9 +216,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputText value="#{historyItem.modifiedTime}">
-                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                  </h:outputText>
+                  <onc:userFormatter value="#{historyItem.modifiedTime}" />
                </rich:column>
                
                <rich:column>

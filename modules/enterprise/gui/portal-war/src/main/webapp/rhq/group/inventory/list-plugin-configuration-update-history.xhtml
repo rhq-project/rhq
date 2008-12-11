@@ -98,9 +98,7 @@
                      <f:param name="groupId" value="#{param.groupId}" />
                      <f:param name="category" value="#{param.category}" />
                      <f:param name="apcuId" value="#{item.id}" />
-                     <h:outputText value="#{item.createdTime}">
-                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                     </h:outputText>
+                     <onc:userFormatter value="#{item.createdTime}" />
                   </h:outputLink>
                </rich:column>
  
@@ -111,7 +109,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.modifiedTime}" />
+                  <onc:userFormatter value="#{item.modifiedTime}" />
                </rich:column>
                
                <rich:column>

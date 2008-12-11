@@ -40,9 +40,7 @@
       
       <h:panelGroup layout="block">
          <b>Date Created: </b>
-         <h:outputText value="#{ResourceGroupUIBean.ctime}">
-            <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-         </h:outputText>
+         <onc:userFormatter value="#{ResourceGroupUIBean.ctime}" />
       </h:panelGroup>
       
       <h:panelGroup layout="block">
@@ -53,9 +51,7 @@
       
       <h:panelGroup layout="block">
          <b>Date Last Modified: </b>
-         <h:outputText value="#{ResourceGroupUIBean.mtime}">
-            <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-         </h:outputText>
+         <onc:userFormatter value="#{ResourceGroupUIBean.mtime}" />
       </h:panelGroup>
       
       <h:panelGroup layout="block">

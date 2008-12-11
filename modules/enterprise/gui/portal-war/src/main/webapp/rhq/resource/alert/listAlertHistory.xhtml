@@ -118,9 +118,7 @@
                      <f:param name="mode" value="viewAlert" />
                      <f:param name="id" value="#{Resource.id}" />
                      <f:param name="a" value="#{item.alert.id}" />
-                     <h:outputText value="#{item.alert.ctime}">
-                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                     </h:outputText>
+                     <onc:userFormatter value="#{item.alert.ctime}" />
                   </h:outputLink>
                </rich:column>
                

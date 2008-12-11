@@ -80,9 +80,6 @@ public class DurationComponent extends UIComponentBase {
     }
 
     public String getUnit() {
-        if (unit == null) {
-
-        }
         return unit;
     }
 

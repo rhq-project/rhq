@@ -36,9 +36,7 @@
       
       <h:panelGroup layout="block">
          <b>Date Created: </b>
-         <h:outputText value="#{GroupDefinitionUIBean.createdTime}">
-            <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-         </h:outputText>
+         <onc:userFormatter value="#{GroupDefinitionUIBean.createdTime}" />
       </h:panelGroup>
       
       <h:panelGroup layout="block">
@@ -49,9 +47,7 @@
       
       <h:panelGroup layout="block">
          <b>Date Last Modified: </b>
-         <h:outputText value="#{GroupDefinitionUIBean.modifiedTime}">
-            <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-         </h:outputText>
+         <onc:userFormatter value="#{GroupDefinitionUIBean.modifiedTime}" />
       </h:panelGroup>
 
       <h:panelGroup layout="block">
@@ -60,9 +56,7 @@
 
       <h:panelGroup layout="block">
          <b>Last Calculation Date: </b>
-         <h:outputText value="#{GroupDefinitionUIBean.lastCalculationTime}" rendered="#{!empty GroupDefinitionUIBean.lastCalculationTime}" >
-            <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-         </h:outputText>
+         <onc:userFormatter value="#{GroupDefinitionUIBean.lastCalculationTime}" rendered="#{!empty GroupDefinitionUIBean.lastCalculationTime}" />
          <h:outputText value="never" rendered="#{empty GroupDefinitionUIBean.lastCalculationTime}" />
       </h:panelGroup>
 

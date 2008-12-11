@@ -103,9 +103,9 @@ public class VersionPromptCommand implements AgentPromptCommand {
                 if (envvars == null) {
                     envvars = new HashMap<String, String>();
                 }
-                for (Map.Entry<String, String> sysprop : envvars.entrySet()) {
-                    if (opt == null || sysprop.getKey().toString().startsWith(opt)) {
-                        out.println(sysprop.getKey() + "=" + sysprop.getValue());
+                for (Map.Entry<String, String> envvar : envvars.entrySet()) {
+                    if (opt == null || envvar.getKey().toString().startsWith(opt)) {
+                        out.println(envvar.getKey() + "=" + envvar.getValue());
                     }
                 }
                 break;

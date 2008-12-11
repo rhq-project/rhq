@@ -284,7 +284,8 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
         String description = installInfo.getProductType().DESCRIPTION;
         File deployDir = new File(absoluteConfigPath, "deploy");
         File rhqInstallerWar = new File(deployDir, "rhq-installer.war");
-        boolean isRhqServer = rhqInstallerWar.exists();
+        File rhqInstallerWarUndeployed = new File(deployDir, "rhq-installer.war.rej");
+        boolean isRhqServer = rhqInstallerWar.exists() || rhqInstallerWarUndeployed.exists();
         if (isRhqServer) {
             baseName += " RHQ Server, ";
             description += " hosting the RHQ Server";

@@ -825,7 +825,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("version")
     String VERSION = "PromptCommand.version";
 
-    @I18NMessage("version [--sysprops] [--env]")
+    @I18NMessage("version [--sysprops[=name]] [--env[=name]]")
     String VERSION_SYNTAX = "PromptCommand.version.syntax";
 
     @I18NMessage("Shows agent version information")

@@ -60,9 +60,9 @@ public class VersionPromptCommand implements AgentPromptCommand {
             return true;
         }
 
-        String sopts = "se";
-        LongOpt[] lopts = { new LongOpt("sysprops", LongOpt.NO_ARGUMENT, null, 's'),
-            new LongOpt("env", LongOpt.NO_ARGUMENT, null, 'e') };
+        String sopts = "s::e::";
+        LongOpt[] lopts = { new LongOpt("sysprops", LongOpt.OPTIONAL_ARGUMENT, null, 's'),
+            new LongOpt("env", LongOpt.OPTIONAL_ARGUMENT, null, 'e') };
 
         Getopt getopt = new Getopt(getPromptCommandString(), args, sopts, lopts);
         int code;
@@ -81,9 +81,13 @@ public class VersionPromptCommand implements AgentPromptCommand {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.VERSION_SYSPROPS_LABEL));
                 out.println();
 
+                String opt = getopt.getOptarg();
+
                 Properties sysprops = System.getProperties();
                 for (Map.Entry<Object, Object> sysprop : sysprops.entrySet()) {
-                    out.println(sysprop.getKey() + "=" + sysprop.getValue());
+                    if (opt == null || sysprop.getKey().toString().startsWith(opt)) {
+                        out.println(sysprop.getKey() + "=" + sysprop.getValue());
+                    }
                 }
                 break;
             }
@@ -93,12 +97,16 @@ public class VersionPromptCommand implements AgentPromptCommand {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.VERSION_ENV_LABEL));
                 out.println();
 
+                String opt = getopt.getOptarg();
+
                 Map<String, String> envvars = System.getenv();
                 if (envvars == null) {
                     envvars = new HashMap<String, String>();
                 }
                 for (Map.Entry<String, String> sysprop : envvars.entrySet()) {
-                    out.println(sysprop.getKey() + "=" + sysprop.getValue());
+                    if (opt == null || sysprop.getKey().toString().startsWith(opt)) {
+                        out.println(sysprop.getKey() + "=" + sysprop.getValue());
+                    }
                 }
                 break;
             }

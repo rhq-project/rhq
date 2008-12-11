@@ -22,12 +22,12 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class AvailabilityUIBean {
 
-    protected final Log log = LogFactory.getLog(AvailabilityUIBean.class);
+    private final Log log = LogFactory.getLog(AvailabilityUIBean.class);
 
-    AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
+    private AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
 
-    List<AvailabilityPoint> data = null;
-    String percentage = "???"; // default
+    private List<AvailabilityPoint> data = null;
+    private String percentage = "???"; // default
 
     public List<AvailabilityPoint> getData() {
         return data;
@@ -38,7 +38,6 @@ public class AvailabilityUIBean {
     }
 
     public AvailabilityUIBean() {
-        // Get the resource availability
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
         MeasurementPreferences preferences = user.getMeasurementPreferences();
 

@@ -38,7 +38,7 @@
                </td>
                <c:forEach var="avail" items="#{AvailabilityUIBean.data}" varStatus="status">
                   <td width="9">
-                     <div>
+                     <div onmousedown="overlay.moveOverlay(this);overlay.showTimePopup(&lt;c:out value='#{status.index - 1}'/&gt;,&lt;onc:userFormatter value='#{avail.timestamp}' /&gt;)" >
                         <c:choose>
                            <c:when test="#{avail.value == 1}">
                               <img src="/images/timeline_green.gif" height="10" width="9" border="0" title="UP"/>

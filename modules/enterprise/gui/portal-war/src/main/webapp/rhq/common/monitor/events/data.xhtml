@@ -56,13 +56,11 @@
    <c:forEach var="timeTick" items="#{EventsTimelineUIBean.data}" varStatus="status">
       <c:set var="count" value="#{status.index}"/>
       <td width="9">
-      <div id="timePopup_&lt;c:out value='#{count - 1}'/&gt;" 
-
-           onmouseout="overlay.curTime = null">
+      <div id="timePopup_#{count}">
          <img src="/images/timeline_off.gif" height="10" width="9" 
               onmouseover="imageSwap(this, imagePath + 'timeline', '_on')" 
               onmouseout="imageSwap(this, imagePath +  'timeline', '_off');" 
-              onmousedown="imageSwap(this, imagePath +  'timeline', '_down')"/> 
+              onmousedown="imageSwap(this, imagePath +  'timeline', '_down')" /> 
       </div>
    </td>
    </c:forEach>

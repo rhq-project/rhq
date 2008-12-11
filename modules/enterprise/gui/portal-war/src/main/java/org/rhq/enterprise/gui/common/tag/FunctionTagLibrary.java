@@ -161,6 +161,7 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     @Deprecated
     public static String formatTimestamp(long timestamp) {
         // NOTE: The below code was snarfed from org.rhq.enterprise.gui.legacy.taglib.DateFormatter.
+
         UnitsConstants unit = UnitsConstants.UNIT_DATE;
         String key = StringConstants.UNIT_FORMAT_PREFIX_KEY + "epoch-millis";
         String formatString = RequestUtils.message(FacesContextUtility.getRequest(), key);

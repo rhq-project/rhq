@@ -254,7 +254,8 @@ function grayOutInput(input)
 function displayMessageModal(title, message)
 {
    var win = new Window({className:WINDOW_THEME, width:350, height:400, zIndex: 100, resizable:true, showEffect:Effect.BlindDown, hideEffect:Effect.SwitchOff, draggable:true, wiredDrag:true});
-   win.getContent().innerHTML = "<div style='padding:10px'>" + message + "</div>";
+   var escapedMessage = escape(message);
+   win.getContent().innerHTML = "<div style='padding:10px'>" + escapedMessage + "</div>";
    win.setTitle(title);
    win.showCenter(true); // true == modal
 }

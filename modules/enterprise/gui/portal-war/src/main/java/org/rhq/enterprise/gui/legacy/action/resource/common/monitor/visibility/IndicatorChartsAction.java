@@ -131,7 +131,7 @@ public class IndicatorChartsAction extends DispatchAction {
          * schedule ids from it. If this fails, fall back to defaults.
          */
         try {
-            EntityContext context = WebUtility.getContext(request);
+            EntityContext context = WebUtility.getEntityContext(request);
             List<String> charts = viewManager.getCharts(subject, context, viewName);
             if (charts.isEmpty())
                 throw new IllegalArgumentException("No metrics defined"); // Use defaults then from below
@@ -289,7 +289,7 @@ public class IndicatorChartsAction extends DispatchAction {
          * First try to load the metrics from the user preferences for that key.
          * If that fails, we load defaults for it.
          */
-        EntityContext context = WebUtility.getContext(request);
+        EntityContext context = WebUtility.getEntityContext(request);
         try {
 
             List<String> charts = viewManager.getCharts(user.getSubject(), context, viewName);

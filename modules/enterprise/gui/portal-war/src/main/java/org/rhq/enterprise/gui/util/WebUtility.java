@@ -30,6 +30,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.DefaultConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -218,7 +219,12 @@ public abstract class WebUtility {
         return mode;
     }
 
-    public static EntityContext getContext(HttpServletRequest request) {
+    public static EntityContext getEntityContext() {
+        HttpServletRequest request = FacesContextUtility.getRequest();
+        return getEntityContext(request);
+    }
+
+    public static EntityContext getEntityContext(HttpServletRequest request) {
         int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
         int groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
         int parentResourceId = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);

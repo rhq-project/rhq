@@ -38,17 +38,20 @@
 
    <!-- performs a base install - this does not attempt to upgrade an agent; this provisions a fresh new agent -->
    <target name="install" unless="rhq.agent.update.update-flag">
+      <echo>Extract the agent distro zip from the agent update binary</echo>
       <unjar src="${rhq.agent.update.jar-file}"
              dest="${basedir}">
          <patternset>
              <include name="rhq-enterprise-agent-${rhq-agent.latest.version}.zip"/>
          </patternset>
       </unjar>
+      <echo>Unzip the agent distro into the new installation directory</echo>
       <unzip src="${basedir}/rhq-enterprise-agent-${rhq-agent.latest.version}.zip"
              dest="${rhq.agent.update.install-agent-dir}"/>
+      <echo>Remove the agent distro zip</echo>
       <delete file="${basedir}/rhq-enterprise-agent-${rhq-agent.latest.version}.zip"
               failonerror="false"/>
-      <echo>Agent version ${rhq-agent.latest.version} (build number=${rhq-agent.latest.build-number}) has been installed to ${rhq.agent.update.install-agent-dir}</echo>
+      <echo>DONE! Agent version ${rhq-agent.latest.version} (build number=${rhq-agent.latest.build-number}) has been installed to ${rhq.agent.update.install-agent-dir}</echo>
    </target>
 
    <!-- upgrades an existing agent -->
@@ -58,31 +61,39 @@
            move it in the current agent's place -->
       <property name="_update.tmp.dir.name" value="update-${rhq-agent.latest.build-number}" />
       <property name="_update.tmp.dir" location="${rhq.agent.update.update-agent-dir}/${_update.tmp.dir.name}" />
+      <echo>Extract the agent distro zip from the agent update binary, place in temporary update dir</echo>
       <unjar src="${rhq.agent.update.jar-file}"
              dest="${_update.tmp.dir}">
          <patternset>
              <include name="rhq-enterprise-agent-${rhq-agent.latest.version}.zip"/>
          </patternset>
       </unjar>
+      <echo>Unzip the agent distro into the temporary update directory</echo>
       <unzip src="${_update.tmp.dir}/rhq-enterprise-agent-${rhq-agent.latest.version}.zip"
              dest="${_update.tmp.dir}"/>
+      <echo>Remove the agent distro zip</echo>
       <delete file="${_update.tmp.dir}/rhq-enterprise-agent-${rhq-agent.latest.version}.zip"
               failonerror="false"/>
 
-      <!-- at this point, we have the new but raw agent extracted to the ${_update.tmp.dir}/rhq-agent -->
-      <!-- the old, existing agent (the one we are upgrading) is at ${rhq.agent.update.update-agent-dir} -->
+      <echo>
+      At this point, we have the new (but raw) agent extracted to: ${_update.tmp.dir}/rhq-agent
+      The old, existing agent (the one we are upgrading) is at: ${rhq.agent.update.update-agent-dir}
+      </echo>
 
       <!-- if there are plugins, keep them -->
+      <echo>Copy existing plugins from the old agent to the new agent</echo>
       <copy todir="${_update.tmp.dir}/rhq-agent/plugins">
         <fileset dir="${rhq.agent.update.update-agent-dir}/plugins"/>
       </copy>
 
       <!-- if there is a failover list, keep it -->
+      <echo>Copy existing failover list from the old agent to the new agent</echo>
       <copy file="${rhq.agent.update.update-agent-dir}/data/failover-list.dat"
             tofile="${_update.tmp.dir}/rhq-agent/data/failover-list.dat"
             failonerror="false" />
 
       <!-- if there are any Windows wrapper environment or include files, copy them -->
+      <echo>Copy existing Java Service Wrapper configuration files from the old agent to the new agent</echo>
       <copy todir="${_update.tmp.dir}/rhq-agent/bin/wrapper">
          <fileset dir="${rhq.agent.update.update-agent-dir}/bin/wrapper">
             <include name="*.env"/>
@@ -91,57 +102,79 @@
       </copy>
 
       <!-- copy any custom launch scripts (if we copy, we lose our UNIX +x permission bits) -->
+      <echo>Copy Windows environment script - keep the old copy in effect and backup the new copy</echo>
       <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/bin"
                         newdir="${_update.tmp.dir}/rhq-agent/bin"
                         filename="rhq-agent-env.bat" keep="old" backupextension=".default" failonerror="false" />
+      <echo>Copy UNIX environment script - keep the old copy in effect and backup the new copy</echo>
       <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/bin"
                         newdir="${_update.tmp.dir}/rhq-agent/bin"
                         filename="rhq-agent-env.sh" keep="old" backupextension=".default" failonerror="false" />
+      <echo>Copy Windows wrapper launch script - use the new copy and backup the old copy</echo>
       <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/bin"
                         newdir="${_update.tmp.dir}/rhq-agent/bin"
-                        filename="rhq-agent-wrapper.bat" keep="old" backupextension=".default" failonerror="false" />
+                        filename="rhq-agent-wrapper.bat" keep="new" backupextension=".custom" failonerror="false" />
+      <echo>Copy UNIX wrapper launch script - use the new copy and backup the old copy</echo>
       <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/bin"
                         newdir="${_update.tmp.dir}/rhq-agent/bin"
-                        filename="rhq-agent-wrapper.sh" keep="old" backupextension=".default" failonerror="false" />
+                        filename="rhq-agent-wrapper.sh" keep="new" backupextension=".custom" failonerror="false" />
+      <echo>Copy Java Service Wrapper configuration - use the new copy and backup the old copy</echo>
       <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/bin/wrapper"
                         newdir="${_update.tmp.dir}/rhq-agent/bin/wrapper"
-                        filename="rhq-agent-wrapper.conf" keep="old" backupextension=".default" failonerror="false" />
+                        filename="rhq-agent-wrapper.conf" keep="new" backupextension=".custom" failonerror="false" />
 
       <!-- copy over the agent-configuration and log4j xml files, but rename them so they do not take effect -->
+      <echo>Copy agent configuration file - use the new copy and backup the old copy</echo>
       <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/conf"
                         newdir="${_update.tmp.dir}/rhq-agent/conf"
                         filename="agent-configuration.xml" keep="new" backupextension=".custom" failonerror="false" />
+      <echo>Copy log4j configuration file - use the new copy and backup the old copy</echo>
       <copy-with-backup olddir="${rhq.agent.update.update-agent-dir}/conf"
                         newdir="${_update.tmp.dir}/rhq-agent/conf"
                         filename="log4j.xml" keep="new" backupextension=".custom" failonerror="false" />
 
-      <!-- everything is done; _update.tmp.dir/rhq-agent has our new agent -->
-      <!-- the old agent is still intact, albeit with a new update subdirectory with the new agent in it -->
-      <!-- start moving things around to get the new agent in the old agent's directory -->
-      <!-- if anything fails below, bad things will happen because the old agent will be ruined -->
+      <echo>
+      Everything is done; _update.tmp.dir/rhq-agent has our new agent.
+      The old agent is still intact, albeit with a new update subdirectory with the new agent in it.
+      Start moving things around to get the new agent in the old agent's directory.
+      If anything fails going forward, bad things will happen because the old agent will be ruined.
+      </echo>
+
+      <echo>Define where we are going to put the old agent - this is where the old agent will be backed up</echo>
       <property name="new.location.for.old.agent" location="${rhq.agent.update.update-agent-dir}/../rhq-agent-OLD" />
+      <echo>Purge any previously backed-up old agent</echo>
       <delete dir="${new.location.for.old.agent}" /> <!-- in case there was a previous update's backup in here -->
+      <echo>Move the old agent to the backup location</echo>
       <move file="${rhq.agent.update.update-agent-dir}"
             tofile="${new.location.for.old.agent}"
             failonerror="true"/>
+      <echo>Make sure the location where the new agent is going to be is empty</echo>
       <delete dir="${rhq.agent.update.update-agent-dir}" /> <!-- just trying to clear the way for the new agent -->
+      <echo>Put the new agent in its new location.</echo>
       <move file="${new.location.for.old.agent}/${_update.tmp.dir.name}/rhq-agent"
             tofile="${rhq.agent.update.update-agent-dir}"
             failonerror="true"/>
+      <echo>Clean up the temporary location where the new agent was located (but no longer is)</echo>
       <delete dir="${new.location.for.old.agent}/${_update.tmp.dir.name}" />
 
-      <!-- at this point, the new agent should now be at the old agent's location -->
-      <!-- the old agent is backed up to the rhq-agent-OLD directory next to new agent -->
+      <echo>
+      At this point, the new agent should now be at the old agent's location.
+      The old agent is backed up to the rhq-agent-OLD directory next to new agent
+      </echo>
 
-      <!-- let's try to get our +x execute permissions back -->
+      <echo>Set the +x execute permission bits on all of the new agent's scripts.</echo>
       <chmod dir="${rhq.agent.update.update-agent-dir}/bin" perm="ug+rx" includes="*.sh"/>
       <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.s0"/>
       <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.sl"/>
       <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.dylib"/>
 
-      <!-- agent is updated, we don't need the backup anymore, so remove it -->
+      <echo>The agent is updated and we don't need the backup anymore, so remove the first backup we made</echo>
       <delete dir="${java.io.tmpdir}/rhq-agent-update-backup" failonerror="false" verbose="false"/>
 
+      <echo>
+      FINISHED UPDATING THE AGENT SUCCESSFULLY!
+      The new agent is now located at: ${rhq.agent.update.update-agent-dir}
+      </echo>
    </target>
 
    <!-- makes sure the jar file where the agent distro is supposed to be actually exists -->

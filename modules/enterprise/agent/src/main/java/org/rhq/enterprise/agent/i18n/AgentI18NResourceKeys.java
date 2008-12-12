@@ -28,14 +28,32 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
+    @I18NMessage("Missing the envvar [{0}] - will try to find a Java executable to use.")
+    String UPDATE_THREAD_LOOKING_FOR_JAVA_EXE = "AgentUpdateThread.looking-for-java-exe";
+
+    @I18NMessage("Will use the Java executable [{0}]")
+    String UPDATE_THREAD_USING_JAVA_EXE = "AgentUpdateThread.using-java-exe";
+
     @I18NMessage("The agent cannot restart after the aborted update: {0}")
     String UPDATE_THREAD_CANNOT_RESTART = "AgentUpdateThread.cannot-restart";
+
+    @I18NMessage("The agent will wait for [{0}] threads to die")
+    String UPDATE_THREAD_WAIT = "AgentUpdateThread.wait";
+
+    @I18NMessage("The agent failed waiting for threads to die: {0}")
+    String UPDATE_THREAD_CANNOT_WAIT = "AgentUpdateThread.cannot-wait";
+
+    @I18NMessage("[{0}] threads are not dying - agent will not wait anymore")
+    String UPDATE_THREAD_NO_MORE_WAIT = "AgentUpdateThread.no-more-wait";
 
     @I18NMessage("The agent update thread encountered an exception: {0}")
     String UPDATE_THREAD_EXCEPTION = "AgentUpdateThread.exception";
 
     @I18NMessage("The agent update thread has started - will begin the agent auto-update now!")
     String UPDATE_THREAD_STARTED = "AgentUpdateThread.started";
+
+    @I18NMessage("The agent is already in the process of updating itself")
+    String UPDATE_THREAD_DUP = "AgentUpdateThread.duplicate";
 
     @I18NMessage("AGENT AUTO-UPDATE FAILED! This agent cannot update itself!\\n\\\n"
         + "The agent is probably no longer able to talk to the server cloud successfully.\\n\\\n"

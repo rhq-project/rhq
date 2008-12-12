@@ -173,6 +173,8 @@ public class AgentMain {
 
     private static final String FILENAME_SERVER_FAILOVER_LIST = "failover-list.dat";
 
+    static final String PROMPT_INPUT_THREAD_NAME = "RHQ Agent Prompt Input Thread";
+
     /**
      * The directory where this agent is installed.
      */
@@ -1332,7 +1334,7 @@ public class AgentMain {
                         LOG.fatal(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, cause);
                         getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, cause));
 
-                        // TODO: THIS AGENT IS DEAD IN THE WATER! it needs to be updated
+                        AgentUpdateThread.updateAgentNow(AgentMain.this, false);
                     } catch (AgentRegistrationException are) {
                         m_registration = null;
 
@@ -1933,10 +1935,9 @@ public class AgentMain {
             LOG.fatal(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, cause);
             getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, cause));
 
-            // TODO: THIS AGENT IS DEAD IN THE WATER! It can never connect, we need to shutdown and update the agent!
-            // for now, aimlessly loop until someone kills the agent
+            AgentUpdateThread.updateAgentNow(AgentMain.this, false);
             m_lastSentConnectAgent.timestamp = 0L;
-            Thread.sleep(60000L);
+            Thread.sleep(1000L);
             throw anse;
         } catch (Throwable t) {
             // error, so allow any quick call back to this method to try it again
@@ -2507,7 +2508,7 @@ public class AgentMain {
 
         // start the thread
         m_inputLoopThread = new Thread(loop_runnable);
-        m_inputLoopThread.setName("RHQ Agent Prompt Input Thread");
+        m_inputLoopThread.setName(PROMPT_INPUT_THREAD_NAME);
         m_inputLoopThread.setDaemon(false);
         m_inputLoopThread.start();
 

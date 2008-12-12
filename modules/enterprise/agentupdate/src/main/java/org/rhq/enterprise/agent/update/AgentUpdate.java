@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URL;
+import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 import java.util.jar.JarEntry;
@@ -133,8 +134,8 @@ public class AgentUpdate {
                 agentUpdate.startAnt(buildFile, "backup-agent", "rhq-agent-update-build-tasks.properties", props,
                     logFile, !agentUpdate.quietFlag);
             } catch (Exception e) {
-                System.out.println("WARNING! Agent backup failed! Agent will not recover if it can't update!");
-                e.printStackTrace();
+                logMessage(logFile, "WARNING! Agent backup failed! Agent will not recover if it can't update!");
+                logStackTrace(logFile, e);
             }
         }
 
@@ -145,14 +146,14 @@ public class AgentUpdate {
         } catch (Exception e) {
             // if we were updating, try to restore the old agent to recover from the error
             if (agentUpdate.updateFlag) {
-                System.out.println("WARNING! Agent update failed! Will try to restore old agent!");
-                e.printStackTrace();
+                logMessage(logFile, "WARNING! Agent update failed! Will try to restore old agent!");
+                logStackTrace(logFile, e);
                 try {
                     agentUpdate.startAnt(buildFile, "restore-agent", "rhq-agent-update-build-tasks.properties", props,
                         logFile, true);
                 } catch (Exception e2) {
-                    System.out.println("WARNING! Agent restore failed! Agent is dead and cannot recover!");
-                    e2.printStackTrace();
+                    logMessage(logFile, "WARNING! Agent restore failed! Agent is dead and cannot recover!");
+                    logStackTrace(logFile, e2);
                 }
             } else {
                 throw e;
@@ -162,11 +163,62 @@ public class AgentUpdate {
         return;
     }
 
+    /**
+     * Logs a message to both the log file and the stdout console.
+     * 
+     * @param logFile where to write the log
+     * @param msg the message to log
+     */
+    private static void logMessage(File logFile, String msg) {
+        msg = new Date().toString() + ": " + msg;
+        System.out.println(msg);
+        try {
+            PrintWriter pw = new PrintWriter(new FileOutputStream(logFile, true));
+            pw.println(msg);
+            pw.close();
+        } catch (Throwable t) {
+        }
+    }
+
+    /**
+     * Logs a stack trace to both the log file and the stdout console.
+     * 
+     * @param logFile where to write the stack track
+     * @param t the exception whose stack track is to be logged
+     */
+    private static void logStackTrace(File logFile, Throwable t) {
+        t.printStackTrace(System.out);
+        try {
+            PrintWriter pw = new PrintWriter(new FileOutputStream(logFile, true));
+            t.printStackTrace(pw);
+            pw.close();
+        } catch (Throwable t1) {
+        }
+    }
+
+    /**
+     * Logs a message to both the log file and the stdout console.
+     * 
+     * @param msg the message to log
+     */
+    private void logMessage(String msg) {
+        msg = new Date().toString() + ": " + msg;
+        System.out.println(msg);
+        try {
+            PrintWriter pw = new PrintWriter(new FileOutputStream(logFileArgument, true));
+            pw.println(msg);
+            pw.close();
+        } catch (Throwable t) {
+        }
+    }
+
     private void showVersion() throws Exception {
-        System.out.println("============================================");
-        System.out.println("RHQ Agent Update Binary Version Information:");
-        System.out.println("============================================");
-        System.out.println(new String(getJarFileContent(RHQ_AGENT_UPDATE_VERSION_PROPERTIES)));
+        String str = "" //
+            + "============================================" //
+            + "RHQ Agent Update Binary Version Information:" //
+            + "============================================" //
+            + new String(getJarFileContent(RHQ_AGENT_UPDATE_VERSION_PROPERTIES));
+        logMessage(str);
     }
 
     private String getJarFilename() throws Exception {
@@ -200,34 +252,38 @@ public class AgentUpdate {
     }
 
     private void printSyntax() {
-        System.out.println("Valid options are:");
-        System.out.println("[--help] : Help information on how to use this jar file.");
-        System.out.println("[--version] : Shows version information about this jar file and exits.");
-        System.out.println("[--update[=<old agent home>]] : When specified, this will update an existing");
-        System.out.println("                                agent. If you do not specify the directory");
-        System.out.println("                                where the existing agent is, the default is:");
-        System.out.println("                                " + DEFAULT_OLD_AGENT_HOME);
-        System.out.println("                                This is mutually exclusive of --install");
-        System.out.println("[--install[=<new agent dir>]] : When specified, this will install a new agent");
-        System.out.println("                                without attempting to update any existing");
-        System.out.println("                                agent. If you do not specify the directory,");
-        System.out.println("                                the default is:" + DEFAULT_NEW_AGENT_HOME_PARENT);
-        System.out.println("                                Note the directory will be the parent of the");
-        System.out.println("                                new agent home installation directory.");
-        System.out.println("                                This is mutually exclusive of --update");
-        System.out.println("[--quiet] : If specified, this turns off console log messages.");
-        System.out.println("[--jar=<jar file>] : If specified, the agent found in the given jar file will");
-        System.out.println("                     be the new one that will be installed. You usually do not");
-        System.out.println("                     have to specify this, since the jar running this update");
-        System.out.println("                     code will usually be the one that contains the agent to");
-        System.out.println("                     be installed. Do not use this unless you have a reason.");
-        System.out.println("[--log=<log file>] : If specified, this is where the log messages will be");
-        System.out.println("                     written. Default=" + DEFAULT_LOG_FILE);
-        System.out.println("[--script=<ant script>] : If specified, this will override the default");
-        System.out.println("                          upgrade script URL found in the classloader.");
-        System.out.println("                          Users will rarely need this;");
-        System.out.println("                          use this only if you know what you are doing.");
-        System.out.println("                          Default=" + DEFAULT_SCRIPT_FILE);
+        String syntax = "Valid options are:" //
+            + "[--help] : Help information on how to use this jar file." //
+            + "[--version] : Shows version information about this jar file and exits." //
+            + "[--update[=<old agent home>]] : When specified, this will update an existing" //
+            + "                                agent. If you do not specify the directory" //
+            + "                                where the existing agent is, the default is:" //
+            + "                                " + DEFAULT_OLD_AGENT_HOME //
+            + "                                This is mutually exclusive of --install" //
+            + "[--install[=<new agent dir>]] : When specified, this will install a new agent" //
+            + "                                without attempting to update any existing" //
+            + "                                agent. If you do not specify the directory," //
+            + "                                the default is:" + DEFAULT_NEW_AGENT_HOME_PARENT //
+            + "                                Note the directory will be the parent of the" //
+            + "                                new agent home installation directory." //
+            + "                                This is mutually exclusive of --update" //
+            + "[--quiet] : If specified, this turns off console log messages." //
+            + "[--pause[=<ms>]] : If specified, the update will not occur until the given" //
+            + "                   number of milliseconds expires. If this option is given" //
+            + "                   without the number of milliseconds, 30000 is the default." //
+            + "[--jar=<jar file>] : If specified, the agent found in the given jar file will" //
+            + "                     be the new one that will be installed. You usually do not" //
+            + "                     have to specify this, since the jar running this update" //
+            + "                     code will usually be the one that contains the agent to" //
+            + "                     be installed. Do not use this unless you have a reason." //
+            + "[--log=<log file>] : If specified, this is where the log messages will be" //
+            + "                     written. Default=" + DEFAULT_LOG_FILE //
+            + "[--script=<ant script>] : If specified, this will override the default" //
+            + "                          upgrade script URL found in the classloader." //
+            + "                          Users will rarely need this;" //
+            + "                          use this only if you know what you are doing." //
+            + "                          Default=" + DEFAULT_SCRIPT_FILE; //
+        System.out.println(syntax);
     }
 
     /**
@@ -246,7 +302,7 @@ public class AgentUpdate {
             throw new UnsupportedOperationException();
         }
 
-        String sopts = "u::i::qhvl:j:s:";
+        String sopts = "u::i::qhvl:j:p::s:";
         LongOpt[] lopts = { new LongOpt("update", LongOpt.OPTIONAL_ARGUMENT, null, 'u'), // updates existing agent
             new LongOpt("install", LongOpt.OPTIONAL_ARGUMENT, null, 'i'), // installs agent
             new LongOpt("quiet", LongOpt.NO_ARGUMENT, null, 'q'), // if not set, dumps log message to stdout too
@@ -254,10 +310,12 @@ public class AgentUpdate {
             new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'v'), // shows version info
             new LongOpt("log", LongOpt.REQUIRED_ARGUMENT, null, 'l'), // location of the log file
             new LongOpt("jar", LongOpt.REQUIRED_ARGUMENT, null, 'j'), // location of an external jar that has our agent
+            new LongOpt("pause", LongOpt.OPTIONAL_ARGUMENT, null, 'p'), // pause (sleep) before updating
             new LongOpt("script", LongOpt.REQUIRED_ARGUMENT, null, 's') }; // switch immediately to the given server
 
         Getopt getopt = new Getopt(AgentUpdate.class.getSimpleName(), args, sopts, lopts);
         int code;
+        long pause = -1L;
 
         while ((code = getopt.getopt()) != -1) {
             switch (code) {
@@ -329,6 +387,19 @@ public class AgentUpdate {
                 break;
             }
 
+            case 'p': {
+                pause = 30000L;
+                String value = getopt.getOptarg();
+                if (value != null) {
+                    try {
+                        pause = Long.parseLong(value);
+                    } catch (Exception e) {
+                        pause = 30000L;
+                    }
+                }
+
+                break;
+            }
             case 's': {
                 this.scriptFileArgument = getopt.getOptarg();
                 break;
@@ -350,6 +421,16 @@ public class AgentUpdate {
 
         if (!this.updateFlag && !this.installFlag) {
             throw new IllegalArgumentException("Must specify either --update or --install");
+        }
+
+        if (pause > 0) {
+            try {
+                logMessage("Pausing for [" + pause + "] milliseconds...");
+                Thread.sleep(pause);
+            } catch (InterruptedException e) {
+            } finally {
+                logMessage("Done pausing. Continuing with the update.");
+            }
         }
 
         return;

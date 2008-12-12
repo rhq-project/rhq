@@ -84,10 +84,16 @@ public class AgentUpdateDownload {
      */
     public File getLocalDownloadDirectory() {
         String agentHome = this.agent.getAgentHomeDirectory();
-        if (agentHome == null || agentHome.length() == 0) {
-            agentHome = System.getProperty("java.io.tmpdir");
+        File dir = null;
+
+        if (agentHome != null && agentHome.length() > 0) {
+            dir = (new File(agentHome)).getParentFile();
         }
-        File dir = new File(agentHome);
+
+        if (dir == null) {
+            dir = new File(System.getProperty("java.io.tmpdir"));
+        }
+
         return dir;
     }
 

@@ -1334,7 +1334,9 @@ public class AgentMain {
                         LOG.fatal(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, cause);
                         getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_NOT_SUPPORTED, cause));
 
-                        AgentUpdateThread.updateAgentNow(AgentMain.this, false);
+                        // attempt to update the agent immediately.
+                        // we are running in a daemon thread, we can hang out and wait (pass in wait=true)
+                        AgentUpdateThread.updateAgentNow(AgentMain.this, true);
                     } catch (AgentRegistrationException are) {
                         m_registration = null;
 

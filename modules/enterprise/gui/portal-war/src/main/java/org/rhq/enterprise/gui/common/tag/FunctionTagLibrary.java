@@ -183,7 +183,7 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         return collection.size();
     }
 
-    public String contextFragmentURL() {
+    public static String contextFragmentURL() {
         EntityContext context = WebUtility.getEntityContext();
         switch (context.category) {
         case Resource:

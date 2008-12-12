@@ -19,7 +19,7 @@
 
   var baseUrl = "/resource/common/monitor/visibility/IndicatorCharts.do";
   baseUrl += '?';
-
+  baseUrl += "#{onf:contextFragmentURL()}"
   baseUrl += '&amp;view=';
   baseUrl += "#{IndicatorChartsUIBean.view}";
 
@@ -159,7 +159,8 @@
   </tr>
   </table>
   
-  <!-- <img src="#{chartImg}" border="0"/> -->
+  <h:graphicImage value="/resource/HighLowChart?#{onf:contextFragmentURL()}&amp;imageWidth=647&amp;imageHeight=100&amp;schedId=#{metric.scheduleId}&amp;definitionId=#{metric.definitionId}&amp;now=#{IndicatorViewsForm.timeToken}&amp;measurementUnits=#{metric.units}" />
+
   </li>
 </c:forEach>
 

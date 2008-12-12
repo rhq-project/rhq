@@ -15,37 +15,39 @@
 
 <ui:composition>
 
+<script type="text/javascript" src="/js/monitorGraphs.js" />
+<!-- need to include this function directly in the facelet so that parameter resolution happens at render-time -->
+<script type="text/javascript">
+  function showEventsDetails(time, status) {
+    initEventDetails();
+    eventsTime = time;
+    var detail = $('eventsSummary');
+    detail.innerHTML = "";
+
+    if (status != null)
+      ajaxEngine.sendRequest( 'getEventDetails',
+                              'id=#{param.id}',
+                              'groupId=#{param.groupId}',
+                              'parent=#{param.parent}',
+                              'type=#{param.type}',
+                              'begin=' + time,
+                              'status=' + status);
+    else
+      ajaxEngine.sendRequest( 'getEventDetails',
+                              'id=#{param.id}',
+                              'groupId=#{param.groupId}',
+                              'parent=#{param.parent}',
+                              'type=#{param.type}',
+                              'begin=' + time);
+    showEventsCallback();
+  }
+</script>
+
 <div id="overlay" class="overlay"></div>
 
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
-   <tr>
-   <td colspan="62" valign="top">
-      <a name="eventDetail"></a>
-      <div id="eventDetailTable"
-           style="position: relative; height: 230px; display: none; ">
-      <div class="eventDetails">
-      <table cellspacing="0" width="100%">
-         <tr>
-            <td class="eventsTabOn" nowrap="nowrap">
-               <h:outputFormat value="#{msg['resource.common.monitor.events.ListOfEvents']}" />
-            </td>
-            <td valign="top" style="text-align: right; border-bottom: solid; border-width: 1px; border-color: #000000;">
-               <img src="/images/dash-icon_delete.gif"
-                    onclick="new Effect.Fade(#('eventDetailTable'))"/>
-            </td>
-         </tr>
-         <tr>
-            <td colspan="8"> 
-               <div id="eventsSummary"  style="height:200px; overflow:auto;">Timeline here</div>
-            </td>
-         </tr>
-      </table>
-      </div>
-      </div>
-   </td>
-   </tr>
 
-   <c:if test="#{not empty AvailabilityUIBean.data}">
+   <c:if test="#{not empty EventsTimelineUIBean.data}">
    <tr>
    <td colspan="62" style="height: 2px;"></td>
    </tr>
@@ -78,17 +80,50 @@
             </c:otherwise>
          </c:choose>
       </c:if>
-      <td background="#{icon}" align="center" valign="middle">
+      
+      <!-- put onmousedown in table data element not the div, which gives the user a larger clickable area -->
+      <c:if test="#{empty timeTick.severity}">
+         <td style="background-image: url(#{icon}); background-repeat:no-repeat;" align="center" valign="middle">
+         </td>
+      </c:if>
       
       <c:if test="#{not empty timeTick.severity}">
          <ui:param name="formattedTimeTick" value="#{onf:formatTimestamp(timeTick.time)}"/>
-         <div class="eventBlock" 
-              onmousedown="overlay.delayTimePopup('#{count}','#{formattedTimeTick}');showEventsDetails(#{timeTick.time});overlay.moveOverlay(this)"></div>
+         <td style="background-image: url(#{icon}); background-repeat:no-repeat;" align="center" valign="middle"
+             onmousedown="overlay.moveOverlay(this);overlay.showTimePopup('#{count}','#{formattedTimeTick}');showEventsDetails(#{timeTick.time});">
+         </td>
       </c:if>
-   </td>
+
    </c:forEach>
    <td align="right">
       <h:outputFormat value="#{msg['resource.common.monitor.label.elc']}" />
+   </td>
+   </tr>
+   
+   <tr>
+   <td colspan="62" valign="top">
+      <a name="eventDetail"></a>
+      <div id="eventDetailTable"
+           style="position: relative; height: 230px; display: none; ">
+      <div class="eventDetails">
+      <table cellspacing="0" width="100%">
+         <tr>
+            <td class="eventsTabOn" nowrap="nowrap">
+               <h:outputFormat value="#{msg['resource.common.monitor.events.ListOfEvents']}" />
+            </td>
+            <td valign="top" style="text-align: right; border-bottom: solid; border-width: 1px; border-color: #000000;">
+               <img src="/images/dash-icon_delete.gif"
+                    onclick="new Effect.Fade($('eventDetailTable'));"/>
+            </td>
+         </tr>
+         <tr>
+            <td colspan="8"> 
+               <div id="eventsSummary" style="height:200px; overflow:auto;"></div>
+            </td>
+         </tr>
+      </table>
+      </div>
+      </div>
    </td>
    </tr>
    
@@ -107,7 +142,7 @@
       <ui:param name="formattedTimeTick" value="#{onf:formatTimestamp(timeTick.time)}"/>
       <td width="9">
       <div id="timePopup_#{count}"
-           onmouseover="overlay.delayTimePopup('#{count}','#{formattedTimeTick}')" 
+           onmouseover="overlay.showTimePopup('#{count}','#{formattedTimeTick}')" 
            onmousedown="overlay.moveOverlay(this); overlay.curTime = '#{formattedTimeTick}';" 
            onmouseout="overlay.curTime = null">
          <img src="/images/timeline_off.gif" height="10" width="9" 

@@ -70,7 +70,7 @@ var overlay = {
     delayTimePopup: function (index,time) {
       this.curTime = time;
       setTimeout("overlay.showCurrentTimePopup('" + time + "'," + index + ")" ,
-                 1000);
+                 500);
     },
 
     showCurrentTimePopup: function (time, index) {

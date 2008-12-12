@@ -1552,15 +1552,6 @@ div.effectsContainer div.effectsPortlet {
 }
 
 /* Events */
-div.eventBlock {
-/*   background-color: #003399; */
-   height: 8px;
-   width: 8px;
-   font-size: 8px; /* For I.E., even if there's no text, it sets the height */
-   position: relative;
-   z-index: 201; /* Just above the overlay */
-}
-
 ul.boxy {
    list-style-type: none;
    padding: 0;

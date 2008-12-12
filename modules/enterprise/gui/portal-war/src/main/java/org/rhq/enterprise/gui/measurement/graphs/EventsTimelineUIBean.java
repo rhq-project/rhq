@@ -27,6 +27,7 @@ public class EventsTimelineUIBean {
 
     private List<TimelineBean> data;
     private boolean showLogs = false;
+    private EntityContext context;
 
     public List<TimelineBean> getData() {
         return data;
@@ -34,6 +35,10 @@ public class EventsTimelineUIBean {
 
     public boolean getShowLogs() {
         return showLogs;
+    }
+
+    public EntityContext getContext() {
+        return context;
     }
 
     public EventsTimelineUIBean() {
@@ -45,7 +50,7 @@ public class EventsTimelineUIBean {
         long end = rangePreferences.end;
         int numberOfBuckets = DefaultConstants.DEFAULT_CHART_POINTS;
 
-        EntityContext context = WebUtility.getEntityContext();
+        context = WebUtility.getEntityContext();
 
         EventSeverity[] eventsCounts;
         if (context.category == EntityContext.Category.Resource) {

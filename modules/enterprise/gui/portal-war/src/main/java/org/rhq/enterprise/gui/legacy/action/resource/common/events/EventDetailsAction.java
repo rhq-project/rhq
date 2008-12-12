@@ -70,86 +70,90 @@ public class EventDetailsAction extends BaseAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
 
-        WebUser user = (WebUser) request.getSession().getAttribute(AttrConstants.WEBUSER_SES_ATTR);
-        MeasurementPreferences preferences = user.getMeasurementPreferences();
-        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
-        long begin = rangePreferences.begin;
-        long end = rangePreferences.end;
-        long interval = TimeUtil.getInterval(begin, end, DefaultConstants.DEFAULT_CHART_POINTS);
+        try {
+            WebUser user = (WebUser) request.getSession().getAttribute(AttrConstants.WEBUSER_SES_ATTR);
+            MeasurementPreferences preferences = user.getMeasurementPreferences();
+            MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+            long begin = rangePreferences.begin;
+            long end = rangePreferences.end;
+            long interval = TimeUtil.getInterval(begin, end, DefaultConstants.DEFAULT_CHART_POINTS);
 
-        begin = Long.parseLong(WebUtility.getOptionalRequestParameter(request, "begin", "0"));
+            begin = Long.parseLong(WebUtility.getOptionalRequestParameter(request, "begin", "0"));
 
-        int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
-        int groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
-        int parent = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
-        int type = WebUtility.getOptionalIntRequestParameter(request, "type", -1);
+            int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
+            int groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
+            int parent = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
+            int type = WebUtility.getOptionalIntRequestParameter(request, "type", -1);
 
-        EventManagerLocal eventManager = LookupUtil.getEventManager();
-        PageList<EventComposite> events;
+            EventManagerLocal eventManager = LookupUtil.getEventManager();
+            PageList<EventComposite> events;
 
-        Subject subject = user.getSubject();
-        if (resourceId > -1) {
-            events = eventManager.getEventsForResource(subject, resourceId, begin, begin + interval, null,
-                new PageControl(0, MAX_EVENTS_PER_DOT));
-        } else if (groupId > -1) {
-            events = eventManager.getEventsForCompGroup(subject, groupId, begin, begin + interval, null,
-                new PageControl(0, MAX_EVENTS_PER_DOT));
-        } else if (parent > -1 && type > -1) {
-            events = eventManager.getEventsForAutoGroup(subject, parent, type, begin, begin + interval, null,
-                new PageControl(0, MAX_EVENTS_PER_DOT));
-        } else {
-            log.error("Unknown input combination, can't compute events for input");
-            return null;
-        }
+            Subject subject = user.getSubject();
+            if (resourceId > -1) {
+                events = eventManager.getEventsForResource(subject, resourceId, begin, begin + interval, null,
+                    new PageControl(0, MAX_EVENTS_PER_DOT));
+            } else if (groupId > -1) {
+                events = eventManager.getEventsForCompGroup(subject, groupId, begin, begin + interval, null,
+                    new PageControl(0, MAX_EVENTS_PER_DOT));
+            } else if (parent > -1 && type > -1) {
+                events = eventManager.getEventsForAutoGroup(subject, parent, type, begin, begin + interval, null,
+                    new PageControl(0, MAX_EVENTS_PER_DOT));
+            } else {
+                log.error("Unknown input combination, can't compute events for input");
+                return null;
+            }
 
-        MessageResources res = getResources(request);
-        StringBuffer html;
-        if (events.isEmpty()) {
-            html = new StringBuffer(res.getMessage("resource.common.monitor.text.events.None"));
-        } else {
-            html = new StringBuffer("<ul class=\"boxy\">");
+            MessageResources res = getResources(request);
+            StringBuffer html;
+            if (events.isEmpty()) {
+                html = new StringBuffer(res.getMessage("resource.common.monitor.text.events.None"));
+            } else {
+                html = new StringBuffer("<ul class=\"boxy\">");
 
-            for (EventComposite event : events) {
-                html.append("<li> ");
+                for (EventComposite event : events) {
+                    html.append("<li> ");
 
-                EventSeverity severity = event.getSeverity();
-                switch (severity) {
-                case FATAL:
-                    html.append("<img src=\"/images/event_fatal.gif\"/>");
-                    break;
-                case ERROR:
-                    html.append("<img src=\"/images/event_error.gif\"/>");
-                    break;
-                case WARN:
-                    html.append("<img src=\"/images/event_warn.gif\"/>");
-                    break;
-                case INFO:
-                    html.append("<img src=\"/images/event_info.gif\"/>");
-                    break;
-                case DEBUG:
-                    html.append("<img src=\"/images/event_debug.gif\"/>");
-                    break;
+                    EventSeverity severity = event.getSeverity();
+                    switch (severity) {
+                    case FATAL:
+                        html.append("<img src=\"/images/event_fatal.gif\"/>");
+                        break;
+                    case ERROR:
+                        html.append("<img src=\"/images/event_error.gif\"/>");
+                        break;
+                    case WARN:
+                        html.append("<img src=\"/images/event_warn.gif\"/>");
+                        break;
+                    case INFO:
+                        html.append("<img src=\"/images/event_info.gif\"/>");
+                        break;
+                    case DEBUG:
+                        html.append("<img src=\"/images/event_debug.gif\"/>");
+                        break;
+                    }
+                    html.append(" ");
+
+                    createLinkForResource(resourceId, groupId, parent, type, html, event, ridBadChars(event
+                        .getEventDetail()));
+                    html.append("</li>");
                 }
-                html.append(" ");
+                html.append("</ul>");
 
-                createLinkForResource(resourceId, groupId, parent, type, html, event, ridBadChars(event
-                    .getEventDetail()));
-                html.append("</li>");
+                if (events.getTotalSize() > MAX_EVENTS_PER_DOT) {
+                    EventComposite event = events.get(events.size() - 1); // take the last one to initialize the list
+                    html.append("<p/>");
+                    createLinkForResource(resourceId, groupId, parent, type, html, event, res
+                        .getMessage("resource.common.monitor.text.events.MoreEvents"));
+                    html.append("<p/>");
+                }
             }
-            html.append("</ul>");
 
-            if (events.getTotalSize() > MAX_EVENTS_PER_DOT) {
-                EventComposite event = events.get(events.size() - 1); // take the last one to initialize the list
-                html.append("<p/>");
-                createLinkForResource(resourceId, groupId, parent, type, html, event, res
-                    .getMessage("resource.common.monitor.text.events.MoreEvents"));
-                html.append("<p/>");
-            }
+            request.setAttribute(AttrConstants.AJAX_TYPE, StringConstants.AJAX_ELEMENT);
+            request.setAttribute(AttrConstants.AJAX_ID, "eventsSummary");
+            request.setAttribute(AttrConstants.AJAX_HTML, html);
+        } catch (Exception e) {
+            log.error("Error getting AJAX-style event details", e);
         }
-
-        request.setAttribute(AttrConstants.AJAX_TYPE, StringConstants.AJAX_ELEMENT);
-        request.setAttribute(AttrConstants.AJAX_ID, "eventsSummary");
-        request.setAttribute(AttrConstants.AJAX_HTML, html);
 
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);
     }

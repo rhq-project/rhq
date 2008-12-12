@@ -453,7 +453,7 @@ public final class AlertConditionCache {
             List<ResourceConfigurationCacheElement> cacheElements = lookupResourceConfigurationCacheElements(resource
                 .getId());
 
-            processCacheElements(cacheElements, update.getConfiguration(), update.getCreatedTime().getTime(), stats);
+            processCacheElements(cacheElements, update.getConfiguration(), update.getCreatedTime(), stats);
 
             AlertConditionCacheMonitor.getMBean().incrementResourceConfigurationCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementResourceConfigurationProcessingTime(stats.getAge());

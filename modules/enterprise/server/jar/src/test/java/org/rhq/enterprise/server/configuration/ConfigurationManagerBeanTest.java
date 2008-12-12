@@ -644,8 +644,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert current.getResource().equals(resource);
         assert current.getStatus().equals(request.getStatus());
         assert current.getSubjectName().equals(request.getSubjectName());
-        assert current.getCreatedTime().getTime() == request.getCreatedTime().getTime();
-        assert current.getModifiedTime().getTime() == request.getModifiedTime().getTime();
+        assert current.getCreatedTime() == request.getCreatedTime();
+        assert current.getModifiedTime() == request.getModifiedTime();
         assert current.getConfiguration().getId() == request.getConfiguration().getId();
 
         Configuration live = configurationManager.getLiveResourceConfiguration(overlord, resource.getId());
@@ -727,8 +727,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert current.getResource().equals(resource);
         assert current.getStatus().equals(newConfigUpdate.getStatus());
         assert current.getSubjectName().equals(newConfigUpdate.getSubjectName());
-        assert current.getCreatedTime().getTime() == newConfigUpdate.getCreatedTime().getTime();
-        assert current.getModifiedTime().getTime() == newConfigUpdate.getModifiedTime().getTime();
+        assert current.getCreatedTime() == newConfigUpdate.getCreatedTime();
+        assert current.getModifiedTime() == newConfigUpdate.getModifiedTime();
         assert current.getConfiguration().getId() == newConfigUpdate.getConfiguration().getId();
     }
 

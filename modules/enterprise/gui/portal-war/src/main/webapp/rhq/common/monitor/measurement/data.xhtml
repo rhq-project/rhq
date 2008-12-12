@@ -66,7 +66,7 @@
 <c:forEach var="metric" varStatus="status" items="#{IndicatorChartsUIBean.data}">
 
   <li id="#{metric.metricToken}">
-  <table width="650" border="0" cellpadding="2" bgcolor="#DBE3F5">
+  <table width="100%" border="0" cellpadding="2" bgcolor="#DBE3F5">
   <tr>
     <td>
       <table width="100%" border="0" cellpadding="0" cellspacing="1" style="margin-top: 1px; margin-bottom: 1px;">
@@ -93,44 +93,42 @@
              <h:outputText value="#{metric.label}" />
           </h:outputLink>
           </font>
-          <font class="FooterSmall">
-            <h:outputFormat value="#{msg['common.value.parenthesis']}">
-               <f:param value="#{metric.metricSource}" />
-            </h:outputFormat>
-          </font>
-          </td>
-          
-          <td width="15%" nowrap="nowrap">
-          <font class="BoldText">
-             <h:outputFormat value="#{msg['resource.common.monitor.visibility.LowTH']}" />
-          </font>: <h:outputText value="#{metric.minMetric.valueFmt}"/>
-          </td>
-          
-          <td width="15%" nowrap="nowrap">
-          <font class="BoldText">
-             <h:outputFormat value="#{msg['resource.common.monitor.visibility.AvgTH']}" />
-          </font>: <h:outputText value="#{metric.avgMetric.valueFmt}"/>
-          </td>
-          
-          <td width="15%" nowrap="nowrap">
-          <font class="BoldText">
-             <h:outputFormat value="#{msg['resource.common.monitor.visibility.PeakTH']}" />
-          </font>: <h:outputText value="#{metric.maxMetric.valueFmt}"/>
           </td>
 
-          <td width="1%">
+          <td width="400">
+             <table cellpadding="0" cellspacing="0" border="0" width="100%">
+             <tr>
+             <td width="33%" nowrap="nowrap">
+                <h:outputFormat style="font-weight: bold;" value="#{msg['resource.common.monitor.visibility.LowTH']}" />: 
+                <h:outputText value="#{metric.minMetric.valueFmt}"/>
+             </td>
+             
+             <td width="34%" nowrap="nowrap">
+                <h:outputFormat style="font-weight: bold;" value="#{msg['resource.common.monitor.visibility.AvgTH']}" />: 
+                <h:outputText value="#{metric.avgMetric.valueFmt}"/>
+             </td>
+             
+             <td width="33%" nowrap="nowrap">
+                <h:outputFormat style="font-weight: bold;" value="#{msg['resource.common.monitor.visibility.PeakTH']}" />: 
+                <h:outputText value="#{metric.maxMetric.valueFmt}"/>
+             </td>
+             </tr>
+             </table>
+          </td>
+
+          <td width="1">
              <a href="javascript:moveMetricUp('#{metric.metricToken}')">
                 <img src="/images/dash_icon_up.gif" border="0"/>
              </a>
           </td>
 
-          <td width="1%">
+          <td width="1">
              <a href="javascript:moveMetricDown('#{metric.metricToken}')">
                 <img src="/images/dash_icon_down.gif" border="0"/>
              </a>
           </td>
           
-          <td width="1%">
+          <td width="1" valign="top">
              <a href="javascript:removeMetric('#{metric.metricToken}')">
                 <img src="/images/dash-icon_delete.gif" border="0"/>
              </a>
@@ -139,7 +137,21 @@
         </tr>
         <tr>
            <td colspan="7">
-              <h:outputText value="#{metric.description}"/>
+              <img src="/images/hierarchy.gif" />
+              <font class="FooterSmall">
+                 <h:outputLink target="_top" value="/rhq/resource/monitor/graphs.xhtml">
+                    <f:param name="id" value="#{metric.metricSourceId}" />
+                    <h:outputFormat value="#{msg['common.value.parenthesis']}">
+                       <f:param value="#{metric.metricSource}" />
+                    </h:outputFormat>
+                 </h:outputLink>
+              </font>
+           </td>
+        </tr>
+        <tr>
+           <td colspan="7">
+              <h:outputText value="&nbsp;&nbsp;&nbsp;" />
+              <h:outputText value="#{metric.description}" />
            </td>
         </tr>
       </table>

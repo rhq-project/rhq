@@ -97,6 +97,13 @@ public class IndicatorChartsUIBean {
         } catch (Exception e) {
             log.info("Error while looking up metric chart data for " + context);
         }
+
+        for (MetricDisplaySummary summary : data) {
+            summary.setMetricToken(getContextKeyChart(context, summary));
+            MonitorUtils.formatSimpleMetrics(summary, null);
+        }
+
+        return;
     }
 
     /**
@@ -124,6 +131,20 @@ public class IndicatorChartsUIBean {
             return "ag," + summary.getParentId() + "," + summary.getDefinitionId() + "," + summary.getChildTypeId();
         default:
             throw new IllegalArgumentException("Unknown or unsupported MetricsDisplayMode '" + mode + "'");
+        }
+    }
+
+    private String getContextKeyChart(EntityContext context, MetricDisplaySummary summary) {
+        if (context.category == EntityContext.Category.Resource) {
+            if (summary.getScheduleId() != null)
+                return summary.getResourceId() + "," + summary.getScheduleId().toString();
+            throw new IllegalStateException("MetricsDisplayMode was 'RESOURCE', but the scheduleId was null");
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            return "cg," + summary.getGroupId() + "," + summary.getDefinitionId();
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            return "ag," + summary.getParentId() + "," + summary.getDefinitionId() + "," + summary.getChildTypeId();
+        } else {
+            throw new IllegalArgumentException("Unknown or unsupported context '" + context + "'");
         }
     }
 
@@ -245,6 +266,7 @@ public class IndicatorChartsUIBean {
                 viewName);
             for (MetricDisplaySummary summary : metrics) {
                 summary.setMetricToken(getContextKeyChart(summary));
+                MonitorUtils.formatSimpleMetrics(summary, null);
             }
         } else if (context.category == EntityContext.Category.ResourceGroup) {
             metrics = chartsManager.getMetricDisplaySummariesForCompatibleGroup(user.getSubject(), context.groupId,

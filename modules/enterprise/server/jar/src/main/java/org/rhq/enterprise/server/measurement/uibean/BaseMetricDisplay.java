@@ -49,6 +49,8 @@ public abstract class BaseMetricDisplay extends MeasurementSummary implements ja
 
     private String metricSource;
 
+    private int metricSourceId;
+
     private String description;
 
     private Map<String, MetricDisplayValue> metrics;
@@ -290,18 +292,20 @@ public abstract class BaseMetricDisplay extends MeasurementSummary implements ja
         return showNumberCollecting;
     }
 
-    /**
-     * @return
-     */
     public String getMetricSource() {
         return metricSource;
     }
 
-    /**
-     * @param string
-     */
     public void setMetricSource(String string) {
         metricSource = string;
+    }
+
+    public int getMetricSourceId() {
+        return metricSourceId;
+    }
+
+    public void setMetricSourceId(int id) {
+        metricSourceId = id;
     }
 
     /**

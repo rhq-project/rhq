@@ -336,6 +336,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         summary.setLabel(definition.getDisplayName());
         summary.setDescription(definition.getDescription());
         summary.setMetricSource(schedule.getResource().getName());
+        summary.setMetricSourceId(schedule.getResource().getId());
 
         switch (definition.getDataType()) {
         case MEASUREMENT: {

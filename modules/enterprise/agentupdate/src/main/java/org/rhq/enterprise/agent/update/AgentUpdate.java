@@ -156,6 +156,8 @@ public class AgentUpdate {
                     logStackTrace(logFile, e2);
                 }
             } else {
+                logMessage(logFile, "WARNING! Agent installation failed!");
+                logStackTrace(logFile, e);
                 throw e;
             }
         }

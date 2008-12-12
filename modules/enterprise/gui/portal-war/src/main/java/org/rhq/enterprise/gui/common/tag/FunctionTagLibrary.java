@@ -42,12 +42,15 @@ import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.StringConstants;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -178,6 +181,21 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
             return 0;
         }
         return collection.size();
+    }
+
+    public String contextFragmentURL() {
+        EntityContext context = WebUtility.getEntityContext();
+        switch (context.category) {
+        case Resource:
+            return ParamConstants.RESOURCE_ID_PARAM + "=" + String.valueOf(context.resourceId);
+        case ResourceGroup:
+            return ParamConstants.GROUP_ID_PARAM + "=" + String.valueOf(context.groupId);
+        case AutoGroup:
+            return ParamConstants.RESOURCE_TYPE_ID_PARAM + "=" + String.valueOf(context.parentResourceId) + "&"
+                + ParamConstants.RESOURCE_TYPE_ID_PARAM + "=" + String.valueOf(context.resourceTypeId);
+        default:
+            throw new IllegalArgumentException(context.getUnknownContextMessage());
+        }
     }
 
     /**

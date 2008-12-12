@@ -190,7 +190,6 @@ public abstract class WebUtility {
         int resourceId = getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
         int groupId = getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
         int resourceTypeId = getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_TYPE_ID_PARAM, -1);
-        int cType = getOptionalIntRequestParameter(request, ParamConstants.CHILD_RESOURCE_TYPE_ID_PARAM, -1);
 
         int parent = getOptionalIntRequestParameter(request, "parent", -1);
 
@@ -202,13 +201,7 @@ public abstract class WebUtility {
             mode = MetricsDisplayMode.RESOURCE_DEFAULT;
         } else if (resourceId > 0) {
             mode = MetricsDisplayMode.RESOURCE;
-        } else if ((cType > 0) && (resourceId > 0)) // TODO bogus old and outdated
-        {
-            mode = MetricsDisplayMode.AUTOGROUP;
         } else if ((resourceTypeId > 0) && (parent > 0)) {
-            mode = MetricsDisplayMode.AUTOGROUP;
-        } else if ((cType > 0) && (parent > 0)) // TODO JBNADM-2630
-        {
             mode = MetricsDisplayMode.AUTOGROUP;
         } else {
             mode = MetricsDisplayMode.UNSET;

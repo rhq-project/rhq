@@ -36,6 +36,26 @@ public class EntityContext {
     public final int parentResourceId;
     public final int resourceTypeId;
 
+    public Category getCategory() {
+        return category;
+    }
+
+    public int getResourceId() {
+        return resourceId;
+    }
+
+    public int getGroupId() {
+        return groupId;
+    }
+
+    public int getParentResourceId() {
+        return parentResourceId;
+    }
+
+    public int getResourceTypeId() {
+        return resourceTypeId;
+    }
+
     public EntityContext(Integer resourceId, Integer groupId, Integer parentResourceId, Integer resourceTypeId) {
         int rId = (resourceId != null && resourceId > 0) ? resourceId : -1;
         int gId = (groupId != null && groupId > 0) ? groupId : -1;
@@ -58,8 +78,7 @@ public class EntityContext {
                 category = Category.AutoGroup;
             }
         } else {
-            throw new IllegalArgumentException("Unknown or unsupported " + EntityContext.class.getSimpleName() + " '"
-                + this + "'");
+            throw new IllegalArgumentException(getUnknownContextMessage());
         }
     }
 
@@ -72,8 +91,12 @@ public class EntityContext {
         case AutoGroup:
             return "ag=" + String.valueOf(parentResourceId) + ":" + String.valueOf(resourceTypeId);
         default:
-            throw new IllegalArgumentException("Unknown or unsupported MeasurementViewContext '" + category + "'");
+            throw new IllegalArgumentException(getUnknownContextMessage());
         }
+    }
+
+    public String getUnknownContextMessage() throws IllegalArgumentException {
+        return "Unknown or unsupported " + EntityContext.class.getSimpleName() + " '" + this + "'";
     }
 
     public String toString() {

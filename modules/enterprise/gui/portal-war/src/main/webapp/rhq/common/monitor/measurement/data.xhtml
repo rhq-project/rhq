@@ -15,7 +15,143 @@
 
 <ui:composition>
 
-Measurement Graphs
+<script language="JavaScript">
+
+  var baseUrl = "/resource/common/monitor/visibility/IndicatorCharts.do";
+  baseUrl += '?';
+
+  baseUrl += '&amp;view=';
+  baseUrl += "#{IndicatorChartsUIBean.view}";
+
+  // Register the remove metric chart method
+  ajaxEngine.registerRequest( 'indicatorCharts', baseUrl );
+
+  function removeMetric(token) {
+    ajaxEngine.sendRequest(
+        'indicatorCharts',
+        'metric=' + token,
+        'action=remove',
+        'view=' + '#{IndicatorChartsUIBean.view}');
+    new Effect.Fade(token);
+  }
+
+  function moveMetricUp(token) {
+    ajaxEngine.sendRequest(
+        'indicatorCharts',
+        'metric=' + token,
+        'action=moveUp',
+        'view=' + '#{IndicatorChartsUIBean.view}');
+    var root = $('root');
+    var elem = $(token);
+    moveElementUp(elem, root);
+  }
+
+  function moveMetricDown(token) {
+    ajaxEngine.sendRequest(
+        'indicatorCharts',
+        'metric=' + token,
+        'action=moveDown',
+        'view=' + '#{IndicatorChartsUIBean.view}');
+        
+    var root = $('root');
+    var elem = $(token);
+    moveElementDown(elem, root);
+  }
+
+</script>
+
+<ul id="root" class="boxy">
+
+<ui:param name="context" value="#{IndicatorChartsUIBean.context}" />
+<c:forEach var="metric" varStatus="status" items="#{IndicatorChartsUIBean.data}">
+
+  <li id="#{metric.metricToken}">
+  <table width="650" border="0" cellpadding="2" bgcolor="#DBE3F5">
+  <tr>
+    <td>
+      <table width="100%" border="0" cellpadding="0" cellspacing="1" style="margin-top: 1px; margin-bottom: 1px;">
+        <tr>
+          <td>
+          <font class="BoldText">
+          <h:outputLink target="_top" value="/resource/common/monitor/Visibility.do">
+             <f:param name="m" value="#{metric.definitionId}"/>
+             <c:choose>
+                <c:when test="#{context.resourceTypeId > 0}">
+                   <f:param name="mode" value="chartSingleMetricMultiResource"/>
+                   <f:param name="type" value="#{context.resourceTypeId}"/>
+                   <f:param name="parent" value="#{context.parentResourceId}"/>
+                </c:when>
+                <c:when test="#{context.groupId > 0}">
+                   <f:param name="mode" value="chartSingleMetricMultiResource"/>
+                   <f:param name="groupId" value="#{context.groupId}"/>
+                </c:when>
+                <c:otherwise>
+                   <f:param name="mode" value="chartSingleMetricSingleResource"/>
+                   <f:param name="id" value="#{context.resourceId}"/>
+                </c:otherwise>
+             </c:choose>
+             <h:outputText value="#{metric.label}" />
+          </h:outputLink>
+          </font>
+          <font class="FooterSmall">
+            <h:outputFormat value="#{msg['common.value.parenthesis']}">
+               <f:param value="#{metric.metricSource}" />
+            </h:outputFormat>
+          </font>
+          </td>
+          
+          <td width="15%" nowrap="nowrap">
+          <font class="BoldText">
+             <h:outputFormat value="#{msg['resource.common.monitor.visibility.LowTH']}" />
+          </font>: <h:outputText value="#{metric.minMetric.valueFmt}"/>
+          </td>
+          
+          <td width="15%" nowrap="nowrap">
+          <font class="BoldText">
+             <h:outputFormat value="#{msg['resource.common.monitor.visibility.AvgTH']}" />
+          </font>: <h:outputText value="#{metric.avgMetric.valueFmt}"/>
+          </td>
+          
+          <td width="15%" nowrap="nowrap">
+          <font class="BoldText">
+             <h:outputFormat value="#{msg['resource.common.monitor.visibility.PeakTH']}" />
+          </font>: <h:outputText value="#{metric.maxMetric.valueFmt}"/>
+          </td>
+
+          <td width="1%">
+             <a href="javascript:moveMetricUp('#{metric.metricToken}')">
+                <img src="/images/dash_icon_up.gif" border="0"/>
+             </a>
+          </td>
+
+          <td width="1%">
+             <a href="javascript:moveMetricDown('#{metric.metricToken}')">
+                <img src="/images/dash_icon_down.gif" border="0"/>
+             </a>
+          </td>
+          
+          <td width="1%">
+             <a href="javascript:removeMetric('#{metric.metricToken}')">
+                <img src="/images/dash-icon_delete.gif" border="0"/>
+             </a>
+          </td>
+          
+        </tr>
+        <tr>
+           <td colspan="7">
+              <h:outputText value="#{metric.description}"/>
+           </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  </table>
+  
+  <!-- <img src="#{chartImg}" border="0"/> -->
+  </li>
+</c:forEach>
+
+</ul>
 
 </ui:composition>
 

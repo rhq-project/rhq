@@ -52,9 +52,14 @@ public class IndicatorChartsUIBean {
     private MeasurementChartsManagerLocal chartsManager = LookupUtil.getMeasurementChartsManager();
     private MeasurementViewManagerLocal viewManager = LookupUtil.getMeasurementViewManager();
 
+    EntityContext context;
     List<MetricDisplaySummary> data;
     List<String> views;
     String view;
+
+    public EntityContext getContext() {
+        return context;
+    }
 
     public List<MetricDisplaySummary> getData() {
         return data;
@@ -72,10 +77,10 @@ public class IndicatorChartsUIBean {
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
         Subject subject = user.getSubject();
 
-        EntityContext context = WebUtility.getEntityContext();
         try {
-            HttpServletRequest request = FacesContextUtility.getRequest();
+            context = WebUtility.getEntityContext();
 
+            HttpServletRequest request = FacesContextUtility.getRequest();
             view = WebUtility.getOptionalRequestParameter(request, "metricView",
                 MeasurementPreferences.PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME);
             views = viewManager.getViewNames(subject, context);

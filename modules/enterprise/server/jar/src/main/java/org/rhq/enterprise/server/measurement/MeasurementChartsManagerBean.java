@@ -250,8 +250,6 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         try {
             EntityContext context = new EntityContext(resourceId, -1, -1, -1);
             List<String> charts = viewManager.getCharts(subject, context, viewName);
-            if (charts.isEmpty())
-                throw new IllegalArgumentException("No metrics defined"); // Use defaults then from below
 
             List<Integer> schIds = new ArrayList<Integer>(charts.size());
             for (String metric : charts) {

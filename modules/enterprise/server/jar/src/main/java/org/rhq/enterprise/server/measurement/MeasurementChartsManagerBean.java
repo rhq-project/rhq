@@ -209,7 +209,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         return measurementDefinitionIds;
     }
 
-    // TODO: jmarques - combine this method and getMetricDisplaySummariesForSchedules
+    // TODO: jmarques - combine this into one query to the backend, and sort the data at the object layer
     public List<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId,
         int[] measurementScheduleIds, long beginTime, long endTime) throws MeasurementException {
         List<MetricDisplaySummary> allMeasurementData = new ArrayList<MetricDisplaySummary>(
@@ -228,37 +228,6 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             if (summary != null) {
                 summary.setUnits(schedule.getDefinition().getUnits().name());
                 // TODO: jmarques - should we add summary.setResourceId(resourceId) here?
-                allMeasurementData.add(summary);
-            }
-        }
-
-        Map<Integer, Integer> alerts = alertManager.getAlertCountForSchedules(beginTime, endTime, scheduleIds);
-        for (MetricDisplaySummary sum : allMeasurementData) {
-            sum.setAlertCount(alerts.get(sum.getScheduleId()));
-        }
-
-        return allMeasurementData;
-    }
-
-    @Deprecated
-    // TODO: jmarques - remove once the conversion to JSF is complete
-    public List<MetricDisplaySummary> getMetricDisplaySummariesForResourceFromDefinitions(Subject subject,
-        int resourceId, int[] measurementDefinitionIds, long beginTime, long endTime) throws MeasurementException {
-        List<MetricDisplaySummary> allMeasurementData = new ArrayList<MetricDisplaySummary>(
-            measurementDefinitionIds.length);
-        List<Integer> scheduleIds = new ArrayList<Integer>(measurementDefinitionIds.length);
-        for (int measurementDefinitionId : measurementDefinitionIds) {
-            MeasurementSchedule schedule = null;
-            try {
-                schedule = scheduleManager.getMeasurementSchedule(subject, measurementDefinitionId, resourceId, false);
-                scheduleIds.add(schedule.getId());
-            } catch (MeasurementNotFoundException mnfe) {
-                throw new MeasurementException(mnfe);
-            }
-
-            MetricDisplaySummary summary = getMetricDisplaySummary(schedule, beginTime, endTime, false);
-            if (summary != null) {
-                summary.setUnits(schedule.getDefinition().getUnits().name());
                 allMeasurementData.add(summary);
             }
         }

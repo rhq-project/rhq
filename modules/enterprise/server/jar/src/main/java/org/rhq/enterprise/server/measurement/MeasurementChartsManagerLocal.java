@@ -34,6 +34,8 @@ import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 @Local
 public interface MeasurementChartsManagerLocal {
 
+    @Deprecated
+    // TODO: jmarques - this will go away once ListChildrenAction is moved to JSF
     List<MetricDisplaySummary> getMetricDisplaySummariesForMetrics(Subject subject, int resourceId, DataType dataType,
         long begin, long end, boolean narrowed, boolean enabledOnly) throws MeasurementException;
 
@@ -80,9 +82,6 @@ public interface MeasurementChartsManagerLocal {
 
     List<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId,
         int[] measurementScheduleIds, long begin, long end) throws MeasurementException;
-
-    List<MetricDisplaySummary> getMetricDisplaySummariesForResourceFromDefinitions(Subject subject, int resourceId,
-        int[] measurementDefinitionIds, long beginTime, long endTime) throws MeasurementException;
 
     List<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId, String viewName)
         throws MeasurementException;

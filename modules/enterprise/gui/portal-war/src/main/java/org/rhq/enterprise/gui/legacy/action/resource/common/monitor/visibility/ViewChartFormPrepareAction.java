@@ -92,6 +92,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
     private final Log log = LogFactory.getLog(ViewChartFormPrepareAction.class);
 
     MeasurementDataManagerLocal dataManager;
+    MeasurementScheduleManagerLocal scheduleManager;
     MeasurementChartsManagerLocal chartsManager;
     ResourceManagerLocal resMgr;
     ResourceGroupManagerLocal resGrpMgr;
@@ -123,6 +124,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         }
 
         dataManager = LookupUtil.getMeasurementDataManager();
+        scheduleManager = LookupUtil.getMeasurementScheduleManager();
         chartsManager = LookupUtil.getMeasurementChartsManager();
         resMgr = LookupUtil.getResourceManager();
         resGrpMgr = LookupUtil.getResourceGroupManager();
@@ -557,9 +559,17 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
 
         List<MetricDisplaySummary> allMetricSummaries = new ArrayList<MetricDisplaySummary>();
         for (Resource resource : resources) {
-            List<MetricDisplaySummary> metricSummariesList = chartsManager
-                .getMetricDisplaySummariesForResourceFromDefinitions(subject, resource.getId(), metricDefinitionIds,
-                    chartForm.getStartDate().getTime(), chartForm.getEndDate().getTime());
+            int[] metricScheduleIds = new int[metricDefinitionIds.length];
+            for (int i = 0; i < metricDefinitionIds.length; i++) {
+                int definitionId = metricDefinitionIds[i];
+                MeasurementSchedule schedule = scheduleManager.getMeasurementSchedule(subject, definitionId, resource
+                    .getId(), false);
+                metricScheduleIds[i] = schedule.getId();
+            }
+
+            List<MetricDisplaySummary> metricSummariesList = chartsManager.getMetricDisplaySummariesForResource(
+                subject, resource.getId(), metricScheduleIds, chartForm.getStartDate().getTime(), chartForm
+                    .getEndDate().getTime());
             MonitorUtils.formatMetrics(metricSummariesList, request.getLocale(), getResources(request));
             allMetricSummaries.addAll(metricSummariesList);
         }

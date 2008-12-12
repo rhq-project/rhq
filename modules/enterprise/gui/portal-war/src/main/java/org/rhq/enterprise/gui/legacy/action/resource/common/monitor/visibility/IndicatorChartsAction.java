@@ -53,7 +53,6 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementViewException;
 import org.rhq.enterprise.server.measurement.MeasurementViewManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
@@ -83,7 +82,6 @@ public class IndicatorChartsAction extends DispatchAction {
     private final static Log log = LogFactory.getLog(IndicatorChartsAction.class);
 
     private MeasurementChartsManagerLocal chartsManager = LookupUtil.getMeasurementChartsManager();
-    private MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
     private MeasurementViewManagerLocal viewManager = LookupUtil.getMeasurementViewManager();
 
     /**

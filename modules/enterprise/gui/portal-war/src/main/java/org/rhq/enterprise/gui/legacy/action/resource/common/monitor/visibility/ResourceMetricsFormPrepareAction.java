@@ -107,17 +107,27 @@ public class ResourceMetricsFormPrepareAction extends MetricsDisplayFormPrepareA
             List<MeasurementSchedule> scheds = scheduleManager.getMeasurementSchedulesForResourceAndType(subject,
                 resourceId, null, null, false); //null -> don't filter, we want everything, false -> not only enabled
 
-            List<Integer> scheduleIds = new ArrayList<Integer>(scheds.size());
+            int metricOrTraitCount = 0;
             for (MeasurementSchedule sched : scheds) {
                 if ((sched.getDefinition().getDataType() == DataType.MEASUREMENT)
                     || (sched.getDefinition().getDataType() == DataType.TRAIT)) {
                     // We only want to display numeric metrics and traits on the Visibility and Metric Data subtabs.
-                    scheduleIds.add(sched.getId());
+                    metricOrTraitCount++;
                 }
             }
 
-            metricSummaries = chartsManager.getMetricDisplaySummariesForSchedules(subject, resourceId, scheduleIds,
-                begin, end, false);
+            int[] scheduleIds = new int[metricOrTraitCount];
+            int index = 0;
+            for (MeasurementSchedule sched : scheds) {
+                if ((sched.getDefinition().getDataType() == DataType.MEASUREMENT)
+                    || (sched.getDefinition().getDataType() == DataType.TRAIT)) {
+                    // We only want to display numeric metrics and traits on the Visibility and Metric Data subtabs.
+                    scheduleIds[index++] = sched.getId();
+                }
+            }
+
+            metricSummaries = chartsManager.getMetricDisplaySummariesForResource(subject, resourceId, scheduleIds,
+                begin, end);
         } else {
             throw new IllegalArgumentException("Unknown operation mode");
         }

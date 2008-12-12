@@ -95,11 +95,6 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
     @EJB
     private MeasurementViewManagerLocal viewManager;
 
-    /* (non-Javadoc)
-     * @see
-     * org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal#getMetricDisplaySummariesForAutoGroup(org.jboss.on.domain.auth.Subject,
-     * int, int, int[], long, long)
-     */
     public List<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(Subject subject,
         int autoGroupParentResourceId, int autoGroupChildResourceTypeId, int[] measurementDefinitionIds, long begin,
         long end, boolean enabledOnly) throws MeasurementException {
@@ -115,11 +110,6 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         return ret;
     }
 
-    /* (non-Javadoc)
-     * @see
-     * org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal#getMetricDisplaySummariesForCompatibleGroup(org.jboss.on.domain.auth.Subject,
-     * int, int[], long, long)
-     */
     public List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, int groupId,
         int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws MeasurementException {
         ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
@@ -219,15 +209,16 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         return measurementDefinitionIds;
     }
 
+    // TODO: jmarques - combine this method and getMetricDisplaySummariesForSchedules
     public List<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId,
-        int[] measurementDefinitionIds, long beginTime, long endTime) throws MeasurementException {
+        int[] measurementScheduleIds, long beginTime, long endTime) throws MeasurementException {
         List<MetricDisplaySummary> allMeasurementData = new ArrayList<MetricDisplaySummary>(
-            measurementDefinitionIds.length);
-        List<Integer> scheduleIds = new ArrayList<Integer>(measurementDefinitionIds.length);
-        for (int measurementDefinitionId : measurementDefinitionIds) {
+            measurementScheduleIds.length);
+        List<Integer> scheduleIds = new ArrayList<Integer>(measurementScheduleIds.length);
+        for (int measurementScheduleId : measurementScheduleIds) {
             MeasurementSchedule schedule = null;
             try {
-                schedule = scheduleManager.getMeasurementSchedule(subject, measurementDefinitionId, resourceId, false);
+                schedule = scheduleManager.getMeasurementScheduleById(subject, measurementScheduleId);
                 scheduleIds.add(schedule.getId());
             } catch (MeasurementNotFoundException mnfe) {
                 throw new MeasurementException(mnfe);
@@ -236,6 +227,7 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
             MetricDisplaySummary summary = getMetricDisplaySummary(schedule, beginTime, endTime, false);
             if (summary != null) {
                 summary.setUnits(schedule.getDefinition().getUnits().name());
+                // TODO: jmarques - should we add summary.setResourceId(resourceId) here?
                 allMeasurementData.add(summary);
             }
         }
@@ -331,36 +323,6 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         List<MetricDisplaySummary> idss = getMetricDisplaySummariesForResource(subject, resourceId, scheduleIds, begin,
             end);
         return idss;
-    }
-
-    /**
-     * TODO hwr document me !!!
-     */
-    @Deprecated
-    // used for refreshing metric charts
-    // called from IndicatorChartsAction.getMetricsForSchedules first, then 
-    // called from IndicatorChartsAction.reloadMetrics
-    public List<MetricDisplaySummary> getMetricDisplaySummariesForSchedules(Subject subject, int resourceId,
-        List<Integer> scheduleIds, long beginTime, long endTime, boolean narrowed) throws MeasurementException {
-        List<MetricDisplaySummary> summaries = new ArrayList<MetricDisplaySummary>();
-        for (int scheduleId : scheduleIds) {
-            MeasurementSchedule schedule = scheduleManager.getMeasurementScheduleById(subject, scheduleId);
-            if (schedule == null)
-                continue;
-
-            MetricDisplaySummary summary = getMetricDisplaySummary(schedule, beginTime, endTime, narrowed);
-            if (summary != null) {
-                summary.setResourceId(resourceId);
-                summaries.add(summary);
-            }
-        }
-
-        Map<Integer, Integer> alerts = alertManager.getAlertCountForSchedules(beginTime, endTime, scheduleIds);
-        for (MetricDisplaySummary sum : summaries) {
-            sum.setAlertCount(alerts.get(sum.getScheduleId()));
-        }
-
-        return summaries;
     }
 
     // used for ListChildrenAction

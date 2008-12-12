@@ -33,15 +33,6 @@ import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
  */
 @Local
 public interface MeasurementChartsManagerLocal {
-    /**
-     * TODO hwr document me !!!
-     *
-     * @param narrowed if true, no measurement values are obtained from the database. This is useful for the List of
-     *                 Children that does not need them.
-     */
-    @Deprecated
-    List<MetricDisplaySummary> getMetricDisplaySummariesForSchedules(Subject subject, int resourceId,
-        List<Integer> scheduleIds, long begin, long end, boolean narrowed) throws MeasurementException;
 
     List<MetricDisplaySummary> getMetricDisplaySummariesForMetrics(Subject subject, int resourceId, DataType dataType,
         long begin, long end, boolean narrowed, boolean enabledOnly) throws MeasurementException;
@@ -88,7 +79,7 @@ public interface MeasurementChartsManagerLocal {
         String viewName);
 
     List<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId,
-        int[] measurementDefinitionIds, long begin, long end) throws MeasurementException;
+        int[] measurementScheduleIds, long begin, long end) throws MeasurementException;
 
     List<MetricDisplaySummary> getMetricDisplaySummariesForResourceFromDefinitions(Subject subject, int resourceId,
         int[] measurementDefinitionIds, long beginTime, long endTime) throws MeasurementException;

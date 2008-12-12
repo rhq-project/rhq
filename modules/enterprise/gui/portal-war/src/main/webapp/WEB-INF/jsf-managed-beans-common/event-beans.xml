@@ -4,7 +4,7 @@
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
 
-   <!-- /rhq/common/monitor/graphs/availability/** -->
+   <!-- /rhq/common/monitor/graphs/events/** -->
 
    <managed-bean>
       <managed-bean-name>EventsTimelineUIBean</managed-bean-name>

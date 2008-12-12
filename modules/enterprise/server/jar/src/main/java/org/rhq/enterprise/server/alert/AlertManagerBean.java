@@ -68,7 +68,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NFactory;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NResourceKeys;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -718,7 +717,6 @@ public class AlertManagerBean implements AlertManagerLocal {
         return builder.toString();
     }
 
-    @SuppressWarnings("deprecation")
     private String prettyPrintAlertURL(Alert alert) {
         StringBuilder builder = new StringBuilder();
 

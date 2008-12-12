@@ -540,21 +540,9 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
 
     }
 
-    private static final class BaseMetricDisplayComparator implements Comparator {
-        public int compare(Object o1, Object o2) {
-            BaseMetricDisplay bmd1 = (BaseMetricDisplay) o1;
-            BaseMetricDisplay bmd2 = (BaseMetricDisplay) o2;
+    private static final class BaseMetricDisplayComparator implements Comparator<BaseMetricDisplay> {
+        public int compare(BaseMetricDisplay bmd1, BaseMetricDisplay bmd2) {
             return bmd1.getLabel().compareTo(bmd2.getLabel());
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            try {
-                BaseMetricDisplayComparator that = (BaseMetricDisplayComparator) obj;
-                return true;
-            } catch (ClassCastException e) {
-                return false;
-            }
         }
     }
 
@@ -569,9 +557,9 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
 
         List<MetricDisplaySummary> allMetricSummaries = new ArrayList<MetricDisplaySummary>();
         for (Resource resource : resources) {
-            List<MetricDisplaySummary> metricSummariesList = chartsManager.getMetricDisplaySummariesForResource(
-                subject, resource.getId(), metricDefinitionIds, chartForm.getStartDate().getTime(), chartForm
-                    .getEndDate().getTime());
+            List<MetricDisplaySummary> metricSummariesList = chartsManager
+                .getMetricDisplaySummariesForResourceFromDefinitions(subject, resource.getId(), metricDefinitionIds,
+                    chartForm.getStartDate().getTime(), chartForm.getEndDate().getTime());
             MonitorUtils.formatMetrics(metricSummariesList, request.getLocale(), getResources(request));
             allMetricSummaries.addAll(metricSummariesList);
         }

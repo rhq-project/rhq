@@ -87,6 +87,7 @@
          
          /WEB-INF/jsf-managed-beans-common/availability-beans.xml,
          /WEB-INF/jsf-managed-beans-common/event-beans.xml,
+         /WEB-INF/jsf-managed-beans-common/measurement-beans.xml,
          
          /WEB-INF/jsf-managed-beans-definition/group-definition-beans.xml,
 

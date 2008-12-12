@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function">
+
+<ui:composition>
+
+<c:if test="#{not empty AvailabilityUIBean.data}">
+<table cellpadding="0" cellspacing="0" border="0">
+   <tr>
+      <td>
+         <font class="BoldText">
+            <h:outputFormat value="#{msg['resource.common.monitor.visibility.availability.value']}">
+               <f:param value="#{AvailabilityUIBean.percentage}" />
+            </h:outputFormat>
+         </font>
+         <font class="FooterSmall">
+            <h:outputFormat value="#{msg['resource.common.monitor.visibility.availability.timeframeShown']}" />
+         </font>
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <table cellpadding="0" cellspacing="0" border="0">
+            <tr>
+               <td width="8">
+                  <img src="/images/timeline_ul.gif" height="10"/>
+                  <div id="charttop"></div>
+               </td>
+               <c:forEach var="avail" items="#{AvailabilityUIBean.data}" varStatus="status">
+                  <c:set var="count" value="#{status.index}"/>
+                  <ui:param name="formattedTimestamp" value="#{onf:formatTimestamp(avail.timestamp)}"/>
+                  <td width="9">
+                     <div onmousedown="overlay.moveOverlay(this);overlay.showTimePopup('#{count}','#{formattedTimestamp}')" >
+                        <c:choose>
+                           <c:when test="#{avail.value == 1}">
+                              <img src="/images/timeline_green.gif" height="10" width="9" border="0" title="UP"/>
+                           </c:when>
+                           <c:when test="#{avail.value == 0 and avail.known}">
+                              <img src="/images/timeline_red.gif" height="10" width="9" border="0" title="DOWN"/>
+                           </c:when>
+                           <c:otherwise>
+                              <img src="/images/timeline_unknown.gif" height="10" width="9" border="0" title="UNKNOWN"/>
+                           </c:otherwise>
+                        </c:choose>
+                     </div>
+                  </td>
+               </c:forEach>
+               <td width="10" align="left">
+                  <img src="/images/timeline_ur.gif" height="10"/>
+               </td>
+            </tr>
+         </table>
+      </td>
+   </tr>
+</table>
+</c:if>
+
+</ui:composition>
+
+</html>

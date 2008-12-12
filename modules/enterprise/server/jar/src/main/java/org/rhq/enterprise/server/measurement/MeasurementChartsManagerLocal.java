@@ -90,6 +90,12 @@ public interface MeasurementChartsManagerLocal {
     List<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId,
         int[] measurementDefinitionIds, long begin, long end) throws MeasurementException;
 
+    List<MetricDisplaySummary> getMetricDisplaySummariesForResourceFromDefinitions(Subject subject, int resourceId,
+        int[] measurementDefinitionIds, long beginTime, long endTime) throws MeasurementException;
+
+    List<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId, String viewName)
+        throws MeasurementException;
+
     /**
      * Get metric display summaries for the resources and measurements that are passed
      *

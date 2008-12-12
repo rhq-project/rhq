@@ -1,22 +1,4 @@
-/*
- * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
+package org.rhq.enterprise.gui.measurement.graphs;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
@@ -34,7 +16,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
-import org.apache.struts.actions.DispatchAction;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
@@ -45,6 +26,7 @@ import org.rhq.enterprise.gui.legacy.KeyConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.IndicatorViewsForm;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -66,25 +48,9 @@ import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-/**
- * Generate the metric info for the indicator charts to be displayed.
- * 
- * Identifying individual metric summaries / charts very much use the concept of a metricToken.
- * This token is a string, that identifies the metric summary and where it comes from - if
- * it is a metric summary for a single resource or for a group. See {@link #getContextKeyChart(MetricDisplaySummary)} and
- * {@link #parseMetricToken(String)} on how the metric token looks like.
- * This token is also used in ListChildResources.jsp to add new charts and in DashCharts.jsp
- * to generate the input for up/down/remove. 
- * 
- * The used {@link IndicatorViewsForm} is filled in the {@link CurrentHealthAction} class,
- * which unlike most of the actions preparing a form is not called *PrepareAction.
- * 
- * @author Heiko W. Rupp (for the RHQ rewrite)
- * @author Joseph Marques
- */
-public class IndicatorChartsAction extends DispatchAction {
+public class IndicatorChartsUIBean {
 
-    private final static Log log = LogFactory.getLog(IndicatorChartsAction.class);
+    private final static Log log = LogFactory.getLog(IndicatorChartsUIBean.class);
 
     private MeasurementChartsManagerLocal chartsManager = LookupUtil.getMeasurementChartsManager();
     private MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();

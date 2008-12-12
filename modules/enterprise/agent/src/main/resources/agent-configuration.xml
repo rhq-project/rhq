@@ -49,7 +49,7 @@ commands named "config", "setconfig" and "setup" and the command line options
       <map />
       <node name="rhq-agent">
          <map />
-         <node name="default">
+         <node name="${rhq.agent.preferences-node}">
             <map>
                <!--
                _______________________________________________________________

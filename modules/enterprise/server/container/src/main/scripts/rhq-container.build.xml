@@ -153,7 +153,7 @@
           toDir="${jboss.lib.dir}" failonerror="false" verbose="true" />-->
     <delete verbose="true"><fileset dir="${jboss.lib.dir}" includes="ojdbc14-*.jar" /></delete>
     <copy file="${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar"
-          toDir="${jboss.lib.dir}" failonerror="false" verbose="true" />      
+          toDir="${jboss.lib.dir}" failonerror="false" verbose="true" />
     <copy file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
           toDir="${jboss.lib.dir}" verbose="true" />
 
@@ -409,7 +409,6 @@ rhq.server.client.security.server-auth-mode-enabled=false
 
 # Embedded RHQ Agent
 rhq.server.embedded-agent.enabled=false
-rhq.server.embedded-agent.name=embedded-agent
 rhq.server.embedded-agent.reset-configuration=true
 rhq.server.embedded-agent.disable-native-system=false
 

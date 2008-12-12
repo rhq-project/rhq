@@ -13,7 +13,7 @@ Embedded RHQ Agent Configuration
       <map />
       <node name="rhq-agent">
          <map />
-         <node name="embedded">
+         <node name="${rhq.server.embedded-agent.preferences-node}">
             <map>
                <!--
                _______________________________________________________________
@@ -366,7 +366,7 @@ Embedded RHQ Agent Configuration
                EMBEDDED: we do not need to poll since we know the server is
                always up
                -->
-               <entry key="rhq.agent.client.server-polling-interval-msecs" value="-1" />
+               <entry key="rhq.agent.client.server-polling-interval-msecs" value="0" />
 
                <!--
                _______________________________________________________________

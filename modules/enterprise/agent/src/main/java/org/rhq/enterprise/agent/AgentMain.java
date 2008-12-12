@@ -45,6 +45,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -67,6 +68,7 @@ import org.jboss.remoting.InvokerLocator;
 import org.jboss.remoting.invocation.NameBasedInvocation;
 import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
+import org.jboss.util.StringPropertyReplacer;
 
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.content.ContentServerService;
@@ -1179,7 +1181,19 @@ public class AgentMain {
 
         // now load in the preferences
         try {
-            Preferences.importPreferences(config_file_input_stream);
+            ByteArrayOutputStream raw_config_file = new ByteArrayOutputStream();
+            StreamUtil.copy(config_file_input_stream, raw_config_file, true);
+
+            // this magic is to allow the prefs XML to replace the node name with the -p option
+            // without requiring the user to hand-modify the .xml file.  This also adds the ability
+            // for the user to use ${var} system property replaces as a bonus.
+            Properties replacements = new Properties();
+            replacements.putAll(System.getProperties());
+            replacements.put("rhq.agent.preferences-node", m_agentPreferencesNodeName);
+            String new_config = StringPropertyReplacer.replaceProperties(raw_config_file.toString(), replacements);
+
+            ByteArrayInputStream new_config_input_stream = new ByteArrayInputStream(new_config.getBytes());
+            Preferences.importPreferences(new_config_input_stream);
 
             if (new AgentConfiguration(preferencesNode).getAgentConfigurationVersion() == 0) {
                 throw new IllegalArgumentException(MSG.getMsg(AgentI18NResourceKeys.BAD_NODE_NAME_IN_CONFIG_FILE,

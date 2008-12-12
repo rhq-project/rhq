@@ -8,6 +8,7 @@
 
       <attribute name="AgentEnabled">${rhq.server.embedded-agent.enabled:false}</attribute>
       <attribute name="ResetConfiguration">${rhq.server.embedded-agent.reset-configuration:false}</attribute>
+      <attribute name="PreferencesNodeName">${rhq.server.embedded-agent.name:}</attribute>
       
       <attribute name="ConfigurationOverrides" serialDataType="jbxb">
          <java:properties xmlns:java="urn:jboss:java-properties"
@@ -18,7 +19,7 @@
 
             <java:property>
                <java:key>rhq.agent.name</java:key>
-               <java:value>${rhq.server.embedded-agent.name:embedded-agent}</java:value>
+               <java:value>${rhq.server.embedded-agent.name:}</java:value>
             </java:property>
 
             <!-- the agent's server will point to the location of the server where it is embedded -->

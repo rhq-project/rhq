@@ -26,16 +26,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.InvalidPreferencesFormatException;
 import java.util.prefs.Preferences;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.util.StringPropertyReplacer;
+
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.agent.AgentConfiguration;
 import org.rhq.enterprise.agent.AgentConfigurationConstants;
 import org.rhq.enterprise.agent.AgentConfigurationUpgrade;
@@ -67,7 +73,7 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
     /**
      * The preferences node name that identifies the configuration set used to configure the services.
      */
-    private String preferencesNodeName = "embedded";
+    private String preferencesNodeName;
 
     /**
      * Properties that will be used to override preferences found in the preferences node and the configuration
@@ -266,7 +272,16 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
     }
 
     public void setPreferencesNodeName(String node) {
-        preferencesNodeName = node;
+        if (node == null || node.trim().length() == 0) {
+            try {
+                node = InetAddress.getLocalHost().getCanonicalHostName();
+            } catch (UnknownHostException e) {
+                node = "${jboss.bind.address}";
+            }
+            node = node + "-embedded";
+        }
+        preferencesNodeName = StringPropertyReplacer.replaceProperties(node);
+        System.setProperty("rhq.server.embedded-agent.preferences-node", preferencesNodeName);
     }
 
     public Properties getConfigurationOverrides() {
@@ -277,6 +292,22 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
     public void setConfigurationOverrides(Properties overrides) {
         //-- if this method signature changes, you must also change StartupServlet.startEmbeddedAgent
         configurationOverrides = overrides;
+
+        // perform some checking to setup defaults if need be
+
+        String agent_name = configurationOverrides.getProperty("rhq.agent.name", "");
+        if (agent_name.trim().length() == 0 || "-".equals(agent_name)) {
+            // the rhq.server.embedded-agent.name was not specified or left blank,
+            // that is the system propery used to define the rhq.agent.name - so let's create our own name
+            try {
+                agent_name = InetAddress.getLocalHost().getCanonicalHostName();
+            } catch (UnknownHostException e) {
+                agent_name = "${jboss.bind.address}";
+            }
+            agent_name = agent_name + "-embedded";
+            agent_name = StringPropertyReplacer.replaceProperties(agent_name);
+            configurationOverrides.put("rhq.agent.name", agent_name);
+        }
     }
 
     public String[] getAgentArguments() {
@@ -288,8 +319,7 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
             }
         }
 
-        args.add("--pref");
-        args.add(getPreferencesNodeName());
+        args.add("--pref=" + getPreferencesNodeName());
 
         return args.toArray(new String[args.size()]);
     }
@@ -539,7 +569,11 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
 
         // now load in the preferences
         try {
-            Preferences.importPreferences(config_file_input_stream);
+            ByteArrayOutputStream raw_config_file = new ByteArrayOutputStream();
+            StreamUtil.copy(config_file_input_stream, raw_config_file, true);
+            String new_config = StringPropertyReplacer.replaceProperties(raw_config_file.toString());
+            ByteArrayInputStream new_config_input_stream = new ByteArrayInputStream(new_config.getBytes());
+            Preferences.importPreferences(new_config_input_stream);
 
             if (new AgentConfiguration(preferences_node).getAgentConfigurationVersion() == 0) {
                 throw new IllegalArgumentException("Bad node name: " + preferences_node_name);

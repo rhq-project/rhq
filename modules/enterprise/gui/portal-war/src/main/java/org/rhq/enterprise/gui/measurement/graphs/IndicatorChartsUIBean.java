@@ -18,6 +18,7 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.KeyConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
@@ -27,6 +28,7 @@ import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.I
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.util.MetricsDisplayMode;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.auth.SessionNotFoundException;
@@ -35,7 +37,6 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementViewException;
 import org.rhq.enterprise.server.measurement.MeasurementViewManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
@@ -49,8 +50,49 @@ public class IndicatorChartsUIBean {
     private final static Log log = LogFactory.getLog(IndicatorChartsUIBean.class);
 
     private MeasurementChartsManagerLocal chartsManager = LookupUtil.getMeasurementChartsManager();
-    private MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
     private MeasurementViewManagerLocal viewManager = LookupUtil.getMeasurementViewManager();
+
+    List<MetricDisplaySummary> data;
+    List<String> views;
+    String view;
+
+    public List<MetricDisplaySummary> getData() {
+        return data;
+    }
+
+    public List<String> getViews() {
+        return views;
+    }
+
+    public String getView() {
+        return view;
+    }
+
+    public IndicatorChartsUIBean() {
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        Subject subject = user.getSubject();
+
+        EntityContext context = WebUtility.getEntityContext();
+        try {
+            HttpServletRequest request = FacesContextUtility.getRequest();
+
+            view = WebUtility.getOptionalRequestParameter(request, "metricView",
+                MeasurementPreferences.PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME);
+            views = viewManager.getViewNames(subject, context);
+
+            if (context.category == EntityContext.Category.Resource) {
+                data = chartsManager.getMetricDisplaySummariesForResource(subject, context.resourceId, view);
+            } else if (context.category == EntityContext.Category.ResourceGroup) {
+                data = chartsManager.getMetricDisplaySummariesForCompatibleGroup(subject, context.groupId, view);
+            } else if (context.category == EntityContext.Category.AutoGroup) {
+                data = chartsManager.getMetricDisplaySummariesForAutoGroup(subject, context.parentResourceId,
+                    context.resourceTypeId, view);
+            }
+
+        } catch (Exception e) {
+            log.info("Error while looking up metric chart data for " + context);
+        }
+    }
 
     /**
      * Generate a key, that identifies the summary.
@@ -136,15 +178,12 @@ public class IndicatorChartsUIBean {
             }
 
             if (context.category == EntityContext.Category.Resource) {
-                int resourceId = WebUtility.getResourceId(request);
-                metrics = chartsManager.getMetricDisplaySummariesForResource(subject, resourceId, viewName);
+                metrics = chartsManager.getMetricDisplaySummariesForResource(subject, context.resourceId, viewName);
             } else if (context.category == EntityContext.Category.ResourceGroup) {
-                int groupId = WebUtility.getRequiredIntRequestParameter(request, AttrConstants.GROUP_ID);
-                metrics = chartsManager.getMetricDisplaySummariesForCompatibleGroup(subject, groupId, viewName);
+                metrics = chartsManager.getMetricDisplaySummariesForCompatibleGroup(subject, context.groupId, viewName);
             } else if (context.category == EntityContext.Category.AutoGroup) {
-                int parent = WebUtility.getRequiredIntRequestParameter(request, "parent");
-                int type = getChildTypeId(request);
-                metrics = chartsManager.getMetricDisplaySummariesForAutoGroup(subject, parent, type, viewName);
+                metrics = chartsManager.getMetricDisplaySummariesForAutoGroup(subject, context.parentResourceId,
+                    context.resourceTypeId, viewName);
             } else {
                 throw new IllegalArgumentException("Unknown or unsupported context: " + context);
             }
@@ -583,12 +622,5 @@ public class IndicatorChartsUIBean {
             log.debug("Mode could not be determined for " + summary);
             return MetricsDisplayMode.UNSET;
         }
-    }
-
-    private static int getChildTypeId(HttpServletRequest request) {
-        int type = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_TYPE_ID_PARAM, -1);
-        if (type == -1) // TODO JBNADM-2630
-            type = WebUtility.getRequiredIntRequestParameter(request, ParamConstants.CHILD_RESOURCE_TYPE_ID_PARAM);
-        return type;
     }
 }

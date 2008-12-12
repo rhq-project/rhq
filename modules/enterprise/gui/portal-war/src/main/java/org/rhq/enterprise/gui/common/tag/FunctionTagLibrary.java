@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.common.tag;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Set;
 
 import com.sun.facelets.tag.AbstractTagLibrary;
@@ -170,6 +171,13 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         FormattedNumber fmtd = UnitsFormat.format(new UnitNumber(timestamp, unit, ScaleConstants.SCALE_MILLI),
             FacesContextUtility.getRequest().getLocale(), specs);
         return fmtd.toString();
+    }
+
+    public static int sizeOf(Collection<?> collection) {
+        if (collection == null) {
+            return 0;
+        }
+        return collection.size();
     }
 
     /**

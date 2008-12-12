@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function">
+
+<ui:composition>
+
+<table cellpadding="0" cellspacing="2" border="0">
+   <tr>
+   <td>
+      <h:outputFormat value="#{msg['Filter.ViewLabel']}" />
+      <select name="action" onchange="reviewAction(this.options[this.selectedIndex]);">
+         <option value="update">
+            <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Update']}" />
+            <h:outputText value=" #{IndicatorChartsUIBean.view}" />
+         </option>
+         <option value="create">
+            <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.New']}" />
+         </option>
+         <c:if test="#{onf:sizeOf(IndicatorViewsForm.views) > 1}">
+            <option value="delete">
+               <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Delete']}" />
+               <h:outputText value=" #{IndicatorChartsUIBean.view}" />
+            </option>
+            <option disabled="disabled">
+               <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Separator']}" />
+            </option>
+            <option disabled="disabled">
+               <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Goto']}" />
+            </option>
+            <c:forEach var="viewname" items="#{IndicatorViewsForm.views}">
+               <option value="go">
+                  <h:outputText value="#{viewname}" />
+               </option>
+            </c:forEach>
+         </c:if>
+      </select>
+   </td>
+   <td>
+      <h:outputFormat value="#{msg['common.label.Name']}" />
+      <input type="text" value="#{IndicatorChartsUIBean.view}" readonly="readonly" />
+   </td>
+   <td>
+      <!-- Use hidden input because IE doesn't pass value of of image -->
+      <input type="hidden" name="update" value="#{IndicatorChartsUIBean.view}" />
+      <input type="image" name="submit" src="/images/dash-button_go-arrow.gif" alt="Save View" />
+   </td>
+   </tr>
+</table>
+
+
+</ui:composition>
+
+</html>

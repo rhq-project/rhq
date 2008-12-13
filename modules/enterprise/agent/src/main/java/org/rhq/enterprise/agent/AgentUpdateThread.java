@@ -280,7 +280,7 @@ public class AgentUpdateThread extends Thread {
                     Thread.sleep(1000L * 60 * 5); // 5 minutes is enough time to wait
                 } catch (Throwable t) {
                 } finally {
-                    System.exit(1); // boom.
+                    System.exit(0); // boom.
                 }
             }
         };

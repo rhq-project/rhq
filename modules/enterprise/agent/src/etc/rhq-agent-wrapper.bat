@@ -71,30 +71,35 @@ rem ----------------------------------------------------------------------
 if "%RHQ_AGENT_INSTANCE_NAME%"=="" (
    set RHQ_AGENT_INSTANCE_NAME=rhqagent-%COMPUTERNAME%
 )
+if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_INSTANCE_NAME: %RHQ_AGENT_INSTANCE_NAME%
 
 rem ----------------------------------------------------------------------
 rem Determine the wrapper directory.
 rem ----------------------------------------------------------------------
 
 set RHQ_AGENT_WRAPPER_DIR_PATH=%RHQ_AGENT_BIN_DIR_PATH%\wrapper
+if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_WRAPPER_DIR_PATH: %RHQ_AGENT_WRAPPER_DIR_PATH%
 
 rem ----------------------------------------------------------------------
 rem The Windows OS platform name is also the wrapper subdirectory name.
 rem ----------------------------------------------------------------------
 
 set RHQ_AGENT_OS_PLATFORM=windows-x86_32
+if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_OS_PLATFORM: %RHQ_AGENT_OS_PLATFORM%
 
 rem ----------------------------------------------------------------------
 rem Determine the wrapper executable that this script will run.
 rem ----------------------------------------------------------------------
 
 set RHQ_AGENT_WRAPPER_EXE_FILE_PATH=%RHQ_AGENT_WRAPPER_DIR_PATH%\%RHQ_AGENT_OS_PLATFORM%\wrapper.exe
+if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_WRAPPER_EXE_FILE_PATH: %RHQ_AGENT_WRAPPER_EXE_FILE_PATH%
 
 rem ----------------------------------------------------------------------
 rem Determine the agent wrapper configuration file.
 rem ----------------------------------------------------------------------
 
 set RHQ_AGENT_WRAPPER_CONF_FILE_PATH=%RHQ_AGENT_WRAPPER_DIR_PATH%\rhq-agent-wrapper.conf
+if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_WRAPPER_CONF_FILE_PATH: %RHQ_AGENT_WRAPPER_CONF_FILE_PATH%
 
 rem ----------------------------------------------------------------------
 rem Create and configure the wrapper log directory.
@@ -106,6 +111,7 @@ if "%RHQ_AGENT_WRAPPER_LOG_DIR_PATH%"=="" (
    )
    set RHQ_AGENT_WRAPPER_LOG_DIR_PATH=%RHQ_AGENT_HOME%\logs
 )
+if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_WRAPPER_LOG_DIR_PATH: %RHQ_AGENT_WRAPPER_LOG_DIR_PATH%
 
 rem ----------------------------------------------------------------------
 rem Determine what to do and do it.

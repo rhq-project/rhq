@@ -12,8 +12,9 @@
 # Note that if this script is to be used as an init.d script, you must set
 # RHQ_SERVER_HOME so this script knows where to find the server installation.
 #
-#    RHQ_SERVER_DEBUG - If this is defined (with any value), the script
-#                       will emit debug messages.
+#    RHQ_SERVER_DEBUG - If this is defined, the script will emit debug
+#                       messages. If this is not defined or set to "false"
+#                       debug messages are not emitted.
 #
 #    RHQ_SERVER_HOME - Defines where the server's home install directory is.
 #                      If not defined, it will be assumed to be the parent
@@ -92,8 +93,11 @@ unset JBOSS_CLASSPATH
 
 debug_msg ()
 {
-   if [ -n "$RHQ_SERVER_DEBUG" ]; then
-      echo $1
+   # if debug variable is set, it is assumed to be on, unless its value is false
+   if [ "x$RHQ_SERVER_DEBUG" != "x" ]; then
+      if [ "$RHQ_SERVER_DEBUG" != "false" ]; then
+         echo $1
+      fi
    fi
 }
 
@@ -310,7 +314,7 @@ case "$1" in
 
         # start the server, making sure its working directory is the JBossAS bin directory
         cd ${RHQ_SERVER_HOME}/jbossas/bin
-        if [ -z "$RHQ_SERVER_DEBUG" ]; then
+        if [ "x$RHQ_SERVER_DEBUG" != "x" -a "$RHQ_SERVER_DEBUG" != "false" ]; then
            $_JBOSS_RUN_SCRIPT $RHQ_SERVER_CMDLINE_OPTS > /dev/null 2>&1 &
         else
            $_JBOSS_RUN_SCRIPT $RHQ_SERVER_CMDLINE_OPTS &

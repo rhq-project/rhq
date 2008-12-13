@@ -43,6 +43,11 @@ if exist "%_ENV_SCRIPT_PATH%\rhq-agent-env.bat" (
    call "%_ENV_SCRIPT_PATH%\rhq-agent-env.bat"
 )
 
+rem if debug variable is set, it is assumed to be on, unless its value is false
+if "%RHQ_AGENT_DEBUG%" == "false" (
+   set RHQ_AGENT_DEBUG=
+)
+
 rem ----------------------------------------------------------------------
 rem Call the agent start script but have it only setup our environment.
 rem Note that this script is assumed to be in the same directory as the

@@ -3,11 +3,12 @@
 #===========================================================================
 #
 
-#    RHQ_AGENT_DEBUG - If this is defined (with any value), the script
-#                      will emit debug messages. It will also enable debug
+#    RHQ_AGENT_DEBUG - If this is defined, the script will emit debug
+#                      messages. It will also enable debug
 #                      messages to be emitted from the agent itself.
+#                      If not set or set to "false", debug is turned off.
 #
-#RHQ_AGENT_DEBUG=1
+#RHQ_AGENT_DEBUG=true
 
 #    RHQ_AGENT_HOME - Defines where the agent's home install directory is.
 #                     If not defined, it will be assumed to be the parent

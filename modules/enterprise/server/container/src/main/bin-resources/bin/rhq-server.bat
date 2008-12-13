@@ -11,8 +11,9 @@ rem executable that is registered as the Windows Service.
 rem
 rem This script is customizable by setting the following environment variables:
 rem
-rem    RHQ_SERVER_DEBUG - If this is defined (with any value), the script
-rem                       will emit debug messages.
+rem    RHQ_SERVER_DEBUG - If this is defined, the script will emit debug
+rem                       messages.
+rem                       If not set or set to "false", debug is turned off.
 rem
 rem    RHQ_SERVER_HOME - Defines where the server's home install directory is.
 rem                      If not defined, it will be assumed to be the parent
@@ -62,6 +63,11 @@ rem This script does not use the built-in JBossAS run.bat.
 rem ===========================================================================
 
 setlocal
+
+rem if debug variable is set, it is assumed to be on, unless its value is false
+if "%RHQ_SERVER_DEBUG%" == "false" (
+   set RHQ_SERVER_DEBUG=
+)
 
 rem ----------------------------------------------------------------------
 rem Change directory so the current directory is the server home.

@@ -3,9 +3,10 @@ rem RHQ Agent Windows Startup Script Configuration File
 rem ===========================================================================
 rem
 
-rem    RHQ_AGENT_DEBUG - If this is defined, the script
-rem                      will emit debug messages. It will also enable debug
+rem    RHQ_AGENT_DEBUG - If this is defined, the script will emit debug
+rem                      messages. It will also enable debug
 rem                      messages to be emitted from the agent itself.
+rem                      If not set or set to "false", debug is turned off.
 rem
 rem set RHQ_AGENT_DEBUG=true
 

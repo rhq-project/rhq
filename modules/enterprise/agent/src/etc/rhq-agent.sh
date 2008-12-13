@@ -20,10 +20,14 @@
 # ----------------------------------------------------------------------
 # Subroutine that simply dumps a message iff debug mode is enabled
 # ----------------------------------------------------------------------
+
 debug_msg ()
 {
-   if [ -n "$RHQ_AGENT_DEBUG" ]; then
-      echo "rhq-agent.sh: $1"
+   # if debug variable is set, it is assumed to be on, unless its value is false
+   if [ "x$RHQ_AGENT_DEBUG" != "x" ]; then
+      if [ "$RHQ_AGENT_DEBUG" != "false" ]; then
+         echo "rhq-agent.sh: $1"
+      fi
    fi
 }
 
@@ -157,10 +161,13 @@ debug_msg "RHQ_AGENT_CMDLINE_OPTS: $RHQ_AGENT_CMDLINE_OPTS"
 # Execute the VM which starts the agent
 # ----------------------------------------------------------------------
 
-if [ -n "$RHQ_AGENT_DEBUG" ]; then
-   _LOG_CONFIG=-Dlog4j.configuration="log4j-debug.xml -Dsigar.nativeLogging=true -Di18nlog.dump-stack-traces=true"
-else
-   _LOG_CONFIG=-Dlog4j.configuration="log4j.xml"
+_LOG_CONFIG=-Dlog4j.configuration=log4j.xml
+
+# if debug is enabled, the log configuration is different
+if [ "x$RHQ_AGENT_DEBUG" != "x" ]; then
+   if [ "$RHQ_AGENT_DEBUG" != "false" ]; then
+      _LOG_CONFIG="-Dlog4j.configuration=log4j-debug.xml -Dsigar.nativeLogging=true -Di18nlog.dump-stack-traces=true"
+   fi
 fi
 
 # log4j 1.2.8 does not create the directory for us (later versions do)

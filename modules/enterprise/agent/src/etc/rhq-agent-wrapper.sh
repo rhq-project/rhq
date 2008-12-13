@@ -26,13 +26,18 @@
 # ----------------------------------------------------------------------
 # Subroutine that simply dumps a message iff debug mode is enabled
 # ----------------------------------------------------------------------
+
 debug_wrapper_msg ()
 {
+   # if debug variable is set, it is assumed to be on, unless its value is false
    if [ "x$RHQ_AGENT_DEBUG" != "x" ]; then
-      echo "rhq-agent-wrapper.sh: $1"
+      if [ "$RHQ_AGENT_DEBUG" != "false" ]; then
+         echo "rhq-agent-wrapper.sh: $1"
+      fi
    fi
 }
 
+# Get the location of this script
 RHQ_AGENT_WRAPPER_BIN_DIR_PATH=`dirname $0`
 debug_wrapper_msg RHQ_AGENT_WRAPPER_BIN_DIR_PATH=$RHQ_AGENT_WRAPPER_BIN_DIR_PATH
 
@@ -158,7 +163,7 @@ case "$1" in
         export RHQ_AGENT_IN_BACKGROUND
 
         # start the agent now!
-        if [ "x$RHQ_AGENT_DEBUG" = "x" ]; then
+        if [ "x$RHQ_AGENT_DEBUG" = "x" -a "$RHQ_AGENT_DEBUG" != "false" ]; then
            $RHQ_AGENT_START_SCRIPT > /dev/null 2>&1
         else
            debug_wrapper_msg "Executing agent with command: ${RHQ_AGENT_START_SCRIPT}"

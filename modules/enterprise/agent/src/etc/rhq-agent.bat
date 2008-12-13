@@ -27,6 +27,11 @@ if "%1"=="_SETENV_ONLY" (
    title RHQ Agent
 )
 
+rem if debug variable is set, it is assumed to be on, unless its value is false
+if "%RHQ_AGENT_DEBUG%" == "false" (
+   set RHQ_AGENT_DEBUG=
+)
+
 rem ----------------------------------------------------------------------
 rem Change directory so the current directory is the Agent home.
 rem Here we assume this script is a child directory of the Agent home
@@ -41,6 +46,11 @@ if exist "%RHQ_AGENT_BIN_DIR_PATH%\rhq-agent-env.bat" (
    call "%RHQ_AGENT_BIN_DIR_PATH%\rhq-agent-env.bat" %*
 ) else (
    if defined RHQ_AGENT_DEBUG echo No environment script found at: %RHQ_AGENT_BIN_DIR_PATH%\rhq-agent-env.bat
+)
+
+rem if debug variable is set, it is assumed to be on, unless its value is false
+if "%RHQ_AGENT_DEBUG%" == "false" (
+   set RHQ_AGENT_DEBUG=
 )
 
 if not defined RHQ_AGENT_HOME (

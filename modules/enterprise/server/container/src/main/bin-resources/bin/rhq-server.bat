@@ -76,9 +76,9 @@ rem ----------------------------------------------------------------------
 set RHQ_SERVER_BIN_DIR_PATH=%~dp0
 
 if not defined RHQ_SERVER_HOME (
-   cd %RHQ_SERVER_BIN_DIR_PATH%\..
+   cd "%RHQ_SERVER_BIN_DIR_PATH%\.."
 ) else (
-   cd %RHQ_SERVER_HOME% || (
+   cd "%RHQ_SERVER_HOME%" || (
       echo Cannot go to the RHQ_SERVER_HOME directory: %RHQ_SERVER_HOME%
       exit /B 1
       )
@@ -115,30 +115,35 @@ rem ----------------------------------------------------------------------
 if "%RHQ_SERVER_INSTANCE_NAME%"=="" (
    set RHQ_SERVER_INSTANCE_NAME=rhqserver-%COMPUTERNAME%
 )
+if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_INSTANCE_NAME: %RHQ_SERVER_INSTANCE_NAME%
 
 rem ----------------------------------------------------------------------
 rem Determine the wrapper directory.
 rem ----------------------------------------------------------------------
 
 set RHQ_SERVER_WRAPPER_DIR_PATH=%RHQ_SERVER_BIN_DIR_PATH%\wrapper
+if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_WRAPPER_DIR_PATH: %RHQ_SERVER_WRAPPER_DIR_PATH%
 
 rem ----------------------------------------------------------------------
 rem The Windows OS platform name is also the wrapper subdirectory name.
 rem ----------------------------------------------------------------------
 
 set RHQ_SERVER_OS_PLATFORM=windows-x86_32
+if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_OS_PLATFORM: %RHQ_SERVER_OS_PLATFORM%
 
 rem ----------------------------------------------------------------------
 rem Determine the wrapper executable that this script will run.
 rem ----------------------------------------------------------------------
 
 set RHQ_SERVER_WRAPPER_EXE_FILE_PATH=%RHQ_SERVER_WRAPPER_DIR_PATH%\%RHQ_SERVER_OS_PLATFORM%\wrapper.exe
+if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_WRAPPER_EXE_FILE_PATH: %RHQ_SERVER_WRAPPER_EXE_FILE_PATH%
 
 rem ----------------------------------------------------------------------
 rem Determine the server wrapper configuration file.
 rem ----------------------------------------------------------------------
 
 set RHQ_SERVER_WRAPPER_CONF_FILE_PATH=%RHQ_SERVER_WRAPPER_DIR_PATH%\rhq-server-wrapper.conf
+if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_WRAPPER_CONF_FILE_PATH: %RHQ_SERVER_WRAPPER_CONF_FILE_PATH%
 
 rem ----------------------------------------------------------------------
 rem Create and configure the wrapper log directory.
@@ -150,6 +155,7 @@ if "%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%"=="" (
    )
    set RHQ_SERVER_WRAPPER_LOG_DIR_PATH=%RHQ_SERVER_HOME%\logs
 )
+if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_WRAPPER_LOG_DIR_PATH: %RHQ_SERVER_WRAPPER_LOG_DIR_PATH%
 
 rem ----------------------------------------------------------------------
 rem Determine what to do and do it.

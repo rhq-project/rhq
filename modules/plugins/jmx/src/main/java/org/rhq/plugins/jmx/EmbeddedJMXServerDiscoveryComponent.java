@@ -32,6 +32,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.system.ProcessInfo;
 
 /**
  * This discovery component can be used to include JVM information under a parent Process oriented server that supports
@@ -57,16 +58,18 @@ public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryCom
                 .getName()));
         } else {
 
-            String[] commandLine = context.getParentResourceContext().getNativeProcess().getCommandLine();
-            String jmxRemotePort = "3001";
             boolean isJmxRemote = false;
-            for (String item : commandLine) {
-                if (item.contains("jmxremote.port")) {
-                    isJmxRemote = true;
-                    jmxRemotePort = item.substring(item.indexOf('=') + 1);
+            String jmxRemotePort = "3001";
+            ProcessInfo nativeProcess = context.getParentResourceContext().getNativeProcess();
+            if (nativeProcess != null) {
+                String[] commandLine = nativeProcess.getCommandLine();
+                for (String item : commandLine) {
+                    if (item.contains("jmxremote.port")) {
+                        isJmxRemote = true;
+                        jmxRemotePort = item.substring(item.indexOf('=') + 1);
+                    }
+                    // TODO get user / password 
                 }
-
-                // TODO get user / password 
             }
 
             // with an external parent, we still need to check, if jmxremote (for jconsole) is enabled or not

@@ -229,6 +229,10 @@
    </filter-mapping>
    <filter-mapping>
       <filter-name>Authentication-Filter</filter-name>
+      <url-pattern>*.rss</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Authentication-Filter</filter-name>
       <url-pattern>/admin/test/*</url-pattern>
    </filter-mapping>
    <filter-mapping>

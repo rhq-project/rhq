@@ -54,8 +54,6 @@
 	<classpathentry kind="src" path="modules/plugins/mock-jboss/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/perftest/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/mock-jboss/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/bluetooth/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/bluetooth/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/jira/target/generated-sources/axistools/wsdl2java"/>
 	<classpathentry kind="src" path="modules/plugins/jira/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/apt/src/test/java"/>
@@ -152,6 +150,5 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/augeas/java-augeas/1.0/java-augeas-1.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/json/json/20080701/json-20080701.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/sun/jna/jna/3.0.1/jna-3.0.1.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/net/sf/bluecove/bluecove/2.0.3/bluecove-2.0.3.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

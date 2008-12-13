@@ -85,7 +85,6 @@
     <module>postgres</module>
 
     <module>apt</module>
-<!-- not behaving        <module>bluetooth</module> -->        
     <module>grub</module>
 <!-- not behaving       <module>hardware</module> -->
     <module>hosts</module>

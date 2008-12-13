@@ -163,11 +163,11 @@ case "$1" in
         export RHQ_AGENT_IN_BACKGROUND
 
         # start the agent now!
-        if [ "x$RHQ_AGENT_DEBUG" = "x" -a "$RHQ_AGENT_DEBUG" != "false" ]; then
-           $RHQ_AGENT_START_SCRIPT > /dev/null 2>&1
-        else
+        if [ "x$RHQ_AGENT_DEBUG" != "x" -a "$RHQ_AGENT_DEBUG" != "false" ]; then
            debug_wrapper_msg "Executing agent with command: ${RHQ_AGENT_START_SCRIPT}"
            $RHQ_AGENT_START_SCRIPT
+        else
+           $RHQ_AGENT_START_SCRIPT > /dev/null 2>&1
         fi
 
         sleep 5

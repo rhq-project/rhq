@@ -315,9 +315,9 @@ case "$1" in
         # start the server, making sure its working directory is the JBossAS bin directory
         cd ${RHQ_SERVER_HOME}/jbossas/bin
         if [ "x$RHQ_SERVER_DEBUG" != "x" -a "$RHQ_SERVER_DEBUG" != "false" ]; then
-           $_JBOSS_RUN_SCRIPT $RHQ_SERVER_CMDLINE_OPTS > /dev/null 2>&1 &
-        else
            $_JBOSS_RUN_SCRIPT $RHQ_SERVER_CMDLINE_OPTS &
+        else
+           $_JBOSS_RUN_SCRIPT $RHQ_SERVER_CMDLINE_OPTS > /dev/null 2>&1 &
         fi
 
         echo "$!" > $PIDFILE

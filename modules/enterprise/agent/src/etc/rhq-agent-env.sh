@@ -116,17 +116,18 @@
 #
 #RHQ_AGENT_PASSWORD_PROMPT=true
 
-#    RHQ_AGENT_RUN_PREFIX - If defined, this will prefix the agent
-#                           start command when it is executed. Use
-#                           this to customize how the agent process
+#    RHQ_AGENT_RUN_PREFIX - If defined, this will prefix the agent start
+#                           command when it is executed. In other words, the
+#                           command to start the agent will be appended to
+#                           the end of this prefix string.
+#                           Use this to customize how the agent process
 #                           is started (e.g. with "su" or "sudo").
 #                           If this is set, it completely overrides the
 #                           RHQ_AGENT_RUN_AS and RHQ_AGENT_RUN_AS_ME
-#                           variables. Note that you can still pipe
-#                           the password if you set the RHQ_AGENT_PASSWORD
-#                           and RHQ_AGENT_PASSWORD_PROMPT variables properly.
-#                           The command to start the agent will be appended
-#                           to the end of this prefix string.
+#                           variables. Note that you can still prompt for
+#                           the password if you set the variable
+#                           RHQ_AGENT_PASSWORD_PROMPT properly. 
+#
 #RHQ_AGENT_RUN_PREFIX=su -m - ${RHQ_AGENT_RUN_AS} -c
 
 #    RHQ_AGENT_RUN_PREFIX_QUOTED - If "true", this will wrap the agent

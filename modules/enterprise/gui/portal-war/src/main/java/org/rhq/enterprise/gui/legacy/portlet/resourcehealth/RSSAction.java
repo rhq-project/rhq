@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.resourcehealth;
 
+import javax.security.auth.login.LoginException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -56,47 +57,53 @@ public class RSSAction extends BaseRSSAction {
 
         // Get the resources health
         Subject subject = getSubject(request);
-        WebUser user = new WebUser(subject);
-        WebUserPreferences preferences = user.getWebPreferences();
-        FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
-            .getFavoriteResourcePortletPreferences();
+        if (subject != null) {
 
-        PageList<ResourceHealthComposite> results = manager.getResourceHealth(subject, favoriteResourcePreferences
-            .asArray(), PageControl.getUnlimitedInstance());
+            WebUser user = new WebUser(subject);
+            WebUserPreferences preferences = user.getWebPreferences();
+            FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
+                .getFavoriteResourcePortletPreferences();
 
-        if ((results != null) && (results.size() > 0)) {
-            for (ResourceHealthComposite summary : results) {
-                String link = feed.getBaseUrl() + "/resource/common/monitor/Visibility.do?mode=currentHealth&id="
-                    + summary.getId();
+            PageList<ResourceHealthComposite> results = manager.getResourceHealth(subject, favoriteResourcePreferences
+                .asArray(), PageControl.getUnlimitedInstance());
 
-                String availText = res.getMessage("dash.home.ResourceHealth.rss.item.availability", summary
-                    .getAvailabilityType().toString());
-                String alertsText = res.getMessage("dash.home.ResourceHealth.rss.item.alerts", Long.valueOf(summary
-                    .getAlerts()));
-                String typeText = res.getMessage("dash.home.ResourceHealth.rss.item.resourceType", summary
-                    .getTypeName());
+            if ((results != null) && (results.size() > 0)) {
+                for (ResourceHealthComposite summary : results) {
+                    String link = feed.getBaseUrl() + "/resource/common/monitor/Visibility.do?mode=currentHealth&id="
+                        + summary.getId();
 
-                long now = System.currentTimeMillis();
+                    String availText = res.getMessage("dash.home.ResourceHealth.rss.item.availability", summary
+                        .getAvailabilityType().toString());
+                    String alertsText = res.getMessage("dash.home.ResourceHealth.rss.item.alerts", Long.valueOf(summary
+                        .getAlerts()));
+                    String typeText = res.getMessage("dash.home.ResourceHealth.rss.item.resourceType", summary
+                        .getTypeName());
 
-                StringBuffer desc = new StringBuffer();
-                desc.append("<table><tr><td align=\"left\">").append(typeText).append("</td></tr>");
+                    long now = System.currentTimeMillis();
 
-                if (favoriteResourcePreferences.showAvailability) {
-                    desc.append("<tr><td align=\"left\">").append(availText).append("</td></tr>");
+                    StringBuffer desc = new StringBuffer();
+                    desc.append("<table><tr><td align=\"left\">").append(typeText).append("</td></tr>");
+
+                    if (favoriteResourcePreferences.showAvailability) {
+                        desc.append("<tr><td align=\"left\">").append(availText).append("</td></tr>");
+                    }
+
+                    if (favoriteResourcePreferences.showAlerts) {
+                        desc.append("<tr><td align=\"left\">").append(alertsText).append("</td></tr>");
+                    }
+
+                    desc.append("</table>");
+
+                    feed.addItem(summary.getName(), link, desc.toString(), now);
                 }
-
-                if (favoriteResourcePreferences.showAlerts) {
-                    desc.append("<tr><td align=\"left\">").append(alertsText).append("</td></tr>");
-                }
-
-                desc.append("</table>");
-
-                feed.addItem(summary.getName(), link, desc.toString(), now);
             }
+
+            request.setAttribute("rssFeed", feed);
+
+            return mapping.findForward(Constants.RSS_URL);
+        } else {
+            throw new LoginException("RSS access requires authentication");
         }
 
-        request.setAttribute("rssFeed", feed);
-
-        return mapping.findForward(Constants.RSS_URL);
     }
 }

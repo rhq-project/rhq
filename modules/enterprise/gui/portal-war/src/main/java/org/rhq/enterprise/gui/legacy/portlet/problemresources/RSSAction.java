@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.legacy.portlet.problemresources;
 
 import java.util.List;
 
+import javax.security.auth.login.LoginException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -52,45 +53,51 @@ public class RSSAction extends BaseRSSAction {
 
         // Get the problem resources
         Subject subject = getSubject(request);
-        WebUser user = new WebUser(subject);
-        ProblemResourcesPortletPreferences preferences = user.getWebPreferences()
-            .getProblemResourcesPortletPreferences();
+        if (subject != null) {
 
-        long begin = 0; // beginning of time, unless configured otherwise
+            WebUser user = new WebUser(subject);
+            ProblemResourcesPortletPreferences preferences = user.getWebPreferences()
+                .getProblemResourcesPortletPreferences();
 
-        if (preferences.hours > 0) {
-            List bounds = MeasurementUtils.calculateTimeFrame(preferences.hours, MeasurementUtils.UNIT_HOURS);
-            begin = (Long) bounds.get(0);
-        }
+            long begin = 0; // beginning of time, unless configured otherwise
 
-        MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
-        List<ProblemResourceComposite> results;
-        results = problemManager.findProblemResources(subject, begin, preferences.range);
-
-        if ((results != null) && (results.size() > 0)) {
-            for (ProblemResourceComposite problem : results) {
-                String link = feed.getBaseUrl() + "/resource/common/monitor/Visibility.do?mode=currentHealth&id="
-                    + problem.getResourceId();
-
-                String availText = "";
-                if (problem.getAvailabilityType() != null) {
-                    if (problem.getAvailabilityType() == AvailabilityType.DOWN) {
-                        availText = res.getMessage("dash.home.ProblemResources.rss.item.downAvail");
-                    } else if (problem.getAvailabilityType() == AvailabilityType.UP) {
-                        availText = res.getMessage("dash.home.ProblemResources.rss.item.upAvail");
-                    } else {
-                        throw new IllegalStateException("invalid availability type - please report this bug");
-                    }
-                }
-
-                feed.addItem(problem.getResourceName(), link, res.getMessage(
-                    "dash.home.ProblemResources.rss.item.description", availText, problem.getNumAlerts()), System
-                    .currentTimeMillis());
+            if (preferences.hours > 0) {
+                List bounds = MeasurementUtils.calculateTimeFrame(preferences.hours, MeasurementUtils.UNIT_HOURS);
+                begin = (Long) bounds.get(0);
             }
+
+            MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
+            List<ProblemResourceComposite> results;
+            results = problemManager.findProblemResources(subject, begin, preferences.range);
+
+            if ((results != null) && (results.size() > 0)) {
+                for (ProblemResourceComposite problem : results) {
+                    String link = feed.getBaseUrl() + "/resource/common/monitor/Visibility.do?mode=currentHealth&id="
+                        + problem.getResourceId();
+
+                    String availText = "";
+                    if (problem.getAvailabilityType() != null) {
+                        if (problem.getAvailabilityType() == AvailabilityType.DOWN) {
+                            availText = res.getMessage("dash.home.ProblemResources.rss.item.downAvail");
+                        } else if (problem.getAvailabilityType() == AvailabilityType.UP) {
+                            availText = res.getMessage("dash.home.ProblemResources.rss.item.upAvail");
+                        } else {
+                            throw new IllegalStateException("invalid availability type - please report this bug");
+                        }
+                    }
+
+                    feed.addItem(problem.getResourceName(), link, res.getMessage(
+                        "dash.home.ProblemResources.rss.item.description", availText, problem.getNumAlerts()), System
+                        .currentTimeMillis());
+                }
+            }
+
+            request.setAttribute("rssFeed", feed);
+
+            return mapping.findForward(Constants.RSS_URL);
+        } else {
+            throw new LoginException("RSS access requires authentication");
         }
 
-        request.setAttribute("rssFeed", feed);
-
-        return mapping.findForward(Constants.RSS_URL);
     }
 }

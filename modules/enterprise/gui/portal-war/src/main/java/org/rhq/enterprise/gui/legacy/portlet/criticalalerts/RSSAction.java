@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.legacy.portlet.criticalalerts;
 
 import java.text.SimpleDateFormat;
 
+import javax.security.auth.login.LoginException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -61,33 +62,38 @@ public class RSSAction extends BaseRSSAction {
 
         // Get the alerts
         Subject subject = getSubject(request);
-        WebUser user = new WebUser(subject);
-        AlertsPortletPreferences prefs = user.getWebPreferences().getAlertsPortletPreferences();
+        if (subject != null) {
 
-        PageControl pageControl = new PageControl(0, prefs.count);
+            WebUser user = new WebUser(subject);
+            AlertsPortletPreferences prefs = user.getWebPreferences().getAlertsPortletPreferences();
 
-        PageList<Alert> alerts = alertManager.findAlerts(subject, ("all".equals(prefs.displayAll) ? null : prefs
-            .asArray()), AlertPriority.getByLegacyIndex(prefs.priority), prefs.timeRange, pageControl);
+            PageControl pageControl = new PageControl(0, prefs.count);
 
-        if ((alerts != null) && (alerts.size() > 0)) {
-            for (Alert alert : alerts) {
-                String link = feed.getBaseUrl() + "/alerts/Alerts.do?mode=viewAlert&id="
-                    + alert.getAlertDefinition().getResource().getId() + "&a=" + alert.getId();
+            PageList<Alert> alerts = alertManager.findAlerts(subject, ("all".equals(prefs.displayAll) ? null : prefs
+                .asArray()), AlertPriority.getByLegacyIndex(prefs.priority), prefs.timeRange, pageControl);
 
-                DateSpecifics specs = new DateSpecifics();
-                specs.setDateFormat(new SimpleDateFormat(res.getMessage(Constants.UNIT_FORMAT_PREFIX_KEY
-                    + "epoch-millis")));
+            if ((alerts != null) && (alerts.size() > 0)) {
+                for (Alert alert : alerts) {
+                    String link = feed.getBaseUrl() + "/alerts/Alerts.do?mode=viewAlert&id="
+                        + alert.getAlertDefinition().getResource().getId() + "&a=" + alert.getId();
 
-                FormattedNumber fmtd = UnitsFormat.format(new UnitNumber(alert.getCtime(), UnitsConstants.UNIT_DATE,
-                    ScaleConstants.SCALE_MILLI), request.getLocale(), specs);
+                    DateSpecifics specs = new DateSpecifics();
+                    specs.setDateFormat(new SimpleDateFormat(res.getMessage(Constants.UNIT_FORMAT_PREFIX_KEY
+                        + "epoch-millis")));
 
-                feed.addItem(alert.getAlertDefinition().getResource().getName() + " "
-                    + alert.getAlertDefinition().getName(), link, fmtd.toString(), alert.getCtime());
+                    FormattedNumber fmtd = UnitsFormat.format(new UnitNumber(alert.getCtime(),
+                        UnitsConstants.UNIT_DATE, ScaleConstants.SCALE_MILLI), request.getLocale(), specs);
+
+                    feed.addItem(alert.getAlertDefinition().getResource().getName() + " "
+                        + alert.getAlertDefinition().getName(), link, fmtd.toString(), alert.getCtime());
+                }
             }
+
+            request.setAttribute("rssFeed", feed);
+
+            return mapping.findForward(Constants.RSS_URL);
+        } else {
+            throw new LoginException("RSS access requires authentication");
         }
-
-        request.setAttribute("rssFeed", feed);
-
-        return mapping.findForward(Constants.RSS_URL);
     }
 }

@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
@@ -80,13 +82,13 @@
 
     <!-- ** JARs -->
 
-    <!--
+<!--
     <dependency>
       <groupId>jboss</groupId>
       <artifactId>jboss-seam</artifactId>
       <version>${seam.version}</version>
     </dependency>
-    -->
+-->
 
   </dependencies>
 
@@ -129,12 +131,12 @@
         <configuration>
           <archive>
             <manifest>
-               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
             </manifest>
             <manifestEntries>
-               <Build-Number>${buildNumber}</Build-Number>
-            </manifestEntries>        
+              <Build-Number>${buildNumber}</Build-Number>
+            </manifestEntries>
           </archive>
           <displayName>RHQ</displayName>
           <version>1.4</version>  <!-- J2EE version -->
@@ -144,54 +146,54 @@
           <unpackTypes>war,ejb,sar</unpackTypes>
           <modules>
 
-             <!-- ** WARs -->
+            <!-- ** WARs -->
 
-             <webModule>
-               <groupId>${project.groupId}</groupId>
-               <artifactId>rhq-portal</artifactId>
-               <bundleFileName>rhq-portal.war</bundleFileName>
-               <contextRoot>/</contextRoot>
-             </webModule>
+            <webModule>
+              <groupId>${project.groupId}</groupId>
+              <artifactId>rhq-portal</artifactId>
+              <bundleFileName>rhq-portal.war</bundleFileName>
+              <contextRoot>/</contextRoot>
+            </webModule>
 
-             <!-- ** EJB-JARs -->
+            <!-- ** EJB-JARs -->
 
-             <ejbModule>
-               <groupId>${project.groupId}</groupId>
-               <artifactId>rhq-enterprise-server</artifactId>
-               <bundleFileName>rhq-enterprise-server-ejb3.jar</bundleFileName>
-             </ejbModule>
+            <ejbModule>
+              <groupId>${project.groupId}</groupId>
+              <artifactId>rhq-enterprise-server</artifactId>
+              <bundleFileName>rhq-enterprise-server-ejb3.jar</bundleFileName>
+            </ejbModule>
 
-             <ejbModule>
-               <groupId>${project.groupId}</groupId>
-               <artifactId>rhq-core-domain</artifactId>
-               <bundleFileName>rhq-core-domain-ejb3.jar</bundleFileName>
-             </ejbModule>
+            <ejbModule>
+              <groupId>${project.groupId}</groupId>
+              <artifactId>rhq-core-domain</artifactId>
+              <bundleFileName>rhq-core-domain-ejb3.jar</bundleFileName>
+            </ejbModule>
 
-             <!-- ** SARs -->
+            <!-- ** SARs -->
 <!--
-             <sarModule>
-               <groupId>${project.groupId}</groupId>
-               <artifactId>rhq-enterprise-server-agent-sar</artifactId>
-               <bundleFileName>rhq-agent.sar</bundleFileName>
-             </sarModule>
+            <sarModule>
+              <groupId>${project.groupId}</groupId>
+              <artifactId>rhq-enterprise-server-agent-sar</artifactId>
+              <bundleFileName>rhq-agent.sar</bundleFileName>
+            </sarModule>
 -->
 
-             <!-- ** JARs -->
+            <!-- ** JARs -->
 
-             <!--
-             <jarModule>
-               <groupId>jboss</groupId>
-               <artifactId>jboss-seam</artifactId>
-               <bundleDir>lib</bundleDir>
-               <includeInApplicationXml>true</includeInApplicationXml>
-             </jarModule>
-             -->
+<!--
+            <jarModule>
+              <groupId>jboss</groupId>
+              <artifactId>jboss-seam</artifactId>
+              <bundleDir>lib</bundleDir>
+              <includeInApplicationXml>true</includeInApplicationXml>
+            </jarModule>
+-->
 
           </modules>
         </configuration>
       </plugin>
 
-     <plugin>
+      <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
         <version>2.0</version>
         <executions>
@@ -205,147 +207,147 @@
             <configuration>
               <artifactItems>
 
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
-                   <artifactId>rhq-agent-plugin</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-agent-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
 
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
-                   <artifactId>rhq-apache-plugin</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-apache-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
 
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-apt-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-apt-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
 
 <!-- In development
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-bluetooth-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
--->                              
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-bluetooth-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+-->
 
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
-                   <artifactId>rhq-database-plugin</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-database-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
 
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-grub-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-grub-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
 
 <!--  In Development
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-hardware-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
--->                 
-                 
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-hosts-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
-                 
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-hudson-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-hardware-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+-->
 
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
-                   <artifactId>rhq-iis-plugin</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-hosts-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-hudson-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-iis-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
 <!-- comment out until errors from RHQ-1226 are fixed
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-jira-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-jira-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
  -->
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
-                   <artifactId>rhq-jmx-plugin</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
-                 
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-mysql-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-jmx-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
 
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-netservices-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-mysql-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-netservices-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
 
 <!--  In Development
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-onewire-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
--->                 
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-onewire-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+-->
 
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-oracle-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-oracle-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
 
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-perftest-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-perftest-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
 
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
-                   <artifactId>rhq-platform-plugin</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-platform-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
 
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-postgres-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
 
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
-                   <artifactId>rhq-postgres-plugin</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
-                 
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-snmptrapd-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-snmptrapd-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
 
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-sshd-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-sshd-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
 
-                              <artifactItem>
-                                 <groupId>org.rhq</groupId>
-                                 <artifactId>rhq-virt-plugin</artifactId>
-                                 <version>${project.version}</version>
-                              </artifactItem>
-                
-               </artifactItems>
-               <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-virt-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+              </artifactItems>
+              <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
             </configuration>
           </execution>
 
@@ -358,20 +360,20 @@
             <configuration>
               <artifactItems>
 
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
-                   <artifactId>rhq-serverplugin-disk</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-serverplugin-disk</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
 
-                 <artifactItem>
-                   <groupId>org.rhq</groupId>
-                   <artifactId>rhq-serverplugin-yum</artifactId>
-                   <version>${project.version}</version>
-                 </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-serverplugin-yum</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
 
-               </artifactItems>
-               <outputDirectory>${earDirectory}/rhq-serverplugins</outputDirectory>
+              </artifactItems>
+              <outputDirectory>${earDirectory}/rhq-serverplugins</outputDirectory>
             </configuration>
           </execution>
 
@@ -380,85 +382,85 @@
     </plugins>
   </build>
 
-   <profiles>
+  <profiles>
 
-      <profile>
-         <id>dev</id>
+    <profile>
+      <id>dev</id>
 
-         <properties>
-            <rhq.rootDir>../../../..</rhq.rootDir>
-            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentName>${project.build.finalName}.ear</rhq.deploymentName>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.deploymentName}</rhq.deploymentDir>
-         </properties>
+      <properties>
+        <rhq.rootDir>../../../..</rhq.rootDir>
+        <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+        <rhq.deploymentName>${project.build.finalName}.ear</rhq.deploymentName>
+        <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.deploymentName}</rhq.deploymentDir>
+      </properties>
 
-         <build>
-            <plugins>
+      <build>
+        <plugins>
 
-               <plugin>
-                 <artifactId>maven-antrun-plugin</artifactId>
-                 <version>1.1</version>
-                 <executions>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.1</version>
+            <executions>
 
-                     <execution>
-                        <id>deploy</id>
-                        <phase>package</phase>
-                        <configuration>
-                          <tasks>
-                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
-                            <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
-                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
-                               <fileset dir="${basedir}/target/${project.build.finalName}" />
-                            </copy>
-                            <property name="deployment.descriptor.file" location="${deployment.dir}/META-INF/application.xml" />
-                            <echo>*** Touching ${deployment.descriptor.file} to force redeployment of ${rhq.deploymentName}...</echo>
-                            <touch file="${deployment.descriptor.file}" />
-                          </tasks>
-                        </configuration>
-                        <goals>
-                          <goal>run</goal>
-                        </goals>
-                     </execution>
+              <execution>
+                <id>deploy</id>
+                <phase>package</phase>
+                <configuration>
+                  <tasks>
+                    <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                    <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
+                    <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                      <fileset dir="${basedir}/target/${project.build.finalName}" />
+                    </copy>
+                    <property name="deployment.descriptor.file" location="${deployment.dir}/META-INF/application.xml" />
+                    <echo>*** Touching ${deployment.descriptor.file} to force redeployment of ${rhq.deploymentName}...</echo>
+                    <touch file="${deployment.descriptor.file}" />
+                  </tasks>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
 
-                     <execution>
-                        <id>deploy-ear-meta-inf</id>
-                        <phase>package</phase>
-                        <configuration>
-                          <tasks>
-                             <unjar src="${project.build.directory}/${project.build.finalName}.ear" dest="${rhq.deploymentDir}">
-                               <patternset>
-                                 <include name="META-INF/**" />
-                               </patternset>
-                             </unjar>
-                          </tasks>
-                        </configuration>
-                        <goals>
-                          <goal>run</goal>
-                        </goals>
-                     </execution>
+              <execution>
+                <id>deploy-ear-meta-inf</id>
+                <phase>package</phase>
+                <configuration>
+                  <tasks>
+                    <unjar src="${project.build.directory}/${project.build.finalName}.ear" dest="${rhq.deploymentDir}">
+                      <patternset>
+                        <include name="META-INF/**" />
+                      </patternset>
+                    </unjar>
+                  </tasks>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
 
-                     <execution>
-                        <id>undeploy</id>
-                        <phase>clean</phase>
-                        <configuration>
-                          <tasks>
-                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
-                            <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
-                            <delete dir="${deployment.dir}" />
-                          </tasks>
-                        </configuration>
-                        <goals>
-                          <goal>run</goal>
-                        </goals>
-                     </execution>
+              <execution>
+                <id>undeploy</id>
+                <phase>clean</phase>
+                <configuration>
+                  <tasks>
+                    <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                    <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                    <delete dir="${deployment.dir}" />
+                  </tasks>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
 
-                  </executions>
-               </plugin>
+            </executions>
+          </plugin>
 
-            </plugins>
-         </build>
-      </profile>
+        </plugins>
+      </build>
+    </profile>
 
-   </profiles>
+  </profiles>
 
 </project>

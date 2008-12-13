@@ -1,13 +1,21 @@
 
 /*-- START adminEditRole_checkAll.js --*/
-function ToggleSelection(e) {
+function ToggleSelection(e, depends) {
 	if (isIE)
 		e = event.srcElement;
 	
 	var form = e.form;
 	
 	if (!e.checked) {
-		form.checkAll.checked = false;
+		var uList = e.form;
+		var len = uList.elements.length;
+		
+		for (var i = 0; i < len; i++) {
+			var e = uList.elements[i];
+			if (e.getAttribute("type")=="checkbox" && e.getAttribute("value")==depends) {
+				e.checked = false;
+			}
+		}
 	}
 }
 

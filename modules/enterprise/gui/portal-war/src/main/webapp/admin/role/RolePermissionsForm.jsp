@@ -15,11 +15,11 @@
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <!-- THE GLOBAL PERMISSIONS HEADER ROW -->
   <tr class="ListHeader">
-    <td width="50%" class="ListHeaderInactive">
+    <td class="ListHeaderInactive">
       <html:img page="/images/spacer.gif" width="175" height="1" border="0"/><br>
       <fmt:message key="admin.role.perms.GlobalPermissions"/></td>
 
-    <td class="ListHeaderInactive" nowrap><div align="center">
+    <td width="300px" class="ListHeaderInactive"><div align="center">
       <html:img page="/images/spacer.gif" width="50" height="1" border="0"/><br>
       <fmt:message key="admin.role.perms.Authorized"/></div></td>
   </tr>
@@ -28,7 +28,10 @@
   
   <!-- MANAGE_SECURITY -->
   <tr class="ListRow">
-    <td class="ListCell"><b><fmt:message key="admin.role.perms.perm.MANAGE_SECURITY"/></b></td>
+    <td class="ListCell">
+       <b><fmt:message key="admin.role.perms.perm.MANAGE_SECURITY"/></b>
+       <c:if test="${mode eq edit || mode eq new}">**</c:if>
+    </td>
 
   <c:choose>
     <c:when test="${mode eq 'view'}">
@@ -42,7 +45,7 @@
       </c:choose>
     </c:when>
     <c:otherwise>
-    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="MANAGE_SECURITY" onclick="ToggleSelection(this)"/></td>
+    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="MANAGE_SECURITY" onclick="ToggleAll(this)"/></td>
     </c:otherwise>
   </c:choose>
   </tr>
@@ -63,7 +66,7 @@
       </c:choose>
     </c:when>
     <c:otherwise>
-    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="MANAGE_INVENTORY" onclick="ToggleSelection(this)"/></td>
+    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="MANAGE_INVENTORY" onclick="ToggleSelection(this, 'MANAGE_SECURITY')"/></td>
     </c:otherwise>
   </c:choose>
   </tr>
@@ -84,7 +87,7 @@
       </c:choose>
     </c:when>
     <c:otherwise>
-    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="MANAGE_SETTINGS" onclick="ToggleSelection(this)"/></td>
+    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="MANAGE_SETTINGS" onclick="ToggleSelection(this, 'MANAGE_SECURITY')"/></td>
     </c:otherwise>
   </c:choose>
   </tr>
@@ -93,7 +96,7 @@
 
   <!-- THE RESOURCE PERMISSIONS HEADER ROW -->
   <tr class="ListHeader">
-    <td width="50%" class="ListHeaderInactive">
+    <td class="ListHeaderInactive">
       <html:img page="/images/spacer.gif" width="175" height="1" border="0"/><br>
       <fmt:message key="admin.role.perms.ResourcePermissions"/></td>
 
@@ -120,7 +123,7 @@
       </c:choose>
     </c:when>
     <c:otherwise>
-    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="MODIFY_RESOURCE" onclick="ToggleSelection(this)"/></td>
+    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="MODIFY_RESOURCE" onclick="ToggleSelection(this, 'MANAGE_SECURITY')"/></td>
     </c:otherwise>
   </c:choose>
   </tr>
@@ -141,7 +144,7 @@
       </c:choose>
     </c:when>
     <c:otherwise>
-    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="DELETE_RESOURCE" onclick="ToggleSelection(this)"/></td>
+    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="DELETE_RESOURCE" onclick="ToggleSelection(this, 'MANAGE_SECURITY')"/></td>
     </c:otherwise>
   </c:choose>
   </tr>
@@ -162,7 +165,7 @@
       </c:choose>
     </c:when>
     <c:otherwise>
-    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="CREATE_CHILD_RESOURCES" onclick="ToggleSelection(this)"/></td>
+    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="CREATE_CHILD_RESOURCES" onclick="ToggleSelection(this, 'MANAGE_SECURITY')"/></td>
     </c:otherwise>
   </c:choose>
   </tr>
@@ -183,7 +186,7 @@
       </c:choose>
     </c:when>
     <c:otherwise>
-    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="MANAGE_ALERTS" onclick="ToggleSelection(this)"/></td>
+    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="MANAGE_ALERTS" onclick="ToggleSelection(this, 'MANAGE_SECURITY')"/></td>
     </c:otherwise>
   </c:choose>
   </tr>
@@ -204,7 +207,7 @@
       </c:choose>
     </c:when>
     <c:otherwise>
-    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="MANAGE_MEASUREMENTS" onclick="ToggleSelection(this)"/></td>
+    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="MANAGE_MEASUREMENTS" onclick="ToggleSelection(this, 'MANAGE_SECURITY')"/></td>
     </c:otherwise>
   </c:choose>
   </tr>
@@ -225,7 +228,7 @@
       </c:choose>
     </c:when>
     <c:otherwise>
-    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="MANAGE_CONTENT" onclick="ToggleSelection(this)"/></td>
+    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="MANAGE_CONTENT" onclick="ToggleSelection(this, 'MANAGE_SECURITY')"/></td>
     </c:otherwise>
   </c:choose>
   </tr>
@@ -246,7 +249,7 @@
       </c:choose>
     </c:when>
     <c:otherwise>
-    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="CONTROL" onclick="ToggleSelection(this)"/></td>
+    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="CONTROL" onclick="ToggleSelection(this, 'MANAGE_SECURITY')"/></td>
     </c:otherwise>
   </c:choose>
   </tr>
@@ -267,7 +270,7 @@
       </c:choose>
     </c:when>
     <c:otherwise>
-    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="CONFIGURE" onclick="ToggleSelection(this)"/></td>
+    <td align="center" class="ListCellCheckboxSelected"><html:multibox property="p" value="CONFIGURE" onclick="ToggleSelection(this, 'MANAGE_SECURITY')"/></td>
     </c:otherwise>
   </c:choose>
   </tr>
@@ -276,15 +279,9 @@
 
  <c:if test="${mode eq edit || mode eq new}">
   <script language="JavaScript" src="<html:rewrite page="/js/adminEditRole_checkAll.js"/>"></script>
-	<!-- CHECK ALL ROW  -->
   <tr class="ListRow">
-   <td class="ListCellCheckAll">&nbsp;</td>
-   <td class="ListCellCheckAll" align="center">
-    <input type="checkbox" name="checkAll" onclick="ToggleAll(this)">
-    <fmt:message key="admin.role.perms.perm.CheckAll"/>
-   </td>
+   <td colspan="2">**<fmt:message key="admin.role.perms.perm.MANAGE_SECURITY.warning"/></td>
   </tr>
-  <!-- / CHECK ALL ROW  -->
  </c:if>
 
 </table>

@@ -92,6 +92,15 @@ public abstract class OperationScheduleUIBean extends PagedDataTableUIBean {
             Integer operationId = FacesContextUtility.getRequiredRequestParameter("opId", Integer.class);
 
             SimpleTrigger simpleTrigger = getTrigger().getQuartzSimpleTrigger();
+            long startTime = simpleTrigger.getStartTime().getTime();
+            long now = System.currentTimeMillis();
+            if (now - startTime > 60000) {
+                /* 
+                 * allow a resource to be scheduled up to 60 seconds in the past, in case the clock 
+                 * ticks forward while the user is still filling out the operation schedule form
+                 */
+                throw new IllegalArgumentException("Can not schedule operations in the past");
+            }
             OperationDefinitionParametersUIBean operationParametersUIBean = FacesContextUtility
                 .getBean(OperationDefinitionParametersUIBean.class);
             Configuration configuration = operationParametersUIBean.getConfiguration();

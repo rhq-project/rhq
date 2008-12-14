@@ -30,33 +30,33 @@
          <h:outputText value="&lt; Return to Operation Schedules"/>
       </h:outputLink>
          
- 	  <rich:panel styleClass="BlockContent">
-	     <f:facet name="header">General Info</f:facet>
-	     <table>
-	        <tr>
-	           <td align="right" style="width: 100px;">Operation:</td>
-	           <td align="left">
+      <rich:panel styleClass="BlockContent">
+         <f:facet name="header">General Info</f:facet>
+         <table>
+            <tr>
+               <td align="right" style="width: 100px;">Operation:</td>
+               <td align="left">
                  <h:outputText value="#{item.operationDisplayName}" />
-	           </td>
-	        </tr>
-	        <tr>
-	           <td align="right" style="width: 100px;">Notes:</td>
-	           <td align="left">
+               </td>
+            </tr>
+            <tr>
+               <td align="right" style="width: 100px;">Notes:</td>
+               <td align="left">
                  <h:outputText value="#{item.description}" />
-	           </td>
-	        </tr>
-	        <tr>
-	           <td align="right" style="width: 100px;">Requester:</td>
-	           <td align="left">
+               </td>
+            </tr>
+            <tr>
+               <td align="right" style="width: 100px;">Requester:</td>
+               <td align="left">
                  <h:outputText value="#{item.subject.name}" />
-	           </td>
-	        </tr>
-	     </table>
-	  </rich:panel>
+               </td>
+            </tr>
+         </table>
+      </rich:panel>
          
-	  <rich:panel styleClass="BlockContent">
-	     <f:facet name="header">Parameters</f:facet>
-	     <onc:config configurationDefinition="#{ResourceGroupOperationScheduleDetailsUIBean.parameters.configurationDefinition}"
+      <rich:panel styleClass="BlockContent">
+         <f:facet name="header">Parameters</f:facet>
+         <onc:config configurationDefinition="#{ResourceGroupOperationScheduleDetailsUIBean.parameters.configurationDefinition}"
                      configuration="#{ResourceGroupOperationScheduleDetailsUIBean.parameters.configuration}"
                      readOnly="true"
                      nullConfigurationDefinitionMessage="#{ResourceGroupOperationScheduleDetailsUIBean.parameters.nullConfigurationDefinitionMessage}"

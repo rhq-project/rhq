@@ -45,57 +45,57 @@
              <h:outputText value="&lt; Return to Operation History"/>
           </h:outputLink>
             
- 	      <rich:panel styleClass="BlockContent">
-	         <f:facet name="header">Details</f:facet>
-	         <table>
-	            <tr>
-	               <td align="right" style="width: 150px;">Operation:</td>
-	               <td align="left">
+          <rich:panel styleClass="BlockContent">
+             <f:facet name="header">Details</f:facet>
+             <table>
+                <tr>
+                   <td align="right" style="width: 150px;">Operation:</td>
+                   <td align="left">
                      <h:outputText value="#{item.operationDefinition.displayName}" />
-	               </td>
-	            </tr>
-	            <tr>
-	               <td align="right">Date Submitted:</td>
-	               <td align="left">
-	                  <onc:userFormatter value="#{item.createdTime}" />
-	               </td>
-	            </tr>
-	            <tr>
-	               <td align="right">Date Completed:</td>
-	               <td align="left">
-	                  <onc:userFormatter value="#{item.modifiedTime}" rendered="#{item.status ne 'INPROGRESS'}" />
-	               </td>
-	            </tr>
-	            <tr>
-	               <td align="right">Requester:</td>
-	               <td align="left">
-	                  <h:outputText value="#{item.subjectName}" rendered="#{!(empty item.subjectName)}" />
-	                  <h:outputText value="(unknown)" rendered="#{empty item.subjectName}" />
-	               </td>
-	            </tr>
-	            <tr>
-	               <td align="right">Status:</td>
-	               <td align="left">
+                   </td>
+                </tr>
+                <tr>
+                   <td align="right">Date Submitted:</td>
+                   <td align="left">
+                      <onc:userFormatter value="#{item.createdTime}" />
+                   </td>
+                </tr>
+                <tr>
+                   <td align="right">Date Completed:</td>
+                   <td align="left">
+                      <onc:userFormatter value="#{item.modifiedTime}" rendered="#{item.status ne 'INPROGRESS'}" />
+                   </td>
+                </tr>
+                <tr>
+                   <td align="right">Requester:</td>
+                   <td align="left">
+                      <h:outputText value="#{item.subjectName}" rendered="#{!(empty item.subjectName)}" />
+                      <h:outputText value="(unknown)" rendered="#{empty item.subjectName}" />
+                   </td>
+                </tr>
+                <tr>
+                   <td align="right">Status:</td>
+                   <td align="left">
                       <h:outputLink rendered="#{item.status ne 'SUCCESS' and item.status ne 'INPROGRESS'}"
                                     value="javascript:displayMessageModal('Error Message','#{item.errorMessage}')">
                          <h:outputText value="#{item.status}"/>
                       </h:outputLink>
                       <h:outputText rendered="#{item.status eq 'SUCCESS' or item.status eq 'INPROGRESS'}"
                                     value="#{item.status}"/>
-	               </td>
-	            </tr>
-	         </table>
-	      </rich:panel>
-	      
-	      <rich:panel styleClass="BlockContent">
-	         <f:facet name="header">Parameters</f:facet>
+                   </td>
+                </tr>
+             </table>
+          </rich:panel>
+          
+          <rich:panel styleClass="BlockContent">
+             <f:facet name="header">Parameters</f:facet>
              <onc:config configurationDefinition="#{ResourceGroupOperationHistoryDetailsUIBean.parameters.configurationDefinition}"
                          configuration="#{ResourceGroupOperationHistoryDetailsUIBean.parameters.configuration}"
                          readOnly="true"
                          nullConfigurationDefinitionMessage="#{ResourceGroupOperationHistoryDetailsUIBean.parameters.nullConfigurationDefinitionMessage}"
                          nullConfigurationMessage="#{ResourceGroupOperationHistoryDetailsUIBean.parameters.nullConfigurationMessage}"
                          nullConfigurationStyle="InfoBlock"/>
-	      </rich:panel>
+          </rich:panel>
 
           <rich:panel styleClass="BlockContent">
             <f:facet name="header">Resource Operation Results</f:facet>
@@ -198,7 +198,7 @@
 
             </h:panelGrid>
 
-	        </rich:panel>
+            </rich:panel>
  
           <h:outputLink value="/rhq/group/operation/groupOperationHistory.xhtml">
              <f:param name="groupId" value="#{param.groupId}" />

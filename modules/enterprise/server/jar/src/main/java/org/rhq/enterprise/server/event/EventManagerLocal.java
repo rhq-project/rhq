@@ -40,6 +40,7 @@ import org.rhq.core.domain.util.PageList;
 /**
  * Interface for the Event Manager
  * @author Heiko W. Rupp
+ * @author Joseph Marques
  *
  */
 @Local
@@ -164,9 +165,10 @@ public interface EventManagerLocal {
      * @param eventId ID of the desired event.
      * @return
      */
-    public EventComposite getEventDetailForEventId(Subject subject, int eventId);
+    public EventComposite getEventDetailForEventId(Subject subject, int eventId) throws EventException;
 
     public void deleteEventSourcesForDefinition(EventDefinition def);
 
     public int getEventDefinitionCountForResourceType(int resourceTypeId);
+
 }

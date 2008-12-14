@@ -24,6 +24,8 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.sun.facelets.tag.AbstractTagLibrary;
 
 import org.rhq.core.clientapi.util.units.DateFormatter;
@@ -198,6 +200,12 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         }
     }
 
+    public static Resource getResource(int resourceId) {
+        HttpServletRequest request = FacesContextUtility.getRequest();
+        Subject user = WebUtility.getSubject(request);
+        return LookupUtil.getResourceManager().getResourceById(user, resourceId);
+    }
+
     /**
      * Returns the alert recovery information
      * 
@@ -230,6 +238,6 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
             throw new IllegalArgumentException("cannot retrieve characters of a null string");
         if (numChars > str.length())
             return str;
-        return str.substring(0, numChars);
+        return str.substring(0, numChars) + "...";
     }
 }

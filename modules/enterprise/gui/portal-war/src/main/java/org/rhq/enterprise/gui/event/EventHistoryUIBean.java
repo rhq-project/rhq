@@ -19,49 +19,83 @@
 package org.rhq.enterprise.gui.event;
 
 import javax.faces.model.DataModel;
+import javax.faces.model.SelectItem;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.server.common.EntityContext;
+import org.rhq.enterprise.server.event.EventException;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class EventHistoryUIBean extends PagedDataTableUIBean {
+
+    private final Log log = LogFactory.getLog(EventHistoryUIBean.class);
+
+    private EventManagerLocal eventManager = LookupUtil.getEventManager();
+
     public static final String MANAGED_BEAN_NAME = "EventHistoryUIBean";
 
-    private int id;
-    private EventSeverity sevFilter;
+    private EntityContext context;
+
+    private String severityFilter;
     private String sourceFilter;
-    private String searchString;
-    private String eventSource;
-    private String eventDetails;
+    private String searchFilter;
+    private SelectItem[] severityFilterSelectItems;
 
-    public int getId() {
-        return this.id;
+    private EventComposite selectedEvent;
+
+    public EventHistoryUIBean() {
+        context = WebUtility.getEntityContext();
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public EntityContext getContext() {
+        return this.context;
     }
 
-    public EventSeverity getSevFilter() {
-        return sevFilter;
+    public String getSeverityFilter() {
+        if (severityFilter == null) {
+            severityFilter = SelectItemUtils.getSelectItemFilter("eventHistoryForm:severityFilter");
+            severityFilter = SelectItemUtils.cleanse(severityFilter);
+        }
+        return severityFilter;
     }
 
-    public void setSevFilter(EventSeverity sevFilter) {
-        this.sevFilter = sevFilter;
+    public void setSeverityFilter(String severityFilter) {
+        this.severityFilter = severityFilter;
+    }
+
+    public SelectItem[] getSeverityFilterSelectItems() {
+        if (severityFilterSelectItems == null) {
+            severityFilterSelectItems = SelectItemUtils.convertFromEnum(EventSeverity.class, true);
+        }
+
+        return severityFilterSelectItems;
+    }
+
+    public void setSeverityFilterSelectItems(SelectItem[] sevFilterSelectItems) {
+        this.severityFilterSelectItems = sevFilterSelectItems;
     }
 
     public String getSourceFilter() {
+        if (sourceFilter == null) {
+            sourceFilter = FacesContextUtility.getOptionalRequestParameter("eventHistoryForm:sourceFilter");
+        }
         return sourceFilter;
     }
 
@@ -69,32 +103,27 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
         this.sourceFilter = sourceFilter;
     }
 
-    public String getSearchString() {
-        return searchString;
+    public String getSearchFilter() {
+        if (searchFilter == null) {
+            searchFilter = FacesContextUtility.getOptionalRequestParameter("eventHistoryForm:searchFilter");
+        }
+        return searchFilter;
     }
 
-    public void setSearchString(String searchString) {
-        this.searchString = searchString;
+    public void setSearchFilter(String searchFilter) {
+        this.searchFilter = searchFilter;
     }
 
-    public int getEventId() {
-        return FacesContextUtility.getOptionalRequestParameter("eventId", Integer.class, -1);
-    }
-
-    public String getEventSource() {
-        return this.eventSource;
-    }
-
-    public String getEventDetails() {
-        return this.eventDetails;
-    }
-
-    private void setEventDetails(String eventDetails) {
-        this.eventDetails = eventDetails;
-    }
-
-    private void setEventSource(String eventSource) {
-        this.eventSource = eventSource;
+    public EventComposite getSelectedEvent() {
+        if (selectedEvent == null) {
+            int eventId = FacesContextUtility.getOptionalRequestParameter("eventId", Integer.class);
+            try {
+                selectedEvent = eventManager.getEventDetailForEventId(getSubject(), eventId);
+            } catch (EventException ee) {
+                selectedEvent = null; // keep it null, handle at the UI layer
+            }
+        }
+        return selectedEvent;
     }
 
     @Override
@@ -112,24 +141,36 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
         @Override
         public PageList<EventComposite> fetchPage(PageControl pc) {
-            EventManagerLocal manager = LookupUtil.getEventManager();
             WebUser user = EnterpriseFacesContextUtility.getWebUser();
             MeasurementPreferences preferences = user.getMeasurementPreferences();
             MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
-            int eventId = -1;
-            PageList<EventComposite> results = manager.getEvents(getSubject(), new int[] { getResource().getId() },
-                rangePreferences.begin, rangePreferences.end, sevFilter, eventId, getSourceFilter(), searchString, pc);
+            PageList<EventComposite> results = new PageList<EventComposite>();
+
+            EventSeverity severity = getEventSeverity();
+            String search = getSearchFilter();
+            String source = getSourceFilter();
+
+            if (context.category == EntityContext.Category.Resource) {
+                results = eventManager.getEvents(getSubject(), new int[] { context.resourceId },
+                    rangePreferences.begin, rangePreferences.end, severity, -1, source, search, pc);
+            } else if (context.category == EntityContext.Category.ResourceGroup) {
+                results = eventManager.getEventsForCompGroup(getSubject(), context.groupId, rangePreferences.begin,
+                    rangePreferences.end, severity, -1, source, search, pc);
+            } else if (context.category == EntityContext.Category.AutoGroup) {
+                results = eventManager.getEventsForAutoGroup(getSubject(), context.parentResourceId,
+                    context.resourceTypeId, rangePreferences.begin, rangePreferences.end, severity, pc);
+            } else {
+                log.error(context.getUnknownContextMessage());
+            }
             return results;
         }
     }
 
-    public String getEventInfo() {
-        int eventId = FacesContextUtility.getOptionalRequestParameter("eventId", Integer.class, -1);
-        EventManagerLocal manager = LookupUtil.getEventManager();
-        EventComposite eventComposite = manager.getEventDetailForEventId(getSubject(), eventId);
-        this.setEventDetails(eventComposite.getEventDetail());
-        this.setEventSource(eventComposite.getSourceLocation());
-        return "";
-
+    private EventSeverity getEventSeverity() {
+        String severityName = getSeverityFilter();
+        if (severityName != null) {
+            return Enum.valueOf(EventSeverity.class, severityName);
+        }
+        return null;
     }
 }

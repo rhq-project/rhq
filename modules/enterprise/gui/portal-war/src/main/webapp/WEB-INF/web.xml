@@ -82,7 +82,6 @@
          /WEB-INF/jsf-managed-beans/admin-beans.xml,
          /WEB-INF/jsf-managed-beans/measurement-beans.xml,
          /WEB-INF/jsf-managed-beans/operation-beans.xml,
-         /WEB-INF/jsf-managed-beans/event-beans.xml,
          /WEB-INF/jsf-managed-beans/test-beans.xml,
          
          /WEB-INF/jsf-managed-beans-common/availability-beans.xml,
@@ -98,6 +97,7 @@
          /WEB-INF/jsf-navigation/alert-navigation.xml,
          /WEB-INF/jsf-navigation/cluster-navigation.xml,
          /WEB-INF/jsf-navigation/content-navigation.xml,
+         /WEB-INF/jsf-navigation/events-navigation.xml,
          /WEB-INF/jsf-navigation/autodiscovery-navigation.xml,
          /WEB-INF/jsf-navigation/configuration-navigation.xml,
          /WEB-INF/jsf-navigation/inventory-navigation.xml,
@@ -108,6 +108,7 @@
 
          /WEB-INF/jsf-navigation-definition/group-definition-navigation.xml,
          
+         /WEB-INF/jsf-navigation-resource-group/events-navigation.xml,
          /WEB-INF/jsf-navigation-resource-group/inventory-navigation.xml,
          /WEB-INF/jsf-navigation-resource-group/operation-navigation.xml,
          /WEB-INF/jsf-navigation-resource-group/measurement-navigation.xml,

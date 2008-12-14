@@ -1,0 +1,171 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax" 
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+      
+<ui:composition>
+
+    <h:form id="eventHistoryForm">
+        <input type="hidden" name="id" value="#{EventHistoryUIBean.context.resourceId}" />
+        <input type="hidden" name="groupId" value="#{EventHistoryUIBean.context.groupId}" />
+        <input type="hidden" name="parent" value="#{EventHistoryUIBean.context.parentResourceId}" />
+        <input type="hidden" name="type" value="#{EventHistoryUIBean.context.resourceTypeId}" />
+        <c:if test="#{not empty param.category}">
+            <input type="hidden" name="category" value="#{param.category}" />
+        </c:if>
+
+        <rich:panel styleClass="BlockContent">
+            <f:facet name="header">
+                <h:outputText value="Events" />
+            </f:facet>
+
+            <h:panelGrid columns="3" cellspacing="3">
+               <h:outputLabel for="severityFilter" value="Severity Filter: " />
+               <h:selectOneMenu id="severityFilter" value="#{EventHistoryUIBean.severityFilter}"
+                                style="width: 300px;">
+                   <a4j:support event="onchange" reRender="eventHistoryDataTable,eventHistoryDataTableScroller" />
+
+                   <f:selectItems value="#{EventHistoryUIBean.severityFilterSelectItems}"/>
+               </h:selectOneMenu>
+               <rich:spacer/>
+
+               <h:outputLabel for="sourceFilter" value="Source Filter: " />
+               <h:inputText id="sourceFilter" value="#{EventHistoryUIBean.sourceFilter}"
+                            style="width: 300px;">
+                   <a4j:support event="onchange" reRender="eventHistoryDataTable,eventHistoryDataTableScroller" />
+               </h:inputText>
+               <rich:spacer/>
+
+               <h:outputLabel for="searchFilter" value="Details Filter: " />
+               <h:inputText id="searchFilter" value="#{EventHistoryUIBean.searchFilter}"
+                            onkeypress="return ignoreEnterKey();"
+                            style="width: 300px;" />
+               <a4j:commandButton value="GO" reRender="eventHistoryDataTable,eventHistoryDataTableScroller"
+                                  styleClass="buttonmed"/>
+            </h:panelGrid>
+
+            <br />
+
+            <ui:param name="eventHistoryDataModel" value="#{EventHistoryUIBean.dataModel}" />
+
+            <rich:dataTable binding="#{EventHistoryUIBean.dataTable}" 
+                                 id="eventHistoryDataTable"
+                              value="#{eventHistoryDataModel}" 
+                               rows="#{PageControl.EventsHistoryList.pageSize}" 
+                                var="item"
+                              width="100%"
+                         styleClass="resources-table"
+                        headerClass="tableRowHeader" 
+                        footerClass="on-pager-footer"
+                     onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                      onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+                <f:facet name="PageControlView">
+                    <onc:paginationControl id="EventsHistoryList" />
+                </f:facet>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="ev.severity">
+                            <h:outputText styleClass="headerText" value="Severity" />
+                        </onc:sortableColumnHeader>
+                    </f:facet>
+                    <h:outputText value="#{item.severity}" />
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="ev.source">
+                            <h:outputText styleClass="headerText" value="Source" />
+                        </onc:sortableColumnHeader>
+                    </f:facet>
+                    <h:outputText value="#{item.sourceLocation}" />
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Detail" />
+                    </f:facet>
+                    
+                    <h:outputLink>
+                        <f:param name="id" value="#{EventHistoryUIBean.context.resourceId}" />
+                        <f:param name="groupId" value="#{EventHistoryUIBean.context.groupId}" />
+                        <f:param name="parent" value="#{EventHistoryUIBean.context.parentResourceId}" />
+                        <f:param name="type" value="#{EventHistoryUIBean.context.resourceTypeId}" />
+                        <f:param name="eventId" value="#{item.eventId}" />
+                        <f:param name="category" value="#{param.category}" rendered="#{not empty param.category}" />
+                        <h:outputText value="#{onf:trimString(item.eventDetail,160)}" />
+                    </h:outputLink>
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="ev.timestamp">
+                            <h:outputText styleClass="headerText" value="Time occurred" />
+                        </onc:sortableColumnHeader>
+                    </f:facet>
+                    <h:outputText value="#{item.timestamp}" />
+                </rich:column>
+
+                <f:facet name="footer">
+                    <rich:columnGroup>
+                        <rich:column colspan="4" width="100%">
+                            <ui:param name="paginationDataTableName" value="eventHistoryDataTable" />
+                            <ui:param name="paginationDataModel" value="#{eventHistoryDataModel}" />
+                            <ui:param name="paginationPageControl" value="#{PageControl.EventsHistoryList}" />
+                            <ui:include src="/rhq/resource/include/pagination.xhtml" />
+                        </rich:column>
+                    </rich:columnGroup>
+                </f:facet>
+            </rich:dataTable>
+        </rich:panel>
+        <br />
+    </h:form>
+
+    <rich:panel id="eventDetailPanel"  rendered="#{param.eventId gt 0}" styleClass="BlockContent">
+        <f:facet name="header">
+            <h:outputText value="#{msg['resource.common.monitor.events.DetailsHeader']}" />
+        </f:facet>
+        <ui:param name="event" value="#{EventHistoryUIBean.selectedEvent}" />
+        <h:panelGroup rendered="#{not empty event}">
+            <table width="100%">
+                <tr style="width: 175px">
+                    <td style="font-weight: bold;">Resource: </td>
+                    <td><h:outputText value="#{onf:getResource(event.resourceId).name}" /></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Source: </td>
+                    <td><h:outputText value="#{event.sourceLocation}" /></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Severity: </td>
+                    <td><h:outputText value="#{event.severity}" /></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold; vertical-align: top;">Details: </td>
+                    <td>
+                        <div style="height: 200px; border-style: inset; border-width: 1px; overflow: auto">
+                            <h:outputText value="#{event.eventDetail}" />
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </h:panelGroup>
+        <h:outputText value="Event details not found: either deleted by another user or purged due to age"
+                      rendered="#{empty event}" />
+    </rich:panel>
+
+</ui:composition>
+
+</html>

@@ -11,6 +11,15 @@
       <managed-bean-class>org.rhq.enterprise.gui.measurement.graphs.EventsTimelineUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
+   
+   <!-- /rhq/common/events/history.xhtml -->
+   
+   <managed-bean>
+      <managed-bean-name>EventHistoryUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.event.EventHistoryUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+     
 
 </faces-config>
       

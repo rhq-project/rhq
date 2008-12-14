@@ -15,12 +15,14 @@
 
 <ui:composition template="/rhq/group/layout/main.xhtml">
 
-    <ui:param name="pageTitle" value="#{ResourceGroupUIBean.groupCategoryName} '#{ResourceGroupUIBean.name}' - Events History" />
-    <ui:param name="selectedTabName" value="Events.History" />
+<ui:param name="pageTitle" value="#{ResourceGroupUIBean.groupCategoryName} '#{ResourceGroupUIBean.name}' - Events History" />
+<ui:param name="selectedTabName" value="Events.History" />
 
-    <ui:define name="content">
+<ui:define name="content">
 
-    </ui:define>
+    <ui:include src="/rhq/common/events/history.xhtml"/>
+
+</ui:define>
 
 </ui:composition>
 

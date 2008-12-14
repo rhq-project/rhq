@@ -421,8 +421,8 @@ public class EventManagerBean implements EventManagerLocal {
 
             rs = stm.executeQuery();
             while (rs.next()) {
-                EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(2), rs.getString(3), EventSeverity
-                    .valueOf(rs.getString(4)), rs.getLong(5), rs.getInt(6));
+                EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(6), rs.getInt(2), EventSeverity
+                    .valueOf(rs.getString(4)), rs.getString(3), rs.getLong(5));
                 pl.add(ec);
             }
 
@@ -494,8 +494,8 @@ public class EventManagerBean implements EventManagerLocal {
 
             rs = stm.executeQuery();
             while (rs.next()) {
-                EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(2), rs.getString(3), EventSeverity
-                    .valueOf(rs.getString(4)), rs.getLong(5), rs.getInt(6));
+                EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(6), rs.getInt(2), EventSeverity
+                    .valueOf(rs.getString(4)), rs.getString(3), rs.getLong(5));
                 pl.add(ec);
             }
 
@@ -631,8 +631,7 @@ public class EventManagerBean implements EventManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public EventComposite getEventDetailForEventId(Subject subject, int eventId) {
-
+    public EventComposite getEventDetailForEventId(Subject subject, int eventId) throws EventException {
         Query q = entityManager.createNamedQuery(Event.GET_DETAILS_FOR_EVENT_IDS);
         List<Integer> eventIds = new ArrayList<Integer>(1);
         eventIds.add(eventId);
@@ -641,8 +640,7 @@ public class EventManagerBean implements EventManagerLocal {
         if (composites.size() == 1)
             return composites.get(0);
         else {
-            log.warn("getEventDetailForEventId: found " + composites.size() + " details");
-            return new EventComposite();
+            throw new EventException("No event found for eventId[" + eventId + "]");
         }
     }
 
@@ -667,4 +665,5 @@ public class EventManagerBean implements EventManagerLocal {
     private boolean isFilled(String in) {
         return in != null && !in.equals("");
     }
+
 }

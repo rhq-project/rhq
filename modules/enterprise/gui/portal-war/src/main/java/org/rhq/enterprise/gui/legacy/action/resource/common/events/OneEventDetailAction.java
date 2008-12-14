@@ -59,11 +59,6 @@ public class OneEventDetailAction extends DispatchAction {
         buf.append("<b>Source: </b>");
         buf.append(htmlFormat(comp.getSourceLocation(), eForm.getSourceFilter()));
         buf.append("<p/>\n");
-        if (comp.getAckUser() != null && !comp.getAckUser().equals("")) {
-            buf.append("<b>Acknowledged by</b> ").append(comp.getAckUser());
-            buf.append(" <b>at</b> ").append(comp.getAckTime());
-            buf.append("<p/>\n");
-        }
         buf.append("<b>Full detail: </b><br/>\n");
         buf.append(htmlFormat(comp.getEventDetail(), eForm.getSearchString()));
         buf.append("</div>");

@@ -11,152 +11,20 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
-      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax" 
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
-      
+
 <ui:composition template="/rhq/resource/layout/main.xhtml">
-       
-    <ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Events History" />
-    <ui:param name="selectedTabName" value="Events.History" />
 
-    <ui:define name="content">
-        <a4j:form ajaxSubmit="true">
-            <input type="hidden" name="id" value="${param.id}" />
+<ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Events History"/>
+<ui:param name="selectedTabName" value="Events.History"/>
 
-            <rich:panel styleClass="BlockContent">
-                <f:facet name="header">
-                    <h:outputText value="${msg['resource.common.monitor.events.FilterBy']}" />
-                </f:facet>
+<ui:define name="content">
 
-                <table width="100%">
-                    <tr>
-                        <td width="33%">
-                            <h:outputText value="Severity:" /> 
-                            <h:selectOneMenu id="sevFilter"
-                                          value="#{EventHistoryUIBean.sevFilter}">
-                                <f:selectItem itemValue="ALL" />
-                                <f:selectItem itemValue="DEBUG" />
-                                <f:selectItem itemValue="INFO" />
-                                <f:selectItem itemValue="WARN" />
-                                <f:selectItem itemValue="ERROR" />
-                                <f:selectItem itemValue="FATAL" />
-                                <a4j:support event="onchange" reRender="eventHistoryDataTable" />
-                            </h:selectOneMenu>
-                        </td>
+<ui:include src="/rhq/common/events/history.xhtml"/>
 
-                        <td width="33%">
-                            <h:outputText value="Source:" /> 
-                            <h:inputText value="#{EventHistoryUIBean.sourceFilter}">
-                                <a4j:support event="onchange" reRender="eventHistoryDataTable" />
-                            </h:inputText>
-                        </td>
+</ui:define>
 
-                        <td width="33%">
-                            <h:outputText value="Search:" /> 
-                            <h:inputText value="#{EventHistoryUIBean.searchString}">
-                                <a4j:support event="onchange" reRender="eventHistoryDataTable" />
-                            </h:inputText>
-                            <a4j:status>
-                                <f:facet name="start">
-                                    &nbsp; &nbsp; <h:graphicImage value="/images/status_bar.gif"/>
-                                 </f:facet>
-                            </a4j:status>
-                        </td>
-                    </tr>
-                </table>
-            
-               <br />
-    
-                <ui:param name="eventHistoryDataModel" value="#{EventHistoryUIBean.dataModel}" />
-                
-                <rich:dataTable binding="#{EventHistoryUIBean.dataTable}" 
-                                     id="eventHistoryDataTable"
-                                  value="#{eventHistoryDataModel}" 
-                                   rows="#{PageControl.EventsHistoryList.pageSize}" 
-                                    var="item"
-                                  width="100%"
-                             styleClass="resources-table"
-                            headerClass="tableRowHeader" 
-                            footerClass="on-pager-footer"
-                               rendered="#{eventHistoryDataModel.rowCount > 0 }"
-                         onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
-                          onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
-    
-                    <f:facet name="PageControlView">
-                        <onc:paginationControl id="EventsHistoryList" />
-                    </f:facet>
-    
-                    <rich:column>
-                        <f:facet name="header">
-                            <onc:sortableColumnHeader sort="ev.severity">
-                                <h:outputText styleClass="headerText" value="Severity" />
-                            </onc:sortableColumnHeader>
-                        </f:facet>
-                        <h:outputText value="#{item.severity}" />
-                    </rich:column>
-    
-                    <rich:column>
-                        <f:facet name="header">
-                            <onc:sortableColumnHeader sort="ev.source">
-                                <h:outputText styleClass="headerText" value="Source" />
-                            </onc:sortableColumnHeader>
-                        </f:facet>
-                        <h:outputText value="#{item.sourceLocation}" />
-                    </rich:column>
-    
-                    <rich:column>                    
-                        <f:facet name="header">
-                            <h:outputText styleClass="headerText" value="Detail" />
-                        </f:facet>
-                        
-                        <h:outputLink>
-                            <f:param name="id" value="${param.id}" />
-                            <f:param name="eventId" value="#{item.eventId}" />
-                            <h:outputText value="#{onf:trimString(item.eventDetail,160)}" />
-                        </h:outputLink>
-                    </rich:column>
-    
-                    <rich:column>
-                        <f:facet name="header">
-                            <onc:sortableColumnHeader sort="ev.timestamp">
-                                <h:outputText styleClass="headerText" value="Time occurred" />
-                            </onc:sortableColumnHeader>
-                        </f:facet>
-                        <h:outputText value="#{item.timestamp}" />
-                    </rich:column>
-    
-                    <f:facet name="footer">
-                        <rich:columnGroup>
-                            <rich:column colspan="4" width="100%">
-                                <ui:param name="paginationDataTableName" value="eventHistoryDataTable" />
-                                <ui:param name="paginationDataModel" value="#{eventHistoryDataModel}" />
-                                <ui:param name="paginationPageControl" value="#{PageControl.EventsHistoryList}" />
-                                <ui:include src="../include/pagination.xhtml" />
-                            </rich:column>
-                        </rich:columnGroup>
-                    </f:facet>
-                </rich:dataTable>
-            </rich:panel>
-            <br />
-        </a4j:form>
-        
-        <h:outputText value="#{EventHistoryUIBean.eventInfo}" />
-        
-        <rich:panel id="eventDetailPanel"  rendered="#{param.eventId gt 0}" styleClass="BlockContent">
-            <f:facet name="header">
-                <h:outputText value="${msg['resource.common.monitor.events.DetailsHeader']}" />
-            </f:facet>
-            <p>
-                <b>Source:</b>
-                <h:outputText value="#{EventHistoryUIBean.eventSource}" />
-            </p>
-        
-            <p>
-                <b>Event Detail:</b>
-                <br />
-                <h:outputText value="#{EventHistoryUIBean.eventDetails}" />
-            </p>
-        </rich:panel>
-    </ui:define>
 </ui:composition>
+
 </html>

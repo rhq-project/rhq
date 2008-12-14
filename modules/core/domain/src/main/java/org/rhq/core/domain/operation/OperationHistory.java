@@ -101,7 +101,20 @@ import org.rhq.core.domain.configuration.Configuration;
         + "    go.group.name, "
         + "    go.group.resourceType.name) "
         + " FROM GroupOperationHistory go JOIN go.group g JOIN g.roles r JOIN r.subjects s "
-        + " WHERE go.status != 'INPROGRESS' AND s = :subject ") })
+        + " WHERE go.status != 'INPROGRESS' AND s = :subject "),
+    @NamedQuery(name = OperationHistory.QUERY_GET_PARAMETER_CONFIGURATION_IDS, query = "" //
+        + "SELECT params.id " //
+        + "  FROM ResourceOperationHistory roh " //
+        + "  JOIN roh.parameters params " //
+        + " WHERE roh.id = :historyId"), //
+    @NamedQuery(name = OperationHistory.QUERY_GET_RESULT_CONFIGURATION_IDS, query = "" //
+        + "SELECT res.id " //
+        + "  FROM ResourceOperationHistory roh " //
+        + "  JOIN roh.results res " //
+        + " WHERE roh.id = :historyId"), //
+    @NamedQuery(name = OperationHistory.QUERY_DELETE_BY_HISTORY_IDS, query = "" //
+        + "DELETE FROM ResourceOperationHistory roh " //
+        + " WHERE roh.id = :historyId ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_OPERATION_HISTORY_ID_SEQ")
 @Table(name = "RHQ_OPERATION_HISTORY")
 public abstract class OperationHistory implements Serializable {
@@ -111,6 +124,10 @@ public abstract class OperationHistory implements Serializable {
     public static final String QUERY_GET_RECENTLY_COMPLETED_RESOURCE_ADMIN = "OperationHistory.getRecentlyCompletedResource_admin";
     public static final String QUERY_GET_RECENTLY_COMPLETED_GROUP = "OperationHistory.getRecentlyCompletedGroup";
     public static final String QUERY_GET_RECENTLY_COMPLETED_GROUP_ADMIN = "OperationHistory.getRecentlyCompletedGroup_admin";
+
+    public static final String QUERY_GET_PARAMETER_CONFIGURATION_IDS = "OperationHistory.getParameterConfigurationIds";
+    public static final String QUERY_GET_RESULT_CONFIGURATION_IDS = "OperationHistory.getResultConfigurationIds";
+    public static final String QUERY_DELETE_BY_HISTORY_IDS = "OperationHistory.deleteByHistoryIds";
 
     private static final long serialVersionUID = 1L;
 

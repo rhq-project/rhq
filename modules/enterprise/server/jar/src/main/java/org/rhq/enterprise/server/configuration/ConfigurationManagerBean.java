@@ -1149,4 +1149,21 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // TODO jmarques: if (errorMessages != null) set any remaining INPROGRESS children to FAILURE
         return entityManager.merge(groupUpdate);
     }
+
+    public void deleteConfigurations(List<Integer> configurationIds) {
+        if (configurationIds == null || configurationIds.size() == 0) {
+            return;
+        }
+
+        Query propertiesQuery = entityManager
+            .createNamedQuery(Configuration.QUERY_DELETE_PROPERTIES_BY_CONFIGURATION_IDS);
+        Query configurationsQuery = entityManager
+            .createNamedQuery(Configuration.QUERY_DELETE_PROPERTIES_BY_CONFIGURATION_IDS);
+
+        propertiesQuery.setParameter("configurationIds", configurationIds);
+        configurationsQuery.setParameter("configurationIds", configurationIds);
+
+        propertiesQuery.executeUpdate();
+        configurationsQuery.executeUpdate();
+    }
 }

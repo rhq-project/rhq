@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.configuration;
 
+import java.util.List;
+
 import javax.ejb.Local;
 
 import org.jetbrains.annotations.Nullable;
@@ -370,4 +372,6 @@ public interface ConfigurationManagerLocal {
 
     AggregatePluginConfigurationUpdate updateAggregatePluginConfigurationUpdate(
         AggregatePluginConfigurationUpdate groupUpdate);
+
+    void deleteConfigurations(List<Integer> configurationIds);
 }

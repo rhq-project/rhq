@@ -460,3 +460,18 @@ function updateDependent(e, dep, disableValue) {
       depElement.disabled = false;
    }
 }
+
+function clickAlreadySelectedElements() {
+   var allForms = document.forms;
+   for (i = 0; i<allForms.length; i++) {
+      var form = allForms[i];
+      for (j = 0; j<form.elements.length; j++) {
+         var element = form.elements[j];
+         if (element.type == 'radio' || element.type == 'select-multiple' || element.type == 'select-one') {
+            if (element.checked) {
+               element.click();
+            }
+         }
+      }
+   }
+}

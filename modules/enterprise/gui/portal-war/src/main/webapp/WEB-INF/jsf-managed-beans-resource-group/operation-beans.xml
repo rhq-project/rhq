@@ -16,6 +16,11 @@
       <managed-bean-class>org.rhq.enterprise.gui.operation.schedule.group.ResourceGroupOperationScheduleUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ResourceGroupExecutionTypeUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.operation.definition.group.ResourceGroupExecutionTypeUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
    
    <!-- /rhq/group/operation/groupOperationScheduleDetails.xhtml -->
    <managed-bean>

@@ -21,19 +21,16 @@ package org.rhq.enterprise.gui.operation.schedule.group;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.faces.model.SelectItem;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.gui.operation.definition.group.ResourceGroupOperationDefinitionUtils;
+import org.rhq.enterprise.gui.operation.definition.group.ResourceGroupExecutionTypeUIBean;
 import org.rhq.enterprise.gui.operation.schedule.OperationScheduleDetailsUIBean;
 import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationSchedule;
 
 public class ResourceGroupOperationScheduleDetailsUIBean extends OperationScheduleDetailsUIBean {
 
-    private List<SelectItem> resourceExecutionOptions;
     private String resourceExecutionOption;
     private List<IntegerOptionItem> resourceNameItems;
 
@@ -47,7 +44,6 @@ public class ResourceGroupOperationScheduleDetailsUIBean extends OperationSchedu
         if (null == this.schedule) {
             super.init();
 
-            this.resourceExecutionOptions = ResourceGroupOperationDefinitionUtils.getResourceExecutionOptions();
             this.resourceExecutionOption = getResourceExecutionOption((GroupOperationSchedule) this.schedule);
             this.resourceNameItems = getResourceNameItems((GroupOperationSchedule) this.schedule);
         }
@@ -58,7 +54,11 @@ public class ResourceGroupOperationScheduleDetailsUIBean extends OperationSchedu
 
         boolean isOrdered = (order != null) && (order.size() > 0);
 
-        return ResourceGroupOperationDefinitionUtils.getExecutionOption(isOrdered == false);
+        if (isOrdered) {
+            return ResourceGroupExecutionTypeUIBean.Type.ORDERED.name();
+        } else {
+            return ResourceGroupExecutionTypeUIBean.Type.CONCURRENT.name();
+        }
     }
 
     private List<IntegerOptionItem> getResourceNameItems(GroupOperationSchedule schedule) {
@@ -75,12 +75,6 @@ public class ResourceGroupOperationScheduleDetailsUIBean extends OperationSchedu
         return results;
     }
 
-    public List<SelectItem> getResourceExecutionOptions() {
-        init();
-
-        return resourceExecutionOptions;
-    }
-
     public String getResourceExecutionOption() {
         init();
 
@@ -91,10 +85,6 @@ public class ResourceGroupOperationScheduleDetailsUIBean extends OperationSchedu
         init();
 
         return resourceNameItems;
-    }
-
-    public void setResourceExecutionOptions(List<SelectItem> resourceExecutionOptions) {
-        this.resourceExecutionOptions = resourceExecutionOptions;
     }
 
     public void setResourceExecutionOption(String resourceExecutionOption) {

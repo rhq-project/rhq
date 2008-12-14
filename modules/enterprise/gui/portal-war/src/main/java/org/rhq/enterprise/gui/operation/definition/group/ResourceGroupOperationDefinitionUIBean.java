@@ -19,7 +19,7 @@
 package org.rhq.enterprise.gui.operation.definition.group;
 
 import java.util.List;
-import javax.faces.model.SelectItem;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -30,14 +30,12 @@ import org.rhq.enterprise.gui.operation.definition.OperationDefinitionUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 
 public class ResourceGroupOperationDefinitionUIBean extends OperationDefinitionUIBean {
-    private List<SelectItem> resourceExecutionOptions;
     private String resourceExecutionOption;
     private List<IntegerOptionItem> resourceNameItems;
     private boolean haltOnFailure = false;
 
     public ResourceGroupOperationDefinitionUIBean() {
-        resourceExecutionOptions = ResourceGroupOperationDefinitionUtils.getResourceExecutionOptions();
-        resourceExecutionOption = ResourceGroupOperationDefinitionUtils.getDefaultExecutionOption();
+        resourceExecutionOption = ResourceGroupExecutionTypeUIBean.Type.CONCURRENT.name();
     }
 
     @Override
@@ -70,10 +68,6 @@ public class ResourceGroupOperationDefinitionUIBean extends OperationDefinitionU
         this.resourceNameItems = names;
     }
 
-    public List<SelectItem> getResourceExecutionOptions() {
-        return resourceExecutionOptions;
-    }
-
     public String getResourceExecutionOption() {
         return resourceExecutionOption;
     }
@@ -83,7 +77,7 @@ public class ResourceGroupOperationDefinitionUIBean extends OperationDefinitionU
     }
 
     public boolean isConcurrent() {
-        return ResourceGroupExecutionType.concurrent.name().equals(resourceExecutionOption);
+        return ResourceGroupExecutionTypeUIBean.Type.CONCURRENT.name().equals(resourceExecutionOption);
     }
 
     public boolean getHaltOnFailure() {

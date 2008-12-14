@@ -443,3 +443,20 @@ function clickRadio(radioName, valueToClick)
 function ignoreEnterKey() {
    return !( window.event && window.event.keyCode == 13 ); 
 }
+
+function updateDependent(e, dep, disableValue) {
+   if (isIE) {
+      e = event.srcElement;
+   }
+   
+   var depElement = document.getElementById(dep);
+   if (e.value == disableValue) {
+      depElement.readonly = true;
+      depElement.disabled = true;
+      depElement.checked = false;
+      
+   } else {
+      depElement.readonly = false;
+      depElement.disabled = false;
+   }
+}

@@ -122,8 +122,10 @@
                <h:outputText value="Execute this operation: " />
                <h:selectOneRadio id="executionType"
                                  layout="pageDirection"
-                                 value="#{ResourceGroupOperationDefinitionUIBean.resourceExecutionOption}">
-                    <f:selectItems value="#{ResourceGroupOperationDefinitionUIBean.resourceExecutionOptions}" />
+                                 value="#{ResourceGroupExecutionTypeUIBean.concurrentOption.value}"
+                                 onchange="updateDependent(this, 'newScheduleForm:haltOnFailure', '#{ResourceGroupExecutionTypeUIBean.concurrentOption.value}');">
+                    <f:selectItem value="#{ResourceGroupExecutionTypeUIBean.concurrentOption}" />
+                    <f:selectItem value="#{ResourceGroupExecutionTypeUIBean.orderedOption}" />
                </h:selectOneRadio>
                
                <h:outputText value=" " />
@@ -152,11 +154,11 @@
 
                <h:outputLabel for="haltOnFailure" value="Halt On Failure:" />
                <h:selectBooleanCheckbox id="haltOnFailure" value="#{ResourceGroupOperationDefinitionUIBean.haltOnFailure}" />
-               <h:outputText value="If checked, an operation failure will cause the scheduling of other operations in the group to halt" />
+               <h:outputText value="If checked, an operation failure will cause the scheduling of the remaining ordered operations to halt" />
                             
                <h:outputLabel for="notes" value="Notes:" /> 
                <h:inputText id="notes" maxlength="120" size="40" /> 
-               <h:outputText value="Optional notes about the scheduled operation" />            
+               <h:outputText value="Optional notes about the scheduled operation" />
             </h:panelGrid>
          </rich:panel>
          
@@ -175,6 +177,10 @@
          </rich:panel>
 
       </h:form>
+
+   <script type="text/javascript">
+      setInputDisabled(document.getElementById('newScheduleForm:haltOnFailure'), true, true);
+   </script>
 
    </ui:define>
 

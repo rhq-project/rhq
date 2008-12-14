@@ -21,10 +21,17 @@ package org.rhq.enterprise.gui.common.scheduling;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
 import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
+
 import org.quartz.SimpleTrigger;
+
 import org.rhq.enterprise.gui.common.scheduling.supporting.TimeUnits;
+import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.DateTimeDisplayPreferences;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 
 public class UISimpleTrigger extends UIInput {
     /* to be a valid component */
@@ -69,7 +76,7 @@ public class UISimpleTrigger extends UIInput {
         return COMPONENT_FAMILY;
     }
 
-    private String dateFormat = "MM/dd/yyyy HH:mm:ss";
+    private String dateFormat; // = "MM/dd/yyyy HH:mm:ss";
 
     /*
      * if no start date/time is specified, this trigger will fire immediately
@@ -98,6 +105,12 @@ public class UISimpleTrigger extends UIInput {
      * If the date format is never set, it will default to "MM/dd/yyyy HH:mm:ss"
      */
     public String getDateFormat() {
+        if (dateFormat == null) {
+            WebUser user = EnterpriseFacesContextUtility.getWebUser();
+            WebUserPreferences preferences = user.getWebPreferences();
+            DateTimeDisplayPreferences dateTimePreferences = preferences.getDateTimeDisplayPreferences();
+            dateFormat = dateTimePreferences.dateTimeFormatTrigger;
+        }
         return dateFormat;
     }
 

@@ -25,9 +25,14 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
+
 import com.sun.faces.util.MessageUtils;
+
+import org.richfaces.component.html.HtmlCalendar;
+
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
@@ -35,6 +40,11 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.scheduling.supporting.TimeUnits;
 
 public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerRendererModel {
+
+    private FacesContext currentContext;
+    private final int TABLE_BORDER = 0;
+    private final String richCalendarSuffix = "InputDate";
+
     public boolean isAvailable() {
         // available if "start" is present in the request, and it doesn't equal the "fake" default value
         String start = FacesContextUtility.getOptionalRequestParameter("start", "fake");
@@ -47,7 +57,7 @@ public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerR
     }
 
     public Date getStartDateTime(DateFormat dateFormatter) {
-        String startDateTimeStr = FacesContextUtility.getRequiredRequestParameter("startDateTime");
+        String startDateTimeStr = FacesContextUtility.getRequiredRequestParameter("startDateTime" + richCalendarSuffix);
         try {
             return dateFormatter.parse(startDateTimeStr);
         } catch (ParseException pe) {
@@ -75,7 +85,7 @@ public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerR
     }
 
     public Date getEndDateTime(DateFormat dateFormatter) {
-        String endDateTimeStr = FacesContextUtility.getRequiredRequestParameter("endDateTime");
+        String endDateTimeStr = FacesContextUtility.getRequiredRequestParameter("endDateTime" + richCalendarSuffix);
         try {
             return dateFormatter.parse(endDateTimeStr);
         } catch (ParseException pe) {
@@ -85,6 +95,7 @@ public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerR
     }
 
     public void encode(FacesContext context, HtmlSimpleTrigger trigger) throws IOException {
+        currentContext = context;
         ResponseWriter writer = context.getResponseWriter();
 
         writeStartDateRows(writer, trigger);
@@ -106,6 +117,7 @@ public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerR
 
         writer.startElement("table", trigger);
         writer.writeAttribute("style", getTablePaddingStyle(), null);
+        writer.writeAttribute("border", TABLE_BORDER, null);
 
         writer.startElement("tr", trigger);
 
@@ -113,7 +125,7 @@ public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerR
         printRadio(writer, trigger, !trigger.getDeferred(), "start", "immediate",
             "hidediv('repeatRows');clickRadio('recur','never');");
         printLabel(writer, trigger, "Immediately");
-        printLabel(writer, trigger, "");
+        //printLabel(writer, trigger, "");
 
         writer.endElement("tr");
 
@@ -126,8 +138,9 @@ public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerR
             dateText = new SimpleDateFormat(trigger.getDateFormat()).format(trigger.getStartDateTime());
         }
 
-        printInputText(writer, trigger, dateText, "startDateTime");
-        printLabel(writer, trigger, (trigger.getPrintDateFormat() ? ("(" + trigger.getDateFormat() + ")") : "&nbsp;"));
+        printInputCalendar(writer, trigger, dateText, "startDateTime", true);
+
+        //printLabel(writer, trigger, (trigger.getPrintDateFormat() ? ("(" + trigger.getDateFormat() + ")") : "&nbsp;"));
 
         writer.endElement("tr");
 
@@ -143,6 +156,7 @@ public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerR
 
         writer.startElement("table", trigger);
         writer.writeAttribute("style", getTablePaddingStyle(), null);
+        writer.writeAttribute("border", TABLE_BORDER, null);
 
         writer.startElement("tr", trigger);
 
@@ -215,13 +229,14 @@ public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerR
 
         writer.startElement("table", trigger);
         writer.writeAttribute("style", getTablePaddingStyle(), null);
+        writer.writeAttribute("border", TABLE_BORDER, null);
 
         writer.startElement("tr", trigger);
 
         printLabel(writer, trigger, "Recurrence End:", getLeftLabelStyle());
         printRadio(writer, trigger, !trigger.getTerminate(), "end", "none");
         printLabel(writer, trigger, "None");
-        printLabel(writer, trigger, "");
+        //printLabel(writer, trigger, "");
 
         writer.endElement("tr");
 
@@ -234,8 +249,8 @@ public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerR
             dateText = new SimpleDateFormat(trigger.getDateFormat()).format(trigger.getEndDateTime());
         }
 
-        printInputText(writer, trigger, dateText, "endDateTime");
-        printLabel(writer, trigger, (trigger.getPrintDateFormat() ? ("(" + trigger.getDateFormat() + ")") : "&nbsp;"));
+        printInputCalendar(writer, trigger, dateText, "endDateTime", true);
+        //printLabel(writer, trigger, (trigger.getPrintDateFormat() ? ("(" + trigger.getDateFormat() + ")") : "&nbsp;"));
 
         writer.endElement("tr");
 
@@ -329,9 +344,24 @@ public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerR
         }
     }
 
-    private void printInputText(ResponseWriter writer, HtmlSimpleTrigger trigger, String value, String id)
-        throws IOException {
-        printInputText(writer, trigger, value, id, true);
+    private void printInputCalendar(ResponseWriter writer, HtmlSimpleTrigger trigger, String value, String id,
+        boolean wrapped) throws IOException {
+        if (wrapped) {
+            writer.startElement("td", trigger);
+        }
+        HtmlCalendar calendar = new HtmlCalendar();
+        calendar.setId(id);
+        calendar.setValue(value);
+        calendar.setShowApplyButton(true);
+        calendar.setShowWeeksBar(false);
+        calendar.setDatePattern(trigger.getDateFormat());
+        if (trigger.getReadOnly()) {
+            calendar.setDisabled(true);
+        }
+        calendar.encodeAll(currentContext);
+        if (wrapped) {
+            writer.endElement("td");
+        }
     }
 
     @SuppressWarnings("unchecked")

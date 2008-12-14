@@ -139,6 +139,10 @@ Firefox and other Gecko-based browsers to render the page in "Almost Standards" 
    </div>
 </div>
 
+<!-- work-around to enable us to embed a rich:calendar component inside the onc:simpleTrigger; without this,
+     the page will throw a javascript error "Calendar is not defined" and the pop-up action will not work -->
+<rich:calendar rendered="false" />
+
 </f:view>
 
 <script type="text/javascript">

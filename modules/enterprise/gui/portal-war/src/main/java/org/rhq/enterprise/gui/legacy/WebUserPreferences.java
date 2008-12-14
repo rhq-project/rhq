@@ -217,6 +217,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         public final String dateFormat = "M/d/yy";
         public final String timeFormat = "h:mm:ss aa, zzz";
         public final String dateTimeFormat = "M/d/yy, h:mm:ss aa, zzz";
+        public final String dateTimeFormatTrigger = "M/d/yy, HH:mm";
     }
 
     public DateTimeDisplayPreferences getDateTimeDisplayPreferences() {

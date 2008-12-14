@@ -33,6 +33,7 @@ public class ResourceGroupOperationScheduleDetailsUIBean extends OperationSchedu
 
     private String resourceExecutionOption;
     private List<IntegerOptionItem> resourceNameItems;
+    private GroupOperationSchedule groupSchedule;
 
     @Override
     public OperationSchedule getOperationSchedule(Subject subject, String jobId) throws Exception {
@@ -95,4 +96,10 @@ public class ResourceGroupOperationScheduleDetailsUIBean extends OperationSchedu
         this.resourceNameItems = resourceNameItems;
     }
 
+    public GroupOperationSchedule getGroupSchedule() {
+        if (groupSchedule == null) {
+            groupSchedule = (GroupOperationSchedule) schedule;
+        }
+        return groupSchedule;
+    }
 }

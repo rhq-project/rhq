@@ -35,21 +35,21 @@
             <f:facet name="header">General Info</f:facet>
             <table>
                <tr>
-                  <td align="right" style="width: 100px;">Operation:</td>
+                  <td align="right" style="width: 125px;">Operation:</td>
                   <td align="left">
                     <h:outputText value="#{item.operationDisplayName}" />
                   </td>
                </tr>
                <tr>
-                  <td align="right" style="width: 100px;">Notes:</td>
+                  <td align="right" style="width: 125px;">Scheduled By:</td>
                   <td align="left">
-                    <h:outputText value="#{item.description}" />
+                    <h:outputText value="#{item.subject.name}" />
                   </td>
                </tr>
                <tr>
-                  <td align="right" style="width: 100px;">Requester:</td>
+                  <td align="right" style="width: 125px;">Notes:</td>
                   <td align="left">
-                    <h:outputText value="#{item.subject.name}" />
+                    <h:outputText value="#{item.description}" />
                   </td>
                </tr>
             </table>

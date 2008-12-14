@@ -18,7 +18,7 @@
    <ui:param name="pageTitle" value="View Operations Schedule Details for '#{ResourceGroupUIBean.name}'"/>
    <ui:param name="selectedTabName" value="Operations.Schedules"/>
    
-   <ui:param name="item" value="#{ResourceGroupOperationScheduleDetailsUIBean.schedule}" />
+   <ui:param name="item" value="#{ResourceGroupOperationScheduleDetailsUIBean.groupSchedule}" />
    
    <ui:define name="content">
          
@@ -34,21 +34,27 @@
          <f:facet name="header">General Info</f:facet>
          <table>
             <tr>
-               <td align="right" style="width: 100px;">Operation:</td>
+               <td align="right" style="width: 125px;">Operation:</td>
                <td align="left">
                  <h:outputText value="#{item.operationDisplayName}" />
                </td>
             </tr>
             <tr>
-               <td align="right" style="width: 100px;">Notes:</td>
+               <td align="right" style="width: 125px;">Scheduled By:</td>
                <td align="left">
-                 <h:outputText value="#{item.description}" />
+                 <h:outputText value="#{item.subject.name}" />
                </td>
             </tr>
             <tr>
-               <td align="right" style="width: 100px;">Requester:</td>
+               <td align="right" style="width: 125px;">Halt on Failure:</td>
                <td align="left">
-                 <h:outputText value="#{item.subject.name}" />
+                 <h:outputText value="#{item.haltOnFailure}" />
+               </td>
+            </tr>
+            <tr>
+               <td align="right" style="width: 125px;">Notes:</td>
+               <td align="left">
+                 <h:outputText value="#{item.description}" />
                </td>
             </tr>
          </table>
@@ -74,9 +80,10 @@
                               layout="pageDirection"
                               disabled="true"
                               value="#{ResourceGroupOperationScheduleDetailsUIBean.resourceExecutionOption}">
-                 <f:selectItems value="#{ResourceGroupOperationScheduleDetailsUIBean.resourceExecutionOptions}" />
+                    <f:selectItem value="#{ResourceGroupExecutionTypeUIBean.concurrentOption}" />
+                    <f:selectItem value="#{ResourceGroupExecutionTypeUIBean.orderedOption}" />
             </h:selectOneRadio>
-               
+            
             <h:outputText value=" " />
             <rich:orderingList id="resourceNameItems" 
                                orderControlsVisible="false"

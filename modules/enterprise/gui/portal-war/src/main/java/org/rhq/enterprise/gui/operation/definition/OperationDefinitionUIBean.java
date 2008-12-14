@@ -36,8 +36,8 @@ public abstract class OperationDefinitionUIBean extends PagedDataTableUIBean {
     protected OperationManagerLocal operationManager = LookupUtil.getOperationManager();
     private OperationDefinition operationDefinition = null;
 
-    private String timeout = null;
-    private String description = null;
+    protected String timeout = null;
+    protected String description = null;
 
     public OperationDefinitionUIBean() {
     }
@@ -75,7 +75,7 @@ public abstract class OperationDefinitionUIBean extends PagedDataTableUIBean {
 
     public String getDescription() {
         if (description == null) {
-            return "";
+            description = FacesContextUtility.getOptionalRequestParameter("newScheduleForm:notes", String.class, "");
         }
         return description;
     }

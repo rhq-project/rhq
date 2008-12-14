@@ -157,8 +157,8 @@
                <h:outputText value="If checked, an operation failure will cause the scheduling of the remaining ordered operations to halt" />
                             
                <h:outputLabel for="notes" value="Notes:" /> 
-               <h:inputText id="notes" maxlength="120" size="40" /> 
-               <h:outputText value="Optional notes about the scheduled operation" />
+               <h:inputText id="notes" maxlength="120" size="40" value="#{ResourceGroupOperationDefinitionUIBean.description}" />
+               <h:outputText value="Optional notes, if the operation is scheduled for execution later" />
             </h:panelGrid>
          </rich:panel>
          

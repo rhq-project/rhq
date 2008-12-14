@@ -53,6 +53,19 @@ import org.rhq.core.domain.resource.Resource;
 @NamedQueries( {
     @NamedQuery(name = Event.DELETE_BY_RESOURCES, query = "DELETE FROM Event ev  "
         + " WHERE ev.source IN ( SELECT evs FROM EventSource evs WHERE evs.resource IN (:resources))"),
+    @NamedQuery(name = Event.DELETE_BY_EVENT_IDS, query = "DELETE FROM Event e WHERE e.id IN ( :eventIds )"),
+    @NamedQuery(name = Event.DELETE_ALL_BY_RESOURCE, query = "" //
+        + "DELETE FROM Event e " //
+        + " WHERE e.source.id IN ( SELECT es.id " //
+        + "                          FROM EventSource es " //
+        + "                         WHERE es.resource.id = :resourceId )"),
+    @NamedQuery(name = Event.DELETE_ALL_BY_RESOURCE_GROUP, query = "" //
+        + "DELETE FROM Event e " //
+        + " WHERE e.source.id IN ( SELECT es.id " //
+        + "                          FROM EventSource es " //
+        + "                          JOIN es.resource res " //
+        + "                          JOIN res.implicitGroups ig " //
+        + "                         WHERE ig.id = :groupId )"),
     @NamedQuery(name = Event.FIND_EVENTS_FOR_RESOURCES_AND_TIME, query = "SELECT ev FROM Event ev "
         + " JOIN ev.source.resource res WHERE res IN (:resources) AND ev.timestamp BETWEEN :start AND :end "),
     @NamedQuery(name = Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME, query = "SELECT ev FROM Event ev "
@@ -74,6 +87,9 @@ public class Event implements Serializable {
     public static final int DETAIL_MAX_LENGTH = 4000;
 
     public static final String DELETE_BY_RESOURCES = "Event.deleteByResources";
+    public static final String DELETE_BY_EVENT_IDS = "Event.deleteByEventIds";
+    public static final String DELETE_ALL_BY_RESOURCE = "Event.deleteAllByResource";
+    public static final String DELETE_ALL_BY_RESOURCE_GROUP = "Event.deleteAllByResourceGroup";
     public static final String FIND_EVENTS_FOR_RESOURCES_AND_TIME = "Event.FIND_EVENTS_FOR_RESOURCES_AND_TIME";
     public static final String FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME = "Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME";
     public static final String FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME_SEVERITY = "Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME_Severity";

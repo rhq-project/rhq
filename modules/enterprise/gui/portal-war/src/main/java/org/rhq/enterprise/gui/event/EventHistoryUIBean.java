@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.event;
 
+import java.util.Arrays;
+
+import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
 
@@ -29,6 +32,7 @@ import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.gui.util.StringUtility;
 import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
@@ -126,6 +130,41 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
         return selectedEvent;
     }
 
+    public String deleteSelectedEvents() {
+        String[] selectedEvents = getSelectedEvents();
+        Integer[] eventIds = StringUtility.getIntegerArray(selectedEvents);
+
+        try {
+            int numDeleted = eventManager.deleteEvents(getSubject(), Arrays.asList(eventIds));
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + numDeleted + " events.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete selected events.", e);
+        }
+
+        return "success";
+    }
+
+    public String purgeAllEvents() {
+        try {
+            int numDeleted = 0;
+
+            if (context.category == EntityContext.Category.Resource) {
+                numDeleted = eventManager.deleteAllEventsForResource(getSubject(), context.resourceId);
+            } else if (context.category == EntityContext.Category.ResourceGroup) {
+                numDeleted = eventManager.deleteAllEventsForCompatibleGroup(getSubject(), context.groupId);
+            } else {
+                log.error(context.getUnknownContextMessage());
+            }
+
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + numDeleted + " events");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete events", e);
+            log.error("Failed to delete events for " + context, e);
+        }
+
+        return "success";
+    }
+
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
@@ -164,6 +203,10 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
             }
             return results;
         }
+    }
+
+    private String[] getSelectedEvents() {
+        return FacesContextUtility.getRequest().getParameterValues("selectedEvents");
     }
 
     private EventSeverity getEventSeverity() {

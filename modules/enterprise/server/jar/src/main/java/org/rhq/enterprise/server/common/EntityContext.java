@@ -95,8 +95,8 @@ public class EntityContext {
         }
     }
 
-    public String getUnknownContextMessage() throws IllegalArgumentException {
-        return "Unknown or unsupported " + EntityContext.class.getSimpleName() + " '" + this + "'";
+    public String getUnknownContextMessage() {
+        return "Unsupported " + EntityContext.class.getSimpleName() + " '" + this + "'";
     }
 
     public String toString() {

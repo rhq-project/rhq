@@ -74,6 +74,14 @@
                 <f:facet name="PageControlView">
                     <onc:paginationControl id="EventsHistoryList" />
                 </f:facet>
+                
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedEvents" />
+                  </f:facet>
+                  
+                  <onc:select name="selectedEvents" value="#{item.eventId}" />
+               </rich:column>
 
                 <rich:column>
                     <f:facet name="header">
@@ -120,7 +128,12 @@
 
                 <f:facet name="footer">
                     <rich:columnGroup>
-                        <rich:column colspan="4" width="100%">
+                        <rich:column colspan="5" width="100%">
+                            <onc:selectCommandButton action="#{EventHistoryUIBean.deleteSelectedEvents}"
+                                                     value="DELETE SELECTED" target="selectedEvents" styleClass="on-pager-button buttonsmall" />
+                            <h:commandButton action="#{EventHistoryUIBean.purgeAllEvents}"
+                                             value="PURGE ALL" styleClass="on-pager-button buttonsmall" />
+                        
                             <ui:param name="paginationDataTableName" value="eventHistoryDataTable" />
                             <ui:param name="paginationDataModel" value="#{eventHistoryDataModel}" />
                             <ui:param name="paginationPageControl" value="#{PageControl.EventsHistoryList}" />
@@ -133,7 +146,7 @@
         <br />
     </h:form>
 
-    <rich:panel id="eventDetailPanel"  rendered="#{param.eventId gt 0}" styleClass="BlockContent">
+    <rich:panel id="eventDetailPanel" rendered="#{param.eventId gt 0}" styleClass="BlockContent">
         <f:facet name="header">
             <h:outputText value="#{msg['resource.common.monitor.events.DetailsHeader']}" />
         </f:facet>

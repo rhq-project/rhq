@@ -10,13 +10,13 @@
       
       <navigation-case>
          <from-outcome>sort</from-outcome>
-         <to-view-id>rhq/group/events/history.xhtml??groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
+         <to-view-id>rhq/group/events/history.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>rhq/group/events/history.xhtml??groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
+         <to-view-id>rhq/group/events/history.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect/>
       </navigation-case>
       

@@ -169,6 +169,12 @@ public interface EventManagerLocal {
 
     public void deleteEventSourcesForDefinition(EventDefinition def);
 
+    public int deleteEvents(Subject subject, List<Integer> eventIds);
+
+    public int deleteAllEventsForResource(Subject subject, int resourceId);
+
+    public int deleteAllEventsForCompatibleGroup(Subject subject, int groupId);
+
     public int getEventDefinitionCountForResourceType(int resourceTypeId);
 
 }

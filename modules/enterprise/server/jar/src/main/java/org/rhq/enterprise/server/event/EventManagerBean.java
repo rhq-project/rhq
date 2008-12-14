@@ -666,4 +666,31 @@ public class EventManagerBean implements EventManagerLocal {
         return in != null && !in.equals("");
     }
 
+    public int deleteEvents(Subject subject, List<Integer> eventIds) {
+        if (eventIds == null || eventIds.size() == 0) {
+            return 0; // nothing to delete, thus 0 were deleted
+        }
+        Query q = entityManager.createNamedQuery(Event.DELETE_BY_EVENT_IDS);
+        q.setParameter("eventIds", eventIds);
+        int deletedCount = q.executeUpdate();
+
+        return deletedCount;
+    }
+
+    public int deleteAllEventsForResource(Subject subject, int resourceId) {
+        Query q = entityManager.createNamedQuery(Event.DELETE_ALL_BY_RESOURCE);
+        q.setParameter("resourceId", resourceId);
+        int deletedCount = q.executeUpdate();
+
+        return deletedCount;
+    }
+
+    public int deleteAllEventsForCompatibleGroup(Subject subject, int groupId) {
+        Query q = entityManager.createNamedQuery(Event.DELETE_ALL_BY_RESOURCE_GROUP);
+        q.setParameter("groupId", groupId);
+        int deletedCount = q.executeUpdate();
+
+        return deletedCount;
+    }
+
 }

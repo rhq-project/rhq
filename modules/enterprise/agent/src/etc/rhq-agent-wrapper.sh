@@ -38,13 +38,13 @@ debug_wrapper_msg ()
 }
 
 # Get the location of this script
-RHQ_AGENT_WRAPPER_BIN_DIR_PATH=`dirname $0`
-debug_wrapper_msg RHQ_AGENT_WRAPPER_BIN_DIR_PATH=$RHQ_AGENT_WRAPPER_BIN_DIR_PATH
+RHQ_AGENT_WRAPPER_BIN_DIR_PATH=`dirname "$0"`
+debug_wrapper_msg "RHQ_AGENT_WRAPPER_BIN_DIR_PATH=$RHQ_AGENT_WRAPPER_BIN_DIR_PATH"
 
 # Read in the rhq-agent-env.sh file so we get the configured agent environment
 if [ -f "${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh" ]; then
    debug_wrapper_msg "Loading environment script: ${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh"
-   . ${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh $*
+   . "${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh" $*
 fi
 
 # The --daemon argument is required, but you can add additional arguments as appropriate
@@ -53,47 +53,42 @@ if [ "x$RHQ_AGENT_CMDLINE_OPTS" = "x" ]; then
 fi
 
 # Determine where this script is, and change to its directory
-cd $RHQ_AGENT_WRAPPER_BIN_DIR_PATH
+cd "$RHQ_AGENT_WRAPPER_BIN_DIR_PATH"
 _THIS_SCRIPT_DIR=`pwd`
-_THIS_SCRIPT=${_THIS_SCRIPT_DIR}/`basename $0`
+_THIS_SCRIPT="${_THIS_SCRIPT_DIR}"/`basename "$0"`
 
 # Figure out where the RHQ Agent's home directory is and cd to it.
 # If RHQ_AGENT_HOME is not defined, we will assume we are running
 # directly from the agent installation's bin directory
 
 if [ "x$RHQ_AGENT_HOME" = "x" ]; then
-   RHQ_AGENT_START_SCRIPT_DIR=${_THIS_SCRIPT_DIR}
    cd ..
    RHQ_AGENT_HOME=`pwd`
 else
-   RHQ_AGENT_START_SCRIPT_DIR=${RHQ_AGENT_HOME}/bin
-   cd ${RHQ_AGENT_HOME} || {
-      echo Cannot go to the RHQ_AGENT_HOME directory: ${RHQ_AGENT_HOME}
+   cd "${RHQ_AGENT_HOME}" || {
+      echo "Cannot go to the RHQ_AGENT_HOME directory: ${RHQ_AGENT_HOME}"
       exit 1
       }
 fi
 
+# create the logs directory
+if [ ! -d "${RHQ_AGENT_HOME}/logs" ]; then
+   mkdir "${RHQ_AGENT_HOME}/logs"
+fi
+
+# Find out where to put the pidfile and prepare its directory
 if [ "x$RHQ_AGENT_PIDFILE_DIR" = "x" ]; then
-   RHQ_AGENT_PIDFILE_DIR=${RHQ_AGENT_HOME}/bin
+   RHQ_AGENT_PIDFILE_DIR="${RHQ_AGENT_HOME}/bin"
 fi
-mkdir -p $RHQ_AGENT_PIDFILE_DIR
-_PIDFILE=${RHQ_AGENT_PIDFILE_DIR}/rhq-agent.pid
+mkdir -p "$RHQ_AGENT_PIDFILE_DIR"
+_PIDFILE="${RHQ_AGENT_PIDFILE_DIR}/rhq-agent.pid"
 debug_wrapper_msg "pidfile will be located at ${_PIDFILE}"
-
-RHQ_AGENT_START_SCRIPT=${RHQ_AGENT_START_SCRIPT_DIR}/rhq-agent.sh
-
-if [ ! -f $RHQ_AGENT_START_SCRIPT ]; then
-   echo "ERROR! Cannot find the RHQ Agent start script"
-   echo "Not found: $RHQ_AGENT_START_SCRIPT"
-   exit 1
-fi
-debug_wrapper_msg "Start script found here: $RHQ_AGENT_START_SCRIPT"
 
 # Sets STATUS, RUNNING and PID based on the status of the RHQ Agent
 check_status ()
 {
-    if [ -f ${_PIDFILE} ]; then
-        PID=`cat ${_PIDFILE}`
+    if [ -f "${_PIDFILE}" ]; then
+        PID=`cat "${_PIDFILE}"`
         if [ "x$PID" != "x" ] && kill -0 $PID 2>/dev/null ; then
             STATUS="RHQ Agent (pid $PID) is running"
             RUNNING=1
@@ -110,9 +105,9 @@ check_status ()
 # Ensures that the PID file no longer exists
 remove_pid_file ()
 {
-   if [ -f ${_PIDFILE} ]; then
+   if [ -f "${_PIDFILE}" ]; then
       debug_wrapper_msg "Removing existing pidfile"
-      rm ${_PIDFILE}
+      rm "${_PIDFILE}"
    fi
 }
 
@@ -129,45 +124,38 @@ case "$1" in
 
         echo Starting RHQ Agent...
 
-        # prefix the start script if needed
-        if [ "x$RHQ_AGENT_RUN_PREFIX" = "x" ]; then
-           if [ "x$RHQ_AGENT_RUN_AS_ME" != "x" ]; then
-              RHQ_AGENT_RUN_AS="$USER"
-           fi
+        RHQ_AGENT_IN_BACKGROUND="${_PIDFILE}"
+        export RHQ_AGENT_IN_BACKGROUND
 
-           if [ "x$RHQ_AGENT_RUN_AS" != "x" ]; then
-              debug_wrapper_msg "Will run agent as user: $RHQ_AGENT_RUN_AS"
-              RHQ_AGENT_START_SCRIPT="su -m - ${RHQ_AGENT_RUN_AS} -c '${RHQ_AGENT_START_SCRIPT}'"
+        # Determine the command to execute when starting the agent
+        if [ "x$RHQ_AGENT_START_COMMAND" = "x" ]; then
+           # Find out where the agent start script is located
+           _START_SCRIPT="${RHQ_AGENT_HOME}/bin/rhq-agent.sh"
+
+           if [ ! -f "$_START_SCRIPT" ]; then
+              echo "ERROR! Cannot find the RHQ Agent start script"
+              echo "Not found: $_START_SCRIPT"
+              exit 1
            fi
-        else
-           if [ "x$RHQ_AGENT_RUN_PREFIX_QUOTED" != "x" ]; then
-              if [ "$RHQ_AGENT_RUN_PREFIX_QUOTED" = "true" ]; then
-                 RHQ_AGENT_RUN_PREFIX_QUOTED=\'
-              fi
-              debug_wrapper_msg "Quoting the start script with: ${RHQ_AGENT_RUN_PREFIX_QUOTED}"
-              RHQ_AGENT_START_SCRIPT="${RHQ_AGENT_RUN_PREFIX_QUOTED}${RHQ_AGENT_START_SCRIPT}${RHQ_AGENT_RUN_PREFIX_QUOTED}"
-           fi
-        
-           RHQ_AGENT_START_SCRIPT="$RHQ_AGENT_RUN_PREFIX $RHQ_AGENT_START_SCRIPT"
-           debug_wrapper_msg "Start script has been prefixed with: ${RHQ_AGENT_RUN_PREFIX}"
+           debug_wrapper_msg "Start script found here: $_START_SCRIPT"
+
+           RHQ_AGENT_START_COMMAND="'${_START_SCRIPT}'"
         fi
 
+        # If a password prompt needs to be shown, do it now
         if [ "x$RHQ_AGENT_PASSWORD_PROMPT" != "x" ]; then
            if [ "$RHQ_AGENT_PASSWORD_PROMPT" = "true" ]; then
-              RHQ_AGENT_PASSWORD_PROMPT="Enter password for user $RHQ_AGENT_RUN_AS"
+              RHQ_AGENT_PASSWORD_PROMPT="Enter password to start the agent"
            fi
            echo $RHQ_AGENT_PASSWORD_PROMPT
         fi
 
-        RHQ_AGENT_IN_BACKGROUND=${_PIDFILE}
-        export RHQ_AGENT_IN_BACKGROUND
-
         # start the agent now!
-        if [ "x$RHQ_AGENT_DEBUG" != "x" -a "$RHQ_AGENT_DEBUG" != "false" ]; then
-           debug_wrapper_msg "Executing agent with command: ${RHQ_AGENT_START_SCRIPT}"
-           $RHQ_AGENT_START_SCRIPT
+        if [ "x$RHQ_AGENT_DEBUG" != "x" ] && [ "$RHQ_AGENT_DEBUG" != "false" ]; then
+           debug_wrapper_msg "Executing agent with command: ${RHQ_AGENT_START_COMMAND}"
+           eval $RHQ_AGENT_START_COMMAND
         else
-           $RHQ_AGENT_START_SCRIPT > /dev/null 2>&1
+           eval $RHQ_AGENT_START_COMMAND > "${RHQ_AGENT_HOME}/logs/rhq-agent-wrapper.log" 2>&1
         fi
 
         sleep 5
@@ -241,8 +229,8 @@ case "$1" in
         ;;
 
 'restart')
-        ${_THIS_SCRIPT} stop
-        ${_THIS_SCRIPT} start
+        "${_THIS_SCRIPT}" stop
+        "${_THIS_SCRIPT}" start
         exit 0
         ;;
 

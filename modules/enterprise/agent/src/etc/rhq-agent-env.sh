@@ -14,7 +14,7 @@
 #                     If not defined, it will be assumed to be the parent
 #                     directory of the directory where this script lives.
 #
-#RHQ_AGENT_HOME=/opt/rhq-agent 
+#RHQ_AGENT_HOME="/opt/rhq-agent" 
 
 #    RHQ_AGENT_JAVA_HOME - The location of the JRE that the agent will
 #                          use. This will be ignored if
@@ -22,7 +22,7 @@
 #                          If this and RHQ_AGENT_JAVA_EXE_FILE_PATH are
 #                          not set, the agent's embedded JRE will be used.
 #
-#RHQ_AGENT_JAVA_HOME=/opt/java
+#RHQ_AGENT_JAVA_HOME="/opt/java"
 
 #    RHQ_AGENT_JAVA_EXE_FILE_PATH - Defines the full path to the Java
 #                                   executable to use. If this is set,
@@ -33,7 +33,7 @@
 #                                   RHQ_AGENT_JAVA_HOME are not set, the
 #                                   agent's embedded JRE will be used.
 #
-#RHQ_AGENT_JAVA_EXE_FILE_PATH=/usr/local/bin/java
+#RHQ_AGENT_JAVA_EXE_FILE_PATH="/usr/local/bin/java"
 
 #    RHQ_AGENT_JAVA_OPTS - Java VM command line options to be
 #                          passed into the agent's VM. If this is not defined
@@ -44,6 +44,34 @@
 #                          use RHQ_AGENT_ADDITIONAL_JAVA_OPTS instead.
 #
 #RHQ_AGENT_JAVA_OPTS="-Xms160M -Xmx160M -Djava.net.preferIPv4Stack=true"
+
+#    RHQ_AGENT_JAVA_ENDORSED_DIRS - Java VM command line option to set the
+#                                   endorsed dirs for the agent's VM. If this
+#                                   is not defined this script will pass in a
+#                                   default value. If this is set, it
+#                                   completely overrides the agent's default.
+#                                   However, if this is set to "none", the
+#                                   agent will not be passed the VM argument
+#                                   to set the endorsed dirs.
+#
+#RHQ_AGENT_JAVA_ENDORSED_DIRS="${RHQ_AGENT_HOME}/lib/endorsed"
+
+#    RHQ_AGENT_JAVA_LIBRARY_PATH - The RHQ Agent has a JNI library that
+#                                  it needs to find in order to do things
+#                                  like execute PIQL queries and access
+#                                  low-level operating system data. This
+#                                  is the native system layer (SIGAR).
+#                                  If you deploy a custom plugin that also
+#                                  requires JNI libraries, you must add to
+#                                  the library path here, but you must ensure
+#                                  not to remove the RHQ Agent library path.
+#                                  If this variable is set, it completely
+#                                  overrides the agent's default.
+#                                  However, if this is set to "none", the
+#                                  agent will not be passed the VM argument
+#                                  to set the library paths.
+#
+#RHQ_AGENT_JAVA_LIBRARY_PATH="${RHQ_AGENT_HOME}/lib"
 
 #    RHQ_AGENT_ADDITIONAL_JAVA_OPTS - additional Java VM command line options
 #                                     to be passed into the agent's VM. This
@@ -60,7 +88,7 @@
 #                             arguments given to this script are passed
 #                             through to the RHQ Agent.
 #
-#RHQ_AGENT_CMDLINE_OPTS=--nonative
+#RHQ_AGENT_CMDLINE_OPTS="--daemon --nonative"
 
 #    RHQ_AGENT_IN_BACKGROUND - If this is defined, the RHQ Agent JVM will
 #                              be launched in the background (thus causing this
@@ -91,19 +119,27 @@
 #                            variable. This value must be a full path to a
 #                            directory with write permissions.
 #
-#RHQ_AGENT_PIDFILE_DIR=/var/run
+#RHQ_AGENT_PIDFILE_DIR="/var/run"
 
-#    RHQ_AGENT_RUN_AS - if defined, then the background process will
-#                       be run as the given user via "su".
-#
-#RHQ_AGENT_RUN_AS=$USER
-
-#    RHQ_AGENT_RUN_AS_ME - if defined, then the background process will
-#                          be run as the current user (as defined
-#                          by the $USER environment variable) via "su".
-#                          This takes precedence over RHQ_AGENT_RUN_AS.
-#
-#RHQ_AGENT_RUN_AS_ME=true
+#    RHQ_AGENT_START_COMMAND - If defined, this is the command that will be
+#                              executed to start the agent.
+#                              Use this to customize how the agent process
+#                              is started (e.g. with "su" or "sudo").
+#                              This completely overrides the command used
+#                              to start the agent - you must ensure you
+#                              provide a valid command that starts the agent
+#                              script 'rhq-agent.sh'
+#                              Note that if this start command requires the
+#                              user to enter a password, you can show a
+#                              prompt to the user if you set the variable
+#                              RHQ_AGENT_PASSWORD_PROMPT.
+#                              Also note that if your agent install directory
+#                              has spaces in its name, you might have to do
+#                              some special string manipulation to get the
+#                              agent script to start. See below for an
+#                              example of how to do this. 
+#RHQ_AGENT_START_COMMAND="su -m -l user -c '${RHQ_AGENT_HOME}/bin/rhq-agent.sh'"
+#RHQ_AGENT_START_COMMAND="su -m -l user -c '$(echo ${RHQ_AGENT_HOME}|sed 's/ /\\ /')/bin/rhq-agent.sh'"
 
 #    RHQ_AGENT_PASSWORD_PROMPT - if "true", this indicates that the user
 #                                that is to run the agent must type the
@@ -115,29 +151,3 @@
 #                                This is not defined by default.
 #
 #RHQ_AGENT_PASSWORD_PROMPT=true
-
-#    RHQ_AGENT_RUN_PREFIX - If defined, this will prefix the agent start
-#                           command when it is executed. In other words, the
-#                           command to start the agent will be appended to
-#                           the end of this prefix string.
-#                           Use this to customize how the agent process
-#                           is started (e.g. with "su" or "sudo").
-#                           If this is set, it completely overrides the
-#                           RHQ_AGENT_RUN_AS and RHQ_AGENT_RUN_AS_ME
-#                           variables. Note that you can still prompt for
-#                           the password if you set the variable
-#                           RHQ_AGENT_PASSWORD_PROMPT properly. 
-#
-#RHQ_AGENT_RUN_PREFIX=su -m - ${RHQ_AGENT_RUN_AS} -c
-
-#    RHQ_AGENT_RUN_PREFIX_QUOTED - If "true", this will wrap the agent
-#                                  start command with single quotes
-#                                  before being appended to the run prefix.
-#                                  If this is defined but not "true", its
-#                                  value will be used to wrap the start command.
-#                                  (allowing for a value such as \"). 
-#                                  This is ignored if RHQ_AGENT_RUN_PREFIX
-#                                  is not defined - the purpose of this value
-#                                  is to wrap the command so it can look like
-#                                  a single argument to the run prefix.
-#RHQ_AGENT_RUN_PREFIX_QUOTED=true

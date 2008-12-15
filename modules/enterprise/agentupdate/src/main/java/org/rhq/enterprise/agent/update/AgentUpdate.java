@@ -215,10 +215,10 @@ public class AgentUpdate {
     }
 
     private void showVersion() throws Exception {
-        String str = "" //
-            + "============================================" //
-            + "RHQ Agent Update Binary Version Information:" //
-            + "============================================" //
+        String str = "\n" //
+            + "============================================\n" //
+            + "RHQ Agent Update Binary Version Information:\n" //
+            + "============================================\n" //
             + new String(getJarFileContent(RHQ_AGENT_UPDATE_VERSION_PROPERTIES));
         logMessage(str);
     }
@@ -254,37 +254,37 @@ public class AgentUpdate {
     }
 
     private void printSyntax() {
-        String syntax = "Valid options are:" //
-            + "[--help] : Help information on how to use this jar file." //
-            + "[--version] : Shows version information about this jar file and exits." //
-            + "[--update[=<old agent home>]] : When specified, this will update an existing" //
-            + "                                agent. If you do not specify the directory" //
-            + "                                where the existing agent is, the default is:" //
-            + "                                " + DEFAULT_OLD_AGENT_HOME //
-            + "                                This is mutually exclusive of --install" //
-            + "[--install[=<new agent dir>]] : When specified, this will install a new agent" //
-            + "                                without attempting to update any existing" //
-            + "                                agent. If you do not specify the directory," //
-            + "                                the default is:" + DEFAULT_NEW_AGENT_HOME_PARENT //
-            + "                                Note the directory will be the parent of the" //
-            + "                                new agent home installation directory." //
-            + "                                This is mutually exclusive of --update" //
-            + "[--quiet] : If specified, this turns off console log messages." //
-            + "[--pause[=<ms>]] : If specified, the update will not occur until the given" //
-            + "                   number of milliseconds expires. If this option is given" //
-            + "                   without the number of milliseconds, 30000 is the default." //
-            + "[--jar=<jar file>] : If specified, the agent found in the given jar file will" //
-            + "                     be the new one that will be installed. You usually do not" //
-            + "                     have to specify this, since the jar running this update" //
-            + "                     code will usually be the one that contains the agent to" //
-            + "                     be installed. Do not use this unless you have a reason." //
-            + "[--log=<log file>] : If specified, this is where the log messages will be" //
-            + "                     written. Default=" + DEFAULT_LOG_FILE //
-            + "[--script=<ant script>] : If specified, this will override the default" //
-            + "                          upgrade script URL found in the classloader." //
-            + "                          Users will rarely need this;" //
-            + "                          use this only if you know what you are doing." //
-            + "                          Default=" + DEFAULT_SCRIPT_FILE; //
+        String syntax = "Valid options are:\n" //
+            + "[--help] : Help information on how to use this jar file.\n" //
+            + "[--version] : Shows version information about this jar file and exits.\n" //
+            + "[--update[=<old agent home>]] : When specified, this will update an existing\n" //
+            + "                                agent. If you do not specify the directory\n" //
+            + "                                where the existing agent is, the default is:\n" //
+            + "                                " + DEFAULT_OLD_AGENT_HOME + "\n" //
+            + "                                This is mutually exclusive of --install\n" //
+            + "[--install[=<new agent dir>]] : When specified, this will install a new agent\n" //
+            + "                                without attempting to update any existing\n" //
+            + "                                agent. If you do not specify the directory,\n" //
+            + "                                the default is:" + DEFAULT_NEW_AGENT_HOME_PARENT + "\n" //
+            + "                                Note the directory will be the parent of the\n" //
+            + "                                new agent home installation directory.\n" //
+            + "                                This is mutually exclusive of --update\n" //
+            + "[--quiet] : If specified, this turns off console log messages.\n" //
+            + "[--pause[=<ms>]] : If specified, the update will not occur until the given\n" //
+            + "                   number of milliseconds expires. If this option is given\n" //
+            + "                   without the number of milliseconds, 30000 is the default.\n" //
+            + "[--jar=<jar file>] : If specified, the agent found in the given jar file will\n" //
+            + "                     be the new one that will be installed. You usually do not\n" //
+            + "                     have to specify this, since the jar running this update\n" //
+            + "                     code will usually be the one that contains the agent to\n" //
+            + "                     be installed. Do not use this unless you have a reason.\n" //
+            + "[--log=<log file>] : If specified, this is where the log messages will be\n" //
+            + "                     written. Default=" + DEFAULT_LOG_FILE + "\n" //
+            + "[--script=<ant script>] : If specified, this will override the default\n" //
+            + "                          upgrade script URL found in the classloader.\n" //
+            + "                          Users will rarely need this;\n" //
+            + "                          use this only if you know what you are doing.\n" //
+            + "                          Default=" + DEFAULT_SCRIPT_FILE + "\n"; //
         System.out.println(syntax);
     }
 

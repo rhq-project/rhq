@@ -112,6 +112,16 @@ public class SecurityUtil {
             throw new RuntimeException(LOG.getMsgString(CommI18NResourceKeys.KEY_PASSWORD_NOT_LONG_ENOUGH));
         }
 
+        // make sure the keystore's directory exists before we ask keytool to write to it
+        File keystore_dir = keystore.getParentFile();
+        if (keystore_dir != null && !keystore_dir.exists()) {
+            boolean success = keystore_dir.mkdirs();
+            if (!success) {
+                throw new RuntimeException(LOG.getMsgString(CommI18NResourceKeys.CANNOT_CREATE_KEYSTORE_DIR,
+                    keystore_dir));
+            }
+        }
+
         // execute the keytool utility to create our key store
         String keytool_dir = System.getProperty("java.home") + File.separator + "bin";
         String keytool_exe = System.getProperty("os.name").toLowerCase().startsWith("windows") ? "keytool.exe"

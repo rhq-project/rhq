@@ -48,6 +48,9 @@ public interface CommI18NResourceKeys {
         @I18NMessage(value = "Bestätigt, dass der Keystore schon besteht: [{0}]", locale = "de") })
     String KEYSTORE_EXISTS = "SecurityUtil.keystore-exists";
 
+    @I18NMessages( { @I18NMessage("The keystore directory [{0}] does not exist and cannot be created") })
+    String CANNOT_CREATE_KEYSTORE_DIR = "SecurityUtil.cannot-create-keystore-dir";
+
     @I18NMessages( { @I18NMessage("Keystore password must not be null"),
         @I18NMessage(value = "Das Keystore-Passwort darf nicht leer sein", locale = "de") })
     String KEYSTORE_PASSWORD_NULL = "SecurityUtil.keystore-password-null";

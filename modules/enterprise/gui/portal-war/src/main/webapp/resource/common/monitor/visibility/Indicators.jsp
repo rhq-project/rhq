@@ -126,7 +126,7 @@ function reviewAction(option) {
       }
 
       onloads.push(refreshIndicators);
-      onloads.push(registerRefresh);
+//      onloads.push(registerRefresh);
       var eventsTime = 0;
 
   function initEventDetails() {

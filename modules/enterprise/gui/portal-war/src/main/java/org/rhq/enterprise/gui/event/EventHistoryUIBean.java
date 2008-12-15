@@ -35,6 +35,7 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.StringUtility;
 import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
+import org.rhq.enterprise.gui.common.metric.MetricComponent;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -63,6 +64,8 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
     private SelectItem[] severityFilterSelectItems;
 
     private EventComposite selectedEvent;
+
+    private MetricComponent metric;
 
     public EventHistoryUIBean() {
         context = WebUtility.getEntityContext();
@@ -165,6 +168,14 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
         return "success";
     }
 
+    public MetricComponent getMetric() {
+        return metric;
+    }
+
+    public void setMetric(MetricComponent metric) {
+        this.metric = metric;
+    }
+
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
@@ -174,6 +185,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
     }
 
     private class ListEventsHistoryDataModel extends PagedListDataModel<EventComposite> {
+
         public ListEventsHistoryDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }

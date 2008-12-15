@@ -16,7 +16,7 @@
       
 <ui:composition>
 
-    <h:form id="eventHistoryForm">
+    <h:form id="EventsForm" >
         <input type="hidden" name="id" value="#{EventHistoryUIBean.context.resourceId}" />
         <input type="hidden" name="groupId" value="#{EventHistoryUIBean.context.groupId}" />
         <input type="hidden" name="parent" value="#{EventHistoryUIBean.context.parentResourceId}" />
@@ -142,6 +142,10 @@
                     </rich:columnGroup>
                 </f:facet>
             </rich:dataTable>
+            
+            <onc:metric binding="#{EventHistoryUIBean.metric}"
+                     optionList="m,h,d" />
+            <a href="javascript:document.EventsForm.submit()" onclick="clickLink('EventsForm', 'advanced')">#{msg['resource.common.monitor.visibility.metricsToolbar.AdvancedSettingsBtn']}</a>
         </rich:panel>
         <br />
     </h:form>

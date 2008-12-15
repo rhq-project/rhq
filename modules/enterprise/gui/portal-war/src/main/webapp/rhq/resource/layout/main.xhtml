@@ -1,14 +1,15 @@
 <?xml version="1.0"?>
 
 <!DOCTYPE html
-      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:a4j="http://richfaces.org/a4j"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function">
@@ -31,69 +32,69 @@ id - the id of the Resource being accessed
 
 <ui:composition template="/rhq/entity/layout/main.xhtml">
 
-THIS TEXT WILL BE REMOVED AS WELL.
+    THIS TEXT WILL BE REMOVED AS WELL.
 
-<ui:param name="defaultPageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}'"/>
+    <ui:param name="defaultPageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}'"/>
 
-<ui:define name="breadcrumbs">
+    <ui:define name="breadcrumbs">
 
-   <onc:resourceLineage resourceId="#{ResourceUIBean.id}"/>
+        <!--<onc:resourceLineage resourceId="#{ResourceUIBean.id}"/>-->
 
-   <ui:remove>
-   <!--
-       Find the resourceId in the request, look up the corresponding resource, and stuff it into the request as well.
-       TODO: Get rid of this, once all pages are switched over to using ResourceUIBean rather than Resource.
-     -->
-   </ui:remove>
-   #{onf:loadResource()}
+        <ui:remove>
+            <!--
+              Find the resourceId in the request, look up the corresponding resource, and stuff it into the request as well.
+              TODO: Get rid of this, once all pages are switched over to using ResourceUIBean rather than Resource.
+            -->
+        </ui:remove>
+        #{onf:loadResource()}
 
-</ui:define>
+    </ui:define>
 
-<ui:define name="summary">
+    <ui:define name="summary">
 
-   <ui:remove>
-      <!-- NOTE: Besides being included here, summary.xhtml is also leveraged by JSP-based pages. Specifically, it is
-                 included (via an AJAX request) in /common/components/PageTitle.jsp. -->
-   </ui:remove>
-   <ui:include src="summary.xhtml"/>
+        <ui:remove>
+            <!-- NOTE: Besides being included here, summary.xhtml is also leveraged by JSP-based pages. Specifically, it is
+     included (via an AJAX request) in /common/components/PageTitle.jsp. -->
+        </ui:remove>
+        <ui:include src="summary.xhtml"/>
 
-</ui:define>
+    </ui:define>
 
-<ui:define name="tabBar">
+    <ui:define name="tabBar">
 
-   <onc:tabBar selectedTabName="#{selectedTabName}">
+        <onc:tabBar selectedTabName="#{selectedTabName}">
 
-      <f:param name="id" value="#{param.id}"/>
+            <f:param name="id" value="#{param.id}"/>
 
-      <onc:tab name="Monitor" rendered="#{monitorEnabled}">
-         <onc:subtab name="Visibility" url="/resource/common/monitor/Visibility.do">
-            <f:param name="mode" value="currentHealth"/>
-         </onc:subtab>
-         <onc:subtab name="Events" url="/resource/common/Events.do">
-            <f:param name="mode" value="events"/>
-         </onc:subtab>
-         <onc:subtab name="Configure" url="/resource/common/monitor/Config.do">
-            <f:param name="mode" value="configure"/>
-         </onc:subtab>
-      </onc:tab>
+            <onc:tab name="Monitor" rendered="#{monitorEnabled}">
+                <onc:subtab name="Visibility" url="/resource/common/monitor/Visibility.do">
+                    <f:param name="mode" value="currentHealth"/>
+                </onc:subtab>
+                <onc:subtab name="Events" url="/resource/common/Events.do">
+                    <f:param name="mode" value="events"/>
+                </onc:subtab>
+                <onc:subtab name="Configure" url="/resource/common/monitor/Config.do">
+                    <f:param name="mode" value="configure"/>
+                </onc:subtab>
+            </onc:tab>
 
-      <onc:tab name="Monitor+">
-         <onc:subtab name="Graphs" url="/rhq/resource/monitor/graphs.xhtml"/>
-         <onc:subtab name="Tables" url="/rhq/resource/monitor/tables.xhtml"/>
-         <onc:subtab name="Schedules" url="/rhq/resource/monitor/schedules.xhtml"/>
-      </onc:tab>
+            <onc:tab name="Monitor+">
+                <onc:subtab name="Graphs" url="/rhq/resource/monitor/graphs.xhtml"/>
+                <onc:subtab name="Tables" url="/rhq/resource/monitor/tables.xhtml"/>
+                <onc:subtab name="Schedules" url="/rhq/resource/monitor/schedules.xhtml"/>
+            </onc:tab>
 
-      <onc:tab name="Events">
-         <onc:subtab name="History" url="/rhq/resource/events/history.xhtml"/>
-         <onc:subtab name="Timeline" url="/rhq/resource/events/timeline.xhtml"/>
-      </onc:tab>
+            <onc:tab name="Events">
+                <onc:subtab name="History" url="/rhq/resource/events/history.xhtml"/>
+                <onc:subtab name="Timeline" url="/rhq/resource/events/timeline.xhtml"/>
+            </onc:tab>
 
-      <onc:tab name="Inventory" url="/rhq/resource/inventory/view.xhtml"/>
+            <onc:tab name="Inventory" url="/rhq/resource/inventory/view.xhtml"/>
 
-      <onc:tab name="Configuration" displayName="Configure" rendered="#{ResourceUIBean.facets.configuration}">
-         <onc:subtab name="Current" url="/rhq/resource/configuration/view.xhtml"/>
-         <onc:subtab name="History" url="/rhq/resource/configuration/history.xhtml"/>
-      </onc:tab>
+            <onc:tab name="Configuration" displayName="Configure" rendered="#{ResourceUIBean.facets.configuration}">
+                <onc:subtab name="Current" url="/rhq/resource/configuration/view.xhtml"/>
+                <onc:subtab name="History" url="/rhq/resource/configuration/history.xhtml"/>
+            </onc:tab>
 
       <onc:tab name="Operations" rendered="#{ResourceUIBean.facets.operation}">
          <onc:subtab name="New" url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml"/>
@@ -101,50 +102,99 @@ THIS TEXT WILL BE REMOVED AS WELL.
          <onc:subtab name="History" url="/rhq/resource/operation/resourceOperationHistory.xhtml"/>
       </onc:tab>
 
-      <onc:tab name="Alert" rendered="#{monitorEnabled}">
-         <onc:subtab name="Definitions" url="/rhq/resource/alert/listAlertDefinitions.xhtml">
-            <f:param name="mode" value="listDefinitions"/>
-         </onc:subtab>
-         <onc:subtab name="History" url="/rhq/resource/alert/listAlertHistory.xhtml">
-            <f:param name="mode" value="list"/>
-         </onc:subtab>
-      </onc:tab>
+            <onc:tab name="Alert" rendered="#{monitorEnabled}">
+                <onc:subtab name="Definitions" url="/rhq/resource/alert/listAlertDefinitions.xhtml">
+                    <f:param name="mode" value="listDefinitions"/>
+                </onc:subtab>
+                <onc:subtab name="History" url="/rhq/resource/alert/listAlertHistory.xhtml">
+                    <f:param name="mode" value="list"/>
+                </onc:subtab>
+            </onc:tab>
 
-      <onc:tab name="Content" rendered="#{ResourceUIBean.facets.content}">
-         <onc:subtab name="Deployed" url="/rhq/resource/content/view.xhtml"/>
-         <onc:subtab name="New" url="/rhq/resource/content/deploy.xhtml"/>
-         <onc:subtab name="Subscriptions" url="/rhq/resource/content/subscription.xhtml"/>
-         <onc:subtab name="History" url="/rhq/resource/content/history.xhtml"/>
-      </onc:tab>
-      
-   </onc:tabBar>
-   
-   <!-- Shows the results of the last action executed. -->
-   <h:messages showSummary="true"
-               showDetail="true"
-               infoClass="InfoBlock"
-               warnClass="WarnBlock"
-               errorClass="ErrorBlock"
-               fatalClass="FatalBlock"
-               globalOnly="true"
-               layout="table"
-               width="100%"/>
+            <onc:tab name="Content" rendered="#{ResourceUIBean.facets.content}">
+                <onc:subtab name="Deployed" url="/rhq/resource/content/view.xhtml"/>
+                <onc:subtab name="New" url="/rhq/resource/content/deploy.xhtml"/>
+                <onc:subtab name="Subscriptions" url="/rhq/resource/content/subscription.xhtml"/>
+                <onc:subtab name="History" url="/rhq/resource/content/history.xhtml"/>
+            </onc:tab>
 
-</ui:define>
+        </onc:tabBar>
 
-<ui:define name="nav">
-   <p/>
-   Empty Auto-Group Tree
-   <p/>
-</ui:define>
+        <!-- Shows the results of the last action executed. -->
+        <h:messages showSummary="true"
+                    showDetail="true"
+                    infoClass="InfoBlock"
+                    warnClass="WarnBlock"
+                    errorClass="ErrorBlock"
+                    fatalClass="FatalBlock"
+                    globalOnly="true"
+                    layout="table"
+                    width="100%"/>
+    </ui:define>
 
-<ui:define name="content">
-   <p/>
+    <ui:define name="nav">
 
-   <h1>Default Resource Content</h1>
 
-   <p/>
-</ui:define>
+        <h:form id="leftNaveTogglePanelForm">
+            <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+
+            <rich:togglePanel value="#{UserPreferencesUIBean.leftResourceNavState}" switchType="ajax"
+                              stateOrder="closed,tree" id="navTogglePanel" styleClass="atest"
+                              style="width: 100%;height: 100%; display: block">
+
+                <f:facet name="closed">
+                            <rich:toggleControl panelId="footest" id="test"
+                                                style="width: 10px; height: 100%; background-color: #A4B2B9;">
+
+                                <span id="openLeftNav"
+                                      style="display: block; width: 10px; height: 800px; background-color: #A4B2B9;">&nbsp;
+                                    <h:graphicImage value="/images/icon_right_arrow.gif"/>
+                                </span>
+                            </rich:toggleControl>
+                </f:facet>
+
+                <f:facet name="tree">
+                    <f:subview id="treeview">
+
+
+                        <div style="width: 100%; height: 100%;  background-color: #E1E5EB; "
+                             id="leftSpace">
+
+
+                            <table width="100%" cellpadding="0" cellspacing="0" style="height: 100%">
+                                <tr>
+                                    <td valign="top">
+                                        <ui:include src="/rhq/resource/navigation/ResourcesTree.xhtml"/>
+                                    </td>
+                                    <td valign="top">
+
+                                        <rich:toggleControl switchToState="closed" id="closeLeftNavLink">
+
+                                            <span id="closeLeftNav"
+                                                  style="display: block; width: 10px; height: 800px; background-color: #A4B2B9;">&nbsp;
+                                                <h:graphicImage value="/images/icon_down_arrow.gif"/>
+                                            </span>
+
+                                        </rich:toggleControl>
+
+
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                    </f:subview>
+                </f:facet>
+            </rich:togglePanel>
+        </h:form>
+    </ui:define>
+
+    <ui:define name="content">
+
+        <h1>Default Resource Content</h1>
+
+
+    </ui:define>
 
 </ui:composition>
 

@@ -136,7 +136,7 @@ public abstract class SubjectPreferencesBase {
     }
 
     @SuppressWarnings( { "unchecked" })
-    protected <T> T getPreference(String key, T defaultValue) {
+    public <T> T getPreference(String key, T defaultValue) {
         T result;
         try {
             String preferenceValue = getPreference(key);

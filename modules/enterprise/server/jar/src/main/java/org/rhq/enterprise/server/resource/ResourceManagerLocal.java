@@ -166,6 +166,15 @@ public interface ResourceManagerLocal {
     List<Resource> getResourceLineage(int resourceId);
 
     /**
+     * Looks up the root of a subtree in the inventory. This will generally find the platform on which
+     * a resource is running.
+     * @param resourceId the resource to find the root parent of
+     * @return the root of the supplied resource's tree
+     */
+    @NotNull
+    Resource getRootResourceForResource(int resourceId);
+
+    /**
      * @param  user
      * @param  parent
      * @param  key

@@ -782,6 +782,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return resourceLineage;
     }
 
+    @NotNull
+    public Resource getRootResourceForResource(int resourceId) {
+        Query q = entityManager.createNamedQuery(Resource.QUERY_FIND_ROOT_PLATFORM_OF_RESOURCE);
+        q.setParameter("resourceId", resourceId);
+
+        return (Resource) q.getSingleResult();
+    }
+
     @SuppressWarnings("unchecked")
     public PageList<Resource> getResourceByParentAndInventoryStatus(Subject user, Resource parent,
         InventoryStatus inventoryStatus, PageControl pageControl) {

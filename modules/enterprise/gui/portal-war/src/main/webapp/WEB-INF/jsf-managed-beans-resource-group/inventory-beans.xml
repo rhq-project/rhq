@@ -65,5 +65,12 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
+   <managed-bean>
+      <managed-bean-name>ResourceGroupTreeModelUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ResourceGroupTreeModelUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+
 </faces-config>
       

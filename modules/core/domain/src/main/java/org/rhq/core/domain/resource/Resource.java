@@ -615,7 +615,22 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGES, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackages ip WHERE r.id = :id"),
     @NamedQuery(name = Resource.QUERY_FIND_BY_ID_WITH_INSTALLED_PACKAGE_HIST, query = "SELECT r FROM Resource AS r LEFT JOIN r.installedPackageHistory ip WHERE r.id = :id"),
     @NamedQuery(name = Resource.QUERY_FIND_PLATFORM_BY_AGENT, query = "SELECT res FROM Resource res WHERE res.resourceType.category = :category AND res.agent = :agent"),
-    @NamedQuery(name = Resource.QUERY_FIND_PAREBT_ID, query = "SELECT res.parentResource.id FROM Resource AS res WHERE res.id = :id") })
+    @NamedQuery(name = Resource.QUERY_FIND_PAREBT_ID, query = "SELECT res.parentResource.id FROM Resource AS res WHERE res.id = :id"),
+    @NamedQuery(name = Resource.QUERY_FIND_ROOT_PLATFORM_OF_RESOURCE, query = ""
+        + "SELECT DISTINCT r FROM Resource r " +
+            "WHERE r.parentResource.id is null " +
+            "AND " +
+            "  ( " +
+            "    r.id = :resourceId " +
+            "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource = r) " +
+            "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource = r) " +
+            "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource = r) " +
+            "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource.parentResource = r) " +
+            "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource.parentResource.parentResource = r) " +
+            "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource.parentResource.parentResource.parentResource = r) " +
+            "  )"
+    )
+})
 @SequenceGenerator(name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
 @Table(name = "RHQ_RESOURCE")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -728,6 +743,8 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_FIND_PLATFORM_BY_AGENT = "Resource.findPlatformByAgent";
 
     public static final String QUERY_FIND_PAREBT_ID = "Resource.findParentId";
+
+    public static final String QUERY_FIND_ROOT_PLATFORM_OF_RESOURCE = "Resource.findRootPlatformOfResource";
 
     private static final long serialVersionUID = 1L;
 

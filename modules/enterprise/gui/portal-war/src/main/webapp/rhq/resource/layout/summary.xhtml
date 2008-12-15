@@ -84,7 +84,13 @@ id - the id of the Resource being accessed
    }
    
 </script>
+<h:form>
+    <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
+<rich:simpleTogglePanel switchType="ajax" id="summary-toggle-panel"
+                        value="#{UserPreferencesUIBean.summaryPanelDisplayState}">
+    <f:facet name="header">  <onc:resourceLineage resourceId="#{ResourceUIBean.id}"/> </f:facet>
+    
 <h:panelGrid columns="2" width="100%" style="padding: 3px">
 
    <h:panelGroup layout="block" styleClass="summary-content">
@@ -178,6 +184,11 @@ id - the id of the Resource being accessed
    </h:panelGroup>
 
 </h:panelGrid>
+    </rich:simpleTogglePanel>
+
+    </h:form>
+
+    
 
 </ui:composition>
 

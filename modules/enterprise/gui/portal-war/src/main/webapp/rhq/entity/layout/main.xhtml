@@ -33,22 +33,25 @@ REQUEST PARAMETERS:
 
    THIS TEXT WILL BE REMOVED AS WELL.
 
-   <ui:define name="body-area">
+    <ui:define name="body-area">
 
-      <div id="sidebar-left">
-         <ui:insert name="nav"><p>Default Entity Navigation</p></ui:insert>
-      </div>
-      
-      <div id="content">
-         <div id="Breadcrumb">
-            <ui:insert name="breadcrumbs">Default Breadcrumbs</ui:insert>
-         </div>
-         <ui:insert name="summary"><p>Default Entity Summary</p></ui:insert>
-         <ui:insert name="tabBar"><p>Default Entity TabBar</p></ui:insert>
-         <ui:insert name="content"><p>Default Entity Content</p></ui:insert>
-      </div>
+        <table width="100%" cellpadding="0" cellspacing="0" id="contentTable" style="height:90%">
+            <tr>
+                <td valign="top" style="width: 250px; background-color: #E1E5EB;">
+                        <ui:insert name="nav"><p>Default Entity Navigation</p></ui:insert>
+                    
 
-   </ui:define>
+                </td>
+                <td valign="top" width="100%">
+
+                        <ui:insert name="summary"><p>Default Entity Summary</p></ui:insert>
+                        <ui:insert name="tabBar"><p>Default Entity TabBar</p></ui:insert>
+                        <ui:insert name="content"><p>Default Entity Content</p></ui:insert>
+
+                </td>
+            </tr>
+        </table>
+    </ui:define>
 
 </ui:composition>
 

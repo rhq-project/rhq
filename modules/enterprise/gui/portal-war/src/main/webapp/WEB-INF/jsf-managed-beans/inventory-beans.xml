@@ -124,5 +124,17 @@
         <managed-bean-scope>request</managed-bean-scope>
     </managed-bean>
 
+    <managed-bean>
+        <managed-bean-name>ResourceSelectUIBean</managed-bean-name>
+        <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ResourceSelectUIBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>
+
+    <managed-bean>
+        <managed-bean-name>ResourceMetricsTableUIBean</managed-bean-name>
+        <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ResourceMetricsTableUIBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>
+    
 </faces-config>
       

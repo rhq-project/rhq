@@ -7,6 +7,7 @@
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:a4j="http://richfaces.org/a4j"      
       xmlns:onc="http://jboss.org/on/component"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
@@ -50,7 +51,7 @@
    
 </head>
 
-<body bgcolor="#FFF" onload="javascript:disableConditionalButtons();">
+<body bgcolor="#FFF" onload="javascript:disableConditionalButtons();" style="height: 100%;">
 
 <ui:remove>
    <!-- [JBNADM-1352] Set the content type to "text/html" (overriding the default of "application/xhtml+xml") to force
@@ -62,7 +63,7 @@ Firefox and other Gecko-based browsers to render the page in "Almost Standards" 
 
 <!-- =================== PAGE HEADER =================== -->
 
-<div id="PageHeader">
+<div id="PageHeader" style="border-bottom: 2px solid #999;">
 
     <table width="100%" border="0" cellpadding="0" cellspacing="0">
         <tr valign="bottom">
@@ -82,6 +83,7 @@ Firefox and other Gecko-based browsers to render the page in "Almost Standards" 
             </td>
        </tr>
        <tr>
+
             <td align="right">
                <div id="resMenu" class="headerresourcemenu">
                   <a href="/ResourceHub.do?resourceCategory=PLATFORM">${msg["resource.hub.filter.platform"]}</a><br/>
@@ -112,9 +114,15 @@ Firefox and other Gecko-based browsers to render the page in "Almost Standards" 
         </tr>
     </table>
 
-    <hr style="margin-top: 6px; background-color: #090909; color: #090909" size="1" noshade="noshade"/>
-
 </div>
+
+
+     <a4j:status id="commonStatus" layout="block"
+                startStyle="position: fixed; bottom: 0px; left: 0px; margin-right: auto; margin-left:auto; z-index: 2; filter:alpha(opacity=85); -moz-opacity: 0.85; opacity: 0.85; vertical-align: middle; background-color: #FFFFFF;">
+        <f:facet name="start">
+            <img src="/images/ajax-loader.gif" alt="" style="vertical-align:middle;" /> <span style="font-size: large; vertical-align: middle;">Loading...</span>
+        </f:facet> 
+    </a4j:status>
 
 <!-- =================== BODY =================== -->
 <ui:insert name="body-area">Default Page Body</ui:insert>

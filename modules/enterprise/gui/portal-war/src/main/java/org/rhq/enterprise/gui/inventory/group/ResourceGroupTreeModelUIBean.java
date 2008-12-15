@@ -16,50 +16,60 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.inventory.resource;
+package org.rhq.enterprise.gui.inventory.group;
 
+import java.io.IOException;
+
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
+import javax.faces.FacesException;
+import javax.faces.el.MethodBinding;
 import javax.faces.application.Application;
+import javax.faces.component.UIComponent;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
-import javax.faces.el.MethodBinding;
-import javax.faces.component.html.HtmlCommandLink;
-import javax.faces.component.html.HtmlOutputLink;
 import javax.el.MethodExpression;
 import javax.el.ExpressionFactory;
 
-import org.richfaces.component.html.ContextMenu;
-import org.richfaces.component.html.HtmlMenuGroup;
-import org.richfaces.component.html.HtmlMenuItem;
-import org.richfaces.component.html.HtmlMenuSeparator;
-import org.richfaces.component.html.HtmlTree;
 import org.richfaces.component.UITree;
+import org.richfaces.component.html.*;
 import org.richfaces.event.NodeSelectedEvent;
 import org.richfaces.model.TreeNode;
-
+import org.richfaces.model.TreeNodeImpl;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.gui.inventory.resource.ResourceTreeNode;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.operation.OperationDefinition;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
-import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
-import org.rhq.core.gui.util.FacesComponentUtility;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
-public class ResourceTreeModelUIBean {
+/**
+ *
+ * @author Greg Hinkle
+ */
+public class ResourceGroupTreeModelUIBean {
 
-    private List<ResourceTreeNode> roots = new ArrayList<ResourceTreeNode>();
-    private ResourceTreeNode rootNode = null;
-    private List<ResourceTreeNode> children = new ArrayList<ResourceTreeNode>();
+    private List<ResourceGroupTreeNode> roots = new ArrayList<ResourceGroupTreeNode>();
+    private ResourceGroupTreeNode rootNode = null;
+    private List<ResourceGroupTreeNode> children = new ArrayList<ResourceGroupTreeNode>();
 
+    private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
     private OperationManagerLocal operationManager = LookupUtil.getOperationManager();
@@ -74,25 +84,26 @@ public class ResourceTreeModelUIBean {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         ExternalContext externalContext = facesContext.getExternalContext();
 
-        Resource currentResource = EnterpriseFacesContextUtility.getResourceIfExists();
+        ResourceGroup currentGroup = EnterpriseFacesContextUtility.getResourceGroup();
+
+//        Resource currentResource = EnterpriseFacesContextUtility.getResourceIfExists();
 
 
-        Resource rootResource = resourceManager.getRootResourceForResource(currentResource.getId());
+        rootNode = new ResourceGroupTreeNode(currentGroup);
 
-        rootNode = new ResourceTreeNode(rootResource);
-
+        /*
         List<AutoGroupComposite> children =
                 resourceManager.getChildrenAutoGroups(EnterpriseFacesContextUtility.getSubject(), rootResource.getId());
 
         for (AutoGroupComposite child : children) {
-            ResourceTreeNode node = new ResourceTreeNode(child);
+            ResourceGroupTreeNode node = new ResourceGroupTreeNode(child);
             this.children.add(node);
         }
-
+        */
     }
 
 
-    public ResourceTreeNode getTreeNode() {
+    public ResourceGroupTreeNode getTreeNode() {
         if (rootNode == null) {
             loadTree();
         }
@@ -100,14 +111,14 @@ public class ResourceTreeModelUIBean {
         return rootNode;
     }
 
-    public List<ResourceTreeNode> getRoots() {
+    public List<ResourceGroupTreeNode> getRoots() {
         if (roots.isEmpty()) {
             roots.add(getTreeNode());
         }
         return roots;
     }
 
-    public List<ResourceTreeNode> getChildren() {
+    public List<ResourceGroupTreeNode> getChildren() {
         return children;
     }
 
@@ -125,27 +136,8 @@ public class ResourceTreeModelUIBean {
     }
 
 
-    public void processSelection(NodeSelectedEvent event) {
-        UITree tree = (UITree) event.getComponent();
-
-
-        try {
-
-            Object node = tree.getRowData();
-            ResourceTreeNode selectedNode = (ResourceTreeNode) node;
-
-            Object data = selectedNode.getData();
-            if (data instanceof ResourceWithAvailability) {
-                FacesContext.getCurrentInstance();
-                        
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     public void setMenu(ContextMenu menu) {
+        System.out.println("*************************************************");
         this.resourceContextMenu = menu;
 
         this.resourceContextMenu.getChildren().clear();
@@ -156,21 +148,23 @@ public class ResourceTreeModelUIBean {
         String resourceTypeIdString = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("contextResourceTypeId");
         if (resourceTypeIdString != null) {
             int resourceId = Integer.parseInt(resourceIdString);
-            int resourceTypeId =
-                    Integer.parseInt(resourceTypeIdString);
+            int resourceTypeId = Integer.parseInt(resourceTypeIdString);
 
             Resource res = resourceManager.getResourceById(EnterpriseFacesContextUtility.getSubject(), resourceId);
             Application app = FacesContext.getCurrentInstance().getApplication();
             // type = resourceTypeManager.getResourceTypeById(EnterpriseFacesContextUtility.getSubject(), resourceTypeId);
-            
+
+
             HtmlMenuItem nameItem = new HtmlMenuItem();
             nameItem.setValue(res.getName());
             nameItem.setId("menu_res_" + res.getId());
+            MethodBinding mb = app.createMethodBinding("#{otherBean.action}", null);
+            nameItem.setAction(mb);
 
-            nameItem.getChildren().add(
-                    FacesComponentUtility.addOutputLink(nameItem, null, "/rhq/resource/monitor/graphs.xhtml?id=" + resourceIdString));
 
             this.resourceContextMenu.getChildren().add(nameItem);
+
+
             this.resourceContextMenu.getChildren().add(new HtmlMenuSeparator());
 
 
@@ -197,6 +191,10 @@ public class ResourceTreeModelUIBean {
                     measurementsMenu.getChildren().add(menuItem);
                 }
             }
+
+
+
+
 
 
             // **** Operations menugroup

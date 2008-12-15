@@ -108,7 +108,7 @@ debug_msg ()
 check_status ()
 {
     if [ -f "$PIDFILE" ]; then
-        PID=`cat $PIDFILE`
+        PID=`cat "$PIDFILE"`
         if [ -n "$PID" ] && kill -0 $PID 2>/dev/null ; then
             STATUS="RHQ Server (pid $PID) is $1"
             RUNNING=1
@@ -129,7 +129,7 @@ check_status ()
 remove_pid_file ()
 {
    if [ -f "$PIDFILE" ]; then
-      rm $PIDFILE
+      rm "$PIDFILE"
    fi
 }
 
@@ -154,7 +154,7 @@ esac
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_HOME" ]; then
-   RHQ_SERVER_HOME=`dirname $0`/..
+   RHQ_SERVER_HOME=`dirname "$0"`/..
 else
    if [ ! -d "$RHQ_SERVER_HOME" ]; then
       echo "ERROR! RHQ_SERVER_HOME is not pointing to a valid directory"
@@ -163,7 +163,7 @@ else
    fi
 fi
 
-cd $RHQ_SERVER_HOME
+cd "$RHQ_SERVER_HOME"
 RHQ_SERVER_HOME=`pwd`
 
 debug_msg "RHQ_SERVER_HOME: $RHQ_SERVER_HOME"
@@ -185,32 +185,41 @@ if [ -z "$JAVA_HOME" ]; then
    fi
 fi
 
+# create the logs directory
+_LOG_DIR_PATH="${RHQ_SERVER_HOME}/logs"
+if [ -n "$_CYGWIN" ]; then
+   _LOG_DIR_PATH=`cygpath --windows --path "$_LOG_DIR_PATH"`
+fi
+if [ ! -d "${_LOG_DIR_PATH}" ]; then
+   mkdir "${_LOG_DIR_PATH}"
+fi
+
 # ----------------------------------------------------------------------
 # Find the Java executable and verify we have a VM available
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_JAVA_EXE_FILE_PATH" ]; then
    if [ -z "$RHQ_SERVER_JAVA_HOME" ]; then
-      RHQ_SERVER_JAVA_HOME=${RHQ_SERVER_HOME}/jre
+      RHQ_SERVER_JAVA_HOME="${RHQ_SERVER_HOME}/jre"
       debug_msg "Using the embedded JRE"
       if [ ! -d "$RHQ_SERVER_JAVA_HOME" ]; then
          debug_msg "No embedded JRE found - will try to use JAVA_HOME: $JAVA_HOME"
-         RHQ_SERVER_JAVA_HOME=$JAVA_HOME
+         RHQ_SERVER_JAVA_HOME="$JAVA_HOME"
       fi
    fi
    debug_msg "RHQ_SERVER_JAVA_HOME: $RHQ_SERVER_JAVA_HOME"
-   RHQ_SERVER_JAVA_EXE_FILE_PATH=${RHQ_SERVER_JAVA_HOME}/bin/java
+   RHQ_SERVER_JAVA_EXE_FILE_PATH="${RHQ_SERVER_JAVA_HOME}/bin/java"
 fi
 debug_msg "RHQ_SERVER_JAVA_EXE_FILE_PATH: $RHQ_SERVER_JAVA_EXE_FILE_PATH"
 
 if [ ! -f "$RHQ_SERVER_JAVA_EXE_FILE_PATH" ]; then
-   echo There is no JVM available.
-   echo Please set RHQ_SERVER_JAVA_HOME or RHQ_SERVER_JAVA_EXE_FILE_PATH appropriately.
+   echo "There is no JVM available."
+   echo "Please set RHQ_SERVER_JAVA_HOME or RHQ_SERVER_JAVA_EXE_FILE_PATH appropriately."
    exit 1
 fi
 
 # run.sh will use JAVA as the full java command
-JAVA=$RHQ_SERVER_JAVA_EXE_FILE_PATH
+JAVA="$RHQ_SERVER_JAVA_EXE_FILE_PATH"
 export JAVA
 
 # ----------------------------------------------------------------------
@@ -218,10 +227,6 @@ export JAVA
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_JAVA_OPTS" ]; then
-   _LOG_DIR_PATH=${RHQ_SERVER_HOME}/logs
-   if [ -n "$_CYGWIN" ]; then
-      _LOG_DIR_PATH=`cygpath --windows --path "$_LOG_DIR_PATH"`
-   fi
    RHQ_SERVER_JAVA_OPTS="-Xms256M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M -Djava.net.preferIPv4Stack=true -Djboss.server.log.dir=${_LOG_DIR_PATH}"
 fi
 RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server $RHQ_SERVER_JAVA_OPTS -Djava.awt.headless=true -Djboss.platform.mbeanserver -Dsun.lang.ClassLoader.allowArraySyntax=true"
@@ -238,7 +243,7 @@ export JAVA_OPTS
 
 if [ -z "$RHQ_SERVER_CMDLINE_OPTS" ]; then
 
-   _PROPS_FILE_PATH=${RHQ_SERVER_HOME}/bin/rhq-server.properties
+   _PROPS_FILE_PATH="${RHQ_SERVER_HOME}/bin/rhq-server.properties"
 
    # convert paths if we are on Windows
    if [ -n "$_CYGWIN" ]; then
@@ -253,7 +258,7 @@ debug_msg "RHQ_SERVER_CMDLINE_OPTS: $RHQ_SERVER_CMDLINE_OPTS"
 # Now find the JBoss run.sh script
 # ----------------------------------------------------------------------
 
-_JBOSS_RUN_SCRIPT=${RHQ_SERVER_HOME}/jbossas/bin/run.sh
+_JBOSS_RUN_SCRIPT="${RHQ_SERVER_HOME}/jbossas/bin/run.sh"
 
 if [ ! -f "$_JBOSS_RUN_SCRIPT" ]; then
    echo "ERROR! Cannot find the JBossAS run script"
@@ -267,11 +272,11 @@ debug_msg "_JBOSS_RUN_SCRIPT: $_JBOSS_RUN_SCRIPT"
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_PIDFILE_DIR" ]; then
-   RHQ_SERVER_PIDFILE_DIR=${RHQ_SERVER_HOME}/bin
+   RHQ_SERVER_PIDFILE_DIR="${RHQ_SERVER_HOME}/bin"
 fi
-mkdir -p $RHQ_SERVER_PIDFILE_DIR
+mkdir -p "$RHQ_SERVER_PIDFILE_DIR"
 
-PIDFILE=${RHQ_SERVER_PIDFILE_DIR}/rhq-server.pid
+PIDFILE="${RHQ_SERVER_PIDFILE_DIR}/rhq-server.pid"
 
 # ----------------------------------------------------------------------
 # Execute the command that the user wants us to do
@@ -282,66 +287,66 @@ check_status "running"
 case "$1" in
 'console')
         if [ "$RUNNING" = "1" ]; then
-           echo $STATUS
+           echo "$STATUS"
            exit 0
         fi
 
-        echo Starting RHQ Server in console...
+        echo "Starting RHQ Server in console..."
 
-        echo "$$" > $PIDFILE
+        echo "$$" > "$PIDFILE"
 
         # start the server, making sure its working directory is the JBossAS bin directory
-        cd ${RHQ_SERVER_HOME}/jbossas/bin
-        $_JBOSS_RUN_SCRIPT $RHQ_SERVER_CMDLINE_OPTS
+        cd "${RHQ_SERVER_HOME}/jbossas/bin"
+        "$_JBOSS_RUN_SCRIPT" $RHQ_SERVER_CMDLINE_OPTS
 
         JBOSS_STATUS=$?
 
-        rm $PIDFILE
+        rm "$PIDFILE"
 
         exit $JBOSS_STATUS
         ;;
 
 'start')
         if [ "$RUNNING" = "1" ]; then
-           echo $STATUS
+           echo "$STATUS"
            exit 0
         fi
 
-        echo Trying to start the RHQ Server...
+        echo "Trying to start the RHQ Server..."
 
         LAUNCH_JBOSS_IN_BACKGROUND=true
         export LAUNCH_JBOSS_IN_BACKGROUND
 
         # start the server, making sure its working directory is the JBossAS bin directory
-        cd ${RHQ_SERVER_HOME}/jbossas/bin
-        if [ "x$RHQ_SERVER_DEBUG" != "x" -a "$RHQ_SERVER_DEBUG" != "false" ]; then
-           $_JBOSS_RUN_SCRIPT $RHQ_SERVER_CMDLINE_OPTS &
+        cd "${RHQ_SERVER_HOME}/jbossas/bin"
+        if [ "x$RHQ_SERVER_DEBUG" != "x" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
+           "$_JBOSS_RUN_SCRIPT" $RHQ_SERVER_CMDLINE_OPTS &
         else
-           $_JBOSS_RUN_SCRIPT $RHQ_SERVER_CMDLINE_OPTS > /dev/null 2>&1 &
+           "$_JBOSS_RUN_SCRIPT" $RHQ_SERVER_CMDLINE_OPTS > /dev/null 2>&1 &
         fi
 
-        echo "$!" > $PIDFILE
+        echo "$!" > "$PIDFILE"
 
         sleep 5
         check_status "starting"
-        echo $STATUS
+        echo "$STATUS"
 
         if [ "$RUNNING" = "1" ]; then
            exit 0
         else
-           echo Failed to start - make sure the RHQ Server is fully configured properly
+           echo "Failed to start - make sure the RHQ Server is fully configured properly"
            exit 1
         fi
         ;;
 
 'stop')
         if [ "$RUNNING" = "0" ]; then
-           echo $STATUS
+           echo "$STATUS"
            remove_pid_file
            exit 0
         fi
 
-        echo Trying to stop the RHQ Server...
+        echo "Trying to stop the RHQ Server..."
 
         echo "RHQ Server (pid=${PID}) is stopping..."
 
@@ -358,12 +363,12 @@ case "$1" in
 
 'kill')
         if [ "$RUNNING" = "0" ]; then
-           echo $STATUS
+           echo "$STATUS"
            remove_pid_file
            exit 0
         fi
 
-        echo Trying to kill the RHQ Server...
+        echo "Trying to kill the RHQ Server..."
 
         echo "RHQ Server (pid=${PID}) is being killed..."
 
@@ -379,7 +384,7 @@ case "$1" in
         ;;
 
 'status')
-        echo $STATUS
+        echo "$STATUS"
         exit 0
         ;;
 

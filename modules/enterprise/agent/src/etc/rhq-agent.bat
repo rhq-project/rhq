@@ -109,19 +109,21 @@ if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_OPTS: %RHQ_AGENT_JAVA_OPTS%
 
 if "%RHQ_AGENT_JAVA_ENDORSED_DIRS%" == "none" (
    if defined RHQ_AGENT_DEBUG echo Not explicitly setting java.endorsed.dirs
-) else (
-   if not defined RHQ_AGENT_JAVA_ENDORSED_DIRS set RHQ_AGENT_JAVA_ENDORSED_DIRS=%RHQ_AGENT_HOME%\lib\endorsed
-   if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_ENDORSED_DIRS: %RHQ_AGENT_JAVA_ENDORSED_DIRS%
-   set _JAVA_ENDORSED_DIRS_OPT="-Djava.endorsed.dirs=%RHQ_AGENT_JAVA_ENDORSED_DIRS%"
+   goto :skip_java_endorsed_dirs
 )
+if not defined RHQ_AGENT_JAVA_ENDORSED_DIRS set RHQ_AGENT_JAVA_ENDORSED_DIRS=%RHQ_AGENT_HOME%\lib\endorsed
+if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_ENDORSED_DIRS: %RHQ_AGENT_JAVA_ENDORSED_DIRS%
+set _JAVA_ENDORSED_DIRS_OPT="-Djava.endorsed.dirs=%RHQ_AGENT_JAVA_ENDORSED_DIRS%"
+:skip_java_endorsed_dirs
 
 if "%RHQ_AGENT_JAVA_LIBRARY_PATH%" == "none" (
    if defined RHQ_AGENT_DEBUG echo Not explicitly setting java.library.path
-) else (
-   if not defined RHQ_AGENT_JAVA_LIBRARY_PATH set RHQ_AGENT_JAVA_LIBRARY_PATH=%RHQ_AGENT_HOME%\lib
-   if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_LIBRARY_PATH: %RHQ_AGENT_JAVA_LIBRARY_PATH%
-   set _JAVA_LIBRARY_PATH_OPT="-Djava.library.path=%RHQ_AGENT_JAVA_LIBRARY_PATH%"
+   goto :skip_java_library_path
 )
+if not defined RHQ_AGENT_JAVA_LIBRARY_PATH set RHQ_AGENT_JAVA_LIBRARY_PATH=%RHQ_AGENT_HOME%\lib
+if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_LIBRARY_PATH: %RHQ_AGENT_JAVA_LIBRARY_PATH%
+set _JAVA_LIBRARY_PATH_OPT="-Djava.library.path=%RHQ_AGENT_JAVA_LIBRARY_PATH%"
+:skip_java_library_path
 
 if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_ADDITIONAL_JAVA_OPTS: %RHQ_AGENT_ADDITIONAL_JAVA_OPTS%
 

@@ -28,6 +28,10 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
+    @I18NMessage("There are still [{0}] threads left - the kill thread will be started\\n\\\n"
+        + "and exit the VM in a few minutes if these threads have not died by then")
+    String SHUTDOWNHOOK_THREADS_STILL_ALIVE = "AgentShutdownHook.threads-still-alive";
+
     @I18NMessage("Missing the envvar [{0}] - will try to find a Java executable to use.")
     String UPDATE_THREAD_LOOKING_FOR_JAVA_EXE = "AgentUpdateThread.looking-for-java-exe";
 
@@ -38,13 +42,13 @@ public interface AgentI18NResourceKeys {
     String UPDATE_THREAD_CANNOT_RESTART = "AgentUpdateThread.cannot-restart";
 
     @I18NMessage("The agent will wait for [{0}] threads to die")
-    String UPDATE_THREAD_WAIT = "AgentUpdateThread.wait";
+    String SHUTDOWNHOOK_THREAD_WAIT = "AgentShutdownHook.wait";
 
     @I18NMessage("The agent failed waiting for threads to die: {0}")
-    String UPDATE_THREAD_CANNOT_WAIT = "AgentUpdateThread.cannot-wait";
+    String SHUTDOWNHOOK_THREAD_CANNOT_WAIT = "AgentUpdateThread.cannot-wait";
 
     @I18NMessage("[{0}] threads are not dying - agent will not wait anymore")
-    String UPDATE_THREAD_NO_MORE_WAIT = "AgentUpdateThread.no-more-wait";
+    String SHUTDOWNHOOK_THREAD_NO_MORE_WAIT = "AgentShutdownHook.no-more-wait";
 
     @I18NMessage("The agent update thread encountered an exception: {0}")
     String UPDATE_THREAD_EXCEPTION = "AgentUpdateThread.exception";
@@ -691,13 +695,13 @@ public interface AgentI18NResourceKeys {
     String EXIT_HELP = "PromptCommand.exit.help";
 
     @I18NMessage("Shutting down...")
-    String EXIT_SHUTTING_DOWN = "PromptCommand.exit.shutting-down";
+    String EXIT_SHUTTING_DOWN = "AgentShutdownHook.exit.shutting-down";
 
     @I18NMessage("Shutdown complete - agent will now exit.")
-    String EXIT_SHUTDOWN_COMPLETE = "PromptCommand.exit.shutdown-complete";
+    String EXIT_SHUTDOWN_COMPLETE = "AgentShutdownHook.exit.shutdown-complete";
 
     @I18NMessage("An error occurred during shutdown. Cause: {0}")
-    String EXIT_SHUTDOWN_ERROR = "PromptCommand.exit.shutdown-error";
+    String EXIT_SHUTDOWN_ERROR = "AgentShutdownHook.exit.shutdown-error";
 
     @I18NMessage("debug")
     String DEBUG = "PromptCommand.debug";

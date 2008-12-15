@@ -64,12 +64,9 @@ public class AgentShutdownHook extends Thread {
             agent.shutdown();
 
             // try to interrupt all non-daemon threads so they die faster; but only try a fixed number of times
-            for (int i = 0; i < 5; i++) {
-                int threadsStillAlive = interruptAllNonDaemonThreads().size();
-                if (threadsStillAlive == 0) {
-                    break;
-                }
-                showMessage(AgentI18NResourceKeys.EXIT_SHUTDOWN_THREADS_LEFT, threadsStillAlive);
+            int threadsStillAlive = waitForNonDaemonThreads();
+            if (threadsStillAlive > 0) {
+                showMessage(AgentI18NResourceKeys.SHUTDOWNHOOK_THREADS_STILL_ALIVE, threadsStillAlive);
             }
 
             // set our timebomb to ensure the agent dies
@@ -86,15 +83,12 @@ public class AgentShutdownHook extends Thread {
     }
 
     /**
-     * Before we spawn our agent update binary, we want the current agent to be almost
-     * dead so this method will attept to wait for all other non-daemon threads to die
-     * before returning.
+     * If you want the current agent to be dead this method will attept to wait for all
+     * other non-daemon threads to die before returning.
      * 
-     * We log messages if we can't wait for them all for whatever reason, but technically
-     * we can keep going since we don't necessarily have to have all threads to be dead.
-     * It just would be nice since we would then be assured the VM would die fast.
+     * We log messages if we can't wait for them all for whatever reason.
      * 
-     * Note that obviously this method will not wait for the non-daemon update thread
+     * Note that obviously this method will not wait for the calling thread
      * that is currently running this method.
      * 
      * @return the number of still active non-daemon threads that haven't died even after waiting
@@ -106,7 +100,7 @@ public class AgentShutdownHook extends Thread {
             while ((threadsStillActive > 0) && (countdown-- > 0)) {
                 threadsStillActive = 0;
                 List<Thread> threads = interruptAllNonDaemonThreads();
-                showMessage(AgentI18NResourceKeys.UPDATE_THREAD_WAIT, threads.size());
+                showMessage(AgentI18NResourceKeys.SHUTDOWNHOOK_THREAD_WAIT, threads.size());
                 for (Thread thread : threads) {
                     try {
                         thread.join(10000L);
@@ -119,11 +113,11 @@ public class AgentShutdownHook extends Thread {
                 }
             }
             if (threadsStillActive > 0) {
-                showMessage(AgentI18NResourceKeys.UPDATE_THREAD_NO_MORE_WAIT, threadsStillActive);
+                showMessage(AgentI18NResourceKeys.SHUTDOWNHOOK_THREAD_NO_MORE_WAIT, threadsStillActive);
             }
             return threadsStillActive;
         } catch (Throwable t) {
-            showMessage(AgentI18NResourceKeys.UPDATE_THREAD_CANNOT_WAIT, ThrowableUtil.getAllMessages(t));
+            showMessage(AgentI18NResourceKeys.SHUTDOWNHOOK_THREAD_CANNOT_WAIT, ThrowableUtil.getAllMessages(t));
             return Thread.activeCount();
         }
     }

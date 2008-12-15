@@ -32,6 +32,7 @@ import javax.faces.context.ResponseWriter;
 import com.sun.faces.util.MessageUtils;
 
 import org.richfaces.component.html.HtmlCalendar;
+import org.richfaces.component.html.HtmlInputNumberSpinner;
 
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
@@ -42,7 +43,7 @@ import org.rhq.enterprise.gui.common.scheduling.supporting.TimeUnits;
 public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerRendererModel {
 
     private FacesContext currentContext;
-    private final int TABLE_BORDER = 0;
+    private final int TABLE_BORDER = 1;
     private final String richCalendarSuffix = "InputDate";
 
     public boolean isAvailable() {
@@ -164,6 +165,7 @@ public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerR
         printRadio(writer, trigger, !trigger.getRepeat(), "recur", "never", "hidediv('endRows');");
         printLabel(writer, trigger, "Never");
         printLabel(writer, trigger, "");
+        printLabel(writer, trigger, "");
 
         writer.endElement("tr");
 
@@ -182,10 +184,17 @@ public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerR
 
         // composite row data of "Every <Interval>"
         writer.startElement("td", trigger);
+        //writer.writeAttribute("style", "width: 200px;", null);
         printLabel(writer, trigger, "Every ", false);
-        printInputText(writer, trigger, (trigger.getRepeat() ? ("" + convertedRepeatInterval) : ""), "repeatInterval",
-            false);
         writer.endElement("td");
+
+        if (trigger.getReadOnly()) {
+            printInputText(writer, trigger, (trigger.getRepeat() ? ("" + convertedRepeatInterval) : ""),
+                "repeatInterval", true);
+        } else {
+            printInputSpinner(writer, trigger, (trigger.getRepeat() ? ("" + convertedRepeatInterval) : ""),
+                "repeatInterval", true);
+        }
 
         printDropDown(writer, trigger, TimeUnits.values(), convertedRepeatedUnits, "repeatUnits");
 
@@ -338,6 +347,29 @@ public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerR
         }
 
         writer.endElement("input");
+
+        if (wrapped) {
+            writer.endElement("td");
+        }
+    }
+
+    private void printInputSpinner(ResponseWriter writer, HtmlSimpleTrigger trigger, String value, String id,
+        boolean wrapped) throws IOException {
+        if (wrapped) {
+            writer.startElement("td", trigger);
+        }
+
+        HtmlInputNumberSpinner spinner = new HtmlInputNumberSpinner();
+        spinner.setEnableManualInput(false);
+        spinner.setId(id);
+        spinner.setValue(value);
+        spinner.setRequired(true);
+        spinner.setMinValue("1");
+        spinner.setInputSize(2);
+        if (trigger.getReadOnly()) {
+            spinner.setDisabled(true);
+        }
+        spinner.encodeAll(currentContext);
 
         if (wrapped) {
             writer.endElement("td");

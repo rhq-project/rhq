@@ -43,7 +43,7 @@ import org.rhq.enterprise.gui.common.scheduling.supporting.TimeUnits;
 public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerRendererModel {
 
     private FacesContext currentContext;
-    private final int TABLE_BORDER = 1;
+    private final int TABLE_BORDER = 0;
     private final String richCalendarSuffix = "InputDate";
 
     public boolean isAvailable() {

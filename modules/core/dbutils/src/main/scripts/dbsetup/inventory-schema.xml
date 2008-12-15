@@ -147,7 +147,8 @@
         <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>
         <!-- this name can be longer than the size of the GROUP_BY column, which is used to uniquely identify it -->
-        <column name="NAME" required="true" size="600" type="VARCHAR2"/>
+        <!-- Max bytes for Oracle Varchar2 to accommodate large cluster keys -->
+        <column name="NAME" required="true" size="4000" type="VARCHAR2"/>
         <column name="DESCRIPTION" size="100" type="VARCHAR2"/>
         <column name="LOCATION" required="false" size="100" type="VARCHAR2"/>
         <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
@@ -165,8 +166,6 @@
         
         <!--  These two only set if this is a backing group for a resource cluster -->
         <column name="CLUSTER_RESOURCE_GROUP_ID" type="INTEGER" references="RHQ_RESOURCE_GROUP"/>
-        <!--  Max bytes for Oracle Varchar2 -->
-        <column name="CLUSTER_KEY" size="4000" type="VARCHAR2"/>
 
         <column name="VISIBLE" type="BOOLEAN"/>
         

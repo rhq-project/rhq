@@ -38,7 +38,7 @@
       <metric property="EventCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
       <metric property="ResourceConfigurationCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
       <metric property="OperationCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
-      
+
       <metric property="TotalProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
       <metric property="AvailabilityProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
       <metric property="MeasurementProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
@@ -149,8 +149,12 @@
             <c:simple-property name="MeasurementScheduleRequestConcurrencyLimit" displayName="Measurement Schedule Request Concurrency Limit" type="integer" required="true" activationPolicy="immediate"
                                description="Number of measurement schedule requests that can be processed concurrently; if zero or less, there is no limit"/>
          </c:group>
+         <c:group name="ha" displayName="High Availability" hiddenByDefault="true">
+            <c:simple-property name="MaintenanceModeAtStartup" type="boolean" required="true" activationPolicy="restart"
+                               description="If true, the server will start in Maintenance Mode, regardless of the state it was in when it was shutdown. Therefore, if true, no agents will be allowed to talk to this server when it starts up."/>
+         </c:group>
       </resource-configuration>
-     
+
    </service>
 
    <service name="RHQ Server Content Source Server Plugin Subsystem"
@@ -171,7 +175,7 @@
       <operation name="startPluginContainer" displayName="Start Plugin Container"
                  description="Starts the plugin container which will load and initialize all content source plugins. Once started, content source feed data will be able to start to flow">
       </operation>
-     
+
       <operation name="stopPluginContainer" displayName="Stop Plugin Container"
                  description="Stops the plugin container which will shutdown all content source plugins. Once stopped, content source feed data will not be able to flow">
       </operation>
@@ -191,7 +195,7 @@
               dataType="trait"
               displayType="detail"
               description="The location that the plugin uses to store transient files. Dependency jars found in plugins will be stored here to help build plugin classloaders."/>
-     
+
    </service>
 
 </plugin>

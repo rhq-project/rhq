@@ -3073,44 +3073,6 @@ public class AgentMain {
     }
 
     /**
-     * Provides a way to gracefully shutdown the agent.
-     */
-    private class AgentShutdownHook extends Thread {
-        /**
-         * The agent that will be shutdown when the shutdown hook is triggered.
-         */
-        private final AgentMain m_agent;
-
-        /**
-         * Constructor for {@link AgentShutdownHook} that retains the reference to the agent that will be shutdown when
-         * the shutdown hook is triggered.
-         *
-         * @param agent the agent to be shutdown when shutdown hook is triggered.
-         */
-        public AgentShutdownHook(AgentMain agent) {
-            m_agent = agent;
-        }
-
-        /**
-         * This is executed when the VM is shutting down.
-         */
-        @Override
-        public void run() {
-            m_agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.EXIT_SHUTTING_DOWN));
-
-            try {
-                m_agent.shutdown();
-            } catch (Throwable t) {
-                String errors = ThrowableUtil.getAllMessages(t);
-                LOG.error(t, AgentI18NResourceKeys.EXIT_SHUTDOWN_ERROR, errors);
-                m_agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.EXIT_SHUTDOWN_ERROR, errors));
-            }
-
-            m_agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.EXIT_SHUTDOWN_COMPLETE));
-        }
-    }
-
-    /**
      * Listener that will register the agent as soon as the sender has started (which means we should be able to connect
      * to the RHQ Server and send the register command).
      */

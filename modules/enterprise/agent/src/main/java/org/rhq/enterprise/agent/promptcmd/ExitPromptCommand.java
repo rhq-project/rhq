@@ -19,8 +19,11 @@
 package org.rhq.enterprise.agent.promptcmd;
 
 import java.io.PrintWriter;
+
 import mazz.i18n.Msg;
+
 import org.rhq.enterprise.agent.AgentMain;
+import org.rhq.enterprise.agent.AgentShutdownHook;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 
@@ -50,10 +53,8 @@ public class ExitPromptCommand implements AgentPromptCommand {
             return true;
         }
 
-        out.println(MSG.getMsg(AgentI18NResourceKeys.EXIT_SHUTTING_DOWN));
-        agent.shutdown();
-        out.println(MSG.getMsg(AgentI18NResourceKeys.EXIT_SHUTDOWN_COMPLETE));
-
+        AgentShutdownHook shutdownHook = new AgentShutdownHook(agent);
+        shutdownHook.start();
         return false;
     }
 

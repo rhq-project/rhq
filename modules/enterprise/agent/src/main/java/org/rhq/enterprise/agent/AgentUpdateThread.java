@@ -110,6 +110,7 @@ public class AgentUpdateThread extends Thread {
     @Override
     public void run() {
         boolean agentWasStarted = false;
+        AgentShutdownHook shutdownHook = new AgentShutdownHook(this.agent);
 
         try {
             showMessage(AgentI18NResourceKeys.UPDATE_THREAD_STARTED);
@@ -122,7 +123,7 @@ public class AgentUpdateThread extends Thread {
 
             // let's wait for the agent's threads to fully shutdown
             // (sometimes, the JBoss/Remoting threads take a long time to die)
-            int numThreadsStillAlive = waitForNonDaemonThreads();
+            int numThreadsStillAlive = shutdownHook.waitForNonDaemonThreads();
 
             // get the agent update binary
             AgentUpdateDownload aud;
@@ -191,103 +192,8 @@ public class AgentUpdateThread extends Thread {
 
         // We should only ever get here if everything was successful.
         // We now need to exit the thread; and if everything goes according to plan, the VM will now exit
-        spawnKillThread(); // pull the pin - FIRE IN THE HOLE!
+        shutdownHook.spawnKillThread(1000L * 60 * 5); // pull the pin - FIRE IN THE HOLE!
         return;
-    }
-
-    /**
-     * Before we spawn our agent update binary, we want the current agent to be almost
-     * dead so this method will attept to wait for all other non-daemon threads to die
-     * before returning.
-     * 
-     * We log messages if we can't wait for them all for whatever reason, but technically
-     * we can keep going since we don't necessarily have to have all threads to be dead.
-     * It just would be nice since we would then be assured the VM would die fast.
-     * 
-     * Note that obviously this method will not wait for the non-daemon update thread
-     * that is currently running this method.
-     * 
-     * @return the number of still active non-daemon threads that haven't died even after waiting
-     */
-    private int waitForNonDaemonThreads() {
-        try {
-            int countdown = 10; // we don't want to do this forever, when this gets to 0, stop
-            int threadsStillActive = Integer.MAX_VALUE; // prime the pump
-            while ((threadsStillActive > 0) && (countdown-- > 0)) {
-                threadsStillActive = 0;
-                List<Thread> threads = interruptAllNonDaemonThreads();
-                showMessage(AgentI18NResourceKeys.UPDATE_THREAD_WAIT, threads.size());
-                for (Thread thread : threads) {
-                    try {
-                        thread.join(10000L);
-                    } catch (InterruptedException ie) {
-                    } finally {
-                        if (thread.isAlive()) {
-                            threadsStillActive++;
-                        }
-                    }
-                }
-            }
-            if (threadsStillActive > 0) {
-                showMessage(AgentI18NResourceKeys.UPDATE_THREAD_NO_MORE_WAIT, threadsStillActive);
-            }
-            return threadsStillActive;
-        } catch (Throwable t) {
-            showMessage(AgentI18NResourceKeys.UPDATE_THREAD_CANNOT_WAIT, ThrowableUtil.getAllMessages(t));
-            return Thread.activeCount();
-        }
-    }
-
-    /**
-     * We need to make sure our VM can die quickly, so this method will send interrupts
-     * to all non-daemon threads to try to get them to hurry up and die.
-     * 
-     * @return the threads that were interrupted
-     */
-    private List<Thread> interruptAllNonDaemonThreads() {
-        List<Thread> nonDaemonThreads = new ArrayList<Thread>();
-        int threadCount = Thread.activeCount();
-        Thread[] threads = new Thread[threadCount + 50]; // give a little more in case more threads were added quickly
-        Thread.enumerate(threads);
-        for (Thread thread : threads) {
-            // do not interrupt or count:
-            // - daemon threads
-            // - threads with 0 stack elements (these are system threads that won't hold up the VM exit)
-            // - our current thread
-            // interrupt but do not count:
-            // - the agent input thread
-            if (thread != null && !thread.isDaemon() && thread.getStackTrace().length > 0
-                && !thread.getName().equals(Thread.currentThread().getName())) {
-                if (!thread.getName().equals(AgentMain.PROMPT_INPUT_THREAD_NAME)) {
-                    nonDaemonThreads.add(thread);
-                }
-                thread.interrupt();
-            }
-        }
-        return nonDaemonThreads;
-    }
-
-    /**
-     * If something goes wrong and the VM does not die on its own when we think it should,
-     * the thread created by this method will explicitly kill the VM.
-     * Calling this method sets a timebomb that will kill the VM after a timer runs out.
-     * There is no way to stop this timebomb short of performing 007-type heroics.
-     */
-    private void spawnKillThread() {
-        Runnable killRunnable = new Runnable() {
-            public void run() {
-                try {
-                    Thread.sleep(1000L * 60 * 5); // 5 minutes is enough time to wait
-                } catch (Throwable t) {
-                } finally {
-                    System.exit(0); // boom.
-                }
-            }
-        };
-
-        Thread killThread = new Thread(killRunnable, "RHQ Agent Kill Thread");
-        killThread.setDaemon(true); // don't let the VM hang around just for us, hopefully, this kill thread isn't needed
-        killThread.start();
     }
 
     /**

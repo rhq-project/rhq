@@ -484,7 +484,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Overlay configuration preferences with system property [{0}]=[{1}]")
     String OVERLAY_SYSPROP = "AgentMain.overlay-sysprop";
 
-    @I18NMessage("Done.")
+    @I18NMessage("Agent no longer accepting input at prompt.")
     String INPUT_DONE = "AgentMain.input-done";
 
     @I18NMessage("Prompt command invoked: {0}")
@@ -693,7 +693,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Shutting down...")
     String EXIT_SHUTTING_DOWN = "PromptCommand.exit.shutting-down";
 
-    @I18NMessage("Shutdown complete. Exiting...")
+    @I18NMessage("Shutdown complete - agent will now exit.")
     String EXIT_SHUTDOWN_COMPLETE = "PromptCommand.exit.shutdown-complete";
 
     @I18NMessage("An error occurred during shutdown. Cause: {0}")

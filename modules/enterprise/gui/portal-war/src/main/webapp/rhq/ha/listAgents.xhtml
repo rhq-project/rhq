@@ -154,7 +154,9 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Affinity Group" />
+                     <onc:sortableColumnHeader sort="a.affinityGroup">
+                        <h:outputText styleClass="headerText" value="Affinity Group" />
+                     </onc:sortableColumnHeader>
                   </f:facet>
                
                   <h:outputLink value="viewAffinityGroup.xhtml">

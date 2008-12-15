@@ -54,7 +54,6 @@ public class ListAgentsUIBean extends PagedDataTableUIBean {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public PageList<Agent> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
 

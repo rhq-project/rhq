@@ -22,6 +22,7 @@ import javax.faces.component.UIData;
 import javax.faces.event.AbortProcessingException;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.ActionListener;
+
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -36,6 +37,7 @@ public class SortableColumnHeaderListener implements ActionListener {
         PageControl pc = model.getPageControl();
 
         pc.sortBy(sort);
+        pc.setPageNumber(1);
 
         model.setPageControl(pc);
     }

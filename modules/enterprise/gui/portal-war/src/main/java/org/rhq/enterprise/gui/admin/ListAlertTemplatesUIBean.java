@@ -75,27 +75,35 @@ public class ListAlertTemplatesUIBean extends PagedDataTableUIBean {
         return "success";
     }
 
-    /* comment out enable/disable template-wide functionality until the UI can support this intuitively
-     * public String enableSelectedAlertTemplates() { Subject   subject                  =
-     * EnterpriseFacesContextUtility.getSubject(); String[]  selectedAlertDefinitions = getSelectedAlertDefinitions();
-     * Integer[] alertDefinitionIds       = getIntegerArray(selectedAlertDefinitions);
-     *
-     * try {   alertTemplateManager.enableAlertTemplates( subject, alertDefinitionIds, false );
-     * FacesContextUtility.addMessage( FacesMessage.SEVERITY_INFO,                                    "Enabled " +
-     * alertDefinitionIds.length + " alert definitions." ); } catch (Exception e) {   FacesContextUtility.addMessage(
-     * FacesMessage.SEVERITY_ERROR,                                    "Failed to enable alert definitions.", e); }
-     * return "success"; }
-     *
-     * public String disableSelectedAlertTemplates() { Subject   subject                  =
-     * EnterpriseFacesContextUtility.getSubject(); String[]  selectedAlertDefinitions = getSelectedAlertDefinitions();
-     * Integer[] alertDefinitionIds       = getIntegerArray(selectedAlertDefinitions);
-     *
-     * try {   alertTemplateManager.disableAlertTemplates( subject, alertDefinitionIds, false );
-     * FacesContextUtility.addMessage( FacesMessage.SEVERITY_INFO,                                    "Disabled " +
-     * alertDefinitionIds.length + " alert definitions." ); } catch (Exception e) {   FacesContextUtility.addMessage(
-     * FacesMessage.SEVERITY_ERROR,                                    "Failed to disable alert definitions.", e); }
-     * return "success"; }
-     */
+    public String enableSelectedAlertTemplates() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        String[] selectedAlertDefinitions = getSelectedAlertDefinitions();
+        Integer[] alertDefinitionIds = getIntegerArray(selectedAlertDefinitions);
+
+        try {
+            alertTemplateManager.enableAlertTemplates(subject, alertDefinitionIds);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled " + alertDefinitionIds.length
+                + " alert definitions.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to enable alert definitions.", e);
+        }
+        return "success";
+    }
+
+    public String disableSelectedAlertTemplates() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        String[] selectedAlertDefinitions = getSelectedAlertDefinitions();
+        Integer[] alertDefinitionIds = getIntegerArray(selectedAlertDefinitions);
+
+        try {
+            alertTemplateManager.disableAlertTemplates(subject, alertDefinitionIds);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled " + alertDefinitionIds.length
+                + " alert definitions.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to disable alert definitions.", e);
+        }
+        return "success";
+    }
 
     @Override
     public DataModel getDataModel() {
@@ -112,7 +120,6 @@ public class ListAlertTemplatesUIBean extends PagedDataTableUIBean {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public PageList<AlertDefinition> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             ResourceType requestResourceType = EnterpriseFacesContextUtility.getResourceTypeIfExists();

@@ -142,6 +142,12 @@
                         <onc:selectCommandButton action="#{ListAlertTemplatesUIBean.deleteSelectedAlertTemplates}"
                                                  value="DELETE SELECTED" target="selectedAlertTemplates" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{GlobalPermissionsUIBean.settings}" />
+                        <onc:selectCommandButton action="#{ListAlertTemplatesUIBean.enableSelectedAlertTemplates}"
+                                                 value="ENABLE SELECTED" target="selectedAlertTemplates" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{GlobalPermissionsUIBean.settings}" />
+                        <onc:selectCommandButton action="#{ListAlertTemplatesUIBean.disableSelectedAlertTemplates}"
+                                                 value="DISABLE SELECTED" target="selectedAlertTemplates" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{GlobalPermissionsUIBean.settings}" />
 
                         <ui:param name="paginationDataTableName" value="alertTemplatesDataTable"/>
                         <ui:param name="paginationDataModel" value="#{alertTemplatesDataModel}"/>

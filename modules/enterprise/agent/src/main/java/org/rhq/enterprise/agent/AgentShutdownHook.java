@@ -65,13 +65,15 @@ public class AgentShutdownHook extends Thread {
 
             // try to interrupt all non-daemon threads so they die faster; but only try a fixed number of times
             for (int i = 0; i < 5; i++) {
-                if (interruptAllNonDaemonThreads().size() == 0) {
+                int threadsStillAlive = interruptAllNonDaemonThreads().size();
+                if (threadsStillAlive == 0) {
                     break;
                 }
+                showMessage(AgentI18NResourceKeys.EXIT_SHUTDOWN_THREADS_LEFT, threadsStillAlive);
             }
 
             // set our timebomb to ensure the agent dies
-            spawnKillThread(1000L * 60 * 10);
+            spawnKillThread(1000L * 60 * 5);
 
         } catch (Throwable t) {
             String errors = ThrowableUtil.getAllMessages(t);
@@ -190,7 +192,11 @@ public class AgentShutdownHook extends Thread {
      * @param args
      */
     private void showMessage(String msg, Object... args) {
-        log.info(msg, args);
-        agent.getOut().println(this.agent.getI18NMsg().getMsg(msg, args));
+        try {
+            log.info(msg, args);
+            agent.getOut().println(this.agent.getI18NMsg().getMsg(msg, args));
+        } catch (Throwable t) {
+            // do not allow exceptions that occur in here to stop our shutdown
+        }
     }
 }

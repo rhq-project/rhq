@@ -105,21 +105,24 @@ rem ----------------------------------------------------------------------
 if not defined RHQ_AGENT_JAVA_OPTS (
    set RHQ_AGENT_JAVA_OPTS=-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true
 )
-
-set RHQ_AGENT_JAVA_OPTS="-Djava.endorsed.dirs=%RHQ_AGENT_HOME%\lib\endorsed" %RHQ_AGENT_JAVA_OPTS%
- 
-rem The RHQ Agent has a JNI library that it needs to find in order to
-rem do things like execute PIQL queries and access low-level operating
-rem system data. Here we add the java.library.path system property
-rem to point to the JNI libraries.  If you deploy a custom plugin
-rem that also requires JNI libraries, you must add to the library path
-rem here, you must not remove the RHQ Agent library path that it needs.
-
-set _JNI_PATH=%RHQ_AGENT_HOME%\lib
-
-set RHQ_AGENT_JAVA_OPTS="-Djava.library.path=%_JNI_PATH%" %RHQ_AGENT_JAVA_OPTS%
-
 if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_OPTS: %RHQ_AGENT_JAVA_OPTS%
+
+if "%RHQ_AGENT_JAVA_ENDORSED_DIRS%" == "none" (
+   if defined RHQ_AGENT_DEBUG echo Not explicitly setting java.endorsed.dirs
+) else (
+   if not defined RHQ_AGENT_JAVA_ENDORSED_DIRS set RHQ_AGENT_JAVA_ENDORSED_DIRS=%RHQ_AGENT_HOME%\lib\endorsed
+   if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_ENDORSED_DIRS: %RHQ_AGENT_JAVA_ENDORSED_DIRS%
+   set _JAVA_ENDORSED_DIRS_OPT="-Djava.endorsed.dirs=%RHQ_AGENT_JAVA_ENDORSED_DIRS%"
+)
+
+if "%RHQ_AGENT_JAVA_LIBRARY_PATH%" == "none" (
+   if defined RHQ_AGENT_DEBUG echo Not explicitly setting java.library.path
+) else (
+   if not defined RHQ_AGENT_JAVA_LIBRARY_PATH set RHQ_AGENT_JAVA_LIBRARY_PATH=%RHQ_AGENT_HOME%\lib
+   if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_LIBRARY_PATH: %RHQ_AGENT_JAVA_LIBRARY_PATH%
+   set _JAVA_LIBRARY_PATH_OPT="-Djava.library.path=%RHQ_AGENT_JAVA_LIBRARY_PATH%"
+)
+
 if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_ADDITIONAL_JAVA_OPTS: %RHQ_AGENT_ADDITIONAL_JAVA_OPTS%
 
 rem ----------------------------------------------------------------------
@@ -142,7 +145,7 @@ if defined RHQ_AGENT_DEBUG (
    set _LOG_CONFIG=-Dlog4j.configuration=log4j.xml
 )
 
-set CMD="%RHQ_AGENT_JAVA_EXE_FILE_PATH%" %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" org.rhq.enterprise.agent.AgentMain %RHQ_AGENT_CMDLINE_OPTS%
+set CMD="%RHQ_AGENT_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" org.rhq.enterprise.agent.AgentMain %RHQ_AGENT_CMDLINE_OPTS%
 
 if not defined _SETENV_ONLY (
    rem log4j 1.2.8 does not create the directory for us (later versions do)

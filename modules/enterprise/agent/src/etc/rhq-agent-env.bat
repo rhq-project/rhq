@@ -49,6 +49,34 @@ rem                          use RHQ_AGENT_ADDITIONAL_JAVA_OPTS instead.
 rem
 rem set RHQ_AGENT_JAVA_OPTS=-Xms160M -Xmx160M -Djava.net.preferIPv4Stack=true
 
+rem    RHQ_AGENT_JAVA_ENDORSED_DIRS - Java VM command line option to set the
+rem                                   endorsed dirs for the agent's VM. If this
+rem                                   is not defined this script will pass in a
+rem                                   default value. If this is set, it
+rem                                   completely overrides the agent's default.
+rem                                   However, if this is set to "none", the
+rem                                   agent will not be passed the VM argument
+rem                                   to set the endorsed dirs.
+rem
+rem set RHQ_AGENT_JAVA_ENDORSED_DIRS=%RHQ_AGENT_HOME%\lib\endorsed
+
+rem    RHQ_AGENT_JAVA_LIBRARY_PATH - The RHQ Agent has a JNI library that
+rem                                  it needs to find in order to do things
+rem                                  like execute PIQL queries and access
+rem                                  low-level operating system data. This
+rem                                  is the native system layer (SIGAR).
+rem                                  If you deploy a custom plugin that also
+rem                                  requires JNI libraries, you must add to
+rem                                  the library path here, but you must ensure
+rem                                  not to remove the RHQ Agent library path.
+rem                                  If this variable is set, it completely
+rem                                  overrides the agent's default.
+rem                                  However, if this is set to "none", the
+rem                                  agent will not be passed the VM argument
+rem                                  to set the library paths.
+rem
+rem set RHQ_AGENT_JAVA_LIBRARY_PATH=%RHQ_AGENT_HOME%\lib
+
 rem    RHQ_AGENT_ADDITIONAL_JAVA_OPTS - additional Java VM command line options
 rem                                     to be passed into the agent's VM. This
 rem                                     is added to RHQ_AGENT_JAVA_OPTS; it

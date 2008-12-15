@@ -23,7 +23,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -591,23 +590,23 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
     }
 
     public Boolean getMaintenanceModeAtStartup() {
-        FileReader reader = null;
+        InputStream inputStream = null;
         Boolean flag;
         try {
             File file = getServerPropertiesFile();
             Properties props = new Properties();
-            reader = new FileReader(file);
-            props.load(reader);
+            inputStream = new FileInputStream(file);
+            props.load(inputStream);
             flag = Boolean.parseBoolean(props.getProperty(ServerManagerLocal.MAINTENANCE_MODE_ON_STARTUP_PROPERTY,
                 "false"));
         } catch (Exception e) {
             LOG.error("Cannot read MM-on-startup property from file, will use the sysprop instead", e);
             flag = Boolean.getBoolean(ServerManagerLocal.MAINTENANCE_MODE_ON_STARTUP_PROPERTY);
         } finally {
-            if (reader != null) {
+            if (inputStream != null) {
                 try {
-                    reader.close();
-                } catch (Exception e) {
+                    inputStream.close();
+                } catch (Exception ignored) {
                 }
             }
         }

@@ -331,6 +331,7 @@ jboss.bind.address=0.0.0.0
 
 # High Availability (HA)
 rhq.server.high-availability.name=
+rhq.server.maintenance-mode-at-startup=false
 
 # General Properties
 rhq.server.startup.web.http.port=${rhq.server.http.port}
@@ -409,6 +410,7 @@ rhq.server.client.security.server-auth-mode-enabled=false
 
 # Embedded RHQ Agent
 rhq.server.embedded-agent.enabled=false
+rhq.server.embedded-agent.name=
 rhq.server.embedded-agent.reset-configuration=true
 rhq.server.embedded-agent.disable-native-system=false
 

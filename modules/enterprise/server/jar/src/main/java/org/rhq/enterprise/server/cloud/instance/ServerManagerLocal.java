@@ -32,6 +32,11 @@ import org.rhq.core.domain.resource.Agent;
  */
 @Local
 public interface ServerManagerLocal {
+    /**
+     * The system property (defined in the startup properties file) that indicates
+     * if we need to put the server into MM upon startup.
+     */
+    String MAINTENANCE_MODE_ON_STARTUP_PROPERTY = "rhq.server.maintenance-mode-at-startup";
 
     void scheduleServerHeartbeat();
 

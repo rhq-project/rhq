@@ -129,6 +129,7 @@ public class ServerProperties {
     public static final String PROP_CONCURRENCY_LIMIT_MEASSCHED_REQ = "rhq.server.concurrency-limit.measurement-schedule-request";
 
     public static final String PROP_HIGH_AVAILABILITY_NAME = "rhq.server.high-availability.name";
+    public static final String PROP_MM_AT_START = "rhq.server.maintenance-mode-at-startup";
 
     public static final List<SelectItem> DATABASE_TYPES;
     static {
@@ -379,7 +380,9 @@ public class ServerProperties {
             InstallerI18NResourceKeys.PROP_CONCURRENCY_LIMIT_MEASSCHED_REQ_HELP, false, false, true),
         new PropertyItem(PROP_HIGH_AVAILABILITY_NAME, String.class,
             InstallerI18NResourceKeys.PROP_HIGH_AVAILABILITY_NAME,
-            InstallerI18NResourceKeys.PROP_HIGH_AVAILABILITY_NAME_HELP, false, false, false, true) };
+            InstallerI18NResourceKeys.PROP_HIGH_AVAILABILITY_NAME_HELP, false, false, false, true),
+        new PropertyItem(PROP_MM_AT_START, Boolean.class, InstallerI18NResourceKeys.PROP_MM_AT_START,
+            InstallerI18NResourceKeys.PROP_MM_AT_START_HELP, false, false, true, false) };
 
     /**
      * Returns the list of all known property items the server supports, in an order that is appropriate for display.

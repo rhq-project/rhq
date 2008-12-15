@@ -23,6 +23,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -69,6 +70,7 @@ import org.rhq.enterprise.communications.util.ConcurrencyManager;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.agentclient.impl.AgentClientImpl;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -588,6 +590,43 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
             true);
     }
 
+    public Boolean getMaintenanceModeAtStartup() {
+        FileReader reader = null;
+        Boolean flag;
+        try {
+            File file = getServerPropertiesFile();
+            Properties props = new Properties();
+            reader = new FileReader(file);
+            props.load(reader);
+            flag = Boolean.parseBoolean(props.getProperty(ServerManagerLocal.MAINTENANCE_MODE_ON_STARTUP_PROPERTY,
+                "false"));
+        } catch (Exception e) {
+            LOG.error("Cannot read MM-on-startup property from file, will use the sysprop instead", e);
+            flag = Boolean.getBoolean(ServerManagerLocal.MAINTENANCE_MODE_ON_STARTUP_PROPERTY);
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (Exception e) {
+                }
+            }
+        }
+        return flag;
+    }
+
+    public Boolean isMaintenanceModeAtStartup() {
+        return getMaintenanceModeAtStartup();
+    }
+
+    public void setMaintenanceModeAtStartup(Boolean flag) {
+        if (flag == null) {
+            flag = Boolean.FALSE;
+        }
+        persistServerProperty(ServerManagerLocal.MAINTENANCE_MODE_ON_STARTUP_PROPERTY, flag.toString());
+        System.setProperty(ServerManagerLocal.MAINTENANCE_MODE_ON_STARTUP_PROPERTY, flag.toString());
+        return;
+    }
+
     /*
      * @see ServiceContainerMetricsMBean#clear()
      */
@@ -653,8 +692,9 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      */
     private ServiceContainerMetricsMBean getServiceContainerMetricsMBean() {
         MBeanServer mbs = getServiceContainer().getMBeanServer();
-        return (ServiceContainerMetricsMBean) MBeanServerInvocationHandler.newProxyInstance(mbs,
+        Object proxy = MBeanServerInvocationHandler.newProxyInstance(mbs,
             ServiceContainerMetricsMBean.OBJECTNAME_METRICS, ServiceContainerMetricsMBean.class, false);
+        return (ServiceContainerMetricsMBean) proxy;
     }
 
     /**

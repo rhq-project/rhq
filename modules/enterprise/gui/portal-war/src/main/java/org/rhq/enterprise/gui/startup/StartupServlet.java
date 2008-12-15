@@ -35,6 +35,7 @@ import org.quartz.SchedulerException;
 import org.jboss.mx.util.MBeanServerLocator;
 
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
@@ -103,9 +104,19 @@ public class StartupServlet extends HttpServlet {
         // Ensure that this server is registered in the database.
         createDefaultServerIfNecessary();
 
+        ServerManagerLocal serverManager = LookupUtil.getServerManager();
+
+        // immediately put the server into MM if configured to do so
+        if (ServerCommunicationsServiceUtil.getService().getMaintenanceModeAtStartup()) {
+            log("Server is configured to start up in MAINTENANCE mode");
+            Server server = serverManager.getServer();
+            Integer[] serverId = new Integer[] { new Integer(server.getId()) };
+            LookupUtil.getCloudManager().updateServerMode(serverId, OperationMode.MAINTENANCE);
+        }
+
         // Establish the current server mode for the server. This will move the server to NORMAL
         // mode from DOWN if necessary.  This can also affect comm layer behavior.
-        LookupUtil.getServerManager().establishCurrentServerMode();
+        serverManager.establishCurrentServerMode();
     }
 
     /**

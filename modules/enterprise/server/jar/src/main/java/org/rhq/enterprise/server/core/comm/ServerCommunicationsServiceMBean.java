@@ -346,4 +346,27 @@ public interface ServerCommunicationsServiceMBean extends ServiceContainerMetric
      * @param maxConcurrency
      */
     void setMeasurementScheduleRequestConcurrencyLimit(Integer maxConcurrency);
+
+    /**
+     * Returns <code>true</code> if the server should always start up in maintenance mode.
+     * If <code>false</code>, the server will startup in the same state it was in when it
+     * was shutdown.
+     * 
+     * @return <code>true</code> if the server should always start up in MM
+     */
+    Boolean getMaintenanceModeAtStartup();
+
+    /**
+     * Same as {@link #getMaintenanceModeAtStartup()}.
+     * @return <code>true</code> if server starts up in MM
+     */
+    Boolean isMaintenanceModeAtStartup();
+
+    /**
+     * Sets the flag to indicate if the server should always start up in maintenance mode.
+     * See {@link #getMaintenanceModeAtStartup()} for more.
+     * 
+     * @param flag
+     */
+    void setMaintenanceModeAtStartup(Boolean flag);
 }

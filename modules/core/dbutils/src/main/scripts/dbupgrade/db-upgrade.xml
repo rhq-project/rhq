@@ -1086,6 +1086,16 @@ DB Upgrade:
       </schema-directSQL>
    </schemaSpec>
 
+   <schemaSpec version="2.35">
+      <!-- Remove RHQ_RESOURCE_GROUP.CLUSTER_KEY added in 2.31. This value will instead be the group name -->
+      <schema-deleteColumn table="RHQ_RESOURCE_GROUP" column="CLUSTER_KEY" />
+   	<!-- Increase RHQ_RESOURCE_GROUP.NAME to accomodate the potentially large cluster key values --> 
+      <schema-alterColumn
+          table="RHQ_RESOURCE_GROUP"
+          column="NAME"
+          columnType="VARCHAR2"
+          precision="4000" />
+   </schemaSpec>
 </dbupgrade>
 
 </target>

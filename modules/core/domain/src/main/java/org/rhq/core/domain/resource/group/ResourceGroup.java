@@ -127,7 +127,7 @@ import org.rhq.core.domain.resource.ResourceType;
         + "  FROM ResourceGroup g " + "       LEFT JOIN g.explicitResources er "
         + "       LEFT JOIN g.implicitResources ir " + " WHERE er.id = :id " + "    OR ir.id = :id "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_NAME, query = "SELECT rg FROM ResourceGroup AS rg WHERE LOWER(rg.name) = LOWER(:name)"),
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY, query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.clusterKey = :clusterKey"),
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY, query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.name = :clusterKey"),
     @NamedQuery(name = ResourceGroup.QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE, query = "SELECT DISTINCT rg "
         + "FROM ResourceGroup AS rg LEFT JOIN rg.roles AS r " + "WHERE rg.id NOT IN " + "( SELECT irg.id "
         + "  FROM Role ir JOIN ir.resourceGroups AS irg " + "  WHERE ir.id = :roleId )"),
@@ -258,9 +258,6 @@ public class ResourceGroup extends Group {
     @JoinColumn(name = "CLUSTER_RESOURCE_GROUP_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
     private ResourceGroup clusterResourceGroup = null;
-
-    @Column(name = "CLUSTER_KEY", nullable = true)
-    private String clusterKey = null;
 
     // When false hide this group from the UI. For example, for a Resource Cluster backing group. 
     private boolean visible = true;
@@ -428,14 +425,6 @@ public class ResourceGroup extends Group {
 
     public void setClusterResourceGroup(ResourceGroup clusterResourceGroup) {
         this.clusterResourceGroup = clusterResourceGroup;
-    }
-
-    public String getClusterKey() {
-        return clusterKey;
-    }
-
-    public void setClusterKey(String clusterKey) {
-        this.clusterKey = clusterKey;
     }
 
     public boolean isVisible() {

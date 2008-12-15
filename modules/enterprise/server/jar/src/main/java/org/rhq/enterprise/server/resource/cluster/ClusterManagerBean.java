@@ -66,8 +66,8 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         ResourceType resourceType = entityManager.find(ResourceType.class, ClusterKey.getResourceType(clusterKey));
         ResourceGroup resourceGroup = entityManager.find(ResourceGroup.class, clusterKey.getClusterGroupId());
 
-        result = new ResourceGroup("autocluster-" + System.currentTimeMillis(), resourceType);
-        result.setClusterKey(clusterKey.toString());
+        // For AutoClusters the group name is the unique cluster key
+        result = new ResourceGroup(clusterKey.toString(), resourceType);
         result.setClusterResourceGroup(resourceGroup);
         result.setVisible(false);
 

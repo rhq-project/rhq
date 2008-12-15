@@ -92,6 +92,16 @@
             tofile="${_update.tmp.dir}/rhq-agent/data/failover-list.dat"
             failonerror="false" />
 
+      <!-- make sure we retain any SSL keystores or truststores that we can find -->
+      <echo>Copy existing keystore and truststore files from the old agent to the new agent</echo>
+      <copy todir="${_update.tmp.dir}/rhq-agent/data"
+            failonerror="false">
+         <fileset dir="${rhq.agent.update.update-agent-dir}/data">
+            <include name="*keystore*"/>
+            <include name="*truststore*"/>
+         </fileset>
+      </copy>
+
       <!-- if there are any Windows wrapper environment or include files, copy them -->
       <echo>Copy existing Java Service Wrapper configuration files from the old agent to the new agent</echo>
       <copy todir="${_update.tmp.dir}/rhq-agent/bin/wrapper">

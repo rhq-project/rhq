@@ -475,4 +475,23 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
                 + (unmatchedAlertConditionLogPurgeCount == 1 ? "" : "s"));
         }
     }
+
+    @SuppressWarnings("unchecked")
+    public int purgeUnusedAlertDefinition() {
+        Query purgeQuery = entityManager.createNamedQuery(AlertDefinition.QUERY_FIND_UNUSED_DEFINITION_IDS);
+        List<Integer> resultIds = purgeQuery.getResultList();
+
+        int removed = 0;
+        for (int unusedDefinitionId : resultIds) {
+            AlertDefinition unusedDefinition = entityManager.find(AlertDefinition.class, unusedDefinitionId);
+            if (unusedDefinition != null) {
+                entityManager.remove(unusedDefinition);
+                removed++;
+            } else {
+                LOG.warn("Could not find alertDefinition[id=" + unusedDefinitionId + "] for purge");
+            }
+        }
+
+        return removed;
+    }
 }

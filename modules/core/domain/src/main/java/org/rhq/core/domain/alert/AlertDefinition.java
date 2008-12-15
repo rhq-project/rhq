@@ -90,7 +90,14 @@ import org.rhq.core.domain.resource.ResourceType;
         + " WHERE a.resource.id = :id " + "       AND a.deleted = false"),
     @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE_TYPE, query = "SELECT a " + "  FROM AlertDefinition a "
         + " WHERE a.resourceType.id = :typeId " + "       AND a.deleted = false"),
-    @NamedQuery(name = AlertDefinition.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertDefinition ad WHERE ad.resource IN (:resources))") })
+    @NamedQuery(name = AlertDefinition.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertDefinition ad WHERE ad.resource IN (:resources))"),
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_UNUSED_DEFINITION_IDS, query = "" //
+        + "SELECT ad.id " //
+        + "  FROM AlertDefinition ad " //
+        + " WHERE ad.deleted = TRUE " //
+        + "   AND ad.id NOT IN ( SELECT alertDef.id " //
+        + "                        FROM Alert a " //
+        + "                        JOIN a.alertDefinition alertDef )") })
 @SequenceGenerator(name = "RHQ_ALERT_DEFINITION_ID_SEQ", sequenceName = "RHQ_ALERT_DEFINITION_ID_SEQ", allocationSize = 10)
 @Table(name = "RHQ_ALERT_DEFINITION")
 public class AlertDefinition implements Serializable {
@@ -105,6 +112,7 @@ public class AlertDefinition implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE = "AlertDefinition.findByResource";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE = "AlertDefinition.findByResourceType";
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertDefinition.deleteByResources";
+    public static final String QUERY_FIND_UNUSED_DEFINITION_IDS = "AlertDefinition.findUnusedDefinitionIds";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_ALERT_DEFINITION_ID_SEQ")
@@ -193,7 +201,7 @@ public class AlertDefinition implements Serializable {
      * be able to cascade delete the AlertDampeningEvents when an AlertDefinition is removed from the db, due to
      * deleting a Resource from inventory.
      */
-    @OneToMany(mappedBy = "alertDefinition", cascade = CascadeType.REFRESH)
+    @OneToMany(mappedBy = "alertDefinition", cascade = { CascadeType.REFRESH, CascadeType.REMOVE })
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
     private Set<AlertDampeningEvent> alertDampeningEvents = new HashSet<AlertDampeningEvent>();
 

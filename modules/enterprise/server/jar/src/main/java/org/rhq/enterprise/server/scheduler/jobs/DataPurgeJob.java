@@ -31,6 +31,7 @@ import org.quartz.SimpleTrigger;
 import org.quartz.StatefulJob;
 
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
@@ -109,6 +110,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeCallTimeData(LookupUtil.getCallTimeDataManager(), systemConfig);
         purgeEventData(LookupUtil.getEventManager(), systemConfig);
         purgeAlertData(LookupUtil.getAlertManager(), systemConfig);
+        purgeUnusedAlertDefinitions(LookupUtil.getAlertDefinitionManager());
         purgeMeasurementTraitData(LookupUtil.getMeasurementDataManager(), systemConfig);
         purgeAvailabilityData(LookupUtil.getAvailabilityManager(), systemConfig);
     }
@@ -210,6 +212,21 @@ public class DataPurgeJob extends AbstractStatefulJob {
         } finally {
             long duration = System.currentTimeMillis() - timeStart;
             LOG.info("Alert data purged [" + alertsPurged + "] - completed in [" + duration + "]ms");
+        }
+    }
+
+    private void purgeUnusedAlertDefinitions(AlertDefinitionManagerLocal alertDefinitionManager) {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Alert definition purge starting at " + new Date(timeStart));
+        int alertDefinitionsPurged = 0;
+
+        try {
+            alertDefinitionsPurged = alertDefinitionManager.purgeUnusedAlertDefinition();
+        } catch (Exception e) {
+            LOG.error("Failed to purge alert data. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Alert definitions purged [" + alertDefinitionsPurged + "] - completed in [" + duration + "]ms");
         }
     }
 

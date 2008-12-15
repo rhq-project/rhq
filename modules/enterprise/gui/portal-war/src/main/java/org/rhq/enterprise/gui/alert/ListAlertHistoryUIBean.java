@@ -64,8 +64,6 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public static final String MANAGED_BEAN_NAME = "ListAlertHistoryUIBean";
 
-    private Resource resource;
-
     // filter stuff
     private String dateFilter;
     private String dateErrors;
@@ -80,15 +78,10 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
     public ListAlertHistoryUIBean() {
     }
 
-    public void initDateFilter() {
-        // As a workaround for JSF calling getRowData() prior to calling setChildTypeFilter(), bypass JSF and set the
-        // field ourselves.
-        if (getDateFilter() == null) {
-            setDateFilter(FacesContextUtility.getOptionalRequestParameter("alertHistoryForm:dateFilter"));
-        }
-    }
-
     public String getDateFilter() {
+        if (dateFilter == null) {
+            dateFilter = FacesContextUtility.getOptionalRequestParameter("alertHistoryForm:dateFilter");
+        }
         return this.dateFilter;
     }
 
@@ -138,8 +131,9 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
     public String getAlertPriorityFilter() {
         if (alertPriorityFilter == null) {
             alertPriorityFilter = SelectItemUtils.getSelectItemFilter("alertHistoryForm:alertPriorityFilter");
+            alertPriorityFilter = SelectItemUtils.cleanse(alertPriorityFilter);
         }
-        return SelectItemUtils.cleanse(alertPriorityFilter);
+        return alertPriorityFilter;
     }
 
     public void setAlertPriorityFilter(String alertPriorityFilter) {
@@ -209,17 +203,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
         @Override
         public PageList<AlertWithLatestConditionLog> fetchPage(PageControl pc) {
-            Resource requestResource = EnterpriseFacesContextUtility.getResourceIfExists();
-            AlertManagerLocal manager = LookupUtil.getAlertManager();
-
-            if (requestResource == null) {
-                requestResource = resource; // request not associated with a resource - use the resource we used before
-            } else {
-                resource = requestResource; // request switched the resource this UI bean is using
-            }
-
-            initDateFilter();
-            String dateStr = ListAlertHistoryUIBean.this.getDateFilter(); // get the outer class's JSF-managed property
+            String dateStr = getDateFilter(); // get the outer class's JSF-managed property
             Date date = null;
 
             if ((dateStr != null) && !dateStr.equals("")) {
@@ -235,7 +219,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
             Integer alertDefinitionId = getAlertDefinitionId();
             AlertPriority alertPriority = getAlertPriority();
 
-            PageList<Alert> alerts = manager.findAlerts(requestResource.getId(), alertDefinitionId, alertPriority,
+            PageList<Alert> alerts = alertManager.findAlerts(getResource().getId(), alertDefinitionId, alertPriority,
                 date, pc);
 
             List<AlertWithLatestConditionLog> results = new ArrayList<AlertWithLatestConditionLog>(alerts.size());

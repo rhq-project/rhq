@@ -58,4 +58,6 @@ public interface AlertDefinitionManagerLocal {
 
     AlertDefinition updateAlertDefinition(Subject user, int alertDefinitionId, AlertDefinition alertDefinition,
         boolean updateInternals) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
+
+    int purgeUnusedAlertDefinition();
 }

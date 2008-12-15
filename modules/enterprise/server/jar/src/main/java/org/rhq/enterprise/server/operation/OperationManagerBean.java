@@ -509,6 +509,10 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     public OperationHistory getOperationHistoryByHistoryId(Subject whoami, int historyId) {
         OperationHistory history = entityManager.find(OperationHistory.class, historyId);
 
+        if (history == null) {
+            throw new RuntimeException("Cannot get history - it does not exist: " + historyId);
+        }
+
         if (history.getParameters() != null) {
             history.getParameters().getId(); // eagerly load it
         }
@@ -518,10 +522,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             if (resourceHistory.getResults() != null) {
                 resourceHistory.getResults().getId(); // eagerly load it
             }
-        }
-
-        if (history == null) {
-            throw new RuntimeException("Cannot get history - it does not exist: " + historyId);
         }
 
         ensureViewPermission(whoami, history);
@@ -1122,28 +1122,28 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
 
         /*
-         * since multiple resource operation histories from different agents can report at the same time, 
-         * it's possible that OperationManagerBean.updateOperationHistory will be called concurrently from 
-         * two different transactions. when this happens, neither thread sees what the other is doing (due 
-         * to current transaction isolation level settings), so the handler code that checks to see whether 
-         * some resourceOperationHistory was the last one in the group to finish might not function the way 
+         * since multiple resource operation histories from different agents can report at the same time,
+         * it's possible that OperationManagerBean.updateOperationHistory will be called concurrently from
+         * two different transactions. when this happens, neither thread sees what the other is doing (due
+         * to current transaction isolation level settings), so the handler code that checks to see whether
+         * some resourceOperationHistory was the last one in the group to finish might not function the way
          * you'd think it would in a purely serial environment.
-         * 
-         * since CheckForTimedOutOperationsJob is already called on a periodic basis (currently set for 60 
+         *
+         * since CheckForTimedOutOperationsJob is already called on a periodic basis (currently set for 60
          * seconds), if we fix it to also check for this condition - any group operations that are INPROGRESS
-         * but which don't have any INPROGRESS resource operation children - we needn't touch anything that 
+         * but which don't have any INPROGRESS resource operation children - we needn't touch anything that
          * concerns the in-band handler code mentioned in the above paragraph.
          */
         try {
             /*
              * the first part of the logic needs to check for group operations that have timed out.  these are
-             * operations that are still in progress that *do* have children in progress.  if any children are 
-             * in progress, they should be canceled (the server may have already submitted the resource-level 
-             * job down to the agent, in which case the cancel request may or may not be honored).  thus, it's 
-             * technically possible for a group operation to have timed out, one or more resource operation 
-             * children to be marked as canceled, and the agent later come back with a successful result.  in the 
-             * strictest sense, the group operation still timed out, even though all resource operations completed 
-             * successfully.  the timing on this is extremely slim, but possible.  the group operation error 
+             * operations that are still in progress that *do* have children in progress.  if any children are
+             * in progress, they should be canceled (the server may have already submitted the resource-level
+             * job down to the agent, in which case the cancel request may or may not be honored).  thus, it's
+             * technically possible for a group operation to have timed out, one or more resource operation
+             * children to be marked as canceled, and the agent later come back with a successful result.  in the
+             * strictest sense, the group operation still timed out, even though all resource operations completed
+             * successfully.  the timing on this is extremely slim, but possible.  the group operation error
              * message should make a note of this potentiality.
              */
             Query query = entityManager.createNamedQuery(GroupOperationHistory.QUERY_FIND_ACTIVE_IN_PROGRESS);
@@ -1155,7 +1155,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 if (groupHistory.getDuration() < timeout) {
                     /*
                      * this INPROGRESS group operation has some children that are still INPROGRESS, but since this
-                     * group operation hasn't timed out yet continue waiting for the children to complete normally. 
+                     * group operation hasn't timed out yet continue waiting for the children to complete normally.
                      */
                     continue;
                 }
@@ -1165,16 +1165,16 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                  */
                 for (ResourceOperationHistory resourceHistory : groupHistory.getResourceOperationHistories()) {
                     if (resourceHistory.getStatus() == OperationRequestStatus.INPROGRESS) {
-                        /* 
+                        /*
                          * when resource-level operations are still INPROGRESS, let's try to cancel them on a
                          * best-effort basis; however, we don't want to fail and throw exceptions out of this
                          * job if the agent (for one or more target resources) can not be reached; so, we'll
                          * mark the resource-level operations as CANCELED but we'll gracefully ignore agent errors.
-                         * 
+                         *
                          * if by some chance the agent happens to later ping back its connected server with updated
                          * data about one or more resource-level operation results, it will override the CANCELED
                          * status, but the group operation will still have a descriptive error message as to why
-                         * it FAILED (in this case, timeout) and what happened as a result (cancellation messages 
+                         * it FAILED (in this case, timeout) and what happened as a result (cancellation messages
                          * where sent to the remaining INPROGRESS elements).
                          */
                         cancelOperationHistory(subject, resourceHistory.getId(), true);
@@ -1204,7 +1204,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             List<GroupOperationHistory> groupHistories = query.getResultList();
             for (GroupOperationHistory groupHistory : groupHistories) {
 
-                /* 
+                /*
                  * assume success at first, override with failure for resource-level operation failures only;
                  * we'll be a little lenient with the logic here, and say that if a group operation hasn't already
                  * been marked for timeout, and if all of its children reach some terminating state, that it
@@ -1215,9 +1215,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
                 for (ResourceOperationHistory resourceHistory : groupHistory.getResourceOperationHistories()) {
                     if (resourceHistory.getStatus() != OperationRequestStatus.SUCCESS) {
-                        /* 
-                         * some child was either canceled or failed for some reason, and so the group operation must 
-                         * also be marked as failed.   remember, group operations are only a success if all resource 
+                        /*
+                         * some child was either canceled or failed for some reason, and so the group operation must
+                         * also be marked as failed.   remember, group operations are only a success if all resource
                          * operation children succeeded.
                          */
                         groupStatus = OperationRequestStatus.FAILURE;
@@ -1241,9 +1241,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             List<GroupOperationHistory> groupHistories = query.getResultList();
 
             for (GroupOperationHistory groupHistory : groupHistories) {
-                /* 
+                /*
                  * since no children histories ended in the FAILURE state (because there were no resource members at
-                 * the time this group operation was kicked off), the group operation was a success by definition 
+                 * the time this group operation was kicked off), the group operation was a success by definition
                  */
                 groupHistory.setStatus(OperationRequestStatus.SUCCESS);
                 continue;

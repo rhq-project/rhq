@@ -149,7 +149,7 @@ rem ----------------------------------------------------------------------
 rem Create and configure the wrapper log directory.
 rem ----------------------------------------------------------------------
 
-if "%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%"=="" (
+if "%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%" == "" (
    if not exist "%RHQ_SERVER_HOME%\logs" (
       mkdir "%RHQ_SERVER_HOME%\logs"
    )
@@ -170,13 +170,11 @@ if defined RHQ_SERVER_RUN_AS set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.a
 if defined RHQ_SERVER_RUN_AS_ME set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=.\%USERNAME%"
 
 if /i "%1"=="console" (
-
    "%RHQ_SERVER_WRAPPER_EXE_FILE_PATH%" -c "%RHQ_SERVER_WRAPPER_CONF_FILE_PATH%" "set.RHQ_SERVER_HOME=%RHQ_SERVER_HOME%" "set.RHQ_SERVER_INSTANCE_NAME=%RHQ_SERVER_INSTANCE_NAME%" "set.RHQ_SERVER_JAVA_EXE_FILE_PATH=%RHQ_SERVER_JAVA_EXE_FILE_PATH%" "set.RHQ_SERVER_OS_PLATFORM=%RHQ_SERVER_OS_PLATFORM%" "set.RHQ_SERVER_WRAPPER_LOG_DIR_PATH=%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%" %_WRAPPER_NTSERVICE_ACCOUNT% %_DEBUG_OPTS%
    goto done
 )
 
 if /i "%1"=="install" (
-
    "%RHQ_SERVER_WRAPPER_EXE_FILE_PATH%" -i "%RHQ_SERVER_WRAPPER_CONF_FILE_PATH%" "set.RHQ_SERVER_HOME=%RHQ_SERVER_HOME%" "set.RHQ_SERVER_INSTANCE_NAME=%RHQ_SERVER_INSTANCE_NAME%" "set.RHQ_SERVER_JAVA_EXE_FILE_PATH=%RHQ_SERVER_JAVA_EXE_FILE_PATH%" "set.RHQ_SERVER_OS_PLATFORM=%RHQ_SERVER_OS_PLATFORM%" "set.RHQ_SERVER_WRAPPER_LOG_DIR_PATH=%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%" %_WRAPPER_NTSERVICE_ACCOUNT% %_DEBUG_OPTS%
    goto done
 )

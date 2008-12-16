@@ -41,6 +41,18 @@
 </ui:define>
 
 <ui:define name="body">
+
+   <!-- Shows the results of the last action executed. -->
+   <h:messages showSummary="true"
+               showDetail="true"
+               infoClass="InfoBlock"
+               warnClass="WarnBlock"
+               errorClass="ErrorBlock"
+               fatalClass="FatalBlock"
+               globalOnly="false"
+               layout="table"
+               width="100%"/>
+
    <ui:insert name="content">Default Group Definition Body</ui:insert>
 </ui:define>
 

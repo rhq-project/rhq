@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-helpers</artifactId>
+      <version>1.2.0-SNAPSHOT</version>
+    </parent>
+
+
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-pluginGen</artifactId>
+    <packaging>jar</packaging>
+
+    <name>RHQ plugin generator</name>
+    <description>Helper to generate plugin skeletons</description>
+
+    <scm>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/helpers/pluginGen/</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/helpers/pluginGen/</developerConnection>
+   </scm>
+
+   <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.5</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>
+
+        <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>org.rhq.helpers.pluginGen.PluginGen</mainClass>
+              <packageName>org.rhq.helpers.pluginGen</packageName>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+
+
+          <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.0</version>
+            <executions>
+               <execution>
+                  <id>copy-loggings-jar</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>commons-logging</groupId>
+                           <artifactId>commons-logging</artifactId>
+                           <version>1.1</version>
+                        </artifactItem>
+                     </artifactItems>
+                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                  </configuration>
+               </execution>
+                <execution>
+                   <id>copy-freemarker-jar</id>
+                   <phase>process-resources</phase>
+                   <goals>
+                      <goal>copy</goal>
+                   </goals>
+                   <configuration>
+                      <artifactItems>
+                         <artifactItem>
+                            <groupId>org.freemarker</groupId>
+                            <artifactId>freemarker</artifactId>
+                            <version>2.3.11</version>
+                         </artifactItem>
+                      </artifactItems>
+                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                   </configuration>
+                </execution>
+
+              </executions>
+         </plugin>
+    </plugins>
+
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>1.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+            <version>2.3.11</version>
+        </dependency>
+    </dependencies>
+</project>

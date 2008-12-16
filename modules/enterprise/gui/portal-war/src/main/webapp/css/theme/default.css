@@ -160,7 +160,3 @@
    -moz-user-select: none;
 }
 
-#menu a, a:hover, a:visited {
-    text-decoration: none;
-    color: black;
-}

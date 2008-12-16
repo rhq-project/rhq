@@ -72,7 +72,7 @@ public class PluginGen {
 
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-        System.out.println("Please speficy the plugin root category (Platform, Server, servIce)");
+        System.out.print("Please speficy the plugin root category (Platform, Server, servIce): ");
         String answer = br.readLine();
         answer = answer.toLowerCase(Locale.getDefault());
         if (answer.startsWith("p"))

@@ -21,10 +21,14 @@
       <echo>=== RESTORING OLD AGENT ===</echo>
       <echo>From: ${java.io.tmpdir}/rhq-agent-update-backup</echo>
       <echo>To: ${rhq.agent.update.update-agent-dir}</echo>
+
       <delete dir="${rhq.agent.update.update-agent-dir}" />
+
       <copy todir="${rhq.agent.update.update-agent-dir}" overwrite="true">
         <fileset dir="${java.io.tmpdir}/rhq-agent-update-backup"/>
       </copy>
+
+      <echo>chmod +x on executables under ${rhq.agent.update.update-agent-dir}</echo>
       <chmod dir="${rhq.agent.update.update-agent-dir}/bin" perm="ug+rx" includes="*.sh"/>
       <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.s0"/>
       <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.sl"/>
@@ -45,12 +49,21 @@
              <include name="rhq-enterprise-agent-${rhq-agent.latest.version}.zip"/>
          </patternset>
       </unjar>
+
       <echo>Unzip the agent distro into the new installation directory</echo>
       <unzip src="${basedir}/rhq-enterprise-agent-${rhq-agent.latest.version}.zip"
              dest="${rhq.agent.update.install-agent-dir}"/>
+
+      <echo>chmod +x on executables under ${rhq.agent.update.install-agent-dir}/rhq-agent</echo>
+      <chmod dir="${rhq.agent.update.install-agent-dir}/rhq-agent/bin" perm="ug+rx" includes="*.sh"/>
+      <chmod dir="${rhq.agent.update.install-agent-dir}/rhq-agent/lib" perm="ug+rx" includes="*.s0"/>
+      <chmod dir="${rhq.agent.update.install-agent-dir}/rhq-agent/lib" perm="ug+rx" includes="*.sl"/>
+      <chmod dir="${rhq.agent.update.install-agent-dir}/rhq-agent/lib" perm="ug+rx" includes="*.dylib"/>
+
       <echo>Remove the agent distro zip</echo>
       <delete file="${basedir}/rhq-enterprise-agent-${rhq-agent.latest.version}.zip"
               failonerror="false"/>
+
       <echo>DONE! Agent version ${rhq-agent.latest.version} (build number=${rhq-agent.latest.build-number}) has been installed to ${rhq.agent.update.install-agent-dir}</echo>
    </target>
 
@@ -172,7 +185,7 @@
       The old agent is backed up to the rhq-agent-OLD directory next to new agent
       </echo>
 
-      <echo>Set the +x execute permission bits on all of the new agent's scripts.</echo>
+      <echo>chmod +x on executables under ${rhq.agent.update.update-agent-dir}</echo>
       <chmod dir="${rhq.agent.update.update-agent-dir}/bin" perm="ug+rx" includes="*.sh"/>
       <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.s0"/>
       <chmod dir="${rhq.agent.update.update-agent-dir}/lib" perm="ug+rx" includes="*.sl"/>

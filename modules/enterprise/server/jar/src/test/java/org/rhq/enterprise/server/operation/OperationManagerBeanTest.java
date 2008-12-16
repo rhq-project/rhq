@@ -334,6 +334,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         PageList<GroupOperationHistory> results;
         results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
+        assert results.size() == 1;
 
         operationManager.deleteOperationHistory(superuser, results.get(0).getId(), false);
 

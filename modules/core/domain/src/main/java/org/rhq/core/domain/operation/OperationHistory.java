@@ -104,17 +104,17 @@ import org.rhq.core.domain.configuration.Configuration;
         + " WHERE go.status != 'INPROGRESS' AND s = :subject "),
     @NamedQuery(name = OperationHistory.QUERY_GET_PARAMETER_CONFIGURATION_IDS, query = "" //
         + "SELECT params.id " //
-        + "  FROM ResourceOperationHistory roh " //
-        + "  JOIN roh.parameters params " //
-        + " WHERE roh.id = :historyId"), //
+        + "  FROM OperationHistory oh " //
+        + "  JOIN oh.parameters params " //
+        + " WHERE oh.id = :historyId"), //
     @NamedQuery(name = OperationHistory.QUERY_GET_RESULT_CONFIGURATION_IDS, query = "" //
         + "SELECT res.id " //
-        + "  FROM ResourceOperationHistory roh " //
-        + "  JOIN roh.results res " //
-        + " WHERE roh.id = :historyId"), //
+        + "  FROM OperationHistory oh " //
+        + "  JOIN oh.results res " //
+        + " WHERE oh.id = :historyId"), //
     @NamedQuery(name = OperationHistory.QUERY_DELETE_BY_HISTORY_IDS, query = "" //
-        + "DELETE FROM ResourceOperationHistory roh " //
-        + " WHERE roh.id = :historyId ") })
+        + "DELETE FROM OperationHistory oh " //
+        + " WHERE oh.id = :historyId ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_OPERATION_HISTORY_ID_SEQ")
 @Table(name = "RHQ_OPERATION_HISTORY")
 public abstract class OperationHistory implements Serializable {

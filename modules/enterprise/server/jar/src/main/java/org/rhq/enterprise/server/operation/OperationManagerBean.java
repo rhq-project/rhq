@@ -915,7 +915,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return results;
     }
 
-    @SuppressWarnings("unchecked")
     public void deleteOperationHistory(Subject whoami, int historyId, boolean purgeInProgress) {
         OperationHistory doomedHistory = getOperationHistoryByHistoryId(whoami, historyId); // this also checks authorization so we don't have to do it again
 
@@ -926,6 +925,21 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 "The job is still in the in-progress state. Please wait for it to complete: " + doomedHistory);
         }
 
+        if (doomedHistory instanceof GroupOperationHistory) {
+            List<ResourceOperationHistory> resourceHistories = ((GroupOperationHistory) doomedHistory)
+                .getResourceOperationHistories();
+            for (ResourceOperationHistory child : resourceHistories) {
+                deleteOperationHistory_helper(child.getId());
+            }
+        }
+
+        deleteOperationHistory_helper(doomedHistory.getId());
+
+        return;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void deleteOperationHistory_helper(int historyId) {
         Query historyArgumentsQuery = entityManager
             .createNamedQuery(OperationHistory.QUERY_GET_PARAMETER_CONFIGURATION_IDS);
         Query historyResultsQuery = entityManager.createNamedQuery(OperationHistory.QUERY_GET_RESULT_CONFIGURATION_IDS);

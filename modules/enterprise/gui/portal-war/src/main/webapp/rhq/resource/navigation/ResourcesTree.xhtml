@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtResourcesTree.xhtmlml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component">
+
+<body>
+
+Usage: The following parameters must be set in the calling page
+
+paginationDataTableName - Name of the data table to be controlled
+paginationDataModel - Data model of the underlying table being controlled (used for total row count)
+paginationPageControl - Page control value to set when changing the number of rows per page
+<f:subview id="navigationTreeView">
+<ui:composition>
+
+    <h:form id="leftNavTreeForm"> <!-- tree needs a form to be present -->
+
+        <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+
+        <a4j:region renderRegionOnly="true">
+
+            <a4j:status id="localStatus" layout="block"
+                          startStyle="position: fixed; bottom: 0px; left: 0px; margin-right: auto; margin-left:auto; z-index: 2; filter:alpha(opacity=85); -moz-opacity: 0.85; opacity: 0.85; vertical-align: middle; background-color: #FFFFFF;">
+                  <f:facet name="start">
+                      <img src="/images/ajax-loader.gif" alt="" style="vertical-align:middle;" /> <span style="font-size: large; vertical-align: middle;">Loading...</span>
+                  </f:facet>
+              </a4j:status>
+
+
+
+            <h:form id="leftNavResourceTreeForm">
+
+
+                <rich:tree style="width: 100%; height: 100%; max-width: 250px; overflow-x: auto;" switchType="ajax"
+                           stateAdvisor="#{ResourceTreeStateAdvisor}"
+                           var="treeNode"
+                           icon="/images/icn_tree_Platform.gif"
+                           id="leftNavTree"
+                           nodeSelectListener="#{ResourceTreeModelUIBean.processSelection}"
+                           ajaxSubmitSelection="true"
+                           nodeFace="#{treeNode.data.class.simpleName}">
+                    <rich:recursiveTreeNodesAdaptor roots="#{ResourceTreeModelUIBean.roots}" var="item"
+                                                    nodes="#{item.nodes}">
+
+
+                    </rich:recursiveTreeNodesAdaptor>
+
+
+                    <rich:treeNode type="AutoGroupComposite"
+                                   iconLeaf="/images/icn_tree_folder.gif" icon="/images/icn_tree_folder.gif">
+                        <h:outputText value="#{item}"/>
+
+                    </rich:treeNode>
+
+
+                    <rich:treeNode type="ResourceWithAvailability"
+                                   icon="/images/icn_tree_#{item.data.resource.resourceType.category}.gif"
+                                   iconLeaf="/images/icn_tree_#{item.data.resource.resourceType.category}.gif">
+
+
+                        <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000">
+                            <f:param name="contextResourceId" value="#{item.data.resource.id}"/>
+                            <f:param name="contextResourceTypeId" value="#{item.data.resource.resourceType.id}"/>
+
+                            <rich:componentControl disableDefault="true" event="oncomplete" for="resourceMenu"
+                                                   operation="show">
+                                <f:param value="#{item.data.resource.name}" name="name"/>
+                                <f:param value="#{item.data.resource.id}" name="id"/>
+                                <f:param value="#{item.data.resource.resourceType.name}" name="type"/>
+                                <f:param value="'#{item.data.resource.resourceType.operationDefinitions}'"
+                                         name="ops"/>
+                            </rich:componentControl>
+                        </a4j:support>
+
+
+                        <h:outputLink value="/rhq/resource/inventory/view.xhtml"><f:param name="id" value="#{item.data.resource.id}"/>
+
+                            <h:outputText value="#{item}"/>
+
+
+                        </h:outputLink>
+                    </rich:treeNode>
+
+
+                </rich:tree>
+
+
+            </h:form>
+
+            <!-- This can be useful for debugging ajax update problems -->
+            <!--<a4j:log popup="false" level="WARN" style="width: 800px; height: 300px;"></a4j:log>-->
+
+
+            <rich:contextMenu attached="false" id="resourceMenu" binding="#{ResourceTreeModelUIBean.menu}"
+                              disableDefaultMenu="true">
+
+            </rich:contextMenu>
+
+
+
+        </a4j:region>
+    </h:form>
+
+</ui:composition>
+
+</f:subview>
+
+</body>
+
+</html>

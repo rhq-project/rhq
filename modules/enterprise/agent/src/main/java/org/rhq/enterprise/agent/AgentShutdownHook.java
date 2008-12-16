@@ -63,14 +63,14 @@ public class AgentShutdownHook extends Thread {
         try {
             agent.shutdown();
 
+            // set our timebomb to ensure the agent dies
+            spawnKillThread(1000L * 60 * 5);
+
             // try to interrupt all non-daemon threads so they die faster; but only try a fixed number of times
             int threadsStillAlive = waitForNonDaemonThreads();
             if (threadsStillAlive > 0) {
                 showMessage(AgentI18NResourceKeys.SHUTDOWNHOOK_THREADS_STILL_ALIVE, threadsStillAlive);
             }
-
-            // set our timebomb to ensure the agent dies
-            spawnKillThread(1000L * 60 * 5);
 
         } catch (Throwable t) {
             String errors = ThrowableUtil.getAllMessages(t);

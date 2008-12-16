@@ -378,9 +378,9 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 }
             } else if (context == ParseContext.Availability) {
                 AvailabilityType type = null;
-                if (value.equals("up")) {
+                if (value.equalsIgnoreCase("up")) {
                     type = AvailabilityType.UP;
-                } else if (value.equals("down")) {
+                } else if (value.equalsIgnoreCase("down")) {
                     type = AvailabilityType.DOWN;
                 } else {
                     throw new InvalidExpressionException("Invalid 'resource.availability' comparision value, "

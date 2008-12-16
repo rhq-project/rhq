@@ -41,7 +41,7 @@
             </plugin-configuration>
 
         <#if props.monitoring>
-            <metric name="dummyMetric"/>
+            <metric property="dummyMetric" displayName="Dummy display name"/>
         </#if>
 
     <!-- TODO process scans -->

@@ -16,8 +16,8 @@
   <description>The SAR that allows the server to embed the agent</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/enterprise/server/sars/agent-sar</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/enterprise/server/sars/agent-sar</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/enterprise/server/sars/agent-sar</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/enterprise/server/sars/agent-sar</developerConnection>
   </scm>
 
   <properties>

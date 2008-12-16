@@ -16,8 +16,8 @@
   <description>parent POM for all RHQ modules</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules</developerConnection>
   </scm>
 
   <properties>

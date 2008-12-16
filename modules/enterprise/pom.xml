@@ -16,8 +16,8 @@
   <description>parent POM for modules comprising the RHQ enterprise edition</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/enterprise</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/enterprise</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/enterprise</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/enterprise</developerConnection>
   </scm>
 
   <properties>

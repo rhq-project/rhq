@@ -16,8 +16,8 @@
    <description>a plugin for managing a generic JMX-enabled application</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP</developerConnection>
    </scm>
 
    <properties>

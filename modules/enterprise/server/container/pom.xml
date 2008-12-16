@@ -16,8 +16,8 @@
   <description>The full RHQ container build, including the JBossAS server and all config/deploy files</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/enterprise/server/container</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/enterprise/server/container</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/enterprise/server/container</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/enterprise/server/container</developerConnection>
   </scm>
 
   <properties>

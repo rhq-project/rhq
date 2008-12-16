@@ -16,8 +16,8 @@
    <description>A plugin for managing PostgreSQL</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/plugins/postgres</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/plugins/postgres</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/plugins/postgres</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/plugins/postgres</developerConnection>
    </scm>
 
    <properties>

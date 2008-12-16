@@ -16,8 +16,8 @@
    <description>RHQ plugin container</description>
 
    <scm>
-     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/core/plugin-container</connection>
-     <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/core/plugin-container</developerConnection>
+     <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/core/plugin-container</connection>
+     <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/core/plugin-container</developerConnection>
    </scm>
 
    <properties>

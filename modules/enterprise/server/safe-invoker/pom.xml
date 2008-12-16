@@ -17,8 +17,8 @@
    <description>A webservice invoker that safely calls returns ejb3 pojo's with lazy attributes</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/enterprise/server/safe-invoker</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/enterprise/server/safe-invoker</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/enterprise/server/safe-invoker</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/enterprise/server/safe-invoker</developerConnection>
    </scm>
 
    <properties>

@@ -16,8 +16,8 @@
   <description>parent POM for all JBossAS services</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/enterprise/server/sars</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/enterprise/server/sars</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/enterprise/server/sars</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/enterprise/server/sars</developerConnection>
   </scm>
 
   <properties>

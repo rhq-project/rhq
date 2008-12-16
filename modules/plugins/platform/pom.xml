@@ -18,8 +18,8 @@
    </description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/plugins/platform</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/plugins/platform</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/plugins/platform</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/plugins/platform</developerConnection>
    </scm>
 
    <properties>

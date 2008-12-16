@@ -16,8 +16,8 @@
    <description>the RHQ Enterprise Portal webapp</description>
 
    <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/enterprise/gui/portal-war</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2/modules/enterprise/gui/portal-war</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/enterprise/gui/portal-war</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/branches/RHQ_1_1_2_GA_CP/modules/enterprise/gui/portal-war</developerConnection>
    </scm>
 
    <properties>

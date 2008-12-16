@@ -17,6 +17,7 @@
 
     <name>RHQ plugin generator</name>
     <description>Helper to generate plugin skeletons</description>
+    <version>1.0</version>
 
     <scm>
       <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/helpers/pluginGen/</connection>
@@ -47,48 +48,28 @@
         </configuration>
       </plugin>
 
-
-          <plugin>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.0</version>
-            <executions>
-               <execution>
-                  <id>copy-loggings-jar</id>
-                  <phase>process-resources</phase>
-                  <goals>
-                     <goal>copy</goal>
-                  </goals>
-                  <configuration>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>commons-logging</groupId>
-                           <artifactId>commons-logging</artifactId>
-                           <version>1.1</version>
-                        </artifactItem>
-                     </artifactItems>
-                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
-                  </configuration>
-               </execution>
-                <execution>
-                   <id>copy-freemarker-jar</id>
-                   <phase>process-resources</phase>
-                   <goals>
-                      <goal>copy</goal>
-                   </goals>
-                   <configuration>
-                      <artifactItems>
-                         <artifactItem>
-                            <groupId>org.freemarker</groupId>
-                            <artifactId>freemarker</artifactId>
-                            <version>2.3.11</version>
-                         </artifactItem>
-                      </artifactItems>
-                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
-                   </configuration>
-                </execution>
-
-              </executions>
-         </plugin>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <archive>
+            <manifest>
+              <mainClass>org.rhq.helpers.pluginGen.PluginGen</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>     <!-- this is used for inheritance merges -->
+            <phase>package</phase>     <!-- append to the packaging phase. -->
+            <goals>
+              <goal>attached</goal>  <!-- goals == mojos -->
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
 
     </build>

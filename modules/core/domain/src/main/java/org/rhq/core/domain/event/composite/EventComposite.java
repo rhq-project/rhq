@@ -45,6 +45,10 @@ public class EventComposite implements Serializable {
     EventSeverity severity;
     long timestamp = -1;
 
+    public EventComposite() {
+        // needed by JSON-based UI pages
+    }
+
     public EventComposite(String eventDetail, int resourceId, int eventId, EventSeverity severity,
         String sourceLocation, Long timestamp) {
         super();

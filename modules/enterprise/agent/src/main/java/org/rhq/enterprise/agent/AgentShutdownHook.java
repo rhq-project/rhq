@@ -19,8 +19,12 @@
 
 package org.rhq.enterprise.agent;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import mazz.i18n.Logger;
 
@@ -96,9 +100,10 @@ public class AgentShutdownHook extends Thread {
     public int waitForNonDaemonThreads() {
         try {
             int countdown = 10; // we don't want to do this forever, when this gets to 0, stop
-            int threadsStillActive = Integer.MAX_VALUE; // prime the pump
-            while ((threadsStillActive > 0) && (countdown-- > 0)) {
-                threadsStillActive = 0;
+            Map<String, String> threadsStillActive = new HashMap<String, String>(); // name, stack
+            threadsStillActive.put("prime-the-pump", "");
+            while ((threadsStillActive.size() > 0) && (countdown-- > 0)) {
+                threadsStillActive.clear();
                 List<Thread> threads = interruptAllNonDaemonThreads();
                 showMessage(AgentI18NResourceKeys.SHUTDOWNHOOK_THREAD_WAIT, threads.size());
                 for (Thread thread : threads) {
@@ -107,15 +112,21 @@ public class AgentShutdownHook extends Thread {
                     } catch (InterruptedException ie) {
                     } finally {
                         if (thread.isAlive()) {
-                            threadsStillActive++;
+                            Throwable t = new Throwable("Thread [" + thread.getName() + "]");
+                            t.setStackTrace(thread.getStackTrace());
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            t.printStackTrace(new PrintStream(baos));
+                            threadsStillActive.put(thread.getName(), baos.toString());
+                            logDebugMessage(AgentI18NResourceKeys.SHUTDOWNHOOK_THREAD_IS_STILL_ACTIVE,
+                                thread.getName(), baos.toString());
                         }
                     }
                 }
             }
-            if (threadsStillActive > 0) {
-                showMessage(AgentI18NResourceKeys.SHUTDOWNHOOK_THREAD_NO_MORE_WAIT, threadsStillActive);
+            if (threadsStillActive.size() > 0) {
+                showMessage(AgentI18NResourceKeys.SHUTDOWNHOOK_THREAD_NO_MORE_WAIT, threadsStillActive.size());
             }
-            return threadsStillActive;
+            return threadsStillActive.size();
         } catch (Throwable t) {
             showMessage(AgentI18NResourceKeys.SHUTDOWNHOOK_THREAD_CANNOT_WAIT, ThrowableUtil.getAllMessages(t));
             return Thread.activeCount();
@@ -189,6 +200,20 @@ public class AgentShutdownHook extends Thread {
         try {
             log.info(msg, args);
             agent.getOut().println(this.agent.getI18NMsg().getMsg(msg, args));
+        } catch (Throwable t) {
+            // do not allow exceptions that occur in here to stop our shutdown
+        }
+    }
+
+    /**
+     * Logs a debug message - it ignores exceptions but won't output anything to the console.
+     *  
+     * @param msg
+     * @param args
+     */
+    private void logDebugMessage(String msg, Object... args) {
+        try {
+            log.debug(msg, args);
         } catch (Throwable t) {
             // do not allow exceptions that occur in here to stop our shutdown
         }

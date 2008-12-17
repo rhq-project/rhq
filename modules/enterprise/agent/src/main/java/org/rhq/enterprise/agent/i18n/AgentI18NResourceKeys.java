@@ -28,8 +28,8 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
-    @I18NMessage("There are still [{0}] threads left - the kill thread will be started\\n\\\n"
-        + "and exit the VM in a few minutes if these threads have not died by then")
+    @I18NMessage("There are still [{0}] threads left - the kill thread will\\n\\\n"
+        + "exit the VM shortly if these threads do not die ")
     String SHUTDOWNHOOK_THREADS_STILL_ALIVE = "AgentShutdownHook.threads-still-alive";
 
     @I18NMessage("Missing the envvar [{0}] - will try to find a Java executable to use.")
@@ -43,6 +43,9 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("The agent will wait for [{0}] threads to die")
     String SHUTDOWNHOOK_THREAD_WAIT = "AgentShutdownHook.wait";
+
+    @I18NMessage("Thread [{0}] is still alive - its stack trace follows:\\n{1}")
+    String SHUTDOWNHOOK_THREAD_IS_STILL_ACTIVE = "AgentShutdownHook.thread-is-still-active";
 
     @I18NMessage("The agent failed waiting for threads to die: {0}")
     String SHUTDOWNHOOK_THREAD_CANNOT_WAIT = "AgentUpdateThread.cannot-wait";
@@ -261,6 +264,12 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("Failed to update the plugins.")
     String UPDATING_PLUGINS_FAILURE = "AgentMain.plugin-update-failure";
+
+    @I18NMessage("The server has [{0}] plugins available for download")
+    String LATEST_PLUGINS_COUNT = "PluginUpdate.latest-plugins-count";
+
+    @I18NMessage("Plugin available for download: id=[{0}], name=[{1}], displayName=[{2}], version=[{3}], path=[{4}], md5=[{5}], description=[{6}]")
+    String LATEST_PLUGIN = "PluginUpdate.latest-plugin";
 
     @I18NMessage("Updating plugins to their latest versions.")
     String UPDATING_PLUGINS = "PluginUpdate.updating";

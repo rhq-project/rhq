@@ -1,33 +1,34 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.io.IOException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
@@ -40,13 +41,14 @@ import org.rhq.core.pc.agent.AgentServiceLifecycleListener;
 import org.rhq.core.pc.agent.AgentServiceStreamRemoter;
 import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.content.ContentManager;
+import org.rhq.core.pc.event.EventManager;
 import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.inventory.ResourceFactoryManager;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.pc.operation.OperationManager;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.plugin.PluginManager;
-import org.rhq.core.pc.event.EventManager;
 import org.rhq.core.pluginapi.util.FileUtils;
 
 /**
@@ -201,6 +203,8 @@ public class PluginContainer implements ContainerService {
 
                 purgeTmpDirectoryContents();
 
+                ResourceContainer.initialize();
+
                 pluginManager = new PluginManager();
                 pluginComponentFactory = new PluginComponentFactory();
                 inventoryManager = new InventoryManager();
@@ -250,6 +254,8 @@ public class PluginContainer implements ContainerService {
 
                 purgeTmpDirectoryContents();
 
+                ResourceContainer.shutdown();
+
                 started = false;
             }
         }
@@ -260,8 +266,7 @@ public class PluginContainer implements ContainerService {
     private void purgeTmpDirectoryContents() {
         try {
             FileUtils.purge(configuration.getTemporaryDirectory(), false);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             log.warn("Failed to purge contents of temporary directory - cause: " + e);
         }
     }

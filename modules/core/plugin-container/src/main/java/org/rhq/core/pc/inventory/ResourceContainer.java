@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.inventory;
 
 import java.io.Serializable;
@@ -85,6 +85,30 @@ public class ResourceContainer implements Serializable {
     private Set<MeasurementScheduleRequest> measurementSchedule = new HashSet<MeasurementScheduleRequest>();
     private SynchronizationState synchronizationState = SynchronizationState.NEW;
     private transient Map<Integer, Object> proxyCache = new HashMap<Integer, Object>();
+
+    // thread pools used to invoke methods on container's components
+    private static final String DAEMON_THREAD_POOL_NAME = "ResourceContainer.invoker.daemon";
+    private static final String NON_DAEMON_THREAD_POOL_NAME = "ResourceContainer.invoker.nonDaemon";
+    private static ExecutorService DAEMON_THREAD_POOL;
+    private static ExecutorService NON_DAEMON_THREAD_POOL;
+
+    /**
+     * Initialize the ResourceContainer's internals, such as its thread pools.
+     */
+    public static void initialize() {
+        LoggingThreadFactory daemonFactory = new LoggingThreadFactory(DAEMON_THREAD_POOL_NAME, true);
+        LoggingThreadFactory nonDaemonFactory = new LoggingThreadFactory(NON_DAEMON_THREAD_POOL_NAME, false);
+        DAEMON_THREAD_POOL = Executors.newCachedThreadPool(daemonFactory);
+        NON_DAEMON_THREAD_POOL = Executors.newCachedThreadPool(nonDaemonFactory);
+    }
+
+    /**
+     * Shuts down ResourceContainer's internals, such as its thread pools.
+     */
+    public static void shutdown() {
+        DAEMON_THREAD_POOL.shutdown();
+        NON_DAEMON_THREAD_POOL.shutdown();
+    }
 
     public ResourceContainer(Resource resource) {
         this.resource = resource;
@@ -307,14 +331,6 @@ public class ResourceContainer implements Serializable {
      */
     private static class ResourceComponentInvocationHandler implements InvocationHandler {
         private static final Log LOG = LogFactory.getLog(ResourceComponentInvocationHandler.class);
-
-        private static final String DAEMON_THREAD_POOL_NAME = "ResourceContainer.invoker.daemon";
-        private static final String NON_DAEMON_THREAD_POOL_NAME = "ResourceContainer.invoker.nonDaemon";
-
-        private static final ExecutorService DAEMON_THREAD_POOL = Executors
-            .newCachedThreadPool(new LoggingThreadFactory(DAEMON_THREAD_POOL_NAME, true));
-        private static final ExecutorService NON_DAEMON_THREAD_POOL = Executors
-            .newCachedThreadPool(new LoggingThreadFactory(NON_DAEMON_THREAD_POOL_NAME, false));
 
         private final ResourceContainer container;
         private final Lock lock;

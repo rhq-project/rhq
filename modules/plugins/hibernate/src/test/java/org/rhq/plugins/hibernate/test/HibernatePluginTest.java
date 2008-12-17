@@ -20,7 +20,6 @@ import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
@@ -105,6 +104,7 @@ public class HibernatePluginTest
    private Set<Resource> findResource(Resource parent, String typeName)
    {
       Set<Resource> found = new HashSet<Resource>();
+      @SuppressWarnings({"UnnecessaryLocalVariable"})
       Resource platform = parent;
       for (Resource resource : platform.getChildResources())
       {
@@ -131,7 +131,7 @@ public class HibernatePluginTest
          for (MeasurementDefinition def : resource.getResourceType().getMetricDefinitions())
          {
             Set<MeasurementScheduleRequest> metricList = new HashSet<MeasurementScheduleRequest>();
-            metricList.add(new MeasurementScheduleRequest(1, def.getName(), 1000, true, def.getDataType(), NumericType.DYNAMIC, false));
+            metricList.add(new MeasurementScheduleRequest(1, def.getName(), 1000, true, def.getDataType(), null));
             MeasurementReport report = new MeasurementReport();
             ((MeasurementFacet) resourceComponent).getValues(report, metricList);
 

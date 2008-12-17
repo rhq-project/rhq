@@ -187,8 +187,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             Agent agent = res.getAgent();
 
             MeasurementScheduleRequest sms = new MeasurementScheduleRequest(sched.getId(), sched.getDefinition()
-                .getName(), sched.getInterval(), sched.isEnabled(), sched.getDefinition().getDataType(), sched
-                .getDefinition().getNumericType(), sched.getDefinition().isPerMinute());
+                .getName(), sched.getInterval(), sched.isEnabled(), sched.getDefinition().getDataType(),
+                    sched.getDefinition().getRawNumericType());
 
             ResourceMeasurementScheduleRequest info = null; //new ResourceMeasurementScheduleRequest(sms, res.getId()); TODO
             Set<ResourceMeasurementScheduleRequest> infoList = agentMap.get(agent);

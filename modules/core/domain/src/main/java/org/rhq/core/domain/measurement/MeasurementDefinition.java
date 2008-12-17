@@ -176,8 +176,13 @@ public class MeasurementDefinition implements Serializable {
     @Column(name = "DESCRIPTION")
     private String description;
 
-    @Column(name = "PER_MINUTE")
-    private boolean perMinute = false;
+    /**
+     * If this is a per-minute numeric metric, how the corresponding raw metric trends (up or down), or, if this is
+     * not a per-minute numeric metric, null.
+     */
+    @Column(name = "RAW_NUMERIC_TYPE")
+    @Enumerated(EnumType.ORDINAL)
+    private NumericType rawNumericType;
 
     @OneToMany(mappedBy = "measurementDefinition", cascade = CascadeType.REMOVE)
     private List<AlertCondition> alertConditions = new ArrayList<AlertCondition>();
@@ -412,11 +417,17 @@ public class MeasurementDefinition implements Serializable {
     }
 
     public boolean isPerMinute() {
-        return perMinute;
+        return rawNumericType != null;
     }
 
-    public void setPerMinute(boolean perMinute) {
-        this.perMinute = perMinute;
+    public NumericType getRawNumericType()
+    {
+        return rawNumericType;
+    }
+
+    public void setRawNumericType(NumericType rawNumericType)
+    {
+        this.rawNumericType = rawNumericType;
     }
 
     /**
@@ -436,7 +447,7 @@ public class MeasurementDefinition implements Serializable {
         dataType = newDefinition.getDataType();
         displayType = newDefinition.getDisplayType();
         defaultOn = newDefinition.isDefaultOn();
-        perMinute = newDefinition.isPerMinute();
+        rawNumericType = newDefinition.getRawNumericType();
         if (alsoUpdateInterval) {
             defaultInterval = newDefinition.getDefaultInterval();
         }
@@ -464,7 +475,7 @@ public class MeasurementDefinition implements Serializable {
             return false;
         }
 
-        if (perMinute != that.perMinute) {
+        if (rawNumericType != that.rawNumericType) {
             return false;
         }
 
@@ -475,7 +486,7 @@ public class MeasurementDefinition implements Serializable {
     public int hashCode() {
         int result;
         result = ((resourceType != null) ? resourceType.hashCode() : 0);
-        result = (31 * result) + (perMinute ? 1 : 0);
+        result = (31 * result) + ((rawNumericType != null) ? rawNumericType.hashCode() : 0);
         result = (31 * result) + name.hashCode();
         return result;
     }

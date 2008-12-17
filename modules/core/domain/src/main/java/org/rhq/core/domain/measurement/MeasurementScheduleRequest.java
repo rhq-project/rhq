@@ -26,7 +26,7 @@ import java.io.Serializable;
 
 /**
  * This class is a stripped down version of the {@link MeasurementSchedule} from the domain project. It is used to send
- * between agent and server, so it does not need all fields.
+ * between Agent and Server, so it does not need all fields.
  *
  * @author <a href="mailto:heiko.rupp@redhat.com">Heiko W. Rupp</a>
  * @see    org.rhq.core.domain.measurement.MeasurementSchedule
@@ -39,8 +39,7 @@ public class MeasurementScheduleRequest implements Serializable {
     private long interval;
     private boolean enabled;
     private DataType dataType;
-    private NumericType numericType;
-    private boolean perMinute;
+    private NumericType rawNumericType;
 
     public MeasurementScheduleRequest(MeasurementSchedule schedule) {
         this.scheduleId = schedule.getId();
@@ -48,23 +47,21 @@ public class MeasurementScheduleRequest implements Serializable {
         this.interval = schedule.getInterval();
         this.enabled = schedule.isEnabled();
         this.dataType = schedule.getDefinition().getDataType();
-        this.numericType = schedule.getDefinition().getNumericType();
-        this.perMinute = schedule.getDefinition().isPerMinute();
+        this.rawNumericType = schedule.getDefinition().getRawNumericType();
     }
 
     public MeasurementScheduleRequest(int scheduleId, String name, long interval, boolean enabled, DataType dataType) {
-        this(scheduleId, name, interval, enabled, dataType, NumericType.DYNAMIC, false);
+        this(scheduleId, name, interval, enabled, dataType, null);
     }
 
     public MeasurementScheduleRequest(int scheduleId, String name, long interval, boolean enabled, DataType dataType,
-        NumericType numericType, boolean isPerMinute) {
+                                      NumericType rawNumericType) {
         this.scheduleId = scheduleId;
         this.name = name;
         this.interval = interval;
         this.enabled = enabled;
         this.dataType = dataType;
-        this.numericType = numericType;
-        this.perMinute = isPerMinute;
+        this.rawNumericType = rawNumericType;
     }
 
     public MeasurementScheduleRequest(MeasurementScheduleRequest scheduleRequest) {
@@ -73,8 +70,7 @@ public class MeasurementScheduleRequest implements Serializable {
         this.interval = scheduleRequest.interval;
         this.enabled = scheduleRequest.enabled;
         this.dataType = scheduleRequest.dataType;
-        this.numericType = scheduleRequest.numericType;
-        this.perMinute = scheduleRequest.perMinute;
+        this.rawNumericType = scheduleRequest.rawNumericType;
     }
 
     public String getName() {
@@ -113,19 +109,18 @@ public class MeasurementScheduleRequest implements Serializable {
         return dataType;
     }
 
-    public NumericType getNumericType() {
-        return numericType;
+    public boolean isPerMinute() {
+        return rawNumericType != null;
     }
 
-    public boolean isPerMinute() {
-        return perMinute;
+    public NumericType getRawNumericType() {
+        return rawNumericType;
     }
 
     @Override
     public String toString() {
         return "MeasurementScheduleRequest[scheduleId=" + scheduleId + ", name=" + name + ", interval=" + interval
-            + ", enabled=" + enabled + ", dataType=" + dataType + ", numericType=" + numericType + ", perMinute="
-            + perMinute + "]";
+            + ", enabled=" + enabled + ", dataType=" + dataType + ", rawNumericType=" + rawNumericType + "]";
     }
 
     @Override

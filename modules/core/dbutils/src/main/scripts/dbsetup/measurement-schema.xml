@@ -17,7 +17,7 @@
       <column name="NUMERIC_TYPE" type="SMALLINT"/>
       <column name="DISPLAY_TYPE" type="SMALLINT"/>
       <column name="DATA_TYPE" type="SMALLINT"/>
-      <column name="PER_MINUTE" type="BOOLEAN" default="false"/>
+      <column name="RAW_NUMERIC_TYPE" type="SMALLINT"/>
       <column name="DEFAULT_ON" type="BOOLEAN" default="false"/>
       <column name="DEFAULT_INTERVAL" type="LONG" />
       <column name="DISPLAY_NAME" type="VARCHAR2" size="100"/>
@@ -28,11 +28,11 @@
       <column name="VERSION" type="INTEGER"/>
       <!-- for optimistic locking -->
 
-      <!-- === business key (RESOURCE_TYPE_ID + NAME + PER_MIN) === -->
+      <!-- === business key (RESOURCE_TYPE_ID + NAME + RAW_NUMERIC_TYPE) === -->
       <index name="RHQ_METRIC_DEF_KEY_IDX" unique="true">
          <field ref="RESOURCE_TYPE_ID"/>
          <field ref="NAME"/>
-         <field ref="PER_MINUTE"/>
+         <field ref="RAW_NUMERIC_TYPE"/>
       </index>
    </table>
 

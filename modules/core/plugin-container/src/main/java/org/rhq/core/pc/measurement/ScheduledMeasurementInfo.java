@@ -24,11 +24,11 @@ package org.rhq.core.pc.measurement;
 
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 
-/**
+ /**
  * This is an object that has a natural ordering by when a measurement next needs to be collected as well as by its
  * resource. Requests for the same resource that have the same measurement Implementation notes: This class has a
  * natural ordering to it used by the measurement manager in order to track the next collection time. This ordering
- * includes distinctive information that should be unecessary but is because the {@link java.util.PriorityQueue}
+ * includes distinctive information that should be unnecessary, but is because the {@link java.util.PriorityQueue}
  * requires that IFF a.compareTo(b) == 0 Then a.equals(b). This is unfortunate and slows us up some.
  *
  * @author Greg Hinkle

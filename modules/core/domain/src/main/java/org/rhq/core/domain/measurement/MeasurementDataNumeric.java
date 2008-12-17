@@ -35,9 +35,8 @@ public class MeasurementDataNumeric extends MeasurementData implements Serializa
 
     private Double value;
 
-    // A shortcut to know if this should be handled as a per minute metric
-    private transient boolean perMinuteCollection;
-    private transient NumericType numericType;
+    // A shortcut to know if this should be handled as a per-minute metric
+    private transient NumericType rawNumericType;
 
     protected MeasurementDataNumeric() {
         super();
@@ -46,14 +45,13 @@ public class MeasurementDataNumeric extends MeasurementData implements Serializa
     public MeasurementDataNumeric(MeasurementScheduleRequest request, Double value) {
         super(request);
         this.value = value;
-        this.perMinuteCollection = request.isPerMinute();
-        this.numericType = request.getNumericType();
+        this.rawNumericType = request.getRawNumericType();
     }
 
     public MeasurementDataNumeric(long collectionTime, MeasurementScheduleRequest request, Double value) {
         super(collectionTime, request);
         this.value = value;
-        this.perMinuteCollection = request.isPerMinute();
+        this.rawNumericType = request.getRawNumericType();
     }
 
     @Deprecated
@@ -73,11 +71,11 @@ public class MeasurementDataNumeric extends MeasurementData implements Serializa
     }
 
     public boolean isPerMinuteCollection() {
-        return this.perMinuteCollection;
+        return this.rawNumericType != null;
     }
 
-    public NumericType getNumericType() {
-        return this.numericType;
+    public NumericType getRawNumericType() {
+        return this.rawNumericType;
     }
 
     @Override

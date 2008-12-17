@@ -65,7 +65,7 @@ import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 
 /**
- * Manage the scheduled process of data collection, detection and sending across all plugins.
+ * Manage the scheduled process of measurement data collection, detection and sending across all plugins.
  *
  * <p/>
  * <p>This is an agent service; its interface is made remotely accessible if this is deployed within the agent.</p>
@@ -327,12 +327,11 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             ResourceContainer resourceContainer = im.getResourceContainer(resourceRequest.getResourceId());
             if (resourceContainer != null) {
                 //                resourceContainer.updateMeasurementSchedule(resourceRequest.getMeasurementSchedules());   // this is where we want to update rather than overwrite, right?
-
                 resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
                 scheduleCollection(resourceRequest.getResourceId(), resourceRequest.getMeasurementSchedules());
             } else {
                 // This will happen when the server sends down schedules to an agent with a cleaned inventory
-                // Its ok to skip these because the agent will request a reschedule once its been able to synchronize
+                // It's ok to skip these because the agent will request a reschedule once its been able to synchronize
                 // and add these to inventory
                 LOG.debug("Resource container was null, could not schedule collection for resource "
                     + resourceRequest.getResourceId());
@@ -355,8 +354,12 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         // This ensures that all the schedules for a single resource start at the same time
         // This will enable them to be collected at the same time
         long firstCollection = System.currentTimeMillis();
+        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+        ResourceContainer resourceContainer = inventoryManager.getResourceContainer(resourceId);
+        ResourceType resourceType = resourceContainer.getResource().getResourceType();
         for (MeasurementScheduleRequest request : requests) {
             ScheduledMeasurementInfo info = new ScheduledMeasurementInfo(request, resourceId);
+
             info.setNextCollection(firstCollection);
 
             // This is a workaround for JDK Bug 6207984 (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6207984)
@@ -495,18 +498,20 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     }
 
     private Double updatePerMinuteMetric(MeasurementDataNumeric numeric) {
-        CachedValue existing = this.perMinuteCache.get(numeric.getScheduleId());
-        Double value = null;
-        if (existing != null) {
-            long timeDifference = numeric.getTimestamp() - existing.timestamp;
-            value = (60000D / timeDifference) * (numeric.getValue() - existing.value);
-            if (((numeric.getNumericType() == NumericType.TRENDSUP) && (value < 0))
-                || ((numeric.getNumericType() == NumericType.TRENDSDOWN) && (value > 0))) {
-                value = null;
-            }
-        }
+        CachedValue previousValue = this.perMinuteCache.get(numeric.getScheduleId());
         this.perMinuteCache.put(numeric.getScheduleId(), new CachedValue(numeric.getTimestamp(), numeric.getValue()));
-        return value;
+        Double perMinuteValue = null;
+        if (previousValue != null) {
+            long timeDifference = numeric.getTimestamp() - previousValue.timestamp;
+            perMinuteValue = (60000D / timeDifference) * (numeric.getValue() - previousValue.value);
+            if (numeric.getRawNumericType() == NumericType.TRENDSDOWN)
+                perMinuteValue *= -1D; // Multiply by -1, so per-minute value is positive.
+            if (perMinuteValue < 0)
+                // A negative value means the raw metric must have been reset, which means we can't accurately
+                // calculate a per-minute value this time around; return null to indicate this.
+                perMinuteValue = null;
+        }
+        return perMinuteValue;
     }
 
     // -- MBean monitoring methods

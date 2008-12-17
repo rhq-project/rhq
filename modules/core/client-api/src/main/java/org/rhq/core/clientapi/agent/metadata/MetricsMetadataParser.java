@@ -130,13 +130,17 @@ public class MetricsMetadataParser {
             ArrayList<MeasurementDefinition> definitions = new ArrayList<MeasurementDefinition>();
             MeasurementDefinition perMinuteMetric = new MeasurementDefinition(definition);
 
-            // Default to applying "defaultOn, Summary Type, etc. to the per minute version of the metric so only one is enabled by default
+            // Default to applying defaultOn, SUMMARY type, etc. to the per-minute version of the metric,
+            // so only the per-minute, and not the raw, is enabled by default.
             definition.setDisplayType(DisplayType.DETAIL);
             definition.setDefaultOn(false);
 
             perMinuteMetric.setDisplayName(perMinuteMetric.getDisplayName() + " per Minute");
-            perMinuteMetric.setPerMinute(true);
-            // Per minute is no longer monotonically increasing/decreasing, but swinging within some band
+
+            // This keeps track of whether the associated raw metric is TRENDUP or TRENDSDOWN.
+            perMinuteMetric.setRawNumericType(definition.getNumericType());
+
+            // The per-minute metric is no longer monotonically increasing/decreasing, but swinging within some band.
             perMinuteMetric.setNumericType(NumericType.DYNAMIC);
 
             definitions.add(definition);

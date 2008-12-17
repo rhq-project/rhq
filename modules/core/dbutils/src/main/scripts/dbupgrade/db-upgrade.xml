@@ -1089,13 +1089,29 @@ DB Upgrade:
    <schemaSpec version="2.35">
       <!-- Remove RHQ_RESOURCE_GROUP.CLUSTER_KEY added in 2.31. This value will instead be the group name -->
       <schema-deleteColumn table="RHQ_RESOURCE_GROUP" column="CLUSTER_KEY" />
-   	<!-- Increase RHQ_RESOURCE_GROUP.NAME to accomodate the potentially large cluster key values --> 
+      <!-- Increase RHQ_RESOURCE_GROUP.NAME to accomodate the potentially large cluster key values -->
       <schema-alterColumn
           table="RHQ_RESOURCE_GROUP"
           column="NAME"
           columnType="VARCHAR2"
           precision="4000" />
    </schemaSpec>
+
+   <schemaSpec version="2.36">
+       <schema-directSQL>
+          <statement desc="Deleting unique constraint on RHQ_MEASUREMENT_DEF">
+             DROP INDEX RHQ_METRIC_DEF_KEY_IDX
+          </statement>
+       </schema-directSQL>
+      <schema-deleteColumn table="RHQ_MEASUREMENT_DEF" column="PER_MINUTE" />
+      <schema-addColumn table="RHQ_MEASUREMENT_DEF" column="RAW_NUMERIC_TYPE" columnType="SMALLINT" />
+      <schema-directSQL>
+          <statement desc="Creating unique constraint on RHQ_MEASUREMENT_DEF (RESOURCE_TYPE_ID, NAME, RAW_NUMERIC_TYPE)">
+             CREATE UNIQUE INDEX RHQ_METRIC_DEF_KEY_IDX ON RHQ_MEASUREMENT_DEF (RESOURCE_TYPE_ID, NAME, RAW_NUMERIC_TYPE)
+          </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

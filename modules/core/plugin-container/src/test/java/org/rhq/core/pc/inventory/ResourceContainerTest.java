@@ -62,7 +62,7 @@ public class ResourceContainerTest {
             resourceComponentProxy.getAvailability();
             assert (false);
         } catch (RuntimeException e) {
-            assert (e instanceof TimeoutException);
+            assert (e instanceof TimeoutException) : "[" + e + "] is not a org.rhq.core.pc.inventory.TimeoutException.";
         }
         System.out.println("SUCCESS!");
         System.out.println("Testing proxy call that should complete successfully...");

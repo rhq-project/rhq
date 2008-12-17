@@ -569,6 +569,9 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             listName);
         FacesComponentUtility.addParameter(viewEditLink, this.config, RequestParameterNameConstants.LIST_INDEX_PARAM,
             listIndex);
+        int configId = this.config.getConfiguration().getId();
+        FacesComponentUtility.addParameter(viewEditLink, this.config, RequestParameterNameConstants.CONFIG_ID_PARAM,
+            String.valueOf(configId));
         FacesComponentUtility.addButton(viewEditLink, viewEditButtonLabel, BUTTON_SMALL_STYLE_CLASS);
 
         if (!isReadOnly(listMemberMapPropertyDefinition.getParentPropertyListDefinition())) {

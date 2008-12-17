@@ -22,8 +22,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -34,10 +37,20 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  * @author Greg Hinkle
  */
 public class VirtualizationDiscoveryComponent implements ResourceDiscoveryComponent {
+
+    private Log log = LogFactory.getLog(getClass());
+
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
         throws InvalidPluginConfigurationException, Exception {
         LibVirtConnection virt = new LibVirtConnection();
-        int[] ids = virt.getDomainIds();
+        int[] ids;
+        try {
+            ids = virt.getDomainIds();
+        }
+        catch (Exception e) {
+            log.info(e.getMessage());
+            return null;
+        }
         List<String> guests = virt.getDomainNames();
 
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();

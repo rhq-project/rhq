@@ -18,11 +18,11 @@
  */
 package org.rhq.plugins.virt;
 
-import org.apache.commons.logging.LogFactory;
-import org.apache.commons.logging.Log;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Represents a connection, via libVirt to domain management.
@@ -69,11 +69,11 @@ public class LibVirtConnection {
     }
 
 
-    public int[] getDomainIds() {
+    public int[] getDomainIds() throws Exception {
         int[] ids = new int[100];
         int result = LibVirt.INSTANCE.virConnectListDomains(connectionPointer, ids, 100);
         if (result < 0) {
-            throw new RuntimeException("Couldn't list domain ids");
+            throw new Exception("Couldn't list domain ids");
         }
 
         int[] found = new int[result];
@@ -183,7 +183,7 @@ public class LibVirtConnection {
         if (result < 0)
             throw new RuntimeException("Failed to set max memory");
     }
-    
+
     public void setMemory(String domainName, long size) {
         LibVirt.DomainPointer domainPointer = LibVirt.INSTANCE.virDomainLookupByName(connectionPointer, domainName);
         int result = LibVirt.INSTANCE.virDomainSetMemory(domainPointer, size);

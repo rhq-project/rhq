@@ -68,16 +68,6 @@
                <f:facet name="PageControlView">
                   <onc:paginationControl id="GroupConnectionPropertyUpdateDetails" />
                </f:facet>
-      
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="cu.id">
-                        <h:outputText styleClass="headerText" value="ID" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  
-                  <h:outputText value="#{item.id}"/>
-               </rich:column>
 
                <rich:column>
                   <f:facet name="header">
@@ -96,7 +86,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                  
-                  <h:outputText value="#{item.update.status}"/>
+                  <h:outputText value="#{item.status}"/>
                </rich:column>
 
                <rich:column>
@@ -104,7 +94,7 @@
                       <h:outputText styleClass="headerText" value="Details" />
                   </f:facet>
                  
-                  <h:outputText value="#{item.update.errorMessage}"/>
+                  <h:outputText value="#{item.errorMessage}"/>
                </rich:column>
 
                <rich:column>
@@ -116,7 +106,7 @@
                
                   <h:outputLink value="/rhq/resource/inventory/view.xhtml">
                      <f:param name="id" value="#{item.resourceId}" />
-                     <h:outputText value="#{item.update.createdTime}">
+                     <h:outputText value="#{item.createdTime}">
                         <f:converter converterId="UserDateTimeConverter" />
                      </h:outputText>
                   </h:outputLink>
@@ -129,7 +119,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.update.modifiedTime}">
+                  <h:outputText value="#{item.modifiedTime}">
                      <f:converter converterId="UserDateTimeConverter" />
                   </h:outputText>
                </rich:column>
@@ -141,12 +131,12 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{item.update.subjectName}" />
+                  <h:outputText value="#{item.subjectName}" />
                </rich:column>
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="7" width="100%">
+                     <rich:column colspan="6" width="100%">
                         <ui:param name="paginationDataTableName" value="groupConnectionPropertyDetailsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{groupConnectionPropertyDetailsDataModel}"/>
                         <ui:param name="paginationPageControl" value="#{PageControl.GroupConnectionPropertyUpdateDetails}"/>

@@ -51,7 +51,10 @@ import org.rhq.core.domain.resource.Resource;
         + "   AND cu.modifiedTime = ( SELECT MAX(cu2.modifiedTime) " + "  FROM PluginConfigurationUpdate cu2 "
         + " WHERE cu2.resource.id = :resourceId) "),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_COMPOSITE_BY_PARENT_UPDATE_ID, query = "" //
-        + "SELECT new org.rhq.core.domain.configuration.composite.PluginConfigurationUpdateResourceComposite( cu, cu.resource.id, cu.resource.name ) "
+        + "SELECT new org.rhq.core.domain.configuration.composite.PluginConfigurationUpdateResourceComposite" //
+        + "       ( cu.status, cu.errorMessage, cu.subjectName, cu.createdTime, cu.modifiedTime, " // update w/o config
+        + "         cu.resource.id, " // just the id so as to create a link to the resource from the history table
+        + "         cu.resource.name ) "
         + "  FROM PluginConfigurationUpdate cu "
         + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID, query = "SELECT cu.id "
@@ -66,6 +69,9 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, query = "DELETE FROM PluginConfigurationUpdate pcu WHERE pcu.resource IN (:resources))"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP, query = "UPDATE PluginConfigurationUpdate pcu SET pcu.aggregateConfigurationUpdate = null WHERE pcu.aggregateConfigurationUpdate IN ( select apcu FROM AggregatePluginConfigurationUpdate apcu WHERE apcu.group.id = :groupId )"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "UPDATE PluginConfigurationUpdate pcu SET pcu.aggregateConfigurationUpdate = null WHERE pcu.aggregateConfigurationUpdate IN ( select apcu FROM AggregatePluginConfigurationUpdate apcu WHERE apcu.id = :apcuId )") })
+/**
+ * @author Joseph Maruqes
+ */
 public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpdate {
     private static final long serialVersionUID = 1L;
 

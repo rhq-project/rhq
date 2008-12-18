@@ -160,6 +160,8 @@ public class AgentJavaServiceWrapperComponent implements ResourceComponent<Agent
                 executeLauncherScriptInThread("stop");
             } else if (name.equals("Remove")) {
                 executeLauncherScriptInThread("remove");
+            } else {
+                throw new UnsupportedOperationException("Invalid operation name: " + name);
             }
         } catch (Exception e) {
             throw new RuntimeException("Failed to invoke operation [" + name + "]", e);

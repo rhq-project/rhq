@@ -27,12 +27,17 @@
 
       <operation name="restart"
                  displayName="Restart Agent"
-                 description="Shuts down the agent's comm layer and plugin container and starts them up again">
+                 description="Shuts down the agent's comm layer and plugin container and starts them up again. This does *not* restart the agent's VM - use the launcher services to do that.">
       </operation>
 
       <operation name="shutdown"
                  displayName="Shutdown Agent"
-                 description="Shuts down the agent's comm layer and plugin container.  If the agent is in daemon mode, the entire VM will exit">
+                 description="Shuts down the agent's comm layer and plugin container.  If the agent is in daemon mode, the entire agent VM will exit">
+      </operation>
+
+      <operation name="restartPluginContainer"
+                 displayName="Restart Plugin Container"
+                 description="Recycles the plugin container. Use this if you want to reload plugins.">
       </operation>
 
       <operation name="downloadLatestFailoverList"
@@ -74,11 +79,6 @@
             <c:simple-property name="size" description="Size of the plugin file" />
             <c:simple-property name="md5" description="MD5 of the plugin file" />
          </results>
-      </operation>
-
-      <operation name="restartPluginContainer"
-                 displayName="Restart Plugin Container"
-                 description="Recycles the plugin container. Use this if you want to reload newly updated plugins.">
       </operation>
 
       <operation name="executeAvailabilityScan"
@@ -635,7 +635,35 @@
          </resource-configuration>
       </service>
 
-      <service name="Java Service Wrapper"
+      <service name="Launcher Script"
+               description="The script that can run the agent as a daemon service. The Environment Setup Script configures the behavior of this service."
+               discovery="AgentLauncherScriptDiscoveryComponent"
+               class="AgentLauncherScriptComponent"
+               singleton="true">
+
+         <plugin-configuration>
+            <c:simple-property name="Pathname" type="file" description="The full path to launcher script file" required="true"/>
+         </plugin-configuration>
+
+         <operation name="Restart" description="Restarts the agent VM.  This will completely kill the agent VM process (if it is running as this service) and then attempt to restart it. If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
+         </operation>
+
+         <operation name="Stop" description="Stops the agent VM gracefully. This will completely kill the agent VM process (if it is running as this service). If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
+         </operation>
+
+         <operation name="Kill" description="Performs a hard kill on the agent VM.  This will completely kill the agent VM process (if it is running as this service). If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
+         </operation>
+
+         <operation name="Status" description="Gets the status of agent VM, if it was launched by the launcher script.">
+            <results>
+               <c:simple-property name="exitCode" type="integer" />
+               <c:simple-property name="output" type="longString" />
+            </results>
+         </operation>
+
+      </service>
+
+      <service name="Java Service Wrapper Launcher"
                description="The Java Service Wrapper that can run the agent as a daemon service"
                discovery="AgentJavaServiceWrapperDiscoveryComponent"
                class="AgentJavaServiceWrapperComponent"

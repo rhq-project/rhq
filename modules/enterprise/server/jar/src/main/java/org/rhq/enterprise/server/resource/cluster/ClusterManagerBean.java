@@ -58,7 +58,7 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         ResourceGroup result = null;
 
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY);
-        query.setParameter("clusterKey", clusterKey);
+        query.setParameter("clusterKey", clusterKey.toString());
         if (!query.getResultList().isEmpty()) {
             throw new IllegalArgumentException("Backing Group exists for clusterKey: " + clusterKey);
         }
@@ -100,7 +100,7 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         ResourceGroup result = null;
 
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY);
-        query.setParameter("clusterKey", clusterKey);
+        query.setParameter("clusterKey", clusterKey.toString());
         try {
             result = (ResourceGroup) query.getSingleResult();
         } catch (NoResultException e) {
@@ -114,9 +114,9 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     public List<Resource> getAutoClusterResources(Subject subject, ClusterKey clusterKey) {
         // Build the query
         String queryString = getClusterKeyQuery(clusterKey);
-        System.out.println();
-        System.out.println(queryString);
-        System.out.println();
+        if (log.isDebugEnabled()) {
+            log.debug("getAutoClusterResources() generated query: " + queryString);
+        }
         Query query = entityManager.createQuery(queryString);
         List<Resource> rs = query.getResultList();
 
@@ -143,7 +143,7 @@ public class ClusterManagerBean implements ClusterManagerLocal {
      *  WHERE r2.resourceKey = :r2key AND r2.resourceType = :r2rt AND r2.parentResource IN (
      *   SELECT r1 FROM Resource r1 
      *   WHERE r1.resourceKey = :r1key AND r1.resourceType = :r1rt AND r1.parentResource IN ( 
-     *     SELECT rg.implicitResources FROM ResourceGroup rg
+     *     SELECT rgir FROM ResourceGroup rg JOIN rg.implicitResources rgir 
      *     WHERE rg = :rgId
      *  </pre>
      *  The parameters are actually filled in with the literal values.
@@ -160,7 +160,7 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         query.append(alias + ".parentResource IN ( ");
 
         if (1 == size) {
-            query.append(" SELECT rgir FROM ResourceGroup rg JOIN rg.implicitResources rgir WHERE rg = "
+            query.append("SELECT rgir FROM ResourceGroup rg JOIN rg.implicitResources rgir WHERE rg = "
                 + clusterKey.getClusterGroupId());
         } else {
             buildQuery(query, clusterKey, nodes.subList(0, size - 1));

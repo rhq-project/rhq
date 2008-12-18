@@ -43,8 +43,8 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
  *  
  *  Expressed Recursively:
  *  
- *  Depth-1 AutoCluster : CompatibleGroupId::ResourceTypeId1:ResourceKey1
- *  Depth-N Cluster : <ParentClusterKey>::ResourceTypeIdN:ResourceKeyN
+ *  Depth-1 AutoCluster  CompatibleGroupId::ResourceTypeId1:ResourceKey1
+ *  Depth-N AutoCluster  <ParentClusterKey>::ResourceTypeIdN:ResourceKeyN
  * </pre> 
  * @author jay shaughnessy
  *
@@ -124,11 +124,14 @@ public class ClusterKey {
 
     public String getKey() {
         if (null == key) {
-            key = clusterGroupId + DELIM_NODE;
+            StringBuilder b = new StringBuilder();
+            b.append(clusterGroupId);
 
             for (ClusterKey.Node node : hierarchy) {
-                key += node.toString();
+                b.append(DELIM_NODE);
+                b.append(node.toString());
             }
+            key = b.toString();
         }
 
         return key;
@@ -150,12 +153,14 @@ public class ClusterKey {
         if (null == namedKey) {
             ResourceGroup clusterResourceGroup = em.find(ResourceGroup.class, this.clusterGroupId);
 
-            namedKey = ((null == clusterResourceGroup) ? this.clusterGroupId : clusterResourceGroup.getName())
-                + DELIM_NODE;
+            StringBuilder b = new StringBuilder();
+            b.append((null == clusterResourceGroup) ? this.clusterGroupId : clusterResourceGroup.getName());
 
             for (ClusterKey.Node node : hierarchy) {
-                namedKey += node.toNamedString(em);
+                b.append(DELIM_NODE);
+                b.append(node.toNamedString(em));
             }
+            namedKey = b.toString();
         }
 
         return namedKey;

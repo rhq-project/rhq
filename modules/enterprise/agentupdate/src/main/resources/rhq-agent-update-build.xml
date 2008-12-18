@@ -251,14 +251,17 @@ Jar File: ${rhq.agent.update.jar-file}
    <!-- ================================================================= -->
    <target name="launch-agent"
            description="Runs the agent using the appropriate launcher script"
-           depends="launch-agent-windows, launch-agent-unix" />
+           depends="launch-agent-windows,launch-agent-unix,process-exit-code" />
 
    <!-- ================================================================= -->
    <target name="launch-agent-windows" if="iswindows">
       <echo>Launching the agent: ${rhq.agent.update.launch-script-dir}/rhq-agent-wrapper.bat</echo>
       <exec dir="${rhq.agent.update.launch-script-dir}"
             executable="cmd"
-            output="${rhq.agent.update.log-dir}/rhq-agent-launcher.log">
+            output="${rhq.agent.update.log-dir}/rhq-agent-launcher.log"
+            resultproperty="_launcher.exit.code"
+            failonerror="false"
+            failifexecutionfails="true">
         <arg line="/c rhq-agent-wrapper.bat restart"/>
       </exec>
    </target>
@@ -268,9 +271,16 @@ Jar File: ${rhq.agent.update.jar-file}
       <echo>Launching the agent: ${rhq.agent.update.launch-script-dir}/rhq-agent-wrapper.sh</echo>
       <exec dir="${rhq.agent.update.launch-script-dir}"
             executable="/bin/sh"
-            output="${rhq.agent.update.log-dir}/rhq-agent-launcher.log">
+            output="${rhq.agent.update.log-dir}/rhq-agent-launcher.log"
+            resultproperty="_launcher.exit.code"
+            failonerror="false"
+            failifexecutionfails="true">
         <arg line="rhq-agent-wrapper.sh restart"/>
       </exec>
    </target>
 
+   <!-- ================================================================= -->
+   <target name="process-exit-code">
+      <echo>Launched agent. result code=${_launcher.exit.code}</echo>
+   </target>
 </project>

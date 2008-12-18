@@ -134,6 +134,11 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
             for (Integer role_id : doomedRoleIds) {
                 Role doomedRole = entityManager.find(Role.class, role_id);
 
+                Query deleteNotificationQuery = entityManager
+                    .createQuery("DELETE FROM RoleNotification rn WHERE rn.role.id = :roleId");
+                deleteNotificationQuery.setParameter("roleId", role_id);
+                deleteNotificationQuery.executeUpdate(); // discard result, might not have been set for any notifications
+
                 for (Subject doomedSubjectRelationship : doomedRole.getSubjects()) {
                     doomedRole.removeSubject(doomedSubjectRelationship);
                     entityManager.merge(doomedSubjectRelationship);

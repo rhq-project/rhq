@@ -20,31 +20,23 @@ package org.rhq.enterprise.gui.inventory.resource;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Arrays;
-import java.util.Locale;
 
 import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
-import javax.faces.application.FacesMessage;
 
-import org.jvnet.inflector.Noun;
-import org.jvnet.inflector.Rule;
 import org.jvnet.inflector.Pluralizer;
-import org.jvnet.inflector.RuleBasedPluralizer;
-import org.jvnet.inflector.rule.SuffixInflectionRule;
 
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.util.CustomEnglishPluralizer;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -86,8 +78,6 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
     private List<ResourceType> manuallyAddableChildServiceTypes;
     private int manuallyAddableChildTypesCount;
 
-    private int deletableChildTypesCount;
-
     private String manuallyAddResourceTypeId;
     private String createNewResourceTypeId;
 
@@ -116,10 +106,6 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
         this.manuallyAddableChildServiceTypes = getManuallyAddableResourceTypes(this.childServiceTypes);
         this.manuallyAddableChildTypesCount = this.manuallyAddableChildServerTypes.size()
             + this.manuallyAddableChildServiceTypes.size();
-
-        List<ResourceType> deletableChildServerTypes = getDeleteableResourceTypes(this.childServerTypes);
-        List<ResourceType> deletableChildServiceTypes = getDeleteableResourceTypes(this.childServiceTypes);
-        this.deletableChildTypesCount = deletableChildServerTypes.size() + deletableChildServiceTypes.size();
 
         this.manuallyAddResourceTypeId = DEFAULT_RESOURCE_TYPE_ID;
         this.createNewResourceTypeId = DEFAULT_RESOURCE_TYPE_ID;
@@ -218,10 +204,6 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
         return this.creatableChildTypesCount;
     }
 
-    public int getDeletableChildTypesCount() {
-        return this.deletableChildTypesCount;
-    }
-
     public int getManuallyAddableChildTypesCount() {
         return this.manuallyAddableChildTypesCount;
     }
@@ -266,26 +248,6 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
         }
     }
 
-    public String uninventorySelectedResources() {
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-        String[] selectedResources = FacesContextUtility.getRequest().getParameterValues("selectedResources");
-        Integer[] selectedResourceIds = new Integer[selectedResources.length];
-        for (int i = 0; i < selectedResources.length; i++) {
-            selectedResourceIds[i] = Integer.parseInt(selectedResources[i]);
-        }
-        try {
-            this.resourceManager.deleteResources(subject, selectedResourceIds);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
-                "Uninventoried child Resource(s) with id(s) " + Arrays.asList(selectedResources) + ".");
-        }
-        catch (Exception e) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                "Failed to uninventory child Resource(s) with id(s) " + Arrays.asList(selectedResources) + ".");
-        }
-        refreshDataModel();
-        return "successOrFailure";
-    }
-
     private void refreshDataModel() {
         this.dataModel = new ListChildResourcesDataModel(PageControlView.ChildResourcesList, MANAGED_BEAN_NAME);
     }
@@ -314,18 +276,6 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
         return creatableResourceTypes;
     }
 
-    private List<ResourceType> getDeleteableResourceTypes(List<ResourceType> resourceTypes) {
-        // TODO: Do this via a separate SQL query rather than Java code.
-        List<ResourceType> deletableResourceTypes = new ArrayList<ResourceType>();
-        for (ResourceType resourceType : resourceTypes) {
-            if (resourceType.isDeletable()) {
-                deletableResourceTypes.add(resourceType);
-            }
-        }
-
-        return deletableResourceTypes;
-    }
-
     private SelectItem createSelectItemForResourceCategory(ResourceCategory resourceCategory, boolean disable) {
         SelectItem selectItem = new SelectItem(resourceCategory.name(), resourceCategory.getDisplayName() + "s");
         selectItem.setDisabled(disable);
@@ -336,7 +286,8 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
         List<SelectItem> selectItems = new ArrayList<SelectItem>();
         Pluralizer customPluralizer = new CustomEnglishPluralizer();
         for (ResourceType resourceType : resourceTypes) {
-            String label = NBSP + " - " + ((pluralize) ? customPluralizer.pluralize(resourceType.getName()) : resourceType.getName());
+            String label = NBSP + " - "
+                + ((pluralize) ? customPluralizer.pluralize(resourceType.getName()) : resourceType.getName());
             SelectItem selectItem = new SelectItem(resourceType.getId(), label);
             selectItem.setEscape(false); // so that the ampersands in the non-blanking spaces will not be escaped to &amp;
             selectItems.add(selectItem);
@@ -350,8 +301,6 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
         ListChildResourcesDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
-
-        private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
         @Override
         public PageList<ResourceComposite> fetchPage(PageControl pageControl) {
@@ -375,7 +324,7 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
                 }
             }
 
-            PageList<ResourceComposite> resourceComposites = this.resourceManager
+            PageList<ResourceComposite> resourceComposites = resourceManager
                 .getResourceCompositeForParentAndTypeAndCategory(EnterpriseFacesContextUtility.getSubject(),
                     resourceCategory, resourceTypeId, EnterpriseFacesContextUtility.getResource(), pageControl);
             return resourceComposites;

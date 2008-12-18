@@ -142,7 +142,8 @@
          <onc:allSelect target="selectedResources"/>
       </f:facet>
       
-      <onc:select name="selectedResources" value="#{resourceComposite.resource.id}"/>
+      <onc:select name="selectedResources" value="#{resourceComposite.resource.id}"
+                  rendered="#{resourceComposite.resource.resourceType.deletable}"/>
    </rich:column>
 
    <rich:column>
@@ -246,23 +247,11 @@
 
    <f:facet name="footer">
       <rich:columnGroup>
-         <rich:column colspan="7" width="100%">
-            <onc:selectCommandButton action="#{ListChildResourcesUIBean.uninventorySelectedResources}"
-                                     value="UNINVENTORY" target="selectedResources"
-                                     styleClass="on-pager-button buttonsmall"/>
-            
-            <ui:param name="confirmDeleteMessage" value="#{msg['resource.inventory.view.deleteResourceConfirm']}"/>
-            <ui:remove>
-            <!-- NOTE: The onclick JavaScript block below should not return true under any circumstance. It is does so,
-                       the JSF-RI-generated JavaScript will never get executed, and the browser will proceed to
-                       redirect to "#", which will do nothing but refresh the current page. -->
-            </ui:remove>
+         <rich:column colspan="#{childResourcesDataTable.columns}">
             <onc:selectCommandButton action="#{DeleteResourcesUIBean.deleteSelectedResources}"
                                      value="DELETE" target="selectedResources"
-                                     onclick="if (!confirm('#{confirmDeleteMessage}')) return false"
-                                     styleClass="on-pager-button buttonsmall"
-                                     rendered="#{ListChildResourcesUIBean.deletableChildTypesCount > 0 and ResourceUIBean.permissions.deleteResource}"/>
-
+                                     onclick="if (!confirm('#{msg['resource.inventory.view.deleteResourceConfirm']}')) return false"
+                                     styleClass="on-pager-button buttonsmall" />
 
             <ui:include src="../include/pagination.xhtml">
                <ui:param name="paginationDataTableName" value="childResourcesDataTable"/>
@@ -307,7 +296,7 @@
                   <f:selectItems value="#{ListChildResourcesUIBean.manuallyAddableChildServerTypes}"/>
                  <f:selectItems value="#{ListChildResourcesUIBean.manuallyAddableChildServiceTypes}"/>
                </h:selectOneMenu>
-            	<h:commandButton action="#{ManuallyAddChildResourceUIBean.startWorkflow}" value="OK"
+               <h:commandButton action="#{ManuallyAddChildResourceUIBean.startWorkflow}" value="OK"
                                 styleClass="buttonmed" style="margin-left: 3px"/>
             </h:panelGrid>
          </h:form>
@@ -328,7 +317,7 @@
                   <f:selectItems value="#{ListChildResourcesUIBean.creatableChildServerTypes}"/>
                   <f:selectItems value="#{ListChildResourcesUIBean.creatableChildServiceTypes}"/>
                </h:selectOneMenu>
-            	<h:commandButton id="createNewOKBtn" action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" value="OK"
+               <h:commandButton id="createNewOKBtn" action="#{DetermineChildResourceCreationTypeUIBean.determineCreationType}" value="OK"
                                 styleClass="buttonmed" style="margin-left: 3px"/>
             </h:panelGrid>
          </h:form>

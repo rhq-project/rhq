@@ -791,14 +791,16 @@
            <var-name>maxlength</var-name>
            <var-value>100</var-value>
          </var>
+         <msg name="maxlength" key="resource.common.inventory.error.NameMaxLength"/>
        </field>
        <field property="description" depends="maxlength">
          <arg0 name="maxlength" key="common.label.Description"/>
          <arg1 name="maxlength" key="${var:maxlength}" resource="false" />
          <var>
            <var-name>maxlength</var-name>
-           <var-value>250</var-value>
+           <var-value>100</var-value>
          </var>
+         <msg name="maxlength" key="resource.common.inventory.error.DescriptionMaxLength"/>
        </field>
        <field property="priority" depends="required">
          <arg0 name="required" key="alert.config.props.PB.Priority"/>

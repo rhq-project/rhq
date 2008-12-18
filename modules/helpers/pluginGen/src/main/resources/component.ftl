@@ -61,6 +61,12 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
 <#if props.resourceConfiguration>
 , ConfigurationFacet
 </#if>
+<#if props.createChildren>
+, CreateChildResourceFacet
+</#if>
+<#if props.deleteChildren>
+, DeleteResourceFacet
+</#if>
 {
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -135,11 +141,18 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
 
 <#if props.operations>
 
+
     public void startOperationFacet(OperationContext context) {
 
     }
 
 
+    /**
+     * Invokes the passed operation on the managed resource
+     * @param name Name of the operation
+     * @param params The method parameters
+     * @returns An operation result
+     */
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
 
         OperationResult res = new OperationResult();
@@ -153,15 +166,49 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
 
 
 <#if props.resourceConfiguration>
+    /**
+     * Load the configuration from a resource into the configuration
+     * @return The configuration of the resource
+     * @see org.rhq.core.pluginapi.configuration.ConfigurationFacet
+     */
     public Configuration loadResourceConfiguration()
     {
         // TODO supply code to load the configuration from the resource into the plugin
         return null;
     }
 
+    /**
+     * Write down the passed configuration into the resource
+     * @param report The configuration updated by the server
+     * @see org.rhq.core.pluginapi.configuration.ConfigurationFacet
+     */
     public void updateResourceConfiguration(ConfigurationUpdateReport report)
     {
         // TODO supply code to update the passed report into the resource
+    }
+</#if>
+
+<#if props.createChildren>
+    /**
+     * Create a child resource
+     * @see org.rhq.core.pluginapi.inventory.CreateChildResourceFacet
+     */
+    public CreateResourceReport createResource(CreateResourceReport report)
+    {
+        // TODO supply code to create a child resource
+
+        return null; // TODO change this
+    }
+</#if>
+
+<#if props.deleteChildren>
+    /**
+     * Delete a child resource
+     * @see org.rhq.core.pluginapi.inventory.DeleteResourceFacet
+     */
+    public void deleteResource() throws Exception
+    {
+        // TODO supply code to delete a child resource
     }
 </#if>
 }

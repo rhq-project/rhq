@@ -56,8 +56,12 @@ public class Props {
     private boolean events;
     /** Can the service create children ? */
     private boolean createChildren;
+    /** Can the service delete children ? */
+    private boolean deleteChildren;
     /** Use externals chars in the plugin jar ? */
     private boolean usesExternalJarsInPlugin;
+    /** Does it support manuall add of children ? */
+    private boolean manualAddOfChildren;
 
     /** Embedded children */
     private Set<Props> children = new HashSet<Props>();
@@ -190,6 +194,22 @@ public class Props {
         this.usesExternalJarsInPlugin = usesExternalJarsInPlugin;
     }
 
+    public boolean isDeleteChildren() {
+        return deleteChildren;
+    }
+
+    public void setDeleteChildren(boolean deleteChildren) {
+        this.deleteChildren = deleteChildren;
+    }
+
+    public boolean isManualAddOfChildren() {
+        return manualAddOfChildren;
+    }
+
+    public void setManualAddOfChildren(boolean manualAddOfChildren) {
+        this.manualAddOfChildren = manualAddOfChildren;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -208,7 +228,9 @@ public class Props {
         sb.append(", resourceConfiguration=").append(resourceConfiguration);
         sb.append(", events=").append(events);
         sb.append(", createChildren=").append(createChildren);
+        sb.append(", deleteChildren=").append(deleteChildren);
         sb.append(", usesExternalJarsInPlugin=").append(usesExternalJarsInPlugin);
+        sb.append(", manualAddOfChildren=").append(manualAddOfChildren);
         sb.append(", children=").append(children);
         sb.append('}');
         return sb.toString();

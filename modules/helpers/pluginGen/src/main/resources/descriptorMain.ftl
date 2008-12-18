@@ -31,6 +31,17 @@
             <#if props.singleton>
             singleton="true"
             </#if>
+            <#if props.manualAddOfChildren>
+            supportsManualAdd="true"
+            </#if>
+            <#if props.createChildren && props.deleteChildren>
+                createDeletePolicy="both"
+            <#elseif props.createChildren && !props.deleteChildren>
+                createDeletePolicy="create-only"
+            <#elseif !props.createChildren && props.deleteChildren>
+                createDeletePolicy="delete-only"
+            <#else > <#-- Dont mention it, as 'neither' is default -->
+            </#if>
         >
 
             <plugin-configuration>

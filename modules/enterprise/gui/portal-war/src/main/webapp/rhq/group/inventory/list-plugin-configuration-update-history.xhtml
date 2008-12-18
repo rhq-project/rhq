@@ -98,7 +98,9 @@
                      <f:param name="groupId" value="#{param.groupId}" />
                      <f:param name="category" value="#{param.category}" />
                      <f:param name="apcuId" value="#{item.id}" />
-                     <onc:userFormatter value="#{item.createdTime}" />
+                     <h:outputText value="#{item.createdTime}">
+                        <f:converter converterId="UserDateTimeConverter" />
+                     </h:outputText>
                   </h:outputLink>
                </rich:column>
  
@@ -109,7 +111,9 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <onc:userFormatter value="#{item.modifiedTime}" />
+                  <h:outputText value="#{item.modifiedTime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
                </rich:column>
                
                <rich:column>

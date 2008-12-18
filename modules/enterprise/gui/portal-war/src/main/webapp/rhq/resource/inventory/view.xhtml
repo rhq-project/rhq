@@ -41,7 +41,9 @@
 
       <h:panelGroup layout="block">
          <b>Date Created: </b>
-         <onc:userFormatter value="#{ResourceUIBean.ctime}" />
+         <h:outputText value="#{ResourceUIBean.ctime}">
+            <f:converter converterId="UserDateTimeConverter" />
+         </h:outputText>
       </h:panelGroup>
 
       <h:panelGroup layout="block">
@@ -52,7 +54,9 @@
 
       <h:panelGroup layout="block">
          <b>Date Last Modified: </b>
-         <onc:userFormatter value="#{ResourceUIBean.mtime}" />
+         <h:outputText value="#{ResourceUIBean.mtime}">
+            <f:converter converterId="UserDateTimeConverter" />
+         </h:outputText>
       </h:panelGroup>
       
       <h:panelGroup layout="block">
@@ -393,7 +397,9 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <onc:userFormatter value="#{createItem.createdTime}" />
+   <h:outputText value="#{createItem.createdTime}">
+      <f:converter converterId="UserDateTimeConverter" />
+   </h:outputText>
 </rich:column>
 
 <ui:remove><!-- Last Modified Time --></ui:remove>
@@ -404,7 +410,9 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <onc:userFormatter value="#{createItem.lastModifiedTime}" />
+   <h:outputText value="#{createItem.lastModifiedTime}">
+      <f:converter converterId="UserDateTimeConverter" />
+   </h:outputText>
 </rich:column>
 
 <ui:remove><!-- User --></ui:remove>
@@ -510,7 +518,9 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <onc:userFormatter value="#{deleteItem.createdTime}" />
+   <h:outputText value="#{deleteItem.createdTime}">
+      <f:converter converterId="UserDateTimeConverter" />
+   </h:outputText>
 </rich:column>
 
 <ui:remove><!-- Request Updated Time --></ui:remove>
@@ -521,7 +531,9 @@
       </onc:sortableColumnHeader>
    </f:facet>
 
-   <onc:userFormatter value="#{deleteItem.lastModifiedTime}" />
+   <h:outputText value="#{deleteItem.lastModifiedTime}">
+      <f:converter converterId="UserDateTimeConverter" />
+   </h:outputText>
 </rich:column>
 
 <ui:remove><!-- User --></ui:remove>

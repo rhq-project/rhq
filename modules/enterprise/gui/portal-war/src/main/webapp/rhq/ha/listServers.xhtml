@@ -142,8 +142,10 @@
                         <h:outputText styleClass="headerText" value="Last Update Time" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
-                  <onc:userFormatter value="#{item.server.mtime}" />
+
+                  <h:outputText value="#{item.server.mtime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
                </rich:column>
 
                <rich:column>

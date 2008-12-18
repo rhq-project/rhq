@@ -115,8 +115,10 @@
                         <h:outputText styleClass="headerText" value="Date Created" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
-                  <onc:userFormatter value="#{item.ctime}" />
+
+                  <h:outputText value="#{item.ctime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
                </rich:column>
                
                <rich:column>

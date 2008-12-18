@@ -95,13 +95,17 @@
                <tr>
                   <td align="right"><b>Installation Date:</b></td>
                   <td align="left">
-                     <onc:userFormatter value="#{serverDetails.ctime}" />
+                     <h:outputText value="#{serverDetails.ctime}">
+                        <f:converter converterId="UserDateTimeConverter" />
+                     </h:outputText>
                   </td>
                </tr>
                <tr>
                   <td align="right"><b>Last Update Time:</b></td>
                   <td align="left">
-                     <onc:userFormatter value="#{serverDetails.mtime}" />
+                     <h:outputText value="#{serverDetails.mtime}">
+                        <f:converter converterId="UserDateTimeConverter" />
+                     </h:outputText>
                   </td>
                </tr>
             </table>

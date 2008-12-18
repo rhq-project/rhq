@@ -94,7 +94,9 @@
                   <h:outputText styleClass="headerText" value="Date Created"/>
                </f:facet>
 
-               <onc:userFormatter value="#{plugin.ctime}" />
+               <h:outputText value="#{plugin.ctime}">
+                  <f:converter converterId="UserDateTimeConverter" />
+               </h:outputText>
             </rich:column>
 
 

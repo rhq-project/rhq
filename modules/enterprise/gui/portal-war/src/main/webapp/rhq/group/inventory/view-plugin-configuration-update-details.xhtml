@@ -116,7 +116,9 @@
                
                   <h:outputLink value="/rhq/resource/inventory/view.xhtml">
                      <f:param name="id" value="#{item.resourceId}" />
-                     <onc:userFormatter value="#{item.update.createdTime}" />
+                     <h:outputText value="#{item.update.createdTime}">
+                        <f:converter converterId="UserDateTimeConverter" />
+                     </h:outputText>
                   </h:outputLink>
                </rich:column>
 
@@ -127,7 +129,9 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <onc:userFormatter value="#{item.update.modifiedTime}" />
+                  <h:outputText value="#{item.update.modifiedTime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
                </rich:column>
                
                <rich:column>

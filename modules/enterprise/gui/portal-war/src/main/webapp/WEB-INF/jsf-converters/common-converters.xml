@@ -14,4 +14,14 @@
       <converter-class>org.rhq.enterprise.gui.common.converter.StringListToStringConverter</converter-class>
    </converter>
 
+   <converter>
+      <converter-id>DurationConverter</converter-id>
+      <converter-class>org.rhq.enterprise.gui.common.time.converter.DurationConverter</converter-class>
+   </converter>
+   
+   <converter>
+      <converter-id>UserDateTimeConverter</converter-id>
+      <converter-class>org.rhq.enterprise.gui.common.time.converter.UserDateTimeConverter</converter-class>
+   </converter>
+
 </faces-config>

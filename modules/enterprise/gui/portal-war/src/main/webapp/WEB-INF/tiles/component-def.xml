@@ -85,8 +85,5 @@
 
   <definition name=".portlet.notenabled"
               path="/common/components/NotEnabled.jsp"/>
-              
-  <definition name=".complexMessage"
-              path="/common/components/ComplexMessage.jsp"/>                            
 
 </tiles-definitions>

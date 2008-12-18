@@ -304,8 +304,10 @@
                         <h:outputText styleClass="headerText" value="Last Update Time" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
-                  <onc:userFormatter value="#{serverItem.ctime}" />
+
+                  <h:outputText value="#{serverItem.ctime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
                </rich:column>
 
                <f:facet name="footer">

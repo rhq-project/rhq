@@ -216,7 +216,9 @@
                            <h:outputText styleClass="headerText" value="Date Detected" />
                         </onc:sortableColumnHeader>                     
                      </f:facet>
-                     <onc:userFormatter value="#{platformQueueItem.ctime}" />
+                     <h:outputText value="#{platformQueueItem.ctime}">
+                        <f:converter converterId="UserDateTimeConverter" />
+                     </h:outputText>
                   </rich:column>
 
                   <rich:column>
@@ -258,7 +260,9 @@
                      </rich:column>
 
                      <rich:column>
-                        <onc:userFormatter value="#{serverQueueItem.ctime}" />
+                        <h:outputText value="#{serverQueueItem.ctime}">
+                           <f:converter converterId="UserDateTimeConverter" />
+                        </h:outputText>
                      </rich:column>
 
                      <rich:column>

@@ -40,7 +40,9 @@
       
       <h:panelGroup layout="block">
          <b>Date Created: </b>
-         <onc:userFormatter value="#{ResourceGroupUIBean.ctime}" />
+         <h:outputText value="#{ResourceGroupUIBean.ctime}">
+            <f:converter converterId="UserDateTimeConverter" />
+         </h:outputText>
       </h:panelGroup>
       
       <h:panelGroup layout="block">
@@ -51,7 +53,9 @@
       
       <h:panelGroup layout="block">
          <b>Date Last Modified: </b>
-         <onc:userFormatter value="#{ResourceGroupUIBean.mtime}" />
+         <h:outputText value="#{ResourceGroupUIBean.mtime}">
+            <f:converter converterId="UserDateTimeConverter" />
+         </h:outputText>
       </h:panelGroup>
       
       <h:panelGroup layout="block">

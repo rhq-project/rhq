@@ -20,15 +20,10 @@
          paginationPageControl - Page control value to set when changing the number of rows per page
 
          <ui:composition>
-<!-- 
-            <h:panelGroup layout="block" style="margin-top: .4ex; float: left;" rendered="false">
-               <a4j:status rendered="#{paginationDataModel.rowCount > PageControlSettingsUIBean.minimumPageSize}"
-                           startText="Processing..." />
-            </h:panelGroup>
- -->
-            <ui:param name="paginationDataScrollerName" value="#{paginationDataTableName}Scroller"/>
 
             <h:panelGroup layout="block" style="margin-top: .4ex; float: right;">
+               <ui:param name="paginationDataScrollerName" value="#{paginationDataTableName}Scroller"/>
+            
                <rich:datascroller id="#{paginationDataScrollerName}"
                                   for="#{paginationDataTableName}"
                                   rendered="#{paginationDataModel.rowCount > PageControlSettingsUIBean.minimumPageSize}"

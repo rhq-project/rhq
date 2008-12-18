@@ -57,13 +57,17 @@
                 <tr>
                    <td align="right">Date Submitted:</td>
                    <td align="left">
-                      <onc:userFormatter value="#{item.createdTime}" />
+                      <h:outputText value="#{item.createdTime}">
+                         <f:converter converterId="UserDateTimeConverter" />
+                      </h:outputText>
                    </td>
                 </tr>
                 <tr>
                    <td align="right">Date Completed:</td>
                    <td align="left">
-                      <onc:userFormatter value="#{item.modifiedTime}" rendered="#{item.status ne 'INPROGRESS'}" />
+                      <h:outputText value="#{item.modifiedTime}" rendered="#{item.status ne 'INPROGRESS'}" >
+                         <f:converter converterId="UserDateTimeConverter" />
+                      </h:outputText>
                    </td>
                 </tr>
                 <tr>
@@ -139,7 +143,9 @@
                      </onc:sortableColumnHeader>                     
                   </f:facet>
                   
-                  <onc:userFormatter value="#{resourceHistoryItem.createdTime}" />
+                  <h:outputText value="#{resourceHistoryItem.createdTime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
                </rich:column>
                
                <rich:column>

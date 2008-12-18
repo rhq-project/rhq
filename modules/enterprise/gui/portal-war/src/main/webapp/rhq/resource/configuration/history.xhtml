@@ -47,13 +47,17 @@
 	            <tr>
 	               <td align="right">Date Submitted:</td>
 	               <td align="left">
-	                  <onc:userFormatter value="#{latestConfig.createdTime}" />
+                      <h:outputText value="#{latestConfig.createdTime}">
+                         <f:converter converterId="UserDateTimeConverter" />
+                      </h:outputText>
 	               </td>
 	            </tr>
 	            <tr>
 	               <td align="right">Date Completed:</td>
 	               <td align="left">
-	                  <onc:userFormatter value="#{latestConfig.modifiedTime}"  rendered="#{latestConfig.status ne 'INPROGRESS'}"/>
+                      <h:outputText value="#{latestConfig.modifiedTime}"  rendered="#{latestConfig.status ne 'INPROGRESS'}" >
+                         <f:converter converterId="UserDateTimeConverter" />
+                      </h:outputText>
 	                  <h:outputText value="(in progress)"  rendered="#{latestConfig.status eq 'INPROGRESS'}"/>
 	               </td>
 	            </tr>
@@ -112,7 +116,9 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <onc:userFormatter value="#{item.createdTime}"/>
+                  <h:outputText value="#{item.createdTime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
                </rich:column>
                
                <rich:column>
@@ -122,7 +128,9 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <onc:userFormatter value="#{item.modifiedTime}"  rendered="#{item.status ne 'INPROGRESS'}"/>
+                  <h:outputText value="#{item.modifiedTime}"  rendered="#{item.status ne 'INPROGRESS'}" >
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
                </rich:column>
                
                <rich:column>

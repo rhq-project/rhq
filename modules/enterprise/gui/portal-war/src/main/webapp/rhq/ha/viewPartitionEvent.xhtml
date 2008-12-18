@@ -56,7 +56,9 @@
                <tr>
                   <td align="right"><b>Event Execution Time:</b></td>
                   <td align="left">
-                     <onc:userFormatter value="#{eventDetails.ctime}" />
+                     <h:outputText value="#{eventDetails.ctime}">
+                        <f:converter converterId="UserDateTimeConverter" />
+                     </h:outputText>
                   </td>
                </tr>
                <tr>

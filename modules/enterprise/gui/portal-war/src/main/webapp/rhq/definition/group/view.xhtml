@@ -36,7 +36,9 @@
       
       <h:panelGroup layout="block">
          <b>Date Created: </b>
-         <onc:userFormatter value="#{GroupDefinitionUIBean.createdTime}" />
+         <h:outputText value="#{GroupDefinitionUIBean.createdTime}">
+            <f:converter converterId="UserDateTimeConverter" />
+         </h:outputText>
       </h:panelGroup>
       
       <h:panelGroup layout="block">
@@ -47,7 +49,9 @@
       
       <h:panelGroup layout="block">
          <b>Date Last Modified: </b>
-         <onc:userFormatter value="#{GroupDefinitionUIBean.modifiedTime}" />
+         <h:outputText value="#{GroupDefinitionUIBean.modifiedTime}">
+            <f:converter converterId="UserDateTimeConverter" />
+         </h:outputText>
       </h:panelGroup>
 
       <h:panelGroup layout="block">
@@ -56,7 +60,9 @@
 
       <h:panelGroup layout="block">
          <b>Last Calculation Date: </b>
-         <onc:userFormatter value="#{GroupDefinitionUIBean.lastCalculationTime}" rendered="#{!empty GroupDefinitionUIBean.lastCalculationTime}" />
+         <h:outputText value="#{GroupDefinitionUIBean.lastCalculationTime}" rendered="#{!empty GroupDefinitionUIBean.lastCalculationTime}" >
+            <f:converter converterId="UserDateTimeConverter" />
+         </h:outputText>
          <h:outputText value="never" rendered="#{empty GroupDefinitionUIBean.lastCalculationTime}" />
       </h:panelGroup>
 

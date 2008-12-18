@@ -118,7 +118,9 @@
                      <f:param name="mode" value="viewAlert" />
                      <f:param name="id" value="#{Resource.id}" />
                      <f:param name="a" value="#{item.alert.id}" />
-                     <onc:userFormatter value="#{item.alert.ctime}" />
+                     <h:outputText value="#{item.alert.ctime}">
+                        <f:converter converterId="UserDateTimeConverter" />
+                     </h:outputText>
                   </h:outputLink>
                </rich:column>
                

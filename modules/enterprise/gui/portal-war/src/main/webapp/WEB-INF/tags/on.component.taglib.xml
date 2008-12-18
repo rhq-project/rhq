@@ -145,14 +145,6 @@
    </tag>
    
    <tag>
-      <tag-name>userFormatter</tag-name>
-      <component>
-         <component-type>org.jboss.on.UserFormatter</component-type>
-         <renderer-type>org.jboss.on.UserFormatter</renderer-type>
-      </component>
-   </tag>
-   
-   <tag>
       <tag-name>metric</tag-name>
       <component>
          <component-type>org.jboss.on.Metric</component-type>

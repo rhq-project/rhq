@@ -101,8 +101,10 @@
                         <h:outputText styleClass="headerText" value="Last Calculated" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
-                  <onc:userFormatter value="#{item.lastCalculationTime}" />
+
+                  <h:outputText value="#{item.lastCalculationTime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
                </rich:column>
                
                <rich:column>

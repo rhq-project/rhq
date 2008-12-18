@@ -160,11 +160,15 @@
    <tr>
       <td></td>
       <td colspan="30" valign="top">
-         <onc:userFormatter value="#{EventsTimelineUIBean.data[0].time}"/>
-            <div id="timePopup" class="timepopup" onmousedown="overlay.hideTimePopup()"></div>
+         <h:outputText value="#{EventsTimelineUIBean.data[0].time}">
+            <f:converter converterId="UserDateTimeConverter" />
+         </h:outputText>
+         <div id="timePopup" class="timepopup" onmousedown="overlay.hideTimePopup()"></div>
       </td>
       <td colspan="30" align="right" valign="top">
-         <onc:userFormatter value="#{EventsTimelineUIBean.data[59].time}"/>
+         <h:outputText value="#{EventsTimelineUIBean.data[59].time}">
+            <f:converter converterId="UserDateTimeConverter" />
+         </h:outputText>
       </td>
       <td></td>
    </tr>

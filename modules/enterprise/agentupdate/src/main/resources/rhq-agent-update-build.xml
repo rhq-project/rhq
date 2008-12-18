@@ -2,6 +2,11 @@
 
 <project name="rhq-agent-update" default="start" basedir=".">
 
+   <condition property="iswindows">
+      <os family="windows"/>
+   </condition>
+
+   <!-- ================================================================= -->
    <!-- this will back up the current agent, in case it needs to be recovered -->
    <!-- this is a standalone target that the AgentUpdate will call when it needs to backup the agent -->
    <target name="backup-agent">
@@ -15,6 +20,7 @@
       <echo>=== BACKUP OF CURRENT AGENT COMPLETE ===</echo>
    </target>
 
+   <!-- ================================================================= -->
    <!-- this will restore a backed up agent -->
    <!-- this is a standalone target that the AgentUpdate will call when it needs to restore the agent -->
    <target name="restore-agent">
@@ -36,10 +42,12 @@
       <echo>=== RESTORE OF OLD AGENT COMPLETE ===</echo>
    </target>
 
+   <!-- ================================================================= -->
    <!-- the initial target that logs some basic information, then performs the install or update -->
    <target name="start" depends="header, verify, install, update">
    </target>
 
+   <!-- ================================================================= -->
    <!-- performs a base install - this does not attempt to upgrade an agent; this provisions a fresh new agent -->
    <target name="install" unless="rhq.agent.update.update-flag">
       <echo>Extract the agent distro zip from the agent update binary</echo>
@@ -67,6 +75,7 @@
       <echo>DONE! Agent version ${rhq-agent.latest.version} (build number=${rhq-agent.latest.build-number}) has been installed to ${rhq.agent.update.install-agent-dir}</echo>
    </target>
 
+   <!-- ================================================================= -->
    <!-- upgrades an existing agent -->
    <target name="update" if="rhq.agent.update.update-flag">
       <!-- we build up the new, updated agent in the update-### subdirectory
@@ -200,6 +209,7 @@
       </echo>
    </target>
 
+   <!-- ================================================================= -->
    <!-- makes sure the jar file where the agent distro is supposed to be actually exists -->
    <target name="verify">
       <fail message="Could not determine the location of the jar file or it does not exist: ${rhq.agent.update.jar-file}">
@@ -211,10 +221,12 @@
       </fail>
    </target>
 
+   <!-- ================================================================= -->
    <!-- header targets will simply output some information to the console -->
    <target name="header" depends="header-for-update, header-for-install">
    </target>
 
+   <!-- ================================================================= -->
    <target name="header-for-update" if="rhq.agent.update.update-flag">
       <echo>
 ===== RHQ AGENT UPDATE =====
@@ -225,6 +237,7 @@ Jar File: ${rhq.agent.update.jar-file}
 </echo>
    </target>
 
+   <!-- ================================================================= -->
    <target name="header-for-install" unless="rhq.agent.update.update-flag">
       <echo>
 ===== RHQ AGENT INSTALL =====
@@ -234,4 +247,30 @@ Build Number: ${rhq-agent.latest.build-number}
 Jar File: ${rhq.agent.update.jar-file}
 </echo>
    </target>
+
+   <!-- ================================================================= -->
+   <target name="launch-agent"
+           description="Runs the agent using the appropriate launcher script"
+           depends="launch-agent-windows, launch-agent-unix" />
+
+   <!-- ================================================================= -->
+   <target name="launch-agent-windows" if="iswindows">
+      <echo>Launching the agent: ${rhq.agent.update.launch-script-dir}/rhq-agent-wrapper.bat</echo>
+      <exec dir="${rhq.agent.update.launch-script-dir}"
+            executable="cmd"
+            output="${rhq.agent.update.log-dir}/rhq-agent-launcher.log">
+        <arg line="/c rhq-agent-wrapper.bat restart"/>
+      </exec>
+   </target>
+
+   <!-- ================================================================= -->
+   <target name="launch-agent-unix" unless="iswindows">
+      <echo>Launching the agent: ${rhq.agent.update.launch-script-dir}/rhq-agent-wrapper.sh</echo>
+      <exec dir="${rhq.agent.update.launch-script-dir}"
+            executable="/bin/sh"
+            output="${rhq.agent.update.log-dir}/rhq-agent-launcher.log">
+        <arg line="rhq-agent-wrapper.sh restart"/>
+      </exec>
+   </target>
+
 </project>

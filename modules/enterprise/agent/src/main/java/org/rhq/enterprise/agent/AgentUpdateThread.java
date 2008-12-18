@@ -138,11 +138,12 @@ public class AgentUpdateThread extends Thread {
             }
 
             // spawn a new Java VM to run the update jar
+            // if threads still aren't dead yet, make sure we pause the update longer than our kill thread wait time
             String javaExe = findJavaExe();
             List<String> args = new ArrayList<String>();
             args.add("-jar");
             args.add(aud.getAgentUpdateBinaryFile().getAbsolutePath());
-            args.add("--pause=" + ((numThreadsStillAlive > 0) ? "120000" : "10000"));
+            args.add("--pause=" + ((numThreadsStillAlive > 0) ? "80000" : "20000"));
             args.add("--update=" + this.agent.getAgentHomeDirectory());
 
             SystemInfo sysInfo = SystemInfoFactory.createSystemInfo();
@@ -192,7 +193,7 @@ public class AgentUpdateThread extends Thread {
 
         // We should only ever get here if everything was successful.
         // We now need to exit the thread; and if everything goes according to plan, the VM will now exit
-        shutdownHook.spawnKillThread(1000L * 60 * 5); // pull the pin - FIRE IN THE HOLE!
+        shutdownHook.spawnKillThread(1000L * 60 * 1); // pull the pin - FIRE IN THE HOLE!
         return;
     }
 

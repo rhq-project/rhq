@@ -51,7 +51,12 @@ import org.apache.tools.ant.helper.ProjectHelper2;
  *
  */
 public class AgentUpdate {
+
     private static final String RHQ_AGENT_UPDATE_VERSION_PROPERTIES = "rhq-agent-update-version.properties";
+    private static final String BUILD_TASKS_PROPERTIES_FILE = "rhq-agent-update-build-tasks.properties";
+    private static final String ANT_TARGET_BACKUP_AGENT = "backup-agent";
+    private static final String ANT_TARGET_RESTORE_AGENT = "restore-agent";
+    private static final String ANT_TARGET_LAUNCH_AGENT = "launch-agent";
 
     private static final String DEFAULT_OLD_AGENT_HOME = "rhq-agent";
     private static final String DEFAULT_NEW_AGENT_HOME_PARENT = ".";
@@ -62,6 +67,7 @@ public class AgentUpdate {
     private boolean showVersion = false;
     private boolean updateFlag = false;
     private boolean installFlag = false;
+    private Boolean launchFlag;
     private String oldAgentHomeArgument = DEFAULT_OLD_AGENT_HOME;
     private String newAgentHomeParentArgument = DEFAULT_NEW_AGENT_HOME_PARENT;
     private String logFileArgument = DEFAULT_LOG_FILE;
@@ -95,13 +101,13 @@ public class AgentUpdate {
             System.out.println();
             agentUpdate.printSyntax();
             System.out.println();
-            agentUpdate.showVersion();
+            agentUpdate.showVersionInfo();
             return;
         }
 
         // if the user passed --version, show the version and exit immediately
         if (agentUpdate.showVersion) {
-            agentUpdate.showVersion();
+            agentUpdate.showVersionInfo();
             return;
         }
 
@@ -120,19 +126,24 @@ public class AgentUpdate {
         // set some properties that we can pass to the ANT script
         Properties props = agentUpdate.getAgentUpdateVersionProperties();
         props.setProperty("rhq.agent.update.jar-file", agentUpdate.getJarFilename());
+        props.setProperty("rhq.agent.update.log-dir", (logFile.getParent() != null) ? logFile.getParent() : ".");
         if (agentUpdate.updateFlag) {
             props.setProperty("rhq.agent.update.update-flag", "true");
             props.setProperty("rhq.agent.update.update-agent-dir", agentUpdate.oldAgentHomeArgument);
+            props.setProperty("rhq.agent.update.launch-script-dir", new File(agentUpdate.oldAgentHomeArgument, "bin")
+                .getAbsolutePath());
         } else if (agentUpdate.installFlag) {
             props.setProperty("rhq.agent.update.install-flag", "true");
             props.setProperty("rhq.agent.update.install-agent-dir", agentUpdate.newAgentHomeParentArgument);
+            props.setProperty("rhq.agent.update.launch-script-dir", new File(agentUpdate.newAgentHomeParentArgument,
+                "rhq-agent/bin").getAbsolutePath());
         }
 
         // if we are updating, backup the current agent just in case we have to restore it
         if (agentUpdate.updateFlag) {
             try {
-                agentUpdate.startAnt(buildFile, "backup-agent", "rhq-agent-update-build-tasks.properties", props,
-                    logFile, !agentUpdate.quietFlag);
+                agentUpdate.startAnt(buildFile, ANT_TARGET_BACKUP_AGENT, BUILD_TASKS_PROPERTIES_FILE, props, logFile,
+                    !agentUpdate.quietFlag);
             } catch (Exception e) {
                 logMessage(logFile, "WARNING! Agent backup failed! Agent will not recover if it can't update!");
                 logStackTrace(logFile, e);
@@ -141,15 +152,14 @@ public class AgentUpdate {
 
         // run the default ant script target now
         try {
-            agentUpdate.startAnt(buildFile, null, "rhq-agent-update-build-tasks.properties", props, logFile,
-                !agentUpdate.quietFlag);
+            agentUpdate.startAnt(buildFile, null, BUILD_TASKS_PROPERTIES_FILE, props, logFile, !agentUpdate.quietFlag);
         } catch (Exception e) {
             // if we were updating, try to restore the old agent to recover from the error
             if (agentUpdate.updateFlag) {
                 logMessage(logFile, "WARNING! Agent update failed! Will try to restore old agent!");
                 logStackTrace(logFile, e);
                 try {
-                    agentUpdate.startAnt(buildFile, "restore-agent", "rhq-agent-update-build-tasks.properties", props,
+                    agentUpdate.startAnt(buildFile, ANT_TARGET_RESTORE_AGENT, BUILD_TASKS_PROPERTIES_FILE, props,
                         logFile, true);
                 } catch (Exception e2) {
                     logMessage(logFile, "WARNING! Agent restore failed! Agent is dead and cannot recover!");
@@ -160,6 +170,20 @@ public class AgentUpdate {
                 logStackTrace(logFile, e);
                 throw e;
             }
+        }
+
+        // if we are not to start the agent, we are done and can return now
+        if (!agentUpdate.launchFlag.booleanValue()) {
+            return;
+        }
+
+        // now start the agent using the proper launcher script
+        try {
+            agentUpdate.startAnt(buildFile, ANT_TARGET_LAUNCH_AGENT, BUILD_TASKS_PROPERTIES_FILE, props, logFile, true);
+        } catch (Exception e) {
+            logMessage(logFile, "WARNING! Agent failed to be restarted!");
+            logStackTrace(logFile, e);
+            throw e;
         }
 
         return;
@@ -214,7 +238,7 @@ public class AgentUpdate {
         }
     }
 
-    private void showVersion() throws Exception {
+    private void showVersionInfo() throws Exception {
         String str = "\n" //
             + "============================================\n" //
             + "RHQ Agent Update Binary Version Information:\n" //
@@ -269,6 +293,11 @@ public class AgentUpdate {
             + "                                Note the directory will be the parent of the\n" //
             + "                                new agent home installation directory.\n" //
             + "                                This is mutually exclusive of --update\n" //
+            + "[--launch=<true|false>] : If specified, this explicitly indicates if the\n" //
+            + "                          agent should be started immediately after being\n" //
+            + "                          installed or updated. If not specified, the\n" //
+            + "                          default will be 'false' if installing a new agent\n" //
+            + "                          and 'true' if updating an existing agent.\n" //
             + "[--quiet] : If specified, this turns off console log messages.\n" //
             + "[--pause[=<ms>]] : If specified, the update will not occur until the given\n" //
             + "                   number of milliseconds expires. If this option is given\n" //
@@ -304,13 +333,14 @@ public class AgentUpdate {
             throw new UnsupportedOperationException();
         }
 
-        String sopts = "u::i::qhvl:j:p::s:";
+        String sopts = "u::i::qhvo:j:p::s:l:";
         LongOpt[] lopts = { new LongOpt("update", LongOpt.OPTIONAL_ARGUMENT, null, 'u'), // updates existing agent
             new LongOpt("install", LongOpt.OPTIONAL_ARGUMENT, null, 'i'), // installs agent
             new LongOpt("quiet", LongOpt.NO_ARGUMENT, null, 'q'), // if not set, dumps log message to stdout too
+            new LongOpt("launch", LongOpt.REQUIRED_ARGUMENT, null, 'l'), // if agent should be started or not
             new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'), // will show the syntax help
             new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'v'), // shows version info
-            new LongOpt("log", LongOpt.REQUIRED_ARGUMENT, null, 'l'), // location of the log file
+            new LongOpt("log", LongOpt.REQUIRED_ARGUMENT, null, 'o'), // location of the log file
             new LongOpt("jar", LongOpt.REQUIRED_ARGUMENT, null, 'j'), // location of an external jar that has our agent
             new LongOpt("pause", LongOpt.OPTIONAL_ARGUMENT, null, 'p'), // pause (sleep) before updating
             new LongOpt("script", LongOpt.REQUIRED_ARGUMENT, null, 's') }; // switch immediately to the given server
@@ -375,8 +405,13 @@ public class AgentUpdate {
                 break;
             }
 
-            case 'l': {
+            case 'o': {
                 this.logFileArgument = getopt.getOptarg();
+                break;
+            }
+
+            case 'l': {
+                this.launchFlag = Boolean.valueOf(Boolean.parseBoolean(getopt.getOptarg()));
                 break;
             }
 
@@ -423,6 +458,11 @@ public class AgentUpdate {
 
         if (!this.updateFlag && !this.installFlag) {
             throw new IllegalArgumentException("Must specify either --update or --install");
+        }
+
+        if (this.launchFlag == null) {
+            // default is to start agent if we are updating; not start if installing
+            this.launchFlag = Boolean.valueOf(this.updateFlag);
         }
 
         if (pause > 0) {
@@ -501,9 +541,10 @@ public class AgentUpdate {
             // notice we are adding the listener before we set the properties - if we do not want the
             // the properties echoed out in the log (e.g. if they contain sensitive passwords)
             // we should do this after we set the properties.
-            project.addBuildListener(new LoggerAntBuildListener(logFileOutput, Project.MSG_DEBUG));
+            project.addBuildListener(new LoggerAntBuildListener(target, logFileOutput, Project.MSG_DEBUG));
             if (logStdOut) {
-                project.addBuildListener(new LoggerAntBuildListener(new PrintWriter(System.out), Project.MSG_INFO));
+                PrintWriter stdout = new PrintWriter(System.out);
+                project.addBuildListener(new LoggerAntBuildListener(target, stdout, Project.MSG_INFO));
             }
 
             if (properties != null) {

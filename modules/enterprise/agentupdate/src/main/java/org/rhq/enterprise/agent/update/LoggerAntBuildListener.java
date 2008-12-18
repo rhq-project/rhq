@@ -32,25 +32,28 @@ import org.apache.tools.ant.Task;
  * @author John Mazzitelli
  */
 public class LoggerAntBuildListener implements BuildListener {
-    private PrintWriter output;
-    private int priorityThreshold;
+    private final String mainTarget;
+    private final PrintWriter output;
+    private final int priorityThreshold;
 
-    public LoggerAntBuildListener(PrintWriter logFile, int priorityThreshold) {
+    public LoggerAntBuildListener(String target, PrintWriter logFile, int priorityThreshold) {
+        this.mainTarget = (target != null) ? target : "(default)";
         this.output = logFile;
         this.priorityThreshold = priorityThreshold;
 
         // start with the date this was started
         this.output.println("======================================");
+        this.output.println("ANT target [" + this.mainTarget + "]");
         this.output.println(new Date().toString());
         this.output.println("======================================");
     }
 
     public void buildFinished(BuildEvent event) {
-        logEvent(event, "FINISHED!");
+        logEvent(event, "FINISHED! [" + this.mainTarget + ']');
     }
 
     public void buildStarted(BuildEvent event) {
-        logEvent(event, "STARTED!");
+        logEvent(event, "STARTED! [" + this.mainTarget + ']');
     }
 
     public void messageLogged(BuildEvent event) {

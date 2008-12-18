@@ -205,7 +205,7 @@ debug_msg "$CMD"
 if [ "x$RHQ_AGENT_IN_BACKGROUND" = "x" ]; then
    eval "$CMD"
 else
-   eval "$CMD" &
+   eval "$CMD &"
    RHQ_AGENT_BACKGROUND_PID=$!
    export RHQ_AGENT_BACKGROUND_PID
    if [ "$RHQ_AGENT_IN_BACKGROUND" != "nofile" ]; then

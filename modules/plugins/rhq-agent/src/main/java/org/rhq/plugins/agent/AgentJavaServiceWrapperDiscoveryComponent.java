@@ -166,7 +166,7 @@ public class AgentJavaServiceWrapperDiscoveryComponent implements ResourceDiscov
     }
 
     /**
-     * Returns the base filename where the JSW is to be found.
+     * Returns the base directory where the JSW is to be found.
      * This is dependent on the platform we are running on.
      * Windows machines will return a non-<code>null</code> string but because the
      * JSW is not used by the agent on UNIX machines, <code>null</code> will be returned

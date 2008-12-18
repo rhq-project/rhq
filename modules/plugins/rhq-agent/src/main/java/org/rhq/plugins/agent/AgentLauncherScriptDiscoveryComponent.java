@@ -133,7 +133,7 @@ public class AgentLauncherScriptDiscoveryComponent implements ResourceDiscoveryC
             location = discoveredLocation.getAbsolutePath(); // ...if we can't, use absolute path
         }
 
-        File launcher = new File(new File(location).getParentFile(), "rhq-agent-wrapper.sh");
+        File launcher = new File(new File(location), "rhq-agent-wrapper.sh");
 
         DiscoveredResourceDetails details = new DiscoveredResourceDetails(context.getResourceType(), key, name,
             version, description, null, null);

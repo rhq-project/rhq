@@ -84,6 +84,8 @@ public class AgentLauncherScriptComponent implements ResourceComponent<AgentServ
 
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
 
+        log.info("Launcher script executing [" + name + "]");
+
         OperationResult result = null;
         try {
             if (name.equals("Status")) {
@@ -104,6 +106,9 @@ public class AgentLauncherScriptComponent implements ResourceComponent<AgentServ
         } catch (Exception e) {
             throw new RuntimeException("Failed to invoke operation [" + name + "]", e);
         }
+
+        log.info("Launcher script executed [" + name + "]: " + result);
+
         return result;
     }
 

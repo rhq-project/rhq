@@ -139,6 +139,8 @@ public class AgentJavaServiceWrapperComponent implements ResourceComponent<Agent
 
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
 
+        log.info("Wrapper launcher script executing [" + name + "]");
+
         OperationResult result = null;
         try {
             if (name.equals("Status")) {
@@ -166,6 +168,8 @@ public class AgentJavaServiceWrapperComponent implements ResourceComponent<Agent
         } catch (Exception e) {
             throw new RuntimeException("Failed to invoke operation [" + name + "]", e);
         }
+
+        log.info("Launcher script executed [" + name + "]: " + result);
         return result;
     }
 

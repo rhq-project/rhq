@@ -494,8 +494,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         sched.setParameters(parameters);
         sched.setExecutionOrder(executionOrder);
         sched.setDescription(description);
-        sched.setHaltOnFailure(jobDataMap
-            .getBooleanValueFromString(GroupOperationJob.DATAMAP_INT_ARRAY_EXECUTION_ORDER));
+        sched.setHaltOnFailure(jobDataMap.getBooleanValueFromString(GroupOperationJob.DATAMAP_BOOL_HALT_ON_FAILURE));
 
         return sched;
     }

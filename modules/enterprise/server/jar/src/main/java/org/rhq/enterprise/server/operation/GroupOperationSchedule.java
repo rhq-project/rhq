@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.operation;
 
 import java.util.List;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
@@ -63,6 +64,13 @@ public class GroupOperationSchedule extends OperationSchedule {
      * @return halt flag
      */
     public boolean isHaltOnFailure() {
+        return haltOnFailure;
+    }
+
+    /**
+     * need a getXXX method instead of isXXX method for proper referencing from facelets pages
+     */
+    public boolean getHaltOnFailure() {
         return haltOnFailure;
     }
 

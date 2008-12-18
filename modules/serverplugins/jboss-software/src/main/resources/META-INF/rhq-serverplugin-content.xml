@@ -28,7 +28,7 @@
                                description="Optional. Port of the proxy server to use for this connection."/>
             <c:simple-property name="proxyUsername" displayName="Proxy Username" type="string" required="false"
                                description="Optional. If the proxy requires authentication, this is the user to log in as."/>
-            <c:simple-property name="proxyPassword" displayName="Proxy Password" type="string" required="false"
+            <c:simple-property name="proxyPassword" displayName="Proxy Password" type="password" required="false"
                                description="Optional. If the proxy requires authentitcation, this is the password for the user."/>
          </c:group>
       </configuration>

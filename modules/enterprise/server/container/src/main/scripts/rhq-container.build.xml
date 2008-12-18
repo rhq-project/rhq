@@ -579,16 +579,11 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
   </target>
 
   <target name="prepare-postinstaller-war">
-    <!-- SVN will ignore resources with '.rej' so we checked in the war as '.reject' -->
-    <!-- We need to rename it to '.rej' so JBossAS will not deploy it -->
-    <move file="${jboss.deploy.dir}/rhq-postinstaller.war.reject" tofile="${jboss.deploy.dir}/rhq-postinstaller.war.rej" verbose="true"/>
+     <!-- nothing to do here - leaving in case we need to perform things in the future -->
   </target>
 
   <target name="process-ds-files">
-    <!-- SVN will ignore resources with '.rej' so we checked in the files as '.reject' -->
-    <!-- We need to rename them to '.rej' so JBossAS will not deploy them -->
-    <move file="${jboss.deploy.dir}/${ds.oracle.file}ect" tofile="${jboss.deploy.dir}/${ds.oracle.file}"/>
-    <move file="${jboss.deploy.dir}/${ds.postgres.file}ect" tofile="${jboss.deploy.dir}/${ds.postgres.file}"/>
+     <!-- nothing to do here - leaving in case we need to perform things in the future -->
   </target>
 
   <target name="developer-release-message" if="predeploy">

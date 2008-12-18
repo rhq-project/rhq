@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.zip.ZipInputStream;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -412,7 +413,11 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
          * version " + AMPS_VERSION);}*/
     }
 
-    private PluginDescriptor getPluginDescriptor(DeploymentInfo di) throws JAXBException {
+    private PluginDescriptor getPluginDescriptor(DeploymentInfo di) throws JAXBException, DeploymentException
+    {
+        checkDeploymentIsValidZipFile(di);
+
+
         URL descriptorURL = di.localCl.findResource(DEFAULT_PLUGIN_DESCRIPTOR_PATH);
         if (descriptorURL == null) {
             throw new JAXBException("Could not load " + DEFAULT_PLUGIN_DESCRIPTOR_PATH + " from plugin jar file ["
@@ -443,6 +448,36 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         }
 
         return pluginDescriptor;
+    }
+
+    private void checkDeploymentIsValidZipFile(DeploymentInfo deploymentInfo)
+            throws DeploymentException
+    {
+        if (deploymentInfo.isDirectory)
+            return;
+        ZipInputStream zipInputStream = null;
+        try
+        {
+            zipInputStream = new ZipInputStream(deploymentInfo.url.openStream());
+            zipInputStream.getNextEntry();
+        }
+        catch (IOException e)
+        {
+            throw new DeploymentException("File [" + deploymentInfo.url + "] is not a valid jarfile - "
+                    + " perhaps the file has not been fully written yet.", e);
+        }
+        finally
+        {
+            if (zipInputStream != null)
+                try
+                {
+                    zipInputStream.close();
+                }
+                catch (IOException e)
+                {
+                    log.error("Failed to close zip input stream for file [" + deploymentInfo.url + "].");
+                }
+        }
     }
 
     /**

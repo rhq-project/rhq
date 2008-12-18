@@ -225,6 +225,8 @@ public class AppServerJDBCXARecovery implements XAResourceRecovery {
                     try {
                         _connection.close(); // just attempt to clean up anything that we can
                     } catch (Throwable t) {
+                    } finally {
+                        _connection = null;
                     }
                 }
 

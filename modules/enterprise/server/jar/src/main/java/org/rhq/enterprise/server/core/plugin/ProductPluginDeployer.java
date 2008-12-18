@@ -413,35 +413,42 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
          * version " + AMPS_VERSION);}*/
     }
 
-    private PluginDescriptor getPluginDescriptor(DeploymentInfo di) throws JAXBException, DeploymentException
+    private PluginDescriptor getPluginDescriptor(DeploymentInfo di) throws DeploymentException
     {
-        checkDeploymentIsValidZipFile(di);
-
-
         URL descriptorURL = di.localCl.findResource(DEFAULT_PLUGIN_DESCRIPTOR_PATH);
         if (descriptorURL == null) {
-            throw new JAXBException("Could not load " + DEFAULT_PLUGIN_DESCRIPTOR_PATH + " from plugin jar file ["
+            throw new DeploymentException("Could not load " + DEFAULT_PLUGIN_DESCRIPTOR_PATH + " from plugin jar file ["
                 + di.url + "]");
         }
 
-        JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
-        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+        PluginDescriptor pluginDescriptor;
+        ValidationEventCollector vec;
+        try
+        {
+            JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
+            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
-        // Enable schema validation. (see http://jira.jboss.com/jira/browse/JBNADM-1539)
-        URL pluginSchemaURL = getClass().getClassLoader().getResource("rhq-plugin.xsd");
-        Schema pluginSchema;
-        try {
-            pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(pluginSchemaURL);
-        } catch (SAXException e) {
-            throw new JAXBException("Schema is invalid: " + e.getMessage());
+            // Enable schema validation. (see http://jira.jboss.com/jira/browse/JBNADM-1539)
+            URL pluginSchemaURL = getClass().getClassLoader().getResource("rhq-plugin.xsd");
+            Schema pluginSchema;
+            try {
+                pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(pluginSchemaURL);
+            } catch (SAXException e) {
+                throw new DeploymentException("Schema is invalid: " + e.getMessage());
+            }
+
+            unmarshaller.setSchema(pluginSchema);
+
+            vec = new ValidationEventCollector();
+            unmarshaller.setEventHandler(vec);
+
+            pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(descriptorURL);
         }
-
-        unmarshaller.setSchema(pluginSchema);
-
-        ValidationEventCollector vec = new ValidationEventCollector();
-        unmarshaller.setEventHandler(vec);
-
-        PluginDescriptor pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(descriptorURL);
+        catch (JAXBException e)
+        {
+            throw new DeploymentException("Failed to parse plugin descriptor for plugin jar file [" + di.url
+                + "].", e);
+        }
 
         for (ValidationEvent event : vec.getEvents()) {
             log.warn(event.getSeverity() + ":" + event.getMessage() + "    " + event.getLinkedException());
@@ -583,14 +590,8 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
      * of registering the plugins.
      */
     private String preprocessPlugin(DeploymentInfo deploymentInfo) throws DeploymentException {
-        String pluginJarFileName = deploymentInfo.url.getFile();
-        PluginDescriptor descriptor;
-        try {
-            descriptor = getPluginDescriptor(deploymentInfo);
-        } catch (JAXBException e) {
-            throw new DeploymentException("Failed to parse plugin descriptor for plugin jar '" + pluginJarFileName
-                + "'.", e);
-        }
+        checkDeploymentIsValidZipFile(deploymentInfo);
+        PluginDescriptor descriptor = getPluginDescriptor(deploymentInfo);
         String pluginName = descriptor.getName();
         boolean initialDeploy = !this.deploymentInfos.containsKey(pluginName);
         ComparableVersion version = getPluginVersion(deploymentInfo, descriptor);

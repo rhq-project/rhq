@@ -24,7 +24,7 @@
 # =============================================================================
 
 # ----------------------------------------------------------------------
-# Subroutine that simply dumps a message iff debug mode is enabled
+# Function that simply dumps a message iff debug mode is enabled
 # ----------------------------------------------------------------------
 
 debug_wrapper_msg ()
@@ -37,26 +37,79 @@ debug_wrapper_msg ()
    fi
 }
 
+# ----------------------------------------------------------------------
+# Function that sets _STATUS, _RUNNING and _PID based on the status of
+# the RHQ Agent process as found in the pidfile
+# ----------------------------------------------------------------------
+
+check_status ()
+{
+    if [ -f "${_PIDFILE}" ]; then
+        _PID=`cat "${_PIDFILE}"`
+        check_status_of_pid $_PID
+    else
+        _STATUS="RHQ Agent (no pid file) is NOT running"
+        _RUNNING=0
+    fi
+}
+
+# ----------------------------------------------------------------------
+# Function that sets _STATUS and _RUNNING based on the status of
+# the given pid number
+# ----------------------------------------------------------------------
+
+check_status_of_pid ()
+{
+    if [ "x$1" != "x" ] && kill -0 $1 2>/dev/null ; then
+        _STATUS="RHQ Agent (pid $1) is running"
+        _RUNNING=1
+    else
+        _STATUS="RHQ Agent (pid $1) is NOT running"
+        _RUNNING=0
+    fi
+}
+
+# ----------------------------------------------------------------------
+# Function that ensures that the _PID file no longer exists
+# ----------------------------------------------------------------------
+
+remove_pid_file ()
+{
+   if [ -f "${_PIDFILE}" ]; then
+      debug_wrapper_msg "Removing existing pidfile"
+      rm "${_PIDFILE}"
+   fi
+}
+
+# -------------------------------
 # Get the location of this script
+
 RHQ_AGENT_WRAPPER_BIN_DIR_PATH=`dirname "$0"`
 debug_wrapper_msg "RHQ_AGENT_WRAPPER_BIN_DIR_PATH=$RHQ_AGENT_WRAPPER_BIN_DIR_PATH"
 
+# -------------------------------
 # Read in the rhq-agent-env.sh file so we get the configured agent environment
+
 if [ -f "${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh" ]; then
    debug_wrapper_msg "Loading environment script: ${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh"
    . "${RHQ_AGENT_WRAPPER_BIN_DIR_PATH}/rhq-agent-env.sh" $*
 fi
 
-# The --daemon argument is required, but you can add additional arguments as appropriate
+# -------------------------------
+# The --daemon argument is required
+
 if [ "x$RHQ_AGENT_CMDLINE_OPTS" = "x" ]; then
    export RHQ_AGENT_CMDLINE_OPTS=--daemon
 fi
 
+# -------------------------------
 # Determine where this script is, and change to its directory
+
 cd "$RHQ_AGENT_WRAPPER_BIN_DIR_PATH"
 _THIS_SCRIPT_DIR=`pwd`
 _THIS_SCRIPT="${_THIS_SCRIPT_DIR}"/`basename "$0"`
 
+# -------------------------------
 # Figure out where the RHQ Agent's home directory is and cd to it.
 # If RHQ_AGENT_HOME is not defined, we will assume we are running
 # directly from the agent installation's bin directory
@@ -71,12 +124,16 @@ else
       }
 fi
 
+# -------------------------------
 # create the logs directory
+
 if [ ! -d "${RHQ_AGENT_HOME}/logs" ]; then
    mkdir "${RHQ_AGENT_HOME}/logs"
 fi
 
+# -------------------------------
 # Find out where to put the pidfile and prepare its directory
+
 if [ "x$RHQ_AGENT_PIDFILE_DIR" = "x" ]; then
    RHQ_AGENT_PIDFILE_DIR="${RHQ_AGENT_HOME}/bin"
 fi
@@ -84,41 +141,15 @@ mkdir -p "$RHQ_AGENT_PIDFILE_DIR"
 _PIDFILE="${RHQ_AGENT_PIDFILE_DIR}/rhq-agent.pid"
 debug_wrapper_msg "pidfile will be located at ${_PIDFILE}"
 
-# Sets STATUS, RUNNING and PID based on the status of the RHQ Agent
-check_status ()
-{
-    if [ -f "${_PIDFILE}" ]; then
-        PID=`cat "${_PIDFILE}"`
-        if [ "x$PID" != "x" ] && kill -0 $PID 2>/dev/null ; then
-            STATUS="RHQ Agent (pid $PID) is running"
-            RUNNING=1
-        else
-            STATUS="RHQ Agent (pid $PID) is NOT running"
-            RUNNING=0
-        fi
-    else
-        STATUS="RHQ Agent (no pid file) is NOT running"
-        RUNNING=0
-    fi
-}
-
-# Ensures that the PID file no longer exists
-remove_pid_file ()
-{
-   if [ -f "${_PIDFILE}" ]; then
-      debug_wrapper_msg "Removing existing pidfile"
-      rm "${_PIDFILE}"
-   fi
-}
-
+# -------------------------------
 # Main processing starts here
 
 check_status
 
 case "$1" in
 'start')
-        if [ "$RUNNING" = "1" ]; then
-           echo $STATUS
+        if [ "$_RUNNING" = "1" ]; then
+           echo $_STATUS
            exit 0
         fi
 
@@ -160,9 +191,9 @@ case "$1" in
 
         sleep 5
         check_status
-        echo $STATUS
+        echo $_STATUS
 
-        if [ "$RUNNING" = "1" ]; then
+        if [ "$_RUNNING" = "1" ]; then
            exit 0
         else
            echo Failed to start - make sure the RHQ Agent is fully configured properly
@@ -171,28 +202,29 @@ case "$1" in
         ;;
 
 'stop')
-        if [ "$RUNNING" = "0" ]; then
-           echo $STATUS
+        if [ "$_RUNNING" = "0" ]; then
+           echo $_STATUS
            remove_pid_file
            exit 0
         fi
 
         echo Stopping RHQ Agent...
 
-        # try to gracefully kill, but eventually beat it over the head
-        echo "RHQ Agent (pid=${PID}) is stopping..."
-        kill -INT $PID
+        _PID_TO_KILL=$_PID;
+
+        echo "RHQ Agent (pid=${_PID_TO_KILL}) is stopping..."
+        kill -TERM $_PID_TO_KILL
 
         sleep 5
-        check_status
-        if [ "$RUNNING" = "1"  ]; then
+        check_status_of_pid $_PID_TO_KILL
+        if [ "$_RUNNING" = "1"  ]; then
            debug_wrapper_msg "Agent did not die yet, trying to kill it again"
-           kill -TERM $PID
+           kill -TERM $_PID_TO_KILL
         fi
 
-        while [ "$RUNNING" = "1"  ]; do
+        while [ "$_RUNNING" = "1"  ]; do
            sleep 2
-           check_status
+           check_status_of_pid $_PID_TO_KILL
         done
 
         remove_pid_file
@@ -201,21 +233,23 @@ case "$1" in
         ;;
 
 'kill')
-        if [ "$RUNNING" = "0" ]; then
-           echo $STATUS
+        if [ "$_RUNNING" = "0" ]; then
+           echo $_STATUS
            remove_pid_file
            exit 0
         fi
 
         echo Killing RHQ Agent...
 
-        # do not try to gracefully kill, use a hard -KILL/-9
-        echo "RHQ Agent (pid=${PID}) is being killed..."
-        kill -9 $PID
+        _PID_TO_KILL=$_PID;
 
-        while [ "$RUNNING" = "1"  ]; do
+        # do not try to gracefully kill, use a hard -KILL/-9
+        echo "RHQ Agent (pid=${_PID_TO_KILL}) is being killed..."
+        kill -9 $_PID_TO_KILL
+
+        while [ "$_RUNNING" = "1"  ]; do
            sleep 2
-           check_status
+           check_status_of_pid $_PID_TO_KILL
         done
 
         remove_pid_file
@@ -224,8 +258,8 @@ case "$1" in
         ;;
 
 'status')
-        echo $STATUS
-        if [ "$RUNNING" = "0" ]; then
+        echo $_STATUS
+        if [ "$_RUNNING" = "0" ]; then
            exit 1
         fi
         exit 0

@@ -648,8 +648,9 @@
             <c:simple-property name="includeFile" type="file" description="The full path to the include file" required="false"/>
          </plugin-configuration>
 
-         <operation name="Status" description="Gets the status of the Java Service Wrapper (installed, running, etc.)">
+         <operation name="Install" description="Installs the Java Service Wrapper so it starts the agent at boot time">
             <results>
+               <c:simple-property name="exitCode" type="integer"/>
                <c:simple-property name="output" type="longString"/>
             </results>
          </operation>
@@ -657,13 +658,23 @@
          <operation name="Restart" description="Restarts the Java Service Wrapper and the agent it contains.  This will completely kill the agent VM process (if it is running as this service) and then attempt to restart it. If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
          </operation>
 
-         <operation name="Install" description="Installs the Java Service Wrapper so it starts the agent at boot time">
-            <results>
-               <c:simple-property name="output" type="longString"/>
-            </results>
+         <operation name="Stop" description="Stops the Java Service Wrapper and the agent it contains.  This will completely kill the agent VM process (if it is running as this service). If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
          </operation>
 
          <operation name="Remove" description="Removes the Java Service Wrapper so it no longer starts the agent at boot time.  *NOTE* This will completely kill the agent VM process if it is running as this service. If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
+         </operation>
+
+         <operation name="Status" description="Gets the status of the Java Service Wrapper">
+            <results>
+               <c:simple-property name="disabled" type="boolean" required="false" />
+               <c:simple-property name="requiresManualStart" type="boolean" required="false" />
+               <c:simple-property name="willAutomaticallyStart" type="boolean" required="false" />
+               <c:simple-property name="hasInteractiveConsole" type="boolean" required="false" />
+               <c:simple-property name="isRunning" type="boolean" required="false" />
+               <c:simple-property name="isInstalled" type="boolean" required="false" />
+               <c:simple-property name="exitCode" type="integer" />
+               <c:simple-property name="output" type="longString" />
+            </results>
          </operation>
 
          <resource-configuration>

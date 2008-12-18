@@ -20,7 +20,9 @@ package org.rhq.plugins.agent;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -140,15 +142,22 @@ public class AgentJavaServiceWrapperComponent implements ResourceComponent<Agent
         OperationResult result = null;
         try {
             if (name.equals("Status")) {
-                String output = executeLauncherScript("status");
+                Map<Integer, String> output = executeLauncherScript("status");
                 result = new OperationResult();
-                result.getComplexResults().put(new PropertySimple("output", output));
+                Integer exitCode = output.keySet().iterator().next();
+                determineServiceStatus(exitCode, result);
+                result.getComplexResults().put(new PropertySimple("exitCode", exitCode));
+                result.getComplexResults().put(new PropertySimple("output", output.values().toArray()[0]));
+            } else if (name.equals("Install")) {
+                Map<Integer, String> output = executeLauncherScript("install");
+                result = new OperationResult();
+                Integer exitCode = output.keySet().iterator().next();
+                result.getComplexResults().put(new PropertySimple("exitCode", exitCode));
+                result.getComplexResults().put(new PropertySimple("output", output.values().toArray()[0]));
             } else if (name.equals("Restart")) {
                 executeLauncherScriptInThread("restart");
-            } else if (name.equals("Install")) {
-                String output = executeLauncherScript("install");
-                result = new OperationResult();
-                result.getComplexResults().put(new PropertySimple("output", output));
+            } else if (name.equals("Stop")) {
+                executeLauncherScriptInThread("stop");
             } else if (name.equals("Remove")) {
                 executeLauncherScriptInThread("remove");
             }
@@ -158,22 +167,47 @@ public class AgentJavaServiceWrapperComponent implements ResourceComponent<Agent
         return result;
     }
 
-    private String executeLauncherScript(String arg) throws Exception {
+    private void determineServiceStatus(Integer exitCode, OperationResult result) {
+        if (exitCode == null || exitCode.intValue() < 0) {
+            return;
+        }
+
+        int bitmask = exitCode.intValue();
+        Configuration map = result.getComplexResults();
+        map.put(new PropertySimple("disabled", ((bitmask & 32) == 32) ? Boolean.TRUE : Boolean.FALSE));
+        map.put(new PropertySimple("requiresManualStart", ((bitmask & 16) == 16) ? Boolean.TRUE : Boolean.FALSE));
+        map.put(new PropertySimple("willAutomaticallyStart", ((bitmask & 8) == 8) ? Boolean.TRUE : Boolean.FALSE));
+        map.put(new PropertySimple("hasInteractiveConsole", ((bitmask & 4) == 4) ? Boolean.TRUE : Boolean.FALSE));
+        map.put(new PropertySimple("isRunning", ((bitmask & 2) == 2) ? Boolean.TRUE : Boolean.FALSE));
+        map.put(new PropertySimple("isInstalled", ((bitmask & 1) == 1) ? Boolean.TRUE : Boolean.FALSE));
+        return;
+    }
+
+    private Map<Integer, String> executeLauncherScript(String arg) throws Exception {
         if (!this.launcherScript.exists()) {
             throw new Exception("Launcher script [" + this.launcherScript + "] does not exist");
         }
+
+        Map<String, String> envvars = new HashMap<String, String>(System.getenv());
+        envvars.put("RHQ_AGENT_DEBUG", "false"); // we don't want all that debug output in the beginning
 
         ProcessExecution exe = new ProcessExecution(this.launcherScript.getAbsolutePath());
         exe.setArguments(new String[] { arg });
         exe.setWorkingDirectory(this.launcherScript.getParent());
         exe.setCaptureOutput(true);
         exe.setWaitForCompletion(30000L);
+        exe.setEnvironmentVariables(envvars);
         ProcessExecutionResults results = this.resourceContext.getSystemInformation().executeProcess(exe);
         Throwable error = results.getError();
         if (error != null) {
             throw new Exception("Failed to invoke [" + this.launcherScript + ' ' + arg + "]", error);
         }
-        return results.getCapturedOutput();
+
+        HashMap<Integer, String> map = new HashMap<Integer, String>();
+        Integer exitCode = results.getExitCode();
+        String output = results.getCapturedOutput();
+        map.put((exitCode != null) ? exitCode : Integer.valueOf(-1), (output != null) ? output : "");
+        return map;
     }
 
     /**

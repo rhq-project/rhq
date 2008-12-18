@@ -321,6 +321,9 @@
    <tiles:put name="widgetInstanceName" beanName="widgetInstanceName"/>
    <tiles:put name="pageAction" value="${pageAction}"/>
    <tiles:put name="useCssButtons" value="true"/>
+   <c:if test="${ResourceHubForm.resourceCategory == SERVICE}">
+      <tiles:put name="noButtons" value="true"/>
+   </c:if>
 </tiles:insert>
 
 <html:hidden property="view"/>

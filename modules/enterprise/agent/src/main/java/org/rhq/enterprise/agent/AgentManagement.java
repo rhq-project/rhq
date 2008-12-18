@@ -103,7 +103,7 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
                     e.printStackTrace(); // TODO what do to here?
                 }
             }
-        }, "Restart Thread").start();
+        }, "RHQ Agent Restart Thread").start();
     }
 
     public void shutdown() {
@@ -116,7 +116,7 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
                 sleep(5000L); // give our shutdown() caller a chance to return and finish
                 m_agent.shutdown();
             }
-        }, "Shutdown Thread").start();
+        }, "RHQ Agent Shutdown Thread").start();
     }
 
     public void downloadLatestFailoverList() {
@@ -192,7 +192,7 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
                 m_agent.shutdownPluginContainer();
                 m_agent.startPluginContainer(500L);
             }
-        }, "Restart Plugin Container Thread").start();
+        }, "RHQ Agent Plugin Container Restart Thread").start();
     }
 
     public OperationResult executeAvailabilityScan(Boolean changesOnly) {

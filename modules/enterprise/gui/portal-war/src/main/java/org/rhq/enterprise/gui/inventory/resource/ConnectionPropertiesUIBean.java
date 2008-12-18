@@ -22,15 +22,15 @@ import javax.faces.application.FacesMessage;
 
 import org.jetbrains.annotations.Nullable;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -77,8 +77,12 @@ public class ConnectionPropertiesUIBean extends AbstractConfigurationUIBean {
     public String getNullConfigurationMessage() {
         return "This resource's plugin configuration has not been initialized.";
     }
-    
+
     public String edit() {
+        return SUCCESS_OUTCOME;
+    }
+
+    public String history() {
         return SUCCESS_OUTCOME;
     }
 

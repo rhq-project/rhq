@@ -13,6 +13,14 @@
          <to-view-id>/rhq/resource/inventory/view.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
+      
+      <!-- === PluginConfiguration History ======================= -->
+      
+      <navigation-case>
+         <from-action>#{ConnectionPropertiesViewUIBean.history}</from-action>
+         <to-view-id>/rhq/resource/inventory/history.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
 
       <!-- === EditGeneralPropertiesUIBean ======================= -->
 
@@ -312,6 +320,39 @@
          <to-view-id>/rhq/resource/inventory/create-config-2.xhtml</to-view-id>
       </navigation-case>
 
+   </navigation-rule>
+   
+   <!-- Plugin Configuration History -->
+   <navigation-rule>
+
+      <from-view-id>/rhq/resource/inventory/history.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{ListPluginConfigurationUpdateUIBean.selectConfigurationToView}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/inventory/history.xhtml?id=#{param.id}&amp;configId=#{param.configId}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/inventory/history.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case>
+         <!-- sorting rule --> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/resource/inventory/history.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+         <to-view-id>/rhq/resource/inventory/view-plugin-config-map.xhtml</to-view-id>
+      </navigation-case>
+      
    </navigation-rule>
 
 </faces-config>

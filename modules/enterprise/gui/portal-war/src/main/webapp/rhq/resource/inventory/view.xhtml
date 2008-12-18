@@ -575,10 +575,12 @@
                   nullConfigurationMessage="#{ConnectionPropertiesViewUIBean.nullConfigurationMessage}"
                   prevalidate="true"/>
 
-      <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell"
+      <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
                    rendered="#{ResourceUIBean.permissions.inventory}">
          <h:commandButton value="EDIT..." action="#{ConnectionPropertiesViewUIBean.edit}"
                           title="Edit Connection Properties" styleClass="buttonmed"/>
+         <h:commandButton value="HISTORY..." action="#{ConnectionPropertiesViewUIBean.history}"
+                          title="View Connection Properties History" styleClass="buttonmed"/>
       </h:panelGrid>
 
    </h:form>

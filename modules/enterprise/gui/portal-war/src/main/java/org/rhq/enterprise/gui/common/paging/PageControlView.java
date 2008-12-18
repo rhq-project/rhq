@@ -71,6 +71,7 @@ import org.rhq.enterprise.gui.inventory.resource.ListChildResourcesUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListContainingGroupsUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListCreateResourceHistoryUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListDeleteResourceHistoryUIBean;
+import org.rhq.enterprise.gui.inventory.resource.history.ListPluginConfigurationUpdateUIBean;
 import org.rhq.enterprise.gui.measurement.schedule.group.ListResourceGroupMeasurementScheduleUIBean;
 import org.rhq.enterprise.gui.measurement.schedule.resource.ListResourceMeasurementScheduleUIBean;
 import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationCompletedHistoryUIBean;
@@ -91,6 +92,8 @@ public enum PageControlView {
 
     /** */
     ConfigurationHistory(ListConfigurationUpdateUIBean.class),
+    /** */
+    PluginConfigurationHistory(ListPluginConfigurationUpdateUIBean.class),
 
     // Content
 

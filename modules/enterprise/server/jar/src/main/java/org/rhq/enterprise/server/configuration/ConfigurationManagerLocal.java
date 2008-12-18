@@ -150,6 +150,8 @@ public interface ConfigurationManagerLocal {
      */
     void checkForTimedOutUpdateRequests();
 
+    PageList<PluginConfigurationUpdate> getPluginConfigurationUpdates(Subject whoami, int resourceId, PageControl pc);
+
     /**
      * Returns the list of all resource configuration updates for the given resource. This will show you an audit trail
      * of the update history for the resource (who updated it, when and what did they do). You can pick one
@@ -163,6 +165,8 @@ public interface ConfigurationManagerLocal {
      * @return the resource's complete list of updates (will be empty (not <code>null</code>) if none)
      */
     PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject whoami, int resourceId, PageControl pc);
+
+    PluginConfigurationUpdate getPluginConfigurationUpdate(Subject whoami, int configurationUpdateId);
 
     /**
      * Returns a single resource configuration update
@@ -240,6 +244,8 @@ public interface ConfigurationManagerLocal {
     void completeResourceConfigurationUpdate(ConfigurationUpdateResponse response);
 
     ConfigurationUpdateResponse executePluginConfigurationUpdate(PluginConfigurationUpdate update);
+
+    public void purgePluginConfigurationUpdate(Subject whoami, int configurationUpdateId, boolean purgeInProgress);
 
     /**
      * This deletes the update information belonging to the {@link AbstractResourceConfigurationUpdate} object with the

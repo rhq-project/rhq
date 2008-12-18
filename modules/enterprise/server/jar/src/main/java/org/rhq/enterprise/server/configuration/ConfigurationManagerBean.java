@@ -468,6 +468,46 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
+    public PageList<PluginConfigurationUpdate> getPluginConfigurationUpdates(Subject whoami, int resourceId,
+        PageControl pc) {
+
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        if (resource.getResourceType().getPluginConfigurationDefinition() == null
+            || resource.getResourceType().getPluginConfigurationDefinition().getPropertyDefinitions().isEmpty()) {
+            return new PageList<PluginConfigurationUpdate>(pc);
+        }
+
+        pc.initDefaultOrderingField("cu.id", PageOrdering.DESC);
+
+        String queryName = PluginConfigurationUpdate.QUERY_FIND_ALL_BY_RESOURCE_ID;
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
+
+        queryCount.setParameter("resourceId", resourceId);
+        query.setParameter("resourceId", resourceId);
+
+        long totalCount = (Long) queryCount.getSingleResult();
+        List<PluginConfigurationUpdate> updates = query.getResultList();
+
+        if ((updates == null) || (updates.size() == 0)) {
+            // there is no configuration yet - get the latest from the agent, if possible
+            updates = new ArrayList<PluginConfigurationUpdate>();
+            PluginConfigurationUpdate latest = getLatestPluginConfigurationUpdate(whoami, resourceId);
+            if (latest != null) {
+                updates.add(latest);
+            }
+        } else if (updates.size() > 0) {
+            resource = updates.get(0).getResource();
+            if (!authorizationManager.canViewResource(whoami, resource.getId())) {
+                throw new PermissionException("User [" + whoami.getName()
+                    + "] does not have permission to view resource [" + resource + "]");
+            }
+        }
+
+        return new PageList<PluginConfigurationUpdate>(updates, (int) totalCount, pc);
+    }
+
+    @SuppressWarnings("unchecked")
     public PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject whoami, int resourceId,
         PageControl pc) {
 
@@ -507,6 +547,19 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return new PageList<ResourceConfigurationUpdate>(updates, (int) totalCount, pc);
     }
 
+    public PluginConfigurationUpdate getPluginConfigurationUpdate(Subject whoami, int configurationUpdateId) {
+        PluginConfigurationUpdate update = entityManager.find(PluginConfigurationUpdate.class, configurationUpdateId);
+
+        if (!authorizationManager.canViewResource(whoami, update.getResource().getId())) {
+            throw new PermissionException("User [" + whoami.getName()
+                + "] does not have permission to view plugin configuration update for [" + update.getResource() + "]");
+        }
+
+        update.getConfiguration(); // this is EAGER loaded, so this really doesn't do anything
+
+        return update;
+    }
+
     public ResourceConfigurationUpdate getResourceConfigurationUpdate(Subject whoami, int configurationUpdateId) {
         ResourceConfigurationUpdate update = entityManager.find(ResourceConfigurationUpdate.class,
             configurationUpdateId);
@@ -519,6 +572,36 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         update.getConfiguration(); // this is EAGER loaded, so this really doesn't do anything
 
         return update;
+    }
+
+    public void purgePluginConfigurationUpdate(Subject whoami, int configurationUpdateId, boolean purgeInProgress) {
+        PluginConfigurationUpdate doomedRequest = entityManager.find(PluginConfigurationUpdate.class,
+            configurationUpdateId);
+
+        if (doomedRequest == null) {
+            log.debug("Asked to purge a non-existing config update request [" + configurationUpdateId + "]");
+            return;
+        }
+
+        if ((doomedRequest.getStatus() == ConfigurationUpdateStatus.INPROGRESS) && !purgeInProgress) {
+            throw new IllegalStateException(
+                "The update request is still in the in-progress state. Please wait for it to complete: "
+                    + doomedRequest);
+        }
+
+        // make sure the user has the proper permissions to do this
+        Resource resource = doomedRequest.getResource();
+        if (!authorizationManager.hasResourcePermission(whoami, Permission.CONFIGURE, resource.getId())) {
+            throw new PermissionException("User [" + whoami.getName()
+                + "] does not have permission to purge a plugin configuration update audit trail for resource ["
+                + resource + "]");
+        }
+
+        resource.getPluginConfigurationUpdates().remove(doomedRequest);
+        entityManager.remove(doomedRequest);
+        entityManager.flush();
+
+        return;
     }
 
     public void purgeResourceConfigurationUpdate(Subject whoami, int configurationUpdateId, boolean purgeInProgress) {

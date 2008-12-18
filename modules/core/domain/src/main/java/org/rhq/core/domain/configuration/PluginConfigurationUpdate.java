@@ -39,6 +39,8 @@ import org.rhq.core.domain.resource.Resource;
 @NamedQueries( {
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_ALL_IN_STATUS, query = "SELECT cu "
         + "  FROM PluginConfigurationUpdate cu "),
+    @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_ALL_BY_RESOURCE_ID, query = "SELECT cu "
+        + "  FROM PluginConfigurationUpdate cu " + " WHERE cu.resource.id = :resourceId"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_CURRENTLY_ACTIVE_CONFIG, query = "SELECT cu "
         + "  FROM PluginConfigurationUpdate cu " + " WHERE cu.resource.id = :resourceId "
         + "   AND cu.status <> 'INPROGRESS' " + "   AND cu.modifiedTime = ( SELECT MAX(cu2.modifiedTime) "
@@ -68,6 +70,7 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_ALL_IN_STATUS = "PluginConfigurationUpdate.findAllInStatus";
+    public static final String QUERY_FIND_ALL_BY_RESOURCE_ID = "PluginConfigurationUpdate.findAllByResourceId";
     public static final String QUERY_FIND_CURRENTLY_ACTIVE_CONFIG = "PluginConfigurationUpdate.findCurrentlyActiveConfig";
     public static final String QUERY_FIND_LATEST_BY_RESOURCE_ID = "PluginConfigurationUpdate.findByResource";
     public static final String QUERY_FIND_COMPOSITE_BY_PARENT_UPDATE_ID = "PluginConfigurationUpdate.findCompositeByParentUpdateId";

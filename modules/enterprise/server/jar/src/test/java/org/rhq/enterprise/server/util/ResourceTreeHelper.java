@@ -48,6 +48,8 @@ import org.rhq.core.domain.resource.ResourceType;
  * information to it.
  */
 public class ResourceTreeHelper {
+    private static int fakeTypeId = 0;
+
     /*
      * This will create the resource tree, but won't persist it
      */
@@ -58,13 +60,22 @@ public class ResourceTreeHelper {
     /*
      * This will create the resource tree, and related resource types
      */
-    public static List<Resource> createTree(EntityManager entityManager, String flatStructure) {
+    public static synchronized List<Resource> createTree(EntityManager entityManager, String flatStructure) {
         // remove any and all whitespace from the string
         flatStructure = flatStructure.replaceAll("\\s", "");
 
-        // create the fakeType which ALL resources will be attached too
-        ResourceType fakeType = new ResourceType("fakeType", "fakePlugin", ResourceCategory.PLATFORM, null);
-        persist(entityManager, fakeType);
+        // if necessary, create the fakeType which ALL resources will be attached too
+        ResourceType fakeType = null;
+        if (null != entityManager) {
+            fakeType = entityManager.find(ResourceType.class, fakeTypeId);
+            if (null == fakeType) {
+                fakeType = new ResourceType("fakeType", "fakePlugin", ResourceCategory.PLATFORM, null);
+                persist(entityManager, fakeType);
+                fakeTypeId = fakeType.getId();
+            }
+        } else {
+            fakeType = new ResourceType("fakeType", "fakePlugin", ResourceCategory.PLATFORM, null);
+        }
 
         // create the map that will hold all of the resources - root, leaf, or inner node
         Map<String, Resource> resources = new HashMap<String, Resource>();
@@ -108,7 +119,6 @@ public class ResourceTreeHelper {
         List<Resource> roots = new ArrayList<Resource>();
         for (Resource potentialRoot : resources.values()) {
             potentialRoot.setInventoryStatus(InventoryStatus.COMMITTED);
-            potentialRoot.setUuid(potentialRoot.getName());
             persist(entityManager, potentialRoot);
 
             // roots are those with no parent resource

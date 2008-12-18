@@ -167,7 +167,7 @@
                      <rich:column colspan="6" width="100%">
                         <onc:selectCommandButton action="#{ListPluginConfigurationUpdateUIBean.delete}"
                                                  value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
-                                                 rendered="${ResourceUIBean.permissions.configure}" />
+                                                 rendered="#{ResourceUIBean.permissions.inventory}" />
 
                         <ui:param name="paginationDataTableName" value="configurationUpdateDataTable"/>
                         <ui:param name="paginationDataModel" value="#{configurationUpdateDataModel}"/>

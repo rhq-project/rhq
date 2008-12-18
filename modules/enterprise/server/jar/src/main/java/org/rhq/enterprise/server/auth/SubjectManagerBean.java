@@ -53,7 +53,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -459,14 +458,17 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                 throw new PermissionException("You cannot remove yourself: " + doomedSubject.getName());
             }
 
+            Query deleteNotificationQuery = entityManager
+                .createQuery("DELETE FROM SubjectNotification sn WHERE sn.subject.id = :subjectId");
+            deleteNotificationQuery.setParameter("subjectId", doomedSubjectId);
+            deleteNotificationQuery.executeUpdate(); // discard result, might not have been set for any notifications
+
             Set<Role> roles = doomedSubject.getRoles();
             doomedSubject.setRoles(new HashSet<Role>()); // clean out roles
 
             for (Role doomedRoleRelationship : roles) {
                 doomedRoleRelationship.removeSubject(doomedSubject);
             }
-
-            doomedSubject = entityManager.merge(doomedSubject);
 
             // TODO: we need to reassign ownership of things this user used to own
 

@@ -2,7 +2,6 @@
 
 <plugin name="RHQAgent"
         displayName="RHQ Agent"
-        version="1.2"
         package="org.rhq.plugins.agent"
         description="Management and monitoring of the RHQ Agent"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -16,7 +15,6 @@
            class="AgentServerComponent"
            description="RHQ Agent">
 
-      <version match="2.0"/>
       <!--
       Plugin configuration properties are connection/lookup configurations.
       They are values that the plugin components need to connect and interact with the resource.
@@ -636,16 +634,38 @@
             </c:list-property>
          </resource-configuration>
       </service>
+
       <service name="Java Service Wrapper"
                description="The Java Service Wrapper that can run the agent as a daemon service"
                discovery="AgentJavaServiceWrapperDiscoveryComponent"
                class="AgentJavaServiceWrapperComponent"
                singleton="true">
+
          <plugin-configuration>
+            <c:simple-property name="launcherScript" type="file" description="The full path to wrapper launcher script file" required="true"/>
             <c:simple-property name="configurationFile" type="file" description="The full path to the configuration file" required="true"/>
             <c:simple-property name="environmentFile" type="file" description="The full path to the environment setup file" required="false"/>
             <c:simple-property name="includeFile" type="file" description="The full path to the include file" required="false"/>
          </plugin-configuration>
+
+         <operation name="Status" description="Gets the status of the Java Service Wrapper (installed, running, etc.)">
+            <results>
+               <c:simple-property name="output" type="longString"/>
+            </results>
+         </operation>
+
+         <operation name="Restart" description="Restarts the Java Service Wrapper and the agent it contains.  This will completely kill the agent VM process (if it is running as this service) and then attempt to restart it. If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
+         </operation>
+
+         <operation name="Install" description="Installs the Java Service Wrapper so it starts the agent at boot time">
+            <results>
+               <c:simple-property name="output" type="longString"/>
+            </results>
+         </operation>
+
+         <operation name="Remove" description="Removes the Java Service Wrapper so it no longer starts the agent at boot time.  *NOTE* This will completely kill the agent VM process if it is running as this service. If the agent executing this operation will quickly die, no confirmation will be available as to the success or failure of this operation.">
+         </operation>
+
          <resource-configuration>
             <c:group name="mainConfiguration" >
                <c:list-property name="mainConfigurationSettings" description="The main JSW configuration. This is read-only - to customize the configuration, add settings to the environment and/or includes." readOnly="true">

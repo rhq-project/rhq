@@ -37,6 +37,11 @@ import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.system.ProcessExecution;
+import org.rhq.core.system.ProcessExecutionResults;
+import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.exception.ExceptionPackage;
 import org.rhq.core.util.exception.Severity;
 import org.rhq.enterprise.agent.EnvironmentScriptFileUpdate;
@@ -47,24 +52,48 @@ import org.rhq.enterprise.agent.EnvironmentScriptFileUpdate.NameValuePair;
  *
  * @author John Mazzitelli
  */
-public class AgentJavaServiceWrapperComponent implements ResourceComponent<AgentServerComponent>, ConfigurationFacet {
+public class AgentJavaServiceWrapperComponent implements ResourceComponent<AgentServerComponent>, ConfigurationFacet,
+    OperationFacet {
+
     private Log log = LogFactory.getLog(AgentJavaServiceWrapperComponent.class);
 
+    private ResourceContext<AgentServerComponent> resourceContext;
+
+    private File launcherScript;
     private File configFile;
     private File environmentFile;
     private File includeFile;
 
-    public void start(ResourceContext<AgentServerComponent> resourceContext) throws Exception {
-        Configuration pc = resourceContext.getPluginConfiguration();
-        PropertySimple pathnameProp = pc.getSimple(AgentJavaServiceWrapperDiscoveryComponent.PLUGINCONFIG_CONF_FILE);
-        if (pathnameProp == null) {
+    public void start(ResourceContext<AgentServerComponent> rc) throws Exception {
+
+        this.resourceContext = rc;
+
+        Configuration pc = this.resourceContext.getPluginConfiguration();
+
+        PropertySimple prop;
+
+        prop = pc.getSimple(AgentJavaServiceWrapperDiscoveryComponent.PLUGINCONFIG_LAUNCHER_SCRIPT);
+        if (prop == null) {
+            throw new InvalidPluginConfigurationException("Missing Launcher Script");
+        }
+        if (prop.getStringValue() == null) {
+            throw new InvalidPluginConfigurationException("Launcher Script property value is null");
+        }
+
+        launcherScript = new File(prop.getStringValue());
+        if (!launcherScript.exists()) {
+            throw new InvalidPluginConfigurationException("Launcher Script [" + launcherScript + "] does not exist");
+        }
+
+        prop = pc.getSimple(AgentJavaServiceWrapperDiscoveryComponent.PLUGINCONFIG_CONF_FILE);
+        if (prop == null) {
             throw new InvalidPluginConfigurationException("Missing Configuration File");
         }
-        if (pathnameProp.getStringValue() == null) {
+        if (prop.getStringValue() == null) {
             throw new InvalidPluginConfigurationException("Configuration File property value is null");
         }
 
-        configFile = new File(pathnameProp.getStringValue());
+        configFile = new File(prop.getStringValue());
         if (!configFile.exists()) {
             throw new InvalidPluginConfigurationException("Config file [" + configFile + "] does not exist");
         }
@@ -72,14 +101,14 @@ public class AgentJavaServiceWrapperComponent implements ResourceComponent<Agent
         log.debug("Starting agent JSW component: " + configFile);
 
         // get the optional files (these may remain null if the paths were left undefined)
-        pathnameProp = pc.getSimple(AgentJavaServiceWrapperDiscoveryComponent.PLUGINCONFIG_ENV_FILE);
-        if (pathnameProp != null && pathnameProp.getStringValue() != null) {
-            environmentFile = new File(pathnameProp.getStringValue());
+        prop = pc.getSimple(AgentJavaServiceWrapperDiscoveryComponent.PLUGINCONFIG_ENV_FILE);
+        if (prop != null && prop.getStringValue() != null) {
+            environmentFile = new File(prop.getStringValue());
         }
 
-        pathnameProp = pc.getSimple(AgentJavaServiceWrapperDiscoveryComponent.PLUGINCONFIG_INC_FILE);
-        if (pathnameProp != null && pathnameProp.getStringValue() != null) {
-            includeFile = new File(pathnameProp.getStringValue());
+        prop = pc.getSimple(AgentJavaServiceWrapperDiscoveryComponent.PLUGINCONFIG_INC_FILE);
+        if (prop != null && prop.getStringValue() != null) {
+            includeFile = new File(prop.getStringValue());
         }
 
         return;
@@ -87,10 +116,105 @@ public class AgentJavaServiceWrapperComponent implements ResourceComponent<Agent
 
     public void stop() {
         // nothing to do
+        return;
     }
 
     public AvailabilityType getAvailability() {
-        return (configFile.exists()) ? AvailabilityType.UP : AvailabilityType.DOWN;
+
+        return (launcherScript.exists() && configFile.exists()) ? AvailabilityType.UP : AvailabilityType.DOWN;
+
+        // I would like to do this but:
+        // 1. I don't like executing the script like this every 60 seconds; not very efficient and,
+        // 2. I don't think executing this script and processing it output will always be faster than
+        //    the 5 seconds the plugin container will give us. 
+        //        try {
+        //            String output = executeLauncherScript("status");
+        //            return (output.contains("is installed")) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        //        } catch (Throwable t) {
+        //            return AvailabilityType.DOWN;
+        //        }
+    }
+
+    public OperationResult invokeOperation(String name, Configuration params) throws Exception {
+
+        OperationResult result = null;
+        try {
+            if (name.equals("Status")) {
+                String output = executeLauncherScript("status");
+                result = new OperationResult();
+                result.getComplexResults().put(new PropertySimple("output", output));
+            } else if (name.equals("Restart")) {
+                executeLauncherScriptInThread("restart");
+            } else if (name.equals("Install")) {
+                String output = executeLauncherScript("install");
+                result = new OperationResult();
+                result.getComplexResults().put(new PropertySimple("output", output));
+            } else if (name.equals("Remove")) {
+                executeLauncherScriptInThread("remove");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to invoke operation [" + name + "]", e);
+        }
+        return result;
+    }
+
+    private String executeLauncherScript(String arg) throws Exception {
+        if (!this.launcherScript.exists()) {
+            throw new Exception("Launcher script [" + this.launcherScript + "] does not exist");
+        }
+
+        ProcessExecution exe = new ProcessExecution(this.launcherScript.getAbsolutePath());
+        exe.setArguments(new String[] { arg });
+        exe.setWorkingDirectory(this.launcherScript.getParent());
+        exe.setCaptureOutput(true);
+        exe.setWaitForCompletion(30000L);
+        ProcessExecutionResults results = this.resourceContext.getSystemInformation().executeProcess(exe);
+        Throwable error = results.getError();
+        if (error != null) {
+            throw new Exception("Failed to invoke [" + this.launcherScript + ' ' + arg + "]", error);
+        }
+        return results.getCapturedOutput();
+    }
+
+    /**
+     * This will execute the launcher script in a separate thread. This separate thread
+     * will sleep for a few seconds before executing to give the caller enough time to
+     * return itself. This is used when the launcher script being executed will quickly
+     * kill the agent VM process in which we are running.
+     * 
+     * @param arg the command to pass to the launcher script
+     *
+     * @throws Exception if failed to even get a chance to spawn the thread and execute the launcher
+     */
+    private void executeLauncherScriptInThread(final String arg) throws Exception {
+        if (!this.launcherScript.exists()) {
+            throw new Exception("Launcher script [" + this.launcherScript + "] does not exist");
+        }
+
+        final File script = this.launcherScript;
+        final SystemInfo sysInfo = this.resourceContext.getSystemInformation();
+
+        Thread thread = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    Thread.sleep(10000L); // this should be enough to return our operation results back
+                    ProcessExecution exe = new ProcessExecution(script.getAbsolutePath());
+                    exe.setArguments(new String[] { arg });
+                    exe.setWorkingDirectory(script.getParent());
+                    ProcessExecutionResults results = sysInfo.executeProcess(exe);
+                    if (results != null && results.getError() != null) {
+                        throw results.getError();
+                    }
+                } catch (Throwable t) {
+                    log.error("Failed to invoke [" + script + ' ' + arg + "] in a thread", t);
+                }
+            }
+        }, "RHQ Agent Plugin JSW Launcher Thread");
+        thread.setDaemon(true);
+
+        // after we start, do not linger; return fast so we can return our operation results before we die
+        thread.start();
+        return;
     }
 
     public Configuration loadResourceConfiguration() throws Exception {

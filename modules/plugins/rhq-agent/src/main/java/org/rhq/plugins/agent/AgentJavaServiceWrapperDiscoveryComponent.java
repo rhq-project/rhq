@@ -45,6 +45,12 @@ public class AgentJavaServiceWrapperDiscoveryComponent implements ResourceDiscov
     private final Log log = LogFactory.getLog(AgentJavaServiceWrapperDiscoveryComponent.class);
 
     /**
+     * The name of the plugin configuration simple property whose value is the JSW's launcher script file path.
+     * Package scoped so the component can use this.
+     */
+    static final String PLUGINCONFIG_LAUNCHER_SCRIPT = "launcherScript";
+
+    /**
      * The name of the plugin configuration simple property whose value is the JSW's configuration file path.
      * Package scoped so the component can use this.
      */
@@ -143,6 +149,7 @@ public class AgentJavaServiceWrapperDiscoveryComponent implements ResourceDiscov
             location = discoveredLocation.getAbsolutePath(); // ...if we can't, use absolute path
         }
 
+        File launcher = new File(new File(location).getParentFile(), "rhq-agent-wrapper.bat");
         File conf = new File(location, "rhq-agent-wrapper.conf");
         File env = new File(location, "rhq-agent-wrapper.env");
         File inc = new File(location, "rhq-agent-wrapper.inc");
@@ -150,8 +157,9 @@ public class AgentJavaServiceWrapperDiscoveryComponent implements ResourceDiscov
         DiscoveredResourceDetails details = new DiscoveredResourceDetails(context.getResourceType(), key, name,
             version, description, null, null);
         Configuration pc = details.getPluginConfiguration();
-        // put the paths in the config, even if they don't exist on the file system
+        pc.put(new PropertySimple(PLUGINCONFIG_LAUNCHER_SCRIPT, launcher.getAbsoluteFile()));
         pc.put(new PropertySimple(PLUGINCONFIG_CONF_FILE, conf.getAbsoluteFile()));
+        // put these paths in the config, even if they don't exist on the file system
         pc.put(new PropertySimple(PLUGINCONFIG_ENV_FILE, env.getAbsoluteFile()));
         pc.put(new PropertySimple(PLUGINCONFIG_INC_FILE, inc.getAbsoluteFile()));
         return details;

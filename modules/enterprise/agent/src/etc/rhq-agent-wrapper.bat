@@ -128,36 +128,85 @@ if not defined RHQ_AGENT_PASSWORD_PROMPT set RHQ_AGENT_PASSWORD_PROMPT=true
 
 if /i "%1"=="install" (
    "%RHQ_AGENT_WRAPPER_EXE_FILE_PATH%" -i "%RHQ_AGENT_WRAPPER_CONF_FILE_PATH%" "set.RHQ_AGENT_HOME=%RHQ_AGENT_HOME%" "set.RHQ_AGENT_INSTANCE_NAME=%RHQ_AGENT_INSTANCE_NAME%" "set.RHQ_AGENT_JAVA_EXE_FILE_PATH=%RHQ_AGENT_JAVA_EXE_FILE_PATH%" "set.RHQ_AGENT_OS_PLATFORM=%RHQ_AGENT_OS_PLATFORM%" "set.RHQ_AGENT_WRAPPER_LOG_DIR_PATH=%RHQ_AGENT_WRAPPER_LOG_DIR_PATH%" %_WRAPPER_NTSERVICE_ACCOUNT% %_DEBUG_OPTS%
+   if ERRORLEVEL 1 goto error
    goto done
 )
 
 if /i "%1"=="start" (
    "%RHQ_AGENT_WRAPPER_EXE_FILE_PATH%" -t "%RHQ_AGENT_WRAPPER_CONF_FILE_PATH%"
+   if ERRORLEVEL 1 goto error
    goto done
 )
 
 if /i "%1"=="stop" (
    "%RHQ_AGENT_WRAPPER_EXE_FILE_PATH%" -p "%RHQ_AGENT_WRAPPER_CONF_FILE_PATH%"
+   if ERRORLEVEL 1 goto error
    goto done
 )
 
 if /i "%1"=="remove" (
    "%RHQ_AGENT_WRAPPER_EXE_FILE_PATH%" -r "%RHQ_AGENT_WRAPPER_CONF_FILE_PATH%"
+   if ERRORLEVEL 1 goto error
    goto done
 )
 
 if /i "%1"=="restart" (
    "%RHQ_AGENT_WRAPPER_EXE_FILE_PATH%" -p "%RHQ_AGENT_WRAPPER_CONF_FILE_PATH%"
    "%RHQ_AGENT_WRAPPER_EXE_FILE_PATH%" -t "%RHQ_AGENT_WRAPPER_CONF_FILE_PATH%"
+   if ERRORLEVEL 1 goto error
    goto done
 )
 
 if /i "%1"=="status" (
    "%RHQ_AGENT_WRAPPER_EXE_FILE_PATH%" -q "%RHQ_AGENT_WRAPPER_CONF_FILE_PATH%"
+   if ERRORLEVEL 1 goto error
    goto done
 )
 
 echo Usage: %0 { install ^| start ^| stop ^| remove ^| restart ^| status }
+goto done
+
+rem Java Service Wrapper returns exit codes up to 39 based on how its installed/running
+:error
+if ERRORLEVEL 39 exit 39
+if ERRORLEVEL 38 exit 38
+if ERRORLEVEL 37 exit 37
+if ERRORLEVEL 36 exit 36
+if ERRORLEVEL 35 exit 35
+if ERRORLEVEL 34 exit 34
+if ERRORLEVEL 33 exit 33
+if ERRORLEVEL 32 exit 32
+if ERRORLEVEL 31 exit 31
+if ERRORLEVEL 30 exit 30
+if ERRORLEVEL 29 exit 29
+if ERRORLEVEL 28 exit 28
+if ERRORLEVEL 27 exit 27
+if ERRORLEVEL 26 exit 26
+if ERRORLEVEL 25 exit 25
+if ERRORLEVEL 24 exit 24
+if ERRORLEVEL 23 exit 23
+if ERRORLEVEL 22 exit 22
+if ERRORLEVEL 21 exit 21
+if ERRORLEVEL 20 exit 20
+if ERRORLEVEL 19 exit 19
+if ERRORLEVEL 18 exit 18
+if ERRORLEVEL 17 exit 17
+if ERRORLEVEL 16 exit 16
+if ERRORLEVEL 15 exit 15
+if ERRORLEVEL 14 exit 14
+if ERRORLEVEL 13 exit 13
+if ERRORLEVEL 12 exit 12
+if ERRORLEVEL 11 exit 11
+if ERRORLEVEL 10 exit 10
+if ERRORLEVEL 9 exit 9
+if ERRORLEVEL 8 exit 8
+if ERRORLEVEL 7 exit 7
+if ERRORLEVEL 6 exit 6
+if ERRORLEVEL 5 exit 5
+if ERRORLEVEL 4 exit 4
+if ERRORLEVEL 3 exit 3
+if ERRORLEVEL 2 exit 2
+if ERRORLEVEL 1 exit 1
 
 :done
 endlocal

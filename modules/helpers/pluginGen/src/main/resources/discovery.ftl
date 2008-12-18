@@ -18,6 +18,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 -->
+<#-- @ftlvariable name="props" type="org.rhq.helpers.pluginGen.Props" -->
 package ${props.packagePrefix};
 
 import java.util.HashSet;

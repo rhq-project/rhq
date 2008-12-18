@@ -18,6 +18,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 -->
+<#-- @ftlvariable name="props" type="org.rhq.helpers.pluginGen.Props" -->
 package ${props.packagePrefix};
 
 import java.util.HashSet;
@@ -28,9 +29,9 @@ import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.pluginapi.event.EventPoller;
 
 
-public class DummyEventPoller implements EventPoller {
+public class ${props.name?cap_first}EventPoller implements EventPoller {
 
-    public DummyEventPoller() {
+    public ${props.name?cap_first}EventPoller() {
 
     }
 
@@ -48,7 +49,7 @@ public class DummyEventPoller implements EventPoller {
      */
     public Set<Event> poll() {
         Set<Event> eventSet = new HashSet<Event>();
-        // TODO add your events here. Below is an example
+        // TODO add your events here. Below is an example that
         /*
         synchronized (events) {
             eventSet.addAll(events);

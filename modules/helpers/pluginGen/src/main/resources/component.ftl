@@ -18,6 +18,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 -->
+<#-- @ftlvariable name="props" type="org.rhq.helpers.pluginGen.Props" -->
 
 package ${props.packagePrefix};
 
@@ -67,7 +68,7 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
 
 
     <#if props.events>
-    public static final String DUMMY_EVENT = "dummyEvent"; // Same as in Plugin-Descriptor
+    public static final String DUMMY_EVENT = "${props.name}DummyEvent"; // Same as in Plugin-Descriptor
 
     EventContext eventContext;
     </#if>
@@ -93,7 +94,7 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
 
         <#if props.events>
         eventContext = context.getEventContext();
-        DummyEventPoller eventPoller = new DummyEventPoller();
+        ${props.name?cap_first}EventPoller eventPoller = new ${props.name?cap_first}EventPoller();
         eventContext.registerEventPoller(eventPoller, 60);
         </#if>
 

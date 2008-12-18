@@ -18,6 +18,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 -->
+<#-- @ftlvariable name="props" type="org.rhq.helpers.pluginGen.Props" -->
 <?xml version="1.0"?>
 <plugin name="${props.name}"
         displayName="${props.name}Plugin"
@@ -26,42 +27,14 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-        <${props.category.lowerName}
-            name="${props.name}" <!-- TODO separate out plugin name and service name -->
-            discovery="${props.discoveryClass}"
-            class="${props.componentClass}"
-            version="1.0"
-            <#if props.singleton>
-            singleton="true"
-            </#if>
 
-        >
-            <plugin-configuration>
-                <!-- TODO add your own here -->
-            </plugin-configuration>
 
-        <#if props.monitoring>
-            <metric property="dummyMetric" displayName="Dummy display name"/>
-        </#if>
+    <#include "descriptorMain.ftl"/>
 
-    <!-- TODO process scans -->
+    <#list props.children as props>
+        <#include "./descriptorMain.ftl"/>
 
-        <#if props.operations>
-            <operation name="dummyOperation">
-                <!-- TODO supply parameters and return values -->
-            </operation>
-        </#if>
+    </#list>
 
-        <#if props.events>
-            <event name="dummyEvent"/>
-        </#if>
-
-        <#if props.resourceConfiguration>
-            <resource-configuration>
-                <!-- TODO supply your configuration parameters -->
-            </resource-configuration>
-        </#if>
-
-        </${props.category.lowerName}>
 
 </plugin>

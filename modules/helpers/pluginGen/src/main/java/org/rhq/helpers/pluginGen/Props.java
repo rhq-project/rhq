@@ -20,6 +20,7 @@ package org.rhq.helpers.pluginGen;
 
 import java.util.Locale;
 import java.util.Set;
+import java.util.HashSet;
 
 /**
  * The properties needed to generate a new plugin skeleton
@@ -60,7 +61,7 @@ public class Props {
     private boolean usesExternalJarsInPlugin;
 
     /** Embedded children */
-    private Set<Props> children;
+    private Set<Props> children = new HashSet<Props>();
 
     public ResourceCategory getCategory() {
         return category;

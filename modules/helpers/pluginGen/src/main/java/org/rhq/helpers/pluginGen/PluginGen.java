@@ -60,17 +60,40 @@ public class PluginGen {
 
     public void run() throws Exception {
 
-        Props props = askQuestions();
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+        Props props = askQuestions(br);
+
+        boolean done = false;
+        do {
+
+            System.out.println();
+            System.out.print("Do you want to add a child to " + props.getName() + "? (y/N) ");
+            String answer = br.readLine();
+            answer = answer.toLowerCase(Locale.getDefault());
+            if (answer.startsWith("n") || answer.length()==0 )
+                done = true;
+            else {
+                Props child = askQuestions(br);
+                props.getChildren().add(child);
+            }
+
+        } while (!done);
+
         log.info("\nYou have choosen:\n" + props.toString());
         generate(props);
     }
 
-    private Props askQuestions() throws Exception {
+    /**
+     * Ask the questions by introspecting the {Props} class
+     * @param br  BufferedReader to read the users answers from
+     * @return an initialized Props object
+     * @throws Exception if anything goes wrong
+     */
+    private Props askQuestions(BufferedReader br) throws Exception {
 
         Method[] meths = Props.class.getDeclaredMethods();
         Props props = new Props();
-
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
         System.out.print("Please speficy the plugin root category (Platform, Server, servIce): ");
         String answer = br.readLine();
@@ -152,7 +175,7 @@ public class PluginGen {
             return;
         }
 
-        boolean success = false;
+        boolean success;
         File activeDirectory = new File(props.getFileSystemRoot(), props.getName());
 
         if (!activeDirectory.exists()) {
@@ -209,8 +232,24 @@ public class PluginGen {
         createFile(props,"component",props.getComponentClass()+".java",javaDirs.getAbsolutePath());
 
         if (props.isEvents()) {
-            createFile(props,"eventPoller", "DummyEventPoller.java", javaDirs.getAbsolutePath());
+            createFile(props,"eventPoller", caps(props.getName()) + "EventPoller.java", javaDirs.getAbsolutePath());
         }
+
+        // See if there are children and create for them too
+        if (!props.getChildren().isEmpty())
+            log.info("Creating child services");
+
+        for (Props cProps : props.getChildren()) {
+            createFile(cProps,"discovery",props.getDiscoveryClass()+".java",javaDirs.getAbsolutePath());
+            createFile(cProps,"component",props.getComponentClass()+".java",javaDirs.getAbsolutePath());
+
+
+            // create EventPoller
+            if (cProps.isEvents()) {
+                createFile(cProps,"eventPoller", caps(props.getName()) + "EventPoller.java", javaDirs.getAbsolutePath());
+            }
+        }
+
         log.info("Done ..");
 
     }
@@ -231,6 +270,7 @@ public class PluginGen {
 
     /**
      * Apply a template to generate a file
+     * @param props The properties used to create the respective file
      * @param template The name of the template without .ftl suffix
      * @param fileName The name of the file to create
      * @param directory The name of the directory to create in
@@ -267,4 +307,10 @@ public class PluginGen {
 
     }
 
+    private String caps(String in) {
+        if (in == null)
+            return null;
+
+        return in.substring(0,1).toUpperCase(Locale.getDefault()) + in.substring(1);
+    }
 }

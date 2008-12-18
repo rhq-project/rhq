@@ -39,7 +39,7 @@ public class Test {
 
         Props p = new Props();
         p.setName("foo");
-        p.setCategory(Props.ResourceCategory.SERVICE);
+        p.setCategory(Props.ResourceCategory.SERVER);
         p.setPackagePrefix("com.acme.plugin");
         p.setDiscoveryClass("FooDiscovery");
         p.setComponentClass("FooComponent");
@@ -50,13 +50,36 @@ public class Test {
         p.setCreateChildren(true);
         p.setSingleton(true);
 
+        Props child = new Props();
+        child.setName("FooChild1");
+        child.setCategory(Props.ResourceCategory.SERVICE);
+        child.setPackagePrefix(p.getPackagePrefix());
+        child.setDiscoveryClass("ChildDiscovery1");
+        child.setComponentClass("ChildComponent1");
+        child.setParentType("FooComponent");
+        child.setEvents(true);
+
+        p.getChildren().add(child);
+
+        child = new Props();
+        child.setName("FooChild2");
+        child.setCategory(Props.ResourceCategory.SERVICE);
+        child.setParentType("FooComponent");
+        child.setPackagePrefix(p.getPackagePrefix());
+        child.setDiscoveryClass("ChildDiscovery2");
+        child.setComponentClass("ChildComponent2");
+        child.setEvents(true);
+
+        p.getChildren().add(child);
+
 
         PluginGen pg = new PluginGen();
         pg.createFile(p,"descriptor","rhq-plugin.xml","/tmp");
         pg.createFile(p,"component", "FooComponent.java", "/tmp");
         pg.createFile(p,"discovery", "FooDiscovery.java", "/tmp");
         pg.createFile(p,"pom", "pom.xml", "/tmp");
-        pg.createFile(p,"eventPoller", "DummyEventPoller.java", "/tmp");
+        pg.createFile(p,"eventPoller", "FooEventPoller.java", "/tmp");
+        pg.createFile(p.getChildren().iterator().next(),"component", "ChildComponent1.java", "/tmp");
 
     }
 }

@@ -146,12 +146,18 @@ if /i "%1"=="remove" (
    goto done
 )
 
+if /i "%1"=="restart" (
+   "%RHQ_AGENT_WRAPPER_EXE_FILE_PATH%" -p "%RHQ_AGENT_WRAPPER_CONF_FILE_PATH%"
+   "%RHQ_AGENT_WRAPPER_EXE_FILE_PATH%" -t "%RHQ_AGENT_WRAPPER_CONF_FILE_PATH%"
+   goto done
+)
+
 if /i "%1"=="status" (
    "%RHQ_AGENT_WRAPPER_EXE_FILE_PATH%" -q "%RHQ_AGENT_WRAPPER_CONF_FILE_PATH%"
    goto done
 )
 
-echo Usage: %0 { install ^| start ^| stop ^| remove ^| status }
+echo Usage: %0 { install ^| start ^| stop ^| remove ^| restart ^| status }
 
 :done
 endlocal

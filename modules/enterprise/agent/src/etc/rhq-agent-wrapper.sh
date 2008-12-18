@@ -225,13 +225,16 @@ case "$1" in
 
 'status')
         echo $STATUS
+        if [ "$RUNNING" = "0" ]; then
+           exit 1
+        fi
         exit 0
         ;;
 
 'restart')
         "${_THIS_SCRIPT}" stop
         "${_THIS_SCRIPT}" start
-        exit 0
+        exit $?
         ;;
 
 *)

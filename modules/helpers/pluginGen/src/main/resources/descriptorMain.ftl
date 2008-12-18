@@ -24,16 +24,15 @@
     platform/server/service. It is called by descriptor.ftl
 
 -->
-        <${props.category.lowerName}
-            name="${props.name}" <!-- TODO separate out plugin name and service name -->
+            name="${props.name}" <#-- TODO separate out plugin name and service name -->
             discovery="${props.discoveryClass}"
             class="${props.componentClass}"
             version="1.0"
             <#if props.singleton>
             singleton="true"
             </#if>
-
         >
+
             <plugin-configuration>
                 <!-- TODO add your own here -->
             </plugin-configuration>
@@ -42,7 +41,7 @@
             <metric property="dummyMetric" displayName="Dummy display name"/>
         </#if>
 
-    <!-- TODO process scans -->
+        <!-- TODO process scans -->
 
         <#if props.operations>
             <operation name="dummyOperation">
@@ -59,5 +58,3 @@
                 <!-- TODO supply your configuration parameters -->
             </resource-configuration>
         </#if>
-
-        </${props.category.lowerName}>

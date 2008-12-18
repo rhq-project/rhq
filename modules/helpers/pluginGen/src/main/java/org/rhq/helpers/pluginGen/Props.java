@@ -18,9 +18,8 @@
  */
 package org.rhq.helpers.pluginGen;
 
-import java.util.Locale;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * The properties needed to generate a new plugin skeleton
@@ -189,15 +188,6 @@ public class Props {
 
     public void setUsesExternalJarsInPlugin(boolean usesExternalJarsInPlugin) {
         this.usesExternalJarsInPlugin = usesExternalJarsInPlugin;
-    }
-
-    /** Possible categories */
-    public static enum ResourceCategory {
-        PLATFORM, SERVER, SERVICE;
-
-        public String getLowerName() {
-            return toString().toLowerCase(Locale.getDefault());
-        }
     }
 
     @Override

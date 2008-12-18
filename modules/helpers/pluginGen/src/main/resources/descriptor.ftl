@@ -22,19 +22,23 @@
 <?xml version="1.0"?>
 <plugin name="${props.name}"
         displayName="${props.name}Plugin"
-        package="${props.packagePrefix}"
+        package="${props.packagePrefix}.${props.name}"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
 
-
+    <${props.category.lowerName}
     <#include "descriptorMain.ftl"/>
 
+    <#-- Those are the embedded children -->
     <#list props.children as props>
+        <${props.category.lowerName}
         <#include "./descriptorMain.ftl"/>
+        </${props.category.lowerName}>
 
     </#list>
+    </${props.category.lowerName}>
 
 
 </plugin>

@@ -20,7 +20,7 @@
 -->
 <#-- @ftlvariable name="props" type="org.rhq.helpers.pluginGen.Props" -->
 
-package ${props.packagePrefix};
+package ${props.packagePrefix}.${props.name};
 
 import java.util.Set;
 
@@ -79,6 +79,7 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
      *  @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
      */
     public AvailabilityType getAvailability() {
+        // TODO supply real implementation
         return AvailabilityType.UP;
     }
 

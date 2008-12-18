@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -62,7 +63,7 @@ public class PluginGen {
 
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-        Props props = askQuestions(br);
+        Props props = askQuestions(br, new Props());
 
         boolean done = false;
         do {
@@ -74,7 +75,7 @@ public class PluginGen {
             if (answer.startsWith("n") || answer.length()==0 )
                 done = true;
             else {
-                Props child = askQuestions(br);
+                Props child = askQuestions(br, props);
                 props.getChildren().add(child);
             }
 
@@ -85,25 +86,29 @@ public class PluginGen {
     }
 
     /**
-     * Ask the questions by introspecting the {Props} class
+     * Ask the questions by introspecting the {@link Props} class
      * @param br  BufferedReader to read the users answers from
+     * @param parentProps Props of the parent - some of them will be copied to the children
      * @return an initialized Props object
      * @throws Exception if anything goes wrong
+     * @see org.rhq.helpers.pluginGen.Props
      */
-    private Props askQuestions(BufferedReader br) throws Exception {
+    private Props askQuestions(BufferedReader br, Props parentProps) throws Exception {
 
         Method[] meths = Props.class.getDeclaredMethods();
         Props props = new Props();
 
-        System.out.print("Please speficy the plugin root category (Platform, Server, servIce): ");
+        System.out.print("Please specify the plugin root category ");
+        List<ResourceCategory> possibleChildren = ResourceCategory.getPossibleChildren(parentProps.getCategory());
+        for (ResourceCategory cat : possibleChildren) {
+            System.out.print(cat + "(" + cat.getAbbrev() + "), ");
+        }
+
         String answer = br.readLine();
-        answer = answer.toLowerCase(Locale.getDefault());
-        if (answer.startsWith("p"))
-            props.setCategory(Props.ResourceCategory.PLATFORM);
-        else if (answer.startsWith("s"))
-            props.setCategory(Props.ResourceCategory.SERVER);
-        else if (answer.startsWith("i"))
-            props.setCategory(Props.ResourceCategory.SERVICE);
+        answer = answer.toUpperCase(Locale.getDefault());
+        ResourceCategory cat = ResourceCategory.getByAbbrv(answer.charAt(0));
+        if (cat != null)
+            props.setCategory(cat);
         else {
             System.err.println("Bad answer, only use P/S/I");
             System.exit(1);
@@ -124,33 +129,45 @@ public class PluginGen {
             else
                 name = name.substring(2);
 
-            System.out.print("Please specify");
-            boolean isBool = false;
-            if (retType.equals(Boolean.TYPE)) {
-                System.out.print(" if it should support " + name + " (y/N): ");
-                isBool = true;
-            } else {
-                System.out.print(" its " + name + ": ");
+            if (name.equals("PackagePrefix") && parentProps.getPackagePrefix()!=null) {
+                props.setPackagePrefix(parentProps.getPackagePrefix());
+            } else if (name.equals("FileSystemRoot") && parentProps.getFileSystemRoot()!=null) {
+                props.setFileSystemRoot(parentProps.getFileSystemRoot());
+            } else if (name.equals("ParentType") && parentProps.getName()!=null) {
+                // Set parent type always when we are in the child
+                props.setParentType(caps(parentProps.getName()));
+            } else if (name.equals("UsesExternalJarsInPlugin") && parentProps.getName()!=null) {
+                 // Skip this one on children
             }
+            else {
 
-            answer = br.readLine();
-            String setterName = "set" + name.substring(0, 1).toUpperCase() + name.substring(1);
-
-            Method setter;
-            if (isBool)
-                setter = Props.class.getMethod(setterName, Boolean.TYPE);
-            else
-                setter = Props.class.getMethod(setterName, String.class);
-
-            if (isBool) {
-                if (answer.toLowerCase().startsWith("y") || answer.toLowerCase().startsWith("j")) {
-                    setter.invoke(props, true);
+                System.out.print("Please specify");
+                boolean isBool = false;
+                if (retType.equals(Boolean.TYPE)) {
+                    System.out.print(" if it should support " + name + " (y/N): ");
+                    isBool = true;
+                } else {
+                    System.out.print(" its " + name + ": ");
                 }
-            } else {
-                if (!answer.startsWith("\n") && !answer.startsWith("\r") && !(answer.length()==0))
-                    setter.invoke(props, answer);
-            }
 
+                answer = br.readLine();
+                String setterName = "set" + name.substring(0, 1).toUpperCase() + name.substring(1);
+
+                Method setter;
+                if (isBool)
+                    setter = Props.class.getMethod(setterName, Boolean.TYPE);
+                else
+                    setter = Props.class.getMethod(setterName, String.class);
+
+                if (isBool) {
+                    if (answer.toLowerCase().startsWith("y") || answer.toLowerCase().startsWith("j")) {
+                        setter.invoke(props, true);
+                    }
+                } else {
+                    if (!answer.startsWith("\n") && !answer.startsWith("\r") && !(answer.length()==0))
+                        setter.invoke(props, answer);
+                }
+            }
         }
 
         return props;
@@ -292,7 +309,7 @@ public class PluginGen {
             Template templ = config.getTemplate(template + ".ftl");
 
             Writer out = new BufferedWriter(new FileWriter(new File(directory,fileName)));
-            Map root = new HashMap();
+            Map<String,Props> root = new HashMap<String,Props>();
             root.put("props",props);
             templ.process(root, out);
             out.flush();

@@ -20,17 +20,12 @@ package org.rhq.helpers.pluginGen;
 
 import java.io.File;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 /**
  * Simple test class to easily trigger creation of output
  *
  * @author Heiko W. Rupp
  */
 public class Test {
-
-    private final Log log = LogFactory.getLog(Test.class);
 
     public static void main(String[] args) throws Exception {
 
@@ -39,7 +34,7 @@ public class Test {
 
         Props p = new Props();
         p.setName("foo");
-        p.setCategory(Props.ResourceCategory.SERVER);
+        p.setCategory(ResourceCategory.SERVER);
         p.setPackagePrefix("com.acme.plugin");
         p.setDiscoveryClass("FooDiscovery");
         p.setComponentClass("FooComponent");
@@ -52,7 +47,7 @@ public class Test {
 
         Props child = new Props();
         child.setName("FooChild1");
-        child.setCategory(Props.ResourceCategory.SERVICE);
+        child.setCategory(ResourceCategory.SERVICE);
         child.setPackagePrefix(p.getPackagePrefix());
         child.setDiscoveryClass("ChildDiscovery1");
         child.setComponentClass("ChildComponent1");
@@ -63,7 +58,7 @@ public class Test {
 
         child = new Props();
         child.setName("FooChild2");
-        child.setCategory(Props.ResourceCategory.SERVICE);
+        child.setCategory(ResourceCategory.SERVICE);
         child.setParentType("FooComponent");
         child.setPackagePrefix(p.getPackagePrefix());
         child.setDiscoveryClass("ChildDiscovery2");

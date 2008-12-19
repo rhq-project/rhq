@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>1.1.3.GA</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
   <description>RHQ Agent Update</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/agentupdate/</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/agentupdate/</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_3_GA/modules/enterprise/agentupdate</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_1_3_GA/modules/enterprise/agentupdate</developerConnection>
   </scm>
 
   <properties>
@@ -94,8 +94,7 @@ rhq-agent.latest.build-number=${buildNumber}
             <phase>process-resources</phase>
             <configuration>
               <tasks>
-                <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}/rhq-enterprise-agent-${project.version}.zip"
-                      todir="${project.build.outputDirectory}" />
+                <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-agent/${project.version}/rhq-enterprise-agent-${project.version}.zip" todir="${project.build.outputDirectory}" />
                 <fileset dir="${settings.localRepository}" id="run.classpath.fileset">
                   <!-- we do not need logging (yet) in AgentUpdate
                   <include name="log4j/log4j/1.2.14/log4j-1.2.14.jar" />
@@ -172,7 +171,7 @@ rhq-agent.latest.build-number=${buildNumber}
                       <echo>*** Cleaning old ${rhq.deploymentDir}...</echo>
                       <mkdir dir="${rhq.deploymentDir}" />
                       <delete failonerror="false">
-                        <fileset dir="${rhq.deploymentDir}" includes="*.properties"/>
+                        <fileset dir="${rhq.deploymentDir}" includes="*.properties" />
                       </delete>
                       <property name="deployment.file" location="${rhq.deploymentDir}/${rhq.deploymentJar}" />
                       <echo>*** Updating ${deployment.file}...</echo>
@@ -190,7 +189,7 @@ rhq-agent.latest.build-number=${buildNumber}
                     <tasks>
                       <echo>*** Deleting ${rhq.deploymentDir}...</echo>
                       <delete failonerror="false">
-                        <fileset dir="${rhq.deploymentDir}" includes="*"/>
+                        <fileset dir="${rhq.deploymentDir}" includes="*" />
                       </delete>
                     </tasks>
                   </configuration>

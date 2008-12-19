@@ -20,8 +20,6 @@
 
    <properties>
       <scm.module.path>modules/plugins/onewire</scm.module.path>
-      <!-- next is needed for the plugin validator -->
-      <rhq.version>1.0.0.GA</rhq.version>
    </properties>
   
   <build>
@@ -32,11 +30,6 @@
           <source>1.5</source>
           <target>1.5</target>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.rhq</groupId>
-        <artifactId>rhq-plugin-validator</artifactId>
-        <version>${rhq.version}</version>
       </plugin>
       
       <plugin>
@@ -173,6 +166,7 @@
       <url>http://repository.jboss.org/maven2/</url>
     </repository>
   </repositories>
+  
   <pluginRepositories>
     <pluginRepository>
       <snapshots>
@@ -183,53 +177,13 @@
       <url>http://repository.jboss.org/maven2/</url>
     </pluginRepository>
   </pluginRepositories>
+
   <dependencies>
     <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-core-domain</artifactId>
-      <version>${rhq.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-core-plugin-api</artifactId>
-      <version>${rhq.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-core-native-system</artifactId>
-      <version>${rhq.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.persistence</groupId>
-      <artifactId>persistence-api</artifactId>
-      <version>1.0</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>hibernate-annotations</groupId>
-      <artifactId>hibernate-annotations</artifactId>
-      <version>3.2.1.GA</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.xml.bind</groupId>
-      <artifactId>jaxb-api</artifactId>
-      <version>2.1</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>1.1</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
       <groupId>com.dalsemi</groupId>
-         <artifactId>OneWireApi</artifactId>
-         <version>1.10</version>
-      </dependency>
+      <artifactId>OneWireApi</artifactId>
+      <version>1.10</version>
+    </dependency>
   </dependencies>
+  
 </project>

@@ -4,10 +4,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-        <artifactId>rhq-plugins-parent</artifactId>
-        <groupId>org.rhq</groupId>
-        <version>1.2.0-SNAPSHOT</version>
-    </parent>
+      <artifactId>rhq-plugins-parent</artifactId>
+      <groupId>org.rhq</groupId>
+      <version>1.2.0-SNAPSHOT</version>
+  </parent>
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-hudson-plugin</artifactId>
@@ -16,104 +16,15 @@
 
   <name>RHQ Hudson Plugin</name>
   <description>RHQ Hudson Plugin</description>
-
-  <properties>        
-    <rhq.version>1.2.0-SNAPSHOT</rhq.version>
-  </properties>    
   
   <dependencies>
-
-    <!-- Below are the core modules that are required dependencies of all plugins -->
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-core-domain</artifactId>
-      <version>${rhq.version}</version>
-      <scope>provided</scope> <!-- provided by the agent/plugin-container -->
-    </dependency>
-
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-core-plugin-api</artifactId>
-      <version>${rhq.version}</version>
-      <scope>provided</scope> <!-- provided by the agent/plugin-container -->
-    </dependency>
-
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-core-native-system</artifactId>
-      <version>${rhq.version}</version>
-      <scope>provided</scope> <!-- provided by the agent/plugin-container -->
-    </dependency>
-
-    <!-- This is a fix for the Javac bug requiring annotations to be
-         available when compiling dependent classes. It is fixed in JDK 6. -->
-    <dependency>
-      <groupId>javax.persistence</groupId>
-      <artifactId>persistence-api</artifactId>
-      <version>1.0</version>
-      <scope>provided</scope> <!-- provided by the agent/plugin-container -->
-    </dependency>
-
-    <!-- This is a fix for the Javac bug requiring annotations to be
-         available when compiling dependent classes; it is fixed in JDK 6. -->
-    <dependency>
-      <groupId>hibernate-annotations</groupId>
-      <artifactId>hibernate-annotations</artifactId>
-      <version>3.2.1.GA</version>
-      <scope>provided</scope> <!-- provided by the agent/plugin-container -->
-    </dependency>
-
-    <!-- This is a fix for the Javac bug requiring annotations to be
-         available when compiling dependent classes; it is fixed in JDK 6. -->
-    <dependency>
-      <groupId>javax.xml.bind</groupId>
-      <artifactId>jaxb-api</artifactId>
-      <version>2.1</version>
-      <scope>provided</scope> <!-- provided by the agent/plugin-container -->
-    </dependency>
     
-    <!-- Uncomment the one of the three logging systems your plugin uses: log4j, commons-logging or i18nlog
-         all three are provided to your plugin by the agent/plugin-container -->
-
-     <dependency>
-       <groupId>commons-logging</groupId>
-       <artifactId>commons-logging</artifactId>
-       <version>1.1</version>
-       <scope>provided</scope>
-     </dependency>
-
-
      <dependency>
        <groupId>org.json</groupId>
        <artifactId>json</artifactId>
        <version>20080701</version>
        <scope>provided</scope>
      </dependency>
-    <!--
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.14</version>
-      <scope>provided</scope>
-    </dependency>
-    -->
-
-    <!--
-    <dependency>
-      <groupId>i18nlog</groupId>
-      <artifactId>i18nlog</artifactId>
-      <version>1.0.9</version>
-    </dependency>
-    -->
-
-    <!-- Define any third-party dependencies your plugin has here. -->
-    <!--
-    <dependency>
-      <groupId>group-id-of-dependency-goes-here</groupId>
-      <artifactId>artifact-id-of-dependency-goes-here</artifactId>
-      <version>version-of-dependency-goes-here</version>
-    </dependency>
-    -->
 
   </dependencies>
 

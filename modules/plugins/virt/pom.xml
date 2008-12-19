@@ -137,7 +137,7 @@
                          <mkdir dir="target/itest/lib" />
                          <copy toDir="target/itest/plugins" flatten="true" verbose="true">
                             <fileset dir="${settings.localRepository}/">
-                               <include name="org/jboss/on/on-platform-plugin/${rhq.version}/on-platform-plugin-${rhq.version}.jar" />
+                               <include name="org/jboss/on/on-platform-plugin/${project.version}/on-platform-plugin-${project.version}.jar" />
                             </fileset>
                             <fileset dir="${project.build.directory}">
                                <include name="${project.artifactId}-${project.version}.jar" />

@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jdom.input.SAXBuilder;
@@ -183,9 +184,10 @@ public class Repodata {
     private String getLocation(Element repomd, Meta type) {
         String href = "";
         for (Element e : (List<Element>) repomd.getChildren()) {
-            if (e.getAttributeValue("type").equals(type.name())) {
-                Element locaction = e.getChild("location", repons);
-                href = locaction.getAttributeValue("href");
+            String typeAttribute = e.getAttributeValue("type");
+            if (typeAttribute != null && typeAttribute.equals(type.name())) {
+                Element location = e.getChild("location", repons);
+                href = location.getAttributeValue("href");
                 break;
             }
         }

@@ -1121,6 +1121,39 @@ DB Upgrade:
       </schema-directSQL>
    </schemaSpec>
 
+   <schemaSpec version="2.38">
+      <!-- Keep these with the same columnType=VARCHAR2, but increase size -->
+      <schema-alterColumn
+         table="RHQ_CONTENT_SOURCE"
+         column="NAME"
+         columnType="VARCHAR2"
+         precision="200" />
+
+      <schema-alterColumn
+         table="RHQ_CONTENT_SOURCE_TYPE"
+         column="NAME"
+         columnType="VARCHAR2"
+         precision="200" />
+
+      <schema-directSQL>
+         <statement desc="Removing obsolete content source sync jobs">
+            DELETE FROM RHQ_QRTZ_CRON_TRIGGERS WHERE TRIGGER_GROUP = 'syncContentSource'
+         </statement>
+         <statement>
+            DELETE FROM RHQ_QRTZ_JOB_DETAILS WHERE JOB_GROUP = 'syncContentSource'
+         </statement>
+         <statement>
+            DELETE FROM RHQ_QRTZ_SIMPLE_TRIGGERS WHERE TRIGGER_GROUP = 'syncContentSource'
+         </statement>
+         <statement>
+            DELETE FROM RHQ_QRTZ_TRIGGERS WHERE TRIGGER_GROUP = 'syncContentSource'
+         </statement>
+         <statement>
+            DELETE FROM RHQ_QRTZ_FIRED_TRIGGERS WHERE TRIGGER_GROUP = 'syncContentSource'
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

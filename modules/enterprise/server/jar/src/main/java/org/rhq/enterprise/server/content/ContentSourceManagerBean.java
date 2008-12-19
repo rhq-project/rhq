@@ -413,14 +413,29 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
 
         log.debug("User [" + subject + "] is updating content source [" + contentSource + "]");
 
+        ContentSource loaded = entityManager.find(ContentSource.class, contentSource.getId());
+
         if (contentSource.getConfiguration() == null) {
             // this is a one-to-one and hibernate can't auto delete this orphan (HHH-2608), we manually do it here
-            ContentSource loaded = entityManager.find(ContentSource.class, contentSource.getId());
             if (loaded.getConfiguration() != null) {
                 entityManager.remove(loaded.getConfiguration());
             }
         }
 
+        // before we merge the change, look to see if the name is changing because if it is
+        // we need to unschedule the sync job due to the fact that the job data has the name in it.
+        if (!loaded.getName().equals(contentSource.getName())) {
+            log.info("Content source [" + loaded.getName() + "] is being renamed to [" + contentSource.getName()
+                + "].  Will now unschedule the old sync job");
+            try {
+                ContentSourcePluginContainer pc = ContentManagerHelper.getPluginContainer();
+                pc.unscheduleSyncJob(loaded);
+            } catch (Exception e) {
+                log.warn("Failed to unschedule obsolete content source sync job for [" + loaded + "]", e);
+            }
+        }
+
+        // now we can merge the changes to the database
         contentSource = entityManager.merge(contentSource);
         log.debug("User [" + subject + "] updated content source [" + contentSource + "]");
 
@@ -698,7 +713,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public boolean internalSynchronizeContentSource(int contentSourceId) throws Exception {
         ContentSourcePluginContainer pc = ContentManagerHelper.getPluginContainer();
-        return pc.getAdapterManager().sychronizeContentSource(contentSourceId);
+        return pc.getAdapterManager().synchronizeContentSource(contentSourceId);
     }
 
     @SuppressWarnings("unchecked")

@@ -19,11 +19,13 @@
 package org.rhq.enterprise.server.plugin.content;
 
 import java.util.Date;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
+
 import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
@@ -119,9 +121,10 @@ public class ContentSourcePluginContainer {
         // Create our job with a trigger that fires immediately and doesn't repeat.
         // Make the name unique - we may already have our cron job schedules.
         // What happens if this is triggered when our cron job is triggered? the job will abort and let the current job finish
-        String timestamp = Long.toHexString(System.currentTimeMillis());
-        JobDetail job = new JobDetail(ContentSourceSyncJob.createJobName(contentSource, timestamp),
-            SYNC_JOB_GROUP_NAME, ContentSourceSyncJob.class, false, false, false);
+        JobDetail job = new JobDetail(ContentSourceSyncJob.createUniqueJobName(contentSource), SYNC_JOB_GROUP_NAME,
+            ContentSourceSyncJob.class, false, false, false);
+
+        ContentSourceSyncJob.createJobDataMap(contentSource, job);
 
         SimpleTrigger trigger = new SimpleTrigger(job.getName(), job.getGroup());
         trigger.setVolatility(false);
@@ -155,8 +158,9 @@ public class ContentSourcePluginContainer {
         }
 
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
-        scheduler.scheduleCronJob(ContentSourceSyncJob.createJobName(contentSource), SYNC_JOB_GROUP_NAME, null,
-            ContentSourceSyncJob.class, true, false, syncSchedule);
+        scheduler.scheduleCronJob(ContentSourceSyncJob.createJobName(contentSource), SYNC_JOB_GROUP_NAME,
+            ContentSourceSyncJob.createJobDataMap(contentSource, null), ContentSourceSyncJob.class, true, false,
+            syncSchedule);
 
         return;
     }

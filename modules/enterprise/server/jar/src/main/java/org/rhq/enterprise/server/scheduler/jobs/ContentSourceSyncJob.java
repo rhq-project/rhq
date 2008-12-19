@@ -20,13 +20,16 @@ package org.rhq.enterprise.server.scheduler.jobs;
 
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Pattern;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.Job;
+import org.quartz.JobDataMap;
+import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.StatefulJob;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
@@ -49,16 +52,37 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author John Mazzitelli
  */
 public class ContentSourceSyncJob implements StatefulJob {
+    private static final String DATAMAP_CONTENT_SOURCE_NAME = "contentSourceName";
+    private static final String DATAMAP_CONTENT_SOURCE_TYPE_NAME = "contentSourceTypeName";
+
     private static final Log log = LogFactory.getLog(ContentSourceSyncJob.class);
     private static final String SEPARATOR = "--";
 
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {
-            String[] jobNameParts = parseJobName(context.getJobDetail().getName());
-            String name = jobNameParts[0];
-            String typeName = jobNameParts[1];
+            JobDetail jobDetail = context.getJobDetail();
+            if (jobDetail == null) {
+                throw new IllegalStateException("The job does not have any details");
+            }
+
+            JobDataMap dataMap = jobDetail.getJobDataMap();
+            if (dataMap == null) {
+                throw new IllegalStateException("The job does not have any data in its details");
+            }
+
+            String name = dataMap.getString(DATAMAP_CONTENT_SOURCE_NAME);
+            String typeName = dataMap.getString(DATAMAP_CONTENT_SOURCE_TYPE_NAME);
+
+            if (name == null) {
+                throw new IllegalStateException("Missing the content source name in details data");
+            }
+
+            if (typeName == null) {
+                throw new IllegalStateException("Missing the content source type name in details data");
+            }
 
             synchronizeAndLoad(name, typeName);
+
         } catch (Exception e) {
             String errorMsg = "Failed to sync content source in job [" + context.getJobDetail() + "]";
             log.error(errorMsg, e);
@@ -69,7 +93,10 @@ public class ContentSourceSyncJob implements StatefulJob {
             // we restart the server, restart the server-side content plugin container or somehow manually create
             // the schedule again.  I will assume we will allow this schedule to trigger again, not sure if
             // that is what we want, but we can flip this to true if we want the other behavior.
-            jobExecutionException.setUnscheduleAllTriggers(false);
+            // NOTE: we do NOT retrigger if we threw IllegalStateException because we know it'll never work anyway
+            if (!(e instanceof IllegalStateException)) {
+                jobExecutionException.setUnscheduleAllTriggers(false);
+            }
 
             throw jobExecutionException;
         }
@@ -180,8 +207,49 @@ public class ContentSourceSyncJob implements StatefulJob {
         return;
     }
 
+    /**
+     * All content source sync jobs must have specified data prepared
+     * in their job details data map. This creates that data map. You must
+     * call this method everytime you schedule a content source sync job.
+     * If the given details is not <code>null</code>, this will place the
+     * created data map in the details for you. Otherwise, you must ensure
+     * the returned data map gets associated with the job when it is created.
+     * 
+     * @param contentSource the content source whose sync job's details is being prepared
+     * @param details where the job's data map will be stored (may be <code>null</code>)
+     *
+     * @return the data map with the data necessary to execute a content sync job 
+     */
+    public static JobDataMap createJobDataMap(ContentSource contentSource, JobDetail details) {
+        JobDataMap dataMap;
+
+        if (details != null) {
+            dataMap = details.getJobDataMap();
+        } else {
+            dataMap = new JobDataMap();
+        }
+
+        dataMap.put(DATAMAP_CONTENT_SOURCE_NAME, contentSource.getName());
+        dataMap.put(DATAMAP_CONTENT_SOURCE_TYPE_NAME, contentSource.getContentSourceType().getName());
+
+        return dataMap;
+    }
+
+    /**
+     * Creates the name for the scheduled content source's sync job. Calling this
+     * method multiple times with the same content source always produces the same name.
+     *  
+     * @param cs the content source whose scheduled job name is to be returned
+     * 
+     * @return the scheduled job name for the given content source
+     */
     public static String createJobName(ContentSource cs) {
-        String jobName = cs.getName() + SEPARATOR + cs.getContentSourceType().getName();
+        // the quartz table has a limited column width of 80 - but we need to use the names to make jobs unique
+        // so encode the names' hashcodes to ensure we fix into the quartz job name column.
+        String nameEncoded = Integer.toHexString(cs.getName().hashCode());
+        String typeNameEncoded = Integer.toHexString(cs.getContentSourceType().getName().hashCode());
+
+        String jobName = nameEncoded + SEPARATOR + typeNameEncoded;
 
         if (jobName.length() > 80) {
             throw new IllegalArgumentException("Job names max size is 80 chars due to DB column size restrictions: "
@@ -191,9 +259,25 @@ public class ContentSourceSyncJob implements StatefulJob {
         return jobName;
     }
 
-    public static String createJobName(ContentSource cs, String appendStr) {
-        // appendStr is used to make the job unique among others for the same content source
-        String jobName = cs.getName() + SEPARATOR + cs.getContentSourceType().getName() + SEPARATOR + appendStr;
+    /**
+     * Creates a unique name for a new content source sync job. Calling this
+     * method multiple times with the same content source always produces a different name
+     * which is useful if you want to schedule an new job that is separate and distinct
+     * from any other job in the system.
+     *  
+     * @param cs the content source
+     * 
+     * @return a unique job name that can be used for a new job to sync a given content source
+     */
+    public static String createUniqueJobName(ContentSource cs) {
+        // the quartz table has a limited column width of 80 - but we need to use the names to make jobs unique
+        // so encode the names' hashcodes to ensure we fix into the quartz job name column.
+        // appendStr is used to make the job unique among others for the same content source.
+        String nameEncoded = Integer.toHexString(cs.getName().hashCode());
+        String typeNameEncoded = Integer.toHexString(cs.getContentSourceType().getName().hashCode());
+        String appendStr = Long.toHexString(System.currentTimeMillis());
+
+        String jobName = nameEncoded + SEPARATOR + typeNameEncoded + SEPARATOR + appendStr;
 
         if (jobName.length() > 80) {
             throw new IllegalArgumentException("Job names max size is 80 chars due to DB column size restrictions: "
@@ -201,9 +285,5 @@ public class ContentSourceSyncJob implements StatefulJob {
         }
 
         return jobName;
-    }
-
-    private String[] parseJobName(String jobName) {
-        return Pattern.compile(SEPARATOR).split(jobName, 3);
     }
 }

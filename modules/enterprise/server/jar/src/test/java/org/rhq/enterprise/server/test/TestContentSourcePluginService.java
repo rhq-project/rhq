@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
 import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
@@ -123,7 +124,7 @@ public class TestContentSourcePluginService extends ContentSourcePluginService i
         }
 
         @Override
-        public boolean sychronizeContentSource(int contentSourceId) throws Exception {
+        public boolean synchronizeContentSource(int contentSourceId) throws Exception {
             if (testAdapters != null) {
                 for (ContentSource cs : testAdapters.keySet()) {
                     if (cs.getId() == contentSourceId) {

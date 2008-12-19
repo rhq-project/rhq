@@ -30,8 +30,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
@@ -105,7 +107,7 @@ public class ContentSourceAdapterManager {
      *
      * @throws Exception
      */
-    public boolean sychronizeContentSource(int contentSourceId) throws Exception {
+    public boolean synchronizeContentSource(int contentSourceId) throws Exception {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
         ContentSourceAdapter adapter = getIsolatedContentSourceAdapter(contentSourceId);
         ContentSourceSyncResults results = null;
@@ -191,7 +193,7 @@ public class ContentSourceAdapterManager {
                 keyPVCSMap.put(key, pvcs);
             }
 
-            log.info("sychronizeContentSource: [" + contentSource.getName() + "]: loaded existing list of size=["
+            log.info("synchronizeContentSource: [" + contentSource.getName() + "]: loaded existing list of size=["
                 + existingCount + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
             progress.append(existingCount).append('\n');
@@ -203,7 +205,7 @@ public class ContentSourceAdapterManager {
 
             adapter.synchronizePackages(report, allDetails);
 
-            log.info("sychronizeContentSource: [" + contentSource.getName() + "]: got sync report from adapter=["
+            log.info("synchronizeContentSource: [" + contentSource.getName() + "]: got sync report from adapter=["
                 + report + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
             progress.append("new=").append(report.getNewPackages().size());
@@ -228,7 +230,7 @@ public class ContentSourceAdapterManager {
             progress.setLength(0);
             progress.append(results.getResults());
 
-            log.info("sychronizeContentSource: [" + contentSource.getName() + "]: report has been merged ("
+            log.info("synchronizeContentSource: [" + contentSource.getName() + "]: report has been merged ("
                 + (System.currentTimeMillis() - start) + ")ms");
 
             progress.append(new Date()).append(": ").append("DONE.");

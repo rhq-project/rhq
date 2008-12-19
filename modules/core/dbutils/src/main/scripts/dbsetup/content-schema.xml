@@ -13,8 +13,7 @@
 
     <table name="RHQ_CONTENT_SOURCE_TYPE">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="NAME" size="30" type="VARCHAR2" required="true"/>
-        <!-- size limit is important - see ContentSourceSyncJob.createJobName -->
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="DISPLAY_NAME" size="200" type="VARCHAR2" required="false"/>
         <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
         <column name="PLUGIN_NAME" size="100" type="VARCHAR2" required="false"/>
@@ -34,8 +33,7 @@
 
     <table name="RHQ_CONTENT_SOURCE">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="NAME" size="30" type="VARCHAR2" required="true"/>
-        <!-- size limit is important - see ContentSourceSyncJob.createJobName -->
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
         <column name="LAZY_LOAD" type="BOOLEAN" required="true"/>
         <column name="DOWNLOAD_MODE" size="16" type="VARCHAR2" required="true"/>

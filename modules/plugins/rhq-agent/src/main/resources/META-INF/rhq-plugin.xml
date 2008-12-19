@@ -628,8 +628,8 @@
          <resource-configuration>
             <c:list-property name="environmentVariables" description="Environment variables that are set when starting the RHQ Agent JVM process">
                <c:map-property name="environmentVariable">
-                  <c:simple-property name="name" type="string" required="true" summary="true"/>
-                  <c:simple-property name="value" type="string" required="true" summary="true"/>
+                  <c:simple-property name="name" type="string" required="true" summary="true" description="Name of the environment variable"/>
+                  <c:simple-property name="value" type="string" required="true" summary="true" description="Value of the environment variable" />
                </c:map-property>
             </c:list-property>
          </resource-configuration>
@@ -709,24 +709,24 @@
             <c:group name="mainConfiguration" >
                <c:list-property name="mainConfigurationSettings" description="The main JSW configuration. This is read-only - to customize the configuration, add settings to the environment and/or includes." readOnly="true">
                   <c:map-property name="mainConfigurationSetting" readOnly="true">
-                     <c:simple-property name="name" type="string" required="true" summary="true" readOnly="true"/>
-                     <c:simple-property name="value" type="string" required="true" summary="true" readOnly="true"/>
+                     <c:simple-property name="name" type="string" required="true" summary="true" readOnly="true" description="Name of the wrapper configuration setting"/>
+                     <c:simple-property name="value" type="string" required="true" summary="true" readOnly="true" description="Value of the wrapper configuration setting"/>
                   </c:map-property>
                </c:list-property>
             </c:group>
             <c:group name="environment" >
                <c:list-property name="environmentSettings" description="Environment settings to further customize the JSW. These are set prior to applying the main configuration and include settings. Variables set here can be placed in the main config or includes using the %VAR% notation.">
                   <c:map-property name="environmentSetting">
-                     <c:simple-property name="name" type="string" required="true" summary="true"/>
-                     <c:simple-property name="value" type="string" required="true" summary="true"/>
+                     <c:simple-property name="name" type="string" required="true" summary="true" description="Name of the environment variable" />
+                     <c:simple-property name="value" type="string" required="true" summary="true" description="Value of the environment variable" />
                   </c:map-property>
                </c:list-property>
             </c:group>
             <c:group name="includes" >
                <c:list-property name="includeSettings" description="Override settings that augment the existing JSW configuration. These are applied after the main configuration is set.">
                   <c:map-property name="includeSetting">
-                     <c:simple-property name="name" type="string" required="true" summary="true"/>
-                     <c:simple-property name="value" type="string" required="true" summary="true"/>
+                     <c:simple-property name="name" type="string" required="true" summary="true" description="Name of the wrapper override setting"/>
+                     <c:simple-property name="value" type="string" required="true" summary="true" description="Value of the wrapper override setting"/>
                   </c:map-property>
                </c:list-property>
             </c:group>

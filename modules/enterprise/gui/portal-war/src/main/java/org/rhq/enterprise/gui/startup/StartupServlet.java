@@ -260,7 +260,7 @@ public class StartupServlet extends HttpServlet {
         LookupUtil.getCacheConsistenyManager().scheduleServerCacheReloader();
         LookupUtil.getSystemManager().scheduleConfigCacheReloader();
 
-        // Suspected Agents Job
+        // DynaGroup auto-recalculation job
         try {
             // do not check until we are up at least 1min, and every minute thereafter
             final long initialDelay = 1000L * 60;

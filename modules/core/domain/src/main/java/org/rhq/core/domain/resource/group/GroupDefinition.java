@@ -55,7 +55,23 @@ import org.rhq.core.domain.util.StringUtils;
     @NamedQuery(name = GroupDefinition.QUERY_FIND_MEMBERS_count, query = "  SELECT COUNT(rg) "
         + "    FROM ResourceGroup rg " + "   WHERE rg.groupDefinition.id = :groupDefinitionId "),
     @NamedQuery(name = GroupDefinition.QUERY_FIND_MANAGED_RESOURCE_GROUP_IDS_ADMIN, query = "  SELECT rg.id "
-        + "    FROM ResourceGroup rg " + "   WHERE rg.groupDefinition.id = :groupDefinitionId ") })
+        + "    FROM ResourceGroup rg " + "   WHERE rg.groupDefinition.id = :groupDefinitionId "),
+    /*
+     * the next recalculation interval is defined as:
+     * 
+     * 1) never, if the interval is 0, or at
+     * 2) recalculationInterval + lastCalculationTime, if lastCalculationTime is NOT 0 (i.e. the group has been calculated at least once before), or at
+     * 3) modifiedTime + lastCalculationTime, if the group has never been calculated once yet
+     */
+    @NamedQuery(name = GroupDefinition.QUERY_FIND_IDS_FOR_RECALCULATION, query = "" //
+        + " SELECT gd.id " //
+        + "   FROM GroupDefinition gd " //
+        + "  WHERE gd.recalculationInterval != 0 " //
+        + "    AND ( ( gd.lastCalculationTime IS NOT NULL " //
+        + "            AND ( gd.lastCalculationTime + gd.recalculationInterval < :now ) ) " //
+        + "          OR " //
+        + "          ( gd.lastCalculationTime IS NULL " //
+        + "            AND ( gd.modifiedTime + gd.recalculationInterval < :now ) ) ) ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_GROUP_DEF_ID_SEQ")
 @Table(name = "RHQ_GROUP_DEF")
 public class GroupDefinition implements Serializable {
@@ -66,6 +82,7 @@ public class GroupDefinition implements Serializable {
     public static final String QUERY_FIND_MEMBERS = "GroupDefinition.findMembers";
     public static final String QUERY_FIND_MEMBERS_count = "GroupDefinition.findMembers_count";
     public static final String QUERY_FIND_MANAGED_RESOURCE_GROUP_IDS_ADMIN = "GroupDefinition.findManagedResourceGroupIds_admin";
+    public static final String QUERY_FIND_IDS_FOR_RECALCULATION = "GroupDefinition.findIdsForRecalculation_admin";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")

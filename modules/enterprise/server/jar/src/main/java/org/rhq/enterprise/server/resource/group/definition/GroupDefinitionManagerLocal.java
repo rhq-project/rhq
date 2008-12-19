@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.resource.group.definition;
 
 import javax.ejb.Local;
-import javax.ejb.Timer;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.GroupDefinition;
@@ -38,9 +37,7 @@ import org.rhq.enterprise.server.resource.group.definition.framework.InvalidExpr
 @Local
 public interface GroupDefinitionManagerLocal {
 
-    void scheduleRecalculationThread();
-
-    void recalculateDynaGroups(Timer timer);
+    void recalculateDynaGroups(Subject subject);
 
     GroupDefinition getById(int groupDefinitionId) throws GroupDefinitionNotFoundException;
 

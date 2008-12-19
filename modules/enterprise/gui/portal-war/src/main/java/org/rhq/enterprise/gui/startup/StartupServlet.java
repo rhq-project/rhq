@@ -53,6 +53,7 @@ import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutContentRequestsJ
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutOperationsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CloudManagerJob;
 import org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob;
+import org.rhq.enterprise.server.scheduler.jobs.DynaGroupAutoRecalculationJob;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -258,7 +259,17 @@ public class StartupServlet extends HttpServlet {
         LookupUtil.getServerManager().scheduleServerHeartbeat();
         LookupUtil.getCacheConsistenyManager().scheduleServerCacheReloader();
         LookupUtil.getSystemManager().scheduleConfigCacheReloader();
-        LookupUtil.getGroupDefinitionManager().scheduleRecalculationThread();
+
+        // Suspected Agents Job
+        try {
+            // do not check until we are up at least 1min, and every minute thereafter
+            final long initialDelay = 1000L * 60;
+            final long interval = 1000L * 60;
+            scheduler.scheduleSimpleRepeatingJob(DynaGroupAutoRecalculationJob.class, true, false, initialDelay,
+                interval);
+        } catch (Exception e) {
+            throw new ServletException("Cannot schedule DynaGroup auto-recalculation job", e);
+        }
 
         // Cluster Manager Job
         try {

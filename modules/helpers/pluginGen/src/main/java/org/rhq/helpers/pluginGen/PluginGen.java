@@ -49,6 +49,7 @@ import org.apache.commons.logging.LogFactory;
 public class PluginGen {
 
     private final Log log = LogFactory.getLog(PluginGen.class);
+    private String pkg;
 
     public static void main(String[] arg) throws Exception {
         PluginGen pg = new PluginGen();
@@ -72,7 +73,7 @@ public class PluginGen {
             System.out.print("Do you want to add a child to " + props.getName() + "? (y/N) ");
             String answer = br.readLine();
             answer = answer.toLowerCase(Locale.getDefault());
-            if (answer.startsWith("n") || answer.length()==0 )
+            if (answer.startsWith("n") || answer.length() == 0)
                 done = true;
             else {
                 Props child = askQuestions(br, props);
@@ -82,7 +83,26 @@ public class PluginGen {
         } while (!done);
 
         log.info("\nYou have choosen:\n" + props.toString());
+        postprocess(props);
         generate(props);
+
+        System.out.println("Don't forget to add your plugin to the parent pom.xml");
+    }
+
+    /**
+     * Do some post processing over the input received.
+     * @param props
+     */
+    private void postprocess(Props props) {
+
+        // Set the package
+        pkg = props.getPackagePrefix()+"."+props.getName();
+        props.setPkg(pkg);
+
+        for (Props cProp : props.getChildren()) {
+            cProp.setPkg(pkg);
+        }
+
     }
 
     /**
@@ -129,17 +149,18 @@ public class PluginGen {
             else
                 name = name.substring(2);
 
-            if (name.equals("PackagePrefix") && parentProps.getPackagePrefix()!=null) {
+            if (name.equals("PackagePrefix") && parentProps.getPackagePrefix() != null) {
                 props.setPackagePrefix(parentProps.getPackagePrefix());
-            } else if (name.equals("FileSystemRoot") && parentProps.getFileSystemRoot()!=null) {
+            } else if (name.equals("FileSystemRoot") && parentProps.getFileSystemRoot() != null) {
                 props.setFileSystemRoot(parentProps.getFileSystemRoot());
-            } else if (name.equals("ParentType") && parentProps.getName()!=null) {
+            } else if (name.equals("ParentType") && parentProps.getName() != null) {
                 // Set parent type always when we are in the child
-                props.setParentType(caps(parentProps.getName()));
-            } else if (name.equals("UsesExternalJarsInPlugin") && parentProps.getName()!=null) {
-                 // Skip this one on children
-            }
-            else {
+                props.setParentType(caps(parentProps.getComponentClass()));
+            } else if (name.equals("UsesExternalJarsInPlugin") && parentProps.getName() != null) {
+                // Skip this one on children
+            } else if (name.equals("Pkg")) {
+                // Always skip this - we postprocess it
+            } else {
 
                 System.out.print("Please specify");
                 boolean isBool = false;
@@ -164,7 +185,7 @@ public class PluginGen {
                         setter.invoke(props, true);
                     }
                 } else {
-                    if (!answer.startsWith("\n") && !answer.startsWith("\r") && !(answer.length()==0))
+                    if (!answer.startsWith("\n") && !answer.startsWith("\r") && !(answer.length() == 0))
                         setter.invoke(props, answer);
                 }
             }
@@ -204,12 +225,11 @@ public class PluginGen {
         }
 
         // write pom.xml
-        createFile(props,"pom","pom.xml",activeDirectory.getAbsolutePath());
+        createFile(props, "pom", "pom.xml", activeDirectory.getAbsolutePath());
 
         // Create java directory hierarchie
-        String path = activeDirectory.getAbsolutePath() + File.separator
-                + "src" + File.separator
-                + "main" + File.separator;
+        String path = activeDirectory.getAbsolutePath() + File.separator + "src" + File.separator + "main"
+            + File.separator;
 
         activeDirectory = new File(path);
         if (!activeDirectory.exists()) {
@@ -219,9 +239,7 @@ public class PluginGen {
                 return;
             }
         }
-        File resourceDirs = new File(path + File.separator
-                + "resources" + File.separator
-                + "META-INF");
+        File resourceDirs = new File(path + File.separator + "resources" + File.separator + "META-INF");
         if (!resourceDirs.exists()) {
             success = resourceDirs.mkdirs();
             if (!success) {
@@ -230,13 +248,10 @@ public class PluginGen {
             }
         }
         // create rhq-plugin.xml below resourceDirs
-        createFile(props,"descriptor","rhq-plugin.xml",resourceDirs.getAbsolutePath());
+        createFile(props, "descriptor", "rhq-plugin.xml", resourceDirs.getAbsolutePath());
 
-        File javaDirs = new File(path + File.separator
-                + "java" + File.separator
-                + toDirPath(props.getPackagePrefix(), File.separator)
-                + props.getName()
-        );
+        File javaDirs = new File(path + File.separator + "java" + File.separator
+            + toDirPath(props.getPackagePrefix(), File.separator) + props.getName());
         if (!javaDirs.exists()) {
             success = javaDirs.mkdirs();
             if (!success) {
@@ -245,11 +260,11 @@ public class PluginGen {
             }
         }
         // create Discovery and component classes
-        createFile(props,"discovery",props.getDiscoveryClass()+".java",javaDirs.getAbsolutePath());
-        createFile(props,"component",props.getComponentClass()+".java",javaDirs.getAbsolutePath());
+        createFile(props, "discovery", props.getDiscoveryClass() + ".java", javaDirs.getAbsolutePath());
+        createFile(props, "component", props.getComponentClass() + ".java", javaDirs.getAbsolutePath());
 
         if (props.isEvents()) {
-            createFile(props,"eventPoller", caps(props.getName()) + "EventPoller.java", javaDirs.getAbsolutePath());
+            createFile(props, "eventPoller", caps(props.getName()) + "EventPoller.java", javaDirs.getAbsolutePath());
         }
 
         // See if there are children and create for them too
@@ -257,13 +272,13 @@ public class PluginGen {
             log.info("Creating child services");
 
         for (Props cProps : props.getChildren()) {
-            createFile(cProps,"discovery",props.getDiscoveryClass()+".java",javaDirs.getAbsolutePath());
-            createFile(cProps,"component",props.getComponentClass()+".java",javaDirs.getAbsolutePath());
-
+            createFile(cProps, "discovery", cProps.getDiscoveryClass() + ".java", javaDirs.getAbsolutePath());
+            createFile(cProps, "component", cProps.getComponentClass() + ".java", javaDirs.getAbsolutePath());
 
             // create EventPoller
             if (cProps.isEvents()) {
-                createFile(cProps,"eventPoller", caps(props.getName()) + "EventPoller.java", javaDirs.getAbsolutePath());
+                createFile(cProps, "eventPoller", caps(cProps.getName()) + "EventPoller.java", javaDirs
+                    .getAbsolutePath());
             }
         }
 
@@ -295,30 +310,28 @@ public class PluginGen {
     public void createFile(Props props, String template, String fileName, String directory) {
 
         try {
-            log.info("Trying to generate " + directory + "/" + fileName );
+            log.info("Trying to generate " + directory + "/" + fileName);
             Configuration config = new Configuration();
 
             // XXX fall-over to ClassTL after failure in FTL seems not to work
             // FileTemplateLoader ftl = new FileTemplateLoader(new File("src/main/resources"));
             ClassTemplateLoader ctl = new ClassTemplateLoader(getClass(), "/");
-            TemplateLoader[] loaders = new TemplateLoader[] { ctl};
+            TemplateLoader[] loaders = new TemplateLoader[] { ctl };
             MultiTemplateLoader mtl = new MultiTemplateLoader(loaders);
 
             config.setTemplateLoader(mtl);
 
             Template templ = config.getTemplate(template + ".ftl");
 
-            Writer out = new BufferedWriter(new FileWriter(new File(directory,fileName)));
-            Map<String,Props> root = new HashMap<String,Props>();
-            root.put("props",props);
+            Writer out = new BufferedWriter(new FileWriter(new File(directory, fileName)));
+            Map<String, Props> root = new HashMap<String, Props>();
+            root.put("props", props);
             templ.process(root, out);
             out.flush();
             out.close();
-        }
-        catch (IOException ioe) {
+        } catch (IOException ioe) {
             ioe.printStackTrace();
-        }
-        catch (TemplateException te) {
+        } catch (TemplateException te) {
             te.printStackTrace();
         }
 
@@ -328,6 +341,6 @@ public class PluginGen {
         if (in == null)
             return null;
 
-        return in.substring(0,1).toUpperCase(Locale.getDefault()) + in.substring(1);
+        return in.substring(0, 1).toUpperCase(Locale.getDefault()) + in.substring(1);
     }
 }

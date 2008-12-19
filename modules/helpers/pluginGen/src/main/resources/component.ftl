@@ -20,8 +20,9 @@
 -->
 <#-- @ftlvariable name="props" type="org.rhq.helpers.pluginGen.Props" -->
 
-package ${props.packagePrefix}.${props.name};
+package ${props.pkg};
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -35,6 +36,18 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 </#if>
+<#if props.resourceConfiguration>
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+</#if>
+<#if props.createChildren>
+import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+</#if>
+<#if props.deleteChildren>
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
+</#if>
+
 
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;

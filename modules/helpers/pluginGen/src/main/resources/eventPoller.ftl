@@ -19,7 +19,7 @@
  */
 -->
 <#-- @ftlvariable name="props" type="org.rhq.helpers.pluginGen.Props" -->
-package ${props.packagePrefix}.${props.name};
+package ${props.pkg};
 
 import java.util.HashSet;
 import java.util.Set;

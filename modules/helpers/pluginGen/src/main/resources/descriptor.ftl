@@ -22,7 +22,7 @@
 <?xml version="1.0"?>
 <plugin name="${props.name}"
         displayName="${props.name}Plugin"
-        package="${props.packagePrefix}.${props.name}"
+        package="${props.pkg}"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">

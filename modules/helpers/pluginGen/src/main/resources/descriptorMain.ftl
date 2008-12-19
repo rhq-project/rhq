@@ -27,7 +27,6 @@
             name="${props.name}" <#-- TODO separate out plugin name and service name -->
             discovery="${props.discoveryClass}"
             class="${props.componentClass}"
-            version="1.0"
             <#if props.singleton>
             singleton="true"
             </#if>
@@ -48,24 +47,25 @@
                 <!-- TODO add your own here -->
             </plugin-configuration>
 
-        <#if props.monitoring>
-            <metric property="dummyMetric" displayName="Dummy display name"/>
-        </#if>
-
         <!-- TODO process scans -->
 
         <#if props.operations>
             <operation name="dummyOperation">
                 <!-- TODO supply parameters and return values -->
             </operation>
-        </#if>
 
+        </#if>
+        <#if props.monitoring>
+            <metric property="dummyMetric" displayName="Dummy display name"/>
+
+        </#if>
         <#if props.events>
             <event name="${props.name}DummyEvent"/>
+            
         </#if>
-
         <#if props.resourceConfiguration>
             <resource-configuration>
                 <!-- TODO supply your configuration parameters -->
             </resource-configuration>
+            
         </#if>

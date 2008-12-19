@@ -36,6 +36,8 @@ public class Props {
     private String description;
     /** Package name prefix */
     private String packagePrefix;
+    /** String package */
+    private String pkg;
     /** The name of the DiscoveryClass */
     private String discoveryClass;
     /** The name of the Component class */
@@ -210,6 +212,14 @@ public class Props {
         this.manualAddOfChildren = manualAddOfChildren;
     }
 
+    public void setPkg(String pkg) {
+        this.pkg = pkg;
+    }
+
+    public String getPkg() {
+        return this.pkg;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -218,6 +228,7 @@ public class Props {
         sb.append(", name='").append(name).append('\'');
         sb.append(", description='").append(description).append('\'');
         sb.append(", packagePrefix='").append(packagePrefix).append('\'');
+        sb.append(", pkg='").append(pkg).append('\'');
         sb.append(", discoveryClass='").append(discoveryClass).append('\'');
         sb.append(", componentClass='").append(componentClass).append('\'');
         sb.append(", parentType='").append(parentType).append('\'');

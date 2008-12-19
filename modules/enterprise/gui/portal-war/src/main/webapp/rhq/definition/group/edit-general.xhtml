@@ -24,6 +24,7 @@
 
          <input type="hidden" name="groupDefinitionId" value="#{GroupDefinitionUIBean.groupDefinitionId}"/>
 
+         <!-- =================== GROUP DEFINITION GENERAL PROPERTIES =================== -->
          <rich:panel styleClass="BlockContent">
 
             <f:facet name="header" styleClass="BlockTitle">
@@ -31,58 +32,67 @@
             </f:facet>
 
             <h:panelGrid columns="2" styleClass="general-props-table" columnClasses="general-prop-cell">
-            
                   <h:panelGroup styleClass="BlockLabel">Name
                      <h:panelGroup styleClass="required-marker-text"> *</h:panelGroup>:
                   </h:panelGroup>
                   <h:inputText id="name" value="#{EditGroupDefinitionGeneralPropertiesUIBean.name}" size="60" maxlength="100" />
-               
+
                   <h:panelGroup styleClass="BlockLabel">Description:</h:panelGroup>
                   <h:inputText id="description" value="#{EditGroupDefinitionGeneralPropertiesUIBean.description}" size="60" maxlength="1000" />
-
             </h:panelGrid>
-
          </rich:panel>
-      
+
          <!-- =================== GROUP DEFINITION CONDITIONS =================== -->
          <rich:panel styleClass="BlockContent">
-		
-		
-         <f:facet name="header" styleClass="BlockTitle">
-            Group Definition Conditions
-         </f:facet>
-		   
+
+            <f:facet name="header" styleClass="BlockTitle">
+               Group Definition Conditions
+            </f:facet>
 
             <h:inputTextarea id="textArea"
                              rows="5" cols="75"
                              value="#{EditGroupDefinitionGeneralPropertiesUIBean.expression}" />
          
-            <a href="#" onclick="window.open('library.xhtml','PropertyNameLibrary','width=500,height=400,scrollbars=yes,toolbar=no,left=80,top=80,resizable=yes'); return false;"
+            <a href="#" onclick="window.open('library.xhtml','PropertyNameLibrary','width=500,height=500,scrollbars=yes,toolbar=no,left=80,top=80,resizable=yes'); return false;"
                alt="Property Name Library">
                <img align="top" src="/images/dash_movecontent_add.gif" alt="Property Name Library"/>
             </a>
-                          
-			
-	   </rich:panel>
-	   
-	   <h:panelGroup layout="block" styleClass="BlockContent">
-          <h:panelGrid columns="4" styleClass="buttons-table" columnClasses="button-cell">
-             <h:commandButton type="submit" action="#{EditGroupDefinitionGeneralPropertiesUIBean.update}" 
-                              value="OK" styleClass="buttonmed"
-                              rendered="${GlobalPermissionsUIBean.inventory}" />
-             <h:commandButton type="submit" action="#{EditGroupDefinitionGeneralPropertiesUIBean.reset}" 
-                              value="RESET" styleClass="buttonmed"
-                              rendered="${GlobalPermissionsUIBean.inventory}" />
-             <h:commandButton type="submit" action="#{EditGroupDefinitionGeneralPropertiesUIBean.cancel}" immediate="true" 
-                              value="CANCEL" styleClass="buttonmed"
-                              rendered="${GlobalPermissionsUIBean.inventory}" />
+
+          </rich:panel>
+
+         <!-- =================== GROUP DEFINITION CONDITIONS =================== -->
+         <rich:panel styleClass="BlockContent">
+
+            <f:facet name="header" styleClass="BlockTitle">
+               Recalculation Interval
+            </f:facet>
+
+            <h:outputText value="Recalculation interval in minutes (or 0 for manual recalculation only): " />
+            <rich:inputNumberSpinner id="recalculationInterval"
+                                     enableManualInput="false"
+                                     value="#{EditGroupDefinitionGeneralPropertiesUIBean.recalculationInterval}" />
+
+          </rich:panel>
+
+          <!-- =================== GROUP DEFINITION FORM BUTTONS =================== -->
+          <h:panelGroup layout="block" styleClass="BlockContent">
+             <h:panelGrid columns="4" styleClass="buttons-table" columnClasses="button-cell">
+                <h:commandButton type="submit" action="#{EditGroupDefinitionGeneralPropertiesUIBean.update}" 
+                                 value="OK" styleClass="buttonmed"
+                                 rendered="${GlobalPermissionsUIBean.inventory}" />
+                <h:commandButton type="submit" action="#{EditGroupDefinitionGeneralPropertiesUIBean.reset}" 
+                                 value="RESET" styleClass="buttonmed"
+                                 rendered="${GlobalPermissionsUIBean.inventory}" />
+                <h:commandButton type="submit" action="#{EditGroupDefinitionGeneralPropertiesUIBean.cancel}" immediate="true" 
+                                 value="CANCEL" styleClass="buttonmed"
+                                 rendered="${GlobalPermissionsUIBean.inventory}" />
                               
-             <h:outputText value="Note: you must have MANAGE_INVENTORY permission to edit this group definition" 
-                           rendered="${!GlobalPermissionsUIBean.inventory}" />
-          </h:panelGrid>
-       </h:panelGroup>
-	
-	</h:form>
+                <h:outputText value="Note: you must have MANAGE_INVENTORY permission to edit this group definition" 
+                              rendered="${!GlobalPermissionsUIBean.inventory}" />
+             </h:panelGrid>
+          </h:panelGroup>
+
+      </h:form>
 
    </ui:define>
 

@@ -90,6 +90,9 @@ public class GroupDefinition implements Serializable {
     @Column(name = "CALC_TIME")
     private Long lastCalculationTime;
 
+    @Column(name = "CALC_INTERVAL")
+    private long recalculationInterval;
+
     @Column(name = "EXPRESSION")
     private String expression;
 
@@ -173,6 +176,27 @@ public class GroupDefinition implements Serializable {
 
     public void setLastCalculationTime(Long lastCalculationTime) {
         this.lastCalculationTime = lastCalculationTime;
+    }
+
+    public Long getRecalculationInterval() {
+        return recalculationInterval;
+    }
+
+    public void setRecalculationInterval(Long recalculationInterval) {
+        this.recalculationInterval = recalculationInterval;
+    }
+
+    public Long getNextCalculationTime() {
+        if (getRecalculationInterval() == 0) {
+            return 0L; // never recalculate
+        } else {
+            if (getLastCalculationTime() != null) {
+                return getLastCalculationTime() + getRecalculationInterval();
+            } else {
+                // interval millis after the user saves the changes to the group, to prevent flooding
+                return getModifiedTime() + getRecalculationInterval();
+            }
+        }
     }
 
     public String getExpression() {

@@ -35,7 +35,7 @@
                             value="#{groupDefinitionsDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 15%, 30%, 30%, 16%, 8%"
+                            columnsWidth="1%, 15%, 20%, 20%, 18%, 18%, 8%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 
@@ -50,16 +50,6 @@
                   </f:facet>
                   
                   <onc:select name="selectedGroupDefinitions" value="#{item.id}" />
-               </rich:column>
-      
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="gd.id">
-                        <h:outputText styleClass="headerText" value="ID" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  
-                  <h:outputText value="#{item.id}"/>
                </rich:column>
 
                <rich:column>
@@ -109,6 +99,17 @@
                
                <rich:column>
                   <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Next Calculation" />
+                  </f:facet>
+
+                  <h:outputText value="(never)" rendered="#{item.nextCalculationTime == 0}" />
+                  <h:outputText value="#{item.nextCalculationTime}" rendered="#{item.nextCalculationTime != 0}" >
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
                      <onc:sortableColumnHeader sort="gd.recursive">
                         <h:outputText styleClass="headerText" value="Recursive" />
                      </onc:sortableColumnHeader>
@@ -120,7 +121,7 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 7:6 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 7 : 6}" width="100%">
+                     <rich:column colspan="7" width="100%">
                         <h:commandButton action="#{ListGroupDefinitionsUIBean.createNewGroupDefinition}"
                                          value="NEW DEFINITION" styleClass="on-pager-button buttonsmall"
                                          rendered="${GlobalPermissionsUIBean.inventory}" >

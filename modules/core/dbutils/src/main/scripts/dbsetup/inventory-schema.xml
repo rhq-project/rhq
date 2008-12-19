@@ -135,6 +135,7 @@
         <column name="CTIME" type="LONG"/>
         <column name="MTIME" type="LONG"/>
         <column name="CALC_TIME" type="LONG"/>
+        <column name="CALC_INTERVAL" type="LONG"/>
         <column name="RECURSIVE" type="BOOLEAN"/>
         <column name="EXPRESSION" type="VARCHAR2" size="1000"/>
 

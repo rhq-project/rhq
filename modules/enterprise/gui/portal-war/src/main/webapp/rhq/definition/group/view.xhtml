@@ -63,7 +63,17 @@
          <h:outputText value="#{GroupDefinitionUIBean.lastCalculationTime}" rendered="#{!empty GroupDefinitionUIBean.lastCalculationTime}" >
             <f:converter converterId="UserDateTimeConverter" />
          </h:outputText>
-         <h:outputText value="never" rendered="#{empty GroupDefinitionUIBean.lastCalculationTime}" />
+         <h:outputText value="(never)" rendered="#{empty GroupDefinitionUIBean.lastCalculationTime}" />
+      </h:panelGroup>
+      
+      <rich:spacer />
+
+      <h:panelGroup layout="block">
+         <b>Next Calculation Date: </b>
+         <h:outputText value="(never)" rendered="#{GroupDefinitionUIBean.nextCalculationTime == 0}" />
+         <h:outputText value="#{GroupDefinitionUIBean.nextCalculationTime}" rendered="#{GroupDefinitionUIBean.nextCalculationTime != 0}" >
+            <f:converter converterId="UserDateTimeConverter" />
+         </h:outputText>
       </h:panelGroup>
 
    </h:panelGrid>

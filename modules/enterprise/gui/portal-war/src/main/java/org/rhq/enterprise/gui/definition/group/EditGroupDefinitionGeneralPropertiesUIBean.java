@@ -47,10 +47,12 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
     private static final String TEMPORARY_NAME_ATTRIBUTE = "temporaryGroupDefName";
     private static final String TEMPORARY_DESCRIPTION_ATTRIBUTE = "temporaryGroupDefDescription";
     private static final String TEMPORARY_RECURSIVE_ATTRIBUTE = "temporaryGroupDefRecursive";
+    private static final String TEMPORARY_RECALCULATION_INTERVAL = "recalculationInterval";
 
     private String name;
     private String description;
     private boolean recursive;
+    private int recalculationInterval;
     private String expression;
 
     private GroupDefinitionManagerLocal groupDefinitionManager = LookupUtil.getGroupDefinitionManager();
@@ -72,17 +74,20 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
         String previousName = (String) session.getAttribute(TEMPORARY_NAME_ATTRIBUTE);
         String previousDescription = (String) session.getAttribute(TEMPORARY_DESCRIPTION_ATTRIBUTE);
         String previousRecursive = (String) session.getAttribute(TEMPORARY_RECURSIVE_ATTRIBUTE);
+        String previousInterval = (String) session.getAttribute(TEMPORARY_RECALCULATION_INTERVAL);
 
         if (marker == null) {
             this.expression = groupDefinition.getExpression();
             this.name = groupDefinition.getName();
             this.description = groupDefinition.getDescription();
             this.recursive = groupDefinition.isRecursive();
+            this.recalculationInterval = (int) (groupDefinition.getRecalculationInterval() / 60000L);
         } else {
             this.expression = previousExpression;
             this.name = previousName;
             this.description = previousDescription;
             this.recursive = previousRecursive.equals("TRUE");
+            this.recalculationInterval = previousInterval == null ? 0 : Integer.parseInt(previousInterval);
         }
 
         session.removeAttribute(TEMPORARY_EDIT_MARKER);
@@ -90,6 +95,7 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
         session.removeAttribute(TEMPORARY_NAME_ATTRIBUTE);
         session.removeAttribute(TEMPORARY_DESCRIPTION_ATTRIBUTE);
         session.removeAttribute(TEMPORARY_RECURSIVE_ATTRIBUTE);
+        session.removeAttribute(TEMPORARY_RECALCULATION_INTERVAL);
     }
 
     public String begin() {
@@ -103,6 +109,7 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
             groupDefinition.setName(this.name);
             groupDefinition.setDescription(this.description);
             groupDefinition.setRecursive(this.recursive);
+            groupDefinition.setRecalculationInterval(this.recalculationInterval * 60000L);
 
             /*
              * cleanse expression of system-dependent new line chars
@@ -120,6 +127,7 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
             session.setAttribute(TEMPORARY_NAME_ATTRIBUTE, name);
             session.setAttribute(TEMPORARY_DESCRIPTION_ATTRIBUTE, description);
             session.setAttribute(TEMPORARY_RECURSIVE_ATTRIBUTE, (recursive ? "TRUE" : "FALSE"));
+            session.setAttribute(TEMPORARY_RECALCULATION_INTERVAL, String.valueOf(recalculationInterval));
 
             this.groupDefinitionManager.updateGroupDefinition(EnterpriseFacesContextUtility.getSubject(),
                 groupDefinition);
@@ -224,5 +232,13 @@ public class EditGroupDefinitionGeneralPropertiesUIBean {
 
     public void setExpression(String expression) {
         this.expression = expression;
+    }
+
+    public int getRecalculationInterval() {
+        return recalculationInterval;
+    }
+
+    public void setRecalculationInterval(int recalculationInterval) {
+        this.recalculationInterval = recalculationInterval;
     }
 }

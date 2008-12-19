@@ -258,6 +258,7 @@ public class StartupServlet extends HttpServlet {
         LookupUtil.getServerManager().scheduleServerHeartbeat();
         LookupUtil.getCacheConsistenyManager().scheduleServerCacheReloader();
         LookupUtil.getSystemManager().scheduleConfigCacheReloader();
+        LookupUtil.getGroupDefinitionManager().scheduleRecalculationThread();
 
         // Cluster Manager Job
         try {

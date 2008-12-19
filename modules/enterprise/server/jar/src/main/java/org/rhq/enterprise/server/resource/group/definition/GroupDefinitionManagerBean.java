@@ -24,8 +24,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.Resource;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.Timeout;
+import javax.ejb.Timer;
+import javax.ejb.TimerService;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
@@ -68,6 +72,12 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
+    @Resource
+    private TimerService timerService;
+
+    @EJB
+    private GroupDefinitionManagerLocal groupDefinitionManager; // self, for xactional purposes
+
     @EJB
     private ResourceGroupManagerLocal resourceGroupManager;
 
@@ -76,6 +86,83 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
     @EJB
     private SubjectManagerLocal subjectManager;
+
+    private final String TIMER_DATA = "GroupDefinitionManagerBean.recalculationThread";
+
+    @SuppressWarnings("unchecked")
+    public void scheduleRecalculationThread() {
+        /* 
+         * each time the webapp is reloaded, it would create 
+         * duplicate events if we don't cancel the existing ones
+         */
+        Collection<Timer> timers = timerService.getTimers();
+        for (Timer existingTimer : timers) {
+            log.debug("Found timer - attempting to cancel: " + existingTimer.toString());
+            try {
+                existingTimer.cancel();
+            } catch (Exception e) {
+                log.warn("Failed in attempting to cancel timer: " + existingTimer.toString());
+            }
+        }
+
+        log.info("Scheduled timer[GroupDefinitionManagerBean.recalculationThread] for recurrence every 60 seconds");
+
+        // single-action timer that will trigger in 60 seconds
+        timerService.createTimer(60000, TIMER_DATA);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Timeout
+    public void recalculateDynaGroups(Timer timer) {
+        try {
+            Subject overlord = subjectManager.getOverlord();
+
+            /*
+             * the next recalculation interval is defined as:
+             * 
+             * 1) never, if the interval is 0, or at
+             * 2) recalculationInterval + lastCalculationTime, if lastCalculationTime is NOT 0 (i.e. the group has been calculated at least once before), or at
+             * 3) modifiedTime + lastCalculationTime, if the group has never been calculated once yet
+             */
+            Query recalculationFinderQuery = entityManager.createQuery("" //
+                + " SELECT gd.id " //
+                + "   FROM GroupDefinition gd " //
+                + "  WHERE gd.recalculationInterval != 0 " //
+                + "    AND ( ( gd.lastCalculationTime IS NOT NULL " //
+                + "            AND ( gd.lastCalculationTime + gd.recalculationInterval < :now ) ) " //
+                + "          OR " //
+                + "          ( gd.lastCalculationTime IS NULL " //
+                + "            AND ( gd.modifiedTime + gd.recalculationInterval < :now ) ) ) ");
+            recalculationFinderQuery.setParameter("now", System.currentTimeMillis());
+            List<Integer> groupDefinitionIdsToRecalculate = recalculationFinderQuery.getResultList();
+
+            if (groupDefinitionIdsToRecalculate.size() == 0) {
+                return; // this will skip the info logging, so we only log when this method does something meaningful
+            }
+
+            int successful = 0;
+            int failed = 0;
+            for (Integer groupDefinitionId : groupDefinitionIdsToRecalculate) {
+                try {
+                    groupDefinitionManager.calculateGroupMembership(overlord, groupDefinitionId);
+                    successful++;
+                } catch (Throwable t) {
+                    /* 
+                     * be paranoid about capturing any and all kinds of errors, to give a chances for 
+                     * all recalculations to complete in this (heart)beat of the recalculation thread
+                     */
+                    log.error("Error recalculating DynaGroups for GroupDefinition[id=" + groupDefinitionId + "]", t);
+                    failed++;
+                }
+            }
+
+            log.info("Auto-recalculated DynaGroups[successful=" + successful + ", failed=" + failed + "]");
+
+        } finally {
+            // reschedule ourself to trigger in another 60 seconds
+            timerService.createTimer(60000, TIMER_DATA);
+        }
+    }
 
     public GroupDefinition getById(int groupDefinitionId) throws GroupDefinitionNotFoundException {
         GroupDefinition groupDefinition = entityManager.find(GroupDefinition.class, groupDefinitionId);
@@ -194,6 +281,8 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    // required for the recalculation thread
     public void calculateGroupMembership(Subject subject, int groupDefinitionId) throws GroupDefinitionDeleteException,
         GroupDefinitionNotFoundException, InvalidExpressionException, ResourceGroupUpdateException {
         /*

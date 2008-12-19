@@ -18,6 +18,13 @@
  */
 package org.rhq.enterprise.gui.definition.group;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import javax.faces.model.SelectItem;
+
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -25,23 +32,15 @@ import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionExpressionBuilderManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-import javax.faces.model.SelectItem;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-
 /**
  *
  * @author Joseph Marques
  * @author Greg Hinkle
  */
 public class GroupDefinitionExpressionBuilderLibraryUIBean {
+
     private enum PropertyType {
-        RESOURCE("Resource"),
-        RESOURCE_TYPE("Resource Type"),
-        TRAIT("Traits"), // resource.trait[<property_name>]
+        RESOURCE("Resource"), RESOURCE_TYPE("Resource Type"), TRAIT("Traits"), // resource.trait[<property_name>]
         PLUGIN_CONFIGURATION("Plugin Configuration"), // resource.pluginConfiguration[<property_name>]
         RESOURCE_CONFIGURATION("Resource Configuration"); // resource.resourceConfiguration[<property_name>]
 
@@ -66,9 +65,7 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
     }
 
     private enum ResourceLevel {
-        RESOURCE("Resource"),
-        PARENT("Parent"),
-        GRANDPARENT("Grandparent");
+        RESOURCE("Resource"), PARENT("Parent"), GRANDPARENT("Grandparent");
         private String displayName;
 
         private ResourceLevel(String displayName) {
@@ -89,12 +86,8 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
         }
     }
 
-
     private enum Comparison {
-        EQUALS("="),
-        STARTS_WITH("starts with"),
-        ENDS_WITH("ends with"),
-        CONTAINS("contains");
+        EQUALS("="), STARTS_WITH("starts with"), ENDS_WITH("ends with"), CONTAINS("contains");
         private String displayName;
 
         private Comparison(String displayName) {
@@ -141,7 +134,6 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
     private SelectItem[] properties;
     private SelectItem[] comparisonTypes;
 
-
     public GroupDefinitionExpressionBuilderLibraryUIBean() {
         // setup the PropertyType drop-down
         List<String> types = new ArrayList<String>();
@@ -150,7 +142,6 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
         }
         setSelectedPropertyType(types.get(0));
         propertyTypes = SelectItemUtils.convertFromListString(types, false);
-
 
         List<String> resourceLevels = new ArrayList<String>();
         for (ResourceLevel level : ResourceLevel.values()) {
@@ -300,30 +291,34 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
     }
 
     public boolean isTypeSelectionDisabled() {
-        this.typeSelectionDisabled =
-                PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE ||
-                (isGroupby() && PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE_TYPE);
+        this.typeSelectionDisabled = PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE
+            || (isGroupby() && PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE_TYPE);
         return typeSelectionDisabled;
     }
 
     private int getResourceTypeId(String resourceTypeName, String pluginName) {
         try {
-            return LookupUtil.getResourceTypeManager().getResourceTypeByNameAndPlugin(resourceTypeName, pluginName).getId();
+            return LookupUtil.getResourceTypeManager().getResourceTypeByNameAndPlugin(resourceTypeName, pluginName)
+                .getId();
         } catch (Exception e) {
             return 0;
         }
     }
 
     public String refreshData() {
-        String requestParamPropertyType = FacesContextUtility.getOptionalRequestParameter("libraryForm:propertyType", String.class, this.selectedPropertyType);
-        String requestParamPlugin = FacesContextUtility.getOptionalRequestParameter("libraryForm:plugin", String.class, this.selectedPlugin);
-        String requestParamResourceType = FacesContextUtility.getOptionalRequestParameter("libraryForm:resourceType", String.class, this.selectedResourceType);
+        String requestParamPropertyType = FacesContextUtility.getOptionalRequestParameter("libraryForm:propertyType",
+            String.class, this.selectedPropertyType);
+        String requestParamPlugin = FacesContextUtility.getOptionalRequestParameter("libraryForm:plugin", String.class,
+            this.selectedPlugin);
+        String requestParamResourceType = FacesContextUtility.getOptionalRequestParameter("libraryForm:resourceType",
+            String.class, this.selectedResourceType);
 
-        this.selectedResourceLevel = FacesContextUtility.getOptionalRequestParameter("libraryForm:resourceLevel", String.class, "Resource");
+        this.selectedResourceLevel = FacesContextUtility.getOptionalRequestParameter("libraryForm:resourceLevel",
+            String.class, "Resource");
         this.selectedProperty = FacesContextUtility.getOptionalRequestParameter("libraryForm:property");
         this.selectedGroupBy = FacesContextUtility.getOptionalRequestParameter("libraryForm:selectedGroupBy");
         this.groupby = Boolean.valueOf(this.selectedGroupBy);
-        this.enteredValue = FacesContextUtility.getOptionalRequestParameter("libraryForm:value",String.class,"");
+        this.enteredValue = FacesContextUtility.getOptionalRequestParameter("libraryForm:value", String.class, "");
         this.selectedComparison = FacesContextUtility.getOptionalRequestParameter("libraryForm:comparison");
 
         processPropertyTypeChange(requestParamPropertyType);
@@ -421,7 +416,7 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
             } else if (type == PropertyType.RESOURCE_CONFIGURATION) {
                 propertyNames = expressionBuilderManager.getResourceConfigurationPropertyNames(resourceTypeId);
             } else if (type == PropertyType.RESOURCE) {
-                propertyNames = Arrays.asList(new String[]{"id", "name", "version"});
+                propertyNames = Arrays.asList(new String[] { "id", "name", "version" });
             }
 
             if (propertyNames.size() == 0) {
@@ -435,7 +430,6 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
         }
     }
 
-
     public String getExpression() {
 
         refreshData();
@@ -448,69 +442,67 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
         buf.append("resource.");
 
         switch (ResourceLevel.getFromDisplayName(this.selectedResourceLevel)) {
-            case RESOURCE:
-                break;
-            case PARENT:
-                buf.append("parent.");
-                break;
-            case GRANDPARENT:
-                buf.append("grandParent.");
+        case RESOURCE:
+            break;
+        case PARENT:
+            buf.append("parent.");
+            break;
+        case GRANDPARENT:
+            buf.append("grandParent.");
         }
 
         switch (PropertyType.getFromDisplayName(this.selectedPropertyType)) {
-            case RESOURCE:
-                buf.append(this.selectedProperty);
-                break;
-            case RESOURCE_TYPE:
-                buf.append("type.plugin");
-                break;
-            case TRAIT:
-                buf.append("trait[" + this.selectedProperty + "]");
-                break;
-            case PLUGIN_CONFIGURATION:
-                buf.append("pluginConfiguration[" + this.selectedProperty + "]");
-                break;
-            case RESOURCE_CONFIGURATION:
-                buf.append("resourceConfiguration[" + this.selectedProperty + "]");
-                break;
+        case RESOURCE:
+            buf.append(this.selectedProperty);
+            break;
+        case RESOURCE_TYPE:
+            buf.append("type.plugin");
+            break;
+        case TRAIT:
+            buf.append("trait[" + this.selectedProperty + "]");
+            break;
+        case PLUGIN_CONFIGURATION:
+            buf.append("pluginConfiguration[" + this.selectedProperty + "]");
+            break;
+        case RESOURCE_CONFIGURATION:
+            buf.append("resourceConfiguration[" + this.selectedProperty + "]");
+            break;
         }
-
 
         if (!groupby) {
 
             switch (Comparison.getFromDisplayName(this.selectedComparison)) {
-                case EQUALS:
-                    break;
-                case CONTAINS:
-                    buf.append(".contains");
-                    break;
-                case STARTS_WITH:
-                    buf.append(".startsWith");
-                    break;
-                case ENDS_WITH:
-                    buf.append(".endsWith");
-                    break;
+            case EQUALS:
+                break;
+            case CONTAINS:
+                buf.append(".contains");
+                break;
+            case STARTS_WITH:
+                buf.append(".startsWith");
+                break;
+            case ENDS_WITH:
+                buf.append(".endsWith");
+                break;
             }
-
 
             buf.append(" = ");
 
             switch (PropertyType.getFromDisplayName(this.selectedPropertyType)) {
-                case RESOURCE:
-                    buf.append(this.enteredValue);
-                    break;
-                case RESOURCE_TYPE:
-                    String d = buf.toString();
-                    buf.append(this.selectedPlugin);
-                    buf.append("\n");
-                    buf.append(d.replaceAll("plugin", "name"));
-                    buf.append(this.selectedResourceType);
-                    break;
-                case TRAIT:
-                case PLUGIN_CONFIGURATION:
-                case RESOURCE_CONFIGURATION:
-                    buf.append(enteredValue);
-                    break;
+            case RESOURCE:
+                buf.append(this.enteredValue);
+                break;
+            case RESOURCE_TYPE:
+                String d = buf.toString();
+                buf.append(this.selectedPlugin);
+                buf.append("\n");
+                buf.append(d.replaceAll("plugin", "name"));
+                buf.append(this.selectedResourceType);
+                break;
+            case TRAIT:
+            case PLUGIN_CONFIGURATION:
+            case RESOURCE_CONFIGURATION:
+                buf.append(enteredValue);
+                break;
             }
         } else if (PropertyType.getFromDisplayName(this.selectedPropertyType) == PropertyType.RESOURCE_TYPE) {
             String d = buf.toString();

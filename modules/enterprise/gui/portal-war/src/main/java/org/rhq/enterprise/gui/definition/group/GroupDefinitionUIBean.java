@@ -20,7 +20,9 @@ package org.rhq.enterprise.gui.definition.group;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -71,6 +73,14 @@ public class GroupDefinitionUIBean extends PagedDataTableUIBean {
 
     public Long getLastCalculationTime() {
         return this.groupDefinition.getLastCalculationTime();
+    }
+
+    public Long getRecalculationInterval() {
+        return this.groupDefinition.getRecalculationInterval();
+    }
+
+    public Long getNextCalculationTime() {
+        return this.groupDefinition.getNextCalculationTime();
     }
 
     public Boolean getRecursive() {

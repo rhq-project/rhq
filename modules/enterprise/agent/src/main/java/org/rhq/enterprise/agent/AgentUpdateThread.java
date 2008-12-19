@@ -65,8 +65,14 @@ public class AgentUpdateThread extends Thread {
      *        <code>false</code> if you want to fire-and-forget the agent update
      *        thread and return immediately.
      * @throws IllegalStateException if the agent is already being updated
+     * @throws UnsupportedOperationException if the agent is not allowed to update itself
      */
     public static void updateAgentNow(AgentMain agent, boolean wait) throws IllegalStateException {
+
+        if (!agent.getConfiguration().isAgentUpdateEnabled()) {
+            throw new UnsupportedOperationException(agent.getI18NMsg().getMsg(
+                AgentI18NResourceKeys.UPDATE_DOWNLOAD_DISABLED_BY_AGENT));
+        }
 
         lock(agent); // throws exception if we are already updating the agent
 

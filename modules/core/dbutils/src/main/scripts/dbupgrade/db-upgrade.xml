@@ -1098,25 +1098,27 @@ DB Upgrade:
    </schemaSpec>
 
    <schemaSpec version="2.36">
-       <schema-directSQL>
-          <statement desc="Deleting unique constraint on RHQ_MEASUREMENT_DEF">
-             DROP INDEX RHQ_METRIC_DEF_KEY_IDX
-          </statement>
-       </schema-directSQL>
+      <schema-directSQL>
+         <statement desc="Deleting unique constraint on RHQ_MEASUREMENT_DEF">
+            DROP INDEX RHQ_METRIC_DEF_KEY_IDX
+         </statement>
+      </schema-directSQL>
       <schema-deleteColumn table="RHQ_MEASUREMENT_DEF" column="PER_MINUTE" />
       <schema-addColumn table="RHQ_MEASUREMENT_DEF" column="RAW_NUMERIC_TYPE" columnType="SMALLINT" />
       <schema-directSQL>
-          <statement desc="Creating unique constraint on RHQ_MEASUREMENT_DEF (RESOURCE_TYPE_ID, NAME, RAW_NUMERIC_TYPE)">
-             CREATE UNIQUE INDEX RHQ_METRIC_DEF_KEY_IDX ON RHQ_MEASUREMENT_DEF (RESOURCE_TYPE_ID, NAME, RAW_NUMERIC_TYPE)
-          </statement>
+         <statement desc="Creating unique constraint on RHQ_MEASUREMENT_DEF (RESOURCE_TYPE_ID, NAME, RAW_NUMERIC_TYPE)">
+            CREATE UNIQUE INDEX RHQ_METRIC_DEF_KEY_IDX ON RHQ_MEASUREMENT_DEF (RESOURCE_TYPE_ID, NAME, RAW_NUMERIC_TYPE)
+         </statement>
       </schema-directSQL>
    </schemaSpec>
 
    <schemaSpec version="2.37">
       <schema-addColumn table="RHQ_GROUP_DEF" column="CALC_INTERVAL" columnType="LONG" />
-       <statement desc="Defaulting all group definition recalculation intervals">
+      <schema-directSQL>
+         <statement desc="Defaulting all group definition recalculation intervals">
             UPDATE RHQ_GROUP_DEF SET CALC_INTERVAL = 0
-       </statement>
+         </statement>
+      </schema-directSQL>
    </schemaSpec>
 
 </dbupgrade>

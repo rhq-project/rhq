@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/core/util/src/main/java"/>
+	<classpathentry kind="src" path="modules/helpers/pluginGen/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/util/src/test/java"/>
 	<classpathentry kind="src" path="modules/core/dbutils/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/dbutils/src/test/java"/>

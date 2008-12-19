@@ -164,7 +164,8 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
      * Invokes the passed operation on the managed resource
      * @param name Name of the operation
      * @param params The method parameters
-     * @returns An operation result
+     * @return An operation result
+     * @see org.rhq.core.pluginapi.operation.OperationFacet
      */
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
 

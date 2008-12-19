@@ -168,45 +168,45 @@ goto done
 
 rem Java Service Wrapper returns exit codes up to 39 based on how its installed/running
 :error
-if ERRORLEVEL 39 exit 39
-if ERRORLEVEL 38 exit 38
-if ERRORLEVEL 37 exit 37
-if ERRORLEVEL 36 exit 36
-if ERRORLEVEL 35 exit 35
-if ERRORLEVEL 34 exit 34
-if ERRORLEVEL 33 exit 33
-if ERRORLEVEL 32 exit 32
-if ERRORLEVEL 31 exit 31
-if ERRORLEVEL 30 exit 30
-if ERRORLEVEL 29 exit 29
-if ERRORLEVEL 28 exit 28
-if ERRORLEVEL 27 exit 27
-if ERRORLEVEL 26 exit 26
-if ERRORLEVEL 25 exit 25
-if ERRORLEVEL 24 exit 24
-if ERRORLEVEL 23 exit 23
-if ERRORLEVEL 22 exit 22
-if ERRORLEVEL 21 exit 21
-if ERRORLEVEL 20 exit 20
-if ERRORLEVEL 19 exit 19
-if ERRORLEVEL 18 exit 18
-if ERRORLEVEL 17 exit 17
-if ERRORLEVEL 16 exit 16
-if ERRORLEVEL 15 exit 15
-if ERRORLEVEL 14 exit 14
-if ERRORLEVEL 13 exit 13
-if ERRORLEVEL 12 exit 12
-if ERRORLEVEL 11 exit 11
-if ERRORLEVEL 10 exit 10
-if ERRORLEVEL 9 exit 9
-if ERRORLEVEL 8 exit 8
-if ERRORLEVEL 7 exit 7
-if ERRORLEVEL 6 exit 6
-if ERRORLEVEL 5 exit 5
-if ERRORLEVEL 4 exit 4
-if ERRORLEVEL 3 exit 3
-if ERRORLEVEL 2 exit 2
-if ERRORLEVEL 1 exit 1
+if ERRORLEVEL 39 exit /B 39
+if ERRORLEVEL 38 exit /B 38
+if ERRORLEVEL 37 exit /B 37
+if ERRORLEVEL 36 exit /B 36
+if ERRORLEVEL 35 exit /B 35
+if ERRORLEVEL 34 exit /B 34
+if ERRORLEVEL 33 exit /B 33
+if ERRORLEVEL 32 exit /B 32
+if ERRORLEVEL 31 exit /B 31
+if ERRORLEVEL 30 exit /B 30
+if ERRORLEVEL 29 exit /B 29
+if ERRORLEVEL 28 exit /B 28
+if ERRORLEVEL 27 exit /B 27
+if ERRORLEVEL 26 exit /B 26
+if ERRORLEVEL 25 exit /B 25
+if ERRORLEVEL 24 exit /B 24
+if ERRORLEVEL 23 exit /B 23
+if ERRORLEVEL 22 exit /B 22
+if ERRORLEVEL 21 exit /B 21
+if ERRORLEVEL 20 exit /B 20
+if ERRORLEVEL 19 exit /B 19
+if ERRORLEVEL 18 exit /B 18
+if ERRORLEVEL 17 exit /B 17
+if ERRORLEVEL 16 exit /B 16
+if ERRORLEVEL 15 exit /B 15
+if ERRORLEVEL 14 exit /B 14
+if ERRORLEVEL 13 exit /B 13
+if ERRORLEVEL 12 exit /B 12
+if ERRORLEVEL 11 exit /B 11
+if ERRORLEVEL 10 exit /B 10
+if ERRORLEVEL 9 exit /B 9
+if ERRORLEVEL 8 exit /B 8
+if ERRORLEVEL 7 exit /B 7
+if ERRORLEVEL 6 exit /B 6
+if ERRORLEVEL 5 exit /B 5
+if ERRORLEVEL 4 exit /B 4
+if ERRORLEVEL 3 exit /B 3
+if ERRORLEVEL 2 exit /B 2
+if ERRORLEVEL 1 exit /B 1
 
 :done
 endlocal

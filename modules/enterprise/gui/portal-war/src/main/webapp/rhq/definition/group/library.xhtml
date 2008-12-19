@@ -8,10 +8,10 @@
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
       
 <f:view>
+
         <h:form id="libraryForm">
 
             <h3><h:outputText value="DynaGroups Expression Builder"/></h3>
-
 
             <i><h:inputTextarea id="expression" readonly="true" value="#{GroupDefinitionExpressionBuilderLibraryUIBean.expression}" style="width: 100%"/></i>
 
@@ -94,9 +94,9 @@
            
            <h:outputText value="Property Names: " />
            <h:selectOneMenu id="property" name="property"
-                               onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
-                   disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType == 'Resource Type'}"
-                   value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedProperty}">
+                            onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
+                            disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType == 'Resource Type'}"
+                            value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedProperty}">
               <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.properties}"/>
                <rich:toolTip showDelay="1000">
                     <span style="white-space:nowrap">
@@ -110,26 +110,25 @@
 
             <h:outputText value="Comparison Type: "/>
             <h:selectOneMenu id="comparison" name="comparison"
-                                onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
-                    disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy || GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType == 'Resource Type'}"
-                    value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedComparison}">
+                             onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
+                             disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy || GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType == 'Resource Type'}"
+                             value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedComparison}">
                <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.comparisonTypes}"/>
             </h:selectOneMenu>
 
             <h:outputText value="Value: " />
             <h:inputText id="value" name="value"
                          disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy || GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType == 'Resource Type'}"
-                        onblur="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
+                         onblur="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
                          onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
+                         onkeypress="valueTimerKeypressHandler();"
                          value="#{GroupDefinitionExpressionBuilderLibraryUIBean.enteredValue}">
                 <rich:toolTip showDelay="1000">
                      <span style="white-space:nowrap">
                          The string value for the expression to query
                      </span>
-                 </rich:toolTip>                
+                 </rich:toolTip>
             </h:inputText>
-
-
 
         </h:panelGrid>
 
@@ -137,6 +136,38 @@
 
         <h:commandButton id="Submit" value="Add Expression" onclick="opener.document.forms['groupDefinitionEditForm'].elements['groupDefinitionEditForm:textArea'].value += document.forms['libraryForm'].elements['libraryForm:expression'].value + '\n'; window.close();" />
         </h:form>
+        
+        <!-- automatically submit the form if some key was pressed in the 'value' input text field, 
+             and 1500 milliseconds have elapsed without any another key press -->
+        <script type="text/javascript">
+        
+            var valueTimerId = 0;
+            var awaitingTimeout = false;
+            
+            function valueTimerKeypressHandler( )
+            {
+              if ( awaitingTimeout )
+              {
+                  clearTimeout ( valueTimerId );
+              }
+              valueTimerId = setTimeout ( "submitValue()", 1500 );
+              awaitingTimeout = true;
+            }
+            
+            function submitValue( )
+            {
+                awaitingTimeout = false;
+                document.getElementById('libraryForm:hiddenChangeSubmit').click();
+            }
+            
+            // move the focus back to the 'value' input text field on load / after reload
+            function focusValueInput ( ) 
+            {
+                document.getElementById('libraryForm:value').focus();
+            }
+            window.onLoad = focusValueInput;
+        
+        </script>
 </f:view>
 
 </html>

@@ -120,14 +120,14 @@ public class SubsystemConfigurationUpdateUIBean extends PagedDataTableUIBean {
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ListResourcesDataModel(PageControlView.SubsystemConfigurationHistory, MANAGED_BEAN_NAME);
+            dataModel = new ResultsDataModel(PageControlView.SubsystemConfigurationHistory, MANAGED_BEAN_NAME);
         }
 
         return dataModel;
     }
 
-    private class ListResourcesDataModel extends PagedListDataModel<ConfigurationUpdateComposite> {
-        public ListResourcesDataModel(PageControlView view, String beanName) {
+    private class ResultsDataModel extends PagedListDataModel<ConfigurationUpdateComposite> {
+        public ResultsDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 

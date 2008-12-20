@@ -94,11 +94,12 @@
                   </f:facet>
                   
                   <h:outputLink value="/rhq/resource/inventory/view.xhtml">
-                     <f:param name="id" value="#{item.resourceId}" />
-                     <h:outputText value="#{item.resourceName}" />
+                     <f:param name="id" value="#{item.resource.id}" />
+                     <h:outputText value="#{item.resource.name}" />
                   </h:outputLink>
                </rich:column>
 
+<ui:remove>
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="parent.name">
@@ -111,6 +112,7 @@
                      <h:outputText value="#{item.parentResourceName}" />
                   </h:outputLink>
                </rich:column>
+</ui:remove>
 
                <rich:column>
                   <f:facet name="header">
@@ -143,7 +145,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputText value="#{item.operationDefinition.anem}" />
+                  <h:outputText value="#{item.operationDefinition.name}" />
                </rich:column>
                
                <rich:column>

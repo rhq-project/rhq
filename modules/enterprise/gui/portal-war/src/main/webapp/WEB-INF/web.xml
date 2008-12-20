@@ -70,8 +70,7 @@
          /WEB-INF/jsf-components/time-components.xml,
          /WEB-INF/jsf-components/trigger-components.xml,
          /WEB-INF/jsf-components/upload-components.xml,
-         /WEB-INF/jsf-components/utility-components.xml,
-         /WEB-INF/jsf-components/metric-components.xml,       
+         /WEB-INF/jsf-components/metric-components.xml,
 
          /WEB-INF/jsf-managed-beans/alert-beans.xml,
          /WEB-INF/jsf-managed-beans/content-beans.xml,

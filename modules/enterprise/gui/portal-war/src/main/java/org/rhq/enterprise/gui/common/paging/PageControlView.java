@@ -80,6 +80,7 @@ import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationPend
 import org.rhq.enterprise.gui.operation.history.resource.ResourceOperationCompletedHistoryUIBean;
 import org.rhq.enterprise.gui.operation.history.resource.ResourceOperationPendingHistoryUIBean;
 import org.rhq.enterprise.gui.subsystem.SubsystemConfigurationUpdateUIBean;
+import org.rhq.enterprise.gui.subsystem.SubsystemOperationHistoryUIBean;
 
 /**
  * @author Joseph Marques
@@ -244,7 +245,9 @@ public enum PageControlView {
     // Subsystem Views
 
     /** */
-    SubsystemConfigurationHistory(SubsystemConfigurationUpdateUIBean.class);
+    SubsystemConfigurationHistory(SubsystemConfigurationUpdateUIBean.class),
+    /** */
+    SubsystemResourceOperationHistory(SubsystemOperationHistoryUIBean.class);
 
     private Class<? extends PagedDataTableUIBean> beanClass;
     private boolean showAll = false;;

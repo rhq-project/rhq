@@ -96,6 +96,7 @@
          /WEB-INF/jsf-managed-beans-resource-group/measurement-beans.xml,
          
          /WEB-INF/jsf-managed-beans-subsystem/configuration-beans.xml,
+         /WEB-INF/jsf-managed-beans-subsystem/operation-beans.xml,
 
          /WEB-INF/jsf-navigation/alert-navigation.xml,
          /WEB-INF/jsf-navigation/cluster-navigation.xml,

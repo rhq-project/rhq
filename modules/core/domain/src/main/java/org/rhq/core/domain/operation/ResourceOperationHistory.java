@@ -60,7 +60,28 @@ import org.rhq.core.domain.resource.Resource;
         + "  and h.modifiedTime = (select min(h2.modifiedTime) " + "from ResourceOperationHistory h2 "
         + "where h2.resource.id = :resourceId " + "  and h2.status = 'INPROGRESS')"),
     @NamedQuery(name = ResourceOperationHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM ResourceOperationHistory roh "
-        + " WHERE roh.resource IN (:resources))") })
+        + " WHERE roh.resource IN (:resources))"),
+    @NamedQuery(name = ResourceOperationHistory.QUERY_FIND_ALL_ADMIN, query = "" //
+        + "   SELECT roh FROM ResourceOperationHistory roh " //
+        + "     JOIN roh.resource res " //
+        + "LEFT JOIN res.parentResource parent " //
+        + "    WHERE (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
+        + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
+        + "      AND (roh.startedTime > :startTime OR :startTime IS NULL) " //
+        + "      AND (roh.modifiedTime < :endTime OR :endTime IS NULL) " //
+        + "      AND (roh.status LIKE :status OR :status IS NULL) "), //
+    @NamedQuery(name = ResourceOperationHistory.QUERY_FIND_ALL, query = "" //
+        + "   SELECT roh FROM ResourceOperationHistory roh " //
+        + "     JOIN roh.resource res " //
+        + "LEFT JOIN res.parentResource parent " //
+        + "    WHERE res.id IN ( SELECT rr.id FROM Resource rr " //
+        + "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
+        + "                       WHERE s.id = :subjectId ) " //
+        + "      AND (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
+        + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
+        + "      AND (roh.startedTime > :startTime OR :startTime IS NULL) " //
+        + "      AND (roh.modifiedTime < :endTime OR :endTime IS NULL) " //
+        + "      AND (roh.status LIKE :status OR :status IS NULL) ") })
 public class ResourceOperationHistory extends OperationHistory {
     public static final String QUERY_FIND_ALL_IN_STATUS = "ResourceOperationHistory.findAllInStatus";
     public static final String QUERY_FIND_BY_GROUP_OPERATION_HISTORY_ID = "ResourceOperationHistory.findByGroupOperationHistoryId";
@@ -69,6 +90,10 @@ public class ResourceOperationHistory extends OperationHistory {
     public static final String QUERY_FIND_LATEST_COMPLETED_OPERATION = "ResourceOperationHistory.findLatestCompletedOperation";
     public static final String QUERY_FIND_OLDEST_INPROGRESS_OPERATION = "ResourceOperationHistory.findOldestInProgressOperation";
     public static final String QUERY_DELETE_BY_RESOURCES = "ResourceOperationHistory.deleteByResources";
+
+    // for subsystem views
+    public static final String QUERY_FIND_ALL = "OperationHistory.findAll";
+    public static final String QUERY_FIND_ALL_ADMIN = "OperationHistory.findAll_admin";
 
     private static final long serialVersionUID = 1L;
 

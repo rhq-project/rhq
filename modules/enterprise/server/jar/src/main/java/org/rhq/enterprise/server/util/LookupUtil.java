@@ -138,6 +138,8 @@ import org.rhq.enterprise.server.scheduler.SchedulerBean;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.subsystem.ConfigurationSubsystemManagerBean;
 import org.rhq.enterprise.server.subsystem.ConfigurationSubsystemManagerLocal;
+import org.rhq.enterprise.server.subsystem.OperationHistorySubsystemManagerBean;
+import org.rhq.enterprise.server.subsystem.OperationHistorySubsystemManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerBean;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.test.AccessBean;
@@ -324,6 +326,10 @@ public final class LookupUtil {
 
     public static OperationManagerLocal getOperationManager() {
         return lookupLocal(OperationManagerBean.class);
+    }
+
+    public static OperationHistorySubsystemManagerLocal getOperationHistorySubsystemManager() {
+        return lookupLocal(OperationHistorySubsystemManagerBean.class);
     }
 
     public static PartitionEventManagerLocal getPartitionEventManager() {

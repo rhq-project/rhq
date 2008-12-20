@@ -29,6 +29,7 @@ import javax.persistence.Query;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.composite.ResourceOperationHistoryComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -51,8 +52,9 @@ public class OperationHistorySubsystemManagerBean implements OperationHistorySub
     private AuthorizationManagerLocal authorizationManager;
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceOperationHistory> getResourceOperationHistories(Subject subject, String resourceFilter,
-        String parentFilter, Long startTime, Long endTime, OperationRequestStatus status, PageControl pc) {
+    public PageList<ResourceOperationHistoryComposite> getResourceOperationHistories(Subject subject,
+        String resourceFilter, String parentFilter, Long startTime, Long endTime, OperationRequestStatus status,
+        PageControl pc) {
         pc.initDefaultOrderingField("roh.id", PageOrdering.DESC);
 
         String queryName = null;
@@ -85,8 +87,8 @@ public class OperationHistorySubsystemManagerBean implements OperationHistorySub
         query.setParameter("status", status);
 
         long totalCount = (Long) queryCount.getSingleResult();
-        List<ResourceOperationHistory> results = query.getResultList();
+        List<ResourceOperationHistoryComposite> results = query.getResultList();
 
-        return new PageList<ResourceOperationHistory>(results, (int) totalCount, pc);
+        return new PageList<ResourceOperationHistoryComposite>(results, (int) totalCount, pc);
     }
 }

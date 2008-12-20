@@ -62,7 +62,9 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = ResourceOperationHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM ResourceOperationHistory roh "
         + " WHERE roh.resource IN (:resources))"),
     @NamedQuery(name = ResourceOperationHistory.QUERY_FIND_ALL_ADMIN, query = "" //
-        + "   SELECT roh FROM ResourceOperationHistory roh " //
+        + "   SELECT new org.rhq.core.domain.operation.composite.ResourceOperationHistoryComposite" // 
+        + "        ( roh, parent.id, parent.name ) " //
+        + "     FROM ResourceOperationHistory roh " //
         + "     JOIN roh.resource res " //
         + "LEFT JOIN res.parentResource parent " //
         + "    WHERE (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
@@ -71,7 +73,9 @@ import org.rhq.core.domain.resource.Resource;
         + "      AND (roh.modifiedTime < :endTime OR :endTime IS NULL) " //
         + "      AND (roh.status LIKE :status OR :status IS NULL) "), //
     @NamedQuery(name = ResourceOperationHistory.QUERY_FIND_ALL, query = "" //
-        + "   SELECT roh FROM ResourceOperationHistory roh " //
+        + "   SELECT new org.rhq.core.domain.operation.composite.ResourceOperationHistoryComposite" // 
+        + "        ( roh, parent.id, parent.name ) " //
+        + "     FROM ResourceOperationHistory roh " //
         + "     JOIN roh.resource res " //
         + "LEFT JOIN res.parentResource parent " //
         + "    WHERE res.id IN ( SELECT rr.id FROM Resource rr " //

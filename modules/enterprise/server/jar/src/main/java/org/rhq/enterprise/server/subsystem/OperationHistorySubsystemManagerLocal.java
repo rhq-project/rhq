@@ -22,7 +22,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.composite.ResourceOperationHistoryComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -32,6 +32,6 @@ import org.rhq.core.domain.util.PageList;
 @Local
 public interface OperationHistorySubsystemManagerLocal {
 
-    PageList<ResourceOperationHistory> getResourceOperationHistories(Subject subject, String resourceFilter,
+    PageList<ResourceOperationHistoryComposite> getResourceOperationHistories(Subject subject, String resourceFilter,
         String parentFilter, Long startTime, Long endTime, OperationRequestStatus status, PageControl pc);
 }

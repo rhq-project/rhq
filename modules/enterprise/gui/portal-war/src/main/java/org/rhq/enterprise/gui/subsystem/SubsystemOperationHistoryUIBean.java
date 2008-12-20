@@ -27,7 +27,7 @@ import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
 
 import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.composite.ResourceOperationHistoryComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -126,13 +126,13 @@ public class SubsystemOperationHistoryUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
-    private class ResultsDataModel extends PagedListDataModel<ResourceOperationHistory> {
+    private class ResultsDataModel extends PagedListDataModel<ResourceOperationHistoryComposite> {
         public ResultsDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
         @Override
-        public PageList<ResourceOperationHistory> fetchPage(PageControl pc) {
+        public PageList<ResourceOperationHistoryComposite> fetchPage(PageControl pc) {
             getDataFromRequest();
 
             String resourceFilter = getResourceFilter();
@@ -143,7 +143,7 @@ public class SubsystemOperationHistoryUIBean extends PagedDataTableUIBean {
             OperationRequestStatus status = cleansedStatus == null ? null : OperationRequestStatus
                 .valueOf(cleansedStatus);
 
-            PageList<ResourceOperationHistory> result;
+            PageList<ResourceOperationHistoryComposite> result;
             result = manager.getResourceOperationHistories(getSubject(), resourceFilter, parentFilter, startMillis,
                 endMillis, status, pc);
             return result;

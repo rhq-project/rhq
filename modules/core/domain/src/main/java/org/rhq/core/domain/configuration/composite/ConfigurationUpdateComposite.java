@@ -39,9 +39,9 @@ public class ConfigurationUpdateComposite implements Serializable {
     private final String subjectName;
     private final long createdTime;
     private final long modifiedTime;
-    private final int resourceId;
+    private final int resourceId; // every update belong to SOME object in the system
     private final String resourceName;
-    private final int parentResourceId;
+    private final Integer parentResourceId; // use object, because it can be null
     private final String parentResourceName;
 
     public ConfigurationUpdateComposite(int id, ConfigurationUpdateStatus status, String errorMessage,

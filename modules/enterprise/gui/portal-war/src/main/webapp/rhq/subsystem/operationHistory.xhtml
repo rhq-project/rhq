@@ -106,7 +106,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputLink value="/rhq/resource/inventory/view.xhtml">
+                  <h:outputLink value="/rhq/resource/inventory/view.xhtml" rendered="#{not empty item.parentResourceName}">
                      <f:param name="id" value="#{item.parentResourceId}" />
                      <h:outputText value="#{item.parentResourceName}" />
                   </h:outputLink>

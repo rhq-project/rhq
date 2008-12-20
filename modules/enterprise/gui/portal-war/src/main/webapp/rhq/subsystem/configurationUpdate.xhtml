@@ -164,14 +164,6 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <rich:column colspan="#{configurationUpdateDataTable.columns}" width="100%">
-                        <onc:selectCommandButton action="#{ListConfigurationUpdateUIBean.delete}"
-                                                 value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
-                                                 rendered="false" />
-                        <onc:selectCommandButton action="#{ListConfigurationUpdateUIBean.compare}"
-                                                 value="COMPARE SELECTED" low="2" high="2" target="selectedItems" styleClass="on-pager-button buttonsmall" rendered="false"/>
-                        <onc:selectCommandButton action="false"
-                                                 value="ROLLBACK TO SELECTED" high="1" target="selectedItems" styleClass="on-pager-button buttonsmall"
-                                                 rendered="false" />
 
                         <ui:param name="paginationDataTableName" value="configurationUpdateDataTable"/>
                         <ui:param name="paginationDataModel" value="#{configurationUpdateDataModel}"/>

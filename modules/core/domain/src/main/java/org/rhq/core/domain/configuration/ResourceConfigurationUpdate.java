@@ -80,7 +80,7 @@ import org.rhq.core.domain.resource.Resource;
         + "LEFT JOIN res.parentResource parent " //
         + "    WHERE res.id IN ( SELECT rr.id FROM Resource rr " //
         + "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
-        + "                       WHERE s = :subject ) " //
+        + "                       WHERE s.id = :subjectId ) " //
         + "      AND (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
         + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
         + "      AND (cu.createdTime > :startTime OR :startTime IS NULL) " //

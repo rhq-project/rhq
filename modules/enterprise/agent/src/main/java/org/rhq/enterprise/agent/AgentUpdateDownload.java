@@ -224,7 +224,13 @@ public class AgentUpdateDownload {
                 if (inStream != null) {
                     try {
                         inStream.close();
-                    } catch (Exception ioe) {
+                    } catch (Exception e) {
+                    }
+                }
+                if (conn != null) {
+                    try {
+                        conn.disconnect();
+                    } catch (Exception e) {
                     }
                 }
             }

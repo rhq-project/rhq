@@ -269,7 +269,8 @@ Jar File: ${rhq.agent.update.jar-file}
             resultproperty="_launcher.windows.service.exit.code"
             failonerror="false"
             failifexecutionfails="true">
-        <arg line="/c rhq-agent-wrapper.bat restart"/>
+         <arg value="/c"/>
+         <arg value="rhq-agent-wrapper.bat restart &amp;&amp; if ERRORLEVEL 1 exit /B 1"/>
       </exec>
       <condition property="_launcher.windows.service.successful">
          <equals arg1="${_launcher.windows.service.exit.code}" arg2="0" />

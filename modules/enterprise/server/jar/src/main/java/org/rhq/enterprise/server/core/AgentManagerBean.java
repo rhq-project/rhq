@@ -346,16 +346,21 @@ public class AgentManagerBean implements AgentManagerLocal {
         try {
             Properties properties = getAgentUpdateVersionFileContent();
 
-            // Prime Directive: whatever agent update the server has installed is the one we support
-            // TODO: for developers, we might want to be less strict, use build-number if it helps
-            //String supportedAgentBuild = properties.getProperty(RHQ_AGENT_LATEST_BUILD_NUMBER);
+            // Prime Directive: whatever agent update the server has installed is the one we support,
+            // so both the version AND build number must match.
+            // For developers, however, we want to allow to be less strict - only version needs to match.
             String supportedAgentVersion = properties.getProperty(RHQ_AGENT_LATEST_VERSION);
             if (supportedAgentVersion == null) {
                 throw new NullPointerException("no agent version in file");
             }
             ComparableVersion agent = new ComparableVersion(agentVersionInfo.getVersion());
             ComparableVersion server = new ComparableVersion(supportedAgentVersion);
-            return agent.equals(server);
+            if (Boolean.getBoolean("rhq.server.agent-update.nonstrict-version-check")) {
+                return agent.equals(server);
+            } else {
+                String supportedAgentBuild = properties.getProperty(RHQ_AGENT_LATEST_BUILD_NUMBER);
+                return agent.equals(server) && agentVersionInfo.getBuild().equals(supportedAgentBuild);
+            }
         } catch (Exception e) {
             log.warn("Cannot determine if agent version [" + agentVersionInfo + "] is supported. Cause: " + e);
             return false; // assume we can't talk to it

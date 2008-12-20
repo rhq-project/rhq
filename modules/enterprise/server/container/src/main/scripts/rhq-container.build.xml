@@ -540,6 +540,8 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
     <copy todir="${project.build.outputDirectory}" verbose="true">
        <fileset dir="src/main/dev-resources"/>
     </copy>
+    <echo>Putting a developer setting in rhq-server.properties to turn on/off strict agent update version checking</echo>
+    <echo file="${project.build.outputDirectory}/bin/rhq-server.properties" append="true">#rhq.server.agent-update.nonstrict-version-check=true</echo>
   </target>
 
   <!-- The prepare-release target must be run AFTER the resources:resources goal has executed. -->

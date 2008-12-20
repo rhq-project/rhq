@@ -56,6 +56,9 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("The agent update thread encountered an exception: {0}")
     String UPDATE_THREAD_EXCEPTION = "AgentUpdateThread.exception";
 
+    @I18NMessage("Now executing agent update - if all goes well, this is the last you will hear of this agent: [{0}]")
+    String UPDATE_THREAD_EXECUTING_UPDATE_PROCESS = "AgentUpdateThread.executing-update-process";
+
     @I18NMessage("The agent update thread has started - will begin the agent auto-update now!")
     String UPDATE_THREAD_STARTED = "AgentUpdateThread.started";
 

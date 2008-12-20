@@ -159,6 +159,7 @@ public class AgentUpdateThread extends Thread {
             processExecution.setWorkingDirectory(new File(this.agent.getAgentHomeDirectory()).getParent());
             processExecution.setCaptureOutput(false);
             processExecution.setWaitForCompletion(0);
+            showMessage(AgentI18NResourceKeys.UPDATE_THREAD_EXECUTING_UPDATE_PROCESS, processExecution);
             ProcessExecutionResults results = sysInfo.executeProcess(processExecution);
             if (results.getError() != null) {
                 throw results.getError();

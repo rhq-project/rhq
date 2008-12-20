@@ -39,18 +39,24 @@
                width="100%"/>
 
    <ui:insert name="content">
-      <rich:tabPanel>
-         <rich:tab label="Configuration Updates">
-            <ui:include src="/rhq/subsystem/configurationUpdate.xhtml"/>
+      <rich:tabPanel id="subsytemViewPanel" binding="#{SubsystemViewsUIBean.tabPanel}">
+         <rich:tab name="configurationUpdates" label="Configuration Updates">
+            <c:if test="#{SubsystemViewsUIBean.tabPanel.selectedTab eq 'configurationUpdates'}">
+               <ui:include src="/rhq/subsystem/configurationUpdate.xhtml" />
+            </c:if>
          </rich:tab>
-         <rich:tab label="Problem Resources">
+         <rich:tab name="problemResources" label="Problem Resources" disabled="true">
             Not Implemented Yet
          </rich:tab>
-         <rich:tab label="Operations">
-            <ui:include src="/rhq/subsystem/operationHistory.xhtml"/>
+         <rich:tab name="operations" label="Operations">
+            <c:if test="#{SubsystemViewsUIBean.tabPanel.selectedTab eq 'operations'}">
+               <ui:include src="/rhq/subsystem/operationHistory.xhtml"/>
+            </c:if>
          </rich:tab>
-         <rich:tab label="Alerts">
-            <ui:include src="/rhq/subsystem/alertHistory.xhtml"/>
+         <rich:tab name="alerts" label="Alerts">
+            <c:if test="#{SubsystemViewsUIBean.tabPanel.selectedTab eq 'alerts'}">
+               <ui:include src="/rhq/subsystem/alertHistory.xhtml"/>
+            </c:if>
          </rich:tab>
       </rich:tabPanel>
    </ui:insert>

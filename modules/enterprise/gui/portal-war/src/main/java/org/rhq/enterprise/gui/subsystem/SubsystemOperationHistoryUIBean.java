@@ -26,8 +26,8 @@ import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
 
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
+import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -37,18 +37,18 @@ import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.subsystem.ConfigurationSubsystemManagerLocal;
+import org.rhq.enterprise.server.subsystem.OperationHistorySubsystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Joseph Marques
  */
-public class SubsystemConfigurationUpdateUIBean extends PagedDataTableUIBean {
-    public static final String MANAGED_BEAN_NAME = "SubsystemConfigurationUpdateUIBean";
-    private static final String FORM_PREFIX = "configurationUpdateSubsystemHistoryForm:";
+public class SubsystemOperationHistoryUIBean extends PagedDataTableUIBean {
+    public static final String MANAGED_BEAN_NAME = "SubsystemOperationHistoryUIBean";
+    private static final String FORM_PREFIX = "operationHistorySubsystemForm:";
     private final String CALENDAR_SUFFIX = "InputDate";
 
-    private ConfigurationSubsystemManagerLocal manager = LookupUtil.getConfigurationSubsystemManager();
+    private OperationHistorySubsystemManagerLocal manager = LookupUtil.getOperationHistorySubsystemManager();
 
     private static String datePattern;
     private String resourceFilter;
@@ -58,10 +58,10 @@ public class SubsystemConfigurationUpdateUIBean extends PagedDataTableUIBean {
     private String statusFilter;
     private SelectItem[] statusFilterItems;
 
-    public SubsystemConfigurationUpdateUIBean() {
+    public SubsystemOperationHistoryUIBean() {
         datePattern = new WebUserPreferences(EnterpriseFacesContextUtility.getSubject())
             .getDateTimeDisplayPreferences().getDateTimeFormatTrigger();
-        statusFilterItems = SelectItemUtils.convertFromEnum(ConfigurationUpdateStatus.class, true);
+        statusFilterItems = SelectItemUtils.convertFromEnum(OperationRequestStatus.class, true);
         statusFilter = (String) statusFilterItems[0].getValue();
     }
 
@@ -120,19 +120,19 @@ public class SubsystemConfigurationUpdateUIBean extends PagedDataTableUIBean {
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ResultsDataModel(PageControlView.SubsystemConfigurationHistory, MANAGED_BEAN_NAME);
+            dataModel = new ResultsDataModel(PageControlView.SubsystemResourceOperationHistory, MANAGED_BEAN_NAME);
         }
 
         return dataModel;
     }
 
-    private class ResultsDataModel extends PagedListDataModel<ConfigurationUpdateComposite> {
+    private class ResultsDataModel extends PagedListDataModel<ResourceOperationHistory> {
         public ResultsDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
         @Override
-        public PageList<ConfigurationUpdateComposite> fetchPage(PageControl pc) {
+        public PageList<ResourceOperationHistory> fetchPage(PageControl pc) {
             getDataFromRequest();
 
             String resourceFilter = getResourceFilter();
@@ -140,17 +140,17 @@ public class SubsystemConfigurationUpdateUIBean extends PagedDataTableUIBean {
             Long startMillis = getDateSubmittedFilter() == null ? null : getDateSubmittedFilter().getTime();
             Long endMillis = getDateCompletedFilter() == null ? null : getDateCompletedFilter().getTime();
             String cleansedStatus = SelectItemUtils.cleanse(getStatusFilter());
-            ConfigurationUpdateStatus status = cleansedStatus == null ? null : ConfigurationUpdateStatus
+            OperationRequestStatus status = cleansedStatus == null ? null : OperationRequestStatus
                 .valueOf(cleansedStatus);
 
-            PageList<ConfigurationUpdateComposite> result;
-            result = manager.getResourceConfigurationUpdates(getSubject(), resourceFilter, parentFilter, startMillis,
+            PageList<ResourceOperationHistory> result;
+            result = manager.getResourceOperationHistories(getSubject(), resourceFilter, parentFilter, startMillis,
                 endMillis, status, pc);
             return result;
         }
 
         private void getDataFromRequest() {
-            SubsystemConfigurationUpdateUIBean outer = SubsystemConfigurationUpdateUIBean.this;
+            SubsystemOperationHistoryUIBean outer = SubsystemOperationHistoryUIBean.this;
             outer.resourceFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "resourceFilter");
             outer.parentFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "parentFilter");
             outer.dateSubmittedFilter = getDate(FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX

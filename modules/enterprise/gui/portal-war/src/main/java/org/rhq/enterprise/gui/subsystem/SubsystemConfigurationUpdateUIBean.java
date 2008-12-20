@@ -161,7 +161,7 @@ public class SubsystemConfigurationUpdateUIBean extends PagedDataTableUIBean {
         }
 
         private Date getDate(String dateAsString) {
-            if (dateAsString == null) {
+            if (dateAsString == null || dateAsString.trim().equals("")) {
                 return null;
             }
             try {

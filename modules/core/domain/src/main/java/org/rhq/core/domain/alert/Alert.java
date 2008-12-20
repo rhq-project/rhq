@@ -95,7 +95,54 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
     @NamedQuery(name = Alert.QUERY_DELETE_BY_CTIME, query = "DELETE FROM Alert AS a WHERE a.ctime BETWEEN :begin AND :end"),
     @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCE, query = "DELETE Alert AS alert " + "WHERE alert.id IN "
         + "( SELECT ia.id " + "FROM Alert ia " + "WHERE ia.alertDefinition.resource.id = :resourceId " + ")"),
-    @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM Alert a WHERE a.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))") })
+    @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM Alert a WHERE a.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))"),
+    @NamedQuery(name = Alert.QUERY_FIND_ALL_COMPOSITES_ADMIN, query = "" //
+        + "   SELECT new org.rhq.core.domain.alert.composite.AlertHistoryComposite" // 
+        + "        ( a, parent.id, parent.name ) " //
+        + "     FROM Alert a " //
+        + "     JOIN a.alertDefinition ad " //
+        + "     JOIN ad.resource res " //
+        + "LEFT JOIN res.parentResource parent " //
+        /* 
+         * as much as i want to for efficient of the query (namely roundtrips to the db) i can't use fetching here
+         * because, when added, the query parser chokes with "query specified join fetching, but the owner of the 
+         * fetched association was not present in the select list"...even though it clearly is  ;/ 
+         */
+        //+ "     JOIN FETCH a.conditionLogs acl " //
+        + "    WHERE (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
+        + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
+        + "      AND (a.ctime > :startTime OR :startTime IS NULL) " //
+        + "      AND (a.ctime < :endTime OR :endTime IS NULL) " //
+        + "      AND (a.id IN ( SELECT aa.id FROM Alert aa " //
+        + "                       JOIN aa.conditionLogs aacl " // 
+        + "                       JOIN aacl.condition ac " //
+        + "                      WHERE ac.category = :category ) " //
+        + "           OR :category IS NULL) "), //
+    @NamedQuery(name = Alert.QUERY_FIND_ALL_COMPOSITES, query = "" //
+        + "   SELECT new org.rhq.core.domain.alert.composite.AlertHistoryComposite" // 
+        + "        ( a, parent.id, parent.name ) " //
+        + "     FROM Alert a " //
+        + "     JOIN a.alertDefinition ad " //
+        + "     JOIN ad.resource res " //
+        + "LEFT JOIN res.parentResource parent " //
+        /* 
+         * as much as i want to for efficient of the query (namely roundtrips to the db) i can't use fetching here
+         * because, when added, the query parser chokes with "query specified join fetching, but the owner of the 
+         * fetched association was not present in the select list"...even though it clearly is  ;/ 
+         */
+        //+ "     JOIN FETCH a.conditionLogs acl " //
+        + "    WHERE res.id IN ( SELECT rr.id FROM Resource rr " //
+        + "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
+        + "                       WHERE s.id = :subjectId ) " //
+        + "      AND (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
+        + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
+        + "      AND (a.ctime > :startTime OR :startTime IS NULL) " //
+        + "      AND (a.ctime < :endTime OR :endTime IS NULL) " //
+        + "      AND (a.id IN ( SELECT aa.id FROM Alert aa " //
+        + "                       JOIN aa.conditionLogs aacl " // 
+        + "                       JOIN aacl.condition ac " //
+        + "                      WHERE ac.category = :category ) " //
+        + "           OR :category IS NULL) ") })
 @SequenceGenerator(name = "RHQ_ALERT_ID_SEQ", sequenceName = "RHQ_ALERT_ID_SEQ", allocationSize = 100)
 @Table(name = "RHQ_ALERT")
 public class Alert implements Serializable {
@@ -112,6 +159,10 @@ public class Alert implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCES = "Alert.deleteByResources";
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCES = "Alert.findByMeasDefIdAndResources";
     public static final String QUERY_GET_ALERT_COUNT_FOR_SCHEDULES = "Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES";
+
+    // for subsystem view
+    public static final String QUERY_FIND_ALL_COMPOSITES = "Alert.findAllComposites";
+    public static final String QUERY_FIND_ALL_COMPOSITES_ADMIN = "Alert.findAllComposites_admin";
 
     private static final long serialVersionUID = 1L;
 

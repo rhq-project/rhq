@@ -1,0 +1,187 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+      
+<ui:composition>
+
+      <h:form id="alertHistorySubsystemForm">
+
+            <rich:simpleTogglePanel switchType="client" label="Search Results">
+            
+            <h:panelGrid columns="3" cellspacing="3">
+               <h:outputLabel for="resourceFilter" value="Resource Name Filter: " />
+               <h:inputText id="resourceFilter" value="#{SubsystemAlertHistoryUIBean.resourceFilter}"
+                            onkeypress="return ignoreEnterKey();"
+                            style="width: 300px;" />
+               <rich:spacer/>
+
+               <h:outputLabel for="parentFilter" value="Parent Name Filter: " />
+               <h:inputText id="parentFilter" value="#{SubsystemAlertHistoryUIBean.parentFilter}"
+                            onkeypress="return ignoreEnterKey();"
+                            style="width: 300px;" />
+               <rich:spacer/>
+
+               <h:outputLabel for="dateBeginFilter" value="Begin Date Filter: " />
+               <rich:calendar id="dateBeginFilter" value="#{SubsystemAlertHistoryUIBean.dateBeginFilter}"
+                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}" 
+                              showApplyButton="true"
+                              showWeeksBar="false"
+                              style="width: 300px;" />
+               <rich:spacer/>
+
+               <h:outputLabel for="dateEndFilter" value="End Date Filter: " />
+               <rich:calendar id="dateEndFilter" value="#{SubsystemAlertHistoryUIBean.dateEndFilter}"
+                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}" 
+                              showApplyButton="true"
+                              showWeeksBar="false"
+                              style="width: 300px;" />
+               <rich:spacer/>
+
+               <h:outputLabel for="categoryFilter" value="Category Filter: " />
+               <h:selectOneMenu id="categoryFilter" value="#{SubsystemAlertHistoryUIBean.categoryFilter}"
+                                style="width: 300px;">
+                   <f:selectItems value="#{SubsystemAlertHistoryUIBean.categoryFilterItems}"/>
+               </h:selectOneMenu>
+               <a4j:commandButton value="GO" reRender="alertHistoryDataTable, alertHistoryDataTableScroller"
+                                  styleClass="buttonmed"/>
+            </h:panelGrid>
+            
+            </rich:simpleTogglePanel>
+
+            <h:panelGrid columns="1" width="100%">
+
+            <ui:param name="alertHistoryDataModel" value="#{SubsystemAlertHistoryUIBean.dataModel}"/>
+            <rich:dataTable binding="#{SubsystemAlertHistoryUIBean.dataTable}"
+                            id="alertHistoryDataTable" 
+                            rows="#{PageControl.SubsystemAlertHistory.pageSize}"
+                            value="#{alertHistoryDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 15%, 15%, 15%, 15%, 15%, 15%, 9%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer">
+                            
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="SubsystemAlertHistory" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedItems" />
+                  </f:facet>
+                  
+                  <onc:select name="selectedItems"
+                              value="#{item.alert.id}" />
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="res.name">
+                        <h:outputText styleClass="headerText" value="Resource" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputLink value="/rhq/resource/inventory/view.xhtml">
+                     <f:param name="id" value="#{item.alert.alertDefinition.resource.id}" />
+                     <h:outputText value="#{item.alert.alertDefinition.resource.name}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="parent.name">
+                        <h:outputText styleClass="headerText" value="Parent" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputLink value="/rhq/resource/inventory/view.xhtml" rendered="#{not empty item.parentResourceName}">
+                     <f:param name="id" value="#{item.parentResourceId}" />
+                     <h:outputText value="#{item.parentResourceName}" />
+                  </h:outputLink>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="a.ctime">
+                        <h:outputText styleClass="headerText" value="Date" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputText value="#{item.alert.ctime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="ad.name">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputText value="#{item.alert.alertDefinition.name}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Alert Condition" />
+                  </f:facet>
+                  <h:outputText value="#{item.conditionText}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Actual Value" />
+                  </f:facet>
+                  <h:outputText value="#{item.conditionValue}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Recovery Info" />
+                  </f:facet>
+                  <h:outputText value="This alert caused its alert definition to be disabled" rendered="#{onf:getAlertRecoveryInfo(item.alert.id) == 2}"/>
+                  <h:outputText value="N/A" rendered="#{onf:getAlertRecoveryInfo(item.alert.id) == 1}"/>
+
+                  <h:outputText value="Triggered '" rendered="#{onf:getAlertRecoveryInfo(item.alert.id) != '1' and onf:getAlertRecoveryInfo(item.alert.id) != '2'}"/>
+                  <h:outputLink value="/alerts/Config.do" rendered="#{onf:getAlertRecoveryInfo(item.alert.id) != '1' and onf:getAlertRecoveryInfo(item.alert.id) != '2'}">
+                     <f:param name="mode" value="viewRoles"/>
+                     <f:param name="id" value="#{Resource.id}"/>
+                     <f:param name="ad" value="#{item.alert.recoveryId}"/>
+                     <h:outputText value="#{onf:getAlertRecoveryInfo(item.alert.id)}"/>
+                  </h:outputLink>
+                  <h:outputText value="' to be re-enabled" rendered="#{onf:getAlertRecoveryInfo(item.alert.id) != '1' and onf:getAlertRecoveryInfo(item.alert.id) != '2'}"/>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="#{alertHistoryDataTable.columns}" width="100%">
+
+                        <ui:param name="paginationDataTableName" value="alertHistoryDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{alertHistoryDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.SubsystemAlertHistory}"/>
+                        <ui:include src="/rhq/resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+               
+            </rich:dataTable>
+
+            </h:panelGrid>
+      </h:form>
+
+</ui:composition>
+
+</html>

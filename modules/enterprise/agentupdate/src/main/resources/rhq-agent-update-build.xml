@@ -249,21 +249,48 @@ Jar File: ${rhq.agent.update.jar-file}
    </target>
 
    <!-- ================================================================= -->
+   <!-- Run appropriate agent script for the platform we are on -->
    <target name="launch-agent"
            description="Runs the agent using the appropriate launcher script"
            depends="launch-agent-windows,launch-agent-unix,process-exit-code" />
 
    <!-- ================================================================= -->
-   <target name="launch-agent-windows" if="iswindows">
-      <echo>Launching the agent: ${rhq.agent.update.launch-script-dir}/rhq-agent-wrapper.bat</echo>
+   <!-- Try to run the windows service; if not installed, run the console script -->
+   <target name="launch-agent-windows" if="iswindows"
+           depends="launch-agent-windows-service,launch-agent-windows-console">
+   </target>
+
+   <!-- ================================================================= -->
+   <target name="launch-agent-windows-service" if="iswindows">
+      <echo>Launching the agent service: ${rhq.agent.update.launch-script-dir}/rhq-agent-wrapper.bat</echo>
       <exec dir="${rhq.agent.update.launch-script-dir}"
             executable="cmd"
-            output="${rhq.agent.update.log-dir}/rhq-agent-launcher.log"
-            resultproperty="_launcher.exit.code"
+            output="${rhq.agent.update.log-dir}/rhq-agent-launcher-service.log"
+            resultproperty="_launcher.windows.service.exit.code"
             failonerror="false"
             failifexecutionfails="true">
         <arg line="/c rhq-agent-wrapper.bat restart"/>
       </exec>
+      <condition property="_launcher.windows.service.successful">
+         <equals arg1="${_launcher.windows.service.exit.code}" arg2="0" />
+      </condition>
+   </target>
+
+   <!-- ================================================================= -->
+   <target name="launch-agent-windows-console" if="iswindows" unless="_launcher.windows.service.successful">
+      <!-- you should not really rely on this in production - but, if the window service wrapper is not
+           installed, let's try to run the agent using rhq-agent.sh and use the daemon option -->
+      <echo>
+         The agent does not seem to be installed as a Windows Service; will
+         attempt to launch using the agent console script:
+         ${rhq.agent.update.launch-script-dir}/rhq-agent.bat
+      </echo>
+      <exec dir="${rhq.agent.update.launch-script-dir}"
+            executable="cmd"
+            spawn="true">
+        <arg line="/c start rhq-agent.bat"/>
+      </exec>
+      <property name="_launcher.windows.console.successful" value="true"/>
    </target>
 
    <!-- ================================================================= -->
@@ -272,15 +299,34 @@ Jar File: ${rhq.agent.update.jar-file}
       <exec dir="${rhq.agent.update.launch-script-dir}"
             executable="/bin/sh"
             output="${rhq.agent.update.log-dir}/rhq-agent-launcher.log"
-            resultproperty="_launcher.exit.code"
+            resultproperty="_launcher.unix.exit.code"
             failonerror="false"
             failifexecutionfails="true">
         <arg line="rhq-agent-wrapper.sh restart"/>
       </exec>
+      <condition property="_launcher.unix.successful">
+         <equals arg1="${_launcher.unix.exit.code}" arg2="0" />
+      </condition>
    </target>
 
    <!-- ================================================================= -->
-   <target name="process-exit-code">
-      <echo>Launched agent. result code=${_launcher.exit.code}</echo>
+   <target name="process-exit-code"
+           depends="process-exit-code-windows-service,
+                    process-exit-code-windows-console,
+                    process-exit-code-unix"/>
+   
+   <!-- ================================================================= -->
+   <target name="process-exit-code-windows-service" if="_launcher.windows.service.successful">
+      <echo>Launched agent as a Windows Service successfully</echo>
+   </target>
+
+   <!-- ================================================================= -->
+   <target name="process-exit-code-windows-console" if="_launcher.windows.console.successful">
+      <echo>Launched agent in a Windows console</echo>
+   </target>
+
+   <!-- ================================================================= -->
+   <target name="process-exit-code-unix" if="_launcher.unix.successful">
+      <echo>Launched Unix agent successfully</echo>
    </target>
 </project>

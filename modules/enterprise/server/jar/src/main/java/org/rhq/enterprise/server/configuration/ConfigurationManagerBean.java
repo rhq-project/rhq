@@ -53,7 +53,7 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.configuration.composite.PluginConfigurationUpdateResourceComposite;
+import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
@@ -508,7 +508,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject whoami, int resourceId,
+    public PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject whoami, Integer resourceId,
         PageControl pc) {
 
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -1080,7 +1080,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<PluginConfigurationUpdateResourceComposite> getPluginConfigurationUpdateCompositesByParentId(
+    public PageList<ConfigurationUpdateComposite> getPluginConfigurationUpdateCompositesByParentId(
         int configurationUpdateId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("cu.modifiedTime");
 
@@ -1090,9 +1090,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         long count = getPluginConfigurationUpdateCountByParentId(configurationUpdateId);
 
-        List<PluginConfigurationUpdateResourceComposite> results = query.getResultList();
+        List<ConfigurationUpdateComposite> results = query.getResultList();
 
-        return new PageList<PluginConfigurationUpdateResourceComposite>(results, (int) count, pageControl);
+        return new PageList<ConfigurationUpdateComposite>(results, (int) count, pageControl);
     }
 
     @SuppressWarnings("unchecked")

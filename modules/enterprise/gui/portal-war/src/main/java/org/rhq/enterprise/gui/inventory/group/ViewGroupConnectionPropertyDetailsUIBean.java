@@ -20,7 +20,7 @@ package org.rhq.enterprise.gui.inventory.group;
 
 import javax.faces.model.DataModel;
 
-import org.rhq.core.domain.configuration.composite.PluginConfigurationUpdateResourceComposite;
+import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -48,7 +48,7 @@ public class ViewGroupConnectionPropertyDetailsUIBean extends PagedDataTableUIBe
     }
 
     private class ListGroupConnectionPropertyUpdateDetailsDataModel extends
-        PagedListDataModel<PluginConfigurationUpdateResourceComposite> {
+        PagedListDataModel<ConfigurationUpdateComposite> {
         private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
         public ListGroupConnectionPropertyUpdateDetailsDataModel(PageControlView view, String beanName) {
@@ -56,7 +56,7 @@ public class ViewGroupConnectionPropertyDetailsUIBean extends PagedDataTableUIBe
         }
 
         @Override
-        public PageList<PluginConfigurationUpdateResourceComposite> fetchPage(PageControl pc) {
+        public PageList<ConfigurationUpdateComposite> fetchPage(PageControl pc) {
             ResourceGroup requestResourceGroup = EnterpriseFacesContextUtility.getResourceGroup();
 
             if (requestResourceGroup == null) {
@@ -67,7 +67,7 @@ public class ViewGroupConnectionPropertyDetailsUIBean extends PagedDataTableUIBe
 
             int aggregatePluginConfigurationUpdateId = FacesContextUtility.getRequiredRequestParameter("apcuId",
                 Integer.class);
-            PageList<PluginConfigurationUpdateResourceComposite> childUpdates = configurationManager
+            PageList<ConfigurationUpdateComposite> childUpdates = configurationManager
                 .getPluginConfigurationUpdateCompositesByParentId(aggregatePluginConfigurationUpdateId, pc);
 
             return childUpdates;

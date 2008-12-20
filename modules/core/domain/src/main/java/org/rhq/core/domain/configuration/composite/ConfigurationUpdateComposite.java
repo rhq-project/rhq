@@ -29,10 +29,11 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 /**
  * @author Joseph Marques
  */
-public class PluginConfigurationUpdateResourceComposite implements Serializable {
+public class ConfigurationUpdateComposite implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    private final int id; //configuration update id
     private final ConfigurationUpdateStatus status;
     private final String errorMessage;
     private final String subjectName;
@@ -40,9 +41,12 @@ public class PluginConfigurationUpdateResourceComposite implements Serializable 
     private final long modifiedTime;
     private final int resourceId;
     private final String resourceName;
+    private final int parentResourceId;
+    private final String parentResourceName;
 
-    public PluginConfigurationUpdateResourceComposite(ConfigurationUpdateStatus status, String errorMessage,
+    public ConfigurationUpdateComposite(int id, ConfigurationUpdateStatus status, String errorMessage,
         String subjectName, long createdTime, long modifiedTime, Integer resourceId, String resourceName) {
+        this.id = id;
         this.status = status;
         this.errorMessage = errorMessage;
         this.subjectName = subjectName;
@@ -50,6 +54,27 @@ public class PluginConfigurationUpdateResourceComposite implements Serializable 
         this.modifiedTime = modifiedTime;
         this.resourceId = resourceId;
         this.resourceName = resourceName;
+        this.parentResourceId = 0;
+        this.parentResourceName = "Not Initialized";
+    }
+
+    public ConfigurationUpdateComposite(int id, ConfigurationUpdateStatus status, String errorMessage,
+        String subjectName, long createdTime, long modifiedTime, Integer resourceId, String resourceName,
+        Integer parentResourceId, String parentResourceName) {
+        this.id = id;
+        this.status = status;
+        this.errorMessage = errorMessage;
+        this.subjectName = subjectName;
+        this.createdTime = createdTime;
+        this.modifiedTime = modifiedTime;
+        this.resourceId = resourceId;
+        this.resourceName = resourceName;
+        this.parentResourceId = parentResourceId;
+        this.parentResourceName = parentResourceName;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public ConfigurationUpdateStatus getStatus() {
@@ -78,6 +103,14 @@ public class PluginConfigurationUpdateResourceComposite implements Serializable 
 
     public String getResourceName() {
         return resourceName;
+    }
+
+    public int getParentResourceId() {
+        return parentResourceId;
+    }
+
+    public String getParentResourceName() {
+        return parentResourceName;
     }
 
 }

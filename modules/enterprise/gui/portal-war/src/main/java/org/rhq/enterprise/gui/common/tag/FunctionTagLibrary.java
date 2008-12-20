@@ -24,8 +24,6 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.sun.facelets.tag.AbstractTagLibrary;
 
 import org.rhq.core.clientapi.util.units.DateFormatter;
@@ -46,6 +44,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.StringConstants;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.util.WebUtility;
@@ -185,6 +184,10 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         return collection.size();
     }
 
+    public static WebUserPreferences getWebUserPreferences() {
+        return new WebUserPreferences(EnterpriseFacesContextUtility.getSubject());
+    }
+
     public static String contextFragmentURL() {
         EntityContext context = WebUtility.getEntityContext();
         switch (context.category) {
@@ -201,8 +204,7 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     }
 
     public static Resource getResource(int resourceId) {
-        HttpServletRequest request = FacesContextUtility.getRequest();
-        Subject user = WebUtility.getSubject(request);
+        Subject user = EnterpriseFacesContextUtility.getSubject();
         return LookupUtil.getResourceManager().getResourceById(user, resourceId);
     }
 

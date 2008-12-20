@@ -26,6 +26,9 @@ import java.util.Map;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
@@ -42,6 +45,9 @@ import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ResourceOperationCompletedHistoryUIBean extends PagedDataTableUIBean {
+
+    private final Log log = LogFactory.getLog(ResourceOperationCompletedHistoryUIBean.class);
+
     public static final String MANAGED_BEAN_NAME = "ResourceOperationCompletedHistoryUIBean";
 
     private OperationManagerLocal manager = LookupUtil.getOperationManager();
@@ -83,6 +89,7 @@ public class ResourceOperationCompletedHistoryUIBean extends PagedDataTableUIBea
         String next = null;
         Integer doomed;
 
+        long start = System.currentTimeMillis();
         for (int i = 0; i < selectedItems.length; i++) {
             try {
                 next = selectedItems[i];
@@ -95,6 +102,9 @@ public class ResourceOperationCompletedHistoryUIBean extends PagedDataTableUIBea
                 failure.put(next, ThrowableUtil.getAllMessages(e, true));
             }
         }
+        long end = System.currentTimeMillis();
+        log.info("Performance: took [" + (end - start) + "]ms to delete " + selectedItems.length
+            + " Resource OperationHistory elements");
 
         if (success.size() > 0) {
             // one success message for all successful deletions

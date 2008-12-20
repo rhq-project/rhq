@@ -79,6 +79,7 @@ import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationHist
 import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationPendingHistoryUIBean;
 import org.rhq.enterprise.gui.operation.history.resource.ResourceOperationCompletedHistoryUIBean;
 import org.rhq.enterprise.gui.operation.history.resource.ResourceOperationPendingHistoryUIBean;
+import org.rhq.enterprise.gui.subsystem.SubsystemConfigurationUpdateUIBean;
 
 /**
  * @author Joseph Marques
@@ -238,7 +239,12 @@ public enum PageControlView {
     /** */
     ResourceGroupMeasurementScheduleList(ListResourceGroupMeasurementScheduleUIBean.class, true),
     /** */
-    EventsHistoryList(EventHistoryUIBean.class);
+    EventsHistoryList(EventHistoryUIBean.class),
+
+    // Subsystem Views
+
+    /** */
+    SubsystemConfigurationHistory(SubsystemConfigurationUpdateUIBean.class);
 
     private Class<? extends PagedDataTableUIBean> beanClass;
     private boolean showAll = false;;

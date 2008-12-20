@@ -136,6 +136,8 @@ import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerBean;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerBean;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.subsystem.ConfigurationSubsystemManagerBean;
+import org.rhq.enterprise.server.subsystem.ConfigurationSubsystemManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerBean;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.test.AccessBean;
@@ -246,6 +248,10 @@ public final class LookupUtil {
 
     public static ConfigurationManagerLocal getConfigurationManager() {
         return lookupLocal(ConfigurationManagerBean.class);
+    }
+
+    public static ConfigurationSubsystemManagerLocal getConfigurationSubsystemManager() {
+        return lookupLocal(ConfigurationSubsystemManagerBean.class);
     }
 
     public static ContentManagerLocal getContentManager() {

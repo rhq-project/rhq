@@ -94,6 +94,8 @@
          /WEB-INF/jsf-managed-beans-resource-group/inventory-beans.xml,
          /WEB-INF/jsf-managed-beans-resource-group/operation-beans.xml,
          /WEB-INF/jsf-managed-beans-resource-group/measurement-beans.xml,
+         
+         /WEB-INF/jsf-managed-beans-subsystem/configuration-beans.xml,
 
          /WEB-INF/jsf-navigation/alert-navigation.xml,
          /WEB-INF/jsf-navigation/cluster-navigation.xml,
@@ -113,6 +115,8 @@
          /WEB-INF/jsf-navigation-resource-group/inventory-navigation.xml,
          /WEB-INF/jsf-navigation-resource-group/operation-navigation.xml,
          /WEB-INF/jsf-navigation-resource-group/measurement-navigation.xml,
+         
+         /WEB-INF/jsf-navigation-subsystem/tab-container-navigation.xml,
 
          /WEB-INF/jsf-converters/common-converters.xml,
          /WEB-INF/jsf-converters/content-converters.xml,

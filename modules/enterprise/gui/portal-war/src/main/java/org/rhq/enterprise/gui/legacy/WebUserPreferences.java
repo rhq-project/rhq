@@ -218,6 +218,14 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         public final String timeFormat = "h:mm:ss aa, zzz";
         public final String dateTimeFormat = "M/d/yy, h:mm:ss aa, zzz";
         public final String dateTimeFormatTrigger = "M/d/yy, HH:mm";
+
+        public String getDateTimeFormat() {
+            return dateTimeFormat;
+        }
+
+        public String getDateTimeFormatTrigger() {
+            return dateTimeFormatTrigger;
+        }
     }
 
     public DateTimeDisplayPreferences getDateTimeDisplayPreferences() {

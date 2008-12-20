@@ -32,7 +32,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.configuration.composite.PluginConfigurationUpdateResourceComposite;
+import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
@@ -159,12 +159,13 @@ public interface ConfigurationManagerLocal {
      * {@link #updateResourceConfiguration(Subject, int, Configuration)}.
      *
      * @param  whoami     the user who wants to see the information
-     * @param  resourceId the resource whose update requests are to be returned
+     * @param  resourceId the resource whose update requests are to be returned, if null will not filter by resourceId
      * @param  pc         the pagination controls
      *
      * @return the resource's complete list of updates (will be empty (not <code>null</code>) if none)
      */
-    PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject whoami, int resourceId, PageControl pc);
+    PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject whoami, Integer resourceId,
+        PageControl pc);
 
     PluginConfigurationUpdate getPluginConfigurationUpdate(Subject whoami, int configurationUpdateId);
 
@@ -353,7 +354,7 @@ public interface ConfigurationManagerLocal {
 
     AggregatePluginConfigurationUpdate getAggregatePluginConfigurationById(int configurationUpdateId);
 
-    PageList<PluginConfigurationUpdateResourceComposite> getPluginConfigurationUpdateCompositesByParentId(
+    PageList<ConfigurationUpdateComposite> getPluginConfigurationUpdateCompositesByParentId(
         int configurationUpdateId, PageControl pageControl);
 
     PageList<Integer> getPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl);

@@ -35,22 +35,72 @@ import org.rhq.core.domain.resource.Resource;
 @DiscriminatorValue("resource")
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_ALL_IN_STATUS, query = "SELECT cu "
-        + "  FROM ResourceConfigurationUpdate cu " + " WHERE cu.status = :status"),
-    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_ALL_BY_RESOURCE_ID, query = "SELECT cu "
-        + "  FROM ResourceConfigurationUpdate cu " + " WHERE cu.resource.id = :resourceId"),
-    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_CURRENTLY_ACTIVE_CONFIG, query = "SELECT cu "
-        + "  FROM ResourceConfigurationUpdate cu " + " WHERE cu.resource.id = :resourceId "
-        + "   AND cu.status = 'SUCCESS' " + "   AND cu.modifiedTime = ( SELECT MAX(cu2.modifiedTime) "
-        + "   FROM ResourceConfigurationUpdate cu2 " + "  WHERE cu2.resource.id = :resourceId "
-        + "    AND cu2.status = 'SUCCESS') "),
-    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_RESOURCE_ID, query = "SELECT cu "
-        + "  FROM ResourceConfigurationUpdate cu " + " WHERE cu.resource.id = :resourceId "
-        + "   AND cu.modifiedTime = ( SELECT MAX(cu2.modifiedTime) " + "   FROM ResourceConfigurationUpdate cu2 "
-        + "  WHERE cu2.resource.id = :resourceId) "),
-    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, query = "DELETE FROM Configuration c WHERE c IN ( SELECT rcu.configuration FROM ResourceConfigurationUpdate rcu WHERE rcu.resource IN (:resources) AND NOT rcu.configuration = rcu.resource.resourceConfiguration)"),
-    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, query = "DELETE FROM ResourceConfigurationUpdate rcu WHERE rcu.resource IN (:resources))"),
-    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "UPDATE ResourceConfigurationUpdate rcu SET rcu.aggregateConfigurationUpdate = null WHERE rcu.aggregateConfigurationUpdate IN ( select arcu FROM AggregateResourceConfigurationUpdate arcu WHERE arcu.group.id = :groupId )") })
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_ALL_IN_STATUS, query = "" //
+        + "SELECT cu " //
+        + "  FROM ResourceConfigurationUpdate cu " //
+        + " WHERE cu.status = :status"),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_ALL_BY_RESOURCE_ID, query = "" //
+        + "SELECT cu " //
+        + "  FROM ResourceConfigurationUpdate cu " //
+        + " WHERE ( cu.resource.id = :resourceId OR :resourceId IS NULL ) "),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_CURRENTLY_ACTIVE_CONFIG, query = "" //
+        + "SELECT cu " //
+        + "  FROM ResourceConfigurationUpdate cu " //
+        + " WHERE cu.resource.id = :resourceId " //
+        + "   AND cu.status = 'SUCCESS' " //
+        + "   AND cu.modifiedTime = ( SELECT MAX(cu2.modifiedTime) " //
+        + "                             FROM ResourceConfigurationUpdate cu2 " //
+        + "                            WHERE cu2.resource.id = :resourceId " //
+        + "                              AND cu2.status = 'SUCCESS' ) "),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_RESOURCE_ID, query = "" //
+        + "SELECT cu " //
+        + "  FROM ResourceConfigurationUpdate cu " //
+        + " WHERE cu.resource.id = :resourceId " //
+        + "   AND cu.modifiedTime = ( SELECT MAX(cu2.modifiedTime) " // 
+        + "                             FROM ResourceConfigurationUpdate cu2 " //
+        + "                            WHERE cu2.resource.id = :resourceId ) "),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_ALL_COMPOSITES_ADMIN, query = "" //
+        + "   SELECT new org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite" //
+        + "        ( cu.id, cu.status, cu.errorMessage, cu.subjectName, cu.createdTime, cu.modifiedTime, " // update w/o config
+        + "          res.id, res.name, parent.id, parent.name ) " //
+        + "     FROM ResourceConfigurationUpdate cu " //
+        + "     JOIN cu.resource res " //
+        + "LEFT JOIN res.parentResource parent " //
+        + "    WHERE (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
+        + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
+        + "      AND (cu.createdTime > :startTime OR :startTime IS NULL) " //
+        + "      AND (cu.modifiedTime < :endTime OR :endTime IS NULL) " //
+        + "      AND (cu.status LIKE :status OR :status IS NULL) "),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_ALL_COMPOSITES, query = "" //
+        + "   SELECT new org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite" //
+        + "        ( cu.id, cu.status, cu.errorMessage, cu.subjectName, cu.createdTime, cu.modifiedTime, " // update w/o config
+        + "          res.id, res.name, parent.id, parent.name ) " //
+        + "     FROM ResourceConfigurationUpdate cu " //
+        + "     JOIN cu.resource res " //
+        + "LEFT JOIN res.parentResource parent " //
+        + "    WHERE res.id IN ( SELECT rr.id FROM Resource rr " //
+        + "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
+        + "                       WHERE s = :subject ) " //
+        + "      AND (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
+        + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
+        + "      AND (cu.createdTime > :startTime OR :startTime IS NULL) " //
+        + "      AND (cu.modifiedTime < :endTime OR :endTime IS NULL) " //
+        + "      AND (cu.status LIKE :status OR :status IS NULL) "),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_1, query = "" //
+        + "DELETE FROM Configuration c " //
+        + " WHERE c IN ( SELECT rcu.configuration " //
+        + "                FROM ResourceConfigurationUpdate rcu " //
+        + "               WHERE rcu.resource IN ( :resources ) " //
+        + "                AND NOT rcu.configuration = rcu.resource.resourceConfiguration )"),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, query = ""
+        + "DELETE FROM ResourceConfigurationUpdate rcu " //
+        + " WHERE rcu.resource IN ( :resources )"),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE, query = "" //
+        + "UPDATE ResourceConfigurationUpdate rcu " //
+        + "   SET rcu.aggregateConfigurationUpdate = NULL " //
+        + " WHERE rcu.aggregateConfigurationUpdate IN ( SELECT arcu " //
+        + "                                               FROM AggregateResourceConfigurationUpdate arcu " //
+        + "                                              WHERE arcu.group.id = :groupId )") })
 public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUpdate {
     private static final long serialVersionUID = 1L;
 
@@ -58,6 +108,12 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
     public static final String QUERY_FIND_ALL_BY_RESOURCE_ID = "ResourceConfigurationUpdate.findAllByResourceId";
     public static final String QUERY_FIND_CURRENTLY_ACTIVE_CONFIG = "ResourceConfigurationUpdate.findCurrentlyActiveConfig";
     public static final String QUERY_FIND_LATEST_BY_RESOURCE_ID = "ResourceConfigurationUpdate.findByResource";
+
+    // for subsystem views
+    public static final String QUERY_FIND_ALL_COMPOSITES = "ResourceConfigurationUpdate.findAllComposites";
+    public static final String QUERY_FIND_ALL_COMPOSITES_ADMIN = "ResourceConfigurationUpdate.findAllComposites_admin";
+
+    // for efficient object cleanup/purge
     public static final String QUERY_DELETE_BY_RESOURCES_1 = "ResourceConfigurationUpdate.deleteByResources1";
     public static final String QUERY_DELETE_BY_RESOURCES_2 = "ResourceConfigurationUpdate.deleteByResources2";
     public static final String QUERY_DELETE_UPDATE_AGGREGATE = "ResourceConfigurationUpdate.deleteUpdateAggregate";

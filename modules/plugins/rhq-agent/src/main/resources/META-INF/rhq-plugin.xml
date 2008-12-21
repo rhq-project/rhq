@@ -247,36 +247,6 @@
               category="throughput"
               measurementType="dynamic" />
 
-      <metric property="QueueThrottleMaxCommands"
-              displayName="Queue Throttle Max Commands"
-              description="Maximum number of messages allowed by the queue throttle during burst period. If 0, queue throttling is disabled"
-              defaultOn="true"
-              category="throughput"
-              measurementType="dynamic" />
-
-      <metric property="QueueThrottleBurstPeriodMillis"
-              displayName="Queue Throttle Burst Period"
-              description="The length of time, in milliseconds, of each queue throttle burst period. If 0, queue throttling is disabled"
-              defaultOn="true"
-              units="milliseconds"
-              category="throughput"
-              measurementType="dynamic" />
-
-      <metric property="SendThrottleMaxCommands"
-              displayName="Send Throttle Max Commands"
-              description="Maximum number of messages allowed by the send throttle before quiet period begins. If 0, send throttling is disabled"
-              defaultOn="true"
-              category="throughput"
-              measurementType="dynamic" />
-
-      <metric property="SendThrottleQuietPeriodDurationMillis"
-              displayName="Send Throttle Quiet Period Duration"
-              description="The duration, in milliseconds, of each send throttle quiet period. If 0, send throttling is disabled"
-              defaultOn="true"
-              units="milliseconds"
-              category="throughput"
-              measurementType="dynamic" />
-
       <metric property="JVMFreeMemory"
               displayName="JVM Free Memory"
               description="The amount of free memory the agent JVM has in its heap"

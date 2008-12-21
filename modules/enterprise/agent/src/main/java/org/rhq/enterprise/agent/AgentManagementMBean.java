@@ -318,26 +318,6 @@ public interface AgentManagementMBean {
     boolean isSending();
 
     /**
-     * @see ClientCommandSenderMetrics#getQueueThrottleMaxCommands()
-     */
-    long getQueueThrottleMaxCommands();
-
-    /**
-     * @see ClientCommandSenderMetrics#getQueueThrottleBurstPeriodMillis()
-     */
-    long getQueueThrottleBurstPeriodMillis();
-
-    /**
-     * @see ClientCommandSenderMetrics#getSendThrottleMaxCommands()
-     */
-    long getSendThrottleMaxCommands();
-
-    /**
-     * @see ClientCommandSenderMetrics#getSendThrottleQuietPeriodDurationMillis()
-     */
-    long getSendThrottleQuietPeriodDurationMillis();
-
-    /**
      * Returns the agent JVM's free memory as reported by <code>Runtime.getRuntime().freeMemory()</code>.
      *
      * @return free memory in bytes

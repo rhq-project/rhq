@@ -352,26 +352,6 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         return metrics.isSending();
     }
 
-    public long getQueueThrottleMaxCommands() {
-        ClientCommandSenderMetrics metrics = getClientSideMetrics();
-        return metrics.getQueueThrottleMaxCommands();
-    }
-
-    public long getQueueThrottleBurstPeriodMillis() {
-        ClientCommandSenderMetrics metrics = getClientSideMetrics();
-        return metrics.getQueueThrottleBurstPeriodMillis();
-    }
-
-    public long getSendThrottleMaxCommands() {
-        ClientCommandSenderMetrics metrics = getClientSideMetrics();
-        return metrics.getSendThrottleMaxCommands();
-    }
-
-    public long getSendThrottleQuietPeriodDurationMillis() {
-        ClientCommandSenderMetrics metrics = getClientSideMetrics();
-        return metrics.getSendThrottleQuietPeriodDurationMillis();
-    }
-
     public long getJVMFreeMemory() {
         return Runtime.getRuntime().freeMemory();
     }

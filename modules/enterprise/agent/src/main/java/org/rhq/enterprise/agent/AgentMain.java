@@ -106,7 +106,6 @@ import org.rhq.enterprise.agent.promptcmd.DebugPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.DiscoveryPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.DownloadPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.DumpSpoolPromptCommand;
-import org.rhq.enterprise.agent.promptcmd.ExecutePromptCommand;
 import org.rhq.enterprise.agent.promptcmd.ExitPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.FailoverPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.GetConfigPromptCommand;
@@ -2840,7 +2839,7 @@ public class AgentMain {
             new ShutdownPromptCommand(), new GetConfigPromptCommand(), new SetConfigPromptCommand(),
             new ConfigPromptCommand(), new RegisterPromptCommand(), new PluginsPromptCommand(),
             new PluginContainerPromptCommand(), new MetricsPromptCommand(), new NativePromptCommand(),
-            new ExecutePromptCommand(), new DiscoveryPromptCommand(), new InventoryPromptCommand(),
+            /*new ExecutePromptCommand(),*/new DiscoveryPromptCommand(), new InventoryPromptCommand(),
             new AvailabilityPromptCommand(), new PiqlPromptCommand(), new IdentifyPromptCommand(),
             new LogPromptCommand(), new TimerPromptCommand(), new PingPromptCommand(), new DownloadPromptCommand(),
             new DumpSpoolPromptCommand(), new SenderPromptCommand(), new FailoverPromptCommand(),

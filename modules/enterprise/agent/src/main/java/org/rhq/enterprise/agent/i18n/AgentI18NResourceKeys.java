@@ -718,7 +718,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("debug")
     String DEBUG = "PromptCommand.debug";
 
-    @I18NMessage("debug [--file=<logfile>] [--comm=true|false] [--threaddump]")
+    @I18NMessage("debug [--file=<conf>] [--comm=true|false] [--threaddump]")
     String DEBUG_SYNTAX = "PromptCommand.debug.syntax";
 
     @I18NMessage("Provides features to help debug the agent.")
@@ -726,10 +726,11 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("Provides features to help debug the agent.\\n\\\n"
         + "-c|--comm=true|false: enables or disables server-agent communications trace.\\n\\\n"
-        + "-f|--file=<logfile>: reconfigures the logging system with the given file.\\n\\\n"
-        + "\\                     Typically, <logfile> can be 'log4j.xml'\\n\\\n"
-        + "\\                     'log4j-debug.xml', but you can use your own by\\n\\\n"
-        + "\\                     placing your log files in the /conf directory.\\n\\\n"
+        + "-f|--file=<conf>: reconfigures the logging system with the given file.\\n\\\n"
+        + "\\                  Typically, <conf> can be 'log4j.xml' or \\n\\\n"
+        + "\\                  'log4j-debug.xml' or any file found in /conf.\\n\\\n"
+        + "\\                  You can even use your own log configuration file by\\n\\\n"
+        + "\\                  placing it in the /conf directory.\\n\\\n"
         + "-t|--threaddump: dumps the stacks for all threads in the agent VM.\\n\\\n")
     String DEBUG_DETAILED_HELP = "PromptCommand.debug.detailed-help";
 

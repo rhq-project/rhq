@@ -17,7 +17,7 @@
 
   <scm>
     <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/</connection>
-    <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/</developerConnection>
+    <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/</developerConnection>
   </scm>
 
   <properties>

@@ -18,7 +18,7 @@
 
    <scm>
       <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/hibernate/</connection>
-      <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/plugins/hibernate/</developerConnection>
+      <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/plugins/plugins/hibernate/</developerConnection>
    </scm>
 
    <properties>

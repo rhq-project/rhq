@@ -18,7 +18,7 @@
 
    <scm>
     <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/rhq-server</connection>
-    <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/rhq-server</developerConnection>
+    <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/plugins/rhq-server</developerConnection>
    </scm>
 
    <properties>

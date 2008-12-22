@@ -18,7 +18,7 @@
 
    <scm>
       <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-cache/</connection>
-      <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-cache/</developerConnection>
+      <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-cache/</developerConnection>
    </scm>
 
    <properties>

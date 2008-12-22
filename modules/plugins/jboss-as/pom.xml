@@ -18,7 +18,7 @@
 
    <scm>
       <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-as/</connection>
-      <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-as/</developerConnection>
+      <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/plugins/jboss-as/</developerConnection>
    </scm>
 
    <properties>

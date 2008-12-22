@@ -26,8 +26,8 @@
   </organization>
 
   <scm>
-    <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk</connection>
-    <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk</developerConnection>
+    <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/</connection>
+    <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/</developerConnection>
   </scm>
 
   <issueManagement>

@@ -29,7 +29,7 @@
 
   <scm>
     <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/dist/agent/</connection>
-    <developerConnection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/dist/agent/</developerConnection>
+    <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/dist/agent/</developerConnection>
   </scm>
 
   <properties>

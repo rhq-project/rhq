@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.alert.engine.jms;
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.EJB;
 import javax.ejb.MessageDriven;
-import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
@@ -56,13 +55,13 @@ public final class AlertConditionConsumerBean implements MessageListener {
     private CachedConditionManagerLocal cachedConditionManager;
 
     public void onMessage(Message message) {
-        ObjectMessage objectMessage = (ObjectMessage) message;
         AbstractAlertConditionMessage conditionMessage = null;
 
         try {
+            ObjectMessage objectMessage = (ObjectMessage) message;
             conditionMessage = (AbstractAlertConditionMessage) objectMessage.getObject();
-        } catch (JMSException je) {
-            log.error("Error getting content of jms message", je);
+        } catch (Throwable t) {
+            log.error("Error getting content of jms message", t);
         }
 
         AlertDefinition definition = null;
@@ -85,11 +84,14 @@ public final class AlertConditionConsumerBean implements MessageListener {
              * completes and unlocks, the next thread will see all of its results
              */
             cachedConditionManager.processCachedConditionMessage(conditionMessage, definition);
-        } catch (Exception e) {
-            log.error("Error handling " + conditionMessage + " - " + e.toString());
+        } catch (Throwable t) {
+            log.error("Error handling " + conditionMessage + " - " + t.toString());
         } finally {
-            if (definition != null) {
-                AlertSerializer.getSingleton().unlock(definition.getId());
+            try {
+                if (definition != null) {
+                    AlertSerializer.getSingleton().unlock(definition.getId());
+                }
+            } catch (Throwable t) {
             }
         }
     }

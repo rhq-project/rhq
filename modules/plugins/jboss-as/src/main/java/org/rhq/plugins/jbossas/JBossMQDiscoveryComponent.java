@@ -32,7 +32,7 @@ import org.rhq.plugins.jmx.JMXComponent;
 /**
  * Discover JBossMQ
  *
- * @author Heiko W. Rupp 
+ * @author Heiko W. Rupp
  */
 public class JBossMQDiscoveryComponent extends AbstractMessagingDiscoveryComponent {
     private static final String DEFAULT_RESOURCE_NAME = "JBossMQ";
@@ -42,7 +42,8 @@ public class JBossMQDiscoveryComponent extends AbstractMessagingDiscoveryCompone
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
         String objectNameQueryTemplate = "jboss.mq:service=DestinationManager";
         Set<DiscoveredResourceDetails> result = super.discoverResources(context, objectNameQueryTemplate,
-                DEFAULT_RESOURCE_NAME, DEFAULT_RESOURCE_DESCRIPTION);
+                DEFAULT_RESOURCE_NAME, DEFAULT_RESOURCE_DESCRIPTION,
+                "jboss.mq:service=DestinationManager;Interceptor");
         return result;
     }
 }

@@ -727,8 +727,8 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Provides features to help debug the agent.\\n\\\n"
         + "-c|--comm=true|false: enables or disables server-agent communications trace.\\n\\\n"
         + "-f|--file=<conf>: reconfigures the logging system with the given file.\\n\\\n"
-        + "\\                  Typically, <conf> can be 'log4j.xml' or \\n\\\n"
-        + "\\                  'log4j-debug.xml' or any file found in /conf.\\n\\\n"
+        + "\\                  <conf> can be 'log4j.xml', 'log4j-debug.xml', \\n\\\n"
+        + "\\                  'log4j-warn.xml' or any file found in /conf.\\n\\\n"
         + "\\                  You can even use your own log configuration file by\\n\\\n"
         + "\\                  placing it in the /conf directory.\\n\\\n"
         + "-t|--threaddump: dumps the stacks for all threads in the agent VM.\\n\\\n")

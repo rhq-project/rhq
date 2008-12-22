@@ -28,8 +28,10 @@ package org.rhq.plugins.jbossas;
  import java.util.Iterator;
  import java.util.List;
  import java.util.Set;
+ import java.io.NotSerializableException;
 
  import org.mc4j.ems.connection.EmsConnection;
+ import org.mc4j.ems.connection.EmsException;
  import org.mc4j.ems.connection.bean.EmsBean;
  import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 
@@ -82,18 +84,20 @@ public abstract class AbstractMessagingDiscoveryComponent extends MBeanResourceD
      * Parse the passed source information and construct the version string from it
      * @param connection EmsConnection to use for this.
      * @param versionSource The source string. This is of the form "domain:mbean;att1,att2,..."
-     * @return A string naming the resource
+     * @return A string naming the resource or null if it can't be obtained.
      */
     private String getVersionFromSource(EmsConnection connection, String versionSource) {
 
         int pos ;
         pos = versionSource.indexOf(';');
         if (pos<0)
-            return "unknown";
+            return null;
+
         String beanName = versionSource.substring(0,pos);
         String attribs = versionSource.substring(pos+1);
         String[] attrs = attribs.split(",");
 
+        try {
         ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(beanName);
         List<EmsBean> beans = connection.queryBeans(queryUtility.getTranslatedQuery());
         if (beans.size() == 1) {
@@ -111,7 +115,13 @@ public abstract class AbstractMessagingDiscoveryComponent extends MBeanResourceD
             return ret.toString();
         }
         else
-            return "unknown";
+            return null;
 
+        } catch (EmsException ee) {
+            return null;
+        }
+        catch (RuntimeException nse) { // NotSerializableException
+            return null; // We can't determine the version from this attribute
+        }
     }
 }

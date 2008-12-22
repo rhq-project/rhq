@@ -37,13 +37,15 @@ import org.rhq.plugins.jmx.JMXComponent;
 public class JBossMQDiscoveryComponent extends AbstractMessagingDiscoveryComponent {
     private static final String DEFAULT_RESOURCE_NAME = "JBossMQ";
     private static final String DEFAULT_RESOURCE_DESCRIPTION = "JBossMQ subsystem";
+    // JMX attribute to obtain the version from 
+    private static final String VERSION_SOURCE = "jboss.mq:service=DestinationManager;Interceptor";
 
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
         String objectNameQueryTemplate = "jboss.mq:service=DestinationManager";
         Set<DiscoveredResourceDetails> result = super.discoverResources(context, objectNameQueryTemplate,
                 DEFAULT_RESOURCE_NAME, DEFAULT_RESOURCE_DESCRIPTION,
-                "jboss.mq:service=DestinationManager;Interceptor");
+                VERSION_SOURCE);
         return result;
     }
 }

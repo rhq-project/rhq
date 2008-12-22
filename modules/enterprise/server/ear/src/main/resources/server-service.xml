@@ -11,4 +11,7 @@
    <mbean code="org.rhq.enterprise.server.alert.engine.mbean.AlertConditionCacheMonitor"
           name="rhq:service=AlertConditionCacheMonitor"/>
 
+   <mbean code="org.rhq.enterprise.server.resource.group.definition.mbean.GroupDefinitionRecalculationThreadMonitor"
+          name="rhq:service=GroupDefinitionRecalculationThreadMonitor"/>
+
 </server>

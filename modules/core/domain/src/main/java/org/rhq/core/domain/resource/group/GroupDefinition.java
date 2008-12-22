@@ -44,18 +44,34 @@ import javax.persistence.Table;
 import org.rhq.core.domain.util.StringUtils;
 
 @Entity
-@NamedQueries( {
-    @NamedQuery(name = GroupDefinition.QUERY_FIND_ALL, query = "SELECT gd " + "  FROM GroupDefinition AS gd "),
-    @NamedQuery(name = GroupDefinition.QUERY_FIND_BY_NAME, query = "SELECT gd FROM GroupDefinition AS gd WHERE LOWER(gd.name) = LOWER(:name)"),
-    @NamedQuery(name = GroupDefinition.QUERY_FIND_MEMBERS, query = "  SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( AVG(a.availabilityType), rg, COUNT(res) ) "
-        + "    FROM ResourceGroup rg LEFT JOIN rg.implicitResources res LEFT JOIN res.availability a "
-        + "   WHERE rg.groupDefinition.id = :groupDefinitionId "
-        + "     AND (a is null OR a.startTime = (SELECT MAX(aa.startTime) FROM Availability aa where res.id = aa.resource.id)) "
-        + "GROUP BY rg, rg.groupCategory, rg.name, rg.groupByClause "),
-    @NamedQuery(name = GroupDefinition.QUERY_FIND_MEMBERS_count, query = "  SELECT COUNT(rg) "
-        + "    FROM ResourceGroup rg " + "   WHERE rg.groupDefinition.id = :groupDefinitionId "),
-    @NamedQuery(name = GroupDefinition.QUERY_FIND_MANAGED_RESOURCE_GROUP_IDS_ADMIN, query = "  SELECT rg.id "
-        + "    FROM ResourceGroup rg " + "   WHERE rg.groupDefinition.id = :groupDefinitionId "),
+@NamedQueries( { @NamedQuery(name = GroupDefinition.QUERY_FIND_ALL, query = "" //
+    + "SELECT gd " //
+    + "  FROM GroupDefinition AS gd "), //
+    @NamedQuery(name = GroupDefinition.QUERY_FIND_BY_NAME, query = "" //
+        + "SELECT gd " //
+        + "  FROM GroupDefinition AS gd " //
+        + " WHERE LOWER(gd.name) = LOWER(:name)"), //
+    @NamedQuery(name = GroupDefinition.QUERY_FIND_MEMBERS, query = "" //
+        + "   SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite" //
+        + "        ( AVG(a.availabilityType), rg, COUNT(res) ) " //
+        + "     FROM ResourceGroup rg " //
+        + "LEFT JOIN rg.implicitResources res " //
+        + "LEFT JOIN res.availability a " //
+        + "    WHERE rg.groupDefinition.id = :groupDefinitionId " //
+        + "      AND (a is null OR a.startTime = ( SELECT MAX(aa.startTime) " //
+        + "                                        FROM Availability aa where res.id = aa.resource.id) ) " //
+        + " GROUP BY rg, rg.groupCategory, rg.name, rg.groupByClause "), //
+    @NamedQuery(name = GroupDefinition.QUERY_FIND_MEMBERS_count, query = "" //
+        + "SELECT COUNT(rg) " //
+        + "  FROM ResourceGroup rg " //
+        + " WHERE rg.groupDefinition.id = :groupDefinitionId "), //
+    @NamedQuery(name = GroupDefinition.QUERY_FIND_ALL_MEMBERS, query = "" //
+        + "SELECT rg " //
+        + "  FROM ResourceGroup rg " //
+        + " WHERE rg.groupDefinition IS NOT NULL "), //
+    @NamedQuery(name = GroupDefinition.QUERY_FIND_MANAGED_RESOURCE_GROUP_IDS_ADMIN, query = "" //
+        + "SELECT rg.id " + "  FROM ResourceGroup rg " //
+        + " WHERE rg.groupDefinition.id = :groupDefinitionId "),
     /*
      * the next recalculation interval is defined as:
      * 
@@ -71,7 +87,11 @@ import org.rhq.core.domain.util.StringUtils;
         + "            AND ( gd.lastCalculationTime + gd.recalculationInterval < :now ) ) " //
         + "          OR " //
         + "          ( gd.lastCalculationTime IS NULL " //
-        + "            AND ( gd.modifiedTime + gd.recalculationInterval < :now ) ) ) ") })
+        + "            AND ( gd.modifiedTime + gd.recalculationInterval < :now ) ) ) "), //
+    @NamedQuery(name = GroupDefinition.QUERY_FIND_ALL_RECALCULATING, query = "" //
+        + "SELECT gd " //
+        + "  FROM GroupDefinition AS gd " //
+        + " WHERE gd.recalculationInterval != 0 ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_GROUP_DEF_ID_SEQ")
 @Table(name = "RHQ_GROUP_DEF")
 public class GroupDefinition implements Serializable {
@@ -81,8 +101,10 @@ public class GroupDefinition implements Serializable {
     public static final String QUERY_FIND_BY_NAME = "GroupDefinition.findByName";
     public static final String QUERY_FIND_MEMBERS = "GroupDefinition.findMembers";
     public static final String QUERY_FIND_MEMBERS_count = "GroupDefinition.findMembers_count";
+    public static final String QUERY_FIND_ALL_MEMBERS = "GroupDefinition.findAllMembers_admin";
     public static final String QUERY_FIND_MANAGED_RESOURCE_GROUP_IDS_ADMIN = "GroupDefinition.findManagedResourceGroupIds_admin";
     public static final String QUERY_FIND_IDS_FOR_RECALCULATION = "GroupDefinition.findIdsForRecalculation_admin";
+    public static final String QUERY_FIND_ALL_RECALCULATING = "GroupDefinition.findAllRecalculating_admin";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")

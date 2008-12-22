@@ -60,6 +60,8 @@ import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefini
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionUpdateException;
 import org.rhq.enterprise.server.resource.group.definition.framework.ExpressionEvaluator;
 import org.rhq.enterprise.server.resource.group.definition.framework.InvalidExpressionException;
+import org.rhq.enterprise.server.resource.group.definition.mbean.GroupDefinitionRecalculationThreadMonitor;
+import org.rhq.enterprise.server.resource.group.definition.mbean.GroupDefinitionRecalculationThreadMonitorMBean;
 
 @Stateless
 public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
@@ -92,24 +94,35 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             return; // this will skip the info logging, so we only log when this method does something meaningful
         }
 
-        int successful = 0;
-        int failed = 0;
+        GroupDefinitionRecalculationThreadMonitorMBean monitor = GroupDefinitionRecalculationThreadMonitor.getMBean();
+
+        long totalStart = System.currentTimeMillis();
         for (Integer groupDefinitionId : groupDefinitionIdsToRecalculate) {
+            long singleStart = System.currentTimeMillis();
+            boolean success = false;
             try {
                 groupDefinitionManager.calculateGroupMembership(subject, groupDefinitionId);
-                successful++;
+                success = true;
             } catch (Throwable t) {
                 /* 
                  * be paranoid about capturing any and all kinds of errors, to give a chances for 
                  * all recalculations to complete in this (heart)beat of the recalculation thread
                  */
                 log.error("Error recalculating DynaGroups for GroupDefinition[id=" + groupDefinitionId + "]", t);
-                failed++;
+            }
+            long singleEnd = System.currentTimeMillis();
+
+            try {
+                GroupDefinition groupDefinition = getById(groupDefinitionId);
+                int size = getManagedResourceGroupIdsForGroupDefinition(groupDefinitionId).size();
+                monitor.updateStatistic(groupDefinition.getName(), size, success, singleEnd - singleStart);
+            } catch (Throwable t) {
+                log.error("Error updating DynaGroup statistics GroupDefinition[id=" + groupDefinitionId + "]", t);
+                // ignore error during statistic update
             }
         }
-
-        log.info("Auto-recalculated DynaGroups[successful=" + successful + ", failed=" + failed + "]");
-
+        long totalEnd = System.currentTimeMillis();
+        monitor.updateAutoRecalculationThreadTime(totalEnd - totalStart);
     }
 
     public GroupDefinition getById(int groupDefinitionId) throws GroupDefinitionNotFoundException {
@@ -390,6 +403,19 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
     public int getGroupDefinitionCount() {
         Query queryCount = PersistenceUtility.createCountQuery(entityManager, GroupDefinition.QUERY_FIND_ALL);
+        long count = (Long) queryCount.getSingleResult();
+        return (int) count;
+    }
+
+    public int getAutoRecalculationGroupDefinitionCount() {
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager,
+            GroupDefinition.QUERY_FIND_ALL_RECALCULATING);
+        long count = (Long) queryCount.getSingleResult();
+        return (int) count;
+    }
+
+    public int getDynaGroupCount() {
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, GroupDefinition.QUERY_FIND_ALL_MEMBERS);
         long count = (Long) queryCount.getSingleResult();
         return (int) count;
     }

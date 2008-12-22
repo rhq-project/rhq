@@ -60,6 +60,10 @@ public interface GroupDefinitionManagerLocal {
 
     int getGroupDefinitionCount();
 
+    int getAutoRecalculationGroupDefinitionCount();
+
+    int getDynaGroupCount();
+
     void removeGroupDefinition(Subject subject, Integer groupDefinitionId) throws GroupDefinitionNotFoundException,
         GroupDefinitionDeleteException;
 

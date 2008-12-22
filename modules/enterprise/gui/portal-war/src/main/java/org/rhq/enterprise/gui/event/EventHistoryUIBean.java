@@ -200,7 +200,13 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
             EventSeverity severity = getEventSeverity();
             String search = getSearchFilter();
             String source = getSourceFilter();
+            MetricComponent metric = getMetric();
 
+            if (metric.getUnit() != null) {
+                rangePreferences.end -= metric.getMillis();
+            }
+
+            preferences.persistPreferences();
             if (context.category == EntityContext.Category.Resource) {
                 results = eventManager.getEvents(getSubject(), new int[] { context.resourceId },
                     rangePreferences.begin, rangePreferences.end, severity, -1, source, search, pc);

@@ -106,7 +106,7 @@ public class MetricRenderer extends Renderer {
         writer.writeAttribute("name", MetricComponent.UNIT, null);
         for (TimeUnit unit : metric.getUnitOptions()) {
             writer.startElement("option", metric);
-            writer.writeAttribute("value", unit.name(), null);
+            writer.writeAttribute("value", unit.name(), MetricComponent.UNIT);
             if (unit.name() == metric.getUnit()) {
                 writer.writeAttribute("SELECTED", "SELECTED", null);
             }
@@ -115,13 +115,6 @@ public class MetricRenderer extends Renderer {
         }
         writer.endElement("select");
 
-        writer.startElement("input", null);
-        writer.writeAttribute("name", "range", null);
-        writer.writeAttribute("src", "/images/dash-button_go-arrow.gif", null);
-        writer.writeAttribute("type", "image", null);
-        writer.writeAttribute("border", "0", null);
-        writer.writeAttribute("valign", "bottom", null);
-        writer.endElement("input");
     }
 
 }

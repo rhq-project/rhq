@@ -145,6 +145,10 @@
             
             <onc:metric binding="#{EventHistoryUIBean.metric}"
                      optionList="m,h,d" />
+            <a4j:commandLink reRender="eventHistoryDataTable,eventHistoryDataTableScroller">
+                <img src="/images/dash-button_go-arrow.gif"/>
+            </a4j:commandLink>
+            
             <a href="javascript:document.EventsForm.submit()" onclick="clickLink('EventsForm', 'advanced')">#{msg['resource.common.monitor.visibility.metricsToolbar.AdvancedSettingsBtn']}</a>
         </rich:panel>
         <br />

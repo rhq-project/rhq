@@ -33,9 +33,9 @@ public class MetricComponent extends UIComponentBase {
     public final static String OPTION_LIST_ATTRIBUTE = "optionList";
 
     public enum TimeUnit {
-        MINUTES("Minutes", "m", 1000L), //
-        HOURS("Hours", "h", 60000L), //
-        DAYS("Days", "d", 3600000L);
+        MINUTES("Minutes", "m", 60000L), //
+        HOURS("Hours", "h", 3600000L), //
+        DAYS("Days", "d", 86400000L);
 
         private String displayName;
         private String optionListToken;
@@ -146,5 +146,4 @@ public class MetricComponent extends UIComponentBase {
         this.optionList = (String) state[3];
         this.unitOptions = (TimeUnit[]) state[4];
     }
-
 }

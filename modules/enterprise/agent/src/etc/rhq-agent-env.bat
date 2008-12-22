@@ -47,7 +47,7 @@ rem                          agent's defaults. If you only want to add options
 rem                          to the agent's defaults, then you will want to
 rem                          use RHQ_AGENT_ADDITIONAL_JAVA_OPTS instead.
 rem
-rem set RHQ_AGENT_JAVA_OPTS=-Xms160M -Xmx160M -Djava.net.preferIPv4Stack=true
+rem set RHQ_AGENT_JAVA_OPTS=-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true
 
 rem    RHQ_AGENT_JAVA_ENDORSED_DIRS - Java VM command line option to set the
 rem                                   endorsed dirs for the agent's VM. If this

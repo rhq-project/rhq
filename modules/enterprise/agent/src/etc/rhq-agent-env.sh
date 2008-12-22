@@ -43,7 +43,7 @@
 #                          to the agent's defaults, then you will want to
 #                          use RHQ_AGENT_ADDITIONAL_JAVA_OPTS instead.
 #
-#RHQ_AGENT_JAVA_OPTS="-Xms160M -Xmx160M -Djava.net.preferIPv4Stack=true"
+#RHQ_AGENT_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true"
 
 #    RHQ_AGENT_JAVA_ENDORSED_DIRS - Java VM command line option to set the
 #                                   endorsed dirs for the agent's VM. If this

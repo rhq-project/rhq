@@ -51,11 +51,11 @@
    
 </head>
 
-<body bgcolor="#FFF" onload="javascript:disableConditionalButtons();" style="height: 100%;">
+<body bgcolor="#FFF" style="height: 100%;">
 
 <ui:remove>
-   <!-- [JBNADM-1352] Set the content type to "text/html" (overriding the default of "application/xhtml+xml") to force
-Firefox and other Gecko-based browsers to render the page in "Almost Standards" (i.e. transitional) mode. -->
+   <!-- Set the content type to "text/html" (overriding the default of "application/xhtml+xml") to force
+        Firefox and other Gecko-based browsers to render the page in "Almost Standards" (i.e. transitional) mode. -->
 </ui:remove>
 <f:view contentType="text/html">
 
@@ -162,7 +162,8 @@ Firefox and other Gecko-based browsers to render the page in "Almost Standards" 
             contentDiv.style.width = remainder + "px";
         }
     }
-    window.onload = maxContentWidth;
+    addWindowsOnLoadEvent(maxContentWidth);
+    addWindowsOnLoadEvent(disableConditionalButtons);
     window.onresize = maxContentWidth;
 </script>
 

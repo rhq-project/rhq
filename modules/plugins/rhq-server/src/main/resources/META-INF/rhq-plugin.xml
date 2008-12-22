@@ -30,7 +30,6 @@
       <metric property="EventCacheElementCount" category="throughput" displayType="summary" />
       <metric property="OperationCacheElementCount" category="throughput" displayType="summary" />
       <metric property="ResourceConfigurationCacheElementCount" category="throughput" displayType="summary" />
-      <metric property="OOBCacheElementCount" category="throughput" displayType="summary" />
 
       <metric property="TotalCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
       <metric property="AvailabilityCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
@@ -79,6 +78,51 @@
       <metric property="PurgedCallTimeData" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of call time data purged by the last purge job"/>
       <metric property="PurgedEvents" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of events purged by the last purge job"/>
       <metric property="PurgedMeasurementTraits" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of traits purged by the last purge job"/>
+   </service>
+   
+   <service name="RHQ Server Group Definition / DynaGroups Subsystem"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            class="GroupDefinitionResourceComponent"
+            description="Statistics for the RHQ Server Group Definition / DynaGroups Subsystem">
+
+      <runs-inside>
+         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+      </runs-inside>
+      
+      <plugin-configuration>
+         <c:simple-property name="objectName" readOnly="true" default="rhq:service=GroupDefinitionRecalculationThreadMonitor"/>
+         <c:simple-property name="nameTemplate" default="RHQ Server Group Definition / DynaGroups Subsystem"/>
+         <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Group Definition / DynaGroups Subsystem."/>
+      </plugin-configuration>
+      
+      <operation name="clear" displayName="Clear Statistics" description="Clear the collected statistics, and start collecting anew"/>
+
+      <operation name="retrieveStatistics" description="View a snapshot of statistical information about the recalculation cost of each GroupDefinition in the system">
+         <results>
+            <c:list-property name="statistics">
+               <c:map-property name="stat">
+                  <c:simple-property name="groupDefinitionName" summary="true" type="string"/>
+                  <c:simple-property name="dynaGroupCount" summary="true" type="long"/>
+                  <c:simple-property name="recalculationCount" summary="true" type="long"/>
+                  <c:simple-property name="successfulCount" summary="true" type="long"/>
+                  <c:simple-property name="failureCount" summary="true" type="long"/>
+                  <c:simple-property name="minExecutionTime" summary="true" type="long"/>
+                  <c:simple-property name="maxExecutionTime" summary="true" type="long"/>
+                  <c:simple-property name="avgEexecutionTime" summary="true" type="long"/>
+               </c:map-property>
+            </c:list-property>
+         </results>
+      </operation>
+
+      <metric property="GroupDefinitionCount" category="throughput" displayType="summary" measurementType="dynamic"
+        description="Total number of group definitions in the system"/>
+      <metric property="AutoRecalculatingGroupDefinitionCount" category="throughput" displayType="summary" measurementType="dynamic"
+        description="The number of auto-recalculating group definitions in the system"/>
+      <metric property="DynaGroupCount" category="throughput" displayType="summary" measurementType="dynamic"
+        description="Total number of resource groups managed by some group definition"/>
+      <metric property="AutoRecalculationThreadTime" category="performance" displayType="summary" measurementType="dynamic" units="milliseconds"
+              description="Average time it took (in milliseconds) to recalculate DynaGroup members for those GroupDefinition's whose timeout expired"/>
+
    </service>
 
    <service name="RHQ Server Communications Subsystem"

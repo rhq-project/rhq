@@ -22,6 +22,8 @@ import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -55,6 +57,17 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public AlertDefinition getAlertDefinitionByConditionIdInNewTransaction(int alertConditionId) {
+        AlertDefinition alertDefinition = null;
+        AlertCondition alertCondition = getAlertConditionById(alertConditionId);
+        if (alertCondition != null) {
+            alertDefinition = alertCondition.getAlertDefinition();
+            alertDefinition.getId(); // load in all eager loaded data, do not load lazy data
+        }
+        return alertDefinition;
+    }
 
     public AlertCondition getAlertConditionById(int alertConditionId) {
         return entityManager.find(AlertCondition.class, alertConditionId);

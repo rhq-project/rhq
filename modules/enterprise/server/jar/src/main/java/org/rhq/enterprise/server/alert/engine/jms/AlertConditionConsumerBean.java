@@ -28,7 +28,6 @@ import javax.jms.ObjectMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.CachedConditionManagerLocal;
@@ -69,13 +68,12 @@ public final class AlertConditionConsumerBean implements MessageListener {
             log.debug("Received message: " + conditionMessage);
 
             int alertConditionId = conditionMessage.getAlertConditionId();
-            AlertCondition condition = alertConditionManager.getAlertConditionById(alertConditionId);
-            if (condition == null) {
+            definition = alertConditionManager.getAlertDefinitionByConditionIdInNewTransaction(alertConditionId);
+            if (definition == null) {
                 log.info("AlertCondition[id=" + alertConditionId
                     + "] has been removed after it was triggered; this message will be discarded");
                 return;
             }
-            definition = condition.getAlertDefinition();
 
             AlertSerializer.getSingleton().lock(definition.getId());
 

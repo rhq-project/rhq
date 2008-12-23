@@ -62,7 +62,7 @@
 
 <ul id="root" class="boxy">
 
-<ui:param name="tableBorder" value="1" /> <!-- used for quick debugging -->
+<ui:param name="tableBorder" value="0" /> <!-- used for quick debugging -->
 <ui:param name="context" value="#{IndicatorChartsUIBean.context}" />
 <c:forEach var="metric" varStatus="status" items="#{IndicatorChartsUIBean.data}">
 
@@ -156,9 +156,13 @@
         </td>
      </tr>
      </c:if>
+     
+     <tr>
+        <td colspan="3">
+           <img src="/resource/HighLowChart?#{onf:contextFragmentURL()}&amp;imageWidth=647&amp;imageHeight=100&amp;schedId=#{metric.scheduleId}&amp;definitionId=#{metric.definitionId}&amp;now=#{IndicatorViewsForm.timeToken}&amp;measurementUnits=#{metric.units}" />
+        </td>
+     </tr>
    </table>
-  
-   <h:graphicImage src="/resource/HighLowChart?#{onf:contextFragmentURL()}&amp;imageWidth=647&amp;imageHeight=100&amp;schedId=#{metric.scheduleId}&amp;definitionId=#{metric.definitionId}&amp;now=#{IndicatorViewsForm.timeToken}&amp;measurementUnits=#{metric.units}" />
 
    </li>
 

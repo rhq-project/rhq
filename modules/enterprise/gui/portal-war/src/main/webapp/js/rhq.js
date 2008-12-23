@@ -476,16 +476,61 @@ function clickAlreadySelectedElements() {
    }
 }
 
-function addWindowsOnLoadEvent(func) { 
-   var oldonload = window.onload; 
+
+function addWindowOnLoadEvent(newMethod) { 
    if (typeof window.onload != 'function') { 
-      window.onload = func; 
+      window.onload = newMethod; 
    } else { 
+      var oldMethod = window.onload; 
       window.onload = function() { 
-         if (oldonload) { 
-            oldonload(); 
+         if (oldMethod) { 
+            oldMethod(); 
          } 
-         func(); 
+         newMethod(); 
       } 
    } 
 } 
+
+function addWindowOnResizeEvent(newMethod) { 
+   if (typeof window.onresize != 'function') { 
+      window.onresize = newMethod; 
+   } else {
+      var oldMethod = window.onresize;
+      window.onresize = function() { 
+         if (oldMethod) { 
+            oldMethod(); 
+         } 
+         newMethod(); 
+      } 
+   } 
+}
+
+function getElementCrossBrowser(elementId) {
+   var e;
+   if(document.getElementById) {
+      e = document.getElementById(elementId);
+   } else if (document.all) {
+      e = document.all[elementId];
+   }
+   return e;
+}
+
+function getElementLeftPos(e) {
+   var xPos = e.offsetLeft;
+   var tempEl = e.offsetParent;
+   while (tempEl != null) {
+      xPos += tempEl.offsetLeft;
+      tempEl = tempEl.offsetParent;
+   }
+   return xPos;
+}
+
+function getElementTopPos(e) {
+   var yPos = e.offsetTop;
+   var tempEl = e.offsetParent;
+   while (tempEl != null) {
+      yPos += tempEl.offsetTop;
+      tempEl = tempEl.offsetParent;
+   }
+   return yPos;
+}

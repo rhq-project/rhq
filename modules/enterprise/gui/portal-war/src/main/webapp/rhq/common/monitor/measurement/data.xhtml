@@ -159,7 +159,8 @@
   </tr>
   </table>
   
-  <h:graphicImage value="/resource/HighLowChart?#{onf:contextFragmentURL()}&amp;imageWidth=647&amp;imageHeight=100&amp;schedId=#{metric.scheduleId}&amp;definitionId=#{metric.definitionId}&amp;now=#{IndicatorViewsForm.timeToken}&amp;measurementUnits=#{metric.units}" />
+  <img src="/resource/HighLowChart?#{onf:contextFragmentURL()}&amp;imageWidth=647&amp;imageHeight=100&amp;schedId=#{metric.scheduleId}&amp;definitionId=#{metric.definitionId}&amp;now=#{IndicatorViewsForm.timeToken}&amp;measurementUnits=#{metric.units}"
+       width="647" height="100" />
 
   </li>
 </c:forEach>

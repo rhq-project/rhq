@@ -155,16 +155,7 @@
 </f:view>
 
 <script type="text/javascript">
-    function maxContentWidth(){
-        var contentDiv = document.getElementById("content");
-        if (contentDiv != null) {
-            var remainder = document.documentElement.clientWidth - 225;
-            contentDiv.style.width = remainder + "px";
-        }
-    }
-    addWindowsOnLoadEvent(maxContentWidth);
-    addWindowsOnLoadEvent(disableConditionalButtons);
-    window.onresize = maxContentWidth;
+    addWindowOnLoadEvent(disableConditionalButtons);
 </script>
 
 </body>

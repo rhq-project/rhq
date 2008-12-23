@@ -40,11 +40,39 @@
 
 <tr class="ListHeaderLight">
     <td width="550px">
-        <ui:include src="events/data.xhtml"/>
+        <div id="eventsDiv">
+            <ui:include src="events/data.xhtml"/>
+        </div>
+    </td>
+</tr>
+
+<tr class="ListHeaderLight">
+    <td>
+        <div id="footerDiv"></div>
     </td>
 </tr> 
 </table>
 
+<script type="text/javascript">
+    function maxIndicatorDivHeight() {
+        var indicatorDiv = getElementCrossBrowser("indicatorDiv");
+        var eventsDiv = getElementCrossBrowser("eventsDiv");
+        var footerDiv = getElementCrossBrowser("footerDiv");
+        
+        var browserHeight = document.documentElement.clientHeight;
+        var indicatorTopPos = getElementTopPos(indicatorDiv);
+        var eventsTopPos = getElementTopPos(eventsDiv);
+        var footerTopPos = getElementTopPos(footerDiv) ;
+        var eventsDivHeight = footerTopPos - eventsTopPos;
+        
+        var newIndicatorDivHeight = browserHeight - indicatorTopPos - eventsDivHeight; 
+        indicatorDiv.style.height = newIndicatorDivHeight + "px"; 
+    }
+    
+    addWindowOnLoadEvent(maxIndicatorDivHeight);
+    addWindowOnResizeEvent(maxIndicatorDivHeight);
+</script>
+    
 </ui:composition>
 
 </html>

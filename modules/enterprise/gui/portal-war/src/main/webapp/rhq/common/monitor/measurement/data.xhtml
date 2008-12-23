@@ -62,17 +62,15 @@
 
 <ul id="root" class="boxy">
 
+<ui:param name="tableBorder" value="1" /> <!-- used for quick debugging -->
 <ui:param name="context" value="#{IndicatorChartsUIBean.context}" />
 <c:forEach var="metric" varStatus="status" items="#{IndicatorChartsUIBean.data}">
 
-  <li id="#{metric.metricToken}">
-  <table width="100%" border="0" cellpadding="2">
-  <tr>
-    <td>
-      <table width="100%" border="0" cellpadding="0" cellspacing="1" style="margin-top: 1px; margin-bottom: 1px;">
-        <tr>
-          <td>
-          <rich:panel styleClass="BlockContentNoPadding" style="border: 0;">
+   <li id="#{metric.metricToken}">
+   <table width="100%" border="#{tableBorder}" cellpadding="0" cellspacing="0">
+     <tr>
+       <td>
+          <rich:panel bodyClass="BlockContent" style="border: 0px; margin: 0; padding: 0;">
           <font class="BoldText">
           <h:outputLink target="_top" value="/resource/common/monitor/Visibility.do">
              <f:param name="m" value="#{metric.definitionId}"/>
@@ -89,9 +87,9 @@
                 <c:otherwise>
                    <f:param name="mode" value="chartSingleMetricSingleResource"/>
                    <f:param name="id" value="#{context.resourceId}"/>
-                </c:otherwise>
+                   </c:otherwise>
              </c:choose>
-             <h:outputText value="#{metric.label} " />
+                <h:outputText value="#{metric.label} " />
           </h:outputLink>
           </font>
              <rich:toolTip followMouse="true" showDelay="500">
@@ -99,72 +97,71 @@
                 <h:outputText value="No description of this metric available" rendered="#{empty metric.description}" />
              </rich:toolTip>
           </rich:panel>
-          </td>
+       </td>
 
-          <td width="400">
-             <table cellpadding="0" cellspacing="0" border="0" width="100%">
-             <tr>
+       <td width="400">
+          <table cellpadding="0" cellspacing="0" border="#{tableBorder}" width="100%">
+          <tr>
              <td width="33%" nowrap="nowrap">
                 <h:outputFormat style="font-weight: bold;" value="#{msg['resource.common.monitor.visibility.LowTH']}" />: 
                 <h:outputText value="#{metric.minMetric.valueFmt}"/>
              </td>
-             
              <td width="34%" nowrap="nowrap">
                 <h:outputFormat style="font-weight: bold;" value="#{msg['resource.common.monitor.visibility.AvgTH']}" />: 
                 <h:outputText value="#{metric.avgMetric.valueFmt}"/>
              </td>
-             
              <td width="33%" nowrap="nowrap">
                 <h:outputFormat style="font-weight: bold;" value="#{msg['resource.common.monitor.visibility.PeakTH']}" />: 
                 <h:outputText value="#{metric.maxMetric.valueFmt}"/>
              </td>
-             </tr>
-             </table>
-          </td>
+          </tr>
+          </table>
+       </td>
 
-          <td width="1">
-             <a href="javascript:moveMetricUp('#{metric.metricToken}')">
-                <img src="/images/dash_icon_up.gif" border="0"/>
-             </a>
-          </td>
-
-          <td width="1">
-             <a href="javascript:moveMetricDown('#{metric.metricToken}')">
-                <img src="/images/dash_icon_down.gif" border="0"/>
-             </a>
-          </td>
-          
-          <td width="1">
-             <a href="javascript:removeMetric('#{metric.metricToken}')">
-                <img src="/images/dash-icon_delete.gif" border="0"/>
-             </a>
-          </td>
-          
-        </tr>
-        <c:if test="#{not empty metric.metricSource}">
-        <tr>
-           <td colspan="7">
-              <img src="/images/hierarchy.gif" />
-              <font class="FooterSmall">
-                 <h:outputLink target="_top" value="/rhq/resource/monitor/graphs.xhtml">
-                    <f:param name="id" value="#{metric.metricSourceId}" />
-                    <h:outputFormat value="#{msg['common.value.parenthesis']}">
-                       <f:param value="#{metric.metricSource}" />
-                    </h:outputFormat>
-                 </h:outputLink>
-              </font>
-           </td>
-        </tr>
-        </c:if>
-      </table>
-    </td>
-  </tr>
-  </table>
+       <td width="1">
+          <table cellpadding="0" cellspacing="0" border="#{tableBorder}" width="100%" style="margin-right: 2px;">
+          <tr>
+             <td width="33%">
+                <a href="javascript:moveMetricUp('#{metric.metricToken}')">
+                  <img src="/images/dash_icon_up.gif" border="0"/>
+                </a>
+             </td>
+             <td width="33%">
+                <a href="javascript:moveMetricDown('#{metric.metricToken}')">
+                   <img src="/images/dash_icon_down.gif" border="0"/>
+                </a>
+             </td>
+             <td width="34%">
+                <a href="javascript:removeMetric('#{metric.metricToken}')">
+                   <img src="/images/dash-icon_delete.gif" border="0"/>
+                </a>
+             </td>
+          </tr>
+          </table>
+       </td>
+     </tr>
+     
+     <c:if test="#{not empty metric.metricSource}">
+     <tr>
+        <td colspan="3" valign="top">
+           <img src="/images/hierarchy.gif" />
+           <font class="FooterSmall">
+              <h:outputLink target="_top" value="/rhq/resource/monitor/graphs.xhtml">
+                 <f:param name="id" value="#{metric.metricSourceId}" />
+                 <h:outputFormat value="#{msg['common.value.parenthesis']}">
+                    <f:param value="#{metric.metricSource}" />
+                 </h:outputFormat>
+              </h:outputLink>
+           </font>
+        </td>
+     </tr>
+     </c:if>
+   </table>
   
-  <img src="/resource/HighLowChart?#{onf:contextFragmentURL()}&amp;imageWidth=647&amp;imageHeight=100&amp;schedId=#{metric.scheduleId}&amp;definitionId=#{metric.definitionId}&amp;now=#{IndicatorViewsForm.timeToken}&amp;measurementUnits=#{metric.units}"
-       width="647" height="100" />
+   <h:graphicImage src="/resource/HighLowChart?#{onf:contextFragmentURL()}&amp;imageWidth=647&amp;imageHeight=100&amp;schedId=#{metric.scheduleId}&amp;definitionId=#{metric.definitionId}&amp;now=#{IndicatorViewsForm.timeToken}&amp;measurementUnits=#{metric.units}" />
 
-  </li>
+   </li>
+
 </c:forEach>
 
 </ul>

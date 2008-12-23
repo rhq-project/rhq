@@ -20,6 +20,8 @@ package org.rhq.enterprise.server.alert.engine.jms;
 
 import javax.annotation.Resource;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
@@ -51,6 +53,7 @@ public class CachedConditionProducerBean implements CachedConditionProducerLocal
     @Resource(mappedName = "queue/AlertConditionQueue")
     private Queue alertConditionQueue;
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public <T extends AbstractCacheElement<S>, S> void sendActivateAlertConditionMessage(int alertConditionId,
         long timestamp, S value, Object... extraParams) throws JMSException {
         Connection connection = factory.createConnection();
@@ -71,6 +74,7 @@ public class CachedConditionProducerBean implements CachedConditionProducerLocal
         connection.close();
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void sendDeactivateAlertConditionMessage(int alertConditionId, long timestamp) throws JMSException {
         Connection connection = factory.createConnection();
         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);

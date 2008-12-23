@@ -52,6 +52,7 @@ import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.common.EntityContext;
+import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -241,5 +242,21 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         if (numChars > str.length())
             return str;
         return str.substring(0, numChars) + "...";
+    }
+
+    private final static String AMP = "&amp;";
+
+    public static String getChartURLParams(MetricDisplaySummary summary) {
+        StringBuilder buffer = new StringBuilder();
+
+        buffer.append(contextFragmentURL()).append(AMP);
+        buffer.append("imageWidth=647").append(AMP);
+        buffer.append("imageHeight=100").append(AMP);
+        buffer.append("schedId=").append(summary.getScheduleId()).append(AMP);
+        buffer.append("definitionId=").append(summary.getDefinitionId()).append(AMP);
+        buffer.append("measurementUnits=").append(summary.getUnits()).append(AMP);
+        buffer.append("now=").append(System.currentTimeMillis());
+
+        return buffer.toString();
     }
 }

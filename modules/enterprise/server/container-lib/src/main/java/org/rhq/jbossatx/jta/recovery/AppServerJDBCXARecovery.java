@@ -214,7 +214,7 @@ public class AppServerJDBCXARecovery implements XAResourceRecovery {
             } catch (NoSuchMethodException nsme) {
                 isConnectionValid = Boolean.FALSE;
                 _supportsIsValidMethod = false;
-                log.info("XA datasource does not support isValid method - connection will always be recreated");
+                log.debug("XA datasource does not support isValid method - connection will always be recreated");
             } catch (Throwable t) {
                 isConnectionValid = Boolean.FALSE;
                 log.debug("XA connection is invalid - will recreate a new one. Cause: " + t);

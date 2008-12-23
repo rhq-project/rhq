@@ -252,11 +252,17 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         buffer.append(contextFragmentURL()).append(AMP);
         buffer.append("imageWidth=647").append(AMP);
         buffer.append("imageHeight=100").append(AMP);
-        buffer.append("schedId=").append(summary.getScheduleId()).append(AMP);
-        buffer.append("definitionId=").append(summary.getDefinitionId()).append(AMP);
-        buffer.append("measurementUnits=").append(summary.getUnits()).append(AMP);
+        buffer.append("schedId=").append(formatNullURLParams(summary.getScheduleId())).append(AMP);
+        buffer.append("definitionId=").append(formatNullURLParams(summary.getDefinitionId())).append(AMP);
+        buffer.append("measurementUnits=").append(formatNullURLParams(summary.getUnits())).append(AMP);
         buffer.append("now=").append(System.currentTimeMillis());
 
         return buffer.toString();
+    }
+
+    // either the object itself or its corresponding string representation can be null - handle both
+    private static String formatNullURLParams(Object value) {
+        String valueStr = (value == null ? null : value.toString());
+        return (valueStr == null ? "" : valueStr);
     }
 }

@@ -66,12 +66,13 @@
 <c:forEach var="metric" varStatus="status" items="#{IndicatorChartsUIBean.data}">
 
   <li id="#{metric.metricToken}">
-  <table width="100%" border="0" cellpadding="2" bgcolor="#DBE3F5">
+  <table width="100%" border="0" cellpadding="2">
   <tr>
     <td>
       <table width="100%" border="0" cellpadding="0" cellspacing="1" style="margin-top: 1px; margin-bottom: 1px;">
         <tr>
           <td>
+          <rich:panel styleClass="BlockContentNoPadding" style="border: 0;">
           <font class="BoldText">
           <h:outputLink target="_top" value="/resource/common/monitor/Visibility.do">
              <f:param name="m" value="#{metric.definitionId}"/>
@@ -90,9 +91,14 @@
                    <f:param name="id" value="#{context.resourceId}"/>
                 </c:otherwise>
              </c:choose>
-             <h:outputText value="#{metric.label}" />
+             <h:outputText value="#{metric.label} " />
           </h:outputLink>
           </font>
+             <rich:toolTip followMouse="true" showDelay="500">
+                <h:outputText value="#{metric.description}" rendered="#{not empty metric.description}" />
+                <h:outputText value="No description of this metric available" rendered="#{empty metric.description}" />
+             </rich:toolTip>
+          </rich:panel>
           </td>
 
           <td width="400">
@@ -128,13 +134,14 @@
              </a>
           </td>
           
-          <td width="1" valign="top">
+          <td width="1">
              <a href="javascript:removeMetric('#{metric.metricToken}')">
                 <img src="/images/dash-icon_delete.gif" border="0"/>
              </a>
           </td>
           
         </tr>
+        <c:if test="#{not empty metric.metricSource}">
         <tr>
            <td colspan="7">
               <img src="/images/hierarchy.gif" />
@@ -148,12 +155,7 @@
               </font>
            </td>
         </tr>
-        <tr>
-           <td colspan="7">
-              <h:outputText value="&nbsp;&nbsp;&nbsp;" />
-              <h:outputText value="#{metric.description}" />
-           </td>
-        </tr>
+        </c:if>
       </table>
     </td>
   </tr>

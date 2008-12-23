@@ -15,30 +15,30 @@
 
 <ui:composition>
 
-<table border="1" cellpadding="0" cellspacing="0" width="100%">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
 
 <!-- chart actions -->
-<tr class="ListHeaderLight">
+<tr class="BlockContent">
     <td align="right">
         <ui:include src="measurement/views.xhtml"/>
     </td>
 </tr>
 
-<tr class="ListHeaderLight">
+<tr class="BlockContent">
     <td>
         <ui:include src="availability/data.xhtml"/>
     </td>
 </tr>
 
-<tr class="ListHeaderLight">
+<tr class="BlockContent">
     <td>
-        <div id="indicatorDiv" style="width: 100%; height: 400px; border: 1; overflow: scroll;">
+        <div id="indicatorDiv" style="width: 100%; height: 400px; border: 1; overflow-x: hidden; overflow-y: scroll;">
            <ui:include src="measurement/data.xhtml"/>
         </div>
     </td>
 </tr>
 
-<tr class="ListHeaderLight">
+<tr class="BlockContent">
     <td width="550px">
         <div id="eventsDiv">
             <ui:include src="events/data.xhtml"/>
@@ -46,7 +46,7 @@
     </td>
 </tr>
 
-<tr class="ListHeaderLight">
+<tr class="BlockContent">
     <td>
         <div id="footerDiv"></div>
     </td>

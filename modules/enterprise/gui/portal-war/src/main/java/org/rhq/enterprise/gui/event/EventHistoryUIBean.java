@@ -178,6 +178,18 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
     @Override
     public DataModel getDataModel() {
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+
+        if (metric.getUnit() != null) {
+            MetricComponent metric = getMetric();
+            metric.setValue(Integer.parseInt(FacesContextUtility.getOptionalRequestParameter("metricComponentValue")));
+            metric.setUnit(FacesContextUtility.getOptionalRequestParameter("metricComponentUnit"));
+            Long millis = metric.getMillis();
+            rangePreferences.begin -= millis;
+        }
+
         if (dataModel == null) {
             dataModel = new ListEventsHistoryDataModel(PageControlView.EventsHistoryList, MANAGED_BEAN_NAME);
         }

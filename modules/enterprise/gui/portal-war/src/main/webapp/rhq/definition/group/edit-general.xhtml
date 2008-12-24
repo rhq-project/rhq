@@ -48,6 +48,20 @@
             <f:facet name="header" styleClass="BlockTitle">
                Group Definition Conditions
             </f:facet>
+            
+            <h:outputText value="Build / overwrite from template: " />
+            <h:selectOneMenu id="expressionList" onchange="updateTextAreaWithSelection();" >
+               <f:selectItem itemLabel="Select" itemValue=""  />
+               <f:selectItem itemLabel="" itemValue="" itemDisabled="true" />
+               
+               <f:selectItem value="#{GroupDefinitionLibraryUIBean.groupedItemLabel}" />
+               <f:selectItems value="#{GroupDefinitionLibraryUIBean.groupedItems}" />
+               
+               <f:selectItem itemLabel="" itemValue="" itemDisabled="true" />
+               <f:selectItem value="#{GroupDefinitionLibraryUIBean.simpleItemLabel}" />
+               <f:selectItems value="#{GroupDefinitionLibraryUIBean.simpleItems}" />
+            </h:selectOneMenu>
+            <br />
 
             <h:inputTextarea id="textArea"
                              rows="5" cols="75"
@@ -93,6 +107,17 @@
           </h:panelGroup>
 
       </h:form>
+
+   <script type="text/javascript">
+       // replace all occurrences of ';' character with the newline character for display in the text area
+       function updateTextAreaWithSelection() {
+           var expressionListElement = getElementCrossBrowser("groupDefinitionEditForm:expressionList");
+           var textAreaElement = getElementCrossBrowser("groupDefinitionEditForm:textArea");
+           
+           var selectedOption = expressionListElement.options[expressionListElement.selectedIndex];
+           textAreaElement.value = selectedOption.value.replace(/;/g, "\n"); 
+       }
+   </script>
 
    </ui:define>
 

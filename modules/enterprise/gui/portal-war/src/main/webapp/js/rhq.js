@@ -506,13 +506,13 @@ function addWindowOnResizeEvent(newMethod) {
 }
 
 function getElementCrossBrowser(elementId) {
-   var e;
+   var elementResult;
    if(document.getElementById) {
-      e = document.getElementById(elementId);
+	   elementResult = document.getElementById(elementId);
    } else if (document.all) {
-      e = document.all[elementId];
+	   elementResult = document.all[elementId];
    }
-   return e;
+   return elementResult;
 }
 
 function getElementLeftPos(e) {

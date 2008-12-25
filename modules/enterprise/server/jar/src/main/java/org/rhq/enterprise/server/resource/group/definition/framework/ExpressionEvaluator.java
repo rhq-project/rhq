@@ -28,6 +28,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.persistence.Query;
 
@@ -759,6 +761,19 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
      * they were added to the predicate list groupByElements
      */
     private class MultipleQueryIterator implements Iterator<ExpressionEvaluator.Result> {
+        /*
+         * support multi-layer capture groups for flexibility, today they resolve to:
+         *     group(0) = "token operator :argX" // where operator is '=' or 'LIKE'
+         *     group(1) = "operator :argX"
+         *     group(2) = "operator"
+         *     group(3) = ":argX"
+         */
+        private final static String nullHandlerPattern = "" + // the 'token' will go in front 
+            "\\s+" + // followed by some whitespace
+            "((\\=|LIKE)" + // and either an '=' or the word 'like'
+            "\\s+" + // followed by more whitespace
+            "(:arg[0-9]*))"; // ending in ':argX' where X is some integer
+
         @SuppressWarnings("unchecked")
         List uniqueTuples;
         int index;
@@ -778,22 +793,13 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             int i = 0;
             Object nextResult = uniqueTuples.get(index++);
 
-            if (nextResult == null) {
-                return null;
-            }
-
             Object[] groupByExpression;
-            if (nextResult.getClass().isArray()) {
+            if (nextResult == null) {
+                groupByExpression = new Object[] { null };
+            } else if (nextResult.getClass().isArray()) {
                 groupByExpression = (Object[]) nextResult;
             } else {
                 groupByExpression = new Object[] { nextResult };
-            }
-
-            // RHQ-1115 - filter out results with NULL elements
-            for (Object next : groupByExpression) {
-                if (next == null) {
-                    return null;
-                }
             }
 
             /*
@@ -803,9 +809,38 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
              */
             for (String groupedElement : groupByElements) {
                 String bindArgumentName = whereConditions.get(groupedElement);
-                whereReplacements.put(bindArgumentName, groupByExpression[i++]);
-                whereReplacementTypes.put(bindArgumentName, String.class);
+                Object groupByExpressionElement = groupByExpression[i++];
+                if (groupByExpressionElement == null) {
+                    whereReplacements.remove(bindArgumentName);
+                    String patternWtihArgument = "\\Q" + groupedElement + "\\E" + nullHandlerPattern;
+                    Pattern nullHandler = Pattern.compile(patternWtihArgument);
+                    Matcher nullMatcher = nullHandler.matcher(computedJPQLGroupStatement);
+                    if (nullMatcher.find() == false) {
+                        log.warn("Did not match for pivoted NULL result");
+                        log.warn("Handler pattern was: " + patternWtihArgument);
+                        log.warn("Computed statement was: " + computedJPQLGroupStatement);
+                        return null; // default to classic, non-null-supported handling 
+                    }
+                    log.info("Dynamic replacement made for pivoted NULL result on subexpression bind argument '"
+                        + bindArgumentName + "'");
+                    log.info("Orginal query: " + computedJPQLGroupStatement);
+                    computedJPQLGroupStatement = nullMatcher.replaceFirst(groupedElement + " IS NULL ");
+                    log.info("Updated query: " + computedJPQLGroupStatement);
+                } else {
+                    whereReplacements.put(bindArgumentName, groupByExpression[i++]);
+                    whereReplacementTypes.put(bindArgumentName, String.class);
+                }
             }
+
+            /*
+                Object bindValue = whereReplacements.get(whereCondition.getValue());
+                if (bindValue == Literal.NOTNULL) {
+                    result += whereCondition.getKey() + " IS NOT NULL ";
+                    whereReplacements.remove(whereCondition.getValue()); // no longer needed, literal rendered here
+                } else if (bindValue == Literal.NULL) {
+                    result += whereCondition.getKey() + " IS NULL ";
+                    whereReplacements.remove(whereCondition.getValue()); // no longer needed, literal rendered here
+             */
 
             log.debug("MultipleQueryIterator: '" + computedJPQLGroupStatement + "'");
             List<Integer> results = getSingleResultList(computedJPQLGroupStatement);
@@ -1068,7 +1103,12 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                     builder.append(delimiter);
                 }
 
-                builder.append(tokens[j].toString());
+                Object token = tokens[j];
+                if (token == null) {
+                    builder.append("empty");
+                } else {
+                    builder.append(token.toString());
+                }
             }
 
             return builder.toString();

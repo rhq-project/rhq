@@ -24,6 +24,9 @@ public class GroupDefinitionLibraryUIBean {
             add(list, "Clustered enterprise application archive (EAR)", "groupby resource.parent.trait[partitionName]",
                 "groupby resource.name", "resource.type.plugin = JBossAS",
                 "resource.type.name = Enterprise Application (EAR)");
+            add(list, "Unique BossAS versions in inventory",
+                "groupby resource.trait[jboss.system:type=Server:VersionName]", "resource.type.plugin = JBossAS",
+                "resource.type.name = JBossAS Server");
             add(list, "Platform resource in inventory", "resource.type.category = PLATFORM", "groupby resource.name");
             add(list, "Unique resource type in inventory", "groupby resource.type.plugin", "groupby resource.type.name");
             groupedItems = list.toArray(new SelectItem[list.size()]);

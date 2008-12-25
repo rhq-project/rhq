@@ -837,11 +837,11 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                         log.warn("Computed statement was: " + computedJPQLGroupStatement);
                         return null; // default to classic, non-null-supported handling 
                     }
-                    log.info("Dynamic replacement made for pivoted NULL result on subexpression bind argument '"
+                    log.debug("Dynamic replacement made for pivoted NULL result on subexpression bind argument '"
                         + bindArgumentName + "'");
-                    log.info("Orginal query: " + computedJPQLGroupStatement);
+                    log.debug("Orginal query: " + computedJPQLGroupStatement);
                     computedJPQLGroupStatement = nullMatcher.replaceFirst(groupedElement + " IS NULL ");
-                    log.info("Updated query: " + computedJPQLGroupStatement);
+                    log.debug("Updated query: " + computedJPQLGroupStatement);
                 } else {
                     whereReplacements.put(bindArgumentName, groupByExpressionElement);
                     whereReplacementTypes.put(bindArgumentName, String.class);

@@ -282,13 +282,29 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
          * makes the rest of the parsing a bit simpler because some ParseContexts need the value immediately in order to
          * properly build up internal maps / constructs to be used in generating the requisite JPQL statement
          * 
-         * 
+         * however, since '=' can occur in the names of configuration properties and trait names, we need
+         * to process from the end of the word skipping over all characters that are inside brackets
          */
-        int equalsIndex = expression.lastIndexOf('=');
+        int equalsIndex = -1;
+        boolean insideBrackets = false;
+        for (int i = expression.length() - 1; i >= 0; i--) {
+            char next = expression.charAt(i);
+            if (insideBrackets) {
+                if (next == '[') {
+                    insideBrackets = false;
+                }
+            } else {
+                if (next == ']') {
+                    insideBrackets = true;
+                } else if (next == '=') {
+                    equalsIndex = i;
+                    break;
+                }
+            }
+        }
+
         if (equalsIndex == -1) {
             condition = expression;
-
-            //isReference
         } else {
             condition = expression.substring(0, equalsIndex);
             value = expression.substring(equalsIndex + 1).trim();
@@ -827,7 +843,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                     computedJPQLGroupStatement = nullMatcher.replaceFirst(groupedElement + " IS NULL ");
                     log.info("Updated query: " + computedJPQLGroupStatement);
                 } else {
-                    whereReplacements.put(bindArgumentName, groupByExpression[i++]);
+                    whereReplacements.put(bindArgumentName, groupByExpressionElement);
                     whereReplacementTypes.put(bindArgumentName, String.class);
                 }
             }

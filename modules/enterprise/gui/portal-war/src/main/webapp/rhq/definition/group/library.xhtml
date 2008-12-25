@@ -4,6 +4,7 @@
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:onf="http://jboss.org/on/function"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
       
@@ -83,29 +84,38 @@
            <h:selectOneMenu id="resourceType" name="resourceType" 
                             disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.typeSelectionDisabled}"
                             onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
-                            value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedResourceType}">
-              <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.resourceTypes}"/>
+                            value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedResourceType}"
+                            rendered="#{onf:length(GroupDefinitionExpressionBuilderLibraryUIBean.resourceTypes) != 0}">
+              <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.resourceTypes}" />
                <rich:toolTip showDelay="1000">
                     <span style="white-space:nowrap">
                         The type of resource
                     </span>
                 </rich:toolTip>
             </h:selectOneMenu>
+            <h:outputText value="None defined for selected plugin"
+                          rendered="#{onf:length(GroupDefinitionExpressionBuilderLibraryUIBean.resourceTypes) == 0}" />
            
            <h:outputText value="Property Names: " />
            <h:selectOneMenu id="property" name="property"
                             onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
                             disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType == 'Resource Type'}"
-                            value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedProperty}">
-              <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.properties}"/>
+                            value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedProperty}"
+                            rendered="#{onf:length(GroupDefinitionExpressionBuilderLibraryUIBean.properties) != 0}">
+              <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.properties}" />
                <rich:toolTip showDelay="1000">
                     <span style="white-space:nowrap">
                         The name of the property to query. This is defined by the type of expression<br/>
                         as well as the resource Type.
                     </span>
                 </rich:toolTip>
-
            </h:selectOneMenu>
+           <h:outputText value="No type selected"
+                         rendered="#{onf:length(GroupDefinitionExpressionBuilderLibraryUIBean.resourceTypes) == 0 and 
+                                     onf:length(GroupDefinitionExpressionBuilderLibraryUIBean.properties) == 0}" />
+           <h:outputText value="None defined for selected type"
+                         rendered="#{onf:length(GroupDefinitionExpressionBuilderLibraryUIBean.resourceTypes) != 0 and
+                                     onf:length(GroupDefinitionExpressionBuilderLibraryUIBean.properties) == 0}" />
 
 
             <h:outputText value="Comparison Type: "/>

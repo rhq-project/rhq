@@ -185,6 +185,13 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         return collection.size();
     }
 
+    public static <T> int length(T[] collection) {
+        if (collection == null) {
+            return 0;
+        }
+        return collection.length;
+    }
+
     public static WebUserPreferences getWebUserPreferences() {
         return new WebUserPreferences(EnterpriseFacesContextUtility.getSubject());
     }

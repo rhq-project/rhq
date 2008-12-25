@@ -1358,10 +1358,17 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             return new ArrayList<ResourceIdFlyWeight>();
         }
 
-        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS);
-        query.setParameter("resourceIds", Arrays.asList(resourceIds));
+        List<ResourceIdFlyWeight> results = new ArrayList<ResourceIdFlyWeight>();
 
-        List<ResourceIdFlyWeight> results = query.getResultList();
+        Arrays.sort(resourceIds); // likely that ids in close proximity are co-located physically (data block-wise)
+        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS);
+        for (int i = 0; i < resourceIds.length; i += 1000) {
+            Integer[] batchRange = Arrays.copyOfRange(resourceIds, i, i + 1000);
+            query.setParameter("resourceIds", Arrays.asList(batchRange));
+            List<ResourceIdFlyWeight> batchResults = query.getResultList();
+            results.addAll(batchResults);
+        }
+
         return results;
     }
 

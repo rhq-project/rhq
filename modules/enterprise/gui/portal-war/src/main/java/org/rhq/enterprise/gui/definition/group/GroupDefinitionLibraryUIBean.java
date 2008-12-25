@@ -19,7 +19,7 @@ public class GroupDefinitionLibraryUIBean {
     public SelectItem[] getGroupedItems() {
         if (groupedItems == null) {
             List<SelectItem> list = new ArrayList<SelectItem>();
-            add(list, "JBossAS clusters in the system", "resource.trait[partitionName]",
+            add(list, "JBossAS clusters in the system", "groupby resource.trait[partitionName]",
                 "resource.type.plugin = JBossAS", "resource.type.name = JBossAS Server");
             add(list, "Clustered enterprise application archive (EAR)", "groupby resource.parent.trait[partitionName]",
                 "groupby resource.name", "resource.type.plugin = JBossAS",

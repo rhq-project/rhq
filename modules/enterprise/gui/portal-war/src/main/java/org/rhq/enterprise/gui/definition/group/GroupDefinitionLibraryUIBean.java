@@ -42,6 +42,8 @@ public class GroupDefinitionLibraryUIBean {
             List<SelectItem> list = new ArrayList<SelectItem>();
             add(list, "All JBossAS hosting any version of 'my' app", "resource.type.plugin = JBossAS",
                 "resource.type.name = JBossAS Server", "resource.child.name.contains = my");
+            add(list, "All Non-secured JBossAS servers", "empty resource.pluginConfiguration[principal]",
+                "resource.type.plugin = JBossAS", "resource.type.name = JBossAS Server");
             add(list, "All resources currently down", "resource.availability = DOWN");
             simpleItems = list.toArray(new SelectItem[list.size()]);
         }

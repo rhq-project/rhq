@@ -118,7 +118,33 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         " AND trait.value = :arg3 " + //
         " AND trait.schedule = sched " + //
         " AND trait.id.timestamp = " + //
-        "     (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)" } };
+        "     (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)" },
+
+    { " ;" + // test empty first line, which should be allowed
+        "resource.name.contains = joseph; " + //
+        " ;" + // test empty intermediate line, which should be allowed
+        "resource.parent.name.contains = joseph; " + //
+        " ;", // test empty last line, which should be allowed,
+
+        "SELECT res.id FROM Resource res " + //
+            "WHERE res.name LIKE :arg1 " + //
+            "  AND res.parentResource.name LIKE :arg2 " },
+
+    { "EMPTY resource.name",
+
+    "SELECT res.id FROM Resource res " + //
+        "WHERE res.name IS NULL" },
+
+    { "empty resource.pluginConfiguration[partition]",
+
+    "SELECT res.id FROM Resource res " + //
+        "  JOIN res.pluginConfiguration pluginConf, PropertySimple simple, PropertyDefinition simpleDef  " + //
+        "  JOIN res.resourceType.pluginConfigurationDefinition pluginConfDef " + // 
+        " WHERE simple.name = :arg1 " + //
+        "   AND simple.stringValue IS NULL " + //
+        "   AND simple.configuration = pluginConf " + //
+        "   AND simpleDef.configurationDefinition = pluginConfDef " + //
+        "   AND simple.name = simpleDef.name AND simpleDef.type != 'PASSWORD' " }, };
 
     @Test(groups = "integration.session")
     public void testWellFormedExpressions() throws Exception {
@@ -141,7 +167,13 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
                 ExpressionEvaluator evaluator = new ExpressionEvaluator();
                 evaluator.setTestMode(true); // to prevent actual query from happening
                 for (String expression : inputExpressions.split(";")) {
-                    evaluator.addExpression(expression.trim());
+                    try {
+                        evaluator.addExpression(expression); // do not trim, evaluator must handle sloppy expressions
+                    } catch (Exception e) {
+                        e.printStackTrace(System.out);
+                        assert false : "Error in TestCase[" + i + "], could not add expression[" + expression
+                            + "], input[" + inputExpressions + "]";
+                    }
                 }
 
                 evaluator.execute(); // execute will compute the JPQL statements
@@ -154,8 +186,8 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
                 expectedGroupResult = cleanUp(expectedGroupResult);
                 actualGroupResult = cleanUp(actualGroupResult);
 
-                System.out.println("Expected[" + i + "]: \"" + expectedTopResult + "\"");
-                System.out.println("Received[" + i + "]: \"" + actualTopResult + "\"");
+                //System.out.println("Expected[" + i + "]: \"" + expectedTopResult + "\"");
+                //System.out.println("Received[" + i + "]: \"" + actualTopResult + "\"");
                 assert expectedTopResult.equalsIgnoreCase(actualTopResult)
                     && expectedGroupResult.equalsIgnoreCase(actualGroupResult) : "TestCase[" + i + "] = \""
                     + inputExpressions + "\" failed. \n" + "Expected Top Result: \"" + expectedTopResult + "\"\n"

@@ -43,7 +43,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
     private final Log log = LogFactory.getLog(ExpressionEvaluator.class);
 
-    private static final String INVALID_EXPRESSION_FORM_MSG = "Expression must be in the form of 'condition = value' or 'groupBy condition'";
+    private static final String INVALID_EXPRESSION_FORM_MSG = "Expression must be in one of the follow forms: " + //
+        "'groupBy condition', 'condition = value', 'empty condition', 'not empty condition";
 
     private static final String PROP_SIMPLE_ALIAS = "simple";
     private static final String PROP_SIMPLE_DEF_ALIAS = "simpleDef";
@@ -169,7 +170,6 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         }
 
         try {
-            isGroupBy = false; // this needs to be reset each time a new expression is added
             parseExpression(expression);
             expressionCount++;
         } catch (InvalidExpressionException iee) {
@@ -208,7 +208,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
     private enum ParseContext {
         BEGIN(false), //
-        Pivot(false), //
+        Modifier(false), // includes 'empty', 'not', and 'pivot'
         Resource(false), //
         ResourceParent(false), //
         ResourceGrandParent(false), //
@@ -216,7 +216,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         ResourceType(false), //
         Availability(true), //
         Trait(true), //
-        Configuration(true), //
+        Configuration(true), // includes 'pluginConfiguration' and 'resourceConfiguration'
         StringMatch(true), //
         END(true);
 
@@ -232,13 +232,30 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     }
 
     private enum ParseSubContext {
-        PluginConfiguration, ResourceConfiguration;
+        Negated, // only relevant for Modifier context
+        NotEmpty, // only relevant for Modifier context
+        Empty, // only relevant for Modifier context
+        Pivot, // only relevant for Modifier context
+        PluginConfiguration, // only relevant for Configuration context
+        ResourceConfiguration; // only relevant for Configuration context
+    }
+
+    private enum ComparisonType {
+        NONE, // expression in the form of 'groupBy condition'
+        EQUALS, // expression in the form of 'condition = value'
+        EMPTY, // expression in the form of 'empty value'
+        NOT_EMPTY; // expression in the form of 'not empty value'
+    }
+
+    private enum Literal {
+        NULL, NOTNULL;
     }
 
     private ParseContext context = ParseContext.BEGIN;
     private ParseSubContext subcontext = null;
     private int parseIndex = 0;
     private boolean isGroupBy = false;
+    private ComparisonType comparisonType = null;
     private Class<?> expressionType;
 
     private ParseContext deepestResourceContext = null;
@@ -261,11 +278,15 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         /*
          * instead of building '= value' parsing into the below algorithm, let's chop this off early and store it; this
          * makes the rest of the parsing a bit simpler because some ParseContexts need the value immediately in order to
-         * properly build up internal maps constructs to be used in generating the requisite JPQL statement
+         * properly build up internal maps / constructs to be used in generating the requisite JPQL statement
+         * 
+         * 
          */
         int equalsIndex = expression.lastIndexOf('=');
         if (equalsIndex == -1) {
             condition = expression;
+
+            //isReference
         } else {
             condition = expression.substring(0, equalsIndex);
             value = expression.substring(equalsIndex + 1).trim();
@@ -293,7 +314,12 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
          */
         StringBuilder normalizedSubExpressionBuilder = new StringBuilder();
         for (String subExpressionToken : tokens) {
+            // do not add modifiers to the normalized expression
             if (subExpressionToken.equals("groupby")) {
+                continue;
+            } else if (subExpressionToken.equals("not")) {
+                continue;
+            } else if (subExpressionToken.equals("empty")) {
                 continue;
             }
             normalizedSubExpressionBuilder.append(subExpressionToken);
@@ -312,6 +338,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         context = ParseContext.BEGIN;
         subcontext = null;
         parseIndex = 0;
+        isGroupBy = false; // this needs to be reset each time a new expression is added
+        comparisonType = ComparisonType.EQUALS; // assume equals, unless "(not) empty" found during the parse
 
         deepestResourceContext = null;
         expressionType = String.class;
@@ -321,33 +349,73 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
             if (context == ParseContext.BEGIN) {
                 if (nextToken.equals("resource")) {
-                    if (value == null) {
-                        // filter expressions must have "= <value>" part
-                        throw new InvalidExpressionException(INVALID_EXPRESSION_FORM_MSG);
-                    }
-                    validateSubExpressionAgainstPreviouslySeen(normalizedSubExpression, false);
                     context = ParseContext.Resource;
                     deepestResourceContext = context;
                 } else if (nextToken.equals("groupby")) {
-                    if (value != null) {
-                        // grouped expressions must NOT have "= <value>" part
-                        throw new InvalidExpressionException(INVALID_EXPRESSION_FORM_MSG);
-                    }
-                    validateSubExpressionAgainstPreviouslySeen(normalizedSubExpression, true);
-                    isGroupBy = true;
-                    context = ParseContext.Pivot;
+                    context = ParseContext.Modifier;
+                    subcontext = ParseSubContext.Pivot;
+                } else if (nextToken.equals("not")) {
+                    context = ParseContext.Modifier;
+                    subcontext = ParseSubContext.Negated;
+                    // 'not' must be followed by 'empty' today, but we won't know until next parse iteration
+                    // furthermore, we may support other forms of negated expressions in the future
+                } else if (nextToken.equals("empty")) {
+                    context = ParseContext.Modifier;
+                    subcontext = ParseSubContext.Empty;
                 } else {
                     throw new InvalidExpressionException(
                         "Expression must either start with 'resource' or 'groupby' token");
                 }
-            } else if (context == ParseContext.Pivot) {
-                if (nextToken.equals("resource")) {
-                    context = ParseContext.Resource;
-                    deepestResourceContext = context;
+            } else if (context == ParseContext.Modifier) {
+                if (subcontext == ParseSubContext.Negated) {
+                    if (nextToken.equals("empty")) {
+                        subcontext = ParseSubContext.NotEmpty;
+                    } else {
+                        throw new InvalidExpressionException(
+                            "Expression starting with 'not' must be followed by the 'empty' token");
+                    }
                 } else {
-                    throw new InvalidExpressionException("Grouped expressions must be followed by the 'resource' token");
+                    // first check for valid forms given the subcontext
+                    if (subcontext == ParseSubContext.Pivot || subcontext == ParseSubContext.Empty
+                        || subcontext == ParseSubContext.NotEmpty) {
+                        if (value != null) {
+                            // these specific types of 'modified' expressions must NOT HAVE "= <value>" part
+                            throw new InvalidExpressionException(INVALID_EXPRESSION_FORM_MSG);
+                        }
+                    }
+
+                    // then perform individual processing based on current subcontext
+                    if (subcontext == ParseSubContext.Pivot) {
+                        // validates the uniqueness of the subexpression after checking for INVALID_EXPRESSION_FORM_MSG
+                        validateSubExpressionAgainstPreviouslySeen(normalizedSubExpression, true);
+                        isGroupBy = true;
+                        comparisonType = ComparisonType.NONE;
+                    } else if (subcontext == ParseSubContext.NotEmpty) {
+                        comparisonType = ComparisonType.NOT_EMPTY;
+                    } else if (subcontext == ParseSubContext.Empty) {
+                        comparisonType = ComparisonType.EMPTY;
+                    } else {
+                        throw new InvalidExpressionException("Unknown or unsupported ParseSubContext[" + subcontext
+                            + "] for ParseContext[" + context + "]");
+                    }
+
+                    if (nextToken.equals("resource")) {
+                        context = ParseContext.Resource;
+                        deepestResourceContext = context;
+                    } else {
+                        throw new InvalidExpressionException(
+                            "Grouped expressions must be followed by the 'resource' token");
+                    }
                 }
             } else if (context == ParseContext.Resource) {
+                if (comparisonType == ComparisonType.EQUALS) {
+                    if (value == null) {
+                        // EQUALS filter expressions must HAVE "= <value>" part
+                        throw new InvalidExpressionException(INVALID_EXPRESSION_FORM_MSG);
+                    }
+                    validateSubExpressionAgainstPreviouslySeen(normalizedSubExpression, false);
+                }
+
                 if (nextToken.equals("parent")) {
                     context = ParseContext.ResourceParent;
                     deepestResourceContext = context;
@@ -567,15 +635,38 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
      * it will only add data to the predicate list groupByElements if necessary, as determined by the instance-level
      * isGroupBy field or the explicitly overriding groupBy 3rd argument
      */
-    private void populatePredicateCollections(String predicateName, Object value) {
+    private void populatePredicateCollections(String predicateName, Object value) throws InvalidExpressionException {
         populatePredicateCollections(predicateName, value, isGroupBy);
     }
 
-    private void populatePredicateCollections(String predicateName, Object value, boolean groupBy) {
+    private void populatePredicateCollections(String predicateName, Object value, boolean groupBy)
+        throws InvalidExpressionException {
         if (groupBy) {
             groupByElements.add(predicateName);
         } else {
             String argumentName = getNextArgumentName();
+
+            // change the value as necessary based on the comparison type
+            if (comparisonType == ComparisonType.EMPTY) {
+                /* 
+                 * a single parse context may populate several predicate collections, 
+                 * but we want to make sure we are only performing extra comparison  
+                 * computation on values representing the "empty" RHS of the expression 
+                 */
+                if (value == null) {
+                    value = Literal.NULL;
+                }
+            } else if (comparisonType == ComparisonType.NOT_EMPTY) {
+                // see comment for ComparisonType.EMPTY logic just above this block
+                if (value == null) {
+                    value = Literal.NOTNULL;
+                }
+            } else if (comparisonType == ComparisonType.EQUALS || comparisonType == ComparisonType.NONE) {
+                // pass through
+            } else {
+                throw new InvalidExpressionException("Unknown or unsupported ComparisonType[" + comparisonType
+                    + "] for predicate population");
+            }
 
             whereConditions.put(predicateName, argumentName);
             whereReplacements.put(argumentName, value);
@@ -832,23 +923,30 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                     result += " AND ";
                 }
 
-                String whereConditionOperator = " = ";
-
                 Object bindValue = whereReplacements.get(whereCondition.getValue());
-                if (bindValue != null) {
-                    /*
-                     * there will *not* necessarily be a replacement value ready at this point in the processing; these
-                     * get set earlier if this is a SingleQuery, but a MultipleQuery will set these later based on the
-                     * results of the pivoted query; so, only attempt processing here if necessary
-                     */
-                    String bindValueAsString = bindValue.toString();
-                    if ((bindValueAsString != null) // whereConditionValue is null when whereCondition isn't a groupBy expression
-                        && (bindValueAsString.startsWith("%") || bindValueAsString.endsWith("%"))) {
-                        whereConditionOperator = " like ";
+                if (bindValue == Literal.NOTNULL) {
+                    result += whereCondition.getKey() + " IS NOT NULL ";
+                    whereReplacements.remove(whereCondition.getValue()); // no longer needed, literal rendered here
+                } else if (bindValue == Literal.NULL) {
+                    result += whereCondition.getKey() + " IS NULL ";
+                    whereReplacements.remove(whereCondition.getValue()); // no longer needed, literal rendered here
+                } else {
+                    String whereConditionOperator = " = ";
+                    if (bindValue != null) {
+                        /*
+                         * there will *not* necessarily be a replacement value ready at this point in the processing; these
+                         * get set earlier if this is a SingleQuery, but a MultipleQuery will set these later based on the
+                         * results of the pivoted query; so, only attempt processing here if necessary
+                         */
+                        String bindValueAsString = bindValue.toString();
+                        if ((bindValueAsString != null) // whereConditionValue is null when whereCondition isn't a groupBy expression
+                            && (bindValueAsString.startsWith("%") || bindValueAsString.endsWith("%"))) {
+                            whereConditionOperator = " LIKE ";
+                        }
                     }
+                    result += whereCondition.getKey() + whereConditionOperator + ":" + whereCondition.getValue() + " ";
                 }
 
-                result += whereCondition.getKey() + whereConditionOperator + ":" + whereCondition.getValue() + " ";
                 first = false;
             }
         }
@@ -931,16 +1029,20 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         normalizedSubExpression = stripFunctionSuffix(normalizedSubExpression);
         if (grouped) {
             if (groupedSubExpressions.contains(normalizedSubExpression)) {
-                throw new InvalidExpressionException(
-                    "Redundant 'groupby' expressions - these expressions must be unique");
+                throw new InvalidExpressionException("Redundant 'groupby' expression[" + normalizedSubExpression
+                    + "] - these expressions must be unique");
             }
             if (simpleSubExpressions.contains(normalizedSubExpression)) {
-                throw new InvalidExpressionException("Can not group by the same condition you are filtering on");
+                throw new InvalidExpressionException(
+                    "Can not group by the same condition you are filtering on, expression[" + normalizedSubExpression
+                        + "]");
             }
             groupedSubExpressions.add(normalizedSubExpression);
         } else {
             if (groupedSubExpressions.contains(normalizedSubExpression)) {
-                throw new InvalidExpressionException("Can not group by the same condition you are filtering on");
+                throw new InvalidExpressionException(
+                    "Can not group by the same condition you are filtering on, expression[" + normalizedSubExpression
+                        + "]");
             }
             simpleSubExpressions.add(normalizedSubExpression);
         }

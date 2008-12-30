@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+
+
+<ui:composition>
+
+   <table border="1">
+      <tr>
+         <th>Name</th>
+         <th>Value</th>
+      </tr>
+      <ui:repeat var="property"
+                 value="#{properties}">
+         <ui:fragment rendered="#{property.class.simpleName eq 'PropertySimple'}">
+            <tr>
+               <td><h:outputText value="#{property.name}" /></td>
+               <td><h:outputText value="#{property.stringValue}" /></td>
+            </tr>
+         </ui:fragment>
+         <ui:fragment rendered="#{property.class.simpleName eq 'PropertyMap'}">
+            <h:outputText value="No support for map properties 2 levels deep" />
+         </ui:fragment>
+         <ui:fragment rendered="#{property.class.simpleName eq 'PropertyList'}">
+            <h:outputText value="No support for list properties 2 levels deep" />
+         </ui:fragment>
+      </ui:repeat>
+   </table>
+   
+</ui:composition>
+
+</html>

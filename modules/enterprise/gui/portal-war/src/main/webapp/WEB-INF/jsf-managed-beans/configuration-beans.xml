@@ -51,5 +51,12 @@
       <managed-bean-scope>application</managed-bean-scope>
    </managed-bean>
 
+   <!-- helper bean that's used by the config component -->
+   <managed-bean>
+      <managed-bean-name>ConfigTestUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.configuration.test.ConfigTestUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
 </faces-config>
       

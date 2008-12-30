@@ -21,7 +21,10 @@ package org.rhq.enterprise.gui.common.tag;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.sun.facelets.tag.AbstractTagLibrary;
@@ -271,5 +274,11 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     private static String formatNullURLParams(Object value) {
         String valueStr = (value == null ? null : value.toString());
         return (valueStr == null ? "" : valueStr);
+    }
+
+    public static <T> List<T> getListFromMap(Map<String, T> map) {
+        List<T> results = new ArrayList<T>();
+        results.addAll(map.values());
+        return results;
     }
 }

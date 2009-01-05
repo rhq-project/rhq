@@ -1106,7 +1106,14 @@ DB Upgrade:
       <schema-deleteColumn table="RHQ_MEASUREMENT_DEF" column="PER_MINUTE" />
       <schema-addColumn table="RHQ_MEASUREMENT_DEF" column="RAW_NUMERIC_TYPE" columnType="SMALLINT" />
       <schema-directSQL>
-         <statement desc="Creating unique constraint on RHQ_MEASUREMENT_DEF (RESOURCE_TYPE_ID, NAME, RAW_NUMERIC_TYPE)">
+         <statement desc="Populating values for new column RHQ_MEASUREMENT_DEF.RAW_NUMERIC_TYPE">
+            UPDATE RHQ_MEASUREMENT_DEF md SET RAW_NUMERIC_TYPE = (SELECT NUMERIC_TYPE FROM RHQ_MEASUREMENT_DEF
+            WHERE NAME = md.NAME AND RESOURCE_TYPE_ID = md.RESOURCE_TYPE_ID AND (NUMERIC_TYPE = 1 OR NUMERIC_TYPE = 2))
+            WHERE NUMERIC_TYPE = 0
+         </statement>
+      </schema-directSQL>
+      <schema-directSQL>
+         <statement desc="Creating unique index on RHQ_MEASUREMENT_DEF (RESOURCE_TYPE_ID, NAME, RAW_NUMERIC_TYPE)">
             CREATE UNIQUE INDEX RHQ_METRIC_DEF_KEY_IDX ON RHQ_MEASUREMENT_DEF (RESOURCE_TYPE_ID, NAME, RAW_NUMERIC_TYPE)
          </statement>
       </schema-directSQL>

@@ -18,93 +18,51 @@
  */
 package org.rhq.enterprise.gui.inventory.resource;
 
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementPreferences;
-import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.gui.util.FacesContextUtility;
-
 import java.util.List;
-import java.util.ArrayList;
 
-import javax.faces.context.FacesContext;
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.struts.util.MessageResources;
-import org.apache.struts.Globals;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.gui.inventory.MetricsTableUIBean;
+import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceMetricsTableUIBean {
+public class ResourceMetricsTableUIBean extends MetricsTableUIBean {
 
-    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-    private MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
-    private MeasurementChartsManagerLocal chartManager = LookupUtil.getMeasurementChartsManager();
-
-    private List<MetricDisplaySummary> metricSummaries;
     private List<MetricDisplaySummary> traitSummaries;
 
     public ResourceMetricsTableUIBean() {
 
+        super();
+
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Resource resource = EnterpriseFacesContextUtility.getResource();
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
-        MeasurementPreferences.MetricRangePreferences range = user.getMeasurementPreferences().getMetricRangePreferences();
+        MeasurementPreferences.MetricRangePreferences range = user.getMeasurementPreferences()
+            .getMetricRangePreferences();
 
+        List<MeasurementSchedule> traitSchedules = scheduleManager.getMeasurementSchedulesForResourceAndType(subject,
+            resource.getId(), DataType.TRAIT, null, true); //null -> don't filter, we want everything, false -> not only enabled
 
-        List<MeasurementSchedule> measurementSchedules =
-                scheduleManager.getMeasurementSchedulesForResourceAndType(subject,
-                        resource.getId(), DataType.MEASUREMENT, null, true); //null -> don't filter, we want everything, false -> not only enabled
+        // System.out.println("trait scheds: " + traitSchedules.size());
 
-        int[] scheduleIds = new int[measurementSchedules.size()];
-        int i = 0;
-        for (MeasurementSchedule sched : measurementSchedules) {
-            scheduleIds[i++] = sched.getId();
-        }
-
-
-        metricSummaries = chartManager.getMetricDisplaySummariesForResource(
-                subject, resource.getId(), scheduleIds,
-                range.begin, range.end);
-
-        for (MetricDisplaySummary sum : metricSummaries) {
-            MonitorUtils.formatSimpleMetrics(sum, FacesContext.getCurrentInstance().getExternalContext().getRequestLocale());
-        }
-
-
-
-        List<MeasurementSchedule> traitSchedules =
-                scheduleManager.getMeasurementSchedulesForResourceAndType(subject,
-                        resource.getId(), DataType.TRAIT, null, true); //null -> don't filter, we want everything, false -> not only enabled
-
-        System.out.println("trait scheds: " + traitSchedules.size());
         int[] traitScheduleIds = new int[traitSchedules.size()];
-        i = 0;
+        int i = 0;
         for (MeasurementSchedule sched : traitSchedules) {
             traitScheduleIds[i++] = sched.getId();
         }
 
         if (traitScheduleIds != null) {
-            traitSummaries = chartManager.getMetricDisplaySummariesForResource(
-                    subject, resource.getId(), traitScheduleIds,
-                    range.begin, range.end);
+            traitSummaries = chartManager.getMetricDisplaySummariesForResource(subject, resource.getId(),
+                traitScheduleIds, range.begin, range.end);
         }
 
-    }
-
-
-    public List<MetricDisplaySummary> getMetricSummaries() {
-        return metricSummaries;
     }
 
     public List<MetricDisplaySummary> getTraitSummaries() {

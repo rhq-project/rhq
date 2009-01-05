@@ -16,69 +16,12 @@
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
-    <ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Metric Tables"/>
-    <ui:param name="selectedTabName" value="Monitor+.Tables"/>
+<ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Metric Tables"/>
+<ui:param name="selectedTabName" value="Monitor+.Tables"/>
 
-    <ui:define name="content">
+<ui:define name="content">
 
-
-        <rich:panel styleClass="BlockContent">
-
-            <f:facet name="header" styleClass="BlockTitle">
-                <a name="Numeric Metrics"/>
-                Numeric Metrics
-            </f:facet>
-
-
-            <rich:dataTable value="#{ResourceMetricsTableUIBean.metricSummaries}" width="100%"
-                            var="metric">
-
-                <rich:column>
-                    <f:facet name="header">
-                        <onc:allSelect target="selectedChannelContentSources"/>
-                    </f:facet>
-
-                    <onc:select name="selectedChannelContentSources" value="#{metric.scheduleId}"/>
-                </rich:column>
-
-                <rich:column>
-                    <f:facet name="header">
-                        <h:outputText value="Name"/>
-                    </f:facet>
-                    <h:outputText value="#{metric.label}"/>
-                </rich:column>
-
-                <rich:column>
-                    <f:facet name="header">
-                        <h:outputText value="Alerts"/>
-                    </f:facet>
-                    <h:outputText value="#{metric.alertCount}"/>
-                </rich:column>
-                <rich:column>
-                    <f:facet name="header">
-                        <h:outputText value="Min"/>
-                    </f:facet>
-                    <h:outputText value="#{metric.minMetric.valueFmt}"/>
-                </rich:column>
-                <rich:column>
-                    <f:facet name="header">
-                        <h:outputText value="Max"/>
-                    </f:facet>
-                    <h:outputText value="#{metric.maxMetric.valueFmt}"/>
-                </rich:column>
-                <rich:column>
-                    <f:facet name="header">
-                        <h:outputText value="Average"/>
-                    </f:facet>
-                    <h:outputText value="#{metric.avgMetric.valueFmt}"/>
-                </rich:column>
-
-
-            </rich:dataTable>
-
-
-        </rich:panel>
-
+<ui:include src="/rhq/common/monitor/tables.xhtml"/>
 
         <rich:panel styleClass="BlockContent">
 
@@ -91,7 +34,6 @@
             <rich:dataTable value="#{ResourceMetricsTableUIBean.traitSummaries}" width="100%"
                             var="metric">
 
-
                 <rich:column>
                     <f:facet name="header">
                         <h:outputText value="Name"/>
@@ -105,12 +47,14 @@
                     </f:facet>
                     <h:outputText value="#{metric.alertCount}"/>
                 </rich:column>
+                
                 <rich:column>
                     <f:facet name="header">
                         <h:outputText value="Value"/>
                     </f:facet>
                     <h:outputText value="#{metric.value}"/>
                 </rich:column>
+                
                 <rich:column>
                     <f:facet name="header">
                         <h:outputText value="Last Changed"/>
@@ -118,12 +62,11 @@
                     <h:outputText value="#{metric.changedDate}"/>
                 </rich:column>
 
-
             </rich:dataTable>
+            
         </rich:panel>
 
-
-    </ui:define>
+</ui:define>
 
 </ui:composition>
 

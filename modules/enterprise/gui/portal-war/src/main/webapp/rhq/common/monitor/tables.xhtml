@@ -1,0 +1,95 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+   xmlns:h="http://java.sun.com/jsf/html"
+   xmlns:f="http://java.sun.com/jsf/core"
+   xmlns:ui="http://java.sun.com/jsf/facelets"
+   xmlns:c="http://java.sun.com/jstl/core"
+   xmlns:onc="http://jboss.org/on/component"
+   xmlns:onf="http://jboss.org/on/function"
+   xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+   xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition>
+
+   <rich:panel styleClass="BlockContent">
+
+      <f:facet name="header" styleClass="BlockTitle">
+         <a name="Numeric Metrics" />
+                Numeric Metrics
+            </f:facet>
+
+      <rich:dataTable value="#{MetricsTableUIBean.metricSummaries}"
+         width="100%" var="metric" columnsWidth="1%,5%">
+
+         <rich:column>
+            <f:facet name="header">
+               <onc:allSelect target="selectedMetrics" />
+            </f:facet>
+
+            <onc:select name="selectedMetrics"
+               value="#{metric.scheduleId}" />
+         </rich:column>
+
+         <rich:column
+            rendered="#{MetricsTableUIBean.context.groupId != -1}">
+            <f:facet name="header">
+               <h:outputText value="Group Members Reporting" />
+            </f:facet>
+            <h:outputText value="#{metric.numberCollecting}" />
+         </rich:column>
+
+         <rich:column>
+            <f:facet name="header">
+               <h:outputText value="Name" />
+            </f:facet>
+            <h:outputText value="#{metric.label}" />
+         </rich:column>
+
+         <rich:column>
+            <f:facet name="header">
+               <h:outputText value="Alerts" />
+            </f:facet>
+            <h:outputText value="#{metric.alertCount}" />
+         </rich:column>
+
+         <rich:column>
+            <f:facet name="header">
+               <h:outputText value="Min" />
+            </f:facet>
+            <h:outputText value="#{metric.minMetric.valueFmt}" />
+         </rich:column>
+
+         <rich:column>
+            <f:facet name="header">
+               <h:outputText value="Max" />
+            </f:facet>
+            <h:outputText value="#{metric.maxMetric.valueFmt}" />
+         </rich:column>
+
+         <rich:column>
+            <f:facet name="header">
+               <h:outputText value="Average" />
+            </f:facet>
+            <h:outputText value="#{metric.avgMetric.valueFmt}" />
+         </rich:column>
+
+         <rich:column
+            rendered="#{MetricsTableUIBean.context.resourceId != -1}">
+            <f:facet name="header">
+               <h:outputText value="Last" />
+            </f:facet>
+            <h:outputText value="#{metric.lastMetric.valueFmt}" />
+         </rich:column>
+
+      </rich:dataTable>
+
+   </rich:panel>
+
+</ui:composition>
+
+</html>

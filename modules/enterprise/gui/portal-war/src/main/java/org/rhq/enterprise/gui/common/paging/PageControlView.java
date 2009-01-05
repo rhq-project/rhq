@@ -65,6 +65,7 @@ import org.rhq.enterprise.gui.ha.ViewAgentUIBean;
 import org.rhq.enterprise.gui.ha.ViewPartitionEventUIBean;
 import org.rhq.enterprise.gui.ha.ViewServerUIBean;
 import org.rhq.enterprise.gui.inventory.group.ListResourceGroupMembersUIBean;
+import org.rhq.enterprise.gui.inventory.group.ResourceGroupMetricsTableUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyDetailsUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyHistoryUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListChildResourcesUIBean;
@@ -199,6 +200,8 @@ public enum PageControlView {
     GroupConnectionPropertyUpdateHistory(ViewGroupConnectionPropertyHistoryUIBean.class),
     /** */
     GroupConnectionPropertyUpdateDetails(ViewGroupConnectionPropertyDetailsUIBean.class),
+    /** */
+    ResourceGroupHealthSummary(ResourceGroupMetricsTableUIBean.class),
 
     // Auto Discovery
 

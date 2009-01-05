@@ -5,25 +5,114 @@
       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://java.sun.com/jsf/html"
-      xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:c="http://java.sun.com/jstl/core"
-      xmlns:onc="http://jboss.org/on/component"
-      xmlns:onf="http://jboss.org/on/function"
-      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
-      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+   xmlns:h="http://java.sun.com/jsf/html"
+   xmlns:f="http://java.sun.com/jsf/core"
+   xmlns:ui="http://java.sun.com/jsf/facelets"
+   xmlns:c="http://java.sun.com/jstl/core"
+   xmlns:onc="http://jboss.org/on/component"
+   xmlns:onf="http://jboss.org/on/function"
+   xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+   xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
 <ui:composition template="/rhq/group/layout/main.xhtml">
 
-<ui:param name="pageTitle" value="#{ResourceGroupUIBean.groupCategoryName} '#{ResourceGroupUIBean.name}' - Metric Tables"/>
-<ui:param name="selectedTabName" value="Monitor+.Tables"/>
+   <ui:param name="pageTitle"
+      value="#{ResourceGroupUIBean.groupCategoryName} '#{ResourceGroupUIBean.name}' - Metric Tables" />
+   <ui:param name="selectedTabName" value="Monitor+.Tables" />
 
-<ui:define name="content">
+   <ui:define name="content">
 
-Not Implemented Yet
+      <ui:param name="resourceGroupHealthSummaryDataModel"
+         value="#{ResourceGroupMetricsTableUIBean.dataModel}" />
 
-</ui:define>
+      <ui:include src="/rhq/common/monitor/tables.xhtml" />
+
+      <rich:panel styleClass="BlockContent">
+
+         <f:facet name="header" styleClass="BlockTitle">
+            <a name="Group member Health" />
+                Group Member Health
+            </f:facet>
+
+         <rich:dataTable id="resourceGroupHealthSummaryDataTable"
+            binding="#{ResourceGroupMetricsTableUIBean.dataTable}"
+            rows="#{PageControl.ResourceGroupHealthSummary.pageSize}"
+            value="#{resourceGroupHealthSummaryDataModel}"
+            var="healthSummary" columnsWidth="1%" width="100%"
+            footerClass="on-pager-footer">
+
+            <rich:column width="1%">
+               <f:facet name="header">
+                  <onc:allSelect target="selectedResources" />
+               </f:facet>
+
+               <onc:select name="selectedResources"
+                  value="#{healthSummary.id}" />
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <h:outputText value="Resource Name" />
+               </f:facet>
+
+               <h:outputLink
+                  value="/resource/common/monitor/Visibility.do">
+                  <f:param name="id" value="#{healthSummary.id}" />
+                  <f:param name="mode" value="currentHealth" />
+                  <h:outputText value="#{healthSummary.name}" />
+               </h:outputLink>
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <h:outputText value="Alerts" />
+               </f:facet>
+               <h:outputText value="#{healthSummary.alerts}" />
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <h:outputText value="Availability" />
+               </f:facet>
+
+               <h:graphicImage value="/images/icon_available_green.png"
+                  alt="Up" title="Up"
+                  rendered="#{healthSummary.availabilityType == 'UP'}" />
+               <h:graphicImage value="/images/icon_available_red.png"
+                  alt="Down" title="Down"
+                  rendered="#{healthSummary.availabilityType == 'DOWN'}" />
+               <h:graphicImage value="/images/icon_available_grey.png"
+                  alt="Unknown" title="Unknown"
+                  rendered="#{healthSummary.availabilityType == null}" />
+            </rich:column>
+
+            <f:facet name="footer">
+               <rich:columnGroup>
+                  <rich:column colspan="4" width="100%">
+
+                     <onc:selectCommandButton
+                        action="#{ResourceGroupMetricsTableUIBean.compareSelected}"
+                        value="COMPARE METRICS" target="selectedResources"
+                        styleClass="on-pager-button buttonsmall" />
+
+                     <ui:param name="paginationDataTableName"
+                        value="resourceGroupHealthSummaryDataTable" />
+                     <ui:param name="paginationDataModel"
+                        value="#{resourceGroupHealthSummaryDataModel}" />
+                     <ui:param name="paginationPageControl"
+                        value="#{PageControl.ResourceGroupHealthSummary}" />
+                     <ui:include
+                        src="/rhq/resource/include/pagination.xhtml" />
+
+                  </rich:column>
+               </rich:columnGroup>
+            </f:facet>
+
+         </rich:dataTable>
+
+      </rich:panel>
+
+   </ui:define>
 
 </ui:composition>
 

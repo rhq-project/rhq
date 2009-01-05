@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -197,7 +198,7 @@ public class ApplicationResourcesTest {
 
         List<String> extraProperties = new ArrayList<String>(); // found in bundle, not in source
         List<String> missingProperties = new ArrayList<String>(); // found in source, not in bundle
-        Set<String> bundlePropertyNames = propertiesBundle.stringPropertyNames();
+        Set<String> bundlePropertyNames = stringPropertyNames(propertiesBundle);
         Set<String> foundPropertyNames = new HashSet<String>();
         for (PropertyFile pf : counts.keySet()) {
             foundPropertyNames.add(pf.property);
@@ -236,6 +237,16 @@ public class ApplicationResourcesTest {
         System.out.println("Found " + missingProperties.size() + " missing");
         System.out.println("Found " + shortBundleNames + " short bundle names");
         System.out.println("Found " + bundlePropertyNames.size() + " total bundle names");
+    }
+
+    // alternative to using Properties.stringPropertyNames but it works on JDK 5
+    private Set<String> stringPropertyNames(Properties propertiesBundle) {
+        HashSet<String> tmpSet = new HashSet<String>();
+        for (Enumeration<?> allNames = propertiesBundle.propertyNames(); allNames.hasMoreElements();) {
+            Object name = allNames.nextElement();
+            tmpSet.add(name.toString());
+        }
+        return tmpSet;
     }
 
     private int process(File f, Pattern pattern, Map<PropertyFile, Integer> properties) {

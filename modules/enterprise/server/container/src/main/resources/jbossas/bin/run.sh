@@ -220,6 +220,8 @@ while true; do
          -classpath "$JBOSS_CLASSPATH" \
          org.jboss.Main "$@" &
       JBOSS_PID=$!
+      # the LAUNCH_JBOSS_IN_BACKGROUND is actually the full path to the pidfile
+      echo $JBOSS_PID > $LAUNCH_JBOSS_IN_BACKGROUND
       # Trap common signals and relay them to the jboss process
       trap "kill -HUP  $JBOSS_PID" HUP
       trap "kill -TERM $JBOSS_PID" INT

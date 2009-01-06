@@ -102,34 +102,54 @@ debug_msg ()
 }
 
 # ----------------------------------------------------------------------
-# Sets STATUS, RUNNING and PID based on the status of the RHQ Server
+# Sets _SERVER_STATUS, _SERVER_RUNNING and _SERVER_PID based on the
+# status of the RHQ Server VM start script (run.sh).
+# Also sets _JVM_STATUS, _JVM_RUNNING and _JVM_PID based on the
+# status of the JBossAS Java Virtual Machine.
 # ----------------------------------------------------------------------
 
 check_status ()
 {
-    if [ -f "$PIDFILE" ]; then
-        PID=`cat "$PIDFILE"`
-        if [ -n "$PID" ] && kill -0 $PID 2>/dev/null ; then
-            STATUS="RHQ Server (pid $PID) is $1"
-            RUNNING=1
+    if [ -f "$_SERVER_PIDFILE" ]; then
+        _SERVER_PID=`cat "$_SERVER_PIDFILE"`
+        if [ -n "$_SERVER_PID" ] && kill -0 $_SERVER_PID 2>/dev/null ; then
+            _SERVER_STATUS="RHQ Server (pid $_SERVER_PID) is $1"
+            _SERVER_RUNNING=1
         else
-            STATUS="RHQ Server (pid $PID) is NOT running"
-            RUNNING=0
+            _SERVER_STATUS="RHQ Server (pid $_SERVER_PID) is NOT running"
+            _SERVER_RUNNING=0
         fi
     else
-        STATUS="RHQ Server (no pid file) is NOT running"
-        RUNNING=0
+        _SERVER_STATUS="RHQ Server (no pid file) is NOT running"
+        _SERVER_RUNNING=0
+    fi
+
+    if [ -f "$_JVM_PIDFILE" ]; then
+        _JVM_PID=`cat "$_JVM_PIDFILE"`
+        if [ -n "$_JVM_PID" ] && kill -0 $_JVM_PID 2>/dev/null ; then
+            _JVM_STATUS="JBossAS Java VM child process (pid $_JVM_PID) is $1"
+            _JVM_RUNNING=1
+        else
+            _JVM_STATUS="JBossAS Java VM child process (pid $_JVM_PID) is NOT running"
+            _JVM_RUNNING=0
+        fi
+    else
+        _JVM_STATUS="JBossAS Java VM child process (no pid file) is NOT running"
+        _JVM_RUNNING=0
     fi
 }
 
 # ----------------------------------------------------------------------
-# Ensures that the PID file no longer exists
+# Ensures that the PID files no longer exist
 # ----------------------------------------------------------------------
 
-remove_pid_file ()
+remove_pid_files ()
 {
-   if [ -f "$PIDFILE" ]; then
-      rm "$PIDFILE"
+   if [ -f "$_SERVER_PIDFILE" ]; then
+      rm "$_SERVER_PIDFILE"
+   fi
+   if [ -f "$_JVM_PIDFILE" ]; then
+      rm "$_JVM_PIDFILE"
    fi
 }
 
@@ -268,7 +288,10 @@ fi
 debug_msg "_JBOSS_RUN_SCRIPT: $_JBOSS_RUN_SCRIPT"
 
 # ----------------------------------------------------------------------
-# Define where we want to write the pidfile - let user override the dir
+# Define where we want to write the pidfiles - let user override the dir
+# Note that we actually have two pidfiles - one is for the script
+# that starts the JBossAS Java virtual machine and the second is the
+# actual server's Java virtual machine process itself.
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_PIDFILE_DIR" ]; then
@@ -276,7 +299,8 @@ if [ -z "$RHQ_SERVER_PIDFILE_DIR" ]; then
 fi
 mkdir -p "$RHQ_SERVER_PIDFILE_DIR"
 
-PIDFILE="${RHQ_SERVER_PIDFILE_DIR}/rhq-server.pid"
+_SERVER_PIDFILE="${RHQ_SERVER_PIDFILE_DIR}/rhq-server.pid"
+_JVM_PIDFILE="${RHQ_SERVER_PIDFILE_DIR}/rhq-jvm.pid"
 
 # ----------------------------------------------------------------------
 # Execute the command that the user wants us to do
@@ -286,35 +310,38 @@ check_status "running"
 
 case "$1" in
 'console')
-        if [ "$RUNNING" = "1" ]; then
-           echo "$STATUS"
+        if [ "$_SERVER_RUNNING" = "1" ]; then
+           echo "$_SERVER_STATUS"
            exit 0
         fi
 
         echo "Starting RHQ Server in console..."
 
-        echo "$$" > "$PIDFILE"
+        # we are running in foreground, make both pids show the same process
+        echo "$$" > "$_SERVER_PIDFILE"
+        echo "$$" > "$_JVM_PIDFILE"
 
         # start the server, making sure its working directory is the JBossAS bin directory
         cd "${RHQ_SERVER_HOME}/jbossas/bin"
         "$_JBOSS_RUN_SCRIPT" $RHQ_SERVER_CMDLINE_OPTS
 
-        JBOSS_STATUS=$?
+        _JBOSS_STATUS=$?
 
-        rm "$PIDFILE"
+        rm "$_SERVER_PIDFILE"
+        rm "$_JVM_PIDFILE"
 
-        exit $JBOSS_STATUS
+        exit $_JBOSS_STATUS
         ;;
 
 'start')
-        if [ "$RUNNING" = "1" ]; then
-           echo "$STATUS"
+        if [ "$_SERVER_RUNNING" = "1" ]; then
+           echo "$_SERVER_STATUS"
            exit 0
         fi
 
         echo "Trying to start the RHQ Server..."
 
-        LAUNCH_JBOSS_IN_BACKGROUND=true
+        LAUNCH_JBOSS_IN_BACKGROUND="$_JVM_PIDFILE"
         export LAUNCH_JBOSS_IN_BACKGROUND
 
         # start the server, making sure its working directory is the JBossAS bin directory
@@ -325,13 +352,13 @@ case "$1" in
            "$_JBOSS_RUN_SCRIPT" $RHQ_SERVER_CMDLINE_OPTS > /dev/null 2>&1 &
         fi
 
-        echo "$!" > "$PIDFILE"
+        echo "$!" > "$_SERVER_PIDFILE"
 
         sleep 5
         check_status "starting"
-        echo "$STATUS"
+        echo "$_SERVER_STATUS"
 
-        if [ "$RUNNING" = "1" ]; then
+        if [ "$_SERVER_RUNNING" = "1" ]; then
            exit 0
         else
            echo "Failed to start - make sure the RHQ Server is fully configured properly"
@@ -340,51 +367,61 @@ case "$1" in
         ;;
 
 'stop')
-        if [ "$RUNNING" = "0" ]; then
-           echo "$STATUS"
-           remove_pid_file
+        if [ "$_SERVER_RUNNING" = "0" ]; then
+           echo "$_SERVER_STATUS"
+           remove_pid_files
            exit 0
         fi
 
         echo "Trying to stop the RHQ Server..."
 
-        echo "RHQ Server (pid=${PID}) is stopping..."
+        echo "RHQ Server (pid=${_SERVER_PID}) is stopping..."
 
-        while [ "$RUNNING" = "1"  ]; do
-           kill -TERM $PID
+        while [ "$_SERVER_RUNNING" = "1"  ]; do
+           kill -TERM $_SERVER_PID
            sleep 2
            check_status "stopping..."
         done
 
-        remove_pid_file
+        remove_pid_files
         echo "RHQ Server has stopped."
         exit 0
         ;;
 
 'kill')
-        if [ "$RUNNING" = "0" ]; then
-           echo "$STATUS"
-           remove_pid_file
+        if [ "$_SERVER_RUNNING" = "0" ]; then
+           echo "$_SERVER_STATUS"
+        fi
+        if [ "$_JVM_RUNNING" = "0" ]; then
+           echo "$_JVM_STATUS"
+           remove_pid_files
            exit 0
         fi
 
         echo "Trying to kill the RHQ Server..."
 
-        echo "RHQ Server (pid=${PID}) is being killed..."
-
-        while [ "$RUNNING" = "1"  ]; do
-           kill -9 $PID
+        echo "RHQ Server parent process (pid=${_SERVER_PID}) is being killed..."
+        while [ "$_SERVER_RUNNING" = "1"  ]; do
+           kill -9 $_SERVER_PID
            sleep 2
            check_status "killing..."
         done
 
-        remove_pid_file
+        echo "Java Virtual Machine child process (pid=${_JVM_PID}) is being killed..."
+        while [ "$_JVM_RUNNING" = "1"  ]; do
+           kill -9 $_JVM_PID
+           sleep 2
+           check_status "killing..."
+        done
+
+        remove_pid_files
         echo "RHQ Server has been killed."
         exit 0
         ;;
 
 'status')
-        echo "$STATUS"
+        echo "$_SERVER_STATUS"
+        echo "$_JVM_STATUS"
         exit 0
         ;;
 

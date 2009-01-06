@@ -18,13 +18,11 @@
  */
 package org.rhq.enterprise.gui.inventory.group;
 
-import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -57,25 +55,6 @@ public class ResourceGroupMetricsTableUIBean extends PagedDataTableUIBean {
         }
 
         return dataModel;
-    }
-
-    public String compareSelected() {
-        String[] selectedResources = FacesContextUtility.getRequest().getParameterValues("selectedResources");
-
-        if ((selectedResources == null) || (selectedResources.length < 2)) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "Select 2 or more resources for comparison");
-            return "successOrFailure";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        for (String resourceIdString : selectedResources) {
-            sb.append("&amp;");
-            sb.append(resourceIdString);
-        }
-
-        FacesContextUtility.getRequest().setAttribute("selectedMembers", sb.toString());
-
-        return "compareResourceGroupMetrics";
     }
 
     protected class ResourceGroupHealthSummaryDataModel extends PagedListDataModel<ResourceHealthComposite> {

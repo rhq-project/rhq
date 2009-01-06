@@ -145,6 +145,11 @@
         <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ResourceGroupMetricsTableUIBean</managed-bean-class>
         <managed-bean-scope>request</managed-bean-scope>
     </managed-bean>
+    <managed-bean>
+        <managed-bean-name>ResourceGroupMetricsCompareUIBean</managed-bean-name>
+        <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ResourceGroupMetricsCompareUIBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>
     
    <!-- /rhq/resource/inventory/history.xhtml -->
    <managed-bean>

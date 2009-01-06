@@ -86,6 +86,16 @@ public interface MeasurementScheduleManagerLocal {
     List<MeasurementSchedule> getSchedulesByIds(Collection<Integer> ids);
 
     /**
+     * Return a list of MeasurementSchedules for the given definition ids and resource id.
+     *
+     * @param  definitionIds
+     * @param  resourceId
+     *
+     * @return a list of Schedules
+     */
+    List<MeasurementSchedule> getSchedulesByDefinitionIdsAndResourceId(int[] definitionIds, int resourceId);
+
+    /**
      * Obtain a MeasurementSchedule by its Id after a check for a valid session
      *
      * @param  subject    a session id that must be valid
@@ -165,7 +175,8 @@ public interface MeasurementScheduleManagerLocal {
      * @return the metric collection schedules for the given resource
      */
     PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesForResource(Subject subject, int resourceId,
-        @Nullable DataType dataType, PageControl pageControl);
+        @Nullable
+        DataType dataType, PageControl pageControl);
 
     /**
      * Retrieves the metric collection schedules for the given resource.
@@ -179,9 +190,10 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return the metric collection schedules for the given resource
      */
-    PageList<MeasurementSchedule> getMeasurementSchedulesForResource(Subject subject, int resourceId,
-        @Nullable DataType dataType, @Nullable DisplayType displayType, @Nullable Boolean enabled,
-        PageControl pageControl);
+    PageList<MeasurementSchedule> getMeasurementSchedulesForResource(Subject subject, int resourceId, @Nullable
+    DataType dataType, @Nullable
+    DisplayType displayType, @Nullable
+    Boolean enabled, PageControl pageControl);
 
     /**
      * Disables all collection schedules in the given measurement definition IDs. This only disables the "templates", it

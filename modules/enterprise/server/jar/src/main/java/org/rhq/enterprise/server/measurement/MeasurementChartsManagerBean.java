@@ -540,25 +540,39 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
         // I want to only get the definition objects once for each ID, and cache here for the rest of this method
         Map<Integer, MeasurementDefinition> measurementDefinitionsMap = new HashMap<Integer, MeasurementDefinition>(
             definitionIds.length);
-        List<Integer> listOfDefinitionIds = new ArrayList<Integer>();
+
+        // Eliminate definitions not collecting 
+        List<Integer> collectingDefIdList = new ArrayList<Integer>();
         for (int definitionId : definitionIds) {
             if (isMetricCollecting(subject, resources, definitionId)) {
-                listOfDefinitionIds.add(definitionId);
+                collectingDefIdList.add(definitionId);
             }
         }
 
-        Integer[] defIds = listOfDefinitionIds.toArray(new Integer[listOfDefinitionIds.size()]);
+        Integer[] collectingDefIds = collectingDefIdList.toArray(new Integer[collectingDefIdList.size()]);
+        // annoying, we also need an int[]
+        int[] collectingDefIdArr = new int[collectingDefIds.length];
+        for (int i = 0; (i < collectingDefIds.length); ++i) {
+            collectingDefIdArr[i] = collectingDefIds[i];
+        }
 
         List<MeasurementDefinition> definitions = measurementDefinitionManager.getMeasurementDefinitionsByIds(subject,
-            defIds);
+            collectingDefIds);
         for (MeasurementDefinition definition : definitions) {
             measurementDefinitionsMap.put(definition.getId(), definition);
         }
 
         Map<MeasurementDefinition, List<MetricDisplaySummary>> compareMetrics = new HashMap<MeasurementDefinition, List<MetricDisplaySummary>>();
         for (Resource resource : resources) {
+            List<MeasurementSchedule> scheds = scheduleManager.getSchedulesByDefinitionIdsAndResourceId(
+                collectingDefIdArr, resource.getId());
+            int[] schedIds = new int[scheds.size()];
+            for (int i = 0; (i < schedIds.length); ++i) {
+                schedIds[i] = scheds.get(i).getId();
+            }
+
             List<MetricDisplaySummary> resourceMDS = getMetricDisplaySummariesForResource(subject, resource.getId(),
-                definitionIds, begin, end);
+                schedIds, begin, end);
             for (MetricDisplaySummary summary : resourceMDS) {
                 Integer definitionId = summary.getDefinitionId();
                 MeasurementDefinition definition = measurementDefinitionsMap.get(definitionId);

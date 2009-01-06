@@ -124,9 +124,9 @@
       <!--  === compareResourcesGroupMetrics (struts) ========================= -->
 
       <navigation-case>
-         <from-action>#{ResourceGroupMetricsTableUIBean.compareSelected}</from-action>
+         <from-action>#{ResourceGroupMetricsCompareUIBean.compareSelected}</from-action>
          <from-outcome>compareResourceGroupMetrics</from-outcome>
-         <to-view-id>/resource/group/monitor/visibility/GroupMetrics.do?category=COMPATIBLE&amp;groupId=#{param.groupId}#{param.selectedResources}</to-view-id>
+         <to-view-id>/resource/common/monitor/Visibility.do?mode=compareMetrics&amp;category=COMPATIBLE&amp;groupId=#{param.groupId}#{ResourceGroupMetricsCompareUIBean.selected}</to-view-id>
          <redirect />
       </navigation-case>
 

@@ -187,8 +187,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             Agent agent = res.getAgent();
 
             MeasurementScheduleRequest sms = new MeasurementScheduleRequest(sched.getId(), sched.getDefinition()
-                .getName(), sched.getInterval(), sched.isEnabled(), sched.getDefinition().getDataType(),
-                    sched.getDefinition().getRawNumericType());
+                .getName(), sched.getInterval(), sched.isEnabled(), sched.getDefinition().getDataType(), sched
+                .getDefinition().getRawNumericType());
 
             ResourceMeasurementScheduleRequest info = null; //new ResourceMeasurementScheduleRequest(sms, res.getId()); TODO
             Set<ResourceMeasurementScheduleRequest> infoList = agentMap.get(agent);
@@ -555,7 +555,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
     @SuppressWarnings("unchecked")
     public PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesForResource(Subject subject,
-        int resourceId, @Nullable DataType dataType, PageControl pageControl) {
+        int resourceId, @Nullable
+        DataType dataType, PageControl pageControl) {
         pageControl.addDefaultOrderingField("ms.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -567,9 +568,10 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<MeasurementSchedule> getMeasurementSchedulesForResource(Subject subject, int resourceId,
-        @Nullable DataType dataType, @Nullable DisplayType displayType, @Nullable Boolean enabled,
-        PageControl pageControl) {
+    public PageList<MeasurementSchedule> getMeasurementSchedulesForResource(Subject subject, int resourceId, @Nullable
+    DataType dataType, @Nullable
+    DisplayType displayType, @Nullable
+    Boolean enabled, PageControl pageControl) {
         pageControl.addDefaultOrderingField("ms.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -948,7 +950,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * @return a list of Schedules
      */
     @SuppressWarnings("unchecked")
-    private List<MeasurementSchedule> getSchedulesByDefinitionIdsAndResourceId(int[] definitionIds, int resourceId) {
+    public List<MeasurementSchedule> getSchedulesByDefinitionIdsAndResourceId(int[] definitionIds, int resourceId) {
         Query query = entityManager.createNamedQuery(MeasurementSchedule.FIND_BY_DEFINITION_IDS_AND_RESOURCE_ID);
         List<Integer> definitionIdsList = convertIntArrayToListOfIntegers(definitionIds);
         query.setParameter("definitionIds", definitionIdsList);

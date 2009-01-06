@@ -948,13 +948,13 @@ DB Upgrade:
       </schema-directSQL>
       <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="ID" nullable="FALSE" />
       <schema-createSequence name="RHQ_RESOURCE_AVAIL_ID_SEQ" initial="10001"/>
-      <schema-addColumn   table="RHQ_RESOURCE_AVAIL" column="RESOURCE_ID" columnType="INTEGER" />
-      <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="RESOURCE_ID" nullable="FALSE" />
       <schema-directSQL>
          <statement desc="Creating primary key for RHQ_RESOURCE_AVAIL">
             ALTER TABLE RHQ_RESOURCE_AVAIL ADD PRIMARY KEY ( RESOURCE_ID )
          </statement>
       </schema-directSQL>
+      <schema-addColumn   table="RHQ_RESOURCE_AVAIL" column="RESOURCE_ID" columnType="INTEGER" />
+      <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="RESOURCE_ID" nullable="FALSE" />
       <schema-directSQL>
          <statement desc="Creating RHQ_RESOURCE_AVAIL foreign key relation to RHQ_RESOURCE">
             ALTER TABLE RHQ_RESOURCE_AVAIL

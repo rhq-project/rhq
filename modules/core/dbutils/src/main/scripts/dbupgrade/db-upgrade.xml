@@ -958,7 +958,7 @@ DB Upgrade:
       <schema-directSQL>
          <statement desc="Creating RHQ_RESOURCE_AVAIL foreign key relation to RHQ_RESOURCE">
             ALTER TABLE RHQ_RESOURCE_AVAIL
-            ADD CONSTRAINT RHQ_PD_RESOURCE_ID_FK
+            ADD CONSTRAINT RHQ_RES_AVAIL_RES_ID_FK
             FOREIGN KEY ( RESOURCE_ID )
             REFERENCES RHQ_RESOURCE ( ID )
             ON DELETE CASCADE

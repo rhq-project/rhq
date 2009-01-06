@@ -1718,6 +1718,12 @@ public class AgentMain {
      */
     @SuppressWarnings("unchecked")
     public boolean switchToServer(String server) {
+        AgentConfiguration config = getConfiguration();
+        String currentServerAddress = config.getServerBindAddress();
+        int currentServerPort = config.getServerBindPort();
+        String currentServerTransport = config.getServerTransport();
+        String currentServerTransportParams = config.getServerTransportParams();
+
         ServerEntry newServer;
         String newTransport;
         String newTransportParams;
@@ -1731,12 +1737,12 @@ public class AgentMain {
                 newServer = new ServerEntry(host, port, port);
                 newTransport = endpointUrl.getProtocol();
                 String path = endpointUrl.getPath();
-                Map<Object, Object> config = endpointUrl.getParameters();
+                Map<Object, Object> parameters = endpointUrl.getParameters();
                 newTransportParams = "/" + ((path != null) ? path : "");
-                if (config != null && config.size() > 0) {
+                if (parameters != null && parameters.size() > 0) {
                     newTransportParams += "?";
                     boolean needAmp = false;
-                    for (Map.Entry<Object, Object> configEntry : config.entrySet()) {
+                    for (Map.Entry<Object, Object> configEntry : parameters.entrySet()) {
                         if (needAmp) {
                             newTransportParams += "&";
                         }
@@ -1750,11 +1756,9 @@ public class AgentMain {
                 return false;
             }
         } else {
-            AgentConfiguration config = getConfiguration();
-            int currentPort = config.getServerBindPort();
-            newServer = new ServerEntry(server, currentPort, currentPort);
-            newTransport = config.getServerTransport();
-            newTransportParams = config.getServerTransportParams();
+            newServer = new ServerEntry(server, currentServerPort, currentServerPort);
+            newTransport = currentServerTransport;
+            newTransportParams = currentServerTransportParams;
         }
 
         RemoteCommunicator comm;
@@ -1779,6 +1783,8 @@ public class AgentMain {
                 try {
                     // we are switching back to the original server because our switch failed
                     comm.setRemoteEndpoint(originalServerEndpoint);
+                    config.setServerLocatorUri(currentServerTransport, currentServerAddress, currentServerPort,
+                        currentServerTransportParams);
                 } catch (Exception e) {
                     // this should never happen
                     LOG.warn(AgentI18NResourceKeys.CANNOT_SWITCH_TO_INVALID_SERVER, originalServerEndpoint, e);

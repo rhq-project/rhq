@@ -142,7 +142,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("VM health check thread sees that memory is critically low and will try to reboot the agent")
     String VM_HEALTH_CHECK_SEES_MEM_PROBLEM = "VMHealthCheckThread.mem-problem";
 
-    @I18NMessage("Cannot switch to server - the sender is not read. Is the agent shutdown?. Cause: {0}")
+    @I18NMessage("Cannot switch to server - the sender is not ready. Is the agent shutdown?. Cause: {0}")
     String CANNOT_SWITCH_NULL_COMMUNICATOR = "AgentMain.cannot-switch-null-communicator";
 
     @I18NMessage("Cannot switch to server - the server endpoint is invalid [{0}]. Cause: {1}")

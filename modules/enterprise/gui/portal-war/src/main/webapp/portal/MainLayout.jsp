@@ -25,6 +25,7 @@
       <link href="/css/theme/default.css" rel="stylesheet" type="text/css"/>
       <link href="/css/theme/alphacube.css" rel="stylesheet" type="text/css"/>
       <link href="/css/theme/debug.css" rel="stylesheet" type="text/css"/>
+      <link rel="stylesheet" type="text/css" media="screen" href="/css/menu.css"/>
 
       <tiles:insert attribute="head"/>
       <title>

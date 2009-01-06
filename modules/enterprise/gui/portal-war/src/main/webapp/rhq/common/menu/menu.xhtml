@@ -1,0 +1,180 @@
+<h:form xmlns="http://www.w3.org/1999/xhtml" 
+        xmlns:h="http://java.sun.com/jsf/html"
+        xmlns:f="http://java.sun.com/jsf/core" 
+        xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+    <rich:toolBar styleClass="topMenu">
+        <rich:toolBarGroup location="right">
+            <rich:dropDownMenu>
+                <f:facet name="label">
+                    <h:panelGroup>
+                        <h:outputLink value="/">
+                            <h:outputText value="Start" />
+                        </h:outputLink>
+                    </h:panelGroup>
+                </f:facet>
+            </rich:dropDownMenu>
+
+            <rich:dropDownMenu>
+                <f:facet name="label">
+                    <h:panelGroup>
+                        <h:outputLink value="/Dashboard.do">
+                            <h:outputText value="Dashboard" />
+                        </h:outputLink>
+                    </h:panelGroup>
+                </f:facet>
+            </rich:dropDownMenu>
+
+            <rich:dropDownMenu>
+                <f:facet name="label">
+                    <h:panelGroup>
+                        <h:outputLink value="/ResourceHub.do">
+                            <h:outputText value="Browse Resources" />
+                        </h:outputLink>
+                    </h:panelGroup>
+                </f:facet>
+
+                <rich:menuItem submitMode="none">
+                    <h:outputLink value="/ResourceHub.do?resourceCategory=PLATFORM">
+                        <h:outputText value="Platforms" />
+                    </h:outputLink>
+                </rich:menuItem>
+
+                <rich:menuItem submitMode="none">
+                    <h:outputLink value="/ResourceHub.do?resourceCategory=SERVER">
+                        <h:outputText value="Servers" />
+                    </h:outputLink>
+                </rich:menuItem>
+
+                <rich:menuItem submitMode="none">
+                    <h:outputLink value="/ResourceHub.do?resourceCategory=SERVICE">
+                        <h:outputText value="Services" />
+                    </h:outputLink>
+                </rich:menuItem>
+
+                <rich:menuGroup value="Groups">
+                    <rich:menuItem submitMode="none">
+                        <h:outputLink value="/GroupHub.do">
+                            <f:param name="groupCategory" value="COMPATIBLE" />
+                            <h:outputText value="Compatible Groups" />
+                        </h:outputLink>
+                    </rich:menuItem>
+
+                    <rich:menuItem submitMode="none">
+                        <h:outputLink value="/GroupHub.do?groupCategory=MIXED">
+                            <h:outputText value="Mixed Groups" />
+                        </h:outputLink>
+                    </rich:menuItem>
+
+                    <rich:menuItem submitMode="none">
+                        <h:outputLink value="/rhq/definition/group/list.xhtml">
+                            <h:outputText value="Group Definition" />
+                        </h:outputLink>
+                    </rich:menuItem>
+                </rich:menuGroup>
+            </rich:dropDownMenu>
+
+            <rich:dropDownMenu>
+                <f:facet name="label">
+                    <h:panelGroup>
+                        <h:outputLink value="/Admin.do">
+                            <h:outputText value="Administration" />
+                        </h:outputLink>
+                    </h:panelGroup>
+                </f:facet>
+                <rich:menuGroup value="Tools">
+                    <rich:menuItem submitMode="none">
+                        <h:outputLink value="/admin/config/EditDefaults.do">
+                            <f:param name="mode" value="monitor" />
+                            <f:param name="viewMode" value="all" />
+                            <h:outputText value="Monitoring Defaults" />
+                        </h:outputLink>
+                    </rich:menuItem>
+
+                    <rich:menuItem submitMode="none">
+                        <h:outputLink value="/admin/license/LicenseAdmin.do?mode=view">
+                            <h:outputText value="License" />
+                        </h:outputLink>
+                    </rich:menuItem>
+                </rich:menuGroup>
+
+                <rich:menuGroup value="Users">
+                    <rich:menuItem submitMode="none">
+                        <h:outputLink value="/admin/user/UserAdmin.do">
+                            <f:param name="mode" value="list" />
+                            <h:outputText value="Manage Users" />
+                        </h:outputLink>
+                    </rich:menuItem>
+                    <rich:menuItem submitMode="none">
+                        <h:outputLink value="/admin/role/RoleAdmin.do">
+                            <f:param name="mode" value="list" />
+                            <h:outputText value="Manager Roles" />
+                        </h:outputLink>
+                    </rich:menuItem>
+                </rich:menuGroup>
+            </rich:dropDownMenu>
+
+            <rich:dropDownMenu>
+                <f:facet name="label">
+                    <h:panelGroup>
+                        <h:outputText value="Help" />
+                    </h:panelGroup>
+                </f:facet>
+
+                <rich:menuItem submitMode="none">
+                    <h:outputLink value="https://docs.jbosson.redhat.com/confluence/display/JON2/" target="blank_">
+                        <h:outputText value="Online Documentation" />
+                    </h:outputLink>
+                </rich:menuItem>
+
+                <rich:menuSeparator />
+
+                <rich:menuItem submitMode="none">
+                    <h:outputLink value="https://support.redhat.com/jbossnetwork/restricted/addCase.html" target="blank_">
+                        <h:outputText value="Open a Support Case" />
+                    </h:outputLink>
+                </rich:menuItem>
+            </rich:dropDownMenu>
+
+            <rich:dropDownMenu>
+                <f:facet name="label">
+                    <h:panelGroup>
+                        <a href="#" onclick="openAbout(aboutWindowTitle)">About</a>
+                    </h:panelGroup>
+                </f:facet>
+            </rich:dropDownMenu>
+
+            <rich:dropDownMenu>
+                <f:facet name="label">
+                    <h:panelGroup>
+                        <h:outputText value="My Account" />
+                    </h:panelGroup>
+                </f:facet>
+                <rich:menuItem submitMode="none">
+                    <h:outputLink value="/admin/user/UserAdmin.do">
+                        <f:param name="mode" value="edit" />
+                        <f:param name="u" value="2" />
+                        <h:outputText value="Edit Details" />
+                    </h:outputLink>
+                </rich:menuItem>
+
+                <rich:menuItem submitMode="none">
+                    <h:outputLink value="/admin/user/UserAdmin.do">
+                        <f:param name="mode" value="editPass" />
+                        <f:param name="u" value="2" />
+                        <h:outputText value="Change Password" />
+                    </h:outputLink>
+                </rich:menuItem>
+            </rich:dropDownMenu>
+
+            <rich:dropDownMenu>
+                <f:facet name="label">
+                    <h:panelGroup>
+                        <h:outputLink value="/Logout.do">
+                            <h:outputText value="Logout" />
+                        </h:outputLink>
+                    </h:panelGroup>
+                </f:facet>
+            </rich:dropDownMenu>
+        </rich:toolBarGroup>
+    </rich:toolBar>
+</h:form>

@@ -23,6 +23,7 @@
    <link rel="stylesheet" type="text/css" media="screen" href="/css/leftMenu.css"/>
    <link rel="stylesheet" type="text/css" media="screen" href="/css/win.css"/>   
    <link rel="stylesheet" type="text/css" media="screen" href="/css/form-style.css"/>
+   <link rel="stylesheet" type="text/css" media="screen" href="/css/menu.css"/>
 
    <script type="text/javascript" src="/js/functions.js" />
    <script type="text/javascript" src="/js/prototype.js" />
@@ -67,7 +68,7 @@
 
     <table width="100%" border="0" cellpadding="0" cellspacing="0">
         <tr valign="bottom">
-            <td align="left" rowspan="2">
+            <td align="left">
                 <a href="#" onclick="openAbout(aboutWindowTitle)">
                     <img src="/images/logo_header.gif" title="${msg['product.fullName']}"/>
                 </a>
@@ -83,34 +84,10 @@
             </td>
        </tr>
        <tr>
-            <td align="right">
-               <div id="resMenu" class="headerresourcemenu">
-                  <a href="/ResourceHub.do?resourceCategory=PLATFORM">${msg["resource.hub.filter.platform"]}</a><br/>
-                  <a href="/ResourceHub.do?resourceCategory=SERVER">${msg["resource.hub.filter.server"]}</a><br/>
-                  <a href="/ResourceHub.do?resourceCategory=SERVICE">${msg["resource.hub.filter.service"]}</a><br/>
-                  <a href="/GroupHub.do?groupCategory=COMPATIBLE">${msg["resource.hub.filter.compatibleGroups"]}</a><br/>
-                  <a href="/GroupHub.do?groupCategory=MIXED">${msg["resource.hub.filter.mixedGroups"]}</a><br/>
-                  <a href="/rhq/definition/group/list.xhtml">${msg["resource.hub.filter.groupDefinitions"]}</a><br/>
-               </div>
-               <div id="AppMenu">
-                  <h:outputLink value="/Start.do">${msg["header.start.link"]}</h:outputLink>
-                  |
-                  <h:outputLink value="/Dashboard.do">${msg["dash.home.PageTitle"]}</h:outputLink>
-                  |
-                  <h:outputLink value="/ResourceHub.do" onmouseover="menuLayers.show('resMenu',event)" onmouseout="menuLayers.hide()">${msg["resource.hub.ResourceHubPageTitle"]}</h:outputLink>
-                  |
-                  <h:outputLink value="/Admin.do">${msg["admin.admin.AdministrationTitle"]}</h:outputLink>
-                  |
-                  <h:outputLink
-                        onclick="window.open('${helpBaseURL}','help','width=940,height=730,scrollbars=yes,toolbar=yes,left=40,top=40,resizable=yes'); return false;">${msg["header.help.link"]}</h:outputLink>
-                  |
-                  <script language="JavaScript" type="text/javascript">var aboutWindowTitle = '${msg["about.Title"]}';</script>
-                  <a href="#" onclick="openAbout(aboutWindowTitle)">${msg["header.about.link"]}</a>
-                  |
-                  <h:outputLink value="/Logout.do">${msg["header.logout.link"]}</h:outputLink>
-               </div>
-            </td>
-        </tr>
+           <td align="right" class="topMenu" colspan="2">
+                <ui:include src="/rhq/common/menu/menu.xhtml" />
+           </td>
+       </tr>
     </table>
 
 </div>

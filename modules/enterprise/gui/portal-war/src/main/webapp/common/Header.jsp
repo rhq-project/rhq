@@ -14,7 +14,7 @@
 
     <table width="100%" border="0" cellpadding="0" cellspacing="0" height="70px">
         <tr valign="bottom">
-            <td align="left" rowspan="2">
+            <td align="left">
                 <fmt:message var="urlDomain" key="product.url.domain"/>
                 <fmt:message var="productName" key="product.fullName"/>
                 <html:link page="http://${urlDomain}">
@@ -32,33 +32,9 @@
             </td>
         </tr>
         <tr>
-            <td align="right">
-               <script type="text/javascript" src="/js/popup.js"></script>
-               <div id="resMenu" class="headerresourcemenu">
-                  <html:link page="/ResourceHub.do?resourceCategory=PLATFORM"><fmt:message key="resource.hub.filter.platform"/></html:link><br/>
-                  <html:link page="/ResourceHub.do?resourceCategory=SERVER"><fmt:message key="resource.hub.filter.server"/></html:link><br/>
-                  <html:link page="/ResourceHub.do?resourceCategory=SERVICE"><fmt:message key="resource.hub.filter.service"/></html:link><br/>
-                  <html:link page="/GroupHub.do?groupCategory=COMPATIBLE"><fmt:message key="resource.hub.filter.compatibleGroups"/></html:link><br/>
-                  <html:link page="/GroupHub.do?groupCategory=MIXED"><fmt:message key="resource.hub.filter.mixedGroups"/></html:link><br/>
-                  <html:link page="/rhq/definition/group/list.xhtml"><fmt:message key="resource.hub.filter.groupDefinitions"/></html:link><br/>
-               </div>
-               <div id="AppMenu">
-                    <html:link page="/Start.do"><fmt:message key="header.start.link"/></html:link>
-                    |
-                    <html:link page="/Dashboard.do"><fmt:message key="dash.home.PageTitle"/></html:link>
-                    |
-                    <html:link page="/ResourceHub.do" onmouseover="menuLayers.show('resMenu',event)" onmouseout="menuLayers.hide()"><fmt:message key="resource.hub.ResourceHubPageTitle"/></html:link>
-                    |
-                    <html:link page="/Admin.do"><fmt:message key="admin.admin.AdministrationTitle"/></html:link>
-                    |
-                    <html:link href="" onclick="window.open('${helpBaseURL}','help','width=940,height=730,scrollbars=yes,toolbar=yes,left=40,top=40,resizable=yes'); return false;"><fmt:message key="header.help.link"/></html:link>
-                    |
-                    <script language="JavaScript" type="text/javascript">var aboutWindowTitle = '<fmt:message key="about.Title"/>';</script>
-                    <a href="#" onclick="openAbout(aboutWindowTitle)"><fmt:message key="header.about.link"/></a>
-                    |
-                    <html:link page="/Logout.do"><fmt:message key="header.logout.link"/></html:link>
-               </div>
-            </td>
+            <td align="right" class="topMenu" colspan="2">
+                <jsp:include page="/rhq/common/menu/menu.xhtml"/>
+             </td>
         </tr>
     </table>
 

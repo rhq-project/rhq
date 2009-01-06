@@ -4,25 +4,13 @@
         xmlns:rich="http://richfaces.ajax4jsf.org/rich">
     <rich:toolBar styleClass="topMenu">
         <rich:toolBarGroup location="right">
-            <rich:dropDownMenu>
-                <f:facet name="label">
-                    <h:panelGroup>
-                        <h:outputLink value="/">
-                            <h:outputText value="Start" />
-                        </h:outputLink>
-                    </h:panelGroup>
-                </f:facet>
-            </rich:dropDownMenu>
+            <h:outputLink value="/">
+                <h:outputText value="Start" />
+            </h:outputLink>
 
-            <rich:dropDownMenu>
-                <f:facet name="label">
-                    <h:panelGroup>
-                        <h:outputLink value="/Dashboard.do">
-                            <h:outputText value="Dashboard" />
-                        </h:outputLink>
-                    </h:panelGroup>
-                </f:facet>
-            </rich:dropDownMenu>
+            <h:outputLink value="/Dashboard.do">
+                <h:outputText value="Dashboard" />
+            </h:outputLink>
 
             <rich:dropDownMenu>
                 <f:facet name="label">
@@ -165,16 +153,11 @@
                     </h:outputLink>
                 </rich:menuItem>
             </rich:dropDownMenu>
-
-            <rich:dropDownMenu>
-                <f:facet name="label">
-                    <h:panelGroup>
-                        <h:outputLink value="/Logout.do">
-                            <h:outputText value="Logout" />
-                        </h:outputLink>
-                    </h:panelGroup>
-                </f:facet>
-            </rich:dropDownMenu>
+            
+            <h:outputLink value="/Logout.do">
+                <h:outputText value="Logout" />
+            </h:outputLink>
+            
         </rich:toolBarGroup>
     </rich:toolBar>
 </h:form>

@@ -950,7 +950,7 @@ DB Upgrade:
       <schema-createSequence name="RHQ_RESOURCE_AVAIL_ID_SEQ" initial="10001"/>
       <schema-directSQL>
          <statement desc="Creating primary key for RHQ_RESOURCE_AVAIL">
-            ALTER TABLE RHQ_RESOURCE_AVAIL ADD PRIMARY KEY ( RESOURCE_ID )
+            ALTER TABLE RHQ_RESOURCE_AVAIL ADD PRIMARY KEY ( ID )
          </statement>
       </schema-directSQL>
       <schema-addColumn   table="RHQ_RESOURCE_AVAIL" column="RESOURCE_ID" columnType="INTEGER" />

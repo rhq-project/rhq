@@ -325,7 +325,7 @@
                   <c:option name="https"     value="https" />
                </c:property-options>
             </c:simple-property>
-            <c:simple-property name="rhq.communications.connector.bind-address" type="string" activationPolicy="restart" required="true" default="" displayName="Agent IP Address" description="The address the agent binds to when listening for incoming commands from the RHQ Server" />
+            <c:simple-property name="rhq.communications.connector.bind-address" type="string" activationPolicy="restart" required="false" default="" displayName="Agent IP Address" description="The address the agent binds to when listening for incoming commands from the RHQ Server" />
             <c:simple-property name="rhq.communications.connector.bind-port" type="integer" activationPolicy="restart" required="true" default="16163" displayName="Agent Port" description="The port the agent listens to for incoming commands from the RHQ Server">
                <c:constraint>
                   <c:integer-constraint minimum="1" maximum="65535"/>

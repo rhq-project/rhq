@@ -942,10 +942,13 @@ DB Upgrade:
    <schemaSpec version="2.30">
       <!-- RHQ_RESOURCE_AVAIL -->
       <schema-directSQL>
-         <statement desc="Creating table RHQ_RESOURCE_AVAIL">
-            CREATE TABLE RHQ_RESOURCE_AVAIL ( RESOURCE_ID INTEGER )
-         </statement>
+          <statement desc="Creating table RHQ_RESOURCE_AVAIL">
+              CREATE TABLE RHQ_RESOURCE_AVAIL ( ID INTEGER )
+          </statement>
       </schema-directSQL>
+      <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="ID" nullable="FALSE" />
+      <schema-createSequence name="RHQ_RESOURCE_AVAIL_ID_SEQ" initial="10001"/>
+      <schema-addColumn   table="RHQ_RESOURCE_AVAIL" column="RESOURCE_ID" columnType="INTEGER" />
       <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="RESOURCE_ID" nullable="FALSE" />
       <schema-directSQL>
          <statement desc="Creating primary key for RHQ_RESOURCE_AVAIL">

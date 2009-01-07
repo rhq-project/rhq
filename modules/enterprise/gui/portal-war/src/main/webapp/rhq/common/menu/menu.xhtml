@@ -126,8 +126,13 @@
                 </rich:menuItem>
             </rich:dropDownMenu>
             
-           <script language="JavaScript" type="text/javascript">var aboutWindowTitle = '${msg["about.Title"]}';</script>           
+            <script language="JavaScript" type="text/javascript">var aboutWindowTitle = '${msg["about.Title"]}';</script>           
             <a href="#" onclick="openAbout(aboutWindowTitle)">#{msg['header.about.link']}</a>
+                       
+            <h:outputLink value="#" id="link">
+                #{msg['header.about.link']}+ 
+                <rich:componentControl for="aboutPanel" attachTo="link" operation="show" event="onclick"/>
+            </h:outputLink>
                     
             <rich:dropDownMenu>
                 <f:facet name="label">
@@ -158,4 +163,31 @@
             
         </rich:toolBarGroup>
     </rich:toolBar>
+    
+    <rich:modalPanel id="aboutPanel">
+        <f:facet name="header">
+            <h:panelGroup>
+                ${msg['about.Title']}
+            </h:panelGroup>
+        </f:facet>
+        <f:facet name="controls">
+            <h:panelGroup>
+                <h:graphicImage value="/images/close.png" style="cursor:pointer" id="hidelink"/>
+                <rich:componentControl for="aboutPanel" attachTo="hidelink" operation="hide" event="onclick"/>
+            </h:panelGroup>
+        </f:facet>
+        <p>
+            <span class="DisplaySubhead">${msg['footer.aboutLink']}</span><br/>
+            <span class="DisplayLabel">${msg['footer.version']}: ${msg['product.version']}</span><br/>
+            <span class="DisplayLabel">${msg['footer.buildNumber']}: ${msg['product.buildNumber']}</span>
+         </p>
+         <p>
+            <f:verbatim>${msg['footer.copyright']}</f:verbatim> ${msg['about.Copyright.Content']}
+         </p>
+         <p >
+            ${msg['about.MoreInfo.Label']}<br/>
+            <a href="mailto:${msg['about.MoreInfo.LinkSales']}">${msg['about.MoreInfo.LinkSales']}</a><br/>
+            <a href="mailto:${msg['about.MoreInfo.LinkSupport']}">${msg['about.MoreInfo.LinkSupport']}</a>
+         </p>
+    </rich:modalPanel>
 </h:form>

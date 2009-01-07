@@ -75,9 +75,11 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
 </tiles:insert>
 <html:form action="/resource/common/monitor/visibility/CompareMetrics">
 
-<html:link href="javascript:document.CompareMetricsForm.submit()" onclick="clickLink('CompareMetricsForm', 'back')"><fmt:message 
-key="resource.common.monitor.visibility.CompareMetricsReturnLink">
-<fmt:param value="${TitleParam}"/></fmt:message></html:link>
+<html:link href="/rhq/group/monitor/tables.xhtml?groupId=${groupId}&amp;category=COMPATIBLE">
+  <fmt:message key="resource.common.monitor.visibility.CompareMetricsReturnLink">
+    <fmt:param value="${TitleParam}"/>
+  </fmt:message>
+</html:link>
 <tiles:insert definition=".header.tab">
   <tiles:put name="tabKey" value="resource.common.monitor.visibility.CompareMetricsTab"/>
 </tiles:insert>
@@ -179,9 +181,11 @@ key="resource.common.monitor.visibility.CompareMetricsReturnLink">
   <tiles:put name="useCurrentButton" value="true"/>
 </tiles:insert> 
 </div>
-<html:link href="javascript:document.CompareMetricsForm.submit()" onclick="clickLink('CompareMetricsForm', 'back')"><fmt:message 
-key="resource.common.monitor.visibility.CompareMetricsReturnLink">
-<fmt:param value="${TitleParam}"/></fmt:message></html:link>
+<html:link href="/rhq/group/monitor/tables.xhtml?groupId=${groupId}&amp;category=COMPATIBLE">
+  <fmt:message key="resource.common.monitor.visibility.CompareMetricsReturnLink">
+    <fmt:param value="${TitleParam}"/>
+  </fmt:message>
+</html:link>
 
 <html:hidden property="groupId"/>
 <html:hidden property="category"/>
@@ -193,4 +197,3 @@ key="resource.common.monitor.visibility.CompareMetricsReturnLink">
 </html:form>
 
 <tiles:insert definition=".page.footer"/>
-  

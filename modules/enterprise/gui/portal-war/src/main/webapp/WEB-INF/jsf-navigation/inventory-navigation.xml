@@ -355,5 +355,20 @@
       
    </navigation-rule>
 
+   <navigation-rule>
+
+      <from-view-id>/rhq/resource/monitor/tables.xhtml</from-view-id>
+
+      <!--  === chartMetrics (struts) ========================= -->
+
+      <navigation-case>
+         <from-action>#{MetricsTableChartUIBean.chartSelected}</from-action>
+         <from-outcome>chartMetrics</from-outcome>
+         <to-view-id>/resource/common/monitor/Visibility.do?mode=chartMultiMetricSingleResource&amp;id=#{param.id}#{MetricsTableChartUIBean.selected}</to-view-id>
+         <redirect />
+      </navigation-case>
+
+   </navigation-rule>
+
 </faces-config>
       

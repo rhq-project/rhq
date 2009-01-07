@@ -136,18 +136,13 @@
         <managed-bean-scope>request</managed-bean-scope>
     </managed-bean>
     <managed-bean>
+        <managed-bean-name>MetricsTableChartUIBean</managed-bean-name>
+        <managed-bean-class>org.rhq.enterprise.gui.inventory.MetricsTableChartUIBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>    
+    <managed-bean>
         <managed-bean-name>ResourceMetricsTableUIBean</managed-bean-name>
         <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ResourceMetricsTableUIBean</managed-bean-class>
-        <managed-bean-scope>request</managed-bean-scope>
-    </managed-bean>
-    <managed-bean>
-        <managed-bean-name>ResourceGroupMetricsTableUIBean</managed-bean-name>
-        <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ResourceGroupMetricsTableUIBean</managed-bean-class>
-        <managed-bean-scope>request</managed-bean-scope>
-    </managed-bean>
-    <managed-bean>
-        <managed-bean-name>ResourceGroupMetricsCompareUIBean</managed-bean-name>
-        <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ResourceGroupMetricsCompareUIBean</managed-bean-class>
         <managed-bean-scope>request</managed-bean-scope>
     </managed-bean>
     

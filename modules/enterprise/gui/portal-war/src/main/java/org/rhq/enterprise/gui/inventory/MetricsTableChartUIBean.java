@@ -16,36 +16,36 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.inventory.group;
+package org.rhq.enterprise.gui.inventory;
 
 import javax.faces.application.FacesMessage;
 
 import org.rhq.core.gui.util.FacesContextUtility;
 
 /**
- * @author jshaughnessy
+ * @author jay shaughnessy
  */
-public class ResourceGroupMetricsCompareUIBean {
+public class MetricsTableChartUIBean {
 
-    public static final String MANAGED_BEAN_NAME = "ResourceGroupMetricsCompareUIBean";
+    public static final String MANAGED_BEAN_NAME = "MetricsTableChartUIBean";
 
-    public String compareSelected() {
-        String[] selectedResources = FacesContextUtility.getRequest().getParameterValues("selectedResources");
+    public String chartSelected() {
+        String[] selectedMetrics = FacesContextUtility.getRequest().getParameterValues("selectedMetrics");
 
-        if ((selectedResources == null) || (selectedResources.length < 2)) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "Select 2 or more resources for comparison");
+        if ((selectedMetrics == null) || (selectedMetrics.length < 1)) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "Select 1 or more metrics to chart");
         }
 
-        return "compareResourceGroupMetrics";
+        return "chartMetrics";
     }
 
     public String getSelected() {
-        String[] selectedResources = FacesContextUtility.getRequest().getParameterValues("selectedResources");
+        String[] selectedMetrics = FacesContextUtility.getRequest().getParameterValues("selectedMetrics");
 
         StringBuilder sb = new StringBuilder();
-        for (String resourceIdString : selectedResources) {
-            sb.append("&r=");
-            sb.append(resourceIdString);
+        for (String scheduleIdString : selectedMetrics) {
+            sb.append("&m=");
+            sb.append(scheduleIdString);
         }
 
         return sb.toString();

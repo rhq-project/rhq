@@ -125,13 +125,10 @@
                     </h:outputLink>
                 </rich:menuItem>
             </rich:dropDownMenu>
-
             
-            <a href="#" onclick="openAbout(aboutWindowTitle)">
-                #{msg['header.about.link']}
-            </a>
+           <script language="JavaScript" type="text/javascript">var aboutWindowTitle = '${msg["about.Title"]}';</script>           
+            <a href="#" onclick="openAbout(aboutWindowTitle)">#{msg['header.about.link']}</a>
                     
-
             <rich:dropDownMenu>
                 <f:facet name="label">
                     <h:panelGroup>

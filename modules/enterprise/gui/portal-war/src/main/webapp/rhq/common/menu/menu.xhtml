@@ -2,40 +2,43 @@
         xmlns:h="http://java.sun.com/jsf/html"
         xmlns:f="http://java.sun.com/jsf/core" 
         xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+        
+    <f:loadBundle basename="ApplicationResources" var="msg"/>
+    
     <rich:toolBar styleClass="topMenu">
         <rich:toolBarGroup location="right">
             <h:outputLink value="/">
-                <h:outputText value="Start" />
+                <h:outputText value="#{msg['header.start.link']}" />
             </h:outputLink>
 
             <h:outputLink value="/Dashboard.do">
-                <h:outputText value="Dashboard" />
+                <h:outputText value="#{msg['dash.home.PageTitle']}" />
             </h:outputLink>
 
             <rich:dropDownMenu>
                 <f:facet name="label">
                     <h:panelGroup>
                         <h:outputLink value="/ResourceHub.do">
-                            <h:outputText value="Browse Resources" />
+                            <h:outputText value="#{msg['resource.hub.ResourceHubPageTitle']}" />
                         </h:outputLink>
                     </h:panelGroup>
                 </f:facet>
 
                 <rich:menuItem submitMode="none">
                     <h:outputLink value="/ResourceHub.do?resourceCategory=PLATFORM">
-                        <h:outputText value="Platforms" />
+                        <h:outputText value="#{msg['resource.hub.filter.platform']}" />
                     </h:outputLink>
                 </rich:menuItem>
 
                 <rich:menuItem submitMode="none">
                     <h:outputLink value="/ResourceHub.do?resourceCategory=SERVER">
-                        <h:outputText value="Servers" />
+                        <h:outputText value="#{msg['resource.hub.filter.server']}" />
                     </h:outputLink>
                 </rich:menuItem>
 
                 <rich:menuItem submitMode="none">
                     <h:outputLink value="/ResourceHub.do?resourceCategory=SERVICE">
-                        <h:outputText value="Services" />
+                        <h:outputText value="#{msg['resource.hub.filter.service']}" />
                     </h:outputLink>
                 </rich:menuItem>
 
@@ -43,19 +46,19 @@
                     <rich:menuItem submitMode="none">
                         <h:outputLink value="/GroupHub.do">
                             <f:param name="groupCategory" value="COMPATIBLE" />
-                            <h:outputText value="Compatible Groups" />
+                            <h:outputText value="#{msg['resource.hub.filter.compatibleGroups']}" />
                         </h:outputLink>
                     </rich:menuItem>
 
                     <rich:menuItem submitMode="none">
                         <h:outputLink value="/GroupHub.do?groupCategory=MIXED">
-                            <h:outputText value="Mixed Groups" />
+                            <h:outputText value="#{msg['resource.hub.filter.mixedGroups']}" />
                         </h:outputLink>
                     </rich:menuItem>
 
                     <rich:menuItem submitMode="none">
                         <h:outputLink value="/rhq/definition/group/list.xhtml">
-                            <h:outputText value="Group Definition" />
+                            <h:outputText value="#{msg['resource.hub.filter.groupDefinitions']}" />
                         </h:outputLink>
                     </rich:menuItem>
                 </rich:menuGroup>
@@ -65,7 +68,7 @@
                 <f:facet name="label">
                     <h:panelGroup>
                         <h:outputLink value="/Admin.do">
-                            <h:outputText value="Administration" />
+                            <h:outputText value="#{msg['admin.admin.AdministrationTitle']}" />
                         </h:outputLink>
                     </h:panelGroup>
                 </f:facet>
@@ -80,12 +83,12 @@
 
                     <rich:menuItem submitMode="none">
                         <h:outputLink value="/admin/license/LicenseAdmin.do?mode=view">
-                            <h:outputText value="License" />
+                            <h:outputText value="#{msg['header.license']}" />
                         </h:outputLink>
                     </rich:menuItem>
                 </rich:menuGroup>
 
-                <rich:menuGroup value="Users">
+                <rich:menuGroup value="#{msg['header.users']}">
                     <rich:menuItem submitMode="none">
                         <h:outputLink value="/admin/user/UserAdmin.do">
                             <f:param name="mode" value="list" />
@@ -104,7 +107,7 @@
             <rich:dropDownMenu>
                 <f:facet name="label">
                     <h:panelGroup>
-                        <h:outputText value="Help" />
+                        <h:outputText value="#{msg['header.help.link']}" />
                     </h:panelGroup>
                 </f:facet>
 
@@ -123,13 +126,11 @@
                 </rich:menuItem>
             </rich:dropDownMenu>
 
-            <rich:dropDownMenu>
-                <f:facet name="label">
-                    <h:panelGroup>
-                        <a href="#" onclick="openAbout(aboutWindowTitle)">About</a>
-                    </h:panelGroup>
-                </f:facet>
-            </rich:dropDownMenu>
+            
+            <a href="#" onclick="openAbout(aboutWindowTitle)">
+                #{msg['header.about.link']}
+            </a>
+                    
 
             <rich:dropDownMenu>
                 <f:facet name="label">
@@ -155,7 +156,7 @@
             </rich:dropDownMenu>
             
             <h:outputLink value="/Logout.do">
-                <h:outputText value="Logout" />
+                <h:outputText value="#{msg['header.logout.link']}" />
             </h:outputLink>
             
         </rich:toolBarGroup>

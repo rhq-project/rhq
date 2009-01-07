@@ -56,7 +56,11 @@
             default:
                 return "red";
         }
-}
+    }
+    
+    public String escapeBackslashes(String s) {
+        return s.replaceAll("\\\\", "\\\\\\\\");
+    }
 %>
 
 <%! public class GroupedEventComposite extends EventComposite {
@@ -140,7 +144,7 @@
             String title = event.getEventDetail();
             title = title.replace('\n', ' ');
 
-            title = trimLength(title,30);
+            title = escapeBackslashes(trimLength(title,30));
 
             String icon = null;
             String color = null;
@@ -158,16 +162,16 @@
             String link = "/resource/common/Events.do?mode=events&id=" + resourceId + "&eventId=" + event.getEventId();
 
             String detail = null;
-            if (event instanceof GroupedEventComposite) {
+            if (grouped) {
                 StringBuilder buf = new StringBuilder();
                 for (EventComposite childEvent : ((GroupedEventComposite)event).events) {
                     buf.append("<a href='/resource/common/Events.do?mode=events&id=" + resourceId + "&eventId=" + childEvent.getEventId() + "'>");
-                    buf.append("<font size=\"-1\" color=\"" + color + "\">" + trimLength(childEvent.getEventDetail(),80) + "</font></a><br />");
+                    buf.append("<font size=\"-1\" color=\"" + color + "\">" + escapeBackslashes(trimLength(childEvent.getEventDetail(),80)) + "</font></a><br />");
                 }
                 detail = buf.toString();
             } else {
-                detail = event.getEventDetail();
-                detail = "<b>Source:</b>" + event.getSourceLocation() + "<br/><b>Detail:</b>" + detail;
+                detail = escapeBackslashes(event.getEventDetail());
+                detail = "<b>Source:</b>" + escapeBackslashes(event.getSourceLocation()) + "<br/><b>Detail:</b>" + detail;
             }
 
 

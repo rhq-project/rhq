@@ -31,7 +31,6 @@ import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.client.ClientCommandSender;
-import org.rhq.enterprise.communications.command.client.JBossRemotingRemoteCommunicator;
 import org.rhq.enterprise.communications.command.client.RemoteCommunicator;
 import org.rhq.enterprise.communications.command.impl.generic.GenericCommandClient;
 import org.rhq.enterprise.communications.command.impl.identify.IdentifyCommand;
@@ -83,7 +82,8 @@ public class IdentifyPromptCommand implements AgentPromptCommand {
                 ServerEndpoint serverEndpoint = AgentUtils.getServerEndpoint(agent.getConfiguration(), args[1]);
 
                 // use the generic client utility to issue the command
-                RemoteCommunicator rc = new JBossRemotingRemoteCommunicator(serverEndpoint.toString());
+                RemoteCommunicator rc = agent.createServerRemoteCommunicator(serverEndpoint.transport,
+                    serverEndpoint.namePort.address, serverEndpoint.namePort.port, serverEndpoint.transportParams);
                 GenericCommandClient client = new GenericCommandClient(rc);
 
                 out.println(MSG.getMsg(AgentI18NResourceKeys.IDENTIFY_ASK_REMOTE_SERVER_FOR_ID, args[1]));

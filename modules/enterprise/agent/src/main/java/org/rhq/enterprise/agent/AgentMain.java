@@ -2306,7 +2306,8 @@ public class AgentMain {
     /**
      * Creates a raw remote communicator that can talk to the given endpoint.
      * 
-     * This is package-scoped so the {@link PrimaryServerSwitchoverThread} can use this.
+     * This is public-scoped so the {@link PrimaryServerSwitchoverThread} can use this
+     * and the {@link IdentifyPromptCommand} can use this.
      * 
      * @param transport
      * @param address
@@ -2317,8 +2318,8 @@ public class AgentMain {
      * 
      * @throws Exception if the communicator could not be created
      */
-    RemoteCommunicator createServerRemoteCommunicator(String transport, String address, int port, String transportParams)
-        throws Exception {
+    public RemoteCommunicator createServerRemoteCommunicator(String transport, String address, int port,
+        String transportParams) throws Exception {
 
         String uri = AgentConfiguration.buildServerLocatorUri(transport, address, port, transportParams);
         return createServerRemoteCommunicator(uri, false, false);

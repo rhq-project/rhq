@@ -32,7 +32,7 @@ ant -Dagent.home.dir=/my/agent/rhq-agent -Dnew.version=0.0.0.GA -Dnew.build=0
       <property name="agent.home.dir" location="${env.RHQ_AGENT_HOME}"/>
    </target>
 
-   <target name="stamp" depends="init">
+   <target name="stamp" depends="init" description="Stamps a new version on an agent. The following system properties can be passed on the command line: -Dagent.home.dir, -Dnew.version, -Dnew.build">
       <echo>RHQ Agent Home=${agent.home.dir}</echo>
 
       <delete file="${java.io.tmpdir}/rhq-agent-version.properties" verbose="false" quiet="true" />

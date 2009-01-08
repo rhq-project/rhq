@@ -66,19 +66,7 @@ id - the id of the Resource being accessed
 
             <f:param name="id" value="#{param.id}"/>
 
-            <onc:tab name="Monitor" rendered="#{monitorEnabled}">
-                <onc:subtab name="Visibility" url="/resource/common/monitor/Visibility.do">
-                    <f:param name="mode" value="currentHealth"/>
-                </onc:subtab>
-                <onc:subtab name="Events" url="/resource/common/Events.do">
-                    <f:param name="mode" value="events"/>
-                </onc:subtab>
-                <onc:subtab name="Configure" url="/resource/common/monitor/Config.do">
-                    <f:param name="mode" value="configure"/>
-                </onc:subtab>
-            </onc:tab>
-
-            <onc:tab name="Monitor+">
+            <onc:tab name="Monitor">
                 <onc:subtab name="Graphs" url="/rhq/resource/monitor/graphs.xhtml"/>
                 <onc:subtab name="Tables" url="/rhq/resource/monitor/tables.xhtml"/>
                 <onc:subtab name="Schedules" url="/rhq/resource/monitor/schedules.xhtml"/>

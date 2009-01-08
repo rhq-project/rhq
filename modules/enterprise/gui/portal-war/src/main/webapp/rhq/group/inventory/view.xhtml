@@ -178,10 +178,9 @@
          <f:param name="id" value="#{resourcWithAvailability.resource.id}"/>
 
          <onc:icon name="m" 
-                   url="/resource/common/monitor/Visibility.do" 
-                   alt="Monitor" 
+                   url="/rhq/resource/monitor/graphs.xhtml" 
+                   alt="Monitor"
                    visible="#{monitorEnabled}">
-            <f:param name="mode" value="currentHealth"/>
          </onc:icon>
 
          <onc:icon name="i" 
@@ -207,7 +206,9 @@
                    url="/rhq/resource/content/view.xhtml" 
                    alt="Packages"
                    visible="#{resourcWithAvailability.resourceFacets.content}"/>
-            <f:param name="mode" value="list"/>
+         
+         <!--  Is this necessary? It's being passed for all quick nav urls. -->   
+         <f:param name="mode" value="list"/>
 
       </onc:quickNav>
    </rich:column>
@@ -219,9 +220,8 @@
          </onc:sortableColumnHeader>
       </f:facet>
 
-      <h:outputLink value="/resource/common/monitor/Visibility.do">
+      <h:outputLink value="/rhq/resource/monitor/graphs.xhtml">
          <f:param name="id" value="#{resourcWithAvailability.resource.id}"/>
-         <f:param name="mode" value="currentHealth"/>
          <h:outputText value="#{resourcWithAvailability.resource.name}"/>
       </h:outputLink>
    </rich:column>
@@ -233,9 +233,8 @@
          </onc:sortableColumnHeader>
       </f:facet>
 
-      <h:outputLink value="/resource/common/monitor/Visibility.do">
+      <h:outputLink value="/rhq/resource/monitor/graphs.xhtml">
          <f:param name="id" value="#{resourcWithAvailability.parent.id}"/>
-         <f:param name="mode" value="currentHealth"/>
          <h:outputText value="#{resourcWithAvailability.parent.name}"/>
       </h:outputLink>
    </rich:column>

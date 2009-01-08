@@ -159,10 +159,9 @@
          <f:param name="id" value="#{resourceComposite.resource.id}"/>
 
          <onc:icon name="m" 
-                   url="/resource/common/monitor/Visibility.do" 
+                   url="/rhq/resource/monitor/graphs.xhtml" 
                    alt="Monitor" 
                    visible="#{monitorEnabled}">
-            <f:param name="mode" value="currentHealth"/>
          </onc:icon>
 
          <onc:icon name="i" 
@@ -199,9 +198,8 @@
          </onc:sortableColumnHeader>
       </f:facet>
 
-      <h:outputLink value="/resource/common/monitor/Visibility.do">
+      <h:outputLink value="/rhq/resource/monitor/graphs.xhtml">
          <f:param name="id" value="#{resourceComposite.resource.id}"/>
-         <f:param name="mode" value="currentHealth"/>
          <h:outputText value="#{resourceComposite.resource.name}"/>
       </h:outputLink>
    </rich:column>
@@ -645,10 +643,9 @@
             <onc:quickNav>
                <f:param name="groupId" value="#{resourceGroupComposite.resourceGroup.id}"/>
 
-               <onc:icon name="m" url="/resource/group/monitor/Visibility.do" alt="Monitor"
+               <onc:icon name="m" url="/rhq/group/monitor/graphs.xhtml" alt="Monitor"
                          visible="#{resourceGroupComposite.category.name eq 'COMPATIBLE'}">
                   <f:param name="category" value="#{resourceGroupComposite.category.name}"/>
-                  <f:param name="mode" value="currentHealth"/>
                </onc:icon>
 
                <onc:icon name="i" url="/rhq/group/inventory/view.xhtml" alt="Inventory">
@@ -689,11 +686,10 @@
                </onc:sortableColumnHeader>
             </f:facet>
 
-            <h:outputLink value="/resource/group/monitor/Visibility.do"
+            <h:outputLink value="/rhq/group/monitor/graphs.xhtml"
                   rendered="#{resourceGroupComposite.category.name eq 'COMPATIBLE'}">
                <f:param name="groupId" value="#{resourceGroupComposite.resourceGroup.id}"/>
                <f:param name="category" value="#{resourceGroupComposite.category.name}"/>
-               <f:param name="mode" value="currentHealth"/>
                <h:outputText value="#{resourceGroupComposite.resourceGroup.name}"/>
             </h:outputLink>
             <h:outputLink value="/rhq/group/inventory/view.xhtml"

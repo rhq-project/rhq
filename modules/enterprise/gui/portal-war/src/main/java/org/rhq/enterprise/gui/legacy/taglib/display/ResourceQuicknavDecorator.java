@@ -31,7 +31,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public class ResourceQuicknavDecorator extends QuicknavDecorator {
-    private static final String MONITOR_URL = "/resource/common/monitor/Visibility.do?mode=currentHealth";
+    private static final String MONITOR_URL = "/rhq/resource/monitor/graphs.xhtml";
     private static final String INVENTORY_URL = "/rhq/resource/inventory/view.xhtml";
     private static final String CONFIGURE_URL = "/rhq/resource/configuration/view.xhtml";
     private static final String OPERATIONS_URL = "/rhq/resource/operation/resourceOperationScheduleNew.xhtml";

@@ -29,7 +29,7 @@
     <display:table cellspacing="0" cellpadding="0" width="100%" action="/Dashboard.do"
                    var="resource" items="${resourceHealth}" >
                 
-        <display:column width="50%" href="/resource/common/monitor/Visibility.do?mode=currentHealth&id=${resource.id}" property="name" sortAttr="res.name" title="dash.home.TableHeader.ResourceName"/>
+        <display:column width="50%" href="/rhq/resource/monitor/graphs.xhtml?id=${resource.id}" property="name" sortAttr="res.name" title="dash.home.TableHeader.ResourceName"/>
         <display:column width="25%" property="typeName" title="dash.home.TableHeader.Type"/>
         <c:if test="${alerts}">                  
           <display:column width="10%" property="alerts" title="dash.home.TableHeader.Alerts" align="center"/>          

@@ -24,7 +24,7 @@ CONTEXT PARAMETERS:
 pageTitle - the page title
 pageHelpURL - a context-sensitive help URL for the page (optional)
 selectedTabName - the name of the tab/subTab to select in the following format: tabName[.subtabName]
-(e.g. "Inventory" or "Monitor.Visibility")
+(e.g. "Inventory" or "Monitor.Graphs")
 
 REQUEST PARAMETERS:
 groupId - the id of the ResourceGroup being accessed
@@ -63,16 +63,7 @@ THIS TEXT WILL BE REMOVED AS WELL.
       <f:param name="groupId" value="#{param.groupId}"/>
       <f:param name="category" value="#{param.category}"/>
 
-      <onc:tab name="Monitor" rendered="#{monitorEnabled and param.category eq 'COMPATIBLE'}">
-         <onc:subtab name="Visibility" url="/resource/group/monitor/Visibility.do">
-            <f:param name="mode" value="currentHealth"/>
-         </onc:subtab>
-         <onc:subtab name="Configure" url="/resource/common/monitor/Config.do">
-            <f:param name="mode" value="configure"/>
-         </onc:subtab>
-      </onc:tab>
-      
-      <onc:tab name="Monitor+" rendered="#{param.category eq 'COMPATIBLE'}">
+      <onc:tab name="Monitor" rendered="#{param.category eq 'COMPATIBLE'}">
          <onc:subtab name="Graphs" url="/rhq/group/monitor/graphs.xhtml"/>
          <onc:subtab name="Tables" url="/rhq/group/monitor/tables.xhtml"/>
          <onc:subtab name="Schedules" url="/rhq/group/monitor/schedules.xhtml"/>

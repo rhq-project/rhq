@@ -292,9 +292,8 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputLink value="/resource/common/monitor/Visibility.do">
+                  <h:outputLink value="/rhq/resource/monitor/graphs.xhtml">
                      <f:param name="id" value="#{resourceitem.id}"/>
-                     <f:param name="mode" value="currentHealth"/>
                      <h:outputText value="#{resourceitem.name}" />
                   </h:outputLink>
                </rich:column>

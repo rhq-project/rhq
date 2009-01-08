@@ -44,7 +44,7 @@ chbtWidgetProps = getWidgetProperties('<c:out value="${chbtWidget}"/>');
           <display:checkboxdecorator name="r" onclick="ToggleSelectionCompare(this, chbtWidgetProps);" styleClass="availableListMember"/>
         </display:column>
         <display:column width="50%" property="name" title="${typeName}" isLocalizedTitle="false" sort="true" sortAttr="5" defaultSort="true" styleClass="ListCell"
-                        href="/resource/common/monitor/Visibility.do?mode=currentHealth&category=COMPATIBLE" paramId="id" paramProperty="id" nowrap="true"/>
+                        href="/rhq/resource/monitor/graphs.xhtml?category=COMPATIBLE" paramId="id" paramProperty="id" nowrap="true"/>
         <display:column width="1%" value="${tmpImg}" title="&nbsp;"
                         isLocalizedTitle="false" styleClass="ListCellCheckboxLeftLine"
                         href="/rhq/resource/alert/listAlertDefinitions.xhtml?mode=list" paramId="id" paramProperty="id" nowrap="true"/>

@@ -47,7 +47,7 @@
              </c:otherwise>
            </c:choose>
         </td>
-        <td class="ListCell" align="left"><html:link page="/resource/common/monitor/Visibility.do?mode=currentHealth&id=${platform.id}"><c:out value="${platform.name}"/>&nbsp;</html:link></td>
+        <td class="ListCell" align="left"><html:link page="/rhq/resource/monitor/graphs.xhtml?id=${platform.id}"><c:out value="${platform.name}"/>&nbsp;</html:link></td>
         <td class="ListCell" align="left"><hq:dateFormatter value="${platform.ctime}"/>&nbsp;</td>
       </tr>
       <c:if test="${platform.showChildren}">
@@ -55,7 +55,7 @@
       <c:forEach items="${platform.children}" var="server">
       <tr class="ListRow">
         <td class="ListCell"></td>
-        <td class="ListCell" align="left"><html:link page="/resource/common/monitor/Visibility.do?mode=currentHealth&id=${server.id}"><c:out value="${server.name}"/>&nbsp;</html:link></td>
+        <td class="ListCell" align="left"><html:link page="/rhq/resource/monitor/graphs.xhtml?id=${server.id}"><c:out value="${server.name}"/>&nbsp;</html:link></td>
         <td class="ListCell" align="left"><hq:dateFormatter value="${server.ctime}"/>&nbsp;</td>
       </tr>
       </c:forEach> <!-- For each server -->

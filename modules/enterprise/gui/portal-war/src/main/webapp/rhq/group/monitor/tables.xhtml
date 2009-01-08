@@ -18,7 +18,7 @@
 
    <ui:param name="pageTitle"
       value="#{ResourceGroupUIBean.groupCategoryName} '#{ResourceGroupUIBean.name}' - Metric Tables" />
-   <ui:param name="selectedTabName" value="Monitor+.Tables" />
+   <ui:param name="selectedTabName" value="Monitor.Tables" />
 
    <ui:define name="content">
 
@@ -62,9 +62,8 @@
                   </f:facet>
 
                   <h:outputLink
-                     value="/resource/common/monitor/Visibility.do">
+                     value="/rhq/resource/monitor/graphs.xhtml">
                      <f:param name="id" value="#{healthSummary.id}" />
-                     <f:param name="mode" value="currentHealth" />
                      <h:outputText value="#{healthSummary.name}" />
                   </h:outputLink>
                </rich:column>

@@ -10,12 +10,10 @@
       <b><fmt:message key="resource.common.monitor.visibility.chart.ResourceAndControlActionKeyLabel"/></b><br>
 
       <c:forEach var="resource" varStatus="resStatus" items="${checkedResources}">
-      <c:url var="resourceUrl" value="/resource/common/monitor/Visibility.do">
-         <c:param name="mode" value="currentHealth"/>
+      <c:url var="resourceUrl" value="/rhq/resource/monitor/graphs.xhtml">
          <c:param name="id" value="${resource.id}"/>
       </c:url>
-      <c:url var="parentResourceUrl" value="/resource/common/monitor/Visibility.do">
-         <c:param name="mode" value="currentHealth"/>
+      <c:url var="parentResourceUrl" value="/rhq/resource/monitor/graphs.xhtml">
          <c:param name="id" value="${resource.parentResource.id}"/>
       </c:url>
       <fmt:formatNumber var="imgidx" pattern="00" value="${resStatus.index + 1}"/>

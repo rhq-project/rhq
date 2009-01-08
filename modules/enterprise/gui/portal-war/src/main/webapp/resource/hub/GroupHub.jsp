@@ -252,7 +252,7 @@
             <c:when test="${GroupHubForm.groupCategory == 'COMPATIBLE'}">
                <display:column width="25%" property="resourceGroup.name" title="common.header.Group"
                                isLocalizedTitle="true" sortAttr="g.name"
-                               href="/resource/group/monitor/Visibility.do?mode=currentHealth&category=${GroupHubForm.groupCategory}&groupId=${groupComposite.resourceGroup.id}"/>
+                               href="/rhq/group/monitor/graphs.xhtml?category=${GroupHubForm.groupCategory}&groupId=${groupComposite.resourceGroup.id}"/>
             </c:when>
             <c:otherwise>
                <display:column width="25%" property="resourceGroup.name" title="common.header.Group"

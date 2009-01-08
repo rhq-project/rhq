@@ -53,7 +53,7 @@
               </tr>  
               <c:forEach items="${lastCompletedResource}" var="obj">
                 <tr class="ListRow">                                                   
-                  <td class="ListCell"><html:link page="/resource/common/monitor/Visibility.do?mode=currentHealth&id=${obj.resourceId}"><c:out value="${obj.resourceName}"/></html:link></td>
+                  <td class="ListCell"><html:link page="/rhq/resource/monitor/graphs.xhtml?id=${obj.resourceId}"><c:out value="${obj.resourceName}"/></html:link></td>
                   <td class="ListCell"><c:out value="${obj.resourceTypeName}"/></td>
                   <td class="ListCell"><c:out value="${obj.operationName}"/></td>
                   <td class="ListCell"><hq:dateFormatter value="${obj.operationStartTime}"/></td>
@@ -88,7 +88,7 @@
               </tr>  
               <c:forEach items="${lastCompletedGroup}" var="obj">
                 <tr class="ListRow">                                                   
-                  <td class="ListCell"><html:link page="/resource/group/monitor/Visibility.do?mode=currentHealth&category=COMPATIBLE&groupId=${obj.groupId}"><c:out value="${obj.groupName}"/></html:link></td>
+                  <td class="ListCell"><html:link page="/rhq/groups/monitor/graphs.xhtml?category=COMPATIBLE&groupId=${obj.groupId}"><c:out value="${obj.groupName}"/></html:link></td>
                   <td class="ListCell"><c:out value="${obj.groupResourceTypeName}"/></td>
                   <td class="ListCell"><c:out value="${obj.operationName}"/></td>
                   <td class="ListCell"><hq:dateFormatter value="${obj.operationStartTime}"/></td>

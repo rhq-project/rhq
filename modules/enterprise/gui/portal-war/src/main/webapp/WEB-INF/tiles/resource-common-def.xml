@@ -91,7 +91,7 @@
       <put name="resourceType" value="2"/>
       <putList name="tabList">
          <item value="Monitor"
-               link="/resource/common/monitor/Visibility.do" mode="currentHealth"
+               link="/rhq/resource/monitor/graphs.xhtml"
                height="21" width="102"
                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
          <item value="Inventory"

@@ -36,7 +36,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public class GroupQuicknavDecorator extends QuicknavDecorator {
-    private static final String MONITOR_URL = "/resource/group/monitor/Visibility.do?mode=currentHealth";
+    private static final String MONITOR_URL = "/rhq/group/monitor/graphs.xhtml";
     private static final String INVENTORY_URL = "/rhq/group/inventory/view.xhtml";
     private static final String CONFIGURE_URL = "/rhq/group/configuration/current.xhtml";
     private static final String OPERATIONS_URL = "/rhq/group/operation/groupOperationScheduleNew.xhtml";

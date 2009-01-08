@@ -101,12 +101,10 @@
             <c:set var="resource" value="${resources[0]}"/>
          </c:otherwise>
       </c:choose>
-      <c:url var="resourceUrl" value="/resource/common/monitor/Visibility.do">
-         <c:param name="mode" value="currentHealth"/>
+      <c:url var="resourceUrl" value="/rhq/resource/monitor/graphs.xhtml">
          <c:param name="id" value="${resource.id}"/>
       </c:url>
-      <c:url var="parentResourceUrl" value="/resource/common/monitor/Visibility.do">
-         <c:param name="mode" value="currentHealth"/>
+      <c:url var="parentResourceUrl" value="/rhq/resource/monitor/graphs.xhtml">
          <c:param name="id" value="${resource.parentResource.id}"/>
       </c:url>
       <tr class="ListRow">

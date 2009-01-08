@@ -117,23 +117,22 @@
                     </h:outputLink>
                 </rich:menuItem>
 
-                <rich:menuSeparator />
-
                 <rich:menuItem submitMode="none">
                     <h:outputLink value="https://support.redhat.com/jbossnetwork/restricted/addCase.html" target="blank_">
                         <h:outputText value="Open a Support Case" />
                     </h:outputLink>
                 </rich:menuItem>
+                
+                <rich:menuSeparator />
+                
+                <rich:menuItem submitMode="none">
+                    <h:outputLink value="#" id="link">
+                        #{msg['header.about.link']} 
+                        <rich:componentControl for="aboutPanel" attachTo="link" operation="show" event="onclick"/>
+                    </h:outputLink>        
+                </rich:menuItem>
             </rich:dropDownMenu>
-            
-            <script language="JavaScript" type="text/javascript">var aboutWindowTitle = '${msg["about.Title"]}';</script>           
-            <a href="#" onclick="openAbout(aboutWindowTitle)">#{msg['header.about.link']}</a>
-                       
-            <h:outputLink value="#" id="link">
-                #{msg['header.about.link']}+ 
-                <rich:componentControl for="aboutPanel" attachTo="link" operation="show" event="onclick"/>
-            </h:outputLink>
-                    
+                                            
             <rich:dropDownMenu>
                 <f:facet name="label">
                     <h:panelGroup>
@@ -164,10 +163,10 @@
         </rich:toolBarGroup>
     </rich:toolBar>
     
-    <rich:modalPanel id="aboutPanel">
+    <rich:modalPanel id="aboutPanel" resizeable="false" width="320" height="220">
         <f:facet name="header">
             <h:panelGroup>
-                ${msg['about.Title']}
+                #{msg['about.Title']}
             </h:panelGroup>
         </f:facet>
         <f:facet name="controls">
@@ -177,17 +176,19 @@
             </h:panelGroup>
         </f:facet>
         <p>
-            <span class="DisplaySubhead">${msg['footer.aboutLink']}</span><br/>
-            <span class="DisplayLabel">${msg['footer.version']}: ${msg['product.version']}</span><br/>
-            <span class="DisplayLabel">${msg['footer.buildNumber']}: ${msg['product.buildNumber']}</span>
+            <span class="DisplaySubhead">#{msg['footer.aboutLink']}</span><br/>
+            <span class="DisplayLabel">#{msg['footer.version']}: #{msg['product.version']}</span><br/>
+            <span class="DisplayLabel">#{msg['footer.buildNumber']}: #{msg['product.buildNumber']}</span>
          </p>
          <p>
-            <f:verbatim>${msg['footer.copyright']}</f:verbatim> ${msg['about.Copyright.Content']}
+            <f:verbatim>#{msg['footer.copyright']}</f:verbatim> #{msg['about.Copyright.Content']}
          </p>
-         <p >
-            ${msg['about.MoreInfo.Label']}<br/>
-            <a href="mailto:${msg['about.MoreInfo.LinkSales']}">${msg['about.MoreInfo.LinkSales']}</a><br/>
-            <a href="mailto:${msg['about.MoreInfo.LinkSupport']}">${msg['about.MoreInfo.LinkSupport']}</a>
+         <p>
+            #{msg['about.MoreInfo.Label']}<br/>
+            <a href="mailto:#{msg['about.MoreInfo.LinkSales']}">#{msg['about.MoreInfo.LinkSales']}</a><br/>
+            <a href="mailto:#{msg['about.MoreInfo.LinkSupport']}">#{msg['about.MoreInfo.LinkSupport']}</a>
          </p>
+         
+         <input type="button" value="Ok" onclick="Richfaces.hideModalPanel('aboutPanel');"/>
     </rich:modalPanel>
 </h:form>

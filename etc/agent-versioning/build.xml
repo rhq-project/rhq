@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+This ANT script is used to test the agent auto-update functionality.
+This takes an agent's core jar file that contains the version information
+and alters it to make it look like its a different version/build than it
+really use. Use this to change the version and/or build strings so the
+server will think the agent is out of date and needs to be updated.
+
+To configure this script, you must tell the script where the agent's
+home directory is. You do this by either setting the normal
+RHQ_AGENT_HOME environment variable or you pass in -Dagent.home.dir
+on the ANT command line. You can also tell this script what the new
+version and build strings should be used by passing in the command
+line arguments -Dnew.version and/or -Dnew.build.
+
+The typical usage of this script that you will normally use is:
+
+ant -Dagent.home.dir=/my/agent/rhq-agent
+
+Which simply resets the build number to 0.
+
+This is another usage (this shows all command line args being used):
+
+ant -Dagent.home.dir=/my/agent/rhq-agent -Dnew.version=0.0.0.GA -Dnew.build=1
+
+-->
+<project name="agent-versioning" default="stamp" basedir=".">
+   <target name="init">
+      <property environment="env" />
+      <property name="env.RHQ_AGENT_HOME" location="rhq-agent"/>
+      <property name="agent.home.dir" location="${env.RHQ_AGENT_HOME}"/>
+   </target>
+
+   <target name="stamp" depends="init">
+      <echo>RHQ Agent Home=${agent.home.dir}</echo>
+
+      <delete file="${java.io.tmpdir}/rhq-agent-version.properties" verbose="false" quiet="true" />
+      <unjar dest="${java.io.tmpdir}">
+         <fileset dir="${agent.home.dir}/lib">
+            <include name="rhq-enterprise-agent-*.jar"/>
+         </fileset>
+         <patternset>
+             <include name="rhq-agent-version.properties"/>
+         </patternset>
+      </unjar>
+      
+      <property name="agent.version.properties.file" location="${java.io.tmpdir}/rhq-agent-version.properties" />
+      <property file="${agent.version.properties.file}"/>
+      <echo>Current Version=${Product-Version}</echo>
+      <echo>Current Build=${Build-Number}</echo>
+
+      <!-- set some defaults, but the user can override these via -D command line args -->
+      <!-- by default, we keep the version string, but reset the build number to 0 -->
+      <property name="new.version" value="${Product-Version}" />
+      <property name="new.build" value="0" />
+      <echo>New Version To Be Used=${new.version}</echo>
+      <echo>New Build To Be Used=${new.build}</echo>
+
+      <replace file="${agent.version.properties.file}">
+        <replacefilter token="Product-Version=${Product-Version}" value="Product-Version=${new.version}"/>
+        <replacefilter token="Build-Number=${Build-Number}" value="Build-Number=${new.build}"/>
+      </replace>
+
+      <property name="agent.jar" location="${agent.home.dir}/lib/rhq-enterprise-agent-${Product-Version}.jar"/>
+      <echo>RHQ Agent Jar Being Modified=${agent.jar}</echo>
+      <jar file="${agent.jar}" update="true">
+         <fileset dir="${java.io.tmpdir}">
+            <include name="rhq-agent-version.properties" />
+         </fileset>
+      </jar>
+   </target>
+</project>

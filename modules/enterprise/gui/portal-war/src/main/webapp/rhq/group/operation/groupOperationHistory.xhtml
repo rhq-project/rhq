@@ -260,7 +260,10 @@
                   </f:facet>
                  
                   <h:outputText rendered="#{historyItem.status ne 'FAILURE'}" value="#{historyItem.status}"/>
-                  <onc:errorPopup popupId="completed-#{historyItem.id}" errorMessage="#{historyItem.errorMessage}" rendered="#{historyItem.status eq 'FAILURE'}">Failure</onc:errorPopup>
+                  <h:outputLink rendered="#{historyItem.status eq 'FAILURE'}"
+                                value="javascript:displayMessageModal('Error Message','#{historyItem.errorMessage}')">
+                     <h:outputText value="#{historyItem.status}"/>
+                  </h:outputLink>
                </rich:column>
                
                <rich:column>

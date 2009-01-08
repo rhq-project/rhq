@@ -64,7 +64,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
 
-import org.jboss.remoting.InvokerLocator;
 import org.jboss.remoting.invocation.NameBasedInvocation;
 import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
@@ -97,6 +96,7 @@ import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.agent.AgentRestartCounter.AgentRestartReason;
+import org.rhq.enterprise.agent.AgentUtils.ServerEndpoint;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 import org.rhq.enterprise.agent.promptcmd.AgentPromptCommand;
@@ -1716,7 +1716,6 @@ public class AgentMain {
      * 
      * @return <code>true</code> if successfully switched, <code>false</code> otherwise
      */
-    @SuppressWarnings("unchecked")
     public boolean switchToServer(String server) {
         AgentConfiguration config = getConfiguration();
         String currentServerAddress = config.getServerBindAddress();
@@ -1724,41 +1723,13 @@ public class AgentMain {
         String currentServerTransport = config.getServerTransport();
         String currentServerTransportParams = config.getServerTransportParams();
 
-        ServerEntry newServer;
-        String newTransport;
-        String newTransportParams;
+        ServerEndpoint newServer;
 
-        // hostnames never have a ":" - if there is a ":", this is therefore a full endpoint URL
-        if (server.indexOf(':') > -1) {
-            try {
-                InvokerLocator endpointUrl = new InvokerLocator(server);
-                String host = endpointUrl.getHost();
-                int port = endpointUrl.getPort();
-                newServer = new ServerEntry(host, port, port);
-                newTransport = endpointUrl.getProtocol();
-                String path = endpointUrl.getPath();
-                Map<Object, Object> parameters = endpointUrl.getParameters();
-                newTransportParams = "/" + ((path != null) ? path : "");
-                if (parameters != null && parameters.size() > 0) {
-                    newTransportParams += "?";
-                    boolean needAmp = false;
-                    for (Map.Entry<Object, Object> configEntry : parameters.entrySet()) {
-                        if (needAmp) {
-                            newTransportParams += "&";
-                        }
-                        newTransportParams += configEntry.getKey().toString() + "=" + configEntry.getValue().toString();
-                        needAmp = true;
-                    }
-                }
-
-            } catch (Exception e) {
-                LOG.warn(AgentI18NResourceKeys.CANNOT_SWITCH_TO_INVALID_SERVER, server, e);
-                return false;
-            }
-        } else {
-            newServer = new ServerEntry(server, currentServerPort, currentServerPort);
-            newTransport = currentServerTransport;
-            newTransportParams = currentServerTransportParams;
+        try {
+            newServer = AgentUtils.getServerEndpoint(config, server);
+        } catch (Exception e) {
+            LOG.warn(AgentI18NResourceKeys.CANNOT_SWITCH_TO_INVALID_SERVER, server, ThrowableUtil.getAllMessages(e));
+            return false;
         }
 
         RemoteCommunicator comm;
@@ -1769,7 +1740,7 @@ public class AgentMain {
                 throw new IllegalStateException(); // i don't think this will ever happen, but just in case
             }
         } catch (Exception e) {
-            LOG.warn(AgentI18NResourceKeys.CANNOT_SWITCH_NULL_COMMUNICATOR, server, e);
+            LOG.warn(AgentI18NResourceKeys.CANNOT_SWITCH_NULL_COMMUNICATOR, server, ThrowableUtil.getAllMessages(e));
             return false;
         }
 
@@ -1778,7 +1749,7 @@ public class AgentMain {
 
         // need to synch on last failover time so we don't clash with the real failover stuff
         synchronized (m_lastFailoverTime) {
-            boolean ok = switchCommServer(comm, newServer, newTransport, newTransportParams);
+            boolean ok = switchCommServer(comm, newServer.namePort, newServer.transport, newServer.transportParams);
             if (!ok) {
                 try {
                     // we are switching back to the original server because our switch failed

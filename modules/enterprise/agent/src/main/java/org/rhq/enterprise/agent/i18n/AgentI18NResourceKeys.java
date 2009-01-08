@@ -875,7 +875,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("identify")
     String IDENTIFY = "PromptCommand.identify";
 
-    @I18NMessage("identify [endpoint-locator-URI]")
+    @I18NMessage("identify [endpoint]")
     String IDENTIFY_SYNTAX = "PromptCommand.identify.syntax";
 
     @I18NMessage("Asks to identify a remote server")
@@ -893,11 +893,11 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("An error occurred asking the remote endpoint for identification")
     String IDENTIFY_REMOTE_FAILURE = "PromptCommand.identify.remote-failure";
 
-    @I18NMessage("The agent is not able to send data to the RHQ Server right now.")
+    @I18NMessage("The agent is not able to send data right now (is the agent shutdown?)")
     String IDENTIFY_NOT_SENDING = "PromptCommand.identify.not-sending";
 
     @I18NMessage("This will send a request-for-identification message to a remote server.\\n\\\n"
-        + "If you do not specify an endpoint locator URI, this will\\n\\\n"
+        + "If you do not specify an endpoint (either as a hostname or full URI), this will\\n\\\n"
         + "send the command to the RHQ Server.  If you wish to identify\\n\\\n"
         + "a different endpoint, you can specify it as an argument to this command.")
     String IDENTIFY_DETAILED_HELP = "PromptCommand.identify.detailed-help";

@@ -24,6 +24,8 @@ import java.net.MalformedURLException;
 import mazz.i18n.Msg;
 
 import org.rhq.enterprise.agent.AgentMain;
+import org.rhq.enterprise.agent.AgentUtils;
+import org.rhq.enterprise.agent.AgentUtils.ServerEndpoint;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 import org.rhq.enterprise.communications.command.Command;
@@ -58,9 +60,12 @@ public class IdentifyPromptCommand implements AgentPromptCommand {
         PrintWriter out = agent.getOut();
 
         try {
-            if (args.length <= 1) {
+            ClientCommandSender sender = agent.getClientCommandSender();
+
+            if (!agent.isStarted() || sender == null) {
+                out.println(MSG.getMsg(AgentI18NResourceKeys.IDENTIFY_NOT_SENDING));
+            } else if (args.length <= 1) {
                 // the user didn't specify a locator URI, by default, we'll send the command to our configured server
-                ClientCommandSender sender = agent.getClientCommandSender();
                 if (agent.isStarted() && (sender != null)) {
                     out.println(MSG.getMsg(AgentI18NResourceKeys.IDENTIFY_ASK_SERVER_FOR_ID));
                     CommandResponse response = sender.sendSynch(command);
@@ -71,18 +76,18 @@ public class IdentifyPromptCommand implements AgentPromptCommand {
                         long serverTime = ((IdentifyCommandResponse) response).getIdentification().getTimestamp();
                         agent.serverClockNotification(serverTime);
                     }
-                } else {
-                    out.println(MSG.getMsg(AgentI18NResourceKeys.IDENTIFY_NOT_SENDING));
                 }
             } else if (args.length > 2) {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.HELP_SYNTAX_LABEL, getSyntax()));
             } else {
+                ServerEndpoint serverEndpoint = AgentUtils.getServerEndpoint(agent.getConfiguration(), args[1]);
+
                 // use the generic client utility to issue the command
-                RemoteCommunicator rc = new JBossRemotingRemoteCommunicator(args[1]);
+                RemoteCommunicator rc = new JBossRemotingRemoteCommunicator(serverEndpoint.toString());
                 GenericCommandClient client = new GenericCommandClient(rc);
 
                 out.println(MSG.getMsg(AgentI18NResourceKeys.IDENTIFY_ASK_REMOTE_SERVER_FOR_ID, args[1]));
-                agent.getClientCommandSender().preprocessCommand(command);
+                sender.preprocessCommand(command);
                 CommandResponse response = client.invoke(command);
 
                 client.disconnectRemoteCommunicator();

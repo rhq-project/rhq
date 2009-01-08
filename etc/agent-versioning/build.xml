@@ -18,11 +18,11 @@ The typical usage of this script that you will normally use is:
 
 ant -Dagent.home.dir=/my/agent/rhq-agent
 
-Which simply resets the build number to 0.
+Which simply resets the version to 0.0.0.GA and the build number to 0.
 
 This is another usage (this shows all command line args being used):
 
-ant -Dagent.home.dir=/my/agent/rhq-agent -Dnew.version=0.0.0.GA -Dnew.build=1
+ant -Dagent.home.dir=/my/agent/rhq-agent -Dnew.version=0.0.0.GA -Dnew.build=0
 
 -->
 <project name="agent-versioning" default="stamp" basedir=".">
@@ -51,8 +51,7 @@ ant -Dagent.home.dir=/my/agent/rhq-agent -Dnew.version=0.0.0.GA -Dnew.build=1
       <echo>Current Build=${Build-Number}</echo>
 
       <!-- set some defaults, but the user can override these via -D command line args -->
-      <!-- by default, we keep the version string, but reset the build number to 0 -->
-      <property name="new.version" value="${Product-Version}" />
+      <property name="new.version" value="0.0.0.GA" />
       <property name="new.build" value="0" />
       <echo>New Version To Be Used=${new.version}</echo>
       <echo>New Build To Be Used=${new.build}</echo>

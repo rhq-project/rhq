@@ -663,8 +663,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         if (!authorizationManager.canViewResource(user, resource.getId())) {
-            throw new PermissionException("User [" + user.getName() + "] does not have permission to view resource ["
-                + id + "]");
+            throw new PermissionException("User [" + user + "] does not have permission to view resource [" + id + "]");
         }
 
         return resource;

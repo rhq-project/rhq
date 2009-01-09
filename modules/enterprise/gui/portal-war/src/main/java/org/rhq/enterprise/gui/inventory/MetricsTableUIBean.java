@@ -31,7 +31,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.enterprise.gui.event.EventHistoryUIBean;
+import org.rhq.enterprise.gui.common.metric.AdvancedMetricSettingsUIBean;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -55,7 +55,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class MetricsTableUIBean {
 
-    private final Log log = LogFactory.getLog(EventHistoryUIBean.class);
+    private final Log log = LogFactory.getLog(AdvancedMetricSettingsUIBean.class);
 
     protected MeasurementChartsManagerLocal chartManager = LookupUtil.getMeasurementChartsManager();
     protected MeasurementDefinitionManagerLocal definitionManager = LookupUtil.getMeasurementDefinitionManager();

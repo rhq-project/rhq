@@ -1,0 +1,1 @@
+ant -Dagent.home.dir=../../modules/enterprise/agent/target/rhq-agent

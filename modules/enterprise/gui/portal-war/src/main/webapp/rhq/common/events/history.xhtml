@@ -15,7 +15,14 @@
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
       
 <ui:composition>
+    <script language="JavaScript">
+<!--
 
+function win1() {
+    
+}
+    -->
+    </script>
     <h:form id="EventsForm" >
         <input type="hidden" name="id" value="#{EventHistoryUIBean.context.resourceId}" />
         <input type="hidden" name="groupId" value="#{EventHistoryUIBean.context.groupId}" />
@@ -155,7 +162,9 @@
                         </a4j:commandLink>
                     </td>
                     <td>
-                        <a href="javascript:document.EventsForm.submit()" onclick="clickLink('EventsForm', 'advanced')">#{msg['resource.common.monitor.visibility.metricsToolbar.AdvancedSettingsBtn']}</a>
+                        <a href="#" onclick="javascript:window.open('/rhq/common/metric/advanced.xhtml','Window1','menubar=no,width=460,height=360,toolbar=no');">
+                            #{msg['resource.common.monitor.visibility.metricsToolbar.AdvancedSettingsBtn']}
+                        </a>
                     </td>
                 </tr>
             </table>

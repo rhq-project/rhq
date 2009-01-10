@@ -104,7 +104,7 @@ public class AgentShutdownHook extends Thread {
             threadsStillActive.put("prime-the-pump", "");
             while ((threadsStillActive.size() > 0) && (countdown-- > 0)) {
                 threadsStillActive.clear();
-                List<Thread> threads = interruptAllNonDaemonThreads();
+                List<Thread> threads = interruptAllThreads();
                 showMessage(AgentI18NResourceKeys.SHUTDOWNHOOK_THREAD_WAIT, threads.size());
                 for (Thread thread : threads) {
                     try {
@@ -135,25 +135,25 @@ public class AgentShutdownHook extends Thread {
 
     /**
      * We need to make sure our VM can die quickly, so this method will send interrupts
-     * to all non-daemon threads to try to get them to hurry up and die.
+     * to most of the threads running in the VM to try to get them to hurry up and die.
      * 
-     * @return the threads that were interrupted
+     * @return the non-daemon threads that were interrupted
      */
-    public List<Thread> interruptAllNonDaemonThreads() {
+    public List<Thread> interruptAllThreads() {
         List<Thread> nonDaemonThreads = new ArrayList<Thread>();
         int threadCount = Thread.activeCount();
         Thread[] threads = new Thread[threadCount + 50]; // give a little more in case more threads were added quickly
         Thread.enumerate(threads);
         for (Thread thread : threads) {
             // do not interrupt or count:
-            // - daemon threads
             // - threads with 0 stack elements (these are system threads that won't hold up the VM exit)
             // - our current thread
             // interrupt but do not count:
+            // - daemon threads
             // - the agent input thread
-            if (thread != null && !thread.isDaemon() && thread.getStackTrace().length > 0
+            if (thread != null && thread.getStackTrace().length > 0
                 && !thread.getName().equals(Thread.currentThread().getName())) {
-                if (!thread.getName().equals(AgentMain.PROMPT_INPUT_THREAD_NAME)) {
+                if (!thread.getName().equals(AgentMain.PROMPT_INPUT_THREAD_NAME) && !thread.isDaemon()) {
                     nonDaemonThreads.add(thread);
                 }
                 thread.interrupt();

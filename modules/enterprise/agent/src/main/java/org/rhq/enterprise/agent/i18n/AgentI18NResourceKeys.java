@@ -449,6 +449,9 @@ public interface AgentI18NResourceKeys {
         + "The agent will continue but it will not start the plugin container.")
     String NO_PLUGINS = "AgentMain.no-plugins";
 
+    @I18NMessage("Failed to start plugin container because the agent did not register properly. Cause: {0}")
+    String PC_START_FAILED_WAITING_FOR_REGISTRATION = "AgentMain.pc-start-failed-waiting-for-registration";
+
     @I18NMessage("Creating server service client end points.")
     String CREATING_PLUGIN_CONTAINER_SERVER_SERVICES = "AgentMain.creating-plugin-container-server-services";
 

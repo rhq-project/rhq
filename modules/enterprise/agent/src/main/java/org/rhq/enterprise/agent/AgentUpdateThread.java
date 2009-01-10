@@ -101,6 +101,16 @@ public class AgentUpdateThread extends Thread {
     }
 
     /**
+     * This returns <code>true</code> if the agent is currently in the process of performing an update.
+     * When this returns <code>true</code>, it should be assumed the agent's VM will die shortly.
+     * 
+     * @return <code>true</code> if an update thread is running and the update is being performed
+     */
+    public static boolean isUpdatingNow() {
+        return updating.get();
+    }
+
+    /**
      * The constructor for the thread object. This is private, go through the
      * static factory method to instantiate (and start) the thread.
      * 
@@ -170,6 +180,7 @@ public class AgentUpdateThread extends Thread {
             try {
                 BufferedReader in = this.agent.getIn();
                 if (in != null) {
+                    System.in.close(); // we must ensure we close this directly!
                     in.close();
                 }
             } catch (Exception e) {

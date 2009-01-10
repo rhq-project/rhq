@@ -398,6 +398,11 @@ public class AgentMain {
                 retries = MAX_RETRIES; // no need to retry...we're good to go
             } catch (HelpException he) {
                 retries = MAX_RETRIES; // do nothing but exit the thread
+            } catch (AgentNotSupportedException anse) {
+                LOG.fatal(anse, AgentI18NResourceKeys.AGENT_START_FAILURE);
+                agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.AGENT_START_FAILURE));
+                anse.printStackTrace(agent.getOut());
+                retries = MAX_RETRIES; // this is unrecoverable, we need this main thread to exit *now*
             } catch (Exception e) {
                 LOG.fatal(e, AgentI18NResourceKeys.AGENT_START_FAILURE);
 
@@ -1455,8 +1460,11 @@ public class AgentMain {
      * @param  wait_ms maximum number of milliseconds to wait
      *
      * @return <code>true</code> if the server is up, <code>false</code> if it is not yet up or the agent has shutdown
+     * 
+     * @throws AgentNotSupportedException If the server is up but it told us we are the wrong version, then this is thrown.
+     *                                    When this is thrown, the agent is currently in the midst of updating itself.
      */
-    public boolean waitForServer(long wait_ms) {
+    public boolean waitForServer(long wait_ms) throws AgentNotSupportedException {
         // its contents will be non-empty string if the server has come up
         final StringBuffer flag_and_lock = new StringBuffer();
 
@@ -1493,6 +1501,11 @@ public class AgentMain {
                             flag_and_lock.wait(wait_ms);
                         } catch (InterruptedException e) {
                             // probably a spurious wakeup - tests are showing that we are getting them here
+                        }
+
+                        // if this agent is updating, break the loop immediately by throwing exception
+                        if (AgentUpdateThread.isUpdatingNow()) {
+                            throw new AgentNotSupportedException();
                         }
 
                         wait_ms -= System.currentTimeMillis() - start_time;
@@ -1598,7 +1611,12 @@ public class AgentMain {
         }
 
         // if wait param is <=0 this BLOCKS INDEFINITELY! If the server is down, this will never return until it comes back up
-        waitToBeRegistered(wait_for_registration);
+        try {
+            waitToBeRegistered(wait_for_registration);
+        } catch (Exception e) {
+            LOG.debug(AgentI18NResourceKeys.PC_START_FAILED_WAITING_FOR_REGISTRATION, ThrowableUtil.getAllMessages(e));
+            return false;
+        }
 
         // Now we need to build our plugin container configuration.
         // All static configuration settings are retrieved directly from the agent configuration object,
@@ -2235,8 +2253,11 @@ public class AgentMain {
      * @param  wait the amount of milliseconds this method should block waiting for the agent to be registered
      *
      * @throws RuntimeException if <code>wait</code> milliseconds has elapsed and the agent is still not registered
+     * @throws AgentNotSupportedException if the agent can never be registered because it is a different version
+     *                                    than the server supports; when this is thrown, the agent is in the
+     *                                    midst of updating itself
      */
-    private void waitToBeRegistered(long wait) throws RuntimeException {
+    private void waitToBeRegistered(long wait) throws RuntimeException, AgentNotSupportedException {
         boolean notified_user = false;
         long started = System.currentTimeMillis();
         long sleep_time = 500L;
@@ -2262,6 +2283,11 @@ public class AgentMain {
             try {
                 Thread.sleep(sleep_time);
             } catch (InterruptedException ignored) {
+            }
+
+            // if this agent was never registered because it is needs to be updated, break the loop immediately
+            if (AgentUpdateThread.isUpdatingNow()) {
+                throw new AgentNotSupportedException();
             }
 
             // keep doubling the sleep time so we gradually wait longer and longer - up to 60 seconds max

@@ -142,7 +142,11 @@ import org.rhq.enterprise.communications.command.client.ClientRemotePojoFactory;
 import org.rhq.enterprise.communications.command.client.CommandPreprocessor;
 import org.rhq.enterprise.communications.command.client.JBossRemotingRemoteCommunicator;
 import org.rhq.enterprise.communications.command.client.OutgoingCommandTrace;
+import org.rhq.enterprise.communications.command.client.PollingListener;
 import org.rhq.enterprise.communications.command.client.RemoteCommunicator;
+import org.rhq.enterprise.communications.command.impl.identify.Identification;
+import org.rhq.enterprise.communications.command.impl.identify.IdentifyCommand;
+import org.rhq.enterprise.communications.command.impl.identify.IdentifyCommandResponse;
 import org.rhq.enterprise.communications.command.impl.remotepojo.RemotePojoInvocationCommand;
 import org.rhq.enterprise.communications.command.server.CommandListener;
 import org.rhq.enterprise.communications.command.server.IncomingCommandTrace;
@@ -2093,6 +2097,10 @@ public class AgentMain {
             }
         } else {
             m_clientSender.startServerPolling();
+
+            // must do this after we start polling, otherwise, the listener is never really added
+            ClockCheckPollingListener clockCheckPollingListener = new ClockCheckPollingListener();
+            m_clientSender.addPollingListener(clockCheckPollingListener);
         }
 
         return;
@@ -3072,6 +3080,24 @@ public class AgentMain {
         } catch (Exception e) {
             LOG.warn(e, AgentI18NResourceKeys.UPDATING_PLUGINS_FAILURE);
             return false;
+        }
+    }
+
+    /**
+     * Listener that is told about the results of all server polls (if polling is enabled).
+     * Because we know the poll thread uses the {@link IdentifyCommand}, this listener will
+     * simply use the results of that command to track our synchronicity with the server clock.
+     */
+    private class ClockCheckPollingListener implements PollingListener {
+        public void pollResponse(CommandResponse response) {
+            if (response instanceof IdentifyCommandResponse && response.isSuccessful()) {
+                IdentifyCommandResponse id_response = (IdentifyCommandResponse) response;
+                Identification id = id_response.getIdentification();
+                if (id != null) {
+                    AgentMain.this.serverClockNotification(id.getTimestamp());
+                }
+            }
+            return;
         }
     }
 

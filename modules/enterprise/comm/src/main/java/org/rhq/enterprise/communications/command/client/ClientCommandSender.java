@@ -737,6 +737,22 @@ public class ClientCommandSender {
         return;
     }
 
+    public void addPollingListener(PollingListener listener) {
+        ServerPollingThread thread = m_serverPollingThread;
+        if (thread != null) {
+            thread.addPollingListener(listener);
+        }
+        return;
+    }
+
+    public void removePollingListener(PollingListener listener) {
+        ServerPollingThread thread = m_serverPollingThread;
+        if (thread != null) {
+            thread.removePollingListener(listener);
+        }
+        return;
+    }
+
     /**
      * This starts to send commands that are found in the queue and allows commands to be synchronously sent via
      * {@link #send(Command)}. Commands are placed in the queue by {@link #sendAsynch(Command, CommandResponseCallback)}

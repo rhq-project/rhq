@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.communications.command.client;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import mazz.i18n.Logger;
 
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -70,6 +73,11 @@ class ServerPollingThread extends Thread {
     private boolean m_warnedAboutConnectionFailure;
 
     /**
+     * The list of polling listeners that will be notified when the sender's polling thread polls the server.
+     */
+    private final List<PollingListener> m_pollingListeners = new ArrayList<PollingListener>();
+
+    /**
      * Constructor for {@link ServerPollingThread} making this thread a daemon thread.
      *
      * @param client           the client sender on whose behalf we are polling
@@ -105,6 +113,17 @@ class ServerPollingThread extends Thread {
                     IdentifyCommand id_cmd = new IdentifyCommand();
                     m_clientSender.preprocessCommand(id_cmd);
                     CommandResponse response = m_clientSender.send(id_cmd);
+
+                    // let all our listeners know what the results of the poll was
+                    synchronized (m_pollingListeners) {
+                        for (PollingListener listener : m_pollingListeners) {
+                            try {
+                                listener.pollResponse(response);
+                            } catch (Throwable t) {
+                                // should never happen, but I'm paranoid
+                            }
+                        }
+                    }
 
                     // there is a special case when we might get a response back but it should be considered "server down".
                     // that is: when the server replies with a NotProcessedException response
@@ -161,6 +180,30 @@ class ServerPollingThread extends Thread {
                 } catch (InterruptedException e) {
                 }
             }
+        }
+
+        synchronized (m_pollingListeners) {
+            m_pollingListeners.clear();
+        }
+
+        return;
+    }
+
+    public void addPollingListener(PollingListener listener) {
+        synchronized (m_pollingListeners) {
+            if (!m_pollingListeners.contains(listener)) {
+                m_pollingListeners.add(listener);
+                LOG.debug(CommI18NResourceKeys.SERVER_POLLING_THREAD_ADDED_POLLING_LISTENER, listener);
+            }
+        }
+
+        return;
+    }
+
+    public void removePollingListener(PollingListener listener) {
+        synchronized (m_pollingListeners) {
+            m_pollingListeners.remove(listener);
+            LOG.debug(CommI18NResourceKeys.SERVER_POLLING_THREAD_REMOVED_POLLING_LISTENER, listener);
         }
 
         return;

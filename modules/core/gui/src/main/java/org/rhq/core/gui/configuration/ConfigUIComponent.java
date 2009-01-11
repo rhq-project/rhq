@@ -35,7 +35,7 @@ import org.rhq.core.gui.util.FacesComponentIdFactory;
 import org.rhq.core.gui.util.FacesComponentUtility;
 
 /**
- * A component that represents a JON configuration and its associated definition.
+ * A component that represents an RHQ configuration and its associated definition.
  *
  * @author Ian Springer
  */
@@ -80,12 +80,6 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
         return config;
     }
 
-    /*
-    public void setConfiguration(Configuration configuration) {
-        this.configuration = configuration;
-    }
-    */
-
     @Nullable
     public ConfigurationDefinition getConfigurationDefinition() {
         //noinspection UnnecessaryLocalVariable
@@ -93,12 +87,6 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
             CONFIGURATION_DEFINITION_ATTRIBUTE, ConfigurationDefinition.class);
         return configDef;
     }
-
-    /*
-    public void setConfigurationDefinition(ConfigurationDefinition configurationDefinition) {
-        this.configurationDefinition = configurationDefinition;
-    }
-    */
 
     public boolean isReadOnly() {
         if (isFullyEditable())

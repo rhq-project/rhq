@@ -40,6 +40,8 @@ public class ResourceAvailabilitySummary implements Serializable {
         this.upTime = upTime;
         this.downTime = downTime;
         this.failures = failures;
+        this.lastChange = lastChange;
+        this.current = current;
     }
 
     public long getMTBF() {

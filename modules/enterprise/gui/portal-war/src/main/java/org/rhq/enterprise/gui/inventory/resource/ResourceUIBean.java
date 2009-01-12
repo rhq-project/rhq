@@ -20,6 +20,10 @@ package org.rhq.enterprise.gui.inventory.resource;
 
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
+
+import javax.servlet.http.HttpServletResponse;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,12 +38,22 @@ import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
+import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.clientapi.util.units.Formatter;
+import org.rhq.core.clientapi.util.units.UnitsFormat;
+import org.rhq.core.clientapi.util.units.UnitNumber;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
+import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.legacy.action.resource.common.QuickFavoritesUtil;
+import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
+import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -78,7 +92,7 @@ public class ResourceUIBean {
         this.resource = resource;
         this.parent = resourceManager.getParentResource(this.resource.getId());
         Set<Permission> resourcePerms = this.authorizationManager.getImplicitResourcePermissions(subject, this.resource
-            .getId());
+                .getId());
         this.permissions = new ResourcePermission(resourcePerms);
         try {
             this.facets = this.resourceTypeManager.getResourceFacets(subject, getResourceType().getId());
@@ -87,7 +101,7 @@ public class ResourceUIBean {
         }
 
         List<ResourceError> errors = this.resourceManager.getResourceErrors(subject, this.resource.getId(),
-            ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
+                ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
         if (errors.size() == 1) {
             this.invalidPluginConfigurationError = errors.get(0);
         }
@@ -171,6 +185,39 @@ public class ResourceUIBean {
         return this.isFavorite;
     }
 
+    public void setFavorite(boolean favorite) {
+
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        WebUserPreferences preferences = user.getWebPreferences();
+
+        int resourceId = EnterpriseFacesContextUtility.getResource().getId();
+
+
+        String mode = FacesContextUtility.getRequiredRequestParameter("mode");
+
+        if (mode.equals("add")) {
+            if (!isFavorite) {
+
+                // Add to favorites and save
+                WebUserPreferences.FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
+                        .getFavoriteResourcePortletPreferences();
+                favoriteResourcePreferences.resourceIds.add(resourceId);
+                preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
+            }
+        } else if (mode.equals("remove")) {
+            if (isFavorite) {
+                // Remove from favorites and save
+                WebUserPreferences.FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
+                        .getFavoriteResourcePortletPreferences();
+                favoriteResourcePreferences.resourceIds.remove(resourceId);
+                preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
+            }
+        }
+        isFavorite = mode.equals("add");
+        preferences.persistPreferences();
+    }
+
+
     public AvailabilityType getAvailabilityType() {
         AvailabilityManagerLocal manager = LookupUtil.getAvailabilityManager();
         Subject subject = EnterpriseFacesContextUtility.getSubject();
@@ -178,9 +225,13 @@ public class ResourceUIBean {
         return avail;
     }
 
+    public ResourceAvailabilitySummary getAvailabilitySummary() {
+        return resourceManager.getAvailabilitySummary(EnterpriseFacesContextUtility.getSubject(), getId());
+    }
+
     private static Resource lookupResource() {
         int resourceId = FacesContextUtility.getRequiredRequestParameter(ParamConstants.RESOURCE_ID_PARAM,
-            Integer.class);
+                Integer.class);
 
         // TODO: To be more efficient, instead call a manager method that returns a ResourceComposite.
         Subject subject = EnterpriseFacesContextUtility.getSubject();

@@ -18,9 +18,7 @@
  */
 package org.rhq.enterprise.gui.inventory.resource;
 
-/**
- * @author Greg Hinkle
- */
+
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -30,60 +28,42 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 
-import java.util.Set;
 import java.util.List;
 import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.TreeSet;
 
-import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 
+/**
+ * Just a basic node to hold resources, resource auto groups and subcategories
+ * in a tree.
+ *
+ * @author Greg Hinkle
+ */
 public class ResourceTreeNode implements Comparable {
 
     private static ResourceTreeNode[] CHILDREN_ABSENT = new ResourceTreeNode[0];
 
-    private List<ResourceTreeNode> children;
+    private Set<ResourceTreeNode> children = new TreeSet<ResourceTreeNode>();
 
     private Object level;
 
     private String shortPath;
 
+
     public ResourceTreeNode(Object level) {
+           this.level = level;
+       }
+
+
+    public ResourceTreeNode(Object level, List<Resource> resources) {
         this.level = level;
     }
 
-    public synchronized List<ResourceTreeNode> getNodes() {
-        if (children == null) {
-            FacesContext facesContext = FacesContext.getCurrentInstance();
-
-            ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-
-            children = new ArrayList<ResourceTreeNode>();
-
-            if (level instanceof Resource) {
-                List<AutoGroupComposite> comps = resourceManager.getChildrenAutoGroups(EnterpriseFacesContextUtility.getSubject(), ((Resource) level).getId());
-                for (AutoGroupComposite comp : comps) {
-                    children.add(new ResourceTreeNode(comp));
-                }
-            } else if (level instanceof AutoGroupComposite) {
-                AutoGroupComposite comp = (AutoGroupComposite) level;
-                List resources = comp.getResources();
-                if (resources != null) {
-                    for (Object res : resources) {
-                        children.add(new ResourceTreeNode(res));
-                    }
-                }
-            } else if (level instanceof ResourceWithAvailability) {
-                List<AutoGroupComposite> comps = resourceManager.getChildrenAutoGroups(EnterpriseFacesContextUtility.getSubject(), ((ResourceWithAvailability) level).getResource().getId());
-                for (AutoGroupComposite comp : comps) {
-                    children.add(new ResourceTreeNode(comp));
-                }
-            } else {
-                children = Collections.EMPTY_LIST;
-            }
-            Collections.sort(children);
-        }
-
+    public Set<ResourceTreeNode> getChildren() {
         return children;
     }
 

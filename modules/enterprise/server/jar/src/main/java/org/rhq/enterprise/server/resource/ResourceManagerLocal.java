@@ -39,6 +39,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
+import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -368,4 +369,25 @@ public interface ResourceManagerLocal {
      * @return the platform Resource associated with the specified Agent
      */
     Resource getPlatform(Agent agent);
+
+
+    /**
+     * Load the entire list of resources under an agent. Tries to do so in as few
+     * queries as possible while prefectching the information necessary to create a tree
+     * view of the platform inventory. This includes resource type and subcategory information
+     * as well as current availability and structure.
+     *
+     * This method also returns placesholder {@link org.rhq.core.domain.resource.composite.LockedResourcerce}
+     * objects for resources that a user should not have visibility to in order to keep the tree a
+     * directed graph.
+     *
+     * @param user user accessing the tree
+     * @param agentId the agent id of the platform to return inventory for
+     * @param pageControl the filter for the resources
+     * @return the list of all resources on a platform
+     */
+    List<Resource> getResourcesByAgent(Subject user, int agentId, PageControl pageControl);
+
+    
+    ResourceAvailabilitySummary getAvailabilitySummary(Subject user, int resourceId);
 }

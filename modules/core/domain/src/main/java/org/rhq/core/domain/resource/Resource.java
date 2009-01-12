@@ -1322,6 +1322,10 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return currentAvailability;
     }
 
+    public void setCurrentAvailability(ResourceAvailability currentAvailability) {
+        this.currentAvailability = currentAvailability;
+    }
+
     /**
      * Returns the explicit mapping entities.
      *
@@ -1509,14 +1513,14 @@ public class Resource implements Comparable<Resource>, Externalizable {
             out.writeObject(resourceType.getCategory());
         }
 
-        if (childResources.getClass().getName().contains("hibernate")) {
+        if (childResources != null && childResources.getClass().getName().contains("hibernate")) {
             out.writeObject(new LinkedHashSet<Resource>(childResources));
         } else {
             out.writeObject(childResources);
         }
 
         // Don't write plugin configs out if they are a lazy proxy
-        if (pluginConfiguration.getClass().getName().contains("hibernate")) {
+        if (pluginConfiguration != null && pluginConfiguration.getClass().getName().contains("hibernate")) {
             out.writeObject(null);
         } else {
             out.writeObject(pluginConfiguration);

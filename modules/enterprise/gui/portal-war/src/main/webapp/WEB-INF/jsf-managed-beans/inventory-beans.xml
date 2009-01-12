@@ -116,12 +116,12 @@
     <managed-bean>
         <managed-bean-name>ResourceTreeModelUIBean</managed-bean-name>
         <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ResourceTreeModelUIBean</managed-bean-class>
-        <managed-bean-scope>request</managed-bean-scope>
+        <managed-bean-scope>session</managed-bean-scope>
     </managed-bean>
     <managed-bean>
         <managed-bean-name>ResourceTreeStateAdvisor</managed-bean-name>
         <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ResourceTreeStateAdvisor</managed-bean-class>
-        <managed-bean-scope>request</managed-bean-scope>
+        <managed-bean-scope>session</managed-bean-scope>
     </managed-bean>
 
     <managed-bean>

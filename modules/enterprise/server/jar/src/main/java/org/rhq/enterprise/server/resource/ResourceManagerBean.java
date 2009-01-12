@@ -26,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.ListIterator;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -83,17 +84,20 @@ import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.LockedResource;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
+import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -1803,6 +1807,86 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         query.setParameter("agent", agent);
         Resource platform = (Resource) query.getSingleResult();
         return platform;
+    }
+
+    public ResourceAvailabilitySummary getAvailabilitySummary(Subject user, int resourceId) {
+        if (!authorizationManager.canViewResource(user, resourceId)) {
+            throw new PermissionException("Cannot view resource availability. User [" + user
+                    + "] does not have permission to view the resource [" + resourceId + "].");
+        }
+
+        Query query = entityManager.createNamedQuery(Availability.FIND_BY_RESOURCE);
+        query.setParameter("resourceId", resourceId);
+
+        List<Availability> availabilities = query.getResultList();
+        long upTime = 0;
+        long downTime = 0;
+        int failures = 0;
+        long lastChange = 0;
+        AvailabilityType current = null;
+        for (Availability avail : availabilities) {
+            if (avail.getAvailabilityType() == AvailabilityType.UP) {
+                upTime += ((avail.getEndTime() != null ? avail.getEndTime().getTime() : System.currentTimeMillis()) - avail.getStartTime().getTime());
+            } else {
+                downTime += ((avail.getEndTime() != null ? avail.getEndTime().getTime() : System.currentTimeMillis()) - avail.getStartTime().getTime());
+                failures++;
+            }
+            if (avail.getEndTime() == null) {
+                lastChange = avail.getStartTime().getTime();
+                current = avail.getAvailabilityType();
+            }
+        }
+
+
+        return new ResourceAvailabilitySummary(upTime, downTime, failures, lastChange, current);
+    }
+
+
+    public List<Resource> getResourcesByAgent(Subject user, int agentId, PageControl unlimitedInstance) {
+        // Note: I didn't put these queries in as named queries since they have very specific prefeching
+        // for this use case.
+
+        String ql = "SELECT res " +
+                "FROM Resource res join fetch res.currentAvailability join fetch res.resourceType rt " +
+                "left join fetch rt.subCategory sc left join fetch sc.parentSubCategory " +
+                "WHERE res.agent.id = :agentId";
+
+        EntityManager em = LookupUtil.getEntityManager();
+        Query query = em.createQuery(ql);
+
+        query.setParameter("agentId", agentId);
+        List<Resource> resources = query.getResultList();
+
+
+        if (!authorizationManager.isInventoryManager(user)) {
+            String secQueryString = "SELECT res.id " +
+                    "FROM Resource res " +
+                    "WHERE res.agent.id = :agentId " +
+                    " AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)";
+            Query secQuery = em.createQuery(secQueryString);
+            secQuery.setParameter("agentId", agentId);
+            secQuery.setParameter("subject", user);
+
+            List<Integer> visible = secQuery.getResultList();
+
+
+            ListIterator<Resource> iter = resources.listIterator();
+            while (iter.hasNext()) {
+                Resource res = iter.next();
+                boolean found = false;
+                for (Integer vis : visible) {
+                    if (res.getId() == vis) {
+                        found = true;
+                    }
+                }
+                if (!found) {
+                    iter.set(new LockedResource(res));
+                }
+             }
+        }
+
+
+        return resources;
     }
 
     @SuppressWarnings("unchecked")

@@ -2,7 +2,7 @@
 
 <!DOCTYPE html
         PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        "http://www.w3.org/TR/xhtResourcesTree.xhtmlml1/DTD/xhtml1-transitional.dtd">
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
@@ -36,20 +36,24 @@ paginationPageControl - Page control value to set when changing the number of ro
               </a4j:status>
 
 
+            <!--<jsp:include page="/Dashboard.do"/>-->
 
             <h:form id="leftNavResourceTreeForm">
 
 
-                <rich:tree style="width: 100%; height: 100%; max-width: 250px; overflow-x: auto;" switchType="ajax"
+                <rich:tree style="width: 100%; height: 100%; max-width: 300px; overflow-x: auto;" switchType="ajax"
                            stateAdvisor="#{ResourceTreeStateAdvisor}"
                            var="treeNode"
                            icon="/images/icn_tree_Platform.gif"
                            id="leftNavTree"
-                           nodeSelectListener="#{ResourceTreeModelUIBean.processSelection}"
+                           preserveDataInRequest="false"
+                           adviseNodeSelected="#{ResourceTreeStateAdvisor.adviseNodeSelected}"
+                           changeExpandListener="#{ResourceTreeStateAdvisor.changeExpandListener}"
+                           nodeSelectListener="#{ResourceTreeStateAdvisor.nodeSelectListener}"
                            ajaxSubmitSelection="true"
                            nodeFace="#{treeNode.data.class.simpleName}">
                     <rich:recursiveTreeNodesAdaptor roots="#{ResourceTreeModelUIBean.roots}" var="resourceTreeItem"
-                                                    nodes="#{resourceTreeItem.nodes}">
+                                                    nodes="#{resourceTreeItem.children}">
 
 
                     </rich:recursiveTreeNodesAdaptor>
@@ -57,37 +61,46 @@ paginationPageControl - Page control value to set when changing the number of ro
 
                     <rich:treeNode type="AutoGroupComposite"
                                    iconLeaf="/images/icn_tree_folder.gif" icon="/images/icn_tree_folder.gif">
-                        <h:outputText value="#{resourceTreeItem}"/>
+                        <h:outputText value="#{resourceTreeItem}"
+                                style="font-weight: bold; color: ${resourceTreeItem.data.availability == 0 ? 'red' : resourceTreeItem.data.availability == 1 ? 'green' : 'yellow'};"/>
 
                     </rich:treeNode>
 
 
-                    <rich:treeNode type="ResourceWithAvailability"
-                                   icon="/images/icn_tree_#{resourceTreeItem.data.resource.resourceType.category}.gif"
-                                   iconLeaf="/images/icn_tree_#{resourceTreeItem.data.resource.resourceType.category}.gif">
+                    <rich:treeNode type="LockedResource"
+                                   icon="/images/lock_16.png"
+                                   iconLeaf="/images/lock_16.png">
+
+                        <h:outputText value="#{resourceTreeItem}" style="color: ${resourceTreeItem.data.currentAvailability.availabilityType.name == 'UP' ? 'green' : 'red'};"/>
+
+                    </rich:treeNode>
+
+                    <rich:treeNode type="Resource"
+                                   icon="/images/icn_tree_#{resourceTreeItem.data.resourceType.category}.gif"
+                                   iconLeaf="/images/icn_tree_#{resourceTreeItem.data.resourceType.category}.gif">
 
 
-                        <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000">
-                            <f:param name="contextResourceId" value="#{resourceTreeItem.data.resource.id}"/>
-                            <f:param name="contextResourceTypeId" value="#{resourceTreeItem.data.resource.resourceType.id}"/>
+                        <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000"  disableDefault="true">
+                            <f:param name="contextResourceId" value="#{resourceTreeItem.data.id}"/>
+                            <f:param name="contextResourceTypeId" value="#{resourceTreeItem.data.resourceType.id}"/>
 
                             <rich:componentControl disableDefault="true" event="oncomplete" for="resourceMenu"
                                                    operation="show">
-                                <f:param value="#{resourceTreeItem.data.resource.name}" name="name"/>
-                                <f:param value="#{resourceTreeItem.data.resource.id}" name="id"/>
-                                <f:param value="#{resourceTreeItem.data.resource.resourceType.name}" name="type"/>
-                                <f:param value="'#{resourceTreeItem.data.resource.resourceType.operationDefinitions}'"
+                                <f:param value="#{resourceTreeItem.data.name}" name="name"/>
+                                <f:param value="#{resourceTreeItem.data.id}" name="id"/>
+                                <f:param value="#{resourceTreeItem.data.resourceType.name}" name="type"/>
+                                <f:param value="'#{resourceTreeItem.data.resourceType.operationDefinitions}'"
                                          name="ops"/>
                             </rich:componentControl>
                         </a4j:support>
 
 
-                        <h:outputLink value="/rhq/resource/inventory/view.xhtml"><f:param name="id" value="#{resourceTreeItem.data.resource.id}"/>
+                        <!--<h:outputLink value="/rhq/resource/inventory/view.xhtml"><f:param name="id" value="#{resourceTreeItem.data.id}"/>-->
 
-                            <h:outputText value="#{resourceTreeItem}"/>
+                            <h:outputText value="#{resourceTreeItem}" style="color: ${resourceTreeItem.data.currentAvailability.availabilityType.name == 'UP' ? 'green' : 'red'};"/>
 
 
-                        </h:outputLink>
+                        <!--</h:outputLink>-->
                     </rich:treeNode>
 
 
@@ -96,18 +109,22 @@ paginationPageControl - Page control value to set when changing the number of ro
 
             </h:form>
 
+       <!-- </a4j:region>
+
+        <a4j:region id="menuOnly" renderRegionOnly="true" selfRendered="true">
+-->
             <!-- This can be useful for debugging ajax update problems -->
             <!--<a4j:log popup="false" level="WARN" style="width: 800px; height: 300px;"></a4j:log>-->
 
 
             <rich:contextMenu attached="false" id="resourceMenu" binding="#{ResourceTreeModelUIBean.menu}"
-                              disableDefaultMenu="true">
+                              
+                              disableDefaultMenu="false">
 
             </rich:contextMenu>
 
+    </a4j:region>
 
-
-        </a4j:region>
     </h:form>
 
 </ui:composition>

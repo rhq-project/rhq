@@ -9,6 +9,7 @@
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:a4j="http://richfaces.org/a4j"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function">
@@ -82,7 +83,7 @@ id - the id of the Resource being accessed
       errorPopup.document.writeln('&lt;/body&gt;&lt;/html&gt;');
       errorPopup.document.close();
    }
-   
+
 </script>
 <h:form>
     <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
@@ -90,7 +91,7 @@ id - the id of the Resource being accessed
 <rich:simpleTogglePanel switchType="ajax" id="summary-toggle-panel"
                         value="#{UserPreferencesUIBean.summaryPanelDisplayState}">
     <f:facet name="header">  <onc:resourceLineage resourceId="#{ResourceUIBean.id}"/> </f:facet>
-    
+
 <h:panelGrid columns="2" width="100%" style="padding: 3px">
 
    <h:panelGroup layout="block" styleClass="summary-content">
@@ -151,34 +152,61 @@ id - the id of the Resource being accessed
    </h:panelGroup>
 
    <ui:remove><!-- the blue box at the top right --></ui:remove>
-   <h:panelGroup layout="block" styleClass="LinkBox">
+   <h:panelGroup layout="block">
       <h:panelGrid columns="1" width="100%" columnClasses="LinkBoxCell">
 
-         <h:panelGroup layout="block">
-            <h:outputText value="Availability: " styleClass="BoldText"/>
-            <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up"
+
+         <h:panelGroup id="availDisplay">
+            <h:graphicImage value="/images/icon_available_green_32.png" alt="Resource is Up" title="Up"
                             rendered="#{ResourceUIBean.availabilityType == 'UP'}"/>
-            <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down"
+            <h:graphicImage value="/images/icon_available_red_32.png" alt="Resource is Down" title="Down"
                             rendered="#{ResourceUIBean.availabilityType == 'DOWN'}"/>
-            <h:graphicImage value="/images/icon_available_grey.png" alt="Unknown" title="Unknown"
+            <h:graphicImage value="/images/icon_available_grey_32.png" alt="Resource availability is Unknown" title="Unknown"
                             rendered="#{ResourceUIBean.availabilityType == null}"/>
+
+             <rich:toolTip for="availDisplay">
+                 <h:outputText value="Resource has been #{ResourceUIBean.availabilityType.name} since: "/>
+                 <h:outputText value="#{ResourceUIBean.availabilitySummary.lastChange}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                 </h:outputText>
+             </rich:toolTip>
+
+             <a4j:outputPanel id="favoritesPanel">
+                 <a4j:form id="favoritesForm">
+                     <h:inputHidden value="${ResourceUIBean.favorite}"/>
+                     <a4j:commandButton reRender="favoritesPanel"
+                                        image="#{ResourceUIBean.favorite ? '/images/heart_minus_32.png' : '/images/heart_plus_32.png'}">
+                         <f:param name="id" value="#{ResourceUIBean.id}"/>
+                         <f:param name="mode" value="#{ResourceUIBean.favorite ? 'remove' : 'add'}"/>
+                     </a4j:commandButton>
+                 </a4j:form>
+             </a4j:outputPanel>
+
          </h:panelGroup>
 
-         <h:outputLink rendered="#{ResourceUIBean.favorite}" value="/resource/common/QuickFavorites.do"
-                       styleClass="PageTitleSmallText">
-            <f:param name="id" value="#{ResourceUIBean.id}"/>
-            <f:param name="mode" value="remove"/>
-            <h:outputText value="&nbsp;Remove from Favorites"/>
-            <h:graphicImage value="/images/title_arrow.gif" width="11" height="9"/>
-         </h:outputLink>
+          <h:panelGroup layout="block">
+              <h:outputText value="Availability: " styleClass="BoldText"/>
+              <h:outputText value="#{ResourceUIBean.availabilitySummary.upPercentage}">
+                   <f:convertNumber type="percent"/>
+              </h:outputText>
+          </h:panelGroup>
 
-         <h:outputLink rendered="#{!ResourceUIBean.favorite}" value="/resource/common/QuickFavorites.do"
-                       styleClass="PageTitleSmallText">
-            <f:param name="id" value="#{ResourceUIBean.id}"/>
-            <f:param name="mode" value="add"/>
-            <h:outputText value="&nbsp;Add to Favorites"/>
-            <h:graphicImage value="/images/title_arrow.gif" width="11" height="9"/>
-         </h:outputLink>
+          <h:panelGroup layout="block">
+              <h:outputText value="MTBF: " styleClass="BoldText"/>
+              <h:outputText value="#{ResourceUIBean.availabilitySummary.MTBF}">
+                  <f:converter converterId="RichDurationConverter" />
+              </h:outputText>
+          </h:panelGroup>
+
+          <h:panelGroup layout="block">
+              <h:outputText value="MTTR: " styleClass="BoldText"/>
+              <h:outputText value="#{ResourceUIBean.availabilitySummary.MTTR}">
+                <f:converter converterId="RichDurationConverter" />
+              </h:outputText>
+          </h:panelGroup>
+
+
+
 
       </h:panelGrid>
    </h:panelGroup>
@@ -188,7 +216,7 @@ id - the id of the Resource being accessed
 
     </h:form>
 
-    
+
 
 </ui:composition>
 

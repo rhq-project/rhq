@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -95,49 +96,52 @@ public class PackageVersions {
     public void loadFromDisk() {
         dataLock.readLock().lock();
 
-        ObjectInputStream ois = null;
         try {
+            ObjectInputStream ois = null;
+            try {
 
-            // All instances of this class will use the same store. If one loaded it already, there's nothing to do.
-            if (data != null)
-                return;
+                // All instances of this class will use the same store. If one loaded it already, there's nothing to do.
+                if (data != null)
+                    return;
 
-            log.debug("Loading package versions from storage for plugin [" + pluginName + "]");
-            File file = new File(dataDirectory, FILENAME);
+                log.debug("Loading package versions from storage for plugin [" + pluginName + "]");
+                File file = new File(dataDirectory, FILENAME);
 
-            // If there's no package-versions.dat, check for the old filename, application-versions.dat.
-            if (!file.exists()) {
-                File legacyFile = new File(dataDirectory, LEGACY_FILENAME);
-                if (legacyFile.exists()) {
-                    log.info("Found legacy package versions data file [" + legacyFile + "] - renaming to ["
-                            + file + "]...");
-                    legacyFile.renameTo(file);
+                // If there's no package-versions.dat, check for the old filename, application-versions.dat.
+                if (!file.exists()) {
+                    File legacyFile = new File(dataDirectory, LEGACY_FILENAME);
+                    if (legacyFile.exists()) {
+                        log.info("Found legacy package versions data file [" + legacyFile + "] - renaming to [" + file
+                            + "]...");
+                        legacyFile.renameTo(file);
+                    }
                 }
-            }
 
-            // There will be no data file after a clean or on the first run, so create an empty one
-            if (!file.exists()) {
-                log.debug("No package versions found for plugin [" + pluginName +
-                    "]. This will be the case if the Agent was cleaned or on the first run.");
+                // There will be no data file after a clean or on the first run, so create an empty one
+                if (!file.exists()) {
+                    log.debug("No package versions found for plugin [" + pluginName
+                        + "]. This will be the case if the Agent was cleaned or on the first run.");
+                    data = new PackageVersionData();
+                } else {
+                    FileInputStream fis = new FileInputStream(file);
+                    ois = new ObjectInputStream(fis);
+                    data = (PackageVersionData) ois.readObject();
+                }
+            } catch (Exception e) {
+                log.error("Could not load persistent version data from disk for plugin [" + pluginName
+                    + "]. Package version values will be reset.", e);
                 data = new PackageVersionData();
-            } else {
-                FileInputStream fis = new FileInputStream(file);
-                ois = new ObjectInputStream(fis);
-                data = (PackageVersionData) ois.readObject();
-            }
-        } catch (Exception e) {
-            log.error("Could not load persistent version data from disk for plugin [" + pluginName +
-                "]. Package version values will be reset.", e);
-            data = new PackageVersionData();
-        } finally {
-            if (ois != null) {
-                try {
-                    ois.close();
-                } catch (IOException e) {
-                    log.error("Error closing input stream for persistent version data for plugin [" + pluginName + "]",
-                        e);
+            } finally {
+                if (ois != null) {
+                    try {
+                        ois.close();
+                    } catch (IOException e) {
+                        log.error("Error closing input stream for persistent version data for plugin [" + pluginName
+                            + "]", e);
+                    }
                 }
             }
+        } finally {
             dataLock.readLock().unlock();
         }
     }
@@ -150,28 +154,32 @@ public class PackageVersions {
     public void saveToDisk() {
         dataLock.writeLock().lock();
 
-        if (data == null)
-            throw new IllegalStateException("Data has not been loaded prior to saving for plugin [" + pluginName + "]");
-
-        ObjectOutputStream oos = null;
         try {
-            File file = new File(dataDirectory, FILENAME);
-            FileOutputStream fos = new FileOutputStream(file);
-            oos = new ObjectOutputStream(fos);
+            if (data == null)
+                throw new IllegalStateException("Data has not been loaded prior to saving for plugin [" + pluginName
+                    + "]");
 
-            oos.writeObject(data);
-        } catch (Exception e) {
-            log.error("Error saving persistent version data for plugin [" + pluginName +
-                "]. Package versions may not be maintained between agent restarts.", e);
-        } finally {
-            if (oos != null) {
-                try {
-                    oos.close();
-                } catch (IOException e) {
-                    log.error("Error closing output stream for plugin [" + pluginName + "].", e);
+            ObjectOutputStream oos = null;
+            try {
+                File file = new File(dataDirectory, FILENAME);
+                FileOutputStream fos = new FileOutputStream(file);
+                oos = new ObjectOutputStream(fos);
+
+                oos.writeObject(data);
+            } catch (Exception e) {
+                log.error("Error saving persistent version data for plugin [" + pluginName
+                    + "]. Package versions may not be maintained between agent restarts.", e);
+            } finally {
+                if (oos != null) {
+                    try {
+                        oos.close();
+                    } catch (IOException e) {
+                        log.error("Error closing output stream for plugin [" + pluginName + "].", e);
+                    }
                 }
-            }
 
+            }
+        } finally {
             dataLock.writeLock().unlock();
         }
     }
@@ -230,7 +238,7 @@ public class PackageVersions {
      */
     private void checkLoaded() {
         if (data == null)
-            throw new IllegalStateException("Attempt to access package versions without loading the data. " +
-                "Call loadFromDisk() before attempting these operations.");
+            throw new IllegalStateException("Attempt to access package versions without loading the data. "
+                + "Call loadFromDisk() before attempting these operations.");
     }
 }

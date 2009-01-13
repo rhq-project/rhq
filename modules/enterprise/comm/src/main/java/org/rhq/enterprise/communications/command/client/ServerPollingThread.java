@@ -175,7 +175,7 @@ class ServerPollingThread extends Thread {
         synchronized (this) {
             while (!m_stopped) {
                 try {
-                    notify();
+                    notifyAll();
                     wait(5000L);
                 } catch (InterruptedException e) {
                 }

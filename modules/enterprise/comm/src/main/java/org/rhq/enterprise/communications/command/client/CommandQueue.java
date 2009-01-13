@@ -185,7 +185,7 @@ class CommandQueue implements BlockingQueue<Runnable> {
             }
 
             m_throttleSemaphore = null;
-            m_throttleLock.notify(); // this should kill the throttle thread immediately
+            m_throttleLock.notifyAll(); // this should kill the throttle thread immediately
         }
 
         LOG.debug(CommI18NResourceKeys.COMMAND_QUEUE_DISABLED);

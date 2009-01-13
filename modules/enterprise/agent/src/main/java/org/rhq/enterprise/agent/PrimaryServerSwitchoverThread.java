@@ -149,7 +149,7 @@ public class PrimaryServerSwitchoverThread extends Thread {
     public void stopChecking() {
         toldToStop = true;
         synchronized (this) {
-            notify();
+            notifyAll();
         }
     }
 
@@ -160,7 +160,7 @@ public class PrimaryServerSwitchoverThread extends Thread {
      */
     public void checkNow() {
         synchronized (this) {
-            notify();
+            notifyAll();
         }
     }
 

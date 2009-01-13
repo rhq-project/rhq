@@ -99,7 +99,7 @@ public class RemotePojoInvocationFuture implements CommandResponseCallback {
                 m_results = new RemotePojoInvocationCommandResponse(response);
             }
 
-            this.notify();
+            this.notifyAll();
         }
 
         return;

@@ -764,7 +764,7 @@ public class AgentMain {
                 // everything should be down - finalize things and notify our input loop that we've stopped
                 setStarted(false);
 
-                m_started.notify();
+                m_started.notifyAll();
 
                 if ((m_inputLoopThread != null) && m_inputLoopThread.isAlive()) {
                     m_inputLoopThread.interrupt();
@@ -1477,7 +1477,7 @@ public class AgentMain {
             public boolean startedSending(ClientCommandSender sender) {
                 synchronized (flag_and_lock) {
                     flag_and_lock.append("1"); // length is now non-zero
-                    flag_and_lock.notify();
+                    flag_and_lock.notifyAll();
                     return false; // no need to keep listening
                 }
             }

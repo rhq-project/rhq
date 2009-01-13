@@ -104,7 +104,7 @@ public class VMHealthCheckThread extends Thread {
         synchronized (this) {
             while (!this.stopped) {
                 try {
-                    notify();
+                    notifyAll();
                     wait(5000L);
                 } catch (InterruptedException e) {
                 }

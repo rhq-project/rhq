@@ -83,6 +83,8 @@
          /WEB-INF/jsf-managed-beans/measurement-beans.xml,
          /WEB-INF/jsf-managed-beans/operation-beans.xml,
          /WEB-INF/jsf-managed-beans/test-beans.xml,
+
+         /WEB-INF/jsf-managed-beans-auto-group/inventory-beans.xml,
          
          /WEB-INF/jsf-managed-beans-common/availability-beans.xml,
          /WEB-INF/jsf-managed-beans-common/event-beans.xml,

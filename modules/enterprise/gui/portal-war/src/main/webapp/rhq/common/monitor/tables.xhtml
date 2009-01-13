@@ -30,12 +30,26 @@
             <input type="hidden" name="id"
                value="#{MetricsTableUIBean.context.resourceId}" />
          </c:if>
+         <c:if test="#{MetricsTableUIBean.context.groupId != -1}">
+            <input type="hidden" name="groupId"
+               value="#{MetricsTableUIBean.context.groupId}" />
+         </c:if>
+         <c:if
+            test="#{MetricsTableUIBean.context.parentResourceId != -1}">
+            <input type="hidden" name="parent"
+               value="#{MetricsTableUIBean.context.parentResourceId}" />
+         </c:if>
+         <c:if test="#{MetricsTableUIBean.context.resourceTypeId != -1}">
+            <input type="hidden" name="type"
+               value="#{MetricsTableUIBean.context.resourceTypeId}" />
+         </c:if>
+
 
          <rich:dataTable value="#{MetricsTableUIBean.metricSummaries}"
             width="100%" var="metric" columnsWidth="1%">
 
             <rich:column
-               rendered="#{MetricsTableUIBean.context.resourceId != -1}">
+               rendered="#{MetricsTableUIBean.context.category == 'Resource'}">
                <f:facet name="header">
                   <onc:allSelect target="selectedMetrics" />
                </f:facet>
@@ -45,7 +59,7 @@
             </rich:column>
 
             <rich:column
-               rendered="#{MetricsTableUIBean.context.groupId != -1}">
+               rendered="#{MetricsTableUIBean.context.category != 'Resource'}">
                <f:facet name="header">
                   <h:outputText value="Group Members Reporting" />
                </f:facet>
@@ -88,7 +102,7 @@
             </rich:column>
 
             <rich:column
-               rendered="#{MetricsTableUIBean.context.resourceId != -1}">
+               rendered="#{MetricsTableUIBean.context.category == 'Resource'}">
                <f:facet name="header">
                   <h:outputText value="Last" />
                </f:facet>
@@ -96,7 +110,8 @@
             </rich:column>
 
             <f:facet name="footer">
-               <rich:columnGroup rendered="#{MetricsTableUIBean.context.resourceId != -1}">
+               <rich:columnGroup
+                  rendered="#{MetricsTableUIBean.context.category == 'Resource'}">
                   <rich:column colspan="8" width="100%">
 
                      <onc:selectCommandButton

@@ -31,7 +31,6 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.enterprise.gui.common.metric.AdvancedMetricSettingsUIBean;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -55,7 +54,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class MetricsTableUIBean {
 
-    private final Log log = LogFactory.getLog(AdvancedMetricSettingsUIBean.class);
+    private final Log log = LogFactory.getLog(MetricsTableUIBean.class);
 
     protected MeasurementChartsManagerLocal chartManager = LookupUtil.getMeasurementChartsManager();
     protected MeasurementDefinitionManagerLocal definitionManager = LookupUtil.getMeasurementDefinitionManager();
@@ -115,7 +114,19 @@ public class MetricsTableUIBean {
                 context.groupId, defIds, range.begin, range.end, true);
 
         } else if (context.category == EntityContext.Category.AutoGroup) {
-            // TODO
+            List<MeasurementDefinition> measurementDefinitions = definitionManager
+                .getMeasurementDefinitionsByResourceType(user.getSubject(), context.getResourceTypeId(),
+                    DataType.MEASUREMENT, null);
+
+            int[] defIds = new int[measurementDefinitions.size()];
+            int i = 0;
+            for (MeasurementDefinition def : measurementDefinitions) {
+                defIds[i++] = def.getId();
+            }
+
+            metricSummaries = chartManager.getMetricDisplaySummariesForAutoGroup(user.getSubject(), context
+                .getParentResourceId(), context.getResourceTypeId(), defIds, range.begin, range.end, true);
+
         } else {
             log.error(context.getUnknownContextMessage());
         }

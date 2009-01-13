@@ -24,9 +24,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.ListIterator;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -86,18 +86,17 @@ import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.LockedResource;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
-import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -109,6 +108,7 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * A manager that provides methods for creating, updating, deleting, and querying {@link Resource}s.
@@ -1219,14 +1219,26 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<AutoGroupComposite> getChildrenAutoGroups(Subject user, int parentResourceId) {
+    public List<AutoGroupComposite> getChildrenAutoGroups(Subject user, int parentResourceId, Integer[] resourceTypeIds) {
         Query query;
-        if (authorizationManager.isInventoryManager(user)) {
-            query = entityManager.createNamedQuery(Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_ADMIN);
+
+        if (null != resourceTypeIds) {
+            if (authorizationManager.isInventoryManager(user)) {
+                query = entityManager.createNamedQuery(Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_BY_TYPE_ADMIN);
+            } else {
+                query = entityManager.createNamedQuery(Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_BY_TYPE);
+                query.setParameter("subject", user);
+            }
+            query.setParameter("resourceTypeIds", Arrays.asList(resourceTypeIds));
         } else {
-            query = entityManager.createNamedQuery(Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES);
-            query.setParameter("subject", user);
+            if (authorizationManager.isInventoryManager(user)) {
+                query = entityManager.createNamedQuery(Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_ADMIN);
+            } else {
+                query = entityManager.createNamedQuery(Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES);
+                query.setParameter("subject", user);
+            }
         }
+
         Resource parentResource = entityManager.getReference(Resource.class, parentResourceId);
         query.setParameter("parent", parentResource);
         query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
@@ -1262,15 +1274,20 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         List<AutoGroupComposite> fullComposites = new ArrayList<AutoGroupComposite>();
 
-        calculateSubcategorySummary(parentResource.getResourceType().getChildSubCategories(), resourceAutoGroups, 0,
-            fullComposites);
+        calculateSubcategorySummary(parentResource, parentResource.getResourceType().getChildSubCategories(),
+            resourceAutoGroups, 0, fullComposites);
         fullComposites.addAll(resourceAutoGroups);
 
         return fullComposites;
     }
 
-    private void calculateSubcategorySummary(List<ResourceSubCategory> subcategories,
+    public List<AutoGroupComposite> getChildrenAutoGroups(Subject user, int parentResourceId) {
+        return getChildrenAutoGroups(user, parentResourceId, (Integer[]) null);
+    }
+
+    private void calculateSubcategorySummary(Resource parentResource, List<ResourceSubCategory> subcategories,
         List<AutoGroupComposite> resourceAutoGroups, int depth, List<AutoGroupComposite> fullComposites) {
+
         for (ResourceSubCategory subCategory : subcategories) {
             List<AutoGroupComposite> matches = new ArrayList<AutoGroupComposite>();
             for (AutoGroupComposite ac : resourceAutoGroups) {
@@ -1295,14 +1312,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
                 avail = avail / count;
 
-                AutoGroupComposite categoryComposite = new AutoGroupComposite(avail, subCategory, count);
+                AutoGroupComposite categoryComposite = new AutoGroupComposite(avail, parentResource, subCategory, count);
                 categoryComposite.setDepth(depth);
                 fullComposites.add(categoryComposite);
             }
 
             if (subCategory.getChildSubCategories() != null) {
-                calculateSubcategorySummary(subCategory.getChildSubCategories(), resourceAutoGroups, depth + 1,
-                    fullComposites);
+                calculateSubcategorySummary(parentResource, subCategory.getChildSubCategories(), resourceAutoGroups,
+                    depth + 1, fullComposites);
             }
 
             // We matched all descendents above, but only list children directly as the child sub categories will already
@@ -1812,7 +1829,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public ResourceAvailabilitySummary getAvailabilitySummary(Subject user, int resourceId) {
         if (!authorizationManager.canViewResource(user, resourceId)) {
             throw new PermissionException("Cannot view resource availability. User [" + user
-                    + "] does not have permission to view the resource [" + resourceId + "].");
+                + "] does not have permission to view the resource [" + resourceId + "].");
         }
 
         Query query = entityManager.createNamedQuery(Availability.FIND_BY_RESOURCE);
@@ -1826,9 +1843,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         AvailabilityType current = null;
         for (Availability avail : availabilities) {
             if (avail.getAvailabilityType() == AvailabilityType.UP) {
-                upTime += ((avail.getEndTime() != null ? avail.getEndTime().getTime() : System.currentTimeMillis()) - avail.getStartTime().getTime());
+                upTime += ((avail.getEndTime() != null ? avail.getEndTime().getTime() : System.currentTimeMillis()) - avail
+                    .getStartTime().getTime());
             } else {
-                downTime += ((avail.getEndTime() != null ? avail.getEndTime().getTime() : System.currentTimeMillis()) - avail.getStartTime().getTime());
+                downTime += ((avail.getEndTime() != null ? avail.getEndTime().getTime() : System.currentTimeMillis()) - avail
+                    .getStartTime().getTime());
                 failures++;
             }
             if (avail.getEndTime() == null) {
@@ -1837,19 +1856,17 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
         }
 
-
         return new ResourceAvailabilitySummary(upTime, downTime, failures, lastChange, current);
     }
-
 
     public List<Resource> getResourcesByAgent(Subject user, int agentId, PageControl unlimitedInstance) {
         // Note: I didn't put these queries in as named queries since they have very specific prefeching
         // for this use case.
 
-        String ql = "SELECT res " +
-                "FROM Resource res join fetch res.currentAvailability join fetch res.resourceType rt " +
-                "left join fetch rt.subCategory sc left join fetch sc.parentSubCategory " +
-                "WHERE res.agent.id = :agentId";
+        String ql = "SELECT res "
+            + "FROM Resource res join fetch res.currentAvailability join fetch res.resourceType rt "
+            + "left join fetch rt.subCategory sc left join fetch sc.parentSubCategory "
+            + "WHERE res.agent.id = :agentId";
 
         EntityManager em = LookupUtil.getEntityManager();
         Query query = em.createQuery(ql);
@@ -1857,18 +1874,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         query.setParameter("agentId", agentId);
         List<Resource> resources = query.getResultList();
 
-
         if (!authorizationManager.isInventoryManager(user)) {
-            String secQueryString = "SELECT res.id " +
-                    "FROM Resource res " +
-                    "WHERE res.agent.id = :agentId " +
-                    " AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)";
+            String secQueryString = "SELECT res.id "
+                + "FROM Resource res "
+                + "WHERE res.agent.id = :agentId "
+                + " AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)";
             Query secQuery = em.createQuery(secQueryString);
             secQuery.setParameter("agentId", agentId);
             secQuery.setParameter("subject", user);
 
             List<Integer> visible = secQuery.getResultList();
-
 
             ListIterator<Resource> iter = resources.listIterator();
             while (iter.hasNext()) {
@@ -1882,9 +1897,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 if (!found) {
                     iter.set(new LockedResource(res));
                 }
-             }
+            }
         }
-
 
         return resources;
     }

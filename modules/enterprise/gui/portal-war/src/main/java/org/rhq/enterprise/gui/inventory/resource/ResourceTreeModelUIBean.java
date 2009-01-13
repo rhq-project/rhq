@@ -26,10 +26,7 @@ import java.util.Map;
 import javax.faces.application.Application;
 import javax.faces.component.html.HtmlOutputLink;
 import javax.faces.context.FacesContext;
-import javax.faces.el.MethodBinding;
 
-import org.hibernate.SessionFactory;
-import org.hibernate.stat.Statistics;
 import org.richfaces.component.UITree;
 import org.richfaces.component.html.ContextMenu;
 import org.richfaces.component.html.HtmlMenuGroup;
@@ -49,7 +46,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -85,8 +81,7 @@ public class ResourceTreeModelUIBean {
         Resource rootResource = resourceManager.getRootResourceForResource(currentResource.getId());
         Agent agent = agentManager.getAgentByResourceId(rootResource.getId());
 
-        List<Resource> resources =
-                resourceManager.getResourcesByAgent(user, agent.getId(), PageControl.getUnlimitedInstance());
+        List<Resource> resources = resourceManager.getResourcesByAgent(user, agent.getId(), PageControl.getUnlimitedInstance());
 
         rootNode = load(rootResource.getId(), resources);
 
@@ -101,7 +96,7 @@ public class ResourceTreeModelUIBean {
         }
         ResourceTreeNode root = new ResourceTreeNode(found);
         load(root, resources);
-        return root; 
+        return root;
     }
 
     private void load(ResourceTreeNode parentNode, List<Resource> resources) {
@@ -146,7 +141,6 @@ public class ResourceTreeModelUIBean {
                 }
             }
 
-
             for (Object rsc : children.keySet()) {
                 if (rsc != null && (rsc instanceof ResourceSubCategory || children.get(rsc).size() > 1)) {
                     double avail = 0;
@@ -158,9 +152,9 @@ public class ResourceTreeModelUIBean {
 
                     AutoGroupComposite agc = null;
                     if (rsc instanceof ResourceSubCategory) {
-                        agc = new AutoGroupComposite(avail, (ResourceSubCategory) rsc, entries.size());
+                        agc = new AutoGroupComposite(avail, parentResource, (ResourceSubCategory) rsc, entries.size());
                     } else if (rsc instanceof ResourceType) {
-                        agc = new AutoGroupComposite(avail, (ResourceType) rsc, entries.size());
+                        agc = new AutoGroupComposite(avail, parentResource, (ResourceType) rsc, entries.size());
                     }
                     ResourceTreeNode node = new ResourceTreeNode(agc);
                     parentNode.getChildren().add(node);
@@ -216,9 +210,8 @@ public class ResourceTreeModelUIBean {
                 }
             }
 
-
-             for (Object rsc : children.keySet()) {
-                if (rsc != null && (rsc instanceof ResourceSubCategory || (children.get(rsc).size() > 1 && ((AutoGroupComposite)parentNode.getData()).getSubcategory() != null))) {
+            for (Object rsc : children.keySet()) {
+                if (rsc != null && (rsc instanceof ResourceSubCategory || (children.get(rsc).size() > 1 && ((AutoGroupComposite) parentNode.getData()).getSubcategory() != null))) {
                     double avail = 0;
                     List<Resource> entries = children.get(rsc);
                     for (Resource res : entries) {
@@ -228,9 +221,9 @@ public class ResourceTreeModelUIBean {
 
                     AutoGroupComposite agc = null;
                     if (rsc instanceof ResourceSubCategory) {
-                        agc = new AutoGroupComposite(avail, (ResourceSubCategory) rsc, entries.size());
+                        agc = new AutoGroupComposite(avail, compositeParent.getParentResource(), (ResourceSubCategory) rsc, entries.size());
                     } else if (rsc instanceof ResourceType) {
-                        agc = new AutoGroupComposite(avail, (ResourceType) rsc, entries.size());
+                        agc = new AutoGroupComposite(avail, compositeParent.getParentResource(), (ResourceType) rsc, entries.size());
                     }
                     ResourceTreeNode node = new ResourceTreeNode(agc);
                     parentNode.getChildren().add(node);
@@ -248,7 +241,6 @@ public class ResourceTreeModelUIBean {
 
     }
 
-
     public ResourceTreeNode getTreeNode() {
         if (rootNode == null) {
             loadTree();
@@ -264,7 +256,6 @@ public class ResourceTreeModelUIBean {
         return roots;
     }
 
-
     public String getNodeTitle() {
         return nodeTitle;
     }
@@ -277,10 +268,8 @@ public class ResourceTreeModelUIBean {
         return resourceContextMenu;
     }
 
-
     public void processSelection(NodeSelectedEvent event) {
         UITree tree = (UITree) event.getComponent();
-
 
         try {
 
@@ -309,13 +298,11 @@ public class ResourceTreeModelUIBean {
         String resourceTypeIdString = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("contextResourceTypeId");
         if (resourceTypeIdString != null) {
             int resourceId = Integer.parseInt(resourceIdString);
-            int resourceTypeId =
-                    Integer.parseInt(resourceTypeIdString);
+            int resourceTypeId = Integer.parseInt(resourceTypeIdString);
 
             Resource res = resourceManager.getResourceById(EnterpriseFacesContextUtility.getSubject(), resourceId);
             Application app = FacesContext.getCurrentInstance().getApplication();
             // type = resourceTypeManager.getResourceTypeById(EnterpriseFacesContextUtility.getSubject(), resourceTypeId);
-
 
             HtmlMenuItem nameItem = new HtmlMenuItem();
             nameItem.setValue(res.getName());
@@ -342,7 +329,6 @@ public class ResourceTreeModelUIBean {
             HtmlOutputLink alertsLink = FacesComponentUtility.addOutputLink(quickLinksItem, null, "/rhq/resource/alert/listAlertDefinitions.xhtml?id=" + resourceIdString);
             FacesComponentUtility.addGraphicImage(alertsLink, null, "/images/icon_hub_a.gif", "Alerts");
 
-
             this.resourceContextMenu.getChildren().add(quickLinksItem);
 
             /*
@@ -358,14 +344,12 @@ public class ResourceTreeModelUIBean {
 
             this.resourceContextMenu.getChildren().add(foo );
 
-*/
+            */
 
             this.resourceContextMenu.getChildren().add(new HtmlMenuSeparator());
 
-
             // *** Measurements menu
-            List<MeasurementSchedule> scheds = measurementScheduleManager.getMeasurementSchedulesForResourceAndType(
-                    subject, resourceId, DataType.MEASUREMENT, null, true);
+            List<MeasurementSchedule> scheds = measurementScheduleManager.getMeasurementSchedulesForResourceAndType(subject, resourceId, DataType.MEASUREMENT, null, true);
 
             if (scheds != null) {
                 HtmlMenuGroup measurementsMenu = new HtmlMenuGroup();
@@ -379,9 +363,7 @@ public class ResourceTreeModelUIBean {
                     menuItem.setValue(subOption);
                     menuItem.setId("measurement_" + sched.getId());
 
-                    String url = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource"
-                        + "&m=" + sched.getId()
-                        + "&id=" + res.getId();
+                    String url = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource" + "&m=" + sched.getId() + "&id=" + res.getId();
 
                     menuItem.setSubmitMode("none");
                     menuItem.setOnclick("document.location.href='" + url + "'");
@@ -390,7 +372,6 @@ public class ResourceTreeModelUIBean {
 
                 }
             }
-
 
             // **** Operations menugroup
 
@@ -408,8 +389,7 @@ public class ResourceTreeModelUIBean {
                     menuItem.setValue(subOption);
                     menuItem.setId("operation_" + def.getId());
 
-                    String url = "/rhq/resource/operation/resourceOperationScheduleNew.xhtml?id="
-                     + res.getId() + "&opId=" + def.getId();
+                    String url = "/rhq/resource/operation/resourceOperationScheduleNew.xhtml?id=" + res.getId() + "&opId=" + def.getId();
 
                     menuItem.setSubmitMode("none");
                     menuItem.setOnclick("document.location.href='" + url + "'");
@@ -418,7 +398,6 @@ public class ResourceTreeModelUIBean {
                 }
             }
         }
-     }
-
+    }
 
 }

@@ -19,6 +19,14 @@
 package org.rhq.enterprise.server.common;
 
 /**
+ * Category is assigned with the following preference assuming multiple categories can be satisfied with the available context information:
+ * <pre>
+ * ResourceGroup
+ * AutoGroup
+ * ResourceTemplate
+ * Resource
+ * <pre>
+ * 
  * @author Joseph Marques
  */
 public class EntityContext {
@@ -67,16 +75,16 @@ public class EntityContext {
         this.parentResourceId = prId;
         this.resourceTypeId = rtId;
 
-        if (this.resourceId > 0) {
-            category = Category.Resource;
-        } else if (this.groupId > 0) {
+        if (this.groupId > 0) {
             category = Category.ResourceGroup;
         } else if (this.resourceTypeId > 0) {
             if (this.parentResourceId > 0) {
-                category = Category.ResourceTemplate;
-            } else {
                 category = Category.AutoGroup;
+            } else {
+                category = Category.ResourceTemplate;
             }
+        } else if (this.resourceId > 0) {
+            category = Category.Resource;
         } else {
             throw new IllegalArgumentException(getUnknownContextMessage());
         }
@@ -99,6 +107,7 @@ public class EntityContext {
         return "Unsupported " + EntityContext.class.getSimpleName() + " '" + this + "'";
     }
 
+    @Override
     public String toString() {
         return EntityContext.class.getSimpleName() + "[category=" + category + ",resourceId =" + resourceId + ","
             + "groupId =" + groupId + "," + "parentResourceId =" + parentResourceId + "," + "resourceTypeId ="

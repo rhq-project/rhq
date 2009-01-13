@@ -160,10 +160,10 @@ import org.rhq.core.domain.resource.ResourceType;
         + "FROM Resource AS res JOIN res.implicitGroups rg " + "WHERE res.id = :resourceId "),
 
     /* the following two are for auto-groups summary */
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_AUTOGROUP_BY_ID, query = "SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(AVG(a.availabilityType), res.resourceType, COUNT(res)) "
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_AUTOGROUP_BY_ID, query = "SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(AVG(a.availabilityType), res.parentResource, res.resourceType, COUNT(res)) "
         + "FROM Resource res JOIN res.implicitGroups irg JOIN irg.roles r JOIN r.subjects s JOIN res.currentAvailability a "
         + "WHERE s = :subject " + "AND res.id = :resourceId " + "GROUP BY res.resourceType "),
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_AUTOGROUP_BY_ID_ADMIN, query = "SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(AVG(a.availabilityType), res.resourceType, COUNT(res)) "
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_AUTOGROUP_BY_ID_ADMIN, query = "SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(AVG(a.availabilityType), res.parentResource, res.resourceType, COUNT(res)) "
         + "FROM Resource res JOIN res.currentAvailability a "
         + "WHERE res.id = :resourceId "
         + "GROUP BY res.resourceType "),

@@ -48,9 +48,9 @@ public class AvailabilityUIBean {
             if (context.category == EntityContext.Category.Resource) {
                 data = availabilityManager.getAvailabilitiesForResource(user.getSubject(), context.resourceId,
                     rangePreferences.begin, rangePreferences.end, DefaultConstants.DEFAULT_CHART_POINTS);
-            } else if (context.category == EntityContext.Category.Resource) {
+            } else if (context.category == EntityContext.Category.ResourceGroup) {
 
-            } else if (context.category == EntityContext.Category.Resource) {
+            } else if (context.category == EntityContext.Category.AutoGroup) {
 
             }
 

@@ -83,10 +83,8 @@ public abstract class WebUtility {
             postfix = "";
         }
 
-        int pageNumber = getOptionalIntRequestParameter(request, ParamConstants.PAGENUM_PARAM + postfix,
-            DefaultConstants.PAGENUM_DEFAULT);
-        int pageSize = getOptionalIntRequestParameter(request, ParamConstants.PAGESIZE_PARAM + postfix,
-            DefaultConstants.PAGESIZE_DEFAULT);
+        int pageNumber = getOptionalIntRequestParameter(request, ParamConstants.PAGENUM_PARAM + postfix, DefaultConstants.PAGENUM_DEFAULT);
+        int pageSize = getOptionalIntRequestParameter(request, ParamConstants.PAGESIZE_PARAM + postfix, DefaultConstants.PAGESIZE_DEFAULT);
 
         // Make sure the user doesn't go around us and create huge pages
         pageSize = Math.min(pageSize, PageControl.SIZE_MAX);
@@ -97,8 +95,7 @@ public abstract class WebUtility {
             try {
                 sortOrder = PageOrdering.valueOf(sortOrderString.toUpperCase());
             } catch (RuntimeException e) {
-                throw new RuntimeException("Request parameter '" + ParamConstants.SORTORDER_PARAM + postfix
-                    + "' has an invalid value ('" + sortOrderString
+                throw new RuntimeException("Request parameter '" + ParamConstants.SORTORDER_PARAM + postfix + "' has an invalid value ('" + sortOrderString
                     + "') - valid values are 'asc' or 'desc' (case-insensitive).");
             }
         }
@@ -145,8 +142,7 @@ public abstract class WebUtility {
         try {
             intValue = Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            throw new ParameterNotFoundException("Request parameter '" + name + "' has value '" + value
-                + "', which is not a valid integer.");
+            throw new ParameterNotFoundException("Request parameter '" + name + "' has value '" + value + "', which is not a valid integer.");
         }
 
         return intValue;
@@ -159,8 +155,7 @@ public abstract class WebUtility {
 
     private static void logWarningIfParameterHasMultipleValues(ServletRequest request, String name) {
         if ((request.getParameterValues(name) != null) && (request.getParameterValues(name).length > 1)) {
-            LOG.warn("More than one '" + name + "' request parameter exists - exactly one is required (values are "
-                + Arrays.asList(request.getParameterValues(name)) + ").");
+            LOG.warn("More than one '" + name + "' request parameter exists - exactly one is required (values are " + Arrays.asList(request.getParameterValues(name)) + ").");
         }
     }
 
@@ -220,9 +215,8 @@ public abstract class WebUtility {
     public static EntityContext getEntityContext(HttpServletRequest request) {
         int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
         int groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
-        int parentResourceId = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
-        int resourceTypeId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_TYPE_ID_PARAM,
-            -1);
+        int parentResourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.PARENT_RESOURCE_ID_PARAM, -1);
+        int resourceTypeId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_TYPE_ID_PARAM, -1);
 
         return new EntityContext(resourceId, groupId, parentResourceId, resourceTypeId);
     }

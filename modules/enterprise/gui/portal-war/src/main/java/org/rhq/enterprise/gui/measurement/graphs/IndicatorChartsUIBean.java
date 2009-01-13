@@ -21,7 +21,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.KeyConstants;
-import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.IndicatorViewsForm;
@@ -148,16 +147,6 @@ public class IndicatorChartsUIBean {
         }
     }
 
-    private EntityContext getContext(HttpServletRequest request) {
-        int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
-        int groupId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.GROUP_ID_PARAM, -1);
-        int parentResourceId = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
-        int resourceTypeId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_TYPE_ID_PARAM,
-            -1);
-
-        return new EntityContext(resourceId, groupId, parentResourceId, resourceTypeId);
-    }
-
     /**
      * Stores the metric in the session and also in the passed form, so it can be
      * identified in moveUp()/moveDown()/remove() 
@@ -200,7 +189,7 @@ public class IndicatorChartsUIBean {
                 context = new EntityContext(form.getId(), form.getGroupId(), form.getParent(), form.getCtype());
             } catch (IllegalArgumentException iae) {
                 // ok, the form didn't have what we wanted, let's fallback on the request
-                context = getContext(request);
+                context = WebUtility.getEntityContext();
             }
 
             if (context.category == EntityContext.Category.Resource) {

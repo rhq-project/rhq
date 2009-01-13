@@ -271,6 +271,11 @@ public interface ParamConstants {
     public static final String RESOURCE_TYPE_ID_PARAM = "type";
 
     /**
+     * The request parameter that specifies the relevant parent resource id.
+     */
+    public static final String PARENT_RESOURCE_ID_PARAM = "parent";
+
+    /**
      * Request paramater for the map of {@link Permission} names the role has (map values are TRUE)
      */
     public static final String ROLE_PERMISSIONS_PARAM = "rolePermissions";

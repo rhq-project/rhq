@@ -58,11 +58,21 @@ paginationPageControl - Page control value to set when changing the number of ro
 
                     </rich:recursiveTreeNodesAdaptor>
 
-
                     <rich:treeNode type="AutoGroupComposite"
                                    iconLeaf="/images/icn_tree_folder.gif" icon="/images/icn_tree_folder.gif">
+
+                     <h:outputLink
+                        value="/rhq/autogroup/monitor/tables.xhtml">
+                        <f:param name="id"
+                           value="#{ResourceUIBean.id}" />
+                        <f:param name="parent"
+                           value="#{resourceTreeItem.data.parentResource.id}" />
+                        <f:param name="type"
+                           value="#{resourceTreeItem.data.resourceType.id}" />
+
                         <h:outputText value="#{resourceTreeItem}"
                                 style="font-weight: bold; color: ${resourceTreeItem.data.availability == 0 ? 'red' : resourceTreeItem.data.availability == 1 ? 'green' : 'yellow'};"/>
+                     </h:outputLink>
 
                     </rich:treeNode>
 

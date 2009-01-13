@@ -46,6 +46,7 @@ public class AutoGroupComposite implements Serializable {
     private long memberCount;
     private int depth;
     private boolean mainResource;
+    private Resource parentResource;
 
     private List<Resource> resources;
 
@@ -62,20 +63,24 @@ public class AutoGroupComposite implements Serializable {
         this.memberCount = other.memberCount;
         this.depth = other.depth;
         this.mainResource = other.mainResource;
+        this.parentResource = other.parentResource;
         this.resources = new ArrayList<Resource>();
         if (other.resources != null) {
             this.resources.addAll(other.resources);
         }
     }
 
-    public AutoGroupComposite(Double availability, ResourceType resourceType, long memberCount) {
+    public AutoGroupComposite(Double availability, Resource parentResource, ResourceType resourceType, long memberCount) {
         this.availability = availability;
+        this.parentResource = parentResource;
         this.resourceType = resourceType;
         this.memberCount = memberCount;
     }
 
-    public AutoGroupComposite(Double availability, ResourceSubCategory subcategory, long memberCount) {
+    public AutoGroupComposite(Double availability, Resource parentResource, ResourceSubCategory subcategory,
+        long memberCount) {
         this.availability = availability;
+        this.parentResource = parentResource;
         this.subcategory = subcategory;
         this.memberCount = memberCount;
     }
@@ -98,6 +103,14 @@ public class AutoGroupComposite implements Serializable {
 
     public ResourceSubCategory getSubcategory() {
         return subcategory;
+    }
+
+    public Resource getParentResource() {
+        return parentResource;
+    }
+
+    public void setParentResource(Resource parentResource) {
+        this.parentResource = parentResource;
     }
 
     public List<Resource> getResources() {

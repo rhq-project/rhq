@@ -237,29 +237,29 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "   AND res.id IN (:ids) " //
         + "ORDER BY res.name "),
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUP_COMPOSITE, query = ""
-        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
+        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
         + "    FROM Resource res "
         + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory JOIN res.currentAvailability a "
         + "   WHERE res.id = :id "
         + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "GROUP BY rt "),
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUPS_COMPOSITE, query = "" //
-        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
+        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
         + "    FROM Resource res "
         + "    JOIN res.resourceType rt  JOIN res.currentAvailability a "
         + "   WHERE res.id IN ( :ids ) "
         + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "GROUP BY rt "),
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUP_COMPOSITE_ADMIN, query = "" //
-        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
+        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
         + "    FROM Resource res JOIN res.currentAvailability a JOIN res.resourceType rt LEFT JOIN rt.subCategory "
         + "   WHERE res.id = :id " + "GROUP BY rt"),
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUPS_COMPOSITE_ADMIN, query = "" //
-        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
+        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
         + "    FROM Resource res JOIN res.currentAvailability a JOIN res.resourceType rt LEFT JOIN rt.subCategory "
         + "   WHERE res.id IN ( :ids ) " + "GROUP BY rt"),
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES, query = ""
-        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
+        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
         + "    FROM Resource res "
         + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory JOIN res.currentAvailability a "
         + "   WHERE res.parentResource = :parent " //
@@ -267,11 +267,28 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "     AND res.inventoryStatus = :inventoryStatus " //
         + "GROUP BY rt "),
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_ADMIN, query = "" //
-        + "   SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), rt, count(res)) "
+        + "   SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
         + "     FROM Resource res " //
         + "     JOIN res.currentAvailability a " //
         + "     JOIN res.resourceType rt LEFT JOIN rt.subCategory " //
         + "    WHERE res.parentResource = :parent " //
+        + "      AND res.inventoryStatus = :inventoryStatus GROUP BY rt"),
+    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_BY_TYPE, query = ""
+        + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
+        + "    FROM Resource res "
+        + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory JOIN res.currentAvailability a "
+        + "   WHERE res.parentResource = :parent " //
+        + "     AND rt.id IN ( :resourceTypeIds ) " //
+        + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "     AND res.inventoryStatus = :inventoryStatus " //
+        + "GROUP BY rt "),
+    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_BY_TYPE_ADMIN, query = "" //
+        + "   SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
+        + "     FROM Resource res " //
+        + "     JOIN res.currentAvailability a " //
+        + "     JOIN res.resourceType rt LEFT JOIN rt.subCategory " //
+        + "    WHERE res.parentResource = :parent " //
+        + "      AND rt.id IN ( :resourceTypeIds ) " //        
         + "      AND res.inventoryStatus = :inventoryStatus GROUP BY rt"),
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_BY_CATEGORY_AND_INVENTORY_STATUS, query = "" //
         + "SELECT res " //
@@ -617,20 +634,18 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_FIND_PLATFORM_BY_AGENT, query = "SELECT res FROM Resource res WHERE res.resourceType.category = :category AND res.agent = :agent"),
     @NamedQuery(name = Resource.QUERY_FIND_PAREBT_ID, query = "SELECT res.parentResource.id FROM Resource AS res WHERE res.id = :id"),
     @NamedQuery(name = Resource.QUERY_FIND_ROOT_PLATFORM_OF_RESOURCE, query = ""
-        + "SELECT DISTINCT r FROM Resource r " +
-            "WHERE r.parentResource.id is null " +
-            "AND " +
-            "  ( " +
-            "    r.id = :resourceId " +
-            "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource = r) " +
-            "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource = r) " +
-            "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource = r) " +
-            "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource.parentResource = r) " +
-            "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource.parentResource.parentResource = r) " +
-            "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource.parentResource.parentResource.parentResource = r) " +
-            "  )"
-    )
-})
+        + "SELECT DISTINCT r FROM Resource r "
+        + "WHERE r.parentResource.id is null "
+        + "AND "
+        + "  ( "
+        + "    r.id = :resourceId "
+        + "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource = r) "
+        + "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource = r) "
+        + "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource = r) "
+        + "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource.parentResource = r) "
+        + "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource.parentResource.parentResource = r) "
+        + "    OR EXISTS (SELECT rr FROM Resource rr WHERE rr.id = :resourceId AND rr.parentResource.parentResource.parentResource.parentResource.parentResource.parentResource = r) "
+        + "  )") })
 @SequenceGenerator(name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
 @Table(name = "RHQ_RESOURCE")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -672,6 +687,9 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public static final String QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES = "Resource.findChildrenAutogroupComposites";
     public static final String QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_ADMIN = "Resource.findChildrenAutogroupComposites_admin";
+
+    public static final String QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_BY_TYPE = "Resource.findChildrenAutogroupCompositesByType";
+    public static final String QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_BY_TYPE_ADMIN = "Resource.findChildrenAutogroupCompositesByType_admin";
 
     public static final String QUERY_FIND_CHILDREN_BY_CATEGORY_AND_INVENTORY_STATUS = "Resource.findChildrenByCategoryAndInventoryStatus";
     public static final String QUERY_FIND_CHILDREN_BY_CATEGORY_AND_INVENTORY_STATUS_ADMIN = "Resource.findChildrenByCategoryAndInventoryStatus_admin";
@@ -919,9 +937,12 @@ public class Resource implements Comparable<Resource>, Externalizable {
     }
 
     public Resource( //
-        @NotNull String resourceKey, //
-        @NotNull String name, //
-        @NotNull ResourceType type) {
+        @NotNull
+        String resourceKey, //
+        @NotNull
+        String name, //
+        @NotNull
+        ResourceType type) {
         this.resourceKey = resourceKey;
         this.name = name;
         this.resourceType = type;
@@ -954,7 +975,8 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return this.name;
     }
 
-    public void setName(@NotNull String name) {
+    public void setName(@NotNull
+    String name) {
         this.name = name;
     }
 
@@ -1104,7 +1126,8 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return parentResource;
     }
 
-    public void setParentResource(@Nullable Resource parentResource) {
+    public void setParentResource(@Nullable
+    Resource parentResource) {
         this.parentResource = parentResource;
     }
 

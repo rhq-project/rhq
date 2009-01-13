@@ -382,7 +382,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                     subcontext = ParseSubContext.Empty;
                 } else {
                     throw new InvalidExpressionException(
-                        "Expression must either start with 'resource' or 'groupby' token");
+                        "Expression must either start with 'resource', 'groupby', 'empty', or 'not empty' tokens");
                 }
             } else if (context == ParseContext.Modifier) {
                 if (subcontext == ParseSubContext.Negated) {

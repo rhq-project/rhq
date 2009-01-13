@@ -57,21 +57,29 @@ public class RichDurationConverter implements Converter {
         int days = (int) (millis / MILLIS_IN_DAY);
         millis %= MILLIS_IN_DAY;
         if (days > 0) {
-            buf.append(days + " days");
+            buf.append(days + " day");
+            if (days != 1)
+                buf.append("s");
         }
 
         int hours = (int) (millis / MILLIS_IN_HOUR);
         millis %= MILLIS_IN_HOUR;
         if (hours > 0) {
             if (buf.length() > 0) buf.append(", ");
-            buf.append(hours + " hours");
+            buf.append(hours + " hour");
+            if (hours != 1)
+                buf.append("s");
+
         }
 
         int mins = (int) (millis / MILLIS_IN_MINUTE);
         millis %= MILLIS_IN_MINUTE;
         if (mins > 0) {
             if (buf.length() > 0) buf.append(", ");
-            buf.append(hours + " minutes");
+            buf.append(mins + " minute");
+            if (mins != 1)
+                buf.append("s");
+
         }
 
 

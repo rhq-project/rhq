@@ -43,6 +43,11 @@ import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.gui.util.FacesContextUtility;
 
 
+/**
+ * Manages the tree selection and node openess for the left nav resource tree
+ *
+ * @author Greg Hinkle
+ */
 public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
 
     private boolean altered = false;
@@ -56,7 +61,6 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
 
         HtmlTree c = (HtmlTree) e.getComponent();
 
-        System.out.println("Expand event: " + source + " / " + c);
         TreeState state = (TreeState) ((HtmlTree) c).getComponentState();
         TreeRowKey key = (TreeRowKey) c.getRowKey();
     }
@@ -119,10 +123,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                     return Boolean.TRUE;
             } else {
                 Object data = ((ResourceTreeNode) tree.getRowData(key)).getData();
-                if (data instanceof AutoGroupComposite && ((AutoGroupComposite)data).getSubcategory() != null) {
-
-                    return Boolean.TRUE;
-                } else if (data instanceof Resource) {
+                if (data instanceof Resource) {
                     if (((Resource) data).getResourceType().getCategory() != ResourceCategory.SERVICE)
                         return Boolean.TRUE;
                 }

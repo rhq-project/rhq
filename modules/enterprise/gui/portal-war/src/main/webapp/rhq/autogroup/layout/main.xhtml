@@ -13,60 +13,50 @@
    xmlns:onc="http://jboss.org/on/component"
    xmlns:onf="http://jboss.org/on/function">
 
-THIS TEXT WILL BE REMOVED. 
+THIS TEXT WILL BE REMOVED.
 
-The template for all Resource Auto Group pages (i.e. the Monitor/Inventory/etc. tabbed pages). 
+The template for all Resource Auto Group pages (i.e. the Monitor/Inventory/etc. tabbed pages).
 
-TEMPLATE PARAMETERS: 
-content - the page content
+TEMPLATE PARAMETERS:
+   content - the page content
 
-CONTEXT PARAMETERS: 
+CONTEXT PARAMETERS:
+   pageTitle - the page title
+   pageHelpURL - a context-sensitive help URL for the page (optional)
+   selectedTabName - the name of the tab/subTab to select in the following format:
+   tabName[.subtabName] (e.g. "Inventory" or "Monitor.Graphs")
 
-pageTitle - the page title
-pageHelpURL - a context-sensitive help URL for the page (optional)
-selectedTabName - the name of the tab/subTab to select in the following format: 
-tabName[.subtabName] (e.g. "Inventory" or "Monitor.Graphs")
+REQUEST PARAMETERS:
+   id - the id of the root Resource being navigated
+   parent - the id of the parent resource for the autogroup
+   type - the id of the resource type for the autogroup
 
-REQUEST PARAMETERS: 
-id - the id of the root Resource being navigated
-parent - the id of the parent resource for the autogroup
-type - the id of the resource type for the autogroup
-
-<ui:composition template="/rhq/resource/layout/main.xhtml">
+<ui:composition template="/rhq/entity/layout/main.xhtml">
 
 THIS TEXT WILL BE REMOVED AS WELL.
 
 <ui:param name="defaultPageTitle"
       value="'#{AutoGroupUIBean.parentResourceName}'.'#{AutoGroupUIBean.childResourceTypeName}'" />
 
-   <ui:define name="breadcrumbs">
-      
-        <ui:remove>
-            <!--
-              TODO: This may need to improve to include the parent resource ancestry
-            -->
-        </ui:remove>
-
-      <h:outputLink value="/rhq/resource/monitor/tables.xhtml">
-         <f:param name="id" value="#{AutoGroupUIBean.parentResourceId}" />         
-         <h:outputText value="#{AutoGroupUIBean.parentResourceName}" />
-      </h:outputLink>
-      <h:outputText value=" &gt; " />
-      <h:outputLink value="/rhq/autogroup/monitor/tables.xhtml">
-         <f:param name="parent" value="#{AutoGroupUIBean.parentResourceId}" />
-         <f:param name="type" value="#{AutoGroupUIBean.childResourceTypeId}" />         
-         <h:outputText value="#{AutoGroupUIBean.childResourceTypeName}" />
-      </h:outputLink>
-
-   </ui:define>
-
    <ui:define name="summary">
 
       <ui:remove>
          <!-- NOTE: Besides being included here, summary.xhtml is also leveraged by JSP-based pages. Specifically, it is
                  included (via an AJAX request) in /common/components/PageTitle.jsp. 
-                 It is left blank for AutoGroups which have no obvious summary information past what is in the breadcrumbs -->
+                 AutoGroups have no obvious summary information past what is in the breadcrumbs -->
       </ui:remove>
+
+      <onc:resourceLineage
+         resourceId="#{AutoGroupUIBean.parentResourceId}" />
+      <h:outputText value=" &gt; " />
+      <h:outputLink value="/rhq/autogroup/monitor/graphs.xhtml">
+         <f:param name="id" value="#{ResourceUIBean.id}" />
+         <f:param name="parent"
+            value="#{AutoGroupUIBean.parentResourceId}" />
+         <f:param name="type"
+            value="#{AutoGroupUIBean.childResourceTypeId}" />
+         <h:outputText value="#{AutoGroupUIBean.childResourceTypeName}" />
+      </h:outputLink>
 
       <p />
 
@@ -98,6 +88,12 @@ THIS TEXT WILL BE REMOVED AS WELL.
          infoClass="InfoBlock" warnClass="WarnBlock"
          errorClass="ErrorBlock" fatalClass="FatalBlock"
          globalOnly="true" layout="table" width="100%" />
+
+   </ui:define>
+
+   <ui:define name="nav">
+
+      <ui:include src="/rhq/resource/layout/nav.xhtml" />
 
    </ui:define>
 

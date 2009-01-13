@@ -106,8 +106,8 @@ public class HighLowChartServlet extends ChartServlet {
 
         // if no schedule and no compatible group are found check for autogroup
         if ((scheduleId == -1) && (groupId == -1)) {
-            parentId = WebUtility.getOptionalIntRequestParameter(request, "id", -1);
-            childTypeId = WebUtility.getOptionalIntRequestParameter(request, "ctype", -1);
+            parentId = WebUtility.getOptionalIntRequestParameter(request, "parent", -1);
+            childTypeId = WebUtility.getOptionalIntRequestParameter(request, "type", -1);
         }
 
         // for group and autogroup
@@ -132,10 +132,9 @@ public class HighLowChartServlet extends ChartServlet {
 
             if (schedule != null) {
                 if (log.isDebugEnabled())
-                    log.debug("Plotting a high-low chart data for metric " + schedule.getDefinition().getName()
-                        + " on resource " + schedule.getResource().getName() + "...");
-                dataPoints = dataManager.getMeasurementDataForResource(subject, schedule.getResource().getId(),
-                    new int[] { schedule.getDefinition().getId() }, beginTime, endTime, NUMBER_OF_DATA_POINTS).get(0);
+                    log.debug("Plotting a high-low chart data for metric " + schedule.getDefinition().getName() + " on resource " + schedule.getResource().getName() + "...");
+                dataPoints = dataManager.getMeasurementDataForResource(subject, schedule.getResource().getId(), new int[] { schedule.getDefinition().getId() }, beginTime, endTime,
+                    NUMBER_OF_DATA_POINTS).get(0);
             } else {
                 log.debug("Passed scheduleId " + scheduleId + " has no schedule attached, ignoring");
                 return;
@@ -148,16 +147,14 @@ public class HighLowChartServlet extends ChartServlet {
          */
         else if ((groupId > 0) && (definitionId > 0)) // compatible group
         {
-            dataPoints = dataManager.getMeasurementDataForCompatibleGroup(subject, groupId, definitionId, beginTime,
-                endTime, NUMBER_OF_DATA_POINTS, true).get(0);
+            dataPoints = dataManager.getMeasurementDataForCompatibleGroup(subject, groupId, definitionId, beginTime, endTime, NUMBER_OF_DATA_POINTS, true).get(0);
         } else if ((parentId > 0) && (childTypeId > 0) && (definitionId > 0)) //  autogroup
         {
-            dataPoints = dataManager.getMeasurementDataForAutoGroup(subject, parentId, childTypeId, definitionId,
-                beginTime, endTime, NUMBER_OF_DATA_POINTS, true).get(0);
+            dataPoints = dataManager.getMeasurementDataForAutoGroup(subject, parentId, childTypeId, definitionId, beginTime, endTime, NUMBER_OF_DATA_POINTS, true).get(0);
         } else {
             if (log.isDebugEnabled()) {
-                log.debug("No valid input found for HighLowChart: [schedId=" + scheduleId + ", defId=" + definitionId
-                    + ", groupId=" + groupId + ", parentId=" + parentId + ", childTypeId=" + childTypeId + "]");
+                log.debug("No valid input found for HighLowChart: [schedId=" + scheduleId + ", defId=" + definitionId + ", groupId=" + groupId + ", parentId=" + parentId + ", childTypeId="
+                    + childTypeId + "]");
             }
 
             return;

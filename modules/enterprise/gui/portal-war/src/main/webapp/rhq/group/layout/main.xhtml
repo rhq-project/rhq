@@ -18,16 +18,16 @@ THIS TEXT WILL BE REMOVED.
 The template for all Resource Group pages (i.e. the Monitor/Inventory/etc. tabbed pages).
 
 TEMPLATE PARAMETERS:
-content - the page content
+   content - the page content
 
 CONTEXT PARAMETERS:
-pageTitle - the page title
-pageHelpURL - a context-sensitive help URL for the page (optional)
-selectedTabName - the name of the tab/subTab to select in the following format: tabName[.subtabName]
-(e.g. "Inventory" or "Monitor.Graphs")
+   pageTitle - the page title
+   pageHelpURL - a context-sensitive help URL for the page (optional)
+   selectedTabName - the name of the tab/subTab to select in the following format: tabName[.subtabName]
+   (e.g. "Inventory" or "Monitor.Graphs")
 
 REQUEST PARAMETERS:
-groupId - the id of the ResourceGroup being accessed
+   groupId - the id of the ResourceGroup being accessed
 
 <ui:composition template="${(param.category eq 'COMPATIBLE') ? '/rhq/entity/layout/main.xhtml' : '/rhq/entity/layout/main-wide.xhtml'}">
 

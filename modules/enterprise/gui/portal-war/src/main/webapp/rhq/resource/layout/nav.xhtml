@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<!-- The Resource context Left Nav is broken out here so it can be re-used by other contexts
+     if appropriate. -->
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+   xmlns:h="http://java.sun.com/jsf/html"
+   xmlns:f="http://java.sun.com/jsf/core"
+   xmlns:ui="http://java.sun.com/jsf/facelets"
+   xmlns:c="http://java.sun.com/jstl/core"
+   xmlns:a4j="http://richfaces.org/a4j"
+   xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+   xmlns:onc="http://jboss.org/on/component"
+   xmlns:onf="http://jboss.org/on/function">
+
+<h:form id="leftNaveTogglePanelForm">
+   <input type="hidden" name="id" value="#{ResourceUIBean.id}" />
+
+   <rich:togglePanel
+      value="#{UserPreferencesUIBean.leftResourceNavState}"
+      switchType="ajax" stateOrder="closed,tree" id="navTogglePanel"
+      styleClass="atest"
+      style="width: 100%;height: 100%; display: block">
+
+      <f:facet name="closed">
+         <rich:toggleControl panelId="footest" id="test"
+            style="width: 10px; height: 100%; background-color: #A4B2B9;">
+
+            <span id="openLeftNav"
+               style="display: block; width: 10px; height: 800px; background-color: #A4B2B9;">&nbsp;
+            <h:graphicImage value="/images/icon_right_arrow.gif" /> </span>
+         </rich:toggleControl>
+      </f:facet>
+
+      <f:facet name="tree">
+         <f:subview id="treeview">
+
+
+            <div
+               style="width: 100%; height: 100%; background-color: #E1E5EB;"
+               id="leftSpace">
+
+
+            <table width="100%" cellpadding="0" cellspacing="0"
+               style="height: 100%">
+               <tr>
+                  <td valign="top"><ui:include
+                     src="/rhq/resource/navigation/ResourcesTree.xhtml" />
+                  </td>
+                  <td valign="top"><rich:toggleControl
+                     switchToState="closed" id="closeLeftNavLink">
+
+                     <span id="closeLeftNav"
+                        style="display: block; width: 10px; height: 800px; background-color: #A4B2B9;">&nbsp;
+                     <h:graphicImage value="/images/icon_down_arrow.gif" />
+                     </span>
+
+                  </rich:toggleControl></td>
+               </tr>
+            </table>
+            </div>
+
+         </f:subview>
+      </f:facet>
+   </rich:togglePanel>
+</h:form>
+
+</html>

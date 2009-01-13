@@ -464,13 +464,15 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 }
             } else if (context == ParseContext.Availability) {
                 AvailabilityType type = null;
-                if (value.equalsIgnoreCase("up")) {
-                    type = AvailabilityType.UP;
-                } else if (value.equalsIgnoreCase("down")) {
-                    type = AvailabilityType.DOWN;
-                } else {
-                    throw new InvalidExpressionException("Invalid 'resource.availability' comparision value, "
-                        + "only 'UP' and 'DOWN' are valid values");
+                if (isGroupBy == false) {
+                    if ("up".equalsIgnoreCase(value)) {
+                        type = AvailabilityType.UP;
+                    } else if ("down".equalsIgnoreCase(value)) {
+                        type = AvailabilityType.DOWN;
+                    } else {
+                        throw new InvalidExpressionException("Invalid 'resource.availability' comparision value, "
+                            + "only 'UP' and 'DOWN' are valid values");
+                    }
                 }
                 addJoinCondition(JoinCondition.AVAILABILITY);
                 populatePredicateCollections(JoinCondition.AVAILABILITY.alias + ".availabilityType", type);

@@ -5,25 +5,26 @@
       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://java.sun.com/jsf/html"
-      xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:c="http://java.sun.com/jstl/core"
-      xmlns:onc="http://jboss.org/on/component"
-      xmlns:onf="http://jboss.org/on/function"
-      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
-      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+   xmlns:h="http://java.sun.com/jsf/html"
+   xmlns:f="http://java.sun.com/jsf/core"
+   xmlns:ui="http://java.sun.com/jsf/facelets"
+   xmlns:c="http://java.sun.com/jstl/core"
+   xmlns:onc="http://jboss.org/on/component"
+   xmlns:onf="http://jboss.org/on/function"
+   xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+   xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-<ui:composition template="/rhq/group/layout/main.xhtml">
+<ui:composition template="/rhq/autogroup/layout/main.xhtml">
 
-<ui:param name="pageTitle" value="#{ResourceGroupUIBean.groupCategoryName} '#{ResourceGroupUIBean.name}' - Metric Graphs"/>
-<ui:param name="selectedTabName" value="Monitor.Graphs"/>
+   <ui:param name="pageTitle"
+      value="AutoGroup '#{AutoGroupUIBean.parentResourceName}'.'#{AutoGroupUIBean.childResourceTypeName}' - Metric Graphs" />
+   <ui:param name="selectedTabName" value="Monitor.Graphs" />
 
-<ui:define name="content">
+   <ui:define name="content">
 
-<ui:include src="/rhq/common/monitor/graphs.xhtml"/>
+      <ui:include src="/rhq/common/monitor/graphs.xhtml" />
 
-</ui:define>
+   </ui:define>
 
 </ui:composition>
 

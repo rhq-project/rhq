@@ -370,9 +370,8 @@ public final class AlertConditionCache {
             return new AlertConditionCacheStats();
         }
 
-        rwLock.readLock().lock();
-
         AlertConditionCacheStats stats = new AlertConditionCacheStats();
+        rwLock.readLock().lock();
         try {
             for (MeasurementData datum : measurementData) {
                 int scheduleId = datum.getScheduleId();
@@ -407,9 +406,8 @@ public final class AlertConditionCache {
     }
 
     public AlertConditionCacheStats checkConditions(OperationHistory operationHistory) {
-        rwLock.readLock().lock();
-
         AlertConditionCacheStats stats = new AlertConditionCacheStats();
+        rwLock.readLock().lock();
         try {
             if (operationHistory instanceof ResourceOperationHistory) {
                 ResourceOperationHistory resourceOperationHistory = (ResourceOperationHistory) operationHistory;
@@ -444,9 +442,8 @@ public final class AlertConditionCache {
             return new AlertConditionCacheStats();
         }
 
-        rwLock.readLock().lock();
-
         AlertConditionCacheStats stats = new AlertConditionCacheStats();
+        rwLock.readLock().lock();
         try {
             Resource resource = update.getResource();
 
@@ -472,9 +469,8 @@ public final class AlertConditionCache {
             return new AlertConditionCacheStats();
         }
 
-        rwLock.readLock().lock();
-
         AlertConditionCacheStats stats = new AlertConditionCacheStats();
+        rwLock.readLock().lock();
         try {
             Resource resource = source.getResource();
             List<EventCacheElement> cacheElements = lookupEventCacheElements(resource.getId());
@@ -500,9 +496,8 @@ public final class AlertConditionCache {
             return new AlertConditionCacheStats();
         }
 
-        rwLock.readLock().lock();
-
         AlertConditionCacheStats stats = new AlertConditionCacheStats();
+        rwLock.readLock().lock();
         try {
             for (Availability availability : availabilities) {
                 Resource resource = availability.getResource();

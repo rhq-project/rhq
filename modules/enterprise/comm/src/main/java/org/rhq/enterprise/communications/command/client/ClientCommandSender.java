@@ -876,8 +876,11 @@ public class ClientCommandSender {
         // at this slice of time, the thread pool is still up and accepting tasks (in a second, that won't be the case).
         // Note that we have to do this prior to obtaining the m_changingModeLock.
         m_shuttingDownTasksLock.writeLock().lock();
-        m_shuttingDownTasks = true;
-        m_shuttingDownTasksLock.writeLock().unlock();
+        try {
+            m_shuttingDownTasks = true;
+        } finally {
+            m_shuttingDownTasksLock.writeLock().unlock();
+        }
 
         synchronized (m_changingModeLock) {
             try {

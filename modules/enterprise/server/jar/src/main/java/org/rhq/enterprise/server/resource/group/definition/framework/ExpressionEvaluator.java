@@ -465,7 +465,9 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             } else if (context == ParseContext.Availability) {
                 AvailabilityType type = null;
                 if (isGroupBy == false) {
-                    if ("up".equalsIgnoreCase(value)) {
+                    if (value == null) {
+                        // pass through, NULL elements now supported  
+                    } else if ("up".equalsIgnoreCase(value)) {
                         type = AvailabilityType.UP;
                     } else if ("down".equalsIgnoreCase(value)) {
                         type = AvailabilityType.DOWN;

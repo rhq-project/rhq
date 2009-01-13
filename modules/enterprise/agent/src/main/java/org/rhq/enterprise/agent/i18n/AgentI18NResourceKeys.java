@@ -838,8 +838,9 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Agent is out of date and needs to be updated!")
     String UPDATE_CHECK_OOD = "PromptCommand.update.check-ood";
 
-    @I18NMessage("Agent is technically up to date with the same version as the agent update\\n\\\n"
-        + "binary, however, it has a different build as the update so it may not be identical.")
+    @I18NMessage("Agent has the same version as the agent update binary,\\n\\\n"
+        + "but it has a different build as the update. Therefore,\\n\\\n"
+        + "the agent is out of date and needs to be updated!")
     String UPDATE_CHECK_OOD_STRICT = "PromptCommand.update.check-ood-strict";
 
     @I18NMessage("Failed to get the agent update version from [{0}]. Cause: {1}")

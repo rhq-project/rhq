@@ -65,16 +65,14 @@ public class IdentifyPromptCommand implements AgentPromptCommand {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.IDENTIFY_NOT_SENDING));
             } else if (args.length <= 1) {
                 // the user didn't specify a locator URI, by default, we'll send the command to our configured server
-                if (agent.isStarted() && (sender != null)) {
-                    out.println(MSG.getMsg(AgentI18NResourceKeys.IDENTIFY_ASK_SERVER_FOR_ID));
-                    CommandResponse response = sender.sendSynch(command);
-                    out.println(response);
+                out.println(MSG.getMsg(AgentI18NResourceKeys.IDENTIFY_ASK_SERVER_FOR_ID));
+                CommandResponse response = sender.sendSynch(command);
+                out.println(response);
 
-                    // let the server know about the time of the server
-                    if (response instanceof IdentifyCommandResponse && response.isSuccessful()) {
-                        long serverTime = ((IdentifyCommandResponse) response).getIdentification().getTimestamp();
-                        agent.serverClockNotification(serverTime);
-                    }
+                // let the server know about the time of the server
+                if (response instanceof IdentifyCommandResponse && response.isSuccessful()) {
+                    long serverTime = ((IdentifyCommandResponse) response).getIdentification().getTimestamp();
+                    agent.serverClockNotification(serverTime);
                 }
             } else if (args.length > 2) {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.HELP_SYNTAX_LABEL, getSyntax()));

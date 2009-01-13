@@ -45,7 +45,7 @@ public class ResourceAvailabilitySummary implements Serializable {
     }
 
     public long getMTBF() {
-        return failures != 0 ? (upTime + downTime) / failures : (upTime * upTime);
+        return failures != 0 ? (upTime + downTime) / failures : 0;
     }
 
     public long getMTTR() {

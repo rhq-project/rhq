@@ -114,7 +114,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
             }
 
 
-            if (selectedKey != null && (selectedKey.isSubKey(key)))
+            if (selectedKey != null && (key.isSubKey(selectedKey)))
                 return Boolean.TRUE;
 
 
@@ -124,7 +124,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
             } else {
                 Object data = ((ResourceTreeNode) tree.getRowData(key)).getData();
                 if (data instanceof Resource) {
-                    if (((Resource) data).getResourceType().getCategory() != ResourceCategory.SERVICE)
+                    if (((Resource) data).getResourceType().getCategory() == ResourceCategory.PLATFORM)
                         return Boolean.TRUE;
                 }
             }

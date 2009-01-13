@@ -5,110 +5,160 @@
       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
-   xmlns:h="http://java.sun.com/jsf/html"
-   xmlns:f="http://java.sun.com/jsf/core"
-   xmlns:ui="http://java.sun.com/jsf/facelets"
-   xmlns:c="http://java.sun.com/jstl/core"
-   xmlns:rich="http://richfaces.ajax4jsf.org/rich"
-   xmlns:onc="http://jboss.org/on/component"
-   xmlns:onf="http://jboss.org/on/function">
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function">
 
-THIS TEXT WILL BE REMOVED. 
+THIS TEXT WILL BE REMOVED.
 
-The template for all Resource Auto Group pages (i.e. the Monitor/Inventory/etc. tabbed pages). 
+The template for all Resource Group pages (i.e. the Monitor/Inventory/etc. tabbed pages).
 
-TEMPLATE PARAMETERS: 
+TEMPLATE PARAMETERS:
 content - the page content
 
-CONTEXT PARAMETERS: 
-
+CONTEXT PARAMETERS:
 pageTitle - the page title
 pageHelpURL - a context-sensitive help URL for the page (optional)
-selectedTabName - the name of the tab/subTab to select in the following format: 
-tabName[.subtabName] (e.g. "Inventory" or "Monitor.Graphs")
+selectedTabName - the name of the tab/subTab to select in the following format: tabName[.subtabName]
+(e.g. "Inventory" or "Monitor.Graphs")
 
-REQUEST PARAMETERS: 
-id - the id of the root Resource being navigated
-parent - the id of the parent resource for the autogroup
-type - the id of the resource type for the autogroup
+REQUEST PARAMETERS:
+groupId - the id of the ResourceGroup being accessed
 
-<ui:composition template="/rhq/resource/layout/main.xhtml">
+<ui:composition template="${(param.category eq 'COMPATIBLE') ? '/rhq/entity/layout/main.xhtml' : '/rhq/entity/layout/main-wide.xhtml'}">
 
 THIS TEXT WILL BE REMOVED AS WELL.
 
-<ui:param name="defaultPageTitle"
-      value="'#{AutoGroupUIBean.parentResourceName}'.'#{AutoGroupUIBean.childResourceTypeName}'" />
+<ui:param name="defaultPageTitle" value="#{ResourceGroupUIBean.typeName} '#{ResourceGroupUIBean.name}'"/>
 
-   <ui:define name="breadcrumbs">
+<ui:define name="breadcrumbs">
+
+   <h:outputLink value="/rhq/group/inventory/view.xhtml">
+      <f:param name="groupId" value="#{ResourceGroupUIBean.groupId}"/>
+      <f:param name="mode" value="view"/>
+      <f:param name="category" value="#{param.category}"/>
+      <h:outputText value="#{ResourceGroupUIBean.name}"/>
+   </h:outputLink>
+
+</ui:define>
+
+<ui:define name="summary">
+
+   <ui:remove>
+      <!-- NOTE: Besides being included here, summary.xhtml is also leveraged by JSP-based pages. Specifically, it is
+                 included (via an AJAX request) in /common/components/PageTitle.jsp. -->
+   </ui:remove>
+   <ui:include src="/rhq/group/layout/summary.xhtml"/>
+
+</ui:define>
+
+<ui:define name="tabBar">
+
+   <onc:tabBar selectedTabName="#{selectedTabName}">
+
+      <f:param name="groupId" value="#{param.groupId}"/>
+      <f:param name="category" value="#{param.category}"/>
+
+      <onc:tab name="Monitor" rendered="#{param.category eq 'COMPATIBLE'}">
+         <onc:subtab name="Graphs" url="/rhq/group/monitor/graphs.xhtml"/>
+         <onc:subtab name="Tables" url="/rhq/group/monitor/tables.xhtml"/>
+         <onc:subtab name="Schedules" url="/rhq/group/monitor/schedules.xhtml"/>
+      </onc:tab>
       
-        <ui:remove>
-            <!--
-              TODO: This may need to improve to include the parent resource ancestry
-            -->
-        </ui:remove>
+      <onc:tab name="Events" rendered="#{param.category eq 'COMPATIBLE'}">
+         <onc:subtab name="History" url="/rhq/group/events/history.xhtml"/>
+      </onc:tab>
 
-      <h:outputLink value="/rhq/resource/monitor/tables.xhtml">
-         <f:param name="id" value="#{AutoGroupUIBean.parentResourceId}" />         
-         <h:outputText value="#{AutoGroupUIBean.parentResourceName}" />
-      </h:outputLink>
-      <h:outputText value=" &gt; " />
-      <h:outputLink value="/rhq/autogroup/monitor/tables.xhtml">
-         <f:param name="parent" value="#{AutoGroupUIBean.parentResourceId}" />
-         <f:param name="type" value="#{AutoGroupUIBean.childResourceTypeId}" />         
-         <h:outputText value="#{AutoGroupUIBean.childResourceTypeName}" />
-      </h:outputLink>
+      <onc:tab name="Inventory" url="/rhq/group/inventory/view.xhtml"/>
+      
+      <onc:tab name="Operations" rendered="#{param.category eq 'COMPATIBLE'}">
+         <onc:subtab name="New" url="/rhq/group/operation/groupOperationScheduleNew.xhtml"/>
+         <onc:subtab name="Schedules" url="/rhq/group/operation/groupOperationSchedules.xhtml"/>
+         <onc:subtab name="History" url="/rhq/group/operation/groupOperationHistory.xhtml"/>
+      </onc:tab>
+      
+   </onc:tabBar>
+   
+   <!-- Shows the results of the last action executed. -->
+   <h:messages showSummary="true"
+               showDetail="true"
+               infoClass="InfoBlock"
+               warnClass="WarnBlock"
+               errorClass="ErrorBlock"
+               fatalClass="FatalBlock"
+               globalOnly="true"
+               layout="table"
+               width="100%"/>
 
-   </ui:define>
+</ui:define>
 
-   <ui:define name="summary">
-
-      <ui:remove>
-         <!-- NOTE: Besides being included here, summary.xhtml is also leveraged by JSP-based pages. Specifically, it is
-                 included (via an AJAX request) in /common/components/PageTitle.jsp. 
-                 It is left blank for AutoGroups which have no obvious summary information past what is in the breadcrumbs -->
-      </ui:remove>
-
-      <p />
-
-
-
-      <p />
-
-   </ui:define>
+	<ui:define name="nav">
+	   <h:form id="leftNaveTogglePanelForm">
+            <input type="hidden" name="groupId" value="#{ResourceGroupUIBean.groupId}"/>
 
 
-   <ui:define name="tabBar">
+            <rich:togglePanel value="#{UserPreferencesUIBean.leftResourceNavState}" switchType="ajax"
+                              stateOrder="closed,tree" id="navTogglePanel" styleClass="atest"
+                              style="width: 100%;height: 100%; display: block">
 
-      <onc:tabBar selectedTabName="#{selectedTabName}">
+                <f:facet name="closed">
+                            <rich:toggleControl panelId="footest" id="test"
+                                                style="width: 10px; height: 100%; background-color: #A4B2B9;">
 
-         <f:param name="id" value="#{param.id}" />
-         <f:param name="parent" value="#{param.parent}" />
-         <f:param name="type" value="#{param.type}" />
+                                <span id="openLeftNav"
+                                      style="display: block; width: 10px; height: 800px; background-color: #A4B2B9;">&nbsp;
+                                    <h:graphicImage value="/images/icon_right_arrow.gif"/>
+                                </span>
+                            </rich:toggleControl>
+                </f:facet>
 
-         <onc:tab name="Monitor">
-            <onc:subtab name="Graphs"
-               url="/rhq/autogroup/monitor/graphs.xhtml" />
-            <onc:subtab name="Tables"
-               url="/rhq/autogroup/monitor/tables.xhtml" />
-         </onc:tab>
+                <f:facet name="tree">
+                    <f:subview id="treeview">
 
-      </onc:tabBar>
 
-      <!-- Shows the results of the last action executed. -->
-      <h:messages showSummary="false" showDetail="true"
-         infoClass="InfoBlock" warnClass="WarnBlock"
-         errorClass="ErrorBlock" fatalClass="FatalBlock"
-         globalOnly="true" layout="table" width="100%" />
+                        <div style="width: 100%; height: 100%;  background-color: #E1E5EB; "
+                             id="leftSpace">
 
-   </ui:define>
 
-   <ui:define name="content">
-      <p />
+                            <table width="100%" cellpadding="0" cellspacing="0" style="height: 100%">
+                                <tr>
+                                    <td valign="top">
+                                        <ui:include src="/rhq/group/navigation/GroupTree.xhtml"/>
+                                    </td>
+                                    <td valign="top">
 
-      <h1>Default AutoGroup Content</h1>
+                                        <rich:toggleControl switchToState="closed" id="closeLeftNavLink">
 
-      <p />
-   </ui:define>
+                                            <span id="closeLeftNav"
+                                                  style="display: block; width: 10px; height: 800px; background-color: #A4B2B9;">&nbsp;
+                                                <h:graphicImage value="/images/icon_down_arrow.gif"/>
+                                            </span>
+
+                                        </rich:toggleControl>
+
+
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                    </f:subview>
+                </f:facet>
+            </rich:togglePanel>
+        </h:form>
+	</ui:define>
+
+<ui:define name="content">
+   <p/>
+
+   <h1>Default Resource Group Content</h1>
+
+   <p/>
+</ui:define>
 
 </ui:composition>
 

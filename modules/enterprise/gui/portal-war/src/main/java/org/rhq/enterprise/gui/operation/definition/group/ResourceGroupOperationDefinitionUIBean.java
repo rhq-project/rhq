@@ -35,7 +35,12 @@ public class ResourceGroupOperationDefinitionUIBean extends OperationDefinitionU
     private boolean haltOnFailure = false;
 
     public ResourceGroupOperationDefinitionUIBean() {
+        super();
+
         resourceExecutionOption = ResourceGroupExecutionTypeUIBean.Type.CONCURRENT.name();
+
+        ResourceGroup resourceGroup = EnterpriseFacesContextUtility.getResourceGroup();
+        this.resourceNameItems = operationManager.getResourceNameOptionItems(resourceGroup.getId());
     }
 
     @Override
@@ -55,12 +60,6 @@ public class ResourceGroupOperationDefinitionUIBean extends OperationDefinitionU
     }
 
     public List<IntegerOptionItem> getResourceNameItems() {
-        if (resourceNameItems == null) {
-            ResourceGroup resourceGroup = EnterpriseFacesContextUtility.getResourceGroup();
-
-            this.resourceNameItems = operationManager.getResourceNameOptionItems(resourceGroup.getId());
-        }
-
         return resourceNameItems;
     }
 

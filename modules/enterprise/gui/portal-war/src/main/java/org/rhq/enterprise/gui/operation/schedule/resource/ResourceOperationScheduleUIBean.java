@@ -19,8 +19,10 @@
 package org.rhq.enterprise.gui.operation.schedule.resource;
 
 import java.util.List;
+
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;

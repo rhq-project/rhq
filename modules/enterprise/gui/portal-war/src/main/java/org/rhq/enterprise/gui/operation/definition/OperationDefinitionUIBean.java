@@ -28,32 +28,29 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.common.scheduling.HtmlSimpleTrigger;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public abstract class OperationDefinitionUIBean extends PagedDataTableUIBean {
     protected OperationManagerLocal operationManager = LookupUtil.getOperationManager();
-    private OperationDefinition operationDefinition = null;
+    protected OperationDefinition operationDefinition = null;
+    private HtmlSimpleTrigger trigger;
 
     protected String timeout = null;
     protected String description = null;
 
     public OperationDefinitionUIBean() {
-    }
+        Integer operationId = FacesContextUtility.getOptionalRequestParameter("opId", Integer.class, null);
 
-    private void initOperationDefinition() {
-        if (this.operationDefinition == null) {
+        if (operationId != null) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            Integer operationId = FacesContextUtility.getRequiredRequestParameter("opId", Integer.class);
-
             this.operationDefinition = operationManager.getOperationDefinition(subject, operationId);
         }
     }
 
     public String getName() {
-        initOperationDefinition();
-
         return this.operationDefinition.getName();
     }
 
@@ -64,11 +61,8 @@ public abstract class OperationDefinitionUIBean extends PagedDataTableUIBean {
     public String getTimeout() {
         // we want to cache the definition, but have a separately manageable timeout
         // this will allow the user to override the timeout and pass this along in the request submission
-        if (this.timeout == null) {
-            initOperationDefinition();
-            Integer defaultTimeout = this.operationDefinition.getTimeout();
-            this.timeout = (defaultTimeout == null) ? "" : String.valueOf(defaultTimeout);
-        }
+        Integer defaultTimeout = this.operationDefinition.getTimeout();
+        this.timeout = (defaultTimeout == null) ? "" : String.valueOf(defaultTimeout);
 
         return this.timeout;
     }
@@ -82,6 +76,14 @@ public abstract class OperationDefinitionUIBean extends PagedDataTableUIBean {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public HtmlSimpleTrigger getTrigger() {
+        return trigger;
+    }
+
+    public void setTrigger(HtmlSimpleTrigger trigger) {
+        this.trigger = trigger;
     }
 
     @Override

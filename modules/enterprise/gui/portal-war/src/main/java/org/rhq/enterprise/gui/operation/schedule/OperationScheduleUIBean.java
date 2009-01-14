@@ -127,7 +127,7 @@ public abstract class OperationScheduleUIBean extends PagedDataTableUIBean {
                 configuration.put(new PropertySimple(OperationDefinition.TIMEOUT_PARAM_NAME, timeout));
             }
 
-            String operationName = manager.getOperationDefinition(subject, operationId).getName();
+            String operationName = operationDefUIBean.getName();
             String description = operationDefUIBean.getDescription();
 
             scheduleOperation(subject, operationName, configuration, simpleTrigger, description);

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.operation.definition.resource;
 
 import java.util.List;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
@@ -28,6 +29,8 @@ import org.rhq.enterprise.gui.operation.definition.OperationDefinitionUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 
 public class ResourceOperationDefinitionUIBean extends OperationDefinitionUIBean {
+    private Resource resource;
+
     @Override
     protected String getBeanName() {
         return "ResourceOperationDefinitionUIBean";

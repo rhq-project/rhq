@@ -21,6 +21,7 @@ package org.rhq.plugins.apache;
 import java.io.File;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -129,10 +130,14 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
 
     private OperationResult createOperationResult(ProcessExecutionResults processExecutionResults) {
         OperationResult operationResult = new OperationResult();
+
         Integer exitCode = processExecutionResults.getExitCode();
-        operationResult.setExitCode(exitCode);
         String output = processExecutionResults.getCapturedOutput(); // NOTE: this is stdout + stderr
-        operationResult.setOutput(output);
+
+        Configuration complexResults = operationResult.getComplexResults();
+        complexResults.put(new PropertySimple(EXIT_CODE_RESULT_PROP, exitCode));
+        complexResults.put(new PropertySimple(OUTPUT_RESULT_PROP, output));
+
         return operationResult;
     }
 

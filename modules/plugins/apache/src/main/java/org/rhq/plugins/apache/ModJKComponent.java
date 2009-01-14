@@ -27,6 +27,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -43,8 +44,10 @@ public class ModJKComponent implements ResourceComponent<ApacheServerComponent> 
 
     private static final Log log = LogFactory.getLog(ModJKComponent.class);
 
-    public void start(
-            ResourceContext<ApacheServerComponent> parentResourceContext) throws InvalidPluginConfigurationException, Exception {
+    private static final String OUTPUT_RESULT_PROP = "output";
+
+    public void start(ResourceContext<ApacheServerComponent> parentResourceContext)
+        throws InvalidPluginConfigurationException, Exception {
 
     }
 
@@ -62,7 +65,8 @@ public class ModJKComponent implements ResourceComponent<ApacheServerComponent> 
      * @param params Params we got passed from the GUI
      * @return The outcome of the operation
      */
-    public static OperationResult installModJk(ApacheServerComponent serverComponent, Configuration params) throws Exception {
+    public static OperationResult installModJk(ApacheServerComponent serverComponent, Configuration params)
+        throws Exception {
 
         StringBuilder builder = new StringBuilder();
         boolean errorSeen = false;
@@ -82,21 +86,19 @@ public class ModJKComponent implements ResourceComponent<ApacheServerComponent> 
         cparser.parse(confPath);
         // TODO back up original file
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(httpdConf,true));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(httpdConf, true));
 
             if (cparser.isModJkInstalled()) {
                 builder.append("Mod_jk is already installed\n");
                 if (cparser.getWorkerPropertiesFile() != null) {
                     builder.append("Found a worker.properties file at ").append(cparser.getWorkerPropertiesFile());
                     builder.append("\n");
-                }
-                else
+                } else
                     needWorkersProps = true;
 
                 if (cparser.getUriWorkerLocation() != null) {
                     builder.append("Found a urimap file at ").append(cparser.getUriWorkerLocation());
-                }
-                else
+                } else
                     needUriWorkers = true;
             } else {
                 builder.append("No mod_jk installed yet at ").append(confPath).append("\n");
@@ -104,10 +106,9 @@ public class ModJKComponent implements ResourceComponent<ApacheServerComponent> 
                 writer.append("LoadModule jk_module modules/mod_jk.so"); // TODO obtain modules location
                 writer.newLine();
 
-
                 builder.append(".. written a LoadModule line \n");
-                needWorkersProps=true;
-                needUriWorkers=true;
+                needWorkersProps = true;
+                needUriWorkers = true;
             }
 
             if (needWorkersProps) {
@@ -123,8 +124,7 @@ public class ModJKComponent implements ResourceComponent<ApacheServerComponent> 
             writer.flush();
             writer.close();
 
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             builder.append("Error when installing mod_jk: \n");
             builder.append(e.fillInStackTrace());
             throw new Exception(builder.toString());
@@ -132,7 +132,9 @@ public class ModJKComponent implements ResourceComponent<ApacheServerComponent> 
         }
 
         OperationResult result = new OperationResult();
-        result.setOutput(builder.toString());
+
+        Configuration complexResults = result.getComplexResults();
+        complexResults.put(new PropertySimple(OUTPUT_RESULT_PROP, builder.toString()));
 
         return result;
     }

@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pluginapi.operation;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -38,8 +38,6 @@ import org.rhq.core.domain.configuration.PropertySimple;
  */
 public class OperationResult {
     public static final String SIMPLE_OPERATION_RESULT_NAME = "operationResult";
-    public static final String OPERATION_OUTPUT = "output";
-    public static final String EXIT_CODE = "exitCode";
 
     private final Configuration complexResults = new Configuration();
 
@@ -105,24 +103,6 @@ public class OperationResult {
     public Configuration getComplexResults() {
         return complexResults;
     }
-
-    /**
-     * Sets the passed output from the operation in the result
-     * @param output output from the operation that was running
-     */
-    public void setOutput(String output) {
-        complexResults.put(new PropertySimple(OPERATION_OUTPUT,output));
-    }
-
-    /**
-     * Sets the passed exit code from the operation in the result
-     * @param code exit code from the running operation
-     */
-    public void setExitCode(int code) {
-        complexResults.put(new PropertySimple(EXIT_CODE,code));
-    }
-
-
 
     @Override
     public String toString() {

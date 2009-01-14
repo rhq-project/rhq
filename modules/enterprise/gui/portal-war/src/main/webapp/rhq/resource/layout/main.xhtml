@@ -74,6 +74,10 @@ REQUEST PARAMETERS:
                url="/rhq/resource/monitor/tables.xhtml" />
             <onc:subtab name="Schedules"
                url="/rhq/resource/monitor/schedules.xhtml" />
+            <c:if test="#{ResourceUIBean.facets.callTime}" >
+               <onc:subtab name="Response"
+                  url="/rhq/resource/monitor/response.xhtml" />
+            </c:if>
          </onc:tab>
 
          <onc:tab name="Events">

@@ -136,8 +136,8 @@ import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerBean;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerBean;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.subsystem.AlertHistorySubsystemManagerBean;
-import org.rhq.enterprise.server.subsystem.AlertHistorySubsystemManagerLocal;
+import org.rhq.enterprise.server.subsystem.AlertSubsystemManagerBean;
+import org.rhq.enterprise.server.subsystem.AlertSubsystemManagerLocal;
 import org.rhq.enterprise.server.subsystem.ConfigurationSubsystemManagerBean;
 import org.rhq.enterprise.server.subsystem.ConfigurationSubsystemManagerLocal;
 import org.rhq.enterprise.server.subsystem.OperationHistorySubsystemManagerBean;
@@ -234,8 +234,8 @@ public final class LookupUtil {
         return lookupLocal(AlertTemplateManagerBean.class);
     }
 
-    public static AlertHistorySubsystemManagerLocal getAlertHistorySubsystemManager() {
-        return lookupLocal(AlertHistorySubsystemManagerBean.class);
+    public static AlertSubsystemManagerLocal getAlertSubsystemManager() {
+        return lookupLocal(AlertSubsystemManagerBean.class);
     }
 
     public static AlertTemplateTestLocal getAlertTemplateTestBean() {

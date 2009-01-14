@@ -27,8 +27,11 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.composite.AlertDefinitionComposite;
 import org.rhq.core.domain.alert.composite.AlertHistoryComposite;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
@@ -42,7 +45,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
  * @author Joseph Marques
  */
 @Stateless
-public class AlertHistorySubsystemManagerBean implements AlertHistorySubsystemManagerLocal {
+public class AlertSubsystemManagerBean implements AlertSubsystemManagerLocal {
 
     //private final Log log = LogFactory.getLog(AlertHistorySubsystemManagerBean.class);
 
@@ -89,13 +92,18 @@ public class AlertHistorySubsystemManagerBean implements AlertHistorySubsystemMa
         long totalCount = (Long) queryCount.getSingleResult();
         List<AlertHistoryComposite> results = query.getResultList();
 
-        fetchCollectionFields(results);
+        fetchAlertCollectionFields(results);
 
         return new PageList<AlertHistoryComposite>(results, (int) totalCount, pc);
     }
 
+    private void fetchAlertCollectionFields(List<AlertHistoryComposite> composites) {
+        for (AlertHistoryComposite composite : composites) {
+            fetchCollectionFields(composite.getAlert());
+        }
+    }
+
     private void fetchCollectionFields(Alert alert) {
-        alert.getConditionLogs().size();
         for (AlertConditionLog log : alert.getConditionLogs()) {
             if (log.getCondition() != null) {
                 log.getCondition().getName(); // eagerly load non-null alert condition logs
@@ -103,9 +111,57 @@ public class AlertHistorySubsystemManagerBean implements AlertHistorySubsystemMa
         }
     }
 
-    private void fetchCollectionFields(List<AlertHistoryComposite> histories) {
-        for (AlertHistoryComposite composite : histories) {
-            fetchCollectionFields(composite.getAlert());
+    @SuppressWarnings("unchecked")
+    public PageList<AlertDefinitionComposite> getAlertDefinitions(Subject subject, String resourceFilter,
+        String parentFilter, Long startTime, Long endTime, AlertConditionCategory category, PageControl pc) {
+        pc.initDefaultOrderingField("ad.id", PageOrdering.DESC);
+
+        String queryName = null;
+        if (authorizationManager.isInventoryManager(subject)) {
+            queryName = AlertDefinition.QUERY_FIND_ALL_COMPOSITES_ADMIN;
+        } else {
+            queryName = AlertDefinition.QUERY_FIND_ALL_COMPOSITES;
+        }
+
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
+
+        if (authorizationManager.isInventoryManager(subject) == false) {
+            queryCount.setParameter("subjectId", subject.getId());
+            query.setParameter("subjectId", subject.getId());
+        }
+
+        resourceFilter = PersistenceUtility.formatSearchParameter(resourceFilter);
+        parentFilter = PersistenceUtility.formatSearchParameter(parentFilter);
+
+        queryCount.setParameter("resourceFilter", resourceFilter);
+        query.setParameter("resourceFilter", resourceFilter);
+        queryCount.setParameter("parentFilter", parentFilter);
+        query.setParameter("parentFilter", parentFilter);
+        queryCount.setParameter("startTime", startTime);
+        query.setParameter("startTime", startTime);
+        queryCount.setParameter("endTime", endTime);
+        query.setParameter("endTime", endTime);
+        queryCount.setParameter("category", category);
+        query.setParameter("category", category);
+
+        long totalCount = (Long) queryCount.getSingleResult();
+        List<AlertDefinitionComposite> results = query.getResultList();
+
+        fetchAlertDefinitionCollectionFields(results);
+
+        return new PageList<AlertDefinitionComposite>(results, (int) totalCount, pc);
+    }
+
+    private void fetchAlertDefinitionCollectionFields(List<AlertDefinitionComposite> composites) {
+        for (AlertDefinitionComposite composite : composites) {
+            fetchCollectionFields(composite.getAlertDefinition());
+        }
+    }
+
+    private void fetchCollectionFields(AlertDefinition alertDefinition) {
+        for (AlertCondition condition : alertDefinition.getConditions()) {
+            condition.getName(); // eagerly load non-null alert condition logs
         }
     }
 }

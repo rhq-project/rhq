@@ -58,6 +58,11 @@
                <ui:include src="/rhq/subsystem/alertHistory.xhtml"/>
             </c:if>
          </rich:tab>
+         <rich:tab name="alertDefinitions" label="Alert Definitions">
+            <c:if test="#{SubsystemViewsUIBean.tabPanel.selectedTab eq 'alertDefinitions'}">
+               <ui:include src="/rhq/subsystem/alertDefinitions.xhtml"/>
+            </c:if>
+         </rich:tab>
       </rich:tabPanel>
    </ui:insert>
 

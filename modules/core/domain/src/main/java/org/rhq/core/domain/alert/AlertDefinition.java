@@ -97,7 +97,50 @@ import org.rhq.core.domain.resource.ResourceType;
         + " WHERE ad.deleted = TRUE " //
         + "   AND ad.id NOT IN ( SELECT alertDef.id " //
         + "                        FROM Alert a " //
-        + "                        JOIN a.alertDefinition alertDef )") })
+        + "                        JOIN a.alertDefinition alertDef )"),
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL_COMPOSITES_ADMIN, query = "" //
+        + "   SELECT new org.rhq.core.domain.alert.composite.AlertDefinitionComposite" // 
+        + "        ( ad, parent.id, parent.name ) " //
+        + "     FROM AlertDefinition ad " //
+        + "LEFT JOIN ad.resource res " //
+        + "LEFT JOIN res.parentResource parent " //
+        /* 
+         * as much as i want to (for efficiency of the query [namely roundtrips to the db]) i can't use fetching here
+         * because, when added, the query parser chokes with "query specified join fetching, but the owner of the 
+         * fetched association was not present in the select list"...even though it clearly is  ;/ 
+         */
+        //+ "     JOIN FETCH ad.conditions ac " //
+        + "    WHERE (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
+        + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
+        + "      AND (ad.ctime > :startTime OR :startTime IS NULL) " //
+        + "      AND (ad.ctime < :endTime OR :endTime IS NULL) " //
+        + "      AND (ad.id IN ( SELECT aad.id FROM AlertDefinition aad " //
+        + "                       JOIN aad.conditions aadc " // 
+        + "                      WHERE aadc.category = :category ) " //
+        + "           OR :category IS NULL) "), //
+    @NamedQuery(name = AlertDefinition.QUERY_FIND_ALL_COMPOSITES, query = "" //
+        + "   SELECT new org.rhq.core.domain.alert.composite.AlertDefinitionComposite" // 
+        + "        ( ad, parent.id, parent.name ) " //
+        + "     FROM AlertDefinition ad " //
+        + "LEFT JOIN ad.resource res " //
+        + "LEFT JOIN res.parentResource parent " //
+        /* 
+         * as much as i want to (for efficiency of the query [namely roundtrips to the db]) i can't use fetching here
+         * because, when added, the query parser chokes with "query specified join fetching, but the owner of the 
+         * fetched association was not present in the select list"...even though it clearly is  ;/ 
+         */
+        //+ "     JOIN FETCH ad.conditions ac " //
+        + "    WHERE res.id IN ( SELECT rr.id FROM Resource rr " //
+        + "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
+        + "                       WHERE s.id = :subjectId ) " //
+        + "      AND (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
+        + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
+        + "      AND (ad.ctime > :startTime OR :startTime IS NULL) " //
+        + "      AND (ad.ctime < :endTime OR :endTime IS NULL) " //
+        + "      AND (ad.id IN ( SELECT aad.id FROM AlertDefinition aad " //
+        + "                       JOIN aad.conditions aadc " // 
+        + "                      WHERE aadc.category = :category ) " //
+        + "           OR :category IS NULL) ") })
 @SequenceGenerator(name = "RHQ_ALERT_DEFINITION_ID_SEQ", sequenceName = "RHQ_ALERT_DEFINITION_ID_SEQ", allocationSize = 10)
 @Table(name = "RHQ_ALERT_DEFINITION")
 public class AlertDefinition implements Serializable {
@@ -113,6 +156,10 @@ public class AlertDefinition implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE_TYPE = "AlertDefinition.findByResourceType";
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertDefinition.deleteByResources";
     public static final String QUERY_FIND_UNUSED_DEFINITION_IDS = "AlertDefinition.findUnusedDefinitionIds";
+
+    // for subsystem view
+    public static final String QUERY_FIND_ALL_COMPOSITES = "AlertDefinition.findAllComposites";
+    public static final String QUERY_FIND_ALL_COMPOSITES_ADMIN = "AlertDefinition.findAllComposites_admin";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_ALERT_DEFINITION_ID_SEQ")

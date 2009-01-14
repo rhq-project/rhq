@@ -30,9 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
-import org.rhq.core.domain.alert.AlertConditionLog;
-import org.rhq.core.domain.alert.composite.AlertHistoryComposite;
-import org.rhq.core.domain.measurement.util.MeasurementConverter;
+import org.rhq.core.domain.alert.composite.AlertDefinitionComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -49,9 +47,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * @author Joseph Marques
  */
-public class SubsystemAlertHistoryUIBean extends PagedDataTableUIBean {
-    public static final String MANAGED_BEAN_NAME = "SubsystemAlertHistoryUIBean";
-    private static final String FORM_PREFIX = "alertHistorySubsystemForm:";
+public class SubsystemAlertDefinitionUIBean extends PagedDataTableUIBean {
+    public static final String MANAGED_BEAN_NAME = "SubsystemAlertDefinitionUIBean";
+    private static final String FORM_PREFIX = "alertDefinitionSubsystemForm:";
     private final String CALENDAR_SUFFIX = "InputDate";
 
     private AlertSubsystemManagerLocal manager = LookupUtil.getAlertSubsystemManager();
@@ -64,7 +62,7 @@ public class SubsystemAlertHistoryUIBean extends PagedDataTableUIBean {
     private String categoryFilter;
     private SelectItem[] categoryFilterItems;
 
-    public SubsystemAlertHistoryUIBean() {
+    public SubsystemAlertDefinitionUIBean() {
         datePattern = new WebUserPreferences(EnterpriseFacesContextUtility.getSubject())
             .getDateTimeDisplayPreferences().getDateTimeFormatTrigger();
         categoryFilterItems = SelectItemUtils.convertFromEnum(AlertConditionCategory.class, true);
@@ -126,19 +124,19 @@ public class SubsystemAlertHistoryUIBean extends PagedDataTableUIBean {
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ResultsDataModel(PageControlView.SubsystemAlertHistory, MANAGED_BEAN_NAME);
+            dataModel = new ResultsDataModel(PageControlView.SubsystemAlertDefinition, MANAGED_BEAN_NAME);
         }
 
         return dataModel;
     }
 
-    private class ResultsDataModel extends PagedListDataModel<AlertHistoryComposite> {
+    private class ResultsDataModel extends PagedListDataModel<AlertDefinitionComposite> {
         public ResultsDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
         @Override
-        public PageList<AlertHistoryComposite> fetchPage(PageControl pc) {
+        public PageList<AlertDefinitionComposite> fetchPage(PageControl pc) {
             getDataFromRequest();
 
             String resourceFilter = getResourceFilter();
@@ -149,40 +147,30 @@ public class SubsystemAlertHistoryUIBean extends PagedDataTableUIBean {
             AlertConditionCategory category = cleansedStatus == null ? null : AlertConditionCategory
                 .valueOf(cleansedStatus);
 
-            PageList<AlertHistoryComposite> result;
-            result = manager.getAlertHistories(getSubject(), resourceFilter, parentFilter, startMillis, endMillis,
+            PageList<AlertDefinitionComposite> result;
+            result = manager.getAlertDefinitions(getSubject(), resourceFilter, parentFilter, startMillis, endMillis,
                 category, pc);
 
             // format UI-layer display column attribute values
             HttpServletRequest request = FacesContextUtility.getRequest();
-            for (AlertHistoryComposite history : result) {
-                Set<AlertConditionLog> acls = history.getAlert().getConditionLogs();
-                if (acls.size() > 1) {
+            for (AlertDefinitionComposite history : result) {
+                Set<AlertCondition> acs = history.getAlertDefinition().getConditions();
+                if (acs.size() > 1) {
                     history.setConditionText("Multiple Conditions");
-                    history.setConditionValue("--");
-                } else if (acls.size() == 1) {
-                    AlertConditionLog log = acls.iterator().next();
-                    AlertCondition condition = log.getCondition();
+                } else if (acs.size() == 1) {
+                    AlertCondition condition = acs.iterator().next();
                     String displayText = AlertDefUtil.formatAlertConditionForDisplay(condition, request);
 
-                    String firedValue = log.getValue();
-                    if (condition.getMeasurementDefinition() != null) {
-                        firedValue = MeasurementConverter.format(Double.valueOf(log.getValue()), condition
-                            .getMeasurementDefinition().getUnits(), true);
-                    }
-
                     history.setConditionText(displayText);
-                    history.setConditionValue(firedValue);
                 } else {
                     history.setConditionText("No Conditions");
-                    history.setConditionValue("--");
                 }
             }
             return result;
         }
 
         private void getDataFromRequest() {
-            SubsystemAlertHistoryUIBean outer = SubsystemAlertHistoryUIBean.this;
+            SubsystemAlertDefinitionUIBean outer = SubsystemAlertDefinitionUIBean.this;
             outer.resourceFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "resourceFilter");
             outer.parentFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "parentFilter");
             outer.dateBeginFilter = getDate(FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX

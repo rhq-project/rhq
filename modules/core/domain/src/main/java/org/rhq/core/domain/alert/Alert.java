@@ -104,7 +104,7 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "     JOIN ad.resource res " //
         + "LEFT JOIN res.parentResource parent " //
         /* 
-         * as much as i want to for efficient of the query (namely roundtrips to the db) i can't use fetching here
+         * as much as i want to (for efficiency of the query [namely roundtrips to the db]) i can't use fetching here
          * because, when added, the query parser chokes with "query specified join fetching, but the owner of the 
          * fetched association was not present in the select list"...even though it clearly is  ;/ 
          */
@@ -126,7 +126,7 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "     JOIN ad.resource res " //
         + "LEFT JOIN res.parentResource parent " //
         /* 
-         * as much as i want to for efficient of the query (namely roundtrips to the db) i can't use fetching here
+         * as much as i want to (for efficiency of the query [namely roundtrips to the db]) i can't use fetching here
          * because, when added, the query parser chokes with "query specified join fetching, but the owner of the 
          * fetched association was not present in the select list"...even though it clearly is  ;/ 
          */

@@ -10,6 +10,13 @@
       <managed-bean-class>org.rhq.enterprise.gui.subsystem.SubsystemAlertHistoryUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
+   
+   <!-- /rhq/subsystem/alertDefinitions.xhtml -->
+   <managed-bean>
+      <managed-bean-name>SubsystemAlertDefinitionUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.subsystem.SubsystemAlertDefinitionUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
 
 </faces-config>
       

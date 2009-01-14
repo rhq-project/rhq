@@ -113,6 +113,9 @@ public class ScriptComponent implements ResourceComponent<JBossASServerComponent
             Configuration complexResults = operationResult.getComplexResults();
             complexResults.put(new PropertySimple(EXIT_CODE_RESULT_PROP, exitCode));
             complexResults.put(new PropertySimple(OUTPUT_RESULT_PROP, output));
+            if (exitCode != null && exitCode != 0) {
+                operationResult.setErrorMessage("Exit code was '" + exitCode + "', see operation results for details");
+            }
 
             return operationResult;
         } else {

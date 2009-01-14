@@ -104,15 +104,20 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
 
         if (this.getMetricType().equalsIgnoreCase(AdvancedMetricSettingsUIBean.DURATION_TYPE)) {
             rangePreferences.end -= this.getDuration() * this.getUnit();
+            preferences.persistPreferences();
         }
 
-        if (this.getMetricType().equalsIgnoreCase(AdvancedMetricSettingsUIBean.INTERVAL_TYPE)) {
+        else if (this.getMetricType().equalsIgnoreCase(AdvancedMetricSettingsUIBean.INTERVAL_TYPE)) {
             Long fromTime = this.getFromTime().getTime();
             Long toTime = this.getToTime().getTime();
             if (toTime < fromTime) {
                 facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Timing error",
                     "To time cannot be earlier than before time"));
+            } else {
+                rangePreferences.end -= toTime;
+                rangePreferences.end -= fromTime;
             }
+            preferences.persistPreferences();
         }
     }
 }

@@ -92,23 +92,11 @@ public class AlertSubsystemManagerBean implements AlertSubsystemManagerLocal {
         long totalCount = (Long) queryCount.getSingleResult();
         List<AlertHistoryComposite> results = query.getResultList();
 
-        fetchAlertCollectionFields(results);
-
-        return new PageList<AlertHistoryComposite>(results, (int) totalCount, pc);
-    }
-
-    private void fetchAlertCollectionFields(List<AlertHistoryComposite> composites) {
-        for (AlertHistoryComposite composite : composites) {
+        for (AlertHistoryComposite composite : results) {
             fetchCollectionFields(composite.getAlert());
         }
-    }
 
-    private void fetchCollectionFields(Alert alert) {
-        for (AlertConditionLog log : alert.getConditionLogs()) {
-            if (log.getCondition() != null) {
-                log.getCondition().getName(); // eagerly load non-null alert condition logs
-            }
-        }
+        return new PageList<AlertHistoryComposite>(results, (int) totalCount, pc);
     }
 
     @SuppressWarnings("unchecked")
@@ -148,20 +136,32 @@ public class AlertSubsystemManagerBean implements AlertSubsystemManagerLocal {
         long totalCount = (Long) queryCount.getSingleResult();
         List<AlertDefinitionComposite> results = query.getResultList();
 
-        fetchAlertDefinitionCollectionFields(results);
+        for (AlertDefinitionComposite composite : results) {
+            fetchCollectionFields(composite.getAlertDefinition());
+        }
 
         return new PageList<AlertDefinitionComposite>(results, (int) totalCount, pc);
     }
 
-    private void fetchAlertDefinitionCollectionFields(List<AlertDefinitionComposite> composites) {
-        for (AlertDefinitionComposite composite : composites) {
-            fetchCollectionFields(composite.getAlertDefinition());
+    private void fetchCollectionFields(Alert alert) {
+        for (AlertConditionLog log : alert.getConditionLogs()) {
+            fetchCollectionFields(log.getCondition());
         }
     }
 
     private void fetchCollectionFields(AlertDefinition alertDefinition) {
         for (AlertCondition condition : alertDefinition.getConditions()) {
-            condition.getName(); // eagerly load non-null alert condition logs
+            fetchCollectionFields(condition);
+        }
+    }
+
+    private void fetchCollectionFields(AlertCondition alertCondition) {
+        if (alertCondition != null) {
+            alertCondition.getName(); // eagerly load non-null alert condition logs
+            if (alertCondition.getMeasurementDefinition() != null) {
+                // this ManyToOne is not lazy by default, so eager load MeasurementDefinition for condition
+                alertCondition.getMeasurementDefinition().getName();
+            }
         }
     }
 }

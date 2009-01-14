@@ -40,6 +40,7 @@ public class OperationResult {
     public static final String SIMPLE_OPERATION_RESULT_NAME = "operationResult";
 
     private final Configuration complexResults = new Configuration();
+    private String errorMessage;
 
     /**
      * Constructor that builds an empty result. You can then use {@link #getComplexResults()} to obtain the
@@ -88,6 +89,25 @@ public class OperationResult {
      */
     public void setSimpleResult(String simpleResult) {
         complexResults.put(new PropertySimple(SIMPLE_OPERATION_RESULT_NAME, simpleResult));
+    }
+
+    /**
+     * Returns the plugin-specific error message for this operation, or null if the operation was successful
+     */
+    public String getErrorMessage() {
+        return this.errorMessage;
+    }
+
+    /**
+     * Sets whether or not this operation was successful. If this method is never called, the operation is assumed
+     * a success. If your operation has logically failed but you don't want to throw an exception because the results
+     * object contains meaningful data at the time of failure, you can pass an error message and the operation will
+     * be marked as FAILURE
+     * 
+     * @param operationError a plugin specific error that indicates why this operation has failed
+     */
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 
     /**

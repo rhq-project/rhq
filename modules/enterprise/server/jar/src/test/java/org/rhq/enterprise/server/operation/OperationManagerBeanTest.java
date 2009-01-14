@@ -1626,7 +1626,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
                         if (simulatedOperation_Error != null) {
                             ExceptionPackage error = new ExceptionPackage(new Exception(simulatedOperation_Error));
                             if (operationServerService != null) {
-                                operationServerService.operationFailed(jobId, error, start, end);
+                                operationServerService.operationFailed(jobId, null, error, start, end);
                             }
                         } else if (simulatedOperation_Timeout) {
                             if (operationServerService != null) {

@@ -1,31 +1,33 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.operation;
 
 import java.util.EnumSet;
 import java.util.TimerTask;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.server.operation.OperationServerService;
 import org.rhq.core.domain.configuration.Configuration;
@@ -199,6 +201,7 @@ public class OperationInvocation implements Runnable {
      */
     public void run() {
         Configuration result = null;
+        String errorMessage = null;
         Throwable failure = null;
         long finishedTime;
 
@@ -223,11 +226,14 @@ public class OperationInvocation implements Runnable {
                                 .getResultsConfigurationDefinition());
                             // TODO: Validate the result Configuration?
                         } else {
-                            log.error("Plugin error: Operation [" + this.operationDefinition.getName() + "] is defined as returning no results, but it returned non-null results: " + result.toString(true));
+                            log.error("Plugin error: Operation [" + this.operationDefinition.getName()
+                                + "] is defined as returning no results, but it returned non-null results: "
+                                + result.toString(true));
                             result = null; // Don't return results that the GUI won't be able to display anyway.
                         }
                     }
                 }
+                errorMessage = opResult.getErrorMessage();
             } else {
                 failure = new InterruptedException("Operation was aborted before it started.");
             }
@@ -261,11 +267,22 @@ public class OperationInvocation implements Runnable {
                 // or the plugin ignored the order to cancel (i.e. the thread interrupt) and finished doing
                 // what it was doing anyway.  In either case, the operation really did succeed (it was not
                 // canceled) so we need to indicate this via calling operationSucceeded
-                try {
-                    operationServerService.operationSucceeded(jobId, result, invocationTime, finishedTime);
-                } catch (Throwable t) {
-                    log.error("Failed to send operation succeeded message to server. resource=[" + resourceId
-                        + "], operation=[" + operationName + "], jobId=[" + jobId + "]", t);
+                if (errorMessage == null) {
+                    try {
+                        operationServerService.operationSucceeded(jobId, result, invocationTime, finishedTime);
+                    } catch (Throwable t) {
+                        log.error("Failed to send operation succeeded message to server. resource=[" + resourceId
+                            + "], operation=[" + operationName + "], jobId=[" + jobId + "]", t);
+                    }
+                } else {
+                    ExceptionPackage errorResults = new ExceptionPackage(Severity.Severe, new Exception(errorMessage));
+                    try {
+                        operationServerService.operationFailed(jobId, result, errorResults, invocationTime,
+                            finishedTime);
+                    } catch (Throwable t) {
+                        log.error("Failed to send operation failed message to server. resource=[" + resourceId
+                            + "], operation=[" + operationName + "], jobId=[" + jobId + "]", t);
+                    }
                 }
             } else {
                 if (status.contains(Status.TIMED_OUT)) {
@@ -285,7 +302,7 @@ public class OperationInvocation implements Runnable {
                     }
 
                     try {
-                        operationServerService.operationFailed(jobId, errorResults, invocationTime, finishedTime);
+                        operationServerService.operationFailed(jobId, null, errorResults, invocationTime, finishedTime);
                     } catch (Throwable t) {
                         log.error("Failed to send operation failed message to server. resource=[" + resourceId
                             + "], operation=[" + operationName + "], jobId=[" + jobId + "], operation-error=["

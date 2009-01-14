@@ -47,7 +47,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class OperationServerServiceImpl implements OperationServerService {
     private static final Log LOG = LogFactory.getLog(OperationServerServiceImpl.class);
 
-    public void operationFailed(String jobId, ExceptionPackage error, long invocationTime, long completionTime) {
+    public void operationFailed(String jobId, Configuration result, ExceptionPackage error, long invocationTime,
+        long completionTime) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Operation invocation [" + jobId + "] failed with error [" + error + "] "
                 + getFromStartToEndTimestampString(invocationTime, completionTime));
@@ -56,7 +57,9 @@ public class OperationServerServiceImpl implements OperationServerService {
         try {
             Subject superuser = LookupUtil.getSubjectManager().getOverlord();
             OperationManagerLocal operationManager = LookupUtil.getOperationManager();
-            OperationHistory history = operationManager.getOperationHistoryByJobId(superuser, jobId);
+            ResourceOperationHistory history = null;
+
+            history = (ResourceOperationHistory) operationManager.getOperationHistoryByJobId(superuser, jobId);
 
             // I think this will only ever occur if the server-side timed this out but the long running
             // operation finally got back to us afterwards. We will still go ahead and
@@ -74,7 +77,9 @@ public class OperationServerServiceImpl implements OperationServerService {
                 history.setErrorMessage("Failed for an unknown reason at " + new Date(completionTime));
             }
 
+            history.setResults(result);
             history.setStatus(OperationRequestStatus.FAILURE);
+
             operationManager.updateOperationHistory(superuser, history);
         } catch (Exception e) {
             LOG.error("Failed to update history from failed operation, jobId=[" + jobId + "]. Cause: " + e, e);

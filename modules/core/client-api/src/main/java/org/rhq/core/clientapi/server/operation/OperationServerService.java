@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.clientapi.server.operation;
 
 import org.rhq.core.communications.command.annotation.Asynchronous;
@@ -45,12 +45,15 @@ public interface OperationServerService {
      * Called by the agent when a server-scheduled operation fails.
      *
      * @param jobId          the server-assigned unique job id for this operation
+     * @param result         a result object that can be used to capture any information available
+     *                       up to the point of failure 
      * @param error          an exception describing why the operation failed
      * @param invocationTime the time at which the agent was asked to invoke the operation (epoch millis)
      * @param completionTime the time at which the operation completed (i.e. failed) (epoch millis)
      */
     @Asynchronous(guaranteedDelivery = true)
-    void operationFailed(String jobId, ExceptionPackage error, long invocationTime, long completionTime);
+    void operationFailed(String jobId, Configuration result, ExceptionPackage error, long invocationTime,
+        long completionTime);
 
     /**
      * Called by the agent when a server-scheduled operation times out.

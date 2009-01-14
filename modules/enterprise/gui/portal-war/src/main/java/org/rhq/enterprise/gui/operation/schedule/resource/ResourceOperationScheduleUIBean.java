@@ -20,15 +20,22 @@ package org.rhq.enterprise.gui.operation.schedule.resource;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.operation.schedule.OperationScheduleUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
+import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.QuartzUtil;
 
 public class ResourceOperationScheduleUIBean extends OperationScheduleUIBean {
     private Resource resource;
@@ -89,5 +96,34 @@ public class ResourceOperationScheduleUIBean extends OperationScheduleUIBean {
 
         manager.scheduleResourceOperation(subject, resource.getId(), operationName, parameters, simpleTrigger,
             description);
+    }
+
+    public String executeNow() throws Exception {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        HttpServletRequest request = FacesContextUtility.getRequest();
+        String[] selectedItems = request.getParameterValues("selectedItems");
+        if (selectedItems == null || selectedItems.length == 0) {
+            selectedItems = request.getParameterValues("jobId");
+        }
+        if (selectedItems == null || selectedItems.length == 0) {
+            throw new IllegalStateException("No job selected to execute");
+        }
+
+        SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
+
+        for (String jobIdString : selectedItems) {
+            ResourceOperationSchedule resourceSchedule;
+            try {
+                resourceSchedule = manager.getResourceOperationSchedule(subject, jobIdString);
+            } catch (SchedulerException se) {
+                throw new IllegalStateException(se.getMessage(), se);
+            }
+
+            JobDetail jobDetail = scheduler.getJobDetail(resourceSchedule.getJobName(), resourceSchedule.getJobGroup());
+            scheduleOperation(subject, resourceSchedule.getOperationName(), resourceSchedule.getParameters(),
+                (SimpleTrigger) QuartzUtil.getFireOnceImmediateTrigger(jobDetail), resourceSchedule.getDescription());
+        }
+
+        return "viewOperationHistory";
     }
 }

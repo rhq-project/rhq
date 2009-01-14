@@ -92,6 +92,9 @@
                      <rich:column colspan="4" width="100%">
                         <onc:selectCommandButton action="#{ResourceOperationScheduleUIBean.unschedule}"
                                                  value="UNSCHEDULE" target="selectedItems" styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{ResourceOperationScheduleUIBean.executeNow}" 
+                                                 value="EXECUTE NOW" target="selectedItems" styleClass="on-pager-button buttonsmall"
+                                                 low="1" high="1"/>
                      </rich:column>
                   </rich:columnGroup>
                </f:facet>

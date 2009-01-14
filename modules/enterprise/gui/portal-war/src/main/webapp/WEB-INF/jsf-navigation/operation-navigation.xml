@@ -54,7 +54,14 @@
          <from-outcome>sort</from-outcome>
          <to-view-id>/rhq/resource/operation/resourceOperationSchedules.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
-      </navigation-case> 
+      </navigation-case>
+      
+      <navigation-case>
+         <!-- schedule an operation for immediate execution -->
+         <from-outcome>viewOperationHistory</from-outcome>
+         <to-view-id>/rhq/resource/operation/resourceOperationHistory.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
       
    </navigation-rule>
      

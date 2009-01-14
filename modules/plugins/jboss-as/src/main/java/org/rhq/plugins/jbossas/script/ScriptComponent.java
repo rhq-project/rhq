@@ -60,6 +60,9 @@ public class ScriptComponent implements ResourceComponent<JBossASServerComponent
     public static final String EXECUTE_OPERATION = "execute";
 
     public static final String COMMAND_LINE_ARGUMENTS_PARAM_PROP = "commandLineArguments";
+    
+    private static final String EXIT_CODE_RESULT_PROP = "exitCode";
+    private static final String OUTPUT_RESULT_PROP = "output";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -78,7 +81,6 @@ public class ScriptComponent implements ResourceComponent<JBossASServerComponent
         return (scriptFile.exists()) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
-    @SuppressWarnings( { "ConstantConditions" })
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
         if (name.equals(EXECUTE_OPERATION)) {
             OperationResult operationResult = new OperationResult();
@@ -106,9 +108,11 @@ public class ScriptComponent implements ResourceComponent<JBossASServerComponent
             }
 
             Integer exitCode = processExecutionResults.getExitCode();
-            operationResult.setExitCode(exitCode);
             String output = processExecutionResults.getCapturedOutput(); // NOTE: this is stdout + stderr
-            operationResult.setOutput(output);
+            
+            Configuration complexResults = operationResult.getComplexResults();
+            complexResults.put(new PropertySimple(EXIT_CODE_RESULT_PROP, exitCode));
+            complexResults.put(new PropertySimple(OUTPUT_RESULT_PROP, output));
 
             return operationResult;
         } else {

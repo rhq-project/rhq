@@ -75,8 +75,9 @@ REQUEST PARAMETERS:
             <onc:subtab name="Schedules"
                url="/rhq/resource/monitor/schedules.xhtml" />
             <c:if test="#{ResourceUIBean.facets.callTime}" >
+               <!-- /rhq/common/monitor/response.xhtml -->
                <onc:subtab name="Response"
-                  url="/rhq/resource/monitor/response.xhtml" />
+                  url="/resource/common/monitor/Visibility.do?mode=performance&amp;id=#{param.id}" />         
             </c:if>
          </onc:tab>
 

@@ -737,7 +737,8 @@ public class ScenarioOneTest {
             lastResult = result;
         }
 
-        public void operationFailed(String jobId, ExceptionPackage error, long invocationTime, long completionTime) {
+        public void operationFailed(String jobId, Configuration result, ExceptionPackage error, long invocationTime,
+            long completionTime) {
             lastJobId = jobId;
             lastException = error;
         }

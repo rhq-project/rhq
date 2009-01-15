@@ -15,23 +15,29 @@
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
     <ui:composition template="/rhq/layout/popup.xhtml">
+        <ui:param name="pageTitle" value="Advanced Metrics Settings"/>
         
         <ui:define name="body-area">
-            <h:form>
+            <a4j:loadScript src="/js/advanced-metrics.js"/>            
+            <h:form id="advancedMetricsValuesForm">
+                <!--  
+                <h:inputText id="sample" onclick="toggleControls('advancedMetricsValuesForm:sample2');"/>
+                <h:inputText id="sample2" />
+                -->
                 <rich:panel styleClass="BlockContent">
                     <f:facet name="header">
                         <h:outputText value="#{msg['resource.common.monitor.visibility.MetricDisplayRangeTab']}" />
                     </f:facet>
     
                     <h:messages showSummary="true"
-                             showDetail="true"
-                              infoClass="InfoBlock"
-                              warnClass="WarnBlock"
-                             errorClass="ErrorBlock"
-                             fatalClass="FatalBlock"
-                             globalOnly="true"
-                                 layout="table"
-                                  width="100%"/>
+                                 showDetail="true"
+                                  infoClass="InfoBlock"
+                                  warnClass="WarnBlock"
+                                 errorClass="ErrorBlock"
+                                 fatalClass="FatalBlock"
+                                 globalOnly="true"
+                                     layout="table"
+                                      width="100%"/>
                     <table>
                         <tr>
                             <td rowspan="5" class="BlockLabel">#{msg['resource.common.monitor.visibility.DefineRangeLabel']}</td>
@@ -39,13 +45,16 @@
                                 <table>
                                     <tr>
                                         <td>
-                                            <h:selectOneRadio id="metricType" value="#{AdvancedMetricSettingsUIBean.metricType}" name="durationRadio" layout="pageDirection">
-                                                <f:selectItem id="durationMetricType" itemValue="duration" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Last']}  " />
-                                                <f:selectItem id="intervalMetricType" itemValue="interval" itemLabel="Within a date range " />
+                                            <h:selectOneRadio id="durationMetricType" 
+                                                           value="#{AdvancedMetricSettingsUIBean.metricType}" 
+                                                            name="durationRadio" 
+                                                          layout="pageDirection" 
+                                                         onclick="uncheckRadio('advancedMetricsValuesForm:intervalMetricType');">
+                                                <f:selectItem id="durationMetricTypeItem" itemValue="duration" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Last']}" />
                                             </h:selectOneRadio>            
                                         </td>
                                         <td>
-                                            <h:inputText id="duration" size="2" value="#{AdvancedMetricSettingsUIBean.duration}"/>
+                                            <h:inputText id="duration" size="2" value="#{AdvancedMetricSettingsUIBean.duration}" onclick="checkUncheckRadio('advancedMetricsValuesForm:durationMetricType','advancedMetricsValuesForm:intervalMetricType');"/>
                                         </td>
                                         <td>
                                             <h:selectOneMenu id="unit" value="#{AdvancedMetricSettingsUIBean.unit}">
@@ -55,16 +64,27 @@
                                             </h:selectOneMenu> 
                                         </td>
                                     </tr>
+                                    
+                                    <tr>
+                                        <td colspan="3">
+                                            <h:selectOneRadio id="intervalMetricType" 
+                                                           value="#{AdvancedMetricSettingsUIBean.metricType}" 
+                                                          layout="pageDirection" 
+                                                         onclick="uncheckRadio('advancedMetricsValuesForm:durationMetricType');"> 
+                                                <f:selectItem id="intervalMetricTypeItem" itemValue="interval" itemLabel="Within a date range" />
+                                            </h:selectOneRadio>
+                                        </td>
+                                    </tr>
                                 </table>
                             </td>
                         </tr>                      
                         <tr>
                             <td>
-                                <table>
+                                <table id="intervalTable">
                                     <tr>
                                         <td>From:</td>
                                         <td>
-                                            <rich:calendar id="fromDate" datePattern="dd/MMM/yyyy HH:mm" value="#{AdvancedMetricSettingsUIBean.fromTime}"/>
+                                            <rich:calendar id="fromDate" datePattern="dd/MMM/yyyy HH:mm" value="#{AdvancedMetricSettingsUIBean.fromTime}" onclick="checkUncheckRadio('advancedMetricsValuesForm:intervalMetricType', 'advancedMetricsValuesForm:durationMetricType');"/>
                                         </td>
                                     </tr>
                                     <tr>
@@ -72,7 +92,7 @@
                                             To:
                                         </td>
                                         <td>
-                                            <rich:calendar id="toDate" datePattern="dd/MMM/yyyy HH:mm" value="#{AdvancedMetricSettingsUIBean.toTime}"/>
+                                            <rich:calendar id="toDate" datePattern="dd/MMM/yyyy HH:mm" value="#{AdvancedMetricSettingsUIBean.toTime}" onclick="checkUncheckRadio('advancedMetricsValuesForm:intervalMetricType', 'advancedMetricsValuesForm:durationMetricType');"/>
                                         </td>
                                     </tr>
                                 </table>

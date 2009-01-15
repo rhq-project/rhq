@@ -13,73 +13,90 @@
       xmlns:onf="http://jboss.org/on/function"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax" 
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
-<h:form>
+
     <ui:composition template="/rhq/layout/popup.xhtml">
-
+        
         <ui:define name="body-area">
-            <rich:panel styleClass="BlockContent">
-                <f:facet name="header">
-                    <h:outputText value="#{msg['resource.common.monitor.visibility.MetricDisplayRangeTab']}" />
-                </f:facet>
-
-                <table>
-                    <tr>
-                        <td rowspan="5" class="BlockLabel">#{msg['resource.common.monitor.visibility.DefineRangeLabel']}</td>
-                        <td class="BlockContent">
-                            <table>
-                                <tr>
-                                    <td>
-                                        <h:selectOneRadio id="sor" value="AdvancedMetricSettingsUIBean.test">
-                                            <f:selectItem id="si1" itemValue="1" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Last']}  " />
-                                        </h:selectOneRadio>            
-                                    </td>
-                                    <td>
-                                        <h:inputText id="timeUnit" size="2" />
-                                    </td>
-                                    <td>
-                                        <h:selectOneMenu id="timeUnit">
-                                            <f:selectItem id="mu" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Minutes']}" itemValue="2" />
-                                            <f:selectItem id="hu" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Hours']}" itemValue="3" />
-                                            <f:selectItem id="du" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Days']}" itemValue="4" />
-                                        </h:selectOneMenu> 
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <h:selectOneRadio id="sor" value="AdvancedMetricSettingsUIBean.test" layout="pageDirection">
-                                <f:selectItem id="si2" itemValue="2" itemLabel="Within a date range  " />
-                            </h:selectOneRadio> 
-                        </td>
-                    </tr>                    
-                    <tr>
-                        <td>
-                            <table>
-                                <tr>
-                                    <td>From:</td>
-                                    <td>
-                                        <rich:calendar id="fromDate" datePattern="dd/MMM/yyyy HH:mm" />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td> 
-                                        To:
-                                    </td>
-                                    <td>
-                                        <rich:calendar id="toDate" datePattern="dd/MMM/yyyy HH:mm" />
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>These settings will be persistent for all Monitoring pages within RHQ.</td>
-                    </tr>
-                </table>
-            </rich:panel>
+            <h:form>
+                <rich:panel styleClass="BlockContent">
+                    <f:facet name="header">
+                        <h:outputText value="#{msg['resource.common.monitor.visibility.MetricDisplayRangeTab']}" />
+                    </f:facet>
+    
+                    <h:messages showSummary="true"
+                             showDetail="true"
+                              infoClass="InfoBlock"
+                              warnClass="WarnBlock"
+                             errorClass="ErrorBlock"
+                             fatalClass="FatalBlock"
+                             globalOnly="true"
+                                 layout="table"
+                                  width="100%"/>
+                    <table>
+                        <tr>
+                            <td rowspan="5" class="BlockLabel">#{msg['resource.common.monitor.visibility.DefineRangeLabel']}</td>
+                            <td class="BlockContent">
+                                <table>
+                                    <tr>
+                                        <td>
+                                            <h:selectOneRadio id="metricType" value="#{AdvancedMetricSettingsUIBean.metricType}" name="durationRadio" layout="pageDirection">
+                                                <f:selectItem id="durationMetricType" itemValue="duration" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Last']}  " />
+                                                <f:selectItem id="intervalMetricType" itemValue="interval" itemLabel="Within a date range " />
+                                            </h:selectOneRadio>            
+                                        </td>
+                                        <td>
+                                            <h:inputText id="duration" size="2" value="#{AdvancedMetricSettingsUIBean.duration}"/>
+                                        </td>
+                                        <td>
+                                            <h:selectOneMenu id="unit" value="#{AdvancedMetricSettingsUIBean.unit}">
+                                                <f:selectItem id="mu" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Minutes']}" itemValue="60000" />
+                                                <f:selectItem id="hu" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Hours']}" itemValue="36000000" />
+                                                <f:selectItem id="du" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Days']}" itemValue="864000000" />
+                                            </h:selectOneMenu> 
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>                      
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td>From:</td>
+                                        <td>
+                                            <rich:calendar id="fromDate" datePattern="dd/MMM/yyyy HH:mm" value="#{AdvancedMetricSettingsUIBean.fromTime}"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td> 
+                                            To:
+                                        </td>
+                                        <td>
+                                            <rich:calendar id="toDate" datePattern="dd/MMM/yyyy HH:mm" value="#{AdvancedMetricSettingsUIBean.toTime}"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>These settings will be persistent for all Monitoring pages within RHQ.</td>
+                        </tr>
+                        <tr>                        
+                            <td>
+                                <table>
+                                    <tr>                        
+                                        <td><input type="reset" class="on-pager-button buttonsmall"/></td>
+                                        <td><input type="button" id="cancelBtn" value="Cancel" class="on-pager-button buttonsmall" onclick="javascript:window.close();"/></td>
+                                        <td>
+                                            <h:commandButton action="#{AdvancedMetricSettingsUIBean.execute}" value="Ok" styleClass="on-pager-button buttonsmall"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </rich:panel>
+            </h:form>
         </ui:define>
     </ui:composition>
-</h:form>
 </html>

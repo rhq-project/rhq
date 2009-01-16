@@ -102,6 +102,8 @@ import org.rhq.enterprise.server.measurement.MeasurementDataManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementOOBManagerBean;
+import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerBean;
@@ -329,6 +331,11 @@ public final class LookupUtil {
     public static MeasurementBaselineManagerLocal getMeasurementBaselineManager() {
         return lookupLocal(MeasurementBaselineManagerBean.class);
     }
+
+    public static MeasurementOOBManagerLocal getOOBManager() {
+        return lookupLocal(MeasurementOOBManagerBean.class);
+    }
+
 
     public static OperationManagerLocal getOperationManager() {
         return lookupLocal(OperationManagerBean.class);

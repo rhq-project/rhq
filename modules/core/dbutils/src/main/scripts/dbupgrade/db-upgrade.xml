@@ -966,7 +966,7 @@ DB Upgrade:
       </schema-directSQL>
       <schema-addColumn   table="RHQ_RESOURCE_AVAIL" column="AVAILABILITY_TYPE" columnType="SMALLINT" />
       <schema-directSQL>
-         <statement targetDBVendor="oracle" 
+         <statement targetDBVendor="oracle"
                     desc="Inserting known, current availability data into RHQ_RESOURCE_AVAIL">
             INSERT INTO RHQ_RESOURCE_AVAIL ( ID, RESOURCE_ID, AVAILABILITY_TYPE )
             SELECT RHQ_RESOURCE_AVAIL_ID_SEQ.NEXTVAL, RES.ID, AVAIL.AVAILABILITY_TYPE
@@ -1173,6 +1173,38 @@ DB Upgrade:
             DELETE FROM RHQ_QRTZ_FIRED_TRIGGERS WHERE TRIGGER_GROUP = 'syncContentSource'
          </statement>
       </schema-directSQL>
+   </schemaSpec>
+
+   <schemaSpec version="2.39">
+       <!-- add a new table for OOBs -->
+       <schema-directSQL>
+          <statement desc="Creating table RHQ_MEASUREMENT_OOB">
+              CREATE TABLE RHQ_MEASUREMENT_OOB ( SCHEDULE_ID INTEGER )
+          </statement>
+       </schema-directSQL>
+       <schema-addColumn   table="RHQ_MEASUREMENT_OOB" column="TIME_STAMP" columnType="LONG" />
+       <schema-alterColumn table="RHQ_MEASUREMENT_OOB" column="TIME_STAMP" nullable="FALSE" />
+       <schema-directSQL>
+          <statement desc="Creating primary key for RHQ_MEASUREMENT_OOB">
+             ALTER TABLE RHQ_MEASUREMENT_OOB ADD PRIMARY KEY ( TIME_STAMP, SCHEDULE_ID )
+          </statement>
+       </schema-directSQL>
+       <schema-alterColumn table="RHQ_MEASUREMENT_OOB" column="SCHEDULE_ID" nullable="FALSE" />
+       <schema-directSQL>
+          <statement desc="Creating RHQ_MEASUREMENT_OOB foreign key relation to RHQ_MEASUREMENT_SCHED">
+             ALTER TABLE RHQ_MEASUREMENT_OOB
+             ADD CONSTRAINT RHQ_M_OOB_M_SCHED_ID_FK
+             FOREIGN KEY ( SCHEDULE_ID )
+             REFERENCES RHQ_MEASUREMENT_SCHED ( ID )
+             ON DELETE CASCADE
+          </statement>
+       </schema-directSQL>
+
+       <schema-addColumn   table="RHQ_MEASUREMENT_OOB" column="OOB_COUNT" columnType="INTEGER" />
+       <schema-alterColumn table="RHQ_MEASUREMENT_OOB" column="OOB_COUNT" nullable="FALSE" />
+       <schema-addColumn   table="RHQ_MEASUREMENT_OOB" column="OOB_FACTOR" columnType="INTEGER" />
+       <schema-alterColumn table="RHQ_MEASUReMent_OOB" column="OOB_FACTOR" nullable="FALSE" />
+
    </schemaSpec>
 
 </dbupgrade>

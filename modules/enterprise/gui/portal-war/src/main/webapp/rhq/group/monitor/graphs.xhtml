@@ -14,10 +14,10 @@
    xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
    xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-<ui:composition template="/rhq/autogroup/layout/main.xhtml">
+<ui:composition template="/rhq/group/layout/main.xhtml">
 
    <ui:param name="pageTitle"
-      value="AutoGroup '#{AutoGroupUIBean.parentResourceName}'.'#{AutoGroupUIBean.childResourceTypeName}' - Metric Graphs" />
+             value="#{ResourceGroupUIBean.groupCategoryName} '#{ResourceGroupUIBean.name}' - Metric Graphs" />
    <ui:param name="selectedTabName" value="Monitor.Graphs" />
 
    <ui:define name="content">

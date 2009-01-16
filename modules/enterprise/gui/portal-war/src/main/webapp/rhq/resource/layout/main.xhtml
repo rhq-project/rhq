@@ -67,7 +67,7 @@ REQUEST PARAMETERS:
 
          <f:param name="id" value="#{param.id}" />
 
-         <onc:tab name="Monitor">
+         <onc:tab name="Monitor" rendered="#{monitorEnabled}">
             <onc:subtab name="Graphs"
                url="/rhq/resource/monitor/graphs.xhtml" />
             <onc:subtab name="Tables"

@@ -99,7 +99,8 @@ fi
 # The --daemon argument is required
 
 if [ "x$RHQ_AGENT_CMDLINE_OPTS" = "x" ]; then
-   export RHQ_AGENT_CMDLINE_OPTS=--daemon
+   RHQ_AGENT_CMDLINE_OPTS=--daemon
+   export RHQ_AGENT_CMDLINE_OPTS
 fi
 
 # -------------------------------

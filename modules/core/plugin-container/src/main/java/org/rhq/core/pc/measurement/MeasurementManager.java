@@ -355,8 +355,6 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         // This will enable them to be collected at the same time
         long firstCollection = System.currentTimeMillis();
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-        ResourceContainer resourceContainer = inventoryManager.getResourceContainer(resourceId);
-        ResourceType resourceType = resourceContainer.getResource().getResourceType();
         for (MeasurementScheduleRequest request : requests) {
             ScheduledMeasurementInfo info = new ScheduledMeasurementInfo(request, resourceId);
 

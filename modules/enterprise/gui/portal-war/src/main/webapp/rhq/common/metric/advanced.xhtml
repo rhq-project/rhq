@@ -20,10 +20,6 @@
         <ui:define name="body-area">
             <a4j:loadScript src="/js/advanced-metrics.js"/>            
             <h:form id="advancedMetricsValuesForm">
-                <!--  
-                <h:inputText id="sample" onclick="toggleControls('advancedMetricsValuesForm:sample2');"/>
-                <h:inputText id="sample2" />
-                -->
                 <rich:panel styleClass="BlockContent">
                     <f:facet name="header">
                         <h:outputText value="#{msg['resource.common.monitor.visibility.MetricDisplayRangeTab']}" />
@@ -47,7 +43,6 @@
                                         <td>
                                             <h:selectOneRadio id="durationMetricType" 
                                                            value="#{AdvancedMetricSettingsUIBean.metricType}" 
-                                                            name="durationRadio" 
                                                           layout="pageDirection" 
                                                          onclick="uncheckRadio('advancedMetricsValuesForm:intervalMetricType');">
                                                 <f:selectItem id="durationMetricTypeItem" itemValue="duration" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Last']}" />

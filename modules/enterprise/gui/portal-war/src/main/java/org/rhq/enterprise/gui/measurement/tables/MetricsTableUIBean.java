@@ -1,0 +1,165 @@
+package org.rhq.enterprise.gui.measurement.tables;
+
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+import java.util.List;
+
+import javax.faces.context.FacesContext;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.server.common.EntityContext;
+import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
+import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
+
+/**
+ * This class supports the UI needs of Resource metrics.  Depending on the context various metric summary processing takes place
+ * returning the appropriate metric summaries.  This class can be extended to provide context-specific UI Bean classes, or
+ * encapsulated in UI beans that must extend other classes, such as PagedDataTableUIBean.
+ *  
+ * @author jay shaughnessy
+ */
+public class MetricsTableUIBean {
+
+    private final Log log = LogFactory.getLog(MetricsTableUIBean.class);
+
+    protected MeasurementChartsManagerLocal chartManager = LookupUtil.getMeasurementChartsManager();
+    protected MeasurementDefinitionManagerLocal definitionManager = LookupUtil.getMeasurementDefinitionManager();
+    protected MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
+    protected ResourceGroupManagerLocal resourceGroupManager = LookupUtil.getResourceGroupManager();
+
+    public static final String MANAGED_BEAN_NAME = "MetricsTableUIBean";
+
+    protected EntityContext context;
+    protected ResourceGroup resourceGroup;
+
+    private List<MetricDisplaySummary> metricSummaries = null;
+
+    public MetricsTableUIBean() {
+        context = WebUtility.getEntityContext();
+    }
+
+    public EntityContext getContext() {
+        return this.context;
+    }
+
+    public List<MetricDisplaySummary> getMetricSummaries() {
+        if (null != metricSummaries) {
+            return metricSummaries;
+        }
+
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
+        MetricRangePreferences range = preferences.getMetricRangePreferences();
+
+        if (context.category == EntityContext.Category.Resource) {
+            //null -> don't filter, we want everything, false -> not only enabled
+            List<MeasurementSchedule> measurementSchedules = scheduleManager.getMeasurementSchedulesForResourceAndType(
+                user.getSubject(), context.resourceId, DataType.MEASUREMENT, null, true);
+
+            int[] scheduleIds = new int[measurementSchedules.size()];
+            int i = 0;
+            for (MeasurementSchedule sched : measurementSchedules) {
+                scheduleIds[i++] = sched.getId();
+            }
+
+            metricSummaries = chartManager.getMetricDisplaySummariesForResource(user.getSubject(), context.resourceId,
+                scheduleIds, range.begin, range.end);
+
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            List<MeasurementDefinition> measurementDefinitions = definitionManager
+                .getMeasurementDefinitionsByResourceType(user.getSubject(), getResourceGroup(user).getResourceType()
+                    .getId(), DataType.MEASUREMENT, null);
+
+            int[] defIds = new int[measurementDefinitions.size()];
+            int i = 0;
+            for (MeasurementDefinition def : measurementDefinitions) {
+                defIds[i++] = def.getId();
+            }
+
+            metricSummaries = chartManager.getMetricDisplaySummariesForCompatibleGroup(user.getSubject(),
+                context.groupId, defIds, range.begin, range.end, true);
+
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            List<MeasurementDefinition> measurementDefinitions = definitionManager
+                .getMeasurementDefinitionsByResourceType(user.getSubject(), context.getResourceTypeId(),
+                    DataType.MEASUREMENT, null);
+
+            int[] defIds = new int[measurementDefinitions.size()];
+            int i = 0;
+            for (MeasurementDefinition def : measurementDefinitions) {
+                defIds[i++] = def.getId();
+            }
+
+            metricSummaries = chartManager.getMetricDisplaySummariesForAutoGroup(user.getSubject(), context
+                .getParentResourceId(), context.getResourceTypeId(), defIds, range.begin, range.end, true);
+
+        } else {
+            log.error(context.getUnknownContextMessage());
+        }
+
+        for (MetricDisplaySummary summary : metricSummaries) {
+            MonitorUtils.formatSimpleMetrics(summary, FacesContext.getCurrentInstance().getExternalContext()
+                .getRequestLocale());
+        }
+
+        return metricSummaries;
+    }
+
+    public ResourceGroup getResourceGroup(WebUser user) {
+        if (null == resourceGroup) {
+            resourceGroup = resourceGroupManager.getResourceGroupById(user.getSubject(), context.groupId,
+                GroupCategory.COMPATIBLE);
+        }
+
+        return resourceGroup;
+    }
+
+    public Integer[] getResourceGroupMemberIds(WebUser user) {
+        List<Resource> resources = resourceGroupManager.getResourcesForResourceGroup(user.getSubject(),
+            context.groupId, GroupCategory.COMPATIBLE);
+
+        Integer[] resourceIds = new Integer[resources.size()];
+        int i = 0;
+        for (Resource res : resources) {
+            resourceIds[i] = res.getId();
+            i++;
+        }
+
+        return resourceIds;
+    }
+
+}

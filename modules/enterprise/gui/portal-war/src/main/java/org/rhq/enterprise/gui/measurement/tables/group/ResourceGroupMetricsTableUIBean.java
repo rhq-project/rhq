@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.inventory.group;
+package org.rhq.enterprise.gui.measurement.tables.group;
 
 import javax.faces.model.DataModel;
 
@@ -26,8 +26,8 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.inventory.MetricsTableUIBean;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.measurement.tables.MetricsTableUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;

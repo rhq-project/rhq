@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.inventory.resource;
+package org.rhq.enterprise.gui.measurement.tables.resource;
 
 import java.util.List;
 
@@ -24,8 +24,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.gui.inventory.MetricsTableUIBean;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.measurement.tables.MetricsTableUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;

@@ -52,7 +52,7 @@ public class IndicatorChartsUIBean {
     private MeasurementViewManagerLocal viewManager = LookupUtil.getMeasurementViewManager();
 
     EntityContext context;
-    List<MetricDisplaySummary> data;
+    List<MetricDisplaySummary> data = new ArrayList<MetricDisplaySummary>();
     List<String> views;
     String view;
 

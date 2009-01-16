@@ -65,7 +65,6 @@ import org.rhq.enterprise.gui.ha.ViewAgentUIBean;
 import org.rhq.enterprise.gui.ha.ViewPartitionEventUIBean;
 import org.rhq.enterprise.gui.ha.ViewServerUIBean;
 import org.rhq.enterprise.gui.inventory.group.ListResourceGroupMembersUIBean;
-import org.rhq.enterprise.gui.inventory.group.ResourceGroupMetricsTableUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyDetailsUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyHistoryUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListChildResourcesUIBean;
@@ -75,6 +74,7 @@ import org.rhq.enterprise.gui.inventory.resource.ListDeleteResourceHistoryUIBean
 import org.rhq.enterprise.gui.inventory.resource.history.ListPluginConfigurationUpdateUIBean;
 import org.rhq.enterprise.gui.measurement.schedule.group.ListResourceGroupMeasurementScheduleUIBean;
 import org.rhq.enterprise.gui.measurement.schedule.resource.ListResourceMeasurementScheduleUIBean;
+import org.rhq.enterprise.gui.measurement.tables.group.ResourceGroupMetricsTableUIBean;
 import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationCompletedHistoryUIBean;
 import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationHistoryDetailsUIBean;
 import org.rhq.enterprise.gui.operation.history.group.ResourceGroupOperationPendingHistoryUIBean;

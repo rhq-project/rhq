@@ -18,4 +18,11 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
    
+   <!-- /rhq/resource/monitor/tables.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ResourceMetricsTableUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.measurement.tables.resource.ResourceMetricsTableUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
 </faces-config>

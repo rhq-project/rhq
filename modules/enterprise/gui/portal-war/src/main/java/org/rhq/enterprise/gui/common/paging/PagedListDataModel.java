@@ -22,6 +22,9 @@ import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.faces.model.DataModel;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -46,6 +49,9 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
  * @author Joseph Marques
  */
 public abstract class PagedListDataModel<T> extends DataModel {
+
+    private final Log log = LogFactory.getLog(PagedListDataModel.class);
+
     private int currentRowIndex;
     private PageControlView pageControlView;
     private PageList<T> pageList;
@@ -66,8 +72,8 @@ public abstract class PagedListDataModel<T> extends DataModel {
     }
 
     /**
-     * Not used in this class; data is fetched via a callback to the {@link #fetchPage(int, int)} method rather than by
-     * explicitly assigning a list.
+     * Not used in this class; data is fetched via a callback to the {@link #getDataPage(PageControl)} method rather 
+     * than by explicitly assigning a list.
      *
      * @param  o unused
      *
@@ -114,14 +120,14 @@ public abstract class PagedListDataModel<T> extends DataModel {
         // ensure page exists - first time going to this view
         if (pageList == null) {
             PageControl pageControl = getPageControl();
-            pageList = fetchPage(pageControl);
+            pageList = getDataPage(pageControl);
         }
 
         // the user has previously been to this view, and is returning
         else if (!FacesContext.getCurrentInstance().getViewRoot().getViewId().equals(lastViewId)) {
             PageControl pageControl = getPageControl();
             lastViewId = FacesContext.getCurrentInstance().getViewRoot().getViewId();
-            pageList = fetchPage(pageControl);
+            pageList = getDataPage(pageControl);
         }
 
         return pageList;
@@ -129,7 +135,7 @@ public abstract class PagedListDataModel<T> extends DataModel {
 
     /**
      * Return the object corresponding to the current {@link #getRowIndex()}. If the PageList object currently cached
-     * doesn't include that index then {@link #fetchPage(int, int)} is called to retrieve the appropriate page.
+     * doesn't include that index then {@link #getDataPage(PageControl)} is called to retrieve the appropriate page.
      *
      * @return the row data that corresponds to {@link #getRowIndex()}
      *
@@ -164,7 +170,7 @@ public abstract class PagedListDataModel<T> extends DataModel {
             }
 
             pageControl.setPageNumber(newPage);
-            pageList = fetchPage(pageControl);
+            pageList = getDataPage(pageControl);
             startRow = pageControl.getStartRow();
         }
 
@@ -175,7 +181,7 @@ public abstract class PagedListDataModel<T> extends DataModel {
             int newPage = pageControl.getPageNumber() + pagesForward;
 
             pageControl.setPageNumber(newPage);
-            pageList = fetchPage(pageControl);
+            pageList = getDataPage(pageControl);
             startRow = pageControl.getStartRow();
         }
 
@@ -191,7 +197,7 @@ public abstract class PagedListDataModel<T> extends DataModel {
      * Return <code>true</code> if the {@link #getRowIndex()} value is currently set to a value that matches some
      * element in the dataset. Note that it may match a row that is not in the currently cached PageList; if so then
      * when {@link #getRowData()} is called the required PageList will be fetched by calling
-     * {@link #fetchPage(int, int)}.
+     * {@link #getDataPage(PageControl)}.
      *
      * @return <code>true</code> if the row is available
      */
@@ -226,6 +232,27 @@ public abstract class PagedListDataModel<T> extends DataModel {
     public void setPageControl(PageControl pageControl) {
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
         getPagedDataTableUIBean().setPageControl(user, pageControlView, pageControl);
+    }
+
+    public PageList<T> getDataPage(PageControl pc) {
+        PageList<T> results;
+        if (true) {
+            long start = System.currentTimeMillis();
+            results = fetchPage(pc);
+            long end = System.currentTimeMillis();
+            long time = end - start;
+            log.info("Fetch time was [" + time + "]ms for " + pageControlView);
+            if (time > 2000L) {
+                log.info("Slow");
+                log.info("Slow");
+                log.info("Slow");
+                log.info("Slow");
+                log.info("Slow");
+            }
+        } else {
+            results = fetchPage(pc);
+        }
+        return results;
     }
 
     /**

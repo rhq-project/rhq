@@ -5,10 +5,21 @@
               xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
 
    <!-- /rhq/common/monitor/graphs/measurement/** -->
-
    <managed-bean>
       <managed-bean-name>IndicatorChartsUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.measurement.graphs.IndicatorChartsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+   <!-- /rhq/common/monitor/tables/** -->
+   <managed-bean>
+      <managed-bean-name>MetricsTableUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.MetricsTableUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>MetricsTableChartUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.MetricsTableChartUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.inventory.group;
+package org.rhq.enterprise.gui.measurement.tables.group;
 
 import javax.faces.application.FacesMessage;
 

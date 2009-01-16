@@ -71,20 +71,5 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
-   <!-- /rhq/group/monitor/tables.xhtml -->
-
-    <managed-bean>
-        <managed-bean-name>ResourceGroupMetricsTableUIBean</managed-bean-name>
-        <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ResourceGroupMetricsTableUIBean</managed-bean-class>
-        <managed-bean-scope>request</managed-bean-scope>
-    </managed-bean>
-    
-    <managed-bean>
-        <managed-bean-name>ResourceGroupMetricsCompareUIBean</managed-bean-name>
-        <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ResourceGroupMetricsCompareUIBean</managed-bean-class>
-        <managed-bean-scope>request</managed-bean-scope>
-    </managed-bean>
-
-
 </faces-config>
       

@@ -100,8 +100,8 @@ fi
 
 if [ "x$RHQ_AGENT_CMDLINE_OPTS" = "x" ]; then
    RHQ_AGENT_CMDLINE_OPTS=--daemon
-   export RHQ_AGENT_CMDLINE_OPTS
 fi
+export RHQ_AGENT_CMDLINE_OPTS
 
 # -------------------------------
 # Determine where this script is, and change to its directory

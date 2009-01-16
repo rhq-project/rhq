@@ -53,9 +53,9 @@
             </html:select>
          </td>
          <td>
-            <c:if test="${not empty pageList}">
+            
                <hq:paginate action="${action}" pageList="${pageList}" postfix="${postfix}"/>
-            </c:if>
+            
          </td>
       </tr>
    </table>

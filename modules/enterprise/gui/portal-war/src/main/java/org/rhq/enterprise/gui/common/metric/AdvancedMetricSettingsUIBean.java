@@ -44,7 +44,8 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
 
     private Integer duration;
     private Integer unit;
-    private String metricType = AdvancedMetricSettingsUIBean.DURATION_TYPE;
+    private String intervalType;
+    private String durationType;
     private Date fromTime;
     private Date toTime;
 
@@ -72,12 +73,20 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
         this.unit = unit;
     }
 
-    public void setMetricType(String metricType) {
-        this.metricType = metricType;
+    public void setIntervalType(String intervalType) {
+        this.intervalType = intervalType;
     }
 
-    public String getMetricType() {
-        return this.metricType;
+    public String getIntervalType() {
+        return this.intervalType;
+    }
+
+    public void setDurationType(String durationType) {
+        this.durationType = durationType;
+    }
+
+    public String getDurationType() {
+        return this.durationType;
     }
 
     public Date getFromTime() {
@@ -102,20 +111,30 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
         MeasurementPreferences preferences = user.getMeasurementPreferences();
         MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
-        if (this.getMetricType().equalsIgnoreCase(AdvancedMetricSettingsUIBean.DURATION_TYPE)) {
+        String metricType = "";
+        if (this.getIntervalType() == null) {
+            metricType = getDurationType();
+        } else {
+            metricType = getIntervalType();
+        }
+
+        if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.DURATION_TYPE)) {
             rangePreferences.end -= this.getDuration() * this.getUnit();
             preferences.persistPreferences();
         }
 
-        else if (this.getMetricType().equalsIgnoreCase(AdvancedMetricSettingsUIBean.INTERVAL_TYPE)) {
+        else if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.INTERVAL_TYPE)) {
             Long fromTime = this.getFromTime().getTime();
             Long toTime = this.getToTime().getTime();
-            if (toTime < fromTime) {
+            if ((toTime == null) || (fromTime == null)) {
+                facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Timing error",
+                    "Please fill in the required fields"));
+            } else if (toTime < fromTime) {
                 facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Timing error",
                     "To time cannot be earlier than before time"));
             } else {
-                rangePreferences.end -= toTime;
-                rangePreferences.end -= fromTime;
+                rangePreferences.begin = fromTime;
+                rangePreferences.end = toTime;
             }
             preferences.persistPreferences();
         }

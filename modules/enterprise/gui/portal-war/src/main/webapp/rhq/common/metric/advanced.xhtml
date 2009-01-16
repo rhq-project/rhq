@@ -42,7 +42,7 @@
                                     <tr>
                                         <td>
                                             <h:selectOneRadio id="durationMetricType" 
-                                                           value="#{AdvancedMetricSettingsUIBean.metricType}" 
+                                                           value="#{AdvancedMetricSettingsUIBean.durationType}" 
                                                           layout="pageDirection" 
                                                          onclick="uncheckRadio('advancedMetricsValuesForm:intervalMetricType');">
                                                 <f:selectItem id="durationMetricTypeItem" itemValue="duration" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Last']}" />
@@ -63,7 +63,7 @@
                                     <tr>
                                         <td colspan="3">
                                             <h:selectOneRadio id="intervalMetricType" 
-                                                           value="#{AdvancedMetricSettingsUIBean.metricType}" 
+                                                           value="#{AdvancedMetricSettingsUIBean.intervalType}" 
                                                           layout="pageDirection" 
                                                          onclick="uncheckRadio('advancedMetricsValuesForm:durationMetricType');"> 
                                                 <f:selectItem id="intervalMetricTypeItem" itemValue="interval" itemLabel="Within a date range" />
@@ -101,7 +101,7 @@
                                 <table>
                                     <tr>                        
                                         <td><input type="reset" class="on-pager-button buttonsmall"/></td>
-                                        <td><input type="button" id="cancelBtn" value="Cancel" class="on-pager-button buttonsmall" onclick="javascript:window.close();"/></td>
+                                        <td><input type="button" id="cancelBtn" value="Close" class="on-pager-button buttonsmall" onclick="javascript:window.close();"/></td>
                                         <td>
                                             <h:commandButton action="#{AdvancedMetricSettingsUIBean.execute}" value="Ok" styleClass="on-pager-button buttonsmall"/>
                                         </td>

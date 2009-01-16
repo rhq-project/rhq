@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.event;
 
 import java.util.Arrays;
+import java.util.Calendar;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
@@ -215,7 +216,8 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
             MetricComponent metric = getMetric();
 
             if (metric.getUnit() != null) {
-                rangePreferences.end -= metric.getMillis();
+                rangePreferences.end = Calendar.getInstance().getTime().getTime();
+                rangePreferences.begin = rangePreferences.end - metric.getMillis();
             }
 
             preferences.persistPreferences();

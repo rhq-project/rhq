@@ -119,7 +119,12 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
             metricType = getIntervalType();
         }
 
-        if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.DURATION_TYPE)) {
+        if ((metricType == null) || (metricType.equals(""))) {
+            facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Range select error",
+                "Please select one option to either setup the duration or the time interval"));
+        }
+
+        else if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.DURATION_TYPE)) {
             long duration = this.getDuration() * this.getUnit();
             rangePreferences.end -= Calendar.getInstance().getTime().getTime();
             rangePreferences.begin = rangePreferences.end - (duration);

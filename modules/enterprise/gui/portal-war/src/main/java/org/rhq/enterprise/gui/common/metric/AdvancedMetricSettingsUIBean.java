@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.common.metric;
 
+import java.util.Calendar;
 import java.util.Date;
 
 import javax.faces.application.FacesMessage;
@@ -119,7 +120,9 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
         }
 
         if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.DURATION_TYPE)) {
-            rangePreferences.end -= this.getDuration() * this.getUnit();
+            long duration = this.getDuration() * this.getUnit();
+            rangePreferences.end -= Calendar.getInstance().getTime().getTime();
+            rangePreferences.begin = rangePreferences.end - (duration);
             preferences.persistPreferences();
         }
 

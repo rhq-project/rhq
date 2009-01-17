@@ -80,21 +80,22 @@ public class StartupServlet extends HttpServlet {
         // may be added.
         initializeServer();
 
-        // The order here is important - make sure if you change this you know what you are doing.
-        // I'm not even sure this is ok.  If we start the scheduler before the comm layer, what happens
-        // if a stored job needs to send a message?  But if we start the comm layer before the scheduler,
-        // what happens if a message is received that needs a job scheduled for it? I think the former
-        // is more likely to happen than the latter (that is, a scheduled job would more likely need
-        // to send a message; as opposed to an incoming message causing a job to be scheduled), so
-        // that explains the ordering of the comm layer and the scheduler.
+        // The order here is important!!!
+        // IF YOU WANT TO CHANGE THE ORDER YOU MUST GET THE CHANGE PEER-REVIEWED FIRST BEFORE COMMITTING IT!!!
+        //
+        // If we start the scheduler before the comm layer, what happens if a stored job needs to send a message?
+        // But if we start the comm layer before the scheduler, what happens if a message is received that needs
+        // a job scheduled for it? I think the former is more likely to happen than the latter
+        // (that is, a scheduled job would more likely need to send a message; as opposed to an incoming message
+        // causing a job to be scheduled), so that explains the ordering of the comm layer and the scheduler.
         startHibernateStatistics();
+        startPluginDeployer();
         startServerPluginContainer(); // before comm in case an agent wants to talk to it
         installJaasModules();
         startServerCommunicationServices();
         startScheduler();
         scheduleJobs();
         startAgentClients();
-        startPluginDeployer();
         startEmbeddedAgent();
         registerShutdownListener();
 

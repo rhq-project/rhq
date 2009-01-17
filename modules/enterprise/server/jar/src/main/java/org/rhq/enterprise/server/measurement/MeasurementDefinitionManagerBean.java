@@ -77,17 +77,15 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
     }
 
     /**
-     * Remove the given definition with its attached schedules and MeasurementData
+     * Remove the given definition with its attached schedules.
      *
      * @param def the MeasuremendDefinition to delete
      */
     public void removeMeasurementDefinition(MeasurementDefinition def) {
+        long now = System.currentTimeMillis();
+
         // get the schedules and unschedule them on the agents
         List<MeasurementSchedule> schedules = def.getSchedules();
-        scheduleManager.sendAgentUnschedules(schedules);
-
-        // remove the measurement data
-        measurementDataManager.removeGatheredMetricsForSchedules(schedules);
 
         // remove the schedules 
         Iterator<MeasurementSchedule> schedIter = schedules.iterator();
@@ -97,6 +95,7 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
                 entityManager.remove(sched.getBaseline());
                 sched.setBaseline(null);
             }
+            sched.getResource().setMtime(now); // changing MTime tells the agent this resource needs to be synced
             entityManager.remove(sched);
             schedIter.remove();
         }

@@ -23,7 +23,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -376,65 +375,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
             DataType.MEASUREMENT, names);
 
         return values;
-    }
-
-    /**
-     * Remove gathered Measurement for the given Schedule
-     *
-     * @param sched The Schedule for which to remove the data
-     */
-    public void removeGatheredMetricsForSchedule(MeasurementSchedule sched) {
-        List<MeasurementSchedule> schedules = new ArrayList<MeasurementSchedule>(1);
-        schedules.add(sched);
-        removeGatheredMetricsForSchedules(schedules);
-    }
-
-    /**
-     * Remove gathered Measurement for the given Schedules from the compression tables.
-     *
-     * @param schedules The Schedule for which to remove the data
-     */
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void removeGatheredMetricsForSchedules(List<MeasurementSchedule> schedules) {
-        if (schedules.isEmpty()) {
-            if (log.isDebugEnabled()) {
-                log.debug("removeGatheredMetricsForSchedules: nothing to do");
-            }
-            return;
-        }
-
-        int[] values = new int[schedules.size()];
-        int i = 0;
-        for (MeasurementSchedule sch : schedules) {
-            values[i++] = sch.getId();
-        }
-
-        List<String> tmp = Arrays.asList(MeasurementDataManagerUtility.getAllRawTables());
-        List<String> tables = new ArrayList<String>(tmp);
-        tables.add("RHQ_MEASUREMENT_DATA_NUM_1H");
-        tables.add("RHQ_MEASUREMENT_DATA_NUM_6H");
-        tables.add("RHQ_MEASUREMENT_DATA_NUM_1D");
-
-        Connection con = null;
-        PreparedStatement ps = null;
-        try {
-            con = rhqDs.getConnection();
-            for (String table : tables) {
-                if (log.isDebugEnabled())
-                    log.debug("Deleting data from table " + table);
-                String query = "DELETE FROM " + table + " md WHERE md.schedule_id IN ( :scheduleIds ) ";
-                query = JDBCUtil.transformQueryForMultipleInParameters(query, ":scheduleIds", schedules.size());
-                ps = con.prepareStatement(query);
-                JDBCUtil.bindNTimes(ps, values, 1);
-                ps.execute();
-                JDBCUtil.safeClose(ps);
-            }
-        } catch (SQLException e) {
-            log.warn("Could not remove metrics for schedules: " + e.getMessage());
-        } finally {
-            JDBCUtil.safeClose(ps);
-            JDBCUtil.safeClose(con);
-        }
     }
 
     @SuppressWarnings("unchecked")

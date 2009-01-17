@@ -79,20 +79,6 @@ public interface MeasurementDataManagerLocal {
      */
     Set<MeasurementData> getLiveData(int resourceId, Set<Integer> definitionIds);
 
-    /**
-     * Remove gathered Measurement for the given Schedule
-     *
-     * @param sched The Schedule for which to remove the data
-     */
-    void removeGatheredMetricsForSchedule(MeasurementSchedule sched);
-
-    /**
-     * Remove gathered Measurement for the given Schedule
-     *
-     * @param schedules The Schedule for which to remove the data
-     */
-    void removeGatheredMetricsForSchedules(List<MeasurementSchedule> schedules);
-
     List<List<MeasurementDataNumericHighLowComposite>> getMeasurementDataForResource(Subject subject, int resourceId,
         int[] measurementDefinitionIds, long beginTime, long endTime, int dataPoints);
 

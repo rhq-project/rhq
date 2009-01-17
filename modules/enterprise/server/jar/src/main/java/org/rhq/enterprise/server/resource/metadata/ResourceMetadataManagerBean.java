@@ -127,7 +127,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         if (newOrUpdated) {
             if (plugin.getDisplayName() == null)
-                plugin.setDisplayName(plugin.getName());                
+                plugin.setDisplayName(plugin.getName());
             entityManager.merge(plugin);
         }
 
@@ -229,8 +229,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
             // see if there is already an existing type that we need to update
             if (log.isDebugEnabled()) {
-                log.debug("Updating resource type [" + resourceType.getName()
-                    + "] from plugin [" + resourceType.getPlugin() + "]...");
+                log.debug("Updating resource type [" + resourceType.getName() + "] from plugin ["
+                    + resourceType.getPlugin() + "]...");
             }
 
             Query q = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN);
@@ -331,19 +331,19 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             } else if (newSubCat == null) {
                 if (oldSubCat != null) {
                     log.debug("Metadata update: Subcategory of ResourceType [" + resourceType.getName()
-                            + "] changed from " + oldSubCat + " to " + newSubCat);
+                        + "] changed from " + oldSubCat + " to " + newSubCat);
                     existingType.setSubCategory(null);
                 }
             } else {
                 // New subcategory is non-null and not equal to the old subcategory.
-                ResourceSubCategory existingSubCat =
-                        SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(existingType, newSubCat.getName());
+                ResourceSubCategory existingSubCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
+                    existingType, newSubCat.getName());
                 if (existingSubCat == null)
                     throw new IllegalStateException("Resource type [" + resourceType.getName() + "] in plugin ["
-                            + resourceType.getPlugin() + "] has a subcategory (" + newSubCat.getName()
-                            + ") which was not defined as a child subcategory of one of its ancestor resource types.");
-                log.debug("Metadata update: Subcategory of ResourceType [" + resourceType.getName()
-                            + "] changed from " + oldSubCat + " to " + existingSubCat);
+                        + resourceType.getPlugin() + "] has a subcategory (" + newSubCat.getName()
+                        + ") which was not defined as a child subcategory of one of its ancestor resource types.");
+                log.debug("Metadata update: Subcategory of ResourceType [" + resourceType.getName() + "] changed from "
+                    + oldSubCat + " to " + existingSubCat);
                 existingType.setSubCategory(existingSubCat);
             }
 
@@ -574,7 +574,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     existingType.addMetricDefinition(newDefinition);
                     entityManager.persist(newDefinition);
 
-                    // TODO add schedules for them ?
+                    // Now create schedules for already existing resources
+                    scheduleManager.createSchedulesForExistingResources(existingType, newDefinition);
                 }
             } else {
                 // Update existing or add new metrics
@@ -586,6 +587,11 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                             found = true;
                             existingDefinition.update(newDefinition, false);
                             entityManager.merge(existingDefinition);
+
+                            // There is nothing in the schedules that need to be updated.
+                            // We do not want to change schedules (such as collection interval)
+                            // because the user might have customized them. So leave them be.
+
                             break;
                         }
                     }
@@ -595,31 +601,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                         existingType.addMetricDefinition(newDefinition);
                         entityManager.persist(newDefinition);
 
-                        /*
-                         * you will always see an exception thrown during a server upgrade because 
-                         * no agents will be available yet; this method calls out to other SLSBs and
-                         * eventually needs to obtain the AgentClient facade that houses all of the
-                         * proxies to the remote POJO services on the agent-side; if the agent is down
-                         * for any reason (which is the natural state of things during an upgrade) this
-                         * method will fail; so, we will catch the exception so the rest of the plugin
-                         * update completes; however, we're not completely getting rid of the callout
-                         * because it'll benefit plugin developers who are making changes to their plugins
-                         * against a live/running JON system; ideally, though, we should shoot to get rid
-                         * of this method in the future in favor of guaranteeing that the agent will
-                         * always properly sync with the server upon starting; if it were to do that, this
-                         * logic could be removed completely, as the agent will always reach a steady,
-                         * consistent state with the server before entering the ready-state.
-                         */
-
-                        /* RHQ-592 - don't try to automate this
-                         * 
-                         * instead, make plugin developers execute 'plugins update' from their agents;
-                         * removal of this supports Server upgrade perfectly because new agents naturally
-                         * synchronize their schedules during their initial inventory merge; 
-                         */
-
                         // Now create schedules for already existing resources
-                        scheduleManager.createSchedulesAndSendToAgents(existingType, newDefinition);
+                        scheduleManager.createSchedulesForExistingResources(existingType, newDefinition);
                     }
                 }
 
@@ -639,8 +622,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     measurementDefinitionManager.removeMeasurementDefinition(definitionToDelete);
                 }
                 if (!definitionsToDelete.isEmpty() && log.isDebugEnabled()) {
-                    log.debug("Metadata update: Measurement definitions deleted from resource type [" +
-                            existingType.getName() + "]:" + definitionsToDelete);
+                    log.debug("Metadata update: Measurement definitions deleted from resource type ["
+                        + existingType.getName() + "]:" + definitionsToDelete);
                 }
 
                 entityManager.flush();
@@ -732,7 +715,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         if (existingType.getChildSubCategories() == null) {
             for (ResourceSubCategory newSubCategory : newType.getChildSubCategories()) {
                 log.debug("Metadata update: Adding new child SubCategory [" + newSubCategory.getName()
-                        + "] to ResourceType [" + existingType.getName() + "]...");
+                    + "] to ResourceType [" + existingType.getName() + "]...");
                 existingType.addChildSubCategory(newSubCategory);
                 entityManager.persist(newSubCategory);
             }
@@ -761,8 +744,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         List<ResourceSubCategory> newSubCategories = new ArrayList<ResourceSubCategory>(newType.getChildSubCategories());
         newSubCategories.removeAll(existingType.getChildSubCategories());
         for (ResourceSubCategory newSubCat : newSubCategories) {
-            log.debug("Metadata update: Adding new child SubCategory [" + newSubCat.getName()
-                    + "] to ResourceType [" + existingType.getName() + "]...");
+            log.debug("Metadata update: Adding new child SubCategory [" + newSubCat.getName() + "] to ResourceType ["
+                + existingType.getName() + "]...");
             existingType.addChildSubCategory(newSubCat);
             entityManager.persist(newSubCat);
         }
@@ -780,7 +763,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         if ((existingSubCat.getChildSubCategories() == null) || existingSubCat.getChildSubCategories().isEmpty()) {
             for (ResourceSubCategory newChildSubCategory : newSubCategory.getChildSubCategories()) {
                 log.debug("Metadata update: Adding new child SubCategory [" + newChildSubCategory.getName()
-                        + "] to SubCategory [" + existingSubCat.getName() + "]...");
+                    + "] to SubCategory [" + existingSubCat.getName() + "]...");
                 existingSubCat.addChildSubCategory(newChildSubCategory);
                 entityManager.persist(newChildSubCategory);
             }
@@ -813,7 +796,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         newChildSubCategories.removeAll(existingSubCat.getChildSubCategories());
         for (ResourceSubCategory newChildSubCategory : newChildSubCategories) {
             log.debug("Metadata update: Adding new child SubCategory [" + newChildSubCategory.getName()
-                    + "] to SubCategory [" + existingSubCat.getName() + "]...");
+                + "] to SubCategory [" + existingSubCat.getName() + "]...");
             existingSubCat.addChildSubCategory(newChildSubCategory);
             entityManager.persist(newChildSubCategory);
         }

@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -130,43 +129,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         Set<ResourceMeasurementScheduleRequest> allSchedules = new HashSet<ResourceMeasurementScheduleRequest>();
         getSchedulesForResourceAndItsDescendants(resourceId, allSchedules, getDescendents);
         return allSchedules;
-    }
-
-    /**
-     * Send MertricSchedules that should be unscheduled to agents. The passed list can contain multiple Schedules that
-     * can span multiple agents
-     *
-     * @param schedules List of schedules to send to agents
-     */
-    public void sendAgentUnschedules(List<MeasurementSchedule> schedules) {
-        // we need to sort by agent first
-        Map<Agent, Set<ResourceMeasurementScheduleRequest>> agentMap = getAgentsWithSchedulingInfo(schedules);
-        for (Agent agent : agentMap.keySet()) {
-            AgentClient ac = agentManager.getAgentClient(agent);
-            Set<ResourceMeasurementScheduleRequest> scheduleInfos = agentMap.get(agent);
-            Set<Integer> resourceIds = new HashSet<Integer>();
-            for (ResourceMeasurementScheduleRequest info : scheduleInfos) {
-                resourceIds.add(info.getResourceId());
-            }
-
-            ac.getMeasurementAgentService().unscheduleCollection(null); // TODO fix me
-        }
-    }
-
-    /**
-     * Send many unschedules to one agent, which needs to host all the resources this schedules belong to
-     *
-     * @param agent     Agent to talk to
-     * @param schedules List of schedules to diable on agent
-     */
-    public void sendAgentUnschedule(Agent agent, List<MeasurementSchedule> schedules) {
-        AgentClient ac = agentManager.getAgentClient(agent);
-        Set<Integer> resourceIds = new HashSet<Integer>();
-        for (MeasurementSchedule sched : schedules) {
-            resourceIds.add(sched.getResource().getId());
-        }
-
-        ac.getMeasurementAgentService().unscheduleCollection(resourceIds);
     }
 
     /**
@@ -555,8 +517,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
     @SuppressWarnings("unchecked")
     public PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesForResource(Subject subject,
-        int resourceId, @Nullable
-        DataType dataType, PageControl pageControl) {
+        int resourceId, @Nullable DataType dataType, PageControl pageControl) {
         pageControl.addDefaultOrderingField("ms.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -568,10 +529,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<MeasurementSchedule> getMeasurementSchedulesForResource(Subject subject, int resourceId, @Nullable
-    DataType dataType, @Nullable
-    DisplayType displayType, @Nullable
-    Boolean enabled, PageControl pageControl) {
+    public PageList<MeasurementSchedule> getMeasurementSchedulesForResource(Subject subject, int resourceId,
+        @Nullable DataType dataType, @Nullable DisplayType displayType, @Nullable Boolean enabled,
+        PageControl pageControl) {
         pageControl.addDefaultOrderingField("ms.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -629,68 +589,21 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         @RequiredPermission(Permission.MANAGE_SETTINGS) })
     public void disableAllMeasurementSchedules(Subject subject) {
         entityManager.createNamedQuery(MeasurementSchedule.DISABLE_ALL).executeUpdate();
-
-        // TODO: we need to tell all agents to update their schedules.
-        // we could have hundreds/thousands of agents, so we need to make sure we can do this within
-        // the transaction timeout period or we do it one agent per tx in another method
+        // TODO: how do we ensure the agents sync their schedules now so they turn off everything?
     }
 
-    /**
-     * Create {@link MeasurementSchedule}s for existing resources hanging on newType
-     * @param type The {@link ResourceType} for which we want to add schedules
-     * @param newDefinition The {@link MeasurementDefinition} where we derive the schedules from
-     */
-    public void createSchedulesAndSendToAgents(ResourceType type, MeasurementDefinition newDefinition) {
+    public void createSchedulesForExistingResources(ResourceType type, MeasurementDefinition newDefinition) {
+        long now = System.currentTimeMillis();
         List<Resource> resources = type.getResources();
         if (resources != null) {
-            Map<Agent, Set<ResourceMeasurementScheduleRequest>> arMap = new HashMap<Agent, Set<ResourceMeasurementScheduleRequest>>();
             for (Resource res : resources) {
+                res.setMtime(now); // changing MTime tells the agent this resource needs to be synced
                 MeasurementSchedule sched = new MeasurementSchedule(newDefinition, res);
                 sched.setInterval(newDefinition.getDefaultInterval());
                 entityManager.persist(sched);
-
-                /* 
-                 * we have the schedule, now lets dispatch them per agent.
-                 * We need to make sure that we only do one round trip per agent.
-                 */
-                MeasurementScheduleRequest mReq = new MeasurementScheduleRequest(sched);
-                ResourceMeasurementScheduleRequest req = new ResourceMeasurementScheduleRequest(res.getId());
-                req.addMeasurementScheduleRequest(mReq);
-                Agent agent = res.getAgent();
-                if (arMap.containsKey(agent)) {
-                    Set<ResourceMeasurementScheduleRequest> tmp = arMap.get(agent);
-                    tmp.add(req);
-                } else {
-                    Set<ResourceMeasurementScheduleRequest> reqSet = new HashSet<ResourceMeasurementScheduleRequest>(1);
-                    reqSet.add(req);
-                    arMap.put(agent, reqSet);
-                }
-
             }
-
-            /*
-             * We've created all schedules and keyed them by agent, so lets "upload" them
-             * to the agents.
-             * What happens when the agent does not yet have the metrics from the plugin? -
-             * There is no harm done, as the agent accepts the new schedules, only the plugin
-             * does not yet know what to do if gathering the passed (new) metrics is requested.  
-             */
-            Set<Agent> agents = arMap.keySet();
-            Iterator<Agent> agentIter = agents.iterator();
-            while (agentIter.hasNext()) {
-                Agent agent = agentIter.next();
-                Set<ResourceMeasurementScheduleRequest> reqSet = arMap.get(agent);
-                AgentClient ac = agentManager.getAgentClient(agent);
-                // AgentClient will not be null for downed agents or during Server upgrades, so first ping the 
-                // agent to see if it is alive before talking to it.
-                if (ac != null) {
-                    boolean agentIsReachable = ac.ping(2000); // 2sec timeout
-                    if (agentIsReachable)
-                        ac.getMeasurementAgentService().updateCollection(reqSet);
-                }
-            }
-
         }
+        return;
     }
 
     /**

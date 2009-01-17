@@ -69,14 +69,6 @@ public interface MeasurementScheduleManagerLocal {
     AgentClient getAgentClientForSchedule(MeasurementSchedule sched);
 
     /**
-     * Send MertricSchedules that should be unscheduled to agents. The passed list can contain multiple Schedules that
-     * can span multiple agents
-     *
-     * @param schedules List of schedules to send to agents
-     */
-    void sendAgentUnschedules(List<MeasurementSchedule> schedules);
-
-    /**
      * Return a list of MeasurementSchedules for the given ids
      *
      * @param  ids PrimaryKeys of the schedules searched
@@ -175,8 +167,7 @@ public interface MeasurementScheduleManagerLocal {
      * @return the metric collection schedules for the given resource
      */
     PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesForResource(Subject subject, int resourceId,
-        @Nullable
-        DataType dataType, PageControl pageControl);
+        @Nullable DataType dataType, PageControl pageControl);
 
     /**
      * Retrieves the metric collection schedules for the given resource.
@@ -190,10 +181,9 @@ public interface MeasurementScheduleManagerLocal {
      *
      * @return the metric collection schedules for the given resource
      */
-    PageList<MeasurementSchedule> getMeasurementSchedulesForResource(Subject subject, int resourceId, @Nullable
-    DataType dataType, @Nullable
-    DisplayType displayType, @Nullable
-    Boolean enabled, PageControl pageControl);
+    PageList<MeasurementSchedule> getMeasurementSchedulesForResource(Subject subject, int resourceId,
+        @Nullable DataType dataType, @Nullable DisplayType displayType, @Nullable Boolean enabled,
+        PageControl pageControl);
 
     /**
      * Disables all collection schedules in the given measurement definition IDs. This only disables the "templates", it
@@ -345,9 +335,9 @@ public interface MeasurementScheduleManagerLocal {
         int childType, PageControl pageControl);
 
     /**
-     * Create {@link MeasurementSchedule}s for existing resources hanging on newType
+     * Create {@link MeasurementSchedule}s for existing resources hanging on newType.
      * @param type The {@link ResourceType} for which we want to add schedules
      * @param newDefinition The {@link MeasurementDefinition} where we derive the schedules from
      */
-    public void createSchedulesAndSendToAgents(ResourceType type, MeasurementDefinition newDefinition);
+    public void createSchedulesForExistingResources(ResourceType type, MeasurementDefinition newDefinition);
 }

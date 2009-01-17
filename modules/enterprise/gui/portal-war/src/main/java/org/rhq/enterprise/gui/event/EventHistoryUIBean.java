@@ -179,18 +179,11 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
     @Override
     public DataModel getDataModel() {
-        WebUser user = EnterpriseFacesContextUtility.getWebUser();
-        MeasurementPreferences preferences = user.getMeasurementPreferences();
-        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
-
         if (metric.getUnit() != null) {
             MetricComponent metric = getMetric();
             metric.setValue(Integer.parseInt(FacesContextUtility.getOptionalRequestParameter("metricComponentValue")));
             metric.setUnit(FacesContextUtility.getOptionalRequestParameter("metricComponentUnit"));
-            Long millis = metric.getMillis();
-            rangePreferences.begin -= millis;
         }
-
         if (dataModel == null) {
             dataModel = new ListEventsHistoryDataModel(PageControlView.EventsHistoryList, MANAGED_BEAN_NAME);
         }
@@ -209,17 +202,14 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
             MeasurementPreferences preferences = user.getMeasurementPreferences();
             MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
             PageList<EventComposite> results = new PageList<EventComposite>();
-
             EventSeverity severity = getEventSeverity();
             String search = getSearchFilter();
             String source = getSourceFilter();
             MetricComponent metric = getMetric();
-
             if (metric.getUnit() != null) {
                 rangePreferences.end = Calendar.getInstance().getTime().getTime();
                 rangePreferences.begin = rangePreferences.end - metric.getMillis();
             }
-
             preferences.persistPreferences();
             if (context.category == EntityContext.Category.Resource) {
                 results = eventManager.getEvents(getSubject(), new int[] { context.resourceId },

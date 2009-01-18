@@ -33,3 +33,13 @@ function checkUncheckRadio(elementName1, elementName2) {
 	checkRadio(elementName1);
 	uncheckRadio(elementName2);
 }
+
+function closePopupAndReloadParent() {
+	window.opener.location.href = window.opener.location.href;
+	if (window.opener.progressWindow) {
+		window.opener.progressWindow.close();
+	}
+	window.opener.location.reload();
+	window.opener.focus();
+	window.close();
+}

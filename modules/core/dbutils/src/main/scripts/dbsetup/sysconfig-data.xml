@@ -126,9 +126,9 @@
         <data ID="50" PROPERTY_KEY="SNMP_PRIVACY_PROTOCOL" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE=""
               FREAD_ONLY="FALSE"/>
 
-        <!-- How long to keep events around (2678400000 millis == 31 days) -->
-        <data ID="51" PROPERTY_KEY="EVENT_PURGE" PROPERTY_VALUE="2678400000"
-              DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="FALSE"/>
+        <!-- How long to keep events around (1209600000 millis == 14 days) -->
+        <data ID="51" PROPERTY_KEY="EVENT_PURGE" PROPERTY_VALUE="1209600000"
+              DEFAULT_PROPERTY_VALUE="1209600000" FREAD_ONLY="FALSE"/>
 
         <!-- How long an agent is allowed to be quiet before we consider it down and backfill it -->
         <data ID="52" PROPERTY_KEY="AGENT_MAX_QUIET_TIME_ALLOWED" PROPERTY_VALUE="120000"

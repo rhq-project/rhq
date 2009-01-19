@@ -32,13 +32,16 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
+import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -55,6 +58,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     private EntityManager entityManager;
     private ResourceManagerLocal resourceManager;
     private MeasurementBaselineManagerLocal baselineManager;
+    private MeasurementOOBManagerLocal oobManager;
     private Subject overlord;
 
     // for the large inventory test
@@ -67,6 +71,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         this.prepareScheduler();
         this.resourceManager = LookupUtil.getResourceManager();
         this.baselineManager = LookupUtil.getMeasurementBaselineManager();
+        this.oobManager = LookupUtil.getOOBManager();
         this.overlord = LookupUtil.getSubjectManager().getOverlord();
     }
 
@@ -138,6 +143,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             allResources = null;
         }
     }
+
 
     /**
      * This is a very important test - it tests native queries that are hardcoded. We need this test because just
@@ -247,6 +253,99 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             }
         }
     }
+
+    /**
+     * Calculate Out of Bound values. Those need to use baselines, so they are tested here
+     * @throws Throwable If anything goes wrong.
+     */
+
+    public void testCalculateOOB() throws Throwable {
+
+        begin();
+
+        try {
+            setupResources(entityManager);
+            assert entityManager.find(Resource.class, platform.getId()) != null : "Did not setup platform - cannot test";
+
+            insertMeasurementDataNumeric1H(100, measSched, 30.0, 20.0, 40.0);
+            insertMeasurementDataNumeric1H(500, measSched, 5.0, 2.0, 8.0);
+            insertMeasurementDataNumeric1H(1000, measSched, 6.0, 3.0, 9.0);
+            insertMeasurementDataNumeric1H(5000, measSched, 40.0, 30.0, 50.0);
+
+            insertMeasurementDataNumeric1H(100, measSched2, 5000.0, 3500.0, 6500.0);
+            insertMeasurementDataNumeric1H(500, measSched2, 5000.0, 3000.0, 7000.0);
+            insertMeasurementDataNumeric1H(1000, measSched2, 2000.0, 1000.0, 3000.0);
+            insertMeasurementDataNumeric1H(5000, measSched2, 1500.0, 500.0, 2500.0);
+
+            commit();
+
+            long computeTime = baselineManager.calculateAutoBaselines(500, 1000);
+            assert computeTime > 0;
+
+            begin();
+            // check the 2 values at 5000 against their bands computed between [500 and 1000]
+            oobManager.computeOOBsFromLastHour(overlord,5000);
+
+            // check results
+            Query q = entityManager.createQuery("SELECT oo FROM MeasurementOOB oo");
+            List<MeasurementOOB> oobs = q.getResultList();
+            System.out.println("OOBs calculated: \n" + oobs);
+            for (MeasurementOOB oob : oobs) {
+                if (oob.getScheduleId() == measSched.getId()) {
+                    assert oob.getOobCount() == 1 : "Expected: 1, was " + oob.getOobCount();
+                    assert oob.getOobFactor() == 586 : "Expected: 586, was " + oob.getOobFactor();
+                }
+                else {
+                    assert oob.getOobCount() == 1 : "Expected: 1, was " + oob.getOobCount();
+                    assert oob.getOobFactor() == 8 : "Expected: 8, was " + oob.getOobFactor();
+                }
+            }
+
+            List<MeasurementOOBComposite> comps = oobManager.getSchedulesWithOOBs(overlord,5000,5000);
+   //         System.out.println("Composites: " + comps);
+            assert comps.size() == 2;
+
+            // Compute some more OOBs
+            oobManager.computeOOBsFromLastHour(overlord,1000);
+            q = entityManager.createQuery("SELECT oo FROM MeasurementOOB oo");
+            oobs = q.getResultList();
+        //    System.out.println("OOBs calculated: \n" + oobs);
+
+            comps = oobManager.getSchedulesWithOOBs(overlord,5000,5000);
+       //     System.out.println("Composites: " + comps);
+            assert comps.size() == 2;
+
+            List<MeasurementOOB> oobList = oobManager.getOObsForSchedule(overlord,measSched.getId(),1000,5000);
+            assert oobList.size()==2;
+
+
+            commit();
+
+            // Clean up
+
+            begin();
+
+            q = entityManager.createQuery("DELETE FROM MeasurementOOB oo WHERE  oo.schedule = :sched1 OR oo.schedule = :sched2");
+            q.setParameter("sched1",measSched);
+            q.setParameter("sched2",measSched2);
+            q.executeUpdate();
+            commit();
+
+            deleteResources();
+        } catch (Throwable t) {
+            System.out.println("TEST FAILURE STACK TRACE FOLLOWS:");
+            t.printStackTrace();
+            throw t;
+        } finally {
+            try {
+                getTransactionManager().rollback();
+            } catch (Exception e) {
+            }
+        }
+
+
+    }
+
 
     private void setupResources(EntityManager em) {
         agent = new Agent("test-agent", "localhost", 1234, "", "randomToken");

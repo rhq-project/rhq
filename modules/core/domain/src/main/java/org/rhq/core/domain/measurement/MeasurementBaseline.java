@@ -49,7 +49,7 @@ import javax.persistence.Table;
     // Can't use NamedNativeQuery either, hibernate doesn't support that.
 
     // update: RHQ-716 proved that this still isn't working, even with a version of Hibernate containing a fix
-    // for HHH-2833.  Basically, CURRENT_TIMESTAMP returns a timestamp data type, but computeTime field expects 
+    // for HHH-2833.  Basically, CURRENT_TIMESTAMP returns a timestamp data type, but computeTime field expects
     // a long.  this incompatibility forces the query analysis to bomb at compile time.  this issue could have been
     // by-passed if Hibernate allows binding parameters in the select list, but that is disallowed as well.
     /*
@@ -323,5 +323,20 @@ public class MeasurementBaseline implements Serializable {
 
     public void setUserEntered(boolean userEntered) {
         this.userEntered = userEntered;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("MeasurementBaseline");
+        sb.append("{id=").append(id);
+        sb.append(", userEntered=").append(userEntered);
+        sb.append(", baselineMin=").append(baselineMin);
+        sb.append(", baselineMax=").append(baselineMax);
+        sb.append(", baselineMean=").append(baselineMean);
+        sb.append(", computeTime=").append(computeTime);
+        sb.append(", scheduleId=").append(scheduleId);
+        sb.append('}');
+        return sb.toString();
     }
 }

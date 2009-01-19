@@ -37,7 +37,7 @@ import javax.persistence.Table;
         @NamedQuery(name=MeasurementOOB.GET_OOBS_FOR_SCHEDULE_RAW,
                 query = "SELECT o FROM MeasurementOOB o "+
                         "WHERE (o.id.timestamp >= :begin AND o.id.timestamp <= :end )" +
-                        "  AND o.id.scheduleId = :scheduleId " 
+                        "  AND o.id.scheduleId = :scheduleId "
                             ),
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE,
                 query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.name,sched.id,sum(o.oobCount),sum(o.oobFactor)) " +
@@ -59,7 +59,7 @@ public class MeasurementOOB {
     public static final String GET_SCHEDULES_WITH_OOB_AGGREGATE = "GetSchedulesWithOObAggregate";
     public static final String GET_OOBS_FOR_SCHEDULE_RAW = "GetSchedulesWithOOBRaw";
 
-    public static final String INSERT_QUERY =
+    public static final String INSERT_QUERY_POSTGRES =
             "insert into rhq_measurement_oob (oob_factor, oob_count, schedule_id,  time_stamp )  \n" +
                     "(SELECT max(mx*100) as mxdiff, count(mx) as cnt, id, ?\n" + //  ?1 = begin
                     " FROM\n" +
@@ -89,14 +89,43 @@ public class MeasurementOOB {
                     "    group by d.schedule_id \n" +
                     " ) data\n" +
                     " group by id\n" +
-                    " order by mxdiff desc\n" +
                     ")";
+
+    public static final String INSERT_QUERY_ORACLE = "insert into rhq_measurement_oob (oob_factor, oob_count, schedule_id,  time_stamp )  \n" +
+            "(\n" +
+            "SELECT max(mx*100) as mxdiff, count(mx) as cnt, id, ? \n" +
+            "FROM  (\n" +
+            "    SELECT max(((d.maxvalue - b.bl_max) / (b.bl_max - b.bl_min))) AS mx, d.schedule_id as id\n" +
+            "    FROM rhq_measurement_bline b, rhq_measurement_data_num_1h d, rhq_measurement_sched sc, rhq_measurement_def def\n" +
+            "    WHERE b.schedule_id = d.schedule_id\n" +
+            "         AND sc.id = b.schedule_id\n" +
+            "         AND d.value > b.bl_max\n" +
+            "         AND d.time_stamp = ?\n" +
+            "         AND ((b.bl_max - b.bl_min) > 0.1 )\n" +  // TODO delta depending on max value ?
+            "         AND sc.enabled = 1\n" +
+            "         AND sc.definition = def.id\n" +
+            "         AND def.numeric_type = 0\n" +
+            "   GROUP BY d.schedule_id\n" +
+            " UNION ALL \n" +
+            "        SELECT   max(((b.bl_min - d.minvalue) / (b.bl_max - b.bl_min))) AS mx, d.schedule_id as id\n" +
+            "       FROM rhq_measurement_bline b, rhq_measurement_data_num_1h d, rhq_measurement_sched sc, rhq_measurement_def def\n" +
+            "       WHERE b.schedule_id = d.schedule_id\n" +
+            "           AND sc.id = b.schedule_id\n" +
+            "           AND d.value < b.bl_max  \n" +
+            "           AND d.time_stamp = ?\n" +
+            "           AND ((b.bl_max - b.bl_min) > 0.1)\n" +   // TODO delta depending on max value ?
+            "           AND sc.enabled = 1\n" +
+            "           AND sc.definition = def.id\n" +
+            "           AND def.numeric_type = 0\n" +
+            "       GROUP BY d.schedule_id \n" +
+            ")\n" +
+            "GROUP BY id\n" +
+            ") ";
 
     private static final long serialVersionUID = 1L;
 
     @EmbeddedId
     MeasurementDataPK id; // Same PK, so reuse of that class
-
     @JoinColumn(name = "SCHEDULE_ID", insertable = false, updatable = false, nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     MeasurementSchedule schedule;

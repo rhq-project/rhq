@@ -35,6 +35,10 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.db.DatabaseType;
+import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.PostgresqlDatabaseType;
+import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
@@ -75,7 +79,15 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         try {
             log.info("Calculating OOBs for hour " + new Date(begin));
             conn = rhqDs.getConnection();
-            stmt = conn.prepareStatement(MeasurementOOB.INSERT_QUERY); // TODO check if this works for oracle
+            DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+
+            if (dbType instanceof PostgresqlDatabaseType)
+                stmt = conn.prepareStatement(MeasurementOOB.INSERT_QUERY_POSTGRES);
+            else if (dbType instanceof OracleDatabaseType)
+                stmt = conn.prepareStatement(MeasurementOOB.INSERT_QUERY_ORACLE);
+            else
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + dbType);
+
             stmt.setLong(1,begin);
             stmt.setLong(2,begin);
             stmt.setLong(3,begin);
@@ -85,6 +97,9 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             log.info("Done calculating OOBs. [" + count + "] new entries in [" + (t1-t0) + "] ms");
         }
         catch (SQLException e) {
+            log.error(e);
+        }
+        catch (Exception e) {
             log.error(e);
         }
         finally {

@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.event;
 
 import java.util.Arrays;
-import java.util.Calendar;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
@@ -51,7 +50,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class EventHistoryUIBean extends PagedDataTableUIBean {
 
-    private final Log log = LogFactory.getLog(EventHistoryUIBean.class);
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private EventManagerLocal eventManager = LookupUtil.getEventManager();
 
@@ -201,13 +200,18 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
             WebUser user = EnterpriseFacesContextUtility.getWebUser();
             MeasurementPreferences preferences = user.getMeasurementPreferences();
             MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+
+            log.info("Range: [ " + rangePreferences.begin + ", " + rangePreferences.end + "]");
+            log.info("Range difference: " + (rangePreferences.end - rangePreferences.begin));
+
             PageList<EventComposite> results = new PageList<EventComposite>();
             EventSeverity severity = getEventSeverity();
             String search = getSearchFilter();
             String source = getSourceFilter();
             MetricComponent metric = getMetric();
+
             if (metric.getUnit() != null) {
-                rangePreferences.end = Calendar.getInstance().getTime().getTime();
+                log.info("Metric is not null");
                 rangePreferences.begin = rangePreferences.end - metric.getMillis();
             }
             preferences.persistPreferences();

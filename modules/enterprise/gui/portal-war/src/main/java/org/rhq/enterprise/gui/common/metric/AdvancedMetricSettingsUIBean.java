@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.common.metric;
 
-import java.util.Calendar;
 import java.util.Date;
 
 import javax.faces.application.FacesMessage;
@@ -118,20 +117,14 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
         } else {
             metricType = getIntervalType();
         }
-
         if ((metricType == null) || (metricType.equals(""))) {
             facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Range select error",
                 "Please select one option to either setup the duration or the time interval"));
-        }
-
-        else if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.DURATION_TYPE)) {
+        } else if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.DURATION_TYPE)) {
             long duration = this.getDuration() * this.getUnit();
-            rangePreferences.end -= Calendar.getInstance().getTime().getTime();
             rangePreferences.begin = rangePreferences.end - (duration);
             preferences.persistPreferences();
-        }
-
-        else if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.INTERVAL_TYPE)) {
+        } else if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.INTERVAL_TYPE)) {
             Long fromTime = this.getFromTime().getTime();
             Long toTime = this.getToTime().getTime();
             if ((toTime == null) || (fromTime == null)) {

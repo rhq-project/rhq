@@ -63,10 +63,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * A Facelets tag library containing custom EL functions for use in RHQ GUI pages.
  *
+ * *NOTE*: There are weird issues with Facelets function taglibs -
+ *         whenever possible, managed beans should be used instead.
+ *
  * @author     Ian Springer
- * @deprecated there are weird issues with Facelets function taglibs - managed beans should be used instead
  */
-@Deprecated
 public class FunctionTagLibrary extends AbstractTagLibrary {
     /**
      * Namespace used to import this library in Facelets pages
@@ -93,9 +94,8 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     }
 
     /**
-     * Returns the Resource with the id specified via the 'id' query string parameter in the current request.
-     *
-     * @return the Resource with the id specified via the 'id' query string parameter in the current request
+     * Loads the Resource with the id specified via the 'id' query string parameter in the current request, and
+     * sticks the Resource into the request context as the "Resource" attribute.
      */
     public static void loadResource() {
         EnterpriseFacesContextUtility.getResource();
@@ -268,15 +268,15 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         return buffer.toString();
     }
 
-    // either the object itself or its corresponding string representation can be null - handle both
-    private static String formatNullURLParams(Object value) {
-        String valueStr = (value == null ? null : value.toString());
-        return (valueStr == null ? "" : valueStr);
-    }
-
     public static <T> List<T> getListFromMap(Map<String, T> map) {
         List<T> results = new ArrayList<T>();
         results.addAll(map.values());
         return results;
+    }
+
+    // either the object itself or its corresponding string representation can be null - handle both
+    private static String formatNullURLParams(Object value) {
+        String valueStr = (value == null ? null : value.toString());
+        return (valueStr == null ? "" : valueStr);
     }
 }

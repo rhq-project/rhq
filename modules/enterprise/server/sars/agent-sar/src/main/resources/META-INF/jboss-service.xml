@@ -63,7 +63,7 @@
             
             <java:property>
                <java:key>rhq.agent.plugins.directory</java:key>
-               <java:value>${jboss.server.home.dir}/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</java:value>
+               <java:value>${jboss.server.home.dir}/deploy/rhq.ear/rhq-downloads/rhq-plugins</java:value>
             </java:property>
             
             <!-- Client-side SSL Security Configuration (for sending messages to the server) -->

@@ -18,9 +18,14 @@
  */
 package org.rhq.enterprise.gui.configuration.test;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 
 /**
@@ -32,10 +37,17 @@ public abstract class AbstractTestConfigurationUIBean {
 
     private ConfigurationDefinition configurationDefinition;
     private Configuration configuration;
+    private Set<Configuration> configurations;
+    private List<Property> properties;
 
-    protected AbstractTestConfigurationUIBean() {
+    protected AbstractTestConfigurationUIBean() throws CloneNotSupportedException
+    {
         this.configurationDefinition = TestConfigurationFactory.createConfigurationDefinition();
         this.configuration = TestConfigurationFactory.createConfiguration();
+        for (int i = 0; i < 10; i++)
+            this.configurations.add(this.configuration.clone());
+        // Unwrap the Hibernate proxy objects, which Facelets appears not to be able to handle.
+        this.properties = new ArrayList<Property>(this.configuration.getProperties());
     }
 
     @Nullable
@@ -56,6 +68,21 @@ public abstract class AbstractTestConfigurationUIBean {
     public void setConfiguration(@NotNull
     Configuration configuration) {
         this.configuration = configuration;
+    }
+
+    public Set<Configuration> getConfigurations()
+    {
+        return configurations;
+    }
+
+    public void setConfigurations(Set<Configuration> configurations)
+    {
+        this.configurations = configurations;
+    }
+
+    public List<Property> getProperties()
+    {
+        return this.properties;
     }
 
     public String getNullConfigurationDefinitionMessage() {

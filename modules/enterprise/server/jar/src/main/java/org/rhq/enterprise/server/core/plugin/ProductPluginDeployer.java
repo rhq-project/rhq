@@ -19,22 +19,22 @@
 package org.rhq.enterprise.server.core.plugin;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Iterator;
 import java.util.Set;
-import java.util.HashSet;
-import java.util.zip.ZipInputStream;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+import java.util.zip.ZipInputStream;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.MBeanNotificationInfo;
@@ -55,8 +55,8 @@ import javax.xml.validation.SchemaFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
-import org.xml.sax.SAXException;
 import org.jetbrains.annotations.NotNull;
+import org.xml.sax.SAXException;
 
 import org.jboss.deployment.DeploymentException;
 import org.jboss.deployment.DeploymentInfo;
@@ -271,8 +271,8 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         }
         Subject superuser = LookupUtil.getSubjectManager().getOverlord();
         SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-        systemManager.vacuum(superuser, new String[] { "RHQ_MEASUREMENT_DEF", "RHQ_CONFIG_DEF",
-            "RHQ_RESOURCE_TYPE", "RHQ_RESOURCE_TYPE_PARENTS" });
+        systemManager.vacuum(superuser, new String[] { "RHQ_MEASUREMENT_DEF", "RHQ_CONFIG_DEF", "RHQ_RESOURCE_TYPE",
+            "RHQ_RESOURCE_TYPE_PARENTS" });
     }
 
     private PluginDependencyGraph buildDependencyGraph() {
@@ -294,12 +294,11 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         DeploymentInfo deploymentInfo = this.deploymentInfos.get(pluginName);
         if (deploymentInfo == null)
             throw new IllegalStateException("DeploymentInfo was not found for plugin [" + pluginName
-                    + " ] - it should have been initialized by preprocessPlugin().");
+                + " ] - it should have been initialized by preprocessPlugin().");
         String md5 = null;
         try {
             md5 = MD5Generator.getDigestString(deploymentInfo.url.openStream());
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             log.error("Error generating MD5 for plugin [" + pluginName + "].");
         }
         ResourceMetadataManagerLocal metadataManager = LookupUtil.getResourceMetadataManager();
@@ -318,8 +317,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     }
 
     private void registerPlugins(PluginDependencyGraph dependencyGraph) {
-        Map<String, LatchedPluginDeploymentService> latchedDependencyMap =
-                new HashMap<String, LatchedPluginDeploymentService>();
+        Map<String, LatchedPluginDeploymentService> latchedDependencyMap = new HashMap<String, LatchedPluginDeploymentService>();
         for (String pluginName : this.namesOfPluginsToBeRegistered) {
             LatchedPluginDeploymentService service = getServiceIfExists(pluginName, latchedDependencyMap);
             // We need to register dependencies also even if they aren't new or updated. This is because
@@ -328,7 +326,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             // PluginMetadataManager to be parsed, but not to unnecessarily merge their types into the DB.
             for (String dependencyPluginName : dependencyGraph.getPluginDependencies(pluginName)) {
                 LatchedPluginDeploymentService dependencyService = getServiceIfExists(dependencyPluginName,
-                        latchedDependencyMap);
+                    latchedDependencyMap);
                 service.addDependency(dependencyService);
             }
         }
@@ -347,13 +345,12 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     }
 
     private LatchedPluginDeploymentService getServiceIfExists(String pluginName,
-                                                              Map<String, LatchedPluginDeploymentService> latchedServiceMap) {
+        Map<String, LatchedPluginDeploymentService> latchedServiceMap) {
         LatchedPluginDeploymentService result = latchedServiceMap.get(pluginName);
         if (result == null) {
             DeploymentInfo deploymentInfo = this.deploymentInfos.get(pluginName);
             PluginDescriptor descriptor = this.pluginDescriptors.get(pluginName);
-            result = new LatchedPluginDeploymentService(pluginName, deploymentInfo, descriptor
-            );
+            result = new LatchedPluginDeploymentService(pluginName, deploymentInfo, descriptor);
             latchedServiceMap.put(pluginName, result);
         }
         return result;
@@ -413,18 +410,16 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
          * version " + AMPS_VERSION);}*/
     }
 
-    private PluginDescriptor getPluginDescriptor(DeploymentInfo di) throws DeploymentException
-    {
+    private PluginDescriptor getPluginDescriptor(DeploymentInfo di) throws DeploymentException {
         URL descriptorURL = di.localCl.findResource(DEFAULT_PLUGIN_DESCRIPTOR_PATH);
         if (descriptorURL == null) {
-            throw new DeploymentException("Could not load " + DEFAULT_PLUGIN_DESCRIPTOR_PATH + " from plugin jar file ["
-                + di.url + "]");
+            throw new DeploymentException("Could not load " + DEFAULT_PLUGIN_DESCRIPTOR_PATH
+                + " from plugin jar file [" + di.url + "]");
         }
 
         PluginDescriptor pluginDescriptor;
         ValidationEventCollector vec;
-        try
-        {
+        try {
             JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
@@ -443,11 +438,8 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             unmarshaller.setEventHandler(vec);
 
             pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(descriptorURL);
-        }
-        catch (JAXBException e)
-        {
-            throw new DeploymentException("Failed to parse plugin descriptor for plugin jar file [" + di.url
-                + "].", e);
+        } catch (JAXBException e) {
+            throw new DeploymentException("Failed to parse plugin descriptor for plugin jar file [" + di.url + "].", e);
         }
 
         for (ValidationEvent event : vec.getEvents()) {
@@ -457,31 +449,21 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         return pluginDescriptor;
     }
 
-    private void checkDeploymentIsValidZipFile(DeploymentInfo deploymentInfo)
-            throws DeploymentException
-    {
+    private void checkDeploymentIsValidZipFile(DeploymentInfo deploymentInfo) throws DeploymentException {
         if (deploymentInfo.isDirectory)
             return;
         ZipInputStream zipInputStream = null;
-        try
-        {
+        try {
             zipInputStream = new ZipInputStream(deploymentInfo.url.openStream());
             zipInputStream.getNextEntry();
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             throw new DeploymentException("File [" + deploymentInfo.url + "] is not a valid jarfile - "
-                    + " perhaps the file has not been fully written yet.", e);
-        }
-        finally
-        {
+                + " perhaps the file has not been fully written yet.", e);
+        } finally {
             if (zipInputStream != null)
-                try
-                {
+                try {
                     zipInputStream.close();
-                }
-                catch (IOException e)
-                {
+                } catch (IOException e) {
                     log.error("Failed to close zip input stream for file [" + deploymentInfo.url + "].");
                 }
         }
@@ -520,7 +502,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     @Override
     public void start(DeploymentInfo deploymentInfo) throws DeploymentException {
         try {
-            // TODO: Do we really need to call start() - I'd think the app server would do that for us...
+            // yes we really need to call start() - you'd think the app server would call it earlier but it doesn't sometimes
             this.start();
         } catch (Exception e) {
             throw new DeploymentException(e);
@@ -532,7 +514,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         String pluginJarFileName = deploymentInfo.url.getFile();
         log.debug("start(): " + pluginJarFileName);
         String pluginName = preprocessPlugin(deploymentInfo);
-        if (this.isReady) {            
+        if (this.isReady) {
             // isReady == true means startDeployer() has already been called, so this is a hot deploy.
             // Call registerPlugins() ourselves.
             log.debug("Hot deploying plugin [" + pluginName + "]...");
@@ -658,8 +640,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
                 FileInputStream fis = new FileInputStream(new File(file, "META-INF/MANIFEST.MF"));
                 manifest = new Manifest(fis);
                 fis.close();
-            }
-            else {  // a jar
+            } else { // a jar
                 JarFile jarFile = new JarFile(file);
                 manifest = jarFile.getManifest();
                 jarFile.close();
@@ -678,7 +659,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         private final PluginDescriptor pluginDescriptor;
 
         public LatchedPluginDeploymentService(String pluginName, DeploymentInfo deploymentInfo,
-                                              PluginDescriptor descriptor) {
+            PluginDescriptor descriptor) {
             super(pluginName);
             this.pluginDeploymentInfo = deploymentInfo;
             this.pluginDescriptor = descriptor;

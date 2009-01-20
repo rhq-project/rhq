@@ -42,7 +42,7 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
     private static final String DURATION_TYPE = "duration";
     private static final String INTERVAL_TYPE = "interval";
 
-    private Integer duration;
+    private int duration;
     private Integer unit;
     private String intervalType;
     private String durationType;
@@ -50,6 +50,7 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
     private Date toTime;
 
     public AdvancedMetricSettingsUIBean() {
+        init();
     }
 
     @Override
@@ -57,11 +58,11 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
         return null;
     }
 
-    public Integer getDuration() {
+    public int getDuration() {
         return duration;
     }
 
-    public void setDuration(Integer duration) {
+    public void setDuration(int duration) {
         this.duration = duration;
     }
 
@@ -121,8 +122,18 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
             facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Range select error",
                 "Please select one option to either setup the duration or the time interval"));
         } else if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.DURATION_TYPE)) {
-            long duration = this.getDuration() * this.getUnit();
-            rangePreferences.begin = rangePreferences.end - (duration);
+            long millis = this.getDuration() * this.getUnit();
+            rangePreferences.readOnly = false;
+            rangePreferences.begin = rangePreferences.end - (millis);
+            rangePreferences.lastN = duration;
+            if (unit == 60000) {
+                rangePreferences.unit = 2;
+            } else if (unit == 36000000) {
+                rangePreferences.unit = 3;
+            } else if (unit == 864000000) {
+                rangePreferences.unit = 4;
+            }
+            preferences.setMetricRangePreferences(rangePreferences);
             preferences.persistPreferences();
         } else if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.INTERVAL_TYPE)) {
             Long fromTime = this.getFromTime().getTime();
@@ -134,10 +145,39 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
                 facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Timing error",
                     "To time cannot be earlier than before time"));
             } else {
+                rangePreferences.readOnly = true;
                 rangePreferences.begin = fromTime;
                 rangePreferences.end = toTime;
             }
+            preferences.setMetricRangePreferences(rangePreferences);
             preferences.persistPreferences();
+        }
+    }
+
+    public void init() {
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+        if (rangePreferences.readOnly) {
+            this.setDurationType(null);
+            this.setIntervalType("interval");
+            this.setUnit(null);
+            this.setFromTime(new Date(rangePreferences.begin));
+            this.setToTime(new Date(rangePreferences.end));
+
+        } else {
+            this.setDurationType("duration");
+            this.setIntervalType(null);
+            this.setDuration(rangePreferences.lastN);
+            if (rangePreferences.unit == 2) {
+                this.setUnit(60000);
+            } else if (rangePreferences.unit == 3) {
+                this.setUnit(36000000);
+            } else if (rangePreferences.unit == 4) {
+                this.setUnit(864000000);
+            }
+            this.setFromTime(null);
+            this.setToTime(null);
         }
     }
 }

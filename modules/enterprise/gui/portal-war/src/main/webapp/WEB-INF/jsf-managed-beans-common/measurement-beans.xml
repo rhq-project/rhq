@@ -14,12 +14,12 @@
    <!-- /rhq/common/monitor/tables/** -->
    <managed-bean>
       <managed-bean-name>MetricsTableUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.inventory.MetricsTableUIBean</managed-bean-class>
+      <managed-bean-class>org.rhq.enterprise.gui.measurement.tables.MetricsTableUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
    <managed-bean>
       <managed-bean-name>MetricsTableChartUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.inventory.MetricsTableChartUIBean</managed-bean-class>
+      <managed-bean-class>org.rhq.enterprise.gui.measurement.tables.MetricsTableChartUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 

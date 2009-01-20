@@ -18,6 +18,7 @@ package org.rhq.enterprise.gui.measurement.tables;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
@@ -87,8 +88,7 @@ public class MetricsTableUIBean {
 
         if (context.category == EntityContext.Category.Resource) {
             //null -> don't filter, we want everything, false -> not only enabled
-            List<MeasurementSchedule> measurementSchedules = scheduleManager.getMeasurementSchedulesForResourceAndType(
-                user.getSubject(), context.resourceId, DataType.MEASUREMENT, null, true);
+            List<MeasurementSchedule> measurementSchedules = scheduleManager.getMeasurementSchedulesForResourceAndType(user.getSubject(), context.resourceId, DataType.MEASUREMENT, null, true);
 
             int[] scheduleIds = new int[measurementSchedules.size()];
             int i = 0;
@@ -96,13 +96,11 @@ public class MetricsTableUIBean {
                 scheduleIds[i++] = sched.getId();
             }
 
-            metricSummaries = chartManager.getMetricDisplaySummariesForResource(user.getSubject(), context.resourceId,
-                scheduleIds, range.begin, range.end);
+            metricSummaries = chartManager.getMetricDisplaySummariesForResource(user.getSubject(), context.resourceId, scheduleIds, range.begin, range.end);
 
         } else if (context.category == EntityContext.Category.ResourceGroup) {
-            List<MeasurementDefinition> measurementDefinitions = definitionManager
-                .getMeasurementDefinitionsByResourceType(user.getSubject(), getResourceGroup(user).getResourceType()
-                    .getId(), DataType.MEASUREMENT, null);
+            List<MeasurementDefinition> measurementDefinitions = definitionManager.getMeasurementDefinitionsByResourceType(user.getSubject(), getResourceGroup(user).getResourceType().getId(),
+                DataType.MEASUREMENT, null);
 
             int[] defIds = new int[measurementDefinitions.size()];
             int i = 0;
@@ -110,13 +108,10 @@ public class MetricsTableUIBean {
                 defIds[i++] = def.getId();
             }
 
-            metricSummaries = chartManager.getMetricDisplaySummariesForCompatibleGroup(user.getSubject(),
-                context.groupId, defIds, range.begin, range.end, true);
+            metricSummaries = chartManager.getMetricDisplaySummariesForCompatibleGroup(user.getSubject(), context.groupId, defIds, range.begin, range.end, true);
 
         } else if (context.category == EntityContext.Category.AutoGroup) {
-            List<MeasurementDefinition> measurementDefinitions = definitionManager
-                .getMeasurementDefinitionsByResourceType(user.getSubject(), context.getResourceTypeId(),
-                    DataType.MEASUREMENT, null);
+            List<MeasurementDefinition> measurementDefinitions = definitionManager.getMeasurementDefinitionsByResourceType(user.getSubject(), context.getResourceTypeId(), DataType.MEASUREMENT, null);
 
             int[] defIds = new int[measurementDefinitions.size()];
             int i = 0;
@@ -124,16 +119,16 @@ public class MetricsTableUIBean {
                 defIds[i++] = def.getId();
             }
 
-            metricSummaries = chartManager.getMetricDisplaySummariesForAutoGroup(user.getSubject(), context
-                .getParentResourceId(), context.getResourceTypeId(), defIds, range.begin, range.end, true);
+            metricSummaries = chartManager.getMetricDisplaySummariesForAutoGroup(user.getSubject(), context.getParentResourceId(), context.getResourceTypeId(), defIds, range.begin, range.end, true);
 
         } else {
             log.error(context.getUnknownContextMessage());
+            // return an empty list in this unlikely scenario
+            return new ArrayList<MetricDisplaySummary>();
         }
 
         for (MetricDisplaySummary summary : metricSummaries) {
-            MonitorUtils.formatSimpleMetrics(summary, FacesContext.getCurrentInstance().getExternalContext()
-                .getRequestLocale());
+            MonitorUtils.formatSimpleMetrics(summary, FacesContext.getCurrentInstance().getExternalContext().getRequestLocale());
         }
 
         return metricSummaries;
@@ -141,16 +136,14 @@ public class MetricsTableUIBean {
 
     public ResourceGroup getResourceGroup(WebUser user) {
         if (null == resourceGroup) {
-            resourceGroup = resourceGroupManager.getResourceGroupById(user.getSubject(), context.groupId,
-                GroupCategory.COMPATIBLE);
+            resourceGroup = resourceGroupManager.getResourceGroupById(user.getSubject(), context.groupId, GroupCategory.COMPATIBLE);
         }
 
         return resourceGroup;
     }
 
     public Integer[] getResourceGroupMemberIds(WebUser user) {
-        List<Resource> resources = resourceGroupManager.getResourcesForResourceGroup(user.getSubject(),
-            context.groupId, GroupCategory.COMPATIBLE);
+        List<Resource> resources = resourceGroupManager.getResourcesForResourceGroup(user.getSubject(), context.groupId, GroupCategory.COMPATIBLE);
 
         Integer[] resourceIds = new Integer[resources.size()];
         int i = 0;

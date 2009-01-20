@@ -29,6 +29,7 @@ public interface NumberConstants {
     public static final long MINUTES = 60000;
     public static final long HOURS = 3600000;
     public static final long DAYS = 86400000;
+    public static final long WEEKS = 604800000;
 
     /**
      * five minutes in millisecond increments

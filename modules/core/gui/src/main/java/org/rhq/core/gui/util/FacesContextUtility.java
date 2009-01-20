@@ -1,36 +1,39 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.gui.util;
 
 import java.lang.reflect.Method;
 import java.util.Iterator;
+
 import javax.el.ValueExpression;
 import javax.faces.application.FacesMessage;
 import javax.faces.application.FacesMessage.Severity;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletRequest;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.exception.WrappedRemotingException;
 
@@ -41,27 +44,23 @@ import org.rhq.core.util.exception.WrappedRemotingException;
  */
 public abstract class FacesContextUtility {
     @Nullable
-    public static String getOptionalRequestParameter(@NotNull
-    String paramName) {
+    public static String getOptionalRequestParameter(@NotNull String paramName) {
         return getOptionalRequestParameter(paramName, String.class, null);
     }
 
     @Nullable
-    public static <T> T getOptionalRequestParameter(@NotNull
-    String paramName, Class<T> type) {
+    public static <T> T getOptionalRequestParameter(@NotNull String paramName, Class<T> type) {
         return getOptionalRequestParameter(paramName, type, null);
     }
 
     @Nullable
-    public static String getOptionalRequestParameter(@NotNull
-    String paramName, String defaultValue) {
+    public static String getOptionalRequestParameter(@NotNull String paramName, String defaultValue) {
         return getOptionalRequestParameter(paramName, String.class, defaultValue);
     }
 
     @Nullable
     @SuppressWarnings("unchecked")
-    public static <T> T getOptionalRequestParameter(@NotNull
-    String paramName, Class<T> type, T defaultValue) {
+    public static <T> T getOptionalRequestParameter(@NotNull String paramName, Class<T> type, T defaultValue) {
         FacesContext facesContext = getFacesContext();
         String paramValue = facesContext.getExternalContext().getRequestParameterMap().get(paramName);
 
@@ -91,14 +90,12 @@ public abstract class FacesContextUtility {
     }
 
     @NotNull
-    public static String getRequiredRequestParameter(@NotNull
-    String paramName) {
+    public static String getRequiredRequestParameter(@NotNull String paramName) {
         return getRequiredRequestParameter(paramName, String.class);
     }
 
     @NotNull
-    public static <T> T getRequiredRequestParameter(@NotNull
-    String paramName, Class<T> type) {
+    public static <T> T getRequiredRequestParameter(@NotNull String paramName, Class<T> type) {
         T paramValue = getOptionalRequestParameter(paramName, type, null);
         if (paramValue == null) {
             throw new IllegalStateException("Required request parameter '" + paramName + "' is missing.");
@@ -124,9 +121,7 @@ public abstract class FacesContextUtility {
      * @param severity the FacesMessage severity (<code>FacesMessage.SEVERITY_WARN</code>, etc.)
      * @param summary  localized summary message text
      */
-    public static void addMessage(@NotNull
-    Severity severity, @NotNull
-    String summary) {
+    public static void addMessage(@NotNull Severity severity, @NotNull String summary) {
         String detail = "";
         addMessage(severity, summary, detail);
     }
@@ -139,10 +134,7 @@ public abstract class FacesContextUtility {
      * @param t        an exception that will be used to construct the detail portion of the message; if null, no detail
      *                 will be included in the message
      */
-    public static void addMessage(@NotNull
-    Severity severity, @NotNull
-    String summary, @Nullable
-    Throwable t) {
+    public static void addMessage(@NotNull Severity severity, @NotNull String summary, @Nullable Throwable t) {
         String detail = createDetailMessage(t);
         addMessage(severity, summary, detail);
     }
@@ -154,10 +146,7 @@ public abstract class FacesContextUtility {
      * @param summary  localized summary message text
      * @param detail   localized detail message text; if null, no detail will be included in the message
      */
-    public static void addMessage(@NotNull
-    Severity severity, @NotNull
-    String summary, @Nullable
-    String detail) {
+    public static void addMessage(@NotNull Severity severity, @NotNull String summary, @Nullable String detail) {
         getFacesContext().addMessage(null, new FacesMessage(severity, summary, (detail != null) ? detail : ""));
     }
 
@@ -207,7 +196,6 @@ public abstract class FacesContextUtility {
         return managedBeanValueExpression;
     }
 
-    @SuppressWarnings("unchecked")
     // TODO: Do this instead by evaluating an EL expression.
     public static void setBean(Object object) {
         HttpServletRequest request = FacesContextUtility.getRequest();
@@ -230,8 +218,7 @@ public abstract class FacesContextUtility {
         }
     }
 
-    private static String createDetailMessage(@Nullable
-    Throwable t) {
+    private static String createDetailMessage(@Nullable Throwable t) {
         if (t == null) {
             return null;
         }

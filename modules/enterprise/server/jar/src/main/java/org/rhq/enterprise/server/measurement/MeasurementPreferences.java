@@ -79,6 +79,10 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
          */
         if (defaultRange && prefs.begin == null && prefs.end == null) {
             range = MeasurementUtils.calculateTimeFrame(prefs.lastN, prefs.unit);
+            if (range == null) {
+                // better error handling for poorly persisted preferences
+                range = MeasurementUtils.calculateTimeFrame(DEFAULT_VALUE_RANGE_LASTN, DEFAULT_VALUE_RANGE_UNIT);
+            }
 
             prefs.begin = (Long) range.get(0);
             prefs.end = (Long) range.get(1);

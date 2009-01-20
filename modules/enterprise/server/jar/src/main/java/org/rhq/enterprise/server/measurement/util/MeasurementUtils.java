@@ -16,6 +16,7 @@ public class MeasurementUtils {
     public static final int UNIT_MINUTES = 2;
     public static final int UNIT_HOURS = 3;
     public static final int UNIT_DAYS = 4;
+    public static final int UNIT_WEEKS = 5;
 
     /**
      * Method calculateTimeFrame
@@ -39,6 +40,9 @@ public class MeasurementUtils {
 
         long retrospective = lastN;
         switch (unit) {
+        case UNIT_WEEKS:
+            retrospective *= NumberConstants.WEEKS;
+            break;
         case UNIT_MINUTES:
             retrospective *= NumberConstants.MINUTES;
             break;

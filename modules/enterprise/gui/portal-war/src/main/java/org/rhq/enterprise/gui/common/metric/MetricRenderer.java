@@ -63,6 +63,7 @@ public class MetricRenderer extends Renderer {
 
         metric.setValue(getMetricValue());
         metric.setUnit(getMetricUnit());
+        metric.persist();
     }
 
     public int getMetricValue() {
@@ -94,6 +95,9 @@ public class MetricRenderer extends Renderer {
         for (int timeIntervalOption : timeIntervalValues) {
             writer.startElement("option", metric);
             writer.writeAttribute("value", timeIntervalOption, MetricComponent.VALUE);
+            if (timeIntervalOption == metric.getValue()) {
+                writer.writeAttribute("SELECTED", "SELECTED", null);
+            }
             writer.write(String.valueOf(timeIntervalOption));
             writer.endElement("option");
         }

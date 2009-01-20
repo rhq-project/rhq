@@ -21,7 +21,12 @@ package org.rhq.enterprise.gui.common.metric;
 import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.gui.util.FacesComponentUtility;
+import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 
 /**
  * @author Fady Matar
@@ -33,17 +38,19 @@ public class MetricComponent extends UIComponentBase {
     public final static String OPTION_LIST_ATTRIBUTE = "optionList";
 
     public enum TimeUnit {
-        MINUTES("Minutes", "m", 60000L), //
-        HOURS("Hours", "h", 3600000L), //
-        DAYS("Days", "d", 86400000L);
+        MINUTES("Minutes", "m", 2, 60000L), //
+        HOURS("Hours", "h", 3, 3600000L), //
+        DAYS("Days", "d", 4, 86400000L);
 
         private String displayName;
         private String optionListToken;
+        private int metricUnitOrdinal;
         private long millisInUnit;
 
-        private TimeUnit(String displayName, String optionListToken, long millisInUnit) {
+        private TimeUnit(String displayName, String optionListToken, int ordinal, long millisInUnit) {
             this.displayName = displayName;
             this.optionListToken = optionListToken;
+            this.metricUnitOrdinal = ordinal;
             this.millisInUnit = millisInUnit;
         }
 
@@ -60,8 +67,21 @@ public class MetricComponent extends UIComponentBase {
             throw new IllegalArgumentException("'" + optionListToken + "' is not a recognized Metric option");
         }
 
+        public static TimeUnit getUnitByMetricOrdinal(int ordinal) {
+            for (TimeUnit unit : TimeUnit.values()) {
+                if (unit.metricUnitOrdinal == ordinal) {
+                    return unit;
+                }
+            }
+            throw new IllegalArgumentException("'" + ordinal + "' is not a recognized Metric ordinal value");
+        }
+
         public long getMillisInUnit() {
             return millisInUnit;
+        }
+
+        public int getMetricUntilOrdinal() {
+            return metricUnitOrdinal;
         }
 
     }
@@ -70,6 +90,24 @@ public class MetricComponent extends UIComponentBase {
     private String unit;
     private String optionList;
     private TimeUnit[] unitOptions;
+
+    public MetricComponent() {
+        Subject subject = WebUtility.getSubject(FacesContextUtility.getRequest());
+        MeasurementPreferences prefs = new MeasurementPreferences(subject);
+        MetricRangePreferences rangePrefs = prefs.getMetricRangePreferences();
+        value = rangePrefs.lastN;
+        unit = TimeUnit.getUnitByMetricOrdinal(rangePrefs.unit).name();
+    }
+
+    public void persist() {
+        Subject subject = WebUtility.getSubject(FacesContextUtility.getRequest());
+        MeasurementPreferences prefs = new MeasurementPreferences(subject);
+        MetricRangePreferences rangePrefs = prefs.getMetricRangePreferences();
+        rangePrefs.lastN = value;
+        rangePrefs.unit = TimeUnit.valueOf(unit).getMetricUntilOrdinal();
+        prefs.setMetricRangePreferences(rangePrefs);
+        prefs.persistPreferences();
+    }
 
     public int getValue() {
         return value;

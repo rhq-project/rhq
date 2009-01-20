@@ -35,7 +35,6 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.StringUtility;
 import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
-import org.rhq.enterprise.gui.common.metric.MetricComponent;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -64,8 +63,6 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
     private SelectItem[] severityFilterSelectItems;
 
     private EventComposite selectedEvent;
-
-    private MetricComponent metric;
 
     public EventHistoryUIBean() {
         context = WebUtility.getEntityContext();
@@ -168,21 +165,8 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
         return "success";
     }
 
-    public MetricComponent getMetric() {
-        return metric;
-    }
-
-    public void setMetric(MetricComponent metric) {
-        this.metric = metric;
-    }
-
     @Override
     public DataModel getDataModel() {
-        if (metric.getUnit() != null) {
-            MetricComponent metric = getMetric();
-            metric.setValue(Integer.parseInt(FacesContextUtility.getOptionalRequestParameter("metricComponentValue")));
-            metric.setUnit(FacesContextUtility.getOptionalRequestParameter("metricComponentUnit"));
-        }
         if (dataModel == null) {
             dataModel = new ListEventsHistoryDataModel(PageControlView.EventsHistoryList, MANAGED_BEAN_NAME);
         }
@@ -208,12 +192,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
             EventSeverity severity = getEventSeverity();
             String search = getSearchFilter();
             String source = getSourceFilter();
-            MetricComponent metric = getMetric();
 
-            if (metric.getUnit() != null) {
-                log.info("Metric is not null");
-                rangePreferences.begin = rangePreferences.end - metric.getMillis();
-            }
             preferences.persistPreferences();
             if (context.category == EntityContext.Category.Resource) {
                 results = eventManager.getEvents(getSubject(), new int[] { context.resourceId },

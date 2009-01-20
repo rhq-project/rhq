@@ -7,7 +7,25 @@
     
    <display-name>RHQ</display-name>
 
+   <!--=== Seam ===-->
+   
+   <listener>
+      <listener-class>org.jboss.seam.servlet.SeamListener</listener-class>
+   </listener>
+
+   <!-- From Seam docs: The Seam master filter must be the first filter specified
+        in web.xml. This ensures it is run first. -->
+   <filter>
+      <filter-name>Seam Filter</filter-name>
+      <filter-class>org.jboss.seam.servlet.SeamFilter</filter-class>
+   </filter>
+   <filter-mapping>
+      <filter-name>Seam Filter</filter-name>
+      <url-pattern>/*</url-pattern>
+   </filter-mapping>
+    
    <!--=== JSF RI ===-->
+   
    <listener>
       <listener-class>com.sun.faces.config.ConfigureListener</listener-class>
    </listener>
@@ -150,26 +168,18 @@
       <param-value>true</param-value>
    </context-param>
 
-   <!--=== RichFaces/Ajax4JSF ===-->
-   <!-- 
-   <context-param>
-      <param-name>org.ajax4jsf.VIEW_HANDLERS</param-name>
-      <param-value>com.sun.facelets.FaceletViewHandler</param-value>
-   </context-param>
-    -->
-
+   <!--=== RichFaces ===-->
+   
+    <!-- From Seam docs: If RichFaces is used in your project, Seam will install
+         the RichFaces Ajax filter for you, making sure to install it before all
+         other built-in filters. You don't need to install the RichFaces Ajax
+         filter in web.xml yourself. -->
+   
    <!-- name of the CSS skin used by RichFaces (default value is "DEFAULT") -->
    <context-param>
       <param-name>org.richfaces.SKIN</param-name>
       <param-value>DEFAULT</param-value>
    </context-param>
-
-   <!--
-   <!- -=== Seam ===- ->
-   <listener>
-      <listener-class>org.jboss.seam.servlet.SeamListener</listener-class>
-   </listener>
-   -->
 
    <!-- everything else -->
 

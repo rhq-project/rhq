@@ -27,7 +27,8 @@
       <el.version>1.0</el.version>
       <hibernate-entitymanager.version>3.2.1.GA</hibernate-entitymanager.version>
       <jsf-facelets.version>1.1.14</jsf-facelets.version>
-
+      <seam.version>2.1.0.SP1</seam.version>
+      
       <product.shortName>RHQ</product.shortName>
       <product.name>RHQ</product.name>
       <product.fullName>RHQ</product.fullName>
@@ -263,6 +264,41 @@
          <scope>provided</scope> <!-- by JBossAS default config, which includes v1.5.2 -->
       </dependency>
 
+      <!-- == Seam Related Dependencies ================ -->
+      
+		<dependency>
+			<groupId>org.jboss.seam</groupId>
+			<artifactId>jboss-seam</artifactId>
+			<version>${seam.version}</version>
+			<exclusions>
+			    <exclusion>
+			      <groupId>xml-apis</groupId>
+			      <artifactId>xml-apis</artifactId>     
+			    </exclusion>
+			</exclusions>
+		</dependency>
+        
+		<dependency>
+			<groupId>org.jboss.seam</groupId>
+			<artifactId>jboss-seam-ui</artifactId>
+			<version>${seam.version}</version>
+		</dependency>
+        
+		<dependency>
+			<groupId>org.jboss.seam</groupId>
+			<artifactId>jboss-seam-debug</artifactId>
+			<version>${seam.version}</version>
+			<!-- should be pulling this in directly ourselves, not relying
+				jboss-seam-debug to provide it -->
+			<exclusions>
+				<exclusion>
+					<groupId>com.sun.facelets</groupId>
+					<artifactId>jsf-facelets</artifactId>
+				</exclusion>
+			</exclusions>
+            <scope>runtime</scope>
+		</dependency>        
+        
       <dependency>
          <groupId>org.jvnet</groupId>
          <artifactId>inflector</artifactId>

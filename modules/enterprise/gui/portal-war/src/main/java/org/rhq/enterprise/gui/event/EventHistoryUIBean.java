@@ -75,6 +75,8 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
     public String getSeverityFilter() {
         if (severityFilter == null) {
             severityFilter = SelectItemUtils.getSelectItemFilter("eventHistoryForm:severityFilter");
+        }
+        if (severityFilter != null) {
             severityFilter = SelectItemUtils.cleanse(severityFilter);
         }
         return severityFilter;
@@ -185,15 +187,11 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
             MeasurementPreferences preferences = user.getMeasurementPreferences();
             MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
-            log.info("Range: [ " + rangePreferences.begin + ", " + rangePreferences.end + "]");
-            log.info("Range difference: " + (rangePreferences.end - rangePreferences.begin));
-
-            PageList<EventComposite> results = new PageList<EventComposite>();
             EventSeverity severity = getEventSeverity();
             String search = getSearchFilter();
             String source = getSourceFilter();
 
-            preferences.persistPreferences();
+            PageList<EventComposite> results = new PageList<EventComposite>();
             if (context.category == EntityContext.Category.Resource) {
                 results = eventManager.getEvents(getSubject(), new int[] { context.resourceId },
                     rangePreferences.begin, rangePreferences.end, severity, -1, source, search, pc);

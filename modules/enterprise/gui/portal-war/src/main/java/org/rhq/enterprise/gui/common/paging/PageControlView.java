@@ -23,7 +23,6 @@ import org.rhq.enterprise.gui.admin.ListAlertTemplatesUIBean;
 import org.rhq.enterprise.gui.alert.ListAlertDefinitionsUIBean;
 import org.rhq.enterprise.gui.alert.ListAlertHistoryUIBean;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
-import org.rhq.enterprise.gui.common.metric.AdvancedMetricSettingsUIBean;
 import org.rhq.enterprise.gui.configuration.history.ListConfigurationUpdateUIBean;
 import org.rhq.enterprise.gui.content.AuditTrailUIBean;
 import org.rhq.enterprise.gui.content.AvailableResourceChannelsUIBean;
@@ -51,6 +50,7 @@ import org.rhq.enterprise.gui.content.ShowContentServiceRequestUIBean;
 import org.rhq.enterprise.gui.definition.group.GroupDefinitionUIBean;
 import org.rhq.enterprise.gui.definition.group.ListGroupDefinitionsUIBean;
 import org.rhq.enterprise.gui.discovery.AutoDiscoveryQueueUIBean;
+import org.rhq.enterprise.gui.event.EventHistoryUIBean;
 import org.rhq.enterprise.gui.ha.AffinityGroupSubscribedAgentsUIBean;
 import org.rhq.enterprise.gui.ha.AffinityGroupSubscribedServersUIBean;
 import org.rhq.enterprise.gui.ha.AffinityGroupUnsubscribedAgentsUIBean;
@@ -245,7 +245,7 @@ public enum PageControlView {
     /** */
     ResourceGroupMeasurementScheduleList(ListResourceGroupMeasurementScheduleUIBean.class, true),
     /** */
-    EventsHistoryList(AdvancedMetricSettingsUIBean.class),
+    EventsHistoryList(EventHistoryUIBean.class),
 
     // Subsystem Views
 

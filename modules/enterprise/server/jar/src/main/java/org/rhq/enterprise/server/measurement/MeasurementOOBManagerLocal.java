@@ -42,7 +42,7 @@ public interface MeasurementOOBManagerLocal {
      * For the total result, this is an incremental computation. The idea is that
      * it gets run *directly* after the 1h compression (and the baseline recalculation too)
      */
-    void computeOOBsFromLastHour(Subject subject, long begin);
+    void computeOOBsFromHourBeginingAt(Subject subject, long begin);
 
     /**
      * Remove old OOB entries from the database
@@ -65,4 +65,13 @@ public interface MeasurementOOBManagerLocal {
      * @todo Do we want to fill gaps with count=0 or factor=0 in the result or not?
      */
     List<MeasurementOOB> getOObsForSchedule(Subject subject, int scheduleId, long begin, long end);
+
+    /**
+     * Computes the OOBs for the last hour.
+     * This is done by getting the latest timestamp of the 1h table and invoking
+     * #computeOOBsFromHourBeginingAt
+     * @param subject
+     */
+    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+    void computeOOBsFromLastHour(Subject subject);
 }

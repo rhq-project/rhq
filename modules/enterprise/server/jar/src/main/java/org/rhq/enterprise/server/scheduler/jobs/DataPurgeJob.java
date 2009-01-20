@@ -30,6 +30,7 @@ import org.quartz.JobExecutionException;
 import org.quartz.SimpleTrigger;
 import org.quartz.StatefulJob;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
@@ -84,6 +85,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
             purgeEverything(systemConfig);
             performDatabaseMaintenance(LookupUtil.getSystemManager(), systemConfig);
             calculateAutoBaselines(LookupUtil.getMeasurementBaselineManager());
+            calculateOOBs();
         } catch (Exception e) {
             LOG.error("Data Purge Job FAILED TO COMPLETE. Cause: " + e);
         } finally {
@@ -113,6 +115,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeUnusedAlertDefinitions(LookupUtil.getAlertDefinitionManager());
         purgeMeasurementTraitData(LookupUtil.getMeasurementDataManager(), systemConfig);
         purgeAvailabilityData(LookupUtil.getAvailabilityManager(), systemConfig);
+        // TODO add purging of OOBs when we know when to do it.
     }
 
     private void purgeMeasurementTraitData(MeasurementDataManagerLocal measurementDataManager, Properties systemConfig) {
@@ -292,5 +295,14 @@ public class DataPurgeJob extends AbstractStatefulJob {
             long duration = System.currentTimeMillis() - timeStart;
             LOG.info("Auto-calculation of baselines completed in [" + duration + "]ms");
         }
+    }
+
+    private void calculateOOBs() {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Auto-calculation of OOBs starting");
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord() ;
+        LookupUtil.getOOBManager().computeOOBsFromLastHour(overlord);
+        long duration = System.currentTimeMillis() - timeStart;
+        LOG.info("Auto-claculation of OOBs completed in [" + duration + "]ms");
     }
 }

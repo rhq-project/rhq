@@ -38,19 +38,21 @@ import javax.persistence.Table;
 @Entity
 @NamedQueries( { @NamedQuery(name = MeasurementDataNumeric1H.GET_NUM_AGGREGATE_MULTI, query = "SELECT min(nmd.min), avg(nmd.value), max(nmd.max),sum(nmd.value) " // TODO does sum() make any sense ?
     + "FROM MeasurementDataNumeric1H nmd "
-    + "WHERE nmd.schedule IN (:schedules) AND nmd.id.timestamp BETWEEN :start AND :end") })
+    + "WHERE nmd.schedule IN (:schedules) AND nmd.id.timestamp BETWEEN :start AND :end") ,
+        @NamedQuery(name=MeasurementDataNumeric1H.GET_MAX_TIMESTAMP, query = "SELECT max(nmd.id.timestamp) FROM MeasurementDataNumeric1H nmd")})
 @Table(name = "RHQ_MEASUREMENT_DATA_NUM_1H")
 public class MeasurementDataNumeric1H extends MeasurementData implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String GET_NUM_AGGREGATE_MULTI = "MeasurementDataNumeric1H.getNumAggregateMulti";
 
+    public static final String GET_MAX_TIMESTAMP = "MeasurementDataNumeric1H.getMaxTimestamp";
+
     @Column(precision = 24, scale = 3)
     private Double value;
 
     @Column(name = "minvalue")
     private Double min;
-
     @Column(name = "maxvalue")
     private Double max;
 

@@ -37,9 +37,10 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
-import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
+import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
 import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.util.jdbc.JDBCUtil;
@@ -71,7 +72,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * @param begin Start time of the 1h entries to look at
      */
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
-    public void computeOOBsFromLastHour(Subject subject, long begin) {
+    public void computeOOBsFromHourBeginingAt(Subject subject, long begin) {
 
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -105,6 +106,28 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         finally {
             JDBCUtil.safeClose(conn,stmt,null);
         }
+    }
+
+    /**
+     * Computes the OOBs for the last hour.
+     * This is done by getting the latest timestamp of the 1h table and invoking
+     * #computeOOBsFromHourBeginingAt
+     * @param subject
+     */
+    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+    public void computeOOBsFromLastHour(Subject subject) {
+
+        Query q = entityManager.createNamedQuery(MeasurementDataNumeric1H.GET_MAX_TIMESTAMP);
+        Object res  = q.getSingleResult();
+        if (res==null) {
+            if (log.isDebugEnabled())
+                log.debug("No data yet in 1h table, nothing to do");
+            return; // no data in that table yet - nothing to do.
+        }
+        long timeStamp = (Long)res;
+
+        computeOOBsFromHourBeginingAt(subject,timeStamp);
+
     }
 
     /**

@@ -284,7 +284,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             begin();
             // check the 2 values at 5000 against their bands computed between [500 and 1000]
-            oobManager.computeOOBsFromLastHour(overlord,5000);
+            oobManager.computeOOBsFromHourBeginingAt(overlord,5000);
 
             // check results
             Query q = entityManager.createQuery("SELECT oo FROM MeasurementOOB oo");
@@ -306,7 +306,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             assert comps.size() == 2;
 
             // Compute some more OOBs
-            oobManager.computeOOBsFromLastHour(overlord,1000);
+            oobManager.computeOOBsFromHourBeginingAt(overlord,1000);
             q = entityManager.createQuery("SELECT oo FROM MeasurementOOB oo");
             oobs = q.getResultList();
         //    System.out.println("OOBs calculated: \n" + oobs);

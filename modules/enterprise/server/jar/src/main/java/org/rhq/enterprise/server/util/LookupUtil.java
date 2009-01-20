@@ -23,6 +23,8 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.sql.DataSource;
+import javax.transaction.TransactionManager;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -184,6 +186,37 @@ public final class LookupUtil {
     }
 
     /**
+     * Returns the main data source that can be used to directly access the database.
+     * 
+     * @return a transactional data source to connect to the database
+     */
+    public static DataSource getDataSource() {
+        try {
+            InitialContext context = new InitialContext();
+            DataSource ds = (DataSource) context.lookup(RHQConstants.DATASOURCE_JNDI_NAME);
+            return ds;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get the data source", e);
+        }
+    }
+
+    /**
+     * Returns the transaction manager that you can use for your own managed transactions.
+     * Use this sparingly and only inside code that is outside of any CMT-scoped objects.
+     * 
+     * @return the transaction manager
+     */
+    public static TransactionManager getTransactionManager() {
+        try {
+            InitialContext context = new InitialContext();
+            TransactionManager tm = (TransactionManager) context.lookup(RHQConstants.TRANSACTION_MANAGER_JNDI_NAME);
+            return tm;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get the transaction manager", e);
+        }
+    }
+
+    /**
      * Creates and returns an EntityManager that allows you to perform JPA operations.
      *
      * @return a unique entity manager object
@@ -335,7 +368,6 @@ public final class LookupUtil {
     public static MeasurementOOBManagerLocal getOOBManager() {
         return lookupLocal(MeasurementOOBManagerBean.class);
     }
-
 
     public static OperationManagerLocal getOperationManager() {
         return lookupLocal(OperationManagerBean.class);

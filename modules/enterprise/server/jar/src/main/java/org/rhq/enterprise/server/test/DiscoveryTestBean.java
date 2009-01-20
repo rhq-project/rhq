@@ -233,8 +233,8 @@ public class DiscoveryTestBean implements DiscoveryTestLocal {
     }
 
     private Plugin getTestPlugin() {
-        return (Plugin) entityManager.createNamedQuery("Plugin.findByName").setParameter("name", TEST_PLUGIN_NAME)
-            .getSingleResult();
+        return (Plugin) entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_NAME)
+            .setParameter("name", TEST_PLUGIN_NAME).getSingleResult();
     }
 
     private ResourceType getTestPlatformType() {

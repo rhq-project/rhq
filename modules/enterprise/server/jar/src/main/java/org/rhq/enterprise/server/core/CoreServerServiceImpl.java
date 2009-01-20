@@ -254,7 +254,7 @@ public class CoreServerServiceImpl implements CoreServerService {
 
         try {
             em = LookupUtil.getEntityManager();
-            Query q = em.createNamedQuery("Plugin.findByPath");
+            Query q = em.createNamedQuery(Plugin.QUERY_FIND_BY_PATH);
             q.setParameter("path", pluginName);
             Plugin plugin = (Plugin) q.getSingleResult();
 

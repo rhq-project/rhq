@@ -30,6 +30,7 @@ public class RHQConstants {
     public static final String ENTITY_MANAGER_JNDI_NAME = "java:/RHQEntityManagerFactory";
     public static final String DATASOURCE_JNDI_NAME = "java:/RHQDS";
     public static final String PERSISTENCE_UNIT_NAME = "rhqpu";
+    public static final String TRANSACTION_MANAGER_JNDI_NAME = "java:/TransactionManager";
 
     public static final String JAASProvider = "CAM_JAAS_PROVIDER";
 

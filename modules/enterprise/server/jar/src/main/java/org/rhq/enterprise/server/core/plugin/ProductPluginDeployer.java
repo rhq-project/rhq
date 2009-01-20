@@ -18,10 +18,16 @@
  */
 package org.rhq.enterprise.server.core.plugin;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -43,6 +49,8 @@ import javax.management.NotificationBroadcaster;
 import javax.management.NotificationBroadcasterSupport;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
+import javax.sql.DataSource;
+import javax.transaction.TransactionManager;
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -68,6 +76,8 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.util.MD5Generator;
+import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceCircularityException;
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceController;
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceException;
@@ -77,14 +87,15 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * ProductPlugin deployer responsible for detecting plugin jars.
+ * ProductPlugin deployer responsible for detecting agent plugin jars on the filesystem.
+ * Note that this class is the only one that should care about the agent jar files on the
+ * filesystem.  The database will contain the plugin jar contents for other objects to use.
  */
 public class ProductPluginDeployer extends SubDeployerSupport implements ProductPluginDeployerMBean,
     NotificationBroadcaster {
     public static final String AMPS_VERSION = "2.0";
 
     private static final String PRODUCT = "RHQ";
-    private static final String PLUGIN_DIR = "rhq-plugins";
     private static final String DEFAULT_PLUGIN_DESCRIPTOR_PATH = "META-INF/rhq-plugin.xml";
 
     private static final String DEPLOYER_READY = NOTIF_TYPE("deployer.ready");
@@ -99,7 +110,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
 
     private Log log = LogFactory.getLog(ProductPluginDeployer.class.getName());
 
-    private String pluginDir = PLUGIN_DIR;
+    private File pluginDir = null;
     private String licenseFile = null;
 
     /** Map of plugin names to the corresponding plugins' JBAS deployment infos */
@@ -164,15 +175,20 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     /**
      * @see org.rhq.enterprise.server.core.plugin.ProductPluginDeployerMBean#setPluginDir(java.lang.String)
      */
-    public void setPluginDir(String name) {
-        this.pluginDir = name;
+    public void setPluginDir(String pluginDirString) {
+        this.pluginDir = new File(pluginDirString);
+
+        // this directory should always exist, but just in case it doesn't, create it
+        if (!this.pluginDir.exists()) {
+            this.pluginDir.mkdirs();
+        }
     }
 
     /**
      * @see org.rhq.enterprise.server.core.plugin.ProductPluginDeployerMBean#getPluginDir()
      */
     public String getPluginDir() {
-        return this.pluginDir;
+        return this.pluginDir.getAbsolutePath();
     }
 
     /**
@@ -202,14 +218,14 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             return true;
         }
 
-        if (!(urlFile.endsWith("jar") || (urlFile.endsWith("test")))) {
+        if (!urlFile.endsWith("jar")) {
             return false;
         }
 
-        String urlPath = new File(urlFile).getParent();
+        File deploymentDirectory = new File(urlFile).getParentFile();
 
-        if (urlPath.endsWith(this.pluginDir)) {
-            log.debug("accepting plugin=" + urlFile);
+        if (deploymentDirectory.getName().equals(this.pluginDir.getName())) {
+            log.debug("accepting agent plugin=" + urlFile);
             return true;
         }
 
@@ -398,6 +414,9 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             ResourceMetadataManagerLocal metadataManager = LookupUtil.getResourceMetadataManager();
             metadataManager.registerPlugin(plugin, pluginDescriptor);
 
+            // stream the actual plugin jar content into the database
+            streamPluginFileContentToDatabase(plugin.getName(), new File(this.pluginDir, plugin.getPath()));
+
             pluginNotify(pluginNameDisplayName, PLUGIN_REGISTERED);
         } catch (Exception e) {
             log.error("Failed to register RHQ plugin [" + pluginJar + "]", e);
@@ -477,6 +496,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     @Override
     public void start() throws Exception {
         if (!isStarted) {
+            extractPluginFilesFromDatabase();
             isStarted = true;
             super.start();
         }
@@ -566,6 +586,113 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     }
 
     /**
+     * This will extract the contents of all agent plugins from the database and write the
+     * plugin jar files on the file system.
+     */
+    private void extractPluginFilesFromDatabase() throws Exception {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        // This map contains the names/paths of plugins that are missing their content in the database.
+        // This map will only have entries if this server was recently upgraded from an older version
+        // that did not support database-stored plugin content.
+        Map<String, String> pluginsMissingContent = new HashMap<String, String>();
+
+        try {
+            DataSource ds = LookupUtil.getDataSource();
+            conn = ds.getConnection();
+            ps = conn.prepareStatement("SELECT NAME, PATH, MD5, CONTENT FROM " + Plugin.TABLE_NAME);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                String name = rs.getString(1);
+                String path = rs.getString(2);
+                String md5 = rs.getString(3);
+                InputStream content = rs.getBinaryStream(4);
+                if (content != null) {
+                    writePluginContentToFileIfAppropriate(name, new File(this.pluginDir, path), md5, content);
+                } else {
+                    pluginsMissingContent.put(name, path);
+                }
+            }
+        } finally {
+            JDBCUtil.safeClose(conn, ps, rs);
+        }
+
+        // to support the use case when our server has recently been upgraded, we need to put
+        // the content of the original plugins into the database.
+        for (Map.Entry<String, String> entry : pluginsMissingContent.entrySet()) {
+            String name = entry.getKey();
+            String path = entry.getValue();
+            File pluginFile = new File(this.pluginDir, path);
+            if (pluginFile.exists()) {
+                streamPluginFileContentToDatabase(name, pluginFile);
+            } else {
+                throw new Exception("The database knows of a plugin named [" + name + "] with path [" + path
+                    + "] but the content is missing. This server does not have this plugin at [" + pluginFile
+                    + "] so the database cannot be updated with the content.");
+            }
+        }
+
+        return;
+    }
+
+    private void writePluginContentToFileIfAppropriate(String name, File pluginFile, String md5, InputStream content)
+        throws Exception {
+        // if the plugin file already exists, check its md5 and if it is the same, do nothing and return
+        if (pluginFile.exists()) {
+            String fileMD5 = MD5Generator.getDigestString(pluginFile);
+            if (fileMD5.equals(md5)) {
+                log.debug("Plugin file [" + pluginFile + "] hasn't changed; leaving it as-is");
+                return;
+            }
+        }
+
+        log.info("Plugin file [" + pluginFile + "] will be overwritten with the new content found in the database");
+        FileOutputStream fos = new FileOutputStream(pluginFile);
+        StreamUtil.copy(content, fos); // note that this closes our "content" stream parameter for us
+        return;
+    }
+
+    private void streamPluginFileContentToDatabase(String name, File file) throws Exception {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        TransactionManager tm = null;
+        FileInputStream fis = new FileInputStream(file);
+
+        try {
+            tm = LookupUtil.getTransactionManager();
+            tm.begin();
+            DataSource ds = LookupUtil.getDataSource();
+            conn = ds.getConnection();
+            ps = conn.prepareStatement("UPDATE " + Plugin.TABLE_NAME + " SET CONTENT = ? WHERE NAME = ?");
+            ps.setBinaryStream(1, new BufferedInputStream(fis), (int) file.length());
+            ps.setString(2, name);
+            int updateResults = ps.executeUpdate();
+            if (updateResults != 1) {
+                throw new Exception("Failed to update content for plugin [" + name + "] from [" + file + "]");
+            }
+        } catch (Exception e) {
+            tm.rollback();
+            tm = null;
+            throw e;
+        } finally {
+            JDBCUtil.safeClose(conn, ps, rs);
+
+            try {
+                fis.close();
+            } catch (Throwable t) {
+            }
+
+            if (tm != null) {
+                tm.commit();
+            }
+        }
+        return;
+    }
+
+    /**
      * Process the specified plugin jar to figure out the plugin name and version. If it is the only plugin with this
      * name, or if it has the newest version among other plugins with the same name, then add it to our master set of
      * plugins to be registered. Once all EJBs are started, {@link #startDeployer()} will be called and will take care
@@ -577,10 +704,13 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         String pluginName = descriptor.getName();
         boolean initialDeploy = !this.deploymentInfos.containsKey(pluginName);
         ComparableVersion version = getPluginVersion(deploymentInfo, descriptor);
-        if (initialDeploy)
+
+        if (initialDeploy) {
             log.info("Deploying RHQ plugin [" + pluginName + "]...");
-        else
+        } else {
             log.info("Redeploying RHQ plugin [" + pluginName + "]...");
+        }
+
         if (initialDeploy || isNewestVersion(pluginName, version)) {
             this.deploymentInfos.put(pluginName, deploymentInfo);
             this.pluginDescriptors.put(pluginName, descriptor);

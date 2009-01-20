@@ -6,7 +6,7 @@
   <mbean code="org.rhq.enterprise.server.core.plugin.ProductPluginDeployer"
 	      name="rhq:service=AgentPluginDeployer">
 
-    <attribute name="PluginDir">rhq-plugins</attribute>
+    <attribute name="PluginDir">${jboss.server.home.dir}/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</attribute>
     
   </mbean>
 

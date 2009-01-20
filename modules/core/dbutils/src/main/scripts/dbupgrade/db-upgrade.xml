@@ -1215,6 +1215,10 @@ DB Upgrade:
       </schema-directSQL>
    </schemaSpec>
 
+   <schemaSpec version="2.41">
+      <schema-addColumn table="RHQ_PLUGIN" column="CONTENT" columnType="BLOB" />
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

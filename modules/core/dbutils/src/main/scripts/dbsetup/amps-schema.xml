@@ -16,6 +16,7 @@
         <column name="PATH" size="500" type="VARCHAR2" required="true"/>
         <column name="MD5" size="100" type="VARCHAR2" required="true"/>
         <column name="CTIME" type="LONG" required="true"/>
+        <column name="CONTENT" type="BLOB" required="false"/>
 
         <index name="RHQ_PLUGIN_NAME_IDX" unique="true">
             <field ref="NAME"/>

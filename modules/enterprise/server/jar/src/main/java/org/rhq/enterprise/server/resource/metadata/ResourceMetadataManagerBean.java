@@ -103,7 +103,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
      * @throws NoResultException when no plugin with that name exists
      */
     public Plugin getPlugin(String name) {
-        return (Plugin) entityManager.createNamedQuery("Plugin.findByName").setParameter("name", name)
+        return (Plugin) entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_NAME).setParameter("name", name)
             .getSingleResult();
     }
 
@@ -112,7 +112,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         Plugin existingPlugin = null;
         boolean newOrUpdated = false;
         try {
-            existingPlugin = (Plugin) entityManager.createNamedQuery("Plugin.findByName").setParameter("name",
+            existingPlugin = (Plugin) entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_NAME).setParameter("name",
                 plugin.getName()).getSingleResult();
         } catch (NoResultException nre) {
             /* Expected for new plugins, so no problem */

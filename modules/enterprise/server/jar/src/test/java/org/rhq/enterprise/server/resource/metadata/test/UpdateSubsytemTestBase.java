@@ -26,8 +26,8 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.persistence.Query;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -41,20 +41,20 @@ import org.testng.annotations.BeforeSuite;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.MD5Generator;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.server.RHQConstants;
 
 public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
@@ -106,7 +106,8 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
             ResourceType type = (ResourceType) q.getSingleResult();
             return type;
         } catch (NoResultException nre) {
-            throw new NoResultException("==== Failed to lookup ResourceType [" + typeName + "] from Plugin [" + PLUGIN_NAME + "] - found: " + types);
+            throw new NoResultException("==== Failed to lookup ResourceType [" + typeName + "] from Plugin ["
+                + PLUGIN_NAME + "] - found: " + types);
         }
     }
 
@@ -156,7 +157,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     protected int getPluginId(EntityManager entityManager) {
         Plugin existingPlugin;
         try {
-            existingPlugin = (Plugin) entityManager.createNamedQuery("Plugin.findByName").setParameter("name",
+            existingPlugin = (Plugin) entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_NAME).setParameter("name",
                 PLUGIN_NAME).getSingleResult();
             plugin1Id = existingPlugin.getId();
             return plugin1Id;
@@ -178,7 +179,8 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
      */
     public class MockAgentService implements MeasurementAgentService {
 
-        public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType, String... measurementNames) {
+        public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType,
+            String... measurementNames) {
             // TODO Auto-generated method stub
             return null;
         }

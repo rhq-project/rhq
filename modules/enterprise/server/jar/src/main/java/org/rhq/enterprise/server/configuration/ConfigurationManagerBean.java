@@ -736,10 +736,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             current = null; // The resource hasn't been successfully configured yet.
         }
 
-        // If the configuration has not changed since the last persisted version do not save a new
-        // version.
+        // Don't bother persisting new entries if there has been no change
         if (current == null || !newConfiguration.equals(current.getConfiguration())) {
-
             // let's make sure all IDs are zero - we want to persist a brand new copy
             Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
 
@@ -750,7 +748,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             newUpdateRequest.setStatus(newStatus);
 
             entityManager.persist(newUpdateRequest);
-            notifyAlertConditionCacheManager("persistNewResourceConfigurationUpdateHistory", newUpdateRequest);
+            if (current != null) {
+                // If this is the first configuration update since the resource was imported, don't alert
+                notifyAlertConditionCacheManager("persistNewResourceConfigurationUpdateHistory", newUpdateRequest);
+            }
 
             resource.addResourceConfigurationUpdates(newUpdateRequest);
 

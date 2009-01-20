@@ -1,6 +1,15 @@
 <%@ page import="java.io.ByteArrayOutputStream" %>
 <%@ page import="java.io.PrintStream" %>
+
+<%@ page import="org.rhq.core.domain.auth.Subject" %>
+<%@ page import="org.rhq.core.domain.util.PersistenceUtility" %>
+
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils"%>
+<%@ page import="org.rhq.enterprise.gui.util.WebUtility"%>
+
+<%@ page import="org.rhq.enterprise.server.measurement.MeasurementPreferences" %>
+<%@ page import="org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences" %>
+
 <%@ page import="org.rhq.enterprise.server.test.CoreTestLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.DiscoveryTestLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.MeasurementTestLocal" %>
@@ -15,8 +24,9 @@
 <%@ page import="org.rhq.enterprise.server.auth.SubjectManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob"%>
+
 <%@ page import="javax.naming.NamingException" %>
-<%@ page import="org.rhq.core.domain.util.PersistenceUtility" %>
+
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -149,6 +159,16 @@
          systemManager.reindex(subjectManager.getOverlord());
          systemManager.analyze(subjectManager.getOverlord());
       }
+      else if ("metricDisplayRange".equals(mode))
+      {
+         int lastHours = Integer.parseInt(pageContext.getRequest().getParameter("lastHours"));
+         Subject subject = WebUtility.getSubject(request);
+         MeasurementPreferences prefs = new MeasurementPreferences(subject);
+         MetricRangePreferences rangePrefs = prefs.getMetricRangePreferences();
+         rangePrefs.lastN = lastHours;
+         prefs.setMetricRangePreferences(rangePrefs);
+         prefs.persistPreferences();
+      }
    }
    catch (Exception e)
    {
@@ -273,6 +293,20 @@ Template Cloning
    <li><c:url var="url" value="/admin/test/control.jsp?mode=startStats"/>
       <a href="<c:out value="${url}"/>">Start Hibernate Statistics Collection</a></li>
 </ul>
+
+
+<h2>User Preferences</h2>
+<%
+   Subject subject = WebUtility.getSubject(request);
+   MeasurementPreferences prefs = new MeasurementPreferences(subject);
+   MetricRangePreferences rangePrefs = prefs.getMetricRangePreferences();
+   pageContext.setAttribute("lastHours", String.valueOf(rangePrefs.lastN));
+%>
+<form action="<c:out value="${url}"/>" method="get">
+   <input type="hidden" name="mode" value="metricDisplayRange"/>
+   Last X hours: <input type="text" name="lastHours" size="5" value="<c:out value="${lastHours}"/>"/><br/>
+   <input type="submit" value="Send" name="Send"/>
+</form>
 
 </body>
 </html>

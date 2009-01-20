@@ -38,9 +38,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.zip.ZipInputStream;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.MBeanNotificationInfo;
@@ -468,24 +468,56 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         return pluginDescriptor;
     }
 
-    private void checkDeploymentIsValidZipFile(DeploymentInfo deploymentInfo) throws DeploymentException {
-        if (deploymentInfo.isDirectory)
+    private void ensureDeploymentIsValid(DeploymentInfo deploymentInfo) throws DeploymentException {
+        if (deploymentInfo.isDirectory) {
             return;
-        ZipInputStream zipInputStream = null;
-        try {
-            zipInputStream = new ZipInputStream(deploymentInfo.url.openStream());
-            zipInputStream.getNextEntry();
-        } catch (IOException e) {
-            throw new DeploymentException("File [" + deploymentInfo.url + "] is not a valid jarfile - "
-                + " perhaps the file has not been fully written yet.", e);
-        } finally {
-            if (zipInputStream != null)
-                try {
-                    zipInputStream.close();
-                } catch (IOException e) {
-                    log.error("Failed to close zip input stream for file [" + deploymentInfo.url + "].");
-                }
         }
+
+        // try 10 times (sleeping 3s between retries) for a total of 30seconds
+        // if the zip file still isn't valid, its probably corrupted and not simply due to the file still being written out
+        int retries = 10;
+        while (!isDeploymentValidZipFile(deploymentInfo)) {
+            if (--retries <= 0) {
+                throw new DeploymentException("File [" + deploymentInfo.url + "] is not a valid jarfile - "
+                    + " it is either corrupted or file has not been fully written yet.");
+            }
+            try {
+                Thread.sleep(3000L);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+        return;
+    }
+
+    private boolean isDeploymentValidZipFile(DeploymentInfo deploymentInfo) {
+        boolean isValid;
+        JarFile jarFile = null;
+        try {
+            // Try to access the plugin jar using the JarFile API.
+            // Any weird errors usually mean the file is currently being written but isn't finished yet.
+            // Errors could also mean the file is simply corrupted.
+            jarFile = new JarFile(new File(deploymentInfo.url.toURI()));
+            if (jarFile.size() <= 0) {
+                throw new Exception("There are no entries in the plugin file");
+            }
+            JarEntry entry = jarFile.entries().nextElement();
+            entry.getName();
+            isValid = true;
+        } catch (Exception e) {
+            log.info("File [" + deploymentInfo.url + "] is not a valid jarfile - "
+                + " the file may not have been fully written yet. Cause: " + e);
+            isValid = false;
+        } finally {
+            if (jarFile != null) {
+                try {
+                    jarFile.close();
+                } catch (Exception e) {
+                    log.error("Failed to close jar file [" + deploymentInfo.url + "]");
+                }
+            }
+        }
+        return isValid;
     }
 
     /**
@@ -699,7 +731,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
      * of registering the plugins.
      */
     private String preprocessPlugin(DeploymentInfo deploymentInfo) throws DeploymentException {
-        checkDeploymentIsValidZipFile(deploymentInfo);
+        ensureDeploymentIsValid(deploymentInfo);
         PluginDescriptor descriptor = getPluginDescriptor(deploymentInfo);
         String pluginName = descriptor.getName();
         boolean initialDeploy = !this.deploymentInfos.containsKey(pluginName);

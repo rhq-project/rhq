@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.configuration.test;
 
+import org.rhq.enterprise.gui.common.Outcomes;
+
 /**
  * @author Ian Springer
  */
@@ -25,6 +27,6 @@ public class ViewTestConfigurationUIBean extends AbstractTestConfigurationUIBean
     public static final String MANAGED_BEAN_NAME = "ViewTestConfigurationUIBean";
 
     public String editConfiguration() {
-        return SUCCESS_OUTCOME;
+        return Outcomes.SUCCESS;
     }
 }

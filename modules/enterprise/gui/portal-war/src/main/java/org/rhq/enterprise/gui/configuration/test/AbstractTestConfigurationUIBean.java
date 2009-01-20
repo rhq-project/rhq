@@ -32,20 +32,17 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
  * @author Ian Springer
  */
 public abstract class AbstractTestConfigurationUIBean {
-    protected static final String SUCCESS_OUTCOME = "success";
-    protected static final String FAILURE_OUTCOME = "failure";
-
     private ConfigurationDefinition configurationDefinition;
     private Configuration configuration;
     private Set<Configuration> configurations;
     private List<Property> properties;
 
-    protected AbstractTestConfigurationUIBean() throws CloneNotSupportedException
+    protected AbstractTestConfigurationUIBean()
     {
         this.configurationDefinition = TestConfigurationFactory.createConfigurationDefinition();
         this.configuration = TestConfigurationFactory.createConfiguration();
         for (int i = 0; i < 10; i++)
-            this.configurations.add(this.configuration.clone());
+            this.configurations.add(this.configuration.deepCopy(true));
         // Unwrap the Hibernate proxy objects, which Facelets appears not to be able to handle.
         this.properties = new ArrayList<Property>(this.configuration.getProperties());
     }

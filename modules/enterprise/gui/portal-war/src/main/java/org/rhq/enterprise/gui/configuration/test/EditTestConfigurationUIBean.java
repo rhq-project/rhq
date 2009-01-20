@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.configuration.test;
 
 import javax.faces.application.FacesMessage;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.common.Outcomes;
 
 /**
  * @author Ian Springer
@@ -32,10 +33,10 @@ public class EditTestConfigurationUIBean extends AbstractTestConfigurationUIBean
     public String updateConfiguration() {
         // TODO (low priority): Persist the test config somewhere.
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration updated.");
-        return SUCCESS_OUTCOME;
+        return Outcomes.SUCCESS;
     }
 
     public String finish() {
-        return SUCCESS_OUTCOME;
+        return Outcomes.SUCCESS;
     }
 }

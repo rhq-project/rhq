@@ -288,9 +288,8 @@ public final class AlertConditionCache {
      * @return the number of conditions that re/loaded
      */
     private AlertConditionCacheStats loadCachesForAgent(int agentId) {
-        rwLock.writeLock().lock();
-
         AlertConditionCacheStats stats = new AlertConditionCacheStats();
+        rwLock.writeLock().lock();
         try {
             log.debug("Loading Alert Condition Caches for agent[id=" + agentId + "]...");
 

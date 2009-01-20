@@ -152,5 +152,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/json/json/20080701/json-20080701.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/sun/jna/jna/3.0.1/jna-3.0.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/freemarker/freemarker/2.3.11/freemarker-2.3.11.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/seam/jboss-seam/2.1.0.SP1/jboss-seam-2.1.0.SP1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/seam/jboss-seam-ui/2.1.0.SP1/jboss-seam-ui-2.1.0.SP1.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

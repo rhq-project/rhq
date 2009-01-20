@@ -922,8 +922,11 @@ public class ClientCommandSender {
                 // before we release the changing mode lock (and thus allow someone to call startSending again)
                 // we need to flip our shutting down tasks flag to false to indicate we are done shutting down all tasks
                 m_shuttingDownTasksLock.writeLock().lock();
-                m_shuttingDownTasks = false;
-                m_shuttingDownTasksLock.writeLock().unlock();
+                try {
+                    m_shuttingDownTasks = false;
+                } finally {
+                    m_shuttingDownTasksLock.writeLock().unlock();
+                }
             }
         }
 

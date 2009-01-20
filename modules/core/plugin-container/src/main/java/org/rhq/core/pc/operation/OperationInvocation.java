@@ -232,8 +232,8 @@ public class OperationInvocation implements Runnable {
                             result = null; // Don't return results that the GUI won't be able to display anyway.
                         }
                     }
+                    errorMessage = opResult.getErrorMessage();
                 }
-                errorMessage = opResult.getErrorMessage();
             } else {
                 failure = new InterruptedException("Operation was aborted before it started.");
             }

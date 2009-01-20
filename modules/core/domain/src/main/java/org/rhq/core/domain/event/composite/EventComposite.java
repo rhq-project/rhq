@@ -40,6 +40,7 @@ public class EventComposite implements Serializable {
 
     String eventDetail;
     int resourceId;
+    String resourceName;
     int eventId;
     String sourceLocation;
     EventSeverity severity;
@@ -49,11 +50,12 @@ public class EventComposite implements Serializable {
         // needed by JSON-based UI pages
     }
 
-    public EventComposite(String eventDetail, int resourceId, int eventId, EventSeverity severity,
+    public EventComposite(String eventDetail, int resourceId, String resourceName, int eventId, EventSeverity severity,
         String sourceLocation, Long timestamp) {
         super();
         this.eventDetail = eventDetail;
         this.resourceId = resourceId;
+        this.resourceName = resourceName;
         this.eventId = eventId;
         this.severity = severity;
         this.sourceLocation = sourceLocation;
@@ -76,6 +78,14 @@ public class EventComposite implements Serializable {
 
     public void setResourceId(int resourceId) {
         this.resourceId = resourceId;
+    }
+
+    public String getResourceName() {
+        return resourceName;
+    }
+
+    public void setResourceName(String resourceName) {
+        this.resourceName = resourceName;
     }
 
     public int getEventId() {

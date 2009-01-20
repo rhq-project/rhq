@@ -91,9 +91,18 @@
                     <h:outputText value="#{item.severity}" />
                 </rich:column>
 
+                <rich:column rendered="#{EventHistoryUIBean.context.resourceId == -1}">
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="res.name">
+                            <h:outputText styleClass="headerText" value="Resource" />
+                        </onc:sortableColumnHeader>
+                    </f:facet>
+                    <h:outputText value="#{item.resourceName}" />
+                </rich:column>
+
                 <rich:column>
                     <f:facet name="header">
-                        <onc:sortableColumnHeader sort="ev.source">
+                        <onc:sortableColumnHeader sort="evs.location">
                             <h:outputText styleClass="headerText" value="Source" />
                         </onc:sortableColumnHeader>
                     </f:facet>
@@ -127,7 +136,7 @@
 
                 <f:facet name="footer">
                     <rich:columnGroup>
-                        <rich:column colspan="5" width="100%">
+                        <rich:column colspan="#{EventHistoryUIBean.context.resourceId == -1 ? 6 : 5}" width="100%">
                             <onc:selectCommandButton action="#{EventHistoryUIBean.deleteSelectedEvents}"
                                                      value="DELETE SELECTED" target="selectedEvents" styleClass="on-pager-button buttonsmall" />
                             <h:commandButton action="#{EventHistoryUIBean.purgeAllEvents}"

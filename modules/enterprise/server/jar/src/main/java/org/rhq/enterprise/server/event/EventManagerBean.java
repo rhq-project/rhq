@@ -383,23 +383,27 @@ public class EventManagerBean implements EventManagerLocal {
 
         String query = "SELECT detail, id, substr(location, 1, 30) ";
         query += ", severity, timestamp, res_id  FROM ( ";
-        String innerQuery1 = " SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, evs.resource_id as res_id "
-            + " FROM rhq_event e1, rhq_event e  ";
-        innerQuery1 += "JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id ";
-        innerQuery1 += "WHERE e1.timestamp < e.timestamp AND e.id = ? AND evs.resource_id IN ( ";
+        String innerQuery1 = " SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, res.id, res.name ";
+        innerQuery1 += " FROM rhq_event e1, rhq_event e ";
+        innerQuery1 += " JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id ";
+        innerQuery1 += " JOIN rhq_resource res ON evs.resource_id = res.id ";
+        innerQuery1 += " WHERE e1.timestamp < e.timestamp AND e.id = ? AND evs.resource_id IN ( ";
         innerQuery1 += JDBCUtil.generateInBinds(resourceIds.length);
         innerQuery1 += " ) ";
         innerQuery1 += " ORDER BY e1.id DESC";
         innerQuery1 = addResultsLimitToQuery(innerQuery1, DEFAULT_EVENTS_PAGE_SIZE / 2);
+
         query += innerQuery1;
         query += ") inner1 UNION (";
-        String innerQuery2 = "SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, evs.resource_id as res_id "
-            + " FROM rhq_event e1, rhq_event e ";
-        innerQuery2 += " JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id "
-            + " WHERE e1.timestamp >= e.timestamp AND e.id = ? AND evs.resource_id IN ( ";
+
+        String innerQuery2 = "SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, res.id, res.name ";
+        innerQuery2 += " FROM rhq_event e1, rhq_event e, rhq_resource res ";
+        innerQuery2 += " JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id ";
+        innerQuery1 += " JOIN rhq_resource res ON evs.resource_id = res.id ";
+        innerQuery2 += " WHERE e1.timestamp >= e.timestamp AND e.id = ? AND evs.resource_id IN ( ";
         innerQuery2 += JDBCUtil.generateInBinds(resourceIds.length);
         innerQuery2 += " ) ";
-        innerQuery2 += "ORDER BY e1.id ASC";
+        innerQuery2 += " ORDER BY e1.id ASC";
         innerQuery2 = addResultsLimitToQuery(innerQuery2, (DEFAULT_EVENTS_PAGE_SIZE / 2) + 1);
         query += innerQuery2;
         query += ") ORDER BY timestamp, id";
@@ -421,8 +425,8 @@ public class EventManagerBean implements EventManagerLocal {
 
             rs = stm.executeQuery();
             while (rs.next()) {
-                EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(6), rs.getInt(2), EventSeverity
-                    .valueOf(rs.getString(4)), rs.getString(3), rs.getLong(5));
+                EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(6), rs.getString(7), rs.getInt(2),
+                    EventSeverity.valueOf(rs.getString(4)), rs.getString(3), rs.getLong(5));
                 pl.add(ec);
             }
 
@@ -494,8 +498,8 @@ public class EventManagerBean implements EventManagerLocal {
 
             rs = stm.executeQuery();
             while (rs.next()) {
-                EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(6), rs.getInt(2), EventSeverity
-                    .valueOf(rs.getString(4)), rs.getString(3), rs.getLong(5));
+                EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(6), rs.getString(7), rs.getInt(2),
+                    EventSeverity.valueOf(rs.getString(4)), rs.getString(3), rs.getLong(5));
                 pl.add(ec);
             }
 
@@ -555,11 +559,12 @@ public class EventManagerBean implements EventManagerLocal {
         if (isCountQuery) {
             query = "SELECT count(ev.id) ";
         } else {
-            query = "SELECT ev.detail, ev.id, substr(evs.location, 1, 30) "
-                + ", ev.severity, ev.timestamp, evs.resource_id ";
+            query = "SELECT ev.detail, ev.id, substr(evs.location, 1, 30), ev.severity, ev.timestamp, res.id, res.name ";
         }
-        query += "FROM RHQ_Event ev INNER JOIN RHQ_Event_Source evs ON evs.id = ev.event_source_id "
-            + "WHERE evs.resource_id IN ( ";
+        query += " FROM RHQ_Event ev ";
+        query += " INNER JOIN RHQ_Event_Source evs ON evs.id = ev.event_source_id ";
+        query += " INNER JOIN rhq_resource res ON evs.resource_id = res.id ";
+        query += " WHERE evs.resource_id IN ( ";
 
         query += JDBCUtil.generateInBinds(resourceIds.length);
         query += " ) ";

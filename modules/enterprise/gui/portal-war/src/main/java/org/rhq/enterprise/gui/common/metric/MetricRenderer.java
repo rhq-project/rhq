@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.common.metric;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 
 import javax.faces.component.UIComponent;
@@ -29,6 +30,9 @@ import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
 
 import com.sun.faces.util.MessageUtils;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -41,8 +45,7 @@ import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangeP
  * @author Fady Matar
  */
 public class MetricRenderer extends Renderer {
-
-    //private ArrayList timeIntervalValues = { "4", "8", "12", "24", "30", "48", "60", "90", 120 };
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private static final ArrayList<Integer> timeIntervalValues = new ArrayList<Integer>(Arrays.asList(4, 8, 12, 24, 30,
         36, 48, 60, 90, 120));
@@ -91,9 +94,15 @@ public class MetricRenderer extends Renderer {
 
         Subject subject = WebUtility.getSubject(FacesContextUtility.getRequest());
         MeasurementPreferences prefs = new MeasurementPreferences(subject);
+        log.info("********************************************************************************");
         MetricRangePreferences rangePrefs = prefs.getMetricRangePreferences();
-
+        log.info("rangePreferences.readOnly: " + rangePrefs.readOnly);
+        log.info("rangePreferences.lastN:    " + rangePrefs.lastN);
+        log.info("rangePreferences.unit:     " + rangePrefs.unit);
+        log.info("rangePreferences.begin:    " + rangePrefs.begin);
+        log.info("rangePreferences.end:      " + rangePrefs.end);
         writer.startElement("b", null);
+        log.info("********************************************************************************");
         writer.write("Metric Display Range:");
         writer.endElement("b");
         writer.write(" ");
@@ -102,6 +111,7 @@ public class MetricRenderer extends Renderer {
             writer.startElement("i", null);
             writer.write(new Date(rangePrefs.begin) + " to " + new Date(rangePrefs.end));
         } else {
+
             writer.write("Last :");
             writer.write(" ");
             writer.startElement("select", metric);
@@ -113,6 +123,7 @@ public class MetricRenderer extends Renderer {
             if (!timeIntervalValues.contains(Integer.valueOf(lastN))) {
                 timeIntervalValues.add(lastN);
             }
+            Collections.sort(timeIntervalValues);
 
             for (int timeIntervalOption : timeIntervalValues) {
                 writer.startElement("option", metric);
@@ -140,7 +151,29 @@ public class MetricRenderer extends Renderer {
                 writer.endElement("option");
             }
             writer.endElement("select");
+
+            writer.write(" "); // space
+
+            writer.startElement("a", null);
+            writer.writeAttribute("href", "#", null);
+            writer.writeAttribute("onclick", "javascript:this.form.submit();", null);
+            writer.startElement("img", null);
+            writer.writeAttribute("src", "/images/dash-button_go-arrow.gif", null);
+            writer.writeAttribute("alt", "Go", null);
+            writer.endElement("img");
+            writer.endElement("a");
+
+            writer.write(" "); // space
+
+            writer.startElement("a", null);
+            writer.writeAttribute("href", "#", null);
+            writer
+                .writeAttribute(
+                    "onclick",
+                    "javascript:window.open('/rhq/common/metric/advanced.xhtml','Window1','menubar=no,width=540,height=360,toolbar=no');",
+                    null);
+            writer.write("Settings...");
+            writer.endElement("a");
         }
     }
-
 }

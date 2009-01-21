@@ -135,6 +135,8 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
             }
             preferences.setMetricRangePreferences(rangePreferences);
             preferences.persistPreferences();
+            facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Preferences updated",
+                "Your preferences have been successfully updated"));
         } else if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.INTERVAL_TYPE)) {
             Long fromTime = this.getFromTime().getTime();
             Long toTime = this.getToTime().getTime();
@@ -145,13 +147,19 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
                 facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Timing error",
                     "To time cannot be earlier than before time"));
             } else {
+                preferences.getMetricRangePreferences().readOnly = true;
                 rangePreferences.readOnly = true;
                 rangePreferences.begin = fromTime;
                 rangePreferences.end = toTime;
+                preferences.getMetricRangePreferences().begin = fromTime;
+                preferences.getMetricRangePreferences().end = toTime;
             }
             preferences.setMetricRangePreferences(rangePreferences);
             preferences.persistPreferences();
+            facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Preferences updated",
+                "Your preferences have been successfully updated"));
         }
+
     }
 
     public void init() {
@@ -164,7 +172,6 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
             this.setUnit(null);
             this.setFromTime(new Date(rangePreferences.begin));
             this.setToTime(new Date(rangePreferences.end));
-
         } else {
             this.setDurationType("duration");
             this.setIntervalType(null);

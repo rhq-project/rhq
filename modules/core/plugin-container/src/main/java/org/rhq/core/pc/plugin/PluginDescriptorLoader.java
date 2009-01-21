@@ -1,33 +1,34 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.plugin;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.io.File;
-import java.io.InputStream;
-import java.io.IOException;
 
+import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
@@ -35,7 +36,6 @@ import javax.xml.bind.ValidationEvent;
 import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
-import javax.xml.XMLConstants;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -96,8 +96,7 @@ public class PluginDescriptorLoader {
             parentClassLoader = this.getClass().getClassLoader();
         }
         if (pluginJarUrl != null) {
-            classLoader = PluginClassLoader.create(new File(pluginJarUrl.getPath()).getName(), pluginJarUrl,
-                unpackJars, parentClassLoader, tmpDir);
+            classLoader = PluginClassLoader.create(new File(pluginJarUrl.getPath()).getName(), pluginJarUrl, unpackJars, parentClassLoader, tmpDir);
         } else {
             // this is mainly to support tests
             classLoader = parentClassLoader;
@@ -116,8 +115,7 @@ public class PluginDescriptorLoader {
      * @return the JAXB plugin descriptor object
      * @throws PluginContainerException on failure to load the descriptor
      */
-    public PluginDescriptor loadPluginDescriptor()
-        throws PluginContainerException {
+    public PluginDescriptor loadPluginDescriptor() throws PluginContainerException {
         if (this.pluginJarUrl == null) {
             throw new PluginContainerException("A valid plugin JAR URL must be supplied.");
         }
@@ -130,8 +128,7 @@ public class PluginDescriptorLoader {
             jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
         } catch (JAXBException e) {
             //noinspection ThrowableInstanceNeverThrown
-            throw new PluginContainerException("Could not instantiate the JAXB Context.",
-                new WrappedRemotingException(e));
+            throw new PluginContainerException("Could not instantiate the JAXB Context.", new WrappedRemotingException(e));
         }
 
         InputStream is = null;
@@ -143,16 +140,14 @@ public class PluginDescriptorLoader {
 
             is = pluginOnlyClassloader.getResourceAsStream(PLUGIN_DESCRIPTOR_PATH);
             if (is == null) {
-                throw new PluginContainerException("Could not load plugin descriptor [" + PLUGIN_DESCRIPTOR_PATH
-                        + "] from pluigin jar at [" + this.pluginJarUrl + "].");
+                throw new PluginContainerException("Could not load plugin descriptor [" + PLUGIN_DESCRIPTOR_PATH + "] from plugin jar at [" + this.pluginJarUrl + "].");
             }
 
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
             // Enable schema validation. (see http://jira.jboss.com/jira/browse/JBNADM-1539)
             URL pluginSchemaURL = getClass().getClassLoader().getResource(PLUGIN_SCHEMA_PATH);
-            Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(
-                pluginSchemaURL);
+            Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(pluginSchemaURL);
             unmarshaller.setSchema(pluginSchema);
 
             ValidationEventCollector vec = new ValidationEventCollector();
@@ -161,16 +156,14 @@ public class PluginDescriptorLoader {
             PluginDescriptor pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(is);
 
             for (ValidationEvent event : vec.getEvents()) {
-                log.debug("Plugin [" + pluginDescriptor.getName() + "] descriptor messages {Severity: "
-                    + event.getSeverity() + ", Message: " + event.getMessage() + ", Exception: "
+                log.debug("Plugin [" + pluginDescriptor.getName() + "] descriptor messages {Severity: " + event.getSeverity() + ", Message: " + event.getMessage() + ", Exception: "
                     + event.getLinkedException() + "}");
             }
 
             return pluginDescriptor;
         } catch (Exception e) {
-            throw new PluginContainerException("Could not successfully parse the plugin descriptor ["
-                    + PLUGIN_DESCRIPTOR_PATH + " found in plugin jar at [" + this.pluginJarUrl + "]",
-                    new WrappedRemotingException(e));
+            throw new PluginContainerException("Could not successfully parse the plugin descriptor [" + PLUGIN_DESCRIPTOR_PATH + " found in plugin jar at [" + this.pluginJarUrl + "]",
+                new WrappedRemotingException(e));
         } finally {
             if (is != null) {
                 try {
@@ -191,24 +184,20 @@ public class PluginDescriptorLoader {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[pluginJarUrl=" + this.pluginJarUrl + ", pluginClassLoader=" +
-                this.pluginClassLoader + "]";
+        return this.getClass().getSimpleName() + "[pluginJarUrl=" + this.pluginJarUrl + ", pluginClassLoader=" + this.pluginClassLoader + "]";
     }
 
     private void testPluginJarIsReadable() throws PluginContainerException {
         InputStream inputStream = null;
         try {
             inputStream = this.pluginJarUrl.openStream();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new PluginContainerException("Unable to open plugin jar at [" + this.pluginJarUrl + "] for reading.");
-        }
-        finally {
+        } finally {
             try {
                 if (inputStream != null)
                     inputStream.close();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 log.error("Failed to close input stream for plugin jar at [" + this.pluginJarUrl + "].");
             }
         }

@@ -101,9 +101,7 @@ public class MetricRenderer extends Renderer {
         writer.write(" ");
 
         if (rangePrefs.readOnly) {
-            writer.startElement("i", null);
             writer.write(new Date(rangePrefs.begin) + " to " + new Date(rangePrefs.end));
-
             writer.write(" ");
             writer.startElement("a", null);
             writer.writeAttribute("href", "#", null);

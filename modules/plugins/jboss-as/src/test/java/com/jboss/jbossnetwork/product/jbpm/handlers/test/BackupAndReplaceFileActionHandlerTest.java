@@ -38,8 +38,18 @@ import org.rhq.core.domain.content.transfer.DeployPackageStep;
  * @author Jason Dobies
  */
 public class BackupAndReplaceFileActionHandlerTest {
-    @Test
-    public void oneFileReplace() throws Exception {
+	
+	@Test
+	public void oneFileReplaceTest() throws Exception {
+		oneFileReplace("handlers/BackupAndReplaceFileActionHandlerTest-one-file-replace.xml");
+	}
+	
+	@Test
+	public void oneFileReplaceWithEntitiesTest() throws Exception {
+		oneFileReplace("handlers/BackupAndReplaceFileActionHandlerTest-one-file-replace-with-entities.xml");
+	}
+	
+    public void oneFileReplace(String processDefinitionLocation) throws Exception {
         // Setup
         File patchFileDir = new File("target" + File.separator + "patch-files");
         if (!patchFileDir.exists()) {
@@ -58,7 +68,7 @@ public class BackupAndReplaceFileActionHandlerTest {
         // Load and populate the JBPM process
         String[] parameters = new String[] { originalFileName, replacementFileName };
         String process = HandlerTestUtils.getProcessAsString(
-            "handlers/BackupAndReplaceFileActionHandlerTest-one-file-replace.xml", parameters);
+        		processDefinitionLocation, parameters);
 
         // Test
         ProcessDefinition processDefinition = ProcessDefinition.parseXmlString(process);

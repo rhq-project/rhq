@@ -122,9 +122,7 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
             facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Range select error",
                 "Please select one option to either setup the duration or the time interval"));
         } else if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.DURATION_TYPE)) {
-            long millis = this.getDuration() * this.getUnit();
             rangePreferences.readOnly = false;
-            rangePreferences.begin = rangePreferences.end - (millis);
             rangePreferences.lastN = duration;
             if (unit == 60000) {
                 rangePreferences.unit = 2;
@@ -133,8 +131,6 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
             } else if (unit == 864000000) {
                 rangePreferences.unit = 4;
             }
-            preferences.setMetricRangePreferences(rangePreferences);
-            preferences.persistPreferences();
             facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Preferences updated",
                 "Your preferences have been successfully updated"));
         } else if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.INTERVAL_TYPE)) {
@@ -147,18 +143,15 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
                 facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Timing error",
                     "To time cannot be earlier than before time"));
             } else {
-                preferences.getMetricRangePreferences().readOnly = true;
                 rangePreferences.readOnly = true;
                 rangePreferences.begin = fromTime;
                 rangePreferences.end = toTime;
-                preferences.getMetricRangePreferences().begin = fromTime;
-                preferences.getMetricRangePreferences().end = toTime;
             }
-            preferences.setMetricRangePreferences(rangePreferences);
-            preferences.persistPreferences();
             facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Preferences updated",
                 "Your preferences have been successfully updated"));
         }
+        preferences.setMetricRangePreferences(rangePreferences);
+        preferences.persistPreferences();
 
     }
 

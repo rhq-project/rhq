@@ -21,7 +21,7 @@
    </filter>
    <filter-mapping>
       <filter-name>Seam Filter</filter-name>
-      <url-pattern>/*</url-pattern>
+      <url-pattern>*.xhtml</url-pattern>
    </filter-mapping>
     
    <!--=== JSF RI ===-->

@@ -94,15 +94,8 @@ public class MetricRenderer extends Renderer {
 
         Subject subject = WebUtility.getSubject(FacesContextUtility.getRequest());
         MeasurementPreferences prefs = new MeasurementPreferences(subject);
-        log.info("********************************************************************************");
         MetricRangePreferences rangePrefs = prefs.getMetricRangePreferences();
-        log.info("rangePreferences.readOnly: " + rangePrefs.readOnly);
-        log.info("rangePreferences.lastN:    " + rangePrefs.lastN);
-        log.info("rangePreferences.unit:     " + rangePrefs.unit);
-        log.info("rangePreferences.begin:    " + rangePrefs.begin);
-        log.info("rangePreferences.end:      " + rangePrefs.end);
         writer.startElement("b", null);
-        log.info("********************************************************************************");
         writer.write("Metric Display Range:");
         writer.endElement("b");
         writer.write(" ");
@@ -110,6 +103,13 @@ public class MetricRenderer extends Renderer {
         if (rangePrefs.readOnly) {
             writer.startElement("i", null);
             writer.write(new Date(rangePrefs.begin) + " to " + new Date(rangePrefs.end));
+
+            writer.write(" ");
+            writer.startElement("a", null);
+            writer.writeAttribute("href", "#", null);
+            writer.write("Switch to Simple Settings ");
+            writer.endElement("a");
+
         } else {
 
             writer.write("Last :");
@@ -156,24 +156,24 @@ public class MetricRenderer extends Renderer {
 
             writer.startElement("a", null);
             writer.writeAttribute("href", "#", null);
-            writer.writeAttribute("onclick", "javascript:this.form.submit();", null);
+            writer.writeAttribute("onclick", "javascript:document.forms[0].submit();", null);
             writer.startElement("img", null);
             writer.writeAttribute("src", "/images/dash-button_go-arrow.gif", null);
             writer.writeAttribute("alt", "Go", null);
             writer.endElement("img");
             writer.endElement("a");
-
-            writer.write(" "); // space
-
-            writer.startElement("a", null);
-            writer.writeAttribute("href", "#", null);
-            writer
-                .writeAttribute(
-                    "onclick",
-                    "javascript:window.open('/rhq/common/metric/advanced.xhtml','Window1','menubar=no,width=540,height=360,toolbar=no');",
-                    null);
-            writer.write("Settings...");
-            writer.endElement("a");
         }
+
+        writer.write(" ");
+
+        writer.startElement("a", null);
+        writer.writeAttribute("href", "#", null);
+        writer
+            .writeAttribute(
+                "onclick",
+                "javascript:window.open('/rhq/common/metric/advanced.xhtml','Window1','menubar=no,width=540,height=360,toolbar=no');",
+                null);
+        writer.write("Settings...");
+        writer.endElement("a");
     }
 }

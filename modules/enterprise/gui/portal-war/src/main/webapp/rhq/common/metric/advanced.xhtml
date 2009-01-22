@@ -52,7 +52,7 @@
                                             <h:inputText id="duration" size="2" value="#{AdvancedMetricSettingsUIBean.duration}" onclick="checkUncheckRadio('advancedMetricsValuesForm:durationMetricType','advancedMetricsValuesForm:intervalMetricType');"/>
                                         </td>
                                         <td>
-                                            <h:selectOneMenu id="unit" value="#{AdvancedMetricSettingsUIBean.unit}">
+                                            <h:selectOneMenu id="unit" value="#{AdvancedMetricSettingsUIBean.unit}" onchange="checkUncheckRadio('advancedMetricsValuesForm:durationMetricType','advancedMetricsValuesForm:intervalMetricType');">
                                                 <f:selectItem id="mu" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Minutes']}" itemValue="60000" />
                                                 <f:selectItem id="hu" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Hours']}" itemValue="36000000" />
                                                 <f:selectItem id="du" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Days']}" itemValue="864000000" />

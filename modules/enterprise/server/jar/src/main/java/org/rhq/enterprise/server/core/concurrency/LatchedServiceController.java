@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -53,8 +54,11 @@ public class LatchedServiceController {
         checkForCircularDependencies();
 
         // start all latched services, but they'll block
+        List<Thread> threads = new ArrayList<Thread>();
         for (LatchedService service : latchedServices) {
-            new Thread(service).start();
+            Thread thread = new Thread(service, "Plugin Deployment - " + service.getServiceName());
+            threads.add(thread);
+            thread.start();
         }
 
         // let them all go at the same time here
@@ -62,7 +66,19 @@ public class LatchedServiceController {
 
         try {
             // and then wait for all of them to complete
-            serviceCompletionLatch.await();
+            while (!serviceCompletionLatch.await(60, TimeUnit.SECONDS)) {
+                boolean stillRunning = false;
+                for (Thread thread : threads) {
+                    if (thread.isAlive()) {
+                        stillRunning = true;
+                        log.warn("Thread [" + thread.getName() + "] is still running - is it hung?");
+                    }
+                }
+                if (!stillRunning) {
+                    log.error("The controller is waiting for threads that are already dead, breaking deadlock now!");
+                    break;
+                }
+            }
         } catch (InterruptedException ie) {
             log.info("Controller was interrupted; can not be sure if all services have begun");
         }
@@ -121,12 +137,6 @@ public class LatchedServiceController {
             this.serviceName = serviceName;
             this.dependencies = new ArrayList<LatchedService>();
             this.dependees = new ArrayList<LatchedService>();
-
-            /* 
-             * so that services with no deps won't throw NPE
-             * when awaits on the dependencyLatch in the run method
-             */
-            this.dependencyLatch = new CountDownLatch(0);
         }
 
         public String getServiceName() {
@@ -159,6 +169,22 @@ public class LatchedServiceController {
                 hasFailed = true;
             }
 
+            // this method might get called so quickly, that the
+            // run method never gets the chance to create the latch
+            // wait here for the latch to get created
+            int maxWaits = 60;
+            while (dependencyLatch == null) {
+                try {
+                    Thread.sleep(1000L);
+                } catch (InterruptedException e) {
+                }
+
+                // avoid a deadlock (this is just more paranoia)
+                if (maxWaits-- <= 0) {
+                    break;
+                }
+            }
+
             dependencyLatch.countDown();
         }
 
@@ -166,11 +192,11 @@ public class LatchedServiceController {
             running = true;
 
             try {
+                dependencyLatch = new CountDownLatch(dependencies.size());
+
                 if (controller == null) {
                     throw new IllegalStateException("LatchedServices must be started via some controller");
                 }
-
-                dependencyLatch = new CountDownLatch(dependencies.size());
 
                 try {
                     /* 
@@ -214,12 +240,14 @@ public class LatchedServiceController {
 
             } finally {
                 // and notify dependees
-                for (LatchedService dependee : dependees) {
-                    dependee.notifyComplete(this, hasFailed);
+                try {
+                    for (LatchedService dependee : dependees) {
+                        dependee.notifyComplete(this, hasFailed);
+                    }
+                } finally {
+                    // and notify the controller as well 
+                    controller.serviceCompletionLatch.countDown();
                 }
-
-                // and notify the controller as well 
-                controller.serviceCompletionLatch.countDown();
             }
         }
 

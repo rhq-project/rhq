@@ -589,7 +589,8 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
 
             pluginNotify(pluginNameDisplayName, PLUGIN_REGISTERED);
         } catch (Exception e) {
-            log.error("Failed to register RHQ plugin [" + deploymentInfo.localUrl + "]", e);
+            log.error("Failed to register RHQ plugin file [" + deploymentInfo.shortName + "] at ["
+                + deploymentInfo.localUrl + "]", e);
         }
     }
 

@@ -377,8 +377,9 @@ public class EventManagerBean implements EventManagerLocal {
 
         PageList<EventComposite> pl = new PageList<EventComposite>(pc);
 
-        if (resourceIds == null || resourceIds.length == 0)
+        if (resourceIds == null || resourceIds.length == 0) {
             return pl;
+        }
 
         /*
          * We're still here - either the specified event was not found or we got called without
@@ -482,7 +483,7 @@ public class EventManagerBean implements EventManagerLocal {
         query += " INNER JOIN RHQ_Event_Source evs ON evs.id = ev.event_source_id ";
         if (!isCountQuery) {
             // only join on rhq_resource if necessary, which it isn't for the count query
-            query += " INNER JOIN rhq_resource res ON evs.resource_id = res.id ";
+            query += " LEFT JOIN rhq_resource res ON evs.resource_id = res.id ";
         }
         query += " WHERE evs.resource_id IN ( ";
 

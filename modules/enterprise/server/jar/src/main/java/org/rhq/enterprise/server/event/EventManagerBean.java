@@ -534,6 +534,7 @@ public class EventManagerBean implements EventManagerLocal {
             int minRowNum = pageControl.getStartRow() + 1;
             int maxRowNum = minRowNum + pageControl.getPageSize() - 1;
 
+            queryWithPaging.append(query);
             queryWithPaging.append(" AND rownum <= ").append(maxRowNum);
             queryWithPaging.append(" AND rownum >= ").append(minRowNum);
 

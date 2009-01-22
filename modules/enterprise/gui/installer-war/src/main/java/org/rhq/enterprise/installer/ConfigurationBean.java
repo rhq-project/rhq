@@ -288,19 +288,12 @@ public class ConfigurationBean {
 
     public StartPageResults testConnection() {
         Properties configurationAsProperties = getConfigurationAsProperties(configuration);
-        Connection conn = null;
         try {
-            conn = serverInfo.getDatabaseConnection(configurationAsProperties);
+            serverInfo.ensureDatabaseIsSupported(configurationAsProperties);
             lastTest = "OK";
         } catch (Exception e) {
             LOG.warn("Installer failed to test connection", e);
             lastTest = e.toString();
-        } finally {
-            if (conn != null)
-                try {
-                    conn.close();
-                } catch (Exception e) {
-                }
         }
 
         return StartPageResults.STAY;

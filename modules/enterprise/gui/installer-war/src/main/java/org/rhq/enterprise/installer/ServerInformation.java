@@ -111,6 +111,43 @@ public class ServerInformation {
     }
 
     /**
+     * Call this when you need to confirm that the database is supported.
+     * 
+     * @param  props set of properties where the connection information is found
+     *
+     * @throws Exception if the database is not supported
+     */
+    public void ensureDatabaseIsSupported(Properties props) throws Exception {
+        Connection conn = null;
+        DatabaseType db = null;
+
+        try {
+            conn = getDatabaseConnection(props);
+            db = DatabaseTypeFactory.getDatabaseType(conn);
+
+            String version = db.getVersion();
+
+            if (DatabaseTypeFactory.isPostgres(db)) {
+                if (version.startsWith("7") || version.startsWith("8.0") || version.startsWith("8.1")) {
+                    throw new Exception("Unsupported PostgreSQL [" + db + "]");
+                }
+            } else if (DatabaseTypeFactory.isOracle(db)) {
+                if (version.startsWith("8") || version.startsWith("9")) {
+                    throw new Exception("Unsupported Oracle [" + db + "]");
+                }
+            } else {
+                throw new Exception("Unsupported DB [" + db + "]");
+            }
+        } finally {
+            if (db != null) {
+                db.closeConnection(conn);
+            }
+        }
+
+        return;
+    }
+
+    /**
      * Returns <code>true</code> if the database already has the database schema created for it. It will not be known
      * what version of schema or if its the latest, all this method tells you is that some RHQ database schema exists.
      *

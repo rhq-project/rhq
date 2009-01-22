@@ -37,6 +37,6 @@ public class Postgresql83DatabaseType extends Postgresql8DatabaseType {
      */
     @Override
     public String getVersion() {
-        return "8";
+        return "8.3";
     }
 }

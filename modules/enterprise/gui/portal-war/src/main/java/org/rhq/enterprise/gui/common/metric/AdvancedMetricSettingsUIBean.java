@@ -152,7 +152,6 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
         }
         preferences.setMetricRangePreferences(rangePreferences);
         preferences.persistPreferences();
-
     }
 
     public void init() {

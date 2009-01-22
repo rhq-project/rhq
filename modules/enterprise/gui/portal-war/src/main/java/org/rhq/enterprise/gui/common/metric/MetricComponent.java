@@ -21,10 +21,9 @@ package org.rhq.enterprise.gui.common.metric;
 import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.gui.util.FacesComponentUtility;
-import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 
@@ -92,21 +91,21 @@ public class MetricComponent extends UIComponentBase {
     private TimeUnit[] unitOptions;
 
     public MetricComponent() {
-        Subject subject = WebUtility.getSubject(FacesContextUtility.getRequest());
-        MeasurementPreferences prefs = new MeasurementPreferences(subject);
-        MetricRangePreferences rangePrefs = prefs.getMetricRangePreferences();
-        value = rangePrefs.lastN;
-        unit = TimeUnit.getUnitByMetricOrdinal(rangePrefs.unit).name();
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+        value = rangePreferences.lastN;
+        unit = TimeUnit.getUnitByMetricOrdinal(rangePreferences.unit).name();
     }
 
     public void persist() {
-        Subject subject = WebUtility.getSubject(FacesContextUtility.getRequest());
-        MeasurementPreferences prefs = new MeasurementPreferences(subject);
-        MetricRangePreferences rangePrefs = prefs.getMetricRangePreferences();
-        rangePrefs.lastN = value;
-        rangePrefs.unit = TimeUnit.valueOf(unit).getMetricUntilOrdinal();
-        prefs.setMetricRangePreferences(rangePrefs);
-        prefs.persistPreferences();
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+        rangePreferences.lastN = value;
+        rangePreferences.unit = TimeUnit.valueOf(unit).getMetricUntilOrdinal();
+        preferences.setMetricRangePreferences(rangePreferences);
+        preferences.persistPreferences();
     }
 
     public int getValue() {

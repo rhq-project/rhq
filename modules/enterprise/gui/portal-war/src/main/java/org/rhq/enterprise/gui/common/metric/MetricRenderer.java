@@ -34,10 +34,10 @@ import com.sun.faces.util.MessageUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.metric.MetricComponent.TimeUnit;
-import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 
@@ -88,36 +88,39 @@ public class MetricRenderer extends Renderer {
 
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
-        super.encodeBegin(context, component);
         ResponseWriter writer = context.getResponseWriter();
         MetricComponent metric = (MetricComponent) component;
 
-        Subject subject = WebUtility.getSubject(FacesContextUtility.getRequest());
-        MeasurementPreferences prefs = new MeasurementPreferences(subject);
-        MetricRangePreferences rangePrefs = prefs.getMetricRangePreferences();
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+
+        writer.startElement("table", null);
+        writer.startElement("tr", null);
+
+        writer.startElement("td", null);
         writer.startElement("b", null);
         writer.write("Metric Display Range:");
         writer.endElement("b");
-        writer.write(" ");
+        writer.endElement("td");
 
-        if (rangePrefs.readOnly) {
-            writer.write(new Date(rangePrefs.begin) + " to " + new Date(rangePrefs.end));
+        if (rangePreferences.readOnly) {
+            writer.startElement("td", null);
+            writer.write(new Date(rangePreferences.begin) + " to " + new Date(rangePreferences.end));
             writer.write(" ");
             writer.startElement("a", null);
             writer.writeAttribute("href", "#", null);
             writer.write("Switch to Simple Settings ");
             writer.endElement("a");
-
+            writer.endElement("td");
         } else {
-
+            writer.startElement("td", null);
             writer.write("Last :");
             writer.write(" ");
             writer.startElement("select", metric);
             writer.writeAttribute("id", MetricComponent.VALUE, null);
             writer.writeAttribute("name", MetricComponent.VALUE, null);
-
-            //add custom value in here 
-            int lastN = rangePrefs.lastN;
+            int lastN = rangePreferences.lastN;
             if (!timeIntervalValues.contains(Integer.valueOf(lastN))) {
                 timeIntervalValues.add(lastN);
             }
@@ -134,8 +137,9 @@ public class MetricRenderer extends Renderer {
             }
 
             writer.endElement("select");
-            writer.write(" "); // space
+            writer.endElement("td");
 
+            writer.startElement("td", null);
             writer.startElement("select", metric);
             writer.writeAttribute("id", MetricComponent.UNIT, null);
             writer.writeAttribute("name", MetricComponent.UNIT, null);
@@ -149,9 +153,9 @@ public class MetricRenderer extends Renderer {
                 writer.endElement("option");
             }
             writer.endElement("select");
+            writer.endElement("td");
 
-            writer.write(" "); // space
-
+            writer.startElement("td", null);
             writer.startElement("a", null);
             writer.writeAttribute("href", "#", null);
             writer.writeAttribute("onclick", "javascript:document.forms[0].submit();", null);
@@ -160,10 +164,10 @@ public class MetricRenderer extends Renderer {
             writer.writeAttribute("alt", "Go", null);
             writer.endElement("img");
             writer.endElement("a");
+            writer.endElement("td");
         }
 
-        writer.write(" ");
-
+        writer.startElement("td", null);
         writer.startElement("a", null);
         writer.writeAttribute("href", "#", null);
         writer
@@ -173,5 +177,8 @@ public class MetricRenderer extends Renderer {
                 null);
         writer.write("Settings...");
         writer.endElement("a");
+        writer.endElement("td");
+        writer.endElement("tr");
+        writer.endElement("table");
     }
 }

@@ -37,9 +37,6 @@
              </td>
         </tr>
     </table>
-
-    <hr style="margin-top: 6px; background-color: #090909; color: #090909" size="1" noshade="noshade"/>
-
 </div>
 
 <div id="about" class="dialog" style="display: none; position: absolute; top: 0; left: 0">

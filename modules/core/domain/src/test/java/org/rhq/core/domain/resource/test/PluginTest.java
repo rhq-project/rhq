@@ -27,9 +27,11 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.List;
 
 import javax.naming.InitialContext;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.sql.DataSource;
 
 import org.testng.annotations.Test;
@@ -41,9 +43,112 @@ import org.rhq.core.util.stream.StreamUtil;
 
 @Test
 public class PluginTest extends AbstractEJB3Test {
-    public void testPersistMinimal() throws Exception {
-        EntityManager em = getEntityManager();
+    public void testUpdate() throws Exception {
+        boolean done = false;
         getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+        try {
+            int id;
+
+            String name = "PluginTest-testUpdate";
+            String path = "/test/Update";
+            String displayName = "Plugin Test - testUpdate";
+            boolean enabled = true;
+            String md5 = "abcdef";
+            byte[] content = "the content is here".getBytes();
+
+            Plugin plugin = new Plugin(name, path);
+            plugin.setDisplayName(displayName);
+            plugin.setEnabled(enabled);
+            plugin.setMD5(md5);
+            plugin.setVersion(null);
+            plugin.setDescription(null);
+            plugin.setHelp(null);
+            plugin.setContent(content);
+
+            em.persist(plugin);
+            id = plugin.getId();
+            assert id > 0;
+
+            plugin = em.find(Plugin.class, id);
+            assert plugin != null;
+            assert plugin.getId() == id;
+            assert plugin.getName().equals(name);
+            assert plugin.getPath().equals(path);
+            assert plugin.getDisplayName().equals(displayName);
+            assert plugin.isEnabled() == enabled;
+            assert plugin.getMD5().equals(md5);
+            assert plugin.getVersion() == null;
+            assert plugin.getDescription() == null;
+            assert plugin.getHelp() == null;
+            assert new String(plugin.getContent()).equals(new String(content));
+
+            // everything persisted fine, let's update it and see the content is left alone
+            name = name + "-UPDATED";
+            path = path + "-UPDATED";
+            displayName = displayName + "-UPDATED";
+            enabled = !enabled;
+            md5 = md5 + "00000";
+            String version = "version-UPDATED";
+            String description = "description-UPDATED";
+            String help = "help-UPDATED";
+
+            em.close();
+            getTransactionManager().commit(); // we will be doing an update - needs to be in own tx
+            getTransactionManager().begin();
+            em = getEntityManager();
+
+            Query q = em.createNamedQuery(Plugin.UPDATE_ALL_BUT_CONTENT);
+            q.setParameter("id", id); // same as the one we just persisted
+            q.setParameter("name", name);
+            q.setParameter("path", path);
+            q.setParameter("displayName", displayName);
+            q.setParameter("enabled", enabled);
+            q.setParameter("md5", md5);
+            q.setParameter("version", version);
+            q.setParameter("description", description);
+            q.setParameter("help", help);
+            q.setParameter("mtime", System.currentTimeMillis());
+            assert q.executeUpdate() == 1 : "Failed to update the plugin";
+
+            em.close();
+            getTransactionManager().commit(); // must commit now
+            getTransactionManager().begin();
+            em = getEntityManager();
+
+            plugin = em.find(Plugin.class, id);
+            assert plugin != null;
+            assert plugin.getId() == id;
+            assert plugin.getName().equals(name);
+            assert plugin.getPath().equals(path);
+            assert plugin.getDisplayName().equals(displayName);
+            assert plugin.isEnabled() == enabled;
+            assert plugin.getMD5().equals(md5);
+            assert plugin.getVersion().equals(version);
+            assert plugin.getDescription().equals(description);
+            assert plugin.getHelp().equals(help);
+            // and what we really want to test - ensure the content remained intact after the update
+            assert new String(plugin.getContent()).equals(new String(content));
+
+            // clean up - delete our test plugin
+            em.close();
+            getTransactionManager().commit();
+            getTransactionManager().begin();
+            em = getEntityManager();
+            em.createNativeQuery("DELETE FROM " + Plugin.TABLE_NAME + " WHERE ID = " + id).executeUpdate();
+            em.close();
+            getTransactionManager().commit();
+            done = true;
+        } finally {
+            if (!done) {
+                getTransactionManager().rollback();
+            }
+        }
+    }
+
+    public void testPersistMinimal() throws Exception {
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
         try {
             String name = "PluginTest-testPersist";
             String path = "/test/Persist";
@@ -83,8 +188,8 @@ public class PluginTest extends AbstractEJB3Test {
     }
 
     public void testPersistFull() throws Exception {
-        EntityManager em = getEntityManager();
         getTransactionManager().begin();
+        EntityManager em = getEntityManager();
         try {
             String name = "PluginTest-testPersist";
             String path = "/test/Persist";
@@ -120,6 +225,44 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getDescription().equals(description);
             assert plugin.getHelp().equals(help);
             assert new String(plugin.getContent()).equals(new String(content));
+
+            // test our queries that purposefully do not load in the content blob
+            Query query = em.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
+            query.setParameter("name", name);
+            plugin = (Plugin) query.getSingleResult();
+            assert plugin != null;
+            assert plugin.getId() > 0;
+            assert plugin.getName().equals(name);
+            assert plugin.getPath().equals(path);
+            assert plugin.getDisplayName().equals(displayName);
+            assert plugin.isEnabled() == enabled;
+            assert plugin.getMD5().equals(md5);
+            assert plugin.getVersion().equals(version);
+            assert plugin.getDescription().equals(description);
+            assert plugin.getHelp().equals(help);
+            assert plugin.getContent() == null;
+
+            query = em.createNamedQuery(Plugin.QUERY_FIND_ALL);
+            List<Plugin> all = query.getResultList();
+            boolean got_it = false;
+            for (Plugin p : all) {
+                if (p.getName().equals(name)) {
+                    got_it = true;
+                    assert p.getId() > 0;
+                    assert p.getName().equals(name);
+                    assert p.getPath().equals(path);
+                    assert p.getDisplayName().equals(displayName);
+                    assert p.isEnabled() == enabled;
+                    assert p.getMD5().equals(md5);
+                    assert p.getVersion().equals(version);
+                    assert p.getDescription().equals(description);
+                    assert p.getHelp().equals(help);
+                    assert p.getContent() == null;
+                    break;
+                }
+            }
+            assert got_it : "findAll query failed to get our plugin";
+
         } finally {
             getTransactionManager().rollback();
         }

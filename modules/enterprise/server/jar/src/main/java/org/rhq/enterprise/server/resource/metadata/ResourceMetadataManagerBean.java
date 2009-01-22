@@ -18,6 +18,12 @@
  */
 package org.rhq.enterprise.server.resource.metadata;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,6 +39,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -51,6 +58,7 @@ import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
@@ -63,14 +71,17 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
  * This class manages the metadata for resources. Plugins are registered against this bean so that their metadata can be
  * pulled out and stored as necessary.
  *
- * <p/>// TODO GH: Should this be named PluginManager or something like that
- *
  * @author Greg Hinkle
  * @author Heiko W. Rupp
+ * @author John Mazzitelli
  */
 @Stateless
+@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal {
     private final Log log = LogFactory.getLog(ResourceMetadataManagerBean.class);
+
+    @javax.annotation.Resource(name = "RHQ_DS")
+    private DataSource dataSource;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -79,85 +90,161 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @EJB
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
-
     @EJB
     private MeasurementScheduleManagerLocal scheduleManager;
-
     @EJB
     private ConfigurationMetadataManagerLocal configurationMetadataManager;
-
     @EJB
     private SubjectManagerLocal subjectManager;
-
     @EJB
     private ResourceManagerLocal resourceManager;
-
     @EJB
     private EventManagerLocal eventManager;
 
     /**
+     * Returns the information on the given plugin as found in the database.
      * @param  name the name of a plugin
-     *
      * @return the plugin with the specified name
-     *
      * @throws NoResultException when no plugin with that name exists
      */
     public Plugin getPlugin(String name) {
-        return (Plugin) entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_NAME).setParameter("name", name)
-            .getSingleResult();
+        Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
+        query.setParameter("name", name);
+        Plugin plugin = (Plugin) query.getSingleResult();
+        return plugin;
     }
 
-    public void registerPlugin(Plugin plugin, PluginDescriptor pluginDescriptor) throws Exception {
-        // TODO GH: Consider how to remove features from plugins in updates without breaking everything
-        Plugin existingPlugin = null;
-        boolean newOrUpdated = false;
-        try {
-            existingPlugin = (Plugin) entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_NAME).setParameter("name",
-                plugin.getName()).getSingleResult();
-        } catch (NoResultException nre) {
-            /* Expected for new plugins, so no problem */
-            newOrUpdated = true;
-        }
-
-        if (existingPlugin != null) {
-            if (!plugin.getMd5().equals(existingPlugin.getMd5()))
-                newOrUpdated = true;
-            plugin.setId(existingPlugin.getId());
-        }
-
-        if (newOrUpdated) {
-            if (plugin.getDisplayName() == null)
-                plugin.setDisplayName(plugin.getName());
-            entityManager.merge(plugin);
-        }
-
-        if (newOrUpdated || !PLUGIN_METADATA_MANAGER.getPluginNames().contains(plugin.getName())) {
-            Set<ResourceType> rootResourceTypes = PLUGIN_METADATA_MANAGER.loadPlugin(pluginDescriptor);
-            if (rootResourceTypes == null)
-                throw new Exception("Failed to load plugin [" + plugin.getName() + "].");
-            if (newOrUpdated)
-                // Only merge the plugin's ResourceTypes into the DB if the plugin is new or updated.
-                updateTypes(plugin.getName(), rootResourceTypes);
-        }
-        // TODO GH: JBNADM-1310 - Push updated plugins to running agents and have them reboot their PCs
-        // See also JBNADM-1630
-    }
-
+    /**
+     * Returns the information on all plugins as found in the database.
+     */
     public List<Plugin> getPlugins() {
         Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL);
         return q.getResultList();
     }
 
-    @SuppressWarnings("unchecked")
+    public void registerPlugin(Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile) throws Exception {
+        // TODO GH: Consider how to remove features from plugins in updates without breaking everything
+        Plugin existingPlugin = null;
+        boolean newOrUpdated = false;
+        try {
+            existingPlugin = getPlugin(plugin.getName());
+        } catch (NoResultException nre) {
+            newOrUpdated = true; // this is expected for new plugins
+        }
+
+        if (existingPlugin != null) {
+            if (!plugin.getMd5().equals(existingPlugin.getMd5())) {
+                newOrUpdated = true;
+            }
+            plugin.setId(existingPlugin.getId());
+        }
+
+        // Notice that we only ever look at MD5 to determine if plugin entity needs to be updated.
+        // If this is a brand new plugin, it gets "updated" too - which ends up being a simple persist.
+        if (newOrUpdated) {
+            if (plugin.getDisplayName() == null) {
+                plugin.setDisplayName(plugin.getName());
+            }
+
+            plugin = updatePluginExceptContent(plugin);
+            if (pluginFile != null) {
+                entityManager.flush();
+                streamPluginFileContentToDatabase(plugin.getName(), pluginFile);
+            }
+            log.debug("Updated plugin entity [" + plugin + "]");
+        }
+
+        if (newOrUpdated || !PLUGIN_METADATA_MANAGER.getPluginNames().contains(plugin.getName())) {
+            Set<ResourceType> rootResourceTypes = PLUGIN_METADATA_MANAGER.loadPlugin(pluginDescriptor);
+            if (rootResourceTypes == null) {
+                throw new Exception("Failed to load plugin [" + plugin.getName() + "].");
+            }
+            if (newOrUpdated) {
+                // Only merge the plugin's ResourceTypes into the DB if the plugin is new or updated.
+                updateTypes(plugin.getName(), rootResourceTypes);
+            }
+        }
+
+        // TODO GH: JBNADM-1310 - Push updated plugins to running agents and have them reboot their PCs
+        // See also JBNADM-1630
+        return;
+    }
+
+    private Plugin updatePluginExceptContent(Plugin plugin) throws Exception {
+        // this method is here because we need a way to update the plugin's information
+        // without blowing away the content data. Because we do not want to load the
+        // content blob in memory, the plugin's content field will be null - if we were
+        // to entityManager.merge that plugin POJO, it would null out that blob column.
+        if (plugin.getId() == 0) {
+            entityManager.persist(plugin);
+        } else {
+            Query q = entityManager.createNamedQuery(Plugin.UPDATE_ALL_BUT_CONTENT);
+            q.setParameter("id", plugin.getId());
+            q.setParameter("name", plugin.getName());
+            q.setParameter("path", plugin.getPath());
+            q.setParameter("displayName", plugin.getDisplayName());
+            q.setParameter("enabled", plugin.isEnabled());
+            q.setParameter("md5", plugin.getMD5());
+            q.setParameter("version", plugin.getVersion());
+            q.setParameter("description", plugin.getDescription());
+            q.setParameter("help", plugin.getHelp());
+            q.setParameter("mtime", plugin.getMtime());
+            if (q.executeUpdate() != 1) {
+                throw new Exception("Failed to update a plugin that matches [" + plugin + "]");
+            }
+        }
+        return plugin;
+    }
+
+    /**
+     * This will write the contents of the given plugin file to the database.
+     * This will assume the MD5 in the database is already correct, so this
+     * method will not take the time to calculate the MD5 again.
+     * 
+     * @param name the name of the plugin whose content is being updated
+     * @param file the plugin file whose content will be streamed to the database
+     * 
+     * @throws Exception
+     */
+    private void streamPluginFileContentToDatabase(String name, File file) throws Exception {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        FileInputStream fis = new FileInputStream(file);
+
+        try {
+            conn = this.dataSource.getConnection();
+            ps = conn.prepareStatement("UPDATE " + Plugin.TABLE_NAME + " SET CONTENT = ? WHERE NAME = ?");
+            ps.setBinaryStream(1, new BufferedInputStream(fis), (int) file.length());
+            ps.setString(2, name);
+            int updateResults = ps.executeUpdate();
+            if (updateResults != 1) {
+                throw new Exception("Failed to update content for plugin [" + name + "] from [" + file + "]");
+            }
+        } finally {
+            JDBCUtil.safeClose(conn, ps, rs);
+
+            try {
+                fis.close();
+            } catch (Throwable t) {
+            }
+        }
+        return;
+    }
+
     private void updateTypes(String pluginName, Set<ResourceType> rootResourceTypes) throws Exception {
-        for (ResourceType rootResourceType : rootResourceTypes)
+        for (ResourceType rootResourceType : rootResourceTypes) {
             updateType(rootResourceType);
+        }
         removeObsoleteTypes(pluginName);
     }
 
+    @SuppressWarnings("unchecked")
     private void removeObsoleteTypes(String pluginName) {
-        List<ResourceType> existingTypes = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_PLUGIN)
-            .setParameter("plugin", pluginName).getResultList();
+        Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_PLUGIN);
+        query.setParameter("plugin", pluginName);
+        List<ResourceType> existingTypes = query.getResultList();
 
         if (existingTypes != null) {
             Subject overlord = subjectManager.getOverlord();

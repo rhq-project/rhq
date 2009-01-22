@@ -122,7 +122,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         Plugin testPlugin = new Plugin(PLUGIN_NAME, "foo.jar", md5);
         testPlugin.setDisplayName("ResourceMetaDataManagerBeanTest: " + pathToDescriptor);
         PluginDescriptor descriptor = loadPluginDescriptor(pathToDescriptor);
-        metadataManager.registerPlugin(testPlugin, descriptor);
+        metadataManager.registerPlugin(testPlugin, descriptor, null);
         getEntityManager().flush();
     }
 

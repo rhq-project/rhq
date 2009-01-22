@@ -327,7 +327,7 @@ public class PluginUpdate {
 
         try {
             new_plugin_outstream = new FileOutputStream(new_plugin, false);
-            server_plugin_instream = coreServerService.getPluginArchive(new_plugin_filename);
+            server_plugin_instream = coreServerService.getPluginArchive(plugin_to_get.getName());
             StreamUtil.copy(server_plugin_instream, new_plugin_outstream, true);
 
             // we've successfully downloaded the latest plugin, so delete our backup of the old plugin
@@ -337,7 +337,7 @@ public class PluginUpdate {
         } catch (Exception e) {
             // we are going to rethrow this exception, but first let's clean up and try to restore the old plugin
 
-            LOG.error(e, AgentI18NResourceKeys.DOWNLOAD_PLUGIN_FAILURE, plugin_to_get.getPath());
+            LOG.error(e, AgentI18NResourceKeys.DOWNLOAD_PLUGIN_FAILURE, plugin_to_get.getName());
 
             if (new_plugin_outstream != null) {
                 try {

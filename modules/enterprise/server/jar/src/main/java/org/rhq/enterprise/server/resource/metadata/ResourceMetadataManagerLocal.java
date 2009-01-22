@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.resource.metadata;
 
+import java.io.File;
 import java.util.List;
 
 import javax.ejb.Local;
@@ -27,24 +28,30 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.plugin.Plugin;
 
 /**
+ * Provides functionality surrounding agent plugins and their resource metadata.
  */
 @Local
 public interface ResourceMetadataManagerLocal {
     /**
      * For server-side registration of plugin archives. At server startup or as new plugins are runtime deployed the jar
      * will have its descriptor read and parsed and the metadata for the plugin will be updated in the db.
-     *
+     * If you provide a non-null <code>pluginFile</code>, and the plugin is deemed to be new or updated, the content
+     * of the file will be streamed to the database. Note that if you provide a non-null file, you must ensure
+     * its MD5 matches that of the file (i.e. this method will not attempt to recompute the file's MD5, it will assume
+     * the caller has already done that and provided the proper MD5 in <code>plugin</code>).
+     * 
      * @param plugin   The plugin object being deployed
      * @param metadata The plugin descriptor file
+     * @param pluginFile the actual plugin file whose content will be stored in the database (will be ignored if null)
      */
-    public void registerPlugin(Plugin plugin, PluginDescriptor metadata) throws Exception;
+    void registerPlugin(Plugin plugin, PluginDescriptor metadata, File pluginFile) throws Exception;
 
     /**
      * Returns the list of all plugins deployed in the server.
      * 
      * @return list of plugins deployed
      */
-    public List<Plugin> getPlugins();
+    List<Plugin> getPlugins();
 
     /**
      * Given the plugin name, will return that plugin.  The name is defined in the plugin descriptor.

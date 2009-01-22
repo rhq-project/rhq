@@ -7,10 +7,10 @@
 	      name="rhq:service=AgentPluginDeployer">
 
     <attribute name="PluginDir">${jboss.server.home.dir}/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</attribute>
-    
+
   </mbean>
 
-  <mbean code="org.jboss.deployment.scanner.URLDeploymentScanner"
+  <mbean code="org.rhq.enterprise.server.core.plugin.AgentPluginURLDeploymentScanner"
 	      name="rhq:service=AgentPluginURLDeploymentScanner,type=DeploymentScanner,flavor=URL">
 
     <depends optional-attribute-name="Deployer">jboss.system:service=MainDeployer</depends>
@@ -19,6 +19,7 @@
     <attribute name="URLComparator">org.jboss.deployment.scanner.PrefixDeploymentSorter</attribute>
     <attribute name="Filter">org.jboss.deployment.scanner.DeploymentFilter</attribute>
     <attribute name="ScanPeriod">30000</attribute>
+    <!-- the first one MUST be the location of the agent plugins -->
     <attribute name="URLs">
        ./deploy/${rhq.earName}/rhq-downloads/rhq-plugins/,
        ./deploy/${rhq.earName}/license/

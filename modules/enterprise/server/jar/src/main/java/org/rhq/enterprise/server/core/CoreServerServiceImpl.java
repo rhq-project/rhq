@@ -232,7 +232,7 @@ public class CoreServerServiceImpl implements CoreServerService {
 
         try {
             em = LookupUtil.getEntityManager();
-            Query q = em.createNamedQuery("Plugin.findAll");
+            Query q = em.createNamedQuery(Plugin.QUERY_FIND_ALL);
             plugins.addAll(q.getResultList());
         } catch (Exception e) {
             log.warn("Failed to get the list of latest plugins", e);
@@ -254,8 +254,8 @@ public class CoreServerServiceImpl implements CoreServerService {
 
         try {
             em = LookupUtil.getEntityManager();
-            Query q = em.createNamedQuery(Plugin.QUERY_FIND_BY_PATH);
-            q.setParameter("path", pluginName);
+            Query q = em.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
+            q.setParameter("name", pluginName);
             Plugin plugin = (Plugin) q.getSingleResult();
 
             // we know our plugins are in a subdirectory within our downloads location

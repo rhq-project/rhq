@@ -70,7 +70,7 @@ public interface CoreServerService {
     /**
      * Return a stream containing the contents of a plugin jar.
      *
-     * @param  pluginName The name of the plugin file (also known as its path)
+     * @param  pluginName The name of the plugin
      *
      * @return a stream by which the caller can use to pull down the contents of the requested plugin jar
      */

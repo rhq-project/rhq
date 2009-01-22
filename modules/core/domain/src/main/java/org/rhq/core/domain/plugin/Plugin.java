@@ -47,9 +47,54 @@ import org.rhq.core.domain.util.MD5Generator;
  * It may also contain the jar contents ({@link #getContent()}).
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = Plugin.QUERY_FIND_BY_NAME, query = "SELECT p FROM Plugin AS p WHERE p.name=:name"),
-    @NamedQuery(name = Plugin.QUERY_FIND_BY_PATH, query = "SELECT p FROM Plugin AS p WHERE p.path=:path"),
-    @NamedQuery(name = Plugin.QUERY_FIND_ALL, query = "SELECT p FROM Plugin AS p") })
+@NamedQueries( {
+//
+    // this query does not load the content blob, but loads everything else
+    @NamedQuery(name = Plugin.QUERY_FIND_BY_NAME, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
+        + "        p.id, " //
+        + "        p.name, " //
+        + "        p.path, " //
+        + "        p.displayName, " //
+        + "        p.enabled, " //
+        + "        p.description, " //
+        + "        p.help, " //
+        + "        p.md5, " //
+        + "        p.version, " //
+        + "        p.ctime, " //
+        + "        p.mtime) " //
+        + "   FROM Plugin AS p " // 
+        + "  WHERE p.name=:name"), //
+
+    // this query does not load the content blob, but loads everything else
+    @NamedQuery(name = Plugin.QUERY_FIND_ALL, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
+        + "        p.id, " //
+        + "        p.name, " //
+        + "        p.path, " //
+        + "        p.displayName, " //
+        + "        p.enabled, " //
+        + "        p.description, " //
+        + "        p.help, " //
+        + "        p.md5, " //
+        + "        p.version, " //
+        + "        p.ctime, " //
+        + "        p.mtime) " //
+        + "   FROM Plugin AS p "), //
+
+    // this query does not update the content blob or ctime
+    @NamedQuery(name = Plugin.UPDATE_ALL_BUT_CONTENT, query = "" //
+        + "UPDATE Plugin p " //
+        + "   SET p.name = :name, " //
+        + "       p.displayName = :displayName, " //
+        + "       p.description = :description, " //
+        + "       p.enabled = :enabled, " //
+        + "       p.help = :help, " //
+        + "       p.version = :version, " //
+        + "       p.path = :path, " //
+        + "       p.md5 = :md5, " //
+        + "       p.mtime = :mtime " //
+        + " WHERE p.id = :id") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PLUGIN_ID_SEQ")
 @Table(name = Plugin.TABLE_NAME)
 public class Plugin implements Serializable {
@@ -59,7 +104,7 @@ public class Plugin implements Serializable {
 
     public static final String QUERY_FIND_ALL = "Plugin.findAll";
     public static final String QUERY_FIND_BY_NAME = "Plugin.findByName";
-    public static final String QUERY_FIND_BY_PATH = "Plugin.findByPath";
+    public static final String UPDATE_ALL_BUT_CONTENT = "Plugin.updateAllButContent";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ")
@@ -91,7 +136,10 @@ public class Plugin implements Serializable {
     private String md5;
 
     @Column(name = "CTIME", nullable = false)
-    private long ctime = System.currentTimeMillis();
+    private long ctime;
+
+    @Column(name = "MTIME", nullable = false)
+    private long mtime;
 
     @Column(name = "CONTENT", nullable = true)
     private byte[] content;
@@ -147,6 +195,38 @@ public class Plugin implements Serializable {
         }
     }
 
+    /**
+     * Constructor that can build the full object except for the content byte array.
+     * This is used mainly for the named queries that want to return a Plugin object
+     * but does not eagerly load in the content array.
+     *  
+     * @param id
+     * @param name
+     * @param path
+     * @param displayName
+     * @param enabled
+     * @param description
+     * @param help
+     * @param md5
+     * @param version
+     * @param ctime
+     * @param mtime
+     */
+    public Plugin(int id, String name, String path, String displayName, boolean enabled, String description,
+        String help, String md5, String version, long ctime, long mtime) {
+        this.id = id;
+        this.name = name;
+        this.path = path;
+        this.displayName = displayName;
+        this.enabled = enabled;
+        this.description = description;
+        this.help = help;
+        this.md5 = md5;
+        this.version = version;
+        this.ctime = ctime;
+        this.mtime = mtime;
+    }
+
     public int getId() {
         return this.id;
     }
@@ -163,8 +243,54 @@ public class Plugin implements Serializable {
         this.name = name;
     }
 
+    /**
+     * See the javadoc of {@link #getMtime()} for
+     * information about this field and its relationship
+     * with "mtime".
+     * 
+     * @return the time when this entity was persisted
+     */
+    public long getCtime() {
+        return this.ctime;
+    }
+
     public void setCtime(long ctime) {
         this.ctime = ctime;
+    }
+
+    /**
+     * The "mtime" of the plugin has slightly different semantics
+     * than  other "mtime" values found elsewhere. The "mtime"
+     * will typically be the time that the content field was modified,
+     * not necessarily the time when any field was modified. In other
+     * words, look at "mtime" if you want to know when the actual
+     * plugin content was last updated. Note that this "mtime" may in
+     * fact be the last modified time of the plugin file from which
+     * the content came from - this means mtime may actually be earlier
+     * in time than "ctime" (in the case when the plugin jar file was
+     * last touched prior to this entity being created).
+     * 
+     * Note that the "ctime" field semantics remains the same as always,
+     * it is the time when this entity was originally created.
+     * 
+     * @return mtime of the content
+     */
+    public long getMtime() {
+        return this.mtime;
+    }
+
+    /**
+     * This entity does not automatically update the "mtime" when it
+     * is updated via a PreUpdate annotation, therefore, the owner of
+     * this entity needs to explicitly call this setter in order to
+     * set the "mtime". You normally set this value to the last
+     * modified time of the plugin jar that provided
+     * this plugin entity's {@link #getContent() content}.
+     * 
+     * @param mtime
+     */
+    public void setMtime(long mtime) {
+        this.mtime = mtime;
     }
 
     public String getDisplayName() {
@@ -241,10 +367,6 @@ public class Plugin implements Serializable {
      */
     public void setPath(String path) {
         this.path = path;
-    }
-
-    public long getCtime() {
-        return this.ctime;
     }
 
     /**

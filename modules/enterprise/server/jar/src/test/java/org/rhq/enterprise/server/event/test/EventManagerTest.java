@@ -39,6 +39,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -138,6 +139,11 @@ public class EventManagerTest extends AbstractEJB3Test {
             int resourceId = resource.getId();
             long t1 = now - 1000L;
             long t2 = now + 1000L;
+
+            PageList<EventComposite> resourceEvents = eventManager.getEventsForResource(null, resourceId, t1, t2, null,
+                new PageControl());
+            assert resourceEvents.size() == 1 : "Expected to find 1 persisted event, but found "
+                + resourceEvents.size();
 
             int[] buckets = eventManager.getEventCounts(null, resourceId, t1, t2, 3);
             assert buckets != null : "Buckets should not be null, but were null";

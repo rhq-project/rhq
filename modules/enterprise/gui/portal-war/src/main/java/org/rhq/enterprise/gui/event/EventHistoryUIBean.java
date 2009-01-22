@@ -194,7 +194,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
             PageList<EventComposite> results = new PageList<EventComposite>();
             if (context.category == EntityContext.Category.Resource) {
                 results = eventManager.getEvents(getSubject(), new int[] { context.resourceId },
-                    rangePreferences.begin, rangePreferences.end, severity, -1, source, search, pc);
+                    rangePreferences.begin, rangePreferences.end, severity, source, search, pc);
             } else if (context.category == EntityContext.Category.ResourceGroup) {
                 results = eventManager.getEventsForCompGroup(getSubject(), context.groupId, rangePreferences.begin,
                     rangePreferences.end, severity, -1, source, search, pc);

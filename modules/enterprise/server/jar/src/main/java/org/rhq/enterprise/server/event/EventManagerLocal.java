@@ -150,14 +150,13 @@ public interface EventManagerLocal {
      * @param begin      Begin time for the events display
      * @param end        End time for the events display
      * @param severity   Severity we are interested in. Null for all
-     * @param eventId    If > -1 , show events around this given one (including the given)
      * @param source TODO
      * @param searchString TODO
      * @param pc         {@link PageControl} to specify the list size
      * @return           List of Events
      */
     public PageList<EventComposite> getEvents(Subject subject, int[] resourceIds, long begin, long end,
-        EventSeverity severity, int eventId, String source, String searchString, PageControl pc);
+        EventSeverity severity, String source, String searchString, PageControl pc);
 
     /**
      * Obtain detail information about the passed event

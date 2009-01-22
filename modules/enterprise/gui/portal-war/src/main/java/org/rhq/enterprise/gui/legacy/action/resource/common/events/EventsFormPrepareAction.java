@@ -111,7 +111,7 @@ public class EventsFormPrepareAction extends MetricsControlFormPrepareAction {
         List<EventComposite> events;
         if (resourceId > 0) {
             events = eventManager.getEvents(subject, new int[] { resourceId }, begin, end, eventSeverityFilter,
-                eventId, sourceFilter, searchString, pc);
+                sourceFilter, searchString, pc);
         } else if (groupId > 0) {
             events = eventManager.getEventsForCompGroup(subject, groupId, begin, end, eventSeverityFilter, eventId,
                 sourceFilter, searchString, pc);

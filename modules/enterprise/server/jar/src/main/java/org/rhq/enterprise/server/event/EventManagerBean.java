@@ -232,7 +232,7 @@ public class EventManagerBean implements EventManagerLocal {
         for (Resource res : resources)
             resourceIds[i++] = res.getId();
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, -1, null, null, pc);
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, null, null, pc);
         return comp;
     }
 
@@ -245,8 +245,8 @@ public class EventManagerBean implements EventManagerLocal {
         for (Resource res : resources)
             resourceIds[i++] = res.getId();
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, -1, source,
-            searchString, pc);
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, source, searchString,
+            pc);
 
         return comp;
     }
@@ -260,7 +260,7 @@ public class EventManagerBean implements EventManagerLocal {
         for (Resource res : resources)
             resourceIds[i++] = res.getId();
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, -1, null, null, pc);
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, null, null, pc);
         return comp;
     }
 
@@ -273,8 +273,8 @@ public class EventManagerBean implements EventManagerLocal {
         for (Resource res : resources)
             resourceIds[i++] = res.getId();
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, -1, source,
-            searchString, pc);
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, source, searchString,
+            pc);
 
         return comp;
     }
@@ -363,102 +363,19 @@ public class EventManagerBean implements EventManagerLocal {
     public PageList<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
         EventSeverity severity, PageControl pc) {
 
-        PageList<EventComposite> comp = getEvents(subject, new int[] { resourceId }, startDate, endDate, severity, -1,
+        PageList<EventComposite> comp = getEvents(subject, new int[] { resourceId }, startDate, endDate, severity,
             null, null, pc);
         return comp;
     }
 
-    /**
-     * Return a list of events for the passed event.
-     * We got an event id passed, so the user wants to directly see this event and
-     * not the most up to date one.
-     * We will present him with the given event surrounded by previous and later
-     * events for the same resource(s).
-     */
-    public PageList<EventComposite> getEventsForEvent(Subject subject, int[] resourceIds, int eventId, PageControl pc) {
-        PageList<EventComposite> pl = new PageList<EventComposite>(pc);
-
-        if (eventId <= 0 || resourceIds == null || resourceIds.length == 0)
-            return pl;
-
-        String query = "SELECT detail, id, substr(location, 1, 30) ";
-        query += ", severity, timestamp, res_id  FROM ( ";
-        String innerQuery1 = " SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, res.id, res.name ";
-        innerQuery1 += " FROM rhq_event e1, rhq_event e ";
-        innerQuery1 += " JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id ";
-        innerQuery1 += " JOIN rhq_resource res ON evs.resource_id = res.id ";
-        innerQuery1 += " WHERE e1.timestamp < e.timestamp AND e.id = ? AND evs.resource_id IN ( ";
-        innerQuery1 += JDBCUtil.generateInBinds(resourceIds.length);
-        innerQuery1 += " ) ";
-        innerQuery1 += " ORDER BY e1.id DESC";
-        innerQuery1 = addResultsLimitToQuery(innerQuery1, DEFAULT_EVENTS_PAGE_SIZE / 2);
-
-        query += innerQuery1;
-        query += ") inner1 UNION (";
-
-        String innerQuery2 = "SELECT e1.detail, e1.id, evs.location, e1.severity, e1.timestamp, res.id, res.name ";
-        innerQuery2 += " FROM rhq_event e1, rhq_event e, rhq_resource res ";
-        innerQuery2 += " JOIN RHQ_Event_Source evs ON evs.id = e.event_source_id ";
-        innerQuery1 += " JOIN rhq_resource res ON evs.resource_id = res.id ";
-        innerQuery2 += " WHERE e1.timestamp >= e.timestamp AND e.id = ? AND evs.resource_id IN ( ";
-        innerQuery2 += JDBCUtil.generateInBinds(resourceIds.length);
-        innerQuery2 += " ) ";
-        innerQuery2 += " ORDER BY e1.id ASC";
-        innerQuery2 = addResultsLimitToQuery(innerQuery2, (DEFAULT_EVENTS_PAGE_SIZE / 2) + 1);
-        query += innerQuery2;
-        query += ") ORDER BY timestamp, id";
-
-        Connection conn = null;
-        PreparedStatement stm = null;
-        ResultSet rs = null;
-        try {
-            conn = rhqDs.getConnection();
-            stm = conn.prepareStatement(query);
-            stm.setInt(1, eventId);
-            int i = 2;
-            JDBCUtil.bindNTimes(stm, resourceIds, i);
-            i += resourceIds.length;
-            stm.setInt(i, eventId);
-            i++;
-            JDBCUtil.bindNTimes(stm, resourceIds, i);
-            i += resourceIds.length;
-
-            rs = stm.executeQuery();
-            while (rs.next()) {
-                EventComposite ec = new EventComposite(rs.getString(1), rs.getInt(6), rs.getString(7), rs.getInt(2),
-                    EventSeverity.valueOf(rs.getString(4)), rs.getString(3), rs.getLong(5));
-                pl.add(ec);
-            }
-
-        } catch (SQLException sq) {
-            log.error("getEventsForEvent: Error retrieving events: " + sq.getMessage(), sq);
-            return pl;
-        } finally {
-            JDBCUtil.safeClose(conn, stm, rs);
-        }
-
-        return pl;
-    }
-
     public PageList<EventComposite> getEvents(Subject subject, int[] resourceIds, long begin, long end,
-        EventSeverity severity, int eventId, String source, String searchString, PageControl pc) {
+        EventSeverity severity, String source, String searchString, PageControl pc) {
 
         if (pc == null) {
             pc = new PageControl();
         }
 
         PageList<EventComposite> pl = new PageList<EventComposite>(pc);
-        if (eventId > -1) {
-            /*
-             * We got an event id passed, so the user wants to directly see this event and
-             * not the most up to date one.
-             * We will present him with the given event surrounded by previous and later
-             * events for the same resource(s).
-             */
-            pl = getEventsForEvent(subject, resourceIds, eventId, pc);
-            if (pl.size() > 0)
-                return pl;
-        }
 
         if (resourceIds == null || resourceIds.length == 0)
             return pl;
@@ -563,7 +480,10 @@ public class EventManagerBean implements EventManagerLocal {
         }
         query += " FROM RHQ_Event ev ";
         query += " INNER JOIN RHQ_Event_Source evs ON evs.id = ev.event_source_id ";
-        query += " INNER JOIN rhq_resource res ON evs.resource_id = res.id ";
+        if (!isCountQuery) {
+            // only join on rhq_resource if necessary, which it isn't for the count query
+            query += " INNER JOIN rhq_resource res ON evs.resource_id = res.id ";
+        }
         query += " WHERE evs.resource_id IN ( ";
 
         query += JDBCUtil.generateInBinds(resourceIds.length);

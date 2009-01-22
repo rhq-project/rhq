@@ -142,9 +142,10 @@ public class EventManagerTest extends AbstractEJB3Test {
             int[] buckets = eventManager.getEventCounts(null, resourceId, t1, t2, 3);
             assert buckets != null : "Buckets should not be null, but were null";
             assert buckets.length == 3 : "Expected 3 buckets, but got " + buckets.length;
-            assert buckets[0] == 0 : "Expected bucket 0 to have 0 entries, but had " + buckets[0];
-            assert buckets[1] == 1 : "Expected bucket 1 to have 1 entry, but had " + buckets[1];
-            assert buckets[2] == 0 : "Expected bucket 2 to have 0 entries, but had " + buckets[2];
+
+            boolean bucketCounts = buckets[0] == 0 && buckets[1] == 1 && buckets[2] == 0;
+            assert bucketCounts : "Expected bucket counts were [0 1 0] Received [" + buckets[0] + " " + buckets[1]
+                + " " + buckets[2] + "]";
 
             List<EventComposite> res = eventManager.getEventsForResource(null, resourceId, t1, t2, null,
                 new PageControl());

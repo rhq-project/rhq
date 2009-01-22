@@ -18,11 +18,7 @@
  */
 package org.rhq.enterprise.server.event.test;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -76,38 +72,40 @@ public class EventManagerTest extends AbstractEJB3Test {
 
             EventDefinition eDef = new EventDefinition(resource.getResourceType(), "My definition is this ..");
             em.persist(eDef);
-            em.flush(); // Needed - else the addEventData() further down will fail, as the Def is not yet in the db
 
             long now = System.currentTimeMillis();
             EventSource evSrc = new EventSource("ESource", eDef, resource);
-            Event ev = new Event("EType", "ESource", now, EventSeverity.INFO, "This is a test");
-            Set<Event> eventSet = new HashSet<Event>();
-            eventSet.add(ev);
-            Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>();
-            events.put(evSrc, eventSet);
-            eventManager.addEventData(events);
+            Event ev = new Event("EType", "ESource", now, EventSeverity.INFO, "This is a test", evSrc);
+            //Set<Event> eventSet = new HashSet<Event>();
+            //eventSet.add(ev);
+            //Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>();
+            //events.put(evSrc, eventSet);
+            em.persist(evSrc);
+            em.persist(ev);
+            em.flush();
 
-            Query q;//= em.createQuery("SELECT ev FROM Event ev");
-            List<Event> res; //= q.getResultList();
-            //            assert res.size() == 1 : "Expected 1 Event, got " + res.size();
-
+            /* 
+             * do NOT use addEventData method until this test is refactored to support the fact that
+             * insertions made via direct SQL won't be visible to the entity manager in this xaction
+             */
+            //eventManager.addEventData(events);
             int resourceId = resource.getId();
-            q = em.createNamedQuery(Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME);
+            Query queryByTime = em.createNamedQuery(Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME);
             long t1 = now - 1000L;
             long t2 = now + 1000L;
-            q.setParameter("resourceId", resourceId);
-            q.setParameter("start", t1);
-            q.setParameter("end", t2);
-            res = q.getResultList();
-            assert res.size() == 1 : "Expected 1 Event, got " + res.size();
+            queryByTime.setParameter("resourceId", resourceId);
+            queryByTime.setParameter("start", t1);
+            queryByTime.setParameter("end", t2);
+            List resultsByTime = queryByTime.getResultList();
+            assert resultsByTime.size() == 1 : "Expected 1 Event, got " + resultsByTime.size();
 
-            q = em.createNamedQuery(Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME_SEVERITY);
-            q.setParameter("severity", EventSeverity.INFO);
-            q.setParameter("resourceId", resourceId);
-            q.setParameter("start", t1);
-            q.setParameter("end", t2);
-            res = q.getResultList();
-            assert res.size() == 1 : "Expected 1 Event, got " + res.size();
+            Query queryBySeverity = em.createNamedQuery(Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME_SEVERITY);
+            queryBySeverity.setParameter("severity", EventSeverity.INFO);
+            queryBySeverity.setParameter("resourceId", resourceId);
+            queryBySeverity.setParameter("start", t1);
+            queryBySeverity.setParameter("end", t2);
+            List resultsBySeverity = queryBySeverity.getResultList();
+            assert resultsBySeverity.size() == 1 : "Expected 1 Event, got " + resultsBySeverity.size();
 
         } finally {
             getTransactionManager().rollback();
@@ -125,17 +123,23 @@ public class EventManagerTest extends AbstractEJB3Test {
 
             EventDefinition eDef = new EventDefinition(resource.getResourceType(), "My definition is this ..");
             em.persist(eDef);
-            em.flush(); // Needed - else the addEventData() further down will fail, as the Def is not yet in the db
 
             long now = System.currentTimeMillis();
             EventSource evSrc = new EventSource("ESource", eDef, resource);
-            Event ev = new Event("EType", "ESource", now, EventSeverity.INFO, "This is a 2nd test");
-            Set<Event> eventSet = new HashSet<Event>();
-            eventSet.add(ev);
-            Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>();
-            events.put(evSrc, eventSet);
-            eventManager.addEventData(events);
+            Event ev = new Event("EType", "ESource", now, EventSeverity.INFO, "This is a 2nd test", evSrc);
+            //Set<Event> eventSet = new HashSet<Event>();
+            //eventSet.add(ev);
+            //Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>();
+            //events.put(evSrc, eventSet);
+            em.persist(evSrc);
+            em.persist(ev);
+            em.flush();
 
+            /* 
+             * do NOT use addEventData method until this test is refactored to support the fact that
+             * insertions made via direct SQL won't be visible to the entity manager in this xaction
+             */
+            //eventManager.addEventData(events);
             int resourceId = resource.getId();
             long t1 = now - 1000L;
             long t2 = now + 1000L;

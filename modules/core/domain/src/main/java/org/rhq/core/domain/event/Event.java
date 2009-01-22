@@ -155,6 +155,26 @@ public class Event implements Serializable {
             this.detail = this.detail.substring(0, DETAIL_MAX_LENGTH);
     }
 
+    public Event(@NotNull String type, @NotNull String sourceLocation, @NotNull long timestamp,
+        @NotNull EventSeverity severity, @NotNull String detail, @Nullable EventSource source) {
+        if (type == null)
+            throw new IllegalArgumentException("type parameter must not be null.");
+        if (sourceLocation == null)
+            throw new IllegalArgumentException("sourceLocation parameter must not be null.");
+        if (severity == null)
+            throw new IllegalArgumentException("severity parameter must not be null.");
+        if (detail == null)
+            throw new IllegalArgumentException("detail parameter must not be null.");
+        this.source = source;
+        this.type = type;
+        this.sourceLocation = sourceLocation;
+        this.timestamp = timestamp;
+        this.severity = severity;
+        this.detail = detail;
+        if (this.detail.length() > DETAIL_MAX_LENGTH)
+            this.detail = this.detail.substring(0, DETAIL_MAX_LENGTH);
+    }
+
     /** NOTE: This method is not intended to be called by plugins or the Plugin Container. */
     public int getId() {
         return this.id;

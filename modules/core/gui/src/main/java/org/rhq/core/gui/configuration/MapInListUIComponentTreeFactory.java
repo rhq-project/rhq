@@ -28,8 +28,9 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
+import org.rhq.core.gui.util.FacesExpressionUtility;
 
-/**
+ /**
  * A factory that generates a tree of JSF components that depicts a given collection of JON {@link Property}s from a
  * specified map within a list.
  *
@@ -52,8 +53,8 @@ public class MapInListUIComponentTreeFactory extends AbstractPropertyBagUICompon
     private static String createValueExpressionFormat(String configurationExpressionString, String listName,
         int listIndex) {
         StringBuilder expression = new StringBuilder();
-        expression.append("#{");
-        expression.append(unwrapExpressionString(configurationExpressionString));
+        expression.append("#{");                                                         
+        expression.append(FacesExpressionUtility.unwrapExpressionString(configurationExpressionString));
         expression.append(".");
         expression.append(PROPERTY_MAP_VALUE_ACCESSOR_SUFFIX);
         expression.append("['").append(listName).append("'].");

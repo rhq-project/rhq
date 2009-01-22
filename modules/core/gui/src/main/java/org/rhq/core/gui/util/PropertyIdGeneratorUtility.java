@@ -74,13 +74,7 @@ public class PropertyIdGeneratorUtility {
             throw new IllegalArgumentException("Property parameter cannot be null.");
         }
 
-        LinkedList<Property> propertyHierarchy = new LinkedList<Property>();
-        Property parentProperty = property;
-        while ((parentProperty = getParentProperty(parentProperty)) != null) {
-            propertyHierarchy.addFirst(parentProperty);
-        }
-
-        propertyHierarchy.add(property);
+        LinkedList<Property> propertyHierarchy = getPropertyHierarchy(property);
 
         StringBuilder identifier = new StringBuilder(ID_PREFIX);
 
@@ -113,6 +107,18 @@ public class PropertyIdGeneratorUtility {
         }
 
         return identifier.toString();
+    }
+
+    private static LinkedList<Property> getPropertyHierarchy(Property property)
+    {
+        LinkedList<Property> propertyHierarchy = new LinkedList<Property>();
+        Property parentProperty = property;
+        while ((parentProperty = getParentProperty(parentProperty)) != null) {
+            propertyHierarchy.addFirst(parentProperty);
+        }
+
+        propertyHierarchy.add(property);
+        return propertyHierarchy;
     }
 
     public static String getIdentifier(@NotNull

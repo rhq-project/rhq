@@ -16,23 +16,31 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.configuration.test;
+package org.rhq.core.gui.configuration.propset;
 
-import javax.faces.application.FacesMessage;
-import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.common.Outcomes;
+import org.rhq.core.domain.configuration.Configuration;
 
 /**
  * @author Ian Springer
  */
-public class EditTestConfigurationUIBean extends AbstractTestConfigurationUIBean {
-    public static final String MANAGED_BEAN_NAME = "EditTestConfigurationUIBean";
-    protected static final String SUCCESS_OUTCOME = "success";
-    protected static final String FAILURE_OUTCOME = "failure";
+public class ConfigurationGroupMemberInfo
+{
+    private String label;
+    private Configuration configuration;
 
-    public String updateConfiguration() {
-        // TODO (low priority): Persist the test config somewhere.
-        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration updated.");
-        return Outcomes.SUCCESS;
+    public ConfigurationGroupMemberInfo(String label, Configuration configuration)
+    {
+        this.label = label;
+        this.configuration = configuration;
+    }
+
+    public String getLabel()
+    {
+        return this.label;
+    }
+
+    public Configuration getConfiguration()
+    {
+        return this.configuration;
     }
 }

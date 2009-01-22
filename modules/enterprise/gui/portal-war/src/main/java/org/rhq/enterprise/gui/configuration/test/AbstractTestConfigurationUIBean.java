@@ -20,13 +20,15 @@ package org.rhq.enterprise.gui.configuration.test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.UUID;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.gui.configuration.propset.ConfigurationGroupMemberInfo;
+import org.rhq.enterprise.gui.common.Outcomes;
 
 /**
  * @author Ian Springer
@@ -34,17 +36,28 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 public abstract class AbstractTestConfigurationUIBean {
     private ConfigurationDefinition configurationDefinition;
     private Configuration configuration;
-    private Set<Configuration> configurations;
     private List<Property> properties;
+    private List<ConfigurationGroupMemberInfo> memberInfos;
 
     protected AbstractTestConfigurationUIBean()
     {
         this.configurationDefinition = TestConfigurationFactory.createConfigurationDefinition();
         this.configuration = TestConfigurationFactory.createConfiguration();
-        for (int i = 0; i < 10; i++)
-            this.configurations.add(this.configuration.deepCopy(true));
+        this.memberInfos = new ArrayList(10);
+        for (int i = 0; i < 10; i++) {
+            Configuration configuration = this.configuration.deepCopy(true);
+            configuration.setId(i + 1);
+            configuration.getSimple("String1").setStringValue(UUID.randomUUID().toString());
+            ConfigurationGroupMemberInfo memberInfo =
+                    new ConfigurationGroupMemberInfo("config w/ id" + configuration.getId(), configuration);
+            this.memberInfos.add(memberInfo);
+        }
         // Unwrap the Hibernate proxy objects, which Facelets appears not to be able to handle.
         this.properties = new ArrayList<Property>(this.configuration.getProperties());
+    }
+
+    public String finish() {
+        return Outcomes.SUCCESS;
     }
 
     @Nullable
@@ -67,14 +80,14 @@ public abstract class AbstractTestConfigurationUIBean {
         this.configuration = configuration;
     }
 
-    public Set<Configuration> getConfigurations()
+    public List<ConfigurationGroupMemberInfo> getMemberInfos()
     {
-        return configurations;
+        return memberInfos;
     }
 
-    public void setConfigurations(Set<Configuration> configurations)
+    public void setMemberInfos(List<ConfigurationGroupMemberInfo> memberInfos)
     {
-        this.configurations = configurations;
+        this.memberInfos = memberInfos;
     }
 
     public List<Property> getProperties()

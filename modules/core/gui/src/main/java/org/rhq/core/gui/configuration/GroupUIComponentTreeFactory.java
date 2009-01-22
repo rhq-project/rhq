@@ -26,8 +26,9 @@ import java.util.Collection;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.gui.util.FacesExpressionUtility;
 
-/**
+ /**
  * A factory that generates a tree of JSF components that depicts a given collection of JON {@link Property}s from a
  * specified property group.
  *
@@ -44,7 +45,7 @@ public class GroupUIComponentTreeFactory extends AbstractPropertyBagUIComponentT
     private static String createValueExpressionFormat(String configurationExpressionString) {
         StringBuilder expression = new StringBuilder();
         expression.append("#{");
-        expression.append(unwrapExpressionString(configurationExpressionString));
+        expression.append(FacesExpressionUtility.unwrapExpressionString(configurationExpressionString));
         expression.append(".");
         expression.append(PROPERTY_MAP_VALUE_ACCESSOR_SUFFIX);
         expression.append("['%s']."); // property name

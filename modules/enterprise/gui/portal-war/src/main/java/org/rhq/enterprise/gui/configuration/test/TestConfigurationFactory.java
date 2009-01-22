@@ -45,17 +45,11 @@ public abstract class TestConfigurationFactory {
 
         PropertyDefinitionSimple simplePropDef;
 
-        PropertyDefinitionSimple stringPropDef1 = new PropertyDefinitionSimple("String1",
-            "a required summary String simple prop", true, PropertySimpleType.STRING);
-        stringPropDef1.setDisplayName(stringPropDef1.getName());
-        stringPropDef1.setSummary(true);
-        propertyDefinitions.put(stringPropDef1.getName(), stringPropDef1);
+        simplePropDef = createStringPropDef1();
+        propertyDefinitions.put(simplePropDef.getName(), simplePropDef);
 
-        PropertyDefinitionSimple stringPropDef2 = new PropertyDefinitionSimple("String2",
-            "a read-only String simple prop", false, PropertySimpleType.STRING);
-        stringPropDef2.setDisplayName(stringPropDef2.getName());
-        stringPropDef2.setReadOnly(true);
-        propertyDefinitions.put(stringPropDef2.getName(), stringPropDef2);
+        simplePropDef = createStringPropDef2();
+        propertyDefinitions.put(simplePropDef.getName(), simplePropDef);
 
         simplePropDef = new PropertyDefinitionSimple("LongString", "a Long String simple prop", false,
             PropertySimpleType.LONG_STRING);
@@ -73,11 +67,8 @@ public abstract class TestConfigurationFactory {
         propertyDefinitions.put(simplePropDef.getName(), simplePropDef);
         simplePropDef.setRequired(true);
 
-        PropertyDefinitionSimple integerPropDef = new PropertyDefinitionSimple("Integer",
-            "a required summary Integer simple prop", true, PropertySimpleType.INTEGER);
-        integerPropDef.setDisplayName(integerPropDef.getName());
-        integerPropDef.setSummary(true);
-        propertyDefinitions.put(integerPropDef.getName(), integerPropDef);
+        simplePropDef = createIntegerPropDef();
+        propertyDefinitions.put(simplePropDef.getName(), simplePropDef);
 
         simplePropDef = new PropertyDefinitionSimple("Float", "a Float simple prop", false, PropertySimpleType.FLOAT);
         simplePropDef.setDisplayName(simplePropDef.getName());
@@ -106,8 +97,10 @@ public abstract class TestConfigurationFactory {
         simplePropDef.setEnumeratedValues(propDefEnums, false);
         propertyDefinitions.put(simplePropDef.getName(), simplePropDef);
 
-        PropertyDefinitionMap mapPropDef = new PropertyDefinitionMap("MapOfSimples", "a map of simples", false,
-            stringPropDef1, stringPropDef2, integerPropDef);
+        PropertyDefinitionMap mapPropDef = new PropertyDefinitionMap("MapOfSimples", "a map of simples", false);
+        mapPropDef.put(createStringPropDef1());
+        mapPropDef.put(createStringPropDef2());
+        mapPropDef.put(createIntegerPropDef());
         mapPropDef.setDisplayName(mapPropDef.getName());
         propertyDefinitions.put(mapPropDef.getName(), mapPropDef);
 
@@ -128,8 +121,14 @@ public abstract class TestConfigurationFactory {
         listOfSimplesPropDef.setDisplayName(listOfSimplesPropDef.getName());
         propertyDefinitions.put(listOfSimplesPropDef.getName(), listOfSimplesPropDef);
 
+        PropertyDefinitionMap mapInListPropDef = new PropertyDefinitionMap("MapOfSimplesInList", "a map of simples in a list", false);
+        mapInListPropDef.put(createStringPropDef1());
+        mapInListPropDef.put(createStringPropDef2());
+        mapInListPropDef.put(createIntegerPropDef());
+        mapInListPropDef.setDisplayName(mapInListPropDef.getName());
+
         PropertyDefinitionList listPropDef = new PropertyDefinitionList("ListOfMaps", "a list of maps", true,
-            mapPropDef);
+            mapInListPropDef);
         listPropDef.setDisplayName(listPropDef.getName());
         propertyDefinitions.put(listPropDef.getName(), listPropDef);
 
@@ -248,4 +247,34 @@ public abstract class TestConfigurationFactory {
 
         return configuration;
     }
+
+    private static PropertyDefinitionSimple createStringPropDef1()
+    {
+        PropertyDefinitionSimple stringPropDef1;
+        stringPropDef1 = new PropertyDefinitionSimple("String1",
+            "a required summary String simple prop", true, PropertySimpleType.STRING);
+        stringPropDef1.setDisplayName(stringPropDef1.getName());
+        stringPropDef1.setSummary(true);
+        return stringPropDef1;
+    }
+
+    private static PropertyDefinitionSimple createStringPropDef2()
+    {
+        PropertyDefinitionSimple stringPropDef2;
+        stringPropDef2 = new PropertyDefinitionSimple("String2",
+            "a read-only String simple prop", false, PropertySimpleType.STRING);
+        stringPropDef2.setDisplayName(stringPropDef2.getName());
+        stringPropDef2.setReadOnly(true);
+        return stringPropDef2;
+    }
+
+    private static PropertyDefinitionSimple createIntegerPropDef()
+    {
+        PropertyDefinitionSimple integerPropDef;
+        integerPropDef = new PropertyDefinitionSimple("Integer",
+            "a required summary Integer simple prop", true, PropertySimpleType.INTEGER);
+        integerPropDef.setDisplayName(integerPropDef.getName());
+        integerPropDef.setSummary(true);
+        return integerPropDef;
+    }    
 }

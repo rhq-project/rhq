@@ -69,7 +69,7 @@
       <from-view-id>/rhq/test/config/edit-map.xhtml</from-view-id>
 
       <navigation-case>
-         <from-action>#{EditTestConfigurationUIBean.updateConfiguration}</from-action>
+         <from-action>#{EditTestConfigurationUIBean.finish}</from-action>
          <to-view-id>/rhq/test/config/edit-config.xhtml</to-view-id>
          <redirect/>
       </navigation-case>
@@ -99,4 +99,16 @@
 
    </navigation-rule>
 
+    <navigation-rule>
+
+       <from-view-id>/rhq/test/config/props.xhtml</from-view-id>
+
+       <navigation-case>
+          <from-action>#{EditTestConfigurationUIBean.finish}</from-action>
+          <to-view-id>/rhq/test/config/edit-config.xhtml</to-view-id>
+          <redirect/>
+       </navigation-case>
+
+    </navigation-rule>
+    
 </faces-config>

@@ -23,4 +23,23 @@
       </renderer>
    </render-kit>
 
+    <component>
+       <component-type>org.rhq.PropertySet</component-type>
+       <component-class>org.rhq.core.gui.configuration.propset.PropertySetComponent</component-class>
+
+       <component-extension>
+          <component-family>org.rhq.PropertySet</component-family>
+          <renderer-type>org.rhq.PropertySet</renderer-type>
+       </component-extension>
+    </component>
+
+    <render-kit>
+       <renderer>
+          <description>renderer for a PropertySet component</description>
+          <component-family>org.rhq.PropertySet</component-family>
+          <renderer-type>org.rhq.PropertySet</renderer-type>
+          <renderer-class>org.rhq.core.gui.configuration.propset.PropertySetRenderer</renderer-class>
+       </renderer>
+    </render-kit>
+
 </faces-config>

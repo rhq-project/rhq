@@ -140,9 +140,8 @@ public class ConfigUIComponent extends UIComponentBase implements FacesComponent
         this.listIndex = listIndex;
     }
 
-    public String getConfigurationExpressionString() {
-        //noinspection deprecation
-        return getValueBinding(CONFIGURATION_ATTRIBUTE).getExpressionString();
+    public String getConfigurationExpressionString() {        
+        return getValueExpression(CONFIGURATION_ATTRIBUTE).getExpressionString();
     }
 
     public String getNullConfigurationStyle() {

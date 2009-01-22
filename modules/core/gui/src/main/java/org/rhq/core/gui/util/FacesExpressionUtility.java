@@ -66,6 +66,10 @@ public abstract class FacesExpressionUtility {
             expectedParamTypes);
     }
 
+    public static String unwrapExpressionString(String configurationExpressionString) {
+        return configurationExpressionString.substring(2, configurationExpressionString.length() - 1);
+    }
+
     private static ExpressionFactory getExpressionFactory() {
         ExpressionFactory expressionFactory = FacesContext.getCurrentInstance().getApplication().getExpressionFactory();
         return expressionFactory;

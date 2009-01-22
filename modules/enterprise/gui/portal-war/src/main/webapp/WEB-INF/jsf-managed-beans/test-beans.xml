@@ -5,12 +5,6 @@
               xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
 
    <managed-bean>
-      <managed-bean-name>ListResourcesPageBean</managed-bean-name>
-      <managed-bean-class>org.jboss.on.enterprise.ui.test.richfaces.ListResourcesPageBean</managed-bean-class>
-      <managed-bean-scope>session</managed-bean-scope>
-   </managed-bean>
-
-   <managed-bean>
       <managed-bean-name>ViewTestConfigurationUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.configuration.test.ViewTestConfigurationUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>

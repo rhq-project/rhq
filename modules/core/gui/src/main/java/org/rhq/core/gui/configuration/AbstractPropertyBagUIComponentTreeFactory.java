@@ -22,51 +22,41 @@
   */
 package org.rhq.core.gui.configuration;
 
-import java.util.Collection;
-import java.util.List;
+ import java.util.Collection;
 
-import javax.el.MethodExpression;
-import javax.el.ValueExpression;
-import javax.faces.application.FacesMessage;
-import javax.faces.component.UIComponent;
-import javax.faces.component.UIInput;
-import javax.faces.component.UIPanel;
-import javax.faces.component.UIParameter;
-import javax.faces.component.UISelectItem;
-import javax.faces.component.UISelectOne;
-import javax.faces.component.html.HtmlCommandLink;
-import javax.faces.component.html.HtmlInputSecret;
-import javax.faces.component.html.HtmlInputText;
-import javax.faces.component.html.HtmlInputTextarea;
-import javax.faces.component.html.HtmlPanelGrid;
-import javax.faces.component.html.HtmlPanelGroup;
-import javax.faces.component.html.HtmlSelectBooleanCheckbox;
-import javax.faces.component.html.HtmlSelectOneMenu;
-import javax.faces.component.html.HtmlSelectOneRadio;
-import javax.faces.context.FacesContext;
-import javax.faces.validator.ValidatorException;
+ import javax.el.MethodExpression;
+ import javax.el.ValueExpression;
+ import javax.faces.application.FacesMessage;
+ import javax.faces.component.UIComponent;
+ import javax.faces.component.UIInput;
+ import javax.faces.component.UIPanel;
+ import javax.faces.component.UIParameter;
+ import javax.faces.component.html.HtmlCommandLink;
+ import javax.faces.component.html.HtmlPanelGrid;
+ import javax.faces.component.html.HtmlPanelGroup;
+ import javax.faces.component.html.HtmlSelectBooleanCheckbox;
+ import javax.faces.context.FacesContext;
+ import javax.faces.validator.ValidatorException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
-
-import org.rhq.core.domain.configuration.AbstractPropertyMap;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.gui.RequestParameterNameConstants;
-import org.rhq.core.gui.converter.PropertySimpleValueConverter;
-import org.rhq.core.gui.util.FacesComponentUtility;
-import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.core.gui.util.FacesExpressionUtility;
-import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
-import org.rhq.core.gui.validator.PropertySimpleValueValidator;
+ import org.apache.commons.logging.Log;
+ import org.apache.commons.logging.LogFactory;
+ import org.jetbrains.annotations.NotNull;
+ import org.rhq.core.domain.configuration.AbstractPropertyMap;
+ import org.rhq.core.domain.configuration.Property;
+ import org.rhq.core.domain.configuration.PropertyList;
+ import org.rhq.core.domain.configuration.PropertyMap;
+ import org.rhq.core.domain.configuration.PropertySimple;
+ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
+ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+ import org.rhq.core.gui.RequestParameterNameConstants;
+ import org.rhq.core.gui.configuration.helper.PropertySimpleRenderingUtility;
+ import org.rhq.core.gui.util.FacesComponentUtility;
+ import org.rhq.core.gui.util.FacesContextUtility;
+ import org.rhq.core.gui.util.FacesExpressionUtility;
+ import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
+ import org.rhq.core.gui.validator.PropertySimpleValueValidator;
 
 /**
  * A factory that generates a tree of JSF components that depicts a given collection of JON {@link Property}s.
@@ -129,16 +119,6 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private static final String BUTTON_SMALL_STYLE_CLASS = "buttonsmall";
     private static final String ROW_ODD_STYLE_CLASS = "OddRow";
     private static final String ROW_EVEN_STYLE_CLASS = "EvenRow";
-
-    private static final String INPUT_TEXT_WIDTH_STYLE = "width:185px;";
-    private static final String INPUT_TEXT_WIDTH_STYLE_WITH_UNITS = "width:165px;";
-    private static final int INPUT_TEXT_COMPONENT_WIDTH = 30;
-    private static final int INPUT_TEXTAREA_COMPONENT_ROWS = 4;
-
-    /**
-     * Enums with a size equal to or greater than this threshold will be rendered as list boxes, rather than radios.
-     */
-    private static final int LISTBOX_THRESHOLD_ENUM_SIZE = 6;
 
     private ConfigUIComponent config;
     private Collection<PropertyDefinition> propertyDefinitions;
@@ -320,7 +300,11 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         FacesComponentUtility.addVerbatimText(parent, "\n\n<tr class='" + rowStyleClass + "'>");
 
         // generate some elements ahead of time, so that dependent
-        UIInput input = createInputForSimpleProperty(propertyDefinitionSimple);
+        PropertySimple propertySimple = this.propertyMap.getSimple(propertyDefinitionSimple.getName());
+        ValueExpression propertyValueExpression = createPropertyValueExpression(propertySimple.getName(),
+                this.valueExpressionFormat);
+        UIInput input = PropertySimpleRenderingUtility.createInputForSimpleProperty(propertyDefinitionSimple,
+                propertySimple, propertyValueExpression, getListIndex(), this.config.isReadOnly());
         HtmlSelectBooleanCheckbox unsetCheckbox = FacesComponentUtility.createComponent(
             HtmlSelectBooleanCheckbox.class, this.config);
         // done generating
@@ -373,7 +357,8 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         FacesComponentUtility.addVerbatimText(panel, "</td>");
 
         FacesComponentUtility.addVerbatimText(panel, "<td class='" + OPENMAP_PROPERTY_VALUE_CELL_STYLE_CLASS + "'>");
-        UIInput input = createInputForSimpleProperty(propertySimple);
+        UIInput input = PropertySimpleRenderingUtility.createInputForSimpleProperty(propertySimple,
+                this.valueExpressionFormat, this.config.isReadOnly());
         panel.getChildren().add(input);
         FacesComponentUtility.addVerbatimText(panel, "</td>");
 
@@ -730,104 +715,8 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         return input;
     }
 
-    @NotNull
-    private UIInput createInputForSimpleProperty(PropertyDefinitionSimple propertyDefinitionSimple) {
-        UIInput input;
-        switch (propertyDefinitionSimple.getType()) {
-        case BOOLEAN: {
-            input = createInputForBooleanProperty();
-            break;
-        }
 
-        case LONG_STRING: {
-            input = createInputForLongStringProperty();
-            break;
-        }
 
-        case PASSWORD: {
-            input = createInputForPasswordProperty();
-            break;
-        }
-
-        default: {
-            if (isEnum(propertyDefinitionSimple)) {
-                input = createInputForEnumProperty(propertyDefinitionSimple);
-            } else {
-                input = createInputForStringProperty();
-            }
-
-            String propertyValue = getSimplePropertyValue(propertyDefinitionSimple);
-            addTitleAttribute(input, propertyValue);
-        }
-        }
-
-        boolean isUnset = isUnset(propertyDefinitionSimple);
-        boolean isReadOnly = isReadOnly(propertyDefinitionSimple);
-
-        // Find the actual property corresponding to this property def, and use that to create the component id.
-        Property property = this.propertyMap.get(propertyDefinitionSimple.getName());
-        if (property != null) {
-            String propertyId = PropertyIdGeneratorUtility.getIdentifier(property, getListIndex());
-            input.setId(propertyId);
-        }
-
-        setInputValueExpression(input, propertyDefinitionSimple.getName());
-
-        // It's important to set the label attribute, since we include it in our validation error messages.
-        input.getAttributes().put("label", propertyDefinitionSimple.getDisplayName());
-
-        // The below adds an inert attribute to the input that contains the name of the associated property - useful
-        // for debugging (i.e. when viewing source of the page or using a JavaScript debugger).
-        input.getAttributes().put("ondblclick", "//" + propertyDefinitionSimple.getName());
-
-        FacesComponentUtility.setUnset(input, isUnset);
-        FacesComponentUtility.setReadonly(input, isReadOnly);
-
-        addValidatorsAndConverter(input, propertyDefinitionSimple);
-
-        return input;
-    }
-
-    @NotNull
-    private UIInput createInputForSimpleProperty(PropertySimple propertySimple) {
-        UIInput input = createInputForStringProperty();
-        setInputValueExpression(input, propertySimple.getName());
-        FacesComponentUtility.setReadonly(input, this.config.isReadOnly());
-        addTitleAttribute(input, propertySimple.getStringValue());
-        return input;
-    }
-
-    private void addTitleAttribute(UIInput input, String propertyValue) {
-        if (input instanceof HtmlInputText) {
-            //         TODO: will this still work now that we use the style def'n "width:185px;" to define the input field width?
-            // For text inputs with values that are too long to fit in the input text field, add a "title" attribute set to
-            // the value, so the user can see the untruncated value via a tooltip.
-            // (see http://jira.jboss.com/jira/browse/JBNADM-1608)
-            HtmlInputText inputText = (HtmlInputText) input;
-            if ((propertyValue != null) && (propertyValue.length() > INPUT_TEXT_COMPONENT_WIDTH)) {
-                inputText.setTitle(propertyValue);
-            }
-
-            inputText.setOnchange("setInputTitle(this)");
-        }
-    }
-
-    private String getSimplePropertyValue(PropertyDefinitionSimple propertyDefinitionSimple) {
-        String propertyValueExpression = String.format(this.valueExpressionFormat, propertyDefinitionSimple.getName());
-        return FacesExpressionUtility.getValue(propertyValueExpression, String.class);
-    }
-
-    private boolean isEnum(PropertyDefinitionSimple simplePropertyDefinition) {
-        return !simplePropertyDefinition.getEnumeratedValues().isEmpty();
-    }
-
-    private void addValidatorsAndConverter(UIInput input, PropertyDefinitionSimple propertyDefinitionSimple) {
-        if (!this.config.isReadOnly()) {
-            input.setRequired(propertyDefinitionSimple.isRequired());
-            input.addValidator(new PropertySimpleValueValidator(propertyDefinitionSimple));
-            input.setConverter(new PropertySimpleValueConverter());
-        }
-    }
 
     private void addErrorMessages(UIComponent parent, UIInput input, PropertyDefinitionSimple propertyDefinitionSimple) {
         addDebug(parent, true, ".addErrorMessages()");
@@ -954,91 +843,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         }
     }
 
-    private UIInput createInputForBooleanProperty() {
-        // <h:selectOneRadio id="#{identifier}" value="#{beanValue}" layout="pageDirection" styleClass="radiolabels">
-        //    <f:selectItems value="#{itemValues}"></f:selectItems>
-        // </h:selectOneRadio>
-        HtmlSelectOneRadio selectOneRadio = FacesComponentUtility
-            .createComponent(HtmlSelectOneRadio.class, this.config);
-        selectOneRadio.setLayout("lineDirection");
-        // TODO: We may want to use CSS to get less space between the radio buttons
-        //      (see http://jira.jboss.com/jira/browse/JBMANCON-21).
 
-        UISelectItem selectItem = FacesComponentUtility.createComponent(UISelectItem.class, this.config);
-        selectItem.setItemLabel("Yes");
-        selectItem.setItemValue("true");
-        selectOneRadio.getChildren().add(selectItem);
-        selectItem = FacesComponentUtility.createComponent(UISelectItem.class, this.config);
-        selectItem.setItemLabel("No");
-        selectItem.setItemValue("false");
-        selectOneRadio.getChildren().add(selectItem);
-        return selectOneRadio;
-    }
-
-    // <h:selectOneRadio id="#{identifier}" value="#{beanValue}" layout="pageDirection" styleClass="radiolabels">
-    //    <f:selectItems value="#{itemValues}"></f:selectItems>
-    // </h:selectOneRadio>
-    private UIInput createInputForEnumProperty(PropertyDefinitionSimple propertyDefinitionSimple) {
-        UISelectOne selectOne;
-        if (propertyDefinitionSimple.getEnumeratedValues().size() >= LISTBOX_THRESHOLD_ENUM_SIZE) {
-            // Use a drop down menu for larger enums...
-            HtmlSelectOneMenu menu = FacesComponentUtility.createComponent(HtmlSelectOneMenu.class, this.config);
-
-            // TODO: Use CSS to set the width of the menu.
-            selectOne = menu;
-        } else {
-            // ...and a radio for smaller ones.
-            HtmlSelectOneRadio radio = FacesComponentUtility.createComponent(HtmlSelectOneRadio.class, this.config);
-            radio.setLayout("pageDirection");
-
-            // TODO: We may want to use CSS to get less space between the radio buttons
-            //      (see http://jira.jboss.com/jira/browse/JBMANCON-21).
-            selectOne = radio;
-        }
-
-        List<PropertyDefinitionEnumeration> options = propertyDefinitionSimple.getEnumeratedValues();
-        for (PropertyDefinitionEnumeration option : options) {
-            UISelectItem selectItem = FacesComponentUtility.createComponent(UISelectItem.class, this.config);
-            selectItem.setItemLabel(option.getName());
-            selectItem.setItemValue(option.getValue());
-            selectOne.getChildren().add(selectItem);
-        }
-
-        return selectOne;
-    }
-
-    private UIInput createInputForStringProperty() {
-        HtmlInputText inputText = FacesComponentUtility.createComponent(HtmlInputText.class, this.config);
-
-        //TODO: check if this has units, then apply the correct style
-        inputText.setStyle(INPUT_TEXT_WIDTH_STYLE);
-        //      inputText.setStyle(INPUT_TEXT_WIDTH_STYLE_WITH_UNITS);
-        inputText.setMaxlength(PropertySimple.MAX_VALUE_LENGTH);
-
-        // Disable browser auto-completion.
-        inputText.setAutocomplete("off");
-        return inputText;
-    }
-
-    private UIInput createInputForPasswordProperty() {
-        HtmlInputSecret inputSecret = FacesComponentUtility.createComponent(HtmlInputSecret.class, this.config);
-        inputSecret.setStyle(INPUT_TEXT_WIDTH_STYLE);
-        inputSecret.setMaxlength(PropertySimple.MAX_VALUE_LENGTH);
-
-        // TODO: Remove the below line, as it's not secure, and improve support for displaying/validating password fields.
-        inputSecret.setRedisplay(true);
-
-        // Disable browser auto-completion.
-        inputSecret.setAutocomplete("off");
-        return inputSecret;
-    }
-
-    private UIInput createInputForLongStringProperty() {
-        HtmlInputTextarea inputTextarea = FacesComponentUtility.createComponent(HtmlInputTextarea.class, this.config);
-        inputTextarea.setRows(INPUT_TEXTAREA_COMPONENT_ROWS);
-        inputTextarea.setStyle(INPUT_TEXT_WIDTH_STYLE);
-        return inputTextarea;
-    }
 
     /**
      * Binds the value of the specified UIInput to an EL expression corresponding to the Configuration property's
@@ -1049,19 +854,6 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         // e.g.: #{configuration.simpleProperties['useJavaContext'].override}
         String expression = String.format(this.overrideExpressionFormat, propertyName);
         ValueExpression valueExpression = FacesExpressionUtility.createValueExpression(expression, Boolean.class);
-        input.setValueExpression("value", valueExpression);
-    }
-
-    /**
-     * Binds the value of the specified UIInput to an EL expression corresponding to the Configuration property with the
-     * specified name.
-     */
-    // TODO: Add support for properties inside lists.
-    @SuppressWarnings( { "JavaDoc" })
-    private void setInputValueExpression(UIInput input, String propertyName) {
-        // e.g.: #{configuration.simpleProperties['useJavaContext'].stringValue}
-        String expression = String.format(this.valueExpressionFormat, propertyName);
-        ValueExpression valueExpression = FacesExpressionUtility.createValueExpression(expression, String.class);
         input.setValueExpression("value", valueExpression);
     }
 
@@ -1103,19 +895,10 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         return isInvalidRequiredProperty;
     }
 
-    private boolean isUnset(PropertyDefinition propertyDefinition) {
-        if (propertyDefinition instanceof PropertyDefinitionSimple) {
-            return !propertyDefinition.isRequired()
-                && ((this.propertyMap.get(propertyDefinition.getName()) == null) || (this.propertyMap.getSimple(
-                    propertyDefinition.getName()).getStringValue() == null));
-        } else {
-            // For now, maps and lists cannot be unset (doesn't make much sense).
-            return false;
-        }
-    }
-
-    static String unwrapExpressionString(String configurationExpressionString) {
-        return configurationExpressionString.substring(2, configurationExpressionString.length() - 1);
+    private boolean isUnset(PropertyDefinitionSimple propertyDefinitionSimple) {
+        return !propertyDefinitionSimple.isRequired()
+            && ((this.propertyMap.get(propertyDefinitionSimple.getName()) == null) || (this.propertyMap.getSimple(
+                propertyDefinitionSimple.getName()).getStringValue() == null));
     }
 
     /**
@@ -1136,4 +919,17 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             FacesComponentUtility.addVerbatimText(component, msg);
         }
     }
+
+    /**
+     * Binds the value of the specified UIInput to an EL expression corresponding to the Configuration property with the
+     * specified name.
+     */
+    @SuppressWarnings( { "JavaDoc" })
+    private static ValueExpression createPropertyValueExpression(String propertyName, String valueExpressionFormat) {
+        // e.g.: #{configuration.simpleProperties['useJavaContext'].stringValue}
+        String expression = String.format(valueExpressionFormat, propertyName);
+        ValueExpression valueExpression = FacesExpressionUtility.createValueExpression(expression, String.class);
+        return valueExpression;
+    }
+
 }

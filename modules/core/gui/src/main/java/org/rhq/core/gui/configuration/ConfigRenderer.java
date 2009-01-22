@@ -114,45 +114,45 @@ public class ConfigRenderer extends Renderer {
      */
     @Override
     public void encodeBegin(FacesContext facesContext, UIComponent component) throws IOException {
-        ConfigUIComponent config = (ConfigUIComponent) component;
-
         // Only create the child components the first time around (i.e. once per JSF lifecycle).
-        if (config.getChildCount() == 0) {
-            if ((config.getConfigurationDefinition() == null)
-                || ((config.getConfiguration() != null) && config.getConfiguration().getMap().isEmpty())) {
-                String styleClass = (config.getNullConfigurationStyle() == null) ? "ErrorBlock" : config
-                    .getNullConfigurationStyle();
-                HtmlPanelGroup messagePanel = FacesComponentUtility.addBlockPanel(config, config, styleClass);
-                FacesComponentUtility.addVerbatimText(messagePanel, config.getNullConfigurationDefinitionMessage());
-                return;
-            }
-
-            if (config.getConfiguration() == null) {
-                HtmlPanelGroup messagePanel = FacesComponentUtility.addBlockPanel(config, config, "WarnBlock");
-                FacesComponentUtility.addVerbatimText(messagePanel, config.getNullConfigurationMessage());
-                return;
-            }
-
-            ConfigurationUtility.normalizeConfiguration(config.getConfiguration(), config.getConfigurationDefinition());
-
-            FacesComponentUtility.addVerbatimText(config, JAVASCRIPT_INCLUDES);
-            if (!config.isReadOnly()) {
-                addRequiredNotationsKey(config);
-            }
-
-            if (config.getListName() != null) {
-                if (config.getListIndex() == null) {
-                    // No index specified means we should add a new map to the list.
-                    config.setListIndex(addNewMap(config));
-                }
-
-                addListMemberProperty(config);
-            } else {
-                addConfiguration(config);
-            }
-
-            addInitInputsJavaScript(config, false);
+        if (component.getChildCount() != 0)
+            return;
+        
+        ConfigUIComponent config = (ConfigUIComponent) component;
+        if ((config.getConfigurationDefinition() == null)
+            || ((config.getConfiguration() != null) && config.getConfiguration().getMap().isEmpty())) {
+            String styleClass = (config.getNullConfigurationStyle() == null) ? "ErrorBlock" : config
+                .getNullConfigurationStyle();
+            HtmlPanelGroup messagePanel = FacesComponentUtility.addBlockPanel(config, config, styleClass);
+            FacesComponentUtility.addVerbatimText(messagePanel, config.getNullConfigurationDefinitionMessage());
+            return;
         }
+
+        if (config.getConfiguration() == null) {
+            HtmlPanelGroup messagePanel = FacesComponentUtility.addBlockPanel(config, config, "WarnBlock");
+            FacesComponentUtility.addVerbatimText(messagePanel, config.getNullConfigurationMessage());
+            return;
+        }
+
+        ConfigurationUtility.normalizeConfiguration(config.getConfiguration(), config.getConfigurationDefinition());
+
+        FacesComponentUtility.addVerbatimText(config, JAVASCRIPT_INCLUDES);
+        if (!config.isReadOnly()) {
+            addRequiredNotationsKey(config);
+        }
+
+        if (config.getListName() != null) {
+            if (config.getListIndex() == null) {
+                // No index specified means we should add a new map to the list.
+                config.setListIndex(addNewMap(config));
+            }
+
+            addListMemberProperty(config);
+        } else {
+            addConfiguration(config);
+        }
+
+        addInitInputsJavaScript(config, false);
     }
 
     private void addListMemberProperty(ConfigUIComponent config) {

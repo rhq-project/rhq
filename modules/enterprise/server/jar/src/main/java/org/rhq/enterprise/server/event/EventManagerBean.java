@@ -498,10 +498,12 @@ public class EventManagerBean implements EventManagerLocal {
         if (isFilled(source))
             query += " AND upper(evs.location) LIKE ? ";
         if (!isCountQuery) {
+            // add paging first as simple AND conditionals instead of using the nested query style
+            query = addPagingToQuery(query, pc);
             query = addSortingToQuery(query, pc);
             // NOTE: Add paging to the query last, since for Oracle, the whole query will become an inner SELECT in the
             //       paging SELECTs.
-            query = addPagingToQuery(query, pc);
+
         }
         return query;
     }
@@ -531,10 +533,14 @@ public class EventManagerBean implements EventManagerLocal {
         } else if (this.dbType instanceof OracleDatabaseType) {
             int minRowNum = pageControl.getStartRow() + 1;
             int maxRowNum = minRowNum + pageControl.getPageSize() - 1;
-            queryWithPaging.append("SELECT * FROM (SELECT /*+ FIRST_ROWS(n) */ allResults.*, rownum rnum FROM (");
-            queryWithPaging.append(query);
-            queryWithPaging.append(") allResults WHERE rownum <= ").append(maxRowNum).append(") WHERE rnum >= ")
-                .append(minRowNum);
+
+            queryWithPaging.append(" AND rownum <= ").append(maxRowNum);
+            queryWithPaging.append(" AND rownum >= ").append(minRowNum);
+
+            //            queryWithPaging.append("SELECT * FROM (SELECT /*+ FIRST_ROWS(n) */ allResults.*, rownum rnum FROM (");
+            //            queryWithPaging.append(query);
+            //            queryWithPaging.append(") allResults WHERE rownum <= ").append(maxRowNum).append(") WHERE rnum >= ")
+            //                .append(minRowNum);
         } else {
             throw new RuntimeException("Unknown database type : " + this.dbType);
         }

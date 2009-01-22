@@ -82,9 +82,12 @@ remove_pid_file ()
 }
 
 # -------------------------------
-# Get the location of this script
+# Get the location of this script.
+# Make sure we take into account the possibility $0
+# is a symlink to the real agent installation script.
 
-RHQ_AGENT_WRAPPER_BIN_DIR_PATH=`dirname "$0"`
+_DOLLARZERO=`readlink "$0" || echo "$0"`
+RHQ_AGENT_WRAPPER_BIN_DIR_PATH=`dirname "$_DOLLARZERO"`
 debug_wrapper_msg "RHQ_AGENT_WRAPPER_BIN_DIR_PATH=$RHQ_AGENT_WRAPPER_BIN_DIR_PATH"
 
 # -------------------------------
@@ -108,7 +111,7 @@ export RHQ_AGENT_CMDLINE_OPTS
 
 cd "$RHQ_AGENT_WRAPPER_BIN_DIR_PATH"
 _THIS_SCRIPT_DIR=`pwd`
-_THIS_SCRIPT="${_THIS_SCRIPT_DIR}"/`basename "$0"`
+_THIS_SCRIPT="${_THIS_SCRIPT_DIR}"/`basename "$_DOLLARZERO"`
 
 # -------------------------------
 # Figure out where the RHQ Agent's home directory is and cd to it.

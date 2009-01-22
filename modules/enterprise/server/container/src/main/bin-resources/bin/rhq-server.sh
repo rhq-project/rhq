@@ -174,7 +174,8 @@ esac
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_HOME" ]; then
-   RHQ_SERVER_HOME=`dirname "$0"`/..
+   _DOLLARZERO=`readlink "$0" || echo "$0"`
+   RHQ_SERVER_HOME=`dirname "$_DOLLARZERO"`/..
 else
    if [ ! -d "$RHQ_SERVER_HOME" ]; then
       echo "ERROR! RHQ_SERVER_HOME is not pointing to a valid directory"

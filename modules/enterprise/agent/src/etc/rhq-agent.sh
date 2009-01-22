@@ -48,7 +48,8 @@ esac
 # We also assume our custom environment script is located in the same
 # place as this script.
 # ----------------------------------------------------------------------
-RHQ_AGENT_BIN_DIR_PATH=`dirname "$0"`
+_DOLLARZERO=`readlink "$0" || echo "$0"`
+RHQ_AGENT_BIN_DIR_PATH=`dirname "$_DOLLARZERO"`
 
 if [ -f "${RHQ_AGENT_BIN_DIR_PATH}/rhq-agent-env.sh" ]; then
    debug_msg "Loading environment script: ${RHQ_AGENT_BIN_DIR_PATH}/rhq-agent-env.sh"

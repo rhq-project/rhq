@@ -40,7 +40,7 @@ import javax.persistence.Table;
                         "  AND o.id.scheduleId = :scheduleId "
                             ),
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE,
-                query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.name,sched.id,sum(o.oobCount),sum(o.oobFactor)) " +
+                query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.displayName,sched.id,sum(o.oobCount),sum(o.oobFactor)) " +
                         "FROM MeasurementOOB o "+
                         "LEFT JOIN o.schedule sched " +
                         "LEFT JOIN sched.definition def " +
@@ -49,7 +49,7 @@ import javax.persistence.Table;
                         "  AND o.id.scheduleId = sched.id " +
                         "  AND sched.definition = def " +
                         "  AND sched.resource = res " +
-                        "GROUP BY res.name, res.id, def.name, sched.id"
+                        "GROUP BY res.name, res.id, def.displayName, sched.id"
                             )
 })
 @Entity

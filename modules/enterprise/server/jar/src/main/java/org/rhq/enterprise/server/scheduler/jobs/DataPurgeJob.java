@@ -40,6 +40,7 @@ import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementCompressionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -115,7 +116,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeUnusedAlertDefinitions(LookupUtil.getAlertDefinitionManager());
         purgeMeasurementTraitData(LookupUtil.getMeasurementDataManager(), systemConfig);
         purgeAvailabilityData(LookupUtil.getAvailabilityManager(), systemConfig);
-        // TODO add purging of OOBs when we know when to do it.
+        purgeOOBData(LookupUtil.getOOBManager(),systemConfig);
     }
 
     private void purgeMeasurementTraitData(MeasurementDataManagerLocal measurementDataManager, Properties systemConfig) {
@@ -298,6 +299,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
     }
 
     private void calculateOOBs() {
+
         long timeStart = System.currentTimeMillis();
         LOG.info("Auto-calculation of OOBs starting");
         Subject overlord = LookupUtil.getSubjectManager().getOverlord() ;
@@ -305,4 +307,21 @@ public class DataPurgeJob extends AbstractStatefulJob {
         long duration = System.currentTimeMillis() - timeStart;
         LOG.info("Auto-claculation of OOBs completed in [" + duration + "]ms");
     }
+
+    private void purgeOOBData(MeasurementOOBManagerLocal oobManager, Properties systemConfig) {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Purging of old OOBs starting");
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord() ;
+        String dataSet = systemConfig.getProperty("CAM_BASELINE_DATASET", "259200000");
+
+        long newest;
+        if (dataSet!=null)
+            newest = Long.parseLong(dataSet); // Default 3 days is nothing found
+        else
+            newest = 259200000L;
+        oobManager.removeOldOOBs(overlord, newest);
+        long duration = System.currentTimeMillis() - timeStart;
+        LOG.info("Purging of old OOBs completed in [" + duration + "]ms");
+    }
+
 }

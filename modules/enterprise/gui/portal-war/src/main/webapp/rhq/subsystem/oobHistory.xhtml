@@ -1,0 +1,160 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition>
+
+      <h:form id="oobHistorySubsystemForm">
+
+            <rich:simpleTogglePanel switchType="client" label="Search Results">
+
+            <h:panelGrid columns="3" cellspacing="3">
+               <h:outputLabel for="resourceFilter" value="Resource Name Filter: " />
+               <h:inputText id="resourceFilter" value="#{SubsystemOperationHistoryUIBean.resourceFilter}"
+                            onkeypress="return ignoreEnterKey();"
+                            style="width: 300px;" />
+               <rich:spacer/>
+
+               <h:outputLabel for="parentFilter" value="Parent Name Filter: " />
+               <h:inputText id="parentFilter" value="#{SubsystemOperationHistoryUIBean.parentFilter}"
+                            onkeypress="return ignoreEnterKey();"
+                            style="width: 300px;" />
+               <rich:spacer/>
+
+               <h:outputLabel for="dateSubmittedFilter" value="Date Submitted Filter: " />
+               <rich:calendar id="dateSubmittedFilter" value="#{SubsystemOperationHistoryUIBean.dateSubmittedFilter}"
+                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
+                              showApplyButton="true"
+                              showWeeksBar="false"
+                              style="width: 300px;" />
+               <rich:spacer/>
+
+               <h:outputLabel for="dateCompletedFilter" value="Date Completed Filter: " />
+               <rich:calendar id="dateCompletedFilter" value="#{SubsystemOperationHistoryUIBean.dateCompletedFilter}"
+                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
+                              showApplyButton="true"
+                              showWeeksBar="false"
+                              style="width: 300px;" />
+               <rich:spacer/>
+
+               <h:outputLabel for="statusFilter" value="Status Filter: " />
+               <h:selectOneMenu id="statusFilter" value="#{SubsystemOperationHistoryUIBean.statusFilter}"
+                                style="width: 300px;">
+                   <f:selectItems value="#{SubsystemOperationHistoryUIBean.statusFilterItems}"/>
+               </h:selectOneMenu>
+               <a4j:commandButton value="GO" reRender="operationHistoryDataTable, operationHistoryDataTableScroller"
+                                  styleClass="buttonmed"/>
+            </h:panelGrid>
+
+            </rich:simpleTogglePanel>
+
+            <h:panelGrid columns="1" width="100%">
+
+            <ui:param name="oobHistoryDataModel" value="#{SubsystemOOBHistoryUIBean.dataModel}"/>
+            <rich:dataTable binding="#{SubsystemOOBHistoryUIBean.dataTable}"
+                            id="oobHistoryDataTable"
+                            rows="#{PageControl.SubsystemOOBHistory.pageSize}"
+                            value="#{oobHistoryDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="38%, 30%, 15%, 14% "
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="SubsystemOOBHistory" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedItems" />
+                  </f:facet>
+
+                  <onc:select name="selectedItems"
+                              value="#{item.scheduleId}" />
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="res.name">
+                        <h:outputText styleClass="headerText" value="Schedule" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="/resource/common/monitor/Visibility.do">
+                     <f:param name="m" value="#{item.definitionId}"/>
+                     <f:param name="mode" value="chartSingleMetricSingleResource"/>
+                     <f:param name="id" value="#{item.resourceId}" />
+                     <h:outputText value="#{item.scheduleName}" />
+                  </h:outputLink>
+               </rich:column>
+
+                <rich:column>
+                   <f:facet name="header">
+                      <onc:sortableColumnHeader sort="res.name">
+                         <h:outputText styleClass="headerText" value="Resource" />
+                      </onc:sortableColumnHeader>
+                   </f:facet>
+
+                   <h:outputLink value="/rhq/resource/inventory/view.xhtml">
+                      <f:param name="id" value="#{item.resourceId}" />
+                      <h:outputText value="#{item.resourceName}" />
+                   </h:outputLink>
+                </rich:column>
+
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="roh.createdTime">
+                        <h:outputText styleClass="headerText" value="Count" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.count}">
+                  </h:outputText>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="roh.modifiedTime">
+                        <h:outputText styleClass="headerText" value="Factor" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.factor}" >
+                  </h:outputText>
+               </rich:column>
+
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="#{oobHistoryDataTable.columns}" width="100%">
+
+                        <ui:param name="paginationDataTableName" value="oobHistoryDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{oobHistoryDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.SubsystemOOBHistory}"/>
+                        <ui:include src="/rhq/resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+      </h:form>
+
+</ui:composition>
+
+</html>

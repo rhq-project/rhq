@@ -33,15 +33,17 @@ public class MeasurementOOBComposite implements Serializable {
     private int resourceId;
     private String scheduleName;
     private int scheduleId;
+    private int definitionId;
     private int count;
     private int factor;
 
-    public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, long count,
+    public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, int definitionId, long count,
                                    long factor) {
         this.resourceName = resourceName;
         this.resourceId = resourceId;
         this.scheduleName = scheduleName;
         this.scheduleId = scheduleId;
+        this.definitionId = definitionId;
         this.count = (int) count;
         this.factor = (int) factor;
     }
@@ -66,6 +68,10 @@ public class MeasurementOOBComposite implements Serializable {
         return count;
     }
 
+    public int getDefinitionId() {
+        return definitionId;
+    }
+
     public int getFactor() {
         return factor;
     }
@@ -78,6 +84,7 @@ public class MeasurementOOBComposite implements Serializable {
         sb.append(", resourceId=").append(resourceId);
         sb.append(", scheduleName='").append(scheduleName).append('\'');
         sb.append(", scheduleId=").append(scheduleId);
+        sb.append(", definitionId=").append(definitionId);
         sb.append(", count=").append(count);
         sb.append(", factor=").append(factor);
         sb.append('}');

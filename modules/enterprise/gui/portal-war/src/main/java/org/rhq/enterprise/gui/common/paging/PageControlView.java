@@ -83,6 +83,7 @@ import org.rhq.enterprise.gui.operation.history.resource.ResourceOperationPendin
 import org.rhq.enterprise.gui.subsystem.SubsystemAlertDefinitionUIBean;
 import org.rhq.enterprise.gui.subsystem.SubsystemAlertHistoryUIBean;
 import org.rhq.enterprise.gui.subsystem.SubsystemConfigurationUpdateUIBean;
+import org.rhq.enterprise.gui.subsystem.SubsystemOOBHistoryUIBean;
 import org.rhq.enterprise.gui.subsystem.SubsystemOperationHistoryUIBean;
 
 /**
@@ -256,7 +257,9 @@ public enum PageControlView {
     /** */
     SubsystemAlertHistory(SubsystemAlertHistoryUIBean.class),
     /** */
-    SubsystemAlertDefinition(SubsystemAlertDefinitionUIBean.class);
+    SubsystemAlertDefinition(SubsystemAlertDefinitionUIBean.class),
+    /** */
+    SubsystemOOBHistory(SubsystemOOBHistoryUIBean.class);
 
     private Class<? extends PagedDataTableUIBean> beanClass;
     private boolean showAll = false;;

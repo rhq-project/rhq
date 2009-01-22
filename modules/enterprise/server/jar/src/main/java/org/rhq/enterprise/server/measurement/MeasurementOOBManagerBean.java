@@ -138,6 +138,8 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     public void removeOldOOBs(Subject subject, long end) {
 
+        if (log.isDebugEnabled())
+            log.debug("Removing OOBs older than " + new Date(end));
         Query q = entityManager.createQuery("DELETE FROM MeasurementOOB mo WHERE mo.id.timestamp < :time");
         q.setParameter("time",end);
         int count = q.executeUpdate();

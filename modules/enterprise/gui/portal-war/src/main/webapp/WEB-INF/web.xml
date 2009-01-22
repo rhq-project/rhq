@@ -4,11 +4,11 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
          version="2.5">
-    
+
    <display-name>RHQ</display-name>
 
    <!--=== Seam ===-->
-   
+
    <listener>
       <listener-class>org.jboss.seam.servlet.SeamListener</listener-class>
    </listener>
@@ -23,13 +23,13 @@
       <filter-name>Seam Filter</filter-name>
       <url-pattern>*.xhtml</url-pattern>
    </filter-mapping>
-    
+
    <!--=== JSF RI ===-->
-   
+
    <listener>
       <listener-class>com.sun.faces.config.ConfigureListener</listener-class>
    </listener>
- 
+
    <!-- flags for debugging during development -->
    <context-param>
       <param-name>com.sun.faces.validateXml</param-name>
@@ -54,7 +54,7 @@
    </servlet>
 
 
-   <!-- serve Facelets pages (*.xhtml) via the JSF servlet -->   
+   <!-- serve Facelets pages (*.xhtml) via the JSF servlet -->
    <servlet-mapping>
       <servlet-name>Faces Servlet</servlet-name>
       <url-pattern>*.xhtml</url-pattern>
@@ -69,13 +69,13 @@
       <param-name>javax.faces.DEFAULT_SUFFIX</param-name>
       <param-value>.xhtml</param-value>
    </context-param>
-   
+
    <!-- only need this if we want jsp's and facelets together, but we don't right now
    <context-param>
       <param-name>facelets.VIEW_MAPPINGS</param-name>
       <param-value>*.xhtml</param-value>
    </context-param>
-    --> 
+    -->
 
    <!-- see http://www.jroller.com/page/mert?entry=state_saving_method_client_side for an explanation of the below param -->
    <context-param>
@@ -113,20 +113,21 @@
          /WEB-INF/jsf-managed-beans/test-beans.xml,
 
          /WEB-INF/jsf-managed-beans-auto-group/inventory-beans.xml,
-         
+
          /WEB-INF/jsf-managed-beans-common/availability-beans.xml,
          /WEB-INF/jsf-managed-beans-common/event-beans.xml,
          /WEB-INF/jsf-managed-beans-common/measurement-beans.xml,
-         
+
          /WEB-INF/jsf-managed-beans-definition/group-definition-beans.xml,
 
          /WEB-INF/jsf-managed-beans-resource-group/inventory-beans.xml,
          /WEB-INF/jsf-managed-beans-resource-group/operation-beans.xml,
          /WEB-INF/jsf-managed-beans-resource-group/measurement-beans.xml,
-         
+
          /WEB-INF/jsf-managed-beans-subsystem/alert-beans.xml,
          /WEB-INF/jsf-managed-beans-subsystem/common-beans.xml,
          /WEB-INF/jsf-managed-beans-subsystem/configuration-beans.xml,
+         /WEB-INF/jsf-managed-beans-subsystem/measurement-beans.xml,
          /WEB-INF/jsf-managed-beans-subsystem/operation-beans.xml,
 
          /WEB-INF/jsf-navigation/alert-navigation.xml,
@@ -142,18 +143,18 @@
          /WEB-INF/jsf-navigation/test-navigation.xml,
 
          /WEB-INF/jsf-navigation-definition/group-definition-navigation.xml,
-         
+
          /WEB-INF/jsf-navigation-resource-group/events-navigation.xml,
          /WEB-INF/jsf-navigation-resource-group/inventory-navigation.xml,
          /WEB-INF/jsf-navigation-resource-group/operation-navigation.xml,
          /WEB-INF/jsf-navigation-resource-group/measurement-navigation.xml,
-         
+
          /WEB-INF/jsf-navigation-subsystem/tab-container-navigation.xml,
 
          /WEB-INF/jsf-converters/common-converters.xml,
          /WEB-INF/jsf-converters/content-converters.xml,
          /WEB-INF/jsf-converters/inventory-converters.xml
-         
+
       </param-value>
    </context-param>
 
@@ -172,12 +173,12 @@
    </context-param>
 
    <!--=== RichFaces ===-->
-   
+
     <!-- From Seam docs: If RichFaces is used in your project, Seam will install
          the RichFaces Ajax filter for you, making sure to install it before all
          other built-in filters. You don't need to install the RichFaces Ajax
          filter in web.xml yourself. -->
-   
+
    <!-- name of the CSS skin used by RichFaces (default value is "DEFAULT") -->
    <context-param>
       <param-name>org.richfaces.SKIN</param-name>
@@ -211,26 +212,26 @@
       <url-pattern>/rhq/resource/*</url-pattern>
    </filter-mapping>
 
-   
+
    <!-- The stuff needed for ajax4jsf / richfaces -->
-   <filter> 
-      <display-name>Ajax4jsf Filter</display-name> 
-      <filter-name>ajax4jsf</filter-name> 
-      <filter-class>org.ajax4jsf.Filter</filter-class> 
+   <filter>
+      <display-name>Ajax4jsf Filter</display-name>
+      <filter-name>ajax4jsf</filter-name>
+      <filter-class>org.ajax4jsf.Filter</filter-class>
       <init-param>
          <param-name>forceparser</param-name>
          <param-value>false</param-value>
-      </init-param> 
-   </filter> 
+      </init-param>
+   </filter>
 
-   <filter-mapping> 
-      <filter-name>ajax4jsf</filter-name> 
+   <filter-mapping>
+      <filter-name>ajax4jsf</filter-name>
       <servlet-name>Faces Servlet</servlet-name>
       <dispatcher>REQUEST</dispatcher>
       <dispatcher>FORWARD</dispatcher>
       <dispatcher>INCLUDE</dispatcher>
    </filter-mapping>
-   
+
    <!-- The Authentication Filter to support our custom login stuff -->
    <filter>
       <filter-name>Authentication-Filter</filter-name>

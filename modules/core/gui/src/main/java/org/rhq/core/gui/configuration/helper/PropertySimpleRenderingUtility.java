@@ -223,7 +223,7 @@ public class PropertySimpleRenderingUtility
 
     private static void addValidatorsAndConverter(UIInput input, PropertyDefinitionSimple propertyDefinitionSimple,
                                            boolean readOnly) {
-        if (readOnly) {
+        if (!readOnly) {
             input.setRequired(propertyDefinitionSimple.isRequired());
             input.addValidator(new PropertySimpleValueValidator(propertyDefinitionSimple));
             input.setConverter(new PropertySimpleValueConverter());
@@ -299,5 +299,5 @@ public class PropertySimpleRenderingUtility
             }
         }
         return isInvalidRequiredProperty;
-    }
+    }    
 }

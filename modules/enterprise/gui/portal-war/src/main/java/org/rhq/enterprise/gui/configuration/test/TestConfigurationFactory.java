@@ -132,8 +132,14 @@ public abstract class TestConfigurationFactory {
         listPropDef.setDisplayName(listPropDef.getName());
         propertyDefinitions.put(listPropDef.getName(), listPropDef);
 
+        PropertyDefinitionMap mapInReadOnlyListPropDef = new PropertyDefinitionMap("MapOfSimplesInReadOnlyList", "a map of simples in a list", false);
+        mapInReadOnlyListPropDef.put(createStringPropDef1());
+        mapInReadOnlyListPropDef.put(createStringPropDef2());
+        mapInReadOnlyListPropDef.put(createIntegerPropDef());
+        mapInReadOnlyListPropDef.setDisplayName(mapInReadOnlyListPropDef.getName());
+
         PropertyDefinitionList readOnlyListPropDef = new PropertyDefinitionList("ReadOnlyListOfMaps",
-            "a read-only list of maps", true, mapPropDef);
+            "a read-only list of maps", true, mapInReadOnlyListPropDef);
         readOnlyListPropDef.setDisplayName(readOnlyListPropDef.getName());
         readOnlyListPropDef.setReadOnly(true);
         propertyDefinitions.put(readOnlyListPropDef.getName(), readOnlyListPropDef);

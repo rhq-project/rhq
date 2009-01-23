@@ -38,6 +38,7 @@ public abstract class AbstractTestConfigurationUIBean {
     private Configuration configuration;
     private List<Property> properties;
     private List<ConfigurationGroupMemberInfo> memberInfos;
+    public static final String [] LABELS = new String[] { "AAA", "ZZZ", "BBB", "YYY","AAA", "AAA", "ZZZ", "ZZZ", "YYY", "BBB"};
 
     protected AbstractTestConfigurationUIBean()
     {
@@ -48,8 +49,10 @@ public abstract class AbstractTestConfigurationUIBean {
             Configuration configuration = this.configuration.deepCopy(true);
             configuration.setId(i + 1);
             configuration.getSimple("String1").setStringValue(UUID.randomUUID().toString());
+            configuration.getSimple("Integer").setStringValue(String.valueOf(i + 1));
+            configuration.getSimple("Boolean").setStringValue(String.valueOf(i % 2 == 0));
             ConfigurationGroupMemberInfo memberInfo =
-                    new ConfigurationGroupMemberInfo("config w/ id" + configuration.getId(), configuration);
+                    new ConfigurationGroupMemberInfo(LABELS[i], configuration);
             this.memberInfos.add(memberInfo);
         }
         // Unwrap the Hibernate proxy objects, which Facelets appears not to be able to handle.

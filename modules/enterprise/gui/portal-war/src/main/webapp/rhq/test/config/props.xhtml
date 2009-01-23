@@ -32,10 +32,48 @@ THIS TEXT WILL BE REMOVED.
 
         <h:form id="editTestConfigurationForm">
 
+            <h2>Simple (String)</h2>
+
             <onc:propSet
                     configurationGroupMemberInfos="#{EditTestConfigurationUIBean.memberInfos}"
                     propertyDefinition="#{EditTestConfigurationUIBean.configurationDefinition.propertyDefinitions['String1']}"
                     readOnly="false"/>
+
+            <h2>Simple (Integer)</h2>
+
+            <onc:propSet
+                    configurationGroupMemberInfos="#{EditTestConfigurationUIBean.memberInfos}"
+                    propertyDefinition="#{EditTestConfigurationUIBean.configurationDefinition.propertyDefinitions['Integer']}"
+                    readOnly="false"/>
+
+            <h2>Simple (Boolean)</h2>
+
+            <onc:propSet
+                    configurationGroupMemberInfos="#{EditTestConfigurationUIBean.memberInfos}"
+                    propertyDefinition="#{EditTestConfigurationUIBean.configurationDefinition.propertyDefinitions['Boolean']}"
+                    readOnly="false"/>
+
+            <h2>Simple (Enum)</h2>
+
+            <onc:propSet
+                    configurationGroupMemberInfos="#{EditTestConfigurationUIBean.memberInfos}"
+                    propertyDefinition="#{EditTestConfigurationUIBean.configurationDefinition.propertyDefinitions['StringEnum2']}"
+                    readOnly="false"/>
+
+            <h2>Simple (String) in Map</h2>
+
+            <onc:propSet
+                    configurationGroupMemberInfos="#{EditTestConfigurationUIBean.memberInfos}"
+                    propertyDefinition="#{EditTestConfigurationUIBean.configurationDefinition.propertyDefinitions['MapOfSimples'].propertyDefinitions['String1']}"
+                    readOnly="false"/>
+
+            <h2>Simple (String) in Map in List</h2>
+
+            <onc:propSet
+                    configurationGroupMemberInfos="#{EditTestConfigurationUIBean.memberInfos}"
+                    propertyDefinition="#{EditTestConfigurationUIBean.configurationDefinition.propertyDefinitions['ListOfMaps'].memberDefinition.propertyDefinitions['String1']}"
+                    readOnly="false"
+                    listIndex="0"/>
 
             <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
                 <h:commandButton type="submit" action="#{EditTestConfigurationUIBean.finish}"

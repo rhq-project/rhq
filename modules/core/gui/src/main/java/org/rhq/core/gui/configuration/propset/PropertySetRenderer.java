@@ -20,6 +20,9 @@ package org.rhq.core.gui.configuration.propset;
 
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import javax.el.ValueExpression;
 import javax.faces.component.UIComponent;
@@ -31,6 +34,7 @@ import javax.faces.render.Renderer;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.gui.configuration.helper.ConfigurationExpressionUtility;
 import org.rhq.core.gui.configuration.helper.PropertySimpleRenderingUtility;
 import org.rhq.core.gui.util.FacesComponentUtility;
@@ -74,29 +78,40 @@ public class PropertySetRenderer extends Renderer
         PropertySetComponent propertySetComponent = (PropertySetComponent) component;
         validateAttributes(propertySetComponent);
 
-        createDataTable(facesContext, propertySetComponent);
+        //createDataTable(facesContext, propertySetComponent);
 
-        /*
+        ValueExpression configurationInfosExpression = propertySetComponent.getValueExpression(
+                PropertySetComponent.CONFIGURATION_GROUP_MEMBER_INFOS_ATTRIBUTE);
         String configurationInfosExpressionString = configurationInfosExpression.getExpressionString();
         String configurationExpressionStringFormat = "#{"
                 + FacesExpressionUtility.unwrapExpressionString(configurationInfosExpressionString)
-                + "[%d].configuration}";String propertyExpressionStringFormat = createPropertyExpressionString(configurationExpressionStringFormat,
-        propertyDefinition, propertySetComponent.getListIndex());
+                + "[%d].configuration}";
+        PropertyDefinitionSimple propertyDefinition = propertySetComponent.getPropertyDefinition();
+        String propertyExpressionStringFormat = createPropertyExpressionString(configurationExpressionStringFormat,
+                propertyDefinition, propertySetComponent.getListIndex());
         //noinspection ConstantConditions
+        List<PropertyInfo> propertyInfos = new ArrayList(propertySetComponent.getConfigurationGroupMemberInfos().size());
         for (int i = 0; i < propertySetComponent.getConfigurationGroupMemberInfos().size(); i++)
         {
             @SuppressWarnings({"ConstantConditions"})
             ConfigurationGroupMemberInfo memberInfo = propertySetComponent.getConfigurationGroupMemberInfos().get(i);
-            FacesComponentUtility.addOutputText(propertySetComponent, null, memberInfo.getLabel(), null);
-            propertyExpressionString = String.format(propertyExpressionStringFormat, i);
+            String propertyExpressionString = String.format(propertyExpressionStringFormat, i);
             PropertySimple property = FacesExpressionUtility.getValue(propertyExpressionString, PropertySimple.class);
-            propertyValueExpression = createPropertyValueExpression(propertyExpressionString);
-            input = PropertySimpleRenderingUtility.createInputForSimpleProperty(propertyDefinition,
-                    property, propertyValueExpression, null, false);
+            ValueExpression propertyValueExpression = createPropertyValueExpression(propertyExpressionString);
+            PropertyInfo propertyInfo = new PropertyInfo(memberInfo.getLabel(), property, propertyValueExpression);
+            propertyInfos.add(propertyInfo);
+
+        }
+        Collections.sort(propertyInfos);
+        for (PropertyInfo propertyInfo : propertyInfos)
+        {
+            FacesComponentUtility.addOutputText(propertySetComponent, null, propertyInfo.getLabel(), null);
+            UIInput input = PropertySimpleRenderingUtility.createInputForSimpleProperty(propertyDefinition,
+                    propertyInfo.getProperty(), propertyInfo.getPropertyValueExpression(),
+                    propertySetComponent.getListIndex(), propertySetComponent.getReadOnly());
             propertySetComponent.getChildren().add(input);
             FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/>\n");
         }
-        */
     }
 
     @Override
@@ -226,5 +241,42 @@ public class PropertySetRenderer extends Renderer
         stringBuilder.append(".stringValue}");
         String propertyValueExpressionString = stringBuilder.toString();
         return FacesExpressionUtility.createValueExpression(propertyValueExpressionString, String.class);
+    }
+
+    class PropertyInfo implements Comparable<PropertyInfo> {
+        private String label;
+        private PropertySimple property;
+        private ValueExpression propertyValueExpression;
+
+        PropertyInfo(String label, PropertySimple property, ValueExpression propertyValueExpression)
+        {
+            this.label = (label != null) ? label : "";
+            this.property = property;
+            this.propertyValueExpression = propertyValueExpression;
+        }
+
+        public String getLabel()
+        {
+            return label;
+        }
+
+        public PropertySimple getProperty()
+        {
+            return property;
+        }
+
+        public ValueExpression getPropertyValueExpression()
+        {
+            return propertyValueExpression;
+        }
+
+        public int compareTo(PropertyInfo that)
+        {
+            int result = this.label.compareTo(that.label);
+            if (result == 0)
+                //noinspection ConstantConditions
+                result = this.property.getStringValue().compareTo(that.property.getStringValue());
+            return result;
+        }
     }
 }

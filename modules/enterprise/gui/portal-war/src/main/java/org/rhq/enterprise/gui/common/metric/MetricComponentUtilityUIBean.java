@@ -18,28 +18,22 @@
  */
 package org.rhq.enterprise.gui.common.metric;
 
-import javax.faces.model.DataModel;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
+import org.rhq.enterprise.gui.common.framework.EnterpriseFacesContextUIBean;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 
-public class MetricComponentUtilityUIBean extends PagedDataTableUIBean {
+public class MetricComponentUtilityUIBean extends EnterpriseFacesContextUIBean {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String MANAGED_BEAN_NAME = "MetricComponentUtilityUIBean";
 
     private boolean readOnly;
-
-    public MetricComponentUtilityUIBean() {
-
-    }
 
     public boolean isReadOnly() {
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
@@ -49,9 +43,14 @@ public class MetricComponentUtilityUIBean extends PagedDataTableUIBean {
         return readOnly;
     }
 
-    @Override
-    public DataModel getDataModel() {
-        return null;
+    public void switchToSimpleMode() {
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+        rangePreferences.unit = 3;
+        rangePreferences.lastN = 8;
+        rangePreferences.readOnly = false;
+        preferences.setMetricRangePreferences(rangePreferences);
+        preferences.persistPreferences();
     }
-
 }

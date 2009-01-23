@@ -102,10 +102,6 @@ public class MetricRenderer extends Renderer {
         if (rangePreferences.readOnly) {
             writer.write(new Date(rangePreferences.begin) + " to " + new Date(rangePreferences.end));
             writer.write(" ");
-            writer.startElement("a", null);
-            writer.writeAttribute("href", "#", null);
-            writer.write("Switch to Simple Settings ");
-            writer.endElement("a");
         } else {
             writer.write("Last :");
 

@@ -103,6 +103,24 @@
           <equals arg1="${rhq.server.enable.web.services}" arg2="true" />
        </not>
     </condition>
+
+    <!-- developers might want to deploy agent plugins frequently, so we'll scan every 30 seconds -->
+    <!-- in production, agent plugins change very infrequently, so only scan every 5 minutes -->
+    <condition property="rhq.server.agent-plugin-scan-period-ms" value="30000">
+        <or>
+           <equals arg1="${dev.profile.active}" arg2="true" />
+           <equals arg1="${developer}" arg2="true" />
+        </or>
+    </condition>
+    <condition property="rhq.server.agent-plugin-scan-period-ms" value="300000">
+        <not>
+           <or>
+              <equals arg1="${dev.profile.active}" arg2="true" />
+              <equals arg1="${developer}" arg2="true" />
+           </or>
+        </not>
+    </condition>
+
   </target>
 
   <target name="prepare-container"
@@ -437,6 +455,9 @@ rhq.server.concurrency-limit.measurement-schedule-request=30
 
 # Content Local Filesystem Repository
 rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
+
+# The frequency (in millis) the server checks for updated agent plugins
+rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
 
 </echo>
 

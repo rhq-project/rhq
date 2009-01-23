@@ -28,6 +28,7 @@ import javax.transaction.TransactionManager;
 
 import org.jetbrains.annotations.NotNull;
 
+import org.jboss.deployment.scanner.URLDeploymentScannerMBean;
 import org.jboss.mx.util.MBeanProxyExt;
 import org.jboss.mx.util.MBeanServerLocator;
 
@@ -86,6 +87,7 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.core.EmailManagerBean;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
+import org.rhq.enterprise.server.core.plugin.AgentPluginURLDeploymentScanner;
 import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.event.EventManagerBean;
@@ -506,6 +508,13 @@ public final class LookupUtil {
         CoreServerMBean jonServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class,
             CoreServerMBean.OBJECT_NAME, jBossMBeanServer);
         return jonServer;
+    }
+
+    public static URLDeploymentScannerMBean getAgentPluginURLDeploymentScanner() {
+        MBeanServer jBossMBeanServer = MBeanServerLocator.locate();
+        URLDeploymentScannerMBean scanner = (URLDeploymentScannerMBean) MBeanProxyExt.create(
+            URLDeploymentScannerMBean.class, AgentPluginURLDeploymentScanner.OBJECT_NAME, jBossMBeanServer);
+        return scanner;
     }
 
     private static <T> String getLocalJNDIName(@NotNull Class<? super T> beanClass) {

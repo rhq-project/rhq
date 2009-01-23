@@ -91,10 +91,10 @@
 
             <rich:column>
                <f:facet name="header">
-                  <h:outputText styleClass="headerText" value="Date Created"/>
+                  <h:outputText styleClass="headerText" value="Last Update"/>
                </f:facet>
 
-               <h:outputText value="#{plugin.ctime}">
+               <h:outputText value="#{plugin.mtime}">
                   <f:converter converterId="UserDateTimeConverter" />
                </h:outputText>
             </rich:column>
@@ -108,6 +108,15 @@
                <h:outputText value="#{plugin.enabled}"/>
             </rich:column>
 
+            <f:facet name="footer">
+               <rich:columnGroup>
+                  <rich:column colspan="4" width="100%">
+                     <h:commandButton action="#{InstalledPluginsUIBean.scan}"
+                                      value="SCAN FOR UPDATES" styleClass="on-pager-button buttonsmall">
+                     </h:commandButton>
+                  </rich:column>
+               </rich:columnGroup>
+            </f:facet>
 
          </rich:dataTable>
 

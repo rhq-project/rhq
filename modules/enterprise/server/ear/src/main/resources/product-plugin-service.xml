@@ -18,7 +18,7 @@
 
     <attribute name="URLComparator">org.jboss.deployment.scanner.PrefixDeploymentSorter</attribute>
     <attribute name="Filter">org.jboss.deployment.scanner.DeploymentFilter</attribute>
-    <attribute name="ScanPeriod">30000</attribute>
+    <attribute name="ScanPeriod">${rhq.server.agent-plugin-scan-period-ms:300000}</attribute>
     <!-- the first one MUST be the location of the agent plugins -->
     <attribute name="URLs">
        ./deploy/${rhq.earName}/rhq-downloads/rhq-plugins/,

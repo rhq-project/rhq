@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.management.ObjectName;
 import javax.sql.DataSource;
 import javax.transaction.TransactionManager;
 
@@ -39,6 +40,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.jboss.deployment.scanner.URLDeploymentScanner;
+import org.jboss.mx.util.ObjectNameFactory;
 
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.util.MD5Generator;
@@ -60,6 +62,12 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author John Mazzitelli
  */
 public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
+
+    /**
+     * The name of this MBean when deployed.
+     */
+    public static ObjectName OBJECT_NAME = ObjectNameFactory
+        .create("rhq:service=AgentPluginURLDeploymentScanner,type=DeploymentScanner,flavor=URL");
 
     private Log log = LogFactory.getLog(AgentPluginURLDeploymentScanner.class);
 

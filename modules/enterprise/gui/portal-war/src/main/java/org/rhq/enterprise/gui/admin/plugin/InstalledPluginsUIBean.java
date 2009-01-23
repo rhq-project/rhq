@@ -20,10 +20,15 @@ package org.rhq.enterprise.gui.admin.plugin;
 
 import java.util.Collection;
 
+import javax.faces.application.FacesMessage;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.deployment.scanner.URLDeploymentScannerMBean;
+
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -41,6 +46,16 @@ public class InstalledPluginsUIBean {
 
     public Collection<Plugin> getInstalledPlugins() {
         return resourceMetadataManagerBean.getPlugins();
+    }
+
+    public void scan() {
+        try {
+            URLDeploymentScannerMBean scanner = LookupUtil.getAgentPluginURLDeploymentScanner();
+            scanner.scan();
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Done scanning for updated agent plugins.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to scan for updated agent plugins", e);
+        }
     }
 
     public void uploadPlugin() {

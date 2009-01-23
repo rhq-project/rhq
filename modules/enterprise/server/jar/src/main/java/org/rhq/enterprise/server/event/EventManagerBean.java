@@ -116,6 +116,7 @@ public class EventManagerBean implements EventManagerLocal {
         }
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void addEventData(Map<EventSource, Set<Event>> events) {
 
         if (events == null || events.size() == 0)

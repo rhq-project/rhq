@@ -154,26 +154,24 @@
             <table>
                 <tr>
                     <td>
-                        <a4j:region id="metricComponent">
-                            <table>
-                                <tr>
-                                    <td><onc:metric optionList="m,h,d" /></td>
-                                    <td>
-                                        <a4j:commandLink reRender="eventHistoryDataTable,eventHistoryDataTableScroller" rendered="#{not MetricComponentUtilityUIBean.readOnly}">
-                                            <img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
-                                        </a4j:commandLink>
-                                    </td>
-                                    <td>
-                                        <a4j:commandLink reRender="componentMetric" rendered="#{MetricComponentUtilityUIBean.readOnly}" action="#{MetricComponentUtilityUIBean.switchToSimpleMode}">
-                                            <f:param name="metricComponentValue" value="8" />                                        
-                                            <f:param name="metricComponentUnit" value="HOURS" />
-                                            <f:param name="id" value="#{EventHistoryUIBean.context.resourceId}" />
-                                            <h:outputText value="Switch to Simple Settings" />
-                                        </a4j:commandLink>
-                                    </td>
-                                </tr>
-                            </table>
-                        </a4j:region>
+                        <table>
+                            <tr>
+                                <td><onc:metric optionList="m,h,d" /></td>
+                                <td>
+                                    <h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}">
+                                        <img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
+                                    </h:commandLink>
+                                </td>
+                                <td>
+                                    <h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" action="#{MetricComponentUtilityUIBean.switchToSimpleMode}">
+                                        <f:param name="metricComponentValue" value="8" />                                        
+                                        <f:param name="metricComponentUnit" value="HOURS" />
+                                        <f:param name="id" value="#{EventHistoryUIBean.context.resourceId}" />
+                                        <h:outputText value="Switch to Simple Settings" />
+                                    </h:commandLink>
+                                </td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
             </table>

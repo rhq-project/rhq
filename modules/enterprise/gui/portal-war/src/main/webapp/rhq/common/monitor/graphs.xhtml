@@ -10,6 +10,7 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function">
 
@@ -38,11 +39,38 @@
     </td>
 </tr>
 
+
+
 <tr class="BlockContent">
     <td width="550px">
         <div id="eventsDiv">
             <ui:include src="events/data.xhtml"/>
         </div>
+    </td>
+</tr>
+
+<tr class="BlockContent">
+    <td>
+        <h:form>
+            <table>
+                <tr>
+                    <td><onc:metric optionList="m,h,d" /></td>
+                    <td>
+                        <h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}">
+                            <img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
+                        </h:commandLink>
+                    </td>
+                    <td>
+                        <h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" action="#{MetricComponentUtilityUIBean.switchToSimpleMode}">
+                            <f:param name="metricComponentValue" value="8" />                                        
+                            <f:param name="metricComponentUnit" value="HOURS" />
+                            <f:param name="id" value="#{EventHistoryUIBean.context.resourceId}" />
+                            <h:outputText value="Switch to Simple Settings" />
+                        </h:commandLink>
+                    </td>
+                </tr>
+            </table>
+        </h:form>
     </td>
 </tr>
 

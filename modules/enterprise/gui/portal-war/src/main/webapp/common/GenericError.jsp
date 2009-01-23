@@ -1,10 +1,38 @@
 <%@ page language="java" %>
 <%@ page isErrorPage="true" %>
-<%@ page import="org.rhq.core.clientapi.util.StringUtil" %>
 <%@ page import="java.util.Enumeration"%>
+<%@ page import="org.rhq.core.clientapi.util.StringUtil" %>
+<%@ page import="org.rhq.enterprise.gui.legacy.WebUser" %>
+<%@ page import="org.rhq.enterprise.gui.legacy.WebUserPreferences" %>
+<%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
+
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-html-el" prefix="html" %>
+
+<%
+// XXX: move this all into an action
+/* get the exception from one of the many places it could be hiding */
+if (exception == null)
+    exception = (Exception)request.getAttribute("javax.servlet.error.exception");
+if (exception == null)
+    exception = (Exception)request.getAttribute("org.apache.struts.action.EXCEPTION");
+if (exception == null)
+    exception = (Exception)request.getAttribute("org.apache.struts.action.ActionErrors");
+%>
+
+<% 
+if (exception instanceof javax.faces.application.ViewExpiredException) {
+   WebUser webUser = SessionUtils.getWebUser(session);
+   if (webUser != null) {
+      WebUserPreferences prefs = webUser.getWebPreferences();
+      // get the url BEFORE the one that threw the ViewExpiredException
+      String lastURL = prefs.getLastVisitedURL(2);
+      response.sendRedirect(lastURL);
+   }
+}
+%>
+
 
 <html>
 <head>
@@ -17,18 +45,7 @@
 </head>
 <body>
 
-
-
-<%
-// XXX: move this all into an action
-/* get the exception from one of the many places it could be hiding */
-if (exception == null)
-    exception = (Exception)request.getAttribute("javax.servlet.error.exception");
-if (exception == null)
-    exception = (Exception)request.getAttribute("org.apache.struts.action.EXCEPTION");
-if (exception == null)
-    exception = (Exception)request.getAttribute("org.apache.struts.action.ActionErrors");
-
+<% 
 request.setAttribute(PageContext.EXCEPTION, exception);
 
 if (exception != null) {
@@ -137,6 +154,11 @@ if (errorDiv!=null) {
 else
     var errorText= "";
 /*--- end declaration/initialization ---*/
+
+function getRedirectURL(offset) {
+    var url = history[offset];
+    return url;
+}
 
 function displayStackTrace() {
 	errorPopup = open("","errorPopup","width=750,height=600,resizable=yes,scrollbars=yes,left=200,top=10");

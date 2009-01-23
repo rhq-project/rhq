@@ -9,7 +9,7 @@
 
     
     <component name="org.jboss.seam.core.init">
-        <property name="debug">true</property> <!-- disable before release -->
+        <property name="debug">false</property> <!-- enable only when needed -->
         <property name="transactionManagementEnabled">false</property>
     </component>
 

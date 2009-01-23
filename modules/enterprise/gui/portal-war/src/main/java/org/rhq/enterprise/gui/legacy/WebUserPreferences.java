@@ -66,6 +66,8 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
     public static final String PREF_PAGE_REFRESH_PERIOD = ".page.refresh.period";
 
+    public static final String PREF_LAST_URL = ".last.url";
+
     public WebUserPreferences(Subject subject) {
         super(subject);
     }
@@ -76,6 +78,25 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
     public void setPageRefreshPeriod(int period) {
         setPreference(PREF_PAGE_REFRESH_PERIOD, Integer.valueOf(period));
+    }
+
+    public String getLastVisitedURL(int previousOffset) {
+        List<String> urls = getPreferenceAsList(PREF_LAST_URL);
+        String url = urls.get(urls.size() - previousOffset);
+        return url;
+    }
+
+    public void addLastVisitedURL(String url) {
+        List<String> urls = getPreferenceAsList(PREF_LAST_URL);
+        if (urls == null) {
+            urls = new ArrayList<String>();
+        }
+        urls.add(url);
+        // maintain at most the last 3 urls, that's all we need to handle the ViewExpiredException elegantly
+        if (urls.size() > 3) {
+            urls.remove(0);
+        }
+        setPreference(PREF_LAST_URL, urls);
     }
 
     public static class SummaryCountPortletPreferences {

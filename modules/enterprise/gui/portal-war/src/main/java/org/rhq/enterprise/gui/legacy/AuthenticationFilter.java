@@ -101,7 +101,7 @@ public final class AuthenticationFilter extends BaseFilter {
                     session.setAttribute(ParamConstants.LOGON_URL_PARAMETERS, newMap);
                 }
 
-                session.setAttribute(KeyConstants.LOGON_URL_KEY, request.getServletPath());
+                session.setAttribute(KeyConstants.LOGON_URL_KEY, path);
                 response.setStatus(401);
                 response.sendRedirect(request.getContextPath() + "/Login.do");
             }

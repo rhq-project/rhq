@@ -18,10 +18,16 @@
  */
 package org.rhq.enterprise.server.plugins.jboss.software;
 
+import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathFactory;
 
 import churchillobjects.rss4j.RssChannel;
 import churchillobjects.rss4j.RssChannelItem;
@@ -39,6 +45,7 @@ import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
+import org.w3c.dom.Document;
 
 /**
  * Parses the contents of the JBoss RSS feed into the server's domain model.
@@ -77,13 +84,21 @@ public class RssFeedParser {
     // Public  --------------------------------------------
 
     public void parseResults(RssDocument feed, PackageSyncReport report,
-        Collection<ContentSourcePackageDetails> existingPackages) {
+        Collection<ContentSourcePackageDetails> existingPackages) throws Exception {
 
         // Used to determine if a package was already sent to the server or is new
         Map<PackageDetailsKey, ContentSourcePackageDetails> existingPackageMap = unpack(existingPackages);
 
         Enumeration channels = feed.channels();
 
+        // do setup in preparation for parsing the automated installation instructions
+		DocumentBuilderFactory xmlFact = DocumentBuilderFactory.newInstance();
+        xmlFact.setNamespaceAware(false);
+        DocumentBuilder builder = xmlFact.newDocumentBuilder();
+
+        XPath xpath = XPathFactory.newInstance().newXPath();
+		String instructionExpression = "/automatedInstallation/instructions/instructionSet";
+        
         while (channels.hasMoreElements()) {
             RssChannel channel = (RssChannel) channels.nextElement();
             Enumeration channeltems = channel.items();
@@ -175,21 +190,17 @@ public class RssFeedParser {
 
                     if (patch.getAutomatedInstallation() != null) {
                         String instructions = patch.getAutomatedInstallation();
-
-                        // The instructions have XML fluff around the <process-definition> tag that is the actual
-                        // process. There might be a cleaner way of doing this, but this should work
-                        // JBNADM-3111
-                        int processDefinitionStart = instructions.indexOf("<process-definition");
-                        int processDefinitionEnd = instructions.indexOf("</process-definition>");
-
-                        if (processDefinitionStart != -1 && processDefinitionEnd != -1) {
-                            processDefinitionEnd += 22;
-
-                            String choppedInstructions = instructions.substring(processDefinitionStart,
-                                processDefinitionEnd);
-
-                            packageDetails.setMetadata(choppedInstructions.getBytes());
-                        }
+           				
+                        // JOPR-51, remove some of the xml elements which wrap the automated installation
+                        // instructions but which aren't needed by JBPM
+                        try {
+                        	Document document = builder.parse(new ByteArrayInputStream(instructions.getBytes("UTF-8")));                				
+                        	String choppedInstructions = xpath.evaluate(instructionExpression, document);
+                        	packageDetails.setMetadata(choppedInstructions.getBytes("UTF-8"));
+                        } catch (Exception e) {
+                        	log.error("Could not parse or set automated installation instructions for package: " + packageName);
+                            continue;
+                        }                          
                     }
 
                     packageDetails.setExtraProperties(extraProperties);

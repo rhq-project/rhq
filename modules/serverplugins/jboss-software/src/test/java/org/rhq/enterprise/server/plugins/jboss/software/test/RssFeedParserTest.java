@@ -18,18 +18,21 @@
  */
 package org.rhq.enterprise.server.plugins.jboss.software.test;
 
-import churchillobjects.rss4j.RssDocument;
-import churchillobjects.rss4j.parser.RssParser;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.Iterator;
 import java.util.Set;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugins.jboss.software.RssFeedParser;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import churchillobjects.rss4j.RssDocument;
+import churchillobjects.rss4j.parser.RssParser;
 
 /**
  * @author Jason Dobies
@@ -39,6 +42,7 @@ public class RssFeedParserTest {
 
     public static final String EXAMPLE_FILE_1 = "rss-feed-example-1.txt";
     public static final String EXAMPLE_FILE_2 = "rss-feed-example-2.txt";
+    public static final String EXAMPLE_FILE_3 = "rss-feed-example-3.txt";
 
     // Attributes  --------------------------------------------
 
@@ -123,7 +127,38 @@ public class RssFeedParserTest {
             + report.getUpdatedPackages().size();
     }
 
-    // Private  --------------------------------------------
+    @Test
+    public void testInstallInstructions() throws Exception {
+    	// Example set 3
+        URL exampleFeedUrl = this.getClass().getClassLoader().getResource(EXAMPLE_FILE_3);
+        assert exampleFeedUrl != null : "Could not load " + EXAMPLE_FILE_3;
+        
+        // Setup
+        PackageSyncReport report = new PackageSyncReport();
+        
+        RssDocument rssDocument3 = loadDocument(exampleFeedUrl);
+        
+        parser.parseResults(rssDocument3, report, null);
+        
+        Set<ContentSourcePackageDetails> newPackages = report.getNewPackages();
+        
+        for (Iterator iterator = newPackages.iterator(); iterator.hasNext();) {
+			ContentSourcePackageDetails contentSourcePackageDetails = (ContentSourcePackageDetails) iterator
+					.next();
+			String installIns = new String(contentSourcePackageDetails.getMetadata());				
+
+			installIns = installIns.trim();
+			assert installIns.startsWith("<?xml version=\"1.0\"?>");
+			installIns = installIns.substring(21).trim();
+			assert installIns.startsWith("<process-definition name=\"process\">") ||
+			       installIns.startsWith("<!DOCTYPE process-definition [ <!ENTITY handler_A") 	
+				: "installIns started with:" + installIns.substring(0, 100);
+						
+			assert installIns.endsWith("</process-definition>");			
+		}
+    }
+    
+    // Private --------------------------------------------
 
     private RssDocument loadDocument(URL exampleFeedUrl) throws Exception {
         BufferedInputStream bis = new BufferedInputStream(exampleFeedUrl.openStream());

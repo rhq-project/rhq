@@ -181,7 +181,7 @@ public class LatchedServiceController {
 
                 // avoid a deadlock (this is just more paranoia)
                 if (maxWaits-- <= 0) {
-                    break;
+                    throw new IllegalStateException("thread hasn't started and created our latch, abort!");
                 }
             }
 

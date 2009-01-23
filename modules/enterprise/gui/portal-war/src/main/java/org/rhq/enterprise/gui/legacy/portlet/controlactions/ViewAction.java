@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.legacy.portlet.controlactions;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -43,52 +44,69 @@ import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAction extends TilesAction {
+
+    private static final Log log = LogFactory.getLog(ViewAction.class);
+
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
-        WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getWebPreferences();
 
-        OperationPortletPreferences operationPreferences = preferences.getOperationPortletPreferences();
+        boolean displayLastCompleted = false;
+        boolean displayNextScheduled = false;
 
-        context.putAttribute("displayLastCompleted", operationPreferences.useLastCompleted);
-        context.putAttribute("displayNextScheduled", operationPreferences.useNextScheduled);
+        PageList<ResourceOperationLastCompletedComposite> lastCompletedResourceOps = new PageList<ResourceOperationLastCompletedComposite>();
+        PageList<GroupOperationLastCompletedComposite> lastCompletedGroupOps = new PageList<GroupOperationLastCompletedComposite>();
+        PageList<ResourceOperationScheduleComposite> nextScheduledResourceOps = new PageList<ResourceOperationScheduleComposite>();
+        PageList<GroupOperationScheduleComposite> nextScheduledGroupOps = new PageList<GroupOperationScheduleComposite>();
 
         try {
+            WebUser user = SessionUtils.getWebUser(request.getSession());
+            if (user == null) {
+                // session timed out, return prematurely
+                return null;
+            }
+
+            WebUserPreferences preferences = user.getWebPreferences();
+
+            OperationPortletPreferences operationPreferences = preferences.getOperationPortletPreferences();
+
+            displayLastCompleted = operationPreferences.useLastCompleted;
+            displayNextScheduled = operationPreferences.useNextScheduled;
+
             OperationManagerLocal manager = LookupUtil.getOperationManager();
 
             if (operationPreferences.useLastCompleted) {
-                PageList<ResourceOperationLastCompletedComposite> rlist;
                 PageControl pageControl = new PageControl(0, operationPreferences.lastCompleted);
                 pageControl.initDefaultOrderingField("ro.createdTime", PageOrdering.DESC);
-                rlist = manager.getRecentlyCompletedResourceOperations(user.getSubject(), pageControl);
-                context.putAttribute("lastCompletedResource", rlist);
+                lastCompletedResourceOps = manager.getRecentlyCompletedResourceOperations(user.getSubject(),
+                    pageControl);
 
-                PageList<GroupOperationLastCompletedComposite> glist;
                 pageControl = new PageControl(0, operationPreferences.lastCompleted);
                 pageControl.initDefaultOrderingField("go.createdTime", PageOrdering.DESC);
-                glist = manager.getRecentlyCompletedGroupOperations(user.getSubject(), pageControl);
-                context.putAttribute("lastCompletedGroup", glist);
+                lastCompletedGroupOps = manager.getRecentlyCompletedGroupOperations(user.getSubject(), pageControl);
             }
 
             if (operationPreferences.useNextScheduled) {
-                PageList<ResourceOperationScheduleComposite> rlist;
                 PageControl pageControl = new PageControl(0, operationPreferences.nextScheduled);
-                rlist = manager.getCurrentlyScheduledResourceOperations(user.getSubject(), pageControl);
-                context.putAttribute("nextScheduledResource", rlist);
+                nextScheduledResourceOps = manager.getCurrentlyScheduledResourceOperations(user.getSubject(),
+                    pageControl);
 
-                PageList<GroupOperationScheduleComposite> glist;
                 pageControl = new PageControl(0, operationPreferences.nextScheduled);
-                glist = manager.getCurrentlyScheduledGroupOperations(user.getSubject(), pageControl);
-                context.putAttribute("nextScheduledGroup", glist);
+                nextScheduledGroupOps = manager.getCurrentlyScheduledGroupOperations(user.getSubject(), pageControl);
             }
         } catch (Exception e) {
-            LogFactory.getLog(ViewAction.class).error("Failed to get operations for portlet", e);
-            PageControl pc = PageControl.getSingleRowInstance();
-            context.putAttribute("lastCompletedResource", new PageList<Object>(pc));
-            context.putAttribute("lastCompletedGroup", new PageList<Object>(pc));
-            context.putAttribute("nextScheduledResource", new PageList<Object>(pc));
-            context.putAttribute("nextScheduledGroup", new PageList<Object>(pc));
+            if (log.isDebugEnabled()) {
+                log.debug("Dashboard Portlet [ControlActions] experienced an error: " + e.getMessage(), e);
+            } else {
+                log.error("Dashboard Portlet [ControlActions] experienced an error: " + e.getMessage());
+            }
+        } finally {
+            context.putAttribute("displayLastCompleted", displayLastCompleted);
+            context.putAttribute("displayNextScheduled", displayNextScheduled);
+            context.putAttribute("lastCompletedResource", lastCompletedResourceOps);
+            context.putAttribute("lastCompletedGroup", lastCompletedGroupOps);
+            context.putAttribute("nextScheduledResource", nextScheduledResourceOps);
+            context.putAttribute("nextScheduledGroup", nextScheduledGroupOps);
         }
 
         return null;

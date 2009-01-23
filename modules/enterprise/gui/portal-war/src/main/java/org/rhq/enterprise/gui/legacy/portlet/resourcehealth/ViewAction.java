@@ -21,6 +21,8 @@ package org.rhq.enterprise.gui.legacy.portlet.resourcehealth;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -39,23 +41,44 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAction extends TilesAction {
+
+    private static final Log log = LogFactory.getLog(ViewAction.class);
+
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
-        WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getWebPreferences();
-        PageControl pc = WebUtility.getPageControl(request);
 
-        FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
-            .getFavoriteResourcePortletPreferences();
+        PageList<ResourceHealthComposite> list = new PageList<ResourceHealthComposite>();
+        boolean showAvailability = true;
+        boolean showAlerts = true;
+        try {
+            WebUser user = SessionUtils.getWebUser(request.getSession());
+            if (user == null) {
+                // session timed out, return prematurely
+                return null;
+            }
 
-        ResourceManagerLocal manager = LookupUtil.getResourceManager();
-        PageList<ResourceHealthComposite> list = manager.getResourceHealth(user.getSubject(),
-            favoriteResourcePreferences.asArray(), pc);
-        context.putAttribute("resourceHealth", list);
+            WebUserPreferences preferences = user.getWebPreferences();
+            PageControl pc = WebUtility.getPageControl(request);
 
-        context.putAttribute("availability", favoriteResourcePreferences.showAvailability);
-        context.putAttribute("alerts", favoriteResourcePreferences.showAlerts);
+            FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
+                .getFavoriteResourcePortletPreferences();
+
+            ResourceManagerLocal manager = LookupUtil.getResourceManager();
+            list = manager.getResourceHealth(user.getSubject(), favoriteResourcePreferences.asArray(), pc);
+            showAvailability = favoriteResourcePreferences.showAvailability;
+            showAlerts = favoriteResourcePreferences.showAlerts;
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Dashboard Portlet [ResourceHealth] experienced an error: " + e.getMessage(), e);
+            } else {
+                log.error("Dashboard Portlet [ResourceHealth] experienced an error: " + e.getMessage());
+            }
+        } finally {
+            context.putAttribute("resourceHealth", list);
+            context.putAttribute("availability", showAvailability);
+            context.putAttribute("alerts", showAlerts);
+        }
 
         return null;
     }

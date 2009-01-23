@@ -53,94 +53,109 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * Form action for autodiscovery dashboard portlet.
  */
 public class ViewAction extends TilesAction {
-    public static final Log log = LogFactory.getLog(ViewAction.class.getName());
+
+    private static final Log log = LogFactory.getLog(ViewAction.class);
 
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
-        DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
-        WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getWebPreferences();
-        Subject subject = user.getSubject();
-        AIQueueForm queueForm = (AIQueueForm) form;
-        PageControl pageControl;
+
+        Map<Resource, List<Resource>> queuedResources = new HashMap<Resource, List<Resource>>();
 
         try {
-            int size = preferences.getAutoDiscoveryRange();
-            if (size < 1) {
-                pageControl = PageControl.getUnlimitedInstance();
-            } else {
-                pageControl = new PageControl(0, size);
+            DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
+            WebUser user = SessionUtils.getWebUser(request.getSession());
+            if (user == null) {
+                // session timed out, return prematurely
+                return null;
+            }
+
+            WebUserPreferences preferences = user.getWebPreferences();
+            Subject subject = user.getSubject();
+            AIQueueForm queueForm = (AIQueueForm) form;
+            PageControl pageControl;
+
+            try {
+                int size = preferences.getAutoDiscoveryRange();
+                if (size < 1) {
+                    pageControl = PageControl.getUnlimitedInstance();
+                } else {
+                    pageControl = new PageControl(0, size);
+                }
+            } catch (Exception e) {
+                // should never happen but if somehow there is a bogus number, just fallback to the default
+                pageControl = new PageControl(0, 10);
+            }
+
+            try {
+                queuedResources = discoveryBoss.getQueuedPlatformsAndServers(subject, pageControl);
+
+                // If the queue is empty, check to see if there are ANY agents defined in inventory.
+                if (queuedResources.isEmpty()) {
+                    int count = LookupUtil.getAgentManager().getAgentCount();
+                    request.setAttribute("hasNoAgents", count == 0);
+                }
+            } catch (PermissionException pe) {
+                // user doesn't have permissions to see or import anything, just show an empty list
+                queuedResources = new HashMap<Resource, List<Resource>>();
+            }
+
+            // as a convienence, check every box for the user
+            List<Integer> platformsToProcess = new ArrayList<Integer>(queuedResources.size());
+            List<Integer> serversToProcess = new ArrayList<Integer>();
+            for (Resource platform : queuedResources.keySet()) {
+                platformsToProcess.add(platform.getId());
+
+                // Add all top-level servers on this platform
+                List<Resource> servers1 = queuedResources.get(platform);
+                for (Resource server : servers1) {
+                    serversToProcess.add(server.getId());
+                }
+            }
+
+            queueForm.setPlatformsToProcess(platformsToProcess.toArray(new Integer[0]));
+            queueForm.setServersToProcess(serversToProcess.toArray(new Integer[0]));
+
+            // clean out the return path
+            SessionUtils.resetReturnPath(request.getSession());
+
+            // Check for previous error
+            // First, check for ignore error - that is, cannot ignore resources already in inventory
+            Object ignoreErr = request.getSession().getAttribute(Constants.IMPORT_IGNORE_ERROR_ATTR);
+            if (ignoreErr != null) {
+                ActionMessage err = new ActionMessage("dash.autoDiscovery.import.ignore.Error");
+                RequestUtils.setError(request, err, ActionMessages.GLOBAL_MESSAGE);
+
+                // Only show the error once
+                request.getSession().setAttribute(Constants.IMPORT_IGNORE_ERROR_ATTR, null);
+            }
+
+            // Check for exception caused by license restriction not allowing additional resources to be imported
+            Exception exc = (Exception) request.getSession().getAttribute(Constants.IMPORT_ERROR_ATTR);
+            if (exc != null) {
+                request.getSession().removeAttribute(Constants.IMPORT_ERROR_ATTR);
+                log.error("Failed to approve AI report", exc);
+
+                //         if ( exc instanceof AIQApprovalException )
+                //         {
+                //            ActionMessage err = new ActionMessage( "dash.autoDiscovery.import.limit.Error" );
+                //            RequestUtils.setError( request, err, ActionMessages.GLOBAL_MESSAGE );
+                //         }
+                //         else
+                //         {
+                ActionMessage err = new ActionMessage("dash.autoDiscovery.import.general.Error", ThrowableUtil
+                    .getAllMessages(exc, true));
+                RequestUtils.setError(request, err, ActionMessages.GLOBAL_MESSAGE);
+                //         }
             }
         } catch (Exception e) {
-            // should never happen but if somehow there is a bogus number, just fallback to the default
-            pageControl = new PageControl(0, 10);
-        }
-
-        Map<Resource, List<Resource>> queuedResources;
-
-        try {
-            queuedResources = discoveryBoss.getQueuedPlatformsAndServers(subject, pageControl);
-
-            // If the queue is empty, check to see if there are ANY agents defined in inventory.
-            if (queuedResources.isEmpty()) {
-                int count = LookupUtil.getAgentManager().getAgentCount();
-                request.setAttribute("hasNoAgents", count == 0);
+            if (log.isDebugEnabled()) {
+                log.debug("Dashboard Portlet [AutoDiscovery] experienced an error: " + e.getMessage(), e);
+            } else {
+                log.error("Dashboard Portlet [AutoDiscovery] experienced an error: " + e.getMessage());
             }
-        } catch (PermissionException pe) {
-            // user doesn't have permissions to see or import anything, just show an empty list
-            queuedResources = new HashMap<Resource, List<Resource>>();
-        }
-
-        context.putAttribute("resources", queuedResources);
-
-        // as a convienence, check every box for the user
-        List<Integer> platformsToProcess = new ArrayList<Integer>(queuedResources.size());
-        List<Integer> serversToProcess = new ArrayList<Integer>();
-        for (Resource platform : queuedResources.keySet()) {
-            platformsToProcess.add(platform.getId());
-
-            // Add all top-level servers on this platform
-            List<Resource> servers1 = queuedResources.get(platform);
-            for (Resource server : servers1) {
-                serversToProcess.add(server.getId());
-            }
-        }
-
-        queueForm.setPlatformsToProcess(platformsToProcess.toArray(new Integer[0]));
-        queueForm.setServersToProcess(serversToProcess.toArray(new Integer[0]));
-
-        // clean out the return path
-        SessionUtils.resetReturnPath(request.getSession());
-
-        // Check for previous error
-        // First, check for ignore error - that is, cannot ignore resources already in inventory
-        Object ignoreErr = request.getSession().getAttribute(Constants.IMPORT_IGNORE_ERROR_ATTR);
-        if (ignoreErr != null) {
-            ActionMessage err = new ActionMessage("dash.autoDiscovery.import.ignore.Error");
-            RequestUtils.setError(request, err, ActionMessages.GLOBAL_MESSAGE);
-
-            // Only show the error once
-            request.getSession().setAttribute(Constants.IMPORT_IGNORE_ERROR_ATTR, null);
-        }
-
-        // Check for exception caused by license restriction not allowing additional resources to be imported
-        Exception exc = (Exception) request.getSession().getAttribute(Constants.IMPORT_ERROR_ATTR);
-        if (exc != null) {
-            request.getSession().removeAttribute(Constants.IMPORT_ERROR_ATTR);
-            log.error("Failed to approve AI report", exc);
-
-            //         if ( exc instanceof AIQApprovalException )
-            //         {
-            //            ActionMessage err = new ActionMessage( "dash.autoDiscovery.import.limit.Error" );
-            //            RequestUtils.setError( request, err, ActionMessages.GLOBAL_MESSAGE );
-            //         }
-            //         else
-            //         {
-            ActionMessage err = new ActionMessage("dash.autoDiscovery.import.general.Error", ThrowableUtil
-                .getAllMessages(exc, true));
-            RequestUtils.setError(request, err, ActionMessages.GLOBAL_MESSAGE);
-            //         }
+        } finally {
+            context.putAttribute("resources", queuedResources);
         }
 
         return null;

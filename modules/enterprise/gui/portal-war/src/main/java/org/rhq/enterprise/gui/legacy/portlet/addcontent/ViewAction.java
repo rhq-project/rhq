@@ -24,6 +24,8 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -37,34 +39,51 @@ import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
 public class ViewAction extends TilesAction {
 
+    private static final Log log = LogFactory.getLog(ViewAction.class);
+
     @Override
     @SuppressWarnings("unchecked")
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
-        List<String> portlets = (List<String>) context.getAttribute("portlets");
-        WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getWebPreferences();
-        DashboardPreferences dashboardPreferences = preferences.getDashboardPreferences();
 
         List<String> availablePortlets = new ArrayList<String>();
-        String userPortlets = null;
 
-        Boolean wide = new Boolean((String) context.getAttribute("wide"));
-
-        if (wide.booleanValue()) {
-            userPortlets = dashboardPreferences.rightColumnPortletNames;
-        } else {
-            userPortlets = dashboardPreferences.leftColumnPortletNames;
-        }
-
-        for (String portlet : portlets) {
-            // make it available only if it's not already on the dashboard
-            if (userPortlets.indexOf(portlet) == -1) {
-                availablePortlets.add(portlet);
+        try {
+            List<String> portlets = (List<String>) context.getAttribute("portlets");
+            WebUser user = SessionUtils.getWebUser(request.getSession());
+            if (user == null) {
+                // session timed out, return prematurely
+                return null;
             }
-        }
 
-        context.putAttribute("availablePortlets", availablePortlets);
+            WebUserPreferences preferences = user.getWebPreferences();
+            DashboardPreferences dashboardPreferences = preferences.getDashboardPreferences();
+
+            String userPortlets = null;
+
+            Boolean wide = new Boolean((String) context.getAttribute("wide"));
+
+            if (wide.booleanValue()) {
+                userPortlets = dashboardPreferences.rightColumnPortletNames;
+            } else {
+                userPortlets = dashboardPreferences.leftColumnPortletNames;
+            }
+
+            for (String portlet : portlets) {
+                // make it available only if it's not already on the dashboard
+                if (userPortlets.indexOf(portlet) == -1) {
+                    availablePortlets.add(portlet);
+                }
+            }
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Dashboard Portlet [AddContent] experienced an error: " + e.getMessage(), e);
+            } else {
+                log.error("Dashboard Portlet [AddContent] experienced an error: " + e.getMessage());
+            }
+        } finally {
+            context.putAttribute("availablePortlets", availablePortlets);
+        }
         return null;
     }
 }

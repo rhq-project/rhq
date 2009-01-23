@@ -44,23 +44,37 @@ import org.rhq.enterprise.server.alert.engine.internal.Tuple;
  * attribute.
  */
 public class ViewAction extends TilesAction {
-    // --------------------------------------------------------- Public Methods
 
-    private static Log log = LogFactory.getLog(ViewAction.class.getName());
+    private static final Log log = LogFactory.getLog(ViewAction.class);
 
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
-        WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getWebPreferences();
-        SavedChartsPortletPreferences savedCharts = preferences.getSavedChartsPortletPreferences();
 
         Map<String, String> charts = new HashMap<String, String>();
-        for (Tuple<String, String> chart : savedCharts.chartList) {
-            charts.put(chart.lefty, chart.righty);
-        }
 
-        context.putAttribute("charts", charts);
+        try {
+            WebUser user = SessionUtils.getWebUser(request.getSession());
+            if (user == null) {
+                // session timed out, return prematurely
+                return null;
+            }
+
+            WebUserPreferences preferences = user.getWebPreferences();
+            SavedChartsPortletPreferences savedCharts = preferences.getSavedChartsPortletPreferences();
+
+            for (Tuple<String, String> chart : savedCharts.chartList) {
+                charts.put(chart.lefty, chart.righty);
+            }
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Dashboard Portlet [SavedQueries] experienced an error: " + e.getMessage(), e);
+            } else {
+                log.error("Dashboard Portlet [SavedQueries] experienced an error: " + e.getMessage());
+            }
+        } finally {
+            context.putAttribute("charts", charts);
+        }
 
         return null;
     }

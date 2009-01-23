@@ -19,8 +19,10 @@
 package org.rhq.enterprise.gui.legacy.portlet.didYouKnow;
 
 import java.util.Properties;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -35,23 +37,35 @@ import org.apache.struts.tiles.actions.TilesAction;
  * attribute.
  */
 public class ViewAction extends TilesAction {
+
+    private static final Log log = LogFactory.getLog(ViewAction.class);
+
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
-        Log log = LogFactory.getLog(ViewAction.class.getName());
 
-        ClassLoader cl = this.getClass().getClassLoader();
-        Properties tips = new Properties();
+        String tip = "Tip #0: tips are only available to logged in users";
+        try {
 
-        tips.load(cl.getResourceAsStream("tips.properties"));
+            ClassLoader cl = this.getClass().getClassLoader();
+            Properties tips = new Properties();
 
-        // Load a random tip
-        long index = System.currentTimeMillis() % tips.size();
-        String strIndex = new Long(index + 1).toString();
+            tips.load(cl.getResourceAsStream("tips.properties"));
 
-        String tip = "Tip #" + strIndex + ": " + (String) tips.get(strIndex);
+            // Load a random tip
+            long index = System.currentTimeMillis() % tips.size();
+            String strIndex = new Long(index + 1).toString();
 
-        context.putAttribute("tip", tip);
+            tip = "Tip #" + strIndex + ": " + (String) tips.get(strIndex);
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Dashboard Portlet [DidYouKnow] experienced an error: " + e.getMessage(), e);
+            } else {
+                log.error("Dashboard Portlet [DidYouKnow] experienced an error: " + e.getMessage());
+            }
+        } finally {
+            context.putAttribute("tip", tip);
+        }
 
         return null;
     }

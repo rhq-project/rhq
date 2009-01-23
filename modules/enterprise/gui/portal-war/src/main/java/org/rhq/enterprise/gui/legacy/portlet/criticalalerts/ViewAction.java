@@ -21,6 +21,8 @@ package org.rhq.enterprise.gui.legacy.portlet.criticalalerts;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -39,23 +41,40 @@ import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAction extends TilesAction {
+
+    private static final Log log = LogFactory.getLog(ViewAction.class);
+
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
-        // get the logged in user
-        WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getWebPreferences();
 
-        // get the user's preferences for the alerts portlet
-        AlertsPortletPreferences alertPrefs = preferences.getAlertsPortletPreferences();
+        PageList<Alert> alerts = new PageList<Alert>();
+        try {
+            WebUser user = SessionUtils.getWebUser(request.getSession());
+            if (user == null) {
+                // session timed out, return prematurely
+                return null;
+            }
 
-        PageControl pageControl = new PageControl(0, alertPrefs.count);
-        AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-        PageList<Alert> alerts = alertManager.findAlerts(user.getSubject(), ("all".equals(alertPrefs.displayAll) ? null
-            : alertPrefs.asArray()), AlertPriority.getByLegacyIndex(alertPrefs.priority), alertPrefs.timeRange,
-            pageControl);
+            WebUserPreferences preferences = user.getWebPreferences();
 
-        context.putAttribute("criticalAlerts", alerts);
+            // get the user's preferences for the alerts portlet
+            AlertsPortletPreferences alertPrefs = preferences.getAlertsPortletPreferences();
+
+            PageControl pageControl = new PageControl(0, alertPrefs.count);
+            AlertManagerLocal alertManager = LookupUtil.getAlertManager();
+            alerts = alertManager.findAlerts(user.getSubject(), ("all".equals(alertPrefs.displayAll) ? null
+                : alertPrefs.asArray()), AlertPriority.getByLegacyIndex(alertPrefs.priority), alertPrefs.timeRange,
+                pageControl);
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Dashboard Portlet [CriticalAlerts] experienced an error: " + e.getMessage(), e);
+            } else {
+                log.error("Dashboard Portlet [CriticalAlerts] experienced an error: " + e.getMessage());
+            }
+        } finally {
+            context.putAttribute("criticalAlerts", alerts);
+        }
 
         return null;
     }

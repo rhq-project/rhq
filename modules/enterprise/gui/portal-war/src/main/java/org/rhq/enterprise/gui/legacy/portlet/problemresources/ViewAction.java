@@ -46,28 +46,36 @@ import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAction extends TilesAction {
-    private static final Log LOG = LogFactory.getLog(ViewAction.class);
+
+    private static final Log log = LogFactory.getLog(ViewAction.class);
 
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
-        List<ProblemResourceComposite> list = null;
 
+        List<ProblemResourceComposite> list = new ArrayList<ProblemResourceComposite>();
+
+        String timeRange = getResources(request).getMessage("dash.home.ProblemResources.timeRangeUnlimited");
         try {
             WebUser user = SessionUtils.getWebUser(request.getSession());
+            if (user == null) {
+                // session timed out, return prematurely
+                return null;
+            }
+
             Subject subject = user.getSubject();
             WebUserPreferences preferences = user.getWebPreferences();
 
             ProblemResourcesPortletPreferences problemResourcePreferences = preferences
                 .getProblemResourcesPortletPreferences();
 
-            String timeRange;
             long begin = 0;
 
             if (problemResourcePreferences.hours > 0) {
-                List bounds = MeasurementUtils.calculateTimeFrame(problemResourcePreferences.hours, MeasurementUtils.UNIT_HOURS);
-                begin = (Long) bounds.get(0);
-                long end = (Long) bounds.get(1);
+                List<Long> bounds = MeasurementUtils.calculateTimeFrame(problemResourcePreferences.hours,
+                    MeasurementUtils.UNIT_HOURS);
+                begin = bounds.get(0);
+                long end = bounds.get(1);
 
                 SimpleDateFormat formatter = new SimpleDateFormat("MMM d, hh:mm a");
 
@@ -77,26 +85,24 @@ public class ViewAction extends TilesAction {
                 timeRange = getResources(request).getMessage("dash.home.ProblemResources.timeRangeUnlimited");
             }
 
-            request.setAttribute("timeRange", timeRange);
-
             try {
                 MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
                 long start = System.currentTimeMillis();
                 list = problemManager.findProblemResources(subject, begin, problemResourcePreferences.range);
                 long end = System.currentTimeMillis();
-                LOG.debug("Performance: Took [" + (end - start) + "]ms to find " + problemResourcePreferences.range
+                log.debug("Performance: Took [" + (end - start) + "]ms to find " + problemResourcePreferences.range
                     + " problem resources");
             } catch (Exception e) {
                 throw new ServletException("Error finding problem resources", e);
             }
         } catch (Exception e) {
-            LOG.warn("Cannot prepare the problem resources portlet", e);
-            throw new ServletException("Cannot prepare the problem resources portlet", e);
-        } finally {
-            if (list == null) {
-                list = new ArrayList<ProblemResourceComposite>();
+            if (log.isDebugEnabled()) {
+                log.debug("Dashboard Portlet [ProblemResources] experienced an error: " + e.getMessage(), e);
+            } else {
+                log.error("Dashboard Portlet [ProblemResources] experienced an error: " + e.getMessage());
             }
-
+        } finally {
+            request.setAttribute("timeRange", timeRange);
             context.putAttribute("problemResources", list);
         }
 

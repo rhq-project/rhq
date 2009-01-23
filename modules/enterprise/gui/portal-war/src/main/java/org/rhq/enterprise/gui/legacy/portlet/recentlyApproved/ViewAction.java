@@ -45,24 +45,31 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAction extends TilesAction {
 
+    private static final Log log = LogFactory.getLog(ViewAction.class);
+
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
-        Log log = LogFactory.getLog(ViewAction.class.getName());
 
-        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getWebPreferences();
-        RecentlyApprovedPortletPreferences recentlyApprovedPreferences = preferences
-            .getRecentlyApprovedPortletPreferences();
-        Subject subject = user.getSubject();
+        List<RecentlyAddedResourceComposite> platformList = new ArrayList<RecentlyAddedResourceComposite>();
 
         try {
+            ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+            WebUser user = SessionUtils.getWebUser(request.getSession());
+            if (user == null) {
+                // session timed out, return prematurely
+                return null;
+            }
+
+            WebUserPreferences preferences = user.getWebPreferences();
+            RecentlyApprovedPortletPreferences recentlyApprovedPreferences = preferences
+                .getRecentlyApprovedPortletPreferences();
+            Subject subject = user.getSubject();
+
             // Based on the user preference, generate a timestamp of the oldest resource to display.
             long range = recentlyApprovedPreferences.range;
             long ts = System.currentTimeMillis() - (range * 60 * 60 * 1000); // range encoded as hours (UI shows days)
 
-            List<RecentlyAddedResourceComposite> platformList;
             platformList = resourceManager.getRecentlyAddedPlatforms(subject, ts);
 
             Map<Integer, RecentlyAddedResourceComposite> platformMap;
@@ -93,11 +100,15 @@ public class ViewAction extends TilesAction {
             expandedPlatforms.removeAll(removeExpandedPlatforms);
 
             // Make the list available to the jsp.
-            context.putAttribute("recentlyApproved", platformList);
+
         } catch (Exception e) {
-            // Most likely a permissions error.  Return an empty list
-            context.putAttribute("recentlyApproved", new ArrayList<RecentlyAddedResourceComposite>());
-            log.error("Error generating recently added data: " + e.getMessage(), e);
+            if (log.isDebugEnabled()) {
+                log.debug("Dashboard Portlet [RecentlyApproved] experienced an error: " + e.getMessage(), e);
+            } else {
+                log.error("Dashboard Portlet [RecentlyApproved] experienced an error: " + e.getMessage());
+            }
+        } finally {
+            context.putAttribute("recentlyApproved", platformList);
         }
 
         return null;

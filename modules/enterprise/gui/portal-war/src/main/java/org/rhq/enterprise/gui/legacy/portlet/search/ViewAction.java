@@ -26,6 +26,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
 import org.apache.struts.util.LabelValueBean;
 
@@ -37,25 +38,33 @@ import org.rhq.enterprise.gui.legacy.action.resource.hub.ResourceHubForm;
  * An <code>TilesAction</code> that sets up for searching the Resource Hub portal.
  */
 public class ViewAction extends TilesAction {
-    // ---------------------------------------------------- Public Methods
 
-    /**
-     * Set up the Resource Hub portal.
-     */
+    private static final Log log = LogFactory.getLog(ViewAction.class);
+
     @Override
-    public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
-        HttpServletResponse response) throws Exception {
-        StopWatch timer = new StopWatch();
-        Log timingLog = LogFactory.getLog("DASHBOARD-TIMING");
+    public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
+        HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-        Log log = LogFactory.getLog(ViewAction.class.getName());
-        ResourceHubForm hubForm = (ResourceHubForm) form;
+        try {
+            StopWatch timer = new StopWatch();
+            Log timingLog = LogFactory.getLog("DASHBOARD-TIMING");
 
-        for (ResourceCategory category : ResourceCategory.values()) {
-            hubForm.addFunction(new LabelValueBean(category.name(), category.name()));
+            ResourceHubForm hubForm = (ResourceHubForm) form;
+            for (ResourceCategory category : ResourceCategory.values()) {
+                hubForm.addFunction(new LabelValueBean(category.name(), category.name()));
+            }
+
+            timingLog.trace("SearchHubPrepare - timing [" + timer.toString() + "]");
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Dashboard Portlet [SavedQueries] experienced an error: " + e.getMessage(), e);
+            } else {
+                log.error("Dashboard Portlet [SavedQueries] experienced an error: " + e.getMessage());
+            }
+        } finally {
+            // nothing to put in the context for this portlet
         }
 
-        timingLog.trace("SearchHubPrepare - timing [" + timer.toString() + "]");
         return null;
     }
 }

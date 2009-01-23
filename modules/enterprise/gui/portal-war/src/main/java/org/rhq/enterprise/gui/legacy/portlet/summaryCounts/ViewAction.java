@@ -21,6 +21,8 @@ package org.rhq.enterprise.gui.legacy.portlet.summaryCounts;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -36,25 +38,41 @@ import org.rhq.enterprise.server.resource.ResourceBossLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewAction extends TilesAction {
+
+    private static final Log log = LogFactory.getLog(ViewAction.class);
+
     @Override
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
-        WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getWebPreferences();
 
-        ResourceBossLocal resourceBoss = LookupUtil.getResourceBoss();
-        InventorySummary summary = resourceBoss.getInventorySummary(user.getSubject());
-        context.putAttribute("summary", summary);
+        SummaryCountPortletPreferences counts = new SummaryCountPortletPreferences(); // all defaults are false
+        InventorySummary summary = new InventorySummary();
+        try {
+            WebUser user = SessionUtils.getWebUser(request.getSession());
+            if (user == null) {
+                // session timed out, return prematurely
+                return null;
+            }
+            WebUserPreferences preferences = user.getWebPreferences();
 
-        SummaryCountPortletPreferences counts = preferences.getSummaryCounts();
-
-        //get all the displayed subtypes
-        context.putAttribute("platform", Boolean.valueOf(counts.showPlatforms));
-        context.putAttribute("server", Boolean.valueOf(counts.showServers));
-        context.putAttribute("service", Boolean.valueOf(counts.showServices));
-        context.putAttribute("groupCompat", Boolean.valueOf(counts.showCompatibleGroups));
-        context.putAttribute("groupMixed", Boolean.valueOf(counts.showMixedGroups));
-        context.putAttribute("groupDefinition", Boolean.valueOf(counts.showGroupDefinitions));
+            ResourceBossLocal resourceBoss = LookupUtil.getResourceBoss();
+            summary = resourceBoss.getInventorySummary(user.getSubject());
+            counts = preferences.getSummaryCounts();
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Dashboard Portlet [SummaryCounts] experienced an error: " + e.getMessage(), e);
+            } else {
+                log.error("Dashboard Portlet [SummaryCounts] experienced an error: " + e.getMessage());
+            }
+        } finally {
+            context.putAttribute("summary", summary);
+            context.putAttribute("platform", Boolean.valueOf(counts.showPlatforms));
+            context.putAttribute("server", Boolean.valueOf(counts.showServers));
+            context.putAttribute("service", Boolean.valueOf(counts.showServices));
+            context.putAttribute("groupCompat", Boolean.valueOf(counts.showCompatibleGroups));
+            context.putAttribute("groupMixed", Boolean.valueOf(counts.showMixedGroups));
+            context.putAttribute("groupDefinition", Boolean.valueOf(counts.showGroupDefinitions));
+        }
 
         return null;
     }

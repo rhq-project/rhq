@@ -80,7 +80,7 @@ public class InstalledPluginsUIBean {
 
             // put the new plugin file in our agent plugin location
             ServerCommunicationsServiceMBean sc = ServerCommunicationsServiceUtil.getService();
-            String dir = sc.getConfiguration().getAgentFilesDirectory();
+            File dir = new File(sc.getConfiguration().getAgentFilesDirectory(), "rhq-plugins");
             File agentPlugin = new File(dir, newPluginFilename);
             FileOutputStream fos = new FileOutputStream(agentPlugin);
             FileInputStream fis = new FileInputStream(uploadedPlugin);

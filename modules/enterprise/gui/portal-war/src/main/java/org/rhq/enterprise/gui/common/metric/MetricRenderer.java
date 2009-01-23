@@ -95,28 +95,22 @@ public class MetricRenderer extends Renderer {
         MeasurementPreferences preferences = user.getMeasurementPreferences();
         MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
-        writer.startElement("table", null);
-        writer.startElement("tr", null);
-
-        writer.startElement("td", null);
         writer.startElement("b", null);
         writer.write("Metric Display Range:");
         writer.endElement("b");
-        writer.endElement("td");
-
+        writer.write(" ");
         if (rangePreferences.readOnly) {
-            writer.startElement("td", null);
             writer.write(new Date(rangePreferences.begin) + " to " + new Date(rangePreferences.end));
             writer.write(" ");
             writer.startElement("a", null);
             writer.writeAttribute("href", "#", null);
             writer.write("Switch to Simple Settings ");
             writer.endElement("a");
-            writer.endElement("td");
         } else {
-            writer.startElement("td", null);
             writer.write("Last :");
+
             writer.write(" ");
+
             writer.startElement("select", metric);
             writer.writeAttribute("id", MetricComponent.VALUE, null);
             writer.writeAttribute("name", MetricComponent.VALUE, null);
@@ -135,11 +129,10 @@ public class MetricRenderer extends Renderer {
                 writer.write(String.valueOf(timeIntervalOption));
                 writer.endElement("option");
             }
-
             writer.endElement("select");
-            writer.endElement("td");
 
-            writer.startElement("td", null);
+            writer.write(" ");
+
             writer.startElement("select", metric);
             writer.writeAttribute("id", MetricComponent.UNIT, null);
             writer.writeAttribute("name", MetricComponent.UNIT, null);
@@ -153,32 +146,18 @@ public class MetricRenderer extends Renderer {
                 writer.endElement("option");
             }
             writer.endElement("select");
-            writer.endElement("td");
 
-            writer.startElement("td", null);
-            writer.startElement("a", null);
-            writer.writeAttribute("href", "#", null);
-            writer.writeAttribute("onclick", "javascript:document.forms[0].submit();", null);
-            writer.startElement("img", null);
-            writer.writeAttribute("src", "/images/dash-button_go-arrow.gif", null);
-            writer.writeAttribute("alt", "Go", null);
-            writer.endElement("img");
-            writer.endElement("a");
-            writer.endElement("td");
+            writer.write(" ");
         }
-
-        writer.startElement("td", null);
+        writer.write(" ");
         writer.startElement("a", null);
         writer.writeAttribute("href", "#", null);
         writer
             .writeAttribute(
                 "onclick",
-                "javascript:window.open('/rhq/common/metric/advanced.xhtml','Window1','menubar=no,width=540,height=360,toolbar=no');",
+                "javascript:window.open('/rhq/common/metric/advanced.xhtml','Advanced Metrics','menubar=no,width=540,height=360,toolbar=no');",
                 null);
-        writer.write("Settings...");
+        writer.write("Change Settings");
         writer.endElement("a");
-        writer.endElement("td");
-        writer.endElement("tr");
-        writer.endElement("table");
     }
 }

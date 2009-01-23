@@ -154,7 +154,16 @@
             <table>
                 <tr>
                     <td>
-                        <onc:metric optionList="m,h,d" />
+                        <table>
+                            <tr>
+                                <td><onc:metric optionList="m,h,d" /></td>
+                                <td>
+                                    <a4j:commandLink reRender="eventHistoryDataTable,eventHistoryDataTableScroller" rendered="#{not MetricComponentUtilityUIBean.readOnly}">
+                                        <img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
+                                    </a4j:commandLink>
+                                </td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
             </table>

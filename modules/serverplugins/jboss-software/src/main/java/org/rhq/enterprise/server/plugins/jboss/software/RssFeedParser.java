@@ -194,9 +194,12 @@ public class RssFeedParser {
                         // JOPR-51, remove some of the xml elements which wrap the automated installation
                         // instructions but which aren't needed by JBPM
                         try {
-                        	Document document = builder.parse(new ByteArrayInputStream(instructions.getBytes("UTF-8")));                				
+                        	Document document = builder.parse(new ByteArrayInputStream(instructions.getBytes()));                				
                         	String choppedInstructions = xpath.evaluate(instructionExpression, document);
-                        	packageDetails.setMetadata(choppedInstructions.getBytes("UTF-8"));
+                        	// the jbpm xml processor doesn't like whitespace at the beginning, so trim it
+                        	// bytes will be retrieved using platform encoding on the agent side so use the same
+                        	// on the server side and assume they are identical
+                        	packageDetails.setMetadata(choppedInstructions.trim().getBytes());
                         } catch (Exception e) {
                         	log.error("Could not parse or set automated installation instructions for package: " + packageName);
                             continue;

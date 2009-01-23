@@ -146,8 +146,7 @@ public class RssFeedParserTest {
 			ContentSourcePackageDetails contentSourcePackageDetails = (ContentSourcePackageDetails) iterator
 					.next();
 			String installIns = new String(contentSourcePackageDetails.getMetadata());				
-
-			installIns = installIns.trim();
+			
 			assert installIns.startsWith("<?xml version=\"1.0\"?>");
 			installIns = installIns.substring(21).trim();
 			assert installIns.startsWith("<process-definition name=\"process\">") ||

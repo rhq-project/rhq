@@ -18,11 +18,8 @@
  */
 package org.rhq.enterprise.gui.content;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.faces.application.FacesMessage;
@@ -59,10 +56,6 @@ public class ChannelPackageVersionsUIBean extends PagedDataTableUIBean {
 
         ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
         ContentManagerLocal contentManager = LookupUtil.getContentManager();
-
-        // Holds the results of each call
-        List<String> successes = new ArrayList<String>();
-        Map<String, String> failures = new HashMap<String, String>();
 
         Set<Integer> resourceIds = new HashSet<Integer>();
         Set<Integer> packageIds = new HashSet<Integer>();

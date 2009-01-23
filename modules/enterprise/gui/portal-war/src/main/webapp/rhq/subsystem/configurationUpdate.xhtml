@@ -118,10 +118,14 @@
                         <h:outputText styleClass="headerText" value="Date Submitted" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
-                  <h:outputText value="#{item.createdTime}">
-                     <f:converter converterId="UserDateTimeConverter" />
-                  </h:outputText>
+
+                  <h:outputLink value="/rhq/resource/configuration/history.xhtml">
+                     <f:param name="id" value="#{item.resourceId}" />
+                     <f:param name="configId" value="#{item.id}" />
+                     <h:outputText value="#{item.createdTime}">
+                        <f:converter converterId="UserDateTimeConverter" />
+                     </h:outputText>
+                  </h:outputLink>
                </rich:column>
                
                <rich:column>
@@ -131,7 +135,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputText value="#{item.modifiedTime}"  rendered="#{item.status ne 'INPROGRESS'}" >
+                  <h:outputText value="#{item.modifiedTime}" rendered="#{item.status ne 'INPROGRESS'}" >
                      <f:converter converterId="UserDateTimeConverter" />
                   </h:outputText>
                </rich:column>

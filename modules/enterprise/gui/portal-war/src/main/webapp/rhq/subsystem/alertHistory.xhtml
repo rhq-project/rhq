@@ -118,20 +118,30 @@
                         <h:outputText styleClass="headerText" value="Date" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
-                  <h:outputText value="#{item.alert.ctime}">
-                     <f:converter converterId="UserDateTimeConverter" />
-                  </h:outputText>
+
+                  <h:outputLink value="/alerts/Alerts.do">
+                     <f:param name="mode" value="viewAlert" />
+                     <f:param name="id" value="#{item.alert.alertDefinition.resource.id}" />
+                     <f:param name="a" value="#{item.alert.id}" />
+                     <h:outputText value="#{item.alert.ctime}">
+                        <f:converter converterId="UserDateTimeConverter" />
+                     </h:outputText>
+                  </h:outputLink>
                </rich:column>
                
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="ad.name">
-                        <h:outputText styleClass="headerText" value="Name" />
+                        <h:outputText styleClass="headerText" value="Alert Definition" />
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputText value="#{item.alert.alertDefinition.name}" />
+                  <h:outputLink value="/alerts/Config.do">
+                     <f:param name="mode" value="viewRoles" />
+                     <f:param name="id" value="#{item.alert.alertDefinition.resource.id}" />
+                     <f:param name="ad" value="#{item.alert.alertDefinition.id}" />
+                     <h:outputText value="#{item.alert.alertDefinition.name}" />
+                  </h:outputLink> 
                </rich:column>
                
                <rich:column>

@@ -143,7 +143,11 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputText value="#{item.history.operationDefinition.name}" />
+                  <h:outputLink value="/rhq/resource/operation/resourceOperationHistoryDetails.xhtml">
+                     <f:param name="id" value="#{item.history.resource.id}" />
+                     <f:param name="opId" value="#{item.history.id}" />
+                     <h:outputText value="#{item.history.operationDefinition.name}" />
+                  </h:outputLink>
                </rich:column>
                
                <rich:column>

@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.gui.admin.plugin;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.Collection;
 
 import javax.faces.application.FacesMessage;
@@ -30,6 +34,9 @@ import org.jboss.deployment.scanner.URLDeploymentScannerMBean;
 
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
+import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -55,13 +62,40 @@ public class InstalledPluginsUIBean {
             scanner.scan();
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Done scanning for updated agent plugins.");
         } catch (Exception e) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to scan for updated agent plugins", e);
+            String err = "Failed to scan for updated agent plugins";
+            log.error(err);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, err, e);
         }
     }
 
     public void fileUploadListener(UploadEvent event) {
-        System.out.println(event);
+        try {
+            File uploadedPlugin = event.getUploadItem().getFile();
+            String newPluginFilename = event.getUploadItem().getFileName();
+            log.info("A new plugin [" + newPluginFilename + "] has been uploaded to [" + uploadedPlugin + "]");
+
+            if (uploadedPlugin == null || !uploadedPlugin.exists()) {
+                throw new FileNotFoundException("The uploaded plugin file [" + uploadedPlugin + "] does not exist!");
+            }
+
+            // put the new plugin file in our agent plugin location
+            ServerCommunicationsServiceMBean sc = ServerCommunicationsServiceUtil.getService();
+            String dir = sc.getConfiguration().getAgentFilesDirectory();
+            File agentPlugin = new File(dir, newPluginFilename);
+            FileOutputStream fos = new FileOutputStream(agentPlugin);
+            FileInputStream fis = new FileInputStream(uploadedPlugin);
+            StreamUtil.copy(fis, fos);
+            log.info("A new plugin has been deployed [" + agentPlugin + "]. Will now perform a scan to register it...");
+
+            scan();
+
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "New agent plugin processed: " + agentPlugin);
+        } catch (Exception e) {
+            String err = "Failed to process uploaded agent plugin";
+            log.error(err);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, err, e);
+        }
+
         return;
     }
-
 }

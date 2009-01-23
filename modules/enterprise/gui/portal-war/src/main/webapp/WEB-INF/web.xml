@@ -222,6 +222,14 @@
          <param-name>forceparser</param-name>
          <param-value>false</param-value>
       </init-param>
+      <init-param>
+         <param-name>createTempFiles</param-name>
+         <param-value>true</param-value>
+      </init-param>
+      <init-param>
+         <param-name>maxRequestSize</param-name>
+         <param-value>10000000</param-value>
+      </init-param>
    </filter>
 
    <filter-mapping>

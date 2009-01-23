@@ -20,6 +20,8 @@ package org.rhq.enterprise.gui.subsystem;
 
 import org.richfaces.component.html.HtmlTabPanel;
 
+import org.rhq.core.gui.util.FacesContextUtility;
+
 /**
  * thanks to a bug in facelets ALL tabs are evaluated in either 'server' or 'ajax' mode, 
  * even though only one of them is being viewing at any one point in time.  facelets is
@@ -32,8 +34,9 @@ public class SubsystemViewsUIBean {
     private HtmlTabPanel tabPanel = new HtmlTabPanel();
 
     public SubsystemViewsUIBean() {
+        String tab = FacesContextUtility.getOptionalRequestParameter("tab", "configurationUpdates");
         // must provide some tab by default, otherwise the panel will render nothing
-        tabPanel.setSelectedTab("configurationUpdates");
+        tabPanel.setSelectedTab(tab);
     }
 
     public HtmlTabPanel getTabPanel() {

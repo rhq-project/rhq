@@ -25,9 +25,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
 import org.rhq.core.clientapi.server.plugin.content.metadata.ContentSourcePluginMetadataManager;
 import org.rhq.core.domain.content.ContentSourceType;
@@ -67,15 +69,17 @@ public class ContentSourcePluginManager {
             File[] pluginFiles = this.configuration.getPluginDirectory().listFiles();
 
             for (File pluginFile : pluginFiles) {
-                URL pluginUrl = pluginFile.toURL();
+                if (pluginFile.getName().endsWith(".jar")) {
+                    URL pluginUrl = pluginFile.toURI().toURL();
 
-                try {
-                    log.debug("Loading content source server plugin from URL: " + pluginUrl);
-                    loadPlugin(pluginUrl, null);
-                } catch (Throwable t) {
-                    // for some reason, the plugin failed to load - it will be ignored
-                    log.error("Plugin at [" + pluginUrl + "] could not be loaded", t);
-                    continue;
+                    try {
+                        log.debug("Loading content source server plugin from URL: " + pluginUrl);
+                        loadPlugin(pluginUrl, null);
+                    } catch (Throwable t) {
+                        // for some reason, the plugin failed to load - it will be ignored
+                        log.error("Plugin at [" + pluginUrl + "] could not be loaded", t);
+                        continue;
+                    }
                 }
             }
         } catch (Exception e) {

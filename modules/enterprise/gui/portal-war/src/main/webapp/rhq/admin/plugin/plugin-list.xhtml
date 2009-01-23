@@ -6,6 +6,7 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
+      xmlns:a4j="http://richfaces.org/a4j"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
 <ui:composition template="/rhq/layout/main.xhtml">
@@ -125,29 +126,22 @@
    </rich:panel>
 </h:form>
 
-<rich:panel rendered="false">
+<rich:panel>
     <f:facet name="header">
        <h:outputText value="Upload Plugin"/>
     </f:facet>
 
     <h:panelGrid columns="1" width="100%">
-
-       <h:form id="uploadForm" enctype="multipart/form-data">
-
-
-            <table>
-               <tr>
-                  <td><b>Plugin File:</b></td>
-                  <td><onc:upload id="uploadFile"/></td>
-               </tr>
-            </table>
-
-            <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
-               <h:commandButton style="margin-top: 10px;" value="UPLOAD"
-                                action="#{InstalledPluginsUIBean.uploadPlugin}" styleClass="buttonmed"/>
-            </h:panelGrid>
-      </h:form>
-
+        <rich:fileUpload
+            id="upload"
+            fileUploadListener="#{InstalledPluginsUIBean.fileUploadListener}"
+            maxFilesQuantity="3"
+            acceptedTypes="jar"
+            immediateUpload="false"
+            autoclear="false"
+            allowFlash="auto">
+            <a4j:support event="onuploadcomplete" reRender="info" />
+        </rich:fileUpload>
     </h:panelGrid>
 
 </rich:panel>

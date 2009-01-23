@@ -24,6 +24,7 @@ import javax.faces.application.FacesMessage;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.richfaces.event.UploadEvent;
 
 import org.jboss.deployment.scanner.URLDeploymentScannerMBean;
 
@@ -58,7 +59,9 @@ public class InstalledPluginsUIBean {
         }
     }
 
-    public void uploadPlugin() {
+    public void fileUploadListener(UploadEvent event) {
+        System.out.println(event);
+        return;
     }
 
 }

@@ -45,8 +45,10 @@
                <ui:include src="/rhq/subsystem/configurationUpdate.xhtml" />
             </c:if>
          </rich:tab>
-         <rich:tab name="problemResources" label="Problem Resources" disabled="true">
-            Not Implemented Yet
+         <rich:tab name="problemResources" label="Problem Resources">
+            <c:if test="#{SubsystemViewsUIBean.tabPanel.selectedTab eq 'problemResources'}">
+               <ui:include src="/rhq/subsystem/oobHistory.xhtml"/>
+            </c:if>
          </rich:tab>
          <rich:tab name="operations" label="Operations">
             <c:if test="#{SubsystemViewsUIBean.tabPanel.selectedTab eq 'operations'}">

@@ -278,9 +278,9 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
 
     /**
      * This remoted method allows the server to schedule a bunch of resources with one call.
-     * 
+     *
      * This method will update the set of {@link MeasurementSchedule}s in the agent.
-     * 
+     *
      * Use {@link #scheduleCollection(Set)} if you want to replace the existing ones.
      *
      * @param scheduleRequests
@@ -313,9 +313,9 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
 
     /**
      * This remoted method allows the server to schedule a bunch of resources with one call.
-     * 
+     *
      * BE CAREFUL, as this will replace all existing schedules with the passed set.
-     * 
+     *
      * Use {@link #updateCollection(Set)} if you want to schedule additional {@link MeasurementSchedule}s
      *
      * @param scheduleRequests
@@ -354,7 +354,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         // This ensures that all the schedules for a single resource start at the same time
         // This will enable them to be collected at the same time
         long firstCollection = System.currentTimeMillis();
-        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+
         for (MeasurementScheduleRequest request : requests) {
             ScheduledMeasurementInfo info = new ScheduledMeasurementInfo(request, resourceId);
 
@@ -401,8 +401,12 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType,
         String... measurementName) {
         MeasurementFacet measurementFacet;
-        Resource resource = PluginContainer.getInstance().getInventoryManager().getResourceContainer(resourceId)
-            .getResource();
+        ResourceContainer resCont = PluginContainer.getInstance().getInventoryManager().getResourceContainer(resourceId);
+        if (resCont == null) {
+            LOG.warn("Can not get resource container for resource with id " + resourceId);
+            return null;
+        }
+        Resource resource = resCont.getResource();
         ResourceType resourceType = resource.getResourceType();
         if (resourceType.getMetricDefinitions().isEmpty())
             return Collections.emptySet();

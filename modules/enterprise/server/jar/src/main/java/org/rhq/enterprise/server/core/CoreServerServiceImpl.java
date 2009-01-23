@@ -283,6 +283,17 @@ public class CoreServerServiceImpl implements CoreServerService {
 
             String dir = sc.getConfiguration().getAgentFilesDirectory();
             File file_to_stream = new File(dir, file);
+
+            // Make sure file_to_stream exists - its possible another server deployed this
+            // but our server hasn't had a chance to download it from the database yet.
+            // If this file does not exist, we need to immediately perform an agent scan
+            // which will pull down the plugin file from the database.
+            if (!file_to_stream.exists()) {
+                log.debug("Agent is asking for a plugin that isn't on file system [" + file_to_stream
+                    + "] - performing plugin scan");
+                LookupUtil.getAgentPluginURLDeploymentScanner().scan();
+            }
+
             FileInputStream fis = new FileInputStream(file_to_stream);
             BufferedInputStream bis = new BufferedInputStream(fis, 1024 * 32);
             RemoteInputStream in = ServerCommunicationsServiceUtil.remoteInputStream(bis);

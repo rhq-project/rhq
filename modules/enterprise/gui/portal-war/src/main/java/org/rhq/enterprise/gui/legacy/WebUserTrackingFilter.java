@@ -39,7 +39,6 @@ public class WebUserTrackingFilter extends BaseFilter {
         if (log.isDebugEnabled()) {
             log.debug("User [" + webUser.getSubject().getName() + "] visited [" + lastURL + "]");
         }
-        System.out.println("User [" + webUser.getSubject().getName() + "] visited [" + lastURL + "]");
 
         try {
             chain.doFilter(req, res);

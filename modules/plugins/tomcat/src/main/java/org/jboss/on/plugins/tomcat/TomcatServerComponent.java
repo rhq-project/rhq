@@ -1,0 +1,377 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.jboss.on.plugins.tomcat;
+
+import java.io.File;
+import java.sql.SQLException;
+import java.util.Properties;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.jboss.on.plugins.tomcat.helper.MainDeployer;
+import org.jetbrains.annotations.NotNull;
+import org.mc4j.ems.connection.ConnectionFactory;
+import org.mc4j.ems.connection.EmsConnectException;
+import org.mc4j.ems.connection.EmsConnection;
+import org.mc4j.ems.connection.bean.EmsBean;
+import org.mc4j.ems.connection.settings.ConnectionSettings;
+import org.mc4j.ems.connection.support.ConnectionProvider;
+import org.mc4j.ems.connection.support.metadata.ConnectionTypeDescriptor;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.system.AggregateProcessInfo;
+import org.rhq.plugins.jmx.JMXComponent;
+import org.rhq.plugins.jmx.JMXDiscoveryComponent;
+
+/**
+ * Management for a JBoss EWS server
+ *
+ * @author Jay Shaughnessy
+ */
+public class TomcatServerComponent implements JMXComponent, OperationFacet {
+
+    public enum EWSServerSupportedOperations {
+        /**
+         * Shuts down an EWS instance via a shutdown script, depending on plug-in configuration
+         */
+        SHUTDOWN,
+
+        /**
+         * Starts an EWS instance by calling a configurable start script.
+         */
+        START
+    }
+
+    /**
+     * Plugin configuration properties.
+     */
+    static final String PROP_INSTALLATION_PATH = "installationPath";
+    static final String PROP_SCRIPT_PREFIX = "scriptPrefix";
+    static final String PROP_SHUTDOWN_MBEAN_NAME = "shutdownMBeanName";
+    static final String PROP_SHUTDOWN_MBEAN_OPERATION = "shutdownMBeanOperation";
+    static final String PROP_SHUTDOWN_METHOD = "shutdownMethod";
+    static final String PROP_SHUTDOWN_SCRIPT = "shutdownScript";
+    static final String PROP_START_SCRIPT = "startScript";
+
+    private Log log = LogFactory.getLog(this.getClass());
+
+    private EmsConnection connection;
+
+    /**
+     * Controls the dampening of connection error stack traces in an attempt to control spam to the log
+     * file. Each time a connection error is encountered, this will be incremented. When the connection
+     * is finally established, this will be reset to zero.
+     */
+    private int consecutiveConnectionErrors;
+
+    private MainDeployer mainDeployer;
+
+    /**
+     * Delegate instance for handling all calls to invoke operations on this component.
+     */
+    private TomcatServerOperationsDelegate operationsDelegate;
+
+    private AggregateProcessInfo aggregateProcessInfo;
+
+    private ResourceContext resourceContext;
+
+    // JMXComponent Implementation  --------------------------------------------
+
+    public EmsConnection getEmsConnection() {
+        EmsConnection emsConnection = null;
+
+        try {
+            emsConnection = loadConnection();
+        } catch (Exception e) {
+            log.error("Component attempting to access a connection that could not be loaded");
+        }
+
+        return emsConnection;
+    }
+
+    /**
+     * This is the preferred way to use a connection from within this class; methods should not access the connection
+     * property directly as it may not have been instantiated if the connection could not be made.
+     *
+     * <p>If the connection has already been established, return the object reference to it. If not, attempt to make
+     * a live connection to the JMX server.</p>
+     *
+     * <p>If the connection could not be made in the {@link #start(org.rhq.core.pluginapi.inventory.ResourceContext)}
+     * method, this method will effectively try to load the connection on each attempt to use it. As such, multiple
+     * threads may attempt to access the connection through this means at a time. Therefore, the method has been
+     * made synchronized on instances of the class.</p>
+     *
+     * <p>If any errors are encountered, this method will log the error, taking into account logic to prevent spamming
+     * the log file. Calling methods should take care to not redundantly log the exception thrown by this method.</p>
+     *
+     * @return live connection to the JMX server; this will not be <code>null</code>
+     *
+     * @throws Exception if there are any issues at all connecting to the server
+     */
+    private synchronized EmsConnection loadConnection() throws Exception {
+        if (this.connection == null) {
+            try {
+                Configuration pluginConfig = resourceContext.getPluginConfiguration();
+                String installationPath = pluginConfig.getSimpleValue(PROP_INSTALLATION_PATH, null);
+
+                ConnectionSettings connectionSettings = new ConnectionSettings();
+
+                String connectionTypeDescriptorClass = pluginConfig.getSimple(JMXDiscoveryComponent.CONNECTION_TYPE).getStringValue();
+                PropertySimple serverUrl = pluginConfig.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY);
+
+                connectionSettings.initializeConnectionType((ConnectionTypeDescriptor) Class.forName(connectionTypeDescriptorClass).newInstance());
+                // if not provided use the default serverUrl
+                if (null != serverUrl) {
+                    connectionSettings.setServerUrl(serverUrl.getStringValue());
+                }
+                connectionSettings.setPrincipal(pluginConfig.getSimpleValue(PRINCIPAL_CONFIG_PROP, null));
+                connectionSettings.setCredentials(pluginConfig.getSimpleValue(CREDENTIALS_CONFIG_PROP, null));
+                connectionSettings.setLibraryURI(installationPath);
+
+                ConnectionFactory connectionFactory = new ConnectionFactory();
+                connectionFactory.discoverServerClasses(connectionSettings);
+
+                if (connectionSettings.getAdvancedProperties() == null) {
+                    connectionSettings.setAdvancedProperties(new Properties());
+                }
+
+                // Tell EMS to make copies of jar files so that the ems classloader doesn't lock
+                // application files (making us unable to update them)  Bug: JBNADM-670
+                connectionSettings.getControlProperties().setProperty(ConnectionFactory.COPY_JARS_TO_TEMP, String.valueOf(Boolean.TRUE));
+
+                // But tell it to put them in a place that we clean up when shutting down the agent
+                connectionSettings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR, resourceContext.getTemporaryDirectory().getAbsolutePath());
+
+                log.info("Loading connection [" + connectionSettings.getServerUrl() + "] with install path [" + connectionSettings.getLibraryURI() + "]...");
+
+                ConnectionProvider connectionProvider = connectionFactory.getConnectionProvider(connectionSettings);
+                this.connection = connectionProvider.connect();
+
+                this.connection.loadSynchronous(false); // this loads all the MBeans
+
+                this.consecutiveConnectionErrors = 0;
+
+                try {
+                    this.mainDeployer = new MainDeployer(this.connection);
+                } catch (Exception e) {
+                    log.error("Unable to access MainDeployer MBean required for creation and deletion of managed " + "resources - this should never happen. Cause: " + e);
+                }
+
+                if (log.isDebugEnabled())
+                    log.debug("Successfully made connection to the AS instance for resource [" + this.resourceContext.getResourceKey() + "]");
+            } catch (Exception e) {
+
+                // The connection will be established even in the case that the principal cannot be authenticated,
+                // but the connection will not work. That failure seems to come from the call to loadSynchronous after
+                // the connection is established. If we get to this point that an exception was thrown, close any
+                // connection that was made and null it out so we can try to establish it again.
+                if (connection != null) {
+                    if (log.isDebugEnabled())
+                        log.debug("Connection created but an exception was thrown. Closing the connection.", e);
+                    connection.close();
+                    connection = null;
+                }
+
+                // Since the connection is attempted each time it's used, failure to connect could result in log
+                // file spamming. Log it once for every 10 consecutive times it's encountered. 
+                if (consecutiveConnectionErrors % 10 == 0) {
+                    log.warn("Could not establish connection to the Tomcat instance [" + (consecutiveConnectionErrors + 1) + "] times for resource [" + resourceContext.getResourceKey() + "]", e);
+                }
+
+                if (log.isDebugEnabled())
+                    log.debug("Could not connect to the Tomcat instance for resource [" + resourceContext.getResourceKey() + "]", e);
+
+                consecutiveConnectionErrors++;
+
+                throw e;
+            }
+        }
+
+        return connection;
+    }
+
+    public Configuration getPluginConfiguration() {
+        return resourceContext.getPluginConfiguration();
+    }
+
+    // Here we do any validation that couldn't be achieved via the metadata-based constraints.
+    private void validatePluginConfiguration() {
+        //validateJBossHomeDirProperty();
+        //validateJavaHomePathProperty();
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        String principal = pluginConfig.getSimpleValue(TomcatServerComponent.PRINCIPAL_CONFIG_PROP, null);
+        String credentials = pluginConfig.getSimpleValue(TomcatServerComponent.CREDENTIALS_CONFIG_PROP, null);
+        if ((principal != null) && (credentials == null)) {
+            throw new InvalidPluginConfigurationException("If the '" + TomcatServerComponent.PRINCIPAL_CONFIG_PROP + "' connection property is set, the '" + TomcatServerComponent.CREDENTIALS_CONFIG_PROP
+                + "' connection property must also be set.");
+        }
+
+        if ((credentials != null) && (principal == null)) {
+            throw new InvalidPluginConfigurationException("If the '" + TomcatServerComponent.CREDENTIALS_CONFIG_PROP + "' connection property is set, the '" + TomcatServerComponent.PRINCIPAL_CONFIG_PROP
+                + "' connection property must also be set.");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void start(ResourceContext context) throws SQLException {
+        this.resourceContext = context;
+
+        this.operationsDelegate = new TomcatServerOperationsDelegate(this, resourceContext.getSystemInformation());
+
+        // Until the bugs get worked out of the calls back into the PC's operation framework, use the implementation
+        // that will simply make calls directly in the plugin.
+        // controlFacade = new PluginContainerControlActionFacade(operationContext, this);
+        //controlFacade = new InPluginControlActionFacade(this);
+        //workflowManager = new JBPMWorkflowManager(contentContext, controlFacade, getPluginConfiguration());
+
+        validatePluginConfiguration();
+
+        Configuration pluginConfig = context.getPluginConfiguration();
+
+        //        this.configPath = resolvePathRelativeToHomeDir(getRequiredPropertyValue(pluginConfig, CONFIGURATION_PATH_CONFIG_PROP));
+        //        if (!this.configPath.exists()) {
+        //            throw new InvalidPluginConfigurationException("Configuration path '" + configPath + "' does not exist.");
+        //        }
+        //        this.configSet = pluginConfig.getSimpleValue(CONFIGURATION_SET_CONFIG_PROP, this.configPath.getName());
+
+        // Attempt to load the connection now. If we cannot, do not consider the start operation as failed. The only
+        // exception to this rule is if the connection cannot be made due to a JMX security exception. In this case,
+        // we treat it as an invalid plugin configuration and throw the appropriate exception (see the javadoc for
+        // ResourceComponent)
+        try {
+            loadConnection();
+        } catch (Exception e) {
+
+            // Explicit checking for security exception (i.e. invalid credentials for connecting to JMX)
+            if (e instanceof EmsConnectException) {
+                Throwable cause = e.getCause();
+
+                if (cause instanceof SecurityException) {
+                    throw new InvalidPluginConfigurationException("Invalid JMX credentials specified for connecting to this server.", e);
+                }
+            }
+
+        }
+
+        // TODO: If we add event checking by default
+        //startLogFileEventPollers();
+    }
+
+    public void stop() {
+        // TODO: If we add event checking by default        
+        // stopLogFileEventPollers();
+        if (this.connection != null) {
+            try {
+                this.connection.close();
+            } catch (Exception e) {
+                log.error("Error closing EWS connection: " + e);
+            }
+            this.connection = null;
+        }
+    }
+
+    public AvailabilityType getAvailability() {
+        try {
+            EmsConnection connection = loadConnection();
+            EmsBean bean = connection.getBean("Catalina:type=Server");
+
+            // perhaps this is not necessary but proves that that not only the connection exists but is servicing requests/
+            bean.getAttribute("serverInfo").refresh();
+            return AvailabilityType.UP;
+        } catch (Exception e) {
+            return AvailabilityType.DOWN;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    ResourceContext getResourceContext() {
+        return resourceContext;
+    }
+
+    public File getStartScriptPath() {
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        String script = pluginConfig.getSimpleValue(TomcatServerComponent.PROP_START_SCRIPT, "");
+        File scriptFile = resolvePathRelativeToHomeDir(script);
+        return scriptFile;
+    }
+
+    public File getInstallationPath() {
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        return new File(pluginConfig.getSimpleValue(TomcatServerComponent.PROP_INSTALLATION_PATH, ""));
+    }
+
+    public File getShutdownScriptPath() {
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        String script = pluginConfig.getSimpleValue(TomcatServerComponent.PROP_SHUTDOWN_SCRIPT, "");
+        File scriptFile = resolvePathRelativeToHomeDir(script);
+        return scriptFile;
+    }
+
+    private File resolvePathRelativeToHomeDir(@NotNull
+    String path) {
+        return resolvePathRelativeToHomeDir(this.resourceContext.getPluginConfiguration(), path);
+    }
+
+    static File resolvePathRelativeToHomeDir(Configuration pluginConfig, String path) {
+        File configDir = new File(path);
+        if (!configDir.isAbsolute()) {
+            String jbossHomeDir = getRequiredPropertyValue(pluginConfig, TomcatServerComponent.PROP_INSTALLATION_PATH);
+            configDir = new File(jbossHomeDir, path);
+        }
+
+        return configDir;
+    }
+
+    private static String getRequiredPropertyValue(Configuration config, String propName) {
+        String propValue = config.getSimpleValue(propName, null);
+        if (propValue == null) {
+            // Something's not right - neither autodiscovery, nor the config edit GUI, should ever allow this.
+            throw new IllegalStateException("Required property '" + propName + "' is not set.");
+        }
+
+        return propValue;
+    }
+
+    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException, Exception {
+        EWSServerSupportedOperations operation = Enum.valueOf(EWSServerSupportedOperations.class, name.toUpperCase());
+
+        return operationsDelegate.invoke(operation, parameters);
+    }
+
+    MainDeployer getMainDeployer() {
+        return this.mainDeployer;
+    }
+
+    void undeployFile(File file) throws MainDeployer.DeployerException {
+        getEmsConnection();
+        if (this.connection == null) {
+            log.warn("Unable to undeploy " + file + ", because we could not connect to the EWS instance.");
+            return;
+        }
+        if (this.mainDeployer == null) {
+            throw new IllegalStateException("Unable to undeploy " + file + ", because MainDeployer MBean could " + "not be accessed - this should never happen.");
+        }
+        this.mainDeployer.undeploy(file);
+    }
+}

@@ -1,0 +1,662 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin
+   name="Tomcat"
+   displayName="Tomcat Server"
+   package="org.jboss.on.plugins.tomcat"
+   description="Supports management and monitoring of JBoss EWS or Apache Tomcat5, Tomcat6"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xmlns="urn:xmlns:rhq-plugin"
+   xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="JMX" />
+
+   <server
+      name="Tomcat Server"
+      discovery="TomcatDiscoveryComponent"
+      class="TomcatServerComponent"
+      description="Tomcat Server"
+      supportsManualAdd="false">
+
+      <subcategories>
+         <subcategory name="Applications" />
+      </subcategories>
+
+      <plugin-configuration>
+         <c:group
+            name="connection"
+            displayName="Connection Info">
+            <c:simple-property
+               name="installationPath"
+               displayName="Installation Home"
+               type="directory"
+               readOnly="true"
+               description="The home directory path of the Tomcat installation." />
+            <c:simple-property
+               name="connectorAddress"
+               displayName="Manager URL"
+               description="The RMI URL with which to connect to the Tomcat Server (e.g. service:jmx:rmi:///jndi/rmi://localhost:8999/jmxrmi)."
+               default="service:jmx:rmi:///jndi/rmi://localhost:8999/jmxrmi" />
+            <c:simple-property
+               name="principal"
+               required="false"
+               description="The name of the principal (i.e. user) to authenticate." />
+            <c:simple-property
+               name="credentials"
+               type="password"
+               required="false"
+               description="The credentials (i.e. password) that should be used to authenticate the principal." />
+         </c:group>
+
+         <c:group
+            name="control"
+            displayName="Operations">
+            <c:simple-property
+               name="scriptPrefix"
+               displayName="Script Prefix"
+               type="string"
+               required="false"
+               description="A prefix applied to script execution commands. Typically a sudo
+                                            for applicable platforms. The prefix is applied verbatim. As such, a
+                                            sudo user must be configured appropriately. Ignored if not set." />
+            <c:simple-property
+               name="startScript"
+               displayName="Start Script"
+               type="file"
+               required="false"
+               description="The path to the script used by the 'Start' operation to start this Tomcat server;                                            
+                                            if the path is not absolute it will be resolved relative to {installationPath}." />
+            <c:simple-property
+               name="shutdownScript"
+               displayName="Shutdown Script"
+               type="file"
+               required="false"
+               description="The path to the script used by the 'Shutdown' operation to shutdown this Tomcat server;                                            
+                                            if the path is not absolute it will be resolved relative to {installationPath}." />
+            <c:simple-property
+               name="shutdownMethod"
+               displayName="Shutdown Method"
+               type="string"
+               required="false"
+               default="JMX"
+               description="The method used to execute the Shutdown operation;
+                                            defaults to 'Shutdown Script'.">
+               <c:property-options>
+                  <c:option
+                     value="JMX"
+                     name="JMX MBean" />
+                  <c:option
+                     value="SCRIPT"
+                     name="Shutdown Script"
+                     default="true" />
+               </c:property-options>
+            </c:simple-property>
+         </c:group>
+
+         <!-- 
+            <c:group name="event" displayName="Events">
+            <c:list-property name="logEventSources">
+            <c:map-property name="logEventSource">
+            <c:simple-property name="logFilePath" type="file" summary="true"
+            description="The absolute path to the source log file."/>
+            <c:simple-property name="enabled" type="boolean" summary="false"
+            description="A flag indicating whether of not this log Event source is currently
+            enabled (i.e. whether the associated log file should be tailed for
+            new entries)."/>
+            <c:simple-property name="dateFormat" required="false"
+            description="The date format to use when parsing the dates in log entries. The
+            format must be in the syntax defined by the Java SimpleDateFormat
+            class. If not specified, the three date formats that are predefined
+            by Log4J (ISO8601, DATE, and ABSOLUTE) will be tried."/>
+            <c:simple-property name="includesPattern" required="false"
+            description="A regular expression against which a log entry's detail is matched
+            to determine if an Event should be fired for that entry. If not
+            specified, no filtering of log entries will be done based on their
+            detail."/>
+            <c:simple-property name="minimumSeverity" required="false" default="error"
+            description="The minimum severity of Events that should be collected for this
+            source. If not specified, there is no minimum severity (i.e. all
+            events will be collected).">
+            <c:property-options>
+            <c:option name="debug" value="debug"/>
+            <c:option name="info"  value="info"/>
+            <c:option name="warn"  value="warn"/>
+            <c:option name="error" value="error" default="true"/>
+            <c:option name="fatal" value="fatal"/>
+            </c:property-options>
+            </c:simple-property>
+            </c:map-property>
+            </c:list-property>
+            </c:group>
+         -->
+
+         <c:group
+            name="advanced"
+            displayName="Advanced"
+            hiddenByDefault="true">
+            <c:simple-property
+               name="type"
+               description="The type used to establish the EMS connection to the Tomcat server."
+               default="org.mc4j.ems.connection.support.metadata.Tomcat55ConnectionTypeDescriptor" />
+            <c:simple-property
+               name="shutdownMBeanName"
+               displayName="Shutdown MBean Name"
+               default="Catalina:type=Server"
+               description="Name of the MBean to use when shutting down this server through JMX." />
+            <c:simple-property
+               name="shutdownMBeanOperation"
+               displayName="Shutdown MBean Operation"
+               default="await"
+               description="Name of the operation to invoke when shutting down this server through JMX.
+                                 Note that only operations with no parameter or with one int parameter are supported. If the
+                                 operation requires an int parameter, '0' will be supplied." />
+         </c:group>
+      </plugin-configuration>
+
+      <!--  This will pick up any Tomcat process, whether standalone or embedded. We narrow it down further by examining the install dir -->
+      <process-scan
+         name="Tomcat"
+         query="process|basename|match=^java.*,arg|org.apache.catalina.startup.Bootstrap|match=.*" />
+
+      <operation
+         name="start"
+         displayName="Start"
+         description="Start this Tomcat server. The script used is specified in Control Properties." />
+      <operation
+         name="shutdown"
+         displayName="Shutdown"
+         description="Shutdown this Tomcat server via script or JMX depending on the settings in Control and Advanced Properties." />
+      <!--
+         <metric property="partitionName" dataType="trait" displayType="summary"
+         description="the name of the cluster partition this app server instance belongs to"/>
+         
+         <metric displayName="Version Name" property="jboss.system:type=Server:VersionName"
+         dataType="trait" displayType="summary"
+         description="the code name for the this app server instance's major version (AS 3.2 = WonderLand, AS 4.0 = Zion, AS 4.2 = Trinity, EAP 4.x = EAP, SOA 4.x = SOA)"/>
+         
+         <metric displayName="Build Date" property="jboss.system:type=Server:BuildDate"
+         dataType="trait" displayType="summary"
+         description="the date this app server was built"/>
+         
+         <metric displayName="Start Date" property="jboss.system:type=Server:StartDate"
+         dataType="trait" displayType="summary"
+         description="the date and time this app server instance was started"/>
+         
+         <metric property="jboss.system:type=ServerInfo:ActiveThreadCount" displayName="Active Thread Count"
+         defaultInterval="300000" displayType="summary" category="throughput"/>
+         
+         <metric property="jboss.system:type=ServerInfo:ActiveThreadGroupCount" displayName="Active Thread Group Count"
+         defaultInterval="300000" defaultOn="true" category="throughput"/>
+         
+         <metric property="jboss.system:type=ServerInfo:FreeMemory" displayName="JVM Free Memory" displayType="summary"
+         defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
+         
+         <metric property="jboss.system:type=ServerInfo:MaxMemory" displayName="JVM Max Memory"
+         defaultInterval="1800000" defaultOn="true" category="utilization" units="bytes"/>
+         
+         <metric property="jboss.system:type=ServerInfo:TotalMemory" displayName="JVM Total Memory" displayType="summary"
+         defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
+         
+         <metric property="jboss:service=TransactionManager:TransactionCount" displayName="Transactions Active"
+         defaultInterval="300000" defaultOn="true" category="utilization"/>
+         
+         <metric property="jboss:service=TransactionManager:CommitCount" displayName="Transactions Committed" displayType="summary" measurementType="trendsup"
+         defaultInterval="600000" defaultOn="true" category="utilization"/>
+         
+         <metric property="jboss:service=TransactionManager:RollbackCount" displayName="Transactions Rolledback" measurementType="trendsup"
+         defaultInterval="600000" defaultOn="true" category="utilization"/>
+         
+         <event name="logEntry" description="an entry in a log file"/>
+         
+         <content name="library" displayName="Jar Library" category="deployable"
+         description="Library Jar files deployed in JBoss AS">
+         <configuration>
+         <c:simple-property name="version" readOnly="true" description="The version declared by the JAR's manifest."/>
+         <c:simple-property name="title" readOnly="true" description="The title declared by the JAR's manifest."/>
+         <c:simple-property name="url" readOnly="true" description="The url declared by the JAR's manifest."/>
+         <c:simple-property name="vendor" readOnly="true" description="The vendor declared by the JAR's manifest."/>
+         <c:simple-property name="classpath" readOnly="true"
+         description="The classpath declared by the JAR's manifest."/>
+         <c:simple-property name="sealed" readOnly="true" type="boolean" description="True if the JAR is sealed."/>
+         </configuration>
+         </content>
+         
+         <content name="cumulativePatch" displayName="Cumulative Patch" category="deployable"
+         description="Automatically installable application server patches">
+         <configuration>
+         <c:simple-property name="jiraId"/>
+         <c:simple-property name="distributionStatus"/>
+         <c:simple-property name="downloadUrl"/>
+         <c:simple-property name="instructionCompatibilityVersion"/>
+         </configuration>
+         </content>
+         
+         <help>
+         <![CDATA[
+         h3. Binding to IP addresses
+         
+         When starting JBossAS instances that need to be monitored using remote JMX (i.e. JNP), it is necessary that the {{java.rmi.server.hostname}} System property is set to the same value as the server's JNP address (which is set to the {{jboss.bind.address}} System property by default). Due to bugs in JBossAS \[1]\[2], {{java.rmi.server.hostname}} will default to "127.0.0.1", unless JBossAS is started using -b, in which case {{java.rmi.server.hostname}} will default to the bind address specified as the argument to -b.
+         
+         Therefore, you must start your JBossAS instances using either -b, e.g.:
+         
+         {code}
+         run -b 12.34.56.78 ...
+         {code}
+         
+         or by explicitly specifying a value for {{java.rmi.server.hostname}} via -D or -P, e.g.:
+         
+         {code}
+         run -Djboss.bind.address=12.34.56.78 -Djava.rmi.server.hostname=12.34.56.78 ...
+         {code}
+         
+         Otherwise, you will not be able to manage the instance via JON.
+         
+         {note}
+         Using -b is the recommended way to specify the bind address, since, in addition to setting {{jboss.bind.address}} and {{java.rmi.server.hostname}}, it will also set a couple other JGroups-related System properties to the specified address.
+         {note}
+         
+         \[1] http://jira.jboss.com/jira/browse/JBAS-4736
+         \[2] http://jira.jboss.com/jira/browse/JBAS-4955
+         
+         h3. Monitoring of EJB 2.x EJBs
+         
+         The issue here is that JBossAS changed its way it creates the MBeans names of the deployed EJBs from the jndiNames / ejb-names (this has happened around 4.0.3.sp1)
+         Basically the <jndi-name> or (if it is not present) <local-jndi-name> from jboss.xml is used.
+         
+         So the workaround is to set the <jndi-name> to the ejb-name in your application.
+         As this probably breaks client code, you want/need to afterwards have a naming reference restoring the original hierarchy.
+         
+         For example:
+         
+         If you have in jboss.xml:
+         {code:title=jboss.xml}
+         <session>
+         <ejb-name>Ability</ejb-name>
+         <local-jndi-name>flower.AbilityLocal</local-jndi-name>
+         ...
+         {code}
+         
+         You might change this to:
+         
+         {code:title=jboss.xml}
+         <session>
+         <ejb-name>Ability</ejb-name>
+         <local-jndi-name>Ability</local-jndi-name>
+         {code}
+         
+         And then add an MBean flowsys-naming-alias-service.xml:
+         
+         {code:title=flower-naming-alias-service.xml}
+         <mbean code="org.jboss.naming.NamingAlias"
+         name=":service=naming-alias">
+         <attribute name="ToName">flower.AbilityLocal</attribute>
+         <attribute name="FromName">Ability</attribute>
+         </mbean>
+         {code}
+         
+         When you have done this, you probably still need to go into the inventory of the respective beans, edit the configuration and just click ok.
+         
+         The namig alias ensures that clients of the Ability ejb can still see the bean in JNDI at the place it looks for.
+         Naming aliases appear in JNDIView (within JMX-Console) as LinkRef.
+         ]]>
+         </help>
+      -->
+
+      <!-- This should be a service. See JBNADM-1697 -->
+      <service
+         name="Connector"
+         discovery="TomcatConnectorDiscoveryComponent"
+         class="TomcatConnectorComponent">
+
+         <!-- Catalina:address=type=Connector,port=9009  -->
+
+         <plugin-configuration>
+            <c:group
+               name="general"
+               displayName="General">
+               <c:simple-property
+                  name="objectName"
+                  readOnly="true"
+                  default="Catalina:type=Connector,port=%port%" />
+               <c:simple-property
+                  name="address"
+                  type="string"
+                  description="IP Address on which this connector listens."
+                  readOnly="true" />
+               <c:simple-property
+                  name="port"
+                  type="string"
+                  description="Port on which this connector listens."
+                  readOnly="true" />
+               <c:simple-property
+                  name="scheme"
+                  type="string"
+                  description="Protocol scheme. (jk, ajp, http)."
+                  default="http" />
+               <c:simple-property
+                  name="protocol"
+                  type="string"
+                  description="Protocal handler."
+                  readOnly="true" />
+            </c:group>
+
+            <c:group
+               name="advanced"
+               displayName="Advanced"
+               hiddenByDefault="true">
+               <c:simple-property
+                  name="nameTemplate"
+                  default="Tomcat Connector ({port})" />
+               <c:simple-property
+                  name="descriptionTemplate"
+                  default="A Tomcat connector" />
+            </c:group>
+
+         </plugin-configuration>
+
+         <!-- Catalina:type=GlobalRequestProcessor,name=http-8080:maxTime -->
+         <metric
+            property="Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%:maxTime"
+            displayName="Maximum Request Time"
+            description="Maximum time it took to process a request"
+            units="milliseconds"
+            defaultOn="true"
+            category="performance" />
+
+         <!-- Catalina:type=GlobalRequestProcessor,name=http-8080:requestCount -->
+         <metric
+            property="Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%:requestCount"
+            displayName="Request count"
+            description="Total number of requests processed since last restart."
+            defaultOn="false"
+            category="utilization"
+            measurementType="trendsup" />
+
+         <!-- Catalina:type=GlobalRequestProcessor,name=http-8080:errorCount -->
+         <metric
+            property="Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%:errorCount"
+            displayName="Error count"
+            description="Number of errors while processing since last restart."
+            defaultOn="true"
+            category="utilization"
+            measurementType="trendsup" />
+
+         <!-- Catalina:type=ThreadPool,name=http-8080:currentThreadsBusy -->
+         <metric
+            property="Catalina:type=ThreadPool,name=%scheme%-%port%:currentThreadsBusy"
+            displayName="Threads Active"
+            defaultOn="true"
+            category="utilization"
+            displayType="summary" />
+
+         <!-- Catalina:type=ThreadPool,name=http-8080:currentThreadCount -->
+         <metric
+            property="Catalina:type=ThreadPool,name=%scheme%-%port%:currentThreadCount"
+            displayName="Threads Allocated"
+            defaultOn="true"
+            category="utilization"
+            displayType="summary" />
+
+         <service
+            name="ThreadPool"
+            discovery="TomcatThreadPoolDiscoveryComponent"
+            class="TomcatThreadPoolComponent">
+
+            <plugin-configuration>
+
+               <c:group
+                  name="general"
+                  displayName="General">
+                  <c:simple-property
+                     name="objectName"
+                     readOnly="true"
+                     default="Catalina:type=ThreadPool,name=%name%" />
+                  <c:simple-property
+                     name="name"
+                     type="string"
+                     description="Generated name based on parent connector."
+                     readOnly="true" />
+               </c:group>
+
+               <c:group
+                  name="advanced"
+                  displayName="Advanced"
+                  hiddenByDefault="true">
+                  <c:simple-property
+                     name="nameTemplate"
+                     default="Tomcat Connector ThreadPool({name})" />
+                  <c:simple-property
+                     name="descriptionTemplate"
+                     default="A Tomcat connector thread pool" />
+               </c:group>
+
+            </plugin-configuration>
+
+            <!-- Catalina:type=ThreadPool,name=http-8080:currentThreadsBusy -->
+            <metric
+               property="Catalina:type=ThreadPool,name=%name%:currentThreadsBusy"
+               displayName="Threads Active"
+               defaultOn="true"
+               category="utilization"
+               displayType="summary" />
+
+            <!-- Catalina:type=ThreadPool,name=http-8080:currentThreadCount -->
+            <metric
+               property="Catalina:type=ThreadPool,name=%name%:currentThreadCount"
+               displayName="Threads Allocated"
+               defaultOn="true"
+               category="utilization"
+               displayType="summary" />
+
+            <!-- Catalina:type=ThreadPool,name=http-8080:maxThreads -->
+            <metric
+               property="Catalina:type=ThreadPool,name=%name%:maxThreads"
+               displayName="Max Threads"
+               defaultOn="true"
+               dataType="trait" />
+
+         </service>
+
+      </service>
+
+      <service
+         name="VHost"
+         discovery="TomcatVHostDiscoveryComponent"
+         class="TomcatVHostComponent"
+         description="A virtual host in the web container">
+
+         <plugin-configuration>
+            <c:simple-property
+               name="objectName"
+               readOnly="true"
+               default="Catalina:type=Host,host=%name%" />
+         </plugin-configuration>
+
+         <metric
+            property="Catalina:type=Host,host=%name%:aliases"
+            displayName="Aliases"
+            defaultOn="true"
+            dataType="trait" />
+
+         <metric
+            property="Catalina:type=Host,host=%name%:appBase"
+            displayName="Application root"
+            defaultOn="true"
+            dataType="trait" />
+
+         <service
+            name="Web Application (WAR)"
+            subCategory="Applications"
+            discovery="TomcatApplicationDiscoveryComponent"
+            class="TomcatApplicationComponent"
+            description="Web Application"
+            createDeletePolicy="both"
+            creationDataType="content">
+
+            <!-- Catalina:j2eeType=WebModule,name=//<VHOST>/<NAME>,J2EEApplication=none,J2EEServer=none -->
+
+            <plugin-configuration>
+               <c:group name="General">
+                  <c:simple-property
+                     name="objectName"
+                     readOnly="true"
+                     default="Catalina:j2eeType=WebModule,name=//%vHost%/%contextRoot%,J2EEApplication=none,J2EEServer=none" />
+                  <c:simple-property
+                     name="name"
+                     description="The name of this WAR"
+                     readOnly="true" />
+                  <c:simple-property
+                     name="filename"
+                     readOnly="true" />
+                  <c:simple-property
+                     name="contextRoot"
+                     readOnly="true"
+                     required="false"
+                     description="this WAR's context root - used as a unique path prefix for URLs corresponding to this WAR" />
+                  <c:simple-property
+                     name="vHost"
+                     displayName="Virtual Host"
+                     readOnly="true"
+                     required="false"
+                     description="The (virtual) host that this application is running on. If no virtual host is set, this defaults to 'localhost'" />
+               </c:group>
+               <c:group
+                  name="Advanced"
+                  hiddenByDefault="true">
+                  <c:simple-property
+                     name="nameTemplate"
+                     default="{name}" />
+                  <c:simple-property
+                     name="extension"
+                     default="war"
+                     readOnly="true" />
+                  <c:simple-property
+                     name="descriptionTemplate"
+                     default="Web Application"
+                     readOnly="true" />
+               </c:group>
+            </plugin-configuration>
+
+            <operation
+               name="start"
+               description="starts this web application." />
+            <operation
+               name="stop"
+               description="stops this web application." />
+            <operation
+               name="reload"
+               description="reloads this web application." />
+
+            <!-- The two traits below are collected by the ApplicationComponent class, which WarComponent extends.. -->
+            <metric
+               property="Application.path"
+               displayName="Path"
+               dataType="trait"
+               displayType="summary"
+               description="the absolute path of this WAR file or directory" />
+
+            <metric
+               property="ContextRoot"
+               displayName="Context Root"
+               dataType="trait"
+               displayType="summary"
+               description="this WAR's context root - used as a unique path prefix for URLs corresponding to this WAR" />
+
+            <metric
+               property="Servlet.NumRequests"
+               displayName="Requests served"
+               units="none"
+               description="Number of requests served by servlets"
+               measurementType="trendsup"
+               displayType="summary" />
+
+            <metric
+               property="Servlet.NumErrors"
+               displayName="Errors while processing"
+               units="none"
+               description="Number of errors while processing"
+               measurementType="trendsup"
+               displayType="summary" />
+
+            <metric
+               property="Vhost.name"
+               displayName="Vhost"
+               dataType="trait"
+               defaultOn="true"
+               description="Virtual hosts this app runs on" />
+
+            <!-- 
+               <content name="file" displayName="WAR File" category="deployable" isCreationType="true">
+               <configuration>
+               <c:group name="deployment" displayName="Deployment Options">
+               <c:simple-property name="deployZipped" displayName="Deploy Zipped" type="boolean" default="false" required="true"
+               description="Indicates if the WAR is deployed either zipped or exploded."/>
+               <c:simple-property name="deployDirectory" displayName="Deploy Directory" type="string" default="deploy" required="true"
+               description="Path to deploy the file. This must be a path relative to the AS configuration set in use."/>
+               </c:group>
+               </configuration>
+               </content>
+            -->
+         </service>
+
+         <service
+            name="Cache"
+            discovery="TomcatCacheDiscoveryComponent"
+            class="TomcatCacheComponent"            
+            description="A Tomcat Application Cache">
+
+            <plugin-configuration>
+               <c:group name="General">
+
+                  <c:simple-property
+                     name="objectName"
+                     readOnly="true"
+                     default="Catalina:type=Cache,host=%host%,path=%path%" />
+                  <c:simple-property
+                     name="host"
+                     description="The VHost for the cache"
+                     readOnly="true" />
+                  <c:simple-property
+                     name="path"
+                     description="The application path"
+                     readOnly="true" />
+               </c:group>
+
+               <c:group
+                  name="Advanced"
+                  hiddenByDefault="true">
+                  <c:simple-property
+                     name="nameTemplate"
+                     default="Application Cache ( {host}{path} )" />
+                  <c:simple-property
+                     name="descriptionTemplate"
+                     default="Web Application Cache"
+                     readOnly="true" />
+               </c:group>
+
+            </plugin-configuration>
+
+            <metric
+               property="HitMissRatio"
+               displayType="summary"
+               units="percentage"
+               description="Returns the hit/miss ratio for the cache. This ratio is defined as hits/(hits + misses)." />
+            <metric
+               property="ReadWriteRatio"
+               displayType="summary"
+               units="percentage"
+               description="Returns the read/write ratio for the cache. This ratio is defined as (hits + misses)/stores." />
+            <metric
+               property="Hits"
+               displayType="summary" />
+            <metric
+               property="Misses"
+               displayType="summary" />
+
+         </service>
+
+      </service>
+
+   </server>
+
+</plugin>

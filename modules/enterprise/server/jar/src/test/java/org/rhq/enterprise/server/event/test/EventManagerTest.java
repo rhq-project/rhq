@@ -18,7 +18,11 @@
  */
 package org.rhq.enterprise.server.event.test;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -122,23 +126,24 @@ public class EventManagerTest extends AbstractEJB3Test {
 
             EventDefinition eDef = new EventDefinition(resource.getResourceType(), "My definition is this ..");
             em.persist(eDef);
+            em.flush();
 
             long now = System.currentTimeMillis();
             EventSource evSrc = new EventSource("ESource", eDef, resource);
             Event ev = new Event("EType", "ESource", now, EventSeverity.INFO, "This is a 2nd test", evSrc);
-            //Set<Event> eventSet = new HashSet<Event>();
-            //eventSet.add(ev);
-            //Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>();
-            //events.put(evSrc, eventSet);
-            em.persist(evSrc);
-            em.persist(ev);
-            em.flush();
+            Set<Event> eventSet = new HashSet<Event>();
+            eventSet.add(ev);
+            Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>();
+            events.put(evSrc, eventSet);
+            //em.persist(evSrc);
+            //em.persist(ev);
+            //em.flush();
 
             /* 
              * do NOT use addEventData method until this test is refactored to support the fact that
              * insertions made via direct SQL won't be visible to the entity manager in this xaction
              */
-            //eventManager.addEventData(events);
+            eventManager.addEventData(events);
             int resourceId = resource.getId();
             long t1 = now - 1000L;
             long t2 = now + 1000L;

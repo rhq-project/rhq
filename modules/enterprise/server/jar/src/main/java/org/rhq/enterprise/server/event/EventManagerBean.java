@@ -116,7 +116,6 @@ public class EventManagerBean implements EventManagerLocal {
         }
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void addEventData(Map<EventSource, Set<Event>> events) {
 
         if (events == null || events.size() == 0)
@@ -500,10 +499,13 @@ public class EventManagerBean implements EventManagerLocal {
             query += " AND upper(evs.location) LIKE ? ";
         if (!isCountQuery) {
             // add paging first as simple AND conditionals instead of using the nested query style
-            query = addPagingToQuery(query, pc);
-            query = addSortingToQuery(query, pc);
-            // NOTE: Add paging to the query last, since for Oracle, the whole query will become an inner SELECT in the
-            //       paging SELECTs.
+            if (this.dbType instanceof PostgresqlDatabaseType) {
+                query = addSortingToQuery(query, pc);
+                query = addPagingToQuery(query, pc);
+            } else if (this.dbType instanceof OracleDatabaseType) {
+                query = addPagingToQuery(query, pc);
+                query = addSortingToQuery(query, pc);
+            }
 
         }
         return query;
@@ -547,21 +549,6 @@ public class EventManagerBean implements EventManagerLocal {
             throw new RuntimeException("Unknown database type : " + this.dbType);
         }
         return queryWithPaging.toString();
-    }
-
-    private String addResultsLimitToQuery(String query, int maxResults) {
-        StringBuilder string = new StringBuilder();
-        if (this.dbType instanceof PostgresqlDatabaseType) {
-            string.append(query);
-            string.append(" LIMIT ").append(maxResults);
-        } else if (this.dbType instanceof OracleDatabaseType) {
-            string.append("SELECT * FROM (");
-            string.append(query);
-            string.append(") WHERE rownum <= ").append(maxResults);
-        } else {
-            throw new RuntimeException("Unknown database type : " + this.dbType);
-        }
-        return string.toString();
     }
 
     @SuppressWarnings("unchecked")

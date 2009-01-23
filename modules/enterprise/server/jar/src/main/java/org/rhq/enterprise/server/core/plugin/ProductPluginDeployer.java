@@ -28,19 +28,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-import javax.management.ListenerNotFoundException;
-import javax.management.MBeanNotificationInfo;
-import javax.management.Notification;
-import javax.management.NotificationBroadcaster;
-import javax.management.NotificationBroadcasterSupport;
-import javax.management.NotificationFilter;
-import javax.management.NotificationListener;
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -57,6 +49,7 @@ import org.xml.sax.SAXException;
 
 import org.jboss.deployment.DeploymentException;
 import org.jboss.deployment.DeploymentInfo;
+import org.jboss.deployment.DeploymentState;
 import org.jboss.deployment.SubDeployerSupport;
 
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
@@ -75,30 +68,15 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * ProductPlugin deployer responsible for detecting agent plugin jars on the filesystem.
- * Note that this class is the only one that should care about the agent jar files on the
- * filesystem.  The database will contain the plugin jar contents for other objects to use.
  */
-public class ProductPluginDeployer extends SubDeployerSupport implements ProductPluginDeployerMBean,
-    NotificationBroadcaster {
+public class ProductPluginDeployer extends SubDeployerSupport implements ProductPluginDeployerMBean {
 
     public static final String AMPS_VERSION = "2.0";
 
     private static final String DEFAULT_PLUGIN_DESCRIPTOR_PATH = "META-INF/rhq-plugin.xml";
     private static final String PLUGIN_DESCRIPTOR_SCHEMA = "rhq-plugin.xsd";
 
-    private static final String DEPLOYER_READY = "RHQ.plugin.deployer.ready";
-    private static final String DEPLOYER_SUSPENDED = "RHQ.plugin.deployer.suspended";
-    private static final String DEPLOYER_CLEARED = "RHQ.plugin.deployer.cleared";
-    private static final String PLUGIN_REGISTERED = "RHQ.plugin.registered";
-    private static final String PLUGIN_DEPLOYED = "RHQ.plugin.deployed";
-    private static final String PLUGIN_UNDEPLOYED = "RHQ.plugin.undeployed";
-    private static final String[] NOTIF_TYPES = new String[] { DEPLOYER_READY, DEPLOYER_SUSPENDED, DEPLOYER_CLEARED,
-        PLUGIN_REGISTERED, PLUGIN_DEPLOYED, PLUGIN_UNDEPLOYED, };
-
     private Log log = LogFactory.getLog(ProductPluginDeployer.class.getName());
-    private NotificationBroadcasterSupport broadcaster = new NotificationBroadcasterSupport();
-    private AtomicLong notifSequence = new AtomicLong(0);
-
     private File pluginDir = null;
     private String licenseFile = null;
 
@@ -116,29 +94,6 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
 
     public ProductPluginDeployer() {
         // intentionally left blank
-    }
-
-    @Override
-    protected void processNestedDeployments(DeploymentInfo di) throws DeploymentException {
-        if (di.isDirectory) {
-            super.processNestedDeployments(di);
-        }
-    }
-
-    @Override
-    public void addNotificationListener(NotificationListener listener, NotificationFilter filter, Object handback) {
-        this.broadcaster.addNotificationListener(listener, filter, handback);
-    }
-
-    @Override
-    public void removeNotificationListener(NotificationListener listener) throws ListenerNotFoundException {
-        this.broadcaster.removeNotificationListener(listener);
-    }
-
-    @Override
-    public MBeanNotificationInfo[] getNotificationInfo() {
-        return new MBeanNotificationInfo[] { new MBeanNotificationInfo(NOTIF_TYPES, Notification.class.getName(),
-            "Product Plugin Notifications"), };
     }
 
     public void setPluginDir(String pluginDirString) {
@@ -181,7 +136,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     public void stopService() throws Exception {
         if (isStarted) {
             super.stopService();
-            pluginNotify("deployer", DEPLOYER_SUSPENDED);
+
             this.deploymentInfos.clear();
             this.pluginDescriptors.clear();
             this.pluginVersions.clear();
@@ -190,6 +145,34 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             isStarted = false;
             isReady = false;
         }
+    }
+
+    /**
+     * This is called when a new or updated plugin is bring brought online.
+     * This is called as part of the JBossAS main deployer and may be called even before
+     * the server is fully initialized (i.e. the EJB3 SLSBs may not be ready yet, in which case
+     * {@link #isReady} will be <code>false</code>).
+     */
+    @Override
+    public void create(DeploymentInfo deploymentInfo) throws DeploymentException {
+        if (isLicenseFile(deploymentInfo))
+            return;
+
+        // don't cache deployment infos across starts, so if we've seen this deployment info before,
+        // take the current one we were just given and use it to replace the old info
+        String key = null;
+        for (Map.Entry<String, DeploymentInfo> entry : this.deploymentInfos.entrySet()) {
+            if (entry.getValue().equals(deploymentInfo)) {
+                key = entry.getKey();
+                break;
+            }
+        }
+        if (key != null) {
+            this.deploymentInfos.put(key, deploymentInfo);
+        }
+
+        String name = preprocessPlugin(deploymentInfo);
+        log.debug("CREATE: [" + deploymentInfo.localUrl + "]: plugin name=[" + name + "]");
     }
 
     /**
@@ -206,20 +189,19 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         if (isLicenseFile(deploymentInfo))
             return;
 
-        log.debug("starting the deployment of agent plugin: " + getPluginJarFilename(deploymentInfo));
-        String pluginName = preprocessPlugin(deploymentInfo);
+        log.debug("START: [" + deploymentInfo.localUrl + "]");
 
         // isReady == true means startDeployer() has already been called, so this is a hot deploy.
-        if (this.isReady) {
-            log.debug("Hot deploying plugin [" + pluginName + "]...");
+        if (this.isReady && areAllPluginsStarted(deploymentInfo)) {
+            log.debug("Hot deploying plugin [" + deploymentInfo.url + "]...");
             try {
                 registerPlugins(); // we are ready to hot-deploy so we can register immediately
             } catch (Exception e) {
-                throw new DeploymentException("Unable to deploy RHQ plugin [" + pluginName + "]", e);
+                throw new DeploymentException("Unable to deploy RHQ plugin [" + deploymentInfo.url + "]", e);
             }
         } else {
             // startDeployer() has not been called yet so we are holding off registering until then
-            log.debug("Initial deploy of plugin [" + pluginName + "]...");
+            log.debug("Not ready yet - will deploy plugin [" + deploymentInfo.url + "] later");
         }
         return;
     }
@@ -229,17 +211,20 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         if (isLicenseFile(deploymentInfo))
             return;
 
-        String pluginJarFileName = getPluginJarFilename(deploymentInfo);
-        log.debug("agent plugin has been removed from the filesystem: " + pluginJarFileName);
+        log.debug("STOP: [" + deploymentInfo.localUrl + "]");
+    }
 
-        try {
-            // TODO: Actually undeploy the plugin from the DB (this will be a lot of work...).
-            pluginNotify(new File(pluginJarFileName).getName(), PLUGIN_UNDEPLOYED);
-        } catch (Exception e) {
-            throw new DeploymentException(e);
-        }
+    @Override
+    public void destroy(DeploymentInfo deploymentInfo) throws DeploymentException {
+        if (isLicenseFile(deploymentInfo))
+            return;
 
-        return;
+        // NOTE: do NOT remove the info from our deploymentInfos cache. We want to remember
+        // this plugin, even though its been destroyed. Our create method will cache the new info
+        // when we get it. Leaving it in cache lets us know how which plugins we can expect to
+        // be started in the future
+
+        log.debug("DESTROY: [" + deploymentInfo.localUrl + "]");
     }
 
     /**
@@ -284,18 +269,57 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
      * allowed to begin registering types from deployed plugins.
      */
     public void startDeployer() {
-        pluginNotify("deployer", DEPLOYER_READY);
-
         // Do startup license checking.
         LicenseManager licenseManager = LicenseManager.instance();
         licenseManager.doStartupCheck(this.licenseFile);
 
+        // we can now register our initial set of plugins
         registerPlugins();
 
-        pluginNotify("deployer", DEPLOYER_CLEARED);
+        // indicate that we are now ready for hot-deployment of new plugins
+        this.isReady = true;
+    }
 
-        this.isReady = true; // this now enables hot-deployment
-        return;
+    /**
+     * Returns true if all known plugins have been started by the jboss deployer.
+     * Because we cannot register any plugins until all plugin jars have been preprocessed
+     * by this plugin deployer object, plugins should only be registered if this returns true.
+     *
+     * @param deploymentInfo this is the deployment that is currently being started and will
+     *                       be ignored when examining the plugins that need to be started
+     * @return true if all plugins (except for the given one) have been started, false otherwise
+     */
+    private boolean areAllPluginsStarted(DeploymentInfo deploymentInfo) {
+
+        List<String> pluginsNotReady = new ArrayList<String>();
+        List<String> pluginsDeleted = new ArrayList<String>();
+
+        // find out which plugins haven't been started by the deployer
+        for (Map.Entry<String, DeploymentInfo> entry : this.deploymentInfos.entrySet()) {
+            DeploymentInfo entryDI = entry.getValue();
+            if (!entryDI.equals(deploymentInfo)) {
+                if (entryDI.state != DeploymentState.STARTED) {
+                    pluginsNotReady.add(entry.getKey());
+                }
+            }
+        }
+
+        // of the plugins that haven't been started, see if any were actually deleted from the file system
+        for (String pluginName : pluginsNotReady) {
+            DeploymentInfo notReadyDI = this.deploymentInfos.get(pluginName);
+            File notReadyFile = new File(notReadyDI.url.getFile());
+            if (!notReadyFile.exists()) {
+                log.info("Plugin named [" + pluginName + "] appears to be deleted, it will be removed from cache");
+                this.deploymentInfos.remove(pluginName);
+                this.pluginDescriptors.remove(pluginName);
+                this.pluginVersions.remove(pluginName);
+                this.namesOfPluginsToBeRegistered.remove(pluginName);
+                pluginsDeleted.add(pluginName);
+            }
+        }
+
+        pluginsNotReady.removeAll(pluginsDeleted); // don't wait for the deleted ones, remove them from the not-ready list
+        return (pluginsNotReady.size() == 0);
     }
 
     /**
@@ -427,6 +451,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             return; // should we throw an exception here?
         }
         registerPlugins(dependencyGraph);
+        log.info("Plugin registration is complete.");
         this.namesOfPluginsToBeRegistered.clear();
 
         // Trigger vacuums on some tables as the initial deployment might have changed a lot of things.
@@ -586,8 +611,6 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             // if we are called when hot-deploying a plugin whose dependencies aren't deployed, this will fail
             ResourceMetadataManagerLocal metadataManager = LookupUtil.getResourceMetadataManager();
             metadataManager.registerPlugin(plugin, pluginDescriptor, localPluginFile);
-
-            pluginNotify(pluginNameDisplayName, PLUGIN_REGISTERED);
         } catch (Exception e) {
             log.error("Failed to register RHQ plugin file [" + deploymentInfo.shortName + "] at ["
                 + deploymentInfo.localUrl + "]", e);
@@ -649,14 +672,6 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         return isValid;
     }
 
-    private void pluginNotify(String name, String notifType) {
-        String action = notifType.substring(notifType.lastIndexOf(".") + 1);
-        String msg = "Plugin " + name + " " + action + ".";
-        Notification notif = new Notification(notifType, this, this.notifSequence.incrementAndGet(), msg);
-        log.debug(msg);
-        broadcaster.sendNotification(notif);
-    }
-
     /**
      * Obtains the manifest of the plugin file represented by the given deployment info.
      * Use this method rather than calling deploymentInfo.getManifest()
@@ -694,6 +709,13 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
     private boolean isLicenseFile(DeploymentInfo deploymentInfo) {
         String name = LicenseManager.getLicenseFileName();
         return deploymentInfo.url.getFile().endsWith(name); // use url (not localurl), want to use the actual license file
+    }
+
+    @Override
+    protected void processNestedDeployments(DeploymentInfo di) throws DeploymentException {
+        if (di.isDirectory) {
+            super.processNestedDeployments(di);
+        }
     }
 
     class LatchedPluginDeploymentService extends LatchedServiceController.LatchedService {

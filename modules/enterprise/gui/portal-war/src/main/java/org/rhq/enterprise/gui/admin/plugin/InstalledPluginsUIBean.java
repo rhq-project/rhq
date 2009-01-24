@@ -63,7 +63,7 @@ public class InstalledPluginsUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Done scanning for updated agent plugins.");
         } catch (Exception e) {
             String err = "Failed to scan for updated agent plugins";
-            log.error(err);
+            log.error(err + " - Cause: " + e);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, err, e);
         }
     }
@@ -92,7 +92,7 @@ public class InstalledPluginsUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "New agent plugin processed: " + agentPlugin);
         } catch (Exception e) {
             String err = "Failed to process uploaded agent plugin";
-            log.error(err);
+            log.error(err + " - Cause: " + e);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, err, e);
         }
 

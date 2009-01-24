@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas;
 
 import java.io.File;
@@ -291,6 +291,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
             description += " hosting the RHQ Server";
 
             // RHQ-633 : We know this is an RHQ Server. Let's auto configure for tracking its log file
+            // JOPR-53 : Tracking will be disabled, user will have to explicitly enable it now
             File rhqLogFile = JBossASServerComponent.resolvePathRelativeToHomeDir(pluginConfiguration,
                 "../logs/rhq-server-log4j.log");
             if (rhqLogFile.exists() && !rhqLogFile.isDirectory()) {
@@ -300,7 +301,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
                         .put(new PropertySimple(JBossASServerComponent.LogEventSourcePropertyNames.LOG_FILE_PATH,
                             rhqLogFile.getCanonicalPath()));
                     serverLogEventSource.put(new PropertySimple(
-                        JBossASServerComponent.LogEventSourcePropertyNames.ENABLED, Boolean.TRUE));
+                        JBossASServerComponent.LogEventSourcePropertyNames.ENABLED, Boolean.FALSE));
                     serverLogEventSource.put(new PropertySimple(
                         JBossASServerComponent.LogEventSourcePropertyNames.MINIMUM_SEVERITY, "info"));
                     PropertyList logEventSources = pluginConfiguration

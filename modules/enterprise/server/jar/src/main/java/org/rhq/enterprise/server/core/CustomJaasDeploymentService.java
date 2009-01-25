@@ -43,7 +43,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Deploy the JAAS login modules that are configured. JDBC login module is always deployed, however, the LDAP login
- * module is only deployed if LDAP is enabled in the JON configuration.
+ * module is only deployed if LDAP is enabled in the RHQ configuration.
  */
 public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceMBean, MBeanRegistration {
     private static final String AUTH_METHOD = "addAppConfig";
@@ -109,7 +109,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                 AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, configOptions);
 
             // We always add the JDBC provider to the auth config
-            this.log.info("Enabling JON JDBC JAAS Provider");
+            this.log.info("Enabling RHQ JDBC JAAS Provider");
             configEntries.add(ace);
 
             // to support the need for authenticating temporary session passwords, add a login module that can do that
@@ -130,10 +130,10 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                     validateLdapOptions(configOptions);
                     ace = new AppConfigurationEntry(LdapLoginModule.class.getName(),
                         AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, configOptions);
-                    this.log.info("Enabling JON LDAP JAAS Provider");
+                    this.log.info("Enabling RHQ LDAP JAAS Provider");
                     configEntries.add(ace);
                 } catch (NamingException e) {
-                    this.log.info("Disabling JON LDAP JAAS Provider: " + e.getMessage(), e);
+                    this.log.info("Disabling RHQ LDAP JAAS Provider: " + e.getMessage(), e);
                 }
             }
 
@@ -143,7 +143,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             Object obj = mbeanServer.invoke(objName, AUTH_METHOD, new Object[] { SECURITY_DOMAIN_NAME, config },
                 new String[] { "java.lang.String", config.getClass().getName() });
         } catch (Exception e) {
-            throw new Exception("Error registering JON JAAS Modules", e);
+            throw new Exception("Error registering RHQ JAAS Modules", e);
         }
     }
 

@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.plugin;
 
 import java.io.File;
@@ -30,9 +30,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
@@ -82,11 +84,9 @@ public class PluginManager implements ContainerService {
                 for (URL url : pluginUrls) {
                     log.debug("Plugin found at: " + url);
 
-                    PluginDescriptorLoader isolatedLoader;
                     PluginDescriptor descriptor;
                     try {
-                        isolatedLoader = new PluginDescriptorLoader(url, null, null, false, tmpDir);
-                        descriptor = isolatedLoader.loadPluginDescriptor();
+                        descriptor = PluginDescriptorLoader.loadPluginDescriptorFromUrl(url);
                     } catch (Throwable t) {
                         // probably due to invalid XML syntax in the deployment descriptor - the plugin will be ignored
                         log.error("Plugin at [" + url + "] could not be loaded and will therefore not be deployed.", t);
@@ -103,8 +103,6 @@ public class PluginManager implements ContainerService {
 
                     graph.addPlugin(pluginName, dependencies);
                     pluginNamesUrls.put(pluginName, url);
-
-                    isolatedLoader.destroy(); // done with it - just needed it to parse the descriptor
                 }
 
                 // get the order that we have to deploy the plugins
@@ -229,7 +227,8 @@ public class PluginManager implements ContainerService {
     private void loadPlugin(URL pluginUrl, ClassLoader classLoader) throws PluginContainerException {
         log.debug("Loading plugin from: " + pluginUrl);
 
-        PluginDescriptorLoader pluginDescriptorLoader = new PluginDescriptorLoader(pluginUrl, classLoader, null, true, this.configuration.getTemporaryDirectory());
+        PluginDescriptorLoader pluginDescriptorLoader = new PluginDescriptorLoader(pluginUrl, classLoader, null, true,
+            this.configuration.getTemporaryDirectory());
         PluginDescriptor pluginDescriptor = pluginDescriptorLoader.loadPluginDescriptor();
         PluginEnvironment pluginEnvironment = new PluginEnvironment(pluginDescriptor.getName(), pluginDescriptorLoader);
         this.loadedPlugins.put(pluginEnvironment.getPluginName(), pluginEnvironment);

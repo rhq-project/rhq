@@ -26,11 +26,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.net.URLClassLoader;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.ValidationEvent;
 import javax.xml.bind.util.ValidationEventCollector;
@@ -39,7 +39,6 @@ import javax.xml.validation.SchemaFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
@@ -54,17 +53,14 @@ import org.rhq.core.util.exception.WrappedRemotingException;
  * @author Ian Springer
  */
 public class PluginDescriptorLoader {
-    /**
-     * The path to the plugin descriptor file within the plugin jar.
-     */
-    private static final String PLUGIN_DESCRIPTOR_PATH = "META-INF/rhq-plugin.xml";
 
+    private static final String PLUGIN_DESCRIPTOR_PATH = "META-INF/rhq-plugin.xml";
     private static final String PLUGIN_SCHEMA_PATH = "rhq-plugin.xsd";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private URL pluginJarUrl;
-    private ClassLoader pluginClassLoader;
+    private final URL pluginJarUrl;
+    private final ClassLoader pluginClassLoader;
 
     /**
      * This will create the plugin's {@link #getPluginClassLoader() classloader}. If <code>classLoader</code> is
@@ -85,26 +81,38 @@ public class PluginDescriptorLoader {
      *
      * @throws PluginContainerException on failure to load the descriptor
      */
-    public PluginDescriptorLoader(URL pluginJarUrl, ClassLoader classLoader, ClassLoader parentClassLoader, boolean unpackJars, File tmpDir) throws PluginContainerException {
+    public PluginDescriptorLoader(URL pluginJarUrl, ClassLoader classLoader, ClassLoader parentClassLoader,
+        boolean unpackJars, File tmpDir) throws PluginContainerException {
+
         this.pluginJarUrl = pluginJarUrl;
-        this.pluginClassLoader = (classLoader != null) ? classLoader : createPluginClassLoader(pluginJarUrl, parentClassLoader, unpackJars, tmpDir);
+
+        if (classLoader != null) {
+            this.pluginClassLoader = classLoader;
+        } else {
+            this.pluginClassLoader = createPluginClassLoader(pluginJarUrl, parentClassLoader, unpackJars, tmpDir);
+        }
     }
 
-    private ClassLoader createPluginClassLoader(URL pluginJarUrl, ClassLoader parentClassLoader, boolean unpackJars, File tmpDir) throws PluginContainerException {
+    private ClassLoader createPluginClassLoader(URL jarUrl, ClassLoader parentClassLoader, boolean unpackJars,
+        File tmpDir) throws PluginContainerException {
+
         ClassLoader classLoader;
         if (parentClassLoader == null) {
             parentClassLoader = this.getClass().getClassLoader();
         }
-        if (pluginJarUrl != null) {
-            classLoader = PluginClassLoader.create(new File(pluginJarUrl.getPath()).getName(), pluginJarUrl, unpackJars, parentClassLoader, tmpDir);
+
+        if (jarUrl != null) {
+            classLoader = PluginClassLoader.create(new File(jarUrl.getPath()).getName(), jarUrl, unpackJars,
+                parentClassLoader, tmpDir);
+            log.debug("Created classloader for plugin [" + jarUrl + "]");
         } else {
             // this is mainly to support tests
             classLoader = parentClassLoader;
         }
+
         return classLoader;
     }
 
-    @NotNull
     public ClassLoader getPluginClassLoader() {
         return this.pluginClassLoader;
     }
@@ -116,38 +124,53 @@ public class PluginDescriptorLoader {
      * @throws PluginContainerException on failure to load the descriptor
      */
     public PluginDescriptor loadPluginDescriptor() throws PluginContainerException {
-        if (this.pluginJarUrl == null) {
+        return loadPluginDescriptorFromUrl(this.pluginJarUrl);
+    }
+
+    /**
+     * Loads a plugin descriptor from the given plugin jar and returns it.
+     * 
+     * This is a static method to provide a convienence method for others to be able to use.
+     *  
+     * @param pluginJarFileUrl URL to a plugin jar file
+     * @return the plugin descriptor found in the given plugin jar file
+     * @throws PluginContainerException if failed to find or parse a descriptor file in the plugin jar
+     */
+    public static PluginDescriptor loadPluginDescriptorFromUrl(URL pluginJarFileUrl) throws PluginContainerException {
+
+        final Log logger = LogFactory.getLog(PluginDescriptorLoader.class);
+
+        if (pluginJarFileUrl == null) {
             throw new PluginContainerException("A valid plugin JAR URL must be supplied.");
         }
-        log.debug("Loading plugin descriptor from plugin jar at [" + this.pluginJarUrl + "]...");
+        logger.debug("Loading plugin descriptor from plugin jar at [" + pluginJarFileUrl + "]...");
 
-        testPluginJarIsReadable();
+        testPluginJarIsReadable(pluginJarFileUrl);
 
         JAXBContext jaxbContext;
         try {
             jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
-        } catch (JAXBException e) {
-            //noinspection ThrowableInstanceNeverThrown
-            throw new PluginContainerException("Could not instantiate the JAXB Context.", new WrappedRemotingException(e));
+        } catch (Exception e) {
+            throw new PluginContainerException("Failed to create JAXB Context.", new WrappedRemotingException(e));
         }
 
-        InputStream is = null;
-        try {
-            // A classloader with just the primary plugin in it... no dependencies or libraries
-            // Note that we use a parent classloader of null in case more than one plugin happens
-            // to be in our thread context classloader - we don't want any other plugins getting picked up
-            ClassLoader pluginOnlyClassloader = new URLClassLoader(new URL[] { this.pluginJarUrl }, null);
+        JarFile jarFile = null;
 
-            is = pluginOnlyClassloader.getResourceAsStream(PLUGIN_DESCRIPTOR_PATH);
+        try {
+            jarFile = new JarFile(new File(pluginJarFileUrl.toURI()));
+            JarEntry descriptorEntry = jarFile.getJarEntry(PLUGIN_DESCRIPTOR_PATH);
+            InputStream is = jarFile.getInputStream(descriptorEntry);
             if (is == null) {
-                throw new PluginContainerException("Could not load plugin descriptor [" + PLUGIN_DESCRIPTOR_PATH + "] from plugin jar at [" + this.pluginJarUrl + "].");
+                throw new PluginContainerException("Could not load plugin descriptor [" + PLUGIN_DESCRIPTOR_PATH
+                    + "] from plugin jar at [" + pluginJarFileUrl + "].");
             }
 
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
             // Enable schema validation. (see http://jira.jboss.com/jira/browse/JBNADM-1539)
-            URL pluginSchemaURL = getClass().getClassLoader().getResource(PLUGIN_SCHEMA_PATH);
-            Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(pluginSchemaURL);
+            URL pluginSchemaURL = PluginDescriptorLoader.class.getClassLoader().getResource(PLUGIN_SCHEMA_PATH);
+            Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(
+                pluginSchemaURL);
             unmarshaller.setSchema(pluginSchema);
 
             ValidationEventCollector vec = new ValidationEventCollector();
@@ -156,20 +179,22 @@ public class PluginDescriptorLoader {
             PluginDescriptor pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(is);
 
             for (ValidationEvent event : vec.getEvents()) {
-                log.debug("Plugin [" + pluginDescriptor.getName() + "] descriptor messages {Severity: " + event.getSeverity() + ", Message: " + event.getMessage() + ", Exception: "
+                logger.debug("Plugin [" + pluginDescriptor.getName() + "] descriptor messages {Severity: "
+                    + event.getSeverity() + ", Message: " + event.getMessage() + ", Exception: "
                     + event.getLinkedException() + "}");
             }
 
             return pluginDescriptor;
         } catch (Exception e) {
-            throw new PluginContainerException("Could not successfully parse the plugin descriptor [" + PLUGIN_DESCRIPTOR_PATH + " found in plugin jar at [" + this.pluginJarUrl + "]",
+            throw new PluginContainerException("Could not successfully parse the plugin descriptor ["
+                + PLUGIN_DESCRIPTOR_PATH + " found in plugin jar at [" + pluginJarFileUrl + "]",
                 new WrappedRemotingException(e));
         } finally {
-            if (is != null) {
+            if (jarFile != null) {
                 try {
-                    is.close();
+                    jarFile.close(); // closes the input stream we created for us
                 } catch (Exception e) {
-                    // Nothing more we can do here
+                    logger.warn("Cannot close jar file [" + pluginJarFileUrl + "]. Cause: " + e);
                 }
             }
         }
@@ -184,21 +209,21 @@ public class PluginDescriptorLoader {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[pluginJarUrl=" + this.pluginJarUrl + ", pluginClassLoader=" + this.pluginClassLoader + "]";
+        return this.getClass().getSimpleName() + "[pluginJarUrl=" + this.pluginJarUrl + ", pluginClassLoader="
+            + this.pluginClassLoader + "]";
     }
 
-    private void testPluginJarIsReadable() throws PluginContainerException {
+    private static void testPluginJarIsReadable(URL pluginJarFileUrl) throws PluginContainerException {
         InputStream inputStream = null;
         try {
-            inputStream = this.pluginJarUrl.openStream();
+            inputStream = pluginJarFileUrl.openStream();
         } catch (IOException e) {
-            throw new PluginContainerException("Unable to open plugin jar at [" + this.pluginJarUrl + "] for reading.");
+            throw new PluginContainerException("Unable to open plugin jar at [" + pluginJarFileUrl + "] for reading.");
         } finally {
             try {
                 if (inputStream != null)
                     inputStream.close();
-            } catch (IOException e) {
-                log.error("Failed to close input stream for plugin jar at [" + this.pluginJarUrl + "].");
+            } catch (IOException ignore) {
             }
         }
     }

@@ -20,11 +20,14 @@ package org.rhq.enterprise.agent.promptcmd;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.net.URL;
 import java.util.Date;
 import java.util.List;
+
 import mazz.i18n.Msg;
-import org.rhq.core.clientapi.server.core.CoreServerService;
+
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.util.MD5Generator;
 import org.rhq.core.pc.PluginContainerConfiguration;
@@ -117,10 +120,9 @@ public class PluginsPromptCommand implements AgentPromptCommand {
             for (File current_plugin : current_plugins) {
                 String plugin_name;
                 try {
-                    PluginDescriptorLoader pluginDescriptorLoader = new PluginDescriptorLoader(current_plugin.toURL(),
-                            this.getClass().getClassLoader(), null, false, null);
-                    PluginDescriptor pluginDescriptor = pluginDescriptorLoader.loadPluginDescriptor();
-                    plugin_name = pluginDescriptor.getName();
+                    URL url = current_plugin.toURI().toURL();
+                    PluginDescriptor descriptor = PluginDescriptorLoader.loadPluginDescriptorFromUrl(url);
+                    plugin_name = descriptor.getName();
                 } catch (Throwable t) {
                     plugin_name = "?cannot-parse-descriptor?";
                 }

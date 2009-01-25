@@ -337,9 +337,9 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         ComparableVersion version = getPluginVersion(pluginFile, descriptor);
 
         if (initialDeploy) {
-            log.info("Discovered agent plugin [" + pluginName + "]...");
+            log.info("Discovered agent plugin [" + pluginName + "]");
         } else {
-            log.info("Rediscovered agent plugin [" + pluginName + "]...");
+            log.info("Rediscovered agent plugin [" + pluginName + "]");
         }
 
         if (initialDeploy || isNewestVersion(pluginName, version)) {

@@ -57,10 +57,13 @@ public class PluginClassLoader extends URLClassLoader {
     }
 
     public void destroy() {
+
+        // XXX: major hack to fix a VM bug and workaround Windows filelocking
+        tryToCloseAllJarFiles();
+
         try {
             FileUtils.purge(embeddedJarsDirectory, true);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             log.warn("Failed to purge embedded jars directory.", e);
         }
     }
@@ -213,5 +216,36 @@ public class PluginClassLoader extends URLClassLoader {
         tmpDir.deleteOnExit();
 
         return tmpDir;
+    }
+
+    // For why I'm trying to do this, read: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=5041014 
+    // This is a solution only for SUN VMs. This will do nothing on other VMs.
+    // This was tested on SUN's Java5. If their internals change, we'll have to do different
+    // things based on which version we are running on. This method never throws exceptions; it
+    // will always return normally, no matter that VM we are running in.
+    @SuppressWarnings("unchecked")
+    private void tryToCloseAllJarFiles() {
+        try {
+            Class<?> clazz = this.getClass().getSuperclass();
+            java.lang.reflect.Field ucp = clazz.getDeclaredField("ucp");
+            ucp.setAccessible(true);
+            Object sun_misc_URLClassPath = ucp.get(this);
+            java.lang.reflect.Field loaders = sun_misc_URLClassPath.getClass().getDeclaredField("loaders");
+            loaders.setAccessible(true);
+            Object java_util_Collection = loaders.get(sun_misc_URLClassPath);
+            for (Object sun_misc_URLClassPath_JarLoader : ((java.util.Collection) java_util_Collection).toArray()) {
+                try {
+                    java.lang.reflect.Field loader = sun_misc_URLClassPath_JarLoader.getClass().getDeclaredField("jar");
+                    loader.setAccessible(true);
+                    Object java_util_jar_JarFile = loader.get(sun_misc_URLClassPath_JarLoader);
+                    ((java.util.jar.JarFile) java_util_jar_JarFile).close(); // FINALLY! CLOSE THIS TO UNLOCK THE FILE!!!
+                } catch (Throwable t) {
+                    // if we got this far, this is just not a JAR loader, we can skip it
+                }
+            }
+        } catch (Throwable t) {
+            // probably not a SUN VM, oh, well, if on Windows, your files are now locked
+        }
+        return;
     }
 }

@@ -170,6 +170,7 @@ public class PluginManager implements ContainerService {
             // Clean up the temp dirs that were used by the plugin classloaders.
             pluginEnvironment.destroy();
         }
+        this.loadedPlugins.clear();
     }
 
     /**

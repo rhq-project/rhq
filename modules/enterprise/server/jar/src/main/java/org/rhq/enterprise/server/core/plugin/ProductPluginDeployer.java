@@ -309,7 +309,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             DeploymentInfo notReadyDI = this.deploymentInfos.get(pluginName);
             File notReadyFile = new File(notReadyDI.url.getFile());
             if (!notReadyFile.exists()) {
-                log.info("Plugin named [" + pluginName + "] appears to be deleted, it will be removed from cache");
+                log.info("Agent plugin named [" + pluginName + "] has been deleted, it will be removed from cache");
                 this.deploymentInfos.remove(pluginName);
                 this.pluginDescriptors.remove(pluginName);
                 this.pluginVersions.remove(pluginName);
@@ -337,9 +337,9 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         ComparableVersion version = getPluginVersion(pluginFile, descriptor);
 
         if (initialDeploy) {
-            log.info("Deploying RHQ plugin [" + pluginName + "]...");
+            log.info("Discovered agent plugin [" + pluginName + "]...");
         } else {
-            log.info("Redeploying RHQ plugin [" + pluginName + "]...");
+            log.info("Rediscovered agent plugin [" + pluginName + "]...");
         }
 
         if (initialDeploy || isNewestVersion(pluginName, version)) {
@@ -438,11 +438,12 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         }
 
         if (this.namesOfPluginsToBeRegistered.isEmpty()) {
-            log.info("All plugins were already up to date in the database.");
+            log.info("All agent plugins were already up to date in the database.");
             return;
         }
 
-        log.info("Registering the following new or updated plugins: " + this.namesOfPluginsToBeRegistered);
+        log.info("Deploying [" + this.namesOfPluginsToBeRegistered.size() + "] new or updated agent plugins: "
+            + this.namesOfPluginsToBeRegistered);
         PluginDependencyGraph dependencyGraph = buildDependencyGraph();
         StringBuilder errorBuffer = new StringBuilder();
         if (!dependencyGraph.isComplete(errorBuffer)) {
@@ -451,7 +452,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             return; // should we throw an exception here?
         }
         registerPlugins(dependencyGraph);
-        log.info("Plugin registration is complete.");
+        log.info("Agent plugin deployment is complete.");
         this.namesOfPluginsToBeRegistered.clear();
 
         // Trigger vacuums on some tables as the initial deployment might have changed a lot of things.

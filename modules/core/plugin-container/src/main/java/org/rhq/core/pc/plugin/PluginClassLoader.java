@@ -225,8 +225,10 @@ public class PluginClassLoader extends URLClassLoader {
     // will always return normally, no matter that VM we are running in.
     @SuppressWarnings("unchecked")
     private void tryToCloseAllJarFiles() {
+
         try {
-            Class<?> clazz = this.getClass().getSuperclass();
+            // first close the 'normal' jar files
+            Class<?> clazz = URLClassLoader.class;
             java.lang.reflect.Field ucp = clazz.getDeclaredField("ucp");
             ucp.setAccessible(true);
             Object sun_misc_URLClassPath = ucp.get(this);
@@ -243,9 +245,21 @@ public class PluginClassLoader extends URLClassLoader {
                     // if we got this far, this is just not a JAR loader, we can skip it
                 }
             }
+
+            // now do native libraries
+            clazz = ClassLoader.class;
+            java.lang.reflect.Field nativeLibraries = clazz.getDeclaredField("nativeLibraries");
+            nativeLibraries.setAccessible(true);
+            java.util.Vector java_lang_ClassLoader_NativeLibrary = (java.util.Vector) nativeLibraries.get(this);
+            for (Object lib : java_lang_ClassLoader_NativeLibrary) {
+                java.lang.reflect.Method finalize = lib.getClass().getDeclaredMethod("finalize", new Class[0]);
+                finalize.setAccessible(true);
+                finalize.invoke(lib, new Object[0]);
+            }
         } catch (Throwable t) {
             // probably not a SUN VM, oh, well, if on Windows, your files are now locked
         }
+
         return;
     }
 }

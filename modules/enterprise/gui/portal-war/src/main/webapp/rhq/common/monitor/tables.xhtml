@@ -70,7 +70,14 @@
                <f:facet name="header">
                   <h:outputText value="Name" />
                </f:facet>
-               <h:outputText value="#{metric.label}" />
+               <c:if test="#{MetricsTableUIBean.context.category != 'AutoGroup'}">
+                  <h:outputText value="#{metric.label}" />
+               </c:if>
+               <c:if test="#{MetricsTableUIBean.context.category == 'AutoGroup'}">
+                  <h:outputLink value="/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&amp;parent=#{MetricsTableUIBean.context.parentResourceId}&amp;type=#{MetricsTableUIBean.context.resourceTypeId}&amp;m=#{metric.definitionId}">
+                     <h:outputText value="#{metric.label}" />
+                  </h:outputLink>
+               </c:if>
             </rich:column>
 
             <rich:column>

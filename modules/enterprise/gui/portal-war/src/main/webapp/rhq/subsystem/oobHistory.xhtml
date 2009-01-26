@@ -71,7 +71,7 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="roh.modifiedTime">
+                     <onc:sortableColumnHeader sort="sum(o.oobFactor)">
                         <h:outputText styleClass="headerText" value="Factor 72h (%)" />
                      </onc:sortableColumnHeader>
                   </f:facet>
@@ -82,9 +82,8 @@
 
                 <rich:column>
                    <f:facet name="header">
-                      <onc:sortableColumnHeader sort="roh.modifiedTime">
+
                          <h:outputText styleClass="headerText" value="Factor 48h (%)" />
-                      </onc:sortableColumnHeader>
                    </f:facet>
 
                    <h:outputText value="#{item.factor48}" >
@@ -93,9 +92,7 @@
 
                 <rich:column>
                    <f:facet name="header">
-                      <onc:sortableColumnHeader sort="roh.modifiedTime">
                          <h:outputText styleClass="headerText" value="Factor 24h (%)" />
-                      </onc:sortableColumnHeader>
                    </f:facet>
 
                    <h:outputText value="#{item.factor24}" >

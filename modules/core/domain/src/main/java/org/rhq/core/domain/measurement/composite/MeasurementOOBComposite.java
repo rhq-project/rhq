@@ -34,18 +34,35 @@ public class MeasurementOOBComposite implements Serializable {
     private String scheduleName;
     private int scheduleId;
     private int definitionId;
-    private int count;
-    private int factor;
+    private int factor72;
+    private int factor48;
+    private int factor24;
 
-    public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, int definitionId, long count,
-                                   long factor) {
+
+    public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, int definitionId,
+                                   long factor72) {
         this.resourceName = resourceName;
         this.resourceId = resourceId;
         this.scheduleName = scheduleName;
         this.scheduleId = scheduleId;
         this.definitionId = definitionId;
-        this.count = (int) count;
-        this.factor = (int) factor;
+        this.factor72 = (int) factor72;
+    }
+
+    public int getFactor48() {
+        return factor48;
+    }
+
+    public void setFactor48(int factor48) {
+        this.factor48 = factor48;
+    }
+
+    public int getFactor24() {
+        return factor24;
+    }
+
+    public void setFactor24(int factor24) {
+        this.factor24 = factor24;
     }
 
     public String getResourceName() {
@@ -64,16 +81,12 @@ public class MeasurementOOBComposite implements Serializable {
         return scheduleId;
     }
 
-    public int getCount() {
-        return count;
-    }
-
     public int getDefinitionId() {
         return definitionId;
     }
 
-    public int getFactor() {
-        return factor;
+    public int getFactor72() {
+        return factor72;
     }
 
     @Override
@@ -85,8 +98,9 @@ public class MeasurementOOBComposite implements Serializable {
         sb.append(", scheduleName='").append(scheduleName).append('\'');
         sb.append(", scheduleId=").append(scheduleId);
         sb.append(", definitionId=").append(definitionId);
-        sb.append(", count=").append(count);
-        sb.append(", factor=").append(factor);
+        sb.append(", factor72=").append(factor72);
+        sb.append(", factor48=").append(factor48);
+        sb.append(", factor24=").append(factor24);
         sb.append('}');
         return sb.toString();
     }

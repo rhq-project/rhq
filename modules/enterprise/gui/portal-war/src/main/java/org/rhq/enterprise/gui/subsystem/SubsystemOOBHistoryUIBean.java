@@ -25,6 +25,7 @@ import javax.faces.model.DataModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -46,10 +47,20 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
 
     private final Log log = LogFactory.getLog(SubsystemOOBHistoryUIBean.class);
 
+    private int selectedSchedule;
+
     private MeasurementOOBManagerLocal manager = LookupUtil.getOOBManager();
 
     public SubsystemOOBHistoryUIBean() {
 
+    }
+
+    public int getSelectedSchedule() {
+        return selectedSchedule;
+    }
+
+    public void setSelectedSchedule(int selectedSchedule) {
+        this.selectedSchedule = selectedSchedule;
     }
 
     public DataModel getDataModel() {
@@ -57,6 +68,11 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
             dataModel = new ResultsDataModel(PageControlView.SubsystemOOBHistory, MANAGED_BEAN_NAME);
         }
         return dataModel;
+    }
+
+    public List<MeasurementOOB> getDataForSelectedSchedule() {
+        List<MeasurementOOB> oobs = manager.getOObsForSchedule(getSubject(),selectedSchedule, 0,System.currentTimeMillis()); // TODO adujust time range
+        return oobs;
     }
 
 
@@ -73,7 +89,7 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
             // TODO implement getting stuff from the page
             PageList<MeasurementOOBComposite> result;
 
-            List<MeasurementOOBComposite> foo = manager.getSchedulesWithOOBs(getSubject(),0,System.currentTimeMillis());
+            List<MeasurementOOBComposite> foo = manager.getSchedulesWithOOBs(getSubject(),0,System.currentTimeMillis()); // TODO adjust time range
             result = new PageList<MeasurementOOBComposite>(foo,foo.size(),pc);
 
             return result;

@@ -40,7 +40,7 @@ import javax.persistence.Table;
                         "  AND o.id.scheduleId = :scheduleId "
                             ),
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE,
-                query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.displayName,def.id,sched.id,sum(o.oobCount),sum(o.oobFactor)) " +
+                query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.displayName,def.id,sched.id,sum(o.oobFactor)) " +
                         "FROM MeasurementOOB o "+
                         "LEFT JOIN o.schedule sched " +
                         "LEFT JOIN sched.definition def " +
@@ -60,8 +60,8 @@ public class MeasurementOOB {
     public static final String GET_OOBS_FOR_SCHEDULE_RAW = "GetSchedulesWithOOBRaw";
 
     public static final String INSERT_QUERY_POSTGRES =
-            "insert into rhq_measurement_oob (oob_factor, oob_count, schedule_id,  time_stamp )  \n" +
-                    "(SELECT max(mx*100) as mxdiff, count(mx) as cnt, id, ?\n" + //  ?1 = begin
+            "insert into rhq_measurement_oob (oob_factor, schedule_id,  time_stamp )  \n" +
+                    "(SELECT max(mx*100) as mxdiff, id, ?\n" + //  ?1 = begin
                     " FROM\n" +
                     " (\n" +
                     "    SELECT max(((d.maxvalue - b.bl_max) / (b.bl_max - b.bl_min))) AS mx, d.schedule_id as id\n" +
@@ -91,9 +91,9 @@ public class MeasurementOOB {
                     " group by id\n" +
                     ")";
 
-    public static final String INSERT_QUERY_ORACLE = "insert into rhq_measurement_oob (oob_factor, oob_count, schedule_id,  time_stamp )  \n" +
+    public static final String INSERT_QUERY_ORACLE = "insert into rhq_measurement_oob (oob_factor, schedule_id,  time_stamp )  \n" +
             "(\n" +
-            "SELECT max(mx*100) as mxdiff, count(mx) as cnt, id, ? \n" +
+            "SELECT max(mx*100) as mxdiff, id, ? \n" +
             "FROM  (\n" +
             "    SELECT max(((d.maxvalue - b.bl_max) / (b.bl_max - b.bl_min))) AS mx, d.schedule_id as id\n" +
             "    FROM rhq_measurement_bline b, rhq_measurement_data_num_1h d, rhq_measurement_sched sc, rhq_measurement_def def\n" +
@@ -129,8 +129,7 @@ public class MeasurementOOB {
     @JoinColumn(name = "SCHEDULE_ID", insertable = false, updatable = false, nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     MeasurementSchedule schedule;
-    @Column(name="OOB_COUNT")
-    private int oobCount;
+
     /**
      * The 'severity' of the violation. Original data is double, but we
      * don't need that precision here, so use an int to conserve space
@@ -150,10 +149,6 @@ public class MeasurementOOB {
         return id.timestamp;
     }
 
-    public int getOobCount() {
-        return oobCount;
-    }
-
     public int getOobFactor() {
         return oobFactor;
     }
@@ -163,7 +158,6 @@ public class MeasurementOOB {
         final StringBuilder sb = new StringBuilder();
         sb.append("MeasurementOOB");
         sb.append("{id=").append(id);
-        sb.append(", oobCount=").append(oobCount);
         sb.append(", oobFactor=").append(oobFactor);
         sb.append('}');
         return sb.toString();

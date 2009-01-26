@@ -310,16 +310,10 @@ public class DataPurgeJob extends AbstractStatefulJob {
 
     private void purgeOOBData(MeasurementOOBManagerLocal oobManager, Properties systemConfig) {
         long timeStart = System.currentTimeMillis();
-        LOG.info("Purging of old OOBs starting");
+        LOG.info("Purging OOBs older than 72h ...");
         Subject overlord = LookupUtil.getSubjectManager().getOverlord() ;
-        String dataSet = systemConfig.getProperty("CAM_BASELINE_DATASET", "259200000");
 
-        long newest;
-        if (dataSet!=null)
-            newest = Long.parseLong(dataSet); // Default 3 days is nothing found
-        else
-            newest = 259200000L;
-        oobManager.removeOldOOBs(overlord, newest);
+        oobManager.removeOldOOBs(overlord, 259200000L);
         long duration = System.currentTimeMillis() - timeStart;
         LOG.info("Purging of old OOBs completed in [" + duration + "]ms");
     }

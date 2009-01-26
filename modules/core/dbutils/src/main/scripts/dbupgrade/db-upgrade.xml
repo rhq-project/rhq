@@ -1229,6 +1229,9 @@ DB Upgrade:
        <schema-alterColumn table="RHQ_PLUGIN" column="MTIME" nullable="FALSE"/>
     </schemaSpec>
 
+    <schemaSpec version="2.43">
+        <schema-deleteColumn table="RHQ_MEASUREMENT_OOB" column="OOB_COUNT"/>
+    </schemaSpec>
 
 </dbupgrade>
 

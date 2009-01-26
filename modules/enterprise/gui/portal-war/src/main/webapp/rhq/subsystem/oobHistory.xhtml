@@ -18,47 +18,6 @@
 
       <h:form id="oobHistorySubsystemForm">
 
-            <rich:simpleTogglePanel switchType="client" label="Search Results">
-
-            <h:panelGrid columns="3" cellspacing="3">
-               <h:outputLabel for="resourceFilter" value="Resource Name Filter: " />
-               <h:inputText id="resourceFilter" value="#{SubsystemOperationHistoryUIBean.resourceFilter}"
-                            onkeypress="return ignoreEnterKey();"
-                            style="width: 300px;" />
-               <rich:spacer/>
-
-               <h:outputLabel for="parentFilter" value="Parent Name Filter: " />
-               <h:inputText id="parentFilter" value="#{SubsystemOperationHistoryUIBean.parentFilter}"
-                            onkeypress="return ignoreEnterKey();"
-                            style="width: 300px;" />
-               <rich:spacer/>
-
-               <h:outputLabel for="dateSubmittedFilter" value="Date Submitted Filter: " />
-               <rich:calendar id="dateSubmittedFilter" value="#{SubsystemOperationHistoryUIBean.dateSubmittedFilter}"
-                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
-                              showApplyButton="true"
-                              showWeeksBar="false"
-                              style="width: 300px;" />
-               <rich:spacer/>
-
-               <h:outputLabel for="dateCompletedFilter" value="Date Completed Filter: " />
-               <rich:calendar id="dateCompletedFilter" value="#{SubsystemOperationHistoryUIBean.dateCompletedFilter}"
-                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
-                              showApplyButton="true"
-                              showWeeksBar="false"
-                              style="width: 300px;" />
-               <rich:spacer/>
-
-               <h:outputLabel for="statusFilter" value="Status Filter: " />
-               <h:selectOneMenu id="statusFilter" value="#{SubsystemOperationHistoryUIBean.statusFilter}"
-                                style="width: 300px;">
-                   <f:selectItems value="#{SubsystemOperationHistoryUIBean.statusFilterItems}"/>
-               </h:selectOneMenu>
-               <a4j:commandButton value="GO" reRender="operationHistoryDataTable, operationHistoryDataTableScroller"
-                                  styleClass="buttonmed"/>
-            </h:panelGrid>
-
-            </rich:simpleTogglePanel>
 
             <h:panelGrid columns="1" width="100%">
 
@@ -69,7 +28,7 @@
                             value="#{oobHistoryDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="38%, 30%, 15%, 14% "
+                            columnsWidth="35%, 35%, 10%, 10%, 10 "
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 
@@ -77,14 +36,7 @@
                   <onc:paginationControl id="SubsystemOOBHistory" />
                </f:facet>
 
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:allSelect target="selectedItems" />
-                  </f:facet>
 
-                  <onc:select name="selectedItems"
-                              value="#{item.scheduleId}" />
-               </rich:column>
 
                <rich:column>
                   <f:facet name="header">
@@ -93,11 +45,11 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="/resource/common/monitor/Visibility.do">
-                     <f:param name="m" value="#{item.definitionId}"/>
-                     <f:param name="mode" value="chartSingleMetricSingleResource"/>
-                     <f:param name="id" value="#{item.resourceId}" />
-                     <h:outputText value="#{item.scheduleName}" />
+                  <h:outputLink action="selectDetails"> <!-- TODO revert to link to Metrics page -->
+                      <f:param name="selectedSchedule" value="#{item.scheduleId}"/>
+                      <f:param name="tab" value="problemResources" />
+
+                      <h:outputText value="#{item.scheduleName}"/>
                   </h:outputLink>
                </rich:column>
 
@@ -117,25 +69,36 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="roh.createdTime">
-                        <h:outputText styleClass="headerText" value="Count" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{item.count}">
-                  </h:outputText>
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
                      <onc:sortableColumnHeader sort="roh.modifiedTime">
-                        <h:outputText styleClass="headerText" value="Factor" />
+                        <h:outputText styleClass="headerText" value="Factor 72h (in %)" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.factor}" >
+                  <h:outputText value="#{item.factor72}" >
                   </h:outputText>
                </rich:column>
+
+                <rich:column>
+                   <f:facet name="header">
+                      <onc:sortableColumnHeader sort="roh.modifiedTime">
+                         <h:outputText styleClass="headerText" value="Factor 48h (in %)" />
+                      </onc:sortableColumnHeader>
+                   </f:facet>
+
+                   <h:outputText value="#{item.factor48}" >
+                   </h:outputText>
+                </rich:column>
+
+                <rich:column>
+                   <f:facet name="header">
+                      <onc:sortableColumnHeader sort="roh.modifiedTime">
+                         <h:outputText styleClass="headerText" value="Factor 24h (in %)" />
+                      </onc:sortableColumnHeader>
+                   </f:facet>
+
+                   <h:outputText value="#{item.factor24}" >
+                   </h:outputText>
+                </rich:column>
 
 
                <f:facet name="footer">

@@ -203,7 +203,6 @@
    <table name="RHQ_MEASUREMENT_OOB">
        <column name="SCHEDULE_ID" type="INTEGER" references="RHQ_MEASUREMENT_SCHED(ID)" required="true"/>
        <column name="TIME_STAMP" type="LONG" required="true"/>
-       <column name="OOB_COUNT" type="INTEGER" required="true" />
        <column name="OOB_FACTOR" type="INTEGER" required="true" />
        <constraint name="RHQ_MEAS_OOB_ID_T_PK">
           <primaryKey>

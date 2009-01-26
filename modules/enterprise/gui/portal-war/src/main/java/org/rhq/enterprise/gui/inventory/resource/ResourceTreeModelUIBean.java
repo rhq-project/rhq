@@ -327,7 +327,7 @@ public class ResourceTreeModelUIBean {
             HtmlOutputLink operationsLink = FacesComponentUtility.addOutputLink(quickLinksItem, null, "/rhq/resource/operation/resourceOperationScheduleNew.xhtml?id=" + resourceIdString);
             FacesComponentUtility.addGraphicImage(operationsLink, null, "/images/icon_hub_o.gif", "Operations").setStyle("margin: 2px;");
             HtmlOutputLink alertsLink = FacesComponentUtility.addOutputLink(quickLinksItem, null, "/rhq/resource/alert/listAlertDefinitions.xhtml?id=" + resourceIdString);
-            FacesComponentUtility.addGraphicImage(alertsLink, null, "/images/icon_hub_a.gif", "Alerts");
+            FacesComponentUtility.addGraphicImage(alertsLink, null, "/images/icon_hub_a.gif", "Alerts").setStyle("margin: 2px;");
 
             this.resourceContextMenu.getChildren().add(quickLinksItem);
 
@@ -363,7 +363,7 @@ public class ResourceTreeModelUIBean {
                     menuItem.setValue(subOption);
                     menuItem.setId("measurement_" + sched.getId());
 
-                    String url = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource" + "&m=" + sched.getId() + "&id=" + res.getId();
+                    String url = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource" + "&m=" + sched.getDefinition().getId() + "&id=" + res.getId();
 
                     menuItem.setSubmitMode("none");
                     menuItem.setOnclick("document.location.href='" + url + "'");

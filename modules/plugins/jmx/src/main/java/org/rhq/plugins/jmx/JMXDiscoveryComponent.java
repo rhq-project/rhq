@@ -59,11 +59,16 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
 
     public static final String ADDITIONAL_CLASSPATH_ENTRIES = "additionalClassPathEntries";
 
+    /* Ignore certain processes that are managed by their own plugin. For example The Tomcat plugin will
+     * handle tomcat processes configured for JMX management.
+     */
+    private static final String[] PROCESS_FILTERS = { "catalina.startup.Bootstrap" };
+
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
 
         Set<DiscoveredResourceDetails> found = new HashSet<DiscoveredResourceDetails>();
 
-        // This model of discovery is of questionable usefullness since if you restart your process you'll get a new resource
+        // This model of discovery is of questionable usefulness since if you restart your process you'll get a new resource
         // Works only on JDK6 and maybe some 64 bit JDK5 See JBNADM-3332.
         //
         //        Map<Integer, LocalVirtualMachine> vms;
@@ -114,7 +119,16 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
             for (ProcessInfo process : processes) {
                 DiscoveredResourceDetails details = discoverProcess(context, process);
                 if (details != null) {
-                    found.add(details);
+                    boolean isFiltered = false;
+                    for (String filter : PROCESS_FILTERS) {
+                        if (details.getResourceName().contains(filter)) {
+                            isFiltered = true;
+                            break;
+                        }
+                    }
+                    if (!isFiltered) {
+                        found.add(details);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -128,8 +142,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
             String resourceKey = c.getSimpleValue(CONNECTOR_ADDRESS_CONFIG_PROPERTY, null);
             String connectionType = c.getSimpleValue(CONNECTION_TYPE, null);
 
-            DiscoveredResourceDetails s = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
-                "Java VM", "?", connectionType + " [" + resourceKey + "]", null, null);
+            DiscoveredResourceDetails s = new DiscoveredResourceDetails(context.getResourceType(), resourceKey, "Java VM", "?", connectionType + " [" + resourceKey + "]", null, null);
 
             s.setPluginConfiguration(c);
 
@@ -175,14 +188,11 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent {
             name += " (" + port + ")";
 
             Configuration config = context.getDefaultPluginConfiguration();
-            config.put(new PropertySimple(CONNECTION_TYPE,
-                "org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"));
-            config.put(new PropertySimple(CONNECTOR_ADDRESS_CONFIG_PROPERTY, "service:jmx:rmi:///jndi/rmi://localhost:"
-                + port + "/jmxrmi"));
+            config.put(new PropertySimple(CONNECTION_TYPE, "org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"));
+            config.put(new PropertySimple(CONNECTOR_ADDRESS_CONFIG_PROPERTY, "service:jmx:rmi:///jndi/rmi://localhost:" + port + "/jmxrmi"));
             // config.put(new PropertySimple(INSTALL_URI, process.getCurrentWorkingDirectory()));
 
-            details = new DiscoveredResourceDetails(context.getResourceType(), port, name, null,
-                "Standalone JVM Process", config, null);
+            details = new DiscoveredResourceDetails(context.getResourceType(), port, name, null, "Standalone JVM Process", config, null);
         }
 
         return details;

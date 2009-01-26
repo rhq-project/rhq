@@ -21,8 +21,11 @@ package org.rhq.enterprise.server.measurement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -43,6 +46,10 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
 import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 
@@ -149,18 +156,65 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     /**
      * Return OOB Composites that contain all information about the OOBs in a given time as aggregates.
      * @param subject The caller
-     * @param begin begin time we are interested in
      * @param end end time we are interested in
+     * @param pc
      * @return List of schedules with the corresponing oob aggregates
      */
-    public List<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, long begin, long end) {
+    public PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, long end, PageControl pc) {
+
+        pc.initDefaultOrderingField("o.oobFactor", PageOrdering.DESC);
+
+        long begin = end - (3L * 86400L *1000L);
 
         Query q = entityManager.createNamedQuery(MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE);
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager,MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE, pc);
+        queryCount.setParameter("begin",begin);
+        queryCount.setParameter("end",end);
         q.setParameter("begin",begin);
         q.setParameter("end",end);
-        List<MeasurementOOBComposite> res = q.getResultList();
 
-        return res;
+        List<MeasurementOOBComposite> results = q.getResultList();
+        long totalCount;// = (Long) queryCount.getSingleResult(); // TODO throws NonUniqueResult exception -- because of group by?
+        totalCount = results.size();
+
+        //  add 24h and 48h factors
+        Map<Integer,MeasurementOOBComposite> map = new HashMap<Integer,MeasurementOOBComposite>(results.size());
+        List<Integer> scheduleIds = new ArrayList<Integer>(results.size());
+        for (MeasurementOOBComposite comp : results) {
+            scheduleIds.add(comp.getScheduleId());
+            map.put(comp.getScheduleId(),comp);
+        }
+        begin = end - (2L * 86400L *1000L);
+
+        q = entityManager.createNamedQuery(MeasurementOOB.GET_FACTOR_FOR_SCHEDULES);
+        q.setParameter("schedules",scheduleIds);
+        q.setParameter("begin", begin);
+        q.setParameter("end", end);
+        List<Object[]> ret = q.getResultList();
+
+        for (Object[] objs : ret) {
+            Integer id = (Integer) objs[0];
+            Long fac = (Long) objs[1];
+            map.get(id).setFactor48(fac.intValue());
+        }
+
+        begin = end - (2L * 86400L *1000L);
+
+        q = entityManager.createNamedQuery(MeasurementOOB.GET_FACTOR_FOR_SCHEDULES);
+        q.setParameter("schedules",scheduleIds);
+        q.setParameter("begin", begin);
+        q.setParameter("end", end);
+        ret = q.getResultList();
+
+        for (Object[] objs : ret) {
+            Integer id = (Integer) objs[0];
+            Long fac = (Long) objs[1];
+            map.get(id).setFactor24(fac.intValue());
+        }
+
+
+        return new PageList<MeasurementOOBComposite>(results, (int) totalCount, pc);
     }
 
     /**

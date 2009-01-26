@@ -40,14 +40,16 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="res.name">
+                     <onc:sortableColumnHeader sort="sched.id">
                         <h:outputText styleClass="headerText" value="Schedule" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink action="selectDetails"> <!-- TODO revert to link to Metrics page -->
-                      <f:param name="selectedSchedule" value="#{item.scheduleId}"/>
-                      <f:param name="tab" value="problemResources" />
+                  <h:outputLink value="/resource/common/monitor/Visibility.do">
+                      <f:param name="m" value="#{item.definitionId}"/>
+                      <f:param name="id" value="#{item.resourceId}"/>
+                      <f:param name="mode" value="chartSingleMetricSingleResource" />
+
 
                       <h:outputText value="#{item.scheduleName}"/>
                   </h:outputLink>
@@ -70,7 +72,7 @@
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="roh.modifiedTime">
-                        <h:outputText styleClass="headerText" value="Factor 72h (in %)" />
+                        <h:outputText styleClass="headerText" value="Factor 72h (%)" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
@@ -81,7 +83,7 @@
                 <rich:column>
                    <f:facet name="header">
                       <onc:sortableColumnHeader sort="roh.modifiedTime">
-                         <h:outputText styleClass="headerText" value="Factor 48h (in %)" />
+                         <h:outputText styleClass="headerText" value="Factor 48h (%)" />
                       </onc:sortableColumnHeader>
                    </f:facet>
 
@@ -92,7 +94,7 @@
                 <rich:column>
                    <f:facet name="header">
                       <onc:sortableColumnHeader sort="roh.modifiedTime">
-                         <h:outputText styleClass="headerText" value="Factor 24h (in %)" />
+                         <h:outputText styleClass="headerText" value="Factor 24h (%)" />
                       </onc:sortableColumnHeader>
                    </f:facet>
 

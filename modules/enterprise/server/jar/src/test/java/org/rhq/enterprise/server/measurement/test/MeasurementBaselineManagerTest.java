@@ -40,6 +40,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -292,16 +293,15 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             System.out.println("OOBs calculated: \n" + oobs);
             for (MeasurementOOB oob : oobs) {
                 if (oob.getScheduleId() == measSched.getId()) {
-                    assert oob.getOobCount() == 1 : "Expected: 1, was " + oob.getOobCount();
                     assert oob.getOobFactor() == 586 : "Expected: 586, was " + oob.getOobFactor();
                 }
                 else {
-                    assert oob.getOobCount() == 1 : "Expected: 1, was " + oob.getOobCount();
                     assert oob.getOobFactor() == 8 : "Expected: 8, was " + oob.getOobFactor();
                 }
             }
 
-            List<MeasurementOOBComposite> comps = oobManager.getSchedulesWithOOBs(overlord,5000,5000);
+            PageControl pc = new PageControl();
+            List<MeasurementOOBComposite> comps = oobManager.getSchedulesWithOOBs(overlord, 5000, pc);
    //         System.out.println("Composites: " + comps);
             assert comps.size() == 2;
 
@@ -311,7 +311,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             oobs = q.getResultList();
         //    System.out.println("OOBs calculated: \n" + oobs);
 
-            comps = oobManager.getSchedulesWithOOBs(overlord,5000,5000);
+            comps = oobManager.getSchedulesWithOOBs(overlord, 5000, pc);
        //     System.out.println("Composites: " + comps);
             assert comps.size() == 2;
 

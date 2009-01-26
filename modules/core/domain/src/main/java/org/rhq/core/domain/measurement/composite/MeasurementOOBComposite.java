@@ -49,6 +49,19 @@ public class MeasurementOOBComposite implements Serializable {
         this.factor72 = (int) factor72;
     }
 
+    public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, int definitionId,
+                                   long factor72, long factor48, long factor24) {
+        this.resourceName = resourceName;
+        this.resourceId = resourceId;
+        this.scheduleName = scheduleName;
+        this.scheduleId = scheduleId;
+        this.definitionId = definitionId;
+        this.factor72 = (int) factor72;
+        this.factor48 = (int) factor48;
+        this.factor24 = (int) factor24;
+    }
+
+
     public int getFactor48() {
         return factor48;
     }

@@ -27,6 +27,8 @@ import javax.ejb.TransactionAttributeType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.measurement.MeasurementOOB;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageControl;
 
 /**
  * Interface for the OOB Manager
@@ -53,7 +55,7 @@ public interface MeasurementOOBManagerLocal {
     void removeOldOOBs(Subject subject, long end);
 
 
-    List<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, long begin, long end);
+    PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, long end, PageControl pc);
 
     /**
      * Get the individual oob values for the given time frame and schedule Id.

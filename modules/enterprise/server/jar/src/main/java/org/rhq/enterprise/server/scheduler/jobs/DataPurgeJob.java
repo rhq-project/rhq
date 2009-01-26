@@ -54,6 +54,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
     private static final Log LOG = LogFactory.getLog(DataPurgeJob.class);
 
     private static long HOUR = 60 * 60 * 1000L;
+    private static long DAY = 24L * HOUR;
 
     /**
      * Schedules a purge job to trigger right now. This will not block - it schedules the job to trigger but immediately
@@ -116,7 +117,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeUnusedAlertDefinitions(LookupUtil.getAlertDefinitionManager());
         purgeMeasurementTraitData(LookupUtil.getMeasurementDataManager(), systemConfig);
         purgeAvailabilityData(LookupUtil.getAvailabilityManager(), systemConfig);
-        purgeOOBData(LookupUtil.getOOBManager(),systemConfig);
+        purgeOOBData(LookupUtil.getOOBManager());
     }
 
     private void purgeMeasurementTraitData(MeasurementDataManagerLocal measurementDataManager, Properties systemConfig) {
@@ -303,17 +304,24 @@ public class DataPurgeJob extends AbstractStatefulJob {
         long timeStart = System.currentTimeMillis();
         LOG.info("Auto-calculation of OOBs starting");
         Subject overlord = LookupUtil.getSubjectManager().getOverlord() ;
+        // TODO purge oobs whose baseline just got recalculated
         LookupUtil.getOOBManager().computeOOBsFromLastHour(overlord);
         long duration = System.currentTimeMillis() - timeStart;
         LOG.info("Auto-claculation of OOBs completed in [" + duration + "]ms");
     }
 
-    private void purgeOOBData(MeasurementOOBManagerLocal oobManager, Properties systemConfig) {
+    /**
+     * Purge outdated OOB data after 72h (we don't show a bigger time frame
+     * to the user anyway)
+     * @param oobManager MeasurementOOBManager to use
+     */
+    private void purgeOOBData(MeasurementOOBManagerLocal oobManager) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Purging OOBs older than 72h ...");
         Subject overlord = LookupUtil.getSubjectManager().getOverlord() ;
 
-        oobManager.removeOldOOBs(overlord, 259200000L);
+        long end = System.currentTimeMillis()- (3L* DAY);
+        oobManager.removeOldOOBs(overlord, end);
         long duration = System.currentTimeMillis() - timeStart;
         LOG.info("Purging of old OOBs completed in [" + duration + "]ms");
     }

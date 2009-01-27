@@ -31,9 +31,6 @@ import javax.faces.render.Renderer;
 
 import com.sun.faces.util.MessageUtils;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.metric.MetricComponent.TimeUnit;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -45,7 +42,6 @@ import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangeP
  * @author Fady Matar
  */
 public class MetricRenderer extends Renderer {
-    private final Log log = LogFactory.getLog(this.getClass());
 
     private static final ArrayList<Integer> timeIntervalValues = new ArrayList<Integer>(Arrays.asList(4, 8, 12, 24, 30,
         36, 48, 60, 90, 120));
@@ -74,17 +70,6 @@ public class MetricRenderer extends Renderer {
             return;
         }
 
-        String metricUnit = getMetricUnit();
-        Integer metricValue = getMetricValue();
-
-        if (metricUnit != null) {
-            // in simple settings mode, range might have been changed
-            metric.setUnit(metricUnit);
-            metric.setValue(metricValue);
-            metric.persist();
-        } else {
-            // advanced mode can not be edited in this fashion
-        }
     }
 
     public int getMetricValue() {

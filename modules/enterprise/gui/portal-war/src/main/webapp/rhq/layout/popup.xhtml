@@ -62,44 +62,10 @@
 
 <f:loadBundle basename="ApplicationResources" var="msg"/>
 
-<!-- =================== PAGE HEADER =================== -->
-
-<div id="PageHeader" style="border-bottom: 2px solid #999;">
-
-    <table width="100%" border="0" cellpadding="0" cellspacing="0">
-        <tr valign="bottom">
-            <td align="left">
-                <a href="#" onclick="openAbout(aboutWindowTitle)">
-                    <img src="/images/logo_header.gif" title="${msg['product.fullName']}"/>
-                </a>
-            </td>
-            <td align="right">
-               <map name="redhat-jboss-logo-map">
-                  <area href="http://www.redhat.com/" alt="Red Hat Homepage" title="Red Hat" shape="rect" coords="0,0,100,42" />
-                  <area href="http://www.jboss.org/" alt="JBoss Homepage" title="JBoss" shape="rect" coords="100,0,200,42" />
-               </map>
-               <div>
-                  <img src="/images/redhat-jboss-logo.gif" usemap="#redhat-jboss-logo-map" />
-               </div>
-            </td>
-       </tr>
-    </table>
-
-</div>
-
 <!-- =================== BODY =================== -->
 <ui:insert name="body-area">Default Page Body</ui:insert>
-<!-- work-around to enable us to embed richfaces components inside the onc:simpleTrigger; 
-     without this, the page will throw a javascript error "{blah} is not defined" or 
-     "{yadda} is not a constructor", and the pop-up action will not work -->
-<rich:calendar rendered="false" />
-<rich:inputNumberSpinner rendered="false" />
 
 </f:view>
-
-<script type="text/javascript">
-    addWindowOnLoadEvent(disableConditionalButtons);
-</script>
 
 </body>
 </html>

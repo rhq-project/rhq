@@ -22,23 +22,15 @@ import java.util.Date;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
-import javax.faces.model.DataModel;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 
-public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
+public class AdvancedMetricSettingsUIBean {
 
-    private final Log log = LogFactory.getLog(this.getClass());
-
-    public static final String MANAGED_BEAN_NAME = "AdvancedMetricSettingsUIBean";
     private static final String DURATION_TYPE = "duration";
     private static final String INTERVAL_TYPE = "interval";
 
@@ -51,11 +43,6 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
 
     public AdvancedMetricSettingsUIBean() {
         init();
-    }
-
-    @Override
-    public DataModel getDataModel() {
-        return null;
     }
 
     public int getDuration() {
@@ -124,13 +111,7 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
         } else if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.DURATION_TYPE)) {
             rangePreferences.readOnly = false;
             rangePreferences.lastN = duration;
-            if (unit == 60000) {
-                rangePreferences.unit = 2;
-            } else if (unit == 36000000) {
-                rangePreferences.unit = 3;
-            } else if (unit == 864000000) {
-                rangePreferences.unit = 4;
-            }
+            rangePreferences.unit = unit;
             facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Preferences updated",
                 "Your preferences have been successfully updated"));
         } else if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.INTERVAL_TYPE)) {
@@ -168,13 +149,7 @@ public class AdvancedMetricSettingsUIBean extends PagedDataTableUIBean {
             this.setDurationType("duration");
             this.setIntervalType(null);
             this.setDuration(rangePreferences.lastN);
-            if (rangePreferences.unit == 2) {
-                this.setUnit(60000);
-            } else if (rangePreferences.unit == 3) {
-                this.setUnit(36000000);
-            } else if (rangePreferences.unit == 4) {
-                this.setUnit(864000000);
-            }
+            this.setUnit(rangePreferences.unit);
             this.setFromTime(null);
             this.setToTime(null);
         }

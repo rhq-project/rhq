@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.common.metric;
 
+import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.common.metric.MetricComponent.TimeUnit;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
@@ -39,6 +41,17 @@ public class MetricComponentUtilityUIBean {
     }
 
     public String update() {
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
+        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+
+        int value = FacesContextUtility.getOptionalRequestParameter(MetricComponent.VALUE, Integer.class, -1);
+        String unit = FacesContextUtility.getOptionalRequestParameter(MetricComponent.UNIT, String.class, null);
+
+        rangePreferences.lastN = value;
+        rangePreferences.unit = TimeUnit.valueOf(unit).getMetricUntilOrdinal();
+        preferences.setMetricRangePreferences(rangePreferences);
+        preferences.persistPreferences();
         return "success";
     }
 

@@ -18,7 +18,7 @@
         <ui:param name="pageTitle" value="Advanced Metrics Settings"/>
         
         <ui:define name="body-area">
-            <a4j:loadScript src="/js/advanced-metrics.js"/>            
+            <a4j:loadScript src="/js/advanced-metrics.js"/>
             <h:form id="advancedMetricsValuesForm">
                 <rich:panel styleClass="BlockContent">
                     <f:facet name="header">
@@ -49,13 +49,23 @@
                                             </h:selectOneRadio>            
                                         </td>
                                         <td>
-                                            <h:inputText id="duration" size="2" value="#{AdvancedMetricSettingsUIBean.duration}" onclick="checkUncheckRadio('advancedMetricsValuesForm:durationMetricType','advancedMetricsValuesForm:intervalMetricType');"/>
+                                            <h:inputText id="duration" size="2" 
+                                                         value="#{AdvancedMetricSettingsUIBean.duration}" 
+                                                         onchange="checkUncheckRadio('advancedMetricsValuesForm:durationMetricType','advancedMetricsValuesForm:intervalMetricType');"/>
                                         </td>
                                         <td>
-                                            <h:selectOneMenu id="unit" value="#{AdvancedMetricSettingsUIBean.unit}" onchange="checkUncheckRadio('advancedMetricsValuesForm:durationMetricType','advancedMetricsValuesForm:intervalMetricType');">
-                                                <f:selectItem id="mu" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Minutes']}" itemValue="60000" />
-                                                <f:selectItem id="hu" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Hours']}" itemValue="36000000" />
-                                                <f:selectItem id="du" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Days']}" itemValue="864000000" />
+                                            <h:selectOneMenu id="unit" 
+                                                             value="#{AdvancedMetricSettingsUIBean.unit}" 
+                                                             onchange="checkUncheckRadio('advancedMetricsValuesForm:durationMetricType','advancedMetricsValuesForm:intervalMetricType');">
+                                                <f:selectItem id="mu" 
+                                                              itemValue="2"
+                                                              itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Minutes']}" />
+                                                <f:selectItem id="hu" 
+                                                              itemValue="3"
+                                                              itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Hours']}" />
+                                                <f:selectItem id="du" 
+                                                              itemValue="4"
+                                                              itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Days']}" />
                                             </h:selectOneMenu> 
                                         </td>
                                     </tr>
@@ -65,7 +75,7 @@
                                             <h:selectOneRadio id="intervalMetricType" 
                                                            value="#{AdvancedMetricSettingsUIBean.intervalType}" 
                                                           layout="pageDirection" 
-                                                         onclick="uncheckRadio('advancedMetricsValuesForm:durationMetricType');"> 
+                                                        onchange="uncheckRadio('advancedMetricsValuesForm:durationMetricType');"> 
                                                 <f:selectItem id="intervalMetricTypeItem" itemValue="interval" itemLabel="Within a date range" />
                                             </h:selectOneRadio>
                                         </td>
@@ -79,7 +89,9 @@
                                     <tr>
                                         <td>From:</td>
                                         <td>
-                                            <rich:calendar id="fromDate" datePattern="dd/MMM/yyyy HH:mm" value="#{AdvancedMetricSettingsUIBean.fromTime}" onclick="checkUncheckRadio('advancedMetricsValuesForm:intervalMetricType', 'advancedMetricsValuesForm:durationMetricType');"/>
+                                            <rich:calendar id="fromDate" datePattern="dd/MMM/yyyy HH:mm" 
+                                                           value="#{AdvancedMetricSettingsUIBean.fromTime}" 
+                                                           onchange="checkUncheckRadio('advancedMetricsValuesForm:intervalMetricType', 'advancedMetricsValuesForm:durationMetricType');"/>
                                         </td>
                                     </tr>
                                     <tr>
@@ -87,7 +99,9 @@
                                             To:
                                         </td>
                                         <td>
-                                            <rich:calendar id="toDate" datePattern="dd/MMM/yyyy HH:mm" value="#{AdvancedMetricSettingsUIBean.toTime}" onclick="checkUncheckRadio('advancedMetricsValuesForm:intervalMetricType', 'advancedMetricsValuesForm:durationMetricType');"/>
+                                            <rich:calendar id="toDate" datePattern="dd/MMM/yyyy HH:mm" 
+                                                           value="#{AdvancedMetricSettingsUIBean.toTime}" 
+                                                           onchange="checkUncheckRadio('advancedMetricsValuesForm:intervalMetricType', 'advancedMetricsValuesForm:durationMetricType');"/>
                                         </td>
                                     </tr>
                                 </table>

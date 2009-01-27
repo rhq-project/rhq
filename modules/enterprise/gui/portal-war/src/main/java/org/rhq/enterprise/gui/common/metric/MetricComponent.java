@@ -98,16 +98,6 @@ public class MetricComponent extends UIComponentBase {
         unit = TimeUnit.getUnitByMetricOrdinal(rangePreferences.unit).name();
     }
 
-    public void persist() {
-        WebUser user = EnterpriseFacesContextUtility.getWebUser();
-        MeasurementPreferences preferences = user.getMeasurementPreferences();
-        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
-        rangePreferences.lastN = value;
-        rangePreferences.unit = TimeUnit.valueOf(unit).getMetricUntilOrdinal();
-        preferences.setMetricRangePreferences(rangePreferences);
-        preferences.persistPreferences();
-    }
-
     public int getValue() {
         return value;
     }

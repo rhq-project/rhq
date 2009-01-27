@@ -37,8 +37,7 @@
             <h:panelGrid columns="1" width="90%" style="min-width: 800px;">
 
             <ui:param name="groupConnectionPropertyHistoryDataModel" value="#{ViewGroupConnectionPropertyHistoryUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ViewGroupConnectionPropertyHistoryUIBean.dataTable}"
-                            id="groupConnectionPropertyHistoryDataTable"
+            <rich:dataTable id="groupConnectionPropertyHistoryDataTable"
                             rows="#{PageControl.GroupConnectionPropertyUpdateHistory.pageSize}"
                             value="#{groupConnectionPropertyHistoryDataModel}"
                             var="item"

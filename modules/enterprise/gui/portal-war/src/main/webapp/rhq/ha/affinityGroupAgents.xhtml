@@ -64,8 +64,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="subscribedAgentsDataModel" value="#{AffinityGroupSubscribedAgentsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{AffinityGroupSubscribedAgentsUIBean.dataTable}"
-                            id="subscribedAgentsDataTable"
+            <rich:dataTable id="subscribedAgentsDataTable"
                             rows="#{PageControl.AffinityGroupSubscribedAgents.pageSize}"
                             value="#{subscribedAgentsDataModel}"
                             var="agentItem"
@@ -198,8 +197,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="unsubscribedAgentsDataModel" value="#{AffinityGroupUnsubscribedAgentsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{AffinityGroupUnsubscribedAgentsUIBean.dataTable}"
-                            id="unsubscribedAgentsDataTable"
+            <rich:dataTable id="unsubscribedAgentsDataTable"
                             rows="#{PageControl.AffinityGroupUnsubscribedAgents.pageSize}"
                             value="#{unsubscribedAgentsDataModel}"
                             var="agentItem"

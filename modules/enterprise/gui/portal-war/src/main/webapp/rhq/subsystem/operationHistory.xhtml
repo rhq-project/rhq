@@ -63,8 +63,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="operationHistoryDataModel" value="#{SubsystemOperationHistoryUIBean.dataModel}"/>
-            <rich:dataTable binding="#{SubsystemOperationHistoryUIBean.dataTable}"
-                            id="operationHistoryDataTable" 
+            <rich:dataTable id="operationHistoryDataTable" 
                             rows="#{PageControl.SubsystemResourceOperationHistory.pageSize}"
                             value="#{operationHistoryDataModel}"
                             var="item"

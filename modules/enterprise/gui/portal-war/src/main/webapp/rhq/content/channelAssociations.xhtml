@@ -61,8 +61,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="channelAssociationsDataModel" value="#{ChannelAssociationsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ChannelAssociationsUIBean.dataTable}"
-                            id="channelAssociationsDataTable"
+            <rich:dataTable id="channelAssociationsDataTable"
                             rows="#{PageControl.ChannelAssociationsList.pageSize}"
                             value="#{channelAssociationsDataModel}"
                             var="contentsourceitem"
@@ -189,8 +188,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="channelDisassociationsDataModel" value="#{ChannelDisassociationsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ChannelDisassociationsUIBean.dataTable}"
-                            id="channelDisassociationsDataTable"
+            <rich:dataTable id="channelDisassociationsDataTable"
                             rows="#{PageControl.ChannelDisassociationsList.pageSize}"
                             value="#{channelDisassociationsDataModel}"
                             var="contentsourceitem"

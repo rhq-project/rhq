@@ -63,8 +63,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="alertDefinitionDataModel" value="#{SubsystemAlertDefinitionUIBean.dataModel}"/>
-            <rich:dataTable binding="#{SubsystemAlertDefinitionUIBean.dataTable}"
-                            id="alertDefinitionDataTable" 
+            <rich:dataTable id="alertDefinitionDataTable" 
                             rows="#{PageControl.SubsystemAlertDefinition.pageSize}"
                             value="#{alertDefinitionDataModel}"
                             var="item"

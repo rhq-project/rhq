@@ -49,8 +49,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="contentSourcesDataModel" value="#{ListContentSourcesUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ListContentSourcesUIBean.dataTable}"
-                            id="contentSourcesDataTable"
+            <rich:dataTable id="contentSourcesDataTable"
                             rows="#{PageControl.ContentSourcesList.pageSize}"
                             value="#{contentSourcesDataModel}"
                             var="item"

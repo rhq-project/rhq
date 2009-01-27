@@ -64,8 +64,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="subscribedServersDataModel" value="#{AffinityGroupSubscribedServersUIBean.dataModel}"/>
-            <rich:dataTable binding="#{AffinityGroupSubscribedServersUIBean.dataTable}"
-                            id="subscribedServersDataTable"
+            <rich:dataTable id="subscribedServersDataTable"
                             rows="#{PageControl.AffinityGroupSubscribedServers.pageSize}"
                             value="#{subscribedServersDataModel}"
                             var="serverItem"
@@ -199,8 +198,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="unsubscribedServersDataModel" value="#{AffinityGroupUnsubscribedServersUIBean.dataModel}"/>
-            <rich:dataTable binding="#{AffinityGroupUnsubscribedServersUIBean.dataTable}"
-                            id="unsubscribedServersDataTable"
+            <rich:dataTable id="unsubscribedServersDataTable"
                             rows="#{PageControl.AffinityGroupUnsubscribedServers.pageSize}"
                             value="#{unsubscribedServersDataModel}"
                             var="serverItem"

@@ -55,8 +55,7 @@
             <h:panelGrid columns="1" width="100%" style="min-width: 800px;">
 
             <ui:param name="groupConnectionPropertyDetailsDataModel" value="#{ViewGroupConnectionPropertyDetailsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ViewGroupConnectionPropertyDetailsUIBean.dataTable}"
-                            id="groupConnectionPropertyDetailsDataTable"
+            <rich:dataTable id="groupConnectionPropertyDetailsDataTable"
                             rows="#{PageControl.GroupConnectionPropertyUpdateDetails.pageSize}"
                             value="#{groupConnectionPropertyDetailsDataModel}"
                             var="item"

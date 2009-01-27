@@ -352,8 +352,7 @@
 <f:facet name="header" styleClass="BlockTitle"><h:outputText value="History of create child resource requests"/></f:facet>
 
 <ui:param name="createHistoryDataModel" value="#{ListCreateResourceHistoryUIBean.dataModel}"/>
-<rich:dataTable binding="#{ListCreateResourceHistoryUIBean.dataTable}"
-                id="createHistoryDataTable"
+<rich:dataTable id="createHistoryDataTable"
                 rows="#{PageControl.CreateResourceHistory.pageSize}"
                 value="#{createHistoryDataModel}"
                 var="createItem"
@@ -477,8 +476,7 @@
 <f:facet name="header" styleClass="BlockTitle"><h:outputText value="History of delete child resource requests"/></f:facet>
 
 <ui:param name="deleteHistoryDataModel" value="#{ListDeleteResourceHistoryUIBean.dataModel}"/>
-<rich:dataTable binding="#{ListDeleteResourceHistoryUIBean.dataTable}"
-                id="deleteHistoryDataTable"
+<rich:dataTable id="deleteHistoryDataTable"
                 rows="#{PageControl.DeleteResourceHistory.pageSize}"
                 value="#{deleteHistoryDataModel}"
                 var="deleteItem"
@@ -635,7 +633,6 @@
       <ui:param name="containingGroupsDataModel" value="#{ListContainingGroupsUIBean.dataModel}"/>
 
       <rich:dataTable id="containingGroupsDataTable"
-                      binding="#{ListContainingGroupsUIBean.dataTable}"
                       rows="#{PageControl.ContainingGroupsList.pageSize}"
                       value="#{containingGroupsDataModel}"
                       rendered="#{ListContainingGroupsUIBean.dataModel.rowCount > 0}"

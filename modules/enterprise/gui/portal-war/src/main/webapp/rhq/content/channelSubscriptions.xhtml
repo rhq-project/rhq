@@ -62,8 +62,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="channelSubscriptionsDataModel" value="#{ChannelSubscriptionsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ChannelSubscriptionsUIBean.dataTable}"
-                            id="channelSubscriptionsDataTable"
+            <rich:dataTable id="channelSubscriptionsDataTable"
                             rows="#{PageControl.ChannelSubscriptionsList.pageSize}"
                             value="#{channelSubscriptionsDataModel}"
                             var="resourceitem"
@@ -197,8 +196,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="channelUnsubscriptionsDataModel" value="#{ChannelUnsubscriptionsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ChannelUnsubscriptionsUIBean.dataTable}"
-                            id="channelUnsubscriptionsDataTable"
+            <rich:dataTable id="channelUnsubscriptionsDataTable"
                             rows="#{PageControl.ChannelUnsubscriptionsList.pageSize}"
                             value="#{channelUnsubscriptionsDataModel}"
                             var="availableitem"

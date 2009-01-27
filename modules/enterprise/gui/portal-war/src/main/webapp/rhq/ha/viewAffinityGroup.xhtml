@@ -94,8 +94,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="agentsDataModel" value="#{ViewAffinityGroupAgentMembersUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ViewAffinityGroupAgentMembersUIBean.dataTable}"
-                            id="agentsDataTable"
+            <rich:dataTable id="agentsDataTable"
                             rows="#{PageControl.AffinityGroupAgentMembersView.pageSize}"
                             value="#{agentsDataModel}"
                             var="agentItem"
@@ -219,8 +218,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="serversDataModel" value="#{ViewAffinityGroupServerMembersUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ViewAffinityGroupServerMembersUIBean.dataTable}"
-                            id="serversDataTable"
+            <rich:dataTable id="serversDataTable"
                             rows="#{PageControl.AffinityGroupServerMembersView.pageSize}"
                             value="#{serversDataModel}"
                             var="serverItem"

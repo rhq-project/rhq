@@ -53,8 +53,7 @@
 
 
             <ui:param name="packagesDataModel" value="#{ListPackagesUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ListPackagesUIBean.dataTable}"
-                            id="packagesDataTable" 
+            <rich:dataTable id="packagesDataTable" 
                             rows="#{PageControl.InstalledPackagesList.pageSize}"
                             value="#{packagesDataModel}"
                             var="item"

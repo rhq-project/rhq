@@ -65,8 +65,7 @@ THIS TEXT WILL BE REMOVED.
             <input type="hidden" name="currentPackageId" value="#{current.id}"/>
 
             <ui:param name="packagesDataModel" value="#{ListPackageHistoryUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ListPackageHistoryUIBean.dataTable}"
-                            id="packagesDataTable"
+            <rich:dataTable id="packagesDataTable"
                             rows="#{PageControl.AllPackageVersionsList.pageSize}"
                             value="#{packagesDataModel}"
                             var="item"

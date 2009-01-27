@@ -48,8 +48,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="agentsDataModel" value="#{ListAgentsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ListAgentsUIBean.dataTable}"
-                            id="agentsDataTable"
+            <rich:dataTable id="agentsDataTable"
                             rows="#{PageControl.AgentsList.pageSize}"
                             value="#{agentsDataModel}"
                             var="item"

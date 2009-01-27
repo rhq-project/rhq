@@ -132,8 +132,7 @@
             <f:facet name="header"><h:outputText value="Group Definition's Managed Resource Group"/></f:facet>
 
             <ui:param name="groupDefinitionMembersDataModel" value="#{GroupDefinitionUIBean.dataModel}"/>
-            <rich:dataTable binding="#{GroupDefinitionUIBean.dataTable}"
-                            id="groupDefinitionMembersDataTable" 
+            <rich:dataTable id="groupDefinitionMembersDataTable" 
                             rows="#{PageControl.GroupDefinitionMembers.pageSize}"
                             value="#{groupDefinitionMembersDataModel}"
                             var="item"

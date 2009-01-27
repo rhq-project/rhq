@@ -32,8 +32,7 @@
             <h:panelGrid columns="1" styleClass="data-table">
 
             <ui:param name="resourceGroupSchedulesDataModel" value="#{ListResourceGroupMeasurementScheduleUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ListResourceGroupMeasurementScheduleUIBean.dataTable}"
-                            id="resourceGroupSchedulesDataTable"
+            <rich:dataTable id="resourceGroupSchedulesDataTable"
                             rows="#{PageControl.ResourceGroupMeasurementScheduleList.pageSize}"
                             value="#{resourceGroupSchedulesDataModel}"
                             var="item"

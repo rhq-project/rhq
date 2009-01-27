@@ -22,8 +22,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="oobHistoryDataModel" value="#{SubsystemOOBHistoryUIBean.dataModel}"/>
-            <rich:dataTable binding="#{SubsystemOOBHistoryUIBean.dataTable}"
-                            id="oobHistoryDataTable"
+            <rich:dataTable id="oobHistoryDataTable"
                             rows="#{PageControl.SubsystemOOBHistory.pageSize}"
                             value="#{oobHistoryDataModel}"
                             var="item"

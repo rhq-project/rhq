@@ -135,8 +135,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="connectedAgentsDataModel" value="#{ViewServerUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ViewServerUIBean.dataTable}"
-                            id="connectedAgentsDataTable"
+            <rich:dataTable id="connectedAgentsDataTable"
                             rows="#{PageControl.ServerConnectedAgentsView.pageSize}"
                             value="#{connectedAgentsDataModel}"
                             var="item"

@@ -112,7 +112,6 @@
                           rendered="#{resourceGroupOperationHistoryDetailsDataModel.rowCount eq 0}"/>
             
             <rich:dataTable rendered="#{resourceGroupOperationHistoryDetailsDataModel.rowCount gt 0}"
-                            binding="#{ResourceGroupOperationHistoryDetailsUIBean.dataTable}"
                             id="resourceGroupOperationHistoryDetailsDataTable" 
                             rows="#{PageControl.ResourceGroupOperationHistoryDetails.pageSize}"
                             value="#{resourceGroupOperationHistoryDetailsDataModel}"

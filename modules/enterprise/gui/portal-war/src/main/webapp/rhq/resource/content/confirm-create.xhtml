@@ -34,7 +34,6 @@
             with the deployment.</p>
 
             <h:dataTable value="#{InstallationStepsUIBean.deploySteps}"
-                         binding="#{InstallationStepsUIBean.stepsData}"
                          var="item"
                          styleClass="instructions-data-table"
                          headerClass="instructions-data-table-header"
@@ -77,8 +76,7 @@
             and thus may take some time.</p>
 
             <ui:param name="packagesToDeployDataModel" value="#{DeployPackagesUIBean.dataModel}"/>
-            <rich:dataTable binding="#{DeployPackagesUIBean.dataTable}"
-                            id="packagesToDeployDataTable"
+            <rich:dataTable id="packagesToDeployDataTable"
                             rows="#{PageControl.PackagesToDeployList.pageSize}"
                             value="#{packagesToDeployDataModel}"
                             var="item"

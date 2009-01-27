@@ -36,7 +36,6 @@
                      rendered="#{ListInProgressContentRequestsUIBean.dataModel.rowCount eq 0}"/></i>
 
     <rich:dataTable rendered="#{ListInProgressContentRequestsUIBean.dataModel.rowCount gt 0}"
-                    binding="#{ListInProgressContentRequestsUIBean.dataTable}"
                     id="contentInProgressRequestsDataTable"
                     rows="#{PageControl.ContentInProgressRequestsList.pageSize}"
                     value="#{ListInProgressContentRequestsUIBean.dataModel}"

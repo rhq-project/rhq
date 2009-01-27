@@ -29,8 +29,7 @@
             <h:panelGrid columns="1" styleClass="data-table">
 
             <ui:param name="groupDefinitionsDataModel" value="#{ListGroupDefinitionsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ListGroupDefinitionsUIBean.dataTable}"
-                            id="groupDefinitionsDataTable"
+            <rich:dataTable id="groupDefinitionsDataTable"
                             rows="#{PageControl.GroupDefinitionsList.pageSize}"
                             value="#{groupDefinitionsDataModel}"
                             var="item"

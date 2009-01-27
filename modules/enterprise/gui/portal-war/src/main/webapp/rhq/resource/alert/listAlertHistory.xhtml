@@ -64,8 +64,7 @@
             <h:panelGrid columns="1" styleClass="data-table">
 
             <ui:param name="alertHistoryDataModel" value="#{ListAlertHistoryUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ListAlertHistoryUIBean.dataTable}"
-                            id="alertHistoryDataTable"
+            <rich:dataTable id="alertHistoryDataTable"
                             rows="#{PageControl.AlertHistoryList.pageSize}"
                             value="#{alertHistoryDataModel}"
                             var="item"

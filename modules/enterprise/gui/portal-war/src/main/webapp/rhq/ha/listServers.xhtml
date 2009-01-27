@@ -49,8 +49,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="serversDataModel" value="#{ListServersUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ListServersUIBean.dataTable}"
-                            id="serversDataTable"
+            <rich:dataTable id="serversDataTable"
                             rows="#{PageControl.ServersList.pageSize}"
                             value="#{serversDataModel}"
                             var="item"

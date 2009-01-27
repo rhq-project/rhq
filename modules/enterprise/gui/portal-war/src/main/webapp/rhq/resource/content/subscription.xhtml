@@ -28,8 +28,7 @@
             <f:facet name="header"><h:outputText value="Current Resource Subscriptions"/></f:facet>
 
             <ui:param name="resourceChannelsDataModel" value="#{ResourceChannelsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ResourceChannelsUIBean.dataTable}"
-                            id="resourceChannelsDataTable" 
+            <rich:dataTable id="resourceChannelsDataTable" 
                             rows="#{PageControl.ResourceChannelsList.pageSize}"
                             value="#{resourceChannelsDataModel}"
                             var="item"
@@ -136,8 +135,7 @@
             <f:facet name="header"><h:outputText value="Available Channels"/></f:facet>
 
             <ui:param name="availableResourceChannelsDataModel" value="#{AvailableResourceChannelsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{AvailableResourceChannelsUIBean.dataTable}"
-                            id="availableResourceChannelsDataTable" 
+            <rich:dataTable id="availableResourceChannelsDataTable" 
                             rows="#{PageControl.AvailableResourceChannelsList.pageSize}"
                             value="#{availableResourceChannelsDataModel}"
                             var="item"

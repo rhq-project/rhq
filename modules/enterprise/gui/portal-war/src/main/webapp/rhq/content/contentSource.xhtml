@@ -173,8 +173,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="contentSourceChannelsDataModel" value="#{ContentSourceChannelsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ContentSourceChannelsUIBean.dataTable}"
-                            id="contentSourceChannelsDataTable"
+            <rich:dataTable id="contentSourceChannelsDataTable"
                             rows="#{PageControl.ContentSourceChannelsList.pageSize}"
                             value="#{contentSourceChannelsDataModel}"
                             var="channelitem"
@@ -290,8 +289,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="contentSourceSyncResultsDataModel" value="#{ContentSourceSyncResultsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ContentSourceSyncResultsUIBean.dataTable}"
-                            id="contentSourceSyncResultsDataTable"
+            <rich:dataTable id="contentSourceSyncResultsDataTable"
                             rows="#{PageControl.ContentSourceSyncResultsList.pageSize}"
                             value="#{contentSourceSyncResultsDataModel}"
                             var="syncitem"
@@ -402,8 +400,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="contentSourcePackageVersionsDataModel" value="#{ContentSourcePackageVersionsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ContentSourcePackageVersionsUIBean.dataTable}"
-                            id="contentSourcePackageVersionsDataTable"
+            <rich:dataTable id="contentSourcePackageVersionsDataTable"
                             rows="#{PageControl.ContentSourcePackageVersionsList.pageSize}"
                             value="#{contentSourcePackageVersionsDataModel}"
                             var="pvitem"

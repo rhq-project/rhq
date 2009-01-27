@@ -113,8 +113,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="channelContentSourcesDataModel" value="#{ChannelContentSourcesUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ChannelContentSourcesUIBean.dataTable}"
-                            id="channelContentSourcesDataTable"
+            <rich:dataTable id="channelContentSourcesDataTable"
                             rows="#{PageControl.ChannelContentSourcesList.pageSize}"
                             value="#{channelContentSourcesDataModel}"
                             var="contentsourceitem"
@@ -252,8 +251,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="channelResourcesDataModel" value="#{ChannelResourcesUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ChannelResourcesUIBean.dataTable}"
-                            id="channelResourcesDataTable"
+            <rich:dataTable id="channelResourcesDataTable"
                             rows="#{PageControl.ChannelResourcesList.pageSize}"
                             value="#{channelResourcesDataModel}"
                             var="resourceitem"
@@ -383,8 +381,7 @@
 
 
             <ui:param name="channelPackageVersionsDataModel" value="#{ChannelPackageVersionsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ChannelPackageVersionsUIBean.dataTable}"
-                            id="channelPackageVersionsDataTable"
+            <rich:dataTable id="channelPackageVersionsDataTable"
                             rows="#{PageControl.ChannelPackageVersionsList.pageSize}"
                             value="#{channelPackageVersionsDataModel}"
                             var="pvitem"

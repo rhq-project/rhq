@@ -101,7 +101,6 @@
                           rendered="#{partitionEventDataModel.rowCount eq 0}"/>
 
             <rich:dataTable rendered="#{partitionEventDataModel.rowCount gt 0}"
-                            binding="#{ViewPartitionEventUIBean.dataTable}"
                             id="partitionEventDataTable"
                             rows="#{PageControl.PartitionEventsDetailsView.pageSize}"
                             value="#{partitionEventDataModel}"

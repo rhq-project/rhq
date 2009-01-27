@@ -63,8 +63,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="configurationUpdateDataModel" value="#{SubsystemConfigurationUpdateUIBean.dataModel}"/>
-            <rich:dataTable binding="#{SubsystemConfigurationUpdateUIBean.dataTable}"
-                            id="configurationUpdateDataTable" 
+            <rich:dataTable id="configurationUpdateDataTable" 
                             rows="#{PageControl.SubsystemConfigurationHistory.pageSize}"
                             value="#{configurationUpdateDataModel}"
                             var="item"

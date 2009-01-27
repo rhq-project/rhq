@@ -77,8 +77,7 @@
    one time in this list, the most recent item indicates the current status of the package.</p>
 
    <ui:param name="packageHistoryDataModel" value="#{ShowContentServiceRequestUIBean.dataModel}"/>
-   <rich:dataTable binding="#{ShowContentServiceRequestUIBean.dataTable}"
-                   id="packageHistoryDataTable"
+   <rich:dataTable id="packageHistoryDataTable"
                    rows="#{PageControl.InstalledPackageHistoryList.pageSize}"
                    value="#{packageHistoryDataModel}"
                    var="item"

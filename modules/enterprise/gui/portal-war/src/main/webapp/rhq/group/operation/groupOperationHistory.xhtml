@@ -42,8 +42,7 @@
                       interval="60000"
                       ignoreDupResponses="true"
                       reRender="resourceGroupOperationPendingHistoryDataTable" />
-            <rich:dataTable binding="#{ResourceGroupOperationPendingHistoryUIBean.dataTable}"
-                            id="resourceGroupOperationPendingHistoryDataTable" 
+            <rich:dataTable id="resourceGroupOperationPendingHistoryDataTable" 
                             rows="#{PageControl.ResourceGroupOperationPendingHistory.pageSize}"
                             value="#{resourceGroupOperationPendingHistoryDataModel}"
                             var="pendingItem"
@@ -172,7 +171,6 @@
                       ignoreDupResponses="true"
                       reRender="resourceGroupOperationCompletedHistoryDataTable" />
             <rich:dataTable rendered="#{resourceGroupOperationCompletedHistoryDataModel.rowCount gt 0}"
-                            binding="#{ResourceGroupOperationCompletedHistoryUIBean.dataTable}"
                             id="resourceGroupOperationCompletedHistoryDataTable" 
                             rows="#{PageControl.ResourceGroupOperationCompletedHistory.pageSize}"
                             value="#{resourceGroupOperationCompletedHistoryDataModel}"

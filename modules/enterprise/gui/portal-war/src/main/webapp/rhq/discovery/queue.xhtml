@@ -140,8 +140,7 @@
             <h:panelGrid columns="1" width="90%" style="min-width: 800px;">
 
                <ui:param name="autoDiscoveryQueueDataModel" value="#{AutoDiscoveryQueueUIBean.dataModel}"/>
-               <rich:dataTable binding="#{AutoDiscoveryQueueUIBean.dataTable}"
-                               id="autoDiscoveryQueueDataTable" 
+               <rich:dataTable id="autoDiscoveryQueueDataTable" 
                                rows="#{PageControl.AutoDiscoveryPlatformList.pageSize}"
                                value="#{autoDiscoveryQueueDataModel}"
                                var="platformQueueItem"

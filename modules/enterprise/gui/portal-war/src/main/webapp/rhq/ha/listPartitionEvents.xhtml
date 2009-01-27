@@ -81,8 +81,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="partitionEventsDataModel" value="#{ListPartitionEventsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ListPartitionEventsUIBean.dataTable}"
-                            id="partitionEventsDataTable"
+            <rich:dataTable id="partitionEventsDataTable"
                             rows="#{PageControl.ListPartitionEventsView.pageSize}"
                             value="#{partitionEventsDataModel}"
                             var="item"

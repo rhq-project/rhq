@@ -49,8 +49,7 @@
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="channelsDataModel" value="#{ListChannelsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ListChannelsUIBean.dataTable}"
-                            id="channelsDataTable"
+            <rich:dataTable id="channelsDataTable"
                             rows="#{PageControl.ChannelsList.pageSize}"
                             value="#{channelsDataModel}"
                             var="item"

@@ -29,8 +29,7 @@
             to more channels.</p>
 
             <ui:param name="resourcePackageVersionsDataModel" value="#{ResourcePackageVersionsUIBean.dataModel}"/>
-            <rich:dataTable binding="#{ResourcePackageVersionsUIBean.dataTable}"
-                            id="resourcePackageVersionsDataTable"
+            <rich:dataTable id="resourcePackageVersionsDataTable"
                             rows="#{PageControl.ResourcePackageVersionsList.pageSize}"
                             value="#{resourcePackageVersionsDataModel}"
                             var="item"

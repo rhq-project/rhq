@@ -21,6 +21,8 @@
 
 <ui:define name="content">
 
+<a4j:region renderRegionOnly="true" selfRendered="true">
+
 <!-- =================== GENERAL PROPERTIES =================== -->
 <rich:panel styleClass="BlockContent">
 
@@ -130,7 +132,6 @@
 
 <ui:param name="childResourcesDataModel" value="#{ListChildResourcesUIBean.dataModel}"/>
 <rich:dataTable id="childResourcesDataTable"
-                binding="#{ListChildResourcesUIBean.dataTable}"
                 rows="#{PageControl.ChildResourcesList.pageSize}"
                 value="#{childResourcesDataModel}"
                 rendered="#{ListChildResourcesUIBean.dataModel.rowCount > 0}"
@@ -149,7 +150,7 @@
       <f:facet name="header">
          <onc:allSelect target="selectedResources"/>
       </f:facet>
-      
+
       <onc:select name="selectedResources" value="#{resourceComposite.resource.id}"
                   rendered="#{resourceComposite.resource.resourceType.deletable}"/>
    </rich:column>
@@ -162,33 +163,33 @@
       <onc:quickNav>
          <f:param name="id" value="#{resourceComposite.resource.id}"/>
 
-         <onc:icon name="m" 
-                   url="/rhq/resource/monitor/graphs.xhtml" 
-                   alt="Monitor" 
+         <onc:icon name="m"
+                   url="/rhq/resource/monitor/graphs.xhtml"
+                   alt="Monitor"
                    visible="#{monitorEnabled}">
          </onc:icon>
 
-         <onc:icon name="i" 
-                   url="/rhq/resource/inventory/view.xhtml" 
+         <onc:icon name="i"
+                   url="/rhq/resource/inventory/view.xhtml"
                    alt="Inventory"/>
 
-         <onc:icon name="c" 
-                   url="/rhq/resource/configuration/view.xhtml" 
-                   alt="Configure" 
+         <onc:icon name="c"
+                   url="/rhq/resource/configuration/view.xhtml"
+                   alt="Configure"
                    visible="#{resourceComposite.resourceFacets.configuration}"/>
 
-         <onc:icon name="o" 
-                   url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml" 
-                   alt="Operations" 
+         <onc:icon name="o"
+                   url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml"
+                   alt="Operations"
                    visible="#{resourceComposite.resourceFacets.operation}"/>
 
-         <onc:icon name="a" 
-                   url="/rhq/resource/alert/listAlertDefinitions.xhtml" 
-                   alt="Alerts" 
+         <onc:icon name="a"
+                   url="/rhq/resource/alert/listAlertDefinitions.xhtml"
+                   alt="Alerts"
                    visible="#{monitorEnabled}"/>
 
-         <onc:icon name="p" 
-                   url="/rhq/resource/content/view.xhtml" 
+         <onc:icon name="p"
+                   url="/rhq/resource/content/view.xhtml"
                    alt="Packages"
                    visible="#{resourceComposite.resourceFacets.content}"/>
 
@@ -320,7 +321,8 @@
            <a4j:keepAlive beanName="ListChildResourcesUIBean"/>
            <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.creatableChildTypesCount > 0}">
 
-             <input type="hidden" name="id" value="#{param.id}"/>
+            <input type="hidden" name="id" value="#{param.id}"/>
+            <input type="hidden" name="parent" value="#{param.id}"/>
 
             <input type="hidden" name="type"/>
             <input type="hidden" name="mode" value="edit"/>
@@ -521,7 +523,7 @@
 
    <h:outputText value="#{deleteItem.status}" rendered="#{deleteItem.status ne 'FAILURE'}"/>
    <onc:errorPopup popupId="delete-#{deleteItem.id}" errorMessage="#{deleteItem.errorMessage}" rendered="#{deleteItem.status eq 'FAILURE'}">Failure</onc:errorPopup>
-      
+
 </rich:column>
 
 <ui:remove><!-- Request Started Time --></ui:remove>
@@ -651,7 +653,7 @@
             <f:facet name="header">
                <onc:allSelect target="selectedGroups" rendered="false"/>
             </f:facet>
-      
+
             <onc:select name="selectedGroups" value="#{resourceGroupComposite.resourceGroup.id}" rendered="false"/>
          </rich:column>
 
@@ -827,6 +829,7 @@
 
 </rich:panel>
 
+</a4j:region>
 </ui:define>
 
 </ui:composition>

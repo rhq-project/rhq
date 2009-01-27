@@ -121,11 +121,15 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
 
                 if (typeId != null) {
                     String id = FacesContextUtility.getOptionalRequestParameter("parent");
-                    this.selectedId = Integer.parseInt(id);
+                    if (id != null) {
+                        this.selectedId = Integer.parseInt(id);
+                    }
 
                 } else {
                     String id = FacesContextUtility.getOptionalRequestParameter("id");
-                    this.selectedId = Integer.parseInt(id);
+                    if (id != null) {
+                        this.selectedId = Integer.parseInt(id);
+                    }
                 }
 
                 if (preopen((ResourceTreeNode) tree.getRowData(key), this.selectedId, this.selecteAGTypeId)) {
@@ -159,7 +163,8 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
             }
         } else if (resourceTreeNode.getData() instanceof AutoGroupComposite) {
             AutoGroupComposite ag = (AutoGroupComposite) resourceTreeNode.getData();
-            if (ag.getParentResource().getId() == selectedResourceId && ag.getResourceType().getId() == selectedAGTypeId) {
+            if (ag.getParentResource().getId() == selectedResourceId
+                    && ag.getResourceType() != null && ag.getResourceType().getId() == selectedAGTypeId) {
                 return true;
             }
         }

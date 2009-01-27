@@ -97,60 +97,10 @@ THIS TEXT WILL BE REMOVED AS WELL.
 </ui:define>
 
 	<ui:define name="nav">
-	   <h:form id="leftNaveTogglePanelForm">
-            <input type="hidden" name="groupId" value="#{ResourceGroupUIBean.groupId}"/>
 
+        <ui:include src="/rhq/group/navigation/GroupTree.xhtml"/>
 
-            <rich:togglePanel value="#{UserPreferencesUIBean.leftResourceNavState}" switchType="ajax"
-                              stateOrder="closed,tree" id="navTogglePanel" styleClass="atest"
-                              style="width: 100%;height: 100%; display: block">
-
-                <f:facet name="closed">
-                            <rich:toggleControl panelId="footest" id="test"
-                                                style="width: 10px; height: 100%; background-color: #A4B2B9;">
-
-                                <span id="openLeftNav"
-                                      style="display: block; width: 10px; height: 800px; background-color: #A4B2B9;">&nbsp;
-                                    <h:graphicImage value="/images/icon_right_arrow.gif"/>
-                                </span>
-                            </rich:toggleControl>
-                </f:facet>
-
-                <f:facet name="tree">
-                    <f:subview id="treeview">
-
-
-                        <div style="width: 100%; height: 100%;  background-color: #E1E5EB; "
-                             id="leftSpace">
-
-
-                            <table width="100%" cellpadding="0" cellspacing="0" style="height: 100%">
-                                <tr>
-                                    <td valign="top">
-                                        <ui:include src="/rhq/group/navigation/GroupTree.xhtml"/>
-                                    </td>
-                                    <td valign="top">
-
-                                        <rich:toggleControl switchToState="closed" id="closeLeftNavLink">
-
-                                            <span id="closeLeftNav"
-                                                  style="display: block; width: 10px; height: 800px; background-color: #A4B2B9;">&nbsp;
-                                                <h:graphicImage value="/images/icon_down_arrow.gif"/>
-                                            </span>
-
-                                        </rich:toggleControl>
-
-
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>
-
-                    </f:subview>
-                </f:facet>
-            </rich:togglePanel>
-        </h:form>
-	</ui:define>
+    </ui:define>
 
 <ui:define name="content">
    <p/>

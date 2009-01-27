@@ -83,7 +83,7 @@ public class SortableColumnHeaderRenderer extends CommandLinkRenderer {
                 children.remove(i);
             }
 
-            if (children.get(i) instanceof UIOutput) {
+            if (children.size() > i && children.get(i) instanceof UIOutput) {
                 String value = ((UIOutput) children.get(i)).getValue().toString();
                 if (value.length() > 0) {
                     if (Character.isDigit(value.charAt(0))) {

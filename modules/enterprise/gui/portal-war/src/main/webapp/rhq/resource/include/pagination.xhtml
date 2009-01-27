@@ -26,6 +26,7 @@
             
                <rich:datascroller id="#{paginationDataScrollerName}"
                                   for="#{paginationDataTableName}"
+                                  status="commonStatus"
                                   rendered="#{paginationDataModel.rowCount > PageControlSettingsUIBean.minimumPageSize}"
                                   stepControls="show" fastControls="hide" boundaryControls="hide"
                                   page="#{paginationPageControl.pageNumber}"

@@ -155,6 +155,8 @@
 #                                to appear on the console. If this is
 #                                defined, but not equal to "true", the value
 #                                itself will be used as the prompt string. 
-#                                This is not defined by default.
+#                                This is not defined by default. Note that
+#                                this setting does nothing more than simply
+#                                printing a message to the console.
 #
 #RHQ_AGENT_PASSWORD_PROMPT=true

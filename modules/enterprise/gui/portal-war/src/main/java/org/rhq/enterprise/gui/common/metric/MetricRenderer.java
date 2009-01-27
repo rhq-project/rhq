@@ -155,16 +155,22 @@ public class MetricRenderer extends Renderer {
             writer.write(" ");
         }
         writer.write(" ");
-        if (rangePreferences.readOnly == false) {
-            writer.startElement("a", null);
-            writer.writeAttribute("href", "#", null);
-            writer
-                .writeAttribute(
-                    "onclick",
-                    "javascript:window.open('/rhq/common/metric/advanced.xhtml','Advanced Metrics','menubar=no,width=540,height=360,toolbar=no');",
-                    null);
-            writer.write("Advanced Settings");
-            writer.endElement("a");
+
+        writer.startElement("a", null);
+        writer.writeAttribute("href", "#", null);
+        writer
+            .writeAttribute(
+                "onclick",
+                "javascript:window.open('/rhq/common/metric/advanced.xhtml','Metric Display Range Settings','menubar=no,width=540,height=360,toolbar=no');",
+                null);
+        if (rangePreferences.readOnly) {
+            writer.write("Edit Settings...");
+        } else {
+            writer.write("Advanced Settings...");
+        }
+        writer.endElement("a");
+        if (rangePreferences.readOnly) {
+            writer.write(" | ");
         }
     }
 }

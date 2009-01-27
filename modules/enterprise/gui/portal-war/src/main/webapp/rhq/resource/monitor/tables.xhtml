@@ -65,6 +65,10 @@
             </rich:dataTable>
             
             <h:form>
+                <input type="hidden" name="id" value="#{IndicatorChartsUIBean.context.resourceId}" />
+                <input type="hidden" name="groupId" value="#{IndicatorChartsUIBean.context.groupId}" />
+                <input type="hidden" name="parent" value="#{IndicatorChartsUIBean.context.parentResourceId}" />
+                <input type="hidden" name="type" value="#{IndicatorChartsUIBean.context.resourceTypeId}" />
                 <table>
                     <tr>
                         <td><onc:metric optionList="m,h,d" /></td>

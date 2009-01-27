@@ -114,7 +114,7 @@ public class PageControlELResolver extends ELResolver {
                 WebUserPreferences preferences = user.getWebPreferences();
                 // get it
                 PageControl pc = preferences.getPageControl(view);
-                log.info("Getting PageControlView[" + view + "] to " + pc);
+                log.debug("Getting PageControlView[" + view + "] to " + pc);
                 result = pc.getPageSize();
 
                 // don't let other resolvers touch this
@@ -125,7 +125,7 @@ public class PageControlELResolver extends ELResolver {
                 WebUserPreferences preferences = user.getWebPreferences();
                 // get it
                 PageControl pc = preferences.getPageControl(view);
-                log.info("Getting PageControlView[" + view + "] to " + pc);
+                log.debug("Getting PageControlView[" + view + "] to " + pc);
                 result = pc.getPageNumber();
 
                 // don't let other resolvers touch this
@@ -181,7 +181,7 @@ public class PageControlELResolver extends ELResolver {
                     int pageSize = (Integer) value;
                     pc.setPageSize(pageSize);
 
-                    log.info("Setting PageControlView[" + view + "] to " + pc);
+                    log.debug("Setting PageControlView[" + view + "] to " + pc);
                     preferences.setPageControl(view, pc);
                     preferences.persistPreferences();
                 }

@@ -30,7 +30,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -192,13 +191,5 @@ public class PageControlELResolver extends ELResolver {
                 throw new PropertyNotFoundException("Only the pageSize property of a PageControl object is accessible");
             }
         }
-    }
-
-    private void workAroundRF1133(PageControlView view) {
-        /*
-         * we always want to reset the table's internal page index to 0 if we change the page size
-         */
-        PagedDataTableUIBean uiBean = view.getPagedDataTableUIBean();
-        uiBean.getDataTable().setFirst(0);
     }
 }

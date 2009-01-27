@@ -30,7 +30,7 @@ import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
  */
 public interface AgentConfigurationConstants {
     /**
-     * This is the top leve parent node of all agent preferences and is directly under the userRoot preferences node.
+     * This is the top level parent node of all agent preferences and is directly under the userRoot preferences node.
      */
     String PREFERENCE_NODE_PARENT = "rhq-agent";
 
@@ -671,4 +671,28 @@ public interface AgentConfigurationConstants {
      * The default number of seconds that an operation invocation has to complete until it is aborted.
      */
     long DEFAULT_PLUGINS_OPERATION_INVOCATION_TIMEOUT = PluginContainerConfiguration.OPERATION_INVOCATION_TIMEOUT_DEFAULT;
+
+    /**
+     * The time in seconds before the event sender thread will start to send event reports.
+     */
+    String PLUGINS_EVENT_SENDER_INITIAL_DELAY = PROPERTY_NAME_PREFIX + "plugins.event-sender.initial-delay-secs";
+    long DEFAULT_PLUGINS_EVENT_SENDER_INITIAL_DELAY = PluginContainerConfiguration.EVENT_SENDER_INITIAL_DELAY_DEFAULT;
+
+    /**
+     * Defines how often an event report is sent to the server.
+     */
+    String PLUGINS_EVENT_SENDER_PERIOD = PROPERTY_NAME_PREFIX + "plugins.event-sender.period-secs";
+    long DEFAULT_PLUGINS_EVENT_SENDER_PERIOD = PluginContainerConfiguration.EVENT_SENDER_PERIOD_DEFAULT;
+
+    /**
+     * The maximum number of events for any one event source that can exist in a single event report.
+     */
+    String PLUGINS_EVENT_REPORT_MAX_PER_SOURCE = PROPERTY_NAME_PREFIX + "plugins.event-report.max-per-source";
+    int DEFAULT_PLUGINS_EVENT_REPORT_MAX_PER_SOURCE = PluginContainerConfiguration.EVENT_REPORT_MAX_PER_SOURCE_DEFAULT;
+
+    /**
+     * The maximum number of events total that can exist in a single event report.
+     */
+    String PLUGINS_EVENT_REPORT_MAX_TOTAL = PROPERTY_NAME_PREFIX + "plugins.event-report.max-total";
+    int DEFAULT_PLUGINS_EVENT_REPORT_MAX_TOTAL = PluginContainerConfiguration.EVENT_REPORT_MAX_TOTAL_DEFAULT;
 }

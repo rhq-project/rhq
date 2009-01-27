@@ -54,8 +54,6 @@ public class EventManager implements ContainerService {
 
     private static final String SENDER_THREAD_POOL_NAME = "EventManager.sender";
     private static final int SENDER_THREAD_POOL_CORE_SIZE = 2;
-    private static final int SENDER_INITIAL_DELAY_SECS = 30;
-    private static final int SENDER_PERIOD_SECS = 30;
 
     private static final String POLLER_THREAD_POOL_NAME = "EventManager.poller";
     private static final int POLLER_THREAD_POOL_CORE_SIZE = 1;
@@ -64,19 +62,22 @@ public class EventManager implements ContainerService {
 
     private PluginContainerConfiguration pcConfig;
     private ScheduledThreadPoolExecutor senderThreadPool;
-    private EventReport activeReport = new EventReport();
+    private EventReport activeReport;
     private ReentrantReadWriteLock reportLock = new ReentrantReadWriteLock(true);
     private ScheduledThreadPoolExecutor pollerThreadPool;
     private Map<PollerKey, Runnable> pollerThreads;
     private Sigar sigar;
 
     public void initialize() {
+        this.activeReport = new EventReport(this.pcConfig.getEventReportMaxPerSource(), this.pcConfig
+            .getEventReportMaxTotal());
+
         // Schedule sender thread(s) to send Event reports to the Server periodically.
         EventSenderRunner senderRunner = new EventSenderRunner(this);
         this.senderThreadPool = new ScheduledThreadPoolExecutor(SENDER_THREAD_POOL_CORE_SIZE, new LoggingThreadFactory(
             SENDER_THREAD_POOL_NAME, true));
-        this.senderThreadPool.scheduleAtFixedRate(senderRunner, SENDER_INITIAL_DELAY_SECS, SENDER_PERIOD_SECS,
-            TimeUnit.SECONDS);
+        this.senderThreadPool.scheduleAtFixedRate(senderRunner, this.pcConfig.getEventSenderInitialDelay(),
+            this.pcConfig.getEventSenderPeriod(), TimeUnit.SECONDS);
 
         // Set up a thread pool for polling threads. Polling threads will be added to the pool via calls to
         // registerEventPoller().
@@ -143,7 +144,8 @@ public class EventManager implements ContainerService {
         this.reportLock.writeLock().lock();
         try {
             EventReport previousReport = this.activeReport;
-            this.activeReport = new EventReport();
+            this.activeReport = new EventReport(this.pcConfig.getEventReportMaxPerSource(), this.pcConfig
+                .getEventReportMaxTotal());
             return previousReport;
         } finally {
             this.reportLock.writeLock().unlock();

@@ -44,8 +44,8 @@ import org.rhq.core.domain.event.EventSource;
 public class EventReport implements Serializable {
     private static final long serialVersionUID = 2L;
 
-    private static final int MAX_EVENTS_PER_SOURCE = 200;
-    private static final int MAX_EVENTS_PER_REPORT = 400;
+    private final int maxEventsPerSource;
+    private final int maxEventsPerReport;
 
     // The log field must be either static final or transient, since sending this class over the wire will cause
     // InvalidClassExceptions (due to the Server having a different version of Commons Logging).
@@ -53,6 +53,11 @@ public class EventReport implements Serializable {
 
     private Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>();
     private int totalEventsInReport = 0;
+
+    public EventReport(int maxEventsPerSource, int maxEventsPerReport) {
+        this.maxEventsPerSource = maxEventsPerSource;
+        this.maxEventsPerReport = maxEventsPerReport;
+    }
 
     /**
      * Adds the given <code>event</code> to this report. If this report is too full,
@@ -63,9 +68,9 @@ public class EventReport implements Serializable {
      * @param eventSource the source of the Event to be added
      */
     public void addEvent(@NotNull Event event, @NotNull EventSource eventSource) {
-        if (this.totalEventsInReport >= MAX_EVENTS_PER_REPORT) {
+        if (this.totalEventsInReport >= this.maxEventsPerReport) {
             LOG.warn("Event Report Limit Reached: this report contains the maximum allowed Events ["
-                + MAX_EVENTS_PER_REPORT + "] - no more Events will be added to this report. source=[" + eventSource
+                + this.maxEventsPerReport + "] - no more Events will be added to this report. source=[" + eventSource
                 + "]");
             return;
         }
@@ -76,12 +81,12 @@ public class EventReport implements Serializable {
             this.events.put(eventSource, eventSet);
         }
 
-        if (eventSet.size() < MAX_EVENTS_PER_SOURCE) {
+        if (eventSet.size() < this.maxEventsPerSource) {
             eventSet.add(event);
             this.totalEventsInReport++;
         } else {
             LOG.warn("Event Report Limit Reached: this report contains the maximum allowed Events ["
-                + MAX_EVENTS_PER_SOURCE + "] for the source [" + eventSource
+                + this.maxEventsPerSource + "] for the source [" + eventSource
                 + "] - no more Events from this source will be added to this report.");
         }
     }

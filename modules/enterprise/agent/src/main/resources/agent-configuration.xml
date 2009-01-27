@@ -698,6 +698,52 @@ commands named "config", "setconfig" and "setup" and the command line options
 
                <!--
                _______________________________________________________________
+               rhq.agent.plugins.event-sender.initial-delay-secs
+
+               Defines the delay before the first event report gets sent
+               to the server. The value is specified in seconds.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.event-sender.initial-delay-secs" value="30"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.event-sender.period-secs
+
+               Defines how often event reports get sent to the server. The
+               value is specified in seconds.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.event-sender.period-secs" value="30"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.event-report.max-per-source
+
+               Defines the maximum number of events for any given event source
+               that can be placed in a single event report that is sent up
+               to the server. If this number is larger than the max-total
+               setting, then this setting is ignored.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.event-report.max-per-source" value="200"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.event-report.max-total
+
+               Defines the total maximum number of events that can be placed 
+               in a single event report that is sent up to the server. 
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.event-report.max-total" value="400"/>
+               -->
+
+               <!--
+               _______________________________________________________________
                rhq.communications.configuration-schema-version
 
                Defines what version of the agent configuration schema this

@@ -1134,6 +1134,26 @@ public class AgentConfiguration {
             AgentConfigurationConstants.PLUGINS_CONTENT_DISCOVERY_THREADPOOL_SIZE,
             AgentConfigurationConstants.DEFAULT_PLUGINS_CONTENT_DISCOVERY_THREADPOOL_SIZE);
 
+        // get configuration discovery settings
+        long config_discovery_initial_delay = m_preferences.getLong(
+            AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY,
+            AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY);
+        long config_discovery_period = m_preferences.getLong(
+            AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_PERIOD,
+            AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_PERIOD);
+
+        // get event sender/report settings
+        long event_sender_initial_delay = m_preferences.getLong(
+            AgentConfigurationConstants.PLUGINS_EVENT_SENDER_INITIAL_DELAY,
+            AgentConfigurationConstants.DEFAULT_PLUGINS_EVENT_SENDER_INITIAL_DELAY);
+        long event_sender_period = m_preferences.getLong(AgentConfigurationConstants.PLUGINS_EVENT_SENDER_PERIOD,
+            AgentConfigurationConstants.DEFAULT_PLUGINS_EVENT_SENDER_PERIOD);
+        int event_report_max_per_src = m_preferences.getInt(
+            AgentConfigurationConstants.PLUGINS_EVENT_REPORT_MAX_PER_SOURCE,
+            AgentConfigurationConstants.DEFAULT_PLUGINS_EVENT_REPORT_MAX_PER_SOURCE);
+        int event_report_max_total = m_preferences.getInt(AgentConfigurationConstants.PLUGINS_EVENT_REPORT_MAX_TOTAL,
+            AgentConfigurationConstants.DEFAULT_PLUGINS_EVENT_REPORT_MAX_TOTAL);
+
         // determine the data and tmp directories to use
         File data_directory = getDataDirectory();
         File tmp_directory = new File(data_directory, "tmp");
@@ -1161,14 +1181,12 @@ public class AgentConfiguration {
         config.setContentDiscoveryThreadPoolSize(con_threadpool_size);
         config.setContentDiscoveryInitialDelay(con_initial_delay);
         config.setContentDiscoveryPeriod(con_period);
-
-        config.setConfigurationDiscoveryInitialDelay(m_preferences.getLong(
-            AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY,
-            AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_INITIAL_DELAY));
-
-        config.setConfigurationDiscoveryPeriod(m_preferences.getLong(
-            AgentConfigurationConstants.PLUGINS_CONFIGURATION_DISCOVERY_PERIOD,
-            AgentConfigurationConstants.DEFAULT_PLUGINS_CONFIGURATION_DISCOVERY_PERIOD));
+        config.setConfigurationDiscoveryInitialDelay(config_discovery_initial_delay);
+        config.setConfigurationDiscoveryPeriod(config_discovery_period);
+        config.setEventSenderInitialDelay(event_sender_initial_delay);
+        config.setEventSenderPeriod(event_sender_period);
+        config.setEventReportMaxPerSource(event_report_max_per_src);
+        config.setEventReportMaxTotal(event_report_max_total);
 
         if (name != null) {
             config.setContainerName(name);

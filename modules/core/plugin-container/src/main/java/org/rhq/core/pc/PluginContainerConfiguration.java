@@ -26,6 +26,7 @@ import java.io.File;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.rhq.core.pc.plugin.PluginFinder;
 
 /**
@@ -100,6 +101,17 @@ public class PluginContainerConfiguration {
     public static final int OPERATION_INVOKER_THREADCOUNT_DEFAULT = 10;
     private static final String OPERATION_INVOCATION_TIMEOUT = PROP_PREFIX + "operation-invocation-timeout";
     public static final long OPERATION_INVOCATION_TIMEOUT_DEFAULT = 600L; // in seconds
+
+    // Event -------
+
+    private static final String EVENT_SENDER_INITIAL_DELAY_PROP = PROP_PREFIX + "event-sender-initial-delay";
+    public static final long EVENT_SENDER_INITIAL_DELAY_DEFAULT = 30L; // in seconds
+    private static final String EVENT_SENDER_PERIOD_PROP = PROP_PREFIX + "event-sender-period";
+    public static final long EVENT_SENDER_PERIOD_DEFAULT = 30L; // in seconds
+    private static final String EVENT_REPORT_MAX_PER_SOURCE_PROP = PROP_PREFIX + "event-report-max-per-source";
+    public static final int EVENT_REPORT_MAX_PER_SOURCE_DEFAULT = 200;
+    private static final String EVENT_REPORT_MAX_TOTAL_PROP = PROP_PREFIX + "event-report-max-total";
+    public static final int EVENT_REPORT_MAX_TOTAL_DEFAULT = 400;
 
     /**
      * Contains all remote POJO services that the server exposes to the plugin container.
@@ -472,6 +484,42 @@ public class PluginContainerConfiguration {
      */
     public void setOperationInvocationTimeout(long timeout) {
         configuration.put(OPERATION_INVOCATION_TIMEOUT, Long.valueOf(timeout));
+    }
+
+    public long getEventSenderInitialDelay() {
+        Long delay = (Long) configuration.get(EVENT_SENDER_INITIAL_DELAY_PROP);
+        return (delay == null) ? EVENT_SENDER_INITIAL_DELAY_DEFAULT : delay.longValue();
+    }
+
+    public void setEventSenderInitialDelay(long delay) {
+        configuration.put(EVENT_SENDER_INITIAL_DELAY_PROP, delay);
+    }
+
+    public long getEventSenderPeriod() {
+        Long period = (Long) configuration.get(EVENT_SENDER_PERIOD_PROP);
+        return (period == null) ? EVENT_SENDER_PERIOD_DEFAULT : period.longValue();
+    }
+
+    public void setEventSenderPeriod(long period) {
+        configuration.put(EVENT_SENDER_PERIOD_PROP, period);
+    }
+
+    public int getEventReportMaxPerSource() {
+        Integer value = (Integer) configuration.get(EVENT_REPORT_MAX_PER_SOURCE_PROP);
+        return (value == null) ? EVENT_REPORT_MAX_PER_SOURCE_DEFAULT : value.intValue();
+    }
+
+    public void setEventReportMaxPerSource(int value) {
+        configuration.put(EVENT_REPORT_MAX_PER_SOURCE_PROP, value);
+    }
+
+    public int getEventReportMaxTotal() {
+        Integer value = (Integer) configuration.get(EVENT_REPORT_MAX_TOTAL_PROP);
+        return (value == null) ? EVENT_REPORT_MAX_TOTAL_DEFAULT : value.intValue();
+    }
+
+    public void setEventReportMaxTotal(int value) {
+        configuration.put(EVENT_REPORT_MAX_TOTAL_PROP, value);
     }
 
     /**

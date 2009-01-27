@@ -620,6 +620,31 @@ public class SetupPromptCommand implements AgentPromptCommand {
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_PROMPT),
             SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_HELP)));
 
+        instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTSENDERPERIOD_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTSENDERPERIOD_DEFAULT, new LongSetupValidityChecker(
+                30L, null), SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTSENDERPERIOD_PROMPT),
+            SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTSENDERPERIOD_HELP)));
+
+        instr.add(new DefaultSetupInstruction(
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTSENDERINITIALDELAY_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTSENDERINITIALDELAY_DEFAULT,
+            new LongSetupValidityChecker(30L, null), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTSENDERINITIALDELAY_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTSENDERINITIALDELAY_HELP)));
+
+        instr.add(new DefaultSetupInstruction(
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXPERSRC_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXPERSRC_DEFAULT,
+            new IntegerSetupValidityChecker(0, null), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXPERSRC_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXPERSRC_HELP)));
+
+        instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXTOTAL_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXTOTAL_DEFAULT,
+            new IntegerSetupValidityChecker(0, null), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXTOTAL_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXTOTAL_HELP)));
+
         instr.add(new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_VMHEALTHCHECKINTERVAL_PREF,
             AgentSetupInstructions.SETUP_INSTRUCTION_VMHEALTHCHECKINTERVAL_DEFAULT, new LongSetupValidityChecker(0L,
                 null), SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_VMHEALTHCHECKINTERVAL_PROMPT), SETUPMSG

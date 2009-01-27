@@ -904,6 +904,45 @@ public interface AgentSetupInstructions {
     @I18NMessages( { @I18NMessage("The time in seconds before the initial configuration discovery is performed.") })
     String SETUP_INSTRUCTION_PLUGINSCONFIGURATIONDISCOVERYINITIALDELAY_HELP = "PromptCommand.setup.instruction.plugins.configurationdiscovery-initialdelay.help";
 
+    // PLUGINS EVENT SENDER PERIOD
+    String SETUP_INSTRUCTION_PLUGINSEVENTSENDERPERIOD_PREF = AgentConfigurationConstants.PLUGINS_EVENT_SENDER_PERIOD;
+    String SETUP_INSTRUCTION_PLUGINSEVENTSENDERPERIOD_DEFAULT = Long
+        .toString(AgentConfigurationConstants.DEFAULT_PLUGINS_EVENT_SENDER_PERIOD);
+    @I18NMessages( { @I18NMessage("Event Sender Period") })
+    String SETUP_INSTRUCTION_PLUGINSEVENTSENDERPERIOD_PROMPT = "PromptCommand.setup.instruction.plugins.eventsender-period.prompt";
+    @I18NMessages( { @I18NMessage("Defines how often event reports get sent to the server (in seconds).") })
+    String SETUP_INSTRUCTION_PLUGINSEVENTSENDERPERIOD_HELP = "PromptCommand.setup.instruction.plugins.eventsender-period.help";
+
+    // PLUGINS EVENT SENDER INITIAL DELAY
+    String SETUP_INSTRUCTION_PLUGINSEVENTSENDERINITIALDELAY_PREF = AgentConfigurationConstants.PLUGINS_EVENT_SENDER_INITIAL_DELAY;
+    String SETUP_INSTRUCTION_PLUGINSEVENTSENDERINITIALDELAY_DEFAULT = Long
+        .toString(AgentConfigurationConstants.DEFAULT_PLUGINS_EVENT_SENDER_INITIAL_DELAY);
+    @I18NMessages( { @I18NMessage("Event Sender Initial Delay") })
+    String SETUP_INSTRUCTION_PLUGINSEVENTSENDERINITIALDELAY_PROMPT = "PromptCommand.setup.instruction.plugins.eventsender-initialdelay.prompt";
+    @I18NMessages( { @I18NMessage("The delay, in seconds, before the first event report gets sent to the server.") })
+    String SETUP_INSTRUCTION_PLUGINSEVENTSENDERINITIALDELAY_HELP = "PromptCommand.setup.instruction.plugins.eventsender-initialdelay.help";
+
+    // PLUGINS EVENT REPORT MAX PER SOURCE
+    String SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXPERSRC_PREF = AgentConfigurationConstants.PLUGINS_EVENT_REPORT_MAX_PER_SOURCE;
+    String SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXPERSRC_DEFAULT = Integer
+        .toString(AgentConfigurationConstants.DEFAULT_PLUGINS_EVENT_REPORT_MAX_PER_SOURCE);
+    @I18NMessages( { @I18NMessage("Event Report Max Per Source") })
+    String SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXPERSRC_PROMPT = "PromptCommand.setup.instruction.plugins.eventreport-maxpersrc.prompt";
+    @I18NMessages( { @I18NMessage("The maximum number of events for any given event source that can be placed\\n\\\n"
+        + "in a single event report that is sent up to the server. If this number is\\n\\\n"
+        + "larger than the max-total setting, then this setting is ignored.") })
+    String SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXPERSRC_HELP = "PromptCommand.setup.instruction.plugins.eventreport-maxpersrc.help";
+
+    // PLUGINS EVENT REPORT MAX TOTAL
+    String SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXTOTAL_PREF = AgentConfigurationConstants.PLUGINS_EVENT_REPORT_MAX_TOTAL;
+    String SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXTOTAL_DEFAULT = Integer
+        .toString(AgentConfigurationConstants.DEFAULT_PLUGINS_EVENT_REPORT_MAX_TOTAL);
+    @I18NMessages( { @I18NMessage("Event Report Max Total") })
+    String SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXTOTAL_PROMPT = "PromptCommand.setup.instruction.plugins.eventreport-maxtotal.prompt";
+    @I18NMessages( { @I18NMessage("The total maximum number of events that can be placed in a single event\\n\\\n"
+        + "report that is sent up to the server.") })
+    String SETUP_INSTRUCTION_PLUGINSEVENTREPORTMAXTOTAL_HELP = "PromptCommand.setup.instruction.plugins.eventreport-maxtotal.help";
+
     // VM HEALTH CHECK INTERVAL
     String SETUP_INSTRUCTION_VMHEALTHCHECKINTERVAL_PREF = AgentConfigurationConstants.VM_HEALTH_CHECK_INTERVAL_MSECS;
     String SETUP_INSTRUCTION_VMHEALTHCHECKINTERVAL_DEFAULT = Long

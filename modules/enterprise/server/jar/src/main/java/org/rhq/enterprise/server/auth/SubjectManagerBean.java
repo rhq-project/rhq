@@ -29,6 +29,8 @@ import java.util.Set;
 import javax.ejb.CreateException;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.interceptor.ExcludeDefaultInterceptors;
 import javax.jws.WebService;
 import javax.persistence.EntityManager;
@@ -139,6 +141,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     /**
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#updateSubject(Subject, Subject)
      */
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public Subject updateSubject(Subject whoami, Subject subjectToModify) {
         // let a user change his own details
         if (whoami.equals(subjectToModify)

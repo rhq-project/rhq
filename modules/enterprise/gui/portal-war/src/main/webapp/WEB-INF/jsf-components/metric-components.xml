@@ -20,16 +20,4 @@
         </renderer>
     </render-kit>
 
-    <managed-bean>
-        <managed-bean-name>AdvancedMetricSettingsUIBean</managed-bean-name>
-        <managed-bean-class>org.rhq.enterprise.gui.common.metric.AdvancedMetricSettingsUIBean</managed-bean-class>
-        <managed-bean-scope>request</managed-bean-scope>
-    </managed-bean>
-    
-    <managed-bean>
-        <managed-bean-name>MetricComponentUtilityUIBean</managed-bean-name>
-        <managed-bean-class>org.rhq.enterprise.gui.common.metric.MetricComponentUtilityUIBean</managed-bean-class>
-        <managed-bean-scope>request</managed-bean-scope>
-    </managed-bean>
-
 </faces-config>

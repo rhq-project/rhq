@@ -73,17 +73,26 @@ public class MetricRenderer extends Renderer {
         } else {
             return;
         }
-        metric.setValue(getMetricValue());
-        metric.setUnit(getMetricUnit());
-        metric.persist();
+
+        String metricUnit = getMetricUnit();
+        Integer metricValue = getMetricValue();
+
+        if (metricUnit != null) {
+            // in simple settings mode, range might have been changed
+            metric.setUnit(metricUnit);
+            metric.setValue(metricValue);
+            metric.persist();
+        } else {
+            // advanced mode can not be edited in this fashion
+        }
     }
 
     public int getMetricValue() {
-        return FacesContextUtility.getRequiredRequestParameter(MetricComponent.VALUE, Integer.class);
+        return FacesContextUtility.getOptionalRequestParameter(MetricComponent.VALUE, Integer.class, -1);
     }
 
     public String getMetricUnit() {
-        return FacesContextUtility.getRequiredRequestParameter(MetricComponent.UNIT, String.class);
+        return FacesContextUtility.getOptionalRequestParameter(MetricComponent.UNIT, String.class, null);
     }
 
     @Override
@@ -146,14 +155,16 @@ public class MetricRenderer extends Renderer {
             writer.write(" ");
         }
         writer.write(" ");
-        writer.startElement("a", null);
-        writer.writeAttribute("href", "#", null);
-        writer
-            .writeAttribute(
-                "onclick",
-                "javascript:window.open('/rhq/common/metric/advanced.xhtml','Advanced Metrics','menubar=no,width=540,height=360,toolbar=no');",
-                null);
-        writer.write("Change Settings");
-        writer.endElement("a");
+        if (rangePreferences.readOnly == false) {
+            writer.startElement("a", null);
+            writer.writeAttribute("href", "#", null);
+            writer
+                .writeAttribute(
+                    "onclick",
+                    "javascript:window.open('/rhq/common/metric/advanced.xhtml','Advanced Metrics','menubar=no,width=540,height=360,toolbar=no');",
+                    null);
+            writer.write("Advanced Settings");
+            writer.endElement("a");
+        }
     }
 }

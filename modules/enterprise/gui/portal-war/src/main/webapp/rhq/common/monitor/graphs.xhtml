@@ -51,21 +51,22 @@
 
 <tr class="BlockContent">
     <td>
-        <h:form>
+        <h:form id="MetricComponentForm">
+            <input type="hidden" name="id" value="#{IndicatorChartsUIBean.context.resourceId}" />
+            <input type="hidden" name="groupId" value="#{IndicatorChartsUIBean.context.groupId}" />
+            <input type="hidden" name="parent" value="#{IndicatorChartsUIBean.context.parentResourceId}" />
+            <input type="hidden" name="type" value="#{IndicatorChartsUIBean.context.resourceTypeId}" />
             <table>
                 <tr>
                     <td><onc:metric optionList="m,h,d" /></td>
                     <td>
-                        <h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}">
+                        <h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}"
+                                       action="#{MetricComponentUtilityUIBean.update}" >
                             <img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
                         </h:commandLink>
-                    </td>
-                    <td>
-                        <h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" action="#{MetricComponentUtilityUIBean.switchToSimpleMode}">
-                            <f:param name="metricComponentValue" value="8" />                                        
-                            <f:param name="metricComponentUnit" value="HOURS" />
-                            <f:param name="id" value="#{EventHistoryUIBean.context.resourceId}" />
-                            <h:outputText value="Switch to Simple Settings" />
+                        <h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" 
+                                       action="#{MetricComponentUtilityUIBean.switchToSimpleMode}">
+                            <h:outputText value="Switch to Simple Mode" />
                         </h:commandLink>
                     </td>
                 </tr>

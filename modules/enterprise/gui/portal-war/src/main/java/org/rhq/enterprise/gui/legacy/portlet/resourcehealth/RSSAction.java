@@ -46,8 +46,7 @@ public class RSSAction extends BaseRSSAction {
     private static final Log log = LogFactory.getLog(RSSAction.class.getName());
 
     @Override
-    public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
-        HttpServletResponse response) throws Exception {
+    public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response) throws Exception {
         RSSFeed feed = getNewRSSFeed(request);
         ResourceManagerLocal manager = LookupUtil.getResourceManager();
 
@@ -61,23 +60,17 @@ public class RSSAction extends BaseRSSAction {
 
             WebUser user = new WebUser(subject);
             WebUserPreferences preferences = user.getWebPreferences();
-            FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
-                .getFavoriteResourcePortletPreferences();
+            FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences.getFavoriteResourcePortletPreferences();
 
-            PageList<ResourceHealthComposite> results = manager.getResourceHealth(subject, favoriteResourcePreferences
-                .asArray(), PageControl.getUnlimitedInstance());
+            PageList<ResourceHealthComposite> results = manager.getResourceHealth(subject, favoriteResourcePreferences.asArray(), PageControl.getUnlimitedInstance());
 
             if ((results != null) && (results.size() > 0)) {
                 for (ResourceHealthComposite summary : results) {
-                    String link = feed.getBaseUrl() + "/resource/common/monitor/Visibility.do?mode=currentHealth&id="
-                        + summary.getId();
+                    String link = feed.getBaseUrl() + "/rhq/resource/monitor/graphs.xhtml&id=" + summary.getId();
 
-                    String availText = res.getMessage("dash.home.ResourceHealth.rss.item.availability", summary
-                        .getAvailabilityType().toString());
-                    String alertsText = res.getMessage("dash.home.ResourceHealth.rss.item.alerts", Long.valueOf(summary
-                        .getAlerts()));
-                    String typeText = res.getMessage("dash.home.ResourceHealth.rss.item.resourceType", summary
-                        .getTypeName());
+                    String availText = res.getMessage("dash.home.ResourceHealth.rss.item.availability", summary.getAvailabilityType().toString());
+                    String alertsText = res.getMessage("dash.home.ResourceHealth.rss.item.alerts", Long.valueOf(summary.getAlerts()));
+                    String typeText = res.getMessage("dash.home.ResourceHealth.rss.item.resourceType", summary.getTypeName());
 
                     long now = System.currentTimeMillis();
 

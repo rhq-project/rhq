@@ -50,7 +50,7 @@ public class InventoryHierarchyTag extends TagSupport {
 
     //private static final String BASE_GROUP_URL = "/Resource.do?type=GROUP";
     private static final String BASE_GROUP_URL = "/rhq/group/inventory/view.xhtml";
-    private static final String BASE_AUTOGROUP_URL = "/resource/common/monitor/Visibility.do?mode=currentHealth";
+    private static final String BASE_AUTOGROUP_URL = "/rhq/autogroup/monitor/graphs.xhtml";
     private static final String SEPARATOR = " &gt; ";
 
     private Integer resourceId;
@@ -119,8 +119,7 @@ public class InventoryHierarchyTag extends TagSupport {
     private String buildResourceHTML(Integer resourceId) {
         List<Resource> ancestorResources = this.resourceManager.getResourceLineage(resourceId);
         if (ancestorResources.isEmpty()) {
-            throw new IllegalStateException(
-                "The list of ancestor resources should always contain at least one resource - the resource whose lineage was requested.");
+            throw new IllegalStateException("The list of ancestor resources should always contain at least one resource - the resource whose lineage was requested.");
         }
 
         Resource parentResource = ancestorResources.get(ancestorResources.size() - 1);
@@ -192,7 +191,7 @@ public class InventoryHierarchyTag extends TagSupport {
     }
 
     private String buildAutoGroupURL() {
-        String url = BASE_AUTOGROUP_URL + "&parent=" + parentResourceId + "&type=" + resourceTypeId;
+        String url = BASE_AUTOGROUP_URL + "?id=" + parentResourceId + "&parent=" + parentResourceId + "&type=" + resourceTypeId;
 
         // Session-encode the URL in case the client doesn't have cookies enabled.
         return encodeURL(url);

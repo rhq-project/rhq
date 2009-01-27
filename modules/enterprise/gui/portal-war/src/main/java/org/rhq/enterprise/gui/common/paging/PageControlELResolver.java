@@ -26,6 +26,9 @@ import javax.el.ELResolver;
 import javax.el.PropertyNotFoundException;
 import javax.el.PropertyNotWritableException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -36,6 +39,9 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
  * @author Joseph Marques
  */
 public class PageControlELResolver extends ELResolver {
+
+    private final Log log = LogFactory.getLog(this.getClass());
+
     @Override
     public Class<?> getCommonPropertyType(ELContext context, Object base) {
         return null; // for gui tools
@@ -61,8 +67,11 @@ public class PageControlELResolver extends ELResolver {
 
             if ("pageSize".equals(propertyName)) {
                 result = Integer.class;
+            } else if ("pageNumber".equals(propertyName)) {
+                result = Integer.class;
             } else {
-                throw new PropertyNotWritableException("Only the pageSize property of a PageControl is writeable");
+                throw new PropertyNotWritableException(
+                    "Only the pageSize and pageNumber properties of a PageControl are writeable");
             }
 
             context.setPropertyResolved(true);
@@ -98,13 +107,26 @@ public class PageControlELResolver extends ELResolver {
             PageControlView view = (PageControlView) base;
             String methodName = (String) property;
 
-            // allows simple mispellings for developer productivity
+            // allows simple misspellings for developer productivity
             if ("pageSize".equalsIgnoreCase(methodName)) {
                 // find the user for this session-based operation
                 WebUser user = EnterpriseFacesContextUtility.getWebUser();
                 WebUserPreferences preferences = user.getWebPreferences();
                 // get it
-                result = preferences.getPageControl(view).getPageSize();
+                PageControl pc = preferences.getPageControl(view);
+                log.info("Getting PageControlView[" + view + "] to " + pc);
+                result = pc.getPageSize();
+
+                // don't let other resolvers touch this
+                context.setPropertyResolved(true);
+            } else if ("pageNumber".equals(methodName)) {
+                // find the user for this session-based operation
+                WebUser user = EnterpriseFacesContextUtility.getWebUser();
+                WebUserPreferences preferences = user.getWebPreferences();
+                // get it
+                PageControl pc = preferences.getPageControl(view);
+                log.info("Getting PageControlView[" + view + "] to " + pc);
+                result = pc.getPageNumber();
 
                 // don't let other resolvers touch this
                 context.setPropertyResolved(true);
@@ -134,8 +156,6 @@ public class PageControlELResolver extends ELResolver {
 
             // allows simple mispellings for developer productivity
             if ("pageSize".equalsIgnoreCase(methodName)) {
-                // work around for http://jira.jboss.com/jira/browse/RF-1133
-                workAroundRF1133(view);
 
                 if (value != null) {
                     /* 
@@ -148,17 +168,22 @@ public class PageControlELResolver extends ELResolver {
                      * had before the paging control was suppressed in the first place
                      */
 
+                    // work around for http://jira.jboss.com/jira/browse/RF-1133
+                    //workAroundRF1133(view);
                     // find the user for this session-based operation
                     WebUser user = EnterpriseFacesContextUtility.getWebUser();
                     WebUserPreferences preferences = user.getWebPreferences();
 
                     // update it
                     PageControl pc = preferences.getPageControl(view);
+                    pc.setPageNumber(0);
 
                     int pageSize = (Integer) value;
                     pc.setPageSize(pageSize);
 
+                    log.info("Setting PageControlView[" + view + "] to " + pc);
                     preferences.setPageControl(view, pc);
+                    preferences.persistPreferences();
                 }
 
                 // don't let other resolvers touch this

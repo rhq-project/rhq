@@ -28,6 +28,7 @@
                                   for="#{paginationDataTableName}"
                                   rendered="#{paginationDataModel.rowCount > PageControlSettingsUIBean.minimumPageSize}"
                                   stepControls="show" fastControls="hide" boundaryControls="hide"
+                                  page="#{paginationPageControl.pageNumber}"
                                   style="margin-top: .5ex;">
                   <f:facet name="next">
                      <h:panelGroup>

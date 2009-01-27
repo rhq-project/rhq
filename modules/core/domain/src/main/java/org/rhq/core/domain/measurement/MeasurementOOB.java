@@ -105,6 +105,7 @@ public class MeasurementOOB {
                     "         AND d.value > b.bl_max\n" +
                     "         AND d.time_stamp = ?\n" +   // ?2 = begin
                     "         AND (b.bl_max - b.bl_min) > 0.1 \n" + // TODO delta depending on max value ?
+                    "         AND (d.maxvalue - b.bl_max) >0 \n " +
                     "         AND sc.enabled = true\n" +
                     "         AND sc.definition = def.id\n" +
                     "         AND def.numeric_type = 0\n" + // Only dynamic metrics
@@ -117,6 +118,7 @@ public class MeasurementOOB {
                     "         AND d.value < b.bl_max  \n" +
                     "         AND d.time_stamp = ?\n" + // ?3 = begin
                     "         AND (b.bl_max - b.bl_min) > 0.1\n" + // TODO delta depending on max value ?
+                    "         AND (b.bl_min - d.minvalue) >0 \n" +
                     "         AND sc.enabled = true\n" +
                     "         AND sc.definition = def.id\n" +
                     "         AND def.numeric_type = 0\n" +
@@ -136,6 +138,7 @@ public class MeasurementOOB {
             "         AND d.value > b.bl_max\n" +
             "         AND d.time_stamp = ?\n" +
             "         AND ((b.bl_max - b.bl_min) > 0.1 )\n" +  // TODO delta depending on max value ?
+            "         AND (d.maxvalue - b.bl_max) >0 \n " +
             "         AND sc.enabled = 1\n" +
             "         AND sc.definition = def.id\n" +
             "         AND def.numeric_type = 0\n" +
@@ -148,6 +151,7 @@ public class MeasurementOOB {
             "           AND d.value < b.bl_max  \n" +
             "           AND d.time_stamp = ?\n" +
             "           AND ((b.bl_max - b.bl_min) > 0.1)\n" +   // TODO delta depending on max value ?
+            "           AND (b.bl_min - d.minvalue) >0 \n" +
             "           AND sc.enabled = 1\n" +
             "           AND sc.definition = def.id\n" +
             "           AND def.numeric_type = 0\n" +

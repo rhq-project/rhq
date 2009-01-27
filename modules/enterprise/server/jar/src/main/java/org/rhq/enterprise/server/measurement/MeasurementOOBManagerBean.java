@@ -179,7 +179,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      */
     public PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, long end, PageControl pc) {
 
-        pc.initDefaultOrderingField("o.oobFactor", PageOrdering.DESC);
+        pc.initDefaultOrderingField("sum(o.oobFactor)", PageOrdering.DESC);
 
         long begin = end - (3L * 86400L *1000L);
 
@@ -195,41 +195,42 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         List<MeasurementOOBComposite> results = query.getResultList();
         long totalCount = queryCount.getResultList().size();
 
-        //  add 24h and 48h factors
-        Map<Integer,MeasurementOOBComposite> map = new HashMap<Integer,MeasurementOOBComposite>(results.size());
-        List<Integer> scheduleIds = new ArrayList<Integer>(results.size());
-        for (MeasurementOOBComposite comp : results) {
-            scheduleIds.add(comp.getScheduleId());
-            map.put(comp.getScheduleId(),comp);
+        if (results.size() >0 ) {
+            //  add 24h and 48h factors
+            Map<Integer,MeasurementOOBComposite> map = new HashMap<Integer,MeasurementOOBComposite>(results.size());
+            List<Integer> scheduleIds = new ArrayList<Integer>(results.size());
+            for (MeasurementOOBComposite comp : results) {
+                scheduleIds.add(comp.getScheduleId());
+                map.put(comp.getScheduleId(),comp);
+            }
+            begin = end - (2L * 86400L *1000L);
+
+            Query q = entityManager.createNamedQuery(MeasurementOOB.GET_FACTOR_FOR_SCHEDULES);
+            q.setParameter("schedules",scheduleIds);
+            q.setParameter("begin", begin);
+            q.setParameter("end", end);
+            List<Object[]> ret = q.getResultList();
+
+            for (Object[] objs : ret) {
+                Integer id = (Integer) objs[0];
+                Long fac = (Long) objs[1];
+                map.get(id).setFactor48(fac.intValue());
+            }
+
+            begin = end - (2L * 86400L *1000L);
+
+            q = entityManager.createNamedQuery(MeasurementOOB.GET_FACTOR_FOR_SCHEDULES);
+            q.setParameter("schedules",scheduleIds);
+            q.setParameter("begin", begin);
+            q.setParameter("end", end);
+            ret = q.getResultList();
+
+            for (Object[] objs : ret) {
+                Integer id = (Integer) objs[0];
+                Long fac = (Long) objs[1];
+                map.get(id).setFactor24(fac.intValue());
+            }
         }
-        begin = end - (2L * 86400L *1000L);
-
-        Query q = entityManager.createNamedQuery(MeasurementOOB.GET_FACTOR_FOR_SCHEDULES);
-        q.setParameter("schedules",scheduleIds);
-        q.setParameter("begin", begin);
-        q.setParameter("end", end);
-        List<Object[]> ret = q.getResultList();
-
-        for (Object[] objs : ret) {
-            Integer id = (Integer) objs[0];
-            Long fac = (Long) objs[1];
-            map.get(id).setFactor48(fac.intValue());
-        }
-
-        begin = end - (2L * 86400L *1000L);
-
-        q = entityManager.createNamedQuery(MeasurementOOB.GET_FACTOR_FOR_SCHEDULES);
-        q.setParameter("schedules",scheduleIds);
-        q.setParameter("begin", begin);
-        q.setParameter("end", end);
-        ret = q.getResultList();
-
-        for (Object[] objs : ret) {
-            Integer id = (Integer) objs[0];
-            Long fac = (Long) objs[1];
-            map.get(id).setFactor24(fac.intValue());
-        }
-
 
         return new PageList<MeasurementOOBComposite>(results, (int) totalCount, pc);
     }

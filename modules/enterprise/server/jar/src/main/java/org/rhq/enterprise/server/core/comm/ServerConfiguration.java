@@ -238,6 +238,10 @@ public class ServerConfiguration {
         String str = m_preferences.get(ServerConfigurationConstants.CLIENT_SENDER_COMMAND_SPOOL_FILE_NAME,
             ServerConfigurationConstants.DEFAULT_CLIENT_SENDER_COMMAND_SPOOL_FILE_NAME);
 
+        if (str != null && str.length() == 0) {
+            str = null;
+        }
+
         return str;
     }
 

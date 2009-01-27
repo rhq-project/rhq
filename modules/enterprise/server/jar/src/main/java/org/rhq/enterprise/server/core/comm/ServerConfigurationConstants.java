@@ -112,8 +112,9 @@ public interface ServerConfigurationConstants {
 
     /**
      * If the client sender command spool file name is not specified, this is the default.
+     * A null value means by default, the server has guaranteed delivery disabled.
      */
-    String DEFAULT_CLIENT_SENDER_COMMAND_SPOOL_FILE_NAME = "command-spool.dat";
+    String DEFAULT_CLIENT_SENDER_COMMAND_SPOOL_FILE_NAME = null;
 
     /**
      * Property that provides the spool file parameters.

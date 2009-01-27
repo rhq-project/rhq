@@ -133,7 +133,9 @@ RHQ Server Communications Configuration
                this setting, the default is to not spool commands to disk
                and thus implicitly disable guaranteed delivery.
                -->
+               <!--
                <entry key="rhq.server.client.command-spool-file.name" value="command-spool.dat" />
+               -->
 
                <!--
                _______________________________________________________________

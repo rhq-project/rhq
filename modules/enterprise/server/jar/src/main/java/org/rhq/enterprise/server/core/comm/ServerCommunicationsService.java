@@ -722,12 +722,14 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
 
         // make sure it uses a unique spool file.  Senders cannot share spool files; each remote endpoint
         // must have its own spool file since the spool file contains command requests for a single, specific, agent.
-        File spool_file = new File(client_config.commandSpoolFileName);
-        String file_name = spool_file.getName();
-        String parent_path = spool_file.getParent();
-        spool_file = new File(parent_path, agent.getName() + "_" + file_name);
-
-        client_config.commandSpoolFileName = spool_file.getPath();
+        // (a null spool filename means we will never guarantee message delivery to agents)
+        if (client_config.commandSpoolFileName != null) {
+            File spool_file = new File(client_config.commandSpoolFileName);
+            String file_name = spool_file.getName();
+            String parent_path = spool_file.getParent();
+            spool_file = new File(parent_path, agent.getName() + "_" + file_name);
+            client_config.commandSpoolFileName = spool_file.getPath();
+        }
 
         return client_config;
     }

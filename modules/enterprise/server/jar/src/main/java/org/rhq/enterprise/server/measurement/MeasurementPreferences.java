@@ -77,7 +77,7 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
          * sometimes we are satisfied with no range. other times we
          * need to calculate the "last n" units range and return that
          */
-        if (defaultRange && (prefs.readOnly == false | prefs.begin == null && prefs.end == null)) {
+        if (defaultRange && prefs.begin == null && prefs.end == null) {
             range = MeasurementUtils.calculateTimeFrame(prefs.lastN, prefs.unit);
             if (range == null) {
                 // better error handling for poorly persisted preferences
@@ -103,6 +103,7 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
         } else {
             setPreference(PREF_METRIC_RANGE_LASTN, prefs.lastN);
             setPreference(PREF_METRIC_RANGE_UNIT, prefs.unit);
+            setPreference(PREF_METRIC_RANGE, MeasurementUtils.calculateTimeFrame(prefs.lastN, prefs.unit));
         }
     }
 

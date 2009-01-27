@@ -50,6 +50,7 @@ public class MetricComponentUtilityUIBean {
 
         rangePreferences.lastN = value;
         rangePreferences.unit = TimeUnit.valueOf(unit).getMetricUntilOrdinal();
+        rangePreferences.readOnly = readOnly = false;
         preferences.setMetricRangePreferences(rangePreferences);
         preferences.persistPreferences();
         return "success";

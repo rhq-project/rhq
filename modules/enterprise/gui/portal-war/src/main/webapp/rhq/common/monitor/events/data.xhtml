@@ -144,7 +144,7 @@
       <div id="timePopup_#{count}"
            onmouseover="overlay.showTimePopup('#{count}','#{formattedTimeTick}')" 
            onmousedown="overlay.moveOverlay(this); overlay.curTime = '#{formattedTimeTick}';" 
-           onmouseout="overlay.curTime = null">
+           onmouseout="overlay.hideTimePopup()">
          <img src="/images/timeline_off.gif" height="10" width="9" 
               onmouseover="imageSwap(this, imagePath + 'timeline', '_on')" 
               onmouseout="imageSwap(this, imagePath +  'timeline', '_off');" 

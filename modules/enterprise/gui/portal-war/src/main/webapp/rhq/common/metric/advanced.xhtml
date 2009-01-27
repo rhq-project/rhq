@@ -20,7 +20,7 @@
         <ui:define name="body-area">
             <a4j:loadScript src="/js/advanced-metrics.js"/>
             <h:form id="advancedMetricsValuesForm">
-                <rich:panel styleClass="BlockContent">
+                <rich:panel styleClass="BlockContent" style="height: 100%">
                     <f:facet name="header">
                         <h:outputText value="#{msg['resource.common.monitor.visibility.MetricDisplayRangeTab']}" />
                     </f:facet>
@@ -34,7 +34,7 @@
                                  globalOnly="true"
                                      layout="table"
                                       width="100%"/>
-                    <table>
+                    <table height="100%">
                         <tr>
                             <td rowspan="5" class="BlockLabel">#{msg['resource.common.monitor.visibility.DefineRangeLabel']}</td>
                             <td class="BlockContent">

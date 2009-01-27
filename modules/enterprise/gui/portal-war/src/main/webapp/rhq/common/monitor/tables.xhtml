@@ -132,6 +132,21 @@
 
          </rich:dataTable>
          
+         <table>
+             <tr>
+                 <td><onc:metric optionList="m,h,d" /></td>
+                 <td>
+                     <h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}"
+                                    action="#{MetricComponentUtilityUIBean.update}" >
+                         <img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
+                     </h:commandLink>
+                     <h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" 
+                                    action="#{MetricComponentUtilityUIBean.switchToSimpleMode}">
+                         <h:outputText value="Switch to Simple Mode" />
+                     </h:commandLink>
+                 </td>
+             </tr>
+         </table>
       </h:form>
 
    </rich:panel>

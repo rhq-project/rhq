@@ -53,7 +53,6 @@
       <load-on-startup>1</load-on-startup>
    </servlet>
 
-
    <!-- serve Facelets pages (*.xhtml) via the JSF servlet -->
    <servlet-mapping>
       <servlet-name>Faces Servlet</servlet-name>
@@ -63,7 +62,7 @@
       <servlet-name>Seam Resource Servlet</servlet-name>
       <url-pattern>/seam/resource/*</url-pattern>
    </servlet-mapping>
-
+  
    <!-- the suffix for files containing JSF content (default is ".jsp") -->
    <context-param>
       <param-name>javax.faces.DEFAULT_SUFFIX</param-name>
@@ -148,6 +147,9 @@
          /WEB-INF/jsf-navigation-resource-group/inventory-navigation.xml,
          /WEB-INF/jsf-navigation-resource-group/operation-navigation.xml,
          /WEB-INF/jsf-navigation-resource-group/measurement-navigation.xml,
+         
+         /WEB-INF/jsf-navigation-auto-group/events-navigation.xml,
+         /WEB-INF/jsf-navigation-auto-group/measurement-navigation.xml,
 
          /WEB-INF/jsf-navigation-subsystem/tab-container-navigation.xml,
 

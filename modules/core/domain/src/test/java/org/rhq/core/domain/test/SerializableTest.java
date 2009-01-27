@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.test;
 
 import java.io.ByteArrayInputStream;
@@ -31,7 +31,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Channel;
 import org.rhq.core.domain.content.ContentServiceRequest;
@@ -44,6 +46,11 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
 import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.domain.event.Event;
+import org.rhq.core.domain.event.EventDefinition;
+import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.event.EventSource;
+import org.rhq.core.domain.event.transfer.EventReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -126,6 +133,19 @@ public class SerializableTest {
         report.addAvailability(new Availability(new Resource(), new Date(), AvailabilityType.DOWN));
         report.addAvailability(new Availability(new Resource(), new Date(), null));
         assert ensureSerializable(report).getResourceAvailability().size() == 3;
+    }
+
+    public void testEventReport() {
+        ResourceType resourceType = new ResourceType("foo", "foo", ResourceCategory.PLATFORM, null);
+        Resource resource = new Resource(1);
+        EventDefinition eventDefinition = new EventDefinition(resourceType, "foo");
+        EventSource eventSource = new EventSource("foo", eventDefinition, resource);
+        EventReport report = new EventReport(2, 2);
+        report.addEvent(new Event("foo", "foo", 0, EventSeverity.DEBUG, ""), eventSource);
+        assert ensureSerializable(report).getEvents().size() == 1;
+        report.addEvent(new Event("foo", "foo", 1, EventSeverity.DEBUG, ""), eventSource);
+        assert ensureSerializable(report).getEvents().size() == 1; // only one event source still!
+        assert ensureSerializable(report).getEvents().values().iterator().next().size() == 2;
     }
 
     /**

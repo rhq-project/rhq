@@ -23,8 +23,10 @@
 package org.rhq.core.domain.event.transfer;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,6 +35,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.event.Event;
+import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.EventSource;
 
 /**
@@ -40,6 +43,7 @@ import org.rhq.core.domain.event.EventSource;
  * all Events that have occurred since the last time a report was successfully sent.
  *
  * @author Ian Springer
+ * @author John Mazzitelli
  */
 public class EventReport implements Serializable {
     private static final long serialVersionUID = 2L;
@@ -47,12 +51,19 @@ public class EventReport implements Serializable {
     private final int maxEventsPerSource;
     private final int maxEventsPerReport;
 
+    private boolean addedMaxTotalLimitWarnEvent = false;
+
     // The log field must be either static final or transient, since sending this class over the wire will cause
     // InvalidClassExceptions (due to the Server having a different version of Commons Logging).
     private static final Log LOG = LogFactory.getLog(EventReport.class);
 
     private Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>();
+
+    // the total number of events in this report - this DOES NOT INCLUDE events this object
+    // added itself to indicate the max limits were reached.
     private int totalEventsInReport = 0;
+
+    private transient List<EventSource> maxedOutEventSources;
 
     public EventReport(int maxEventsPerSource, int maxEventsPerReport) {
         this.maxEventsPerSource = maxEventsPerSource;
@@ -68,27 +79,60 @@ public class EventReport implements Serializable {
      * @param eventSource the source of the Event to be added
      */
     public void addEvent(@NotNull Event event, @NotNull EventSource eventSource) {
+
+        Set<Event> eventSet;
+
         if (this.totalEventsInReport >= this.maxEventsPerReport) {
-            LOG.warn("Event Report Limit Reached: this report contains the maximum allowed Events ["
-                + this.maxEventsPerReport + "] - no more Events will be added to this report. source=[" + eventSource
-                + "]");
+            // this event report has maxed out its allowed number of events
+            // if this is the first time the limit has been breached, add a
+            // warning event so there is at least an indication that events are now being dropped.
+            if (!addedMaxTotalLimitWarnEvent) {
+                String msg = "Event Report Limit Reached: reached the maximum allowed events ["
+                    + this.maxEventsPerReport + "] - no more events will be added to this report.";
+                LOG.warn(msg + " source=[" + eventSource + "]");
+
+                Event limitEvent = new Event(event.getType(), event.getSourceLocation(), event.getTimestamp(),
+                    EventSeverity.WARN, msg, eventSource);
+                eventSet = getEventsForEventSource(eventSource);
+                eventSet.add(limitEvent);
+                addedMaxTotalLimitWarnEvent = true;
+            }
+
             return;
         }
 
-        Set<Event> eventSet = this.events.get(eventSource);
-        if (eventSet == null) {
-            eventSet = new LinkedHashSet<Event>();
-            this.events.put(eventSource, eventSet);
-        }
+        eventSet = getEventsForEventSource(eventSource);
 
         if (eventSet.size() < this.maxEventsPerSource) {
             eventSet.add(event);
             this.totalEventsInReport++;
         } else {
-            LOG.warn("Event Report Limit Reached: this report contains the maximum allowed Events ["
-                + this.maxEventsPerSource + "] for the source [" + eventSource
-                + "] - no more Events from this source will be added to this report.");
+            // this event source has maxed out its allowed number of events for this report
+            // if this is the first time it breached the limit for this report, add a
+            // warning event so there is at least an indication that events are now being dropped.
+            if (maxedOutEventSources == null) {
+                maxedOutEventSources = new ArrayList<EventSource>(1);
+            }
+            if (!maxedOutEventSources.contains(eventSource)) {
+                String msg = "Event Report Limit Reached: reached the maximum allowed events ["
+                    + this.maxEventsPerSource
+                    + "] for this event source - no more events from this source will be added to this report.";
+                LOG.warn(msg + " source=[" + eventSource + "]");
+                Event limitEvent = new Event(event.getType(), event.getSourceLocation(), event.getTimestamp(),
+                    EventSeverity.WARN, msg, eventSource);
+                eventSet.add(limitEvent);
+                maxedOutEventSources.add(eventSource);
+            }
         }
+    }
+
+    private Set<Event> getEventsForEventSource(EventSource eventSource) {
+        Set<Event> eventSet = this.events.get(eventSource);
+        if (eventSet == null) {
+            eventSet = new LinkedHashSet<Event>();
+            this.events.put(eventSource, eventSet);
+        }
+        return eventSet;
     }
 
     /**

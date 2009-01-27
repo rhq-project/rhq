@@ -76,4 +76,15 @@ public interface MeasurementOOBManagerLocal {
      */
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     void computeOOBsFromLastHour(Subject subject);
+
+    /**
+     * Remove OOBs for schedules that had their baselines calculated after
+     * a certain cutoff point. This is used to get rid of outdated OOB data for
+     * baselines that got recalculated, as the new baselines will be 'big' enough for
+     * what have been OOBs before and we don't have any baseline history.
+     * @param subject The caller
+     * @param cutoffTime The reference time to determine new baselines
+     */
+    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+    void removeOutdatedOObs(Subject subject, long cutoffTime);
 }

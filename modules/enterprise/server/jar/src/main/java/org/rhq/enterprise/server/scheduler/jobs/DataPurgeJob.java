@@ -299,13 +299,28 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
+    /**
+     * Calculate the OOB values for the last hour.
+     * This also removes outdated ones due to recalculated baselines.
+     */
     private void calculateOOBs() {
 
         long timeStart = System.currentTimeMillis();
         LOG.info("Auto-calculation of OOBs starting");
         Subject overlord = LookupUtil.getSubjectManager().getOverlord() ;
-        // TODO purge oobs whose baseline just got recalculated
-        LookupUtil.getOOBManager().computeOOBsFromLastHour(overlord);
+        MeasurementOOBManagerLocal manager = LookupUtil.getOOBManager();
+        // purge oobs whose baseline just got recalculated
+        // For now just assume that our system is fast, so a cutoff of 30mins is ok,
+        // as the calculate baseline job runs hourly
+        long cutOff = System.currentTimeMillis() - (30L * 60L * 1000L);
+        manager.removeOutdatedOObs(overlord,cutOff);
+
+        // clean up
+        LookupUtil.getSystemManager().vacuum(overlord,new String[]{"RHQ_MEASUREMENT_OOB"});
+
+        // Now caclulate the fresh OOBs
+        manager.computeOOBsFromLastHour(overlord);
+
         long duration = System.currentTimeMillis() - timeStart;
         LOG.info("Auto-claculation of OOBs completed in [" + duration + "]ms");
     }

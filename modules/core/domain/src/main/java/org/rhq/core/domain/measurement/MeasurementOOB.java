@@ -51,12 +51,32 @@ import javax.persistence.Table;
                         "  AND sched.resource = res " +
                         "GROUP BY res.name, res.id, def.displayName, sched.id, def.id "
                             ),
+        @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT,
+                query = "  SELECT sched.id " +
+                        "  FROM MeasurementOOB o "+
+                        "  LEFT JOIN o.schedule sched " +
+                        "  LEFT JOIN sched.definition def " +
+                        "  LEFT JOIN sched.resource res " +
+                        "  WHERE (o.id.timestamp >= :begin AND o.id.timestamp <= :end )" +
+                        "    AND o.id.scheduleId = sched.id " +
+                        "    AND sched.definition = def " +
+                        "    AND sched.resource = res " +
+                        "  GROUP BY sched.id "
+                        ),
         @NamedQuery(name=MeasurementOOB.GET_FACTOR_FOR_SCHEDULES,
                 query= "SELECT o.id.scheduleId,sum(o.oobFactor)" +
                         "FROM MeasurementOOB o "+
                         "WHERE (o.id.timestamp >= :begin AND o.id.timestamp <= :end )" +
                         "  AND o.id.scheduleId IN (:schedules)  " +
                         "GROUP BY o.id.scheduleId"
+        ),
+        @NamedQuery(name=MeasurementOOB.DELETE_OUTDATED,
+                query = "DELETE FROM MeasurementOOB o " +
+                        "WHERE o.id.scheduleId IN (" +
+                        "  SELECT b.schedule.id " +
+                        "  FROM MeasurementBaseline b " +
+                        "  WHERE b.computeTime > :cutOff" +
+                        ")"
         )
 })
 @Entity
@@ -64,9 +84,14 @@ import javax.persistence.Table;
 public class MeasurementOOB {
 
     public static final String GET_SCHEDULES_WITH_OOB_AGGREGATE = "GetSchedulesWithOObAggregate";
+
+    public static final String GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT = "GetSchedulesWithOObAggregateCount";
+
     public static final String GET_OOBS_FOR_SCHEDULE_RAW = "GetSchedulesWithOOBRaw";
 
     public static final String GET_FACTOR_FOR_SCHEDULES = "GetFactorForSchedules";
+
+    public static final String DELETE_OUTDATED = "DeleteOutdatedOOBs";
 
     public static final String INSERT_QUERY_POSTGRES =
             "insert into rhq_measurement_oob (oob_factor, schedule_id,  time_stamp )  \n" +

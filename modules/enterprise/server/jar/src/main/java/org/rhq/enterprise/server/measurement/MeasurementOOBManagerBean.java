@@ -46,8 +46,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
 import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
@@ -154,6 +154,23 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     }
 
     /**
+     * Remove OOBs for schedules that had their baselines calculated after
+     * a certain cutoff point. This is used to get rid of outdated OOB data for
+     * baselines that got recalculated, as the new baselines will be 'big' enough for
+     * what have been OOBs before and we don't have any baseline history.
+     * @param subject The caller
+     * @param cutoffTime The reference time to determine new baselines
+     */
+    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+    public void removeOutdatedOObs(Subject subject, long cutoffTime) {
+
+        Query q = entityManager.createNamedQuery(MeasurementOOB.DELETE_OUTDATED);
+        q.setParameter("cutOff",cutoffTime);
+        int count = q.executeUpdate();
+        log.info("Removed [" + count + "] outdated OOBs");
+    }
+
+    /**
      * Return OOB Composites that contain all information about the OOBs in a given time as aggregates.
      * @param subject The caller
      * @param end end time we are interested in
@@ -166,17 +183,17 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
         long begin = end - (3L * 86400L *1000L);
 
-        Query q = entityManager.createNamedQuery(MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE);
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager,MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE);
+        Query queryCount = entityManager.createNamedQuery(MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT);
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE, pc);
         queryCount.setParameter("begin",begin);
         queryCount.setParameter("end",end);
-        q.setParameter("begin",begin);
-        q.setParameter("end",end);
+        query.setParameter("begin",begin);
+        query.setParameter("end",end);
 
-        List<MeasurementOOBComposite> results = q.getResultList();
-        long totalCount;// = (Long) queryCount.getSingleResult(); // TODO throws NonUniqueResult exception -- because of group by?
-        totalCount = results.size();
+        query.getResultList();
+
+        List<MeasurementOOBComposite> results = query.getResultList();
+        long totalCount = queryCount.getResultList().size();
 
         //  add 24h and 48h factors
         Map<Integer,MeasurementOOBComposite> map = new HashMap<Integer,MeasurementOOBComposite>(results.size());
@@ -187,7 +204,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         }
         begin = end - (2L * 86400L *1000L);
 
-        q = entityManager.createNamedQuery(MeasurementOOB.GET_FACTOR_FOR_SCHEDULES);
+        Query q = entityManager.createNamedQuery(MeasurementOOB.GET_FACTOR_FOR_SCHEDULES);
         q.setParameter("schedules",scheduleIds);
         q.setParameter("begin", begin);
         q.setParameter("end", end);

@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.event.transfer;
 
 import java.io.Serializable;
@@ -28,12 +28,12 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  * A report of resource {@link Event}s that the Plugin Container periodically sends to the Server. The report contains
@@ -42,32 +42,48 @@ import org.apache.commons.logging.LogFactory;
  * @author Ian Springer
  */
 public class EventReport implements Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
-    private static final int MAX_EVENTS_PER_SOURCE = 1000;
+    private static final int MAX_EVENTS_PER_SOURCE = 200;
+    private static final int MAX_EVENTS_PER_REPORT = 400;
 
     // The log field must be either static final or transient, since sending this class over the wire will cause
     // InvalidClassExceptions (due to the Server having a different version of Commons Logging).
     private static final Log LOG = LogFactory.getLog(EventReport.class);
 
     private Map<EventSource, Set<Event>> events = new HashMap<EventSource, Set<Event>>();
+    private int totalEventsInReport = 0;
 
     /**
-     * Adds the given Event to this report.
+     * Adds the given <code>event</code> to this report. If this report is too full,
+     * the event will be silently rejected (i.e. an exception will not be thrown, but the
+     * event will not be sent to the server).
      *
-     * @param event the Event to be added
+     * @param event the {@link Event} to be added
      * @param eventSource the source of the Event to be added
      */
     public void addEvent(@NotNull Event event, @NotNull EventSource eventSource) {
+        if (this.totalEventsInReport >= MAX_EVENTS_PER_REPORT) {
+            LOG.warn("Event Report Limit Reached: this report contains the maximum allowed Events ["
+                + MAX_EVENTS_PER_REPORT + "] - no more Events will be added to this report. source=[" + eventSource
+                + "]");
+            return;
+        }
+
         Set<Event> eventSet = this.events.get(eventSource);
         if (eventSet == null) {
             eventSet = new LinkedHashSet<Event>();
             this.events.put(eventSource, eventSet);
         }
-        if (eventSet.size() < MAX_EVENTS_PER_SOURCE)
+
+        if (eventSet.size() < MAX_EVENTS_PER_SOURCE) {
             eventSet.add(event);
-        else if (eventSet.size() == MAX_EVENTS_PER_SOURCE)
-            LOG.warn(eventSource + " contains the maximum allowed Events per source (" + MAX_EVENTS_PER_SOURCE + ") - no more Events from this source will be added to this report.");
+            this.totalEventsInReport++;
+        } else {
+            LOG.warn("Event Report Limit Reached: this report contains the maximum allowed Events ["
+                + MAX_EVENTS_PER_SOURCE + "] for the source [" + eventSource
+                + "] - no more Events from this source will be added to this report.");
+        }
     }
 
     /**

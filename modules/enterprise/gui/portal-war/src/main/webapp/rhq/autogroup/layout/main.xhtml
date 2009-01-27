@@ -50,7 +50,6 @@ THIS TEXT WILL BE REMOVED AS WELL.
          resourceId="#{AutoGroupUIBean.parentResourceId}" />
       <h:outputText value=" &gt; " />
       <h:outputLink value="/rhq/autogroup/monitor/graphs.xhtml">
-         <f:param name="id" value="#{ResourceUIBean.id}" />
          <f:param name="parent"
             value="#{AutoGroupUIBean.parentResourceId}" />
          <f:param name="type"
@@ -91,11 +90,13 @@ THIS TEXT WILL BE REMOVED AS WELL.
 
    </ui:define>
 
-   <ui:define name="nav">
 
-      <ui:include src="/rhq/resource/layout/nav.xhtml" />
+    <ui:define name="nav">
 
-   </ui:define>
+        <ui:include src="/rhq/resource/navigation/ResourcesTree.xhtml" />
+
+    </ui:define>
+
 
    <ui:define name="content">
       <p />

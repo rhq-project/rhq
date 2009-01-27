@@ -19,6 +19,8 @@
 package org.rhq.enterprise.gui.common.framework;
 
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.core.domain.auth.Subject;
 
 /**
  * @author Greg Hinkle
@@ -28,13 +30,20 @@ public class UserPreferencesUIBean {
     public static final String LEFT_RESOURCE_NAV_SHOWING = "ui.leftResourceNavShowing";
     public static final String SUMMARY_PANEL_DISPLAY_STATE = "ui.summaryPanelDisplayState";
 
+    public Subject getSubject() {
+        return EnterpriseFacesContextUtility.getSubject();
+    }
 
+    public WebUser getWebUser() {
+        return EnterpriseFacesContextUtility.getWebUser();
+    }
+    
     public String getLeftResourceNavState() {
-        return EnterpriseFacesContextUtility.getWebUser().getWebPreferences().getPreference(LEFT_RESOURCE_NAV_SHOWING, "tree");
+        return EnterpriseFacesContextUtility.getWebUser().getWebPreferences().getPreference(LEFT_RESOURCE_NAV_SHOWING, "30");
     }
 
     public void setLeftResourceNavState(String state) {
-        EnterpriseFacesContextUtility.getWebUser().getWebPreferences().setPreference(LEFT_RESOURCE_NAV_SHOWING, state);
+            EnterpriseFacesContextUtility.getWebUser().getWebPreferences().setPreference(LEFT_RESOURCE_NAV_SHOWING, state);
     }
 
     public String getSummaryPanelDisplayState() {

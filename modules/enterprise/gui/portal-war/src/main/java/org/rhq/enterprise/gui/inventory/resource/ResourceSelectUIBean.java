@@ -38,7 +38,7 @@ public class ResourceSelectUIBean {
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
-
+    private String searchString;
 
     public Resource getResource() {
         return resource;
@@ -48,6 +48,13 @@ public class ResourceSelectUIBean {
         this.resource = resource;
     }
 
+    public String getSearchString() {
+        return searchString;
+    }
+
+    public void setSearchString(String searchString) {
+        this.searchString = searchString;
+    }
 
     public List<ResourceComposite> autocomplete(Object suggest) {
         String pref = (String)suggest;

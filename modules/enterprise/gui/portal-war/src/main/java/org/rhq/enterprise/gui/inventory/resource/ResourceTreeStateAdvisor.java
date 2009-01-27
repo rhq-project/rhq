@@ -54,6 +54,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
     UITree tree;
     private TreeRowKey selectedKey;
     private int selectedId;
+    private int selecteAGTypeId;
 
     public void changeExpandListener(org.richfaces.event.NodeExpandedEvent e) {
         altered = true;
@@ -73,21 +74,31 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
             tree.queueNodeExpand((TreeRowKey) tree.getRowKey());
             ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(tree.getRowKey());
 
-            if (node != null && node.getData() instanceof Resource) {
+            if (node != null) {
+                ServletContext context = (ServletContext) FacesContextUtility.getFacesContext().getExternalContext().getContext();
+                HttpServletResponse response = (HttpServletResponse) FacesContextUtility.getFacesContext().getExternalContext().getResponse();
 
-            ServletContext context = (ServletContext) FacesContextUtility.getFacesContext().getExternalContext().getContext();
-            String path = FacesContextUtility.getRequest().getRequestURI();
-            HttpServletResponse response = (HttpServletResponse) FacesContextUtility.getFacesContext().getExternalContext().getResponse();
-            response.sendRedirect(path + "?id=" + ((Resource)node.getData()).getId());
-//            context.getRequestDispatcher(path + "?id=" + FacesContextUtility.getRequiredRequestParameter("id")).forward(
-//                    FacesContextUtility.getRequest(),
-//                    );
+                if (node.getData() instanceof Resource) {
+                    String path = FacesContextUtility.getRequest().getRequestURI();
+
+                    // Switching from a auto group view... default to monitor page
+                    if (!path.startsWith("/rhq/resource")) {
+                        path = "/rhq/resource/monitor/graphs.xhtml";
+                    }
+
+                    response.sendRedirect(path + "?id=" + ((Resource) node.getData()).getId());
+                } else if (node.getData() instanceof AutoGroupComposite) {
+                    AutoGroupComposite ag = (AutoGroupComposite) node.getData();
+                    String path = "/rhq/autogroup/monitor/graphs.xhtml?parent="
+                            + ag.getParentResource().getId()
+                            + "&type=" + ag.getResourceType().getId();
+                    response.sendRedirect(path);
+                }
             }
         } catch (IOException e1) {
             e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
     }
-
 
 
     public Boolean adviseNodeOpened(UITree tree) {
@@ -105,12 +116,21 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
             }
 
             if (selectedKey == null) {
-                String id = FacesContextUtility.getOptionalRequestParameter("id");
-                this.selectedId = Integer.parseInt(id);
+                String typeId = FacesContextUtility.getOptionalRequestParameter("type");
+                this.selecteAGTypeId = typeId != null ? Integer.parseInt(typeId) : 0;
 
-                 if (preopen((ResourceTreeNode) tree.getRowData(key), this.selectedId)) {
+                if (typeId != null) {
+                    String id = FacesContextUtility.getOptionalRequestParameter("parent");
+                    this.selectedId = Integer.parseInt(id);
+
+                } else {
+                    String id = FacesContextUtility.getOptionalRequestParameter("id");
+                    this.selectedId = Integer.parseInt(id);
+                }
+
+                if (preopen((ResourceTreeNode) tree.getRowData(key), this.selectedId, this.selecteAGTypeId)) {
                     return true;
-                 }
+                }
             }
 
 
@@ -132,15 +152,21 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
         return null;
     }
 
-    private boolean preopen(ResourceTreeNode resourceTreeNode, int selectedId) {
-        if (resourceTreeNode.getData() instanceof Resource) {
-            if (((Resource)resourceTreeNode.getData()).getId() == selectedId) {
+    private boolean preopen(ResourceTreeNode resourceTreeNode, int selectedResourceId, int selectedAGTypeId) {
+        if (resourceTreeNode.getData() instanceof Resource && selectedAGTypeId == 0) {
+            if (((Resource) resourceTreeNode.getData()).getId() == selectedResourceId) {
+                return true;
+            }
+        } else if (resourceTreeNode.getData() instanceof AutoGroupComposite) {
+            AutoGroupComposite ag = (AutoGroupComposite) resourceTreeNode.getData();
+            if (ag.getParentResource().getId() == selectedResourceId && ag.getResourceType().getId() == selectedAGTypeId) {
                 return true;
             }
         }
 
-        for (ResourceTreeNode child: resourceTreeNode.getChildren()) {
-            if (preopen(child, selectedId)) {
+
+        for (ResourceTreeNode child : resourceTreeNode.getChildren()) {
+            if (preopen(child, selectedResourceId, selectedAGTypeId)) {
                 return true;
             }
         }
@@ -149,12 +175,23 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
     }
 
     public Boolean adviseNodeSelected(UITree tree) {
-        TreeState state = (TreeState) ((HtmlTree)tree).getComponentState();
+        TreeState state = (TreeState) ((HtmlTree) tree).getComponentState();
         String id = FacesContextUtility.getOptionalRequestParameter("id");
+        String parent = FacesContextUtility.getOptionalRequestParameter("parent");
+        String type = FacesContextUtility.getOptionalRequestParameter("type");
         ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(tree.getRowKey());
 
+        if (this.selecteAGTypeId > 0) {
+            if (node.getData() instanceof AutoGroupComposite) {
+                AutoGroupComposite ag = (AutoGroupComposite) node.getData();
+                if (String.valueOf(ag.getParentResource().getId()).equals(parent)
+                        && String.valueOf(ag.getResourceType().getId()).equals(type)) {
+                    return true;
+                }
+            }
+        }
         if (node.getData() instanceof Resource) {
-            if (String.valueOf(((Resource)node.getData()).getId()).equals(id)) {
+            if (String.valueOf(((Resource) node.getData()).getId()).equals(id)) {
                 return Boolean.TRUE;
             }
         }

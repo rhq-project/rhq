@@ -20,7 +20,18 @@
 <h:form id="leftNaveTogglePanelForm">
    <input type="hidden" name="id" value="#{ResourceUIBean.id}" />
 
-   <rich:togglePanel
+
+    <div id="parent">
+        <div id="lhs" class="column"><p class="content">
+            <span style="display: block; white-space: nowrap; overflow: hidden">This is some clipped text that will be in the left column.</span>
+            <span style="display: block">This is some wrapped text that will be in the left column.</span>
+        </p></div>
+        <div id="mid" class="column"><p class="content">This is some text that will be in the middle column.</p></div>
+        <div id="rhs" class="column"><p class="content">This is some text that will be in the right column.</p></div>
+    </div>
+
+
+    <rich:togglePanel
       value="#{UserPreferencesUIBean.leftResourceNavState}"
       switchType="ajax" stateOrder="closed,tree" id="navTogglePanel"
       styleClass="atest"

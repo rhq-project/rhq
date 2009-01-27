@@ -25,7 +25,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 
-public abstract class EnterpriseFacesContextUIBean {
+public class EnterpriseFacesContextUIBean {
     public Subject getSubject() {
         return EnterpriseFacesContextUtility.getSubject();
     }

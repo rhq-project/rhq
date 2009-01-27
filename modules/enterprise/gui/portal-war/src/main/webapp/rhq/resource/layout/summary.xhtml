@@ -129,19 +129,20 @@ id - the id of the Resource being accessed
       </h:panelGrid>
 
       <!-- spacer -->
-     <!-- <h:panelGroup layout="block" style="height: 9px" rendered="#{!empty ListOfTraits.traitPairs}"/>-->
 
       <!-- summary traits -->
+         <a4j:keepAlive beanName="ListOfTraits" />
+         <a4j:keepAlive beanName="ResourceUIBean"/>
       <h:dataTable var="traitPair" value="#{ListOfTraits.traitPairs}" styleClass="summary-props-table"
                    columnClasses="summary-prop-cell" rendered="#{!empty ListOfTraits.traitPairs}">
          <h:column>
             <h:outputText value="#{traitPair[0].name}: " styleClass="BoldText"/>
-            <h:panelGroup>#{traitPair[0].value}</h:panelGroup>
+            <h:panelGroup><h:outputText value="#{traitPair[0].value}"/></h:panelGroup>
          </h:column>
          <h:column>
             <h:panelGroup layout="block" rendered="#{!empty traitPair[1]}">
                <h:outputText value="#{traitPair[1].name}: " styleClass="BoldText"/>
-               <h:panelGroup>#{traitPair[1].value}</h:panelGroup>
+               <h:panelGroup><h:outputText value="#{traitPair[1].value}"/></h:panelGroup>
             </h:panelGroup>
          </h:column>
       </h:dataTable>
@@ -158,11 +159,11 @@ id - the id of the Resource being accessed
 
           <h:panelGrid columns="2">
               <h:panelGroup id="availDisplay">
-                  <h:graphicImage value="/images/icon_available_green_32.png" alt="Resource is Up" title="Up"
+                  <h:graphicImage value="/images/icon_available_green_24.png" alt="Resource is Up" title="Up"
                                   rendered="#{ResourceUIBean.availabilityType == 'UP'}"/>
-                  <h:graphicImage value="/images/icon_available_red_32.png" alt="Resource is Down" title="Down"
+                  <h:graphicImage value="/images/icon_available_red_24.png" alt="Resource is Down" title="Down"
                                   rendered="#{ResourceUIBean.availabilityType == 'DOWN'}"/>
-                  <h:graphicImage value="/images/icon_available_grey_32.png" alt="Resource availability is Unknown"
+                  <h:graphicImage value="/images/icon_available_grey_24.png" alt="Resource availability is Unknown"
                                   title="Unknown"
                                   rendered="#{ResourceUIBean.availabilityType == null}"/>
                   <rich:toolTip for="availDisplay">
@@ -170,6 +171,19 @@ id - the id of the Resource being accessed
                       <h:outputText value="#{ResourceUIBean.availabilitySummary.lastChange}">
                           <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
                       </h:outputText>
+                      <br/>
+                      <b>Down for: </b>
+                      <h:outputText value="#{ResourceUIBean.availabilitySummary.downTime}">
+                          <f:converter converterId="RichDurationConverter"/>
+                      </h:outputText>
+                      <br/>
+                      <b>Up for: </b>
+                      <h:outputText value="#{ResourceUIBean.availabilitySummary.upTime}">
+                          <f:converter converterId="RichDurationConverter"/>
+                      </h:outputText>
+                      <br/>
+                      <b>Failures: </b>
+                      <h:outputText value="#{ResourceUIBean.availabilitySummary.failures}"/>
                   </rich:toolTip>
 
               </h:panelGroup>
@@ -179,7 +193,7 @@ id - the id of the Resource being accessed
                       <a4j:form id="favoritesForm">
                           <h:inputHidden value="${ResourceUIBean.favorite}"/>
                           <a4j:commandButton reRender="favoritesPanel"
-                                             image="#{ResourceUIBean.favorite ? '/images/star_on_32.png' : '/images/star_off_32.png'}">
+                                             image="#{ResourceUIBean.favorite ? '/images/star_on_24.png' : '/images/star_off_24.png'}">
                               <f:param name="id" value="#{ResourceUIBean.id}"/>
                               <f:param name="mode" value="#{ResourceUIBean.favorite ? 'remove' : 'add'}"/>
                           </a4j:commandButton>
@@ -197,23 +211,6 @@ id - the id of the Resource being accessed
               <h:outputText value="#{ResourceUIBean.availabilitySummary.upPercentage}">
                    <f:convertNumber type="percent"/>
               </h:outputText>
-              <rich:toolTip for="availPercent">
-                  Percentage of time that this resource was available over its known lifetime.
-                  <br/>
-              Down for:
-              <h:outputText value="#{ResourceUIBean.availabilitySummary.downTime}">
-                  <f:converter converterId="RichDurationConverter" />
-                </h:outputText>
-                  <br/>
-              Up for:
-                  <h:outputText value="#{ResourceUIBean.availabilitySummary.upTime}">
-                      <f:converter converterId="RichDurationConverter" />
-                    </h:outputText>
-                <br/>
-              Failures:
-                  <h:outputText value="#{ResourceUIBean.availabilitySummary.failures}"/>
-
-              </rich:toolTip>
           </h:panelGroup>
 
           <h:panelGroup layout="block">

@@ -11,9 +11,11 @@
 </script>
 
 <div id="PageHeader">
+    <jsp:include page="/rhq/common/menu/menu.xhtml"/>
 
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" height="70px">
-        <tr valign="bottom">
+
+  <%--  <table width="100%" border="0" cellpadding="0" cellspacing="0" height="70px">
+        --%><%--<tr valign="bottom">
             <td align="left">
                 <fmt:message var="urlDomain" key="product.url.domain"/>
                 <fmt:message var="productName" key="product.fullName"/>
@@ -30,13 +32,15 @@
                   <img src="/images/redhat-jboss-logo.gif" usemap="#redhat-jboss-logo-map" />
                </div>
             </td>
-        </tr>
+        </tr>--%><%--
         <tr>
             <td align="right" class="topMenu" colspan="2">
-                <jsp:include page="/rhq/common/menu/menu.xhtml"/>
              </td>
         </tr>
-    </table>
+    </table>--%>
+
+    <%--<hr style="margin-top: 6px; background-color: #090909; color: #090909" size="1" noshade="noshade"/>--%>
+
 </div>
 
 <div id="about" class="dialog" style="display: none; position: absolute; top: 0; left: 0">

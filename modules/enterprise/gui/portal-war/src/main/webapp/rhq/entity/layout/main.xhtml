@@ -1,12 +1,11 @@
 <?xml version="1.0"?>
 
-<!DOCTYPE html
-      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml"
+<ui:composition  template="/rhq/layout/main-layout.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
       xmlns:ui="http://java.sun.com/jsf/facelets">
 
 THIS TEXT WILL BE REMOVED.
@@ -14,47 +13,130 @@ THIS TEXT WILL BE REMOVED.
 The template for all Resource/Group pages (i.e. the Monitor/Inventory/etc. tabbed pages).
 
 TEMPLATE PARAMETERS:
-   breadcrumbs - the page breadcrumbs (optional)
-   summary - the summary of the resource or group
-   nav - the rich component for navigating autogroups (resource) or cluster (group)
-   tabBar - the tab bar
-   content - the page content
+breadcrumbs - the page breadcrumbs (optional)
+summary - the summary of the resource or group
+nav - the rich component for navigating autogroups (resource) or cluster (group)
+tabBar - the tab bar
+content - the page content
 
 CONTEXT PARAMETERS:
-   pageTitle - the page title
-   pageHelpURL - a context-sensitive help URL for the page (optional)
-   selectedTabName - the name of the tab/subTab to select in the following format: tabName[.subtabName]
-                     (e.g. "Inventory" or "Monitor.Visibility")
+pageTitle - the page title
+pageHelpURL - a context-sensitive help URL for the page (optional)
+selectedTabName - the name of the tab/subTab to select in the following format: tabName[.subtabName]
+(e.g. "Inventory" or "Monitor.Visibility")
 
 REQUEST PARAMETERS:
-   id - the id of the Resource being accessed
+id - the id of the Resource being accessed
 
-<ui:composition template="/rhq/layout/main-layout.xhtml">
 
-   THIS TEXT WILL BE REMOVED AS WELL.
+    THIS TEXT WILL BE REMOVED AS WELL.
 
     <ui:define name="body-area">
 
-        <table width="100%" cellpadding="0" cellspacing="0" id="contentTable" style="height:90%">
-            <tr>
-                <td valign="top" style="width: 300px; background-color: #E1E5EB;">
-                        <ui:insert name="nav"><p>Default Entity Navigation</p></ui:insert>
-                    
+        <script type="text/javascript" src="/js/splitpane.js"/>
 
-                </td>
-                <td valign="top" width="100%">
+        <style type="text/css">
+            #contentParent {
+                width: 100%;
+                height: 100%;
+                background: #FFFFFF;
+            }
 
+            .column {
+                float: left; /* This is forces the page content to adjust to changes in height of the columns */
+                overflow: hidden; /* As a precaution, all content is clipped to the column width */
+                margin: 0; /* This and padding need to be zero */
+                padding: 0;
+                z-index: 1;
+                background: #FFFFFF;
+                color: #666666;
+                width: 30%; /* Default value, overridden by class */
+                height: 100%;
+            }
+
+            /* Any spacing must be on a child of the column, not the column itself */
+            .content-left {
+                width: 100%;
+                height: 100%;
+                background-color: #E5E5E5;
+                overflow: auto;
+            }
+
+            .content-right {
+                left: 6px;
+                right: 0;
+                height: 100%;
+                margin-left: 6px;
+                height: 100%;
+                overflow: auto;
+            }
+
+            .splitpane-divider {
+                width: 6px;
+                background: #4A5B81;
+                opacity: .5;
+                z-index: 2;
+                filter: alpha( opacity = 50 );
+                background-image: url("/images/horizontal_gradient.png");
+                background-repeat: repeat-y;
+            }
+        </style>
+
+
+        <div id="contentParent">
+            <div id="leftContent" class="column" style="width: #{UserPreferencesUIBean.leftResourceNavState}%;">
+                <div class="content-left">
+                    <ui:insert name="nav"><p>Default Entity Navigation</p></ui:insert>
+
+                </div>
+            </div>
+            <div id="centerContent" class="column" style="width: #{100 - UserPreferencesUIBean.leftResourceNavState}%;">
+
+                <div class="content-right">
+
+                    <div style="left: 0; right: 0;">
                         <ui:insert name="summary"><p>Default Entity Summary</p></ui:insert>
                         <ui:insert name="tabBar"><p>Default Entity TabBar</p></ui:insert>
                         <ui:insert name="content"><p>Default Entity Content</p></ui:insert>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                </td>
-            </tr>
-        </table>
+
+        <a4j:region renderRegionOnly="true" selfRendered="true">
+
+            <a4j:form>
+                <a4j:jsFunction name="saveSplitPaneState" reRender="showname" status="commonStatus">
+                    <a4j:actionparam name="param1" assignTo="#{UserPreferencesUIBean.leftResourceNavState}"/>
+                </a4j:jsFunction>
+            </a4j:form>
+        </a4j:region>
+
+        <script language="JavaScript" type="text/JavaScript">
+            <!--
+               function handleSplitPaneResize(splitPane, event) {
+
+
+
+                   //#{rich:element('leftResourceNavStateField')}.value = navSplitPane.getWidthPercent(navSplitPane.div1);
+                   //#{rich:element('leftResourceNavStateField')}.focus();
+                   //#{rich:element('leftResourceNavStateField')}.blur();
+                   // #{rich:element('leftResourceNavStateField')}.form.submit();
+
+                   //alert(#{rich:element('leftResourceNavStateField')});
+                   saveSplitPaneState(navSplitPane.getWidthPercent(navSplitPane.div1));
+                   //alert("Saved: " + navSplitPane.getWidthPercent(navSplitPane.div1));
+
+               }
+
+               var navSplitPane = new SplitPane("leftContent", "#{UserPreferencesUIBean.leftResourceNavState}", "centerContent", { onEnd: handleSplitPaneResize, active: true });
+
+
+           // -->
+        </script> 
+
+
     </ui:define>
 
 </ui:composition>
-
-THIS TEXT WILL BE REMOVED AS WELL.
-
-</html>

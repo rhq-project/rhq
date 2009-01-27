@@ -173,17 +173,17 @@ A.NotBold:hover {
 
 /* BLOCK */
 .BlockContent {
-   background-color: #EBEDF2;
+   background-color: #E5E5E5;
    padding: 3px;
 }
 
 .BlockContentNoPadding {
-   background-color: #EBEDF2;
+   background-color: #E5E5E5;
    padding: 0;
 }
 
 .BlockLabel {
-   background-color: #EBEDF2;
+   background-color: #E5E5E5;
    padding: 3px;
    font-weight: bold;
    text-align: right;
@@ -191,21 +191,21 @@ A.NotBold:hover {
 }
 
 .BlockCheckboxLabel, .BlockLeftAlignLabel {
-   background-color: #EBEDF2;
+   background-color: #E5E5E5;
    padding: 3px;
    font-weight: bold;
    text-align: left;
 }
 
 .BlockContentSmallText {
-   background-color: #EBEDF2;
+   background-color: #E5E5E5;
    padding: 3px;
    font-size: 11px;
    color: #000000;
 }
 
 .BlockBg {
-   background-color: #EBEDF2;
+   background-color: #E5E5E5;
 }
 
 /* LIST */
@@ -276,7 +276,7 @@ A.ListHeaderLink:hover {
 
 .ListRowSelected, .tableRowAction {
    text-align: left;
-   background-color: #EBEDF2;
+   background-color: #E5E5E5;
 }
 
 .ListCell, .ListCellSelected, .tableCell, .redTableCell, .tableCellTop {
@@ -376,7 +376,7 @@ A.ListHeaderLink:hover {
 
 /* list for MONITOR */
 .ListHeaderLight {
-   background-color: #ebedf2;
+   background-color: #E5E5E5;
 }
 
 .ListHeaderDark {
@@ -704,7 +704,7 @@ A.MastheadLink:active {
 
 /* only in /portal/MultiColumnLayout.jsp */
 .DashboardControlActionsContainer {
-   background-color: #EBEDF2;
+   background-color: #E5E5E5;
    padding: 10px;
 }
 
@@ -841,7 +841,7 @@ A.displaylink:hover {
 
 /* MONITORING */
 .MonitorBlockContainer {
-   background-color: #EBEDF2;
+   background-color: #E5E5E5;
    padding-top: 10px;
    border-spacing: 3px;
 }
@@ -959,7 +959,7 @@ A.displaylink:hover {
 }
 
 .CalHeader {
-   background-color: #EBEDF2;
+   background-color: #E5E5E5;
    padding: 3px;
    border-top: solid #DE652D;
    border-bottom: solid #D5D8DE;
@@ -1077,7 +1077,7 @@ A.displaylink:hover {
 }
 
 .MiniChartTitle {
-   background-color: #EBEDF2;
+   background-color: #E5E5E5;
    padding: 3px;
    font-size: 10px;
    color: #004680;
@@ -2159,4 +2159,20 @@ ul.radio-group .unspecified {
 
 .dr-tree-i-sel {
     background-color: #94AECF;
+}
+
+.availLinkDown {
+    color: red;
+    font-weight: bold;
+}
+
+
+.availLinkUp {
+    color: black;
+    font-weight: bold;
+}
+
+.availLinkMixed {
+    color: #FFC323;
+    font-weight: bold;
 }

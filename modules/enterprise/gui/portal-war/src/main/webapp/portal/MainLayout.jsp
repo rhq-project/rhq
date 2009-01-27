@@ -50,7 +50,7 @@
          }
       </script>
    </head>
-   <body bgcolor="#FFFFFF" onload="bodyOnLoad()">
+   <body bgcolor="#FFFFFF" onload="bodyOnLoad()" style="margin: 0px; padding: 0px;">
    <tiles:insert attribute="header">
       <tiles:put name="breadcrumb" beanName="breadcrumb"/>
       <tiles:put name="location" beanName="location"/>

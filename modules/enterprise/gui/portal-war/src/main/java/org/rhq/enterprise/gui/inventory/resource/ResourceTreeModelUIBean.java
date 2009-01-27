@@ -47,6 +47,7 @@ import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.gui.util.FacesComponentUtility;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
@@ -78,7 +79,14 @@ public class ResourceTreeModelUIBean {
         Resource currentResource = EnterpriseFacesContextUtility.getResourceIfExists();
         Subject user = EnterpriseFacesContextUtility.getSubject();
 
-        Resource rootResource = resourceManager.getRootResourceForResource(currentResource.getId());
+        int searchId;
+        if (currentResource == null) {
+            searchId = Integer.parseInt(FacesContextUtility.getOptionalRequestParameter("parent"));
+        } else {
+            searchId = currentResource.getId();
+        }
+
+        Resource rootResource = resourceManager.getRootResourceForResource(searchId);
         Agent agent = agentManager.getAgentByResourceId(rootResource.getId());
 
         List<Resource> resources = resourceManager.getResourcesByAgent(user, agent.getId(), PageControl.getUnlimitedInstance());

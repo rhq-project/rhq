@@ -30,13 +30,13 @@
 
    <h:panelGrid columns="2" styleClass="general-props-table" columnClasses="general-prop-cell">
       <h:panelGroup layout="block">
-         <b>Name: </b> #{ResourceUIBean.name}
+         <b>Name: </b> <h:outputText value="#{ResourceUIBean.name}"/>
       </h:panelGroup>
 
       <rich:spacer/>
 
       <h:panelGroup layout="block">
-         <b>Type: </b> #{ResourceUIBean.resourceType.name} (#{ResourceUIBean.resourceType.plugin})
+         <b>Type: </b> <h:outputText value="#{ResourceUIBean.resourceType.name} (#{ResourceUIBean.resourceType.plugin})"/>
       </h:panelGroup>
 
       <h:panelGroup layout="block">
@@ -76,7 +76,7 @@
 
    <h:form id="viewGeneralPropertiesForm">
 
-      <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+       <h:inputHidden value="#{ResourceUIBean.id}"/>
 
       <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell"
                    rendered="#{ResourceUIBean.permissions.inventory}">
@@ -97,7 +97,9 @@
 </f:facet>
 
 <h:form id="childResourcesForm">
-<input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+    <h:inputHidden value="#{ResourceUIBean.id}"/>
+    <a4j:keepAlive beanName="ListContainingGroupsUIBean"/>
+
 
 <!-- CHILD RESOURCE TYPE FILTER -->
 <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.utilizedChildTypesCount > 1}" style="margin-bottom: 6px;">
@@ -289,7 +291,10 @@
    <h:panelGroup>
       <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.manuallyAddableChildTypesCount > 0}">
          <h:form id="manuallyAddResourceForm" onsubmit="addManuallyAddResourceTypeRequestParam(this)">
-            <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+             <a4j:keepAlive beanName="ListContainingGroupsUIBean"/>
+
+             <h:inputHidden value="#{ResourceUIBean.id}"/>
+
             <input type="hidden" name="type"/>
             <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
                <h:outputText style="font-weight: bold;" value="Manually Add:"/>
@@ -309,7 +314,10 @@
    <h:panelGroup>
       <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.creatableChildTypesCount > 0}">
          <h:form id="createNewResourceForm" onsubmit="addCreateNewResourceTypeRequestParam(this)">
-            <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+             <a4j:keepAlive beanName="ListContainingGroupsUIBean"/>
+
+             <h:inputHidden value="#{ResourceUIBean.id}"/>
+
             <input type="hidden" name="type"/>
             <input type="hidden" name="mode" value="edit"/>
             <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
@@ -330,7 +338,9 @@
 
 <!-- =================== CREATE CHILD RESOURCES HISTORY =================== -->
 <h:form id="createResourceHistoryForm">
-<input type="hidden" name="id" value="#{Resource.id}"/>
+    <h:inputHidden value="#{ResourceUIBean.id}"/>
+
+    <a4j:keepAlive beanName="ListContainingGroupsUIBean"/>
 
 <rich:panel rendered="#{ListCreateResourceHistoryUIBean.createHistoryCount > 0}" styleClass="BlockContent">
 <f:facet name="header" styleClass="BlockTitle"><h:outputText value="History of create child resource requests"/></f:facet>
@@ -453,7 +463,9 @@
 
 <!-- =================== DELETE CHILD RESOURCES HISTORY =================== -->
 <h:form id="deleteResourceHistoryForm">
-<input type="hidden" name="id" value="#{Resource.id}"/>
+    <h:inputHidden value="#{ResourceUIBean.id}"/>
+
+    <a4j:keepAlive beanName="ListContainingGroupsUIBean"/>
 
 <rich:panel rendered="#{ListDeleteResourceHistoryUIBean.deleteHistoryCount > 0}" styleClass="BlockContent">
 <f:facet name="header" styleClass="BlockTitle"><h:outputText value="History of delete child resource requests"/></f:facet>
@@ -575,8 +587,9 @@
    </f:facet>
 
    <h:form id="viewConnectionPropertiesForm">
+       <h:inputHidden value="#{ResourceUIBean.id}"/>
 
-      <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+
 
       <onc:config configurationDefinition="#{ConnectionPropertiesViewUIBean.configurationDefinition}"
                   configuration="#{ConnectionPropertiesViewUIBean.configuration}"
@@ -605,13 +618,16 @@
 
    <h:form id="containingGroupsForm">
 
-      <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+       <a4j:keepAlive beanName="ListContainingGroupsUIBean"/>
+
+       <h:inputHidden value="#{ResourceUIBean.id}"/>
 
       <h:panelGroup layout="block" rendered="#{ListContainingGroupsUIBean.dataModel.rowCount == 0}">
          This resource is not currently a member of any groups.
       </h:panelGroup>
 
       <ui:param name="containingGroupsDataModel" value="#{ListContainingGroupsUIBean.dataModel}"/>
+
       <rich:dataTable id="containingGroupsDataTable"
                       binding="#{ListContainingGroupsUIBean.dataTable}"
                       rows="#{PageControl.ContainingGroupsList.pageSize}"
@@ -761,12 +777,12 @@
 
    <h:form id="managingAgentForm">
 
-      <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+       <h:inputHidden value="#{ResourceUIBean.id}"/>
 
       <h:panelGrid columns="2" styleClass="general-props-table" columnClasses="general-prop-cell">
 
          <h:panelGroup layout="block">
-            <b>Name: </b> #{PingAgentUIBean.agent.name}
+            <b>Name: </b> <h:outputText value="#{PingAgentUIBean.agent.name}"/>
          </h:panelGroup>
 
          <h:panelGroup layout="block">
@@ -778,7 +794,7 @@
          </h:panelGroup>
 
          <h:panelGroup layout="block">
-            <b>Address: </b> #{PingAgentUIBean.agent.address}
+            <b>Address: </b> <h:outputText value="#{PingAgentUIBean.agent.address}"/>
          </h:panelGroup>
 
          <h:panelGroup layout="block">
@@ -789,7 +805,7 @@
          </h:panelGroup>
 
          <h:panelGroup layout="block">
-            <b>Port: </b> #{PingAgentUIBean.agent.port}
+            <b>Port: </b> <h:outputText value="#{PingAgentUIBean.agent.port}"/>
          </h:panelGroup>
 
       </h:panelGrid>
@@ -798,7 +814,7 @@
          <h:panelGroup layout="block">
             <table><tr>
             <td><b>Full Endpoint: </b></td>
-            <td style="WORD-BREAK:BREAK-ALL">#{PingAgentUIBean.remoteEndpointWrapped}</td>
+            <td style="WORD-BREAK:BREAK-ALL"><h:outputText value="#{PingAgentUIBean.remoteEndpointWrapped}"/></td>
             </tr></table>
          </h:panelGroup>
       </h:panelGrid>

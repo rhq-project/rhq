@@ -26,7 +26,7 @@
 
     <h:form> <!-- datascroll tag wants a form to be present -->
 
-        <input type="hidden" name="id" value="#{ResourceGroupUIBean.groupId}"/>
+        <input type="hidden" name="groupId" value="#{param.groupId}"/>
 
         <a4j:region renderRegionOnly="true">
 
@@ -42,6 +42,7 @@
                 <!--stateAdvisor="#{ResourceTreeStateAdvisor}"-->
                     <rich:tree style="width: 100%; height: 100%" switchType="ajax"
                                var="treeNode"
+                               status="commonStatus"
                                icon="/images/icn_tree_Platform.gif"
                                nodeFace="#{treeNode.data.class.simpleName}">
                         
@@ -64,7 +65,7 @@
                                        iconLeaf="/images/icn_tree_#{groupTreeItem.data.resource.resourceType.category}.gif">
 
 
-                            <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000">
+                            <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000" status="commonStatus">
                                 <f:param name="contextResourceId" value="#{groupTreeItem.data.resource.id}"/>
                                 <f:param name="contextResourceTypeId" value="#{groupTreeItem.data.resource.resourceType.id}"/>
 
@@ -98,14 +99,9 @@
 
         </rich:contextMenu>
 
-
-        <a4j:status id="localstatus" onstart="document.body.style.cursor = 'wait'">
-                        <f:facet name="start">
-                            <h:graphicImage value="/images/status_bar.gif"/>
-                        </f:facet>
-                    </a4j:status>
-
         </a4j:region>
+
+
     </h:form>
 
           </ui:composition>

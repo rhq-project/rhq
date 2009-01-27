@@ -59,7 +59,7 @@
     <ojdbc5.version>11.1.0.7.0</ojdbc5.version>
     <ems.version>1.2.6</ems.version>
     <postgresql.version>8.3-604.jdbc3</postgresql.version>
-    <richfaces.version>3.2.2.SR1</richfaces.version>
+    <richfaces.version>3.3.0.GA</richfaces.version>
     <sigar.version>1.5.0.3</sigar.version>
 
     <!-- misc properties -->

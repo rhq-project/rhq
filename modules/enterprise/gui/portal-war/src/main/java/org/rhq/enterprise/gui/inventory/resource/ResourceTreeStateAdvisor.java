@@ -189,7 +189,8 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
         if (this.selecteAGTypeId > 0) {
             if (node.getData() instanceof AutoGroupComposite) {
                 AutoGroupComposite ag = (AutoGroupComposite) node.getData();
-                if (String.valueOf(ag.getParentResource().getId()).equals(parent)
+                if (ag.getParentResource() != null
+                        && String.valueOf(ag.getParentResource().getId()).equals(parent)
                         && String.valueOf(ag.getResourceType().getId()).equals(type)) {
                     return true;
                 }

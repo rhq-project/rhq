@@ -322,7 +322,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         manager.computeOOBsFromLastHour(overlord);
 
         long duration = System.currentTimeMillis() - timeStart;
-        LOG.info("Auto-claculation of OOBs completed in [" + duration + "]ms");
+        LOG.info("Auto-calculation of OOBs completed in [" + duration + "]ms");
     }
 
     /**

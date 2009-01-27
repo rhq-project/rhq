@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
@@ -43,8 +44,7 @@ import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangeP
  */
 public class MetricRenderer extends Renderer {
 
-    private static final ArrayList<Integer> timeIntervalValues = new ArrayList<Integer>(Arrays.asList(4, 8, 12, 24, 30,
-        36, 48, 60, 90, 120));
+    private final List<Integer> timeIntervalValues = Arrays.asList(4, 8, 12, 24, 30, 36, 48, 60, 90, 120);
 
     @Override
     public void decode(FacesContext context, UIComponent component) {
@@ -105,12 +105,13 @@ public class MetricRenderer extends Renderer {
             writer.writeAttribute("id", MetricComponent.VALUE, null);
             writer.writeAttribute("name", MetricComponent.VALUE, null);
             int lastN = rangePreferences.lastN;
-            if (!timeIntervalValues.contains(Integer.valueOf(lastN))) {
-                timeIntervalValues.add(lastN);
+            List<Integer> timeIntervals = new ArrayList<Integer>(timeIntervalValues);
+            if (!timeIntervals.contains(Integer.valueOf(lastN))) {
+                timeIntervals.add(lastN);
             }
-            Collections.sort(timeIntervalValues);
+            Collections.sort(timeIntervals);
 
-            for (int timeIntervalOption : timeIntervalValues) {
+            for (int timeIntervalOption : timeIntervals) {
                 writer.startElement("option", metric);
                 writer.writeAttribute("value", timeIntervalOption, MetricComponent.VALUE);
                 if (timeIntervalOption == metric.getValue()) {

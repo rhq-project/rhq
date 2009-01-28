@@ -159,13 +159,13 @@
                 color = "#F5EB0A";
             }
 
-            String link = "/resource/common/Events.do?mode=events&id=" + resourceId + "&eventId=" + event.getEventId();
+            String link = "/rhq/resource/events/history.xhtml?id=" + resourceId + "&eventId=" + event.getEventId();
 
             String detail = null;
             if (grouped) {
                 StringBuilder buf = new StringBuilder();
                 for (EventComposite childEvent : ((GroupedEventComposite)event).events) {
-                    buf.append("<a href='/resource/common/Events.do?mode=events&id=" + resourceId + "&eventId=" + childEvent.getEventId() + "'>");
+                    buf.append("<a href='/rhq/resource/events/history.xhtml?id=" + resourceId + "&eventId=" + childEvent.getEventId() + "'>");
                     buf.append("<font size=\"-1\" color=\"" + color + "\">" + escapeBackslashes(trimLength(childEvent.getEventDetail(),80)) + "</font></a><br />");
                 }
                 detail = buf.toString();

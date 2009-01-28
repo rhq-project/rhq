@@ -77,7 +77,9 @@ public class TomcatApplicationComponent extends MBeanResourceComponent<TomcatSer
      */
     private static final String ARCHITECTURE = "noarch";
 
-    protected static final String FILENAME_PLUGIN_CONFIG_PROP = "filename";
+    protected static final String PROPERTY_CONTEXT_ROOT = "contextRoot";
+    protected static final String PROPERTY_FILENAME = "filename";
+    protected static final String PROPERTY_VHOST = "vHost";
 
     private static final String APPLICATION_PATH_TRAIT = "Application.path";
     private static final String APPLICATION_EXPLODED_TRAIT = "Application.exploded";
@@ -111,7 +113,7 @@ public class TomcatApplicationComponent extends MBeanResourceComponent<TomcatSer
         Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
 
         Configuration pluginConfiguration = super.resourceContext.getPluginConfiguration();
-        String fullFileName = pluginConfiguration.getSimpleValue(FILENAME_PLUGIN_CONFIG_PROP, null);
+        String fullFileName = pluginConfiguration.getSimpleValue(PROPERTY_FILENAME, null);
 
         if (fullFileName == null) {
             throw new IllegalStateException("Plugin configuration does not contain the full file name of the EAR/WAR file.");
@@ -170,7 +172,7 @@ public class TomcatApplicationComponent extends MBeanResourceComponent<TomcatSer
 
         // Find location of existing application
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
-        File appFile = new File(pluginConfig.getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue());
+        File appFile = new File(pluginConfig.getSimple(PROPERTY_FILENAME).getStringValue());
         if (!appFile.exists()) {
             return failApplicationDeployment("Could not find application to update at location: " + appFile, packageDetails);
         }
@@ -224,7 +226,7 @@ public class TomcatApplicationComponent extends MBeanResourceComponent<TomcatSer
 
     public void deleteResource() throws Exception {
         Configuration pluginConfiguration = super.resourceContext.getPluginConfiguration();
-        String fullFileName = pluginConfiguration.getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
+        String fullFileName = pluginConfiguration.getSimple(PROPERTY_FILENAME).getStringValue();
 
         File file = new File(fullFileName);
 
@@ -259,7 +261,7 @@ public class TomcatApplicationComponent extends MBeanResourceComponent<TomcatSer
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
         if (!requests.isEmpty()) {
             Configuration pluginConfig = super.resourceContext.getPluginConfiguration();
-            String path = pluginConfig.getSimpleValue(FILENAME_PLUGIN_CONFIG_PROP, null);
+            String path = pluginConfig.getSimpleValue(PROPERTY_FILENAME, null);
             for (MeasurementScheduleRequest request : requests) {
                 String metricName = request.getName();
                 if (metricName.equals(APPLICATION_PATH_TRAIT)) {
@@ -293,7 +295,7 @@ public class TomcatApplicationComponent extends MBeanResourceComponent<TomcatSer
      */
     public String getFileName() {
         Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
-        return pluginConfiguration.getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
+        return pluginConfiguration.getSimple(PROPERTY_FILENAME).getStringValue();
     }
 
     public TomcatServerComponent getParentResourceComponent() {

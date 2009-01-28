@@ -100,18 +100,18 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
 
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
 
-        // For each Tomcat process found in the context, create a resource details instance for those under EWS
+        // For each Tomcat process found in the context, create a resource details instance for thos
         List<ProcessScanResult> autoDiscoveryResults = context.getAutoDiscoveredProcesses();
         for (ProcessScanResult autoDiscoveryResult : autoDiscoveryResults) {
             if (log.isDebugEnabled()) {
-                log.debug("Discovered potential EWS process: " + autoDiscoveryResult);
+                log.debug("Discovered potential Tomcat process: " + autoDiscoveryResult);
             }
 
             try {
                 DiscoveredResourceDetails resource = parseTomcatProcess(context, autoDiscoveryResult);
                 if (resource != null) {
                     if (log.isDebugEnabled()) {
-                        log.debug("Verified EWS process: " + autoDiscoveryResult);
+                        log.debug("Verified Tomcat process: " + autoDiscoveryResult);
                     }
 
                     resources.add(resource);
@@ -125,13 +125,13 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
     }
 
     /**
-     * Processes a process that has been detected to be a Tomcat server process. If an EWS process return a resource
-     * ready to be returned as part of the discovery report.
+     * Processes a process that has been detected to be a Tomcat server process. If a standalone
+     * Apache or EWS Tomcat instance return a resource ready to be returned as part of the discovery report.
      *
      * @param  context             discovery context making this call
      * @param  autoDiscoveryResult process scan being parsed for an EWS resource
      *
-     * @return resource object describing the EWS server running in the specified process
+     * @return resource object describing the Tomcat server running in the specified process
      */
     @SuppressWarnings("unchecked")
     private DiscoveredResourceDetails parseTomcatProcess(ResourceDiscoveryContext context, ProcessScanResult autoDiscoveryResult) {
@@ -278,7 +278,6 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
     private String determineVersion(String installationPath, SystemInfo systemInfo) {
         String version = UNKNOWN_VERSION;
         boolean isNix = File.separatorChar == '/';
-
         String versionScriptFileName = null;
 
         if (this.isEWS(installationPath)) {
@@ -293,7 +292,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
         TomcatServerOperationsDelegate.setProcessExecutionEnvironment(processExecution, installationPath);
 
         processExecution.setCaptureOutput(true);
-        processExecution.setWaitForCompletion(500);
+        processExecution.setWaitForCompletion(5000L);
         processExecution.setKillOnTimeout(true);
 
         ProcessExecutionResults results = systemInfo.executeProcess(processExecution);
@@ -312,6 +311,11 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
                 String[] serverNumberParts = serverNumberString.split("/");
                 version = serverNumberParts[1].trim();
             }
+        }
+
+        if (UNKNOWN_VERSION.equals(version)) {
+            log.warn("Failed to determine Tomcat Server Version Given:\nVersionInfo:" + versionOutput + "\ninstallationPath: " + installationPath + "\nScript:" + versionScriptFileName
+                + "\ntimeout=5000L");
         }
 
         return version;

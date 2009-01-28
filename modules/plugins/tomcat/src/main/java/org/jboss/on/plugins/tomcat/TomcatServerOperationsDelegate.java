@@ -29,7 +29,7 @@ import java.util.StringTokenizer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.on.plugins.tomcat.TomcatServerComponent.EWSServerSupportedOperations;
+import org.jboss.on.plugins.tomcat.TomcatServerComponent.SupportedOperations;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -98,7 +98,7 @@ public class TomcatServerOperationsDelegate {
      *
      * @throws RuntimeException if any errors occur while trying to perform the operation
      */
-    public OperationResult invoke(EWSServerSupportedOperations operation, Configuration parameters) throws InterruptedException {
+    public OperationResult invoke(SupportedOperations operation, Configuration parameters) throws InterruptedException {
         String message = null;
 
         switch (operation) {

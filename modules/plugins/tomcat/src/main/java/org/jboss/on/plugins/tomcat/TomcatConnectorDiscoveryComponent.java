@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.EmsBeanName;
+import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -51,8 +52,6 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  */
 public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryComponent {
     private final Log log = LogFactory.getLog(this.getClass());
-
-    private static final String LOCAL_IP = "0.0.0.0";
 
     // MBeanResourceDiscoveryComponent Overridden Methods  --------------------------------------------
 
@@ -75,24 +74,15 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
             return Collections.emptySet();
         }
 
-        // Map <port, scheme>
-        Map<String, String> schemeMap = new HashMap<String, String>(beans.size());
-
-        // TODO: Does Tomcat really provide address optionally in the object name? If not this logic is not needed.
-        // Map <port, address>
-        Map<String, String> addressMap = new HashMap<String, String>(beans.size());
+        // Map <port, ConfigInfo>
+        Map<String, ConfigInfo> configMap = new HashMap<String, ConfigInfo>(beans.size());
 
         for (EmsBean bean : beans) {
-            EmsBeanName eName = bean.getBeanName();
-            String oName = eName.getKeyProperty("name");
-            String[] tokens = oName.split("-");
-            if (tokens.length == 2) {
-                schemeMap.put(tokens[1], tokens[0]);
-            } else if (tokens.length == 3) {
-                schemeMap.put(tokens[2], tokens[0]);
-                addressMap.put(tokens[2], tokens[1]);
+            ConfigInfo configInfo = new ConfigInfo(bean);
+            if (null != configInfo.getPort()) {
+                configMap.put(configInfo.port, configInfo);
             } else {
-                log.warn("Unknown ObjectName for GlobalRequestProcessor: " + oName);
+                log.warn("Unknown ObjectName for GlobalRequestProcessor: " + configInfo.getName());
             }
         }
 
@@ -100,19 +90,72 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
             Configuration pluginConfiguration = resource.getPluginConfiguration();
 
             String port = pluginConfiguration.getSimple(TomcatConnectorComponent.PROPERTY_PORT).getStringValue();
-            String scheme = schemeMap.get(port);
-            String address = addressMap.get(port);
+            ConfigInfo configInfo = configMap.get(port);
 
-            pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PROPERTY_SCHEME, scheme));
-            if (null != address) {
-                pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PROPERTY_ADDRESS, address));
+            pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PROPERTY_SCHEME, configInfo.getScheme()));
+            pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PROPERTY_ADDRESS, configInfo.getAddress()));
+
+            queryUtility = new ObjectNameQueryUtility("Catalina:type=Connector,port=" + port);
+            beans = connection.queryBeans(queryUtility.getTranslatedQuery());
+
+            if (!beans.isEmpty()) {
+                EmsAttribute protocol = beans.get(0).getAttribute("protocol");
+                if (null != protocol) {
+                    pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PROPERTY_PROTOCOL, (String) protocol.getValue()));
+                }
             }
 
             if (log.isDebugEnabled()) {
-                log.debug("Found a connector: " + scheme + "-" + ((null != address) ? address : LOCAL_IP) + "-" + port);
+                log.debug("Found a connector: " + configInfo.getScheme() + "-" + configInfo.getAddress() + "-" + configInfo.getPort());
             }
         }
 
         return resourceDetails;
+    }
+
+    private static class ConfigInfo {
+        private static final String LOCAL_IP = "0.0.0.0";
+
+        private String name;
+        private String address;
+        private String scheme;
+        private String port;
+        private String protocol;
+
+        public ConfigInfo(EmsBean bean) {
+            EmsBeanName eName = bean.getBeanName();
+            this.name = eName.getKeyProperty("name");
+            String[] tokens = name.split("-");
+            if (tokens.length == 2) {
+                this.scheme = tokens[0];
+                this.port = tokens[1];
+                this.address = LOCAL_IP;
+            } else if (tokens.length == 3) {
+                this.scheme = tokens[0];
+                this.address = tokens[1];
+                this.port = tokens[2];
+            }
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getAddress() {
+            return address;
+        }
+
+        public String getScheme() {
+            return scheme;
+        }
+
+        public String getPort() {
+            return port;
+        }
+
+        public String getProtocol() {
+            return protocol;
+        }
+
     }
 }

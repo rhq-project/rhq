@@ -336,7 +336,7 @@
                <c:simple-property
                   name="protocol"
                   type="string"
-                  description="Protocal handler."
+                  description="Protocol handler."
                   readOnly="true" />
             </c:group>
 
@@ -424,7 +424,7 @@
                   hiddenByDefault="true">
                   <c:simple-property
                      name="nameTemplate"
-                     default="Tomcat Connector ThreadPool({name})" />
+                     default="Tomcat Connector ThreadPool ({name})" />
                   <c:simple-property
                      name="descriptionTemplate"
                      default="A Tomcat connector thread pool" />
@@ -489,18 +489,16 @@
             subCategory="Applications"
             discovery="TomcatApplicationDiscoveryComponent"
             class="TomcatApplicationComponent"
-            description="Web Application"
+            description="Web Application (WAR)"
             createDeletePolicy="both"
             creationDataType="content">
-
-            <!-- Catalina:j2eeType=WebModule,name=//<VHOST>/<NAME>,J2EEApplication=none,J2EEServer=none -->
 
             <plugin-configuration>
                <c:group name="General">
                   <c:simple-property
                      name="objectName"
                      readOnly="true"
-                     default="Catalina:j2eeType=WebModule,name=//%vHost%/%contextRoot%,J2EEApplication=none,J2EEServer=none" />
+                     default="Catalina:j2eeType=WebModule,name=%name%,J2EEApplication=none,J2EEServer=none" />
                   <c:simple-property
                      name="name"
                      description="The name of this WAR"
@@ -618,7 +616,7 @@
                      readOnly="true" />
                   <c:simple-property
                      name="path"
-                     description="The application path"
+                     description="The relevant application path"
                      readOnly="true" />
                </c:group>
 
@@ -627,7 +625,7 @@
                   hiddenByDefault="true">
                   <c:simple-property
                      name="nameTemplate"
-                     default="Application Cache ( {host}{path} )" />
+                     default="Application Cache ({host}{path})" />
                   <c:simple-property
                      name="descriptionTemplate"
                      default="Web Application Cache"

@@ -45,20 +45,20 @@ import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 
 /**
- * Management for a JBoss EWS server
+ * Management for an Apache or JBoss EWS Tomcat server
  *
  * @author Jay Shaughnessy
  */
 public class TomcatServerComponent implements JMXComponent, OperationFacet {
 
-    public enum EWSServerSupportedOperations {
+    public enum SupportedOperations {
         /**
-         * Shuts down an EWS instance via a shutdown script, depending on plug-in configuration
+         * Shuts down a Tomcat instance via a shutdown script, depending on plug-in configuration
          */
         SHUTDOWN,
 
         /**
-         * Starts an EWS instance by calling a configurable start script.
+         * Starts a Tomcat instance by calling a configurable start script.
          */
         START
     }
@@ -223,13 +223,13 @@ public class TomcatServerComponent implements JMXComponent, OperationFacet {
         String principal = pluginConfig.getSimpleValue(TomcatServerComponent.PRINCIPAL_CONFIG_PROP, null);
         String credentials = pluginConfig.getSimpleValue(TomcatServerComponent.CREDENTIALS_CONFIG_PROP, null);
         if ((principal != null) && (credentials == null)) {
-            throw new InvalidPluginConfigurationException("If the '" + TomcatServerComponent.PRINCIPAL_CONFIG_PROP + "' connection property is set, the '" + TomcatServerComponent.CREDENTIALS_CONFIG_PROP
-                + "' connection property must also be set.");
+            throw new InvalidPluginConfigurationException("If the '" + TomcatServerComponent.PRINCIPAL_CONFIG_PROP + "' connection property is set, the '"
+                + TomcatServerComponent.CREDENTIALS_CONFIG_PROP + "' connection property must also be set.");
         }
 
         if ((credentials != null) && (principal == null)) {
-            throw new InvalidPluginConfigurationException("If the '" + TomcatServerComponent.CREDENTIALS_CONFIG_PROP + "' connection property is set, the '" + TomcatServerComponent.PRINCIPAL_CONFIG_PROP
-                + "' connection property must also be set.");
+            throw new InvalidPluginConfigurationException("If the '" + TomcatServerComponent.CREDENTIALS_CONFIG_PROP + "' connection property is set, the '"
+                + TomcatServerComponent.PRINCIPAL_CONFIG_PROP + "' connection property must also be set.");
         }
     }
 
@@ -285,7 +285,7 @@ public class TomcatServerComponent implements JMXComponent, OperationFacet {
             try {
                 this.connection.close();
             } catch (Exception e) {
-                log.error("Error closing EWS connection: " + e);
+                log.error("Error closing Tomcat EMS connection: " + e);
             }
             this.connection = null;
         }
@@ -354,7 +354,7 @@ public class TomcatServerComponent implements JMXComponent, OperationFacet {
     }
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException, Exception {
-        EWSServerSupportedOperations operation = Enum.valueOf(EWSServerSupportedOperations.class, name.toUpperCase());
+        SupportedOperations operation = Enum.valueOf(SupportedOperations.class, name.toUpperCase());
 
         return operationsDelegate.invoke(operation, parameters);
     }
@@ -366,7 +366,7 @@ public class TomcatServerComponent implements JMXComponent, OperationFacet {
     void undeployFile(File file) throws MainDeployer.DeployerException {
         getEmsConnection();
         if (this.connection == null) {
-            log.warn("Unable to undeploy " + file + ", because we could not connect to the EWS instance.");
+            log.warn("Unable to undeploy " + file + ", because we could not connect to the Tomcat instance.");
             return;
         }
         if (this.mainDeployer == null) {

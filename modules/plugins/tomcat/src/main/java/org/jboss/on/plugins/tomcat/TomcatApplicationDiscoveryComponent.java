@@ -24,13 +24,14 @@ package org.jboss.on.plugins.tomcat;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.mc4j.ems.connection.EmsConnection;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
@@ -47,32 +48,44 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * @author Jason Dobies
  */
 public class TomcatApplicationDiscoveryComponent extends MBeanResourceDiscoveryComponent {
-    // ResourceDiscoveryComponent Implementation  --------------------------------------------
+
+    /**
+     * The name MBean attribute for each application is of the form //vHost/contextRoot. 
+     */
+    private static final Pattern PATTERN_NAME = Pattern.compile("//(.*)(/.*)");
+
+    private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
         // Parent will discover deployed applications through JMX
         Set<DiscoveredResourceDetails> jmxResources = super.discoverResources(context);
 
-        // JMX resources don't set the filename property, so munge them before going on
+        // JMX resources don't set the filename property, so set it here. It could be a directory deployment
         JMXComponent parentComponent = context.getParentResourceComponent();
         ApplicationServerComponent applicationServerComponent = (ApplicationServerComponent) parentComponent;
-        EmsConnection emsConnection = parentComponent.getEmsConnection();
-        String deployDirectoryPath = generateDeployDirectory(applicationServerComponent.getConfigurationPath().getPath());
-
-        List<String> earNames = new ArrayList<String>();
-        for (DiscoveredResourceDetails jmxResource : jmxResources) {
-            earNames.add(jmxResource.getResourceName());
-        }
-        Map<String, String> pathMap = getEarDeploymentPath(emsConnection, earNames);
+        String deployDirectoryPath = applicationServerComponent.getConfigurationPath().getPath();
+        Matcher m = PATTERN_NAME.matcher("");
 
         for (DiscoveredResourceDetails jmxResource : jmxResources) {
             Configuration pluginConfiguration = jmxResource.getPluginConfiguration();
-            String path;
-            if (pathMap.containsKey(jmxResource.getResourceName()))
-                path = pathMap.get(jmxResource.getResourceName());
-            else
-                path = deployDirectoryPath + jmxResource.getResourceName(); // Fallback, just in case
-            pluginConfiguration.put(new PropertySimple("filename", path));
+            String name = jmxResource.getResourceName();
+            m.reset(name);
+            if (m.matches()) {
+                String vHost = m.group(1);
+                String contextRoot = m.group(2);
+                String path = deployDirectoryPath + contextRoot;
+                try {
+                    path = new File(path).getCanonicalPath();
+                } catch (IOException e) {
+                    // leave path as is
+                    log.warn("Unexpected discovered web application path: " + path);
+                }
+                pluginConfiguration.put(new PropertySimple(TomcatApplicationComponent.PROPERTY_VHOST, vHost));
+                pluginConfiguration.put(new PropertySimple(TomcatApplicationComponent.PROPERTY_CONTEXT_ROOT, contextRoot));
+                pluginConfiguration.put(new PropertySimple(TomcatApplicationComponent.PROPERTY_FILENAME, path));
+            } else {
+                log.warn("Skipping discovered web application with unexpected name: " + name);
+            }
         }
 
         // Find all deployed but unstarted applications
@@ -83,13 +96,6 @@ public class TomcatApplicationDiscoveryComponent extends MBeanResourceDiscoveryC
         jmxResources.addAll(fileSystemResources);
 
         return jmxResources;
-    }
-
-    // Private  --------------------------------------------
-
-    // This is a replacement placeholder for whatever DeploymentUtily.getEarDeploymentPath(EmsConnection connection, List<String> fileNames)  does
-    public static Map<String, String> getEarDeploymentPath(EmsConnection connection, List<String> fileNames) {
-        throw new IllegalArgumentException("Not Yet Implemented");
     }
 
     /**
@@ -107,7 +113,7 @@ public class TomcatApplicationDiscoveryComponent extends MBeanResourceDiscoveryC
         JMXComponent parentComponent = context.getParentResourceComponent();
         ApplicationServerComponent applicationServerComponent = (ApplicationServerComponent) parentComponent;
 
-        String deployDirectoryPath = generateDeployDirectory(applicationServerComponent.getConfigurationPath().getPath());
+        String deployDirectoryPath = applicationServerComponent.getConfigurationPath().getPath();
         File deployDirectory = new File(deployDirectoryPath);
 
         // Set up filter for application type
@@ -135,20 +141,6 @@ public class TomcatApplicationDiscoveryComponent extends MBeanResourceDiscoveryC
         }
 
         return resources;
-    }
-
-    // Private  --------------------------------------------
-
-    /**
-     * Generates the string representing the deployment directory for this AS instance. This may have to change in the
-     * future to take into account WARs nested inside of EARs.
-     *
-     * @param  profilePath path to the AS profile directory (i.e. /opt/jboss/server/default)
-     *
-     * @return path to the deployment directory
-     */
-    private String generateDeployDirectory(String profilePath) {
-        return profilePath + File.separator + "deploy" + File.separator;
     }
 
     /**

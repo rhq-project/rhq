@@ -57,6 +57,11 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
     /**
      * Plugin property name for the schema the connector is processing. Possible values are http (also for https), jk
      */
+    public static final String PROPERTY_PROTOCOL = "protocol";
+
+    /**
+     * Plugin property name for the schema the connector is processing. Possible values are http (also for https), jk
+     */
     public static final String PROPERTY_SCHEME = "scheme";
 
     private final Log log = LogFactory.getLog(this.getClass());

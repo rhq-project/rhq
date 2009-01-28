@@ -30,4 +30,23 @@
       
    </navigation-rule>
    
+   <!-- changing metric display range on Events > History  -->
+   <navigation-rule>
+      <from-view-id>/rhq/autogroup/events/history.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/autogroup/events/history.xhtml?parent=#{param.parent}&amp;type=#{param.type}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <!-- catch all navigation-case: if any actions return 'success', go here -->
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/autogroup/events/history.xhtml?parent=#{param.parent}&amp;type=#{param.type}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+   </navigation-rule>
+   
 </faces-config>

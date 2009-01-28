@@ -8,6 +8,7 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component">
 
@@ -43,7 +44,9 @@ THIS TEXT WILL BE REMOVED.
 
          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
             <h:commandButton value="OK" action="#{CreateNewChildResourceAddNewOpenMapMemberPropertyUIBean.addProperty}"
-                             alt="Click to Add Property" styleClass="buttonmed"/>
+                             alt="Click to Add Property" styleClass="buttonmed">
+               <s:defaultAction />
+            </h:commandButton>
             <h:commandButton value="CANCEL" action="#{CreateNewChildResourceAddNewOpenMapMemberPropertyUIBean.cancel}"
                              immediate="true" alt="Click to Cancel" styleClass="buttonmed"/>
          </h:panelGrid>

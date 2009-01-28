@@ -11,6 +11,7 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
@@ -42,7 +43,9 @@
 
             <h:panelGrid id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
                <h:commandButton value="CONTINUE" action="#{CreateNewConfigurationChildResourceUIBean.selectTemplate}"
-                                alt="Continue to Next Step" styleClass="buttonmed" id="continueButton"/>
+                                alt="Continue to Next Step" styleClass="buttonmed" id="continueButton">
+                  <s:defaultAction />
+               </h:commandButton>
                <h:commandButton value="CANCEL" action="#{CreateNewConfigurationChildResourceUIBean.cancel}"
                                 alt="Cancel" styleClass="buttonmed" id="cancelButton"/>
             </h:panelGrid>

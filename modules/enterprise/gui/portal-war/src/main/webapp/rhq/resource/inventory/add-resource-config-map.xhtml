@@ -8,6 +8,7 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component">
 
@@ -33,7 +34,9 @@ THIS TEXT WILL BE REMOVED.
 
          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
             <h:commandButton value="OK" type="submit" action="#{CreateNewConfigurationChildResourceUIBean.finish}"
-                             alt="Click to Add Map" styleClass="buttonmed"/>
+                             alt="Click to Add Map" styleClass="buttonmed">
+               <s:defaultAction />
+            </h:commandButton>
             <h:commandButton value="RESET" type="reset" immediate="true"
                              alt="Click to Reset Fields" styleClass="buttonmed"/>
          </h:panelGrid>

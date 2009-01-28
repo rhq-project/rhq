@@ -11,6 +11,7 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
@@ -60,7 +61,9 @@
          <h:panelGrid id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
 
             <h:commandButton style="margin-top: 10px;" value="CREATE"
-                             action="#{CreateNewPackageChildResourceUIBean.createResource}" styleClass="buttonmed"/>
+                             action="#{CreateNewPackageChildResourceUIBean.createResource}" styleClass="buttonmed">
+               <s:defaultAction />
+            </h:commandButton>
 
             <h:commandButton style="margin-top: 10px;" value="CANCEL"
                              immediate="true"

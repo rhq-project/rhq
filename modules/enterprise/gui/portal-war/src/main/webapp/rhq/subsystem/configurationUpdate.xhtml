@@ -11,6 +11,7 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
       
@@ -55,7 +56,9 @@
                    <f:selectItems value="#{SubsystemConfigurationUpdateUIBean.statusFilterItems}"/>
                </h:selectOneMenu>
                <a4j:commandButton value="GO" reRender="configurationUpdateDataTable, configurationUpdateDataTableScroller"
-                                  styleClass="buttonmed"/>
+                                  styleClass="buttonmed">
+                   <s:defaultAction/>
+               </a4j:commandButton>
             </h:panelGrid>
             
             </rich:simpleTogglePanel>

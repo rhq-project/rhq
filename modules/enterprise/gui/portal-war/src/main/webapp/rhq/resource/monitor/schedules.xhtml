@@ -11,6 +11,7 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
@@ -22,6 +23,15 @@
 <ui:define name="content">
 
       <h:form id="resourceSchedulesForm">
+         <!-- hack to override the default button on the page, make this button pseudo-first in the form, 
+              but take it out of the document flow and position it off the screen -->
+         <div style="position:absolute; top:-100px; ">
+            <onc:selectCommandButton name="enableAndSetSelectedSchedules"
+                                     action="#{ListResourceMeasurementScheduleUIBean.enableAndSetSelected}"
+                                     value="SET" target="selectedResourceSchedules"
+                                     styleClass="on-pager-button buttonsmall"
+                                     rendered="#{ResourceUIBean.permissions.measure}" />
+         </div>
          <input type="hidden" name="id" value="${param.id}"/>
          
          <rich:panel styleClass="BlockContent">
@@ -107,14 +117,18 @@
                   <rich:columnGroup>
                      <rich:column colspan="6">
                         <h:panelGrid columns="4">
-                           <onc:selectCommandButton action="#{ListResourceMeasurementScheduleUIBean.disableSelected}"
+                           <onc:selectCommandButton id="disableSelectedSchedules"
+                                                    name="disableSelectedSchedules"
+                                                    action="#{ListResourceMeasurementScheduleUIBean.disableSelected}"
                                                     value="DISABLE" target="selectedResourceSchedules" 
                                                     styleClass="on-pager-button buttonsmall"
                                                     rendered="#{ResourceUIBean.permissions.measure}" />
                            <h:outputText value="&nbsp;&nbsp;&nbsp;Collection Interval: " />
                            <onc:duration binding="#{ListResourceMeasurementScheduleUIBean.duration}"
                                          optionList="s,m,h" />
-                           <onc:selectCommandButton action="#{ListResourceMeasurementScheduleUIBean.enableAndSetSelected}"
+                           <onc:selectCommandButton id="enableAndSetSelectedSchedules"
+                                                    name="enableAndSetSelectedSchedules"
+                                                    action="#{ListResourceMeasurementScheduleUIBean.enableAndSetSelected}"
                                                     value="SET" target="selectedResourceSchedules"
                                                     styleClass="on-pager-button buttonsmall"
                                                     rendered="#{ResourceUIBean.permissions.measure}" />

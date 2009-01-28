@@ -11,6 +11,7 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
       
@@ -370,6 +371,10 @@
                   <h:inputText id="packageFilter" value="#{ChannelPackageVersionsUIBean.packageFilter}">
                      <a4j:support event="onchange" reRender="channelPackageVersionsDataTable, channelPackageVersionsDataTableScroller"/>
                   </h:inputText>
+                  <a4j:commandButton value="GO" reRender="channelPackageVersionsDataTable, channelPackageVersionsDataTableScroller"
+                                     styleClass="buttonmed">
+                     <s:defaultAction />
+                  </a4j:commandButton>
 
                   <a4j:status>
                      <f:facet name="start">

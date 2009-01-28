@@ -10,6 +10,7 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
+      xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
@@ -72,7 +73,9 @@
                             onkeypress="return ignoreEnterKey();"
                             style="width: 300px;"/>
                <a4j:commandButton value="GO" reRender="partitionEventsDataTable, partitionEventsDataTableScroller"
-                                  styleClass="buttonmed"/>
+                                  styleClass="buttonmed">
+                     <s:defaultAction />
+               </a4j:commandButton>
                <rich:spacer/>
             </h:panelGrid>
 

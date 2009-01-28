@@ -56,8 +56,7 @@ public class EventManager implements ContainerService {
     private static final int SENDER_THREAD_POOL_CORE_SIZE = 2;
 
     private static final String POLLER_THREAD_POOL_NAME = "EventManager.poller";
-    private static final int POLLER_THREAD_POOL_CORE_SIZE = 1;
-    private static final int POLLER_THREAD_POOL_MAX_SIZE = 3;
+    private static final int POLLER_THREAD_POOL_CORE_SIZE = 3;
     private static final int POLLER_INITIAL_DELAY_SECS = 0;
 
     private PluginContainerConfiguration pcConfig;
@@ -83,7 +82,6 @@ public class EventManager implements ContainerService {
         // registerEventPoller().
         this.pollerThreadPool = new ScheduledThreadPoolExecutor(POLLER_THREAD_POOL_CORE_SIZE, new LoggingThreadFactory(
             POLLER_THREAD_POOL_NAME, true));
-        this.pollerThreadPool.setMaximumPoolSize(POLLER_THREAD_POOL_MAX_SIZE);
         this.pollerThreads = new HashMap<PollerKey, Runnable>();
     }
 

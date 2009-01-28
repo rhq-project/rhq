@@ -34,7 +34,7 @@
                             style="width: 300px;" />
                <rich:spacer/>
 
-               <h:outputLabel for="dateSubmittedFilter" value="Date Submitted Filter: " />
+               <h:outputLabel for="dateSubmittedFilter" value="Submitted After Filter: " />
                <rich:calendar id="dateSubmittedFilter" value="#{SubsystemConfigurationUpdateUIBean.dateSubmittedFilter}"
                               datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}" 
                               showApplyButton="true"
@@ -42,7 +42,7 @@
                               style="width: 300px;" />
                <rich:spacer/>
 
-               <h:outputLabel for="dateCompletedFilter" value="Date Completed Filter: " />
+               <h:outputLabel for="dateCompletedFilter" value="Completed Before Filter: " />
                <rich:calendar id="dateCompletedFilter" value="#{SubsystemConfigurationUpdateUIBean.dateCompletedFilter}"
                               datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}" 
                               showApplyButton="true"

@@ -133,7 +133,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                  * definition is actual many objects: the definition, the condition set, the notification
                  * set, the alert dampening rules
                  */
-                if (++definitionCount % 5 == 0) {
+                if (++definitionCount % 250 == 0) {
                     entityManager.flush();
                     entityManager.clear();
                 }
@@ -293,7 +293,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
              * definition is actual many objects: the definition, the condition set, the notification
              * set, the alert dampening rules
              */
-            if (++definitionCount % 5 == 0) {
+            if (++definitionCount % 250 == 0) {
                 entityManager.flush();
                 entityManager.clear();
             }
@@ -313,7 +313,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                  * definition is actual many objects: the definition, the condition set, the notification
                  * set, the alert dampening rules
                  */
-                if (++definitionCount % 5 == 0) {
+                if (++definitionCount % 250 == 0) {
                     entityManager.flush();
                     entityManager.clear();
                 }

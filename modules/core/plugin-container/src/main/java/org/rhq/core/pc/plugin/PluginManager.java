@@ -139,6 +139,7 @@ public class PluginManager implements ContainerService {
 
                             ClassLoader classloader = lastDepEnvironment.getPluginClassLoader();
 
+                            // note that we don't really care if the URL uses file: or not, we just use File to parse the name from the path 
                             loadPlugin(pluginUrl, PluginClassLoader.create(pluginJarName, pluginUrl, true, classloader,
                                 tmpDir));
                         }

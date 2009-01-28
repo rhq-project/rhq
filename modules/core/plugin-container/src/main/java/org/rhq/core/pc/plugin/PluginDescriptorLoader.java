@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
@@ -102,6 +102,7 @@ public class PluginDescriptorLoader {
         }
 
         if (jarUrl != null) {
+            // note that we don't really care if the URL uses file: or not, we just use File to parse the name from the path 
             classLoader = PluginClassLoader.create(new File(jarUrl.getPath()).getName(), jarUrl, unpackJars,
                 parentClassLoader, tmpDir);
             log.debug("Created classloader for plugin [" + jarUrl + "]");
@@ -154,15 +155,23 @@ public class PluginDescriptorLoader {
             throw new PluginContainerException("Failed to create JAXB Context.", new WrappedRemotingException(e));
         }
 
-        JarFile jarFile = null;
+        JarInputStream jis = null;
+        JarEntry descriptorEntry = null;
 
         try {
-            jarFile = new JarFile(new File(pluginJarFileUrl.toURI()));
-            JarEntry descriptorEntry = jarFile.getJarEntry(PLUGIN_DESCRIPTOR_PATH);
-            InputStream is = jarFile.getInputStream(descriptorEntry);
-            if (is == null) {
-                throw new PluginContainerException("Could not load plugin descriptor [" + PLUGIN_DESCRIPTOR_PATH
-                    + "] from plugin jar at [" + pluginJarFileUrl + "].");
+            jis = new JarInputStream(pluginJarFileUrl.openStream());
+            JarEntry nextEntry = jis.getNextJarEntry();
+            while (nextEntry != null && descriptorEntry == null) {
+                if (PLUGIN_DESCRIPTOR_PATH.equals(nextEntry.getName())) {
+                    descriptorEntry = nextEntry;
+                } else {
+                    jis.closeEntry();
+                    nextEntry = jis.getNextJarEntry();
+                }
+            }
+
+            if (descriptorEntry == null) {
+                throw new Exception("The plugin descriptor does not exist");
             }
 
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
@@ -176,7 +185,7 @@ public class PluginDescriptorLoader {
             ValidationEventCollector vec = new ValidationEventCollector();
             unmarshaller.setEventHandler(vec);
 
-            PluginDescriptor pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(is);
+            PluginDescriptor pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(jis);
 
             for (ValidationEvent event : vec.getEvents()) {
                 logger.debug("Plugin [" + pluginDescriptor.getName() + "] descriptor messages {Severity: "
@@ -190,11 +199,11 @@ public class PluginDescriptorLoader {
                 + PLUGIN_DESCRIPTOR_PATH + " found in plugin jar at [" + pluginJarFileUrl + "]",
                 new WrappedRemotingException(e));
         } finally {
-            if (jarFile != null) {
+            if (jis != null) {
                 try {
-                    jarFile.close(); // closes the input stream we created for us
+                    jis.close();
                 } catch (Exception e) {
-                    logger.warn("Cannot close jar file [" + pluginJarFileUrl + "]. Cause: " + e);
+                    logger.warn("Cannot close jar stream [" + pluginJarFileUrl + "]. Cause: " + e);
                 }
             }
         }

@@ -75,7 +75,7 @@
                             value="#{configurationUpdateDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 25%, 25%, 25%, 24%"
+                            columnsWidth="1%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
                             
@@ -83,7 +83,7 @@
                   <onc:paginationControl id="ConfigurationHistory" />
                </f:facet>
 
-               <rich:column>
+               <rich:column rendered="#{ResourceUIBean.permissions.configure}">
                   <f:facet name="header">
                      <onc:allSelect target="selectedItems" />
                   </f:facet>
@@ -103,7 +103,7 @@
                   <h:commandLink action="#{ListConfigurationUpdateUIBean.selectConfigurationToView}">
                      <f:param name="id" value="#{param.id}"/>
                      <f:param name="configId" value="#{item.id}"/>
-                     <h:outputText value="#{item.id} *" rendered="#{latestConfig.id == item.id}"/>
+                     <h:outputText value="#{item.id}*" rendered="#{latestConfig.id == item.id}"/>
                      <h:outputText value="#{item.id}" rendered="#{latestConfig.id != item.id}"/>
                   </h:commandLink>
                </rich:column>
@@ -158,7 +158,7 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="6" width="100%">
+                     <rich:column colspan="#{ResourceUIBean.permissions.configure ? 6 : 5}" width="100%">
                         <onc:selectCommandButton action="#{ListConfigurationUpdateUIBean.delete}"
                                                  value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
                                                  rendered="${ResourceUIBean.permissions.configure}" />

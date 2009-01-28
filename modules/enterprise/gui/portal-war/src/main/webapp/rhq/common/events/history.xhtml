@@ -12,10 +12,18 @@
       
     <h:form id="eventHistoryForm" >
 
-        <input type="hidden" name="id" value="#{EventHistoryUIBean.context.resourceId}" />
-        <input type="hidden" name="groupId" value="#{EventHistoryUIBean.context.groupId}" />
-        <input type="hidden" name="parent" value="#{EventHistoryUIBean.context.parentResourceId}" />
-        <input type="hidden" name="type" value="#{EventHistoryUIBean.context.resourceTypeId}" />
+        <c:if test="#{EventHistoryUIBean.context.resourceId != -1}">
+            <input type="hidden" name="id" value="#{EventHistoryUIBean.context.resourceId}" />
+        </c:if>
+        <c:if test="#{EventHistoryUIBean.context.groupId != -1}">
+            <input type="hidden" name="groupId" value="#{EventHistoryUIBean.context.groupId}" />
+        </c:if>
+        <c:if test="#{EventHistoryUIBean.context.parentResourceId != -1}">
+            <input type="hidden" name="parent" value="#{EventHistoryUIBean.context.parentResourceId}" />
+        </c:if>
+        <c:if test="#{EventHistoryUIBean.context.resourceTypeId != -1}">
+            <input type="hidden" name="type" value="#{EventHistoryUIBean.context.resourceTypeId}" />
+        </c:if>
         <c:if test="#{not empty param.category}">
             <input type="hidden" name="category" value="#{param.category}" />
         </c:if>

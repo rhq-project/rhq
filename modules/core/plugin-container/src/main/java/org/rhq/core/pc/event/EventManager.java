@@ -128,9 +128,10 @@ public class EventManager implements ContainerService {
      * Sends the given Event report to the Server, if this Plugin Container has Server services that it can communicate
      * with.
      *
-     * @param report the Event report to be sent
+     * @param report the Event report to be sent (this report should be closed from getting any more events added to it)
      */
     void sendEventReport(EventReport report) {
+        report.addLimitWarningEvents(); // add any limit warning events if events were dropped
         if (!report.getEvents().isEmpty() && this.pcConfig.getServerServices() != null) {
             try {
                 this.pcConfig.getServerServices().getEventServerService().mergeEventReport(report);

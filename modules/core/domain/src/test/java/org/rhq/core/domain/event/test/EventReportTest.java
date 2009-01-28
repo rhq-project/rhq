@@ -34,6 +34,7 @@ import org.rhq.core.domain.resource.ResourceType;
 
 @Test
 public class EventReportTest {
+
     public void testEventReport() {
         ResourceType resourceType = new ResourceType("foo", "foo", ResourceCategory.PLATFORM, null);
         Resource resource = new Resource(1);
@@ -41,11 +42,13 @@ public class EventReportTest {
         EventSource eventSource = new EventSource("foo", eventDefinition, resource);
         EventReport report = new EventReport(10, 10);
         report.addEvent(new Event("foo", "foo", 0, EventSeverity.DEBUG, "foo-first", eventSource), eventSource);
+        report.addLimitWarningEvents(); // should do nothing
         Map<EventSource, Set<Event>> allEvents = report.getEvents();
         assert allEvents.size() == 1;
         assert allEvents.get(eventSource).size() == 1;
 
         report.addEvent(new Event("foo", "foo", 1, EventSeverity.DEBUG, "foo-second", eventSource), eventSource);
+        report.addLimitWarningEvents(); // should do nothing
         allEvents = report.getEvents();
         assert allEvents.size() == 1; // only one event source still!
         assert allEvents.get(eventSource).size() == 2;
@@ -58,6 +61,7 @@ public class EventReportTest {
         // use a second event source
         EventSource eventSource2 = new EventSource("bar", eventDefinition, resource);
         report.addEvent(new Event("bar", "bar", 2, EventSeverity.DEBUG, "bar-first", eventSource2), eventSource2);
+        report.addLimitWarningEvents(); // should do nothing
         allEvents = report.getEvents();
         assert allEvents.size() == 2;
         assert allEvents.get(eventSource).size() == 2;
@@ -80,13 +84,15 @@ public class EventReportTest {
         EventReport report = new EventReport(1, 10);
 
         // add the first
-        report.addEvent(new Event("foo", "foo", 0, EventSeverity.DEBUG, "foo-first", eventSource), eventSource);
+        addEvent(report, "foo", "first", eventSource);
+        report.addLimitWarningEvents(); // should do nothing
         Map<EventSource, Set<Event>> allEvents = report.getEvents();
         assert allEvents.size() == 1; // only one event source still!
         assert allEvents.get(eventSource).size() == 1;
 
         // add the second (this is over the max)
-        report.addEvent(new Event("foo", "foo", 1, EventSeverity.DEBUG, "foo-second", eventSource), eventSource); // OVER MAX!
+        addEvent(report, "foo", "second", eventSource); // OVER MAX SO THIS NEVER MAKES IT!
+        report.addLimitWarningEvents();
         allEvents = report.getEvents();
         assert allEvents.size() == 1; // only one event source still!
         assert allEvents.get(eventSource).size() == 2; // the second one is our "over the max" message
@@ -107,10 +113,13 @@ public class EventReportTest {
         assert limit_count == 1 : "there should have been an event warning of the limit breach: " + limit_count;
 
         // add the third (this is over the max)
+        report = stripLimitWarningEvents(report);
+        addEvent(report, "foo", "second", eventSource); // OVER MAX SO THIS NEVER MAKES IT!
+        addEvent(report, "foo", "third", eventSource); // STILL OVER MAX SO THIS NEVER MAKES IT EITHER!
+        report.addLimitWarningEvents();
         allEvents = report.getEvents();
-        report.addEvent(new Event("foo", "foo", 2, EventSeverity.DEBUG, "foo-third", eventSource), eventSource); // STILL OVER MAX!
         assert allEvents.size() == 1; // only one event source still!
-        assert allEvents.get(eventSource).size() == 2; // no others have been added
+        assert allEvents.get(eventSource).size() == 2; // no others have been added, this includes our "over the max" event
         foo_count = 0;
         limit_count = 0;
         for (Event e : allEvents.get(eventSource)) {
@@ -127,11 +136,15 @@ public class EventReportTest {
 
         // use a second event source - since we didn't hit our max total, this should work
         EventSource eventSource2 = new EventSource("bar", eventDefinition, resource);
-        report.addEvent(new Event("bar", "bar", 2, EventSeverity.DEBUG, "bar-first", eventSource2), eventSource2);
+        report = stripLimitWarningEvents(report);
+        addEvent(report, "foo", "second", eventSource); // OVER MAX SO THIS NEVER MAKES IT!
+        addEvent(report, "foo", "third", eventSource); // STILL OVER MAX SO THIS NEVER MAKES IT EITHER!
+        addEvent(report, "bar", "first", eventSource2);
+        report.addLimitWarningEvents();
         allEvents = report.getEvents();
         assert allEvents.size() == 2;
-        assert allEvents.get(eventSource).size() == 2; // still have our two from above
-        assert allEvents.get(eventSource2).size() == 1; // our new one
+        assert allEvents.get(eventSource).size() == 2; // the original one plus a warning event
+        assert allEvents.get(eventSource2).size() == 1; // our new one (no warning events here)
 
         // make sure they are the ones we expect
         for (Event e : allEvents.get(eventSource)) {
@@ -150,13 +163,15 @@ public class EventReportTest {
         EventReport report = new EventReport(10, 1); // max total takes precedence!
 
         // add the first
-        report.addEvent(new Event("foo", "foo", 0, EventSeverity.DEBUG, "foo-first", eventSource), eventSource);
+        addEvent(report, "foo", "first", eventSource);
+        report.addLimitWarningEvents(); // should do nothing
         Map<EventSource, Set<Event>> allEvents = report.getEvents();
         assert allEvents.size() == 1; // only one event source still!
         assert allEvents.get(eventSource).size() == 1;
 
         // add the second (this is over the max)
-        report.addEvent(new Event("foo", "foo", 1, EventSeverity.DEBUG, "foo-second", eventSource), eventSource); // OVER MAX!
+        addEvent(report, "foo", "second", eventSource); // OVER MAX SO THIS NEVER MAKES IT!
+        report.addLimitWarningEvents();
         allEvents = report.getEvents();
         assert allEvents.size() == 1; // only one event source still!
         assert allEvents.get(eventSource).size() == 2; // the second one is our "over the max" message
@@ -178,10 +193,38 @@ public class EventReportTest {
 
         // use a second event source - since we are over the total, this should add nothing
         EventSource eventSource2 = new EventSource("bar", eventDefinition, resource);
-        report.addEvent(new Event("bar", "bar", 2, EventSeverity.DEBUG, "bar-first", eventSource2), eventSource2);
+        report = stripLimitWarningEvents(report);
+        addEvent(report, "foo", "second", eventSource); // OVER MAX SO THIS NEVER MAKES IT!
+        addEvent(report, "foo", "third", eventSource); // STILL OVER MAX SO THIS NEVER MAKES IT EITHER!
+        addEvent(report, "bar", "first", eventSource2); // WE ARE OVER THE TOTAL MAX, SO THIS NEVER MAKES IT EITHER!
+        report.addLimitWarningEvents();
         allEvents = report.getEvents();
-        assert allEvents.size() == 1;
+        assert allEvents.size() == 2; // both are here, the second one just has a single limit warning event
         assert allEvents.get(eventSource).size() == 2;
-        assert allEvents.containsKey(eventSource2) == false;
+        assert allEvents.containsKey(eventSource2) == true; // even though the "real" event never made it, we have a limit warn event
+        assert allEvents.get(eventSource2).size() == 1; // this isn't the "real" bar event, its the limit warn event
+        assert allEvents.get(eventSource2).iterator().next().getDetail().contains("Event Report Limit Reached:");
+    }
+
+    private void addEvent(EventReport report, String testId, String testDetail, EventSource eventSource) {
+        report.addEvent(new Event(testId, testId, System.currentTimeMillis(), EventSeverity.DEBUG, testId + "-"
+            + testDetail, eventSource), eventSource);
+        return;
+    }
+
+    // this creates a new report with the same debug/test events but without the limi warn events
+    private EventReport stripLimitWarningEvents(EventReport report) {
+        EventReport newReport = new EventReport(report.getMaxEventsPerSource(), report.getMaxEventsPerReport());
+
+        for (Map.Entry<EventSource, Set<Event>> entry : report.getEvents().entrySet()) {
+            EventSource eventSource = entry.getKey();
+            for (Event event : entry.getValue()) {
+                if (event.getSeverity() == EventSeverity.DEBUG) {
+                    newReport.addEvent(event, eventSource);
+                }
+            }
+        }
+
+        return newReport;
     }
 }

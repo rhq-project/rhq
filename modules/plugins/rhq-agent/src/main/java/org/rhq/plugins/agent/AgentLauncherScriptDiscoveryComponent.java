@@ -69,7 +69,7 @@ public class AgentLauncherScriptDiscoveryComponent implements ResourceDiscoveryC
                 EmsAttribute attrib = context.getParentResourceComponent().getAgentBean().getAttribute("Version");
                 attrib.refresh();
                 String version;
-                if (attrib != null && attrib.getValue() != null) {
+                if (attrib.getValue() != null) {
                     version = attrib.getValue().toString();
                 } else {
                     version = Version.getProductVersion(); // just use the one we can get statically, its probably the correct version
@@ -91,12 +91,12 @@ public class AgentLauncherScriptDiscoveryComponent implements ResourceDiscoveryC
 
     /**
      * Looks for the launcher script relative to the agent home directory.
-     * 
+     *
      * @param context
      * @param version
      * @param baseName
      * @param discoveries where the new details are stored if the script is discovered
-     * 
+     *
      * @return <code>true</code> if this method discovers the launcher script; <code>false</code> if not
      */
     private boolean findInAgentHome(ResourceDiscoveryContext<AgentServerComponent> context, String version,
@@ -148,9 +148,9 @@ public class AgentLauncherScriptDiscoveryComponent implements ResourceDiscoveryC
      * UNIX machines will return a non-<code>null</code> string but because the
      * launcher script is not used by the agent on Windows machines, <code>null</code> will be returned
      * when running on Windows machines.
-     * 
+     *
      * @param sysInfo used to determine what platform we are on
-     * 
+     *
      * @return the location of the launcher script that we are trying to discover, or <code>null</code> if we
      *         should not try to discovery the launcher script. The returned location is relative to agent home.
      */

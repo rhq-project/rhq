@@ -85,7 +85,7 @@ public class AgentJavaServiceWrapperDiscoveryComponent implements ResourceDiscov
                 EmsAttribute attrib = context.getParentResourceComponent().getAgentBean().getAttribute("Version");
                 attrib.refresh();
                 String version;
-                if (attrib != null && attrib.getValue() != null) {
+                if (attrib.getValue() != null) {
                     version = attrib.getValue().toString();
                 } else {
                     version = Version.getProductVersion(); // just use the one we can get statically, its probably the correct version
@@ -107,12 +107,12 @@ public class AgentJavaServiceWrapperDiscoveryComponent implements ResourceDiscov
 
     /**
      * Looks for the JSW relative to the agent home directory.
-     * 
+     *
      * @param context
      * @param version
      * @param baseName
      * @param discoveries where the new details are stored if the JSW is discovered
-     * 
+     *
      * @return <code>true</code> if this method discovers the JSW; <code>false</code> if not
      */
     private boolean findInAgentHome(ResourceDiscoveryContext<AgentServerComponent> context, String version,
@@ -171,9 +171,9 @@ public class AgentJavaServiceWrapperDiscoveryComponent implements ResourceDiscov
      * Windows machines will return a non-<code>null</code> string but because the
      * JSW is not used by the agent on UNIX machines, <code>null</code> will be returned
      * when running on non-Windows machines.
-     * 
+     *
      * @param sysInfo used to determine what platform we are on
-     * 
+     *
      * @return the location of the JSW that we are trying to discover, or <code>null</code> if we
      *         should not try to discovery the JSW. The returned location is relative to agent home.
      */

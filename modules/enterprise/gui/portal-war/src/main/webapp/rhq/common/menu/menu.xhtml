@@ -21,7 +21,7 @@
     <h:outputText value="#{msg['dash.home.PageTitle']}"/>
 </h:outputLink>
 
-<rich:dropDownMenu>
+<rich:dropDownMenu >
     <f:facet name="label">
         <h:panelGroup>
             <h:outputLink value="/ResourceHub.do">
@@ -30,20 +30,19 @@
         </h:panelGroup>
     </f:facet>
 
-
-    <rich:menuItem submitMode="none">
+    <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
         <h:outputLink value="/ResourceHub.do?resourceCategory=PLATFORM">
             <h:outputText value="#{msg['resource.hub.filter.platform']}"/>
         </h:outputLink>
     </rich:menuItem>
 
-    <rich:menuItem submitMode="none">
+    <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
         <h:outputLink value="/ResourceHub.do?resourceCategory=SERVER">
             <h:outputText value="#{msg['resource.hub.filter.server']}"/>
         </h:outputLink>
     </rich:menuItem>
 
-    <rich:menuItem submitMode="none">
+    <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
         <h:outputLink value="/ResourceHub.do?resourceCategory=SERVICE">
             <h:outputText value="#{msg['resource.hub.filter.service']}"/>
         </h:outputLink>
@@ -53,20 +52,20 @@
 
 
     <rich:menuGroup value="Groups">
-        <rich:menuItem submitMode="none">
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
             <h:outputLink value="/GroupHub.do">
                 <f:param name="groupCategory" value="COMPATIBLE"/>
                 <h:outputText value="#{msg['resource.hub.filter.compatibleGroups']}"/>
             </h:outputLink>
         </rich:menuItem>
 
-        <rich:menuItem submitMode="none">
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
             <h:outputLink value="/GroupHub.do?groupCategory=MIXED">
                 <h:outputText value="#{msg['resource.hub.filter.mixedGroups']}"/>
             </h:outputLink>
         </rich:menuItem>
 
-        <rich:menuItem submitMode="none">
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
             <h:outputLink value="/rhq/definition/group/list.xhtml">
                 <h:outputText value="#{msg['resource.hub.filter.groupDefinitions']}"/>
             </h:outputLink>
@@ -77,16 +76,18 @@
 
     <rich:menuGroup value="Subsystem Views">
 
-        <rich:menuItem><h:outputLink value="/rhq/subsystem/layout/main.xhtml">
-            <f:param name="tab" value="configurationUpdates"/>
-            Configuration Changes</h:outputLink></rich:menuItem>
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}" >
+            <h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=configurationUpdates">
+                Configuration Changes
+            </h:outputLink>
+        </rich:menuItem>
 
-        <rich:menuItem><h:outputLink value="/rhq/subsystem/layout/main.xhtml">
-            <f:param name="tab" value="problemResources"/>
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
+            <h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=problemResources">
             Problem Resources</h:outputLink></rich:menuItem>
-        <rich:menuItem><h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=operations">Operations</h:outputLink></rich:menuItem>
-        <rich:menuItem><h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=alerts">Alerts</h:outputLink></rich:menuItem>
-        <rich:menuItem><h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=alertDefinitions">Alert Definitions</h:outputLink></rich:menuItem>
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}"><h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=operations">Operations</h:outputLink></rich:menuItem>
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}"><h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=alerts">Alerts</h:outputLink></rich:menuItem>
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}"><h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=alertDefinitions">Alert Definitions</h:outputLink></rich:menuItem>
 
     </rich:menuGroup>
 
@@ -145,7 +146,7 @@
         </h:panelGroup>
     </f:facet>
     <rich:menuGroup value="Tools">
-        <rich:menuItem submitMode="none">
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
             <h:outputLink value="/admin/config/EditDefaults.do">
                 <f:param name="mode" value="monitor"/>
                 <f:param name="viewMode" value="all"/>
@@ -153,7 +154,7 @@
             </h:outputLink>
         </rich:menuItem>
 
-        <rich:menuItem submitMode="none">
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
             <h:outputLink value="/admin/license/LicenseAdmin.do?mode=view">
                 <h:outputText value="#{msg['header.license']}"/>
             </h:outputLink>
@@ -161,13 +162,13 @@
     </rich:menuGroup>
 
     <rich:menuGroup value="Security">
-        <rich:menuItem submitMode="none">
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
             <h:outputLink value="/admin/user/UserAdmin.do">
                 <f:param name="mode" value="list"/>
                 <h:outputText value="Manage Users"/>
             </h:outputLink>
         </rich:menuItem>
-        <rich:menuItem submitMode="none">
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
             <h:outputLink value="/admin/role/RoleAdmin.do">
                 <f:param name="mode" value="list"/>
                 <h:outputText value="Manage Roles"/>
@@ -183,13 +184,13 @@
         </h:panelGroup>
     </f:facet>
 
-    <rich:menuItem submitMode="none">
+    <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
         <h:outputLink value="https://docs.jbosson.redhat.com/confluence/display/JON2/" target="blank_">
             <h:outputText value="Online Documentation"/>
         </h:outputLink>
     </rich:menuItem>
 
-    <rich:menuItem submitMode="none">
+    <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
         <h:outputLink value="https://support.redhat.com/jbossnetwork/restricted/addCase.html" target="blank_">
             <h:outputText value="Open a Support Case"/>
         </h:outputLink>
@@ -226,7 +227,7 @@
                 <h:outputText value="Logged in as #{UserPreferencesUIBean.subject.name}"/>
             </h:panelGroup>
         </f:facet>
-        <rich:menuItem submitMode="none">
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
             <h:outputLink value="/admin/user/UserAdmin.do">
                 <f:param name="mode" value="edit"/>
                 <f:param name="u" value="2"/>
@@ -234,7 +235,7 @@
             </h:outputLink>
         </rich:menuItem>
 
-        <rich:menuItem submitMode="none">
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
             <h:outputLink value="/admin/user/UserAdmin.do">
                 <f:param name="mode" value="editPass"/>
                 <f:param name="u" value="2"/>

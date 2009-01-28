@@ -125,6 +125,10 @@
 
 <!--  HIGH AVAILABILITY -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td width="20%" class="BlockLabel">Server Timezone:</td>
+      <td width="30%" class="BlockContent"><%= java.util.TimeZone.getDefault().getDisplayName()%></td>
+   </tr>
    <tr>
       <td width="20%" class="BlockLabel"></td>
       <td width="30%" class="BlockContent"><html:link page="/rhq/ha/listServers.xhtml"><fmt:message key="admin.home.Ha.ListServers"/></html:link></td>

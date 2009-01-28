@@ -47,4 +47,11 @@
    </managed-bean>
 
 
+    <managed-bean>
+        <managed-bean-name>IncludeUIBean</managed-bean-name>
+        <managed-bean-class>org.rhq.enterprise.gui.util.IncludeUIBean</managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+    </managed-bean>
+
+
 </faces-config>

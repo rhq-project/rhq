@@ -450,17 +450,24 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         String chart = null;
         boolean errorOccurred = false;
         do {
-            chart = getPreference(PREF_DASH_USER_SAVED_CHARTS + "." + counter, null);
-            if (chart != null && !chart.equals("")) {
-                String[] nameURL = chart.split(",");
-                if (nameURL.length != 2) {
-                    log.error("Could not read saved chart, marked for removal: '" + chart + "'");
-                    errorOccurred = true;
-                } else {
-                    nameURL[0] = StringUtil.replace(nameURL[0], "&#124;", "|");
-                    nameURL[1] = StringUtil.replace(nameURL[1], "&#44;", ",");
-                    prefs.chartList.add(counter, new Tuple<String, String>(nameURL[0], nameURL[1]));
+            String preferenceName = PREF_DASH_USER_SAVED_CHARTS + "." + counter;
+            try {
+                chart = getPreference(preferenceName, null);
+                if (chart != null && !chart.equals("")) {
+                    String[] nameURL = chart.split(",");
+                    if (nameURL.length != 2) {
+                        log.error("Could not read saved chart, marked for removal: '" + chart + "'");
+                        errorOccurred = true;
+                    } else {
+                        nameURL[0] = StringUtil.replace(nameURL[0], "&#124;", "|");
+                        nameURL[1] = StringUtil.replace(nameURL[1], "&#44;", ",");
+                        prefs.chartList.add(counter, new Tuple<String, String>(nameURL[0], nameURL[1]));
+                    }
                 }
+            } catch (Exception e) {
+                errorOccurred = true;
+                log.warn("Error reading SavedChartsPortletPreferences for preference[name=" + preferenceName + "]: "
+                    + e.getMessage());
             }
 
             counter++;

@@ -59,8 +59,7 @@ public class SubtabRenderer extends Renderer {
 
         StringWriter stringWriter = new StringWriter();
 
-        //ResponseWriter writer = facesContext.getResponseWriter().cloneWithWriter(stringWriter);
-        ResponseWriter writer = new HtmlResponseWriter(stringWriter);
+        ResponseWriter writer = facesContext.getResponseWriter().cloneWithWriter(stringWriter);        
         writer.startElement("td", subtab);
         if (!subtab.isSelected()) {
             writer.startElement("a", subtab);

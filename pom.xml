@@ -53,8 +53,8 @@
     <jboss-common.version>1.2.0.GA</jboss-common.version>
     <jboss-remoting.version>2.2.1.GA</jboss-remoting.version> <!-- version that ships w/ AS 4.2.1.GA -->
     <jboss-serialization.version>1.0.3.GA</jboss-serialization.version> <!-- version that ships w/ AS 4.2.1.GA -->
-    <jsf-api.version>1.2_06</jsf-api.version>
-    <jsf-impl.version>1.2_06</jsf-impl.version>
+    <jsf-api.version>1.2_12</jsf-api.version>
+    <jsf-impl.version>1.2_12</jsf-impl.version>
     <ojdbc14.version>10.2.0.4.0</ojdbc14.version>
     <ojdbc5.version>11.1.0.7.0</ojdbc5.version>
     <ems.version>1.2.6</ems.version>

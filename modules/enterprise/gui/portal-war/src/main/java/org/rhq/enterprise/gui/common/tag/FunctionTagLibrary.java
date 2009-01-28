@@ -176,7 +176,8 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         String formatString = RequestUtils.message(FacesContextUtility.getRequest(), key);
         DateFormatter.DateSpecifics specs = new DateFormatter.DateSpecifics();
         specs.setDateFormat(new SimpleDateFormat(formatString));
-        FormattedNumber fmtd = UnitsFormat.format(new UnitNumber(timestamp, unit, ScaleConstants.SCALE_MILLI), FacesContextUtility.getRequest().getLocale(), specs);
+        FormattedNumber fmtd = UnitsFormat.format(new UnitNumber(timestamp, unit, ScaleConstants.SCALE_MILLI),
+            FacesContextUtility.getRequest().getLocale(), specs);
         return fmtd.toString();
     }
 
@@ -195,7 +196,7 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     }
 
     public static WebUserPreferences getWebUserPreferences() {
-        return new WebUserPreferences(EnterpriseFacesContextUtility.getSubject());
+        return EnterpriseFacesContextUtility.getWebUser().getWebPreferences();
     }
 
     public static String contextFragmentURL() {
@@ -206,8 +207,8 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         case ResourceGroup:
             return ParamConstants.GROUP_ID_PARAM + "=" + String.valueOf(context.groupId);
         case AutoGroup:
-            return ParamConstants.PARENT_RESOURCE_ID_PARAM + "=" + String.valueOf(context.parentResourceId) + "&" + ParamConstants.RESOURCE_TYPE_ID_PARAM + "="
-                + String.valueOf(context.resourceTypeId);
+            return ParamConstants.PARENT_RESOURCE_ID_PARAM + "=" + String.valueOf(context.parentResourceId) + "&"
+                + ParamConstants.RESOURCE_TYPE_ID_PARAM + "=" + String.valueOf(context.resourceTypeId);
         default:
             throw new IllegalArgumentException(context.getUnknownContextMessage());
         }
@@ -233,7 +234,8 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         if (alert.getRecoveryId() != 0) {
             Integer recoveryAlertId = alert.getRecoveryId();
             AlertDefinitionManagerLocal alertDefinitionManagerLocal = LookupUtil.getAlertDefinitionManager();
-            AlertDefinition recoveryAlertDefinition = alertDefinitionManagerLocal.getAlertDefinitionById(subject, recoveryAlertId);
+            AlertDefinition recoveryAlertDefinition = alertDefinitionManagerLocal.getAlertDefinitionById(subject,
+                recoveryAlertId);
             return recoveryAlertDefinition.getName();
         }
 

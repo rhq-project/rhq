@@ -749,8 +749,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
             entityManager.persist(newUpdateRequest);
             if (current != null) {
-                // If this is the first configuration update since the resource was imported, don't alert
-                notifyAlertConditionCacheManager("persistNewResourceConfigurationUpdateHistory", newUpdateRequest);
+                if (newStatus == ConfigurationUpdateStatus.SUCCESS) {
+                    // If this is the first configuration update since the resource was imported, don't alert
+                    notifyAlertConditionCacheManager("persistNewResourceConfigurationUpdateHistory", newUpdateRequest);
+                }
             }
 
             resource.addResourceConfigurationUpdates(newUpdateRequest);

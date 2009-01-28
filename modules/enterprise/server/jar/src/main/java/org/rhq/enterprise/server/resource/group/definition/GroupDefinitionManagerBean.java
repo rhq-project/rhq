@@ -274,7 +274,6 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             doomedResourceGroupIds.add(managedGroupId);
         }
 
-        Subject overlord = subjectManager.getOverlord();
         for (ExpressionEvaluator.Result result : evaluator) {
             if (result == null) {
                 /*
@@ -286,8 +285,12 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
             /*
              * do one group at a time, to help prevent xaction timeouts
+             * 
+             * note: we don't need to pass the overlord here because all group definition / dynagroup functionality
+             *       is hidden behind the MANAGE_INVENTORY permission, which is sufficient for all operations on a
+             *       resource group including creation, deletion, and membership changes 
              */
-            Integer nextResourceGroupId = calculateGroupMembership_helper(overlord, groupDefinitionId, result);
+            Integer nextResourceGroupId = calculateGroupMembership_helper(subject, groupDefinitionId, result);
 
             /*
              * remove all ids returned from the helper.  by the time we're done looping over all
@@ -301,9 +304,13 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         /*
          * and ids that are left over are doomed, but since deleting a resource group is related to the size of the
          * group, remove each group in it's own transaction
+         * 
+         * note: we don't need to pass the overlord here because all group definition / dynagroup functionality
+         *       is hidden behind the MANAGE_INVENTORY permission, which is sufficient for all operations on a
+         *       resource group including creation, deletion, and membership changes 
          */
         for (Integer doomedGroupId : doomedResourceGroupIds) {
-            removeManagedResource_helper(overlord, groupDefinitionId, doomedGroupId);
+            removeManagedResource_helper(subject, groupDefinitionId, doomedGroupId);
         }
 
         // re-attach the group, because it was cleared from the session during the callout to the helper

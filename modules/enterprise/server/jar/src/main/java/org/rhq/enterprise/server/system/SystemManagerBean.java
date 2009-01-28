@@ -258,14 +258,21 @@ public class SystemManagerBean implements SystemManagerLocal {
     private void verifyNewSystemConfigurationProperty(String name, String value, Properties properties) {
         if (RHQConstants.BaselineDataSet.equals(name)) {
             // 1h table holds at most 14 days worth of data, make sure we don't set a dataset more than that
-            long freq = Long.parseLong(value);
-            if (freq > (1000L * 60 * 60 * 24 * 14)) {
-                throw new IllegalArgumentException("Baseline dataset must be less than 14 days");
+            long baselineDataSet = Long.parseLong(value);
+            if (baselineDataSet > (1000L * 60 * 60 * 24 * 14)) {
+                throw new InvalidSystemConfigurationException("Baseline dataset must be less than 14 days");
+            }
+        } else if (RHQConstants.BaselineFrequency.equals(name)) {
+            long baselineFrequency = Long.parseLong(value);
+            long baselineDataSet = Long.parseLong(properties.getProperty(RHQConstants.BaselineDataSet));
+            if (baselineFrequency > baselineDataSet) {
+                throw new InvalidSystemConfigurationException(
+                    "baseline computation frequency must not be larger than baseline data set");
             }
         } else if (RHQConstants.AgentMaxQuietTimeAllowed.endsWith(name)) {
             long time = Long.parseLong(value);
             if (time < 1000L * 60 * 2) {
-                throw new IllegalArgumentException("Agent Max Quiet Time Allowed must be at least 2 minutes");
+                throw new InvalidSystemConfigurationException("Agent Max Quiet Time Allowed must be at least 2 minutes");
             }
         }
 

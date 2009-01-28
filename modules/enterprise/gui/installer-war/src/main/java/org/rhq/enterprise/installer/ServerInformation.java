@@ -128,7 +128,8 @@ public class ServerInformation {
             String version = db.getVersion();
 
             if (DatabaseTypeFactory.isPostgres(db)) {
-                if (version.startsWith("7") || version.startsWith("8.0") || version.startsWith("8.1")) {
+                if (version.startsWith("7") || version.equals("8") || version.startsWith("8.0")
+                    || version.startsWith("8.1")) {
                     throw new Exception("Unsupported PostgreSQL [" + db + "]");
                 }
             } else if (DatabaseTypeFactory.isOracle(db)) {

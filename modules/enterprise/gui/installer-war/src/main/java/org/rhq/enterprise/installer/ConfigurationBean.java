@@ -35,6 +35,7 @@ import mazz.i18n.Msg;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.installer.i18n.InstallerI18NResourceKeys;
 
@@ -288,6 +289,10 @@ public class ConfigurationBean {
 
     public StartPageResults testConnection() {
         Properties configurationAsProperties = getConfigurationAsProperties(configuration);
+
+        // its possible the JDBC URL was changed, clear the factory cache in case the DB version is different now
+        DatabaseTypeFactory.clearDatabaseTypeCache();
+
         try {
             serverInfo.ensureDatabaseIsSupported(configurationAsProperties);
             lastTest = "OK";
@@ -428,6 +433,9 @@ public class ConfigurationBean {
 
     public StartPageResults save() {
         LOG.info("Installer raw values: " + configuration);
+
+        // its possible the JDBC URL was changed, clear the factory cache in case the DB version is different now
+        DatabaseTypeFactory.clearDatabaseTypeCache();
 
         try {
             // update server properties with the latest ha info to keep the form and server properties file up to date

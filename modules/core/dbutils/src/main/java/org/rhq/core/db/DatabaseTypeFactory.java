@@ -22,8 +22,10 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.util.Hashtable;
 import java.util.Map;
+
 import javax.naming.Context;
 import javax.sql.DataSource;
+
 import mazz.i18n.Logger;
 
 /**
@@ -36,7 +38,7 @@ public class DatabaseTypeFactory {
     /**
      * Maps the database type that is associated with a particular connection type.
      */
-    public static final Map<String, Class<? extends DatabaseType>> DATABASE_TYPES = new Hashtable<String, Class<? extends DatabaseType>>();
+    private static final Map<String, Class<? extends DatabaseType>> DATABASE_TYPES = new Hashtable<String, Class<? extends DatabaseType>>();
 
     /**
      * This provides a map that keys JDBC URL protocols with their corresponding <code>java.sql.Driver</code> classes.
@@ -55,6 +57,19 @@ public class DatabaseTypeFactory {
      */
     private DatabaseTypeFactory() {
         // don't instantiate us from external
+    }
+
+    /**
+     * By default, this factory will remember what {@link DatabaseType} is associated with
+     * a specific connection class type. However, if you change the JDBC URL, its possible
+     * that this will also change the database type the connection class type should be
+     * associated with (i.e. the URL may point to a different version of the same vendor's
+     * database).  If you change the JDBC URL, you should call this method to clear the
+     * cache, thus enabling the factory to re-check the connection metadata to associate
+     * a new database type with the connection class type.  
+     */
+    public static void clearDatabaseTypeCache() {
+        DATABASE_TYPES.clear();
     }
 
     /**
@@ -125,6 +140,10 @@ public class DatabaseTypeFactory {
                     database_type_class = Postgresql7DatabaseType.class;
                 } else if (db_version.startsWith("8.3")) {
                     database_type_class = Postgresql83DatabaseType.class;
+                } else if (db_version.startsWith("8.2")) {
+                    database_type_class = Postgresql82DatabaseType.class;
+                } else if (db_version.startsWith("8.1")) {
+                    database_type_class = Postgresql81DatabaseType.class;
                 } else if (db_version.startsWith("8.")) {
                     database_type_class = Postgresql8DatabaseType.class;
                 }

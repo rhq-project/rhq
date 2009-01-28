@@ -138,6 +138,8 @@ public class ServerInformation {
             } else {
                 throw new Exception("Unsupported DB [" + db + "]");
             }
+
+            LOG.info("Database is supported: " + db);
         } finally {
             if (db != null) {
                 db.closeConnection(conn);

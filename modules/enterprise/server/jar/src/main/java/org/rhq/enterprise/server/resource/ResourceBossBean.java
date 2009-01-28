@@ -60,7 +60,7 @@ public class ResourceBossBean implements ResourceBossLocal {
         summary.setCompatibleGroupCount(groupManager.getResourceGroupCountByCategory(user, GroupCategory.COMPATIBLE));
         summary.setMixedGroupCount(groupManager.getResourceGroupCountByCategory(user, GroupCategory.MIXED));
 
-        summary.setGroupDefinitionCount(groupDefinitionManager.getGroupDefinitionCount());
+        summary.setGroupDefinitionCount(groupDefinitionManager.getGroupDefinitionCount(user));
 
         summary.setScheduledMeasurementsPerMinute(scheduleManager.getScheduledMeasurementsPerMinute());
 

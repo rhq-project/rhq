@@ -54,15 +54,15 @@ public interface GroupDefinitionManagerLocal {
     Integer calculateGroupMembership_helper(Subject subject, int groupDefinitionId, ExpressionEvaluator.Result result)
         throws GroupDefinitionNotFoundException, ResourceGroupUpdateException, GroupDefinitionNotFoundException;
 
-    PageList<ResourceGroupComposite> getManagedResourceGroups(int groupDefinitionId, PageControl pc);
+    PageList<ResourceGroupComposite> getManagedResourceGroups(Subject subject, int groupDefinitionId, PageControl pc);
 
-    PageList<GroupDefinition> getGroupDefinitions(PageControl pc);
+    PageList<GroupDefinition> getGroupDefinitions(Subject subject, PageControl pc);
 
-    int getGroupDefinitionCount();
+    int getGroupDefinitionCount(Subject subject);
 
-    int getAutoRecalculationGroupDefinitionCount();
+    int getAutoRecalculationGroupDefinitionCount(Subject subject);
 
-    int getDynaGroupCount();
+    int getDynaGroupCount(Subject subject);
 
     void removeGroupDefinition(Subject subject, Integer groupDefinitionId) throws GroupDefinitionNotFoundException,
         GroupDefinitionDeleteException;

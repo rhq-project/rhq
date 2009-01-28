@@ -29,6 +29,7 @@ import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -116,15 +117,19 @@ public class GroupDefinitionRecalculationThreadMonitor implements GroupDefinitio
     }
 
     public long getGroupDefinitionCount() {
-        return LookupUtil.getGroupDefinitionManager().getGroupDefinitionCount();
+        return LookupUtil.getGroupDefinitionManager().getGroupDefinitionCount(getOverlord());
     }
 
     public long getAutoRecalculatingGroupDefinitionCount() {
-        return LookupUtil.getGroupDefinitionManager().getAutoRecalculationGroupDefinitionCount();
+        return LookupUtil.getGroupDefinitionManager().getAutoRecalculationGroupDefinitionCount(getOverlord());
     }
 
     public long getDynaGroupCount() {
-        return LookupUtil.getGroupDefinitionManager().getDynaGroupCount();
+        return LookupUtil.getGroupDefinitionManager().getDynaGroupCount(getOverlord());
+    }
+
+    private Subject getOverlord() {
+        return LookupUtil.getSubjectManager().getOverlord();
     }
 
     public long getAutoRecalculationThreadTime() {

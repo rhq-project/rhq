@@ -46,6 +46,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -81,6 +82,9 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
     @EJB
     private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private AuthorizationManagerLocal authorizationManager;
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -374,7 +378,9 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     }
 
     @SuppressWarnings( { "unchecked" })
-    public PageList<ResourceGroupComposite> getManagedResourceGroups(int groupDefinitionId, PageControl pc) {
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<ResourceGroupComposite> getManagedResourceGroups(Subject subject, int groupDefinitionId,
+        PageControl pc) {
         pc.initDefaultOrderingField("rg.name");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, GroupDefinition.QUERY_FIND_MEMBERS, pc);
@@ -390,31 +396,42 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     }
 
     @SuppressWarnings( { "unchecked" })
-    public PageList<GroupDefinition> getGroupDefinitions(PageControl pc) {
+    public PageList<GroupDefinition> getGroupDefinitions(Subject subject, PageControl pc) {
         pc.initDefaultOrderingField("gd.name");
+        if (authorizationManager.isInventoryManager(subject)) {
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, GroupDefinition.QUERY_FIND_ALL, pc);
-        List<GroupDefinition> results = query.getResultList();
+            Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, GroupDefinition.QUERY_FIND_ALL, pc);
+            List<GroupDefinition> results = query.getResultList();
 
-        int count = getGroupDefinitionCount();
+            int count = getGroupDefinitionCount(subject);
 
-        return new PageList<GroupDefinition>(results, (int) count, pc);
+            return new PageList<GroupDefinition>(results, count, pc);
+        } else {
+            return new PageList<GroupDefinition>(pc);
+        }
     }
 
-    public int getGroupDefinitionCount() {
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager, GroupDefinition.QUERY_FIND_ALL);
-        long count = (Long) queryCount.getSingleResult();
-        return (int) count;
+    public int getGroupDefinitionCount(Subject subject) {
+        if (authorizationManager.isInventoryManager(subject)) {
+            Query queryCount = PersistenceUtility.createCountQuery(entityManager, GroupDefinition.QUERY_FIND_ALL);
+            long count = (Long) queryCount.getSingleResult();
+            return (int) count;
+        } else {
+            // instead of throwing an authorization exception, gracefully return 0
+            return 0;
+        }
     }
 
-    public int getAutoRecalculationGroupDefinitionCount() {
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public int getAutoRecalculationGroupDefinitionCount(Subject subject) {
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,
             GroupDefinition.QUERY_FIND_ALL_RECALCULATING);
         long count = (Long) queryCount.getSingleResult();
         return (int) count;
     }
 
-    public int getDynaGroupCount() {
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public int getDynaGroupCount(Subject subject) {
         Query queryCount = PersistenceUtility.createCountQuery(entityManager, GroupDefinition.QUERY_FIND_ALL_MEMBERS);
         long count = (Long) queryCount.getSingleResult();
         return (int) count;

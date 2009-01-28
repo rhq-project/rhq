@@ -23,6 +23,7 @@ import javax.faces.model.DataModel;
 
 import org.jetbrains.annotations.NotNull;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -116,11 +117,12 @@ public class GroupDefinitionUIBean extends PagedDataTableUIBean {
 
         @Override
         public PageList<ResourceGroupComposite> fetchPage(PageControl pc) {
+            Subject user = getSubject();
             int groupDefinitionId = groupDefinition.getId();
 
             GroupDefinitionManagerLocal groupDefinitionManager = LookupUtil.getGroupDefinitionManager();
 
-            return groupDefinitionManager.getManagedResourceGroups(groupDefinitionId, pc);
+            return groupDefinitionManager.getManagedResourceGroups(user, groupDefinitionId, pc);
         }
     }
 }

@@ -71,7 +71,7 @@
          <b>Recursive: </b> #{ResourceGroupUIBean.recursive}
       </h:panelGroup>
       
-      <h:panelGroup layout="block" rendered="#{!empty ResourceGroupUIBean.groupDefinition}" >
+      <h:panelGroup layout="block" rendered="#{!empty ResourceGroupUIBean.groupDefinition and GlobalPermissionsUIBean.inventory}" >
          <b>Group Definition: </b>
          <h:outputLink value="/rhq/definition/group/view.xhtml">
             <f:param name="groupDefinitionId" value="#{ResourceGroupUIBean.groupDefinition.id}"/>

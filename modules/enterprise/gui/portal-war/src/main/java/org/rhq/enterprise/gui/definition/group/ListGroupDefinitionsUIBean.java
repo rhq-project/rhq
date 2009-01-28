@@ -57,7 +57,9 @@ public class ListGroupDefinitionsUIBean extends PagedDataTableUIBean {
 
         @Override
         public PageList<GroupDefinition> fetchPage(PageControl pc) {
-            PageList<GroupDefinition> groupDefinitions = LookupUtil.getGroupDefinitionManager().getGroupDefinitions(pc);
+            Subject user = getSubject();
+            PageList<GroupDefinition> groupDefinitions = LookupUtil.getGroupDefinitionManager().getGroupDefinitions(
+                user, pc);
             for (GroupDefinition definition : groupDefinitions) {
                 // prepare for nicer display in the browser
                 if (definition.getExpression() != null) {

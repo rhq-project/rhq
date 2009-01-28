@@ -66,7 +66,10 @@ import org.rhq.core.domain.resource.Resource;
         + "     FROM ResourceConfigurationUpdate cu " //
         + "     JOIN cu.resource res " //
         + "LEFT JOIN res.parentResource parent " //
-        + "    WHERE (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
+        + "    WHERE (cu.modifiedTime <> (SELECT MIN(icu.modifiedTime) " // 
+        + "                                 FROM ResourceConfigurationUpdate icu " //
+        + "                                WHERE icu.resource.id = res.id))" //
+        + "      AND (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
         + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
         + "      AND (cu.createdTime > :startTime OR :startTime IS NULL) " //
         + "      AND (cu.modifiedTime < :endTime OR :endTime IS NULL) " //
@@ -81,6 +84,9 @@ import org.rhq.core.domain.resource.Resource;
         + "    WHERE res.id IN ( SELECT rr.id FROM Resource rr " //
         + "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
         + "                       WHERE s.id = :subjectId ) " //
+        + "      AND (cu.modifiedTime <> (SELECT MIN(icu.modifiedTime) " // 
+        + "                                 FROM ResourceConfigurationUpdate icu " //
+        + "                                WHERE icu.resource.id = res.id))" //
         + "      AND (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
         + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
         + "      AND (cu.createdTime > :startTime OR :startTime IS NULL) " //

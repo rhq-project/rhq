@@ -284,7 +284,7 @@ public class DBSetupCombiner extends BaseFileSetTask {
             int possibleMatchLen;
 
             for (int i = 0; i < orderList.size(); i++) {
-                possibleMatch = orderList.get(i).toString();
+                possibleMatch = orderList.get(i);
                 possibleMatchLen = possibleMatch.length();
 
                 if (fname.startsWith(possibleMatch) && (possibleMatchLen > lengthOfLongestMatch)) {

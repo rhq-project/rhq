@@ -218,11 +218,11 @@
                 <h:outputText value="Logged in as #{UserPreferencesUIBean.subject.name}"/>
             </h:panelGroup>
         </f:facet>
-        <rich:menuItem submitMode="none" onclick="window.location = '/admin/user/UserAdmin.do?mode=edit&amp;u=2'">
+        <rich:menuItem submitMode="none" onclick="window.location = '/admin/user/UserAdmin.do?mode=edit&amp;u=#{UserPreferencesUIBean.subject.id}'">
             <h:outputText value="Edit Details"/>
         </rich:menuItem>
 
-        <rich:menuItem submitMode="none" onclick="window.location = '/admin/user/UserAdmin.do?mode=editPass&amp;u=2'">
+        <rich:menuItem submitMode="none" onclick="window.location = '/admin/user/UserAdmin.do?mode=editPass&amp;u=#{UserPreferencesUIBean.subject.id}'">
             <h:outputText value="Change Password"/>
         </rich:menuItem>
 

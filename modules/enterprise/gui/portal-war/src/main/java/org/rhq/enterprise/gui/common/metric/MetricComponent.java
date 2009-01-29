@@ -22,10 +22,6 @@ import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
 
 import org.rhq.core.gui.util.FacesComponentUtility;
-import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.measurement.MeasurementPreferences;
-import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 
 /**
  * @author Fady Matar
@@ -37,20 +33,18 @@ public class MetricComponent extends UIComponentBase {
     public final static String OPTION_LIST_ATTRIBUTE = "optionList";
 
     public enum TimeUnit {
-        MINUTES("Minutes", "m", 2, 60000L), //
-        HOURS("Hours", "h", 3, 3600000L), //
-        DAYS("Days", "d", 4, 86400000L);
+        MINUTES("Minutes", "m", 2), //
+        HOURS("Hours", "h", 3), //
+        DAYS("Days", "d", 4);
 
         private String displayName;
         private String optionListToken;
         private int metricUnitOrdinal;
-        private long millisInUnit;
 
-        private TimeUnit(String displayName, String optionListToken, int ordinal, long millisInUnit) {
+        private TimeUnit(String displayName, String optionListToken, int ordinal) {
             this.displayName = displayName;
             this.optionListToken = optionListToken;
             this.metricUnitOrdinal = ordinal;
-            this.millisInUnit = millisInUnit;
         }
 
         public String getDisplayName() {
@@ -75,44 +69,14 @@ public class MetricComponent extends UIComponentBase {
             throw new IllegalArgumentException("'" + ordinal + "' is not a recognized Metric ordinal value");
         }
 
-        public long getMillisInUnit() {
-            return millisInUnit;
-        }
-
         public int getMetricUntilOrdinal() {
             return metricUnitOrdinal;
         }
 
     }
 
-    private int value;
-    private String unit;
     private String optionList;
     private TimeUnit[] unitOptions;
-
-    public MetricComponent() {
-        WebUser user = EnterpriseFacesContextUtility.getWebUser();
-        MeasurementPreferences preferences = user.getMeasurementPreferences();
-        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
-        value = rangePreferences.lastN;
-        unit = TimeUnit.getUnitByMetricOrdinal(rangePreferences.unit).name();
-    }
-
-    public int getValue() {
-        return value;
-    }
-
-    public void setValue(int value) {
-        this.value = value;
-    }
-
-    public String getUnit() {
-        return unit;
-    }
-
-    public void setUnit(String unit) {
-        this.unit = unit;
-    }
 
     public String getOptionList() {
         if (optionList == null) {
@@ -141,10 +105,6 @@ public class MetricComponent extends UIComponentBase {
         this.unitOptions = unitOptions;
     }
 
-    public long getMillis() {
-        return value * TimeUnit.valueOf(unit).getMillisInUnit();
-    }
-
     public static final String COMPONENT_TYPE = "org.jboss.on.Metric";
     public static final String COMPONENT_FAMILY = "org.jboss.on.Time";
 
@@ -155,12 +115,10 @@ public class MetricComponent extends UIComponentBase {
 
     @Override
     public Object saveState(FacesContext facesContext) {
-        Object[] state = new Object[5];
+        Object[] state = new Object[3];
         state[0] = super.saveState(facesContext);
-        state[1] = this.value;
-        state[2] = this.unit;
-        state[3] = this.optionList;
-        state[4] = this.unitOptions;
+        state[1] = this.optionList;
+        state[2] = this.unitOptions;
         return state;
     }
 
@@ -168,9 +126,7 @@ public class MetricComponent extends UIComponentBase {
     public void restoreState(FacesContext context, Object stateValues) {
         Object[] state = (Object[]) stateValues;
         super.restoreState(context, state[0]);
-        this.value = (Integer) state[1];
-        this.unit = (String) state[2];
-        this.optionList = (String) state[3];
-        this.unitOptions = (TimeUnit[]) state[4];
+        this.optionList = (String) state[1];
+        this.unitOptions = (TimeUnit[]) state[2];
     }
 }

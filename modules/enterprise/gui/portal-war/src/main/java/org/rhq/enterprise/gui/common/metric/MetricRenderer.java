@@ -32,7 +32,6 @@ import javax.faces.render.Renderer;
 
 import com.sun.faces.util.MessageUtils;
 
-import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.metric.MetricComponent.TimeUnit;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -61,24 +60,6 @@ public class MetricRenderer extends Renderer {
         if (!component.isRendered()) {
             return;
         }
-
-        MetricComponent metric;
-        if (component instanceof MetricComponent) {
-            metric = (MetricComponent) component;
-        } else {
-            return;
-        }
-        metric.setValue(getMetricValue());
-        metric.setUnit(getMetricUnit());
-
-    }
-
-    public int getMetricValue() {
-        return FacesContextUtility.getOptionalRequestParameter(MetricComponent.VALUE, Integer.class, -1);
-    }
-
-    public String getMetricUnit() {
-        return FacesContextUtility.getOptionalRequestParameter(MetricComponent.UNIT, String.class, null);
     }
 
     @Override
@@ -115,7 +96,7 @@ public class MetricRenderer extends Renderer {
             for (int timeIntervalOption : timeIntervals) {
                 writer.startElement("option", metric);
                 writer.writeAttribute("value", timeIntervalOption, MetricComponent.VALUE);
-                if (timeIntervalOption == metric.getValue()) {
+                if (timeIntervalOption == lastN) {
                     writer.writeAttribute("SELECTED", "SELECTED", null);
                 }
                 writer.write(String.valueOf(timeIntervalOption));
@@ -128,10 +109,11 @@ public class MetricRenderer extends Renderer {
             writer.startElement("select", metric);
             writer.writeAttribute("id", MetricComponent.UNIT, null);
             writer.writeAttribute("name", MetricComponent.UNIT, null);
+            TimeUnit preferencesUnit = TimeUnit.getUnitByMetricOrdinal(rangePreferences.unit);
             for (TimeUnit unit : metric.getUnitOptions()) {
                 writer.startElement("option", metric);
                 writer.writeAttribute("value", unit.name(), MetricComponent.UNIT);
-                if (unit.name().equals(metric.getUnit())) {
+                if (unit.name().equals(preferencesUnit)) {
                     writer.writeAttribute("SELECTED", "SELECTED", null);
                 }
                 writer.write(unit.getDisplayName());

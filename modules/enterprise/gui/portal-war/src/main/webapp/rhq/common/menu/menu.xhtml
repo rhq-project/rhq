@@ -189,11 +189,9 @@
 
         <rich:menuSeparator/>
 
-        <rich:menuItem submitMode="none">
-            <h:outputLink value="#" id="link">
+        <rich:menuItem submitMode="none" id="aboutLink">
                 <h:outputText value="#{msg['header.about.link']}"/>
-                <rich:componentControl for="aboutPanel" attachTo="link" operation="show" event="onclick"/>
-            </h:outputLink>
+                <rich:componentControl for="aboutPanel" attachTo="aboutLink" operation="show" event="onclick"/>
         </rich:menuItem>
     </rich:dropDownMenu>
 
@@ -223,7 +221,7 @@
         </rich:menuItem>
 
         <rich:menuItem submitMode="none" onclick="window.location = '/admin/user/UserAdmin.do?mode=editPass&amp;u=#{UserPreferencesUIBean.subject.id}'">
-            <h:outputText value="Change Password"/>
+            <h:outputText value="Chiixange Password"/>
         </rich:menuItem>
 
         <rich:menuSeparator/>

@@ -24,6 +24,7 @@
 package org.jboss.on.plugins.tomcat;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -58,6 +59,8 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
      * Indicates the version information could not be determined.
      */
     public static final String UNKNOWN_VERSION = "Unknown Version";
+    public static final String PROPERTY_CATALINA_BASE = "-Dcatalina.base=";
+    public static final String PROPERTY_CATALINA_HOME = "-Dcatalina.home=";
 
     /**
      * Formal name used to identify the server.
@@ -88,11 +91,6 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
      */
     private static final String EWS_TOMCAT_6 = "tomcat6";
     private static final String EWS_TOMCAT_5 = "tomcat5";
-
-    /**
-     * Plugin configuration property name.
-     */
-    private static final String PROP_JMX_URL = "jmxUrl";
 
     @SuppressWarnings("unchecked")
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
@@ -139,14 +137,13 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
         ProcessInfo processInfo = autoDiscoveryResult.getProcessInfo();
         SystemInfo systemInfo = context.getSystemInformation();
         String[] commandLine = processInfo.getCommandLine();
+        String installationPath = determineInstallationPath(commandLine);
 
-        if (!isStandalone(commandLine)) {
+        if (null == installationPath) {
             log.info("Ignoring embedded tomcat instance with following command line, ignoring: " + Arrays.toString(commandLine));
             return null;
         }
 
-        String[] classpath = determineClassPath(commandLine);
-        String installationPath = determineInstallationPath(classpath);
         TomcatConfig tomcatConfig = parseTomcatConfig(installationPath);
 
         // Create pieces necessary for the resource creation
@@ -164,23 +161,6 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), resourceKey, resourceName, resourceVersion, productDescription, pluginConfiguration, processInfo);
 
         return resource;
-    }
-
-    /**
-     * Check from the command line if this is a standalone tomcat
-     *
-     * @param  commandLine
-     *
-     * @return
-     */
-    private boolean isStandalone(String[] commandLine) {
-        for (String item : commandLine) {
-            if (item.contains("catalina.home")) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -211,46 +191,37 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
     }
 
     /**
-     * Searches through the command line arguments for the classpath setting.
+     * Looks for tomcat home in the command line properties
      *
-     * @param  arguments command line arguments passed to the java process
-     *
-     * @return array of entries in the classpath; <code>null</code> if the classpath is not specified using -cp or
-     *         -classpath
-     */
-    private String[] determineClassPath(String[] arguments) {
-        for (int ii = 0; ii < (arguments.length - 1); ii++) {
-            String arg = arguments[ii];
-            if ("-cp".equals(arg) || "-classpath".equals(arg)) {
-                String[] classpath = arguments[ii + 1].split(File.pathSeparator);
-                return classpath;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Looks for a known JAR in the classpath to determine the installation path of the Tomcat instance.
-     *
-     * @param  classpath classpath of the java call
+     * @param startup command line
      *
      * @return
      */
-    private String determineInstallationPath(String[] classpath) {
-        for (String classpathEntry : classpath) {
-            if (classpathEntry.endsWith("bootstrap.jar")) {
-                // Directory of bootstrap.jar
-                String installationPath = classpathEntry.substring(0, classpathEntry.lastIndexOf(File.separatorChar));
+    private String determineInstallationPath(String[] cmdLine) {
+        String result = null;
 
-                // bootstrap.jar is in the /bin directory, so move one directory up
-                installationPath = installationPath.substring(0, installationPath.lastIndexOf(File.separatorChar));
-
-                return installationPath;
+        for (int i = 0; i < cmdLine.length; ++i) {
+            String line = cmdLine[i];
+            if (line.startsWith(PROPERTY_CATALINA_HOME)) {
+                result = line.substring(PROPERTY_CATALINA_HOME.length());
+                break;
+            }
+            // older versions may have only this property defined
+            if (line.startsWith(PROPERTY_CATALINA_BASE)) {
+                result = line.substring(PROPERTY_CATALINA_BASE.length());
+                break;
             }
         }
 
-        return null;
+        if (null != result) {
+            try {
+                result = new File(result).getCanonicalPath();
+            } catch (IOException e) {
+                log.warn("Unexpected standalone Tomcat installation path: " + result);
+            }
+        }
+
+        return result;
     }
 
     /**

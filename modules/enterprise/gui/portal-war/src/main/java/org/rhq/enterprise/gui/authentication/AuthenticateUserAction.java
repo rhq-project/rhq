@@ -18,21 +18,23 @@
  */
 package org.rhq.enterprise.gui.authentication;
 
-import java.rmi.ServerException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
@@ -116,7 +118,7 @@ public class AuthenticateUserAction extends TilesAction {
             }
 
             webUser = new WebUser(subject, sessionId, logonForm.getJ_password(), hasPrincipal);
-        } catch (ServerException e) {
+        } catch (Exception e) {
             String msg = e.getMessage().toLowerCase();
             if ((msg.indexOf("username") >= 0) || (msg.indexOf("password") >= 0)) {
                 request.setAttribute(Constants.LOGON_STATUS, "login.info.bad");

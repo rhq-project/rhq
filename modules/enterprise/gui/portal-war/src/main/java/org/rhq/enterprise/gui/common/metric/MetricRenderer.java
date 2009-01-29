@@ -108,7 +108,7 @@ public class MetricRenderer extends Renderer {
             for (TimeUnit unit : metric.getUnitOptions()) {
                 writer.startElement("option", metric);
                 writer.writeAttribute("value", unit.name(), MetricComponent.UNIT);
-                if (unit.name().equals(preferencesUnit)) {
+                if (unit.equals(preferencesUnit)) {
                     writer.writeAttribute("SELECTED", "SELECTED", null);
                 }
                 writer.write(unit.getDisplayName());

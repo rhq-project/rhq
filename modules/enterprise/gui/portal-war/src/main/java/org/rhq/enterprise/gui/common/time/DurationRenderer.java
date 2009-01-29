@@ -93,7 +93,7 @@ public class DurationRenderer extends Renderer {
         for (TimeUnit unit : duration.getUnitOptions()) {
             writer.startElement("option", duration);
             writer.writeAttribute("value", unit.name(), null);
-            if (unit.name() == duration.getUnit()) {
+            if (unit.name().equals(duration.getUnit())) {
                 writer.writeAttribute("SELECTED", "SELECTED", null);
             }
             writer.write(unit.getDisplayName());

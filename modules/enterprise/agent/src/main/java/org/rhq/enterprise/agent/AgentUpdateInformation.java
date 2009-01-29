@@ -25,13 +25,13 @@ import org.apache.maven.artifact.versioning.ComparableVersion;
 /**
  * Encapsulates all the version information known about the agent update
  * and the current agent.
- * 
+ *
  * @author John Mazzitelli
  */
 public class AgentUpdateInformation {
-    private final String AGENT_UPDATE_BINARY_MD5 = "rhq-agent.latest.md5";
-    private final String AGENT_UPDATE_BINARY_VERSION = "rhq-agent.latest.version";
-    private final String AGENT_UPDATE_BINARY_BUILD = "rhq-agent.latest.build-number";
+    private final static String AGENT_UPDATE_BINARY_MD5 = "rhq-agent.latest.md5";
+    private final static String AGENT_UPDATE_BINARY_VERSION = "rhq-agent.latest.version";
+    private final static String AGENT_UPDATE_BINARY_BUILD = "rhq-agent.latest.build-number";
 
     private final String agentVersion;
     private final String agentBuild;
@@ -42,7 +42,7 @@ public class AgentUpdateInformation {
 
     /**
      * Builds the information object.
-     * 
+     *
      * @param updateProps properties known about the agent update. This information
      *                              must be retrieved from the server.
      */
@@ -67,7 +67,7 @@ public class AgentUpdateInformation {
      * Returns <code>true</code> if the {@link #getAgentVersion() current agent's version}
      * is lower than the {@link #getUpdateVersion() update's version}.
      * This method does not compare build numbers - see {@link #isAgentOutOfDateStrict()} for that.
-     * 
+     *
      * @return <code>true</code> if the agent's version is older than the update's version
      */
     public boolean isAgentOutOfDate() {
@@ -85,9 +85,9 @@ public class AgentUpdateInformation {
      * number could not be determined or is invalid, they will be ignored which causes this
      * method to return <code>false</code> since the version strings must be equal for this method
      * to even look at the build numbers.
-     * 
+     *
      * To compare only version strings and ignore build numbers, see {@link #isAgentOutOfDate()}.
-     * 
+     *
      * @return <code>true</code> if the agent's version/build is older than the update's version/build
      */
     public boolean isAgentOutOfDateStrict() {

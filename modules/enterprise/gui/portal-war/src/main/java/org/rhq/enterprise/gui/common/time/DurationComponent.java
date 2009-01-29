@@ -71,6 +71,11 @@ public class DurationComponent extends UIComponentBase {
     private String optionList;
     private TimeUnit[] unitOptions;
 
+    public DurationComponent() {
+        // default selected unit
+        unit = TimeUnit.MINUTES.name();
+    }
+
     public int getValue() {
         return value;
     }
@@ -121,10 +126,12 @@ public class DurationComponent extends UIComponentBase {
     public static final String COMPONENT_TYPE = "org.jboss.on.Duration";
     public static final String COMPONENT_FAMILY = "org.jboss.on.Time";
 
+    @Override
     public String getFamily() {
         return COMPONENT_FAMILY;
     }
 
+    @Override
     public Object saveState(FacesContext facesContext) {
         Object[] state = new Object[5];
         state[0] = super.saveState(facesContext);
@@ -135,6 +142,7 @@ public class DurationComponent extends UIComponentBase {
         return state;
     }
 
+    @Override
     public void restoreState(FacesContext context, Object stateValues) {
         Object[] state = (Object[]) stateValues;
         super.restoreState(context, state[0]);

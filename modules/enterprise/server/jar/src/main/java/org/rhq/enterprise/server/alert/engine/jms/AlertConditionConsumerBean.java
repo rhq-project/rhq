@@ -36,7 +36,7 @@ import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
 
 /**
  * Use the default message provider
- * 
+ *
  * @author Joseph Marques
  */
 @MessageDriven(activationConfig = {
@@ -44,7 +44,7 @@ import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
     @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/AlertConditionQueue"),
     @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
     @ActivationConfigProperty(propertyName = "subscriptionDurability", propertyValue = "NonDurable") })
-public final class AlertConditionConsumerBean implements MessageListener {
+public class AlertConditionConsumerBean implements MessageListener {
 
     private final Log log = LogFactory.getLog(AlertConditionConsumerBean.class);
 
@@ -65,7 +65,8 @@ public final class AlertConditionConsumerBean implements MessageListener {
 
         AlertDefinition definition = null;
         try {
-            log.debug("Received message: " + conditionMessage);
+            if (log.isDebugEnabled())
+                log.debug("Received message: " + conditionMessage);
 
             int alertConditionId = conditionMessage.getAlertConditionId();
             definition = alertConditionManager.getAlertDefinitionByConditionIdInNewTransaction(alertConditionId);
@@ -77,7 +78,7 @@ public final class AlertConditionConsumerBean implements MessageListener {
 
             AlertSerializer.getSingleton().lock(definition.getId());
 
-            /* 
+            /*
              * must be executed in a new, nested transaction so that by it
              * completes and unlocks, the next thread will see all of its results
              */

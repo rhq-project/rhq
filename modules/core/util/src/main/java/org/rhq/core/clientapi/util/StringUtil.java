@@ -51,7 +51,7 @@ public class StringUtil {
             return source;
         }
 
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         int idx;
         int fromIndex;
@@ -84,7 +84,7 @@ public class StringUtil {
         String retVal = null;
         int sourceLen = source.length();
         int findLen = find.length();
-        StringBuffer remove = new StringBuffer(source);
+        StringBuilder remove = new StringBuilder(source);
 
         try {
             if ((sourceLen > 0) && (findLen > 0)) {
@@ -129,7 +129,7 @@ public class StringUtil {
      */
     public static String iteratorToString(Iterator i, String delim, String quoteChar) {
         Object elt = null;
-        StringBuffer rstr = new StringBuffer();
+        StringBuilder rstr = new StringBuilder();
         String s;
 
         while (i.hasNext()) {
@@ -233,16 +233,16 @@ public class StringUtil {
             return "null";
         }
 
-        String rstr = "";
+        StringBuilder rstr = new StringBuilder();
         for (int i = 0; i < array.length; i++) {
             if (i > 0) {
-                rstr += delim;
+                rstr.append(delim);
             }
 
-            rstr += array[i];
+            rstr.append(array[i]);
         }
 
-        return rstr;
+        return rstr.toString();
     }
 
     /**
@@ -253,16 +253,16 @@ public class StringUtil {
             return "null";
         }
 
-        String rstr = "";
+        StringBuilder rstr = new StringBuilder();
         for (int i = 0; i < array.length; i++) {
             if (i > 0) {
-                rstr += ",";
+                rstr.append(",");
             }
 
-            rstr += array[i];
+            rstr.append(array[i]);
         }
 
-        return rstr;
+        return rstr.toString();
     }
 
     /**
@@ -274,11 +274,12 @@ public class StringUtil {
      * @return A string with objects in the list seperated by delim
      */
     public static String implode(List objs, String delim) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         int size = objs.size();
 
         for (int i = 0; i < (size - 1); i++) {
-            buf.append(objs.get(i).toString() + delim);
+            buf.append(objs.get(i).toString());
+            buf.append( delim);
         }
 
         if (size != 0) {
@@ -481,7 +482,7 @@ public class StringUtil {
 
         millis = (double) duration / 1000;
 
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
 
         if ((hours > 0) || (minDigits == false)) {
             buf.append(((hours < 10) && (minDigits == false)) ? ("0" + hours) : String.valueOf(hours)).append(':');

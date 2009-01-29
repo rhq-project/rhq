@@ -22,7 +22,6 @@
   <tr>
     <td width="20%" class="BlockLabel"><fmt:message key="admin.home.Users"/></td>
     <td width="30%" class="BlockContent"><html:link page="/admin/user/UserAdmin.do?mode=list"><fmt:message key="admin.home.ListUsers"/></html:link></td>
-
     <td width="20%" class="BlockLabel"><fmt:message key="admin.home.Roles"/></td>
     <td width="30%" class="BlockContent"><html:link page="/admin/role/RoleAdmin.do?mode=list"><fmt:message key="admin.home.ListRoles"/></html:link></td>
   </tr>
@@ -31,9 +30,6 @@
     <td width="30%" class="BlockContent"><html:link page="/admin/user/UserAdmin.do?mode=new"><fmt:message key="admin.home.NewUser"/></html:link></td>
     <td width="20%" class="BlockLabel">&nbsp;</td>
     <td width="30%" class="BlockContent"><html:link page="/admin/role/RoleAdmin.do?mode=new"><fmt:message key="admin.home.NewRole"/></html:link></td>
-  </tr>
-  <tr>
-    <td colspan="4" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>
 </table>
 <!--  /  -->
@@ -78,9 +74,6 @@
       <td width="30%" class="BlockContent"><html:link page="/rhq/admin/largeenv.xhtml"><fmt:message key="admin.home.LargeEnvironmentLink"/></html:link></td>
    </tr>
 --%>   
-   <tr>
-      <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
-   </tr>
 </table>
 </hq:authorization>
 <!--  /  -->
@@ -106,9 +99,6 @@
       <td width="20%" class="BlockLabel"></td>
       <td width="30%" class="BlockContent"><html:link page="/rhq/content/listChannels.xhtml"><fmt:message key="admin.home.Content.ListChannels"/></html:link></td>
    </tr>
-   <tr>
-      <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
-   </tr>
 </table>
 </hq:authorization>
 <!--  /  -->
@@ -125,10 +115,6 @@
 
 <!--  HIGH AVAILABILITY -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
-    <tr>
-      <td width="20%" class="BlockLabel">Server Timezone:</td>
-      <td width="30%" class="BlockContent"><%= java.util.TimeZone.getDefault().getDisplayName()%></td>
-   </tr>
    <tr>
       <td width="20%" class="BlockLabel"></td>
       <td width="30%" class="BlockContent"><html:link page="/rhq/ha/listServers.xhtml"><fmt:message key="admin.home.Ha.ListServers"/></html:link></td>
@@ -144,9 +130,6 @@
    <tr>
       <td width="20%" class="BlockLabel"></td>
       <td width="30%" class="BlockContent"><html:link page="/rhq/ha/listPartitionEvents.xhtml"><fmt:message key="admin.home.Ha.ListPartitionEvents"/></html:link></td>
-   </tr>
-   <tr>
-      <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
    </tr>
 </table>
 </hq:authorization>
@@ -170,9 +153,6 @@
    <tr>
       <td width="20%" class="BlockLabel"></td>
       <td width="30%" class="BlockContent"><html:link page="/agentupdate/download"><fmt:message key="admin.home.AgentUpdateBinary.download"/></html:link></td>
-   </tr>
-   <tr>
-      <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
    </tr>
 </table>
 <!--  /  -->

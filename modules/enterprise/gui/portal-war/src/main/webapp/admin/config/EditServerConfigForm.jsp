@@ -30,9 +30,13 @@
   </logic:messagesPresent>
 
 <!--  BASE SERVER CONFIG TITLE -->
+  <tr>
+    <td colspan="4" class="BlockHeader">
 <tiles:insert definition=".header.tab">
   <tiles:put name="tabKey" value="admin.settings.BaseConfigTab"/>
 </tiles:insert>
+    </td>
+  </tr>
 <!--  /  -->
 
 <!--  BASE SERVER CONFIG CONTENTS -->
@@ -105,9 +109,6 @@
     </td>
     <td class="BlockLabel"></td>
     <td class="BlockContent"></td>
-  </tr>
-  <tr>
-    <td colspan="4" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>
 <!--  /  -->
 
@@ -448,9 +449,6 @@
     <td class="BlockContent"></td>
   </tr>
 
-  <tr>
-    <td colspan="4" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
-  </tr>
 </table>
 
 <!--  BASELINE CONFIG TITLE -->
@@ -565,6 +563,132 @@
       </table>
     </td>
   </tr>
+
+<!--  SYSTEM-WIDE TITLE -->
+  <tr>
+    <td colspan="4" class="BlockHeader">
+<tiles:insert definition=".header.tab">
+  <tiles:put name="tabKey" value="admin.settings.SystemTab"/>
+</tiles:insert>
+    </td>
+  </tr>
+<!--  /  -->
+
+<%
+
+   org.rhq.enterprise.server.util.SystemInformation info = org.rhq.enterprise.server.util.SystemInformation.getInstance();
+
+%>
+<!--  SYSTEM-WIDE CONTENTS -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="BlockLabel"><fmt:message key="admin.settings.TimeZone"/></td>
+    <td class="BlockLabel">
+      <table cellpadding="0" cellspacing="4" border="0">
+        <tr>
+          <td nowrap="nowrap" align="left"><%= java.util.TimeZone.getDefault().getDisplayName()%></td>
+        </tr>
+      </table>
+    </td>
+    <td class="BlockLabel"></td>
+    <td class="BlockContent"></td>
+  </tr>
+  <tr>
+    <td class="BlockLabel"><fmt:message key="admin.settings.System.DatabaseURL"/></td>
+    <td class="BlockLabel">
+      <table cellpadding="0" cellspacing="4" border="0">
+        <tr>
+          <td nowrap="nowrap" align="left"><%= info.getDatabaseConnectionURL() %></td>
+        </tr>
+      </table>
+    </td>
+    <td class="BlockLabel"></td>
+    <td class="BlockContent"></td>
+  </tr>
+  <tr>
+    <td class="BlockLabel"><fmt:message key="admin.settings.System.DatabaseProductName"/></td>
+    <td class="BlockLabel">
+      <table cellpadding="0" cellspacing="4" border="0">
+        <tr>
+          <td nowrap="nowrap" align="left"><%= info.getDatabaseProductName() %></td>
+        </tr>
+      </table>
+    </td>
+    <td class="BlockLabel"></td>
+    <td class="BlockContent"></td>
+  </tr>
+  <tr>
+    <td class="BlockLabel"><fmt:message key="admin.settings.System.DatabaseProductVersion"/></td>
+    <td class="BlockLabel">
+      <table cellpadding="0" cellspacing="4" border="0">
+        <tr>
+          <td nowrap="nowrap" align="left"><%= info.getDatabaseProductVersion() %></td>
+        </tr>
+      </table>
+    </td>
+    <td class="BlockLabel"></td>
+    <td class="BlockContent"></td>
+  </tr>
+  <tr>
+    <td class="BlockLabel"><fmt:message key="admin.settings.System.DatabaseDriverName"/></td>
+    <td class="BlockLabel">
+      <table cellpadding="0" cellspacing="4" border="0">
+        <tr>
+          <td nowrap="nowrap" align="left"><%= info.getDatabaseDriverName() %></td>
+        </tr>
+      </table>
+    </td>
+    <td class="BlockLabel"></td>
+    <td class="BlockContent"></td>
+  </tr>
+  <tr>
+    <td class="BlockLabel"><fmt:message key="admin.settings.System.DatabaseDriverVersion"/></td>
+    <td class="BlockLabel">
+      <table cellpadding="0" cellspacing="4" border="0">
+        <tr>
+          <td nowrap="nowrap" align="left"><%= info.getDatabaseDriverVersion() %></td>
+        </tr>
+      </table>
+    </td>
+    <td class="BlockLabel"></td>
+    <td class="BlockContent"></td>
+  </tr>
+  <tr>
+    <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.System.RawTable"/></td>
+    <td width="30%" class="BlockLabel">
+      <table cellpadding="0" cellspacing="4" border="0">
+        <tr>
+          <td nowrap="nowrap" align="left"><%= org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility.getCurrentRawTable() %></td>
+        </tr>
+      </table>
+    </td>
+    <td width="20%" class="BlockLabel"></td>
+    <td width="30%" class="BlockContent">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td nowrap="nowrap" class="BlockContent" colspan="2">
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td class="BlockLabel"><fmt:message key="admin.settings.System.RotationTime"/></td>
+    <td class="BlockLabel">
+      <table cellpadding="0" cellspacing="4" border="0">
+        <tr>
+          <td nowrap="nowrap" align="left"><%= org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility.getNextRotationTime() %></td>
+        </tr>
+      </table>
+    </td>
+    <td class="BlockLabel"></td>
+    <td class="BlockContent"></td>
+  </tr>
+<!--  /  -->
+
+
+
+
 
 </table>
 <!--  /  -->

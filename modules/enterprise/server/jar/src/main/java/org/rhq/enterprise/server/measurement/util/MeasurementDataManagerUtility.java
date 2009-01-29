@@ -24,11 +24,13 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
@@ -167,6 +169,26 @@ public class MeasurementDataManagerUtility {
     public static String getDeadTable(long time) {
         long tableIndex = getTableIndex(time);
         return TABLE_PREFIX + nf.format((tableIndex + 1) % (TABLE_COUNT));
+    }
+
+    public static String getCurrentRawTable() {
+        long now = System.currentTimeMillis();
+        long tableIndex = getTableIndex(now);
+        return TABLE_PREFIX + nf.format((tableIndex + 1) % (TABLE_COUNT));
+    }
+
+    public static String getNextRotationTime() {
+        long now = System.currentTimeMillis();
+        long day = now / MILLISECONDS_PER_DAY;
+        long timeOfDay = now - (day * MILLISECONDS_PER_DAY);
+
+        long remaining = MILLESECONDS_PER_TABLE - timeOfDay;
+        long nextRotation = now + remaining;
+        if (nextRotation < now) {
+            nextRotation += MILLESECONDS_PER_TABLE;
+        }
+
+        return DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.FULL).format(new Date(nextRotation));
     }
 
     private static int getTableIndex(long time) {
@@ -612,6 +634,7 @@ public class MeasurementDataManagerUtility {
     }
 
     public static void main(String[] args) throws Exception {
+        System.out.println(getNextRotationTime());
         //      Class.forName("org.postgresql.Driver");
         //      Connection c = DriverManager.getConnection("jdbc:postgresql://127.0.0.1:5432","jon","jon");
 

@@ -121,12 +121,22 @@
                     </f:facet>
                     
                     <h:outputLink>
-                        <f:param name="id" value="#{EventHistoryUIBean.context.resourceId}" />
-                        <f:param name="groupId" value="#{EventHistoryUIBean.context.groupId}" />
-                        <f:param name="parent" value="#{EventHistoryUIBean.context.parentResourceId}" />
-                        <f:param name="type" value="#{EventHistoryUIBean.context.resourceTypeId}" />
+                        <c:if test="#{EventHistoryUIBean.context.resourceId != -1}">
+                            <f:param name="id" value="#{EventHistoryUIBean.context.resourceId}" />
+                        </c:if>
+                        <c:if test="#{EventHistoryUIBean.context.groupId != -1}">
+                            <f:param name="groupId" value="#{EventHistoryUIBean.context.groupId}" />
+                        </c:if>
+                        <c:if test="#{EventHistoryUIBean.context.parentResourceId != -1}">
+                            <f:param name="parent" value="#{EventHistoryUIBean.context.parentResourceId}" />
+                        </c:if>
+                        <c:if test="#{EventHistoryUIBean.context.resourceTypeId != -1}">
+                            <f:param name="type" value="#{EventHistoryUIBean.context.resourceTypeId}" />
+                        </c:if>
                         <f:param name="eventId" value="#{item.eventId}" />
-                        <f:param name="category" value="#{param.category}" rendered="#{not empty param.category}" />
+                        <c:if test="#{not empty param.category}">
+                            <f:param name="category" value="#{param.category}" />
+                        </c:if>
                         <h:outputText value="#{onf:trimString(item.eventDetail,160)}" />
                     </h:outputLink>
                 </rich:column>

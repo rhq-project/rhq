@@ -45,8 +45,6 @@ import org.rhq.core.pluginapi.util.FileUtils;
 /**
  * Classloader for the plugin jar itself and any embedded lib/* jars.
  */
-// TODO: ghinkle, Dec 14, 2006: Consider using a deepjar: direct style classloader instead of the temporary file system.
-// TODO: jdobies, Dec 14, 2006: Add logging
 public class PluginClassLoader extends URLClassLoader {
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -218,11 +216,15 @@ public class PluginClassLoader extends URLClassLoader {
         return tmpDir;
     }
 
-    // For why I'm trying to do this, read: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=5041014 
+    // For why I'm trying to do this, read:
+    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=5041014 
+    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4299094
     // This is a solution only for SUN VMs. This will do nothing on other VMs.
     // This was tested on SUN's Java5. If their internals change, we'll have to do different
     // things based on which version we are running on. This method never throws exceptions; it
     // will always return normally, no matter that VM we are running in.
+    private static final List<Object> doNotGarbageCollectThese = new ArrayList<Object>();
+
     @SuppressWarnings("unchecked")
     private void tryToCloseAllJarFiles() {
 
@@ -252,9 +254,16 @@ public class PluginClassLoader extends URLClassLoader {
             nativeLibraries.setAccessible(true);
             java.util.Vector java_lang_ClassLoader_NativeLibrary = (java.util.Vector) nativeLibraries.get(this);
             for (Object lib : java_lang_ClassLoader_NativeLibrary) {
-                java.lang.reflect.Method finalize = lib.getClass().getDeclaredMethod("finalize", new Class[0]);
+                doNotGarbageCollectThese.add(lib); // call finalize twice seems to crash the VM, so keep a ref so we don't GC
+                java.lang.reflect.Method finalize = lib.getClass().getDeclaredMethod("finalize");
                 finalize.setAccessible(true);
-                finalize.invoke(lib, new Object[0]);
+                finalize.invoke(lib);
+            }
+            if (java_lang_ClassLoader_NativeLibrary != null) {
+                java.lang.reflect.Method clear;
+                clear = java_lang_ClassLoader_NativeLibrary.getClass().getDeclaredMethod("clear");
+                clear.setAccessible(true);
+                clear.invoke(java_lang_ClassLoader_NativeLibrary);
             }
         } catch (Throwable t) {
             // probably not a SUN VM, oh, well, if on Windows, your files are now locked

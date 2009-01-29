@@ -62,10 +62,11 @@ public interface SystemManagerLocal {
      * Set the server cloud configuration.  The given properties will be the new settings
      * for all servers in the HA server cloud.
      *
-     * @param subject    the user who wants to change the settings
-     * @param properties the new system configuration settings
+     * @param subject        the user who wants to change the settings
+     * @param properties     the new system configuration settings
+     * @param skipValidation if true, validation will not be performed on the properties
      */
-    void setSystemConfiguration(Subject subject, Properties properties);
+    void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation);
 
     /**
      * Creates and registers the Hibernate Statistics MBean. This allows us to monitor

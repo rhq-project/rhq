@@ -203,7 +203,7 @@ public class SystemManagerBean implements SystemManagerLocal {
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void setSystemConfiguration(Subject subject, Properties properties) {
+    public void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation) {
         // first, we need to get the current settings so we'll know if we need to persist or merge the new ones
         List<SystemConfiguration> configs;
         configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL).getResultList();
@@ -222,7 +222,9 @@ public class SystemManagerBean implements SystemManagerLocal {
             String name = (String) key;
             String value = properties.getProperty(name);
 
-            verifyNewSystemConfigurationProperty(name, value, properties);
+            if (skipValidation == false) {
+                verifyNewSystemConfigurationProperty(name, value, properties);
+            }
 
             newCacheProperties.setProperty(name, value);
 

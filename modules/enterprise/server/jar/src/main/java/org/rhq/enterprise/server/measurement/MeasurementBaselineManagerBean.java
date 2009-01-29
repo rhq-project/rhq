@@ -47,7 +47,6 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -139,7 +138,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         // everything was calculated successfully, remember this time
         conf = systemManager.getSystemConfiguration(); // reload the config in case it was changed since we started
         conf.setProperty(RHQConstants.BaselineLastCalculationTime, String.valueOf(computeTime));
-        systemManager.setSystemConfiguration(subjectManager.getOverlord(), conf);
+        systemManager.setSystemConfiguration(subjectManager.getOverlord(), conf, true);
 
         log.info("Auto-calculation of baselines done. Next scheduled for " + new Date(computeTime + frequency));
     }

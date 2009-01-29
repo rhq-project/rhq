@@ -62,7 +62,7 @@ public class EditConfigAction extends BaseAction {
                 Properties props = cForm.saveConfigProperties(systemManager.getSystemConfiguration());
 
                 log.trace("Setting config");
-                systemManager.setSystemConfiguration(whoami, props);
+                systemManager.setSystemConfiguration(whoami, props, false);
 
                 log.trace("Restarting config service");
 

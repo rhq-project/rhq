@@ -545,6 +545,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
             return defaultControl;
         } else {
             int pageSize = Integer.valueOf(pageControlProperties.get(0));
+
             PageControl pageControl = new PageControl(0, pageSize);
 
             int i = 2;
@@ -556,6 +557,13 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
                 i += 2;
             }
+
+            // with recent improvements to the RF data table, it's possible to save the page number now
+            if (i - 1 < pageControlProperties.size()) {
+                int pageNumber = Integer.valueOf(pageControlProperties.get(i - 1));
+                pageControl.setPageNumber(pageNumber);
+            }
+
             return pageControl;
         }
     }
@@ -573,6 +581,8 @@ public class WebUserPreferences extends SubjectPreferencesBase {
             pageControlProperties.add(field.getOrdering().toString());
             pageControlProperties.add(field.getField());
         }
+
+        pageControlProperties.add(pageControl.getPageNumber());
 
         setPreference(view.toString(), pageControlProperties);
     }

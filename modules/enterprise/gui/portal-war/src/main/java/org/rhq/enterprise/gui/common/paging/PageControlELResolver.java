@@ -62,15 +62,15 @@ public class PageControlELResolver extends ELResolver {
         if (base == null) {
             // We don't handle setting top-level implicit objects.
         } else if (base.equals(PageControlView.class) || (base instanceof PageControlView)) {
-            String propertyName = property.toString();
+            String propertyName = property.toString().toLowerCase();
 
-            if ("pageSize".equals(propertyName)) {
+            if ("pagesize".equals(propertyName)) {
                 result = Integer.class;
-            } else if ("pageNumber".equals(propertyName)) {
+            } else if ("pagenumber".equals(propertyName)) {
                 result = Integer.class;
             } else {
                 throw new PropertyNotWritableException(
-                    "Only the pageSize and pageNumber properties of a PageControl are writeable");
+                    "Only the pageSize and pageNumber properties of a PageControl object can be resolved");
             }
 
             context.setPropertyResolved(true);
@@ -105,9 +105,10 @@ public class PageControlELResolver extends ELResolver {
             // cast to required types
             PageControlView view = (PageControlView) base;
             String methodName = (String) property;
-
+            String lowerCaseMethodName = methodName.toLowerCase();
+            log.debug("accessing PageControl." + methodName);
             // allows simple misspellings for developer productivity
-            if ("pageSize".equalsIgnoreCase(methodName)) {
+            if ("pagesize".equals(lowerCaseMethodName)) {
                 // find the user for this session-based operation
                 WebUser user = EnterpriseFacesContextUtility.getWebUser();
                 WebUserPreferences preferences = user.getWebPreferences();
@@ -115,23 +116,21 @@ public class PageControlELResolver extends ELResolver {
                 PageControl pc = preferences.getPageControl(view);
                 log.debug("Getting PageControlView[" + view + "] to " + pc);
                 result = pc.getPageSize();
-
-                // don't let other resolvers touch this
-                context.setPropertyResolved(true);
-            } else if ("pageNumber".equals(methodName)) {
+            } else if ("pagenumber".equals(lowerCaseMethodName)) {
                 // find the user for this session-based operation
                 WebUser user = EnterpriseFacesContextUtility.getWebUser();
                 WebUserPreferences preferences = user.getWebPreferences();
                 // get it
                 PageControl pc = preferences.getPageControl(view);
                 log.debug("Getting PageControlView[" + view + "] to " + pc);
-                result = pc.getPageNumber();
-
-                // don't let other resolvers touch this
-                context.setPropertyResolved(true);
+                result = pc.getPageNumber() + 1; // RF data table is 1-based, our PageControl is 0-based
             } else {
-                throw new PropertyNotFoundException("Only the pageSize property of a PageControl object is accessible");
+                throw new PropertyNotFoundException("The " + methodName
+                    + " property of a PageControl object is not accessible");
             }
+
+            // don't let other resolvers touch this
+            context.setPropertyResolved(true);
         }
 
         return result;
@@ -152,33 +151,38 @@ public class PageControlELResolver extends ELResolver {
             // cast to required types
             PageControlView view = (PageControlView) base;
             String methodName = (String) property;
+            String lowerCaseMethodName = methodName.toLowerCase();
 
             // allows simple mispellings for developer productivity
-            if ("pageSize".equalsIgnoreCase(methodName)) {
-
+            if ("pagesize".equals(lowerCaseMethodName)) {
                 if (value != null) {
-                    /* 
-                     * only update the pageSize if the user changed it, otherwise just use the value that was 
-                     * already persisted; this will happen if a user is viewing lots of data (say 100 items),
-                     * but one of their table filters reduces the results to less than 15 items (currently the
-                     * minimum number to start paging); if the user then removes this filter, this resolver
-                     * kicks in and attempts to resolve the new pageSize, but it doesn't exist because there
-                     * was no explicit user action to change it, so let's display whatever option the user
-                     * had before the paging control was suppressed in the first place
-                     */
-
-                    // work around for http://jira.jboss.com/jira/browse/RF-1133
-                    //workAroundRF1133(view);
                     // find the user for this session-based operation
                     WebUser user = EnterpriseFacesContextUtility.getWebUser();
                     WebUserPreferences preferences = user.getWebPreferences();
 
                     // update it
                     PageControl pc = preferences.getPageControl(view);
-                    pc.setPageNumber(0);
-
                     int pageSize = (Integer) value;
                     pc.setPageSize(pageSize);
+                    pc.setPageNumber(0); // reset the page number too
+
+                    log.debug("Setting PageControlView[" + view + "] to " + pc);
+                    preferences.setPageControl(view, pc);
+                    preferences.persistPreferences();
+                }
+
+                // don't let other resolvers touch this
+                context.setPropertyResolved(true);
+            } else if ("pagenumber".equals(lowerCaseMethodName)) {
+                if (value != null) {
+                    // find the user for this session-based operation
+                    WebUser user = EnterpriseFacesContextUtility.getWebUser();
+                    WebUserPreferences preferences = user.getWebPreferences();
+
+                    // update it
+                    PageControl pc = preferences.getPageControl(view);
+                    int pageNumber = (Integer) value;
+                    pc.setPageNumber(pageNumber - 1); // RF data table is 1-based, our PageControl is 0-based
 
                     log.debug("Setting PageControlView[" + view + "] to " + pc);
                     preferences.setPageControl(view, pc);
@@ -188,7 +192,8 @@ public class PageControlELResolver extends ELResolver {
                 // don't let other resolvers touch this
                 context.setPropertyResolved(true);
             } else {
-                throw new PropertyNotFoundException("Only the pageSize property of a PageControl object is accessible");
+                throw new PropertyNotFoundException("The " + methodName
+                    + " property of a PageControl object can not be set, only pageSize");
             }
         }
     }

@@ -55,7 +55,6 @@
 
     <rich:menuSeparator/>
 
-
     <rich:menuGroup value="Groups">
         <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
             <h:outputLink value="/GroupHub.do">
@@ -63,13 +62,11 @@
                 <h:outputText value="#{msg['resource.hub.filter.compatibleGroups']}"/>
             </h:outputLink>
         </rich:menuItem>
-
         <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
             <h:outputLink value="/GroupHub.do?groupCategory=MIXED">
                 <h:outputText value="#{msg['resource.hub.filter.mixedGroups']}"/>
             </h:outputLink>
         </rich:menuItem>
-
         <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
             <h:outputLink value="/rhq/definition/group/list.xhtml">
                 <h:outputText value="#{msg['resource.hub.filter.groupDefinitions']}"/>
@@ -80,20 +77,21 @@
     <rich:menuSeparator/>
 
     <rich:menuGroup value="Subsystem Views">
-
         <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}" >
-            <h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=configurationUpdates">
-                Configuration Changes
-            </h:outputLink>
+            <h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=configurationUpdates">Configuration Changes</h:outputLink>
         </rich:menuItem>
-
         <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
-            <h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=problemResources">
-            Problem Resources</h:outputLink></rich:menuItem>
-        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}"><h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=operations">Operations</h:outputLink></rich:menuItem>
-        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}"><h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=alerts">Alerts</h:outputLink></rich:menuItem>
-        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}"><h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=alertDefinitions">Alert Definitions</h:outputLink></rich:menuItem>
-
+            <h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=problemResources">Problem Resources</h:outputLink>
+        </rich:menuItem>
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
+            <h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=operations">Operations</h:outputLink>
+        </rich:menuItem>
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
+            <h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=alerts">Alerts</h:outputLink>
+        </rich:menuItem>
+        <rich:menuItem actionListener="#{IncludeUIBean.menuItemListener}">
+            <h:outputLink value="/rhq/subsystem/layout/main.xhtml?tab=alertDefinitions">Alert Definitions</h:outputLink>
+        </rich:menuItem>
     </rich:menuGroup>
 
     <rich:menuSeparator/>

@@ -33,9 +33,6 @@ import javax.faces.render.Renderer;
 import com.sun.faces.util.MessageUtils;
 
 import org.rhq.enterprise.gui.common.metric.MetricComponent.TimeUnit;
-import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 
 /**
@@ -65,11 +62,9 @@ public class MetricRenderer extends Renderer {
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
         ResponseWriter writer = context.getResponseWriter();
-        MetricComponent metric = (MetricComponent) component;
 
-        WebUser user = EnterpriseFacesContextUtility.getWebUser();
-        MeasurementPreferences preferences = user.getMeasurementPreferences();
-        MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+        MetricComponent metric = (MetricComponent) component;
+        MetricRangePreferences rangePreferences = metric.getMetricRangePreferences();
 
         writer.startElement("b", null);
         writer.write("Metric Display Range:");

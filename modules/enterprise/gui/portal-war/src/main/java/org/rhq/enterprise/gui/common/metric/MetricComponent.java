@@ -22,6 +22,10 @@ import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
 
 import org.rhq.core.gui.util.FacesComponentUtility;
+import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences;
+import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 
 /**
  * @author Fady Matar
@@ -77,6 +81,11 @@ public class MetricComponent extends UIComponentBase {
 
     private String optionList;
     private TimeUnit[] unitOptions;
+    private transient MetricRangePreferences rangePreferences;
+
+    public MetricComponent() {
+        loadPreferences();
+    }
 
     public String getOptionList() {
         if (optionList == null) {
@@ -113,6 +122,16 @@ public class MetricComponent extends UIComponentBase {
         return COMPONENT_FAMILY;
     }
 
+    private void loadPreferences() {
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        MeasurementPreferences preferences = user.getMeasurementPreferences();
+        this.rangePreferences = preferences.getMetricRangePreferences();
+    }
+
+    public MetricRangePreferences getMetricRangePreferences() {
+        return rangePreferences;
+    }
+
     @Override
     public Object saveState(FacesContext facesContext) {
         Object[] state = new Object[3];
@@ -128,5 +147,16 @@ public class MetricComponent extends UIComponentBase {
         super.restoreState(context, state[0]);
         this.optionList = (String) state[1];
         this.unitOptions = (TimeUnit[]) state[2];
+
+        /*
+         * need to restore transient data during deserialization because
+         * the AdvancedMetricSettingsUIBean performs it's work in a pop-up,
+         * which means that the JSF component tree in the parent window
+         * does not receive the update when in simple settings mode; as a
+         * workaround, we will always instruct the metric component to get
+         * it's most up-to-date preferences at the time the view needs to
+         * be deserialized for rerendering 
+         */
+        loadPreferences(); // reload transient data
     }
 }

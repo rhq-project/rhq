@@ -18,14 +18,13 @@
  */
 package org.rhq.enterprise.agent.promptcmd;
 
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
-
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
 import mazz.i18n.Msg;
 
 import org.rhq.enterprise.agent.AgentMain;
@@ -104,7 +103,7 @@ public class VersionPromptCommand implements AgentPromptCommand {
                     envvars = new HashMap<String, String>();
                 }
                 for (Map.Entry<String, String> envvar : envvars.entrySet()) {
-                    if (opt == null || envvar.getKey().toString().startsWith(opt)) {
+                    if (opt == null || envvar.getKey().startsWith(opt)) {
                         out.println(envvar.getKey() + "=" + envvar.getValue());
                     }
                 }

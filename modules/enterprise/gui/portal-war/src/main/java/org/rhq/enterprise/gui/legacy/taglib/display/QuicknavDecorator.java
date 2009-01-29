@@ -41,6 +41,8 @@ public abstract class QuicknavDecorator extends ColumnDecorator implements Tag {
 
     private static final IconInfo MONITOR_ICON_INFO = new IconInfo("/images/icon_hub_m.gif", "Monitor");
 
+    private static final IconInfo EVENT_ICON_INFO = new IconInfo("/images/icon_hub_e.gif", "Events");
+
     private static final IconInfo INVENTORY_ICON_INFO = new IconInfo("/images/icon_hub_i.gif", "Inventory");
 
     private static final IconInfo CONFIGURE_ICON_INFO = new IconInfo("/images/icon_hub_c.gif", "Configure");
@@ -67,6 +69,9 @@ public abstract class QuicknavDecorator extends ColumnDecorator implements Tag {
 
         // MONITOR (M) icon
         appendCell(stringBuilder, isMonitorSupported(), isMonitorAllowed(), getMonitorURL(), MONITOR_ICON_INFO);
+
+        // EVENTS (E) icon
+        appendCell(stringBuilder, isEventsSupported(), isEventsAllowed(), getEventsURL(), EVENT_ICON_INFO);
 
         // INVENTORY (I) icon
         appendCell(stringBuilder, isInventorySupported(), isInventoryAllowed(), getInventoryURL(), INVENTORY_ICON_INFO);
@@ -169,11 +174,13 @@ public abstract class QuicknavDecorator extends ColumnDecorator implements Tag {
 
     protected abstract String getTagName();
 
-    protected Object evalAttr(String name, String value, Class type) throws JspException {
+    protected Object evalAttr(String name, String value, Class<?> type) throws JspException {
         return ExpressionUtil.evalNotNull(getTagName(), name, value, type, this, getPageContext());
     }
 
     protected abstract boolean isMonitorSupported();
+
+    protected abstract boolean isEventsSupported();
 
     protected abstract boolean isInventorySupported();
 
@@ -187,6 +194,8 @@ public abstract class QuicknavDecorator extends ColumnDecorator implements Tag {
 
     protected abstract boolean isMonitorAllowed();
 
+    protected abstract boolean isEventsAllowed();
+
     protected abstract boolean isInventoryAllowed();
 
     protected abstract boolean isConfigureAllowed();
@@ -198,6 +207,8 @@ public abstract class QuicknavDecorator extends ColumnDecorator implements Tag {
     protected abstract boolean isContentAllowed();
 
     protected abstract String getMonitorURL();
+
+    protected abstract String getEventsURL();
 
     protected abstract String getInventoryURL();
 

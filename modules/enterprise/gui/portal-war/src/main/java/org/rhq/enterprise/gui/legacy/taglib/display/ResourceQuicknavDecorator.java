@@ -32,6 +32,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ResourceQuicknavDecorator extends QuicknavDecorator {
     private static final String MONITOR_URL = "/rhq/resource/monitor/graphs.xhtml";
+    private static final String EVENTS_URL = "/rhq/resource/events/history.xhtml";
     private static final String INVENTORY_URL = "/rhq/resource/inventory/view.xhtml";
     private static final String CONFIGURE_URL = "/rhq/resource/configuration/view.xhtml";
     private static final String OPERATIONS_URL = "/rhq/resource/operation/resourceOperationScheduleNew.xhtml";
@@ -60,6 +61,11 @@ public class ResourceQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isMonitorSupported() {
+        return true;
+    }
+
+    @Override
+    protected boolean isEventsSupported() {
         return true;
     }
 
@@ -97,6 +103,11 @@ public class ResourceQuicknavDecorator extends QuicknavDecorator {
     }
 
     @Override
+    protected boolean isEventsAllowed() {
+        return true;
+    }
+
+    @Override
     protected boolean isInventoryAllowed() {
         return true;
     }
@@ -124,6 +135,11 @@ public class ResourceQuicknavDecorator extends QuicknavDecorator {
     @Override
     protected String getMonitorURL() {
         return MONITOR_URL;
+    }
+
+    @Override
+    protected String getEventsURL() {
+        return EVENTS_URL;
     }
 
     @Override

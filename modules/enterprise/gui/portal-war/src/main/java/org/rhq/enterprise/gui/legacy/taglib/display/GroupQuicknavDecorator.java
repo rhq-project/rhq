@@ -37,6 +37,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class GroupQuicknavDecorator extends QuicknavDecorator {
     private static final String MONITOR_URL = "/rhq/group/monitor/graphs.xhtml";
+    private static final String EVENTS_URL = "/rhq/group/inventory/view.xhtml";
     private static final String INVENTORY_URL = "/rhq/group/inventory/view.xhtml";
     private static final String CONFIGURE_URL = "/rhq/group/configuration/current.xhtml";
     private static final String OPERATIONS_URL = "/rhq/group/operation/groupOperationScheduleNew.xhtml";
@@ -55,7 +56,8 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
     protected String getFullURL(String url) {
         HttpServletRequest request = (HttpServletRequest) getPageContext().getRequest();
         Map<String, String> params = new HashMap<String, String>();
-        if (url.equals(MONITOR_URL) || url.equals(INVENTORY_URL) || url.equals(OPERATIONS_URL)) {
+        if (url.equals(MONITOR_URL) || url.equals(EVENTS_URL) || url.equals(INVENTORY_URL)
+            || url.equals(OPERATIONS_URL)) {
             params.put(HubConstants.PARAM_GROUP_CATEGORY, this.resourceGroupComposite.getCategory().name());
         }
 
@@ -71,6 +73,11 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isMonitorSupported() {
+        return (this.resourceGroupComposite.getResourceGroup().getGroupCategory() == GroupCategory.COMPATIBLE);
+    }
+
+    @Override
+    protected boolean isEventsSupported() {
         return (this.resourceGroupComposite.getResourceGroup().getGroupCategory() == GroupCategory.COMPATIBLE);
     }
 
@@ -108,6 +115,11 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
     }
 
     @Override
+    protected boolean isEventsAllowed() {
+        return true;
+    }
+
+    @Override
     protected boolean isInventoryAllowed() {
         return true;
     }
@@ -135,6 +147,11 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
     @Override
     protected String getMonitorURL() {
         return MONITOR_URL;
+    }
+
+    @Override
+    protected String getEventsURL() {
+        return EVENTS_URL;
     }
 
     @Override

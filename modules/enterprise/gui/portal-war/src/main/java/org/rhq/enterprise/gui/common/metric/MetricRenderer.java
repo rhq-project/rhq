@@ -32,6 +32,8 @@ import javax.faces.render.Renderer;
 
 import com.sun.faces.util.MessageUtils;
 
+import org.jboss.xb.binding.introspection.FieldInfo.GetValueAccessFactory;
+
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.metric.MetricComponent.TimeUnit;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -53,7 +55,7 @@ public class MetricRenderer extends Renderer {
             throw new NullPointerException(MessageUtils.getExceptionMessageString(
                 MessageUtils.NULL_PARAMETERS_ERROR_MESSAGE_ID, "context"));
         }
-
+        setValue
         if (component == null) {
             throw new NullPointerException(MessageUtils.getExceptionMessageString(
                 MessageUtils.NULL_PARAMETERS_ERROR_MESSAGE_ID, "component"));
@@ -69,6 +71,8 @@ public class MetricRenderer extends Renderer {
         } else {
             return;
         }
+        metric.setValue(getMetricValue());
+        metric.setUnit(getMetricUnit());
 
     }
 
@@ -130,7 +134,7 @@ public class MetricRenderer extends Renderer {
             for (TimeUnit unit : metric.getUnitOptions()) {
                 writer.startElement("option", metric);
                 writer.writeAttribute("value", unit.name(), MetricComponent.UNIT);
-                if (unit.name() == metric.getUnit()) {
+                if (unit.name().equals(metric.getUnit())) {
                     writer.writeAttribute("SELECTED", "SELECTED", null);
                 }
                 writer.write(unit.getDisplayName());

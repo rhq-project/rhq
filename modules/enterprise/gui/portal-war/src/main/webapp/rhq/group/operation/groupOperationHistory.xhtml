@@ -39,6 +39,7 @@
             <ui:param name="resourceGroupOperationPendingHistoryDataModel" value="#{ResourceGroupOperationPendingHistoryUIBean.dataModel}"/>
             
             <a4j:poll id="resourceGroupOperationPendingHistoryDataTableReRenderer"
+                      oncomplete="disableConditionalButtons();"
                       interval="60000"
                       ignoreDupResponses="true"
                       reRender="resourceGroupOperationPendingHistoryDataTable" />
@@ -167,6 +168,7 @@
             <h:outputText value="There are no completed operations" rendered="#{resourceGroupOperationCompletedHistoryDataModel.rowCount eq 0}"/>
             
             <a4j:poll id="resourceGroupOperationCompletedHistoryDataTableReRenderer"
+                      oncomplete="disableConditionalButtons();"
                       interval="60000"
                       ignoreDupResponses="true"
                       reRender="resourceGroupOperationCompletedHistoryDataTable" />

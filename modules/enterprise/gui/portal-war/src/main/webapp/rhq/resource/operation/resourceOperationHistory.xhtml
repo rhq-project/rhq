@@ -39,6 +39,7 @@
             <ui:param name="resourceOperationPendingHistoryDataModel" value="#{ResourceOperationPendingHistoryUIBean.dataModel}"/>
 
             <a4j:poll id="resourceOperationPendingHistoryDataTableReRenderer"
+                      oncomplete="disableConditionalButtons();"
                       interval="60000"
                       ignoreDupResponses="true"
                       reRender="resourceOperationPendingHistoryDataTable" />
@@ -163,6 +164,7 @@
             <ui:param name="resourceOperationCompletedHistoryDataModel" value="#{ResourceOperationCompletedHistoryUIBean.dataModel}"/>
 
             <a4j:poll id="resourceOperationCompletedHistoryDataTableReRenderer"
+                      oncomplete="disableConditionalButtons();"
                       interval="60000"
                       ignoreDupResponses="true"
                       reRender="resourceOperationCompletedHistoryDataTable" />

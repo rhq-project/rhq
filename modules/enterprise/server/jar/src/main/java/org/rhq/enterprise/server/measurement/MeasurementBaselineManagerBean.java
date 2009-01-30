@@ -80,6 +80,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     @EJB
     private MeasurementBaselineManagerLocal measurementBaselineManager; // self
     @EJB
+    private MeasurementOOBManagerLocal oobManager;
+    @EJB
     private SystemManagerLocal systemManager;
     @EJB
     private SubjectManagerLocal subjectManager;
@@ -316,6 +318,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
         try {
             baseline = calculateBaseline(sched, true, startDate, endDate, save);
+            // We have changed the baseline information for the schedule, so remove the now outdated OOB info.
+            oobManager.removeOOBsForSchedule(subject,sched);
         } catch (DataNotAvailableException e) {
             throw new BaselineCreationException("Error fetching data for baseline calculation: "
                 + measurementScheduleId);

@@ -45,6 +45,7 @@ import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
 import org.rhq.core.domain.measurement.MeasurementOOB;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -119,7 +120,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * Computes the OOBs for the last hour.
      * This is done by getting the latest timestamp of the 1h table and invoking
      * #computeOOBsFromHourBeginingAt
-     * @param subject
+     * @param subject Caller
      */
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     public void computeOOBsFromLastHour(Subject subject) {
@@ -171,10 +172,21 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     }
 
     /**
+     * Remove all OOB data for the passed schedule
+     * @param subject Caller
+     * @param sched the schedule for which we want to clean out the data
+     */
+    public void removeOOBsForSchedule(Subject subject, MeasurementSchedule sched) {
+        Query q = entityManager.createQuery("DELETE FROM MeasurementOOB o WHERE o.id.scheduleId = :id");
+        q.setParameter("id", sched.getId());
+        q.executeUpdate();
+    }
+
+    /**
      * Return OOB Composites that contain all information about the OOBs in a given time as aggregates.
      * @param subject The caller
      * @param end end time we are interested in
-     * @param pc
+     * @param pc PageControl to do pagination
      * @return List of schedules with the corresponing oob aggregates
      */
     public PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, long end, PageControl pc) {
@@ -195,7 +207,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         List<MeasurementOOBComposite> results = query.getResultList();
         long totalCount = queryCount.getResultList().size();
 
-        if (results.size() >0 ) {
+        if (!results.isEmpty()) {
             //  add 24h and 48h factors
             Map<Integer,MeasurementOOBComposite> map = new HashMap<Integer,MeasurementOOBComposite>(results.size());
             List<Integer> scheduleIds = new ArrayList<Integer>(results.size());

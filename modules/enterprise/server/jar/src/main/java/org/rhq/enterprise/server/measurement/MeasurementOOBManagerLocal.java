@@ -27,6 +27,7 @@ import javax.ejb.TransactionAttributeType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.measurement.MeasurementOOB;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageControl;
 
@@ -87,4 +88,11 @@ public interface MeasurementOOBManagerLocal {
      */
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     void removeOutdatedOObs(Subject subject, long cutoffTime);
+
+    /**
+     * Remove all OOB data for the passed schedule
+     * @param subject Caller
+     * @param sched the schedule for which we want to clean out the data
+     */
+    void removeOOBsForSchedule(Subject subject, MeasurementSchedule sched);
 }

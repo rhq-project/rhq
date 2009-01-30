@@ -100,7 +100,7 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
     protected void loadBean() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String objectName = pluginConfig.getSimple(OBJECT_NAME_PROP).getStringValue();
-        this.bean = loadBean(objectName);        
+        this.bean = loadBean(objectName);
     }
 
     protected EmsBean loadBean(String objectName) {
@@ -422,6 +422,10 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
 
     public OperationResult invokeOperation(String name, Configuration parameters, EmsBean emsBean)  throws Exception
     {
+        if (emsBean==null) {
+            throw new Exception("Can not invoke operation [" + name + "], as we can't connect to the bean - is it down?");
+        }
+
         EmsOperation operation = emsBean.getOperation(name);
         if (operation == null) {
             throw new Exception("Operation [" + name + "] not found on bean [" + bean.getBeanName() + "]");

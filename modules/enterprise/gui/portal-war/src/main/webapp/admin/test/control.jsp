@@ -49,7 +49,7 @@
    AgentManagerLocal agentManager;
    SystemManagerLocal systemManager;
    SubjectManagerLocal subjectManager;
-   
+
    coreTestBean = LookupUtil.getCoreTest();
    discoveryTestBean = LookupUtil.getDiscoveryTest();
    measurementTestBean = LookupUtil.getMeasurementTest();
@@ -134,16 +134,21 @@
       {
          String alertTemplateId = pageContext.getRequest().getParameter("alertTemplateId");
          String numberOfClones = pageContext.getRequest().getParameter("numberOfClones");
-         alertTemplateTestBean.cloneAlertTemplate(Integer.parseInt(alertTemplateId), Integer.parseInt(numberOfClones));  
+         alertTemplateTestBean.cloneAlertTemplate(Integer.parseInt(alertTemplateId), Integer.parseInt(numberOfClones));
       }
       else if ("calculateAutoBaselines".equals(mode))
       {
          // for now, baselines aren't calculated until we hit our day limit, we force it here
          java.util.Properties props = systemManager.getSystemConfiguration();
          props.put("CAM_BASELINE_LASTTIME", "0");
-         systemManager.setSystemConfiguration(subjectManager.getOverlord(), props);
+         systemManager.setSystemConfiguration(subjectManager.getOverlord(), props,true);
 
          measurementBaselineManager.calculateAutoBaselines();
+      }
+      else if ("calculateOOBs".equals(mode))
+      {
+          DataPurgeJob dpj = new DataPurgeJob();
+          dpj.calculateOOBs();
       }
       else if ("checkForSuspectAgents".equals(mode))
       {
@@ -273,6 +278,8 @@ Send New Platform Inventory Report
       <a href="<c:out value="${url}"/>">Check For Suspect Agents</a></li>
   <li><c:url var="url" value="/admin/test/control.jsp?mode=dataPurgeJob"/>
       <a href="<c:out value="${url}"/>">Force Data Purge Now</a></li>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=calculateOOBs"/>
+      <a href="<c:out value="${url}"/>">Force calculation of OOBs</a></li>
 </ul>
 
 <h2>Alerts</h2>
@@ -285,7 +292,7 @@ Template Cloning
    Number of Clones: <input type="text" name="numberOfClones" size="5"/><br/>
    <input type="submit" value="Send" name="Send"/>
 </form>
-      
+
 </ul>
 
 <h2>Utilities</h2>

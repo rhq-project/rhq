@@ -303,7 +303,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
      * Calculate the OOB values for the last hour.
      * This also removes outdated ones due to recalculated baselines.
      */
-    private void calculateOOBs() {
+    public void calculateOOBs() {
 
         long timeStart = System.currentTimeMillis();
         LOG.info("Auto-calculation of OOBs starting");

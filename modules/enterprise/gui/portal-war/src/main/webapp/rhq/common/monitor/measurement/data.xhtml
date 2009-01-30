@@ -91,6 +91,13 @@
              </c:choose>
                 <h:outputText value="#{metric.label} " />
           </h:outputLink>
+          &nbsp;&nbsp;
+          <h:outputLink target="_top" value="/rhq/resource/monitor/graphs.xhtml">
+             <f:param name="id" value="#{metric.metricSourceId}" />
+             <h:outputFormat value="#{msg['common.value.parenthesis']}">
+                <f:param value="#{metric.metricSource}" />
+             </h:outputFormat>
+          </h:outputLink>
           </font>
              <rich:toolTip followMouse="true" showDelay="500">
                 <h:outputText value="#{metric.description}" rendered="#{not empty metric.description}" />
@@ -140,22 +147,6 @@
           </table>
        </td>
      </tr>
-     
-     <c:if test="#{not empty metric.metricSource}">
-     <tr>
-        <td colspan="3" valign="top">
-           <img src="/images/hierarchy.gif" />
-           <font class="FooterSmall">
-              <h:outputLink target="_top" value="/rhq/resource/monitor/graphs.xhtml">
-                 <f:param name="id" value="#{metric.metricSourceId}" />
-                 <h:outputFormat value="#{msg['common.value.parenthesis']}">
-                    <f:param value="#{metric.metricSource}" />
-                 </h:outputFormat>
-              </h:outputLink>
-           </font>
-        </td>
-     </tr>
-     </c:if>
      
      <tr>
         <td colspan="3">

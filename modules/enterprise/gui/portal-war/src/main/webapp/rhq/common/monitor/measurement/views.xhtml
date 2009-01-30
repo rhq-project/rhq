@@ -15,49 +15,54 @@
 
 <ui:composition>
 
-<table cellpadding="0" cellspacing="2" border="0">
+<table align="left" width="750" cellpadding="0" cellspacing="0" border="0">
    <tr>
-   <td>
-      <h:outputFormat value="#{msg['Filter.ViewLabel']}" />
-      <select name="action" onchange="reviewAction(this.options[this.selectedIndex]);">
-         <option value="update">
-            <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Update']}" />
-            <h:outputText value=" #{IndicatorChartsUIBean.view}" />
-         </option>
-         <option value="create">
-            <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.New']}" />
-         </option>
-         <c:if test="#{onf:sizeOf(IndicatorViewsForm.views) > 1}">
-            <option value="delete">
-               <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Delete']}" />
+   <td align="right">
+      <table cellpadding="0" cellspacing="1" border="0">
+      <tr>
+      <td>
+         <h:outputFormat value="#{msg['Filter.ViewLabel']}" />
+         <select name="action" onchange="reviewAction(this.options[this.selectedIndex]);">
+            <option value="update">
+               <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Update']}" />
                <h:outputText value=" #{IndicatorChartsUIBean.view}" />
             </option>
-            <option disabled="disabled">
-               <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Separator']}" />
+            <option value="create">
+               <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.New']}" />
             </option>
-            <option disabled="disabled">
-               <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Goto']}" />
-            </option>
-            <c:forEach var="viewname" items="#{IndicatorViewsForm.views}">
-               <option value="go">
-                  <h:outputText value="#{viewname}" />
+            <c:if test="#{onf:sizeOf(IndicatorViewsForm.views) > 1}">
+               <option value="delete">
+                  <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Delete']}" />
+                  <h:outputText value=" #{IndicatorChartsUIBean.view}" />
                </option>
-            </c:forEach>
-         </c:if>
-      </select>
-   </td>
-   <td>
-      <h:outputFormat value="#{msg['common.label.Name']}" />
-      <input type="text" value="#{IndicatorChartsUIBean.view}" readonly="readonly" />
-   </td>
-   <td>
-      <!-- Use hidden input because IE doesn't pass value of of image -->
-      <input type="hidden" name="update" value="#{IndicatorChartsUIBean.view}" />
-      <input type="image" name="submit" src="/images/dash-button_go-arrow.gif" alt="Save View" />
+               <option disabled="disabled">
+                  <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Separator']}" />
+               </option>
+               <option disabled="disabled">
+                  <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Goto']}" />
+               </option>
+               <c:forEach var="viewname" items="#{IndicatorViewsForm.views}">
+                  <option value="go">
+                     <h:outputText value="#{viewname}" />
+                  </option>
+               </c:forEach>
+            </c:if>
+         </select>
+      </td>
+      <td>
+         <h:outputFormat value="#{msg['common.label.Name']}" />
+         <input type="text" value="#{IndicatorChartsUIBean.view}" readonly="readonly" />
+      </td>
+      <td>
+         <!-- Use hidden input because IE doesn't pass value of of image -->
+         <input type="hidden" name="update" value="#{IndicatorChartsUIBean.view}" />
+         <input type="image" name="submit" src="/images/dash-button_go-arrow.gif" alt="Save View" />
+      </td>
+      </tr>
+      </table>
    </td>
    </tr>
 </table>
-
 
 </ui:composition>
 

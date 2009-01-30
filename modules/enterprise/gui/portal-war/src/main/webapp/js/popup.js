@@ -1,3 +1,5 @@
+var yOffset = 28;
+
 var overlay = {
     curTime : null,
     times: new Array(),
@@ -35,8 +37,8 @@ var overlay = {
         var anchorY = this.findPosY(anchor);
         
         var left = this.findPosX(anchor);
-        var top = this.findPosY($('charttop'));
-        var bottom = this.findPosY($('timetop'));
+        var top = this.findPosY($('charttop')) - yOffset;
+        var bottom = this.findPosY($('timetop')) - yOffset;
 
         ovl.style.visibility='visible';
         ovl.style.left = left + 'px';
@@ -49,14 +51,15 @@ var overlay = {
             this.curPopup.style.visibility='hidden';
         }
         var anchor = $('timePopup_' + index);
-        
+
         var left = this.findPosX(anchor) - 50;
-        var top = this.findPosY(anchor) + 10;
+        var top = this.findPosY(anchor) - yOffset + 10;
         
         this.curPopup = $('timePopup');
         this.curPopup.innerHTML = time; 
         this.curPopup.style.left = left + 'px';
         this.curPopup.style.top = top + 'px';
+        this.curPopup.style.height = '25px';
         this.curPopup.style.visibility ='visible';
         new Effect.Appear(this.curPopup);
     },

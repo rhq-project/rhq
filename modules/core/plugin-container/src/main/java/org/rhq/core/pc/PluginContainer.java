@@ -25,6 +25,10 @@ package org.rhq.core.pc;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -85,6 +89,9 @@ public class PluginContainer implements ContainerService {
     private Collection<AgentServiceLifecycleListener> agentServiceListeners = new LinkedHashSet<AgentServiceLifecycleListener>();
     private AgentServiceStreamRemoter agentServiceStreamRemoter = null;
     private AgentRegistrar agentRegistrar = null;
+
+    // this is to prevent race conditions on startup between components from all the different managers
+    private ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     /**
      * Returns the singleton instance.
@@ -177,8 +184,11 @@ public class PluginContainer implements ContainerService {
      * @return <code>true</code> if the plugin container was initialized and started; <code>false</code> otherwise
      */
     public boolean isStarted() {
-        synchronized (INSTANCE) {
+        Lock lock = obtainReadLock();
+        try {
             return started;
+        } finally {
+            releaseLock(lock);
         }
     }
 
@@ -192,7 +202,8 @@ public class PluginContainer implements ContainerService {
      * <p>If the plugin container has already been initialized, this method does nothing and returns.</p>
      */
     public void initialize() {
-        synchronized (INSTANCE) {
+        Lock lock = obtainWriteLock();
+        try {
             if (!started) {
                 version = PluginContainer.class.getPackage().getImplementationVersion();
                 log.info("Initializing Plugin Container" + ((version != null) ? (" v" + version) : "") + "...");
@@ -227,6 +238,8 @@ public class PluginContainer implements ContainerService {
 
                 started = true;
             }
+        } finally {
+            releaseLock(lock);
         }
 
         return;
@@ -237,7 +250,8 @@ public class PluginContainer implements ContainerService {
      * this method does nothing and returns.
      */
     public void shutdown() {
-        synchronized (INSTANCE) {
+        Lock lock = obtainWriteLock();
+        try {
             if (started) {
                 eventManager.shutdown();
                 contentManager.shutdown();
@@ -258,6 +272,8 @@ public class PluginContainer implements ContainerService {
 
                 started = false;
             }
+        } finally {
+            releaseLock(lock);
         }
 
         return;
@@ -295,43 +311,132 @@ public class PluginContainer implements ContainerService {
         }
     }
 
+    private Lock obtainReadLock() {
+        // try to obtain the lock, but if we can't get the lock in 60 seconds,
+        // keep going. The PC is usually fine within seconds after its initializes,
+        // so not getting this lock within 60 seconds probably isn't detrimental.
+        // But if there is a deadlock, blocking forever here would be detrimental,
+        // so we do not do it. We'll just log a warning and let the thread keep going.
+        Lock readLock = rwLock.readLock();
+        try {
+            if (!readLock.tryLock(60, TimeUnit.SECONDS)) {
+                String msg = "There may be a deadlock in the plugin container.";
+                log.warn(msg, new Throwable(msg));
+                readLock = null;
+            }
+        } catch (InterruptedException e) {
+            readLock = null;
+        }
+        return readLock;
+    }
+
+    private Lock obtainWriteLock() {
+        // try to obtain the lock, but if we can't get the lock in 60 seconds,
+        // keep going. The PC is usually fine within seconds after its initializes,
+        // so not getting this lock within 60 seconds probably isn't detrimental.
+        // But if there is a deadlock, blocking forever here would be detrimental,
+        // so we do not do it. We'll just log a warning and let the thread keep going.
+        Lock writeLock = rwLock.writeLock();
+        try {
+            if (!writeLock.tryLock(60, TimeUnit.SECONDS)) {
+                String msg = "There may be a deadlock in the plugin container.";
+                log.warn(msg, new Throwable(msg));
+                writeLock = null;
+            }
+        } catch (InterruptedException e) {
+            writeLock = null;
+        }
+        return writeLock;
+    }
+
+    private void releaseLock(Lock lock) {
+        if (lock != null) {
+            lock.unlock();
+        }
+    }
+
     // The methods below return the actual manager implementation objects.
     // Only those objects inside the plugin container should be calling these getXXXManager() methods.
 
     public PluginManager getPluginManager() {
-        return pluginManager;
+        Lock lock = obtainReadLock();
+        try {
+            return pluginManager;
+        } finally {
+            releaseLock(lock);
+        }
     }
 
     public PluginComponentFactory getPluginComponentFactory() {
-        return pluginComponentFactory;
+        Lock lock = obtainReadLock();
+        try {
+            return pluginComponentFactory;
+        } finally {
+            releaseLock(lock);
+        }
     }
 
     public InventoryManager getInventoryManager() {
-        return inventoryManager;
+        Lock lock = obtainReadLock();
+        try {
+            return inventoryManager;
+        } finally {
+            releaseLock(lock);
+        }
     }
 
     public ConfigurationManager getConfigurationManager() {
-        return configurationManager;
+        Lock lock = obtainReadLock();
+        try {
+            return configurationManager;
+        } finally {
+            releaseLock(lock);
+        }
     }
 
     public MeasurementManager getMeasurementManager() {
-        return measurementManager;
+        Lock lock = obtainReadLock();
+        try {
+            return measurementManager;
+        } finally {
+            releaseLock(lock);
+        }
     }
 
     public OperationManager getOperationManager() {
-        return operationManager;
+        Lock lock = obtainReadLock();
+        try {
+            return operationManager;
+        } finally {
+            releaseLock(lock);
+        }
     }
 
     public ResourceFactoryManager getResourceFactoryManager() {
-        return resourceFactoryManager;
+        Lock lock = obtainReadLock();
+        try {
+            return resourceFactoryManager;
+        } finally {
+            releaseLock(lock);
+        }
     }
 
     public ContentManager getContentManager() {
-        return contentManager;
+        Lock lock = obtainReadLock();
+        try {
+            return contentManager;
+        } finally {
+            releaseLock(lock);
+        }
     }
 
     public EventManager getEventManager() {
-        return eventManager;
+        Lock lock = obtainReadLock();
+        try {
+            return eventManager;
+        } finally {
+            releaseLock(lock);
+        }
     }
 
     // The methods below return the manager implementations wrapped in their remote client interfaces.

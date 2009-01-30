@@ -124,7 +124,8 @@ public class MeasurementOOB {
                     "         AND def.numeric_type = 0\n" +
                     "    group by d.schedule_id \n" +
                     " ) data\n" +
-                    " group by id\n" +
+                    " group by id, mx\n" +
+                    " having mx > 0.01 " +
                     ")";
 
     public static final String INSERT_QUERY_ORACLE = "insert into rhq_measurement_oob (oob_factor, schedule_id,  time_stamp )  \n" +
@@ -157,7 +158,8 @@ public class MeasurementOOB {
             "           AND def.numeric_type = 0\n" +
             "       GROUP BY d.schedule_id \n" +
             ")\n" +
-            "GROUP BY id\n" +
+            "GROUP BY id, mx\n" +
+            "HAVING mx > 0.01" +
             ") ";
 
     private static final long serialVersionUID = 1L;

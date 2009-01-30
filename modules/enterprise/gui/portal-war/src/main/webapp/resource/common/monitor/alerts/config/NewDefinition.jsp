@@ -18,6 +18,8 @@
 <c:if test="${not empty ResourceType}" >
   <html:hidden property="type" value="${ResourceType.id}"/>
 </c:if>
+
+<tiles:insert definition=".events.config.view.nav"/>
  
 <tiles:insert definition=".events.config.new.properties"/>
 
@@ -25,7 +27,7 @@
   <tiles:put name="formName" value="NewAlertDefinitionForm"/>
 </tiles:insert>
 
-<tiles:insert definition=".events.config.form.buttons"/>
+<tiles:insert definition=".events.config.form.buttons" /> 
 
 <tiles:insert definition=".page.footer"/>
 

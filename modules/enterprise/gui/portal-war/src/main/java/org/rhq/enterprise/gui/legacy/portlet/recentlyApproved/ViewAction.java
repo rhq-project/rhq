@@ -81,11 +81,16 @@ public class ViewAction extends TilesAction {
 
             // Set the show servers flag on all expanded platforms.
             // Find the list of expanded platforms for this user and make it available to the jsp.
-            List<String> expandedPlatforms = recentlyApprovedPreferences.expandedPlatforms;
             List<String> removeExpandedPlatforms = new ArrayList<String>();
 
-            for (String expandedPlatform : expandedPlatforms) {
-                Integer platformId = Integer.valueOf(expandedPlatform);
+            for (String expandedPlatform : recentlyApprovedPreferences.expandedPlatforms) {
+                Integer platformId = null;
+                try {
+                    platformId = Integer.valueOf(expandedPlatform);
+                } catch (NumberFormatException nfe) {
+                    removeExpandedPlatforms.add(expandedPlatform);
+                    continue;
+                }
                 RecentlyAddedResourceComposite miniPlatform = platformMap.get(platformId);
                 if (miniPlatform != null) {
                     miniPlatform.setShowChildren(true);
@@ -96,8 +101,12 @@ public class ViewAction extends TilesAction {
                 }
             }
 
-            // we do this just to clean up the preferences for platforms that are no longer recently approved
-            expandedPlatforms.removeAll(removeExpandedPlatforms);
+            // we do this just to clean up the preferences for platforms in the filter list which no longer exist
+            if (removeExpandedPlatforms.size() > 0) {
+                recentlyApprovedPreferences.expandedPlatforms.removeAll(removeExpandedPlatforms);
+                preferences.setRecentlyApprovedPortletPreferences(recentlyApprovedPreferences);
+                preferences.persistPreferences();
+            }
 
             // Make the list available to the jsp.
 

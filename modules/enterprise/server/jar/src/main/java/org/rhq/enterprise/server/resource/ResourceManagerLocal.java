@@ -35,11 +35,11 @@ import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
-import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -183,8 +183,8 @@ public interface ResourceManagerLocal {
      * @return the resource, or null if no such resource exists
      */
     @Nullable
-    Resource getResourceByParentAndKey(Subject user, @Nullable
-    Resource parent, String key, String plugin, String typeName);
+    Resource getResourceByParentAndKey(Subject user, @Nullable Resource parent, String key, String plugin,
+        String typeName);
 
     PageList<Resource> getResourceByParentAndInventoryStatus(Subject user, Resource parent, InventoryStatus status,
         PageControl pageControl);
@@ -221,10 +221,11 @@ public interface ResourceManagerLocal {
      *
      * @param  user
      * @param  ctime the oldest time (epoch mills) that a platform had to have been added for it to be returned
+     * @param  maxItems the maximum number of items to return within the timeframe
      *
      * @return list of all platforms that were added since or at <code>ctime</code>
      */
-    List<RecentlyAddedResourceComposite> getRecentlyAddedPlatforms(Subject user, long ctime);
+    List<RecentlyAddedResourceComposite> getRecentlyAddedPlatforms(Subject user, long ctime, int maxItems);
 
     /**
      * Gets a list of servers that are children of the given platform that were recently added (committed) to inventory.
@@ -372,7 +373,6 @@ public interface ResourceManagerLocal {
      */
     Resource getPlatform(Agent agent);
 
-
     /**
      * Load the entire list of resources under an agent. Tries to do so in as few
      * queries as possible while prefectching the information necessary to create a tree
@@ -390,6 +390,5 @@ public interface ResourceManagerLocal {
      */
     List<Resource> getResourcesByAgent(Subject user, int agentId, PageControl pageControl);
 
-    
     ResourceAvailabilitySummary getAvailabilitySummary(Subject user, int resourceId);
 }

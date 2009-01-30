@@ -44,8 +44,6 @@ public class ModifyAction extends BaseAction {
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
         WebUserPreferences preferences = user.getWebPreferences();
-        RecentlyApprovedPortletPreferences recentlyApprovedPreferences = preferences
-            .getRecentlyApprovedPortletPreferences();
 
         ActionForward forward = checkSubmit(request, mapping, form);
 
@@ -57,8 +55,9 @@ public class ModifyAction extends BaseAction {
             DashboardUtils.removePortlet(user, pForm.getPortletName());
         }
 
-        recentlyApprovedPreferences.range = pForm.getRange();
-        preferences.setRecentlyApprovedPortletPreferences(recentlyApprovedPreferences);
+        RecentlyApprovedPortletPreferences problemResourcePreferences = pForm.getRecentlyApprovedPortletPreferences();
+        preferences.setRecentlyApprovedPortletPreferences(problemResourcePreferences);
+
         preferences.persistPreferences();
 
         session.removeAttribute(Constants.USERS_SES_PORTAL);

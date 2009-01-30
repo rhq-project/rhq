@@ -1101,7 +1101,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public List<RecentlyAddedResourceComposite> getRecentlyAddedPlatforms(Subject user, long ctime) {
+    public List<RecentlyAddedResourceComposite> getRecentlyAddedPlatforms(Subject user, long ctime, int maxItems) {
         Query query;
 
         if (authorizationManager.isInventoryManager(user)) {
@@ -1112,7 +1112,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         query.setParameter("oldestEpochTime", ctime);
-        query.setMaxResults(100); // this query is only used by the dashboard portlet, let's not blow it up
+        query.setMaxResults(maxItems); // this query is only used by the dashboard portlet, let's not blow it up
         return query.getResultList();
     }
 

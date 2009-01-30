@@ -28,23 +28,41 @@
       </tiles:insert>
 
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
-         <tr>
+        <tr>
+          <td colspan="4" class="BlockContent"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
+        </tr>
+        <tr valign="top">
           <td width="20%" class="BlockLabel" valign="center"><fmt:message key="dash.settings.FormLabel.RecentlyApprovedShow"/></td>
-          <td width="80%" class="BlockContent" colspan="3" valign="center">
-            <table width="100%" cellpadding="0" cellspacing="5" border="0">
-             <tr>
-              <td nowrap><fmt:message key="dash.settings.recentlyApproved.last"/></td>
-              <td>
-              <html:select property="range">
-                <html:option value="24">1</html:option>
-                <html:option value="120">5</html:option>
-                <html:option value="240">10</html:option>
-                <html:option value="360">15</html:option>
+          <td width="1%" class="BlockContent">
+              <html:select property="rows">
+                <html:option value="5">5</html:option>
+                <html:option value="10">10</html:option>
+                <html:option value="15">15</html:option>
+                <html:option value="20">20</html:option>
+                <html:option value="30">30</html:option>
               </html:select>
-              </td>
-              <td width="100%"><fmt:message key="dash.settings.recentlyApproved.approved"/></td>
-             </tr>
-           </table>
+          </td>
+          <td class="BlockContent" valign="center">
+            <fmt:message key="dash.settings.FormLabel.RecentlyApprovedMax"/>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="3" class="BlockContent"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
+        </tr>
+        <tr>
+          <td width="20%" class="BlockLabel" valign="center"><fmt:message key="dash.settings.FormLabel.RecentlyApprovedLast"/></td>
+          <td width="1%" class="BlockContent">
+              <html:select property="hours">
+                <html:option value="1">1</html:option>
+                <html:option value="4">4</html:option>
+                <html:option value="8">8</html:option>
+                <html:option value="24">24</html:option>
+                <html:option value="48">48</html:option>
+                <html:option value="-1"><fmt:message key="dash.settings.FormLabel.RecentlyApprovedUnlimited"/></html:option>
+              </html:select>
+          </td>
+          <td class="BlockContent" valign="center">
+            <fmt:message key="dash.settings.FormLabel.RecentlyApprovedHours"/>
           </td>
         </tr>
         <tr>

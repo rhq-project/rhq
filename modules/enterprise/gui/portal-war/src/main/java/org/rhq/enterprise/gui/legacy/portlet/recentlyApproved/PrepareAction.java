@@ -32,15 +32,17 @@ import org.rhq.enterprise.gui.legacy.WebUserPreferences.RecentlyApprovedPortletP
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 
 public class PrepareAction extends BaseAction {
+    @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
 
         HttpSession session = request.getSession();
         WebUser user = (WebUser) session.getAttribute(Constants.WEBUSER_SES_ATTR);
-        RecentlyApprovedPortletPreferences preferences = user.getWebPreferences().getRecentlyApprovedPortletPreferences();
+        RecentlyApprovedPortletPreferences preferences = user.getWebPreferences()
+            .getRecentlyApprovedPortletPreferences();
 
         PropertiesForm pForm = (PropertiesForm) form;
-        pForm.setRange(preferences.range);
+        pForm.setRecentlyApprovedPortletPreferences(preferences);
 
         return null;
     }

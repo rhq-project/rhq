@@ -20,12 +20,14 @@ package org.rhq.enterprise.gui.legacy.portlet.problemresources;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.ProblemResourcesPortletPreferences;
@@ -37,11 +39,11 @@ public class ModifyAction extends BaseAction {
     @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
-        PropertiesForm pForm = (PropertiesForm) form;
-        WebUser user = SessionUtils.getWebUser(request.getSession());
-        WebUserPreferences preferences = user.getWebPreferences();
 
-        String forwardStr = Constants.SUCCESS_URL;
+        PropertiesForm pForm = (PropertiesForm) form;
+        HttpSession session = request.getSession();
+        WebUser user = SessionUtils.getWebUser(session);
+        WebUserPreferences preferences = user.getWebPreferences();
 
         ActionForward forward = checkSubmit(request, mapping, form);
 
@@ -58,7 +60,8 @@ public class ModifyAction extends BaseAction {
 
         preferences.persistPreferences();
 
-        request.getSession().removeAttribute(Constants.USERS_SES_PORTAL);
-        return mapping.findForward(forwardStr);
+        session.removeAttribute(Constants.USERS_SES_PORTAL);
+
+        return mapping.findForward(RetCodeConstants.SUCCESS_URL);
     }
 }

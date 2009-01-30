@@ -19,20 +19,34 @@
 package org.rhq.enterprise.gui.legacy.portlet.recentlyApproved;
 
 // XXX: remove when ImageBeanButton works
+import org.rhq.enterprise.gui.legacy.WebUserPreferences.RecentlyApprovedPortletPreferences;
 import org.rhq.enterprise.gui.legacy.portlet.DashboardBaseForm;
 
 public class PropertiesForm extends DashboardBaseForm {
-    private Integer range;
 
-    public PropertiesForm() {
-        super();
+    RecentlyApprovedPortletPreferences prefs = new RecentlyApprovedPortletPreferences();
+
+    public int getHours() {
+        return this.prefs.hours;
     }
 
-    public Integer getRange() {
-        return this.range;
+    public void setHours(int hours) {
+        this.prefs.hours = hours;
     }
 
-    public void setRange(Integer range) {
-        this.range = range;
+    public int getRows() {
+        return this.prefs.range;
+    }
+
+    public void setRows(int rows) {
+        this.prefs.range = rows;
+    }
+
+    public RecentlyApprovedPortletPreferences getRecentlyApprovedPortletPreferences() {
+        return prefs;
+    }
+
+    public void setRecentlyApprovedPortletPreferences(RecentlyApprovedPortletPreferences prefs) {
+        this.prefs = prefs;
     }
 }

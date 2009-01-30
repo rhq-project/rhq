@@ -45,6 +45,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     public static final String PREF_DASH_PROBLEM_RESOURCES_IGNORED = ".dashContent.problemResources.ignoreList";
 
     public static final String PREF_DASH_RECENTLY_APPROVED_RANGE = ".dashContent.recentlyApproved.range";
+    public static final String PREF_DASH_RECENTLY_APPROVED_HOURS = ".dashContent.recentlyApproved.hours";
     public static final String PREF_DASH_RECENTLY_APPROVED_EXPANDED_PLATFORMS = ".dashContent.recentlyApproved.expandedPlatforms";
 
     public static final String PREF_DASH_FAVORITE_RESOURCES_AVAILABILITY = ".dashContent.resourcehealth.availability";
@@ -202,8 +203,8 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
     public ProblemResourcesPortletPreferences getProblemResourcesPortletPreferences() {
         ProblemResourcesPortletPreferences prefs = new ProblemResourcesPortletPreferences();
-        prefs.range = getIntPref(PREF_DASH_PROBLEM_RESOURCES_ROWS);
-        prefs.hours = getIntPref(PREF_DASH_PROBLEM_RESOURCES_HOURS);
+        prefs.range = getIntPref(PREF_DASH_PROBLEM_RESOURCES_ROWS, 10);
+        prefs.hours = getIntPref(PREF_DASH_PROBLEM_RESOURCES_HOURS, -1);
         prefs.showIgnored = getBooleanPref(PREF_DASH_PROBLEM_RESOURCES_SHOW_IGNORED);
         prefs.ignoreList = getPreference(PREF_DASH_PROBLEM_RESOURCES_IGNORED);
         return prefs;
@@ -218,18 +219,21 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
     public static class RecentlyApprovedPortletPreferences {
         public int range;
+        public int hours;
         public List<String> expandedPlatforms;
     }
 
     public RecentlyApprovedPortletPreferences getRecentlyApprovedPortletPreferences() {
         RecentlyApprovedPortletPreferences prefs = new RecentlyApprovedPortletPreferences();
-        prefs.range = getIntPref(PREF_DASH_RECENTLY_APPROVED_RANGE);
+        prefs.range = getIntPref(PREF_DASH_RECENTLY_APPROVED_RANGE, 10);
+        prefs.hours = getIntPref(PREF_DASH_RECENTLY_APPROVED_HOURS, -1);
         prefs.expandedPlatforms = getPreferenceAsList(PREF_DASH_RECENTLY_APPROVED_EXPANDED_PLATFORMS);
         return prefs;
     }
 
     public void setRecentlyApprovedPortletPreferences(RecentlyApprovedPortletPreferences prefs) {
         setPreference(PREF_DASH_RECENTLY_APPROVED_RANGE, prefs.range);
+        setPreference(PREF_DASH_RECENTLY_APPROVED_HOURS, prefs.hours);
         setPreference(PREF_DASH_RECENTLY_APPROVED_EXPANDED_PLATFORMS, prefs.expandedPlatforms);
     }
 

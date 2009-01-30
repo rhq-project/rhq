@@ -67,10 +67,10 @@ public class ViewAction extends TilesAction {
             Subject subject = user.getSubject();
 
             // Based on the user preference, generate a timestamp of the oldest resource to display.
-            long range = recentlyApprovedPreferences.range;
+            long range = recentlyApprovedPreferences.hours;
             long ts = System.currentTimeMillis() - (range * 60 * 60 * 1000); // range encoded as hours (UI shows days)
 
-            platformList = resourceManager.getRecentlyAddedPlatforms(subject, ts);
+            platformList = resourceManager.getRecentlyAddedPlatforms(subject, ts, recentlyApprovedPreferences.range);
 
             Map<Integer, RecentlyAddedResourceComposite> platformMap;
             platformMap = new HashMap<Integer, RecentlyAddedResourceComposite>();

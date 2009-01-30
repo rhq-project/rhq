@@ -137,13 +137,13 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
         ProcessInfo processInfo = autoDiscoveryResult.getProcessInfo();
         SystemInfo systemInfo = context.getSystemInformation();
         String[] commandLine = processInfo.getCommandLine();
-        String installationPath = determineInstallationPath(commandLine);
 
-        if (null == installationPath) {
-            log.info("Ignoring embedded tomcat instance with following command line, ignoring: " + Arrays.toString(commandLine));
+        if (!isStandalone(commandLine)) {
+            log.info("Ignoring embedded Tomcat instance with following command line, ignoring: " + Arrays.toString(commandLine));
             return null;
         }
 
+        String installationPath = determineInstallationPath(processInfo);
         TomcatConfig tomcatConfig = parseTomcatConfig(installationPath);
 
         // Create pieces necessary for the resource creation
@@ -161,6 +161,23 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), resourceKey, resourceName, resourceVersion, productDescription, pluginConfiguration, processInfo);
 
         return resource;
+    }
+
+    /**
+     * Check from the command line if this is a standalone tomcat
+     *
+     * @param  commandLine
+     *
+     * @return
+     */
+    private boolean isStandalone(String[] commandLine) {
+        for (String item : commandLine) {
+            if (item.contains("catalina.home")) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -191,7 +208,10 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
     }
 
     /**
-     * Looks for tomcat home in the command line properties
+     * Looks for tomcat home in the command line properties.
+     * 
+     * This can be called if we are guaranteed to have an absolute path for the catalina.home property. Otherwise, call
+     * {@link determineInstallationPath(ProcessInfo)}  
      *
      * @param startup command line
      *
@@ -222,6 +242,21 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
         }
 
         return result;
+    }
+
+    /**
+     * Looks for tomcat home on the assumption that the process working directory is home/bin.  This may or may not
+     * be a valid assumption, if possible, use {@link determineInstallationPath(String[])}.
+     * 
+     * @param ProcessInfo for the standalone tomcat process
+     *
+     * @return
+     */
+    private String determineInstallationPath(ProcessInfo processInfo) {
+        //determine the bin directory of the installation
+        String cwdPath = processInfo.getCurrentWorkingDirectory();
+        File cwd = new File(cwdPath);
+        return cwd.getParent();
     }
 
     /**

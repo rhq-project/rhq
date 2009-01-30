@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="agentcopy" default="help">
+   
+   <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+      <classpath>
+         <pathelement location="${basedir}/ant-contrib-1.0b3.jar"/>
+      </classpath>
+   </taskdef>
+
+   <property file="${basedir}/agentcopy.properties" />
+
+   <if>
+      <os family="windows"/>
+      <then>
+         <property name="iswindows" value="true" />
+         <property name="agentcopy.agent.executable" value="rhq-agent.bat" />
+      </then>
+      <else>
+         <property name="agentcopy.agent.executable" value="rhq-agent-wrapper.sh" />
+      </else>
+   </if>
+
+   <!-- ========== -->
+   <target name="help">
+      <echo>
+         Target are: copy, start, stop, clean
+         Run ant -projecthelp for more info.
+      </echo>
+   </target>
+
+   <!-- ========== -->
+   <target name="copy" description="Spawns copies of the source agent distro and configures them.">
+      <echo>The source agent distro is found here: ${agentcopy.agent.dist.dir}</echo>
+      <echo>The copied agents will be found here: ${agentcopy.agent.spawn.dir}</echo>
+      <echo>The list of copied agents is: ${agentcopy.agent.spawn.list}</echo>
+
+      <!-- make sure the source distro exists and we create the dir where we copy all our agents -->
+      <available file="${agentcopy.agent.dist.dir}"
+                 type="dir"
+                 property="_agentcopy.agent.dist.dir.present"/>
+      <fail unless="_agentcopy.agent.dist.dir.present"
+            message="Missing agent distribution at ${agentcopy.agent.dist.dir}"/>
+      <mkdir dir="${agentcopy.agent.spawn.dir}" />
+
+      <!-- copy the source agent distro - make one copy for each copied agent -->
+      <foreach param="_index"
+               list="${agentcopy.agent.spawn.list}"
+               target="copy-agent-dist" />
+      
+      <!-- configure each copied agent appropriately -->
+      <foreach param="_index"
+               list="${agentcopy.agent.spawn.list}"
+               target="configure-agent" />
+
+      <!-- setup the environment settings for each copied agent -->
+      <foreach param="_index"
+               list="${agentcopy.agent.spawn.list}"
+               target="setup-agent-env" />
+   </target>
+
+   <!-- ========== -->
+   <target name="copy-agent-dist" >
+      <echo>Copying agent distribution for agent [${_index}]</echo>
+      <copy todir="${agentcopy.agent.spawn.dir}/${_index}">
+         <fileset dir="${agentcopy.agent.dist.dir}"/>
+      </copy>
+      <chmod dir="${agentcopy.agent.spawn.dir}/${_index}/bin" includes="*.sh" perm="ugo+rx"/>
+   </target>
+
+   <!-- ========== -->
+   <target name="configure-agent" >
+      <echo>Configuring agent [${_index}]</echo>
+      
+      <!-- put the template configuration file in the copied agent's distribution -->
+      <copy tofile="${agentcopy.agent.spawn.dir}/${_index}/conf/agent-configuration.xml"
+            file="${basedir}/agentcopy-agent-configuration.xml"
+            overwrite="true"/>
+      
+      <!-- override the copied agent's configuration with defined override settings -->
+      <propertyselector property="_overrides.list"
+                        delimiter=","
+                        match="agentcopy.agent.override.${_index}\.(.*)"
+                        select="\1"
+                        casesensitive="false" />
+      <property name="_overrides.list" value="" /> <!-- in case there are no overrides -->
+
+      <foreach list="${_overrides.list}"
+               delimiter=","
+               target="override-agent-configuration"
+               param="_override" />
+
+      <!-- if we did not specifically override a preference for this agent, give it a default -->
+      <!-- * we set the agent preference node name to that of its index -->
+      <!-- * we set the agent's port to that of its index -->
+      <replace file="${agentcopy.agent.spawn.dir}/${_index}/conf/agent-configuration.xml">
+         <replacefilter token="@@@AGENT_NODE@@@" value="${_index}"/>
+         <replacefilter token="@@@rhq.communications.connector.transport@@@" value="socket"/>
+         <replacefilter token="@@@rhq.communications.connector.bind-port@@@" value="${_index}"/>
+         <replacefilter token="@@@rhq.communications.connector.bind-address@@@" value="${agentcopy.bindaddress}"/>
+         <replacefilter token="@@@rhq.communications.connector.transport-params@@@" value="numAcceptThreads=3&amp;amp;maxPoolSize=303&amp;amp;clientMaxPoolSize=304&amp;amp;socketTimeout=60000&amp;amp;enableTcpNoDelay=true&amp;amp;backlog=200"/>
+         <replacefilter token="@@@rhq.agent.server.transport@@@" value="servlet"/>
+         <replacefilter token="@@@rhq.agent.server.bind-port@@@" value="${agentcopy.server.bind-port}"/>
+         <replacefilter token="@@@rhq.agent.server.bind-address@@@" value="${agentcopy.server.bind-address}"/>
+         <replacefilter token="@@@rhq.agent.server.transport-params@@@" value="/jboss-remoting-servlet-invoker/ServerInvokerServlet"/>
+         <replacefilter token="@@@rhq.agent.server-auto-detection@@@" value="true"/>
+         <replacefilter token="@@@rhq.agent.client.server-polling-interval-msecs@@@" value="60000"/>
+         <replacefilter token="@@@rhq.agent.client.max-concurrent@@@" value="5"/>
+         <replacefilter token="@@@rhq.agent.client.command-timeout-msecs@@@" value="0"/>
+         <replacefilter token="@@@rhq.agent.client.retry-interval-msecs@@@" value="15000"/>
+         <replacefilter token="@@@rhq.agent.client.max-retries@@@" value="10"/>
+         <replacefilter token="@@@rhq.agent.client.send-throttling@@@" value="100:1000"/>
+         <replacefilter token="@@@rhq.agent.client.queue-throttling@@@" value="200:2000"/>
+         <replacefilter token="@@@rhq.agent.disable-native-system@@@" value="false"/>
+         <replacefilter token="@@@rhq.agent.plugins.operation-invocation-timeout-secs@@@" value="600"/>
+         <replacefilter token="@@@rhq.agent.plugins.operation-invoker.threadpool-size@@@" value="5"/>
+         <replacefilter token="@@@rhq.agent.plugins.server-discovery.initial-delay-secs@@@" value="10"/>
+         <replacefilter token="@@@rhq.agent.plugins.server-discovery.period-secs@@@" value="900"/>
+         <replacefilter token="@@@rhq.agent.plugins.service-discovery.initial-delay-secs@@@" value="20"/>
+         <replacefilter token="@@@rhq.agent.plugins.service-discovery.period-secs@@@" value="86400"/>
+         <replacefilter token="@@@rhq.agent.plugins.availability-scan.initial-delay-secs@@@" value="5"/>
+         <replacefilter token="@@@rhq.agent.plugins.availability-scan.period-secs@@@" value="60"/>
+         <replacefilter token="@@@rhq.agent.plugins.measurement-collection.threadpool-size@@@" value="5"/>
+         <replacefilter token="@@@rhq.agent.plugins.measurement-collection.initial-delay-secs@@@" value="30"/>
+         <replacefilter token="@@@rhq.agent.plugins.content-discovery.threadpool-size@@@" value="10"/>
+         <replacefilter token="@@@rhq.agent.plugins.content-discovery.initial-delay-secs@@@" value="60"/>
+         <replacefilter token="@@@rhq.agent.plugins.content-discovery.period-secs@@@" value="30"/>
+         <replacefilter token="@@@rhq.agent.plugins.configuration-discovery.initial-delay-secs@@@" value="300"/>
+         <replacefilter token="@@@rhq.agent.plugins.configuration-discovery.period-secs@@@" value="3600"/>
+         <replacefilter token="@@@rhq.agent.plugins.event-sender.initial-delay-secs@@@" value="30"/>
+         <replacefilter token="@@@rhq.agent.plugins.event-sender.period-secs@@@" value="30"/>
+         <replacefilter token="@@@rhq.agent.plugins.event-report.max-per-source@@@" value="200"/>
+         <replacefilter token="@@@rhq.agent.plugins.event-report.max-total@@@" value="400"/>
+      </replace>
+   </target>
+   
+   <!-- ========== -->
+   <target name="override-agent-configuration" >
+      <propertycopy property="_override.value"
+                    from="agentcopy.agent.override.${_index}.${_override}"
+                    override="true"/>
+      <echo>Agent [${_index}] will override [${_override}] with the value [${_override.value}]</echo>
+      <replace file="${agentcopy.agent.spawn.dir}/${_index}/conf/agent-configuration.xml">
+         <replacefilter token="@@@${_override}@@@" value="${_override.value}"/>
+      </replace>
+   </target>
+   
+   <!-- ========== -->
+   <target name="setup-agent-env" >
+      <propertycopy property="_javaopts"
+                    from="agentcopy.agent.javaopts-default"/>
+      <propertycopy property="_javaopts"
+                    from="agentcopy.agent.javaopts.${_index}"
+                    override="true"
+                    silent="true"/>
+
+      <propertycopy property="_sysprops"
+                    from="agentcopy.agent.sysprops-default"/>
+      <propertycopy property="_sysprops"
+                    from="agentcopy.agent.sysprops.${_index}"
+                    override="true"
+                    silent="true"/>
+
+      <propertycopy property="_cmdlineopts"
+                    from="agentcopy.agent.cmdlineopts-default"/>
+      <propertycopy property="_cmdlineopts"
+                    from="agentcopy.agent.cmdlineopts.${_index}"
+                    override="true"
+                    silent="true"/>
+
+      <echo>
+Agent [${_index}]:
+RHQ_AGENT_JAVA_OPTS=${_javaopts} ${_sysprops}
+RHQ_AGENT_CMDLINE_OPTS=--daemon --pref=${_index} ${_cmdlineopts}
+</echo>
+
+      <echo append="true" file="${agentcopy.agent.spawn.dir}/${_index}/bin/rhq-agent-env.sh">
+# AGENTSPAWN CUSTOMIZATION
+RHQ_AGENT_JAVA_OPTS=${_javaopts} ${_sysprops}
+RHQ_AGENT_CMDLINE_OPTS=--daemon --pref=${_index} ${_cmdlineopts}
+      </echo>
+         
+      <echo append="true" file="${agentcopy.agent.spawn.dir}/${_index}/bin/rhq-agent-env.bat">
+rem AGENTSPAWN CUSTOMIZATION
+set RHQ_AGENT_JAVA_OPTS=${_javaopts} ${_sysprops}
+set RHQ_AGENT_CMDLINE_OPTS=--daemon --pref=${_index} ${_cmdlineopts}
+      </echo>
+
+   </target>
+   
+   <!-- ========== -->
+   <target name="start" description="Starts all the agents.">
+      <echo>Starting all agents...</echo>
+      <foreach param="_index"
+               list="${agentcopy.agent.spawn.list}"
+               target="run-single-agent" />
+      
+      <echo>All agents should have been started.</echo>
+      <echo>Will pause for 60 seconds to make sure.</echo>
+      <sleep seconds="60" />
+   </target>
+   
+   <!-- ========== -->
+   <target name="run-single-agent" >
+      <propertycopy property="_sleep_millis"
+                    from="agentcopy.agent.sleep-before-launch-default"/>
+      <propertycopy property="_sleep_millis"
+                    from="agentcopy.agent.sleep-before-launch.${_index}"
+                    override="true"
+                    silent="true"/>
+
+      <echo>Pausing for ${_sleep_millis}ms before starting agent [${_index}]</echo>
+      <sleep milliseconds="${_sleep_millis}"/>
+      
+      <echo>Starting agent [${_index}] using [${agentcopy.agent.executable}]</echo>
+      
+      <forget>
+         <exec executable="${agentcopy.agent.spawn.dir}/${_index}/bin/${agentcopy.agent.executable}"
+               output="${agentcopy.agent.spawn.dir}/${_index}/logs/agentcopy-output.txt">
+            <arg line="start" />
+         </exec>
+      </forget>
+      
+   </target>
+
+   <!-- ========== -->
+   <target name="clean" description="Deletes the spawn directory and with it all copies of the source agent distro.">
+      <echo>Deleting the agents found here: ${agentcopy.agent.spawn.dir}</echo>
+      <delete dir="${agentcopy.agent.spawn.dir}" />
+   </target>
+
+   <!-- ========== -->
+   <target name="stop" description="Stops all the agents (not available on Windows).">
+      <fail if="iswindows" message="Stopping agents with this script is not supported on Windows"/>
+
+      <echo>Stopping all agents...</echo>
+      <foreach param="_index"
+               list="${agentcopy.agent.spawn.list}"
+               target="stop-single-agent" />
+      
+      <echo>All agents should have been stopped.</echo>
+   </target>
+   
+   <!-- ========== -->
+   <target name="stop-single-agent">
+      <loadfile property="_pid"
+                srcfile="${agentcopy.agent.spawn.dir}/${_index}/bin/.rhq-agent.pid"
+                failonerror="false">
+         <filterchain>
+            <striplinebreaks/>
+         </filterchain>
+      </loadfile>
+
+      <echo>Stopping agent [${_index}] with pid [${_pid}]</echo>
+
+      <exec executable="kill">
+         <arg value="-TERM" />
+         <arg value="${_pid}" />
+      </exec>
+   </target>
+
+</project>

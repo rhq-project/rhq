@@ -73,17 +73,29 @@
                               <copy toDir="target/itest/plugins" flatten="true">
                                  <fileset dir="${settings.localRepository}/">
                                     <include name="org/rhq/rhq-platform-plugin/${rhq.version}/rhq-platform-plugin-${rhq.version}.jar" />
-                                    <include name="org/rhq/rhq-jmx-plugin/${rhq.version}/rhq-jmx-plugin-${rhq.version}.jar" />
+                                    <include name="org/rhq/rhq-jmx-plugin/${rhq.version}/rhq-jmx-plugin-${rhq.version}.jar" />                                                                        
                                  </fileset>
                                  <fileset dir="${project.build.directory}">
                                     <include name="${project.artifactId}-${project.version}.jar" />
                                  </fileset>
                               </copy>
+                              <unzip dest="target/itest/lib">
+                                 <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
+                                 <patternset>
+                                    <include name="**/lib/sigar.jar" />
+                                    <include name="**/lib/bcel*.jar" />
+                                    <include name="**/lib/*.so" />
+                                    <include name="**/lib/*.sl" />
+                                    <include name="**/lib/*.dll" />
+                                    <include name="**/lib/*.dylib" />
+                                 </patternset>
+                              </unzip>
                               <move todir="target/itest/lib" flatten="true">
                                  <fileset dir="target/itest/lib">
                                     <include name="**/lib/*" />
                                  </fileset>
                               </move>
+                              <delete dir="target/itest/lib/hyperic-sigar-${sigar.version}" />
                            </tasks>
                         </configuration>
                         <goals>

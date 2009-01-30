@@ -1,0 +1,74 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.jboss.on.plugins.tomcat.test;
+
+import java.io.File;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.plugin.FileSystemPluginFinder;
+import org.rhq.core.pc.plugin.PluginEnvironment;
+import org.rhq.core.pc.plugin.PluginManager;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Test;
+
+/**
+ * @author Fady Matar
+ */
+@Test(groups = "tomcat-plugin")
+public class TomcatPluginTest {
+    private Log log = LogFactory.getLog(this.getClass());
+    private static final String PLUGIN_NAME = "Tomcat";
+
+    @BeforeSuite
+    public void start() {
+        try {
+            File pluginDir = new File("target/test/plugins");
+            PluginContainerConfiguration pcConfig = new PluginContainerConfiguration();
+            pcConfig.setPluginFinder(new FileSystemPluginFinder(pluginDir));
+            pcConfig.setPluginDirectory(pluginDir);
+
+            pcConfig.setInsideAgent(false);
+            PluginContainer.getInstance().setConfiguration(pcConfig);
+            PluginContainer.getInstance().initialize();
+            log.info("PC started.");
+            for (String plugin : PluginContainer.getInstance().getPluginManager().getMetadataManager().getPluginNames()) {
+                log.info("...Loaded plugin: " + plugin);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @AfterSuite
+    public void stop() {
+        PluginContainer.getInstance().shutdown();
+    }
+
+    @Test
+    public void testPluginLoad() {
+        PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
+        PluginEnvironment pluginEnvironment = pluginManager.getPlugin(PLUGIN_NAME);
+        assert (pluginEnvironment != null) : "Null environment, plugin not loaded";
+        assert (pluginEnvironment.getPluginName().equals(PLUGIN_NAME));
+    }
+}

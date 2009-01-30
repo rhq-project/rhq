@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.clientapi.server.content;
 
 import java.io.InputStream;
@@ -28,6 +28,7 @@ import java.util.Set;
 
 import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
+import org.rhq.core.communications.command.annotation.Timeout;
 import org.rhq.core.domain.content.Channel;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageVersion;
@@ -121,6 +122,7 @@ public interface ContentServerService {
      * @return the number of bytes written to the output stream - this is the size of the package version that was
      *         downloaded
      */
+    @Timeout(45 * 60 * 1000L)
     @LimitedConcurrency(CONCURRENCY_LIMIT_CONTENT_DOWNLOAD)
     long downloadPackageBitsGivenResource(int resourceId, PackageDetailsKey packageDetailsKey, OutputStream outputStream);
 
@@ -140,6 +142,7 @@ public interface ContentServerService {
      *
      * @return the number of bytes written to the output stream - this is the size of the chunk downloaded
      */
+    @Timeout(45 * 60 * 1000L)
     @LimitedConcurrency(CONCURRENCY_LIMIT_CONTENT_DOWNLOAD)
     long downloadPackageBitsRangeGivenResource(int resourceId, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream, long startByte, long endByte);
@@ -156,6 +159,7 @@ public interface ContentServerService {
      * 
      * @return the number of bytes written to the output stream
      */
+    @Timeout(45 * 60 * 1000L)
     @LimitedConcurrency(CONCURRENCY_LIMIT_CONTENT_DOWNLOAD)
     long downloadPackageBitsForChildResource(int parentResourceId, String resourceTypeName,
         PackageDetailsKey packageDetailsKey, OutputStream outputStream);

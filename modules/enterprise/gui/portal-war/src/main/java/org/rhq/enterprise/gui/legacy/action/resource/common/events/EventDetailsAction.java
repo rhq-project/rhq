@@ -161,7 +161,8 @@ public class EventDetailsAction extends BaseAction {
     private void createLinkForResource(int resourceId, int groupId, int parent, int type, StringBuffer html,
         EventComposite event, String text) {
 
-        html.append("<a href=\"/resource/common/Events.do?mode=events&amp;eventId=");
+        //html.append("<a href=\"/resource/common/Events.do?mode=events&amp;eventId=");
+        html.append("<a href=\"/rhq/resource/events/history.xhtml?eventId=");
         html.append(event.getEventId());
         if (resourceId > -1) {
             html.append("&amp;id=").append(event.getResourceId());

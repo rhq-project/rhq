@@ -1,5 +1,9 @@
 <%@ page language="java" %>
 <%@ page errorPage="/common/Error.jsp" %>
+
+<%@page import="java.text.DateFormat"%>
+<%@page import="java.util.Date"%>
+
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-html-el" prefix="html" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-tiles" prefix="tiles" %>
@@ -582,11 +586,23 @@
 <!--  SYSTEM-WIDE CONTENTS -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr>
-    <td class="BlockLabel"><fmt:message key="admin.settings.TimeZone"/></td>
-    <td class="BlockLabel">
+    <td nowrap="nowrap" width="30%" class="BlockLabel"><fmt:message key="admin.settings.TimeZone"/></td>
+    <td width="40%" class="BlockLabel">
       <table cellpadding="0" cellspacing="4" border="0">
         <tr>
           <td nowrap="nowrap" align="left"><%= java.util.TimeZone.getDefault().getDisplayName()%></td>
+        </tr>
+      </table>
+    </td>
+    <td width="15%" class="BlockLabel"></td>
+    <td width="15%" class="BlockContent"></td>
+  </tr>
+  <tr>
+    <td nowrap="nowrap" class="BlockLabel"><fmt:message key="admin.settings.LocalTime"/></td>
+    <td class="BlockLabel">
+      <table cellpadding="0" cellspacing="4" border="0">
+        <tr>
+          <td nowrap="nowrap" align="left"><%= DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.FULL).format(new Date(System.currentTimeMillis()))%></td>
         </tr>
       </table>
     </td>
@@ -594,7 +610,7 @@
     <td class="BlockContent"></td>
   </tr>
   <tr>
-    <td class="BlockLabel"><fmt:message key="admin.settings.System.DatabaseURL"/></td>
+    <td nowrap="nowrap" class="BlockLabel"><fmt:message key="admin.settings.System.DatabaseURL"/></td>
     <td class="BlockLabel">
       <table cellpadding="0" cellspacing="4" border="0">
         <tr>
@@ -606,7 +622,7 @@
     <td class="BlockContent"></td>
   </tr>
   <tr>
-    <td class="BlockLabel"><fmt:message key="admin.settings.System.DatabaseProductName"/></td>
+    <td nowrap="nowrap" class="BlockLabel"><fmt:message key="admin.settings.System.DatabaseProductName"/></td>
     <td class="BlockLabel">
       <table cellpadding="0" cellspacing="4" border="0">
         <tr>
@@ -618,7 +634,7 @@
     <td class="BlockContent"></td>
   </tr>
   <tr>
-    <td class="BlockLabel"><fmt:message key="admin.settings.System.DatabaseProductVersion"/></td>
+    <td nowrap="nowrap" class="BlockLabel"><fmt:message key="admin.settings.System.DatabaseProductVersion"/></td>
     <td class="BlockLabel">
       <table cellpadding="0" cellspacing="4" border="0">
         <tr>
@@ -630,7 +646,7 @@
     <td class="BlockContent"></td>
   </tr>
   <tr>
-    <td class="BlockLabel"><fmt:message key="admin.settings.System.DatabaseDriverName"/></td>
+    <td nowrap="nowrap" class="BlockLabel"><fmt:message key="admin.settings.System.DatabaseDriverName"/></td>
     <td class="BlockLabel">
       <table cellpadding="0" cellspacing="4" border="0">
         <tr>
@@ -642,7 +658,7 @@
     <td class="BlockContent"></td>
   </tr>
   <tr>
-    <td class="BlockLabel"><fmt:message key="admin.settings.System.DatabaseDriverVersion"/></td>
+    <td nowrap="nowrap" class="BlockLabel"><fmt:message key="admin.settings.System.DatabaseDriverVersion"/></td>
     <td class="BlockLabel">
       <table cellpadding="0" cellspacing="4" border="0">
         <tr>
@@ -654,16 +670,16 @@
     <td class="BlockContent"></td>
   </tr>
   <tr>
-    <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.System.RawTable"/></td>
-    <td width="30%" class="BlockLabel">
+    <td nowrap="nowrap" class="BlockLabel"><fmt:message key="admin.settings.System.RawTable"/></td>
+    <td class="BlockLabel">
       <table cellpadding="0" cellspacing="4" border="0">
         <tr>
           <td nowrap="nowrap" align="left"><%= org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility.getCurrentRawTable() %></td>
         </tr>
       </table>
     </td>
-    <td width="20%" class="BlockLabel"></td>
-    <td width="30%" class="BlockContent">
+    <td class="BlockLabel"></td>
+    <td class="BlockContent">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td nowrap="nowrap" class="BlockContent" colspan="2">
@@ -673,7 +689,7 @@
     </td>
   </tr>
   <tr>
-    <td class="BlockLabel"><fmt:message key="admin.settings.System.RotationTime"/></td>
+    <td nowrap="nowrap" class="BlockLabel"><fmt:message key="admin.settings.System.RotationTime"/></td>
     <td class="BlockLabel">
       <table cellpadding="0" cellspacing="4" border="0">
         <tr>

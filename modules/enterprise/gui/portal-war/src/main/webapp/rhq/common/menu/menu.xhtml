@@ -16,15 +16,10 @@
         <h:graphicImage value="/images/logo_icon.png"/>
     </h:outputLink>
 
-    <rich:dropDownMenu>
-        <f:facet name="label">
-            <h:panelGroup>
-                <h:outputLink value="/Dashboard.do">
-                    <h:outputText value="#{msg['dash.home.PageTitle']}"/>
-                </h:outputLink>
-            </h:panelGroup>
-        </f:facet>
-    </rich:dropDownMenu>
+
+    <h:outputLink value="/Dashboard.do">
+        <h:outputText value="#{msg['dash.home.PageTitle']}"/>
+    </h:outputLink>
 
     <rich:dropDownMenu>
         <f:facet name="label">

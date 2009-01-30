@@ -21,6 +21,7 @@ package org.jboss.on.plugins.tomcat;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,26 +31,33 @@ import org.mc4j.ems.connection.ConnectionFactory;
 import org.mc4j.ems.connection.EmsConnectException;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
+import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.settings.ConnectionSettings;
 import org.mc4j.ems.connection.support.ConnectionProvider;
 import org.mc4j.ems.connection.support.metadata.ConnectionTypeDescriptor;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.AggregateProcessInfo;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
+import org.rhq.plugins.platform.PlatformComponent;
 
 /**
  * Management for an Apache or JBoss EWS Tomcat server
  *
  * @author Jay Shaughnessy
  */
-public class TomcatServerComponent implements JMXComponent, OperationFacet {
+public class TomcatServerComponent implements JMXComponent<PlatformComponent>, MeasurementFacet, OperationFacet {
 
     public enum SupportedOperations {
         /**
@@ -374,4 +382,31 @@ public class TomcatServerComponent implements JMXComponent, OperationFacet {
         }
         this.mainDeployer.undeploy(file);
     }
+
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+        for (MeasurementScheduleRequest schedule : metrics) {
+            String name = schedule.getName();
+
+            int delimIndex = name.lastIndexOf(':');
+            String beanName = name.substring(0, delimIndex);
+            String attributeName = name.substring(delimIndex + 1);
+            try {
+                // Bean is cached by EMS, so no problem with getting the bean from the connection on each call
+                EmsConnection emsConnection = loadConnection();
+                EmsBean bean = emsConnection.getBean(beanName);
+                EmsAttribute attribute = bean.getAttribute(attributeName);
+
+                Object valueObject = attribute.refresh();
+                if (valueObject instanceof Number) {
+                    Number value = (Number) valueObject;
+                    report.addData(new MeasurementDataNumeric(schedule, value.doubleValue()));
+                } else {
+                    report.addData(new MeasurementDataTrait(schedule, valueObject.toString()));
+                }
+            } catch (Exception e) {
+                log.error("Failed to obtain measurement [" + name + "]", e);
+            }
+        }
+    }
+
 }

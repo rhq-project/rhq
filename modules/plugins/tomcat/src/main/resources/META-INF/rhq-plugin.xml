@@ -166,149 +166,24 @@
          name="shutdown"
          displayName="Shutdown"
          description="Shutdown this Tomcat server via script or JMX depending on the settings in Control and Advanced Properties." />
-      <!--
-         <metric property="partitionName" dataType="trait" displayType="summary"
-         description="the name of the cluster partition this app server instance belongs to"/>
-         
-         <metric displayName="Version Name" property="jboss.system:type=Server:VersionName"
-         dataType="trait" displayType="summary"
-         description="the code name for the this app server instance's major version (AS 3.2 = WonderLand, AS 4.0 = Zion, AS 4.2 = Trinity, EAP 4.x = EAP, SOA 4.x = SOA)"/>
-         
-         <metric displayName="Build Date" property="jboss.system:type=Server:BuildDate"
-         dataType="trait" displayType="summary"
-         description="the date this app server was built"/>
-         
-         <metric displayName="Start Date" property="jboss.system:type=Server:StartDate"
-         dataType="trait" displayType="summary"
-         description="the date and time this app server instance was started"/>
-         
-         <metric property="jboss.system:type=ServerInfo:ActiveThreadCount" displayName="Active Thread Count"
-         defaultInterval="300000" displayType="summary" category="throughput"/>
-         
-         <metric property="jboss.system:type=ServerInfo:ActiveThreadGroupCount" displayName="Active Thread Group Count"
-         defaultInterval="300000" defaultOn="true" category="throughput"/>
-         
-         <metric property="jboss.system:type=ServerInfo:FreeMemory" displayName="JVM Free Memory" displayType="summary"
-         defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
-         
-         <metric property="jboss.system:type=ServerInfo:MaxMemory" displayName="JVM Max Memory"
-         defaultInterval="1800000" defaultOn="true" category="utilization" units="bytes"/>
-         
-         <metric property="jboss.system:type=ServerInfo:TotalMemory" displayName="JVM Total Memory" displayType="summary"
-         defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
-         
-         <metric property="jboss:service=TransactionManager:TransactionCount" displayName="Transactions Active"
-         defaultInterval="300000" defaultOn="true" category="utilization"/>
-         
-         <metric property="jboss:service=TransactionManager:CommitCount" displayName="Transactions Committed" displayType="summary" measurementType="trendsup"
-         defaultInterval="600000" defaultOn="true" category="utilization"/>
-         
-         <metric property="jboss:service=TransactionManager:RollbackCount" displayName="Transactions Rolledback" measurementType="trendsup"
-         defaultInterval="600000" defaultOn="true" category="utilization"/>
+
+      <metric
+         displayName="Server Identifier"
+         property="Catalina:type=Server:serverInfo"
+         dataType="trait"
+         displayType="summary"
+         description="Tomcat server release identifier" />
+
+      <!--                  
          
          <event name="logEntry" description="an entry in a log file"/>
          
-         <content name="library" displayName="Jar Library" category="deployable"
-         description="Library Jar files deployed in JBoss AS">
-         <configuration>
-         <c:simple-property name="version" readOnly="true" description="The version declared by the JAR's manifest."/>
-         <c:simple-property name="title" readOnly="true" description="The title declared by the JAR's manifest."/>
-         <c:simple-property name="url" readOnly="true" description="The url declared by the JAR's manifest."/>
-         <c:simple-property name="vendor" readOnly="true" description="The vendor declared by the JAR's manifest."/>
-         <c:simple-property name="classpath" readOnly="true"
-         description="The classpath declared by the JAR's manifest."/>
-         <c:simple-property name="sealed" readOnly="true" type="boolean" description="True if the JAR is sealed."/>
-         </configuration>
-         </content>
-         
-         <content name="cumulativePatch" displayName="Cumulative Patch" category="deployable"
-         description="Automatically installable application server patches">
-         <configuration>
-         <c:simple-property name="jiraId"/>
-         <c:simple-property name="distributionStatus"/>
-         <c:simple-property name="downloadUrl"/>
-         <c:simple-property name="instructionCompatibilityVersion"/>
-         </configuration>
-         </content>
-         
-         <help>
-         <![CDATA[
-         h3. Binding to IP addresses
-         
-         When starting JBossAS instances that need to be monitored using remote JMX (i.e. JNP), it is necessary that the {{java.rmi.server.hostname}} System property is set to the same value as the server's JNP address (which is set to the {{jboss.bind.address}} System property by default). Due to bugs in JBossAS \[1]\[2], {{java.rmi.server.hostname}} will default to "127.0.0.1", unless JBossAS is started using -b, in which case {{java.rmi.server.hostname}} will default to the bind address specified as the argument to -b.
-         
-         Therefore, you must start your JBossAS instances using either -b, e.g.:
-         
-         {code}
-         run -b 12.34.56.78 ...
-         {code}
-         
-         or by explicitly specifying a value for {{java.rmi.server.hostname}} via -D or -P, e.g.:
-         
-         {code}
-         run -Djboss.bind.address=12.34.56.78 -Djava.rmi.server.hostname=12.34.56.78 ...
-         {code}
-         
-         Otherwise, you will not be able to manage the instance via JON.
-         
-         {note}
-         Using -b is the recommended way to specify the bind address, since, in addition to setting {{jboss.bind.address}} and {{java.rmi.server.hostname}}, it will also set a couple other JGroups-related System properties to the specified address.
-         {note}
-         
-         \[1] http://jira.jboss.com/jira/browse/JBAS-4736
-         \[2] http://jira.jboss.com/jira/browse/JBAS-4955
-         
-         h3. Monitoring of EJB 2.x EJBs
-         
-         The issue here is that JBossAS changed its way it creates the MBeans names of the deployed EJBs from the jndiNames / ejb-names (this has happened around 4.0.3.sp1)
-         Basically the <jndi-name> or (if it is not present) <local-jndi-name> from jboss.xml is used.
-         
-         So the workaround is to set the <jndi-name> to the ejb-name in your application.
-         As this probably breaks client code, you want/need to afterwards have a naming reference restoring the original hierarchy.
-         
-         For example:
-         
-         If you have in jboss.xml:
-         {code:title=jboss.xml}
-         <session>
-         <ejb-name>Ability</ejb-name>
-         <local-jndi-name>flower.AbilityLocal</local-jndi-name>
-         ...
-         {code}
-         
-         You might change this to:
-         
-         {code:title=jboss.xml}
-         <session>
-         <ejb-name>Ability</ejb-name>
-         <local-jndi-name>Ability</local-jndi-name>
-         {code}
-         
-         And then add an MBean flowsys-naming-alias-service.xml:
-         
-         {code:title=flower-naming-alias-service.xml}
-         <mbean code="org.jboss.naming.NamingAlias"
-         name=":service=naming-alias">
-         <attribute name="ToName">flower.AbilityLocal</attribute>
-         <attribute name="FromName">Ability</attribute>
-         </mbean>
-         {code}
-         
-         When you have done this, you probably still need to go into the inventory of the respective beans, edit the configuration and just click ok.
-         
-         The namig alias ensures that clients of the Ability ejb can still see the bean in JNDI at the place it looks for.
-         Naming aliases appear in JNDIView (within JMX-Console) as LinkRef.
-         ]]>
-         </help>
       -->
 
-      <!-- This should be a service. See JBNADM-1697 -->
       <service
          name="Connector"
          discovery="TomcatConnectorDiscoveryComponent"
          class="TomcatConnectorComponent">
-
-         <!-- Catalina:address=type=Connector,port=9009  -->
 
          <plugin-configuration>
             <c:group
@@ -432,7 +307,6 @@
 
             </plugin-configuration>
 
-            <!-- Catalina:type=ThreadPool,name=http-8080:currentThreadsBusy -->
             <metric
                property="Catalina:type=ThreadPool,name=%name%:currentThreadsBusy"
                displayName="Threads Active"
@@ -440,7 +314,6 @@
                category="utilization"
                displayType="summary" />
 
-            <!-- Catalina:type=ThreadPool,name=http-8080:currentThreadCount -->
             <metric
                property="Catalina:type=ThreadPool,name=%name%:currentThreadCount"
                displayName="Threads Allocated"
@@ -448,7 +321,6 @@
                category="utilization"
                displayType="summary" />
 
-            <!-- Catalina:type=ThreadPool,name=http-8080:maxThreads -->
             <metric
                property="Catalina:type=ThreadPool,name=%name%:maxThreads"
                displayName="Max Threads"
@@ -470,6 +342,11 @@
                name="objectName"
                readOnly="true"
                default="Catalina:type=Host,host=%name%" />
+            <c:simple-property
+               name="name"
+               type="string"
+               description="Name of the virtual host"
+               readOnly="true" />
          </plugin-configuration>
 
          <metric
@@ -487,9 +364,9 @@
          <service
             name="Web Application (WAR)"
             subCategory="Applications"
-            discovery="TomcatApplicationDiscoveryComponent"
-            class="TomcatApplicationComponent"
-            description="Web Application (WAR)"
+            discovery="TomcatWarDiscoveryComponent"
+            class="TomcatWarComponent"
+            description="Web Application"
             createDeletePolicy="both"
             creationDataType="content">
 
@@ -501,16 +378,17 @@
                      default="Catalina:j2eeType=WebModule,name=%name%,J2EEApplication=none,J2EEServer=none" />
                   <c:simple-property
                      name="name"
-                     description="The name of this WAR"
-                     readOnly="true" />
+                     readOnly="true"
+                     description="The name of this Web Module (WAR)" />
                   <c:simple-property
                      name="filename"
-                     readOnly="true" />
+                     readOnly="true"
+                     description="The deployment root file name (.war or directory)" />
                   <c:simple-property
-                     name="contextRoot"
+                     name="path"
                      readOnly="true"
                      required="false"
-                     description="this WAR's context root - used as a unique path prefix for URLs corresponding to this WAR" />
+                     description="The context root; the unique path prefix for URLs corresponding to this WAR" />
                   <c:simple-property
                      name="vHost"
                      displayName="Virtual Host"
@@ -547,18 +425,11 @@
 
             <!-- The two traits below are collected by the ApplicationComponent class, which WarComponent extends.. -->
             <metric
-               property="Application.path"
-               displayName="Path"
+               property="Application.exploded"
+               displayName="Exploded deployment"
                dataType="trait"
                displayType="summary"
-               description="the absolute path of this WAR file or directory" />
-
-            <metric
-               property="ContextRoot"
-               displayName="Context Root"
-               dataType="trait"
-               displayType="summary"
-               description="this WAR's context root - used as a unique path prefix for URLs corresponding to this WAR" />
+               description="Whether deployed as a .war file or an exploded directory" />
 
             <metric
                property="Servlet.NumRequests"
@@ -577,8 +448,53 @@
                displayType="summary" />
 
             <metric
-               property="Vhost.name"
-               displayName="Vhost"
+               property="Session.activeSessions"
+               displayName="Currently Active Sessions"
+               units="none"
+               description="Number active sessions for the webapp right now" />
+
+            <metric
+               property="Session.maxActive"
+               displayName="Maximum number of Active Sessions"
+               units="none"
+               description="Maximum number of active sessions for the webapp" />
+
+            <metric
+               property="Session.sessionCounter"
+               displayName="Sessions created"
+               units="none"
+               description="Number of sessions created for the webapp"
+               measurementType="trendsup" />
+
+            <metric
+               property="Session.expiredSessions"
+               displayName="Expired Sessions"
+               units="none"
+               description="Number of expired sessions for the webapp"
+               measurementType="trendsup" />
+
+            <metric
+               property="Session.rejectedSessions"
+               displayName="Rejected Sessions"
+               units="none"
+               description="Number of sessions rejected for the webapp"
+               measurementType="trendsup" />
+
+            <metric
+               property="Session.sessionAverageAliveTime"
+               displayName="Session Average alive time"
+               units="seconds"
+               description="Average alive time of a Sessions" />
+
+            <metric
+               property="Session.sessionMaxAliveTime"
+               displayName="Max Session alive time"
+               units="seconds"
+               description="Maximum alive time of a Sessions" />
+
+            <metric
+               property="VHost.name"
+               displayName="Virtual Hosts"
                dataType="trait"
                defaultOn="true"
                description="Virtual hosts this app runs on" />
@@ -600,7 +516,7 @@
          <service
             name="Cache"
             discovery="TomcatCacheDiscoveryComponent"
-            class="TomcatCacheComponent"            
+            class="TomcatCacheComponent"
             description="A Tomcat Application Cache">
 
             <plugin-configuration>
@@ -635,22 +551,21 @@
             </plugin-configuration>
 
             <metric
-               property="HitMissRatio"
+               property="accessCount"
                displayType="summary"
-               units="percentage"
-               description="Returns the hit/miss ratio for the cache. This ratio is defined as hits/(hits + misses)." />
+               description="Number of cache accesses" />
             <metric
-               property="ReadWriteRatio"
+               property="hitsCount"
                displayType="summary"
-               units="percentage"
-               description="Returns the read/write ratio for the cache. This ratio is defined as (hits + misses)/stores." />
+               description="Number of cache hits" />
             <metric
-               property="Hits"
-               displayType="summary" />
+               property="cacheSize"
+               displayType="summary"
+               description="Number of cache entries" />
             <metric
-               property="Misses"
-               displayType="summary" />
-
+               property="cacheMaxSize"
+               displayType="summary"
+               description="Maximum number of cache entries" />
          </service>
 
       </service>

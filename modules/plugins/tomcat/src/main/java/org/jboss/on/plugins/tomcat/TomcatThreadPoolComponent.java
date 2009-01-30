@@ -40,7 +40,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * @author Jay Shaughnessy
  * @author Jason Dobies
  */
-public class TomcatThreadPoolComponent extends MBeanResourceComponent<TomcatServerComponent> {
+public class TomcatThreadPoolComponent extends MBeanResourceComponent<TomcatConnectorComponent> {
     // Constants  --------------------------------------------
 
     public static final String NAME_ADDRESS = "name";
@@ -56,7 +56,7 @@ public class TomcatThreadPoolComponent extends MBeanResourceComponent<TomcatServ
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
-        TomcatServerComponent parentComponent = (TomcatServerComponent) super.resourceContext.getParentResourceComponent();
+        TomcatConnectorComponent parentComponent = super.resourceContext.getParentResourceComponent();
         parentComponent.getEmsConnection(); // first make sure the connection is loaded
 
         for (MeasurementScheduleRequest request : metrics) {

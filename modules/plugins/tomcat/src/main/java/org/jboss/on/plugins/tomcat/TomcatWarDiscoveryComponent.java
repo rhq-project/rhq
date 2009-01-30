@@ -47,7 +47,7 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * @author Jay Shaughnessy
  * @author Jason Dobies
  */
-public class TomcatApplicationDiscoveryComponent extends MBeanResourceDiscoveryComponent {
+public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent {
 
     /**
      * The name MBean attribute for each application is of the form //vHost/contextRoot. 
@@ -72,17 +72,17 @@ public class TomcatApplicationDiscoveryComponent extends MBeanResourceDiscoveryC
             m.reset(name);
             if (m.matches()) {
                 String vHost = m.group(1);
-                String contextRoot = m.group(2);
-                String path = deployDirectoryPath + contextRoot;
+                String path = m.group(2);
+                String filename = deployDirectoryPath + path;
                 try {
-                    path = new File(path).getCanonicalPath();
+                    filename = new File(filename).getCanonicalPath();
                 } catch (IOException e) {
                     // leave path as is
-                    log.warn("Unexpected discovered web application path: " + path);
+                    log.warn("Unexpected discovered web application path: " + filename);
                 }
-                pluginConfiguration.put(new PropertySimple(TomcatApplicationComponent.PROPERTY_VHOST, vHost));
-                pluginConfiguration.put(new PropertySimple(TomcatApplicationComponent.PROPERTY_CONTEXT_ROOT, contextRoot));
-                pluginConfiguration.put(new PropertySimple(TomcatApplicationComponent.PROPERTY_FILENAME, path));
+                pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_VHOST, vHost));
+                pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_PATH, path));
+                pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_FILENAME, filename));
             } else {
                 log.warn("Skipping discovered web application with unexpected name: " + name);
             }

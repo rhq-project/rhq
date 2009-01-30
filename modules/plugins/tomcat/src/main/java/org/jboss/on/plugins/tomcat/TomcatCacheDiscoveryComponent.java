@@ -71,7 +71,6 @@ public class TomcatCacheDiscoveryComponent extends MBeanResourceDiscoveryCompone
                 name = host + path;
                 detail.setResourceName(name);
             }
-            detail.setResourceDescription("Cache " + name);
         }
         return resources;
     }

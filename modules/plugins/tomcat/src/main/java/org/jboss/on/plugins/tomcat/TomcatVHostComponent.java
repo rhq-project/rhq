@@ -34,7 +34,6 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ApplicationServerComponent;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
@@ -44,7 +43,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * @author Heiko W. Rupp
  *
  */
-public class TomcatVHostComponent extends MBeanResourceComponent<JMXComponent> implements ApplicationServerComponent, MeasurementFacet {
+public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerComponent> implements ApplicationServerComponent, MeasurementFacet {
 
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
@@ -60,7 +59,7 @@ public class TomcatVHostComponent extends MBeanResourceComponent<JMXComponent> i
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
-        TomcatServerComponent parentComponent = (TomcatServerComponent) super.resourceContext.getParentResourceComponent();
+        TomcatServerComponent parentComponent = super.resourceContext.getParentResourceComponent();
         parentComponent.getEmsConnection(); // first make sure the connection is loaded
 
         for (MeasurementScheduleRequest request : metrics) {

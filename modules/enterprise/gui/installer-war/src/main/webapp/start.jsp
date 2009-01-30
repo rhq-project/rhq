@@ -14,11 +14,11 @@
    <f:subview id="header">
       <jsp:include page="/header.jsp" flush="true" />
    </f:subview>
-   
+
    <p align="left">
       <h:outputText value="#{bundle.setPropertiesInstructions}" />
    </p>
-   
+
    <h:form>
       <p align="left">
          <h5 align="left">
@@ -31,7 +31,7 @@
                         value="#{bundle.showAdvancedSettings}" />
       </p>
    </h:form>
-   
+
    <h:form id="propForm">
       <br/>
       <h4 align="left">
@@ -114,6 +114,7 @@
                </h:panelGrid>
             </h:panelGrid>
 
+<!-- this is confusing people, don't show this
             <h:panelGrid columns="1">
                <h:outputText value="#{bundle.createDatabaseNote}" style="font-size: 100%"/>
                <h:panelGrid columns="2">
@@ -124,8 +125,9 @@
                   <h:panelGroup rendered="#{configurationBean.lastCreate != null && configurationBean.lastCreate == 'OK'}">
                      <h:graphicImage value="/images/ok.gif" alt="OK"/>
                   </h:panelGroup>
-               </h:panelGrid>               
+               </h:panelGrid>
             </h:panelGrid>
+-->
          </h:panelGrid>
       </h:panelGrid>
 
@@ -135,18 +137,18 @@
                                        <f:selectItems value="#{configurationBean.existingSchemaOptions}" />
          </h:selectOneMenu>
       </h:panelGrid>
- 
-      
+
+
       <br/>
       <h4 align="left">
          <h:outputText value="#{bundle.installSettingsInstructions}" />
       </h4>
       <h:panelGrid columns="1">
          <h:panelGrid columns="1" rendered="#{configurationBean.registeredServers == true}" >
-         
+
             <h:outputText value="#{bundle.installSettingsNote1}" />
             <br/>
-            
+
             <h:panelGrid columns="2" >
 
                <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-RegisteredServers', 'propertyHelp')" >
@@ -158,18 +160,18 @@
                                             document.getElementById('propForm:haendpointport').value = '';
                                             document.getElementById('propForm:haendpointsecureport').value = '';
                                             if (document.getElementById('propForm:haaffinitygroup') != null) {
-                                               document.getElementById('propForm:haaffinitygroup').value = ''; }                                            
+                                               document.getElementById('propForm:haaffinitygroup').value = ''; }
                                             submit(); }" >
                   <f:selectItems value="#{configurationBean.registeredServerNames}" />
-               </h:selectOneMenu>       
-            
+               </h:selectOneMenu>
+
             </h:panelGrid>
 
             <br/>
             <h:outputText value="#{bundle.installSettingsNote2}" />
 
          </h:panelGrid>
-         
+
 
          <h:panelGrid columns="3" headerClass="evenRow" rowClasses="evenRow,oddRow">
 
@@ -183,9 +185,9 @@
             <h:inputText id="haservername" size="#{configurationBean.propHaServerName.itemDefinition.fieldSize}"
                          value="#{configurationBean.haServerName}" >
             </h:inputText>
-            <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaServerName.itemDefinition.requiresRestart}" />            
-            <h:outputText value="#{bundle.noString}" rendered="#{!configurationBean.propHaServerName.itemDefinition.requiresRestart}" />                        
-            
+            <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaServerName.itemDefinition.requiresRestart}" />
+            <h:outputText value="#{bundle.noString}" rendered="#{!configurationBean.propHaServerName.itemDefinition.requiresRestart}" />
+
             <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerPublicAddress', 'propertyHelp')" >
                <h:outputText value="#{bundle.propertyHighAvailabilityEndpointAddress}" />
             </h:outputLink>
@@ -193,14 +195,14 @@
                          value="#{configurationBean.haServer.endpointAddress}" >
             </h:inputText>
             <h:outputText value="#{bundle.noString}" />
-            
+
             <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaEndpointPort.itemDefinition.help}', 'propertyHelp')" >
                <h:outputText value="#{bundle.propertyHttpPort}" />
             </h:outputLink>
             <h:inputText id="haendpointport" size="#{configurationBean.propHaEndpointPort.itemDefinition.fieldSize}"
                          value="#{configurationBean.haServer.endpointPortString}" >
             </h:inputText>
-            <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaEndpointPort.itemDefinition.requiresRestart}" />            
+            <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaEndpointPort.itemDefinition.requiresRestart}" />
 
             <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaEndpointSecurePort.itemDefinition.help}', 'propertyHelp')" >
                <h:outputText value="#{bundle.propertyHttpsPort}" />
@@ -208,21 +210,21 @@
             <h:inputText id="haendpointsecureport" size="#{configurationBean.propHaEndpointSecurePort.itemDefinition.fieldSize}"
                          value="#{configurationBean.haServer.endpointSecurePortString}" >
             </h:inputText>
-            <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaEndpointSecurePort.itemDefinition.requiresRestart}" />            
+            <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaEndpointSecurePort.itemDefinition.requiresRestart}" />
 
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerAffinityGroup', 'propertyHelp')" 
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerAffinityGroup', 'propertyHelp')"
                           rendered="#{configurationBean.showAdvancedSettings == true}" >
                <h:outputText value="#{bundle.propertyHighAvailabilityAffinityGroup}" />
             </h:outputLink>
             <h:inputText id="haaffinitygroup" size="#{configurationBean.propHaServerName.itemDefinition.fieldSize}"
                          value="#{configurationBean.haServer.affinityGroup}"
-                         rendered="#{configurationBean.showAdvancedSettings == true}" >                         
-            </h:inputText>           
-            <h:outputText value="#{bundle.noString}" rendered="#{configurationBean.showAdvancedSettings == true}" />            
+                         rendered="#{configurationBean.showAdvancedSettings == true}" >
+            </h:inputText>
+            <h:outputText value="#{bundle.noString}" rendered="#{configurationBean.showAdvancedSettings == true}" />
 
          </h:panelGrid>
       </h:panelGrid>
-      
+
       <br/>
       <h4 align="left">
       <h:outputText value="#{bundle.serverSettingsInstructions}" />
@@ -233,7 +235,7 @@
             <f:facet name="header">
                <h:outputText value="" />
             </f:facet>
-            
+
             <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{prop.itemDefinition.help}', 'propertyHelp')">
                <h:outputText value="#{prop.itemDefinition.propertyLabel}" />
             </h:outputLink>
@@ -266,7 +268,7 @@
                <h:outputText value="#{bundle.requiresRestart}" />
             </f:facet>
             <h:outputText value="#{bundle.yesString}" rendered="#{prop.itemDefinition.requiresRestart}" />
-            <h:outputText value="#{bundle.noString}"  rendered="#{!prop.itemDefinition.requiresRestart}" />            
+            <h:outputText value="#{bundle.noString}"  rendered="#{!prop.itemDefinition.requiresRestart}" />
          </h:column>
       </h:dataTable>
 
@@ -275,7 +277,7 @@
          <h:commandButton id="save" action="#{configurationBean.save}" value="#{bundle.save}" />
       </p>
    </h:form>
-   
+
    </body>
 
 </html>

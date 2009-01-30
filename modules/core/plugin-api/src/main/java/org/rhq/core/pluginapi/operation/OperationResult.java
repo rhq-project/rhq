@@ -92,7 +92,8 @@ public class OperationResult {
     }
 
     /**
-     * Returns the plugin-specific error message for this operation, or null if the operation was successful
+     * Returns the plugin-specific error message for this operation, or null if the operation was successful.
+     * @return The stored message or null.
      */
     public String getErrorMessage() {
         return this.errorMessage;
@@ -103,8 +104,8 @@ public class OperationResult {
      * a success. If your operation has logically failed but you don't want to throw an exception because the results
      * object contains meaningful data at the time of failure, you can pass an error message and the operation will
      * be marked as FAILURE
-     * 
-     * @param operationError a plugin specific error that indicates why this operation has failed
+     *
+     * @param errorMessage a plugin specific error that indicates why this operation has failed
      */
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;

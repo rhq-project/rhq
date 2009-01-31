@@ -90,8 +90,8 @@
 #                             passed through to the RHQ Agent.
 #                             If you want to have command line arguments
 #                             added to the arguments specified here, append
-#                             '%*' to the end of this option. For example,
-#                             "--daemon %*". In this case, both the command
+#                             '$*' to the end of this option. For example,
+#                             "--daemon $*". In this case, both the command
 #                             line options and the ones specified here will
 #                             be passed to the agent.
 # 

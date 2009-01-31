@@ -68,6 +68,8 @@ public class PageControlELResolver extends ELResolver {
                 result = Integer.class;
             } else if ("pagenumber".equals(propertyName)) {
                 result = Integer.class;
+            } else if ("unlimited".equals(propertyName)) {
+                result = Boolean.class;
             } else {
                 throw new PropertyNotWritableException(
                     "Only the pageSize and pageNumber properties of a PageControl object can be resolved");
@@ -124,6 +126,8 @@ public class PageControlELResolver extends ELResolver {
                 PageControl pc = preferences.getPageControl(view);
                 log.debug("Getting PageControlView[" + view + "] to " + pc);
                 result = pc.getPageNumber() + 1; // RF data table is 1-based, our PageControl is 0-based
+            } else if ("unlimited".equals(lowerCaseMethodName)) {
+                result = view.getShowAll();
             } else {
                 throw new PropertyNotFoundException("The " + methodName
                     + " property of a PageControl object is not accessible");

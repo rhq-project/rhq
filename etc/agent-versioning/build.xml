@@ -2,6 +2,7 @@
 
 <!--
 This ANT script is used to test the agent auto-update functionality.
+
 This takes an agent's core jar file that contains the version information
 and alters it to make it look like its a different version/build than it
 really use. Use this to change the version and/or build strings so the
@@ -24,15 +25,59 @@ This is another usage (this shows all command line args being used):
 
 ant -Dagent.home.dir=/my/agent/rhq-agent -Dnew.version=0.0.0.GA -Dnew.build=0
 
+===
+
+This script can alternatively take an agent update binary jar file
+found on a server that contains the version information
+and alters it to make it look like its a different version/build than it
+really is. Use this to change the version and/or build strings so the
+agents will think they are out of date and need to be updated.
+
+To configure this script, you must tell the script where the agent
+binary update is. You do this by either setting the normal
+RHQ_SERVER_HOME environment variable or you pass in -Dserver.home.dir
+on the ANT command line. You can also tell this script what the new
+version and build strings should be used by passing in the command
+line arguments -Dnew.version and/or -Dnew.build. You can also
+tell this script the version of the agent update binary jar (if the
+default isn't correct) - use -Dagent.version for that.
+
+The typical usage of this script that you will normally use is:
+
+ant -Dserver.home.dir=/my/server
+
+Which simply resets the version to 0.0.0.GA and the build number to 0.
+
+This is another usage (this shows all command line args being used):
+
+ant -Dserver.home.dir=/my/server/rhq-agent
+    -Dnew.version=0.0.0.GA
+    -Dnew.build=0
+    -Dagent.version=1.2.0-SNAPSHOT
+
 -->
-<project name="agent-versioning" default="stamp" basedir=".">
-   <target name="init">
-      <property environment="env" />
+<project name="agent-versioning" default="help" basedir=".">
+
+   <property environment="env" />
+
+   <!-- set some defaults, but the user can override these via -D command line args -->
+   <property name="new.version" value="0.0.0.GA" />
+   <property name="new.build" value="0" />
+   <echo>New Version To Be Used=${new.version}</echo>
+   <echo>New Build To Be Used=${new.build}</echo>
+
+   <target name="help">
+      <echo>Use one of these two targets: stamp-agent, stamp-server</echo>
+   </target>
+   
+   <!-- ========== AGENT STAMPING ========== -->
+
+   <target name="init-agent">
       <property name="env.RHQ_AGENT_HOME" location="rhq-agent"/>
       <property name="agent.home.dir" location="${env.RHQ_AGENT_HOME}"/>
    </target>
 
-   <target name="stamp" depends="init" description="Stamps a new version on an agent. The following system properties can be passed on the command line: -Dagent.home.dir, -Dnew.version, -Dnew.build">
+   <target name="stamp-agent" depends="init-agent" description="Stamps a new version on an agent. The following system properties can be passed on the command line: -Dagent.home.dir, -Dnew.version, -Dnew.build">
       <echo>RHQ Agent Home=${agent.home.dir}</echo>
 
       <delete file="${java.io.tmpdir}/rhq-agent-version.properties" verbose="false" quiet="true" />
@@ -44,17 +89,11 @@ ant -Dagent.home.dir=/my/agent/rhq-agent -Dnew.version=0.0.0.GA -Dnew.build=0
              <include name="rhq-agent-version.properties"/>
          </patternset>
       </unjar>
-      
+
       <property name="agent.version.properties.file" location="${java.io.tmpdir}/rhq-agent-version.properties" />
       <property file="${agent.version.properties.file}"/>
       <echo>Current Version=${Product-Version}</echo>
       <echo>Current Build=${Build-Number}</echo>
-
-      <!-- set some defaults, but the user can override these via -D command line args -->
-      <property name="new.version" value="0.0.0.GA" />
-      <property name="new.build" value="0" />
-      <echo>New Version To Be Used=${new.version}</echo>
-      <echo>New Build To Be Used=${new.build}</echo>
 
       <replace file="${agent.version.properties.file}">
         <replacefilter token="Product-Version=${Product-Version}" value="Product-Version=${new.version}"/>
@@ -68,5 +107,67 @@ ant -Dagent.home.dir=/my/agent/rhq-agent -Dnew.version=0.0.0.GA -Dnew.build=0
             <include name="rhq-agent-version.properties" />
          </fileset>
       </jar>
+      <delete file="${agent.version.properties.file}" />
+
    </target>
+
+   <!-- ========== SERVER STAMPING ========== -->
+
+   <target name="init-server">
+      <property name="env.RHQ_SERVER_HOME" location="dev-container"/>
+      <property name="server.home.dir" location="${env.RHQ_SERVER_HOME}"/>
+      <property name="agent.version" value="1.2.0-SNAPSHOT" />
+      <property name="agent.update.binary" value="rhq-enterprise-agent-${agent.version}.jar" />
+      <property name="server.download.dir" location="${server.home.dir}/jbossas/server/default/deploy/rhq.ear/rhq-downloads/rhq-agent"/>
+      <property name="agent.update.binary.fullpath" location="${server.download.dir}/${agent.update.binary}"/>
+      <available property="_agent.update.binary.exists" file="${agent.update.binary.fullpath}"/>
+      <fail unless="_agent.update.binary.exists" message="Cannot find the agent update binary at ${agent.update.binary.fullpath}"/>
+   </target>
+
+   <target name="stamp-server" depends="init-server" description="Stamps a new version on an agent update binary in a server. The following system properties can be passed on the command line: -Dserver.home.dir, -Dnew.version, -Dnew.build, -Dagent.version">
+      <echo>RHQ Server Home=${server.home.dir}</echo>
+      <echo>Agent Update Binary=${agent.update.binary.fullpath}</echo>
+
+      <delete file="${server.download.dir}/rhq-server-agent-versions.properties" />
+
+      <property name="_tmpdir" location="${java.io.tmpdir}/agent-binary-update"/>
+
+      <!-- get the agent distro .zip from the agent update binary jar -->
+      <delete dir="${_tmpdir}" verbose="false" quiet="true" />
+      <mkdir dir="${_tmpdir}" />
+      <unjar dest="${_tmpdir}">
+         <fileset file="${agent.update.binary.fullpath}"/>
+      </unjar>
+
+      <!-- unzip the agent distro .zip - we need the agent distro exploded so we can stamp it -->
+      <delete dir="${_tmpdir}/rhq-agent" verbose="false" quiet="true" />
+      <unzip dest="${_tmpdir}">
+         <fileset file="${_tmpdir}/rhq-enterprise-agent-${agent.version}.zip"/>
+      </unzip>
+      <delete file="${_tmpdir}/rhq-enterprise-agent-${agent.version}.zip"/>
+         
+      <!-- stamp the agent -->
+      <property name="agent.home.dir" location="${_tmpdir}/rhq-agent"/>
+      <antcall target="stamp-agent" />
+
+      <echo file="${_tmpdir}/rhq-agent-update-version.properties">rhq-agent.latest.version=${new.version}
+rhq-agent.latest.build-number=${new.build}</echo>
+
+      <!-- package up the agent distro again -->
+      <delete file="${_tmpdir}/rhq-enterprise-agent-${new.version}.zip" />
+      <zip destfile="${_tmpdir}/rhq-enterprise-agent-${new.version}.zip" >
+         <fileset dir="${_tmpdir}">
+            <include name="rhq-agent/**" />
+         </fileset>
+      </zip>
+      <delete dir="${_tmpdir}/rhq-agent" />
+
+      <!-- rebuild the newly stamped agent update binary, renaming it with the new version -->
+      <delete file="${agent.update.binary.fullpath}" />
+      <jar file="${server.download.dir}/rhq-enterprise-agent-${new.version}.jar">
+         <fileset dir="${_tmpdir}">
+         </fileset>
+      </jar>
+   </target>
+
 </project>

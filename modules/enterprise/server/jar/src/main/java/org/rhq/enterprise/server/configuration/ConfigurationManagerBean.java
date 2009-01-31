@@ -55,6 +55,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
 import org.rhq.core.domain.resource.Agent;
@@ -968,7 +969,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         boolean hasOneOverride = false;
         for (PropertySimple property : properties) {
-            if (property.getOverride()) {
+            if (property.getOverride() != null && property.getOverride()) {
                 hasOneOverride = true;
                 break;
             }
@@ -1134,27 +1135,32 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     @SuppressWarnings("unchecked")
     private Configuration calculateAggregateConfiguration(ConfigurationDefinition configurationDefinition,
         ResourceGroup compatibleGroup) {
-        Configuration resultConfiguration = configurationDefinition.getDefaultTemplate().getConfiguration();
-
-        int groupSize = resourceGroupManager.getImplicitGroupMemberCount(compatibleGroup.getId());
+        Configuration resultConfiguration = new Configuration();
 
         Query query = entityManager
             .createNamedQuery(Configuration.QUERY_GET_PLUGIN_CONFIG_UNIQUE_COUNT_BY_GROUP_AND_PROP_NAME);
         query.setParameter("resourceGroupId", compatibleGroup.getId());
+        int groupSize = resourceGroupManager.getImplicitGroupMemberCount(compatibleGroup.getId());
 
-        for (PropertySimple nextSimple : resultConfiguration.getSimpleProperties().values()) {
-            query.setParameter("propertyName", nextSimple.getName());
+        for (String propertyName : configurationDefinition.getPropertyDefinitions().keySet()) {
+            // Skip properties that are not simples.
+            if (configurationDefinition.getPropertyDefinitionSimple(propertyName) == null)
+                continue;
+            query.setParameter("propertyName", propertyName);
             List<Object[]> results = query.getResultList();
+            Object propertyValue;
             if (results.size() == 1) {
                 Object[] identicalPropertyValueTuple = results.get(0);
-                if (groupSize == ((Long) identicalPropertyValueTuple[1]).intValue()) {
-                    nextSimple.setValue(identicalPropertyValueTuple[0]);
+                if (((Long)identicalPropertyValueTuple[1]).intValue() == groupSize) {
+                    propertyValue = identicalPropertyValueTuple[0];
                 } else {
-                    nextSimple.setValue(AbstractAggregateConfigurationUpdate.MIXED_VALUES_MARKER);
+                    propertyValue = AbstractAggregateConfigurationUpdate.MIXED_VALUES_MARKER;
                 }
             } else {
-                nextSimple.setValue(AbstractAggregateConfigurationUpdate.MIXED_VALUES_MARKER);
+                propertyValue = AbstractAggregateConfigurationUpdate.MIXED_VALUES_MARKER;
             }
+            PropertySimple property = new PropertySimple(propertyName, propertyValue);            
+            resultConfiguration.put(property);
         }
 
         return resultConfiguration;

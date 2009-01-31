@@ -221,6 +221,14 @@ public class PageControl implements Serializable, Cloneable {
         return pageNumber * pageSize;
     }
 
+    public void reset(boolean keepOrderingFields) {
+        setPageNumber(0);
+        setPageSize(15);
+        if (keepOrderingFields == false) {
+            this.orderingFields = new LinkedList<OrderingField>();
+        }
+    }
+
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder("PageControl[");

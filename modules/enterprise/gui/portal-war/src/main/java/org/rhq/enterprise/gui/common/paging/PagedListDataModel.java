@@ -278,7 +278,7 @@ public abstract class PagedListDataModel<T> extends DataModel {
              * update the page control to get the view consistent with the backend once again.
              */
             if (results.getTotalSize() <= pc.getStartRow()) {
-                resetToDefaults(pc);
+                resetToDefaults(pc, true);
                 results = fetchPage(pc);
             }
         } catch (Throwable t) {
@@ -294,7 +294,7 @@ public abstract class PagedListDataModel<T> extends DataModel {
              * try the query once again; this time, we want the first page and will not specify any explicit
              * ordering (though the underlying SLSB may add a default ordering downstream). 
              */
-            resetToDefaults(pc);
+            resetToDefaults(pc, false);
 
             // round 2 should be guaranteed because of use of defaultPageControl 
             results = fetchPage(pc);
@@ -303,9 +303,8 @@ public abstract class PagedListDataModel<T> extends DataModel {
         return results;
     }
 
-    private void resetToDefaults(PageControl pc) {
-        pc.setPageNumber(0);
-        pc.setPageSize(15);
+    private void resetToDefaults(PageControl pc, boolean keepOrderingFields) {
+        pc.reset(keepOrderingFields);
         setPageControl(pc);
     }
 

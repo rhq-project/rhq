@@ -15,9 +15,11 @@
       <then>
          <property name="iswindows" value="true" />
          <property name="agentcopy.agent.executable" value="rhq-agent.bat" />
+         <property name="agentcopy.agent.executable.args" value="" />
       </then>
       <else>
          <property name="agentcopy.agent.executable" value="rhq-agent-wrapper.sh" />
+         <property name="agentcopy.agent.executable.args" value="start" />
       </else>
    </if>
 
@@ -168,23 +170,19 @@
                     override="true"
                     silent="true"/>
 
-      <echo>
-Agent [${_index}]:
+      <echo>Agent [${_index}]:
+RHQ_AGENT_DEBUG=${agentcopy.agent.debug}
 RHQ_AGENT_JAVA_OPTS=${_javaopts} ${_sysprops}
-RHQ_AGENT_CMDLINE_OPTS=--daemon --pref=${_index} ${_cmdlineopts}
-</echo>
+RHQ_AGENT_CMDLINE_OPTS=--daemon --pref=${_index} ${_cmdlineopts}</echo>
 
-      <echo append="true" file="${agentcopy.agent.spawn.dir}/${_index}/bin/rhq-agent-env.sh">
-# AGENTSPAWN CUSTOMIZATION
-RHQ_AGENT_JAVA_OPTS=${_javaopts} ${_sysprops}
-RHQ_AGENT_CMDLINE_OPTS=--daemon --pref=${_index} ${_cmdlineopts}
-      </echo>
-         
-      <echo append="true" file="${agentcopy.agent.spawn.dir}/${_index}/bin/rhq-agent-env.bat">
-rem AGENTSPAWN CUSTOMIZATION
-set RHQ_AGENT_JAVA_OPTS=${_javaopts} ${_sysprops}
-set RHQ_AGENT_CMDLINE_OPTS=--daemon --pref=${_index} ${_cmdlineopts}
-      </echo>
+      <property name="lf" value="&#10;"/>
+      <property name="winlf" value="&#13;&#10;"/>
+
+      <echo append="true" file="${agentcopy.agent.spawn.dir}/${_index}/bin/rhq-agent-env.sh"
+            message="${lf}# AGENTSPAWN CUSTOMIZATION${lf}RHQ_AGENT_DEBUG=${agentcopy.agent.debug}${lf}RHQ_AGENT_JAVA_OPTS=${_javaopts} ${_sysprops}${lf}RHQ_AGENT_CMDLINE_OPTS=--daemon --pref=${_index} ${_cmdlineopts}${lf}" />
+
+      <echo append="true" file="${agentcopy.agent.spawn.dir}/${_index}/bin/rhq-agent-env.bat"
+            message="${winlf}rem AGENTSPAWN CUSTOMIZATION${winlf}set RHQ_AGENT_DEBUG=${agentcopy.agent.debug}${winlf}set RHQ_AGENT_JAVA_OPTS=${_javaopts} ${_sysprops}${winlf}set RHQ_AGENT_CMDLINE_OPTS=--daemon --pref=${_index} ${_cmdlineopts}${winlf}"/>
 
    </target>
    
@@ -212,12 +210,13 @@ set RHQ_AGENT_CMDLINE_OPTS=--daemon --pref=${_index} ${_cmdlineopts}
       <echo>Pausing for ${_sleep_millis}ms before starting agent [${_index}]</echo>
       <sleep milliseconds="${_sleep_millis}"/>
       
-      <echo>Starting agent [${_index}] using [${agentcopy.agent.executable}]</echo>
+      <echo>Starting agent [${_index}] using [${agentcopy.agent.executable} ${agentcopy.agent.executable.args}]</echo>
       
+      <mkdir dir="${agentcopy.agent.spawn.dir}/${_index}/logs" />
       <forget>
          <exec executable="${agentcopy.agent.spawn.dir}/${_index}/bin/${agentcopy.agent.executable}"
                output="${agentcopy.agent.spawn.dir}/${_index}/logs/agentcopy-output.txt">
-            <arg line="start" />
+            <arg line="${agentcopy.agent.executable.args}" />
          </exec>
       </forget>
       
@@ -244,7 +243,7 @@ set RHQ_AGENT_CMDLINE_OPTS=--daemon --pref=${_index} ${_cmdlineopts}
    <!-- ========== -->
    <target name="stop-single-agent">
       <loadfile property="_pid"
-                srcfile="${agentcopy.agent.spawn.dir}/${_index}/bin/.rhq-agent.pid"
+                srcfile="${agentcopy.agent.spawn.dir}/${_index}/bin/rhq-agent.pid"
                 failonerror="false">
          <filterchain>
             <striplinebreaks/>

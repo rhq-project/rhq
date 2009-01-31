@@ -178,10 +178,10 @@ rhq-agent.latest.build-number=${new.build}</echo>
 
       <!-- rebuild the newly stamped agent update binary, renaming it with the new version -->
       <delete file="${agent.update.binary.fullpath}" />
-      <jar file="${server.download.dir}/rhq-enterprise-agent-${new.version}.jar">
+      <zip file="${server.download.dir}/rhq-enterprise-agent-${new.version}.jar">
          <fileset dir="${_tmpdir}">
          </fileset>
-      </jar>
+      </zip>
    </target>
 
 </project>

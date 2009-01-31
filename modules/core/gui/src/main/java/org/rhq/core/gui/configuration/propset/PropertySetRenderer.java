@@ -19,36 +19,35 @@
 package org.rhq.core.gui.configuration.propset;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.el.ValueExpression;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
-import javax.faces.component.UIOutput;
+import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.render.Renderer;
 
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.gui.configuration.helper.ConfigurationExpressionUtility;
-import org.rhq.core.gui.configuration.helper.PropertySimpleRenderingUtility;
+import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
+import org.rhq.core.gui.configuration.CssStyleClasses;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesExpressionUtility;
-import org.richfaces.component.html.HtmlColumn;
-import org.richfaces.component.html.HtmlDataTable;
-import org.richfaces.component.html.HtmlRichMessage;
-import org.richfaces.model.Ordering;
 
 /**
  * @author Ian Springer
  */
 public class PropertySetRenderer extends Renderer
 {
+    private static final String INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID_SUFFIX = "-initInputsJavaScript";
+
     /**
      * Decode any new state from request parameters for the given {@link PropertySetComponent}.
      *
@@ -59,7 +58,12 @@ public class PropertySetRenderer extends Renderer
     public void decode(FacesContext facesContext, UIComponent component) {
         PropertySetComponent propertySetComponent = (PropertySetComponent) component;
         validateAttributes(propertySetComponent);
-        // TODO: anything?
+        String id = getInitInputsJavaScriptComponentId(propertySetComponent);
+        UIComponent initInputsJavaScriptComponent = propertySetComponent.findComponent(id);
+        if (initInputsJavaScriptComponent != null) {
+            FacesComponentUtility.detachComponent(initInputsJavaScriptComponent);
+            PropertyRenderingUtility.addInitInputsJavaScript(propertySetComponent, id, false, true);
+        }
     }
 
     /**
@@ -78,17 +82,77 @@ public class PropertySetRenderer extends Renderer
         PropertySetComponent propertySetComponent = (PropertySetComponent) component;
         validateAttributes(propertySetComponent);
 
-        //createDataTable(facesContext, propertySetComponent);
+        addPropertyDisplayNameAndDescription(propertySetComponent);
 
+        // The below panel is a placeholder. We'll add children to it later once we know the client id's of the
+        // property value inputs.
+        HtmlPanelGroup setAllToSameValueControlPanel = FacesComponentUtility.addBlockPanel(propertySetComponent, null, null);
+
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/>&nbsp;<br/>\n");
+        
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "\n\n<table class='"
+                + CssStyleClasses.MEMBER_PROPERTIES_TABLE + "'>");
+        addPropertiesTableHeaderRow(propertySetComponent);
+
+        List<PropertyInfo> propertyInfos = createPropertyInfos(propertySetComponent);
+        for (PropertyInfo propertyInfo : propertyInfos)
+            addPropertyRow(propertySetComponent, propertyInfo, null);
+
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "</table>\n");
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/>\n");
+
+        String masterInputId = propertySetComponent.getId() + ":setAllToSameValue";
+
+        String functionName = "setAllToSameValue_" + propertySetComponent.getId();
+        StringBuilder script = new StringBuilder();
+        script.append("function ").append(functionName).append("() {\n");
+        script.append("var valueInputArray = new Array(");
+        for (PropertyInfo propertyInfo : propertyInfos)
+            for (String htmlDomReference : PropertyRenderingUtility.getHtmlDomReferences(propertyInfo.getInput()))
+                script.append(htmlDomReference).append(", ");                        
+        script.delete(script.length() - 2, script.length()); // chop off the extra ", "
+        script.append(");\n");
+        script.append("setInputsToValue(valueInputArray, document.getElementById('");
+        script.append(masterInputId).append("').value);\n");
+        script.append("}\n");
+        FacesComponentUtility.addJavaScript(setAllToSameValueControlPanel, null, null, script);
+
+        StringBuilder html = new StringBuilder();
+        html.append("Set All Values To: <input id='").append(masterInputId).append("' type='text' ");
+        html.append("autocomplete='off' maxLength='").append(PropertySimple.MAX_VALUE_LENGTH).append("' ");
+        html.append("class='").append(CssStyleClasses.PROPERTY_VALUE_INPUT).append("'/>");
+        html.append("<button type='button' onClick='").append(functionName).append("()'>OK</button>");
+        FacesComponentUtility.addVerbatimText(setAllToSameValueControlPanel, html);        
+                
+        String id = getInitInputsJavaScriptComponentId(propertySetComponent);
+        PropertyRenderingUtility.addInitInputsJavaScript(propertySetComponent, id, false, false);
+    }
+
+    private void addPropertyDisplayNameAndDescription(PropertySetComponent propertySetComponent)
+    {
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/>\n");
+        PropertyDefinitionSimple propertyDefinitionSimple = propertySetComponent.getPropertyDefinition();
+        if (propertyDefinitionSimple != null) {
+            PropertyRenderingUtility.addPropertyDisplayName(propertySetComponent, propertyDefinitionSimple,
+                    propertySetComponent.getReadOnly());
+            FacesComponentUtility.addVerbatimText(propertySetComponent, " - ");
+            PropertyRenderingUtility.addPropertyDescription(propertySetComponent, propertyDefinitionSimple);            
+            FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/>&nbsp;<br/>\n");
+        }
+    }
+
+    private List<PropertyInfo> createPropertyInfos(PropertySetComponent propertySetComponent)
+    {
+        PropertyDefinitionSimple propertyDefinitionSimple = propertySetComponent.getPropertyDefinition();
         ValueExpression configurationInfosExpression = propertySetComponent.getValueExpression(
                 PropertySetComponent.CONFIGURATION_GROUP_MEMBER_INFOS_ATTRIBUTE);
         String configurationInfosExpressionString = configurationInfosExpression.getExpressionString();
         String configurationExpressionStringFormat = "#{"
                 + FacesExpressionUtility.unwrapExpressionString(configurationInfosExpressionString)
                 + "[%d].configuration}";
-        PropertyDefinitionSimple propertyDefinition = propertySetComponent.getPropertyDefinition();
+
         String propertyExpressionStringFormat = createPropertyExpressionString(configurationExpressionStringFormat,
-                propertyDefinition, propertySetComponent.getListIndex());
+                propertyDefinitionSimple, propertySetComponent.getListIndex());
         //noinspection ConstantConditions
         List<PropertyInfo> propertyInfos = new ArrayList(propertySetComponent.getConfigurationGroupMemberInfos().size());
         for (int i = 0; i < propertySetComponent.getConfigurationGroupMemberInfos().size(); i++)
@@ -103,97 +167,32 @@ public class PropertySetRenderer extends Renderer
 
         }
         Collections.sort(propertyInfos);
-        for (PropertyInfo propertyInfo : propertyInfos)
-        {
-            FacesComponentUtility.addOutputText(propertySetComponent, null, propertyInfo.getLabel(), null);
-            UIInput input = PropertySimpleRenderingUtility.createInputForSimpleProperty(propertyDefinition,
-                    propertyInfo.getProperty(), propertyInfo.getPropertyValueExpression(),
-                    propertySetComponent.getListIndex(), propertySetComponent.getReadOnly());
-            propertySetComponent.getChildren().add(input);
-            FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/>\n");
-        }
+        return propertyInfos;
+    }
+
+    private void addPropertiesTableHeaderRow(PropertySetComponent propertySetComponent)
+    {
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "\n\n<tr>");
+
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "<th class='" + CssStyleClasses.PROPERTIES_TABLE_HEADER_CELL + "'>");
+        FacesComponentUtility.addOutputText(propertySetComponent, null, "Member", FacesComponentUtility.NO_STYLE_CLASS);
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "</th>");
+
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "<th class='" + CssStyleClasses.PROPERTIES_TABLE_HEADER_CELL + "'>");
+        FacesComponentUtility.addOutputText(propertySetComponent, null, "Unset", FacesComponentUtility.NO_STYLE_CLASS);
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "</th>");
+
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "<th class='" + CssStyleClasses.PROPERTIES_TABLE_HEADER_CELL + "'>");
+        FacesComponentUtility.addOutputText(propertySetComponent, null, "Value", FacesComponentUtility.NO_STYLE_CLASS);
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "</th>");
+
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "</tr>");
     }
 
     @Override
     public void encodeEnd(FacesContext context, UIComponent component) throws IOException
     {
         super.encodeEnd(context, component);
-    }
-    
-    private void createDataTable(FacesContext facesContext, PropertySetComponent propertySetComponent)
-    {
-        HtmlDataTable dataTable = new HtmlDataTable();
-        dataTable.setId(createUniqueId(facesContext));
-        propertySetComponent.getChildren().add(dataTable);
-        ValueExpression configurationInfosExpression = propertySetComponent.getValueExpression(
-                PropertySetComponent.CONFIGURATION_GROUP_MEMBER_INFOS_ATTRIBUTE);
-        dataTable.setValueExpression("value", configurationInfosExpression);
-        dataTable.setVar("memberInfo");
-        dataTable.setRows(15);
-        dataTable.setSortMode("multiple");
-        UIOutput tableHeader = new UIOutput();
-        tableHeader.setId(createUniqueId(facesContext));
-        dataTable.getFacets().put("header", tableHeader);
-        tableHeader.setValue("Group Member Values");
-
-        HtmlColumn labelColumn = createLabelColumn(facesContext);
-        dataTable.getChildren().add(labelColumn);
-
-        PropertyDefinitionSimple propertyDefinition = propertySetComponent.getPropertyDefinition();
-        String configurationExpressionString = "#{memberInfo.configuration}";
-        HtmlColumn valueColumn = createValueColumn(facesContext, propertySetComponent, propertyDefinition,
-                configurationExpressionString);
-        dataTable.getChildren().add(valueColumn);
-    }
-
-    private HtmlColumn createValueColumn(FacesContext facesContext, PropertySetComponent propertySetComponent, PropertyDefinitionSimple propertyDefinition, String configurationExpressionString)
-    {
-        HtmlColumn valueColumn = new HtmlColumn();
-        valueColumn.setId(createUniqueId(facesContext));
-        String propertyExpressionString = createPropertyExpressionString(configurationExpressionString,
-                propertyDefinition, propertySetComponent.getListIndex());
-        ValueExpression propertyValueExpression = createPropertyValueExpression(propertyExpressionString);
-        valueColumn.setValueExpression("sortBy", propertyValueExpression);
-        valueColumn.setSortOrder(Ordering.ASCENDING);
-        UIOutput valueColumnHeader = new UIOutput();
-        valueColumnHeader.setId(createUniqueId(facesContext));
-        valueColumn.getFacets().put("header", valueColumnHeader);
-        valueColumnHeader.setValue("Value");
-        HtmlRichMessage message = new HtmlRichMessage();
-        message.setId(createUniqueId(facesContext));
-        valueColumn.getChildren().add(message);
-        FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/>\n");
-        UIInput input = PropertySimpleRenderingUtility.createInputForSimpleProperty(propertyDefinition,
-                    null, propertyValueExpression, null, false);
-        input.setId(createUniqueId(facesContext));
-        valueColumn.getChildren().add(input);
-        message.setFor(input.getId());
-        return valueColumn;
-    }
-
-    private HtmlColumn createLabelColumn(FacesContext facesContext)
-    {
-        HtmlColumn labelColumn = new HtmlColumn();
-        labelColumn.setId(createUniqueId(facesContext));
-
-        labelColumn.setSortOrder(Ordering.ASCENDING);
-        ValueExpression labelExpression = FacesExpressionUtility.createValueExpression("#{memberInfo.label}",
-                String.class);
-        labelColumn.setValueExpression("sortBy", labelExpression);
-        UIOutput labelColumnHeader = new UIOutput();
-        labelColumnHeader.setId(createUniqueId(facesContext));
-        labelColumn.getFacets().put("header", labelColumnHeader);
-        labelColumnHeader.setValue("Member");
-        UIOutput label = new UIOutput();
-        label.setId(createUniqueId(facesContext));
-        labelColumn.getChildren().add(label);
-        label.setValueExpression("value", labelExpression);
-        return labelColumn;
-    }
-
-    private static String createUniqueId(FacesContext facesContext)
-    {
-        return facesContext.getViewRoot().createUniqueId();
     }
 
     private void validateAttributes(PropertySetComponent propertySetComponent) {
@@ -243,13 +242,51 @@ public class PropertySetRenderer extends Renderer
         return FacesExpressionUtility.createValueExpression(propertyValueExpressionString, String.class);
     }
 
+    private String getInitInputsJavaScriptComponentId(PropertySetComponent propertySetComponent)
+    {
+        return propertySetComponent.getId() + INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID_SUFFIX;
+    }
+
+    private static void addPropertyRow(PropertySetComponent propertySetComponent,
+        PropertyInfo propertyInfo, String rowStyleClass) {
+
+        PropertyDefinitionSimple propertyDefinitionSimple = propertySetComponent.getPropertyDefinition();
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "\n\n<tr class='" + rowStyleClass + "'>");
+
+        UIInput input = PropertyRenderingUtility.createInputForSimpleProperty(
+                propertySetComponent.getPropertyDefinition(), propertyInfo.getProperty(),
+                propertyInfo.getPropertyValueExpression(), propertySetComponent.getListIndex(),
+                propertySetComponent.getReadOnly(),
+                true);
+        propertyInfo.setInput(input);
+
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='" + CssStyleClasses.PROPERTY_DISPLAY_NAME_CELL + "'>"); // TODO: CSS
+        FacesComponentUtility.addOutputText(propertySetComponent, null, propertyInfo.getLabel(), null);
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "</td>");
+
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
+        PropertyRenderingUtility.addUnsetControl(propertySetComponent, propertyDefinitionSimple,
+                    propertyInfo.getProperty(), input, propertySetComponent.getReadOnly());
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "</td>");
+
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='" + CssStyleClasses.PROPERTY_VALUE_CELL + "'>");
+        propertySetComponent.getChildren().add(input);
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/>");
+        PropertyRenderingUtility.addMessageComponentForInput(propertySetComponent, input);
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "</td>");
+
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "</tr>");
+    }
+
     class PropertyInfo implements Comparable<PropertyInfo> {
         private String label;
         private PropertySimple property;
         private ValueExpression propertyValueExpression;
+        private UIInput input;
 
         PropertyInfo(String label, PropertySimple property, ValueExpression propertyValueExpression)
         {
+            // Ensure this.label will never be null, so our compareTo() impl doesn't need to deal with null labels.
             this.label = (label != null) ? label : "";
             this.property = property;
             this.propertyValueExpression = propertyValueExpression;
@@ -270,12 +307,28 @@ public class PropertySetRenderer extends Renderer
             return propertyValueExpression;
         }
 
+        public UIInput getInput()
+        {
+            return input;
+        }
+
+        public void setInput(UIInput input)
+        {
+            this.input = input;
+        }
+
         public int compareTo(PropertyInfo that)
         {
-            int result = this.label.compareTo(that.label);
+            int result = this.label.compareTo(that.label); // NOTE: this.label will never be null.
             if (result == 0)
-                //noinspection ConstantConditions
-                result = this.property.getStringValue().compareTo(that.property.getStringValue());
+                if (this.property.getStringValue() != null && that.property.getStringValue() != null)
+                    //noinspection ConstantConditions
+                    result = this.property.getStringValue().compareTo(that.property.getStringValue());
+                else if (this.property.getStringValue() != null && that.property.getStringValue() == null)
+                    result = 0;
+                else
+                    // Show properties with null values (i.e. unset properties) last.
+                    result = (this.property.getStringValue() == null) ? 1 : -1;
             return result;
         }
     }

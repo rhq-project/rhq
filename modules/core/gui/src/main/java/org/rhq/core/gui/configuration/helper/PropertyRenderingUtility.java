@@ -19,35 +19,47 @@
 package org.rhq.core.gui.configuration.helper;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import javax.el.ValueExpression;
 import javax.faces.component.UIInput;
 import javax.faces.component.UISelectItem;
 import javax.faces.component.UISelectOne;
+import javax.faces.component.UIComponent;
+import javax.faces.component.UIOutput;
+import javax.faces.component.NamingContainer;
 import javax.faces.component.html.HtmlInputSecret;
 import javax.faces.component.html.HtmlInputText;
 import javax.faces.component.html.HtmlInputTextarea;
 import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.component.html.HtmlSelectOneRadio;
+import javax.faces.component.html.HtmlSelectBooleanCheckbox;
+import javax.faces.context.FacesContext;
+import javax.faces.validator.ValidatorException;
+import javax.faces.application.FacesMessage;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.gui.converter.PropertySimpleValueConverter;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesExpressionUtility;
 import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.validator.PropertySimpleValueValidator;
+import org.rhq.core.gui.configuration.CssStyleClasses;
 
 /**
  * @author Ian Springer
  */
-public class PropertySimpleRenderingUtility
-{
-    private static final String INPUT_TEXT_WIDTH_STYLE = "width:185px;";
+public class PropertyRenderingUtility
+{    
     private static final int INPUT_TEXT_COMPONENT_WIDTH = 30;
     private static final int INPUT_TEXTAREA_COMPONENT_ROWS = 4;
+    private static final String ERROR_MSG_STYLE_CLASS = "error-msg";
 
     /**
      * Enums with a size equal to or greater than this threshold will be rendered as list boxes, rather than radios.
@@ -59,7 +71,7 @@ public class PropertySimpleRenderingUtility
                                                        PropertySimple propertySimple,
                                                        ValueExpression propertyValueExpression,
                                                        Integer listIndex,
-                                                       boolean readOnly) {
+                                                       boolean readOnly, boolean prevalidate) {
         UIInput input;
         switch (propertyDefinitionSimple.getType()) {
         case BOOLEAN: {
@@ -92,15 +104,10 @@ public class PropertySimpleRenderingUtility
         }
 
         boolean isUnset = isUnset(propertyDefinitionSimple, propertySimple);
-        boolean isReadOnly = isReadOnly(readOnly, propertyDefinitionSimple, propertySimple);
+        boolean isReadOnly = isReadOnly(propertyDefinitionSimple, propertySimple, readOnly);
 
-        // Find the actual property corresponding to this property def, and use that to create the component id.
-        // TODO (ips, 01/21/09): Generate id using PropertyDefinition instead of Property, since Property will be null
-        //      for the propertySet component.
-        if (propertySimple != null) {
-            String propertyId = PropertyIdGeneratorUtility.getIdentifier(propertySimple, listIndex);
-            input.setId(propertyId);
-        }
+        String propertyId = PropertyIdGeneratorUtility.getIdentifier(propertySimple, listIndex);
+        input.setId(propertyId);
 
         input.setValueExpression("value", propertyValueExpression);
 
@@ -116,10 +123,9 @@ public class PropertySimpleRenderingUtility
 
         addValidatorsAndConverter(input, propertyDefinitionSimple, readOnly);
 
+        addErrorMessages(input, propertyDefinitionSimple, propertySimple, prevalidate);
         return input;
     }
-
-
 
     @NotNull
     public static UIInput createInputForSimpleProperty(PropertySimple propertySimple, String valueExpressionFormat, 
@@ -129,6 +135,166 @@ public class PropertySimpleRenderingUtility
         FacesComponentUtility.setReadonly(input, readOnly);
         addTitleAttribute(input, propertySimple.getStringValue());
         return input;
+    }
+
+    public static void addMessageComponentForInput(UIComponent parent, UIInput input) {
+        // <h:message for="#{input-component-id}" showDetail="true" errorClass="error-msg" />
+        FacesComponentUtility.addMessage(parent, null, input.getId(), ERROR_MSG_STYLE_CLASS);
+        // TODO: specify a component id
+    }
+
+    public static HtmlSelectBooleanCheckbox addUnsetControl(UIComponent parent,
+                                                                         PropertyDefinitionSimple propertyDefinitionSimple,
+                                                    PropertySimple propertySimple,
+                                                    UIInput valueInput, boolean readOnlyConfig) {
+        HtmlSelectBooleanCheckbox unsetCheckbox = FacesComponentUtility.createComponent(
+                HtmlSelectBooleanCheckbox.class, null);
+        if (!propertyDefinitionSimple.isRequired()) {
+            parent.getChildren().add(unsetCheckbox);
+            unsetCheckbox.setValue(Boolean.valueOf(isUnset(propertyDefinitionSimple, propertySimple)));
+            if (isReadOnly(propertyDefinitionSimple, propertySimple, readOnlyConfig)) {
+                FacesComponentUtility.setDisabled(unsetCheckbox, true);
+            } else {
+                // Add JavaScript that will disable/enable the corresponding input element when the unset checkbox is
+                // checked/unchecked.
+                // IMPORTANT: We must use document.formName.inputName, rather than document.getElementById('inputId'),
+                //            to reference the HTML DOM element, because the id of the HTML DOM input element is not the same as the
+                //            id of the corresponding JSF input component in some cases (e.g. radio buttons). However, the
+                //            name property that JSF renders on the HTML DOM input element does always match the JSF
+                //            component id. (ips, 05/31/07)
+                StringBuilder onchange = new StringBuilder();
+                for (String htmlDomReference : getHtmlDomReferences(valueInput)) {
+                    onchange.append("setInputUnset(").append(htmlDomReference).append(", this.checked);");
+                }
+
+                unsetCheckbox.setOnchange(onchange.toString());
+            }
+        }
+        return unsetCheckbox;
+    }
+
+    public static void addInitInputsJavaScript(UIComponent parent, String componentId, boolean configFullyEditable, boolean postBack) {
+        List<UIInput> inputs = FacesComponentUtility.getDescendantsOfType(parent, UIInput.class);
+        List<UIInput> overrideInputs = new ArrayList<UIInput>();
+        List<UIInput> unsetInputs = new ArrayList<UIInput>();
+        List<UIInput> readOnlyInputs = new ArrayList<UIInput>();
+        for (UIInput input : inputs) {
+            // readOnly components can not be overridden - by this point, the override
+            // status should have only been set if the component *was not* readOnly
+            //if (FacesComponentUtility.isOverride(input)) {
+            //    overrideInputs.add(input);
+            //}
+
+            if (postBack) {
+                boolean inputIsNull = PropertySimpleValueConverter.NULL_INPUT_VALUE.equals(input.getSubmittedValue());
+                FacesComponentUtility.setUnset(input, inputIsNull);
+            }
+            if (FacesComponentUtility.isUnset(input)) {
+                unsetInputs.add(input);
+            }
+
+            if (!configFullyEditable && FacesComponentUtility.isReadonly(input)) {
+                readOnlyInputs.add(input);
+            }
+        }
+
+        StringBuilder script = new StringBuilder();
+
+        if (!overrideInputs.isEmpty()) {
+            script.append("var overrideInputArray = new Array(");
+            for (UIInput input : overrideInputs) {
+                for (String htmlDomReference : getHtmlDomReferences(input)) {
+                    script.append(htmlDomReference).append(", ");
+                }
+            }
+
+            script.delete(script.length() - 2, script.length()); // chop off the extra ", "
+            script.append(");\n");
+
+            // do it this way instead of DISABLED attribute via code, because if DISABLED is used and
+            // even if javascript later enables them, JSF won't submit them as part of the component
+            script.append("setInputsOverride(overrideInputArray, false);\n");
+        }
+
+        if (!unsetInputs.isEmpty()) {
+            script.append("var unsetInputArray = new Array(");
+            for (UIInput input : unsetInputs) {
+                for (String htmlDomReference : getHtmlDomReferences(input)) {
+                    script.append(htmlDomReference).append(", ");
+                }
+            }
+
+            script.delete(script.length() - 2, script.length()); // chop off the extra ", "
+            script.append(");\n");
+
+            // do it this way instead of DISABLED attribute via code, because if DISABLED is used and
+            // even if javascript later enables them, JSF won't submit them as part of the component
+            script.append("unsetInputs(unsetInputArray);\n");
+        }
+
+        if (!readOnlyInputs.isEmpty()) {
+            script.append("var readOnlyInputArray = new Array(");
+            for (UIInput input : readOnlyInputs) {
+                for (String htmlDomReference : getHtmlDomReferences(input)) {
+                    script.append(htmlDomReference).append(", ");
+                }
+            }
+
+            script.delete(script.length() - 2, script.length()); // chop off the extra ", "
+            script.append(");\n");
+            script.append("writeProtectInputs(readOnlyInputArray);\n");
+        }
+
+        UIOutput uiOutput = FacesComponentUtility.addJavaScript(parent, null, null, script);
+
+        uiOutput.setId(componentId);
+    }
+
+    public static List<String> getHtmlDomReferences(UIComponent component) {
+        List<String> htmlDomReferences = new ArrayList<String>();
+        if (component instanceof HtmlSelectOneRadio) {
+            String clientId = component.getClientId(FacesContext.getCurrentInstance());
+            int selectItemCount = 0;
+            for (UIComponent child : component.getChildren()) {
+                if (child instanceof UISelectItem) {
+                    String selectItemClientId = clientId + NamingContainer.SEPARATOR_CHAR + selectItemCount++;
+                    htmlDomReferences.add(getHtmlDomReference(selectItemClientId));
+                } else {
+                    throw new IllegalStateException(
+                        "HtmlSelectOneRadio component has a child that is not a UISelectItem.");
+                }
+            }
+        } else {
+            String clientId = component.getClientId(FacesContext.getCurrentInstance());
+            htmlDomReferences.add(getHtmlDomReference(clientId));
+        }
+
+        return htmlDomReferences;
+    }
+
+    // <h:outputLabel value="DISPLAY_NAME" styleClass="..." />
+    public static void addPropertyDisplayName(UIComponent parent, PropertyDefinition propertyDefinition,
+                                              boolean configReadOnly) {
+        FacesComponentUtility.addOutputText(parent, null, propertyDefinition.getDisplayName(),
+            CssStyleClasses.PROPERTY_DISPLAY_NAME_TEXT);
+        if (!configReadOnly && propertyDefinition.isRequired()
+            && (propertyDefinition instanceof PropertyDefinitionSimple)) {
+            // Print a required marker next to required simples.
+            // Ignore the required field for maps and lists, as it is has no significance for them.
+            FacesComponentUtility.addOutputText(parent, null, " * ", CssStyleClasses.REQUIRED_MARKER_TEXT);
+        }
+    }
+
+    public static void addPropertyDescription(UIComponent parent, PropertyDefinition propertyDefinition) {
+        // <span class="description">DESCRIPTION</span>
+        if (propertyDefinition.getDescription() != null) {
+            FacesComponentUtility.addOutputText(parent, null, propertyDefinition.getDescription(),
+                CssStyleClasses.DESCRIPTION);
+        }
+    }
+
+    static String getHtmlDomReference(String clientId) {
+        return "document.getElementById('" + clientId + "')";
     }
 
     private static UIInput createInputForBooleanProperty() {
@@ -188,7 +354,7 @@ public class PropertySimpleRenderingUtility
         HtmlInputText inputText = FacesComponentUtility.createComponent(HtmlInputText.class, null);
 
         //TODO: check if this has units, then apply the correct style
-        inputText.setStyle(INPUT_TEXT_WIDTH_STYLE);
+        inputText.setStyleClass(CssStyleClasses.PROPERTY_VALUE_INPUT);
         //      inputText.setStyle(INPUT_TEXT_WIDTH_STYLE_WITH_UNITS);
         inputText.setMaxlength(PropertySimple.MAX_VALUE_LENGTH);
 
@@ -199,7 +365,7 @@ public class PropertySimpleRenderingUtility
 
     private static UIInput createInputForPasswordProperty() {
         HtmlInputSecret inputSecret = FacesComponentUtility.createComponent(HtmlInputSecret.class, null);
-        inputSecret.setStyle(INPUT_TEXT_WIDTH_STYLE);
+        inputSecret.setStyleClass(CssStyleClasses.PROPERTY_VALUE_INPUT);
         inputSecret.setMaxlength(PropertySimple.MAX_VALUE_LENGTH);
 
         // TODO: Remove the below line, as it's not secure, and improve support for displaying/validating password fields.
@@ -213,7 +379,7 @@ public class PropertySimpleRenderingUtility
     private static UIInput createInputForLongStringProperty() {
         HtmlInputTextarea inputTextarea = FacesComponentUtility.createComponent(HtmlInputTextarea.class, null);
         inputTextarea.setRows(INPUT_TEXTAREA_COMPONENT_ROWS);
-        inputTextarea.setStyle(INPUT_TEXT_WIDTH_STYLE);
+        inputTextarea.setStyleClass(CssStyleClasses.PROPERTY_VALUE_INPUT);
         return inputTextarea;
     }
 
@@ -230,10 +396,39 @@ public class PropertySimpleRenderingUtility
         }
     }
 
-    private static String getSimplePropertyValue(PropertyDefinitionSimple propertyDefinitionSimple,
-                                                 String valueExpressionFormat) {
-        String valueExpression = String.format(valueExpressionFormat, propertyDefinitionSimple.getName());
-        return FacesExpressionUtility.getValue(valueExpression, String.class);
+    private static void addErrorMessages(UIInput input, @Nullable PropertyDefinitionSimple propertyDefinitionSimple,
+                                  PropertySimple propertySimple, boolean prevalidate) {
+        if (prevalidate) {
+            // Pre-validate the property's value, in case the PC sent us an invalid live config.
+            PropertySimpleValueValidator validator = new PropertySimpleValueValidator(propertyDefinitionSimple);
+            //PropertySimple propertySimple = this.propertyMap.getSimple(propertyDefinitionSimple.getName());
+            prevalidatePropertyValue(input, propertySimple, validator);                
+        }
+        // If there is a PC-detected error associated with the property, associate it with the input.
+        addPluginContainerDetectedErrorMessage(input, propertySimple);
+    }
+
+    private static void prevalidatePropertyValue(UIInput propertyValueInput, PropertySimple propertySimple,
+        PropertySimpleValueValidator validator) {
+        FacesContext facesContext = FacesContextUtility.getFacesContext();
+        try {
+            String value = (propertySimple != null) ? propertySimple.getStringValue() : null;
+            validator.validate(facesContext, propertyValueInput, value);
+        } catch (ValidatorException e) {
+            // NOTE: It's vital to pass the client id, *not* the component id, to addMessage().
+            facesContext.addMessage(propertyValueInput.getClientId(facesContext), e.getFacesMessage());
+        }
+    }
+
+    private static void addPluginContainerDetectedErrorMessage(UIInput input, PropertySimple propertySimple) {
+        String errorMsg = (propertySimple != null) ? propertySimple.getErrorMessage() : null;
+        if ((errorMsg != null) && !errorMsg.equals("")) {
+            FacesContext facesContext = FacesContextUtility.getFacesContext();
+            FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_ERROR, errorMsg, null);
+
+            // NOTE: It's vital to pass the client id, *not* the component id, to addMessage().
+            facesContext.addMessage(input.getClientId(facesContext), facesMsg);
+        }
     }
 
     private static void addTitleAttribute(UIInput input, String propertyValue) {
@@ -265,16 +460,11 @@ public class PropertySimpleRenderingUtility
     }
 
     private static boolean isUnset(PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple) {
-        // TODO (ips, 01/21/09): Figure out some way to do this for the propertySet component, where propertySimple will
-        //      be null. Perhaps perform this logic in PropertySetRenderer.encodeEnd() after the UIInputs have been
-        //      rendered.
-        if (propertySimple == null)
-            return false;
         return (!propertyDefinitionSimple.isRequired() && propertySimple.getStringValue() == null);
     }
 
-    private static boolean isReadOnly(boolean readOnlyConfig, PropertyDefinitionSimple propertyDefinitionSimple,
-                                      PropertySimple propertySimple) {
+    private static boolean isReadOnly(PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple, boolean readOnlyConfig
+    ) {
         // a fully editable config overrides any other means of setting read only
         return (readOnlyConfig || (propertyDefinitionSimple.isReadOnly() &&
                 !isInvalidRequiredProperty(propertyDefinitionSimple, propertySimple)));
@@ -282,11 +472,6 @@ public class PropertySimpleRenderingUtility
 
     private static boolean isInvalidRequiredProperty(PropertyDefinitionSimple propertyDefinitionSimple,
                                                      PropertySimple propertySimple) {
-        // TODO (ips, 01/21/09): Figure out some way to do this for the propertySet component, where propertySimple will
-        //      be null. Perhaps perform this logic in PropertySetRenderer.encodeEnd() after the UIInputs have been
-        //      rendered.
-        if (propertySimple == null)
-            return false;
         boolean isInvalidRequiredProperty = false;
         if (propertyDefinitionSimple.isRequired()) {
             String errorMessage = propertySimple.getErrorMessage();
@@ -299,5 +484,5 @@ public class PropertySimpleRenderingUtility
             }
         }
         return isInvalidRequiredProperty;
-    }    
+    }
 }

@@ -30,7 +30,7 @@ THIS TEXT WILL BE REMOVED.
                   layout="table"
                   width="100%" />
       
-      <h:form id="editTestConfigurationForm">
+      <h:form id="editTestConfigurationForm" onsubmit="prepareInputsForSubmission(this)">
          <onc:config configurationDefinition="#{EditTestConfigurationUIBean.configurationDefinition}"
                      configuration="#{EditTestConfigurationUIBean.configuration}"
                      accessMapActionExpression="#{EditTestConfigurationUIBean.accessMap}"

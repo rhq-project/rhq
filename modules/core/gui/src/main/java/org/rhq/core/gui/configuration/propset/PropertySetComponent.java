@@ -40,7 +40,7 @@ public class PropertySetComponent extends UIComponentBase implements FacesCompon
     static final String PROPERTY_DEFINITION_ATTRIBUTE = "propertyDefinition";
     static final String CONFIGURATION_GROUP_MEMBER_INFOS_ATTRIBUTE = "configurationGroupMemberInfos";
 
-    private Boolean readOnly;
+    private Boolean readOnly;    
     private Integer listIndex;
 
     public String createUniqueId() {
@@ -96,7 +96,7 @@ public class PropertySetComponent extends UIComponentBase implements FacesCompon
             this.stateValues = new Object[3];
         this.stateValues[0] = super.saveState(facesContext);
         this.stateValues[1] = this.readOnly;
-        this.stateValues[1] = this.listIndex;
+        this.stateValues[2] = this.listIndex;
         return this.stateValues;
     }
 

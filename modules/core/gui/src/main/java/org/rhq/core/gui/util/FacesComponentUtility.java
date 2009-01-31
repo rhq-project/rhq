@@ -374,10 +374,9 @@ public abstract class FacesComponentUtility {
         Application application = FacesContext.getCurrentInstance().getApplication();
         String componentType = getComponentType(componentClass);
         T component = (T) application.createComponent(componentType);
-        if (idFactory != null) {
-            component.setId(idFactory.createUniqueId());
-        }
-
+        if (idFactory == null)
+            idFactory = new DefaultFacesComponentIdFactory();
+        component.setId(idFactory.createUniqueId());
         return component;
     }
 
@@ -493,5 +492,12 @@ public abstract class FacesComponentUtility {
         }
 
         return componentType;
+    }
+
+    private static class DefaultFacesComponentIdFactory implements FacesComponentIdFactory {
+        public String createUniqueId()
+        {
+            return FacesContext.getCurrentInstance().getViewRoot().createUniqueId();
+        }
     }
 }

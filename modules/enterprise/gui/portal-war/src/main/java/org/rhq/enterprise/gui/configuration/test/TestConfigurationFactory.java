@@ -258,9 +258,8 @@ public abstract class TestConfigurationFactory {
     {
         PropertyDefinitionSimple stringPropDef1;
         stringPropDef1 = new PropertyDefinitionSimple("String1",
-            "a required summary String simple prop", true, PropertySimpleType.STRING);
+            "an optional String simple prop", false, PropertySimpleType.STRING);
         stringPropDef1.setDisplayName(stringPropDef1.getName());
-        stringPropDef1.setSummary(true);
         return stringPropDef1;
     }
 

@@ -26,7 +26,6 @@ package org.rhq.core.gui.configuration;
 
  import javax.el.MethodExpression;
  import javax.el.ValueExpression;
- import javax.faces.application.FacesMessage;
  import javax.faces.component.UIComponent;
  import javax.faces.component.UIInput;
  import javax.faces.component.UIPanel;
@@ -35,8 +34,6 @@ package org.rhq.core.gui.configuration;
  import javax.faces.component.html.HtmlPanelGrid;
  import javax.faces.component.html.HtmlPanelGroup;
  import javax.faces.component.html.HtmlSelectBooleanCheckbox;
- import javax.faces.context.FacesContext;
- import javax.faces.validator.ValidatorException;
 
  import org.apache.commons.logging.Log;
  import org.apache.commons.logging.LogFactory;
@@ -51,14 +48,12 @@ package org.rhq.core.gui.configuration;
  import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
  import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
  import org.rhq.core.gui.RequestParameterNameConstants;
- import org.rhq.core.gui.configuration.helper.PropertySimpleRenderingUtility;
+ import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
  import org.rhq.core.gui.util.FacesComponentUtility;
- import org.rhq.core.gui.util.FacesContextUtility;
  import org.rhq.core.gui.util.FacesExpressionUtility;
  import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
- import org.rhq.core.gui.validator.PropertySimpleValueValidator;
 
-/**
+ /**
  * A factory that generates a tree of JSF components that depicts a given collection of JON {@link Property}s.
  *
  * @author Ian Springer (with some code snarfed from embedded's <code>org.jboss.on.embedded.ui.WidgetFactory</code>)
@@ -84,16 +79,10 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private static final String ADD_NEW_MAP_BUTTON_LABEL = "Add New";
     private static final String ADD_NEW_MAP_BUTTON_TITLE = "Add New";
 
-    private static final String PROPERTIES_TABLE_STYLE_CLASS = "properties-table";
     private static final String NESTED_PROPERTIES_TABLE_STYLE_CLASS = "nested-properties-table";
     private static final String PROPERTIES_TABLE_HEADER_CELL_STYLE_CLASS = "properties-table-header-cell";
     private static final String NESTED_PROPERTIES_TABLE_HEADER_CELL_STYLE_CLASS = "nested-properties-table-header-cell";
-    private static final String NESTED_PROPERTIES_TABLE_INDENT_CELL_STYLE_CLASS = "nested-properties-table-indent-cell";
-    private static final String DESCRIPTION_STYLE_CLASS = "description";
-    private static final String PROPERTY_DISPLAY_NAME_CELL_STYLE_CLASS = "property-display-name-cell";
-    private static final String PROPERTY_VALUE_CELL_STYLE_CLASS = "property-value-cell";
-    private static final String PROPERTY_DESCRIPTION_CELL_STYLE_CLASS = "property-description-cell";
-    private static final String PROPERTY_ENABLED_CELL_STYLE_CLASS = "property-enabled-cell";
+    private static final String NESTED_PROPERTIES_TABLE_INDENT_CELL_STYLE_CLASS = "nested-properties-table-indent-cell";    
     private static final String PROPERTY_ERROR_CELL_STYLE_CLASS = "property-error-cell";
     private static final String OPENMAP_PROPERTIES_TABLE_STYLE_CLASS = "openmap-properties-table";
     private static final String OPENMAP_PROPERTY_DISPLAY_NAME_CELL_STYLE_CLASS = "openmap-property-display-name-cell";
@@ -104,17 +93,14 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private static final String LIST_PROPERTY_VALUE_CELL_STYLE_CLASS = "list-property-value-cell";
     private static final String LIST_PROPERTY_DESCRIPTION_CELL_STYLE_CLASS = "list-property-description-cell";
     private static final String LIST_PROPERTY_ENABLED_CELL_STYLE_CLASS = "list-property-enabled-cell";
-    private static final String LIST_PROPERTY_CHILDREN_CELL_STYLE_CLASS = "list-property-children-cell";
-    private static final String ERROR_MSG_STYLE_CLASS = "error-msg";
-    private static final String PROPERTY_DISPLAY_NAME_TEXT_STYLE_CLASS = "property-display-name-text";
+    private static final String LIST_PROPERTY_CHILDREN_CELL_STYLE_CLASS = "list-property-children-cell";        
     private static final String PROPERTY_MAP_SUMMARY_TABLE_STYLE_CLASS = "property-map-summary-table";
     private static final String PROPERTY_MAP_SUMMARY_DATA_HEADER_CELL_STYLE_CLASS = "property-map-summary-data-header-cell";
     private static final String PROPERTY_MAP_SUMMARY_HEADER_TEXT_STYLE_CLASS = "property-map-summary-header-text";
     private static final String PROPERTY_MAP_SUMMARY_BUTTONS_CELL_STYLE_CLASS = "property-map-summary-buttons-cell";
     private static final String PROPERTY_MAP_SUMMARY_DATA_CELL_STYLE_CLASS = "property-map-summary-data-cell";
     private static final String PROPERTY_MAP_SUMMARY_DATA_TEXT_STYLE_CLASS = "property-map-summary-data-text";
-    private static final String PROPERTY_MAP_SUMMARY_BUTTON_FOOTER_STYLE_CLASS = "property-buttonfooterrow";
-    private static final String REQUIRED_MARKER_TEXT_STYLE_CLASS = "required-marker-text";
+    private static final String PROPERTY_MAP_SUMMARY_BUTTON_FOOTER_STYLE_CLASS = "property-buttonfooterrow";    
     private static final String BUTTONS_TABLE_STYLE_CLASS = "buttons-table";
     private static final String BUTTON_SMALL_STYLE_CLASS = "buttonsmall";
     private static final String ROW_ODD_STYLE_CLASS = "OddRow";
@@ -155,7 +141,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             FacesComponentUtility.NO_STYLE_CLASS);
         if (!this.propertyDefinitions.isEmpty() || (this.propertyMap instanceof PropertyMap)) {
             if (!this.propertyDefinitions.isEmpty()) {
-                String tableStyleClass = this.topLevel ? PROPERTIES_TABLE_STYLE_CLASS
+                String tableStyleClass = this.topLevel ? CssStyleClasses.PROPERTIES_TABLE
                     : NESTED_PROPERTIES_TABLE_STYLE_CLASS;
                 FacesComponentUtility.addVerbatimText(rootPanel, "\n\n<table class='" + tableStyleClass + "'>");
                 int rowCount = 0;
@@ -303,34 +289,34 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         PropertySimple propertySimple = this.propertyMap.getSimple(propertyDefinitionSimple.getName());
         ValueExpression propertyValueExpression = createPropertyValueExpression(propertySimple.getName(),
                 this.valueExpressionFormat);
-        UIInput input = PropertySimpleRenderingUtility.createInputForSimpleProperty(propertyDefinitionSimple,
-                propertySimple, propertyValueExpression, getListIndex(), this.config.isReadOnly());
-        HtmlSelectBooleanCheckbox unsetCheckbox = FacesComponentUtility.createComponent(
-            HtmlSelectBooleanCheckbox.class, this.config);
+        UIInput input = PropertyRenderingUtility.createInputForSimpleProperty(propertyDefinitionSimple,
+                propertySimple, propertyValueExpression, getListIndex(), this.config.isReadOnly(),
+                this.config.isPrevalidate());
         // done generating
 
-        FacesComponentUtility.addVerbatimText(parent, "<td class='" + PROPERTY_DISPLAY_NAME_CELL_STYLE_CLASS + "'>");
-        addPropertyDisplayName(parent, propertyDefinitionSimple);
+        FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_DISPLAY_NAME_CELL + "'>");
+        PropertyRenderingUtility.addPropertyDisplayName(parent, propertyDefinitionSimple, this.config.isReadOnly());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         if (config.isAggregate()) {
-            FacesComponentUtility.addVerbatimText(parent, "<td class='" + PROPERTY_ENABLED_CELL_STYLE_CLASS + "'>");
-            addPropertyOverrideControl(parent, propertyDefinitionSimple, input, unsetCheckbox);
+            FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
+            addPropertyOverrideControl(parent, propertyDefinitionSimple, input);
             FacesComponentUtility.addVerbatimText(parent, "</td>");
         }
 
-        FacesComponentUtility.addVerbatimText(parent, "<td class='" + PROPERTY_ENABLED_CELL_STYLE_CLASS + "'>");
-        addPropertyUnsetControl(parent, propertyDefinitionSimple, input, unsetCheckbox);
+        FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
+        PropertyRenderingUtility.addUnsetControl(parent, propertyDefinitionSimple, propertySimple, input,
+                this.config.isReadOnly());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
-        FacesComponentUtility.addVerbatimText(parent, "<td class='" + PROPERTY_VALUE_CELL_STYLE_CLASS + "'>");
+        FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_VALUE_CELL + "'>");
         parent.getChildren().add(input);
         FacesComponentUtility.addVerbatimText(parent, "<br/>");
-        addErrorMessages(parent, input, propertyDefinitionSimple);
+        PropertyRenderingUtility.addMessageComponentForInput(parent, input);
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
-        FacesComponentUtility.addVerbatimText(parent, "<td class='" + PROPERTY_DESCRIPTION_CELL_STYLE_CLASS + "'>");
-        addPropertyDescription(parent, propertyDefinitionSimple);
+        FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_DESCRIPTION_CELL + "'>");
+        PropertyRenderingUtility.addPropertyDescription(parent, propertyDefinitionSimple);
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "</tr>");
@@ -353,16 +339,14 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         FacesComponentUtility.addVerbatimText(panel, "<td class='" + OPENMAP_PROPERTY_DISPLAY_NAME_CELL_STYLE_CLASS
             + "'>");
         FacesComponentUtility.addOutputText(panel, this.config, propertySimple.getName(),
-            PROPERTY_DISPLAY_NAME_TEXT_STYLE_CLASS);
+            CssStyleClasses.PROPERTY_DISPLAY_NAME_TEXT);
         FacesComponentUtility.addVerbatimText(panel, "</td>");
 
         FacesComponentUtility.addVerbatimText(panel, "<td class='" + OPENMAP_PROPERTY_VALUE_CELL_STYLE_CLASS + "'>");
-        UIInput input = PropertySimpleRenderingUtility.createInputForSimpleProperty(propertySimple,
+        UIInput input = PropertyRenderingUtility.createInputForSimpleProperty(propertySimple,
                 this.valueExpressionFormat, this.config.isReadOnly());
         panel.getChildren().add(input);
         FacesComponentUtility.addVerbatimText(panel, "</td>");
-
-        addErrorMessages(panel, input, propertySimple);
 
         if (!isReadOnly(propertyDefinitionMap)) {
             // add Actions column w/ delete button
@@ -402,7 +386,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + LIST_PROPERTY_DISPLAY_NAME_CELL_STYLE_CLASS
             + "'>");
-        addPropertyDisplayName(parent, listPropertyDefinition);
+        PropertyRenderingUtility.addPropertyDisplayName(parent, listPropertyDefinition, this.config.isReadOnly());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + LIST_PROPERTY_ENABLED_CELL_STYLE_CLASS + "' />");
@@ -411,7 +395,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         FacesComponentUtility
             .addVerbatimText(parent, "<td class='" + LIST_PROPERTY_DESCRIPTION_CELL_STYLE_CLASS + "'>");
-        addPropertyDescription(parent, listPropertyDefinition);
+        PropertyRenderingUtility.addPropertyDescription(parent, listPropertyDefinition);
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "</tr>");
@@ -597,7 +581,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             FacesComponentUtility.addVerbatimText(parent, "<td class='" + PROPERTY_MAP_SUMMARY_DATA_CELL_STYLE_CLASS
                 + "'>");
             if (mapMemberSimpleProperty.getStringValue() == null) {
-                FacesComponentUtility.addOutputText(parent, this.config, "not set", REQUIRED_MARKER_TEXT_STYLE_CLASS);
+                FacesComponentUtility.addOutputText(parent, this.config, "not set", CssStyleClasses.REQUIRED_MARKER_TEXT);
             } else {
                 FacesComponentUtility.addOutputText(parent, this.config, mapMemberSimpleProperty.getStringValue(),
                     PROPERTY_MAP_SUMMARY_DATA_TEXT_STYLE_CLASS);
@@ -627,7 +611,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + LIST_PROPERTY_DISPLAY_NAME_CELL_STYLE_CLASS
             + "'>");
-        addPropertyDisplayName(parent, propertyDefinitionMap);
+        PropertyRenderingUtility.addPropertyDisplayName(parent, propertyDefinitionMap, this.config.isReadOnly());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + LIST_PROPERTY_ENABLED_CELL_STYLE_CLASS + "' />");
@@ -636,7 +620,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         FacesComponentUtility
             .addVerbatimText(parent, "<td class='" + LIST_PROPERTY_DESCRIPTION_CELL_STYLE_CLASS + "'>");
-        addPropertyDescription(parent, propertyDefinitionMap);
+        PropertyRenderingUtility.addPropertyDescription(parent, propertyDefinitionMap);
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "</tr>");
@@ -715,88 +699,8 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         return input;
     }
 
-
-
-
-    private void addErrorMessages(UIComponent parent, UIInput input, PropertyDefinitionSimple propertyDefinitionSimple) {
-        addDebug(parent, true, ".addErrorMessages()");
-        addMessageComponentForInput(parent, input);
-
-        // Pre-validate the property's value, in case the PC sent us an invalid live config.
-        PropertySimpleValueValidator validator = new PropertySimpleValueValidator(propertyDefinitionSimple);
-        PropertySimple propertySimple = this.propertyMap.getSimple(propertyDefinitionSimple.getName());
-        prevalidatePropertyValue(input, propertySimple, validator);
-
-        // If there is a PC-detected error associated with the property, associate it with the input.
-        addPluginContainerDetectedErrorMessage(input, propertySimple);
-        addDebug(parent, false, ".addErrorMessages()");
-    }
-
-    private void addErrorMessages(UIComponent parent, UIInput input, PropertySimple propertySimple) {
-        addDebug(parent, true, ".addErrorMessages()");
-        addMessageComponentForInput(parent, input);
-
-        // Pre-validate the property's value, in case the PC sent us an invalid live config.
-        PropertySimpleValueValidator validator = new PropertySimpleValueValidator();
-        if (this.config.isPrevalidate()) {
-            prevalidatePropertyValue(input, propertySimple, validator);
-        }
-
-        // If there is a PC-detected error associated with the property, associate it with the input.
-        addPluginContainerDetectedErrorMessage(input, propertySimple);
-        addDebug(parent, false, ".addErrorMessages()");
-    }
-
-    private void addMessageComponentForInput(UIComponent parent, UIInput input) {
-        // <h:message for="#{input-component-id}" showDetail="true" errorClass="error-msg" />
-        FacesComponentUtility.addMessage(parent, this.config, input.getId(), ERROR_MSG_STYLE_CLASS);
-    }
-
-    private void prevalidatePropertyValue(UIInput input, PropertySimple propertySimple,
-        PropertySimpleValueValidator validator) {
-        FacesContext facesContext = FacesContextUtility.getFacesContext();
-        try {
-            String value = (propertySimple != null) ? propertySimple.getStringValue() : null;
-            validator.validate(facesContext, input, value);
-        } catch (ValidatorException e) {
-            // NOTE: It's vital to pass the client id, *not* the component id, to addMessage().
-            facesContext.addMessage(input.getClientId(facesContext), e.getFacesMessage());
-        }
-    }
-
-    private void addPluginContainerDetectedErrorMessage(UIInput input, PropertySimple propertySimple) {
-        String errorMsg = (propertySimple != null) ? propertySimple.getErrorMessage() : null;
-        if ((errorMsg != null) && !errorMsg.equals("")) {
-            FacesContext facesContext = FacesContextUtility.getFacesContext();
-            FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_ERROR, errorMsg, null);
-
-            // NOTE: It's vital to pass the client id, *not* the component id, to addMessage().
-            facesContext.addMessage(input.getClientId(facesContext), facesMsg);
-        }
-    }
-
-    // <h:outputLabel value="DISPLAY_NAME" styleClass="..." />
-    private void addPropertyDisplayName(UIComponent parent, PropertyDefinition propertyDefinition) {
-        FacesComponentUtility.addOutputText(parent, this.config, propertyDefinition.getDisplayName(),
-            PROPERTY_DISPLAY_NAME_TEXT_STYLE_CLASS);
-        if (!this.config.isReadOnly() && propertyDefinition.isRequired()
-            && (propertyDefinition instanceof PropertyDefinitionSimple)) {
-            // Print a required marker next to required simples.
-            // Ignore the required field for maps and lists, as it is has no significance for them.
-            FacesComponentUtility.addOutputText(parent, this.config, " * ", REQUIRED_MARKER_TEXT_STYLE_CLASS);
-        }
-    }
-
-    private void addPropertyDescription(UIComponent parent, PropertyDefinition propertyDefinition) {
-        // <span class="description">DESCRIPTION</span>
-        if (propertyDefinition.getDescription() != null) {
-            FacesComponentUtility.addOutputText(parent, this.config, propertyDefinition.getDescription(),
-                DESCRIPTION_STYLE_CLASS);
-        }
-    }
-
     private void addPropertyOverrideControl(UIComponent parent, PropertyDefinitionSimple propertyDefinitionSimple,
-        UIInput valueInput, HtmlSelectBooleanCheckbox unsetCheckbox) {
+                                            UIInput valueInput) {
         HtmlSelectBooleanCheckbox overrideCheckbox = createInputOverrideForSimpleProperty(propertyDefinitionSimple);
         parent.getChildren().add(overrideCheckbox);
         overrideCheckbox.setValue(isOverride(propertyDefinitionSimple));
@@ -811,39 +715,12 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
          * unsetCheckbox is NOT unset
          */
         StringBuilder onchange = new StringBuilder();
-        for (String valueInputHtmlDomReference : ConfigRenderer.getHtmlDomReferences(valueInput)) {
+        for (String valueInputHtmlDomReference : PropertyRenderingUtility.getHtmlDomReferences(valueInput)) {
             onchange.append("setInputOverride(").append(valueInputHtmlDomReference).append(", this.checked);");
         }
 
         overrideCheckbox.setOnchange(onchange.toString());
     }
-
-    private void addPropertyUnsetControl(UIComponent parent, PropertyDefinitionSimple propertyDefinitionSimple,
-        UIInput valueInput, HtmlSelectBooleanCheckbox unsetCheckbox) {
-        if (!propertyDefinitionSimple.isRequired()) {
-            parent.getChildren().add(unsetCheckbox);
-            unsetCheckbox.setValue(Boolean.valueOf(isUnset(propertyDefinitionSimple)));
-            if (isReadOnly(propertyDefinitionSimple)) {
-                FacesComponentUtility.setDisabled(unsetCheckbox, true);
-            } else {
-                // Add JavaScript that will disable/enable the corresponding input element when the unset checkbox is
-                // checked/unchecked.
-                // IMPORTANT: We must use document.formName.inputName, rather than document.getElementById('inputId'),
-                //            to reference the HTML DOM element, because the id of the HTML DOM input element is not the same as the
-                //            id of the corresponding JSF input component in some cases (e.g. radio buttons). However, the
-                //            name property that JSF renders on the HTML DOM input element does always match the JSF
-                //            component id. (ips, 05/31/07)
-                StringBuilder onchange = new StringBuilder();
-                for (String htmlDomReference : ConfigRenderer.getHtmlDomReferences(valueInput)) {
-                    onchange.append("setInputUnset(").append(htmlDomReference).append(", this.checked);");
-                }
-
-                unsetCheckbox.setOnchange(onchange.toString());
-            }
-        }
-    }
-
-
 
     /**
      * Binds the value of the specified UIInput to an EL expression corresponding to the Configuration property's

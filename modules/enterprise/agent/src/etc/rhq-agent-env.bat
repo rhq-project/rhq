@@ -88,16 +88,16 @@ rem set RHQ_AGENT_ADDITIONAL_JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,addres
 
 rem    RHQ_AGENT_CMDLINE_OPTS - If this is defined, these are the command line
 rem                             arguments that will be passed to the RHQ Agent.
-rem                             Any arguments specified on the command line will
-rem                             be ignored
-rem                             If this is not defined, the command line
-rem                             arguments given to the script are passed
-rem                             through to the RHQ Agent.
-rem                             If you want to have command line arguments added to
-rem                             the arguments specified here append %* 
-rem                             to the end of this option e.g. ="--daemon %*". In this case
-rem                             both the command line options and the ones specified here
-rem                             will be passed to the agent.
+rem                             Any arguments specified on the command line
+rem                             will be ignored. If this is not defined, the
+rem                             command line arguments given to the script are
+rem                             passed through to the RHQ Agent.
+rem                             If you want to have command line arguments
+rem                             added to the arguments specified here, append
+rem                             '%*' to the end of this option. For example,
+rem                             "--daemon %*". In this case, both the command
+rem                             line options and the ones specified here will
+rem                             be passed to the agent.
 rem
 rem set RHQ_AGENT_CMDLINE_OPTS=--nonative
 

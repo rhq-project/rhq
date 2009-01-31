@@ -38,9 +38,7 @@ binary update is. You do this by either setting the normal
 RHQ_SERVER_HOME environment variable or you pass in -Dserver.home.dir
 on the ANT command line. You can also tell this script what the new
 version and build strings should be used by passing in the command
-line arguments -Dnew.version and/or -Dnew.build. You can also
-tell this script the version of the agent update binary jar (if the
-default isn't correct) - use -Dagent.version for that.
+line arguments -Dnew.version and/or -Dnew.build.
 
 The typical usage of this script that you will normally use is:
 
@@ -50,10 +48,7 @@ Which simply resets the version to 0.0.0.GA and the build number to 0.
 
 This is another usage (this shows all command line args being used):
 
-ant -Dserver.home.dir=/my/server/rhq-agent
-    -Dnew.version=0.0.0.GA
-    -Dnew.build=0
-    -Dagent.version=1.2.0-SNAPSHOT
+ant -Dserver.home.dir=/my/server/rhq-agent -Dnew.version=0.0.0.GA -Dnew.build=0
 
 -->
 <project name="agent-versioning" default="help" basedir=".">
@@ -92,8 +87,8 @@ ant -Dserver.home.dir=/my/server/rhq-agent
 
       <property name="agent.version.properties.file" location="${java.io.tmpdir}/rhq-agent-version.properties" />
       <property file="${agent.version.properties.file}"/>
-      <echo>Current Version=${Product-Version}</echo>
-      <echo>Current Build=${Build-Number}</echo>
+      <echo>Current Agent Distro Version=${Product-Version}</echo>
+      <echo>Current Agent Distro Build=${Build-Number}</echo>
 
       <replace file="${agent.version.properties.file}">
         <replacefilter token="Product-Version=${Product-Version}" value="Product-Version=${new.version}"/>
@@ -108,6 +103,7 @@ ant -Dserver.home.dir=/my/server/rhq-agent
          </fileset>
       </jar>
       <delete file="${agent.version.properties.file}" />
+      <move file="${agent.jar}" tofile="${agent.home.dir}/lib/rhq-enterprise-agent-${new.version}.jar" />
 
    </target>
 
@@ -116,12 +112,30 @@ ant -Dserver.home.dir=/my/server/rhq-agent
    <target name="init-server">
       <property name="env.RHQ_SERVER_HOME" location="dev-container"/>
       <property name="server.home.dir" location="${env.RHQ_SERVER_HOME}"/>
-      <property name="agent.version" value="1.2.0-SNAPSHOT" />
-      <property name="agent.update.binary" value="rhq-enterprise-agent-${agent.version}.jar" />
       <property name="server.download.dir" location="${server.home.dir}/jbossas/server/default/deploy/rhq.ear/rhq-downloads/rhq-agent"/>
+      <available property="_server.download.dir.exists" file="${server.download.dir}"/>
+      <fail unless="_server.download.dir.exists" message="Cannot find the server download directory at ${server.download.dir}"/>
+
+      <property name="agent.update.version.properties.file" location="${java.io.tmpdir}/rhq-agent-update-version.properties" />
+      <delete file="${agent.update.version.properties.file}" verbose="false" quiet="true" />
+      <unjar dest="${java.io.tmpdir}">
+         <fileset dir="${server.download.dir}">
+            <include name="rhq-enterprise-agent-*.jar" />
+         </fileset>
+         <patternset>
+            <include name="rhq-agent-update-version.properties"/>
+         </patternset>
+      </unjar>
+      <property file="${agent.update.version.properties.file}" />
+      <echo>Current Agent Update Binary Version=${rhq-agent.latest.version}</echo>
+      <echo>Current Agent Update Binary Build=${rhq-agent.latest.build-number}</echo>
+      <fail unless="rhq-agent.latest.version" message="Cannot find the agent update binary's version" />
+      <delete file="${agent.update.version.properties.file}" />
+      <property name="agent.version" value="${rhq-agent.latest.version}" />
+
+      <property name="agent.update.binary" value="rhq-enterprise-agent-${agent.version}.jar" />
       <property name="agent.update.binary.fullpath" location="${server.download.dir}/${agent.update.binary}"/>
-      <available property="_agent.update.binary.exists" file="${agent.update.binary.fullpath}"/>
-      <fail unless="_agent.update.binary.exists" message="Cannot find the agent update binary at ${agent.update.binary.fullpath}"/>
+      
    </target>
 
    <target name="stamp-server" depends="init-server" description="Stamps a new version on an agent update binary in a server. The following system properties can be passed on the command line: -Dserver.home.dir, -Dnew.version, -Dnew.build, -Dagent.version">

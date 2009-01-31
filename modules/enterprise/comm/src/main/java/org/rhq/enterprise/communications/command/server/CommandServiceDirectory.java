@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.management.MBeanRegistration;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
@@ -31,6 +32,7 @@ import javax.management.MBeanServerNotification;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
+
 import org.rhq.enterprise.communications.command.CommandType;
 import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
 
@@ -93,6 +95,7 @@ public class CommandServiceDirectory extends CommandMBean implements CommandServ
      *
      * @see MBeanRegistration#preRegister(MBeanServer, ObjectName)
      */
+    @Override
     public ObjectName preRegister(MBeanServer mbs, ObjectName name) throws Exception {
         if (!KeyProperty.TYPE_DIRECTORY.equals(name.getKeyProperty(KeyProperty.TYPE))) {
             String errorMsg = getLog().getMsgString(CommI18NResourceKeys.COMMAND_SERVICE_DIRECTORY_INVALID_SELF_NAME,
@@ -109,6 +112,7 @@ public class CommandServiceDirectory extends CommandMBean implements CommandServ
      *
      * @throws RuntimeException
      */
+    @Override
     public void startService() {
         try {
             // lock out all others to prevent new command registrations from getting added until we finish the inventory
@@ -141,6 +145,7 @@ public class CommandServiceDirectory extends CommandMBean implements CommandServ
     /**
      * Clean up any resources that were initialized during start.
      */
+    @Override
     public void stopService() {
         synchronized (m_allCommandTypes) {
             stopListening();
@@ -251,7 +256,7 @@ public class CommandServiceDirectory extends CommandMBean implements CommandServ
      */
     public void setAllowDynamicDiscovery(boolean flag) {
         if (flag) {
-            getLog().info(CommI18NResourceKeys.COMMAND_SERVICE_DIRECTORY_DYNAMIC_DISCOVERY_ALLOWED);
+            getLog().debug(CommI18NResourceKeys.COMMAND_SERVICE_DIRECTORY_DYNAMIC_DISCOVERY_ALLOWED);
         }
 
         m_allowDynamicDiscovery = flag;
@@ -452,7 +457,7 @@ public class CommandServiceDirectory extends CommandMBean implements CommandServ
 
         subsystemMap.put(commandType, commandServiceName);
 
-        getLog().info(CommI18NResourceKeys.COMMAND_SERVICE_DIRECTORY_NEW_SUPPORTED_COMMAND, commandType,
+        getLog().debug(CommI18NResourceKeys.COMMAND_SERVICE_DIRECTORY_NEW_SUPPORTED_COMMAND, commandType,
             commandServiceName);
 
         return;
@@ -475,7 +480,7 @@ public class CommandServiceDirectory extends CommandMBean implements CommandServ
             // remove the command type, and if no more command types in this subsystem are supported, remove the map itself
             subsystemMap.remove(commandType);
 
-            getLog().info(CommI18NResourceKeys.COMMAND_SERVICE_DIRECTORY_REMOVED_COMMAND_SUPPORT, commandType,
+            getLog().debug(CommI18NResourceKeys.COMMAND_SERVICE_DIRECTORY_REMOVED_COMMAND_SUPPORT, commandType,
                 commandServiceName);
 
             removeSubsystemCommandTypesIfEmpty(subsystem);

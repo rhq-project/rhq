@@ -19,12 +19,7 @@
 
 package org.rhq.enterprise.agent;
 
-import java.net.ConnectException;
-
 import mazz.i18n.Logger;
-
-import org.jboss.remoting.CannotConnectException;
-import org.jboss.remoting.transport.http.WebServerError;
 
 import org.rhq.core.domain.cloud.composite.FailoverListComposite;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
@@ -33,7 +28,7 @@ import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.client.FailureCallback;
 import org.rhq.enterprise.communications.command.client.RemoteCommunicator;
-import org.rhq.enterprise.communications.util.NotProcessedException;
+import org.rhq.enterprise.communications.util.CommUtils;
 
 /**
  * This is a {@link FailureCallback} that will attempt to failover to another server if appropriate.
@@ -69,7 +64,7 @@ public class FailoverFailureCallback implements FailureCallback {
         }
 
         // determine if its an exception that can be corrected if we send it to another server
-        boolean failoverNow = isExceptionFailoverable(theProblem);
+        boolean failoverNow = CommUtils.isExceptionFailoverable(theProblem);
         if (failoverNow == false) {
             return false;
         }
@@ -108,20 +103,5 @@ public class FailoverFailureCallback implements FailureCallback {
         // is also down and our next request will trigger us again to try the next server in the list
         this.agent.failoverToNewServer(remoteCommunicator);
         return true;
-    }
-
-    /**
-     * Examines the given exception and determines if failing over to another server might help.
-     * Typically, this method will look for "cannot connect" type exceptions.
-     * 
-     * @param t the exception to examine
-     * 
-     * @return <code>true</code> if we failing over to another server might help; <code>false</code> if
-     *         there is nothing about the exception that would lead us to believe another server would produce
-     *         a different result.
-     */
-    private boolean isExceptionFailoverable(Throwable t) {
-        return (t instanceof CannotConnectException || t instanceof ConnectException
-            || t instanceof NotProcessedException || t instanceof WebServerError);
     }
 }

@@ -28,7 +28,7 @@ import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.impl.identify.IdentifyCommand;
 import org.rhq.enterprise.communications.i18n.CommI18NFactory;
 import org.rhq.enterprise.communications.i18n.CommI18NResourceKeys;
-import org.rhq.enterprise.communications.util.NotProcessedException;
+import org.rhq.enterprise.communications.util.CommUtils;
 
 /**
  * An object that runs in a thread whose sole job is to poll the given remote server. When the server's status changes
@@ -125,9 +125,12 @@ class ServerPollingThread extends Thread {
                         }
                     }
 
-                    // there is a special case when we might get a response back but it should be considered "server down".
-                    // that is: when the server replies with a NotProcessedException response
-                    if (response.getException() instanceof NotProcessedException) {
+                    // there are special cases when we might get a response back but it should be considered "server down".
+                    // 1) when the server replies with a NotProcessedException response
+                    // 2) when our failover mechanism runs out of retries and it can't find a server to process our request,
+                    //    the comm layer will reply with a failoverable exception.
+                    // In both cases, our CommUtils will detect this.
+                    if (CommUtils.isExceptionFailoverable(response.getException())) {
                         throw response.getException();
                     }
 

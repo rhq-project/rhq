@@ -11,6 +11,14 @@
    <property file="${basedir}/agentcopy.properties" />
 
    <if>
+      <not><isset property="agentcopy.agent.dist.dir"/></not>
+      <then>
+         <property name="need-to-download-agent" value="true"/>
+         <property name="agentcopy.agent.dist.dir" location="${agentcopy.agent.spawn.dir}/agent-binary-update/rhq-agent"/>
+      </then>
+   </if>
+
+   <if>
       <os family="windows"/>
       <then>
          <property name="iswindows" value="true" />
@@ -223,14 +231,14 @@ RHQ_AGENT_CMDLINE_OPTS=--daemon --pref=${_index} ${_cmdlineopts}</echo>
    </target>
 
    <!-- ========== -->
-   <target name="download-agent" unless="agentcopy.agent.dist.dir">
+   <target name="download-agent" if="need-to-download-agent">
+      <mkdir dir="${agentcopy.agent.spawn.dir}" />
       <property name="_url" value="http://${agentcopy.server.bind-address}:${agentcopy.server.bind-port}/agentupdate/download" />
       <get src="${_url}" dest="${agentcopy.agent.spawn.dir}/agent-binary-update.jar" />
       <java jar="${agentcopy.agent.spawn.dir}/agent-binary-update.jar" fork="true">
          <arg value="--install=${agentcopy.agent.spawn.dir}/agent-binary-update"/>
          <arg value="--log=${agentcopy.agent.spawn.dir}/agent-binary-update.log"/>
       </java>
-      <property name="agentcopy.agent.dist.dir" location="${agentcopy.agent.spawn.dir}/agent-binary-update/rhq-agent"/>
    </target>
 
    <!-- ========== -->

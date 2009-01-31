@@ -32,7 +32,7 @@
    </target>
 
    <!-- ========== -->
-   <target name="copy" description="Spawns copies of the source agent distro and configures them.">
+   <target name="copy" depends="download-agent" description="Spawns copies of the source agent distro and configures them.">
       <echo>The source agent distro is found here: ${agentcopy.agent.dist.dir}</echo>
       <echo>The copied agents will be found here: ${agentcopy.agent.spawn.dir}</echo>
       <echo>The list of copied agents is: ${agentcopy.agent.spawn.list}</echo>
@@ -220,6 +220,17 @@ RHQ_AGENT_CMDLINE_OPTS=--daemon --pref=${_index} ${_cmdlineopts}</echo>
          </exec>
       </forget>
       
+   </target>
+
+   <!-- ========== -->
+   <target name="download-agent" unless="agentcopy.agent.dist.dir">
+      <property name="_url" value="http://${agentcopy.server.bind-address}:${agentcopy.server.bind-port}/agentupdate/download" />
+      <get src="${_url}" dest="${agentcopy.agent.spawn.dir}/agent-binary-update.jar" />
+      <java jar="${agentcopy.agent.spawn.dir}/agent-binary-update.jar" fork="true">
+         <arg value="--install=${agentcopy.agent.spawn.dir}/agent-binary-update"/>
+         <arg value="--log=${agentcopy.agent.spawn.dir}/agent-binary-update.log"/>
+      </java>
+      <property name="agentcopy.agent.dist.dir" location="${agentcopy.agent.spawn.dir}/agent-binary-update/rhq-agent"/>
    </target>
 
    <!-- ========== -->

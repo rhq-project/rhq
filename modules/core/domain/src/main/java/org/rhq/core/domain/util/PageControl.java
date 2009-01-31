@@ -224,13 +224,18 @@ public class PageControl implements Serializable, Cloneable {
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder("PageControl[");
-        buf.append("pageNumber=").append(pageNumber).append(", ");
-        buf.append("pageSize=").append(pageSize).append(", ");
+        buf.append("page=").append(pageNumber).append(", ");
+        buf.append("size=").append(pageSize);
         int i = 0;
-        for (OrderingField orderingField : orderingFields) {
-            i++;
-            buf.append("sortColumn" + i + "=").append(orderingField.getField()).append(", ");
-            buf.append("sortOrder" + i + "=").append(orderingField.getOrdering());
+        if (orderingFields.size() > 0) {
+            buf.append(", sort[");
+            for (OrderingField orderingField : orderingFields) {
+                if (i++ != 0) {
+                    buf.append(", ");
+                }
+                buf.append(orderingField.getField()).append(" ").append(orderingField.getOrdering());
+            }
+            buf.append("]");
         }
 
         buf.append("]");

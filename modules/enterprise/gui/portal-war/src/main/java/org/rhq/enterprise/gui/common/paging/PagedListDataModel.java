@@ -238,7 +238,7 @@ public abstract class PagedListDataModel<T> extends DataModel {
         PageList<T> results;
         if (true) {
             long start = System.currentTimeMillis();
-            results = fetchPage(pc);
+            results = fetchPageGuarded(pc);
             long end = System.currentTimeMillis();
             long time = end - start;
             log.debug("Fetch time was [" + time + "]ms for " + pageControlView);
@@ -246,9 +246,67 @@ public abstract class PagedListDataModel<T> extends DataModel {
                 log.debug("Slow loading page");
             }
         } else {
-            results = fetchPage(pc);
+            results = fetchPageGuarded(pc);
         }
         return results;
+    }
+
+    private PageList<T> fetchPageGuarded(PageControl pc) {
+        PageList<T> results;
+        try {
+            if (pc.getPageSize() == PageControl.SIZE_UNLIMITED && pc.getPageNumber() != 0) {
+                /* 
+                 * user is trying to get all of the results (SIZE_UNLIMITED), but not starting
+                 * on the first page.  while this is technically allowable, it generally doesn't
+                 * make all that much sense and was most likely due to a mistake upstream in the
+                 * usage of the pagination / sorting framework.
+                 */
+                pc.setPageNumber(0);
+                setPageControl(pc);
+            }
+
+            // try the data fetch with the potentially changed (and persisted) PageControl object
+            results = fetchPage(pc);
+
+            /*
+             * do the results make sense?  there are certain times when no exception will be thrown but the
+             * user interface won't be properly updated because of the multi-user environment.  if one user
+             * is looking at some data set while another user deletes that entire data set, the current user
+             * upon next sort or pagination action should realize that no results exist for his current page
+             * and the view should be rendered to reflect that.  however, due to some defensive coding in the
+             * RF components, the DataTable component does not see this change.  so, we have to explicitly
+             * update the page control to get the view consistent with the backend once again.
+             */
+            if (results.getTotalSize() <= pc.getStartRow()) {
+                resetToDefaults(pc);
+                results = fetchPage(pc);
+            }
+        } catch (Throwable t) {
+            /*
+             * known issues during pagination:
+             * 
+             * 1) IndexOutOfBoundsException - trying to access a non-existent page
+             * 2) QuerySyntaxException - when the token passed by the SortableColumnHeaderListen does not
+             *                           match some alias on the underlying query that fetches the results
+             *
+             * but let's be extra careful and catch Throwable so as to handle any other exceptional case 
+             * we've yet to uncover.  however, we still want to return value data to the user, so let's
+             * try the query once again; this time, we want the first page and will not specify any explicit
+             * ordering (though the underlying SLSB may add a default ordering downstream). 
+             */
+            resetToDefaults(pc);
+
+            // round 2 should be guaranteed because of use of defaultPageControl 
+            results = fetchPage(pc);
+        }
+
+        return results;
+    }
+
+    private void resetToDefaults(PageControl pc) {
+        pc.setPageNumber(0);
+        pc.setPageSize(15);
+        setPageControl(pc);
     }
 
     /**

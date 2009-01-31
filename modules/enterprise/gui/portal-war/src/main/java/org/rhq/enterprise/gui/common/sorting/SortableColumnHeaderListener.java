@@ -37,7 +37,6 @@ public class SortableColumnHeaderListener implements ActionListener {
         PageControl pc = model.getPageControl();
 
         pc.sortBy(sort);
-        pc.setPageNumber(1);
 
         model.setPageControl(pc);
     }

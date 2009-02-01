@@ -2,6 +2,7 @@ package org.rhq.enterprise.gui.legacy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
@@ -407,10 +408,42 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         public void removeByURL(String chartURL) {
             for (int i = 0; i < chartList.size(); i++) {
                 Tuple<String, String> nameURL = chartList.get(i);
-                if (nameURL.righty.equals(chartURL)) {
+                if (identicalURL(nameURL.righty, chartURL)) {
                     chartList.remove(i);
                 }
             }
+        }
+
+        public boolean containsByURL(String chartURL) {
+            for (int i = 0; i < chartList.size(); i++) {
+                Tuple<String, String> nameURL = chartList.get(i);
+                if (identicalURL(nameURL.righty, chartURL)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean identicalURL(String thisURL, String thatURL) {
+            List<String> thisTokens = new ArrayList<String>();
+            List<String> thatTokens = new ArrayList<String>();
+
+            thisURL = StringUtil.replace(thisURL, ",", "&#44;");
+            thatURL = StringUtil.replace(thatURL, ",", "&#44;");
+
+            StringTokenizer thisToker = new StringTokenizer(thisURL, "&");
+            while (thisToker.hasMoreTokens()) {
+                String token = thisToker.nextToken();
+                thisTokens.add(token);
+            }
+
+            StringTokenizer thatToker = new StringTokenizer(thatURL, "&");
+            while (thatToker.hasMoreTokens()) {
+                String token = thatToker.nextToken();
+                thatTokens.add(token);
+            }
+
+            return thisTokens.containsAll(thatTokens) && thatTokens.containsAll(thisTokens);
         }
 
         public boolean add(String name, String url) {
@@ -427,7 +460,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
             int i = 2;
             for (Tuple<String, String> chart : chartList) {
                 // don't add duplicate charts
-                if (chart.righty.equals(url)) {
+                if (identicalURL(chart.righty, url)) {
                     return false;
                 }
 

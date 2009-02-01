@@ -262,7 +262,7 @@ public enum PageControlView {
     SubsystemOOBHistory(SubsystemOOBHistoryUIBean.class);
 
     private Class<? extends PagedDataTableUIBean> beanClass;
-    private boolean showAll = false;;
+    private boolean isUnlimited = false;;
 
     private PageControlView() {
         this.beanClass = null;
@@ -272,9 +272,9 @@ public enum PageControlView {
         this.beanClass = beanClass;
     }
 
-    private <T extends PagedDataTableUIBean> PageControlView(Class<T> beanClass, boolean showAll) {
+    private <T extends PagedDataTableUIBean> PageControlView(Class<T> beanClass, boolean isUnlimited) {
         this.beanClass = beanClass;
-        this.showAll = showAll;
+        this.isUnlimited = isUnlimited;
     }
 
     public PagedDataTableUIBean getPagedDataTableUIBean() {
@@ -282,7 +282,7 @@ public enum PageControlView {
         return uiBean;
     }
 
-    public boolean getShowAll() {
-        return showAll;
+    public boolean isUnlimited() {
+        return isUnlimited;
     }
 }

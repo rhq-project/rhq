@@ -127,7 +127,7 @@ public class PageControlELResolver extends ELResolver {
                 log.debug("Getting PageControlView[" + view + "] to " + pc);
                 result = pc.getPageNumber() + 1; // RF data table is 1-based, our PageControl is 0-based
             } else if ("unlimited".equals(lowerCaseMethodName)) {
-                result = view.getShowAll();
+                result = view.isUnlimited();
             } else {
                 throw new PropertyNotFoundException("The " + methodName
                     + " property of a PageControl object is not accessible");

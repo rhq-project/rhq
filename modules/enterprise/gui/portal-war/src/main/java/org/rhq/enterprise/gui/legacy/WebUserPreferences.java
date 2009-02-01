@@ -540,7 +540,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         List<String> pageControlProperties = getPreferenceAsList(view.toString());
         if (pageControlProperties.size() == 0) {
             PageControl defaultControl = null;
-            if (view.getShowAll()) {
+            if (view.isUnlimited()) {
                 defaultControl = PageControl.getUnlimitedInstance();
             } else {
                 defaultControl = new PageControl(0, 15);
@@ -568,7 +568,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
                 pageControl.setPageNumber(pageNumber);
             }
 
-            if (view.getShowAll() && pageSize != PageControl.SIZE_UNLIMITED) {
+            if (view.isUnlimited() && pageSize != PageControl.SIZE_UNLIMITED) {
                 // make sure pageSize for an unlimited view is actually unlimited
                 pageControl.setPageSize(PageControl.SIZE_UNLIMITED);
                 setPageControl(view, pageControl);

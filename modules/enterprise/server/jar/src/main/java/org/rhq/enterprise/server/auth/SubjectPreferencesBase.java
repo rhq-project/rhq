@@ -135,13 +135,17 @@ public abstract class SubjectPreferencesBase {
         return value;
     }
 
-    @SuppressWarnings( { "unchecked" })
+    @SuppressWarnings("unchecked")
     public <T> T getPreference(String key, T defaultValue) {
         T result;
         try {
             String preferenceValue = getPreference(key);
 
-            Class<T> type = (Class<T>) defaultValue.getClass();
+            Class<T> type = (Class<T>) String.class;
+            if (defaultValue != null) {
+                type = (Class<T>) defaultValue.getClass();
+            }
+
             if (type == String.class) {
                 result = (T) preferenceValue; // cast string to self-type
             } else {

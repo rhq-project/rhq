@@ -524,15 +524,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
             persistPreferences();
         }
 
-        log.info("Before Sort");
-        for (Tuple<String, String> tuple : prefs.chartList) {
-            log.info("Chart: " + tuple.lefty);
-        }
         Collections.sort(prefs.chartList, new SavedChartsPortletPreferences.ChartsComparator());
-        log.info("After Sort");
-        for (Tuple<String, String> tuple : prefs.chartList) {
-            log.info("Chart: " + tuple.lefty);
-        }
 
         return prefs;
     }

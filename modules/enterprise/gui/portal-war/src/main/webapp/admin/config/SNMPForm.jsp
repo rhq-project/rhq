@@ -5,15 +5,8 @@
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-tiles" prefix="tiles" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-logic" prefix="logic" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ taglib uri="/WEB-INF/tld/hq.tld" prefix="hq" %>
 
-<hq:constant classname="org.rhq.enterprise.server.RHQConstants" symbol="JDBCJAASProvider" var="camProvider"/>
-<hq:constant classname="org.rhq.enterprise.server.RHQConstants" symbol="LDAPJAASProvider" var="ldapProvider"/>
-
-<hq:config var="ldapAuth" prop="CAM_JAAS_PROVIDER" value="${ldapProvider}"/>
-<hq:config var="camAuth" prop="CAM_JAAS_PROVIDER" value="${camProvider}"/>
-
-<!--  LDAP CONFIG PROPERTIES TITLE -->
+<!--  SNMP CONFIG PROPERTIES TITLE -->
 <tiles:insert definition=".header.tab">  
   <tiles:put name="tabKey" value="admin.settings.SNMPConfigPropTab"/>  
 </tiles:insert>
@@ -66,7 +59,7 @@
 
 </script>
 
-<!--  LDAP CONFIG PROPERTIES CONTENTS -->
+<!--  SNMP CONFIG PROPERTIES CONTENTS -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr>
     <td class="BlockCheckboxLabel" align="left" colspan="4"><fmt:message key="admin.settings.SNMPVersion"/>

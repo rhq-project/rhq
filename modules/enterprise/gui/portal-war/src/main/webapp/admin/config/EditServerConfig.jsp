@@ -21,10 +21,21 @@
    <input type="hidden" name="debug" value="${param.debug}" />
 </c:if>
 
-<tiles:insert page="/admin/config/EditServerConfigForm.jsp"/>
-
+<tiles:insert page="/admin/config/GeneralPropertiesConfigForm.jsp"/>
+<br>
+<br>
+<tiles:insert page="/admin/config/DataManagerConfigForm.jsp"/>
+<br>
+<br>
+<tiles:insert page="/admin/config/BaselineConfigForm.jsp"/>
+<br>
+<br>
+<tiles:insert page="/admin/config/SystemInfoForm.jsp"/>
+<br>
+<br>
 <tiles:insert page="/admin/config/LDAPForm.jsp"/>
-
+<br>
+<br>
 <tiles:insert page="/admin/config/SNMPForm.jsp"/>
 
 <%--<tiles:insert page="/admin/config/MiscForm.jsp"/>--%>

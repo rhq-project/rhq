@@ -62,7 +62,17 @@ public class EditConfigAction extends BaseAction {
                 Properties props = cForm.saveConfigProperties(systemManager.getSystemConfiguration());
 
                 log.trace("Setting config");
-                systemManager.setSystemConfiguration(whoami, props, false);
+                if (LookupUtil.getAuthorizationManager().isSystemSuperuser(whoami)
+                    && request.getParameter("debug") != null) {
+                    /* 
+                     * if the superuser is logged in and the "debug" url parameter is present,
+                     * validation will be skipped to enable special administration functions
+                     * that might violate the standard restrictions
+                     */
+                    systemManager.setSystemConfiguration(whoami, props, true);
+                } else {
+                    systemManager.setSystemConfiguration(whoami, props, false);
+                }
 
                 log.trace("Restarting config service");
 

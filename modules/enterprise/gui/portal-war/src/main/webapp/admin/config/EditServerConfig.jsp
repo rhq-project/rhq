@@ -17,6 +17,10 @@
 
 <html:form action="/admin/config/EditConfig">
 
+<c:if test="${not empty param.debug}">
+   <input type="hidden" name="debug" value="${param.debug}" />
+</c:if>
+
 <tiles:insert page="/admin/config/EditServerConfigForm.jsp"/>
 
 <tiles:insert page="/admin/config/LDAPForm.jsp"/>

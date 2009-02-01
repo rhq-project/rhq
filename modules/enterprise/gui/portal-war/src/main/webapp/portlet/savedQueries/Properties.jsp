@@ -56,10 +56,10 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
           <th width="1%" class="ListHeaderCheckbox"><input type="checkbox" onclick="ToggleAll(this, widgetProperties)" name="listToggleAll"></th>
           <th width="50%" class="tableRowSorted"><fmt:message key="dash.settings.ListHeader.ResourceChart"/></th>          
         </tr>
-        <c:forEach var="chart" items="${charts}">
+        <c:forEach var="chartTuple" items="${charts}">
         <tr class="tableRowOdd">
-          <td  class="ListCellCheckbox" width="1%" align="left" valign="top"><input type="checkbox" onclick="ToggleSelection(this, widgetProperties)" class="listMember" name="charts" value="<c:out value="${chart.key}"/>,<c:out value="${chart.value}"/>"></td>
-          <td  class="tableCell" width="99%" align="left" valign="top"><html:link page="${chart.value}"><c:out value="${chart.key}"/></html:link></td>          
+          <td  class="ListCellCheckbox" width="1%" align="left" valign="top"><input type="checkbox" onclick="ToggleSelection(this, widgetProperties)" class="listMember" name="charts" value="<c:out value="${chartTuple.lefty}"/>,<c:out value="${chartTuple.righty}"/>"></td>
+          <td  class="tableCell" width="99%" align="left" valign="top"><html:link page="${chartTuple.righty}"><c:out value="${chartTuple.lefty}"/></html:link></td>          
         </tr>
         </c:forEach>
       </table>      

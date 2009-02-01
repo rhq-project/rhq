@@ -24,9 +24,9 @@
         </tr>
       </c:when>
       <c:otherwise>
-        <c:forEach var="chart" items="${charts}">        
+        <c:forEach var="chartTuple" items="${charts}">
           <tr class="ListRow">
-            <td class="ListCell"><html:link page="${chart.value}"><c:out value="${chart.key}"/></html:link></td>        
+            <td class="ListCell"><html:link page="${chartTuple.righty}"><c:out value="${chartTuple.lefty}"/></html:link></td>
           </tr>
         </c:forEach>
       </c:otherwise>

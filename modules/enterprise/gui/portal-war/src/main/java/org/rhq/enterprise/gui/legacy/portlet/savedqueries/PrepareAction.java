@@ -18,9 +18,6 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.savedqueries;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -34,7 +31,6 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.SavedChartsPortletPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
-import org.rhq.enterprise.server.alert.engine.internal.Tuple;
 
 public class PrepareAction extends TilesAction {
     @Override
@@ -47,13 +43,13 @@ public class PrepareAction extends TilesAction {
 
         pForm.setDisplayOnDash(true);
 
-        Map<String, String> charts = new HashMap<String, String>();
-        for (Tuple<String, String> chart : savedCharts.chartList) {
-            charts.put(chart.lefty, chart.righty);
-        }
+        //        Map<String, String> charts = new HashMap<String, String>();
+        //        for (Tuple<String, String> chart : savedCharts.chartList) {
+        //            charts.put(chart.lefty, chart.righty);
+        //        }
 
-        request.setAttribute("charts", charts);
-        request.setAttribute("chartsize", String.valueOf(charts.size()));
+        request.setAttribute("charts", savedCharts.chartList);
+        request.setAttribute("chartsize", String.valueOf(savedCharts.chartList.size()));
 
         return null;
     }

@@ -18,8 +18,8 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.savedqueries;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -51,7 +51,7 @@ public class ViewAction extends TilesAction {
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-        Map<String, String> charts = new HashMap<String, String>();
+        List<Tuple<String, String>> charts = new ArrayList<Tuple<String, String>>();
 
         try {
             WebUser user = SessionUtils.getWebUser(request.getSession());
@@ -63,9 +63,10 @@ public class ViewAction extends TilesAction {
             WebUserPreferences preferences = user.getWebPreferences();
             SavedChartsPortletPreferences savedCharts = preferences.getSavedChartsPortletPreferences();
 
-            for (Tuple<String, String> chart : savedCharts.chartList) {
+            charts = savedCharts.chartList;
+            /*for (Tuple<String, String> chart : savedCharts.chartList) {
                 charts.put(chart.lefty, chart.righty);
-            }
+            }*/
         } catch (Exception e) {
             if (log.isDebugEnabled()) {
                 log.debug("Dashboard Portlet [SavedQueries] experienced an error: " + e.getMessage(), e);

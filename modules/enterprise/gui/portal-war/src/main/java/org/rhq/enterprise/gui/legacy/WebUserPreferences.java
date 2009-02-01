@@ -1,6 +1,8 @@
 package org.rhq.enterprise.gui.legacy;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -393,6 +395,12 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     }
 
     public static class SavedChartsPortletPreferences {
+        public static class ChartsComparator implements Comparator<Tuple<String, String>> {
+            public int compare(Tuple<String, String> first, Tuple<String, String> second) {
+                return first.lefty.compareTo(second.lefty);
+            }
+        }
+
         public List<Tuple<String, String>> chartList;
 
         public void removeByTuple(String chart) {
@@ -514,6 +522,16 @@ public class WebUserPreferences extends SubjectPreferencesBase {
             // re-persist the new list so we don't read the error again 
             setSavedChartsPortletPreferences(prefs);
             persistPreferences();
+        }
+
+        log.info("Before Sort");
+        for (Tuple<String, String> tuple : prefs.chartList) {
+            log.info("Chart: " + tuple.lefty);
+        }
+        Collections.sort(prefs.chartList, new SavedChartsPortletPreferences.ChartsComparator());
+        log.info("After Sort");
+        for (Tuple<String, String> tuple : prefs.chartList) {
+            log.info("Chart: " + tuple.lefty);
         }
 
         return prefs;

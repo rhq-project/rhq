@@ -1926,8 +1926,12 @@ public class AgentMain {
             }
 
             if (!connectResponse.isSuccessful()) {
-                if (connectResponse.getException() != null) {
-                    throw connectResponse.getException();
+                Throwable exception = connectResponse.getException();
+                if (exception != null) {
+                    if (exception.getCause() instanceof AgentNotSupportedException) {
+                        exception = exception.getCause(); // this happens if we got InvocationTargetException
+                    }
+                    throw exception;
                 } else {
                     throw new Exception("FAILED: " + connectCommand);
                 }

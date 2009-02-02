@@ -44,7 +44,7 @@ public interface MeasurementOOBManagerLocal {
      * @param subject Subject of the caller
      * @param begin Start time of the 1h entries to look at
      */
-    void computeOOBsFromHourBegininAt(Subject subject, long begin);
+    void computeOOBsFromHourBeginingAt(Subject subject, long begin);
 
     /**
      * Remove old OOB entries from the database

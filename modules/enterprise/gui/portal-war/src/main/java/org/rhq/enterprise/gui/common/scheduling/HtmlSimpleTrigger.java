@@ -66,20 +66,20 @@ public class HtmlSimpleTrigger extends UISimpleTrigger {
         Date endDateTime = trigger.getEndTime();
         if (endDateTime != null) {
             this.setTerminate(true);
-            this.setEndDateTime(trigger.getEndTime());
+            this.setEndDateTime(endDateTime);
         }
     }
 
     public HtmlSimpleTriggerRendererType getRenderType() {
-        if (renderType == null) {
+        if (this.renderType == null) {
             String type = FacesContextUtility.getOptionalRequestParameter("renderType");
 
             try {
                 this.renderType = HtmlSimpleTriggerRendererType.valueOf(type);
             } catch (IllegalArgumentException iae) {
                 String viewId = FacesContextUtility.getFacesContext().getViewRoot().getViewId();
-                LOG.warn("The render type '" + renderType + "' " + "for the trigger specified on '" + viewId + "' "
-                    + "is unknown.  Falling back to " + renderType.toString());
+                LOG.warn("The render type '" + type + "' " + "for the trigger specified on '" + viewId + "' "
+                    + "is unknown.");
             }
         }
 

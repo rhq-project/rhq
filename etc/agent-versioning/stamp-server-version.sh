@@ -1,0 +1,1 @@
+ant -Dserver.home.dir=../../dev-container $* stamp-server

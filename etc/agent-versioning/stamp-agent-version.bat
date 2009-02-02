@@ -1,1 +1,1 @@
-ant -Dagent.home.dir=..\..\modules\enterprise\agent\target\rhq-agent
+ant -Dagent.home.dir=..\..\modules\enterprise\agent\target\rhq-agent %* stamp-agent

@@ -18,18 +18,15 @@
  */
 package org.rhq.enterprise.server.measurement;
 
-import java.util.List;
-
 import javax.ejb.Local;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
-import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 
 /**
  * Interface for the OOB Manager
@@ -43,37 +40,34 @@ public interface MeasurementOOBManagerLocal {
     /**
      * Compute oobs from the values in the 1h measurement table that just got added.
      * For the total result, this is an incremental computation. The idea is that
-     * it gets run *directly* after the 1h compression (and the baseline recalculation too)
+     * it gets run *directly* after the 1h compression (and the baseline recalculation too).
+     * @param subject Subject of the caller
+     * @param begin Start time of the 1h entries to look at
      */
-    void computeOOBsFromHourBeginingAt(Subject subject, long begin);
+    void computeOOBsFromHourBegininAt(Subject subject, long begin);
 
     /**
      * Remove old OOB entries from the database
-     * @param subject
+     * @param subject caller
      * @param end oldest value to keep
      */
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     void removeOldOOBs(Subject subject, long end);
 
-
-    PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, long end, PageControl pc);
-
     /**
-     * Get the individual oob values for the given time frame and schedule Id.
-     * @param subject Caller
-     * @param scheduleId PK of the schedule we are interested in
-     * @param begin Start timestamp of the time frame
-     * @param end End timestamp of the time frame
-     * @return A list of individual OOB entries
-     * @todo Do we want to fill gaps with count=0 or factor=0 in the result or not?
+     * Return OOB Composites that contain all information about the OOBs in a given time as aggregates.
+     * @param subject The caller
+     * @param end end time we are interested in
+     * @param pc PageControl to do pagination
+     * @return List of schedules with the corresponing oob aggregates
      */
-    List<MeasurementOOB> getOObsForSchedule(Subject subject, int scheduleId, long begin, long end);
+    PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, long end, PageControl pc);
 
     /**
      * Computes the OOBs for the last hour.
      * This is done by getting the latest timestamp of the 1h table and invoking
      * #computeOOBsFromHourBeginingAt
-     * @param subject
+     * @param subject caller
      */
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     void computeOOBsFromLastHour(Subject subject);

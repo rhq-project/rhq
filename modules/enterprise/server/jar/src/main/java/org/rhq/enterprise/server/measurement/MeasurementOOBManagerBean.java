@@ -247,24 +247,4 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         return new PageList<MeasurementOOBComposite>(results, (int) totalCount, pc);
     }
 
-    /**
-     * Get the individual oob values for the given time frame and schedule Id.
-     * @param subject Caller
-     * @param scheduleId PK of the schedule we are interested in
-     * @param begin Start timestamp of the time frame
-     * @param end End timestamp of the time frame
-     * @return A list of individual OOB entries
-     * @todo Do we want to fill gaps with count=0 or factor=0 in the result or not?
-     */
-    public List<MeasurementOOB> getOObsForSchedule(Subject subject, int scheduleId, long begin, long end) {
-
-        Query q = entityManager.createNamedQuery(MeasurementOOB.GET_OOBS_FOR_SCHEDULE_RAW);
-        q.setParameter("begin",begin);
-        q.setParameter("end",end);
-        q.setParameter("scheduleId", scheduleId);
-        List<MeasurementOOB> res = q.getResultList();
-
-        return res;
-
-    }
 }

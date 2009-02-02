@@ -34,11 +34,6 @@ import javax.persistence.Table;
  * @author Heiko W. Rupp
  */
 @NamedQueries({
-        @NamedQuery(name=MeasurementOOB.GET_OOBS_FOR_SCHEDULE_RAW,
-                query = "SELECT o FROM MeasurementOOB o "+
-                        "WHERE (o.id.timestamp >= :begin AND o.id.timestamp <= :end )" +
-                        "  AND o.id.scheduleId = :scheduleId "
-                            ),
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE,
                 query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.displayName,sched.id,def.id,sum(o.oobFactor)) " +
                         "FROM MeasurementOOB o "+
@@ -86,8 +81,6 @@ public class MeasurementOOB {
     public static final String GET_SCHEDULES_WITH_OOB_AGGREGATE = "GetSchedulesWithOObAggregate";
 
     public static final String GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT = "GetSchedulesWithOObAggregateCount";
-
-    public static final String GET_OOBS_FOR_SCHEDULE_RAW = "GetSchedulesWithOOBRaw";
 
     public static final String GET_FACTOR_FOR_SCHEDULES = "GetFactorForSchedules";
 

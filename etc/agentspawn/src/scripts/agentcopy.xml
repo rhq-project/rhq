@@ -189,7 +189,7 @@ RHQ_AGENT_CMDLINE_OPTS="--daemon --pref=${_index} ${_cmdlineopts}"</echo>
       <property name="winlf" value="&#13;&#10;"/>
       <property name="q" value="&quot;"/>
 
-      <property name="_preferences.sysprop" value="-Djava.util.prefs.userRoot=${agentcopy.agent.spawn.dir}/javaPreferences/${_index}"/>
+      <property name="_preferences.sysprop" value="-Djava.util.prefs.userRoot=${agentcopy.agent.spawn.dir}/${_index}/javaPreferences"/>
       <echo append="true" file="${agentcopy.agent.spawn.dir}/${_index}/rhq-agent/bin/rhq-agent-env.sh"
             message="${lf}# AGENTSPAWN CUSTOMIZATION${lf}RHQ_AGENT_DEBUG=${q}${agentcopy.agent.debug}${q}${lf}RHQ_AGENT_JAVA_OPTS=${q}${_javaopts} ${_sysprops} ${_preferences.sysprop}${q}${lf}RHQ_AGENT_CMDLINE_OPTS=${q}--daemon --pref=${_index} ${_cmdlineopts}${q}${lf}" />
 

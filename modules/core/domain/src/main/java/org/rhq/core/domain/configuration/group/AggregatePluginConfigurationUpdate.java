@@ -39,6 +39,7 @@ import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
@@ -86,30 +87,39 @@ public class AggregatePluginConfigurationUpdate extends AbstractAggregateConfigu
     private Configuration getMergedConfiguration(Configuration base, Configuration changes) {
         Configuration results = base.deepCopy(false);
 
-        merge(results.getMap(), changes.getMap());
+        merge(results, changes);
 
         return results;
     }
 
-    private void merge(Map<String, Property> base, Map<String, Property> changes) {
-        for (Map.Entry<String, Property> changesEntry : changes.entrySet()) {
+    private void merge(AbstractPropertyMap base, AbstractPropertyMap changes) {
+        for (Map.Entry<String, Property> changesEntry : changes.getMap().entrySet()) {
             String changesPropertyName = changesEntry.getKey();
             Property changesProperty = changesEntry.getValue();
 
             if (changesProperty instanceof PropertySimple) {
                 PropertySimple changesPropertySimple = (PropertySimple) changesProperty;
 
-                if ((changesPropertySimple.getOverride() == null) || (changesPropertySimple.getOverride() == false)) {
+                if ((changesPropertySimple.getOverride() == null) || (!changesPropertySimple.getOverride())) {
                     continue;
                 }
 
                 PropertySimple basePropertySimple = (PropertySimple) base.get(changesPropertyName);
-                basePropertySimple.setStringValue(changesPropertySimple.getStringValue());
+                if (basePropertySimple == null) {
+                    basePropertySimple = new PropertySimple(changesPropertyName, changesPropertySimple.getStringValue());
+                    base.put(basePropertySimple);
+                } else {
+                    basePropertySimple.setStringValue(changesPropertySimple.getStringValue());
+                }
             } else if (changesProperty instanceof PropertyMap) {
                 PropertyMap changesPropertyMap = (PropertyMap) changesProperty;
                 PropertyMap basePropertyMap = (PropertyMap) base.get(changesPropertyName);
-
-                merge(basePropertyMap.getMap(), changesPropertyMap.getMap());
+                if (basePropertyMap == null) {
+                    basePropertyMap = new PropertyMap(changesPropertyName);
+                    base.put(basePropertyMap);
+                }
+                // Recurse...
+                merge(basePropertyMap, changesPropertyMap);
             }
             /*
             else if (changesProperty instanceof PropertyList) {

@@ -299,10 +299,9 @@ public class JBossASServerOperationsDelegate {
     }
 
     private void logExecutionResults(ProcessExecutionResults results) {
-        if (log.isDebugEnabled()) {
-            log.debug("Exit code from process execution: " + results.getExitCode());
-            log.debug("Output from process execution: " + SEPARATOR + results.getCapturedOutput() + SEPARATOR);
-        }
+        // Always log the output at info level. On Unix we could switch depending on a exitCode being !=0, but ...
+        log.info("Exit code from process execution: " + results.getExitCode());
+        log.info("Output from process execution: " + SEPARATOR + results.getCapturedOutput() + SEPARATOR);
     }
 
     /**
@@ -325,7 +324,7 @@ public class JBossASServerOperationsDelegate {
          *  This is a workaround for a bug in EMS that prevents finding operations with same name
          *  and different signature.
          *  http://sourceforge.net/tracker/index.php?func=detail&aid=2007692&group_id=60228&atid=493495
-         *  
+         *
          *   In addition, as we offer the user to specify any MBean and any method, we'd need a
          *   clever way for the user to specify parameters anyway.
          */

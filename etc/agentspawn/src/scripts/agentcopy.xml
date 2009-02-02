@@ -72,10 +72,11 @@
    <!-- ========== -->
    <target name="copy-agent-dist" >
       <echo>Copying agent distribution for agent [${_index}]</echo>
-      <copy todir="${agentcopy.agent.spawn.dir}/${_index}">
+      <mkdir dir="${agentcopy.agent.spawn.dir}/${_index}/rhq-agent" />
+      <copy todir="${agentcopy.agent.spawn.dir}/${_index}/rhq-agent">
          <fileset dir="${agentcopy.agent.dist.dir}"/>
       </copy>
-      <chmod dir="${agentcopy.agent.spawn.dir}/${_index}/bin" includes="*.sh" perm="ugo+rx"/>
+      <chmod dir="${agentcopy.agent.spawn.dir}/${_index}/rhq-agent/bin" includes="*.sh" perm="ugo+rx"/>
    </target>
 
    <!-- ========== -->
@@ -83,7 +84,7 @@
       <echo>Configuring agent [${_index}]</echo>
       
       <!-- put the template configuration file in the copied agent's distribution -->
-      <copy tofile="${agentcopy.agent.spawn.dir}/${_index}/conf/agent-configuration.xml"
+      <copy tofile="${agentcopy.agent.spawn.dir}/${_index}/rhq-agent/conf/agent-configuration.xml"
             file="${basedir}/agentcopy-agent-configuration.xml"
             overwrite="true"/>
       
@@ -103,7 +104,7 @@
       <!-- if we did not specifically override a preference for this agent, give it a default -->
       <!-- * we set the agent preference node name to that of its index -->
       <!-- * we set the agent's port to that of its index -->
-      <replace file="${agentcopy.agent.spawn.dir}/${_index}/conf/agent-configuration.xml">
+      <replace file="${agentcopy.agent.spawn.dir}/${_index}/rhq-agent/conf/agent-configuration.xml">
          <replacefilter token="@@@AGENT_NODE@@@" value="${_index}"/>
          <replacefilter token="@@@rhq.communications.connector.transport@@@" value="socket"/>
          <replacefilter token="@@@rhq.communications.connector.bind-port@@@" value="${_index}"/>
@@ -151,7 +152,7 @@
                     from="agentcopy.agent.override.${_index}.${_override}"
                     override="true"/>
       <echo>Agent [${_index}] will override [${_override}] with the value [${_override.value}]</echo>
-      <replace file="${agentcopy.agent.spawn.dir}/${_index}/conf/agent-configuration.xml">
+      <replace file="${agentcopy.agent.spawn.dir}/${_index}/rhq-agent/conf/agent-configuration.xml">
          <replacefilter token="@@@${_override}@@@" value="${_override.value}"/>
       </replace>
    </target>
@@ -189,10 +190,10 @@ RHQ_AGENT_CMDLINE_OPTS="--daemon --pref=${_index} ${_cmdlineopts}"</echo>
       <property name="q" value="&quot;"/>
 
       <property name="_preferences.sysprop" value="-Djava.util.prefs.userRoot=${agentcopy.agent.spawn.dir}/javaPreferences/${_index}"/>
-      <echo append="true" file="${agentcopy.agent.spawn.dir}/${_index}/bin/rhq-agent-env.sh"
+      <echo append="true" file="${agentcopy.agent.spawn.dir}/${_index}/rhq-agent/bin/rhq-agent-env.sh"
             message="${lf}# AGENTSPAWN CUSTOMIZATION${lf}RHQ_AGENT_DEBUG=${q}${agentcopy.agent.debug}${q}${lf}RHQ_AGENT_JAVA_OPTS=${q}${_javaopts} ${_sysprops} ${_preferences.sysprop}${q}${lf}RHQ_AGENT_CMDLINE_OPTS=${q}--daemon --pref=${_index} ${_cmdlineopts}${q}${lf}" />
 
-      <echo append="true" file="${agentcopy.agent.spawn.dir}/${_index}/bin/rhq-agent-env.bat"
+      <echo append="true" file="${agentcopy.agent.spawn.dir}/${_index}/rhq-agent/bin/rhq-agent-env.bat"
             message="${winlf}rem AGENTSPAWN CUSTOMIZATION${winlf}set RHQ_AGENT_DEBUG=${agentcopy.agent.debug}${winlf}set RHQ_AGENT_JAVA_OPTS=${_javaopts} ${_sysprops}${winlf}set RHQ_AGENT_CMDLINE_OPTS=--daemon --pref=${_index} ${_cmdlineopts}${winlf}"/>
 
    </target>
@@ -223,10 +224,10 @@ RHQ_AGENT_CMDLINE_OPTS="--daemon --pref=${_index} ${_cmdlineopts}"</echo>
       
       <echo>Starting agent [${_index}] using [${agentcopy.agent.executable} ${agentcopy.agent.executable.args}]</echo>
       
-      <mkdir dir="${agentcopy.agent.spawn.dir}/${_index}/logs" />
+      <mkdir dir="${agentcopy.agent.spawn.dir}/${_index}/rhq-agent/logs" />
       <forget>
-         <exec executable="${agentcopy.agent.spawn.dir}/${_index}/bin/${agentcopy.agent.executable}"
-               output="${agentcopy.agent.spawn.dir}/${_index}/logs/agentcopy-output.txt">
+         <exec executable="${agentcopy.agent.spawn.dir}/${_index}/rhq-agent/bin/${agentcopy.agent.executable}"
+               output="${agentcopy.agent.spawn.dir}/${_index}/rhq-agent/logs/agentcopy-output.txt">
             <arg line="${agentcopy.agent.executable.args}" />
          </exec>
       </forget>
@@ -265,7 +266,7 @@ RHQ_AGENT_CMDLINE_OPTS="--daemon --pref=${_index} ${_cmdlineopts}"</echo>
    <!-- ========== -->
    <target name="stop-single-agent">
       <loadfile property="_pid"
-                srcfile="${agentcopy.agent.spawn.dir}/${_index}/bin/rhq-agent.pid"
+                srcfile="${agentcopy.agent.spawn.dir}/${_index}/rhq-agent/bin/rhq-agent.pid"
                 failonerror="false">
          <filterchain>
             <striplinebreaks/>

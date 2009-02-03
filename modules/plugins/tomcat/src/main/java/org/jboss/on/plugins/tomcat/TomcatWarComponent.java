@@ -97,20 +97,31 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
     @Override
     public AvailabilityType getAvailability() {
         AvailabilityType availability;
-        if (this.webModuleMBean != null) {
-            int state = (Integer) this.webModuleMBean.getAttribute("state").refresh();
-            availability = (state == WarMBeanState.STARTED) ? AvailabilityType.UP : AvailabilityType.DOWN;
-        } else {
-            // The WAR has no Catalina WebModule MBean associated with it - this means it
-            // has no associated context root (i.e. it's not exposed via HTTP), so consider it down.
 
-            // Try to get the MBean again. If you can't then set this to down.
+        if (null == this.webModuleMBean) {
             this.webModuleMBean = getWebModuleMBean();
-            if (this.webModuleMBean == null) {
-                availability = AvailabilityType.DOWN;
-            } else {
-                availability = getAvailability();
+        }
+
+        if (null != this.webModuleMBean) {
+            int state;
+
+            try {
+                // check to see if the mbean is truly active
+                state = (Integer) this.webModuleMBean.getAttribute("state").refresh();
+            } catch (Exception e) {
+                // if not active an exception may be thrown
+                state = WarMBeanState.STOPPED;
             }
+
+            availability = (WarMBeanState.STARTED == state) ? AvailabilityType.UP : AvailabilityType.DOWN;
+
+            if (AvailabilityType.DOWN == availability) {
+                // if availability is down then ensure we use a new mbean on the next try, in case we have
+                // a totally new EMS connection.
+                this.webModuleMBean = null;
+            }
+        } else {
+            availability = AvailabilityType.DOWN;
         }
 
         return availability;
@@ -286,7 +297,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
     @Override
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
         WarOperation operation = getOperation(name);
-        if (this.webModuleMBean == null) {
+        if (null == this.webModuleMBean) {
             throw new IllegalStateException("Could not find MBean for WAR '" + getApplicationName() + "'.");
         }
 

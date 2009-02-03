@@ -183,7 +183,7 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, A
 
                 try {
                     this.mainDeployer = new MainDeployer(this.connection);
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     log.error("Unable to access MainDeployer MBean required for creation and deletion of managed " + "resources - this should never happen. Cause: " + e);
                 }
 
@@ -290,6 +290,14 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, A
     public void stop() {
         // TODO: If we add event checking by default        
         // stopLogFileEventPollers();
+        closeConnection();
+    }
+
+    /**
+     * If necessary attempt to close the EMS connection, then set this.connection null.  Synchronized ensure we play well
+     * with loadConnection.  
+     */
+    private synchronized void closeConnection() {
         if (this.connection != null) {
             try {
                 this.connection.close();
@@ -305,10 +313,14 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, A
             EmsConnection connection = loadConnection();
             EmsBean bean = connection.getBean("Catalina:type=Server");
 
-            // perhaps this is not necessary but proves that that not only the connection exists but is servicing requests/
+            // this is necessary to prove that that not only the connection exists but is servicing requests.
             bean.getAttribute("serverInfo").refresh();
             return AvailabilityType.UP;
         } catch (Exception e) {
+            // If the connection is not servicing requests then close it. this seems necessary for the
+            // Tomcat connection as when Tomcat does come up again it seems a new EMS connection is required,
+            // otherwise we're not seeing EMS be able to pick up the new process.
+            closeConnection();
             return AvailabilityType.DOWN;
         }
     }

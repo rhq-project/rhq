@@ -50,6 +50,7 @@ public class MainDeployer {
         if (mainDeployer == null) {
             throw new IllegalStateException("MBean named [" + DEPLOYER_BEAN + "] does not exist.");
         }
+
         this.deployOperation = EmsUtility.getOperation(mainDeployer, "manageApp", Context.class);
         //this.redeployOperation = EmsUtility.getOperation(mainDeployer, "manageApp", URL.class);
         this.undeployOperation = EmsUtility.getOperation(mainDeployer, "unmanageApp", URL.class);

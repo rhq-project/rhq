@@ -23,7 +23,6 @@
 
 package org.jboss.on.plugins.tomcat;
 
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
@@ -38,14 +37,5 @@ public class TomcatCacheComponent extends MBeanResourceComponent<TomcatVHostComp
 
     public static final String PROPERTY_HOST = "host";
     public static final String PROPERTY_PATH = "path";
-
-    /* (non-Javadoc)
-     * @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
-     */
-    @Override
-    public AvailabilityType getAvailability() {
-        boolean isreg = bean.isRegistered();
-        return isreg ? AvailabilityType.UP : AvailabilityType.DOWN;
-    }
 
 }

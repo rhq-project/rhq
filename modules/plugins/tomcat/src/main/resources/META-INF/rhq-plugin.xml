@@ -21,6 +21,7 @@
       <subcategories>
          <subcategory name="Applications" />
          <subcategory name="Resources" />
+         <subcategory name="Security" />
       </subcategories>
 
       <plugin-configuration>
@@ -589,7 +590,76 @@
             </content>
          -->
       </service>
+<!-- 
+      <service
+         name="Tomcat User"
+         subCategory="Security"
+         discovery="TomcatUserDiscoveryComponent"
+         class="TomcatUserComponent"
+         description="Tomcat User"
+         createDeletePolicy="both">
 
+         <plugin-configuration>
+            <c:group name="General">
+               <c:simple-property
+                  name="objectName"
+                  readOnly="true"
+                  default="Users:type=User,username=%username%,database=UserDatabase" />
+               <c:simple-property
+                  name="username"
+                  readOnly="true"
+                  description="The name of user" />
+               <c:simple-property
+                  name="password"
+                  type="password"
+                  required="false"
+                  description="The credentials used to authenticate the username." />
+               <c:simple-property
+                  name="fullName"
+                  required="false"
+                  description="The full name of user" />
+            </c:group>
+
+            <c:group
+               name="Advanced"
+               hiddenByDefault="true">
+               <c:simple-property
+                  name="nameTemplate"
+                  default="Tomcat User ({username})" />
+            </c:group>
+
+            <operation
+               name="addGroup"
+               description="add the user to the specified group." />
+            <operation
+               name="removeGroup"
+               description="remove the user from the specified group." />
+            <operation
+               name="addRole"
+               description="add the user to the specified role." />
+            <operation
+               name="removeRole"
+               description="remove the user from the specified role." />
+            <operation
+               name="setPassword"
+               description="set a new password for the user." />               
+
+            <metric
+               property="Users:type=User,username=%username%,database=UserDatabase:roles"
+               displayName="Roles"
+               defaultOn="true"
+               dataType="trait" />
+               
+            <metric
+               property="Users:type=User,username=%username%,database=UserDatabase:roles"
+               displayName="Groups"
+               defaultOn="true"
+               dataType="trait" />               
+
+         </plugin-configuration>
+
+      </service>
+ -->
    </server>
 
 </plugin>

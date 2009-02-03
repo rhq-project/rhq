@@ -215,7 +215,7 @@ id - the id of the Resource being accessed
                   <a4j:outputPanel id="favoritesPanel">
                       <a4j:form id="favoritesForm">
                           <h:inputHidden value="${ResourceUIBean.favorite}"/>
-                          <a4j:commandButton reRender="favoritesPanel"
+                          <a4j:commandButton reRender="favoritesPanel" status="commonStatus"
                                              image="#{ResourceUIBean.favorite ? '/images/star_on_24.png' : '/images/star_off_24.png'}">
                               <f:param name="id" value="#{ResourceUIBean.id}"/>
                               <f:param name="mode" value="#{ResourceUIBean.favorite ? 'remove' : 'add'}"/>

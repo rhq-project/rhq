@@ -583,43 +583,58 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
         List<String> pageControlProperties = getPreferenceAsList(view.toString());
         if (pageControlProperties.size() == 0) {
-            PageControl defaultControl = null;
-            if (view.isUnlimited()) {
-                defaultControl = PageControl.getUnlimitedInstance();
-            } else {
-                defaultControl = new PageControl(0, 15);
-            }
-            setPageControl(view, defaultControl);
+            PageControl defaultControl = getDefaultPageControl(view);
             return defaultControl;
         } else {
-            int pageSize = Integer.valueOf(pageControlProperties.get(0));
+            PageControl pageControl = null;
+            try {
+                int pageSize = Integer.valueOf(pageControlProperties.get(0));
+                int pageNumber = Integer.valueOf(pageControlProperties.get(1));
 
-            PageControl pageControl = new PageControl(0, pageSize);
+                pageControl = new PageControl(pageNumber, pageSize);
 
-            int i = 2;
-            while (i < pageControlProperties.size()) {
-                String pageOrdering = pageControlProperties.get(i - 1);
-                String sortColumn = pageControlProperties.get(i);
+                int i = 3;
+                while (i < pageControlProperties.size()) {
+                    String pageOrdering = pageControlProperties.get(i - 1);
+                    String sortColumn = pageControlProperties.get(i);
 
-                pageControl.addDefaultOrderingField(sortColumn, PageOrdering.valueOf(pageOrdering));
+                    pageControl.addDefaultOrderingField(sortColumn, PageOrdering.valueOf(pageOrdering));
 
-                i += 2;
-            }
+                    i += 2;
+                }
 
-            // with recent improvements to the RF data table, it's possible to save the page number now
-            if (i - 1 < pageControlProperties.size()) {
-                int pageNumber = Integer.valueOf(pageControlProperties.get(i - 1));
-                pageControl.setPageNumber(pageNumber);
-            }
-
-            if (view.isUnlimited() && pageSize != PageControl.SIZE_UNLIMITED) {
-                // make sure pageSize for an unlimited view is actually unlimited
-                pageControl.setPageSize(PageControl.SIZE_UNLIMITED);
-                setPageControl(view, pageControl);
+                if (view.isUnlimited() && pageSize != PageControl.SIZE_UNLIMITED) {
+                    // make sure pageSize for an unlimited view is actually unlimited
+                    pageControl.setPageSize(PageControl.SIZE_UNLIMITED);
+                    setPageControl(view, pageControl);
+                }
+            } catch (Throwable t) {
+                /*
+                 * we used to only persist the pageSize along with pairs of pageOrdering/sortColumn;
+                 * today, we also persist the pageNumber; as a result, during an upgrade people will
+                 * try to get data but it may not be in the proper order; instead of trying to code
+                 * fancy logic to determine all of the permutations their persisted PageControl could
+                 * be in, simply catch any and all problems arising and start from a default / scratch
+                 * PageControl object; the next time a pagination or sort action happens, thing will
+                 * persist and load just fine because the logic in this method and its counterpart
+                 * setPageControl are kept in sync
+                 */
+                pageControl = getDefaultPageControl(view);
             }
 
             return pageControl;
         }
+    }
+
+    private PageControl getDefaultPageControl(PageControlView view) {
+        PageControl defaultPageControl = null;
+        if (view.isUnlimited()) {
+            defaultPageControl = PageControl.getUnlimitedInstance();
+        } else {
+            defaultPageControl = new PageControl(0, 15);
+        }
+        setPageControl(view, defaultPageControl);
+        return defaultPageControl;
     }
 
     @SuppressWarnings("unchecked")
@@ -630,13 +645,12 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
         List pageControlProperties = new ArrayList();
         pageControlProperties.add(pageControl.getPageSize());
+        pageControlProperties.add(pageControl.getPageNumber());
 
         for (OrderingField field : pageControl.getOrderingFieldsAsArray()) {
             pageControlProperties.add(field.getOrdering().toString());
             pageControlProperties.add(field.getField());
         }
-
-        pageControlProperties.add(pageControl.getPageNumber());
 
         setPreference(view.toString(), pageControlProperties);
     }

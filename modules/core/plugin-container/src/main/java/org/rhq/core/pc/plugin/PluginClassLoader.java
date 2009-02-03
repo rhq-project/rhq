@@ -255,13 +255,13 @@ public class PluginClassLoader extends URLClassLoader {
                 java.lang.reflect.Field nativeLibraries = clazz.getDeclaredField("nativeLibraries");
                 nativeLibraries.setAccessible(true);
                 java.util.Vector java_lang_ClassLoader_NativeLibrary = (java.util.Vector) nativeLibraries.get(this);
-                for (Object lib : java_lang_ClassLoader_NativeLibrary) {
-                    doNotGarbageCollectThese.add(lib); // call finalize twice seems to crash the VM, so keep a ref so we don't GC
-                    java.lang.reflect.Method finalize = lib.getClass().getDeclaredMethod("finalize");
-                    finalize.setAccessible(true);
-                    finalize.invoke(lib);
-                }
                 if (java_lang_ClassLoader_NativeLibrary != null) {
+                    for (Object lib : java_lang_ClassLoader_NativeLibrary) {
+                        doNotGarbageCollectThese.add(lib); // call finalize twice seems to crash the VM, so keep a ref so we don't GC
+                        java.lang.reflect.Method finalize = lib.getClass().getDeclaredMethod("finalize");
+                        finalize.setAccessible(true);
+                        finalize.invoke(lib);
+                    }
                     java.lang.reflect.Method clear;
                     clear = java_lang_ClassLoader_NativeLibrary.getClass().getDeclaredMethod("clear");
                     clear.setAccessible(true);

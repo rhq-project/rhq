@@ -299,6 +299,7 @@ Jar File: ${rhq.agent.update.jar-file}
       <echo>Launching the agent: ${rhq.agent.update.launch-script-dir}/rhq-agent-wrapper.sh</echo>
       <exec dir="${rhq.agent.update.launch-script-dir}"
             executable="/bin/sh"
+            inputstring=""
             output="${rhq.agent.update.log-dir}/rhq-agent-launcher.log"
             resultproperty="_launcher.unix.exit.code"
             failonerror="false"

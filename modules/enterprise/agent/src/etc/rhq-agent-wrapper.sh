@@ -190,7 +190,7 @@ case "$1" in
            debug_wrapper_msg "Executing agent with command: ${RHQ_AGENT_START_COMMAND}"
            eval $RHQ_AGENT_START_COMMAND
         else
-           eval $RHQ_AGENT_START_COMMAND > "${RHQ_AGENT_HOME}/logs/rhq-agent-wrapper.log" 2>&1
+           eval "$RHQ_AGENT_START_COMMAND > \"${RHQ_AGENT_HOME}/logs/rhq-agent-wrapper.log\" 2>&1"
         fi
 
         sleep 5

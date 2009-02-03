@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -125,7 +124,7 @@ public class JBossInstanceInfo {
         };
         Getopt options = new Getopt(programName, args, shortOpts, longOpts);
         // Tell Getopt not to complain to stderr about unrecognized options...
-        options.setOpterr(false); 
+        options.setOpterr(false);
         int c;
         while ((c = options.getopt()) != -1) {
             switch (c) {
@@ -160,10 +159,11 @@ public class JBossInstanceInfo {
                     String arg = options.getOptarg();
                     URL url;
                     try {
-                        File currentWorkingDir = new File(this.processInfo.getExecutable().getCwd());
+                        File currentWorkingDir; // e.g. /jon/dev-container/jbossas/bin
+                        currentWorkingDir = new File(getHomeDir(), "bin");
                         url = JBossConfigurationUtility.makeURL(arg, currentWorkingDir);
                     }
-                    catch (MalformedURLException e) {
+                    catch (Exception e) {
                         log.error("Failed to parse argument to --properties option: " + options.getOptarg());
                         break;
                     }
@@ -216,15 +216,19 @@ public class JBossInstanceInfo {
         return name;
     }
 
-
-
+    /**
+     * Returns the home directory of the JBossAS server - this is the base directory in which you
+     * can find bin/ server/ lib/ client/ docs/ directories.
+     * @return a File object pointing to the home directory
+     * @throws Exception If there is no way to obtain that directory.
+     */
     private File getHomeDir() throws Exception {
-       
+
        File runJar=null;
        File binDir=null;
        File homeDir=null;
         // method 1: should work 99% of the time.
-       if (this.processInfo != null && this.processInfo.getExecutable()!=null && 
+       if (this.processInfo != null && this.processInfo.getExecutable()!=null &&
                 this.processInfo.getExecutable().getCwd() != null) {
           homeDir = new File(this.processInfo.getExecutable().getCwd()).getParentFile();
           binDir = new File(homeDir, "bin");
@@ -347,7 +351,7 @@ public class JBossInstanceInfo {
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder(this.getClass().getSimpleName());
-        buf.append("[");        
+        buf.append("[");
         buf.append("sysProps").append("=").append(this.sysProps).append(", ");
         buf.append("installInfo").append("=").append(this.installInfo);
         buf.append("]");

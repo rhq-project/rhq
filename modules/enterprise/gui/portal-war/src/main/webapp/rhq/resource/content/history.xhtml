@@ -323,8 +323,8 @@
            </f:facet>
 
            <h:outputText value="#{item.timestamp}">
-               <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-            </h:outputText>
+               <f:converter converterId="UserDateTimeConverter" />
+           </h:outputText>
         </rich:column>
 
         <rich:column>

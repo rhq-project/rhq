@@ -55,14 +55,10 @@ public class PluginClassLoader extends URLClassLoader {
     }
 
     public void destroy() {
-
-        // XXX: major hack to fix a VM bug and workaround Windows filelocking
-        tryToCloseAllJarFiles();
-
         try {
             FileUtils.purge(embeddedJarsDirectory, true);
         } catch (IOException e) {
-            log.warn("Failed to purge embedded jars directory.", e);
+            log.warn("Failed to purge embedded jars directory. Cause: " + e);
         }
     }
 
@@ -214,63 +210,5 @@ public class PluginClassLoader extends URLClassLoader {
         tmpDir.deleteOnExit();
 
         return tmpDir;
-    }
-
-    // For why I'm trying to do this, read:
-    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=5041014 
-    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4299094
-    // This is a solution only for SUN VMs. This will do nothing on other VMs.
-    // This was tested on SUN's Java5. If their internals change, we'll have to do different
-    // things based on which version we are running on. This method never throws exceptions; it
-    // will always return normally, no matter that VM we are running in.
-    private static final List<Object> doNotGarbageCollectThese = new ArrayList<Object>();
-
-    @SuppressWarnings("unchecked")
-    private void tryToCloseAllJarFiles() {
-
-        if ("true".equals(System.getProperty("rhq.agent.fix.sun.classloader.bugs", "true"))) {
-            try {
-                // first close the 'normal' jar files
-                Class<?> clazz = URLClassLoader.class;
-                java.lang.reflect.Field ucp = clazz.getDeclaredField("ucp");
-                ucp.setAccessible(true);
-                Object sun_misc_URLClassPath = ucp.get(this);
-                java.lang.reflect.Field loaders = sun_misc_URLClassPath.getClass().getDeclaredField("loaders");
-                loaders.setAccessible(true);
-                Object java_util_Collection = loaders.get(sun_misc_URLClassPath);
-                for (Object sun_misc_URLClassPath_JarLoader : ((java.util.Collection) java_util_Collection).toArray()) {
-                    try {
-                        java.lang.reflect.Field loader = sun_misc_URLClassPath_JarLoader.getClass().getDeclaredField(
-                            "jar");
-                        loader.setAccessible(true);
-                        Object java_util_jar_JarFile = loader.get(sun_misc_URLClassPath_JarLoader);
-                        ((java.util.jar.JarFile) java_util_jar_JarFile).close(); // FINALLY! CLOSE THIS TO UNLOCK THE FILE!!!
-                    } catch (Throwable t) {
-                        // if we got this far, this is just not a JAR loader, we can skip it
-                    }
-                }
-
-                // now do native libraries
-                clazz = ClassLoader.class;
-                java.lang.reflect.Field nativeLibraries = clazz.getDeclaredField("nativeLibraries");
-                nativeLibraries.setAccessible(true);
-                java.util.Vector java_lang_ClassLoader_NativeLibrary = (java.util.Vector) nativeLibraries.get(this);
-                if (java_lang_ClassLoader_NativeLibrary != null) {
-                    for (Object lib : java_lang_ClassLoader_NativeLibrary) {
-                        doNotGarbageCollectThese.add(lib); // call finalize twice seems to crash the VM, so keep a ref so we don't GC
-                        java.lang.reflect.Method finalize = lib.getClass().getDeclaredMethod("finalize");
-                        finalize.setAccessible(true);
-                        finalize.invoke(lib);
-                    }
-                    java.lang.reflect.Method clear;
-                    clear = java_lang_ClassLoader_NativeLibrary.getClass().getDeclaredMethod("clear");
-                    clear.setAccessible(true);
-                    clear.invoke(java_lang_ClassLoader_NativeLibrary);
-                }
-            } catch (Throwable t) {
-                // probably not a SUN VM, oh, well, if on Windows, your files are now locked
-            }
-        }
-        return;
     }
 }

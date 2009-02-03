@@ -50,7 +50,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  *
  * @author Greg Hinkle
  */
-public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryComponent<JMXComponent> {
+public class MBeanResourceDiscoveryComponent<T extends JMXComponent> implements ResourceDiscoveryComponent<T> {
     // Constants  --------------------------------------------
 
     /**
@@ -76,14 +76,13 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private ResourceDiscoveryContext<JMXComponent> discoveryContext;
+    private ResourceDiscoveryContext<T> discoveryContext;
 
     // ResourceDiscoveryComponent Implementation  --------------------------------------------
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context) {
         this.discoveryContext = context;
-        return performDiscovery(context.getDefaultPluginConfiguration(), context.getParentResourceComponent(), context
-            .getResourceType(), true);
+        return performDiscovery(context.getDefaultPluginConfiguration(), context.getParentResourceComponent(), context.getResourceType(), true);
 
     }
 
@@ -97,8 +96,7 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
      * @param  resourceType            type of resource being discovered
      * @return set describing the resources discovered; empty set if no resources are found
      */
-    public Set<DiscoveredResourceDetails> performDiscovery(Configuration pluginConfiguration,
-        JMXComponent parentResourceComponent, ResourceType resourceType) {
+    public Set<DiscoveredResourceDetails> performDiscovery(Configuration pluginConfiguration, JMXComponent parentResourceComponent, ResourceType resourceType) {
 
         return performDiscovery(pluginConfiguration, parentResourceComponent, resourceType, true);
     }
@@ -113,8 +111,7 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
      * @param skipUnknownProps         Should we skip over MBeans that have unknown properties in their ObjectName
      * @return set describing the resources discovered; empty set if no resources are found
      */
-    public Set<DiscoveredResourceDetails> performDiscovery(Configuration pluginConfiguration,
-        JMXComponent parentResourceComponent, ResourceType resourceType, boolean skipUnknownProps) {
+    public Set<DiscoveredResourceDetails> performDiscovery(Configuration pluginConfiguration, JMXComponent parentResourceComponent, ResourceType resourceType, boolean skipUnknownProps) {
 
         String objectNameQueryTemplateOrig = pluginConfiguration.getSimple(PROPERTY_OBJECT_NAME).getStringValue();
 
@@ -126,9 +123,8 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
         String templates[] = objectNameQueryTemplateOrig.split("\\|");
         for (String objectNameQueryTemplate : templates) {
             // Get the query template, replacing the parent key variables with the values from the parent configuration
-            ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(objectNameQueryTemplate,
-                (this.discoveryContext != null) ? this.discoveryContext.getParentResourceContext()
-                    .getPluginConfiguration() : null);
+            ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(objectNameQueryTemplate, (this.discoveryContext != null) ? this.discoveryContext.getParentResourceContext()
+                .getPluginConfiguration() : null);
 
             List<EmsBean> beans = connection.queryBeans(queryUtility.getTranslatedQuery());
             if (log.isDebugEnabled()) {
@@ -139,19 +135,15 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
                     // Only use beans that have all the properties we've made variables of
 
                     // Don't match beans that have unexpected properties
-                    if (skipUnknownProps
-                        && queryUtility.isContainsExtraKeyProperties(bean.getBeanName().getKeyProperties().keySet())) {
+                    if (skipUnknownProps && queryUtility.isContainsExtraKeyProperties(bean.getBeanName().getKeyProperties().keySet())) {
                         continue;
                     }
 
                     String resourceKey = bean.getBeanName().getCanonicalName(); // The detected object name
 
-                    String nameTemplate = (pluginConfiguration.getSimple(PROPERTY_NAME_TEMPLATE) != null) ? pluginConfiguration
-                        .getSimple(PROPERTY_NAME_TEMPLATE).getStringValue()
-                        : null;
+                    String nameTemplate = (pluginConfiguration.getSimple(PROPERTY_NAME_TEMPLATE) != null) ? pluginConfiguration.getSimple(PROPERTY_NAME_TEMPLATE).getStringValue() : null;
 
-                    String descriptionTemplate = (pluginConfiguration.getSimple(PROPERTY_DESCRIPTION_TEMPLATE) != null) ? pluginConfiguration
-                        .getSimple(PROPERTY_DESCRIPTION_TEMPLATE).getStringValue()
+                    String descriptionTemplate = (pluginConfiguration.getSimple(PROPERTY_DESCRIPTION_TEMPLATE) != null) ? pluginConfiguration.getSimple(PROPERTY_DESCRIPTION_TEMPLATE).getStringValue()
                         : null;
 
                     String name = resourceKey;
@@ -164,8 +156,7 @@ public class MBeanResourceDiscoveryComponent implements ResourceDiscoveryCompone
                         description = queryUtility.formatMessage(descriptionTemplate);
                     }
 
-                    DiscoveredResourceDetails service = new DiscoveredResourceDetails(resourceType, resourceKey, name,
-                        "", description, null, null);
+                    DiscoveredResourceDetails service = new DiscoveredResourceDetails(resourceType, resourceKey, name, "", description, null, null);
                     Configuration config = service.getPluginConfiguration();
                     config.put(new PropertySimple(PROPERTY_OBJECT_NAME, bean.getBeanName().toString()));
 

@@ -46,13 +46,14 @@ import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
+import org.rhq.plugins.platform.PlatformComponent;
 
 /**
  * Discovers JBoss EWS Tomcat5, Tomcat6 server instances.
  *
  * @author Jay Shaughnessy
  */
-public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent {
+public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent> {
     private final Log log = LogFactory.getLog(this.getClass());
 
     /**

@@ -56,7 +56,7 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * @author Ian Springer
  * @author Heiko W. Rupp
  */
-public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostComponent> implements OperationFacet {
+public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerComponent> implements OperationFacet {
 
     public static final String RESPONSE_TIME_LOG_FILE_CONFIG_PROP = "responseTimeLogFile";
     public static final String RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP = "responseTimeUrlExcludes";
@@ -85,7 +85,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     private static final String QUERY_TEMPLATE_HOST = "Catalina:type=Manager,path=%PATH%,host=%host%";
 
     protected static final String PROPERTY_NAME = "name";
-    protected static final String PROPERTY_PATH = "path";
+    protected static final String PROPERTY_CONTEXT_ROOT = "contextRoot";
     protected static final String PROPERTY_FILENAME = "filename";
     protected static final String PROPERTY_VHOST = "vHost";
 
@@ -193,7 +193,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         EmsConnection jmxConnection = getEmsConnection();
         String servletMBeanNames = QUERY_TEMPLATE_SESSION;
         Configuration config = this.resourceContext.getPluginConfiguration();
-        servletMBeanNames = servletMBeanNames.replace("%PATH%", config.getSimpleValue(PROPERTY_PATH, ""));
+        servletMBeanNames = servletMBeanNames.replace("%PATH%", config.getSimpleValue(PROPERTY_CONTEXT_ROOT, ""));
         servletMBeanNames = servletMBeanNames.replace("%HOST%", config.getSimpleValue(PROPERTY_VHOST, ""));
         ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(servletMBeanNames);
         List<EmsBean> mBeans = jmxConnection.queryBeans(queryUtility.getTranslatedQuery());
@@ -385,7 +385,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     private List<EmsBean> getVHosts() {
         EmsConnection emsConnection = getEmsConnection();
         String query = QUERY_TEMPLATE_HOST;
-        query = query.replace("%PATH%", this.resourceContext.getPluginConfiguration().getSimpleValue(PROPERTY_PATH, ""));
+        query = query.replace("%PATH%", this.resourceContext.getPluginConfiguration().getSimpleValue(PROPERTY_CONTEXT_ROOT, ""));
         ObjectNameQueryUtility queryUtil = new ObjectNameQueryUtility(query);
         List<EmsBean> mBeans = emsConnection.queryBeans(queryUtil.getTranslatedQuery());
         return mBeans;

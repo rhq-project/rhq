@@ -43,12 +43,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
 public class TomcatThreadPoolComponent extends MBeanResourceComponent<TomcatConnectorComponent> {
     // Constants  --------------------------------------------
 
-    public static final String NAME_ADDRESS = "name";
-
-    /**
-     * A Dash character is needed to separate the parts of the GlobalRequestProcessorName
-     */
-    public static final String PROPERTY_DASH = "-";
+    public static final String PROPERTY_NAME = "name";
 
     private final Log log = LogFactory.getLog(this.getClass());
 

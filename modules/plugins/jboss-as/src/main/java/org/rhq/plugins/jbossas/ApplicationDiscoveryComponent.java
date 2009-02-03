@@ -1,53 +1,52 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
- package org.rhq.plugins.jbossas;
-
- import java.io.File;
- import java.io.FilenameFilter;
- import java.util.ArrayList;
- import java.util.HashSet;
- import java.util.List;
- import java.util.Map;
- import java.util.Set;
-
- import org.mc4j.ems.connection.EmsConnection;
-
- import org.rhq.core.domain.configuration.Configuration;
- import org.rhq.core.domain.configuration.PropertySimple;
- import org.rhq.core.domain.resource.ResourceType;
- import org.rhq.core.pluginapi.inventory.ApplicationServerComponent;
- import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
- import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
- import org.rhq.plugins.jbossas.util.DeploymentUtility;
- import org.rhq.plugins.jmx.JMXComponent;
- import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
-
- /**
- * Discovery component used to discover both enterprise and web applications.
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
  *
- * @author Jason Dobies
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-public class ApplicationDiscoveryComponent extends MBeanResourceDiscoveryComponent {
+package org.rhq.plugins.jbossas;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.mc4j.ems.connection.EmsConnection;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.inventory.ApplicationServerComponent;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.jbossas.util.DeploymentUtility;
+import org.rhq.plugins.jmx.JMXComponent;
+import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
+
+/**
+* Discovery component used to discover both enterprise and web applications.
+*
+* @author Jason Dobies
+*/
+public class ApplicationDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent> {
     // ResourceDiscoveryComponent Implementation  --------------------------------------------
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
@@ -64,7 +63,7 @@ public class ApplicationDiscoveryComponent extends MBeanResourceDiscoveryCompone
         for (DiscoveredResourceDetails jmxResource : jmxResources) {
             earNames.add(jmxResource.getResourceName());
         }
-        Map<String,String> pathMap = DeploymentUtility.getEarDeploymentPath(emsConnection,earNames);
+        Map<String, String> pathMap = DeploymentUtility.getEarDeploymentPath(emsConnection, earNames);
 
         for (DiscoveredResourceDetails jmxResource : jmxResources) {
             Configuration pluginConfiguration = jmxResource.getPluginConfiguration();
@@ -73,8 +72,7 @@ public class ApplicationDiscoveryComponent extends MBeanResourceDiscoveryCompone
                 path = pathMap.get(jmxResource.getResourceName());
             else
                 path = deployDirectoryPath + jmxResource.getResourceName(); // Fallback, just in case
-            pluginConfiguration
-                .put(new PropertySimple("filename", path));
+            pluginConfiguration.put(new PropertySimple("filename", path));
         }
 
         // Find all deployed but unstarted applications
@@ -122,8 +120,7 @@ public class ApplicationDiscoveryComponent extends MBeanResourceDiscoveryCompone
             String resourceName = file.getName();
             String description = defaultConfiguration.getSimple("descriptionTemplate").getStringValue();
 
-            DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey, resourceName,
-                "", description, null, null);
+            DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, "", description, null, null);
             Configuration resourcePluginConfiguration = resource.getPluginConfiguration();
             resourcePluginConfiguration.put(new PropertySimple("name", resourceName));
             resourcePluginConfiguration.put(new PropertySimple("objectName", objectName));

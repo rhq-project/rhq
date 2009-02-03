@@ -38,7 +38,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.ApplicationServerComponent;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 
 /**
@@ -47,21 +46,20 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * @author Jay Shaughnessy
  * @author Jason Dobies
  */
-public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent {
+public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatServerComponent> {
 
     /**
-     * The name MBean attribute for each application is of the form //vHost/contextRoot. 
+     * The name MBean attribute for each application is of the form "Tomcat WAR (//vHost/contextRoot)". 
      */
-    private static final Pattern PATTERN_NAME = Pattern.compile("//(.*)(/.*)");
+    private static final Pattern PATTERN_NAME = Pattern.compile(".*//(.*)(/.*)\\).*");
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatServerComponent> context) {
         // Parent will discover deployed applications through JMX
         Set<DiscoveredResourceDetails> jmxResources = super.discoverResources(context);
 
-        // JMX resources don't set the filename property, so set it here. It could be a directory deployment
-        JMXComponent parentComponent = context.getParentResourceComponent();
+        TomcatServerComponent parentComponent = context.getParentResourceComponent();
         ApplicationServerComponent applicationServerComponent = (ApplicationServerComponent) parentComponent;
         String deployDirectoryPath = applicationServerComponent.getConfigurationPath().getPath();
         Matcher m = PATTERN_NAME.matcher("");
@@ -81,7 +79,7 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
                     log.warn("Unexpected discovered web application path: " + filename);
                 }
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_VHOST, vHost));
-                pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_PATH, path));
+                pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_CONTEXT_ROOT, path));
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_FILENAME, filename));
             } else {
                 log.warn("Skipping discovered web application with unexpected name: " + name);
@@ -106,11 +104,11 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
      * @return set of all applications discovered on the file system; this should include at least some of the
      *         applications discovered through JMX as well
      */
-    private Set<DiscoveredResourceDetails> discoverFileSystem(ResourceDiscoveryContext<JMXComponent> context) {
+    private Set<DiscoveredResourceDetails> discoverFileSystem(ResourceDiscoveryContext<TomcatServerComponent> context) {
         Configuration defaultConfiguration = context.getDefaultPluginConfiguration();
 
         // Find the location of the deploy directory
-        JMXComponent parentComponent = context.getParentResourceComponent();
+        TomcatServerComponent parentComponent = context.getParentResourceComponent();
         ApplicationServerComponent applicationServerComponent = (ApplicationServerComponent) parentComponent;
 
         String deployDirectoryPath = applicationServerComponent.getConfigurationPath().getPath();

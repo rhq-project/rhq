@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas;
 
 import java.io.File;
@@ -39,7 +39,7 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * @author Jason Dobies
  * @author Ian Springer
  */
-public class EmbeddedWarDiscoveryComponent extends MBeanResourceDiscoveryComponent {
+public class EmbeddedWarDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent> {
     // ResourceDiscoveryComponent Implementation  --------------------------------------------
 
     @Override
@@ -50,18 +50,15 @@ public class EmbeddedWarDiscoveryComponent extends MBeanResourceDiscoveryCompone
         ApplicationComponent parentEarComponent = (ApplicationComponent) context.getParentResourceComponent();
         String parentEar = parentEarComponent.getApplicationName();
 
-        String objectName = "jboss.management.local:J2EEApplication=" + parentEar
-            + ",J2EEServer=Local,j2eeType=WebModule,name=%name%";
+        String objectName = "jboss.management.local:J2EEApplication=" + parentEar + ",J2EEServer=Local,j2eeType=WebModule,name=%name%";
 
         // Stuff the object name into the default plugin configuration to look like any other JMX discovery
         // where the objectName is read from the default plugin configuration
         Configuration defaultPluginConfiguration = context.getDefaultPluginConfiguration();
-        defaultPluginConfiguration.put(new PropertySimple(MBeanResourceDiscoveryComponent.PROPERTY_OBJECT_NAME,
-            objectName));
+        defaultPluginConfiguration.put(new PropertySimple(MBeanResourceDiscoveryComponent.PROPERTY_OBJECT_NAME, objectName));
 
         // Call the base MBean discovery method to perform the actual discovery
-        Set<DiscoveredResourceDetails> resourceDetails = super.performDiscovery(defaultPluginConfiguration,
-            parentEarComponent, context.getResourceType());
+        Set<DiscoveredResourceDetails> resourceDetails = super.performDiscovery(defaultPluginConfiguration, parentEarComponent, context.getResourceType());
 
         // Once we've finished making sure the plugin configurations have the data we need:
         // 1) First the stuff generic to all WARs...
@@ -72,8 +69,7 @@ public class EmbeddedWarDiscoveryComponent extends MBeanResourceDiscoveryCompone
         String parentEarFullFileName = parentEarComponent.getFileName() + File.separator;
         for (DiscoveredResourceDetails resource : resourceDetails) {
             Configuration pluginConfiguration = resource.getPluginConfiguration();
-            pluginConfiguration.put(new PropertySimple(WarComponent.FILE_NAME, parentEarFullFileName
-                + resource.getResourceName()));
+            pluginConfiguration.put(new PropertySimple(WarComponent.FILE_NAME, parentEarFullFileName + resource.getResourceName()));
         }
 
         return resourceDetails;

@@ -20,6 +20,7 @@
 
       <subcategories>
          <subcategory name="Applications" />
+         <subcategory name="Resources" />
       </subcategories>
 
       <plugin-configuration>
@@ -181,7 +182,8 @@
       -->
 
       <service
-         name="Connector"
+         name="Tomcat Connector"
+         subCategory="Resources"
          discovery="TomcatConnectorDiscoveryComponent"
          class="TomcatConnectorComponent">
 
@@ -273,7 +275,7 @@
             displayType="summary" />
 
          <service
-            name="ThreadPool"
+            name="Tomcat ThreadPool"
             discovery="TomcatThreadPoolDiscoveryComponent"
             class="TomcatThreadPoolComponent">
 
@@ -299,7 +301,7 @@
                   hiddenByDefault="true">
                   <c:simple-property
                      name="nameTemplate"
-                     default="Tomcat Connector ThreadPool ({name})" />
+                     default="Tomcat ThreadPool ({name})" />
                   <c:simple-property
                      name="descriptionTemplate"
                      default="A Tomcat connector thread pool" />
@@ -326,27 +328,45 @@
                displayName="Max Threads"
                defaultOn="true"
                dataType="trait" />
-
          </service>
 
       </service>
 
       <service
-         name="VHost"
+         name="Tomcat Virtual Host"
+         subCategory="Resources"
          discovery="TomcatVHostDiscoveryComponent"
          class="TomcatVHostComponent"
          description="A virtual host in the web container">
 
          <plugin-configuration>
-            <c:simple-property
-               name="objectName"
-               readOnly="true"
-               default="Catalina:type=Host,host=%name%" />
-            <c:simple-property
-               name="name"
-               type="string"
-               description="Name of the virtual host"
-               readOnly="true" />
+            <c:group
+               name="general"
+               displayName="General">
+
+               <c:simple-property
+                  name="objectName"
+                  readOnly="true"
+                  default="Catalina:type=Host,host=%name%" />
+               <c:simple-property
+                  name="name"
+                  type="string"
+                  description="The virtual host"
+                  readOnly="true" />
+            </c:group>
+
+            <c:group
+               name="advanced"
+               displayName="Advanced"
+               hiddenByDefault="true">
+               <c:simple-property
+                  name="nameTemplate"
+                  default="Tomcat VHost ({name})" />
+               <c:simple-property
+                  name="descriptionTemplate"
+                  default="A Tomcat virtual host" />
+            </c:group>
+
          </plugin-configuration>
 
          <metric
@@ -362,162 +382,10 @@
             dataType="trait" />
 
          <service
-            name="Web Application (WAR)"
-            subCategory="Applications"
-            discovery="TomcatWarDiscoveryComponent"
-            class="TomcatWarComponent"
-            description="Web Application"
-            createDeletePolicy="both"
-            creationDataType="content">
-
-            <plugin-configuration>
-               <c:group name="General">
-                  <c:simple-property
-                     name="objectName"
-                     readOnly="true"
-                     default="Catalina:j2eeType=WebModule,name=%name%,J2EEApplication=none,J2EEServer=none" />
-                  <c:simple-property
-                     name="name"
-                     readOnly="true"
-                     description="The name of this Web Module (WAR)" />
-                  <c:simple-property
-                     name="filename"
-                     readOnly="true"
-                     description="The deployment root file name (.war or directory)" />
-                  <c:simple-property
-                     name="path"
-                     readOnly="true"
-                     required="false"
-                     description="The context root; the unique path prefix for URLs corresponding to this WAR" />
-                  <c:simple-property
-                     name="vHost"
-                     displayName="Virtual Host"
-                     readOnly="true"
-                     required="false"
-                     description="The (virtual) host that this application is running on. If no virtual host is set, this defaults to 'localhost'" />
-               </c:group>
-               <c:group
-                  name="Advanced"
-                  hiddenByDefault="true">
-                  <c:simple-property
-                     name="nameTemplate"
-                     default="{name}" />
-                  <c:simple-property
-                     name="extension"
-                     default="war"
-                     readOnly="true" />
-                  <c:simple-property
-                     name="descriptionTemplate"
-                     default="Web Application"
-                     readOnly="true" />
-               </c:group>
-            </plugin-configuration>
-
-            <operation
-               name="start"
-               description="starts this web application." />
-            <operation
-               name="stop"
-               description="stops this web application." />
-            <operation
-               name="reload"
-               description="reloads this web application." />
-
-            <!-- The two traits below are collected by the ApplicationComponent class, which WarComponent extends.. -->
-            <metric
-               property="Application.exploded"
-               displayName="Exploded deployment"
-               dataType="trait"
-               displayType="summary"
-               description="Whether deployed as a .war file or an exploded directory" />
-
-            <metric
-               property="Servlet.NumRequests"
-               displayName="Requests served"
-               units="none"
-               description="Number of requests served by servlets"
-               measurementType="trendsup"
-               displayType="summary" />
-
-            <metric
-               property="Servlet.NumErrors"
-               displayName="Errors while processing"
-               units="none"
-               description="Number of errors while processing"
-               measurementType="trendsup"
-               displayType="summary" />
-
-            <metric
-               property="Session.activeSessions"
-               displayName="Currently Active Sessions"
-               units="none"
-               description="Number active sessions for the webapp right now" />
-
-            <metric
-               property="Session.maxActive"
-               displayName="Maximum number of Active Sessions"
-               units="none"
-               description="Maximum number of active sessions for the webapp" />
-
-            <metric
-               property="Session.sessionCounter"
-               displayName="Sessions created"
-               units="none"
-               description="Number of sessions created for the webapp"
-               measurementType="trendsup" />
-
-            <metric
-               property="Session.expiredSessions"
-               displayName="Expired Sessions"
-               units="none"
-               description="Number of expired sessions for the webapp"
-               measurementType="trendsup" />
-
-            <metric
-               property="Session.rejectedSessions"
-               displayName="Rejected Sessions"
-               units="none"
-               description="Number of sessions rejected for the webapp"
-               measurementType="trendsup" />
-
-            <metric
-               property="Session.sessionAverageAliveTime"
-               displayName="Session Average alive time"
-               units="seconds"
-               description="Average alive time of a Sessions" />
-
-            <metric
-               property="Session.sessionMaxAliveTime"
-               displayName="Max Session alive time"
-               units="seconds"
-               description="Maximum alive time of a Sessions" />
-
-            <metric
-               property="VHost.name"
-               displayName="Virtual Hosts"
-               dataType="trait"
-               defaultOn="true"
-               description="Virtual hosts this app runs on" />
-
-            <!-- 
-               <content name="file" displayName="WAR File" category="deployable" isCreationType="true">
-               <configuration>
-               <c:group name="deployment" displayName="Deployment Options">
-               <c:simple-property name="deployZipped" displayName="Deploy Zipped" type="boolean" default="false" required="true"
-               description="Indicates if the WAR is deployed either zipped or exploded."/>
-               <c:simple-property name="deployDirectory" displayName="Deploy Directory" type="string" default="deploy" required="true"
-               description="Path to deploy the file. This must be a path relative to the AS configuration set in use."/>
-               </c:group>
-               </configuration>
-               </content>
-            -->
-         </service>
-
-         <service
-            name="Cache"
+            name="Tomcat Cache"
             discovery="TomcatCacheDiscoveryComponent"
             class="TomcatCacheComponent"
-            description="A Tomcat Application Cache">
+            description="A Tomcat Application (WAR) Cache">
 
             <plugin-configuration>
                <c:group name="General">
@@ -541,10 +409,10 @@
                   hiddenByDefault="true">
                   <c:simple-property
                      name="nameTemplate"
-                     default="Application Cache ({host}{path})" />
+                     default="Tomcat Cache ({host}{path})" />
                   <c:simple-property
                      name="descriptionTemplate"
-                     default="Web Application Cache"
+                     default="Tomcat Web Application Cache"
                      readOnly="true" />
                </c:group>
 
@@ -568,6 +436,158 @@
                description="Maximum number of cache entries" />
          </service>
 
+      </service>
+
+      <service
+         name="Tomcat Web Application (WAR)"
+         subCategory="Applications"
+         discovery="TomcatWarDiscoveryComponent"
+         class="TomcatWarComponent"
+         description="Tomcat deployed Web Application"
+         createDeletePolicy="both"
+         creationDataType="content">
+
+         <plugin-configuration>
+            <c:group name="General">
+               <c:simple-property
+                  name="objectName"
+                  readOnly="true"
+                  default="Catalina:j2eeType=WebModule,name=%name%,J2EEApplication=none,J2EEServer=none" />
+               <c:simple-property
+                  name="name"
+                  readOnly="true"
+                  description="The name of this Web Module (WAR)" />
+               <c:simple-property
+                  name="filename"
+                  readOnly="true"
+                  description="The deployment root file name (.war or directory)" />
+               <c:simple-property
+                  name="contextRoot"
+                  readOnly="true"
+                  required="false"
+                  description="The unique path prefix for URLs corresponding to this WAR" />
+               <c:simple-property
+                  name="vHost"
+                  displayName="Virtual Host"
+                  readOnly="true"
+                  required="false"
+                  description="The (virtual) host that this application is running on. If no virtual host is set, this defaults to 'localhost'" />
+            </c:group>
+            <c:group
+               name="Advanced"
+               hiddenByDefault="true">
+               <c:simple-property
+                  name="nameTemplate"
+                  default="Tomcat WAR ({name})" />
+               <c:simple-property
+                  name="extension"
+                  default="war"
+                  readOnly="true" />
+               <c:simple-property
+                  name="descriptionTemplate"
+                  default="Web Application"
+                  readOnly="true" />
+            </c:group>
+         </plugin-configuration>
+
+         <operation
+            name="start"
+            description="starts this web application." />
+         <operation
+            name="stop"
+            description="stops this web application." />
+         <operation
+            name="reload"
+            description="reloads this web application." />
+
+         <!-- The two traits below are collected by the ApplicationComponent class, which WarComponent extends.. -->
+         <metric
+            property="Application.exploded"
+            displayName="Exploded deployment"
+            dataType="trait"
+            displayType="summary"
+            description="Whether deployed as a .war file or an exploded directory" />
+
+         <metric
+            property="Servlet.NumRequests"
+            displayName="Requests served"
+            units="none"
+            description="Number of requests served by servlets"
+            measurementType="trendsup"
+            displayType="summary" />
+
+         <metric
+            property="Servlet.NumErrors"
+            displayName="Errors while processing"
+            units="none"
+            description="Number of errors while processing"
+            measurementType="trendsup"
+            displayType="summary" />
+
+         <metric
+            property="Session.activeSessions"
+            displayName="Currently Active Sessions"
+            units="none"
+            description="Number active sessions for the webapp right now" />
+
+         <metric
+            property="Session.maxActive"
+            displayName="Maximum number of Active Sessions"
+            units="none"
+            description="Maximum number of active sessions for the webapp" />
+
+         <metric
+            property="Session.sessionCounter"
+            displayName="Sessions created"
+            units="none"
+            description="Number of sessions created for the webapp"
+            measurementType="trendsup" />
+
+         <metric
+            property="Session.expiredSessions"
+            displayName="Expired Sessions"
+            units="none"
+            description="Number of expired sessions for the webapp"
+            measurementType="trendsup" />
+
+         <metric
+            property="Session.rejectedSessions"
+            displayName="Rejected Sessions"
+            units="none"
+            description="Number of sessions rejected for the webapp"
+            measurementType="trendsup" />
+
+         <metric
+            property="Session.sessionAverageAliveTime"
+            displayName="Session Average alive time"
+            units="seconds"
+            description="Average alive time of a Sessions" />
+
+         <metric
+            property="Session.sessionMaxAliveTime"
+            displayName="Max Session alive time"
+            units="seconds"
+            description="Maximum alive time of a Sessions" />
+
+         <metric
+            property="VHost.name"
+            displayName="Virtual Hosts"
+            dataType="trait"
+            defaultOn="true"
+            description="Virtual hosts this app runs on" />
+
+         <!-- 
+            <content name="file" displayName="WAR File" category="deployable" isCreationType="true">
+            <configuration>
+            <c:group name="deployment" displayName="Deployment Options">
+            <c:simple-property name="deployZipped" displayName="Deploy Zipped" type="boolean" default="false" required="true"
+            description="Indicates if the WAR is deployed either zipped or exploded."/>
+            <c:simple-property name="deployDirectory" displayName="Deploy Directory" type="string" default="deploy" required="true"
+            description="Path to deploy the file. This must be a path relative to the AS configuration set in use."/>
+            </c:group>
+            </configuration>
+            </content>
+         -->
       </service>
 
    </server>

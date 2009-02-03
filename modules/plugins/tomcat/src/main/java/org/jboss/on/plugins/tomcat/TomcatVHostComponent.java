@@ -23,7 +23,6 @@
 
 package org.jboss.on.plugins.tomcat;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -32,7 +31,6 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.pluginapi.inventory.ApplicationServerComponent;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
@@ -43,7 +41,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * @author Heiko W. Rupp
  *
  */
-public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerComponent> implements ApplicationServerComponent, MeasurementFacet {
+public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerComponent> implements MeasurementFacet {
 
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
@@ -83,9 +81,4 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
             }
         }
     }
-
-    public File getConfigurationPath() {
-        return new File(((TomcatServerComponent) super.resourceContext.getParentResourceComponent()).getInstallationPath(), "webapps");
-    }
-
 }

@@ -42,6 +42,7 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.inventory.ApplicationServerComponent;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
@@ -57,7 +58,7 @@ import org.rhq.plugins.platform.PlatformComponent;
  *
  * @author Jay Shaughnessy
  */
-public class TomcatServerComponent implements JMXComponent<PlatformComponent>, MeasurementFacet, OperationFacet {
+public class TomcatServerComponent implements JMXComponent<PlatformComponent>, ApplicationServerComponent, MeasurementFacet, OperationFacet {
 
     public enum SupportedOperations {
         /**
@@ -407,6 +408,10 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
                 log.error("Failed to obtain measurement [" + name + "]", e);
             }
         }
+    }
+
+    public File getConfigurationPath() {
+        return new File(this.getInstallationPath(), "webapps");
     }
 
 }

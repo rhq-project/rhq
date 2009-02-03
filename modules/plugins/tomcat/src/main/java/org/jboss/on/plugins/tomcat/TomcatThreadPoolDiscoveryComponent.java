@@ -22,11 +22,12 @@
  */
 package org.jboss.on.plugins.tomcat;
 
+import java.util.HashSet;
 import java.util.Set;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 
 /**
@@ -35,16 +36,22 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  *
  * @author Jay Shaughnessy
  */
-public class TomcatThreadPoolDiscoveryComponent extends MBeanResourceDiscoveryComponent {
+public class TomcatThreadPoolDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatConnectorComponent> {
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> discoveryContext) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatConnectorComponent> discoveryContext) {
 
         Set<DiscoveredResourceDetails> resources = super.discoverResources(discoveryContext);
+        Set<DiscoveredResourceDetails> validResources = new HashSet<DiscoveredResourceDetails>();
+        Configuration parentConfig = discoveryContext.getParentResourceContext().getPluginConfiguration();
 
         for (DiscoveredResourceDetails detail : resources) {
-            detail.setResourceDescription("Tomcat Connector Thread Pool");
+            String threadPoolName = detail.getPluginConfiguration().getSimpleValue(TomcatThreadPoolComponent.PROPERTY_NAME, "");
+            if (threadPoolName.contains(parentConfig.getSimpleValue(TomcatConnectorComponent.PROPERTY_PORT, "-1"))) {
+                validResources.add(detail);
+            }
         }
-        return resources;
+
+        return validResources;
     }
 }

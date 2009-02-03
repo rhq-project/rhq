@@ -29,7 +29,6 @@ import java.util.regex.Pattern;
 
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 
 /**
@@ -38,12 +37,12 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * @author Jay Shaughnessy
  * @author Heiko W. Rupp
  */
-public class TomcatVHostDiscoveryComponent extends MBeanResourceDiscoveryComponent {
+public class TomcatVHostDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatServerComponent> {
 
     static Pattern pattern = Pattern.compile(".*host=([\\w.]+).*");
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> discoveryContext) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatServerComponent> discoveryContext) {
 
         Set<DiscoveredResourceDetails> resources = super.discoverResources(discoveryContext);
 

@@ -26,6 +26,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.apache.catalina.Context;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
@@ -49,7 +50,7 @@ public class MainDeployer {
         if (mainDeployer == null) {
             throw new IllegalStateException("MBean named [" + DEPLOYER_BEAN + "] does not exist.");
         }
-        this.deployOperation = EmsUtility.getOperation(mainDeployer, "manageApp", Object[].class, String[].class);
+        this.deployOperation = EmsUtility.getOperation(mainDeployer, "manageApp", Context.class);
         //this.redeployOperation = EmsUtility.getOperation(mainDeployer, "manageApp", URL.class);
         this.undeployOperation = EmsUtility.getOperation(mainDeployer, "unmanageApp", URL.class);
     }

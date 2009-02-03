@@ -38,7 +38,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
@@ -50,13 +49,13 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * @author Jason Dobies
  * @author Ian Springer
  */
-public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryComponent {
+public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatServerComponent> {
     private final Log log = LogFactory.getLog(this.getClass());
 
     // MBeanResourceDiscoveryComponent Overridden Methods  --------------------------------------------
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatServerComponent> context) {
 
         // Get the connectors via the default JMX discovery for the connector mbeans
         Set<DiscoveredResourceDetails> resourceDetails = super.discoverResources(context);

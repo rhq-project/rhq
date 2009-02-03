@@ -31,7 +31,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 
 /**
@@ -41,13 +40,13 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * @author Heiko W. Rupp
  *
  */
-public class TomcatCacheDiscoveryComponent extends MBeanResourceDiscoveryComponent {
+public class TomcatCacheDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatVHostComponent> {
 
     static Pattern hostPattern = Pattern.compile(".*host=([\\w.]+).*");
     static Pattern pathPattern = Pattern.compile(".*path=([\\w.]+).*");
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> discoveryContext) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatVHostComponent> discoveryContext) {
 
         Set<DiscoveredResourceDetails> resources = super.discoverResources(discoveryContext);
         Configuration pluginConfiguration = discoveryContext.getDefaultPluginConfiguration();

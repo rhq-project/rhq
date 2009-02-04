@@ -282,7 +282,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     public void setFavoriteResourcePortletPreferences(FavoriteResourcePortletPreferences prefs) {
         setPreference(PREF_DASH_FAVORITE_RESOURCES_AVAILABILITY, prefs.showAvailability);
         setPreference(PREF_DASH_FAVORITE_RESOURCES_ALERTS, prefs.showAlerts);
-        setPreference(PREF_DASH_FAVORITE_RESOURCES, prefs.resourceIds);
+        setPreference(PREF_DASH_FAVORITE_RESOURCES, prefs.resourceIds, DashboardUtils.DASHBOARD_DELIMITER);
     }
 
     public static class DashboardPreferences {

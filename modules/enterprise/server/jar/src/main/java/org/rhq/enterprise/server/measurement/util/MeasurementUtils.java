@@ -57,8 +57,8 @@ public class MeasurementUtils {
             break;
         }
 
-        l.add(new Long(now - retrospective));
-        l.add(new Long(now));
+        l.add(now - retrospective);
+        l.add(now);
 
         return l;
     }

@@ -69,7 +69,12 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, A
         /**
          * Starts a Tomcat instance by calling a configurable start script.
          */
-        START
+        START,
+        
+        /**
+         * Restarts a Tomcat instance by calling a configurable restart script.
+         */
+        RESTART
     }
 
     /**

@@ -167,7 +167,12 @@
       <operation
          name="shutdown"
          displayName="Shutdown"
-         description="Shutdown this Tomcat server via script or JMX depending on the settings in Control and Advanced Properties." />
+         description="Shutdown this Tomcat server. The script used is specified in Control Properties." />
+         
+      <operation
+         name="restart"
+         displayName="Restart"
+         description="Restart this Tomcat server. The script used is specified in Control Properties." />
 
       <metric
          displayName="Server Identifier"

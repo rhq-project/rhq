@@ -112,6 +112,11 @@ public class TomcatServerOperationsDelegate {
             message = start();
             break;
         }
+        
+        case RESTART: {
+            message = restart();
+            break;
+        }
         }
 
         OperationResult result = new OperationResult(message);
@@ -171,7 +176,8 @@ public class TomcatServerOperationsDelegate {
         if (results.getError() == null) {
             avail = waitForServerToStart(start);
         } else {
-            log.error("Error from process execution while starting the EWS instance. Exit code [" + results.getExitCode() + "]", results.getError());
+            log.error("Error from process execution while starting the EWS instance. Exit code ["
+                + results.getExitCode() + "]", results.getError());
             avail = this.serverComponent.getAvailability();
         }
 
@@ -186,7 +192,8 @@ public class TomcatServerOperationsDelegate {
     static public void setProcessExecutionEnvironment(ProcessExecution processExecution, String installationPath) {
         String javaHomeDir = System.getProperty("java.home");
         if (null == javaHomeDir) {
-            throw new IllegalStateException("The JAVA_HOME environment variable must be set in order to run the EWS start or stop script.");
+            throw new IllegalStateException(
+                "The JAVA_HOME environment variable must be set in order to run the EWS start or stop script.");
         }
 
         // Strip off the jre since the version script requires a JDK
@@ -212,7 +219,8 @@ public class TomcatServerOperationsDelegate {
         processExecution.setWorkingDirectory(scriptFile.getParent());
 
         // Set necessary environment variables
-        String installationPath = this.serverComponent.getPluginConfiguration().getSimple(TomcatServerComponent.PROP_INSTALLATION_PATH).getStringValue();
+        String installationPath = this.serverComponent.getPluginConfiguration().getSimple(
+            TomcatServerComponent.PROP_INSTALLATION_PATH).getStringValue();
         setProcessExecutionEnvironment(processExecution, installationPath);
 
         processExecution.setCaptureOutput(true);
@@ -268,7 +276,8 @@ public class TomcatServerOperationsDelegate {
         logExecutionResults(results);
 
         if (results.getError() != null) {
-            throw new RuntimeException("Error executing shutdown script while stopping AS instance. Exit code [" + results.getExitCode() + "]", results.getError());
+            throw new RuntimeException("Error executing shutdown script while stopping AS instance. Exit code ["
+                + results.getExitCode() + "]", results.getError());
         }
 
         return "Server has been shut down.";
@@ -279,6 +288,45 @@ public class TomcatServerOperationsDelegate {
             log.debug("Exit code from process execution: " + results.getExitCode());
             log.debug("Output from process execution: " + SEPARATOR + results.getCapturedOutput() + SEPARATOR);
         }
+    }
+
+    private String restart() {
+        StringBuffer result = new StringBuffer();
+        boolean problem = false;
+
+        try {
+            shutdown();
+        } catch (Exception e) {
+            problem = true;
+            result.append("Shutdown may have failed: ");
+            result.append(e);
+            result.append(", ");
+        } finally {
+            try {
+                // Wait for server to show as unavailable, up to max wait time.
+                AvailabilityType avail = waitForServerToShutdown();
+                if (avail == AvailabilityType.UP) {
+                    problem = true;
+                    result.append("Shutdown may have failed (server appears to still be running), ");
+                }
+                // Perform the restart.
+                start();
+
+            } catch (Exception e) {
+                problem = true;
+                result.append("Startup may have failed: ");
+                result.append(e);
+                result.append(", ");
+            }
+        }
+
+        if (problem) {
+            result.append("Restart may have failed.");
+        } else {
+            result.append("Server has been restarted.");
+        }
+
+        return result.toString();
     }
 
     /**
@@ -317,17 +365,20 @@ public class TomcatServerOperationsDelegate {
     //    }
     private void validateScriptFile(File scriptFile, String scriptPropertyName) {
         if (!scriptFile.exists()) {
-            throw new RuntimeException("Script (" + scriptFile + ") specified via '" + scriptPropertyName + "' connection property does not exist.");
+            throw new RuntimeException("Script (" + scriptFile + ") specified via '" + scriptPropertyName
+                + "' connection property does not exist.");
         }
 
         if (scriptFile.isDirectory()) {
-            throw new RuntimeException("Script (" + scriptFile + ") specified via '" + scriptPropertyName + "' connection property is a directory, not a file.");
+            throw new RuntimeException("Script (" + scriptFile + ") specified via '" + scriptPropertyName
+                + "' connection property is a directory, not a file.");
         }
     }
 
     private AvailabilityType waitForServerToStart(long start) throws InterruptedException {
         AvailabilityType avail;
-        while (((avail = this.serverComponent.getAvailability()) == AvailabilityType.DOWN) && (System.currentTimeMillis() < (start + START_WAIT_MAX))) {
+        while (((avail = this.serverComponent.getAvailability()) == AvailabilityType.DOWN)
+            && (System.currentTimeMillis() < (start + START_WAIT_MAX))) {
             try {
                 Thread.sleep(START_WAIT_INTERVAL);
             } catch (InterruptedException e) {

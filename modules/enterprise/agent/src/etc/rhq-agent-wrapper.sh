@@ -48,7 +48,7 @@ check_status ()
         _PID=`cat "${_PIDFILE}"`
         check_status_of_pid $_PID
     else
-        _STATUS="RHQ Agent (no pid file) is NOT running"
+        _STATUS="RHQ Agent (no pidfile) is NOT running"
         _RUNNING=0
     fi
 }
@@ -70,7 +70,7 @@ check_status_of_pid ()
 }
 
 # ----------------------------------------------------------------------
-# Function that ensures that the _PID file no longer exists
+# Function that ensures that the pidfile no longer exists
 # ----------------------------------------------------------------------
 
 remove_pid_file ()
@@ -78,6 +78,19 @@ remove_pid_file ()
    if [ -f "${_PIDFILE}" ]; then
       debug_wrapper_msg "Removing existing pidfile"
       rm "${_PIDFILE}"
+   fi
+}
+
+# ----------------------------------------------------------------------
+# Function that prepares the location where the pidfile will live
+# ----------------------------------------------------------------------
+
+prepare_pid_dir ()
+{
+   mkdir -p "$RHQ_AGENT_PIDFILE_DIR"
+   if [ "$?" != "0" ]; then
+      echo "Cannot create the directory where the pidfile will go: ${RHQ_AGENT_PIDFILE_DIR}"
+      exit 1
    fi
 }
 
@@ -141,7 +154,6 @@ fi
 if [ "x$RHQ_AGENT_PIDFILE_DIR" = "x" ]; then
    RHQ_AGENT_PIDFILE_DIR="${RHQ_AGENT_HOME}/bin"
 fi
-mkdir -p "$RHQ_AGENT_PIDFILE_DIR"
 _PIDFILE="${RHQ_AGENT_PIDFILE_DIR}/rhq-agent.pid"
 debug_wrapper_msg "pidfile will be located at ${_PIDFILE}"
 
@@ -152,6 +164,8 @@ check_status
 
 case "$1" in
 'start')
+        prepare_pid_dir
+
         if [ "$_RUNNING" = "1" ]; then
            echo $_STATUS
            exit 0
@@ -206,6 +220,8 @@ case "$1" in
         ;;
 
 'stop')
+        prepare_pid_dir
+
         if [ "$_RUNNING" = "0" ]; then
            echo $_STATUS
            remove_pid_file
@@ -237,6 +253,8 @@ case "$1" in
         ;;
 
 'kill')
+        prepare_pid_dir
+
         if [ "$_RUNNING" = "0" ]; then
            echo $_STATUS
            remove_pid_file

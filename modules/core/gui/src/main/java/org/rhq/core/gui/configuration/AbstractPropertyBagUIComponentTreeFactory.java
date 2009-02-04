@@ -49,6 +49,7 @@ package org.rhq.core.gui.configuration;
  import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
  import org.rhq.core.gui.RequestParameterNameConstants;
  import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
+ import org.rhq.core.gui.configuration.propset.ConfigurationSetComponent;
  import org.rhq.core.gui.util.FacesComponentUtility;
  import org.rhq.core.gui.util.FacesExpressionUtility;
  import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
@@ -56,7 +57,7 @@ package org.rhq.core.gui.configuration;
  /**
  * A factory that generates a tree of JSF components that depicts a given collection of JON {@link Property}s.
  *
- * @author Ian Springer (with some code snarfed from embedded's <code>org.jboss.on.embedded.ui.WidgetFactory</code>)
+ * @author Ian Springer
  */
 public abstract class AbstractPropertyBagUIComponentTreeFactory {
     static final String DELETE_LIST_MEMBER_PROPERTY_FUNCTION = "DELETE_LIST_MEMBER_PROPERTY";
@@ -78,6 +79,8 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private static final String DELETE_MAP_BUTTON_TITLE = "Delete";
     private static final String ADD_NEW_MAP_BUTTON_LABEL = "Add New";
     private static final String ADD_NEW_MAP_BUTTON_TITLE = "Add New";
+    private static final String MEMBER_VALUES_BUTTON_LABEL = "Members";
+    private static final String MEMBER_VALUES_BUTTON_TITLE = "Members";
 
     private static final String NESTED_PROPERTIES_TABLE_STYLE_CLASS = "nested-properties-table";
     private static final String PROPERTIES_TABLE_HEADER_CELL_STYLE_CLASS = "properties-table-header-cell";
@@ -103,19 +106,21 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private static final String PROPERTY_MAP_SUMMARY_BUTTON_FOOTER_STYLE_CLASS = "property-buttonfooterrow";    
     private static final String BUTTONS_TABLE_STYLE_CLASS = "buttons-table";
     private static final String BUTTON_SMALL_STYLE_CLASS = "buttonsmall";
+    private static final String VALUES_DIFFER_TEXT_STYLE_CLASS = "values-differ-text";
     private static final String ROW_ODD_STYLE_CLASS = "OddRow";
     private static final String ROW_EVEN_STYLE_CLASS = "EvenRow";
 
-    private ConfigUIComponent config;
+    private AbstractConfigurationComponent config;
     private Collection<PropertyDefinition> propertyDefinitions;
     private AbstractPropertyMap propertyMap;
     private boolean topLevel;
     private String valueExpressionFormat;
     private String overrideExpressionFormat;
+    private boolean isAggregate;
 
     private final Log LOG = LogFactory.getLog(ConfigRenderer.class);
 
-    public AbstractPropertyBagUIComponentTreeFactory(ConfigUIComponent config,
+     public AbstractPropertyBagUIComponentTreeFactory(AbstractConfigurationComponent config,
         Collection<PropertyDefinition> propertyDefinitions, AbstractPropertyMap propertyMap, boolean topLevel,
         String valueExpressionFormat) {
         this.config = config;
@@ -124,6 +129,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         this.topLevel = topLevel;
         this.valueExpressionFormat = valueExpressionFormat;
         this.overrideExpressionFormat = getOverrideExpressionFormat(valueExpressionFormat);
+        this.isAggregate = (this.config instanceof ConfigurationSetComponent);
     }
 
     private String getOverrideExpressionFormat(String valueExpression) {
@@ -205,6 +211,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         FacesComponentUtility.addOutputText(parent, this.config, "Name", FacesComponentUtility.NO_STYLE_CLASS);
         FacesComponentUtility.addVerbatimText(parent, "</th>");
 
+        // TODO: Get rid of the Override column, once the new group config stuff is operational.
         if (config.isAggregate()) {
             FacesComponentUtility.addVerbatimText(parent, "<th class='" + headerCellStyleClass + "'>");
             FacesComponentUtility.addOutputText(parent, this.config, "Override", FacesComponentUtility.NO_STYLE_CLASS);
@@ -261,7 +268,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         FacesComponentUtility.addVerbatimText(parent, "</tr>");
     }
 
-    protected ConfigUIComponent getConfig() {
+    protected AbstractConfigurationComponent getConfigurationComponent() {
         return config;
     }
 
@@ -289,6 +296,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         PropertySimple propertySimple = this.propertyMap.getSimple(propertyDefinitionSimple.getName());
         ValueExpression propertyValueExpression = createPropertyValueExpression(propertySimple.getName(),
                 this.valueExpressionFormat);
+        // TODO: Only create input when it's actually going to be displayed.
         UIInput input = PropertyRenderingUtility.createInputForSimpleProperty(propertyDefinitionSimple,
                 propertySimple, propertyValueExpression, getListIndex(), this.config.isReadOnly(),
                 this.config.isPrevalidate());
@@ -310,7 +318,8 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_VALUE_CELL + "'>");
-        parent.getChildren().add(input);
+        addPropertySimpleValue(parent, propertySimple, input);
+
         FacesComponentUtility.addVerbatimText(parent, "<br/>");
         PropertyRenderingUtility.addMessageComponentForInput(parent, input);
         FacesComponentUtility.addVerbatimText(parent, "</td>");
@@ -324,10 +333,27 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         addDebug(parent, false, ".addSimpleProperty()");
     }
 
-    private void addOpenMapMemberProperty(HtmlPanelGroup parent, PropertyDefinitionMap propertyDefinitionMap,
+     private void addPropertySimpleValue(UIComponent parent, PropertySimple propertySimple, UIInput input)
+     {
+         if (this.isAggregate) {
+             if (propertySimple.getOverride() != null && propertySimple.getOverride()) {
+                 parent.getChildren().add(input);
+             } else {
+                 FacesComponentUtility.addOutputText(parent, null, "Member Values Differ",
+                         VALUES_DIFFER_TEXT_STYLE_CLASS);
+             }
+             HtmlCommandLink membersLink = FacesComponentUtility.addCommandLink(parent, this.config);
+             membersLink.setTitle(MEMBER_VALUES_BUTTON_TITLE);
+             FacesComponentUtility.addButton(membersLink, MEMBER_VALUES_BUTTON_LABEL, BUTTON_SMALL_STYLE_CLASS);
+         } else {
+             parent.getChildren().add(input);
+         }
+     }
+
+     private void addOpenMapMemberProperty(HtmlPanelGroup parent, PropertyDefinitionMap propertyDefinitionMap,
         PropertySimple propertySimple, String rowStyleClass) {
         addDebug(parent, true, ".addOpenMapMemberProperty()");
-        HtmlPanelGroup panel = FacesComponentUtility.addBlockPanel(parent, getConfig(),
+        HtmlPanelGroup panel = FacesComponentUtility.addBlockPanel(parent, getConfigurationComponent(),
             FacesComponentUtility.NO_STYLE_CLASS);
         String mapName = ((PropertyMap) this.propertyMap).getName();
         String memberName = propertySimple.getName();
@@ -343,9 +369,10 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         FacesComponentUtility.addVerbatimText(panel, "</td>");
 
         FacesComponentUtility.addVerbatimText(panel, "<td class='" + OPENMAP_PROPERTY_VALUE_CELL_STYLE_CLASS + "'>");
-        UIInput input = PropertyRenderingUtility.createInputForSimpleProperty(propertySimple,
+         // TODO: Only create input when it's actually going to be displayed.
+         UIInput input = PropertyRenderingUtility.createInputForSimpleProperty(propertySimple,
                 this.valueExpressionFormat, this.config.isReadOnly());
-        panel.getChildren().add(input);
+        addPropertySimpleValue(panel, propertySimple, input);
         FacesComponentUtility.addVerbatimText(panel, "</td>");
 
         if (!isReadOnly(propertyDefinitionMap)) {
@@ -506,7 +533,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         PropertyMap listMemberPropertyMap = (PropertyMap) listMemberProperty;
 
-        HtmlPanelGroup panel = FacesComponentUtility.addBlockPanel(parent, getConfig(),
+        HtmlPanelGroup panel = FacesComponentUtility.addBlockPanel(parent, getConfigurationComponent(),
             FacesComponentUtility.NO_STYLE_CLASS);
         String listIndex = String.valueOf(index);
         String panelId = PropertyIdGeneratorUtility.getIdentifier(listMemberProperty, index, PANEL_ID_SUFFIX);

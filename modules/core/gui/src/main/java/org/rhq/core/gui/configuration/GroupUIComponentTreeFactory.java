@@ -37,7 +37,7 @@ import org.rhq.core.gui.util.FacesExpressionUtility;
 public class GroupUIComponentTreeFactory extends AbstractPropertyBagUIComponentTreeFactory {
     public static final String NO_GROUP = null;
 
-    public GroupUIComponentTreeFactory(ConfigUIComponent config, String groupName) {
+    public GroupUIComponentTreeFactory(AbstractConfigurationComponent config, String groupName) {
         super(config, getPropertyDefinitions(config.getConfigurationDefinition(), groupName),
             config.getConfiguration(), true, createValueExpressionFormat(config.getConfigurationExpressionString()));
     }

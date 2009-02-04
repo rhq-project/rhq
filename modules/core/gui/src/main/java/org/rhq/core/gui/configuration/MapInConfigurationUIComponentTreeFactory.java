@@ -35,9 +35,9 @@ import org.rhq.core.gui.util.FacesExpressionUtility;
  * @author Ian Springer
  */
 public class MapInConfigurationUIComponentTreeFactory extends AbstractPropertyBagUIComponentTreeFactory {
-    public MapInConfigurationUIComponentTreeFactory(ConfigUIComponent config, String mapName) {
-        super(config, getPropertyDefinitions(config.getConfigurationDefinition(), mapName), config.getConfiguration()
-            .getMap(mapName), false, createValueExpressionFormat(config.getConfigurationExpressionString(), mapName));
+    public MapInConfigurationUIComponentTreeFactory(AbstractConfigurationComponent configurationComponent, String mapName) {
+        super(configurationComponent, getPropertyDefinitions(configurationComponent.getConfigurationDefinition(), mapName), configurationComponent.getConfiguration()
+            .getMap(mapName), false, createValueExpressionFormat(configurationComponent.getConfigurationExpressionString(), mapName));
     }
 
     static String createValueExpressionFormat(String configurationExpressionString, String mapName) {

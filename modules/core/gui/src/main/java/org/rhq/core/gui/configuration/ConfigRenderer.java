@@ -52,7 +52,7 @@ import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
 import org.richfaces.component.html.HtmlSimpleTogglePanel;
 
 /**
- * A renderer that renders a {@link ConfigUIComponent} component as XHTML.
+ * A renderer that renders an {@link AbstractConfigurationComponent} component as XHTML.
  *
  * @author Ian Springer
  */
@@ -78,7 +78,7 @@ public class ConfigRenderer extends Renderer {
      */
     @Override
     public void decode(FacesContext facesContext, UIComponent component) {
-        ConfigUIComponent config = (ConfigUIComponent) component;
+        AbstractConfigurationComponent config = (AbstractConfigurationComponent) component;
         validateAttributes(config);
         String function = FacesContextUtility.getOptionalRequestParameter(RequestParameterNameConstants.FUNCTION_PARAM);
         if (function != null) {
@@ -111,7 +111,7 @@ public class ConfigRenderer extends Renderer {
         if (component.getChildCount() != 0)
             return;
         
-        ConfigUIComponent config = (ConfigUIComponent) component;
+        AbstractConfigurationComponent config = (AbstractConfigurationComponent) component;
         if ((config.getConfigurationDefinition() == null)
             || ((config.getConfiguration() != null) && config.getConfiguration().getMap().isEmpty())) {
             String styleClass = (config.getNullConfigurationStyle() == null) ? "ErrorBlock" : config
@@ -149,7 +149,7 @@ public class ConfigRenderer extends Renderer {
         PropertyRenderingUtility.addInitInputsJavaScript(config, id, config.isFullyEditable(), false);
     }
 
-    private void addListMemberProperty(ConfigUIComponent config) {
+    private void addListMemberProperty(AbstractConfigurationComponent config) {
         AbstractPropertyBagUIComponentTreeFactory propertyListUIComponentTreeFactory = new MapInListUIComponentTreeFactory(
             config, config.getListName(), config.getListIndex());
         HtmlPanelGroup propertiesPanel = FacesComponentUtility.addBlockPanel(config, config,
@@ -157,7 +157,7 @@ public class ConfigRenderer extends Renderer {
         propertiesPanel.getChildren().add(propertyListUIComponentTreeFactory.createUIComponentTree(null));
     }
 
-    private void deleteListMemberProperty(ConfigUIComponent config) {
+    private void deleteListMemberProperty(AbstractConfigurationComponent config) {
         String listName = FacesContextUtility
             .getRequiredRequestParameter(RequestParameterNameConstants.LIST_NAME_PARAM);
         PropertyList propertyList = config.getConfiguration().getList(listName);
@@ -191,7 +191,7 @@ public class ConfigRenderer extends Renderer {
             + " deleted from list '" + listName + "'.");
     }
 
-    private void correctListIndexesInSiblingMembers(ConfigUIComponent config, PropertyList propertyList,
+    private void correctListIndexesInSiblingMembers(AbstractConfigurationComponent config, PropertyList propertyList,
         int deletedMemberIndex) {
         for (int oldIndex = deletedMemberIndex + 1; oldIndex < propertyList.getList().size(); oldIndex++) {
             int newIndex = oldIndex - 1;
@@ -211,7 +211,7 @@ public class ConfigRenderer extends Renderer {
         }
     }
 
-    private void deleteOpenMapMemberProperty(ConfigUIComponent config) {
+    private void deleteOpenMapMemberProperty(AbstractConfigurationComponent config) {
         String mapName = FacesContextUtility.getRequiredRequestParameter(RequestParameterNameConstants.MAP_NAME_PARAM);
         PropertyMap propertyMap = config.getConfiguration().getMap(mapName);
         if (propertyMap == null) {
@@ -243,7 +243,7 @@ public class ConfigRenderer extends Renderer {
             + mapName + "'.");
     }
 
-    private void addRequiredNotationsKey(ConfigUIComponent config) {
+    private void addRequiredNotationsKey(AbstractConfigurationComponent config) {
         addDebug(config, true, ".addNotePanel()");
         HtmlPanelGroup footnotesPanel = FacesComponentUtility.addBlockPanel(config, config, NOTE_PANEL_STYLE_CLASS);
         FacesComponentUtility.addOutputText(footnotesPanel, config, "*", REQUIRED_MARKER_TEXT_STYLE_CLASS);
@@ -259,12 +259,12 @@ public class ConfigRenderer extends Renderer {
         addDebug(config, false, ".addNotePanel()");
     }
 
-    private void addConfiguration(ConfigUIComponent config) {
+    private void addConfiguration(AbstractConfigurationComponent config) {
         addNonGroupedProperties(config);
         addGroupedProperties(config);
     }
 
-    private void addNonGroupedProperties(ConfigUIComponent config) {
+    private void addNonGroupedProperties(AbstractConfigurationComponent config) {
         addDebug(config, true, ".addNonGroupedProperties()");
         HtmlPanelGroup propertiesPanel = FacesComponentUtility.addBlockPanel(config, config,
             UNGROUPED_PROPERTIES_STYLE_CLASS);
@@ -274,7 +274,7 @@ public class ConfigRenderer extends Renderer {
         addDebug(config, false, ".addNonGroupedProperties()");
     }
 
-    private void addGroupedProperties(ConfigUIComponent config) {
+    private void addGroupedProperties(AbstractConfigurationComponent config) {
         addDebug(config, true, ".addGroupedProperties()");
         List<PropertyGroupDefinition> groups = config.getConfigurationDefinition().getGroupDefinitions();
         for (PropertyGroupDefinition group : groups) {
@@ -287,7 +287,7 @@ public class ConfigRenderer extends Renderer {
         addDebug(config, false, ".addGroupedProperties()");
     }
 
-    private HtmlSimpleTogglePanel addGroupPanel(ConfigUIComponent config, PropertyGroupDefinition group) {
+    private HtmlSimpleTogglePanel addGroupPanel(AbstractConfigurationComponent config, PropertyGroupDefinition group) {
         addDebug(config, true, ".addGroupPanel()");
         HtmlSimpleTogglePanel groupPanel = FacesComponentUtility.addSimpleTogglePanel(config, config, null);
         groupPanel.setOpened(!group.isDefaultHidden());
@@ -319,7 +319,7 @@ public class ConfigRenderer extends Renderer {
         return groupPanel;
     }
 
-    private void validateAttributes(ConfigUIComponent config) {
+    private void validateAttributes(AbstractConfigurationComponent config) {
         if (config.getValueExpression("configurationDefinition") == null) {
             throw new IllegalStateException("The " + config.getClass().getName()
                 + " component requires a 'configurationDefinition' attribute.");
@@ -331,7 +331,7 @@ public class ConfigRenderer extends Renderer {
         }
     }
 
-    private int addNewMap(ConfigUIComponent config) {
+    private int addNewMap(AbstractConfigurationComponent config) {
         String listName = config.getListName();
         PropertyDefinitionMap mapDefinition = (PropertyDefinitionMap) config.getConfigurationDefinition()
             .getPropertyDefinitionList(listName).getMemberDefinition();
@@ -356,7 +356,6 @@ public class ConfigRenderer extends Renderer {
      * @param start      true if this is the "START" comment, false if it is the "END" comment
      * @param methodName the name of the method this is calling from
      */
-
     private void addDebug(UIComponent component, boolean start, String methodName) {
         if (LOG.isDebugEnabled()) {
             StringBuilder msg = new StringBuilder("\n<!--");
@@ -368,7 +367,7 @@ public class ConfigRenderer extends Renderer {
         }
     }
 
-    private String getInitInputsJavaScriptComponentId(ConfigUIComponent configUIComponent)
+    private String getInitInputsJavaScriptComponentId(AbstractConfigurationComponent configUIComponent)
     {
         return configUIComponent.getId() + INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID_SUFFIX;
     }

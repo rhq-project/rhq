@@ -1845,6 +1845,13 @@ P.compact {
    font-weight: normal;
 }
 
+.values-differ-text {
+   color: #AA2222;
+   font-size: 1em;
+   font-style: italic;
+   font-weight: normal;
+}
+
 .required-marker-text {
    color: #AA2222;
    font-weight: bold;

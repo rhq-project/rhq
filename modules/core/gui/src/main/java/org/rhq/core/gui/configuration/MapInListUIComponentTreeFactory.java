@@ -39,7 +39,7 @@ import org.rhq.core.gui.util.FacesExpressionUtility;
 public class MapInListUIComponentTreeFactory extends AbstractPropertyBagUIComponentTreeFactory {
     private Integer listIndex;
 
-    public MapInListUIComponentTreeFactory(ConfigUIComponent config, String listName, int listIndex) {
+    public MapInListUIComponentTreeFactory(AbstractConfigurationComponent config, String listName, int listIndex) {
         super(config, getPropertyDefinitions(config.getConfigurationDefinition(), listName), (PropertyMap) config
             .getConfiguration().getList(listName).getList().get(listIndex), true, createValueExpressionFormat(config
             .getConfigurationExpressionString(), listName, listIndex));

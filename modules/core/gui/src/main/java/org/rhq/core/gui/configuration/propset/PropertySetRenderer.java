@@ -145,20 +145,21 @@ public class PropertySetRenderer extends Renderer
     {
         PropertyDefinitionSimple propertyDefinitionSimple = propertySetComponent.getPropertyDefinition();
         ValueExpression configurationInfosExpression = propertySetComponent.getValueExpression(
-                PropertySetComponent.CONFIGURATION_GROUP_MEMBER_INFOS_ATTRIBUTE);
+                PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE);
         String configurationInfosExpressionString = configurationInfosExpression.getExpressionString();
         String configurationExpressionStringFormat = "#{"
                 + FacesExpressionUtility.unwrapExpressionString(configurationInfosExpressionString)
-                + "[%d].configuration}";
+                + ".members[%d].configuration}";
 
         String propertyExpressionStringFormat = createPropertyExpressionString(configurationExpressionStringFormat,
                 propertyDefinitionSimple, propertySetComponent.getListIndex());
         //noinspection ConstantConditions
-        List<PropertyInfo> propertyInfos = new ArrayList(propertySetComponent.getConfigurationGroupMemberInfos().size());
-        for (int i = 0; i < propertySetComponent.getConfigurationGroupMemberInfos().size(); i++)
+        List<ConfigurationSetMember> configurationSetMembers = propertySetComponent.getConfigurationSet().getMembers();
+        List<PropertyInfo> propertyInfos = new ArrayList(configurationSetMembers.size());
+        for (int i = 0; i < configurationSetMembers.size(); i++)
         {
             @SuppressWarnings({"ConstantConditions"})
-            ConfigurationGroupMemberInfo memberInfo = propertySetComponent.getConfigurationGroupMemberInfos().get(i);
+            ConfigurationSetMember memberInfo = configurationSetMembers.get(i);
             String propertyExpressionString = String.format(propertyExpressionStringFormat, i);
             PropertySimple property = FacesExpressionUtility.getValue(propertyExpressionString, PropertySimple.class);
             ValueExpression propertyValueExpression = createPropertyValueExpression(propertyExpressionString);
@@ -201,9 +202,9 @@ public class PropertySetRenderer extends Renderer
                 + " component requires a '" + PropertySetComponent.PROPERTY_DEFINITION_ATTRIBUTE + "' attribute.");
         }
 
-        if (propertySetComponent.getValueExpression(PropertySetComponent.CONFIGURATION_GROUP_MEMBER_INFOS_ATTRIBUTE) == null) {
+        if (propertySetComponent.getValueExpression(PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE) == null) {
             throw new IllegalStateException("The " + propertySetComponent.getClass().getName()
-                + " component requires a '" + PropertySetComponent.CONFIGURATION_GROUP_MEMBER_INFOS_ATTRIBUTE + "' attribute.");
+                + " component requires a '" + PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE + "' attribute.");
         }
     }
 

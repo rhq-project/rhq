@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component">
+
+THIS TEXT WILL BE REMOVED.
+
+<ui:composition template="/rhq/layout/main.xhtml">
+
+   THIS TEXT WILL BE REMOVED AS WELL.
+
+   <ui:param name="pageTitle" value="Edit Test Configuration"/>
+
+   <ui:define name="body">
+
+      <h:messages showSummary="true"
+                  showDetail="true"
+                  errorClass="ErrorBlock"
+                  warnClass="ErrorBlock"
+                  infoClass="ConfirmationBlock"
+                  globalOnly="true"
+                  layout="table"
+                  width="100%" />
+      
+      <h:form id="editTestConfigurationForm" onsubmit="prepareInputsForSubmission(this)">
+         <onc:configSet configurationSet="#{EditTestConfigurationUIBean.configurationSet}"/>
+         <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
+            <h:commandButton type="submit" action="#{EditTestConfigurationUIBean.updateConfiguration}"
+                             value="Save" alt="Click to Save Changes" styleClass="buttonmed"/>
+            <h:commandButton type="reset" immediate="true" value="Reset" alt="Click to Reset Fields" styleClass="buttonmed"/>
+         </h:panelGrid>
+      </h:form>
+       
+   </ui:define>
+
+</ui:composition>
+
+THIS TEXT WILL BE REMOVED AS WELL.
+
+</html>

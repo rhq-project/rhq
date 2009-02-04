@@ -201,7 +201,7 @@ public abstract class TestConfigurationFactory {
         configuration.put(new PropertySimple("Integer", 666));
         configuration.put(new PropertySimple("Float", Math.PI));
 
-        configuration.put(new PropertySimple("StringEnum1", "NJ"));
+        configuration.put(new PropertySimple("StringEnum1", "PA"));
         configuration.put(new PropertySimple("StringEnum2", "blue"));
 
         PropertyMap propMap1 = new PropertyMap("MapOfSimples");

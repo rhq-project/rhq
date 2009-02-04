@@ -26,35 +26,41 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.gui.configuration.propset.ConfigurationGroupMemberInfo;
+import org.rhq.core.gui.configuration.propset.ConfigurationSetMember;
+import org.rhq.core.gui.configuration.propset.ConfigurationSet;
 import org.rhq.enterprise.gui.common.Outcomes;
 
 /**
  * @author Ian Springer
  */
 public abstract class AbstractTestConfigurationUIBean {
+    public static final String [] LABELS = new String[] { "AAA", "ZZZ", "BBB", "YYY","AAA", "AAA", "ZZZ", "ZZZ", "YYY", "BBB"};
+
     private ConfigurationDefinition configurationDefinition;
     private Configuration configuration;
     private List<Property> properties;
-    private List<ConfigurationGroupMemberInfo> memberInfos;
-    public static final String [] LABELS = new String[] { "AAA", "ZZZ", "BBB", "YYY","AAA", "AAA", "ZZZ", "ZZZ", "YYY", "BBB"};
+    private ConfigurationSet configurationSet;
 
     protected AbstractTestConfigurationUIBean()
     {
         this.configurationDefinition = TestConfigurationFactory.createConfigurationDefinition();
         this.configuration = TestConfigurationFactory.createConfiguration();
-        this.memberInfos = new ArrayList(10);
+        List<ConfigurationSetMember> members = new ArrayList(10);
         for (int i = 0; i < 10; i++) {
             Configuration configuration = this.configuration.deepCopy(true);
             configuration.setId(i + 1);
             configuration.getSimple("String1").setStringValue(UUID.randomUUID().toString());
             configuration.getSimple("Integer").setStringValue(String.valueOf(i + 1));
             configuration.getSimple("Boolean").setStringValue(String.valueOf(i % 2 == 0));
-            ConfigurationGroupMemberInfo memberInfo =
-                    new ConfigurationGroupMemberInfo(LABELS[i], configuration);
-            this.memberInfos.add(memberInfo);
+            if (i == 0)
+                configuration.getMap("OpenMapOfSimples").put(new PropertySimple("PROCESSOR_CORES", "4"));
+            ConfigurationSetMember memberInfo =
+                    new ConfigurationSetMember(LABELS[i], configuration);
+            members.add(memberInfo);
         }
+        this.configurationSet = new ConfigurationSet(this.configurationDefinition, members);
         // Unwrap the Hibernate proxy objects, which Facelets appears not to be able to handle.
         this.properties = new ArrayList<Property>(this.configuration.getProperties());
     }
@@ -83,14 +89,14 @@ public abstract class AbstractTestConfigurationUIBean {
         this.configuration = configuration;
     }
 
-    public List<ConfigurationGroupMemberInfo> getMemberInfos()
+    public ConfigurationSet getConfigurationSet()
     {
-        return memberInfos;
+        return configurationSet;
     }
 
-    public void setMemberInfos(List<ConfigurationGroupMemberInfo> memberInfos)
+    public void setConfigurationSet(ConfigurationSet configurationSet)
     {
-        this.memberInfos = memberInfos;
+        this.configurationSet = configurationSet;
     }
 
     public List<Property> getProperties()

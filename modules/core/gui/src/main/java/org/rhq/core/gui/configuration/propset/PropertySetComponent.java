@@ -19,15 +19,14 @@
 package org.rhq.core.gui.configuration.propset;
 
 import java.util.UUID;
-import java.util.List;
 
 import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
 
 import org.jetbrains.annotations.Nullable;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesComponentIdFactory;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 
 /**
  * @author Ian Springer
@@ -35,10 +34,10 @@ import org.rhq.core.gui.util.FacesComponentIdFactory;
 public class PropertySetComponent extends UIComponentBase implements FacesComponentIdFactory
 {
     public static final String COMPONENT_TYPE = "org.rhq.PropertySet";
-    public static final String COMPONENT_FAMILY = "org.rhq.PropertySet";
+    public static final String COMPONENT_FAMILY = "rhq";
 
     static final String PROPERTY_DEFINITION_ATTRIBUTE = "propertyDefinition";
-    static final String CONFIGURATION_GROUP_MEMBER_INFOS_ATTRIBUTE = "configurationGroupMemberInfos";
+    static final String CONFIGURATION_SET_ATTRIBUTE = "configurationSet";
 
     private Boolean readOnly;    
     private Integer listIndex;
@@ -61,12 +60,13 @@ public class PropertySetComponent extends UIComponentBase implements FacesCompon
     }
 
     @Nullable
-    public List<ConfigurationGroupMemberInfo> getConfigurationGroupMemberInfos() {
+    public ConfigurationSet getConfigurationSet() {
         //noinspection UnnecessaryLocalVariable
-        List<ConfigurationGroupMemberInfo> configurationInfos = FacesComponentUtility.getExpressionAttribute(this,
-                CONFIGURATION_GROUP_MEMBER_INFOS_ATTRIBUTE, List.class);
-        return configurationInfos;
+        ConfigurationSet configurationSet = FacesComponentUtility.getExpressionAttribute(this,
+                CONFIGURATION_SET_ATTRIBUTE, ConfigurationSet.class);
+        return configurationSet;
     }
+
 
     public Boolean getReadOnly()
     {

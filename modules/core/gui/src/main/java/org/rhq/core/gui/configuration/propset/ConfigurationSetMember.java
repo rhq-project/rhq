@@ -23,12 +23,12 @@ import org.rhq.core.domain.configuration.Configuration;
 /**
  * @author Ian Springer
  */
-public class ConfigurationGroupMemberInfo implements Comparable<ConfigurationGroupMemberInfo>
+public class ConfigurationSetMember
 {
     private String label;
     private Configuration configuration; 
 
-    public ConfigurationGroupMemberInfo(String label, Configuration configuration)
+    public ConfigurationSetMember(String label, Configuration configuration)
     {
         this.label = label;
         this.configuration = configuration;
@@ -42,10 +42,5 @@ public class ConfigurationGroupMemberInfo implements Comparable<ConfigurationGro
     public Configuration getConfiguration()
     {
         return this.configuration;
-    }
-
-    public int compareTo(ConfigurationGroupMemberInfo that)
-    {
-        return 0; // TODO
     }
 }

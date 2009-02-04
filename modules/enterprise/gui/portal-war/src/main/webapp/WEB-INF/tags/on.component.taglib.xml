@@ -65,6 +65,14 @@
    </tag>
 
    <tag>
+      <tag-name>configSet</tag-name>
+      <component>
+         <component-type>org.rhq.ConfigurationSet</component-type>
+         <renderer-type>org.jboss.on.Config</renderer-type>
+      </component>
+   </tag>
+
+   <tag>
       <tag-name>propSet</tag-name>
       <component>
          <component-type>org.rhq.PropertySet</component-type>

@@ -1866,21 +1866,67 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         String ql = "SELECT res "
             + "FROM Resource res join fetch res.currentAvailability join fetch res.resourceType rt "
             + "left join fetch rt.subCategory sc left join fetch sc.parentSubCategory "
-            + "WHERE res.agent.id = :agentId";
+            + "WHERE res.inventoryStatus = :inventoryStatus AND res.agent.id = :agentId";
 
         EntityManager em = LookupUtil.getEntityManager();
         Query query = em.createQuery(ql);
 
         query.setParameter("agentId", agentId);
+        query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
         List<Resource> resources = query.getResultList();
 
         if (!authorizationManager.isInventoryManager(user)) {
             String secQueryString = "SELECT res.id "
                 + "FROM Resource res "
-                + "WHERE res.agent.id = :agentId "
+                + "WHERE res.inventoryStatus = :inventoryStatus AND res.agent.id = :agentId "
                 + " AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)";
             Query secQuery = em.createQuery(secQueryString);
             secQuery.setParameter("agentId", agentId);
+            secQuery.setParameter("subject", user);
+            secQuery.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
+
+            List<Integer> visible = secQuery.getResultList();
+
+            ListIterator<Resource> iter = resources.listIterator();
+            while (iter.hasNext()) {
+                Resource res = iter.next();
+                boolean found = false;
+                for (Integer vis : visible) {
+                    if (res.getId() == vis) {
+                        found = true;
+                    }
+                }
+                if (!found) {
+                    iter.set(new LockedResource(res));
+                }
+            }
+        }
+
+        return resources;
+    }
+
+    public List<Resource> getResourcesByCompatibleGroup(Subject user, int compatibleGroupId, PageControl pageControl) {
+        // Note: I didn't put these queries in as named queries since they have very specific prefeching
+        // for this use case.
+
+        String ql = "SELECT res "
+                + "FROM Resource res join fetch res.currentAvailability join fetch res.resourceType rt "
+                + "left join fetch rt.subCategory sc left join fetch sc.parentSubCategory "
+                + "WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g WHERE g.id = :groupId)";
+
+        EntityManager em = LookupUtil.getEntityManager();
+        Query query = em.createQuery(ql);
+
+        query.setParameter("groupId", compatibleGroupId);
+        List<Resource> resources = query.getResultList();
+
+        if (!authorizationManager.isInventoryManager(user)) {
+            String secQueryString = "SELECT res.id "
+                    + "FROM Resource res "
+                    + "WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g WHERE g.id = :groupId) "
+                    + " AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)";
+            Query secQuery = em.createQuery(secQueryString);
+            secQuery.setParameter("groupId", compatibleGroupId);
             secQuery.setParameter("subject", user);
 
             List<Integer> visible = secQuery.getResultList();

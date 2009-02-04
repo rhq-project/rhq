@@ -390,5 +390,9 @@ public interface ResourceManagerLocal {
      */
     List<Resource> getResourcesByAgent(Subject user, int agentId, PageControl pageControl);
 
+
+    List<Resource> getResourcesByCompatibleGroup(Subject user, int compatibleGroupId, PageControl pageControl);
+    
+
     ResourceAvailabilitySummary getAvailabilitySummary(Subject user, int resourceId);
 }

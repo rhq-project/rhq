@@ -71,8 +71,9 @@ REQUEST PARAMETERS:
             <onc:subtab name="Graphs"      url="/rhq/resource/monitor/graphs.xhtml" />
             <onc:subtab name="Tables"      url="/rhq/resource/monitor/tables.xhtml" />
             <onc:subtab name="Schedules"   url="/rhq/resource/monitor/schedules.xhtml" />
-            <onc:subtab name="Response"    url="/rhq/resource/monitor/response.xhtml" 
-                                           rendered="#{ResourceUIBean.facets.callTime}" />
+            <c:if test="#{ResourceUIBean.facets.callTime}">
+               <onc:subtab name="Response"    url="/rhq/resource/monitor/response.xhtml" />
+            </c:if>
          </onc:tab>
 
          <onc:tab name="Events">

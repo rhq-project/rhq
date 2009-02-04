@@ -109,16 +109,18 @@ class Request {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String request = reader.readLine();
-            StringTokenizer st = new StringTokenizer(request);
-            st.nextToken(); // skip request-type
-            String url = st.nextToken();
-            log.info("processing: " + url);
-            String path = url.substring(context().basepath().length() + 1);
-            int qmark = qmark(path);
-            filename = path.substring(0, qmark);
-            args = getArgs(path.substring(qmark));
-            fields = httpFields(reader);
-            reply();
+            if (request!=null) {
+                StringTokenizer st = new StringTokenizer(request);
+                st.nextToken(); // skip request-type
+                String url = st.nextToken();
+                log.info("processing: " + url);
+                String path = url.substring(context().basepath().length() + 1);
+                int qmark = qmark(path);
+                filename = path.substring(0, qmark);
+                args = getArgs(path.substring(qmark));
+                fields = httpFields(reader);
+                reply();
+            }
         } catch (Exception e) {
             log.error("request failed:", e);
         } finally {
@@ -226,7 +228,7 @@ class Request {
         Map<String, String> result = new HashMap<String, String>();
         while (true) {
             String line = reader.readLine();
-            if (line.length() > 0) {
+            if (line!= null && line.length() > 0) {
                 String[] pair = line.split(":");
                 result.put(pair[0], pair[1].trim());
             } else {

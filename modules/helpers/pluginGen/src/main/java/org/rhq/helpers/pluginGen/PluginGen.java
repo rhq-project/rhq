@@ -49,7 +49,6 @@ import org.apache.commons.logging.LogFactory;
 public class PluginGen {
 
     private final Log log = LogFactory.getLog(PluginGen.class);
-    private String pkg;
 
     public static void main(String[] arg) throws Exception {
         PluginGen pg = new PluginGen();
@@ -65,6 +64,10 @@ public class PluginGen {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
         Props props = askQuestions(br, new Props());
+        if (props==null) {
+            // abort by user
+            return;
+        }
 
         boolean done = false;
         do {
@@ -77,6 +80,10 @@ public class PluginGen {
                 done = true;
             else {
                 Props child = askQuestions(br, props);
+                if (child==null) {
+                    // abort by user
+                    return;
+                }
                 props.getChildren().add(child);
             }
 
@@ -91,12 +98,12 @@ public class PluginGen {
 
     /**
      * Do some post processing over the input received.
-     * @param props
+     * @param props The properties just recorded from the user input
      */
     private void postprocess(Props props) {
 
         // Set the package
-        pkg = props.getPackagePrefix()+"."+props.getName();
+        String pkg = props.getPackagePrefix() + "." + props.getName();
         props.setPkg(pkg);
 
         for (Props cProp : props.getChildren()) {
@@ -172,7 +179,11 @@ public class PluginGen {
                 }
 
                 answer = br.readLine();
-                String setterName = "set" + name.substring(0, 1).toUpperCase() + name.substring(1);
+                if (answer==null) {
+                    System.out.println("EOL .. aborting");
+                    return null;
+                }
+                String setterName = "set" + caps(name);
 
                 Method setter;
                 if (isBool)
@@ -181,7 +192,7 @@ public class PluginGen {
                     setter = Props.class.getMethod(setterName, String.class);
 
                 if (isBool) {
-                    if (answer.toLowerCase().startsWith("y") || answer.toLowerCase().startsWith("j")) {
+                    if (answer.toLowerCase(Locale.getDefault()).startsWith("y") || answer.toLowerCase(Locale.getDefault()).startsWith("j")) {
                         setter.invoke(props, true);
                     }
                 } else {
@@ -204,7 +215,7 @@ public class PluginGen {
 
         if (props.getFileSystemRoot() == null || props.getFileSystemRoot().equals("")) {
             log.error("No root directory given, can not continue");
-            System.exit(1);
+            return;
         }
 
         File baseDir = new File(props.getFileSystemRoot());
@@ -337,7 +348,7 @@ public class PluginGen {
 
     }
 
-    private String caps(String in) {
+    static String caps(String in) {
         if (in == null)
             return null;
 

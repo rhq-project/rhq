@@ -61,6 +61,7 @@ public class AlertConditionConsumerBean implements MessageListener {
             conditionMessage = (AbstractAlertConditionMessage) objectMessage.getObject();
         } catch (Throwable t) {
             log.error("Error getting content of jms message", t);
+            return;
         }
 
         AlertDefinition definition = null;

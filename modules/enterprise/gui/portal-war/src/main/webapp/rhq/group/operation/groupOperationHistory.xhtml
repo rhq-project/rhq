@@ -51,7 +51,9 @@
                             columnsWidth="1%, 20%, 20%, 20%, 20%, 19%"
                             styleClass="resources-table"
                             headerClass="tableRowHeader"
-                            footerClass="on-pager-footer">
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
                             
                <f:facet name="PageControlView">
                   <onc:paginationControl id="ResourceGroupOperationPendingHistory" />
@@ -182,7 +184,9 @@
                             rowKeyVar="rowIndex"
                             styleClass="resources-table"
                             headerClass="tableRowHeader"
-                            footerClass="on-pager-footer">
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
                             
                <f:facet name="PageControlView">
                   <onc:paginationControl id="ResourceGroupOperationCompletedHistory" />

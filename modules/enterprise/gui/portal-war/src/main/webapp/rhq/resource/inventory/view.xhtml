@@ -140,7 +140,9 @@
                 columnClasses="resource-checkbox, resource-quicknav-cell, resource-name-cell, resource-category-cell, resource-type-cell, resource-description-cell, resource-availability-cell"
                 columnsWidth="1%,1%"
                 headerClass="tableRowHeader"
-                footerClass="on-pager-footer">
+                footerClass="on-pager-footer"
+                onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
 
    <f:facet name="PageControlView">
       <onc:paginationControl id="ChildResourcesList"/>
@@ -359,7 +361,9 @@
                 width="100%"
                 columnsWidth="12%,22%,16%,12%,13%,13%,12%"
                 headerClass="tableRowHeader"
-                footerClass="on-pager-footer">
+                footerClass="on-pager-footer"
+                onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
 
 
 <f:facet name="PageControlView">
@@ -483,7 +487,9 @@
                 width="100%"
                 columnsWidth="16%,16%,17%,17%,17%,17%"
                 headerClass="tableRowHeader"
-                footerClass="on-pager-footer">
+                footerClass="on-pager-footer"
+                onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
 
 <f:facet name="PageControlView">
    <onc:paginationControl id="DeleteResourceHistory"/>
@@ -640,7 +646,9 @@
                       styleClass="resources-table"
                       columnClasses="resource-checkbox, resource-quicknav-cell, group-category-cell, resource-name-cell, resource-description-cell, count-cell, resource-availability-cell"
                       headerClass="tableRowHeader"
-                      footerClass="on-pager-footer">
+                      footerClass="on-pager-footer"
+                      onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                      onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
 
          <f:facet name="PageControlView">
             <onc:paginationControl id="ContainingGroupsList"/>

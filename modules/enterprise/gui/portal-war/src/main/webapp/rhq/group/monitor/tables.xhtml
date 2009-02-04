@@ -41,10 +41,14 @@
                value="#{ResourceGroupUIBean.groupId}" />
 
             <rich:dataTable id="resourceGroupHealthSummaryDataTable"
-               rows="#{PageControl.ResourceGroupHealthSummary.pageSize}"
-               value="#{resourceGroupHealthSummaryDataModel}"
-               var="healthSummary" columnsWidth="1%" width="100%"
-               footerClass="on-pager-footer">
+                            rows="#{PageControl.ResourceGroupHealthSummary.pageSize}"
+                            value="#{resourceGroupHealthSummaryDataModel}"
+                            var="healthSummary" 
+                            columnsWidth="1%" 
+                            width="100%"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
 
                <rich:column width="1%">
                   <f:facet name="header">

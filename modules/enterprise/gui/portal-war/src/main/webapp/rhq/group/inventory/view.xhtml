@@ -153,7 +153,9 @@
                 columnClasses="resource-checkbox, resource-quicknav-cell, resource-name-cell, resource-category-cell, resource-type-cell, resource-description-cell, resource-availability-cell"
                 columnsWidth="1%,1%"
                 headerClass="tableRowHeader"
-                footerClass="on-pager-footer">
+                footerClass="on-pager-footer"
+                onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
 
    <f:facet name="PageControlView">
       <onc:paginationControl id="ResourceGroupMemberList"/>

@@ -45,7 +45,11 @@
 
 
          <rich:dataTable value="#{MetricsTableUIBean.metricSummaries}"
-            width="100%" var="metric" columnsWidth="1%">
+                         width="100%" 
+                         var="metric" 
+                         columnsWidth="1%"
+                         onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                         onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
 
             <rich:column
                rendered="#{MetricsTableUIBean.context.category == 'Resource'}">

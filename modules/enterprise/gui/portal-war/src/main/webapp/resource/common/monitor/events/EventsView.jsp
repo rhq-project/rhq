@@ -81,7 +81,7 @@ function onLoad() {
 
    var theme = Timeline.ClassicTheme.create();
     theme.event.bubble.width = 650;
-    theme.event.bubble.height = 320
+    theme.event.bubble.height = 320;
     theme.event.label.width = 200;
     theme.event.label.lineColor = "black";
     theme.event.highlightColors = ["red", "orange"];
@@ -161,9 +161,8 @@ for (Availability avail : availabilities) {
         ];
     }
 
-    var foo = "hello, world";
 
-  tl = Timeline.create(document.getElementById("t1"), bandInfos);
+  var tl = Timeline.create(document.getElementById("t1"), bandInfos);
 
     var toLoad = 4;
      function done() {

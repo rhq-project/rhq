@@ -44,6 +44,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.gui.util.FacesComponentUtility;
@@ -53,6 +54,8 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -66,6 +69,7 @@ public class ResourceTreeModelUIBean {
     private ResourceTreeNode rootNode = null;
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+    private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
     private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
     private OperationManagerLocal operationManager = LookupUtil.getOperationManager();
     private MeasurementScheduleManagerLocal measurementScheduleManager = LookupUtil.getMeasurementScheduleManager();
@@ -295,7 +299,7 @@ public class ResourceTreeModelUIBean {
         }
     }
 
-    public void setMenu(ContextMenu menu) {
+    public void setMenu(ContextMenu menu) throws ResourceTypeNotFoundException {
         this.resourceContextMenu = menu;
 
         this.resourceContextMenu.getChildren().clear();
@@ -324,18 +328,38 @@ public class ResourceTreeModelUIBean {
             quickLinksItem.setSubmitMode("none");
             quickLinksItem.setId("menu_res_" + res.getId());
 
-            HtmlOutputLink monitorLink = FacesComponentUtility.addOutputLink(quickLinksItem, null, "/rhq/resource/monitor/graphs.xhtml?id=" + resourceIdString);
-            FacesComponentUtility.addGraphicImage(monitorLink, null, "/images/icon_hub_m.gif", "Monitor").setStyle("margin: 2px;");
+            ResourceFacets facets  = this.resourceTypeManager.getResourceFacets(subject, res.getResourceType().getId());
+
+            if (LookupUtil.getSystemManager().isMonitoringEnabled()) {
+                HtmlOutputLink monitorLink = FacesComponentUtility.addOutputLink(quickLinksItem, null, "/rhq/resource/monitor/graphs.xhtml?id=" + resourceIdString);
+                FacesComponentUtility.addGraphicImage(monitorLink, null, "/images/icon_hub_m.gif", "Monitor").setStyle("margin: 2px;");
+            }
+
             HtmlOutputLink eventLink = FacesComponentUtility.addOutputLink(quickLinksItem, null, "/rhq/resource/events/history.xhtml?id=" + resourceIdString);
             FacesComponentUtility.addGraphicImage(eventLink, null, "/images/icon_hub_e.gif", "Events").setStyle("margin: 2px;");
+
             HtmlOutputLink inventoryLink = FacesComponentUtility.addOutputLink(quickLinksItem, null, "/rhq/resource/inventory/view.xhtml?id=" + resourceIdString);
             FacesComponentUtility.addGraphicImage(inventoryLink, null, "/images/icon_hub_i.gif", "Inventory").setStyle("margin: 2px;");
-            HtmlOutputLink configurationLink = FacesComponentUtility.addOutputLink(quickLinksItem, null, "/rhq/resource/configuration/view.xhtml?id=" + resourceIdString);
-            FacesComponentUtility.addGraphicImage(configurationLink, null, "/images/icon_hub_c.gif", "Configuration").setStyle("margin: 2px;");
-            HtmlOutputLink operationsLink = FacesComponentUtility.addOutputLink(quickLinksItem, null, "/rhq/resource/operation/resourceOperationScheduleNew.xhtml?id=" + resourceIdString);
-            FacesComponentUtility.addGraphicImage(operationsLink, null, "/images/icon_hub_o.gif", "Operations").setStyle("margin: 2px;");
+
+            if (facets.isConfiguration()) {
+                HtmlOutputLink configurationLink = FacesComponentUtility.addOutputLink(quickLinksItem, null, "/rhq/resource/configuration/view.xhtml?id=" + resourceIdString);
+                FacesComponentUtility.addGraphicImage(configurationLink, null, "/images/icon_hub_c.gif", "Configuration").setStyle("margin: 2px;");
+            }
+
+            if (facets.isOperation()) {
+                HtmlOutputLink operationsLink = FacesComponentUtility.addOutputLink(quickLinksItem, null, "/rhq/resource/operation/resourceOperationScheduleNew.xhtml?id=" + resourceIdString);
+                FacesComponentUtility.addGraphicImage(operationsLink, null, "/images/icon_hub_o.gif", "Operations").setStyle("margin: 2px;");
+            }
+
             HtmlOutputLink alertsLink = FacesComponentUtility.addOutputLink(quickLinksItem, null, "/rhq/resource/alert/listAlertDefinitions.xhtml?id=" + resourceIdString);
             FacesComponentUtility.addGraphicImage(alertsLink, null, "/images/icon_hub_a.gif", "Alerts").setStyle("margin: 2px;");
+
+            if (facets.isContent()) {
+                HtmlOutputLink packagesLink = FacesComponentUtility.addOutputLink(quickLinksItem, null, "/rhq/resource/content/view.xhtml?id=" + resourceIdString);
+                FacesComponentUtility.addGraphicImage(packagesLink, null, "/images/icon_hub_p.gif", "Alerts").setStyle("margin: 2px;");
+            }
+
+
 
             this.resourceContextMenu.getChildren().add(quickLinksItem);
 

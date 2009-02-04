@@ -1927,7 +1927,7 @@
 
       <service name="Stateless Session EJB"
                subCategory="Applications"
-               class="org.rhq.plugins.jmx.MBeanResourceComponent"
+               class="EJB2BeanComponent"
                discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
                description="An EJB 1.x or 2.x Stateless Session Bean">
          <plugin-configuration>
@@ -1960,6 +1960,11 @@
 
            <metric displayName="Max Pool Size"
                    property="{{jboss.j2ee:jndiName=%name%,plugin=pool,service=EJB}MaxSize}"/>
+
+            <!-- default interval == 600000 ms == 10 min -->
+            <metric property="MethodInvocationTime" dataType="calltime" units="milliseconds"
+                    defaultOn="false" defaultInterval="600000" destinationType="Method Name"
+                    description="the minimum, maximum, and average invocation times for each of the methods exposed by this EJB"/>
 
          </service>
 

@@ -189,7 +189,7 @@ id - the id of the Resource being accessed
                       <h:panelGroup layout="block">
                           <h:outputText value="MTBF: " styleClass="BoldText"/>
                           <h:outputText value="#{ResourceUIBean.availabilitySummary.MTBF}">
-                              <f:converter converterId="RichDurationConverter" />
+                              <f:converter converterId="LongDurationConverter" />
                           </h:outputText>
                           <rich:toolTip>
                               Mean Time Between Failures over the known resource lifetime.
@@ -200,7 +200,7 @@ id - the id of the Resource being accessed
                       <h:panelGroup layout="block">
                           <h:outputText value="MTTR: " styleClass="BoldText"/>
                           <h:outputText value="#{ResourceUIBean.availabilitySummary.MTTR}">
-                            <f:converter converterId="RichDurationConverter" />
+                            <f:converter converterId="LongDurationConverter" />
                           </h:outputText>
                           <rich:toolTip>
                               Mean Time To Recover from failure over the known resource lifetime.

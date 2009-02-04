@@ -165,7 +165,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     private static final String RESOURCE_TYPE_CONNECTION_FACTORY = "ConnectionFactory";
     private static final String RESOURCE_TYPE_EAR = "Enterprise Application (EAR)";
     private static final String RESOURCE_TYPE_WAR = "Web Application (WAR)";
-    private static final String RESOURCE_TYPE_SAR = "Service Archive (SAR)"; // Not yet used 
+    private static final String RESOURCE_TYPE_SAR = "Service Archive (SAR)"; // Not yet used
 
     // The following constants reference the exact name of the package types as defined in the plugin descriptor
     private static final String PACKAGE_TYPE_PATCH = "cumulativePatch";
@@ -673,7 +673,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         deployFile(dsFile);
 
         String objectName = String.format("jboss.jca:name=%s,service=ConnectionFactoryBinding", name);
-        // IMPORTANT: The object name must be canonicalized so it matches the resource key that 
+        // IMPORTANT: The object name must be canonicalized so it matches the resource key that
         //            MBeanResourceDiscoveryComponent uses, which is the canonical object name.
         report.setResourceKey(getCanonicalName(objectName));
         setResourceName(report, name);
@@ -817,6 +817,11 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
         Configuration deployTimeConfiguration = details.getDeploymentTimeConfiguration();
         String deployDirectory = deployTimeConfiguration.getSimple("deployDirectory").getStringValue();
+        if (deployDirectory == null) {
+            // should not be null, but you never know ..
+            setErrorOnCreateResourceReport(report, "Property 'deployDirectory' was unexpectedly null");
+            return;
+        }
 
         // Verify the user did not enter a path that represents a security issue:
         // - No absolute directories; must be relative to the configuration path
@@ -918,7 +923,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     /**
      * Parse the passed war file, try to read an enclosed jboss-web.xml and look for
      * virtual-hosts in it. If found, return one virtual host name. Else return localhost.
-     * @param warFile
+     * @param warFile File pointer pointing to a .war file
      * @return The name of a defined virtual host or localhost
      */
     private String getVhostFromWarFile(File warFile) {
@@ -933,7 +938,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
                 Document doc = saxBuilder.build(is);
                 Element root = doc.getRootElement(); // <jboss-web>
                 List<Element> vHosts = root.getChildren("virtual-host");
-                if (vHosts == null || vHosts.size() == 0) {
+                if (vHosts == null || vHosts.isEmpty()) {
                     if (log.isDebugEnabled())
                         log.debug("No vhosts found in war file, using " + LOCALHOST);
                     return LOCALHOST;
@@ -959,7 +964,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     }
 
     /**
-     * Check to see if the passed file is actually in jar format and contains a 
+     * Check to see if the passed file is actually in jar format and contains a
      * <ul>
      * <li>WEB-INF/web.xml for .war </li>
      * <li>META-INF/application.xml for .ear</li>
@@ -978,7 +983,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
                 entry = jfile.getJarEntry("WEB-INF/web.xml");
             else if (RESOURCE_TYPE_EAR.equals(type))
                 entry = jfile.getJarEntry("META-INF/application.xml");
-            else if (RESOURCE_TYPE_SAR.equals(type)) // Not yet used 
+            else if (RESOURCE_TYPE_SAR.equals(type)) // Not yet used
                 entry = jfile.getJarEntry("META-INF/jboss-service.xml");
             else {
                 entry = null; // unknown type
@@ -1008,13 +1013,23 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         for (Property prop : logEventSources.getList()) {
             PropertyMap logEventSource = (PropertyMap) prop;
             Boolean enabled = Boolean.valueOf(logEventSource.getSimpleValue(LogEventSourcePropertyNames.ENABLED, null));
-            File logFile = new File((logEventSource.getSimpleValue(LogEventSourcePropertyNames.LOG_FILE_PATH, null)));
             if (enabled) {
+                String logFilePathname = logEventSource.getSimpleValue(LogEventSourcePropertyNames.LOG_FILE_PATH, null);
+                if (logFilePathname==null) {
+                    log.info("No logfile path given, can not watch this event log.");
+                    return;
+                }
+                File logFile = new File(logFilePathname);
+                if (!logFile.exists() || !logFile.canRead()) {
+                    log.error("Logfile at location " + logFilePathname + " does not exist or is not readable. Can not start watching the event log.");
+                    return;
+                }
+
                 Log4JLogEntryProcessor processor = new Log4JLogEntryProcessor(LOG_ENTRY_EVENT_TYPE, logFile);
                 String dateFormatString = logEventSource.getSimpleValue(LogEventSourcePropertyNames.DATE_FORMAT, null);
                 if (dateFormatString != null) {
                     try {
-                        DateFormat dateFormat = new SimpleDateFormat(dateFormatString);
+                        DateFormat dateFormat = new SimpleDateFormat(dateFormatString); // TODO locale specific ?
                         processor.setDateFormat(dateFormat);
                     } catch (IllegalArgumentException e) {
                         throw new InvalidPluginConfigurationException("Date format [" + dateFormatString
@@ -1167,7 +1182,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
                 }
 
                 // Since the connection is attempted each time it's used, failure to connect could result in log
-                // file spamming. Log it once for every 10 consecutive times it's encountered. 
+                // file spamming. Log it once for every 10 consecutive times it's encountered.
                 if (consecutiveConnectionErrors % 10 == 0) {
                     log.warn("Could not establish connection to the JBoss AS instance ["
                         + (consecutiveConnectionErrors + 1) + "] times for resource ["
@@ -1185,5 +1200,5 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         }
 
         return connection;
-    }   
+    }
 }

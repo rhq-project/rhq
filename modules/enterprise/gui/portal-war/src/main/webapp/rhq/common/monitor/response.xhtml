@@ -1,21 +1,142 @@
-<?xml version="1.0"?>
 
-<!DOCTYPE html
-        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax" 
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-<html xmlns="http://www.w3.org/1999/xhtml"
-   xmlns:h="http://java.sun.com/jsf/html"
-   xmlns:f="http://java.sun.com/jsf/core"
-   xmlns:ui="http://java.sun.com/jsf/facelets"
-   xmlns:c="http://java.sun.com/jstl/core"
-   xmlns:onc="http://jboss.org/on/component"
-   xmlns:onf="http://jboss.org/on/function"
-   xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
-   xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+   <a href="/resource/common/monitor/Visibility.do?mode=performance&amp;id=#{param.id}">Struts Impl</a>
 
+   <rich:panel styleClass="BlockContent">
 
-NOT YET IMPLEMENTED
+      <f:facet name="header" styleClass="BlockTitle">
+         Response Time Metrics
+      </f:facet>
 
+      <h:form id="callTimeForm">
+         <!--  On submit make sure these are provided for the context of any new instance of the UI beans -->
+         <c:if test="#{CallTimeUIBean.context.resourceId != -1}">
+            <input type="hidden" name="id"
+               value="#{CallTimeUIBean.context.resourceId}" />
+         </c:if>
+         <c:if test="#{CallTimeUIBean.context.groupId != -1}">
+            <input type="hidden" name="groupId"
+               value="#{CallTimeUIBean.context.groupId}" />
+         </c:if>
+         <c:if
+            test="#{CallTimeUIBean.context.parentResourceId != -1}">
+            <input type="hidden" name="parent"
+               value="#{CallTimeUIBean.context.parentResourceId}" />
+         </c:if>
+         <c:if test="#{CallTimeUIBean.context.resourceTypeId != -1}">
+            <input type="hidden" name="type"
+               value="#{CallTimeUIBean.context.resourceTypeId}" />
+         </c:if>
 
-</html>
+         <ui:param name="callTimeDataModel" value="#{CallTimeUIBean.dataModel}" />
+
+         <rich:dataTable id="callTimeDataTable"
+                         value="#{callTimeDataModel}" 
+                         rows="#{PageControl.CallTimeHistory.pageSize}" 
+                         var="item"
+                         width="100%"
+                         styleClass="resources-table"
+                         headerClass="tableRowHeader" 
+                         footerClass="on-pager-footer"
+                         onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                         onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+            <f:facet name="PageControlView">
+                <onc:paginationControl id="CallTimeHistory" />
+            </f:facet>
+
+            <rich:column>
+               <f:facet name="header">
+                  <onc:sortableColumnHeader sort="key.callDestination">
+                     <h:outputText value="Destination" />
+                  </onc:sortableColumnHeader>
+               </f:facet>
+               <h:outputText value="#{item.callDestination}" />
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <onc:sortableColumnHeader sort="SUM(value.count)">
+                     <h:outputText value="Request Count" />
+                  </onc:sortableColumnHeader>
+               </f:facet>
+               <h:outputText value="#{item.count}" />
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <onc:sortableColumnHeader sort="MIN(value.minimum)">
+                     <h:outputText value="Minimum" />
+                  </onc:sortableColumnHeader>
+               </f:facet>
+               <h:outputText value="#{item.minimum}">
+                  <f:converter converterId="ShortDurationConverter"/>
+               </h:outputText>
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <onc:sortableColumnHeader sort="SUM(value.total) / SUM(value.count))">
+                     <h:outputText value="Average" />
+                  </onc:sortableColumnHeader>
+               </f:facet>
+               <h:outputText value="#{item.average}">
+                  <f:converter converterId="ShortDurationConverter"/>
+               </h:outputText>
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <onc:sortableColumnHeader sort="MAX(value.maximum)">
+                     <h:outputText value="Maximum" />
+                  </onc:sortableColumnHeader>
+               </f:facet>
+               <h:outputText value="#{item.maximum}">
+                  <f:converter converterId="ShortDurationConverter"/>
+               </h:outputText>
+            </rich:column>
+
+            <f:facet name="footer">
+                <rich:columnGroup>
+                    <rich:column colspan="5" width="100%">
+                        <ui:param name="paginationDataTableName" value="callTimeDataTable" />
+                        <ui:param name="paginationDataModel" value="#{callTimeDataModel}" />
+                        <ui:param name="paginationPageControl" value="#{PageControl.CallTimeHistory}" />
+                        <ui:include src="/rhq/resource/include/pagination.xhtml" />
+                    </rich:column>
+                </rich:columnGroup>
+            </f:facet>
+
+         </rich:dataTable>
+         
+         <table>
+             <tr>
+                 <td><onc:metric optionList="m,h,d" /></td>
+                 <td>
+                     <h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}"
+                                    action="#{MetricComponentUtilityUIBean.update}" >
+                         <img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
+                     </h:commandLink>
+                     <h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" 
+                                    action="#{MetricComponentUtilityUIBean.switchToSimpleMode}">
+                         <h:outputText value="Switch to Simple Mode" />
+                     </h:commandLink>
+                 </td>
+             </tr>
+         </table>
+      </h:form>
+
+   </rich:panel>
+
+</ui:composition>
+

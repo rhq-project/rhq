@@ -20,8 +20,13 @@
    </converter>
 
    <converter>
-      <converter-id>RichDurationConverter</converter-id>
-      <converter-class>org.rhq.enterprise.gui.common.time.converter.RichDurationConverter</converter-class>
+      <converter-id>LongDurationConverter</converter-id>
+      <converter-class>org.rhq.enterprise.gui.common.time.converter.LongDurationConverter</converter-class>
+   </converter>
+   
+   <converter>
+      <converter-id>ShortDurationConverter</converter-id>
+      <converter-class>org.rhq.enterprise.gui.common.time.converter.ShortDurationConverter</converter-class>
    </converter>
     
    <converter>

@@ -174,12 +174,12 @@ id - the id of the Resource being accessed
                       <br/>
                       <b>Down for: </b>
                       <h:outputText value="#{ResourceUIBean.availabilitySummary.downTime}">
-                          <f:converter converterId="RichDurationConverter"/>
+                          <f:converter converterId="LongDurationConverter"/>
                       </h:outputText>
                       <br/>
                       <b>Up for: </b>
                       <h:outputText value="#{ResourceUIBean.availabilitySummary.upTime}">
-                          <f:converter converterId="RichDurationConverter"/>
+                          <f:converter converterId="LongDurationConverter"/>
                       </h:outputText>
                       <br/>
                       <b>Failures: </b>

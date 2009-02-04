@@ -241,9 +241,9 @@ public abstract class PagedListDataModel<T> extends DataModel {
             results = fetchPageGuarded(pc);
             long end = System.currentTimeMillis();
             long time = end - start;
-            log.debug("Fetch time was [" + time + "]ms for " + pageControlView);
+            log.info("Fetch time was [" + time + "]ms for " + pageControlView);
             if (time > 2000L) {
-                log.debug("Slow loading page");
+                log.info("Slow loading page");
             }
         } else {
             results = fetchPageGuarded(pc);

@@ -29,9 +29,9 @@ import javax.faces.convert.Converter;
  */
 public class DurationConverter implements Converter {
 
-    private static final long MILLIS_IN_HOUR = 3600000L;
-    private static final long MILLIS_IN_MINUTE = 60000L;
     private static final long MILLIS_IN_SECOND = 1000L;
+    private static final long MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
+    private static final long MILLIS_IN_HOUR = 60 * MILLIS_IN_MINUTE;
 
     private static final DecimalFormat twoDigitFormatter = new DecimalFormat("00");
 

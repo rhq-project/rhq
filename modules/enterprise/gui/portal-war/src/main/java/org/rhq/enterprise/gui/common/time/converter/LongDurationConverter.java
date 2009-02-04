@@ -27,7 +27,7 @@ import javax.faces.convert.Converter;
 /**
  * @author Greg Hinkle
  */
-public class RichDurationConverter implements Converter {
+public class LongDurationConverter implements Converter {
 
     private static final long MILLIS_IN_SECOND = 1000L;
     private static final long MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
@@ -51,7 +51,15 @@ public class RichDurationConverter implements Converter {
         if (value == null) {
             return "0"; // visual indicator of issue
         }
-        long millis = (Long) value;
+        long millis = 0;
+        if (value instanceof Long) {
+            millis = (Long) value;
+        } else if (value instanceof Double) {
+            millis = ((Double) value).longValue();
+        } else {
+            throw new IllegalArgumentException("The " + LongDurationConverter.class.getSimpleName()
+                + " converter does not support rendering objects of type " + value.getClass().getSimpleName());
+        }
         StringBuilder buf = new StringBuilder();
 
         int days = (int) (millis / MILLIS_IN_DAY);
@@ -65,7 +73,8 @@ public class RichDurationConverter implements Converter {
         int hours = (int) (millis / MILLIS_IN_HOUR);
         millis %= MILLIS_IN_HOUR;
         if (hours > 0) {
-            if (buf.length() > 0) buf.append(", ");
+            if (buf.length() > 0)
+                buf.append(", ");
             buf.append(hours + " hour");
             if (hours != 1)
                 buf.append("s");
@@ -75,13 +84,13 @@ public class RichDurationConverter implements Converter {
         int mins = (int) (millis / MILLIS_IN_MINUTE);
         millis %= MILLIS_IN_MINUTE;
         if (mins > 0) {
-            if (buf.length() > 0) buf.append(", ");
+            if (buf.length() > 0)
+                buf.append(", ");
             buf.append(mins + " minute");
             if (mins != 1)
                 buf.append("s");
 
         }
-
 
         return buf.toString();
     }

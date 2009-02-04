@@ -72,6 +72,7 @@ import org.rhq.enterprise.gui.inventory.resource.ListContainingGroupsUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListCreateResourceHistoryUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListDeleteResourceHistoryUIBean;
 import org.rhq.enterprise.gui.inventory.resource.history.ListPluginConfigurationUpdateUIBean;
+import org.rhq.enterprise.gui.measurement.calltime.CallTimeUIBean;
 import org.rhq.enterprise.gui.measurement.schedule.group.ListResourceGroupMeasurementScheduleUIBean;
 import org.rhq.enterprise.gui.measurement.schedule.resource.ListResourceMeasurementScheduleUIBean;
 import org.rhq.enterprise.gui.measurement.tables.group.ResourceGroupMetricsTableUIBean;
@@ -92,7 +93,7 @@ import org.rhq.enterprise.gui.subsystem.SubsystemOperationHistoryUIBean;
 public enum PageControlView {
     // Use this across any view that doesn't want paging of tabular data
 
-    NONE,
+    NONE, // this is deprecated in favor of using an unlimited PageControlView
 
     // Configuration
 
@@ -247,6 +248,8 @@ public enum PageControlView {
     ResourceGroupMeasurementScheduleList(ListResourceGroupMeasurementScheduleUIBean.class, true),
     /** */
     EventsHistoryList(EventHistoryUIBean.class),
+    /** */
+    CallTimeHistory(CallTimeUIBean.class),
 
     // Subsystem Views
 

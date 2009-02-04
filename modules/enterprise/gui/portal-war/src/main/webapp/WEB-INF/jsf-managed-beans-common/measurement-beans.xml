@@ -23,6 +23,13 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
    
+   <!-- /rhq/common/monitor/response/** -->
+   <managed-bean>
+      <managed-bean-name>CallTimeUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.measurement.calltime.CallTimeUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
    <!-- for various pages onc:metric is dropped onto -->
     <managed-bean>
         <managed-bean-name>AdvancedMetricSettingsUIBean</managed-bean-name>
@@ -34,6 +41,7 @@
         <managed-bean-class>org.rhq.enterprise.gui.common.metric.MetricComponentUtilityUIBean</managed-bean-class>
         <managed-bean-scope>request</managed-bean-scope>
     </managed-bean>
+
 
 </faces-config>
       

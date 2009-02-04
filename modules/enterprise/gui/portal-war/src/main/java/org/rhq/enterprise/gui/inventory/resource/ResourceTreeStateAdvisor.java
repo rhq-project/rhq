@@ -39,8 +39,15 @@ import org.ajax4jsf.model.DataVisitor;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 
 
 /**
@@ -55,6 +62,11 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
     private TreeRowKey selectedKey;
     private int selectedId;
     private int selecteAGTypeId;
+
+    private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
+    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+
+
 
     public void changeExpandListener(org.richfaces.event.NodeExpandedEvent e) {
         altered = true;
@@ -78,12 +90,41 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                 ServletContext context = (ServletContext) FacesContextUtility.getFacesContext().getExternalContext().getContext();
                 HttpServletResponse response = (HttpServletResponse) FacesContextUtility.getFacesContext().getExternalContext().getResponse();
 
+                Subject subject = EnterpriseFacesContextUtility.getSubject();
+
                 if (node.getData() instanceof Resource) {
                     String path = FacesContextUtility.getRequest().getRequestURI();
 
+                    Resource resource = this.resourceManager.getResourceById(subject, ((Resource) node.getData()).getId());
+                    ResourceFacets facets  = this.resourceTypeManager.getResourceFacets(subject, resource.getResourceType().getId());
+
+
+                    String fallbackPath = LookupUtil.getSystemManager().isMonitoringEnabled()
+                            ? "/rhq/resource/monitor/graphs.xhtml"
+                            : "/rhq/resource/inventory/view.xhtml";
+
+                    
+
+
                     // Switching from a auto group view... default to monitor page
                     if (!path.startsWith("/rhq/resource")) {
-                        path = "/rhq/resource/monitor/graphs.xhtml";
+                        path = fallbackPath;
+                    } else {
+                        if ((path.startsWith("/rhq/resource/configuration/") && !facets.isConfiguration())
+                            || (path.startsWith("/rhq/resource/content/") && !facets.isContent())
+                            || (path.startsWith("/rhq/resource/operation") && !facets.isOperation())) {
+                            // This resource doesn't support those facets
+                            path = fallbackPath;
+                        } else if (path.startsWith("/rhq/resource/configuration/edit.xhtml") && facets.isConfiguration()) {
+                            path = "/rhq/resource/configuration/view.xhtml";
+                        } else if (!path.startsWith("/rhq/resource/content/view.xhtml")
+                                && path.startsWith("/rhq/resource/content/")
+                                && facets.isContent()) {
+                            path = "/rhq/resource/content/view.xhtml";
+                        } else if (!path.startsWith("/rhq/resource/inventory/view.xhtml")
+                            && path.startsWith("/rhq/resource/inventory/")) {
+                            path = "/rhq/resource/inventory/view.xhtml";
+                        }
                     }
 
                     response.sendRedirect(path + "?id=" + ((Resource) node.getData()).getId());
@@ -96,6 +137,8 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                 }
             }
         } catch (IOException e1) {
+            e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (ResourceTypeNotFoundException e1) {
             e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
     }

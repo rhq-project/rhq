@@ -172,9 +172,7 @@ public class MeasurementDataManagerUtility {
     }
 
     public static String getCurrentRawTable() {
-        long now = System.currentTimeMillis();
-        long tableIndex = getTableIndex(now);
-        return TABLE_PREFIX + nf.format((tableIndex + 1) % (TABLE_COUNT));
+        return getTable(System.currentTimeMillis());
     }
 
     public static String getNextRotationTime() {

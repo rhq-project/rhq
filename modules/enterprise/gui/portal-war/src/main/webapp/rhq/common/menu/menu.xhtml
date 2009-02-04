@@ -68,13 +68,11 @@
         <rich:menuGroup value="Subsystem Views">
 
             <rich:menuItem submitMode="none"
-                           onclick="window.location = '/rhq/subsystem/layout/main.xhtml?tab=configurationUpdates'">
-                Configuration Changes
+                           onclick="window.location = '/rhq/subsystem/layout/main.xhtml?tab=configurationUpdates'">Configuration Changes
             </rich:menuItem>
 
             <rich:menuItem submitMode="none"
-                           onclick="window.location = '/rhq/subsystem/layout/main.xhtml?tab=problemResources'">
-                Problem Resources
+                           onclick="window.location = '/rhq/subsystem/layout/main.xhtml?tab=problemResources'">Problem Resources
             </rich:menuItem>
             <rich:menuItem submitMode="none"
                            onclick="window.location = '/rhq/subsystem/layout/main.xhtml?tab=operations'">Operations
@@ -97,8 +95,6 @@
             <h:panelGroup>
 
                 <h:inputText id="selectedResource" style="width: 250px;" immediate="true"/>
-                <h:graphicImage value="/images/icon_menu_down.gif"
-                                onclick="#{rich:component('resourceSelectBox')}.callSuggestion(true)"/>
 
                 <rich:suggestionbox id="resourceSelectBox" for="selectedResource" tokens=",[]"
                                     ajaxSingle="true" immediate="true"

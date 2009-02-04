@@ -105,7 +105,7 @@ public class ConfigurationUpdateComposite implements Serializable {
         return resourceName;
     }
 
-    public int getParentResourceId() {
+    public Integer getParentResourceId() {
         return parentResourceId;
     }
 

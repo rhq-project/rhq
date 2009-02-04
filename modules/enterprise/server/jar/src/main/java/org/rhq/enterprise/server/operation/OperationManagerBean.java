@@ -1505,7 +1505,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         if (parameters != null) {
             PropertySimple timeoutProperty = parameters.getSimple(OperationDefinition.TIMEOUT_PARAM_NAME);
             if (timeoutProperty != null) {
-                timeout = timeoutProperty.getIntegerValue().intValue();
+                timeout = timeoutProperty.getIntegerValue();
             }
         }
 
@@ -1521,10 +1521,10 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         // user had N ways to define the timeout and didn't choose to do any... just provide a hardcoded value
         if (timeout == null) {
-            timeout = new Integer(3600); // 1 hour
+            timeout = 3600; // 1 hour
         }
 
-        return timeout.intValue() * 1000L;
+        return timeout * 1000L;
     }
 
     private Resource getResourceIfAuthorized(Subject whoami, int resourceId) {

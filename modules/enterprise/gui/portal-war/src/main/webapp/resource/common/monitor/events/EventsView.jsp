@@ -183,20 +183,20 @@ for (Availability avail : availabilities) {
           done();
       });
 
-      var link = "/resource/common/monitor/events/EventAlertJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+      link = "/resource/common/monitor/events/EventAlertJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
       Timeline.loadJSON(link, function(json, url) {
           eventSource.loadJSON(json, url);
           document.getElementById("event-count").innerHTML = eventSource.getCount();
           done();
       });
 
-      var link = "/resource/common/monitor/events/EventOperationsJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+      link = "/resource/common/monitor/events/EventOperationsJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
       Timeline.loadJSON(link, function(json, url) {
           eventSource.loadJSON(json, url);
           document.getElementById("event-count").innerHTML = eventSource.getCount();
           done();
       });
-      var link = "/resource/common/monitor/events/EventEventsJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+      link = "/resource/common/monitor/events/EventEventsJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
       Timeline.loadJSON(link, function(json, url) {
           eventSource.loadJSON(json, url);
           document.getElementById("event-count").innerHTML = eventSource.getCount();

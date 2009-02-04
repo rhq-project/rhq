@@ -33,20 +33,24 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
  */
 public class PropertySetComponent extends UIComponentBase implements FacesComponentIdFactory
 {
+    private static final String COMPONENT_FAMILY = "rhq";
     public static final String COMPONENT_TYPE = "org.rhq.PropertySet";
-    public static final String COMPONENT_FAMILY = "rhq";
 
-    static final String PROPERTY_DEFINITION_ATTRIBUTE = "propertyDefinition";
-    static final String CONFIGURATION_SET_ATTRIBUTE = "configurationSet";
+    public static final String PROPERTY_DEFINITION_ATTRIBUTE = "propertyDefinition";
+    public static final String CONFIGURATION_SET_ATTRIBUTE = "configurationSet";
 
     private Boolean readOnly;    
     private Integer listIndex;
+
+    public PropertySetComponent()
+    {
+        setRendererType(PropertySetRenderer.RENDERER_TYPE);
+    }
 
     public String createUniqueId() {
         return UNIQUE_ID_PREFIX + UUID.randomUUID();
     }
 
-    @Override
     public String getFamily() {
         return COMPONENT_FAMILY;
     }

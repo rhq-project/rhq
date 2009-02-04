@@ -320,7 +320,8 @@ public class ConfigRenderer extends Renderer {
     }
 
     private void validateAttributes(AbstractConfigurationComponent config) {
-        if (config.getValueExpression("configurationDefinition") == null) {
+        // TODO: Add back attribute validation - remember config and configSet components require different attributes.
+        /*if (config.getValueExpression("configurationDefinition") == null) {
             throw new IllegalStateException("The " + config.getClass().getName()
                 + " component requires a 'configurationDefinition' attribute.");
         }
@@ -328,7 +329,7 @@ public class ConfigRenderer extends Renderer {
         if (config.getValueExpression("configuration") == null) {
             throw new IllegalStateException("The " + config.getClass().getName()
                 + " component requires a 'configuration' attribute.");
-        }
+        }*/
     }
 
     private int addNewMap(AbstractConfigurationComponent config) {

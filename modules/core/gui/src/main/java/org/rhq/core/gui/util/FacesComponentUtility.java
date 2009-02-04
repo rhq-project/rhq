@@ -33,6 +33,7 @@ import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
 import javax.faces.component.UIOutput;
 import javax.faces.component.UIParameter;
+import javax.faces.component.UIForm;
 import javax.faces.component.html.HtmlColumn;
 import javax.faces.component.html.HtmlCommandButton;
 import javax.faces.component.html.HtmlCommandLink;
@@ -482,6 +483,36 @@ public abstract class FacesComponentUtility {
             }
         }
     }
+
+    /**
+     * Returns the enclosing UIForm component, if any, from the specified component's ancestry.
+     *
+     * @param component the component
+     *
+     * @return the enclosing UIForm component, if any, from the specified component's ancestry
+     *
+     * @throws IllegalArgumentException if more than one UIForm is found in the component's ancestry
+     */
+    @Nullable
+     public static UIForm getEnclosingForm(UIComponent component)
+         throws IllegalArgumentException
+     {
+         UIForm ret = null;
+         while (component != null)
+         {
+             if (component instanceof UIForm)
+             {
+                 if (ret != null)
+                 {
+                     // Cannot have a doubly-nested form!
+                     throw new IllegalArgumentException();
+                 }
+                 ret = (UIForm) component;
+             }
+             component = component.getParent();
+         }
+         return ret;
+     }
 
     private static <T extends UIComponent> String getComponentType(Class<T> componentClass) {
         String componentType;

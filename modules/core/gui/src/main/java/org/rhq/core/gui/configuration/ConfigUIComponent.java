@@ -34,15 +34,17 @@ package org.rhq.core.gui.configuration;
  * @author Ian Springer
  */
 public class ConfigUIComponent extends AbstractConfigurationComponent implements FacesComponentIdFactory {
-    public static final String COMPONENT_TYPE = "org.jboss.on.Config";
-    public static final String COMPONENT_FAMILY = "rhq";
+    public static final String COMPONENT_TYPE = "org.jboss.on.Config";    
 
-    private static final String CONFIGURATION_ATTRIBUTE = "configuration";
     private static final String CONFIGURATION_DEFINITION_ATTRIBUTE = "configurationDefinition";
+    private static final String CONFIGURATION_ATTRIBUTE = "configuration";
 
-    @Override
-    public String getFamily() {
-        return COMPONENT_FAMILY;
+    @Nullable
+    public ConfigurationDefinition getConfigurationDefinition() {
+        //noinspection UnnecessaryLocalVariable
+        ConfigurationDefinition configDef = FacesComponentUtility.getExpressionAttribute(this,
+            CONFIGURATION_DEFINITION_ATTRIBUTE, ConfigurationDefinition.class);
+        return configDef;
     }
 
     @Nullable
@@ -53,15 +55,12 @@ public class ConfigUIComponent extends AbstractConfigurationComponent implements
         return config;
     }
 
-    @Nullable
-    public ConfigurationDefinition getConfigurationDefinition() {
-        //noinspection UnnecessaryLocalVariable
-        ConfigurationDefinition configDef = FacesComponentUtility.getExpressionAttribute(this,
-            CONFIGURATION_DEFINITION_ATTRIBUTE, ConfigurationDefinition.class);
-        return configDef;
+    public String getConfigurationDefinitionExpressionString()
+    {
+        return getValueExpression(CONFIGURATION_DEFINITION_ATTRIBUTE).getExpressionString();
     }
 
-    public String getConfigurationExpressionString() {        
+    public String getConfigurationExpressionString() {
         return getValueExpression(CONFIGURATION_ATTRIBUTE).getExpressionString();
     }
 }

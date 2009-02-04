@@ -41,6 +41,8 @@ import org.rhq.core.gui.configuration.propset.ConfigurationSetComponent;
  */
 public abstract class AbstractConfigurationComponent extends UIComponentBase implements FacesComponentIdFactory
 {
+    private static final String COMPONENT_FAMILY = "rhq";
+
     private static final String NULL_CONFIGURATION_DEFINITION_MESSAGE_ATTRIBUTE = "nullConfigurationDefinitionMessage";
     private static final String NULL_CONFIGURATION_MESSAGE_ATTRIBUTE = "nullConfigurationMessage";
     private static final String NULL_CONFIGURATION_STYLE_ATTRIBUTE = "nullConfigurationStyle";
@@ -58,10 +60,17 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
     private String nullConfigurationStyle;
     private boolean prevalidate;
     private boolean aggregate;
+    
+    public String getFamily()
+    {
+        return COMPONENT_FAMILY;
+    }
 
     public abstract ConfigurationDefinition getConfigurationDefinition();
 
     public abstract Configuration getConfiguration();
+
+    public abstract String getConfigurationDefinitionExpressionString();
 
     public abstract String getConfigurationExpressionString();
 

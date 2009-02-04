@@ -46,6 +46,8 @@ import org.rhq.core.gui.util.FacesExpressionUtility;
  */
 public class PropertySetRenderer extends Renderer
 {
+    static final String RENDERER_TYPE = "org.rhq.PropertySet";
+    
     private static final String INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID_SUFFIX = "-initInputsJavaScript";
 
     /**
@@ -81,6 +83,10 @@ public class PropertySetRenderer extends Renderer
         
         PropertySetComponent propertySetComponent = (PropertySetComponent) component;
         validateAttributes(propertySetComponent);
+
+        // TODO: Add support for open map member properties, which do not have an associated definition.
+        if (propertySetComponent.getPropertyDefinition() == null)
+            return;
 
         addPropertyDisplayNameAndDescription(propertySetComponent);
 
@@ -197,11 +203,10 @@ public class PropertySetRenderer extends Renderer
     }
 
     private void validateAttributes(PropertySetComponent propertySetComponent) {
-        if (propertySetComponent.getValueExpression(PropertySetComponent.PROPERTY_DEFINITION_ATTRIBUTE) == null) {
+        /*if (propertySetComponent.getValueExpression(PropertySetComponent.PROPERTY_DEFINITION_ATTRIBUTE) == null) {
             throw new IllegalStateException("The " + propertySetComponent.getClass().getName()
                 + " component requires a '" + PropertySetComponent.PROPERTY_DEFINITION_ATTRIBUTE + "' attribute.");
-        }
-
+        }*/
         if (propertySetComponent.getValueExpression(PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE) == null) {
             throw new IllegalStateException("The " + propertySetComponent.getClass().getName()
                 + " component requires a '" + PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE + "' attribute.");

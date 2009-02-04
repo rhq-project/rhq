@@ -40,7 +40,7 @@ public class ConfigurationSetComponent extends AbstractConfigurationComponent im
     public static final String COMPONENT_TYPE = "org.rhq.ConfigurationSet";
     public static final String COMPONENT_FAMILY = "rhq";
 
-    private static final String CONFIGURATION_SET_ATTRIBUTE = "configurationSet";
+    public static final String CONFIGURATION_SET_ATTRIBUTE = "configurationSet";
 
     @Nullable
     public Configuration getConfiguration() {
@@ -56,16 +56,17 @@ public class ConfigurationSetComponent extends AbstractConfigurationComponent im
         return (configurationSet != null) ? configurationSet.getConfigurationDefinition() : null;
     }
 
+    public String getConfigurationDefinitionExpressionString()
+    {
+        String configurationSetExpressionString = getValueExpression(CONFIGURATION_SET_ATTRIBUTE).getExpressionString();
+        return "#{" + FacesExpressionUtility.unwrapExpressionString(configurationSetExpressionString)
+                + ".configurationDefinition}";
+    }
+
     public String getConfigurationExpressionString() {
         String configurationSetExpressionString = getValueExpression(CONFIGURATION_SET_ATTRIBUTE).getExpressionString();
         return "#{" + FacesExpressionUtility.unwrapExpressionString(configurationSetExpressionString)
                 + ".aggregateConfiguration}";
-    }
-
-    @Override
-    public String getFamily()
-    {
-        return COMPONENT_FAMILY;
     }
 
     @Nullable

@@ -139,16 +139,24 @@ public class ConfigurationSet
         Map<String, Map<String, Integer>> memberNameValueFrequenciesMap =
                 createMemberNameValueFrequenciesMap(sourceParentPropertyMaps);
         for (String memberName : memberNameValueFrequenciesMap.keySet()) {
-            PropertySimple member = new PropertySimple(memberName, null);
             // Add each unique member to the target map, so the renderer will be able to display it on the main
             // config page.
+            PropertySimple member = new PropertySimple(memberName, null);
             targetParentPropertyMap.put(member);
+            // Also add it to each of the source config maps that don't already contain it, so that they can be
+            // rendered as unset on the propSet page.
+            for (AbstractPropertyMap map : sourceParentPropertyMaps)
+            {
+                if (map.get(memberName) == null)
+                    map.put(new PropertySimple(memberName, null));
+            }
             Map<String, Integer> valueFrequencies = memberNameValueFrequenciesMap.get(memberName);
             if (valueFrequencies.size() == 1 &&
                     valueFrequencies.values().iterator().next() == sourceParentPropertyMaps.size()) {
-                member.setStringValue(valueFrequencies.keySet().iterator().next());
-                // Set override to true so the renderer will know the prop is homogenous.
+                // Set override to true so the renderers will know the prop is homogenous.
                 member.setOverride(true);
+                // And set the value, so it can be displayed on the main config page.
+                member.setStringValue(valueFrequencies.keySet().iterator().next());
             }
         }
     }

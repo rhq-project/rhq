@@ -34,6 +34,8 @@ package org.rhq.core.gui.configuration;
  import javax.faces.component.html.HtmlPanelGrid;
  import javax.faces.component.html.HtmlPanelGroup;
  import javax.faces.component.html.HtmlSelectBooleanCheckbox;
+ import javax.faces.component.html.HtmlOutputLink;
+ import javax.faces.context.FacesContext;
 
  import org.apache.commons.logging.Log;
  import org.apache.commons.logging.LogFactory;
@@ -49,10 +51,13 @@ package org.rhq.core.gui.configuration;
  import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
  import org.rhq.core.gui.RequestParameterNameConstants;
  import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
+ import org.rhq.core.gui.configuration.helper.ConfigurationExpressionUtility;
  import org.rhq.core.gui.configuration.propset.ConfigurationSetComponent;
+ import org.rhq.core.gui.configuration.propset.PropertySetComponent;
  import org.rhq.core.gui.util.FacesComponentUtility;
  import org.rhq.core.gui.util.FacesExpressionUtility;
  import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
+ import org.richfaces.component.html.HtmlModalPanel;
 
  /**
  * A factory that generates a tree of JSF components that depicts a given collection of JON {@link Property}s.
@@ -318,8 +323,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_VALUE_CELL + "'>");
-        addPropertySimpleValue(parent, propertySimple, input);
-
+        addPropertySimpleValue(parent, propertyDefinitionSimple, propertySimple, input);
         FacesComponentUtility.addVerbatimText(parent, "<br/>");
         PropertyRenderingUtility.addMessageComponentForInput(parent, input);
         FacesComponentUtility.addVerbatimText(parent, "</td>");
@@ -333,7 +337,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         addDebug(parent, false, ".addSimpleProperty()");
     }
 
-     private void addPropertySimpleValue(UIComponent parent, PropertySimple propertySimple, UIInput input)
+     private void addPropertySimpleValue(UIComponent parent, PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple, UIInput input)
      {
          if (this.isAggregate) {
              if (propertySimple.getOverride() != null && propertySimple.getOverride()) {
@@ -342,9 +346,31 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
                  FacesComponentUtility.addOutputText(parent, null, "Member Values Differ",
                          VALUES_DIFFER_TEXT_STYLE_CLASS);
              }
-             HtmlCommandLink membersLink = FacesComponentUtility.addCommandLink(parent, this.config);
-             membersLink.setTitle(MEMBER_VALUES_BUTTON_TITLE);
-             FacesComponentUtility.addButton(membersLink, MEMBER_VALUES_BUTTON_LABEL, BUTTON_SMALL_STYLE_CLASS);
+             HtmlModalPanel modalPanel = FacesComponentUtility.createComponent(HtmlModalPanel.class);
+             parent.getChildren().add(modalPanel);
+             PropertySetComponent propertySet = FacesComponentUtility.createComponent(PropertySetComponent.class);
+             propertySet.setReadOnly(this.config.isReadOnly());
+             propertySet.setListIndex(this.config.getListIndex());
+             if (propertyDefinitionSimple != null) {
+                 propertySet.setValueExpression(PropertySetComponent.PROPERTY_DEFINITION_ATTRIBUTE,
+                         ConfigurationExpressionUtility.createValueExpressionForPropertyDefiniton(
+                                 this.config.getConfigurationDefinitionExpressionString(), propertyDefinitionSimple));
+             }
+             propertySet.setValueExpression(PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE,
+                     this.config.getValueExpression(ConfigurationSetComponent.CONFIGURATION_SET_ATTRIBUTE));
+             modalPanel.getChildren().add(propertySet);
+
+             String modalPanelClientId = modalPanel.getClientId(FacesContext.getCurrentInstance());
+
+             HtmlOutputLink closeModalLink = FacesComponentUtility.addOutputLink(modalPanel, this.config, "#");
+             closeModalLink.setOnclick("Richfaces.hideModalPanel('" + modalPanelClientId + "')");
+             closeModalLink.setTitle("Cancel");
+             FacesComponentUtility.addButton(closeModalLink, "Cancel", BUTTON_SMALL_STYLE_CLASS);
+
+             HtmlOutputLink openModalLink = FacesComponentUtility.addOutputLink(parent, this.config, "#");
+             openModalLink.setOnclick("Richfaces.showModalPanel('" + modalPanelClientId + "')");
+             openModalLink.setTitle(MEMBER_VALUES_BUTTON_TITLE);
+             FacesComponentUtility.addButton(openModalLink, MEMBER_VALUES_BUTTON_LABEL, BUTTON_SMALL_STYLE_CLASS);
          } else {
              parent.getChildren().add(input);
          }
@@ -372,7 +398,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
          // TODO: Only create input when it's actually going to be displayed.
          UIInput input = PropertyRenderingUtility.createInputForSimpleProperty(propertySimple,
                 this.valueExpressionFormat, this.config.isReadOnly());
-        addPropertySimpleValue(panel, propertySimple, input);
+        addPropertySimpleValue(panel, null, propertySimple, input);
         FacesComponentUtility.addVerbatimText(panel, "</td>");
 
         if (!isReadOnly(propertyDefinitionMap)) {

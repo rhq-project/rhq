@@ -106,9 +106,12 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
         if (prefs.readOnly) {
             // persist advanced mode
             setPreference(PREF_METRIC_RANGE, Arrays.asList(prefs.begin, prefs.end));
+            unsetPreference(PREF_METRIC_RANGE_LASTN);
+            unsetPreference(PREF_METRIC_RANGE_UNIT);
         } else {
             setPreference(PREF_METRIC_RANGE_LASTN, prefs.lastN);
             setPreference(PREF_METRIC_RANGE_UNIT, prefs.unit);
+            unsetPreference(PREF_METRIC_RANGE);
         }
 
         log.info("Setting Metric Range Preferences:" + prefs);

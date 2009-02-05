@@ -81,7 +81,8 @@ public class CoreServerServiceImpl implements CoreServerService {
         if (!getAgentManager().isAgentVersionSupported(request.getAgentVersion())) {
             log.warn("Agent [" + request.getName() + "][" + request.getAddress() + ':' + request.getPort() + "]["
                 + request.getAgentVersion() + "] would like to register with this server but it is not supported");
-            throw new AgentNotSupportedException("Unsupported agent version: " + request.getAgentVersion());
+            throw new AgentNotSupportedException("Agent [" + request.getName() + "] is an unsupported agent: "
+                + request.getAgentVersion());
         }
 
         // Make a very quick test to verify the agent's remote endpoint can be connected to.
@@ -201,6 +202,8 @@ public class CoreServerServiceImpl implements CoreServerService {
         log.info("Agent [" + agentName + "][" + agentVersion + "] would like to connect to this server");
 
         if (!getAgentManager().isAgentVersionSupported(agentVersion)) {
+            log.warn("Agent [" + agentName + "][" + agentVersion
+                + "] would like to connect to this server but it is not supported");
             throw new AgentNotSupportedException("Agent [" + agentName + "] is an unsupported agent: " + agentVersion);
         }
 

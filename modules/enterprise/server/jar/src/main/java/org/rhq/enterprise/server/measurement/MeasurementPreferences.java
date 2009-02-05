@@ -96,7 +96,7 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
             prefs.end = (Long) range.get(1);
         }
 
-        log.info("Getting Metric Range Preferences:" + prefs);
+        log.debug("Getting Metric Range Preferences:" + prefs);
 
         return prefs;
     }
@@ -114,7 +114,7 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
             unsetPreference(PREF_METRIC_RANGE);
         }
 
-        log.info("Setting Metric Range Preferences:" + prefs);
+        log.debug("Setting Metric Range Preferences:" + prefs);
     }
 
     /**

@@ -99,7 +99,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
 
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
 
-        // For each Tomcat process found in the context, create a resource details instance for thos
+        // For each Tomcat process found in the context, create a resource details instance
         List<ProcessScanResult> autoDiscoveryResults = context.getAutoDiscoveredProcesses();
         for (ProcessScanResult autoDiscoveryResult : autoDiscoveryResults) {
             if (log.isDebugEnabled()) {

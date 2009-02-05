@@ -53,7 +53,6 @@ public class TomcatVHostDiscoveryComponent extends MBeanResourceDiscoveryCompone
                 name = m.group(1);
             }
             detail.setResourceName(name);
-            detail.setResourceDescription("Virtual Host " + name);
         }
         return resources;
     }

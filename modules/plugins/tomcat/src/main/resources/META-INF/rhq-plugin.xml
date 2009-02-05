@@ -164,11 +164,12 @@
          name="start"
          displayName="Start"
          description="Start this Tomcat server. The script used is specified in Control Properties." />
+
       <operation
          name="shutdown"
          displayName="Shutdown"
          description="Shutdown this Tomcat server. The script used is specified in Control Properties." />
-         
+
       <operation
          name="restart"
          displayName="Restart"
@@ -491,7 +492,7 @@
                   readOnly="true" />
                <c:simple-property
                   name="descriptionTemplate"
-                  default="Web Application"
+                  default="Tomcat Web Application"
                   readOnly="true" />
             </c:group>
          </plugin-configuration>
@@ -499,9 +500,11 @@
          <operation
             name="start"
             description="starts this web application." />
+
          <operation
             name="stop"
             description="stops this web application." />
+
          <operation
             name="reload"
             description="reloads this web application." />
@@ -595,11 +598,122 @@
             </content>
          -->
       </service>
-<!-- 
+
+      <service
+         name="Tomcat Group"
+         subCategory="Security"
+         discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+         class="org.rhq.plugins.jmx.MBeanResourceComponent"
+         description="Tomcat User Group">
+
+         <plugin-configuration>
+            <c:group name="General">
+               <c:simple-property
+                  name="objectName"
+                  readOnly="true"
+                  default="Users:type=Group,groupname=%groupname%,database=UserDatabase" />
+               <c:simple-property
+                  name="groupname"
+                  readOnly="true"
+                  description="The Group name." />
+            </c:group>
+
+            <c:group
+               name="Advanced"
+               hiddenByDefault="true">
+               <c:simple-property
+                  name="nameTemplate"
+                  default="Tomcat Group ({groupname})" />
+               <c:simple-property
+                  name="descriptionTemplate"
+                  default="A Tomcat Group"
+                  readOnly="true" />
+            </c:group>
+         </plugin-configuration>
+         
+         <operation
+            name="addRole"
+            description="Add a Role to this Group.">
+            <parameters>
+               <c:simple-property
+                  name="rolename"
+                  displayName="Role Name"
+                  description="The Role to add."
+                  type="string"
+                  required="true" />
+            </parameters>
+         </operation>
+
+         <operation
+            name="removeRole"
+            description="Remove the specified Role from this Group.">
+            <parameters>
+               <c:simple-property
+                  name="rolename"
+                  displayName="Role Name"
+                  description="The Role to remove."
+                  type="string"
+                  required="true" />
+            </parameters>
+         </operation>                  
+
+         <resource-configuration>
+            <c:group name="Attributes">
+               <c:simple-property
+                  name="description"
+                  required="false"
+                  description="The Group description." />
+            </c:group>
+         </resource-configuration>
+      </service>
+
+      <service
+         name="Tomcat Role"
+         subCategory="Security"
+         discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+         class="org.rhq.plugins.jmx.MBeanResourceComponent"
+         description="Tomcat User Role">
+
+         <plugin-configuration>
+            <c:group name="General">
+               <c:simple-property
+                  name="objectName"
+                  readOnly="true"
+                  default="Users:type=Role,rolename=%rolename%,database=UserDatabase" />
+               <c:simple-property
+                  name="rolename"
+                  readOnly="true"
+                  description="The Role name." />
+            </c:group>
+
+            <c:group
+               name="Advanced"
+               hiddenByDefault="true">
+               <c:simple-property
+                  name="nameTemplate"
+                  default="Tomcat Role ({rolename})" />
+               <c:simple-property
+                  name="descriptionTemplate"
+                  default="A Tomcat Role"
+                  readOnly="true" />
+            </c:group>
+         </plugin-configuration>
+         
+         <resource-configuration>
+            <c:group name="Attributes">
+               <c:simple-property
+                  name="description"
+                  required="false"
+                  description="The Role description." />
+            </c:group>
+         </resource-configuration>
+
+      </service>
+
       <service
          name="Tomcat User"
          subCategory="Security"
-         discovery="TomcatUserDiscoveryComponent"
+         discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
          class="TomcatUserComponent"
          description="Tomcat User"
          createDeletePolicy="both">
@@ -613,16 +727,7 @@
                <c:simple-property
                   name="username"
                   readOnly="true"
-                  description="The name of user" />
-               <c:simple-property
-                  name="password"
-                  type="password"
-                  required="false"
-                  description="The credentials used to authenticate the username." />
-               <c:simple-property
-                  name="fullName"
-                  required="false"
-                  description="The full name of user" />
+                  description="The User name." />
             </c:group>
 
             <c:group
@@ -631,40 +736,230 @@
                <c:simple-property
                   name="nameTemplate"
                   default="Tomcat User ({username})" />
+               <c:simple-property
+                  name="descriptionTemplate"
+                  default="A Tomcat User"
+                  readOnly="true" />
             </c:group>
-
-            <operation
-               name="addGroup"
-               description="add the user to the specified group." />
-            <operation
-               name="removeGroup"
-               description="remove the user from the specified group." />
-            <operation
-               name="addRole"
-               description="add the user to the specified role." />
-            <operation
-               name="removeRole"
-               description="remove the user from the specified role." />
-            <operation
-               name="setPassword"
-               description="set a new password for the user." />               
-
-            <metric
-               property="Users:type=User,username=%username%,database=UserDatabase:roles"
-               displayName="Roles"
-               defaultOn="true"
-               dataType="trait" />
-               
-            <metric
-               property="Users:type=User,username=%username%,database=UserDatabase:roles"
-               displayName="Groups"
-               defaultOn="true"
-               dataType="trait" />               
-
          </plugin-configuration>
 
+         <operation
+            name="addGroup"
+            description="Add the User to the specified Group.">
+            <parameters>
+               <c:simple-property
+                  name="groupname"
+                  displayName="Group Name"
+                  description="The Group to add."
+                  type="string"
+                  required="true" />
+            </parameters>
+         </operation>
+
+         <operation
+            name="removeGroup"
+            description="Remove the User from the specified Group.">
+            <parameters>
+               <c:simple-property
+                  name="groupname"
+                  displayName="Group Name"
+                  description="The Group to remove."
+                  type="string"
+                  required="true" />
+            </parameters>
+         </operation>
+
+         <operation
+            name="addRole"
+            description="Add the specified Role to the User.">
+            <parameters>
+               <c:simple-property
+                  name="rolename"
+                  displayName="Role Name"
+                  description="The Role to add."
+                  type="string"
+                  required="true" />
+            </parameters>
+         </operation>
+
+         <operation
+            name="removeRole"
+            description="Remove the specified Role from the User.">
+            <parameters>
+               <c:simple-property
+                  name="rolename"
+                  displayName="Role Name"
+                  description="The Role to remove."
+                  type="string"
+                  required="true" />
+            </parameters>
+         </operation>
+
+         <metric
+            property="Users:type=User,username=%username%,database=UserDatabase:roles"
+            displayName="Roles"
+            defaultOn="true"
+            dataType="trait" />
+
+         <metric
+            property="Users:type=User,username=%username%,database=UserDatabase:groups"
+            displayName="Groups"
+            defaultOn="true"
+            dataType="trait" />
+
+         <resource-configuration>
+            <c:group name="Attributes">
+               <c:simple-property
+                  name="fullName"
+                  required="false"
+                  description="The full name of User" />
+               <c:simple-property
+                  name="password"
+                  type="password"
+                  required="false"
+                  description="The credentials used to authenticate the username." />
+            </c:group>
+         </resource-configuration>
+
       </service>
- -->
+
+      <service
+         name="Tomcat User Database"
+         subCategory="Security"
+         discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+         class="org.rhq.plugins.jmx.MBeanResourceComponent"
+         description="Tomcat User Database" >
+
+         <plugin-configuration>
+            <c:group name="General">
+               <c:simple-property
+                  name="objectName"
+                  readOnly="true"
+                  default="Users:type=UserDatabase,database=UserDatabase" />
+            </c:group>
+
+            <c:group
+               name="Advanced"
+               hiddenByDefault="true">
+               <c:simple-property
+                  name="nameTemplate"
+                  default="Tomcat User Database" />
+               <c:simple-property
+                  name="descriptionTemplate"
+                  default="A Tomcat User Database"
+                  readOnly="true" />
+            </c:group>
+         </plugin-configuration>
+
+         <operation
+            name="createGroup"
+            description="Add a new Group to the database.">
+            <parameters>
+               <c:simple-property
+                  name="groupname"
+                  displayName="Group Name"
+                  description="The Group name."
+                  type="string"
+                  required="true" />
+               <c:simple-property
+                  name="description"
+                  displayName="Description"
+                  description="The Group description."
+                  type="string"
+                  required="false" />                  
+            </parameters>
+         </operation>
+
+         <operation
+            name="createRole"
+            description="Add a new Role to the database.">
+            <parameters>
+               <c:simple-property
+                  name="rolename"
+                  displayName="Role Name"
+                  description="The Role name."
+                  type="string"
+                  required="true" />
+               <c:simple-property
+                  name="description"
+                  displayName="Description"
+                  description="The Role description."
+                  type="string"
+                  required="false" />                  
+            </parameters>
+         </operation>
+
+         <operation
+            name="createUser"
+            description="Add a new User to the database.">
+            <parameters>
+               <c:simple-property
+                  name="username"
+                  displayName="Username"
+                  description="The new username."
+                  type="string"
+                  required="true" />
+               <c:simple-property
+                  name="password"
+                  displayName="Password"
+                  description="A password for the new User."
+                  type="string"
+                  required="true" />
+               <c:simple-property
+                  name="fullName"
+                  displayName="Full Name"
+                  description="A full name for the new User."
+                  type="string"
+                  required="false" />                                    
+            </parameters>
+         </operation>
+
+         <operation
+            name="removeGroup"
+            description="Remove an existing Group from the database.">
+            <parameters>
+               <c:simple-property
+                  name="groupname"
+                  displayName="Group Name"
+                  description="The existing Group name."
+                  type="string"
+                  required="true" />
+            </parameters>
+         </operation>
+
+         <operation
+            name="removeRole"
+            description="Remove an existing Role from the database.">
+            <parameters>
+               <c:simple-property
+                  name="rolename"
+                  displayName="Role Name"
+                  description="The existing Role name."
+                  type="string"
+                  required="true" />
+            </parameters>
+         </operation>
+
+         <operation
+            name="removeUser"
+            description="Remove an existing User from the database.">
+            <parameters>
+               <c:simple-property
+                  name="username"
+                  displayName="Username"
+                  description="The existing User."
+                  type="string"
+                  required="true" />
+            </parameters>
+         </operation>
+
+         <operation
+            name="save"
+            description="Save current users and groups to persistent storage.">
+         </operation>
+
+      </service>
+
    </server>
 
 </plugin>

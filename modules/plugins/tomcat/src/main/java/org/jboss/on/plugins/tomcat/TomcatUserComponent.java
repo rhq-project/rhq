@@ -30,17 +30,20 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
- * Handle generic information about a virtual host in tomcat
+ * Manage a Tomcat User component
  * 
  * @author Jay Shaughnessy
- * @author Heiko W. Rupp
- *
  */
-public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerComponent> implements MeasurementFacet {
+public class TomcatUserComponent extends MBeanResourceComponent<TomcatServerComponent> implements MeasurementFacet, ConfigurationFacet {
+
+    public static final String PROPERTY_FULL_NAME = "fullName";
+    public static final String PROPERTY_PASSWORD = "password";
+    public static final String PROPERTY_USERNAME = "username";
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
@@ -57,11 +60,10 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
 
                 Object valueObject = attribute.refresh();
 
-                if (attributeName.equals("aliases")) {
-                    String[] vals = (String[]) valueObject;
-                    MeasurementDataTrait mdt = new MeasurementDataTrait(request, Arrays.toString(vals));
-                    report.addData(mdt);
-                }
+                // currently all metrics are traits so we can make the assumption
+                String[] vals = (String[]) valueObject;
+                MeasurementDataTrait mdt = new MeasurementDataTrait(request, Arrays.toString(vals));
+                report.addData(mdt);
             } catch (Exception e) {
                 log.error("Failed to obtain measurement [" + name + "]", e);
             }

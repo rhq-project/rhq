@@ -90,7 +90,9 @@ import org.rhq.core.domain.resource.ResourceType;
         + " WHERE a.resource.id = :id " + "       AND a.deleted = false"),
     @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE_TYPE, query = "SELECT a " + "  FROM AlertDefinition a "
         + " WHERE a.resourceType.id = :typeId " + "       AND a.deleted = false"),
-    @NamedQuery(name = AlertDefinition.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertDefinition ad WHERE ad.resource IN (:resources))"),
+    @NamedQuery(name = AlertDefinition.QUERY_DELETE_BY_RESOURCES, query = "" //
+        + "DELETE FROM AlertDefinition ad " //
+        + " WHERE ad.resource IN ( :resources )"), //
     @NamedQuery(name = AlertDefinition.QUERY_FIND_UNUSED_DEFINITION_IDS, query = "" //
         + "SELECT ad.id " //
         + "  FROM AlertDefinition ad " //
@@ -110,7 +112,8 @@ import org.rhq.core.domain.resource.ResourceType;
          * fetched association was not present in the select list"...even though it clearly is  ;/ 
          */
         //+ "     JOIN FETCH ad.conditions ac " //
-        + "    WHERE (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
+        + "    WHERE ad.deleted = false " //
+        + "      AND (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
         + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
         + "      AND (ad.ctime > :startTime OR :startTime IS NULL) " //
         + "      AND (ad.ctime < :endTime OR :endTime IS NULL) " //
@@ -130,7 +133,8 @@ import org.rhq.core.domain.resource.ResourceType;
          * fetched association was not present in the select list"...even though it clearly is  ;/ 
          */
         //+ "     JOIN FETCH ad.conditions ac " //
-        + "    WHERE res.id IN ( SELECT rr.id FROM Resource rr " //
+        + "    WHERE ad.deleted = false " //
+        + "      AND res.id IN ( SELECT rr.id FROM Resource rr " //
         + "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
         + "                       WHERE s.id = :subjectId ) " //
         + "      AND (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
@@ -281,10 +285,6 @@ public class AlertDefinition implements Serializable {
     }
 
     public void update(AlertDefinition alertDef) {
-        if (getId() == alertDef.getId()) {
-            return; // no-op if i'm updating my already attached self
-        }
-
         /*
          * Don't copy the id, ctime, or mtime.
          */
@@ -342,6 +342,10 @@ public class AlertDefinition implements Serializable {
 
     public int getId() {
         return this.id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getName() {

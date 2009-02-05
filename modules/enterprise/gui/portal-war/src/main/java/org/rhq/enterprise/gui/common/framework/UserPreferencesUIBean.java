@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.common.framework;
 
+import org.richfaces.event.SimpleToggleEvent;
+
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.core.domain.auth.Subject;
@@ -44,6 +46,10 @@ public class UserPreferencesUIBean {
 
     public void setLeftResourceNavState(String state) {
             EnterpriseFacesContextUtility.getWebUser().getWebPreferences().setPreference(LEFT_RESOURCE_NAV_SHOWING, state);
+    }
+
+    public void updateSummaryPanelDisplayState(javax.faces.event.ActionEvent event) {
+        setSummaryPanelDisplayState(String.valueOf(!((SimpleToggleEvent)event).isIsOpen()));
     }
 
     public String getSummaryPanelDisplayState() {

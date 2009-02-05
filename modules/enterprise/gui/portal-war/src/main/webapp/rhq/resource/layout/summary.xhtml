@@ -89,6 +89,7 @@ id - the id of the Resource being accessed
     <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
 <rich:simpleTogglePanel switchType="ajax" id="summary-toggle-panel"
+                        actionListener="#{UserPreferencesUIBean.updateSummaryPanelDisplayState}"
                         value="#{UserPreferencesUIBean.summaryPanelDisplayState}">
     <f:facet name="header">  <onc:resourceLineage resourceId="#{ResourceUIBean.id}"/> </f:facet>
 

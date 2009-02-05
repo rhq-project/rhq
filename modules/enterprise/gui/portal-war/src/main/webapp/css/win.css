@@ -171,7 +171,7 @@ A.NotBold:hover {
    padding: 0;
 }
 
-/* BLOCK */
+/* BLOCK */ 
 .BlockContent {
    background-color: #E5E5E5;
    padding: 3px;
@@ -2169,17 +2169,70 @@ ul.radio-group .unspecified {
 }
 
 .availLinkDown {
-    color: red;
-    font-weight: bold;
+    color: #8f0606;
+    font-weight: normal;
+    font-family:tahoma,verdana,sans-serif;
+    font-size:11px;
 }
 
 
 .availLinkUp {
     color: black;
-    font-weight: bold;
+    font-weight: normal;
+    font-family:tahoma,verdana,sans-serif;
+    font-size:11px;
 }
 
 .availLinkMixed {
-    color: #FFC323;
-    font-weight: bold;
+    color: #b08002;
+    font-weight: normal;
+    font-family:tahoma,verdana,sans-serif;
+    font-size:11px;    
+}
+
+
+
+#contentParent {
+    width: 100%;
+    height: 100%;
+    background: #FFFFFF;
+}
+
+.column {
+    float: left; /* This is forces the page content to adjust to changes in height of the columns */
+    overflow: hidden; /* As a precaution, all content is clipped to the column width */
+    margin: 0; /* This and padding need to be zero */
+    padding: 0;
+    z-index: 1;
+    background: #FFFFFF;
+    color: #666666;
+    width: 30%; /* Default value, overridden by class */
+    height: 100%;
+}
+
+/* Any spacing must be on a child of the column, not the column itself */
+.content-left {
+    width: 100%;
+    height: 100%;
+    background-color: #f2f1f1;
+    overflow: auto;
+}
+
+.content-right {
+    left: 6px;
+    right: 0;
+    height: 100%;
+    margin-left: 6px;
+    height: 100%;
+    overflow: auto;
+}
+
+.splitpane-divider {
+    width: 6px;
+    background: #4A5B81;
+    opacity: .5;
+    z-index: 2;
+    filter: alpha( opacity = 50 );
+    background-image: url("/images/horizontal_gradient.png");
+    background-repeat: repeat-y;
 }

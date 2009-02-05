@@ -38,4 +38,8 @@ public interface AlertSubsystemManagerLocal {
 
     PageList<AlertDefinitionComposite> getAlertDefinitions(Subject subject, String resourceFilter, String parentFilter,
         Long startTime, Long endTime, AlertConditionCategory category, PageControl pc);
+
+    int deleteAlertHistories(Subject subject, Integer[] historyIds);
+
+    int purgeAllAlertHistories(Subject subject);
 }

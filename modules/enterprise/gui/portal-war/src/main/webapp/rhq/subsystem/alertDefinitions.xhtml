@@ -192,6 +192,9 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <rich:column colspan="#{alertDefinitionDataTable.columns}" width="100%">
+                        <onc:selectCommandButton action="#{SubsystemAlertDefinitionUIBean.deleteSelected}"
+                                                 value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{GlobalPermissionsUIBean.superuser}" />
 
                         <ui:param name="paginationDataTableName" value="alertDefinitionDataTable"/>
                         <ui:param name="paginationDataModel" value="#{alertDefinitionDataModel}"/>

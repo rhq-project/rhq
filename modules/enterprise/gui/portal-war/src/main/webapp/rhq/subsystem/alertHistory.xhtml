@@ -182,6 +182,12 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <rich:column colspan="#{alertHistoryDataTable.columns}" width="100%">
+                        <onc:selectCommandButton action="#{SubsystemAlertHistoryUIBean.deleteSelected}"
+                                                 value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{GlobalPermissionsUIBean.superuser}" />
+                        <h:commandButton action="#{SubsystemAlertHistoryUIBean.purge}"
+                                         value="PURGE ALL" styleClass="on-pager-button buttonsmall"
+                                         rendered="#{GlobalPermissionsUIBean.superuser}" />
 
                         <ui:param name="paginationDataTableName" value="alertHistoryDataTable"/>
                         <ui:param name="paginationDataModel" value="#{alertHistoryDataModel}"/>

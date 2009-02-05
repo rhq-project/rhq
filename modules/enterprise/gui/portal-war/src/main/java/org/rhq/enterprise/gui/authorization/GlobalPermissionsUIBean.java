@@ -30,6 +30,7 @@ public class GlobalPermissionsUIBean {
     private boolean security;
     private boolean inventory;
     private boolean settings;
+    private boolean isSuperuser;
 
     public GlobalPermissionsUIBean() {
         Subject user = EnterpriseFacesContextUtility.getSubject();
@@ -38,6 +39,11 @@ public class GlobalPermissionsUIBean {
         security = globalPermissions.contains(Permission.MANAGE_SECURITY);
         inventory = globalPermissions.contains(Permission.MANAGE_INVENTORY);
         settings = globalPermissions.contains(Permission.MANAGE_SETTINGS);
+        isSuperuser = LookupUtil.getAuthorizationManager().isSystemSuperuser(user);
+    }
+
+    public boolean isSuperuser() {
+        return isSuperuser;
     }
 
     public boolean isSecurity() {

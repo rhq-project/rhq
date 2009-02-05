@@ -35,24 +35,25 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
-import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.subsystem.AlertSubsystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Joseph Marques
  */
-public class SubsystemAlertDefinitionUIBean extends PagedDataTableUIBean {
+public class SubsystemAlertDefinitionUIBean extends SubsystemView {
     public static final String MANAGED_BEAN_NAME = "SubsystemAlertDefinitionUIBean";
     private static final String FORM_PREFIX = "alertDefinitionSubsystemForm:";
     private final String CALENDAR_SUFFIX = "InputDate";
 
     private AlertSubsystemManagerLocal manager = LookupUtil.getAlertSubsystemManager();
+    private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
 
     private static String datePattern;
     private String resourceFilter;
@@ -119,6 +120,20 @@ public class SubsystemAlertDefinitionUIBean extends PagedDataTableUIBean {
 
     public void setCategoryFilterItems(SelectItem[] statusFilterItems) {
         this.categoryFilterItems = statusFilterItems;
+    }
+
+    public String deleteSelected() {
+        Integer[] selected = getSelectedItems();
+
+        try {
+            int numDeleted = alertDefinitionManager.removeAlertDefinitions(getSubject(), selected);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + numDeleted + " alert definitions.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete selected alert definitions.",
+                e);
+        }
+
+        return "success";
     }
 
     @Override

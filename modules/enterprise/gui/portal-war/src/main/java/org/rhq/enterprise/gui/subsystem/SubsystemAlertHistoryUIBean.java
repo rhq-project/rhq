@@ -37,7 +37,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
-import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
@@ -49,7 +48,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * @author Joseph Marques
  */
-public class SubsystemAlertHistoryUIBean extends PagedDataTableUIBean {
+public class SubsystemAlertHistoryUIBean extends SubsystemView {
     public static final String MANAGED_BEAN_NAME = "SubsystemAlertHistoryUIBean";
     private static final String FORM_PREFIX = "alertHistorySubsystemForm:";
     private final String CALENDAR_SUFFIX = "InputDate";
@@ -121,6 +120,30 @@ public class SubsystemAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public void setCategoryFilterItems(SelectItem[] statusFilterItems) {
         this.categoryFilterItems = statusFilterItems;
+    }
+
+    public String deleteSelected() {
+        Integer[] selected = getSelectedItems();
+
+        try {
+            int numDeleted = manager.deleteAlertHistories(getSubject(), selected);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + numDeleted + " alerts.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete selected alerts.", e);
+        }
+
+        return "success";
+    }
+
+    public String purge() {
+        try {
+            int numDeleted = manager.purgeAllAlertHistories(getSubject());
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + numDeleted + " alerts.");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete selected alerts.", e);
+        }
+
+        return "success";
     }
 
     @Override

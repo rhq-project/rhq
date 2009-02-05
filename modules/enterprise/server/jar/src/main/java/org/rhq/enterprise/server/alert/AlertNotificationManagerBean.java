@@ -426,4 +426,9 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             }
         }
     }
+
+    public int purgeOrphanedAlertNotifications() {
+        Query purgeQuery = entityManager.createNamedQuery(AlertNotification.QUERY_DELETE_ORPHANED);
+        return purgeQuery.executeUpdate();
+    }
 }

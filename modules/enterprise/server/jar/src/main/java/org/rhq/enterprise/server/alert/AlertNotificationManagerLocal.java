@@ -63,4 +63,6 @@ public interface AlertNotificationManagerLocal {
 
     int removeNotifications(Subject subject, Integer alertDefinitionId, Integer[] notificationIds,
         boolean isAlertTemplate);
+
+    int purgeOrphanedAlertNotifications();
 }

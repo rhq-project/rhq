@@ -49,7 +49,8 @@ import org.rhq.core.domain.alert.AlertDefinition;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @NamedQueries( {
     @NamedQuery(name = AlertNotification.DELETE_BY_ID, query = "DELETE FROM AlertNotification an WHERE an.id IN ( :ids )"),
-    @NamedQuery(name = AlertNotification.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))") })
+    @NamedQuery(name = AlertNotification.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))"),
+    @NamedQuery(name = AlertNotification.QUERY_DELETE_ORPHANED, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IS NULL") })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIFICATION_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIFICATION")
 public abstract class AlertNotification implements Serializable {
@@ -58,6 +59,7 @@ public abstract class AlertNotification implements Serializable {
 
     public static final String DELETE_BY_ID = "AlertNotification.deleteById";
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertNotification.deleteByResources";
+    public static final String QUERY_DELETE_ORPHANED = "AlertNotification.deleteOrphaned";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_ALERT_NOTIFICATION_ID_SEQ")

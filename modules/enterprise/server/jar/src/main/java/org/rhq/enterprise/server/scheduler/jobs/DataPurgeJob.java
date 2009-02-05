@@ -34,6 +34,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
@@ -115,6 +116,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeEventData(LookupUtil.getEventManager(), systemConfig);
         purgeAlertData(LookupUtil.getAlertManager(), systemConfig);
         purgeUnusedAlertDefinitions(LookupUtil.getAlertDefinitionManager());
+        purgeOrphanedAlertNotifications(LookupUtil.getAlertNotificationManager());
         purgeMeasurementTraitData(LookupUtil.getMeasurementDataManager(), systemConfig);
         purgeAvailabilityData(LookupUtil.getAvailabilityManager(), systemConfig);
         purgeOOBData(LookupUtil.getOOBManager());
@@ -222,16 +224,31 @@ public class DataPurgeJob extends AbstractStatefulJob {
 
     private void purgeUnusedAlertDefinitions(AlertDefinitionManagerLocal alertDefinitionManager) {
         long timeStart = System.currentTimeMillis();
-        LOG.info("Alert definition purge starting at " + new Date(timeStart));
+        LOG.info("Alert definition unused purge starting at " + new Date(timeStart));
         int alertDefinitionsPurged = 0;
 
         try {
             alertDefinitionsPurged = alertDefinitionManager.purgeUnusedAlertDefinition();
         } catch (Exception e) {
-            LOG.error("Failed to purge alert data. Cause: " + e, e);
+            LOG.error("Failed to purge alert definition data. Cause: " + e, e);
         } finally {
             long duration = System.currentTimeMillis() - timeStart;
             LOG.info("Alert definitions purged [" + alertDefinitionsPurged + "] - completed in [" + duration + "]ms");
+        }
+    }
+
+    private void purgeOrphanedAlertNotifications(AlertNotificationManagerLocal alertNotificationManager) {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Alert notification orphan purge starting at " + new Date(timeStart));
+        int orphansPurged = 0;
+
+        try {
+            orphansPurged = alertNotificationManager.purgeOrphanedAlertNotifications();
+        } catch (Exception e) {
+            LOG.error("Failed to purge alert notification data. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Purged [" + orphansPurged + "] orphan alert notifications - completed in [" + duration + "]ms");
         }
     }
 
@@ -307,16 +324,16 @@ public class DataPurgeJob extends AbstractStatefulJob {
 
         long timeStart = System.currentTimeMillis();
         LOG.info("Auto-calculation of OOBs starting");
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord() ;
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         MeasurementOOBManagerLocal manager = LookupUtil.getOOBManager();
         // purge oobs whose baseline just got recalculated
         // For now just assume that our system is fast, so a cutoff of 30mins is ok,
         // as the calculate baseline job runs hourly
         long cutOff = System.currentTimeMillis() - (30L * 60L * 1000L);
-        manager.removeOutdatedOObs(overlord,cutOff);
+        manager.removeOutdatedOObs(overlord, cutOff);
 
         // clean up
-        LookupUtil.getSystemManager().vacuum(overlord,new String[]{"RHQ_MEASUREMENT_OOB"});
+        LookupUtil.getSystemManager().vacuum(overlord, new String[] { "RHQ_MEASUREMENT_OOB" });
 
         // Now caclulate the fresh OOBs
         manager.computeOOBsFromLastHour(overlord);
@@ -333,9 +350,9 @@ public class DataPurgeJob extends AbstractStatefulJob {
     private void purgeOOBData(MeasurementOOBManagerLocal oobManager) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Purging OOBs older than 72h ...");
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord() ;
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
-        long end = System.currentTimeMillis()- (3L* DAY);
+        long end = System.currentTimeMillis() - (3L * DAY);
         oobManager.removeOldOOBs(overlord, end);
         long duration = System.currentTimeMillis() - timeStart;
         LOG.info("Purging of old OOBs completed in [" + duration + "]ms");

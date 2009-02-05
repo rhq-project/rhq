@@ -238,7 +238,7 @@
 </rich:toolBarGroup>
 </rich:toolBar>
 
-<rich:modalPanel id="aboutPanel" resizeable="false" width="320" height="220">
+<rich:modalPanel id="aboutPanel" resizeable="false" width="320" height="250">
     <f:facet name="header">
         <h:panelGroup>
             <h:outputText value="#{msg['about.Title']}"/>
@@ -257,6 +257,15 @@
                 value="#{msg['footer.version']}: #{msg['product.version']}"/></span><br/>
     <span class="DisplayLabel"><h:outputText
             value="#{msg['footer.buildNumber']}: #{msg['product.buildNumber']}"/></span>
+    </p>
+
+    <p>
+        <map id="redhat-jboss-logo-map" name="redhat-jboss-logo-map">
+          <area href="http://www.redhat.com/" target="_top" alt="Red Hat Homepage" title="Red Hat" shape="rect" coords="0,0,100,42" />
+          <area href="http://www.jboss.org/" target="_top" alt="JBoss Homepage" title="JBoss" shape="rect" coords="100,0,200,42" />
+       </map>
+
+         <h:graphicImage value="/images/redhat-jboss-logo.gif" usemap="#redhat-jboss-logo-map"/>
     </p>
 
     <p>

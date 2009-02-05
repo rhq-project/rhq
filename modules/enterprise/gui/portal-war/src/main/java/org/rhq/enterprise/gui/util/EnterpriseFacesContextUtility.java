@@ -18,12 +18,14 @@
  */
 package org.rhq.enterprise.gui.util;
 
-import java.util.Map;
 import javax.faces.application.FacesMessage;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
+import javax.servlet.http.HttpSession;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -32,6 +34,7 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -42,8 +45,7 @@ public class EnterpriseFacesContextUtility {
     public static WebUser getWebUser() {
         FacesContext facesContext = FacesContextUtility.getFacesContext();
         ExternalContext externalContext = facesContext.getExternalContext();
-        Map<String, Object> sessionMap = externalContext.getSessionMap();
-        return (WebUser) sessionMap.get(AttrConstants.WEBUSER_SES_ATTR);
+        return SessionUtils.getWebUser((HttpSession) externalContext.getSession(false));
     }
 
     /**

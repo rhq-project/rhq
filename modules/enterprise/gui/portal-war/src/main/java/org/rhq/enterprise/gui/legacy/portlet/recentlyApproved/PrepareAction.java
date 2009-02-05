@@ -26,10 +26,10 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.RecentlyApprovedPortletPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
+import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
 public class PrepareAction extends BaseAction {
     @Override
@@ -37,7 +37,7 @@ public class PrepareAction extends BaseAction {
         HttpServletResponse response) throws Exception {
 
         HttpSession session = request.getSession();
-        WebUser user = (WebUser) session.getAttribute(Constants.WEBUSER_SES_ATTR);
+        WebUser user = SessionUtils.getWebUser(request.getSession());
         RecentlyApprovedPortletPreferences preferences = user.getWebPreferences()
             .getRecentlyApprovedPortletPreferences();
 

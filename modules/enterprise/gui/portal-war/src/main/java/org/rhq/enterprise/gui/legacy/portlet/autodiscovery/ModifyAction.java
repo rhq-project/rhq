@@ -32,6 +32,7 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
+import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
 public class ModifyAction extends BaseAction {
     @Override
@@ -39,7 +40,7 @@ public class ModifyAction extends BaseAction {
         HttpServletResponse response) throws Exception {
         PropertiesForm propsForm = (PropertiesForm) form;
         HttpSession session = request.getSession();
-        WebUser user = (WebUser) session.getAttribute(Constants.WEBUSER_SES_ATTR);
+        WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getWebPreferences();
         String range = propsForm.getRange().toString();
 

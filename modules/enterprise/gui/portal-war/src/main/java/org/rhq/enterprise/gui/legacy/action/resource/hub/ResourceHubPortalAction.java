@@ -93,7 +93,7 @@ public class ResourceHubPortalAction extends BaseAction {
         ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
 
         HttpSession session = request.getSession();
-        WebUser user = (WebUser) session.getAttribute(Constants.WEBUSER_SES_ATTR);
+        WebUser user = SessionUtils.getWebUser(request.getSession());
 
         // Setup whether we're displaying list view or chart view.
         HubUtils.initView(hubForm, user);

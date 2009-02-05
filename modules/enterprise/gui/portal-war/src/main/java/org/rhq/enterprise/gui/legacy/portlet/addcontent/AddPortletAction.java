@@ -32,6 +32,7 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.DashboardPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
+import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
 public class AddPortletAction extends BaseAction {
     @Override
@@ -40,7 +41,7 @@ public class AddPortletAction extends BaseAction {
 
         PropertiesForm pForm = (PropertiesForm) form;
         HttpSession session = request.getSession();
-        WebUser user = (WebUser) session.getAttribute(Constants.WEBUSER_SES_ATTR);
+        WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getWebPreferences();
 
         if ((pForm.getPortlet() == null) || "bad".equals(pForm.getPortlet())) {

@@ -158,23 +158,7 @@ public class RequestUtils {
             throw new ServletException("web session does not exist!");
         }
 
-        return getWebUser(session);
-    }
-
-    /**
-     * Return the <code>WebUser</code> representing the person currently interacting with the product.
-     *
-     * @param  session The servlet session object
-     *
-     * @throws ServletException if the session cannot be accessed
-     */
-    public static WebUser getWebUser(HttpSession session) throws ServletException {
-        WebUser webUser = (WebUser) session.getAttribute(Constants.WEBUSER_SES_ATTR);
-        if (webUser == null) {
-            throw new ServletException("Your session has timed out. Please log in again.");
-        }
-
-        return webUser;
+        return SessionUtils.getWebUser(request.getSession());
     }
 
     /**
@@ -189,27 +173,12 @@ public class RequestUtils {
     }
 
     /**
-     * Return the <code>Subject</code> representing the person currently interacting with the product.
-     *
-     * @param  session The servlet session object
-     *
-     * @throws ServletException if the session cannot be accessed
-     */
-    public static Subject getSubject(HttpSession session) throws ServletException {
-        return getWebUser(session).getSubject();
-    }
-
-    /**
      * Extract the BizApp session id as an <code>Integer</code> from the web session.
      *
      * @throws ServletException if the session cannot be accessed
      */
     public static Integer getSessionId(HttpServletRequest request) throws ServletException {
         return getWebUser(request).getSessionId();
-    }
-
-    public static int getSessionIdInt(HttpServletRequest request) throws ServletException {
-        return getWebUser(request).getSessionId().intValue();
     }
 
     /**
@@ -269,20 +238,6 @@ public class RequestUtils {
     public static void setResourceType(HttpServletRequest request, ResourceType resourceType) {
         request.setAttribute(Constants.RESOURCE_TYPE_ATTR, resourceType);
     }
-
-    //   @Deprecated
-    //   public static AppdefResourceValue getHqResource(HttpServletRequest request)
-    //   {
-    //      AppdefResourceValue resource = (AppdefResourceValue)request.getAttribute(Constants.HQ_RESOURCE_ATTR);
-    //      return resource;
-    //   }
-    //
-    //   @Deprecated
-    //   public static void setHqResource(HttpServletRequest request,
-    //                                    AppdefResourceValue resource)
-    //   {
-    //      request.setAttribute(Constants.HQ_RESOURCE_ATTR, resource);
-    //   }
 
     /**
      * Retrieve the <code>Integer</code> value of the <strong>RESOURCE_PARAM</strong> parameter from the HTTP request.
@@ -463,56 +418,6 @@ public class RequestUtils {
         return url;
     }
 
-    //   /**
-    //    * Create and return a <code>PageControl</code> object by examining various request parameters.
-    //    *
-    //    * @deprecated use {@link org.rhq.enterprise.gui.util.WebUtility#getPageControl(ServletRequest, String)} instead
-    //    */
-    //   @Deprecated
-    //   public static PageControl getPageControl(HttpServletRequest request,
-    //                                            String pageSizeParam,
-    //                                            String pageNumParam,
-    //                                            String sortOrderParam,
-    //                                            String sortColParam)
-    //   {
-    //      if (pageNumParam == null)
-    //      {
-    //         pageNumParam = Constants.PAGENUM_PARAM;
-    //      }
-    //      int pn = getPageNum(request, pageNumParam);
-    //
-    //      if (pageSizeParam == null)
-    //      {
-    //         pageSizeParam = Constants.PAGESIZE_PARAM;
-    //      }
-    //      int ps = getPageSize(request, pageSizeParam);
-    //
-    //      if (sortOrderParam == null)
-    //      {
-    //         sortOrderParam = Constants.SORTORDER_PARAM;
-    //      }
-    //      int so = getSortOrder(request, sortOrderParam);
-    //
-    //      if (sortColParam == null)
-    //      {
-    //         sortColParam = Constants.SORTCOL_PARAM;
-    //      }
-    //      int sc = getSortCol(request, sortColParam);
-    //
-    //      return new PageControl(pn, ps, so, sc);
-    //   }
-
-    //   /**
-    //    * Create and return a <code>PageControl</code> object by examining various request parameters.
-    //    *
-    //    * @deprecated use {@link org.rhq.enterprise.gui.util.WebUtility#getPageControl(ServletRequest)} instead
-    //    */
-    //   @Deprecated
-    //   public static PageControl getPageControl(HttpServletRequest request)
-    //   {
-    //      return getPageControl(request, null, null, null, null);
-    //   }
-
     /**
      * Retrieve the <code>int</code> value of the <code>Constants.PAGENUM_PARAM</code> request parameter, or <code>
      * Constants.PAGENUM_DEFAULT</code> if the parameter was not found or not specified as an integer.
@@ -554,50 +459,6 @@ public class RequestUtils {
 
         return ps;
     }
-
-    //   /**
-    //    * Retrieve the <code>int</code> value of the <code>Constants.SORTORDER_PARAM</code> request parameter, or
-    //    * <code>Constants.SORTORDER_DEFAULT</code> if the parameter was not found or not specified as an integer.
-    //    */
-    //   public static int getSortOrder(HttpServletRequest request, String param)
-    //   {
-    //      int so;
-    //      String val = request.getParameter(param);
-    //      if (val != null)
-    //      {
-    //         so = Constants.SORTORDER_DEC.equals(val) ?
-    //               PageControl.SORT_DESC : PageControl.SORT_ASC;
-    //      }
-    //      else
-    //      {
-    //         so = PageControl.SORT_ASC;
-    //      }
-    //      return so;
-    //   }
-
-    //   /**
-    //    * Retrieve the <code>int</code> value of the <code>Constants.SORTCOL_PARAM</code> request parameter, or
-    //    * <code>Constants.SORTCOL_DEFAULT</code> if the parameter was not found or not specified as an integer.
-    //    */
-    //   public static int getSortCol(HttpServletRequest request, String param)
-    //   {
-    //      Integer sc = null;
-    //      String val = request.getParameter(param);
-    //      if (val != null && val.length() > 0)
-    //      {
-    //         try
-    //         {
-    //            sc = new Integer(val);
-    //         }
-    //         catch (Exception e)
-    //         {
-    //         }
-    //      }
-    //      // don't set a default- bizapp managers will do that
-    //
-    //      return sc != null ? sc : SortAttribute.DEFAULT;
-    //      return sc;
-    //   }
 
     /**
      * Set a confirmation message upon completion of a user action.

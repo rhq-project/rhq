@@ -21,9 +21,11 @@ package org.rhq.enterprise.gui.legacy.action.resource.hub;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -31,6 +33,7 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.LabelValueBean;
 import org.apache.struts.util.MessageResources;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -83,7 +86,7 @@ public class GroupHubPortalAction extends BaseAction {
         ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
 
         HttpSession session = request.getSession();
-        WebUser user = (WebUser) session.getAttribute(Constants.WEBUSER_SES_ATTR);
+        WebUser user = SessionUtils.getWebUser(request.getSession());
 
         // Setup whether we're displaying list view or chart view.
         HubUtils.initView(hubForm, user);

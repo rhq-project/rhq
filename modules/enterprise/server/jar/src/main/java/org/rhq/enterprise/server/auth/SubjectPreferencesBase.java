@@ -152,6 +152,8 @@ public abstract class SubjectPreferencesBase {
                 if (type == Boolean.class) {
                     if (preferenceValue.equalsIgnoreCase("on") || preferenceValue.equalsIgnoreCase("yes")) {
                         preferenceValue = "true"; // flexible support for boolean translations from forms
+                    } else {
+                        preferenceValue = "false";
                     }
                 }
 

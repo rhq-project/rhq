@@ -48,9 +48,14 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
         // advanced, when readOnly is true
         public Long begin;
         public Long end;
+
+        public String toString() {
+            return getClass().getSimpleName() + "[readOnly=" + readOnly + ",lastN=" + lastN + ",unit=" + unit
+                + ",begin=" + begin + end + ",end=" + end + "]";
+        }
     }
 
-    public MetricRangePreferences getMetricRangePreferences(boolean defaultRange) {
+    public MetricRangePreferences getMetricRangePreferences() {
         MetricRangePreferences prefs = new MetricRangePreferences();
 
         prefs.readOnly = getPreference(PREF_METRIC_RANGE_RO, DEFAULT_VALUE_RANGE_RO);
@@ -74,13 +79,16 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
         }
 
         /* 
-         * sometimes we are satisfied with no range. other times we
-         * need to calculate the "last n" units range and return that
+         * get the begin/end range if: 
+         * 
+         * 1) we are in "last X units" mode, or
+         * 2) we're in "advanced" mode, but the begin/end is not set
          */
-        if (defaultRange && prefs.begin == null && prefs.end == null) {
+        if (prefs.readOnly == false | (prefs.begin == null && prefs.end == null)) {
+            // try to get the range from the "last X units" preferences first
             range = MeasurementUtils.calculateTimeFrame(prefs.lastN, prefs.unit);
             if (range == null) {
-                // better error handling for poorly persisted preferences
+                // but if that fails, fall back to default preferences
                 range = MeasurementUtils.calculateTimeFrame(DEFAULT_VALUE_RANGE_LASTN, DEFAULT_VALUE_RANGE_UNIT);
             }
 
@@ -88,11 +96,9 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
             prefs.end = (Long) range.get(1);
         }
 
-        return prefs;
-    }
+        log.info("Getting Metric Range Preferences:" + prefs);
 
-    public MetricRangePreferences getMetricRangePreferences() {
-        return getMetricRangePreferences(true);
+        return prefs;
     }
 
     public void setMetricRangePreferences(MetricRangePreferences prefs) {
@@ -103,8 +109,9 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
         } else {
             setPreference(PREF_METRIC_RANGE_LASTN, prefs.lastN);
             setPreference(PREF_METRIC_RANGE_UNIT, prefs.unit);
-            setPreference(PREF_METRIC_RANGE, MeasurementUtils.calculateTimeFrame(prefs.lastN, prefs.unit));
         }
+
+        log.info("Setting Metric Range Preferences:" + prefs);
     }
 
     /**

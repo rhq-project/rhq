@@ -25,7 +25,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.on.plugins.tomcat.helper.MainDeployer;
+import org.jboss.on.plugins.tomcat.helper.TomcatApplicationDeployer;
 import org.jetbrains.annotations.NotNull;
 import org.mc4j.ems.connection.ConnectionFactory;
 import org.mc4j.ems.connection.EmsConnectException;
@@ -99,7 +99,7 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, A
      */
     private int consecutiveConnectionErrors;
 
-    private MainDeployer mainDeployer;
+    private TomcatApplicationDeployer deployer;
 
     /**
      * Delegate instance for handling all calls to invoke operations on this component.
@@ -187,7 +187,7 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, A
                 this.consecutiveConnectionErrors = 0;
 
                 try {
-                    this.mainDeployer = new MainDeployer(this.connection);
+                    this.deployer = new TomcatApplicationDeployer(this.connection);
                 } catch (Throwable e) {
                     log.error("Unable to access MainDeployer MBean required for creation and deletion of managed " + "resources - this should never happen. Cause: " + e);
                 }
@@ -385,20 +385,20 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, A
         return operationsDelegate.invoke(operation, parameters);
     }
 
-    MainDeployer getMainDeployer() {
-        return this.mainDeployer;
+    TomcatApplicationDeployer getDeployer() {
+        return this.deployer;
     }
 
-    void undeployFile(File file) throws MainDeployer.DeployerException {
+    void undeployFile(File file) throws TomcatApplicationDeployer.DeployerException {
         getEmsConnection();
         if (this.connection == null) {
             log.warn("Unable to undeploy " + file + ", because we could not connect to the Tomcat instance.");
             return;
         }
-        if (this.mainDeployer == null) {
+        if (this.deployer == null) {
             throw new IllegalStateException("Unable to undeploy " + file + ", because MainDeployer MBean could " + "not be accessed - this should never happen.");
         }
-        this.mainDeployer.undeploy(file);
+        this.deployer.undeploy(file);
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {

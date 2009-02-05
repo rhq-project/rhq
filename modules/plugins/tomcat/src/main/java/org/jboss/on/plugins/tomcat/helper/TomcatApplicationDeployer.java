@@ -36,7 +36,7 @@ import org.mc4j.ems.connection.bean.operation.EmsOperation;
 /**
  * @author Ian Springer
  */
-public class MainDeployer {
+public class TomcatApplicationDeployer {
     static public final String DEPLOYER_BEAN = "Catalina:type=Deployer,host=localhost";
 
     private final Log log = LogFactory.getLog(this.getClass());
@@ -45,7 +45,7 @@ public class MainDeployer {
     private EmsOperation redeployOperation;
     private EmsOperation undeployOperation;
 
-    public MainDeployer(EmsConnection connection) throws NoSuchMethodException {
+    public TomcatApplicationDeployer(EmsConnection connection) throws NoSuchMethodException {
         EmsBean mainDeployer = connection.getBean(DEPLOYER_BEAN);
         if (mainDeployer == null) {
             throw new IllegalStateException("MBean named [" + DEPLOYER_BEAN + "] does not exist.");

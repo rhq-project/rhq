@@ -67,10 +67,10 @@ public class ProcessExecutionResults {
     }
 
     /**
-     * Returns the full output of the process as a <code>String</code>. This returns <code>null</code> if the process's
-     * output was not captured.
+     * Returns the full output of the process (stdout plus stderr) as a <code>String</code>. This returns
+     * <code>null</code> if the process's output was not captured.
      *
-     * @return the full output of the process or <code>null</code>
+     * @return the full output of the process (stdout plus stderr) or <code>null</code>
      */
     public String getCapturedOutput() {
         if (output == null) {

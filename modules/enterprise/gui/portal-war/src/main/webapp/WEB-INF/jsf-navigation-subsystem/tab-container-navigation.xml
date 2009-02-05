@@ -11,13 +11,13 @@
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/subsystem/layout/main.xhtml</to-view-id>
+         <to-view-id>/rhq/subsystem/layout/main.xhtml?tab=#{param.tab}</to-view-id>
          <redirect/>
       </navigation-case>
       
       <navigation-case> 
          <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/subsystem/layout/main.xhtml</to-view-id>
+         <to-view-id>/rhq/subsystem/layout/main.xhtml?tab=#{param.tab}</to-view-id>
          <redirect/>
       </navigation-case>
 

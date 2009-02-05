@@ -39,7 +39,9 @@
                width="100%"/>
 
    <ui:insert name="content">
-      <rich:tabPanel id="subsytemViewPanel" binding="#{SubsystemViewsUIBean.tabPanel}">
+      <rich:tabPanel id="subsytemViewPanel" 
+                     binding="#{SubsystemViewsUIBean.tabPanel}"
+                     valueChangeListener="#{SubsystemViewsUIBean.processValueChange}">
          <rich:tab name="configurationUpdates" label="Configuration Updates">
             <c:if test="#{SubsystemViewsUIBean.tabPanel.selectedTab eq 'configurationUpdates'}">
                <ui:include src="/rhq/subsystem/configurationUpdate.xhtml" />

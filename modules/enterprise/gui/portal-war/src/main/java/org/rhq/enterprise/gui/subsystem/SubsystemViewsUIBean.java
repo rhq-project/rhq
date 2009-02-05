@@ -18,6 +18,14 @@
  */
 package org.rhq.enterprise.gui.subsystem;
 
+import java.io.IOException;
+
+import javax.faces.context.FacesContext;
+import javax.faces.event.ValueChangeEvent;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.richfaces.component.html.HtmlTabPanel;
 
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -30,6 +38,8 @@ import org.rhq.core.gui.util.FacesContextUtility;
  * @author Joseph Marques
  */
 public class SubsystemViewsUIBean {
+
+    protected final Log log = LogFactory.getLog(SubsystemViewsUIBean.class);
 
     private HtmlTabPanel tabPanel = new HtmlTabPanel();
 
@@ -45,5 +55,20 @@ public class SubsystemViewsUIBean {
 
     public void setTabPanel(HtmlTabPanel tabPanel) {
         this.tabPanel = tabPanel;
+    }
+
+    public void processValueChange(ValueChangeEvent event) {
+        // intercept the click on some other tab, and reformat the URL as needed through redirection
+        String newTabName = (String) event.getNewValue();
+        FacesContext context = FacesContextUtility.getFacesContext();
+        String subsystemViewMainURL = context.getViewRoot().getViewId();
+
+        HttpServletResponse response = (HttpServletResponse) context.getExternalContext().getResponse();
+        try {
+            // perhaps a little nasty, but it works
+            response.sendRedirect(subsystemViewMainURL + "?tab=" + newTabName);
+        } catch (IOException ioe) {
+            log.warn("Could not redirect from subsystem view tab click, resetting with default tab");
+        }
     }
 }

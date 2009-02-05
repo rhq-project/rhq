@@ -22,6 +22,8 @@
 */
 package org.rhq.core.gui.configuration.propset;
 
+import javax.faces.component.UIForm;
+
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.gui.configuration.AbstractConfigurationComponent;
 import org.rhq.core.gui.util.FacesComponentIdFactory;
@@ -29,6 +31,7 @@ import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesExpressionUtility;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.richfaces.component.html.HtmlModalPanel;
 
 /**
  * A component that represents a set of RHQ Configurations which share the same ConfigurationDefinition.
@@ -77,4 +80,16 @@ public class ConfigurationSetComponent extends AbstractConfigurationComponent im
                 ConfigurationSet.class);
         return configurationSet;
     }
+
+    public static String getMemberValuesModalPanelId(ConfigurationSetComponent configurationSetComponent)
+    {
+        return configurationSetComponent.getId() + "MemberValuesModalPanel";
+    }
+
+    @Nullable
+    public HtmlModalPanel getMemberValuesModalPanel() {
+        UIForm form = FacesComponentUtility.getEnclosingForm(this);
+        //noinspection ConstantConditions
+        return (HtmlModalPanel)(form.getParent().findComponent(getMemberValuesModalPanelId(this)));
+    }    
 }

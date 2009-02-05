@@ -35,6 +35,12 @@
 
       <from-view-id>/rhq/test/config/edit-config.xhtml</from-view-id>
 
+       <navigation-case>
+          <from-action>#{EditTestConfigurationUIBean.updateConfiguration}</from-action>
+          <to-view-id>/rhq/test/config/view-config.xhtml</to-view-id>
+          <redirect/>
+       </navigation-case>
+
       <navigation-case>
          <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
          <to-view-id>/rhq/test/config/edit-map.xhtml</to-view-id>
@@ -110,5 +116,49 @@
        </navigation-case>
 
     </navigation-rule>
-    
+
+    <navigation-rule>
+
+       <from-view-id>/rhq/test/config/view-group-config.xhtml</from-view-id>
+
+       <navigation-case>
+          <from-action>#{ViewTestConfigurationUIBean.editConfiguration}</from-action>
+          <to-view-id>/rhq/test/config/edit-group-config.xhtml</to-view-id>
+          <redirect/>
+       </navigation-case>
+
+       <navigation-case>
+          <from-action>#{ViewTestConfigurationUIBean.accessMap}</from-action>
+          <to-view-id>/rhq/test/config/view-map.xhtml</to-view-id>
+       </navigation-case>
+
+    </navigation-rule>
+
+    <navigation-rule>
+
+       <from-view-id>/rhq/test/config/edit-group-config.xhtml</from-view-id>
+
+        <navigation-case>
+           <from-action>#{EditTestConfigurationUIBean.updateConfiguration}</from-action>
+           <to-view-id>/rhq/test/config/view-group-config.xhtml</to-view-id>
+           <redirect/>
+        </navigation-case>
+
+       <navigation-case>
+          <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+          <to-view-id>/rhq/test/config/edit-map.xhtml</to-view-id>
+       </navigation-case>
+
+       <navigation-case>
+          <from-action>#{ConfigHelperUIBean.addNewMap}</from-action>
+          <to-view-id>/rhq/test/config/add-map.xhtml</to-view-id>
+       </navigation-case>
+
+       <navigation-case>
+          <from-action>#{ConfigHelperUIBean.addNewOpenMapMemberProperty}</from-action>
+          <to-view-id>/rhq/test/config/add-simple.xhtml</to-view-id>
+       </navigation-case>
+
+    </navigation-rule>
+
 </faces-config>

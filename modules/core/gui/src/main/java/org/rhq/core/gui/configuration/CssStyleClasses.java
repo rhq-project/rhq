@@ -33,7 +33,8 @@ public class CssStyleClasses
     public static final String PROPERTY_VALUE_CELL = "property-value-cell";
     public static final String PROPERTY_DESCRIPTION_CELL = "property-description-cell";
     public static final String PROPERTY_ENABLED_CELL = "property-enabled-cell";
-    public static final String PROPERTY_VALUE_INPUT = "";    
+    public static final String PROPERTY_VALUE_INPUT = "";
+    public static final String BUTTON_SMALL = "buttonsmall";
 
     private CssStyleClasses()
     {

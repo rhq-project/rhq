@@ -60,6 +60,7 @@ public class PropertySetRenderer extends Renderer
     public void decode(FacesContext facesContext, UIComponent component) {
         PropertySetComponent propertySetComponent = (PropertySetComponent) component;
         validateAttributes(propertySetComponent);
+
         String id = getInitInputsJavaScriptComponentId(propertySetComponent);
         UIComponent initInputsJavaScriptComponent = propertySetComponent.findComponent(id);
         if (initInputsJavaScriptComponent != null) {

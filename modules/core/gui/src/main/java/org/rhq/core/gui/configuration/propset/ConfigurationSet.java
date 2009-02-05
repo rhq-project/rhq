@@ -48,7 +48,13 @@ public class ConfigurationSet
         this.configurationDefinition = configurationDefinition;
         this.members = members;
         this.aggregateConfiguration = new Configuration();
-        Map<String, PropertyDefinition> childPropertyDefinitions = configurationDefinition.getPropertyDefinitions();
+        calculateAggregateConfiguration();
+    }
+
+    public void calculateAggregateConfiguration()
+    {
+        this.aggregateConfiguration.getMap().clear();        
+        Map<String, PropertyDefinition> childPropertyDefinitions = this.configurationDefinition.getPropertyDefinitions();
         List<AbstractPropertyMap> sourceParentPropertyMaps = new ArrayList();
         for (ConfigurationSetMember member : this.members)
             sourceParentPropertyMaps.add(member.getConfiguration());
@@ -174,10 +180,11 @@ public class ConfigurationSet
                 Map<String, Integer> valueFrequencies = nameValueFrequenciesMap.get(propertyName);
                 if (valueFrequencies == null) {
                     valueFrequencies = new HashMap();
-                    valueFrequencies.put(propertyValue, 0);
                     nameValueFrequenciesMap.put(propertyName, valueFrequencies);
                 }
-                valueFrequencies.put(propertyValue, valueFrequencies.get(propertyValue) + 1);
+                Integer valueFrequency = (valueFrequencies.containsKey(propertyValue)) ?
+                        (valueFrequencies.get(propertyValue) + 1) : 1;
+                valueFrequencies.put(propertyValue, valueFrequency);
             }
         }
         return nameValueFrequenciesMap;

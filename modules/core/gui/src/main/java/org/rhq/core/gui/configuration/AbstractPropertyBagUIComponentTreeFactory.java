@@ -34,7 +34,6 @@ package org.rhq.core.gui.configuration;
  import javax.faces.component.html.HtmlPanelGrid;
  import javax.faces.component.html.HtmlPanelGroup;
  import javax.faces.component.html.HtmlSelectBooleanCheckbox;
- import javax.faces.component.html.HtmlOutputLink;
  import javax.faces.context.FacesContext;
 
  import org.apache.commons.logging.Log;
@@ -51,13 +50,12 @@ package org.rhq.core.gui.configuration;
  import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
  import org.rhq.core.gui.RequestParameterNameConstants;
  import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
- import org.rhq.core.gui.configuration.helper.ConfigurationExpressionUtility;
  import org.rhq.core.gui.configuration.propset.ConfigurationSetComponent;
- import org.rhq.core.gui.configuration.propset.PropertySetComponent;
  import org.rhq.core.gui.util.FacesComponentUtility;
  import org.rhq.core.gui.util.FacesExpressionUtility;
  import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
  import org.richfaces.component.html.HtmlModalPanel;
+ import org.ajax4jsf.component.html.HtmlAjaxCommandLink;
 
  /**
  * A factory that generates a tree of JSF components that depicts a given collection of JON {@link Property}s.
@@ -65,6 +63,8 @@ package org.rhq.core.gui.configuration;
  * @author Ian Springer
  */
 public abstract class AbstractPropertyBagUIComponentTreeFactory {
+    private final Log LOG = LogFactory.getLog(AbstractPropertyBagUIComponentTreeFactory.class);
+
     static final String DELETE_LIST_MEMBER_PROPERTY_FUNCTION = "DELETE_LIST_MEMBER_PROPERTY";
     static final String DELETE_OPEN_MAP_MEMBER_PROPERTY_FUNCTION = "DELETE_OPEN_MAP_MEMBER_PROPERTY";
 
@@ -109,8 +109,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private static final String PROPERTY_MAP_SUMMARY_DATA_CELL_STYLE_CLASS = "property-map-summary-data-cell";
     private static final String PROPERTY_MAP_SUMMARY_DATA_TEXT_STYLE_CLASS = "property-map-summary-data-text";
     private static final String PROPERTY_MAP_SUMMARY_BUTTON_FOOTER_STYLE_CLASS = "property-buttonfooterrow";    
-    private static final String BUTTONS_TABLE_STYLE_CLASS = "buttons-table";
-    private static final String BUTTON_SMALL_STYLE_CLASS = "buttonsmall";
+    private static final String BUTTONS_TABLE_STYLE_CLASS = "buttons-table";    
     private static final String VALUES_DIFFER_TEXT_STYLE_CLASS = "values-differ-text";
     private static final String ROW_ODD_STYLE_CLASS = "OddRow";
     private static final String ROW_EVEN_STYLE_CLASS = "EvenRow";
@@ -122,8 +121,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private String valueExpressionFormat;
     private String overrideExpressionFormat;
     private boolean isAggregate;
-
-    private final Log LOG = LogFactory.getLog(ConfigRenderer.class);
+    private HtmlModalPanel memberValuesModalPanel;
 
      public AbstractPropertyBagUIComponentTreeFactory(AbstractConfigurationComponent config,
         Collection<PropertyDefinition> propertyDefinitions, AbstractPropertyMap propertyMap, boolean topLevel,
@@ -135,6 +133,10 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         this.valueExpressionFormat = valueExpressionFormat;
         this.overrideExpressionFormat = getOverrideExpressionFormat(valueExpressionFormat);
         this.isAggregate = (this.config instanceof ConfigurationSetComponent);
+        if (isAggregate) {
+            ConfigurationSetComponent configurationSetComponent = (ConfigurationSetComponent)this.config;
+            this.memberValuesModalPanel = configurationSetComponent.getMemberValuesModalPanel();
+        }
     }
 
     private String getOverrideExpressionFormat(String valueExpression) {
@@ -337,7 +339,8 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         addDebug(parent, false, ".addSimpleProperty()");
     }
 
-     private void addPropertySimpleValue(UIComponent parent, PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple, UIInput input)
+     private void addPropertySimpleValue(UIComponent parent, PropertyDefinitionSimple propertyDefinitionSimple,
+                                         PropertySimple propertySimple, UIInput input)
      {
          if (this.isAggregate) {
              if (propertySimple.getOverride() != null && propertySimple.getOverride()) {
@@ -346,31 +349,18 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
                  FacesComponentUtility.addOutputText(parent, null, "Member Values Differ",
                          VALUES_DIFFER_TEXT_STYLE_CLASS);
              }
-             HtmlModalPanel modalPanel = FacesComponentUtility.createComponent(HtmlModalPanel.class);
-             parent.getChildren().add(modalPanel);
-             PropertySetComponent propertySet = FacesComponentUtility.createComponent(PropertySetComponent.class);
-             propertySet.setReadOnly(this.config.isReadOnly());
-             propertySet.setListIndex(this.config.getListIndex());
-             if (propertyDefinitionSimple != null) {
-                 propertySet.setValueExpression(PropertySetComponent.PROPERTY_DEFINITION_ATTRIBUTE,
-                         ConfigurationExpressionUtility.createValueExpressionForPropertyDefiniton(
-                                 this.config.getConfigurationDefinitionExpressionString(), propertyDefinitionSimple));
-             }
-             propertySet.setValueExpression(PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE,
-                     this.config.getValueExpression(ConfigurationSetComponent.CONFIGURATION_SET_ATTRIBUTE));
-             modalPanel.getChildren().add(propertySet);
-
-             String modalPanelClientId = modalPanel.getClientId(FacesContext.getCurrentInstance());
-
-             HtmlOutputLink closeModalLink = FacesComponentUtility.addOutputLink(modalPanel, this.config, "#");
-             closeModalLink.setOnclick("Richfaces.hideModalPanel('" + modalPanelClientId + "')");
-             closeModalLink.setTitle("Cancel");
-             FacesComponentUtility.addButton(closeModalLink, "Cancel", BUTTON_SMALL_STYLE_CLASS);
-
-             HtmlOutputLink openModalLink = FacesComponentUtility.addOutputLink(parent, this.config, "#");
-             openModalLink.setOnclick("Richfaces.showModalPanel('" + modalPanelClientId + "')");
-             openModalLink.setTitle(MEMBER_VALUES_BUTTON_TITLE);
-             FacesComponentUtility.addButton(openModalLink, MEMBER_VALUES_BUTTON_LABEL, BUTTON_SMALL_STYLE_CLASS);
+             HtmlAjaxCommandLink ajaxCommandLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
+             parent.getChildren().add(ajaxCommandLink);
+             ajaxCommandLink.setOncomplete("Richfaces.showModalPanel('" +
+                     this.memberValuesModalPanel.getClientId(FacesContext.getCurrentInstance()) + "');");
+             StringBuilder reRenderIds = new StringBuilder();
+             for (UIComponent component : this.memberValuesModalPanel.getChildren())
+                 reRenderIds.append(":" + component.getId() + ", ");
+             reRenderIds.delete(reRenderIds.length() - 2, reRenderIds.length()); // chop off the extra ", "
+             ajaxCommandLink.setReRender(reRenderIds.toString());
+             ajaxCommandLink.setTitle(MEMBER_VALUES_BUTTON_TITLE);
+             FacesComponentUtility.addParameter(ajaxCommandLink, null, "prop", "foobar");
+             FacesComponentUtility.addButton(ajaxCommandLink, MEMBER_VALUES_BUTTON_LABEL, CssStyleClasses.BUTTON_SMALL);
          } else {
              parent.getChildren().add(input);
          }
@@ -416,7 +406,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             FacesComponentUtility.addParameter(deleteLink, this.config,
                 RequestParameterNameConstants.MEMBER_NAME_PARAM, memberName);
 
-            FacesComponentUtility.addButton(deleteLink, DELETE_MAP_BUTTON_LABEL, BUTTON_SMALL_STYLE_CLASS);
+            FacesComponentUtility.addButton(deleteLink, DELETE_MAP_BUTTON_LABEL, CssStyleClasses.BUTTON_SMALL);
             FacesComponentUtility.addVerbatimText(panel, "</td>");
         }
 
@@ -535,7 +525,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
                 listProperty.getName());
             FacesComponentUtility.addParameter(addNewLink, this.config, RequestParameterNameConstants.LIST_INDEX_PARAM,
                 String.valueOf(listProperty.getList().size()));
-            FacesComponentUtility.addButton(addNewLink, ADD_NEW_MAP_BUTTON_LABEL, BUTTON_SMALL_STYLE_CLASS);
+            FacesComponentUtility.addButton(addNewLink, ADD_NEW_MAP_BUTTON_LABEL, CssStyleClasses.BUTTON_SMALL);
             FacesComponentUtility.addVerbatimText(parent, "</td></tr>\n");
         }
 
@@ -594,7 +584,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         int configId = this.config.getConfiguration().getId();
         FacesComponentUtility.addParameter(viewEditLink, this.config, RequestParameterNameConstants.CONFIG_ID_PARAM,
             String.valueOf(configId));
-        FacesComponentUtility.addButton(viewEditLink, viewEditButtonLabel, BUTTON_SMALL_STYLE_CLASS);
+        FacesComponentUtility.addButton(viewEditLink, viewEditButtonLabel, CssStyleClasses.BUTTON_SMALL);
 
         if (!isReadOnly(listMemberMapPropertyDefinition.getParentPropertyListDefinition())) {
             // delete button
@@ -611,7 +601,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             String paramId = PropertyIdGeneratorUtility.getIdentifier(listMemberProperty, index, PARAM_ID_SUFFIX);
             listIndexParam.setId(paramId);
 
-            FacesComponentUtility.addButton(deleteLink, DELETE_MAP_BUTTON_LABEL, BUTTON_SMALL_STYLE_CLASS);
+            FacesComponentUtility.addButton(deleteLink, DELETE_MAP_BUTTON_LABEL, CssStyleClasses.BUTTON_SMALL);
         }
 
         FacesComponentUtility.addVerbatimText(panel, "</td>\n");
@@ -714,7 +704,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             addNewLink.setActionExpression(actionExpression);
             FacesComponentUtility.addParameter(addNewLink, this.config, RequestParameterNameConstants.MAP_NAME_PARAM,
                 propertyDefinitionMap.getName());
-            FacesComponentUtility.addButton(addNewLink, ADD_NEW_MAP_BUTTON_LABEL, BUTTON_SMALL_STYLE_CLASS);
+            FacesComponentUtility.addButton(addNewLink, ADD_NEW_MAP_BUTTON_LABEL, CssStyleClasses.BUTTON_SMALL);
             FacesComponentUtility.addVerbatimText(parent, "</td></tr>");
         }
     }

@@ -1233,6 +1233,57 @@ DB Upgrade:
         <schema-deleteColumn table="RHQ_MEASUREMENT_OOB" column="OOB_COUNT"/>
     </schemaSpec>
 
+	<!-- RHQ 1448 -->
+    <schemaSpec version="2.44">
+        <schema-directSQL>
+           <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R00 (SCHEDULE_ID)">
+              CREATE INDEX RHQ_MEAS_DATA_R00_SID_IDX ON RHQ_MEAS_DATA_NUM_R00 (schedule_id)
+           </statement>
+           <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R01 (SCHEDULE_ID)">
+              CREATE INDEX RHQ_MEAS_DATA_R01_SID_IDX ON RHQ_MEAS_DATA_NUM_R01 (schedule_id)
+           </statement>
+           <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R02 (SCHEDULE_ID)">
+              CREATE INDEX RHQ_MEAS_DATA_R02_SID_IDX ON RHQ_MEAS_DATA_NUM_R02 (schedule_id)
+           </statement>
+           <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R03 (SCHEDULE_ID)">
+              CREATE INDEX RHQ_MEAS_DATA_R03_SID_IDX ON RHQ_MEAS_DATA_NUM_R03 (schedule_id)
+           </statement>
+           <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R04 (SCHEDULE_ID)">
+              CREATE INDEX RHQ_MEAS_DATA_R04_SID_IDX ON RHQ_MEAS_DATA_NUM_R04 (schedule_id)
+           </statement>
+           <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R05 (SCHEDULE_ID)">
+              CREATE INDEX RHQ_MEAS_DATA_R05_SID_IDX ON RHQ_MEAS_DATA_NUM_R05 (schedule_id)
+           </statement>
+           <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R06 (SCHEDULE_ID)">
+              CREATE INDEX RHQ_MEAS_DATA_R06_SID_IDX ON RHQ_MEAS_DATA_NUM_R06 (schedule_id)
+           </statement>
+           <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R07 (SCHEDULE_ID)">
+              CREATE INDEX RHQ_MEAS_DATA_R07_SID_IDX ON RHQ_MEAS_DATA_NUM_R07 (schedule_id)
+           </statement>
+           <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R08 (SCHEDULE_ID)">
+              CREATE INDEX RHQ_MEAS_DATA_R08_SID_IDX ON RHQ_MEAS_DATA_NUM_R08 (schedule_id)
+           </statement>
+           <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R09 (SCHEDULE_ID)">
+              CREATE INDEX RHQ_MEAS_DATA_R09_SID_IDX ON RHQ_MEAS_DATA_NUM_R09 (schedule_id)
+           </statement>
+           <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R10 (SCHEDULE_ID)">
+              CREATE INDEX RHQ_MEAS_DATA_R10_SID_IDX ON RHQ_MEAS_DATA_NUM_R10 (schedule_id)
+           </statement>
+           <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R11 (SCHEDULE_ID)">
+              CREATE INDEX RHQ_MEAS_DATA_R11_SID_IDX ON RHQ_MEAS_DATA_NUM_R11 (schedule_id)
+           </statement>
+           <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R12 (SCHEDULE_ID)">
+              CREATE INDEX RHQ_MEAS_DATA_R12_SID_IDX ON RHQ_MEAS_DATA_NUM_R12 (schedule_id)
+           </statement>
+           <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R13 (SCHEDULE_ID)">
+              CREATE INDEX RHQ_MEAS_DATA_R13_SID_IDX ON RHQ_MEAS_DATA_NUM_R13 (schedule_id)
+           </statement>
+           <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R14 (SCHEDULE_ID)">
+              CREATE INDEX RHQ_MEAS_DATA_R14_SID_IDX ON RHQ_MEAS_DATA_NUM_R14 (schedule_id)
+           </statement>
+        </schema-directSQL>    
+    </schemaSpec>
+	
 </dbupgrade>
 
 </target>

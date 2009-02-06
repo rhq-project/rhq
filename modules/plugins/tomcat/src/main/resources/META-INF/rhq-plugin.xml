@@ -480,6 +480,22 @@
                   required="false"
                   description="The (virtual) host that this application is running on. If no virtual host is set, this defaults to 'localhost'" />
             </c:group>
+            
+            <c:group name="ResponseTime">
+               <c:simple-property
+                  name="responseTimeLogFile"
+                  required="false"
+                  description="the absolute path to the log file containing response-time statistics for this web application" />
+               <c:simple-property
+                  name="responseTimeUrlExcludes"
+                  required="false"
+                  description="a space-delimited list of regular expressions matching URLs to exclude from response-time statisics" />
+               <c:simple-property
+                  name="responseTimeUrlTransforms"
+                  required="false"
+                  description="a space-delimited list of Perl-style substitution expressions to apply to URLs actively collecting response-time statistics (e.g. |^/dept/finance/.*|/dept/finance/*|)" />
+            </c:group>
+            
             <c:group
                name="Advanced"
                hiddenByDefault="true">
@@ -585,6 +601,15 @@
             defaultOn="true"
             description="Virtual hosts this app runs on" />
 
+         <metric
+            property="ResponseTime"
+            displayName="HTTP Response Time"
+            dataType="calltime"
+            defaultOn="false"
+            units="milliseconds"
+            destinationType="URL"
+            description="the minimum, maximum, and average response times for HTTP requests serviced by this web application" />
+
          <!-- 
             <content name="file" displayName="WAR File" category="deployable" isCreationType="true">
             <configuration>
@@ -630,7 +655,7 @@
                   readOnly="true" />
             </c:group>
          </plugin-configuration>
-         
+
          <operation
             name="addRole"
             description="Add a Role to this Group.">
@@ -655,7 +680,7 @@
                   type="string"
                   required="true" />
             </parameters>
-         </operation>                  
+         </operation>
 
          <resource-configuration>
             <c:group name="Attributes">
@@ -698,7 +723,7 @@
                   readOnly="true" />
             </c:group>
          </plugin-configuration>
-         
+
          <resource-configuration>
             <c:group name="Attributes">
                <c:simple-property
@@ -828,7 +853,7 @@
          subCategory="Security"
          discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
          class="org.rhq.plugins.jmx.MBeanResourceComponent"
-         description="Tomcat User Database" >
+         description="Tomcat User Database">
 
          <plugin-configuration>
             <c:group name="General">
@@ -866,7 +891,7 @@
                   displayName="Description"
                   description="The Group description."
                   type="string"
-                  required="false" />                  
+                  required="false" />
             </parameters>
          </operation>
 
@@ -885,7 +910,7 @@
                   displayName="Description"
                   description="The Role description."
                   type="string"
-                  required="false" />                  
+                  required="false" />
             </parameters>
          </operation>
 
@@ -910,7 +935,7 @@
                   displayName="Full Name"
                   description="A full name for the new User."
                   type="string"
-                  required="false" />                                    
+                  required="false" />
             </parameters>
          </operation>
 

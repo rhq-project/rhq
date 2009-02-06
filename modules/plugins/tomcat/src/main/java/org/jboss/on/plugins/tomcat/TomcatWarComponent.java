@@ -58,10 +58,6 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  */
 public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerComponent> implements OperationFacet {
 
-    public static final String RESPONSE_TIME_LOG_FILE_CONFIG_PROP = "responseTimeLogFile";
-    public static final String RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP = "responseTimeUrlExcludes";
-    public static final String RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP = "responseTimeUrlTransforms";
-
     private static final String METRIC_PREFIX_APPLICATION = "Application.";
     private static final String METRIC_PREFIX_SERVLET = "Servlet.";
     private static final String METRIC_PREFIX_SESSION = "Session.";
@@ -87,6 +83,9 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
     protected static final String PROPERTY_NAME = "name";
     protected static final String PROPERTY_CONTEXT_ROOT = "contextRoot";
     protected static final String PROPERTY_FILENAME = "filename";
+    protected static final String PROPERTY_RESPONSE_TIME_LOG_FILE = ResponseTimeConfiguration.RESPONSE_TIME_LOG_FILE_CONFIG_PROP;
+    protected static final String PROPERTY_RESPONSE_TIME_URL_EXCLUDES = ResponseTimeConfiguration.RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP;
+    protected static final String PROPERTY_RESPONSE_TIME_URL_TRANSFORMS = ResponseTimeConfiguration.RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP;
     protected static final String PROPERTY_VHOST = "vHost";
 
     private final Log log = LogFactory.getLog(this.getClass());
@@ -117,8 +116,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
 
             if (AvailabilityType.DOWN == availability) {
                 // if availability is down then ensure we use a new mbean on the next try, in case we have
-                // a totally new EMS connection.
-                // this is creating a limitation on the stop operation
+                // a totally new EMS connection. This is creating a limitation on the stop operation.
                 this.webModuleMBean = null;
             }
         } else {
@@ -129,10 +127,11 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
     }
 
     @Override
-    public void start(ResourceContext resourceContext) {
+    public void start(ResourceContext<TomcatServerComponent> resourceContext) {
         super.start(resourceContext);
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         this.webModuleMBean = getWebModuleMBean();
+
         ResponseTimeConfiguration responseTimeConfig = new ResponseTimeConfiguration(pluginConfig);
         File logFile = responseTimeConfig.getLogFile();
         if (logFile != null) {
@@ -159,7 +158,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
                         }
                     } else {
                         log.error("The '" + METRIC_RESPONSE_TIME + "' metric is enabled for WAR resource '" + getApplicationName() + "', but no value is defined for the '"
-                            + RESPONSE_TIME_LOG_FILE_CONFIG_PROP + "' connection property.");
+                            + PROPERTY_RESPONSE_TIME_LOG_FILE + "' connection property.");
                         // TODO: Communicate this error back to the server for display in the GUI.
                     }
                 } else if (metricName.startsWith(METRIC_PREFIX_SERVLET)) {
@@ -298,10 +297,10 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
     @Override
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
         WarOperation operation = getOperation(name);
-        if(name.equalsIgnoreCase("start")) {
+        if (name.equalsIgnoreCase("start")) {
             this.webModuleMBean = getWebModuleMBean();
         }
-        
+
         if (null == this.webModuleMBean) {
             throw new IllegalStateException("Could not find MBean for WAR '" + getApplicationName() + "'.");
         }

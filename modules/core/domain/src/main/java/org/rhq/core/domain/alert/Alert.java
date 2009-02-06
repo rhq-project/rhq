@@ -79,6 +79,36 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "  JOIN a.alertDefinition definition " + "  JOIN definition.conditions condition "
         + " WHERE condition.measurementDefinition.id = :measurementDefinitionId "
         + "   AND definition.resource IN (:resources) " + "   AND (a.ctime BETWEEN :startDate AND :endDate)"),
+    @NamedQuery(name = Alert.QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCEGROUP, query = "" //
+        + "SELECT a " //
+        + "  FROM Alert AS a " //
+        + "  JOIN a.alertDefinition definition " //
+        + "  JOIN definition.conditions condition " //
+        + " WHERE condition.measurementDefinition.id = :measurementDefinitionId " //
+        + "   AND definition.resource IN ( SELECT res " //
+        + "                                  FROM ResourceGroup rg " //
+        + "                                  JOIN rg.implicitResources res " //
+        + "                                 WHERE rg.id = :groupId ) " //
+        + "   AND ( a.ctime BETWEEN :startDate AND :endDate )"),
+    @NamedQuery(name = Alert.QUERY_FIND_BY_MEAS_DEF_ID_AND_AUTOGROUP, query = "" //
+        + "SELECT a " //
+        + "  FROM Alert AS a " //
+        + "  JOIN a.alertDefinition definition " //
+        + "  JOIN definition.conditions condition " //
+        + " WHERE condition.measurementDefinition.id = :measurementDefinitionId " //
+        + "   AND definition.resource IN ( SELECT res " //
+        + "                                  FROM Resource res " //
+        + "                                 WHERE res.parentResource.id = :parentId " //
+        + "                                   AND res.resourceType.id = :typeId ) " //
+        + "   AND ( a.ctime BETWEEN :startDate AND :endDate )"),
+    @NamedQuery(name = Alert.QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCE, query = "" //
+        + "SELECT a " //
+        + "  FROM Alert AS a " //
+        + "  JOIN a.alertDefinition definition " //
+        + "  JOIN definition.conditions condition " //
+        + " WHERE condition.measurementDefinition.id = :measurementDefinitionId " //
+        + "   AND definition.resource.id = ( :resourceId ) " //
+        + "   AND ( a.ctime BETWEEN :startDate AND :endDate )"),
     @NamedQuery(name = Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES, query = "SELECT sched.id, count(*) "
         + "  FROM Alert AS a " + "  JOIN a.alertDefinition aDef " + "  JOIN aDef.conditions condition "
         + "  JOIN aDef.resource res" + "  JOIN condition.measurementDefinition mDef " + "  JOIN mDef.schedules sched"
@@ -92,10 +122,19 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "     AND (a.alertDefinition.priority = :priority OR :priority IS NULL) "
         + "     AND (a.ctime BETWEEN :startDate AND :endDate)"),
     @NamedQuery(name = Alert.QUERY_FIND_ALL, query = "SELECT a FROM Alert AS a"),
-    @NamedQuery(name = Alert.QUERY_DELETE_BY_CTIME, query = "DELETE FROM Alert AS a WHERE a.ctime BETWEEN :begin AND :end"),
-    @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCE, query = "DELETE Alert AS alert " + "WHERE alert.id IN "
-        + "( SELECT ia.id " + "FROM Alert ia " + "WHERE ia.alertDefinition.resource.id = :resourceId " + ")"),
-    @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM Alert a WHERE a.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource IN (:resources))"),
+    @NamedQuery(name = Alert.QUERY_DELETE_BY_CTIME, query = "" //
+        + "DELETE FROM Alert AS a " //
+        + " WHERE a.ctime BETWEEN :begin AND :end"),//
+    @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCE, query = "" //
+        + "DELETE Alert AS alert " //
+        + " WHERE alert.id IN ( SELECT ia.id " //
+        + "                       FROM Alert ia " //
+        + "                      WHERE ia.alertDefinition.resource.id = :resourceId )"),
+    @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCES, query = "" //
+        + "DELETE FROM Alert a " //
+        + " WHERE a.alertDefinition IN ( SELECT ad " //
+        + "                                FROM AlertDefinition ad " //
+        + "                               WHERE ad.resource IN ( :resources ) )"),
     @NamedQuery(name = Alert.QUERY_FIND_ALL_COMPOSITES_ADMIN, query = "" //
         + "   SELECT new org.rhq.core.domain.alert.composite.AlertHistoryComposite" // 
         + "        ( a, parent.id, parent.name ) " //
@@ -158,6 +197,9 @@ public class Alert implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCE = "Alert.deleteByResource";
     public static final String QUERY_DELETE_BY_RESOURCES = "Alert.deleteByResources";
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCES = "Alert.findByMeasDefIdAndResources";
+    public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCEGROUP = "Alert.findByMeasDefIdAndResourceGroup";
+    public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_AUTOGROUP = "Alert.findByMeasDefIdAndAutoGroup";
+    public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCE = "Alert.findByMeasDefIdAndResource";
     public static final String QUERY_GET_ALERT_COUNT_FOR_SCHEDULES = "Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES";
 
     // for subsystem view

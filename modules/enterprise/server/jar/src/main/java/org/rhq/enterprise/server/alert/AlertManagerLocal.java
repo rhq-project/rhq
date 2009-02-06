@@ -54,6 +54,15 @@ public interface AlertManagerLocal {
 
     int getAlertCountByMeasurementDefinitionId(Integer measurementDefinitionId, long begin, long end);
 
+    int getAlertCountByMeasurementDefinitionAndResourceGroup(int measurementDefinitionId, int groupId, long beginDate,
+        long endDate);
+
+    int getAlertCountByMeasurementDefinitionAndAutoGroup(int measurementDefinitionId, int resourceParentId,
+        int resourceTypeId, long beginDate, long endDate);
+
+    int getAlertCountByMeasurementDefinitionAndResource(int measurementDefinitionId, int resourceId, long beginDate,
+        long endDate);
+
     // resourceIds is nullable
     PageList<Alert> findAlerts(Subject subject, Integer[] resourceIds, AlertPriority priority, long timeRange,
         PageControl pageControl);

@@ -286,6 +286,41 @@ public class AlertManagerBean implements AlertManagerLocal {
         return (int) count;
     }
 
+    public int getAlertCountByMeasurementDefinitionAndResourceGroup(int measurementDefinitionId, int groupId,
+        long beginDate, long endDate) {
+        Query query = PersistenceUtility.createCountQuery(entityManager,
+            Alert.QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCEGROUP);
+        query.setParameter("measurementDefinitionId", measurementDefinitionId);
+        query.setParameter("startDate", beginDate);
+        query.setParameter("endDate", endDate);
+        query.setParameter("groupId", groupId);
+        long count = (Long) query.getSingleResult();
+        return (int) count;
+    }
+
+    public int getAlertCountByMeasurementDefinitionAndAutoGroup(int measurementDefinitionId, int resourceParentId,
+        int resourceTypeId, long beginDate, long endDate) {
+        Query query = PersistenceUtility.createCountQuery(entityManager, Alert.QUERY_FIND_BY_MEAS_DEF_ID_AND_AUTOGROUP);
+        query.setParameter("measurementDefinitionId", measurementDefinitionId);
+        query.setParameter("startDate", beginDate);
+        query.setParameter("endDate", endDate);
+        query.setParameter("parentId", resourceParentId);
+        query.setParameter("typeId", resourceTypeId);
+        long count = (Long) query.getSingleResult();
+        return (int) count;
+    }
+
+    public int getAlertCountByMeasurementDefinitionAndResource(int measurementDefinitionId, int resourceId,
+        long beginDate, long endDate) {
+        Query query = PersistenceUtility.createCountQuery(entityManager, Alert.QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCE);
+        query.setParameter("measurementDefinitionId", measurementDefinitionId);
+        query.setParameter("startDate", beginDate);
+        query.setParameter("endDate", endDate);
+        query.setParameter("resourceId", resourceId);
+        long count = (Long) query.getSingleResult();
+        return (int) count;
+    }
+
     @SuppressWarnings("unchecked")
     public Map<Integer, Integer> getAlertCountForSchedules(long begin, long end, List<Integer> scheduleIds) {
         if ((scheduleIds == null) || (scheduleIds.size() == 0) || (end < begin)) {

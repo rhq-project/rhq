@@ -73,9 +73,17 @@
                <f:facet name="header">
                   <h:outputText value="Name" />
                </f:facet>
-               <c:if test="#{MetricsTableUIBean.context.category != 'AutoGroup'}">
+               
+               <c:if test="#{MetricsTableUIBean.context.category == 'Resource'}">
                   <h:outputText value="#{metric.label}" />
                </c:if>
+               
+               <c:if test="#{MetricsTableUIBean.context.category == 'ResourceGroup'}">
+                  <h:outputLink value="/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&amp;groupId=#{MetricsTableUIBean.context.groupId}&amp;m=#{metric.definitionId}">
+                     <h:outputText value="#{metric.label}" />
+                  </h:outputLink>
+               </c:if>
+
                <c:if test="#{MetricsTableUIBean.context.category == 'AutoGroup'}">
                   <h:outputLink value="/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&amp;parent=#{MetricsTableUIBean.context.parentResourceId}&amp;type=#{MetricsTableUIBean.context.resourceTypeId}&amp;m=#{metric.definitionId}">
                      <h:outputText value="#{metric.label}" />

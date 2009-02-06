@@ -75,7 +75,13 @@
                   <f:facet name="header">
                      <h:outputText value="Alerts" />
                   </f:facet>
-                  <h:outputText value="#{healthSummary.alerts}" />
+
+                  <h:outputLink
+                     value="/rhq/resource/alert/listAlertHistory.xhtml">
+                     <f:param name="id" value="#{healthSummary.id}"/>
+                     <f:param name="mode" value="list"/>
+                     <h:outputText value="#{healthSummary.alerts}" />
+                  </h:outputLink>
                </rich:column>
 
                <rich:column>

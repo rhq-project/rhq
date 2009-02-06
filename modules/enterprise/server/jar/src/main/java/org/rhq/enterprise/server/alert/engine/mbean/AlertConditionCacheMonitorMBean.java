@@ -51,8 +51,6 @@ public interface AlertConditionCacheMonitorMBean {
     /*
      * for current congestion
      */
-    public int getTotalCacheElementCount();
-
     public int getAvailabilityCacheElementCount();
 
     public int getMeasurementCacheElementCount();
@@ -62,28 +60,6 @@ public interface AlertConditionCacheMonitorMBean {
     public int getResourceConfigurationCacheElementCount();
 
     public int getOperationCacheElementCount();
-
-    public void resetAvailabilityCacheElementCounts();
-
-    public void resetEventCacheElementCounts();
-
-    public void resetMeasurementCacheElementCounts();
-
-    public void resetResourceConfigurationCacheElementCounts();
-
-    public void resetOperationCacheElementCounts();
-
-    public void resetAllCacheElementCounts();
-
-    public void incrementAvailabilityCacheElementCount(int count);
-
-    public void incrementMeasurementCacheElementCount(int count);
-
-    public void incrementEventCacheElementCount(int count);
-
-    public void incrementResourceConfigurationCacheElementCount(int count);
-
-    public void incrementOperationCacheElementCount(int count);
 
     /*
      * for out-bound traffic

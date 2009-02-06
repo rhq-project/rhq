@@ -26,6 +26,7 @@ import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 
+import org.rhq.enterprise.server.alert.engine.AlertConditionCache;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -34,13 +35,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Joseph Marques
  */
 public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBean, MBeanRegistration {
-
-    public AtomicInteger availabilityCacheElementCount = new AtomicInteger();
-    public AtomicInteger eventCacheElementCount = new AtomicInteger();
-    public AtomicInteger measurementCacheElementCount = new AtomicInteger();
-    public AtomicInteger resourceConfigurationCacheElementCount = new AtomicInteger();
-    public AtomicInteger operationCacheElementCount = new AtomicInteger();
-    public AtomicInteger totalCacheElementCount = new AtomicInteger();
 
     public AtomicInteger availabilityCacheElementMatches = new AtomicInteger();
     public AtomicInteger eventCacheElementMatches = new AtomicInteger();
@@ -64,8 +58,8 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     public static AlertConditionCacheMonitorMBean getMBean() {
         if (proxy == null) {
             if (objectName != null) {
-                proxy = (AlertConditionCacheMonitorMBean)MBeanServerInvocationHandler.newProxyInstance(mbeanServer, objectName,
-                    AlertConditionCacheMonitorMBean.class, false);
+                proxy = (AlertConditionCacheMonitorMBean) MBeanServerInvocationHandler.newProxyInstance(mbeanServer,
+                    objectName, AlertConditionCacheMonitorMBean.class, false);
             } else {
                 // create a local object
                 proxy = new AlertConditionCacheMonitor();
@@ -76,61 +70,24 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     }
 
     public int getAvailabilityCacheElementCount() {
-        return availabilityCacheElementCount.get();
+        return AlertConditionCache.getInstance().getCacheSize(AlertConditionCache.CacheName.AvailabilityCache);
     }
 
     public int getEventCacheElementCount() {
-        return eventCacheElementCount.get();
+        return AlertConditionCache.getInstance().getCacheSize(AlertConditionCache.CacheName.EventsCache);
     }
 
     public int getMeasurementCacheElementCount() {
-        return measurementCacheElementCount.get();
+        return AlertConditionCache.getInstance().getCacheSize(AlertConditionCache.CacheName.MeasurementDataCache)
+            + AlertConditionCache.getInstance().getCacheSize(AlertConditionCache.CacheName.MeasurementTraitCache);
     }
 
     public int getResourceConfigurationCacheElementCount() {
-        return resourceConfigurationCacheElementCount.get();
+        return AlertConditionCache.getInstance().getCacheSize(AlertConditionCache.CacheName.ResourceConfigurationCache);
     }
 
     public int getOperationCacheElementCount() {
-        return operationCacheElementCount.get();
-    }
-
-    public int getTotalCacheElementCount() {
-        return totalCacheElementCount.get();
-    }
-
-    public void resetAvailabilityCacheElementCounts() {
-        int removed = availabilityCacheElementCount.getAndSet(0);
-        totalCacheElementCount.addAndGet(-removed);
-    }
-
-    public void resetEventCacheElementCounts() {
-        int removed = eventCacheElementCount.getAndSet(0);
-        totalCacheElementCount.addAndGet(-removed);
-    }
-
-    public void resetMeasurementCacheElementCounts() {
-        int removed = measurementCacheElementCount.getAndSet(0);
-        totalCacheElementCount.addAndGet(-removed);
-    }
-
-    public void resetResourceConfigurationCacheElementCounts() {
-        int removed = resourceConfigurationCacheElementCount.getAndSet(0);
-        totalCacheElementCount.addAndGet(-removed);
-    }
-
-    public void resetOperationCacheElementCounts() {
-        int removed = operationCacheElementCount.getAndSet(0);
-        totalCacheElementCount.addAndGet(-removed);
-    }
-
-    public synchronized void resetAllCacheElementCounts() {
-        availabilityCacheElementCount.set(0);
-        eventCacheElementCount.set(0);
-        measurementCacheElementCount.set(0);
-        operationCacheElementCount.set(0);
-        resourceConfigurationCacheElementCount.set(0);
-        totalCacheElementCount.set(0);
+        return AlertConditionCache.getInstance().getCacheSize(AlertConditionCache.CacheName.ResourceOperationCache);
     }
 
     public int getAvailabilityCacheElementMatches() {
@@ -155,31 +112,6 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
 
     public int getTotalCacheElementMatches() {
         return totalCacheElementMatches.get();
-    }
-
-    public void incrementAvailabilityCacheElementCount(int insertedCount) {
-        availabilityCacheElementCount.addAndGet(insertedCount);
-        totalCacheElementCount.addAndGet(insertedCount);
-    }
-
-    public void incrementEventCacheElementCount(int insertedCount) {
-        eventCacheElementCount.addAndGet(insertedCount);
-        totalCacheElementCount.addAndGet(insertedCount);
-    }
-
-    public void incrementResourceConfigurationCacheElementCount(int count) {
-        resourceConfigurationCacheElementCount.addAndGet(count);
-        totalCacheElementCount.addAndGet(count);
-    }
-
-    public void incrementMeasurementCacheElementCount(int insertedCount) {
-        measurementCacheElementCount.addAndGet(insertedCount);
-        totalCacheElementCount.addAndGet(insertedCount);
-    }
-
-    public void incrementOperationCacheElementCount(int insertedCount) {
-        operationCacheElementCount.addAndGet(insertedCount);
-        totalCacheElementCount.addAndGet(insertedCount);
     }
 
     public void incrementAvailabilityCacheElementMatches(int matches) {

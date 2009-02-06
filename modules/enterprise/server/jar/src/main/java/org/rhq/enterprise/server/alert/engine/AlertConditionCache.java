@@ -101,7 +101,7 @@ public final class AlertConditionCache {
      */
     private ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-    private enum CacheName {
+    public enum CacheName {
         MeasurementDataCache, //
         MeasurementTraitCache, //
         ResourceOperationCache, //
@@ -109,6 +109,70 @@ public final class AlertConditionCache {
         EventsCache, //
         ResourceConfigurationCache, //
         Inverse;
+    }
+
+    public Map<String, Integer> getCacheCounts() {
+        Map<String, Integer> counts = new HashMap<String, Integer>();
+        counts.put(CacheName.MeasurementDataCache.name(), getMapListCount(measurementDataCache));
+        counts.put(CacheName.MeasurementTraitCache.name(), getMapListCount(measurementTraitCache));
+        counts.put(CacheName.ResourceOperationCache.name(), getMapMapListCount(resourceOperationCache));
+        counts.put(CacheName.AvailabilityCache.name(), getMapListCount(availabilityCache));
+        counts.put(CacheName.EventsCache.name(), getMapListCount(eventsCache));
+        counts.put(CacheName.ResourceConfigurationCache.name(), getMapListCount(resourceConfigurationCache));
+        return counts;
+    }
+
+    public int getCacheSize(CacheName cache) {
+        switch (cache) {
+        case MeasurementDataCache:
+            return getMapListCount(measurementDataCache);
+        case MeasurementTraitCache:
+            return getMapListCount(measurementTraitCache);
+        case ResourceOperationCache:
+            return getMapListCount(measurementDataCache);
+        case AvailabilityCache:
+            return getMapListCount(availabilityCache);
+        case EventsCache:
+            return getMapListCount(eventsCache);
+        case ResourceConfigurationCache:
+            return getMapListCount(resourceConfigurationCache);
+        default:
+            throw new IllegalArgumentException("Getting size of " + cache.name() + " not supported");
+        }
+    }
+
+    private <S, T> int getMapListCount(Map<S, List<T>> mapList) {
+        rwLock.writeLock().lock();
+
+        int count = 0;
+        try {
+            for (List<?> listValue : mapList.values()) {
+                count += listValue.size();
+            }
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
+        return count;
+    }
+
+    private <R, S, T> int getMapMapListCount(Map<R, Map<S, List<T>>> mapMapList) {
+        rwLock.writeLock().lock();
+
+        int count = 0;
+        try {
+            for (Map<S, List<T>> mapListValue : mapMapList.values()) {
+                count += getMapListCount(mapListValue);
+            }
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error(t);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
+        return count;
     }
 
     /*
@@ -355,7 +419,6 @@ public final class AlertConditionCache {
             resourceOperationCache.clear();
             availabilityCache.clear();
             inverseAlertConditionMap.clear();
-            AlertConditionCacheMonitor.getMBean().resetAllCacheElementCounts();
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error(t);
@@ -779,7 +842,6 @@ public final class AlertConditionCache {
                 log.info("Failed to create NumericDoubleCacheElement with parameters: "
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, calculatedValue));
             }
-            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(2);
         } else if (alertConditionCategory == AlertConditionCategory.CHANGE) {
             AlertConditionChangesCategoryComposite changesComposite = (AlertConditionChangesCategoryComposite) composite;
             int scheduleId = changesComposite.getScheduleId();
@@ -796,7 +858,6 @@ public final class AlertConditionCache {
                 log.info("Failed to create NumericDoubleCacheElement with parameters: "
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, numeric));
             }
-            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.TRAIT) {
             AlertConditionTraitCategoryComposite traitsComposite = (AlertConditionTraitCategoryComposite) composite;
             String value = traitsComposite.getValue();
@@ -816,7 +877,6 @@ public final class AlertConditionCache {
                 log.info("Failed to create StringCacheElement with parameters: "
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator, null, value));
             }
-            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.AVAILABILITY) {
             /*
              * This is a hack, because we're not respecting the persist alertCondition option, we're instead overriding
@@ -837,7 +897,6 @@ public final class AlertConditionCache {
                     + getCacheElementErrorString(alertConditionId, alertConditionOperator, availabilityComposite
                         .getAvailabilityType(), AvailabilityType.UP));
             }
-            AlertConditionCacheMonitor.getMBean().incrementAvailabilityCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.CONTROL) {
             AlertConditionControlCategoryComposite controlComposite = (AlertConditionControlCategoryComposite) composite;
             String option = alertCondition.getOption();
@@ -856,7 +915,6 @@ public final class AlertConditionCache {
                         + getCacheElementErrorString(alertConditionId, alertConditionOperator, null,
                             operationRequestStatus));
             }
-            AlertConditionCacheMonitor.getMBean().incrementOperationCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.THRESHOLD) {
             AlertConditionScheduleCategoryComposite thresholdComposite = (AlertConditionScheduleCategoryComposite) composite;
             Double thresholdValue = alertCondition.getThreshold();
@@ -875,7 +933,6 @@ public final class AlertConditionCache {
                     alertConditionId, agentId, stats);
 
             }
-            AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.EVENT) {
             AlertConditionEventCategoryComposite eventComposite = (AlertConditionEventCategoryComposite) composite;
             EventSeverity eventSeverity = EventSeverity.valueOf(alertCondition.getName());
@@ -898,7 +955,6 @@ public final class AlertConditionCache {
 
             addTo("eventsCache", eventsCache, eventComposite.getResourceId(), cacheElement, alertConditionId, agentId,
                 stats);
-            AlertConditionCacheMonitor.getMBean().incrementEventCacheElementCount(1);
         } else if (alertConditionCategory == AlertConditionCategory.RESOURCE_CONFIG) {
             AlertConditionResourceConfigurationCategoryComposite resourceConfigurationComposite = (AlertConditionResourceConfigurationCategoryComposite) composite;
 
@@ -913,7 +969,6 @@ public final class AlertConditionCache {
 
             addTo("resourceConfigurationCache", resourceConfigurationCache, resourceConfigurationComposite
                 .getResourceId(), cacheElement, alertConditionId, agentId, stats);
-            AlertConditionCacheMonitor.getMBean().incrementResourceConfigurationCacheElementCount(1);
         }
     }
 
@@ -986,25 +1041,6 @@ public final class AlertConditionCache {
             }
             inverseCacheElement.righty.remove(inverseCacheElement.lefty);
             stats.deleted++;
-
-            if (inverseCacheElement.lefty instanceof AvailabilityCacheElement) {
-                AlertConditionCacheMonitor.getMBean().incrementAvailabilityCacheElementCount(-1);
-            } else if (inverseCacheElement.lefty instanceof EventCacheElement) {
-                AlertConditionCacheMonitor.getMBean().incrementEventCacheElementCount(-1);
-            } else if (inverseCacheElement.lefty instanceof ResourceOperationCacheElement) {
-                AlertConditionCacheMonitor.getMBean().incrementOperationCacheElementCount(-1);
-            } else if (inverseCacheElement.lefty instanceof MeasurementTraitCacheElement) {
-                AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(-1);
-            } else if (inverseCacheElement.lefty instanceof MeasurementNumericCacheElement) {
-                AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(-1);
-            } else if (inverseCacheElement.lefty instanceof MeasurementBaselineCacheElement) {
-                AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementCount(-1);
-            } else if (inverseCacheElement.lefty instanceof ResourceConfigurationCacheElement) {
-                AlertConditionCacheMonitor.getMBean().incrementResourceConfigurationCacheElementCount(-1);
-            } else {
-                log.info("AlertConditionCacheMonitor does not yet remove/reset cache counts for elements of type '"
-                    + inverseCacheElement.lefty.getClass() + "'");
-            }
         }
     }
 

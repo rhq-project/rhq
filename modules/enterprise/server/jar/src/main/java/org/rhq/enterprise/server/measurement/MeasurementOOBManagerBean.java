@@ -146,8 +146,10 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             log.debug("Removing OOBs older than " + new Date(end));
         Query q = entityManager.createQuery("DELETE FROM MeasurementOOB mo WHERE mo.id.timestamp < :time");
         q.setParameter("time", end);
+        long t0 = System.currentTimeMillis();
         int count = q.executeUpdate();
-        log.info("Removed [" + count + "] old OOB entries");
+        long t1 = System.currentTimeMillis();
+        log.info("Removed [" + count + "] old OOB entries in [" + (t1 - t0) + "] ms");
     }
 
     /**

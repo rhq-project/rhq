@@ -118,6 +118,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
             if (AvailabilityType.DOWN == availability) {
                 // if availability is down then ensure we use a new mbean on the next try, in case we have
                 // a totally new EMS connection.
+                // this is creating a limitation on the stop operation
                 this.webModuleMBean = null;
             }
         } else {
@@ -297,6 +298,10 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
     @Override
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
         WarOperation operation = getOperation(name);
+        if(name.equalsIgnoreCase("start")) {
+            this.webModuleMBean = getWebModuleMBean();
+        }
+        
         if (null == this.webModuleMBean) {
             throw new IllegalStateException("Could not find MBean for WAR '" + getApplicationName() + "'.");
         }

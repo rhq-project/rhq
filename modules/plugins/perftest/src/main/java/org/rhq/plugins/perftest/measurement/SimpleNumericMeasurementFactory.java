@@ -18,6 +18,8 @@
  */
 package org.rhq.plugins.perftest.measurement;
 
+import java.util.Random;
+
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -33,20 +35,15 @@ public class SimpleNumericMeasurementFactory implements MeasurementFactory {
     public MeasurementData nextValue(MeasurementScheduleRequest request) {
         // We want "random" data, but just enough randomness to possibly trigger some
         // baseline-based alert definitions, but not flood the system with unrealistic alerts.
-        // I ran a test to confirm that every 10,000 executions of Math.random will produce
-        // between 1 and 4 numbers that will be lower than 0.0001 or higher than 0.9999
-        // When the random number is between .0001 and .9999, the normal metric value is the schedule id.
-        // When the random number is really low, the metric value will be 10% lower than normal.
-        // When the random number is really high, the metric value will be 10% higher than normal.
+        // Adding nextGaussian to the scheduleId should produce a Normal distribution of metric 
+        // values overtime, with the mean being the scheduleId itself.
+        // By changing the baseline frequency and duration so that we only consider a short
+        // period when calculating the baselines, and then don't recalculate it very frequently
+        // it should be possible to have OOBs triggered at a reasonable rate, e.g. one high
+        // and one low OOB per metric schedule per day.
 
         double value = request.getScheduleId();
-        double random = Math.random();
-
-        if (random < 0.0001) {
-            value = value * 0.90;
-        } else if (random > 0.9999) {
-            value = value * 1.10;
-        }
+        value += (new Random()).nextGaussian();
 
         MeasurementDataNumeric data = new MeasurementDataNumeric(request, value);
         return data;

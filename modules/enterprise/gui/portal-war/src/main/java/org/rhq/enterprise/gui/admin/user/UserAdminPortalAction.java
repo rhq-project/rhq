@@ -20,14 +20,17 @@ package org.rhq.enterprise.gui.admin.user;
 
 import java.util.HashMap;
 import java.util.Properties;
+
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.Portal;
@@ -183,7 +186,7 @@ public class UserAdminPortalAction extends BaseDispatchAction {
         WebUser webUser = new WebUser(user);
         webUser.setHasPrincipal(hasPrincipal);
 
-        request.setAttribute(Constants.USER_ATTR, webUser);
+        request.setAttribute(Constants.WEBUSER_SES_ATTR, webUser);
         request.setAttribute(Constants.TITLE_PARAM_ATTR, BizappUtils.makeSubjectFullName(user));
     }
 

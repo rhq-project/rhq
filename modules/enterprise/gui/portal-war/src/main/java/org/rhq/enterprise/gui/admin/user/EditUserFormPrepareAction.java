@@ -49,7 +49,7 @@ public class EditUserFormPrepareAction extends TilesAction {
         Log log = LogFactory.getLog(EditUserFormPrepareAction.class.getName());
         EditForm userForm = (EditForm) form;
 
-        WebUser user = (WebUser) request.getAttribute(Constants.USER_ATTR);
+        WebUser user = (WebUser) request.getAttribute(Constants.WEBUSER_SES_ATTR);
 
         if (userForm.getFirstName() == null) {
             userForm.setFirstName(user.getFirstName());
@@ -73,10 +73,6 @@ public class EditUserFormPrepareAction extends TilesAction {
 
         if (userForm.getPhoneNumber() == null) {
             userForm.setPhoneNumber(user.getPhoneNumber());
-        }
-
-        if (userForm.getSmsAddress() == null) {
-            userForm.setSmsAddress(user.getSmsaddress());
         }
 
         setupMyPreferences(request, user, userForm);

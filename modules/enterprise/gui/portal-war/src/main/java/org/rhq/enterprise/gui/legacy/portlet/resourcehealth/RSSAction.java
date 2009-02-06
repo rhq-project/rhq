@@ -29,7 +29,6 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.MessageResources;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -46,7 +45,8 @@ public class RSSAction extends BaseRSSAction {
     private static final Log log = LogFactory.getLog(RSSAction.class.getName());
 
     @Override
-    public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
+        HttpServletResponse response) throws Exception {
         RSSFeed feed = getNewRSSFeed(request);
         ResourceManagerLocal manager = LookupUtil.getResourceManager();
 
@@ -55,22 +55,25 @@ public class RSSAction extends BaseRSSAction {
         feed.setTitle(res.getMessage("dash.home.ResourceHealth"));
 
         // Get the resources health
-        Subject subject = getSubject(request);
-        if (subject != null) {
-
-            WebUser user = new WebUser(subject);
+        WebUser user = getWebUser(request);
+        if (user != null) {
             WebUserPreferences preferences = user.getWebPreferences();
-            FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences.getFavoriteResourcePortletPreferences();
+            FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
+                .getFavoriteResourcePortletPreferences();
 
-            PageList<ResourceHealthComposite> results = manager.getResourceHealth(subject, favoriteResourcePreferences.asArray(), PageControl.getUnlimitedInstance());
+            PageList<ResourceHealthComposite> results = manager.getResourceHealth(user.getSubject(),
+                favoriteResourcePreferences.asArray(), PageControl.getUnlimitedInstance());
 
             if ((results != null) && (results.size() > 0)) {
                 for (ResourceHealthComposite summary : results) {
                     String link = feed.getBaseUrl() + "/rhq/resource/monitor/graphs.xhtml&id=" + summary.getId();
 
-                    String availText = res.getMessage("dash.home.ResourceHealth.rss.item.availability", summary.getAvailabilityType().toString());
-                    String alertsText = res.getMessage("dash.home.ResourceHealth.rss.item.alerts", Long.valueOf(summary.getAlerts()));
-                    String typeText = res.getMessage("dash.home.ResourceHealth.rss.item.resourceType", summary.getTypeName());
+                    String availText = res.getMessage("dash.home.ResourceHealth.rss.item.availability", summary
+                        .getAvailabilityType().toString());
+                    String alertsText = res.getMessage("dash.home.ResourceHealth.rss.item.alerts", Long.valueOf(summary
+                        .getAlerts()));
+                    String typeText = res.getMessage("dash.home.ResourceHealth.rss.item.resourceType", summary
+                        .getTypeName());
 
                     long now = System.currentTimeMillis();
 

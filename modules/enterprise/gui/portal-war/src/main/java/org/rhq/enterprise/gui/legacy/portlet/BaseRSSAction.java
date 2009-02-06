@@ -19,11 +19,13 @@
 package org.rhq.enterprise.gui.legacy.portlet;
 
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
+
+import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
+import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 
 /**
@@ -36,23 +38,13 @@ public abstract class BaseRSSAction extends BaseAction {
         return WebUtility.getRequiredRequestParameter(request, "user");
     }
 
-    protected Subject getSubject(HttpServletRequest request) {
+    protected WebUser getWebUser(HttpServletRequest request) {
         try {
-            return WebUtility.getSubject(request);
+            return SessionUtils.getWebUser(request.getSession());
         } catch (Exception e) {
             log.error("No RSS feeds allowed for user without configuration: " + e);
             return null;
         }
-    }
-
-    protected Configuration getUserPreferences(HttpServletRequest request) {
-        Subject s = getSubject(request);
-
-        if (s == null) {
-            return new Configuration();
-        }
-
-        return s.getUserConfiguration();
     }
 
     protected void setManagingEditor(HttpServletRequest request) {

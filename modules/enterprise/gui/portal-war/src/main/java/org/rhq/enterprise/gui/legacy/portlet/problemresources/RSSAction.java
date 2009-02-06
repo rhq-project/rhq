@@ -29,7 +29,6 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.MessageResources;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.enterprise.gui.legacy.Constants;
@@ -43,7 +42,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class RSSAction extends BaseRSSAction {
     @Override
-    public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
+        HttpServletResponse response) throws Exception {
         RSSFeed feed = getNewRSSFeed(request);
 
         // Set title
@@ -51,11 +51,11 @@ public class RSSAction extends BaseRSSAction {
         feed.setTitle(res.getMessage("dash.home.ProblemResources"));
 
         // Get the problem resources
-        Subject subject = getSubject(request);
-        if (subject != null) {
+        WebUser user = getWebUser(request);
+        if (user != null) {
 
-            WebUser user = new WebUser(subject);
-            ProblemResourcesPortletPreferences preferences = user.getWebPreferences().getProblemResourcesPortletPreferences();
+            ProblemResourcesPortletPreferences preferences = user.getWebPreferences()
+                .getProblemResourcesPortletPreferences();
 
             long begin = 0; // beginning of time, unless configured otherwise
 
@@ -66,11 +66,12 @@ public class RSSAction extends BaseRSSAction {
 
             MeasurementProblemManagerLocal problemManager = LookupUtil.getMeasurementProblemManager();
             List<ProblemResourceComposite> results;
-            results = problemManager.findProblemResources(subject, begin, preferences.range);
+            results = problemManager.findProblemResources(user.getSubject(), begin, preferences.range);
 
             if ((results != null) && (results.size() > 0)) {
                 for (ProblemResourceComposite problem : results) {
-                    String link = feed.getBaseUrl() + "/rhq/resource/monitor/graphs.xhtml&id=" + problem.getResourceId();
+                    String link = feed.getBaseUrl() + "/rhq/resource/monitor/graphs.xhtml&id="
+                        + problem.getResourceId();
 
                     String availText = "";
                     if (problem.getAvailabilityType() != null) {
@@ -83,7 +84,9 @@ public class RSSAction extends BaseRSSAction {
                         }
                     }
 
-                    feed.addItem(problem.getResourceName(), link, res.getMessage("dash.home.ProblemResources.rss.item.description", availText, problem.getNumAlerts()), System.currentTimeMillis());
+                    feed.addItem(problem.getResourceName(), link, res.getMessage(
+                        "dash.home.ProblemResources.rss.item.description", availText, problem.getNumAlerts()), System
+                        .currentTimeMillis());
                 }
             }
 

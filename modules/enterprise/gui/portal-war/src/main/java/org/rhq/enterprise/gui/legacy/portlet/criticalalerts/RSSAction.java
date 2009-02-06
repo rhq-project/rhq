@@ -37,7 +37,6 @@ import org.rhq.core.clientapi.util.units.UnitsFormat;
 import org.rhq.core.clientapi.util.units.DateFormatter.DateSpecifics;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.legacy.Constants;
@@ -61,16 +60,15 @@ public class RSSAction extends BaseRSSAction {
         feed.setTitle(res.getMessage("dash.home.CriticalAlerts"));
 
         // Get the alerts
-        Subject subject = getSubject(request);
-        if (subject != null) {
+        WebUser user = getWebUser(request);
+        if (user != null) {
 
-            WebUser user = new WebUser(subject);
             AlertsPortletPreferences prefs = user.getWebPreferences().getAlertsPortletPreferences();
 
             PageControl pageControl = new PageControl(0, prefs.count);
 
-            PageList<Alert> alerts = alertManager.findAlerts(subject, ("all".equals(prefs.displayAll) ? null : prefs
-                .asArray()), AlertPriority.getByLegacyIndex(prefs.priority), prefs.timeRange, pageControl);
+            PageList<Alert> alerts = alertManager.findAlerts(user.getSubject(), ("all".equals(prefs.displayAll) ? null
+                : prefs.asArray()), AlertPriority.getByLegacyIndex(prefs.priority), prefs.timeRange, pageControl);
 
             if ((alerts != null) && (alerts.size() > 0)) {
                 for (Alert alert : alerts) {

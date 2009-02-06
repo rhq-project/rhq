@@ -39,7 +39,6 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.subsystem.AlertSubsystemManagerLocal;
@@ -64,8 +63,8 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
     private SelectItem[] categoryFilterItems;
 
     public SubsystemAlertHistoryUIBean() {
-        datePattern = new WebUserPreferences(EnterpriseFacesContextUtility.getSubject())
-            .getDateTimeDisplayPreferences().getDateTimeFormatTrigger();
+        datePattern = EnterpriseFacesContextUtility.getWebUser().getWebPreferences().getDateTimeDisplayPreferences()
+            .getDateTimeFormatTrigger();
         categoryFilterItems = SelectItemUtils.convertFromEnum(AlertConditionCategory.class, true);
         categoryFilter = (String) categoryFilterItems[0].getValue();
     }

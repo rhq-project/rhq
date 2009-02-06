@@ -328,7 +328,7 @@ public interface AttrConstants {
     public static final String PENDING_RESGRPS_ATTR = "PendingResGrps";
 
     /**
-     * The request or session scope attribute under which actions store the requested <code>AuthzSubjectValue</code>
+     * The request or session scope attribute under which actions store the requested <code>Subject</code>
      * object.
      */
     public static final String USER_ATTR = "User";

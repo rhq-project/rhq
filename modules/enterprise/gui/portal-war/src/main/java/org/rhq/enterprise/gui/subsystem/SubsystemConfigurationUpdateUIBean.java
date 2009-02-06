@@ -35,7 +35,6 @@ import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.subsystem.ConfigurationSubsystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -59,8 +58,8 @@ public class SubsystemConfigurationUpdateUIBean extends PagedDataTableUIBean {
     private SelectItem[] statusFilterItems;
 
     public SubsystemConfigurationUpdateUIBean() {
-        datePattern = new WebUserPreferences(EnterpriseFacesContextUtility.getSubject())
-            .getDateTimeDisplayPreferences().getDateTimeFormatTrigger();
+        datePattern = EnterpriseFacesContextUtility.getWebUser().getWebPreferences().getDateTimeDisplayPreferences()
+            .getDateTimeFormatTrigger();
         statusFilterItems = SelectItemUtils.convertFromEnum(ConfigurationUpdateStatus.class, true);
         statusFilter = (String) statusFilterItems[0].getValue();
     }

@@ -71,7 +71,6 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource rhqDs;
 
-
     /**
      * Compute oobs from the values in the 1h measurement table that just got added.
      * For the total result, this is an incremental computation. The idea is that
@@ -97,22 +96,19 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             else
                 throw new IllegalArgumentException("Unknown database type, can't continue: " + dbType);
 
-            stmt.setLong(1,begin);
-            stmt.setLong(2,begin);
-            stmt.setLong(3,begin);
+            stmt.setLong(1, begin);
+            stmt.setLong(2, begin);
+            stmt.setLong(3, begin);
             long t0 = System.currentTimeMillis();
             int count = stmt.executeUpdate();
             long t1 = System.currentTimeMillis();
-            log.info("Done calculating OOBs. [" + count + "] new entries in [" + (t1-t0) + "] ms");
-        }
-        catch (SQLException e) {
+            log.info("Done calculating OOBs. [" + count + "] new entries in [" + (t1 - t0) + "] ms");
+        } catch (SQLException e) {
             log.error(e);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error(e);
-        }
-        finally {
-            JDBCUtil.safeClose(conn,stmt,null);
+        } finally {
+            JDBCUtil.safeClose(conn, stmt, null);
         }
     }
 
@@ -126,15 +122,15 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     public void computeOOBsFromLastHour(Subject subject) {
 
         Query q = entityManager.createNamedQuery(MeasurementDataNumeric1H.GET_MAX_TIMESTAMP);
-        Object res  = q.getSingleResult();
-        if (res==null) {
+        Object res = q.getSingleResult();
+        if (res == null) {
             if (log.isDebugEnabled())
                 log.debug("No data yet in 1h table, nothing to do");
             return; // no data in that table yet - nothing to do.
         }
-        long timeStamp = (Long)res;
+        long timeStamp = (Long) res;
 
-        computeOOBsFromHourBeginingAt(subject,timeStamp);
+        computeOOBsFromHourBeginingAt(subject, timeStamp);
 
     }
 
@@ -149,7 +145,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         if (log.isDebugEnabled())
             log.debug("Removing OOBs older than " + new Date(end));
         Query q = entityManager.createQuery("DELETE FROM MeasurementOOB mo WHERE mo.id.timestamp < :time");
-        q.setParameter("time",end);
+        q.setParameter("time", end);
         int count = q.executeUpdate();
         log.info("Removed [" + count + "] old OOB entries");
     }
@@ -166,7 +162,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     public void removeOutdatedOObs(Subject subject, long cutoffTime) {
 
         Query q = entityManager.createNamedQuery(MeasurementOOB.DELETE_OUTDATED);
-        q.setParameter("cutOff",cutoffTime);
+        q.setParameter("cutOff", cutoffTime);
         int count = q.executeUpdate();
         log.info("Removed [" + count + "] outdated OOBs");
     }
@@ -193,14 +189,15 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
         pc.initDefaultOrderingField("sum(o.oobFactor)", PageOrdering.DESC);
 
-        long begin = end - (3L * 86400L *1000L);
+        long begin = end - (3L * 86400L * 1000L);
 
         Query queryCount = entityManager.createNamedQuery(MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE, pc);
-        queryCount.setParameter("begin",begin);
-        queryCount.setParameter("end",end);
-        query.setParameter("begin",begin);
-        query.setParameter("end",end);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE, pc);
+        queryCount.setParameter("begin", begin);
+        queryCount.setParameter("end", end);
+        query.setParameter("begin", begin);
+        query.setParameter("end", end);
 
         query.getResultList();
 
@@ -209,16 +206,16 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
         if (!results.isEmpty()) {
             //  add 24h and 48h factors
-            Map<Integer,MeasurementOOBComposite> map = new HashMap<Integer,MeasurementOOBComposite>(results.size());
+            Map<Integer, MeasurementOOBComposite> map = new HashMap<Integer, MeasurementOOBComposite>(results.size());
             List<Integer> scheduleIds = new ArrayList<Integer>(results.size());
             for (MeasurementOOBComposite comp : results) {
                 scheduleIds.add(comp.getScheduleId());
-                map.put(comp.getScheduleId(),comp);
+                map.put(comp.getScheduleId(), comp);
             }
-            begin = end - (2L * 86400L *1000L);
+            begin = end - (2L * 86400L * 1000L);
 
             Query q = entityManager.createNamedQuery(MeasurementOOB.GET_FACTOR_FOR_SCHEDULES);
-            q.setParameter("schedules",scheduleIds);
+            q.setParameter("schedules", scheduleIds);
             q.setParameter("begin", begin);
             q.setParameter("end", end);
             List<Object[]> ret = q.getResultList();
@@ -229,10 +226,10 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
                 map.get(id).setFactor48(fac.intValue());
             }
 
-            begin = end - (2L * 86400L *1000L);
+            begin = end - (2L * 86400L * 1000L);
 
             q = entityManager.createNamedQuery(MeasurementOOB.GET_FACTOR_FOR_SCHEDULES);
-            q.setParameter("schedules",scheduleIds);
+            q.setParameter("schedules", scheduleIds);
             q.setParameter("begin", begin);
             q.setParameter("end", end);
             ret = q.getResultList();

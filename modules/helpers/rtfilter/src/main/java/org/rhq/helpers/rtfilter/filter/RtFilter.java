@@ -54,12 +54,16 @@ import org.rhq.helpers.rtfilter.util.ServletUtility;
  */
 public class RtFilter implements Filter {
     private static final String JAVA_IO_TMPDIR_SYSPROP = "java.io.tmpdir";
-    private static final String JBOSS_SERVER_HOME_DIR_SYSPROP = "jboss.server.home.dir";
+    private static final String JBOSSAS_SERVER_HOME_DIR_SYSPROP = "jboss.server.home.dir";
+    private static final String TOMCAT_SERVER_HOME_DIR_SYSPROP = "catalina.home";
+
+    private static final String JBOSSAS_SERVER_LOG_SUBDIR = "log";
+    private static final String TOMCAT_SERVER_LOG_SUBDIR = "logs";
 
     private static final String DEFAULT_LOG_FILE_PREFIX = "";
-    private static final long DEFAULT_FLUSH_TIMEOUT = 60 * 1000; // 1 minute
-    private static final long DEFAULT_FLUSH_AFTER_LINES = 10;
-    private static final long DEFAULT_MAX_LOG_FILE_SIZE = 1024 * 1024 * 5; // 5 MB
+    private static final long DEFAULT_FLUSH_TIMEOUT = 60L * 1000; // 1 minute
+    private static final long DEFAULT_FLUSH_AFTER_LINES = 10L;
+    private static final long DEFAULT_MAX_LOG_FILE_SIZE = 1024L * 1024 * 5; // 5 MB
     private static final boolean DEFAULT_CHOP_QUERY_STRING = true;
 
     private final Log log = LogFactory.getLog(this.getClass());
@@ -92,8 +96,7 @@ public class RtFilter implements Filter {
      * @see javax.servlet.Filter#doFilter(javax.servlet.ServletRequest, javax.servlet.ServletResponse,
      *      javax.servlet.FilterChain)
      */
-    public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException,
-        ServletException {
+    public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException, ServletException {
         long t1 = 0;
         HttpServletRequest hreq = (HttpServletRequest) req;
         RtFilterResponseWrapper hresp = new RtFilterResponseWrapper(resp);
@@ -121,8 +124,7 @@ public class RtFilter implements Filter {
                         this.t2 = System.currentTimeMillis();
 
                         int statusCode = hresp.getStatus();
-
-                        // Only log successful requests (2xx or 3xx), since that's all JON 2.0 cares about for now...
+                        // Only log successful requests (2xx or 3xx) since that's all we care about for now...
                         if ((statusCode < 200) || (statusCode >= 400)) {
                             return;
                         }
@@ -179,15 +181,14 @@ public class RtFilter implements Filter {
             // try to see if the user provided a mapping for this server name
             if (vhostMappings.containsKey(serverName)) {
                 vhost = vhostMappings.getProperty(serverName);
-                if (vhost==null || vhost.equals(""))
-                    vhost = "" ; // It is in the mapping, but no value set -> no vhost
+                if (vhost == null || vhost.equals(""))
+                    vhost = ""; // It is in the mapping, but no value set -> no vhost
                 else
-                    vhost += "_"; // Othewise take it and append the separator
+                    vhost += "_"; // Otherwise take it and append the separator
                 if (log.isDebugEnabled())
                     log.debug("Vhost determined from mapping >" + vhost + "<");
-            }
-            else {
-                vhost = serverName + "_" ; // Not found in mapping? Take it literal + separator
+            } else {
+                vhost = serverName + "_"; // Not found in mapping? Take it literal + separator
             }
         }
 
@@ -197,8 +198,7 @@ public class RtFilter implements Filter {
 
         String logFileName = this.logFilePrefix + vhost + contextFileName + "_rt.log";
         this.logFile = new File(this.logDirectory, logFileName);
-        log.info("-- Filter openFile: Writing response-time log for webapp with context root '" + this.contextName
-            + "' to '" + this.logFile + "' (hashCode=" + hashCode() + ")...");
+        log.info("-- Filter openFile: Writing response-time log for webapp with context root '" + this.contextName + "' to '" + this.logFile + "' (hashCode=" + hashCode() + ")...");
         boolean append = true;
         try {
             openFileWriter(append);
@@ -250,8 +250,7 @@ public class RtFilter implements Filter {
         }
     }
 
-    private void writeLogEntry(ServletRequest req, RtFilterResponseWrapper responseWrapper, String uri, String url,
-        long t1) throws Exception {
+    private void writeLogEntry(ServletRequest req, RtFilterResponseWrapper responseWrapper, String uri, String url, long t1) throws Exception {
         long duration = this.t2 - t1;
         if (duration < 0) {
             log.error("Calculated response time for request to [" + url + "] (" + duration + " ms) is negative!");
@@ -275,8 +274,7 @@ public class RtFilter implements Filter {
 
         // Format: <url> <when> <duration> <status> <IP>
         StringBuilder buf = new StringBuilder();
-        buf.append((this.chopUrl) ? uri : url).append(" ").append(this.t2).append(" ").append(duration).append(" ")
-            .append(responseWrapper.getStatus()).append(" ").append(remoteIp);
+        buf.append((this.chopUrl) ? uri : url).append(" ").append(this.t2).append(" ").append(duration).append(" ").append(responseWrapper.getStatus()).append(" ").append(remoteIp);
 
         // Check if log file was externally truncated before writing to it. NOTE: It's important to do this just prior
         // to writing to the file to minimize the chances of the file becoming corrupt (i.e. front-padded with NUL
@@ -307,32 +305,42 @@ public class RtFilter implements Filter {
             this.logDirectory = new File(logDirectoryPath.trim());
         } else {
             /*
-             * Default to "${jboss.server.home.dir}/log/rt"; this is the same location that the JON jbossas plugin
-             * defaults to. If, for some reason, the jboss.server.home.dir sysprop is not set, fall back to
-             * "${java.io.tmpdir}/rhq/rt".
+             * If this is a JBossAS deployed container, or a Standalone TC container, use a logical
+             * default (so those plugins can be written in a compatible way).
+             * First, try to default to "${JBOSS_SERVER_HOME_DIR_SYSPROP}/JBOSSAS_SERVER_LOG_SUBDIR/rt";
+             * If not set try "${TOMCAT_SERVER_HOME_DIR_SYSPROP}/TOMCAT_SERVER_LOG_SUBDIR/rt";
+             * If, for some reason, neither property is set, fall back to "${java.io.tmpdir}/rhq/rt".
              */
-            String jbossServerHomeDirPath = System.getProperty(JBOSS_SERVER_HOME_DIR_SYSPROP);
-            if (jbossServerHomeDirPath != null) {
-                File jbossServerLogDir = new File(jbossServerHomeDirPath, "log");
-                this.logDirectory = new File(jbossServerLogDir, "rt");
+            File serverLogDir = null;
+            String serverHomeDirPath = System.getProperty(JBOSSAS_SERVER_HOME_DIR_SYSPROP);
+
+            if (null != serverHomeDirPath) {
+                serverLogDir = new File(serverHomeDirPath, JBOSSAS_SERVER_LOG_SUBDIR);
+            } else {
+                serverHomeDirPath = System.getProperty(TOMCAT_SERVER_HOME_DIR_SYSPROP);
+                if (serverHomeDirPath != null) {
+                    serverLogDir = new File(serverHomeDirPath, TOMCAT_SERVER_LOG_SUBDIR);
+                }
+            }
+
+            if (null != serverLogDir) {
+                this.logDirectory = new File(serverLogDir, "rt");
             } else {
                 this.logDirectory = new File(System.getProperty(JAVA_IO_TMPDIR_SYSPROP), "rhq/rt");
-                log.warn(JBOSS_SERVER_HOME_DIR_SYSPROP + " system property is not set - defaulting log directory to '"
-                    + this.logDirectory + "'...");
+                log.warn("The 'logDirectory' filter init param was not set. Also, the standard system properties were not set (" + JBOSSAS_SERVER_HOME_DIR_SYSPROP + ", "
+                    + TOMCAT_SERVER_HOME_DIR_SYSPROP + "); defaulting RT log directory to '" + this.logDirectory + "'.");
             }
         }
 
         if (this.logDirectory.exists()) {
             if (!this.logDirectory.isDirectory()) {
-                throw new UnavailableException("Log directory '" + this.logDirectory
-                    + "' exists but is not a directory.");
+                throw new UnavailableException("Log directory '" + this.logDirectory + "' exists but is not a directory.");
             }
         } else {
             try {
                 this.logDirectory.mkdirs();
             } catch (Exception e) {
-                throw new UnavailableException("Unable to create log directory '" + this.logDirectory + "' - cause: "
-                    + e);
+                throw new UnavailableException("Unable to create log directory '" + this.logDirectory + "' - cause: " + e);
             }
 
             if (!logDirectory.exists()) {
@@ -372,8 +380,7 @@ public class RtFilter implements Filter {
                     throw new NumberFormatException();
                 }
             } catch (NumberFormatException nfe) {
-                log.error("Invalid '" + InitParams.FLUSH_AFTER_LINES + "' init parameter: " + lines
-                    + " (value must be a positive integer) - using default.");
+                log.error("Invalid '" + InitParams.FLUSH_AFTER_LINES + "' init parameter: " + lines + " (value must be a positive integer) - using default.");
                 flushAfterLines = DEFAULT_FLUSH_AFTER_LINES;
             }
         }
@@ -386,8 +393,7 @@ public class RtFilter implements Filter {
                     throw new NumberFormatException();
                 }
             } catch (NumberFormatException e) {
-                log.error("Invalid '" + InitParams.MAX_LOG_FILE_SIZE + "' init parameter: " + maxLogFileSizeString
-                    + " (value must be a positive integer) - using default.");
+                log.error("Invalid '" + InitParams.MAX_LOG_FILE_SIZE + "' init parameter: " + maxLogFileSizeString + " (value must be a positive integer) - using default.");
                 this.maxLogFileSize = DEFAULT_MAX_LOG_FILE_SIZE;
             }
         }
@@ -408,19 +414,16 @@ public class RtFilter implements Filter {
                     vhostMappings.load(stream);
                 } catch (IOException e) {
                     log.warn("Can't read vhost mappings from " + vhostMappingFileString + " :" + e.getMessage());
-                }
-                finally {
+                } finally {
                     if (stream != null)
                         try {
                             stream.close();
-                        }
-                        catch (Exception e) {
+                        } catch (Exception e) {
                             log.debug(e);
                         }
                 }
-            }
-            else {
-                log.warn("Can't read vhost mappings from " + vhostMappingFileString );
+            } else {
+                log.warn("Can't read vhost mappings from " + vhostMappingFileString);
             }
         }
     }
@@ -475,8 +478,7 @@ public class RtFilter implements Filter {
 
     private void truncateLogFileIfMaxSizeExceeded() throws Exception {
         if (this.logFile.length() > this.maxLogFileSize) {
-            log.warn("Response time log '" + this.logFile + "' has exceeded maximum file size (" + this.maxLogFileSize
-                + " bytes) - truncating it...");
+            log.warn("Response time log '" + this.logFile + "' has exceeded maximum file size (" + this.maxLogFileSize + " bytes) - truncating it...");
             closeFileWriter();
             boolean append = false;
             openFileWriter(append);
@@ -491,8 +493,7 @@ public class RtFilter implements Filter {
     private void rewindLogFileIfSizeDecreased() throws Exception {
         if (this.logFile.length() < this.lastLogFileSize) {
             if (log.isDebugEnabled()) {
-                log.debug("Logfile " + this.logFile
-                    + " has been truncated (probably by RHQ Agent) - rewinding writer...");
+                log.debug("Logfile " + this.logFile + " has been truncated (probably by RHQ Agent) - rewinding writer...");
             }
             closeFileWriter();
             boolean append = true;
@@ -511,9 +512,7 @@ public class RtFilter implements Filter {
 
     private void handleFatalError(Exception e) {
         this.initialized = false;
-        log.fatal(
-            "RHQ response-time filter experienced an unrecoverable failure. Response-time collection is now disabled for context '"
-                + this.contextName + "'.", e);
+        log.fatal("RHQ response-time filter experienced an unrecoverable failure. Response-time collection is now disabled for context '" + this.contextName + "'.", e);
     }
 
     abstract class InitParams {

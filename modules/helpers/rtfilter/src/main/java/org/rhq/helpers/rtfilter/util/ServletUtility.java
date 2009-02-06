@@ -98,8 +98,8 @@ public class ServletUtility {
             ctxName = ctxName.substring(0, ctxName.length() - 1);
         }
 
-        // the war name is from last / to end (sans .war)
-        ctxName = ctxName.substring(ctxName.lastIndexOf(SEPARATOR), ctxName.length() - 4);
+        // the war name is from last '/' to end (sans .war, if it exists)
+        ctxName = ctxName.substring(ctxName.lastIndexOf(SEPARATOR), ctxName.length() - (ctxName.endsWith(".war") ? 4 : 0));
 
         // Now remove crap that might be there
         if (ctxName.endsWith("-exp")) {
@@ -228,9 +228,7 @@ public class ServletUtility {
 
             LOG.debug("ctxPath from servlet spec 2.5: " + ret);
         } catch (Exception e) {
-            LOG
-                .warn("Container says it is at least servlet 2.5, but getting the contextPath failed: "
-                    + e.getMessage());
+            LOG.warn("Container says it is at least servlet 2.5, but getting the contextPath failed: " + e.getMessage());
         }
 
         return ret;

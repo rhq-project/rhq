@@ -38,8 +38,8 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Will use the Java executable [{0}]")
     String UPDATE_THREAD_USING_JAVA_EXE = "AgentUpdateThread.using-java-exe";
 
-    @I18NMessage("The agent cannot restart after the aborted update: {0}")
-    String UPDATE_THREAD_CANNOT_RESTART = "AgentUpdateThread.cannot-restart";
+    @I18NMessage("The agent cannot restart after the aborted update, will try to update again in [{0}]ms")
+    String UPDATE_THREAD_CANNOT_RESTART_RETRY = "AgentUpdateThread.cannot-restart-retry";
 
     @I18NMessage("The agent will wait for [{0}] threads to die")
     String SHUTDOWNHOOK_THREAD_WAIT = "AgentShutdownHook.wait";
@@ -65,7 +65,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("The agent is already in the process of updating itself")
     String UPDATE_THREAD_DUP = "AgentUpdateThread.duplicate";
 
-    @I18NMessage("AGENT AUTO-UPDATE FAILED! This agent cannot update itself!\\n\\\n"
+    @I18NMessage("AGENT AUTO-UPDATE FAILED! This agent cannot update itself after [{0}] attempts!\\n\\\n"
         + "The agent is probably no longer able to talk to the server cloud successfully.\\n\\\n"
         + "Manual intervention by an administrator is usually required now.")
     String UPDATE_THREAD_FAILURE = "AgentUpdateThread.failure";

@@ -199,7 +199,11 @@ public class AgentUpdateDownload {
                 keep_going = false;
             } catch (Exception e) {
                 if (conn != null) {
-                    int responseCode = conn.getResponseCode();
+                    int responseCode = 0;
+                    try {
+                        responseCode = conn.getResponseCode();
+                    } catch (Exception ignore) {
+                    }
                     if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
                         // server is overloaded with other agents downloading, we must wait
                         LOG.info(AgentI18NResourceKeys.UPDATE_DOWNLOAD_UNAVAILABLE, info, url);

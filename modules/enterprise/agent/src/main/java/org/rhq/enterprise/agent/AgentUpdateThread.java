@@ -125,88 +125,86 @@ public class AgentUpdateThread extends Thread {
 
     @Override
     public void run() {
-        boolean agentWasStarted = false;
         AgentShutdownHook shutdownHook = new AgentShutdownHook(this.agent);
 
-        try {
-            showMessage(AgentI18NResourceKeys.UPDATE_THREAD_STARTED);
-
-            // if the agent is started, we need to shut it down now
-            if (this.agent.isStarted()) {
-                this.agent.shutdown();
-                agentWasStarted = true;
-            }
-
-            // let's wait for the agent's threads to fully shutdown
-            // (sometimes, the JBoss/Remoting threads take a long time to die)
-            int numThreadsStillAlive = shutdownHook.waitForNonDaemonThreads();
-
-            // get the agent update binary
-            AgentUpdateDownload aud;
+        int attempts = 0;
+        boolean tryAgain = true;
+        while (tryAgain) {
             try {
-                aud = new AgentUpdateDownload(this.agent);
-                aud.download();
-                aud.validate();
-                showMessage(AgentI18NResourceKeys.UPDATE_DOWNLOADED, aud.getAgentUpdateBinaryFile());
-            } catch (Exception e) {
-                showErrorMessage(AgentI18NResourceKeys.UPDATE_DOWNLOAD_FAILED, e.getMessage());
-                throw e;
-            }
+                showMessage(AgentI18NResourceKeys.UPDATE_THREAD_STARTED);
 
-            // spawn a new Java VM to run the update jar
-            // if threads still aren't dead yet, make sure we pause the update longer than our kill thread wait time
-            String javaExe = findJavaExe();
-            List<String> args = new ArrayList<String>();
-            args.add("-jar");
-            args.add(aud.getAgentUpdateBinaryFile().getAbsolutePath());
-            args.add("--pause=" + ((numThreadsStillAlive > 0) ? "80000" : "20000"));
-            args.add("--update=" + this.agent.getAgentHomeDirectory());
-
-            SystemInfo sysInfo = SystemInfoFactory.createSystemInfo();
-            ProcessExecution processExecution = new ProcessExecution(javaExe);
-            processExecution.setArguments(args);
-            //processExecution.setEnvironmentVariables(envvars); 
-            processExecution.setWorkingDirectory(new File(this.agent.getAgentHomeDirectory()).getParent());
-            processExecution.setCaptureOutput(false);
-            processExecution.setWaitForCompletion(0);
-            showMessage(AgentI18NResourceKeys.UPDATE_THREAD_EXECUTING_UPDATE_PROCESS, processExecution);
-            ProcessExecutionResults results = sysInfo.executeProcess(processExecution);
-            if (results.getError() != null) {
-                throw results.getError();
-            }
-
-            // update has started! if this agent is running in non-daemon mode, kill
-            // the input stream so the input thread knows to shutdown now
-            try {
-                BufferedReader in = this.agent.getIn();
-                if (in != null) {
-                    System.in.close(); // we must ensure we close this directly!
-                    in.close();
+                if (this.agent.isStarted()) {
+                    this.agent.shutdown();
                 }
-            } catch (Exception e) {
-            }
-        } catch (Throwable t) {
-            try {
+
+                // let's wait for the agent's threads to fully shutdown
+                // (sometimes, the JBoss/Remoting threads take a long time to die)
+                int numThreadsStillAlive = shutdownHook.waitForNonDaemonThreads();
+
+                // get the agent update binary
+                AgentUpdateDownload aud;
+                try {
+                    aud = new AgentUpdateDownload(this.agent);
+                    aud.download();
+                    aud.validate();
+                    showMessage(AgentI18NResourceKeys.UPDATE_DOWNLOADED, aud.getAgentUpdateBinaryFile());
+                } catch (Exception e) {
+                    showErrorMessage(AgentI18NResourceKeys.UPDATE_DOWNLOAD_FAILED, e.getMessage());
+                    throw e;
+                }
+
+                // spawn a new Java VM to run the update jar
+                // if threads still aren't dead yet, make sure we pause the update longer than our kill thread wait time
+                String javaExe = findJavaExe();
+                List<String> args = new ArrayList<String>();
+                args.add("-jar");
+                args.add(aud.getAgentUpdateBinaryFile().getAbsolutePath());
+                args.add("--pause=" + ((numThreadsStillAlive > 0) ? "80000" : "20000"));
+                args.add("--update=" + this.agent.getAgentHomeDirectory());
+
+                SystemInfo sysInfo = SystemInfoFactory.createSystemInfo();
+                ProcessExecution processExecution = new ProcessExecution(javaExe);
+                processExecution.setArguments(args);
+                //processExecution.setEnvironmentVariables(envvars); 
+                processExecution.setWorkingDirectory(new File(this.agent.getAgentHomeDirectory()).getParent());
+                processExecution.setCaptureOutput(false);
+                processExecution.setWaitForCompletion(0);
+                showMessage(AgentI18NResourceKeys.UPDATE_THREAD_EXECUTING_UPDATE_PROCESS, processExecution);
+                ProcessExecutionResults results = sysInfo.executeProcess(processExecution);
+                if (results.getError() != null) {
+                    throw results.getError();
+                }
+
+                // update has started! if this agent is running in non-daemon mode, kill
+                // the input stream so the input thread knows to shutdown now
+                try {
+                    BufferedReader in = this.agent.getIn();
+                    if (in != null) {
+                        System.in.close(); // we must ensure we close this directly!
+                        in.close();
+                    }
+                } catch (Throwable t) {
+                } finally {
+                    tryAgain = false;
+                }
+            } catch (Throwable t) {
                 showErrorMessage(AgentI18NResourceKeys.UPDATE_THREAD_EXCEPTION, ThrowableUtil.getAllMessages(t));
 
-                // We might not be able to do anything, but let's start the agent just in case it can still do something.
-                // Note that if the agent wasn't started before, don't bother starting it now. The agent is probably
-                // in non-daemon mode and the user has a console they can use to manipulate the agent state.
-                if (agentWasStarted) {
-                    try {
-                        this.agent.start();
-                    } catch (Throwable t2) {
-                        showErrorMessage(AgentI18NResourceKeys.UPDATE_THREAD_CANNOT_RESTART, ThrowableUtil
-                            .getAllMessages(t2));
-                    }
+                // after every 5 attempts, dump a message to say we need help from an admin
+                attempts++;
+                if ((attempts % 5) == 0) {
+                    showFinalFailureMessage(attempts);
                 }
-            } finally {
-                unlock(); // we failed to update, unlock us so we can attempt later
-                showFinalFailureMessage();
-            }
 
-            // do not continue - we were not successful so we should not kill the agent VM
-            return;
+                // Something bad is happening - most likely we can't download the agent update binary from the server.
+                // Let's wait a bit longer before retrying - give the server some time to correct itself.
+                final long pause = 60000L;
+                showErrorMessage(AgentI18NResourceKeys.UPDATE_THREAD_CANNOT_RESTART_RETRY, pause);
+                try {
+                    Thread.sleep(pause);
+                } catch (Throwable ignore) {
+                }
+            }
         }
 
         // We should only ever get here if everything was successful.
@@ -293,19 +291,27 @@ public class AgentUpdateThread extends Thread {
      * @param args
      */
     private void showErrorMessage(String msg, Object... args) {
-        // log at fatal level because if we can't update, it probably means the agent is dead in the water
-        // and will never be able to talk to the server again - manual admin intervention is probably required now
-        log.fatal(msg, args);
-        this.console.println(this.agent.getI18NMsg().getMsg(msg, args));
+        try {
+            // log at fatal level because if we can't update, it probably means the agent is dead in the water
+            // and will never be able to talk to the server again - manual admin intervention is probably required now
+            log.fatal(msg, args);
+            this.console.println(this.agent.getI18NMsg().getMsg(msg, args));
+        } catch (Throwable t) {
+        }
     }
 
     /**
      * This will also log a generic failure message to tell the user that the agent
      * is in a really bad state now and manual intervention by an administrator is
      * probably needed.
+     * 
+     * @param attempts number of times the update was tried
      */
-    private void showFinalFailureMessage() {
-        log.fatal(AgentI18NResourceKeys.UPDATE_THREAD_FAILURE);
-        this.console.println(this.agent.getI18NMsg().getMsg(AgentI18NResourceKeys.UPDATE_THREAD_FAILURE));
+    private void showFinalFailureMessage(int attempts) {
+        try {
+            log.fatal(AgentI18NResourceKeys.UPDATE_THREAD_FAILURE, attempts);
+            this.console.println(this.agent.getI18NMsg().getMsg(AgentI18NResourceKeys.UPDATE_THREAD_FAILURE, attempts));
+        } catch (Throwable t) {
+        }
     }
 }

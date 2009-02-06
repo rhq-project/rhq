@@ -1497,25 +1497,27 @@ public class AgentMain {
 
                 // do _not_ wait if the listener was already called (meaning the server is already up)
                 if (flag_and_lock.length() == 0) {
-                    // this craziness about timing is because "spurious wakeups" are occurring (look it up in wikipedia)
-                    long start_time = System.currentTimeMillis();
+                    try {
+                        // this craziness about timing is because "spurious wakeups" are occurring (look it up in wikipedia)
+                        long start_time = System.currentTimeMillis();
 
-                    while ((wait_ms > 0) && (flag_and_lock.length() == 0)) {
-                        try {
-                            flag_and_lock.wait(wait_ms);
-                        } catch (InterruptedException e) {
-                            // probably a spurious wakeup - tests are showing that we are getting them here
+                        while ((wait_ms > 0) && (flag_and_lock.length() == 0)) {
+                            try {
+                                flag_and_lock.wait(wait_ms);
+                            } catch (InterruptedException e) {
+                                // probably a spurious wakeup - tests are showing that we are getting them here
+                            }
+
+                            // if this agent is updating, break the loop immediately by throwing exception
+                            if (AgentUpdateThread.isUpdatingNow()) {
+                                throw new AgentNotSupportedException();
+                            }
+
+                            wait_ms -= System.currentTimeMillis() - start_time;
                         }
-
-                        // if this agent is updating, break the loop immediately by throwing exception
-                        if (AgentUpdateThread.isUpdatingNow()) {
-                            throw new AgentNotSupportedException();
-                        }
-
-                        wait_ms -= System.currentTimeMillis() - start_time;
+                    } finally {
+                        sender_to_server.removeStateListener(listener);
                     }
-
-                    sender_to_server.removeStateListener(listener);
                 }
             } else {
                 LOG.debug(AgentI18NResourceKeys.CANNOT_WAIT_FOR_SERVER);

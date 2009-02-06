@@ -1,20 +1,18 @@
-<%@ page import="org.rhq.enterprise.gui.util.WebUtility" %>
-<%@ page import="org.rhq.enterprise.gui.legacy.ParamConstants" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.Date" %>
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.Locale" %>
+<%@ page import="org.rhq.core.domain.auth.Subject" %>
+<%@ page import="org.rhq.core.domain.measurement.Availability" %>
+<%@ page import="org.rhq.core.domain.measurement.AvailabilityType" %>
+<%@ page import="org.rhq.enterprise.gui.legacy.ParamConstants" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.WebUser" %>
-<%@ page import="org.rhq.enterprise.gui.legacy.WebUserPreferences" %>
+<%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
+<%@ page import="org.rhq.enterprise.gui.util.WebUtility" %>
+<%@ page import="org.rhq.enterprise.server.measurement.AvailabilityManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.measurement.MeasurementPreferences" %>
 <%@ page import="org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences" %>
-<%@ page import="org.rhq.core.domain.auth.Subject" %>
-<%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
-<%@ page import="org.rhq.enterprise.server.measurement.AvailabilityManagerLocal" %>
-<%@ page import="org.rhq.core.domain.measurement.Availability" %>
-<%@ page import="java.util.List" %>
-<%@ page import="org.rhq.core.domain.measurement.AvailabilityType" %>
-<%@ page import="java.util.Map" %>
-<%@ page import="org.rhq.enterprise.gui.legacy.util.MonitorUtils" %>
 <%--
   Author: Greg Hinkle
 --%>
@@ -65,13 +63,14 @@
 
 <script type="text/javascript">
 
+var tl;
 
 function onLoad() {
 
     var begin = <%= begin%>;
     var end = <%= end%>;
 
-    var date = "<%= new SimpleDateFormat("MMM dd yyyy HH:mm:ss z").format(new Date()) %>";
+    var date = "<%= new SimpleDateFormat("MMM dd yyyy HH:mm:ss z",Locale.US).format(new Date()) %>";
     var dateAndOne = "<%= new SimpleDateFormat("MMM dd yyyy HH:mm:ss z").format(new Date(System.currentTimeMillis() + (1000L * 60))) %>";
     var timeZoneOffset = <%= (-new Date().getTimezoneOffset()) / 60 %>;
 
@@ -89,7 +88,7 @@ function onLoad() {
   var bandInfos = [
     Timeline.createBandInfo({
         eventSource:    eventSource,
-        date:      date,
+        date:      "<%= new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss Z",Locale.US).format(new Date()) %>",
         width:          "80%",
         intervalUnit:   Timeline.DateTime.MINUTE,
         multiple: 5,
@@ -127,13 +126,13 @@ function onLoad() {
   ];
   bandInfos[1].syncWith = 0;
   bandInfos[1].highlight = true;
-  bandInfos[2].syncWith = 0;
+  bandInfos[2].syncWith = 1;
   bandInfos[2].highlight = true;
 
     for (var i = 0; i < bandInfos.length; i++) {
         bandInfos[i].decorators = [
             new Timeline.PointHighlightDecorator({
-                date:  date,
+                date:  "<%= new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss Z",Locale.US).format(new Date()) %>",
                 color:      "#0000CC",
                 opacity:    30,
                 startLabel: "Now",
@@ -141,7 +140,7 @@ function onLoad() {
             })
 
     <%
-        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss z");
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss Z",Locale.US);
 
 for (Availability avail : availabilities) {
 
@@ -162,7 +161,7 @@ for (Availability avail : availabilities) {
     }
 
 
-  var tl = Timeline.create(document.getElementById("t1"), bandInfos);
+  tl = Timeline.create(document.getElementById("t1"), bandInfos);
 
     var toLoad = 4;
      function done() {

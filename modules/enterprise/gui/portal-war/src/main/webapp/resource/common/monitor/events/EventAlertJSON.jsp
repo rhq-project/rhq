@@ -1,3 +1,6 @@
+<%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="java.util.Date" %>
+<%@ page import="java.util.Locale" %>
 <%@ page import="org.rhq.core.domain.alert.Alert" %>
 <%@ page import="org.rhq.core.domain.alert.AlertConditionLog" %>
 <%@ page import="org.rhq.core.domain.alert.AlertPriority" %>
@@ -8,11 +11,8 @@
 <%@ page import="org.rhq.enterprise.gui.legacy.WebUser" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
 <%@ page import="org.rhq.enterprise.gui.util.WebUtility" %>
-<%@ page import="org.rhq.enterprise.server.alert.AlertManagerLocal" %>
-<%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
-<%@ page import="java.text.SimpleDateFormat" %>
-<%@ page import="java.util.Date" %>
-<%@ page contentType="text/javascript" language="java" %>
+<%@ page import="org.rhq.enterprise.server.alert.AlertManagerLocal" %><%@ page import="org.rhq.enterprise.server.util.LookupUtil"%>
+        <%@ page contentType="text/javascript" language="java" %>
 
 <%
     int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
@@ -34,7 +34,7 @@
 
 [
     <%
-        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss z");
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss Z", Locale.US);
 
         boolean first = true;
 
@@ -67,7 +67,7 @@
             String link = "/alerts/Alerts.do?mode=viewAlert&id=" + resourceId + "&a=" + alert.getId();
 %>
 
-{ "start" : new Date('<%=sdf.format(new Date(alert.getCtime()))%>'),
+{ "start" : "<%=sdf.format(new Date(alert.getCtime()))%>",
   "title" : "<%=alert.getAlertDefinition().getName()%>",
   "link" : "<%=link%>",
   "description" : "<%=buf.toString()%>",

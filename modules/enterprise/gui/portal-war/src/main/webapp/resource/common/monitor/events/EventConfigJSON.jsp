@@ -1,3 +1,5 @@
+<%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="java.util.Locale" %>
 <%@ page import="org.rhq.core.domain.auth.Subject" %>
 <%@ page import="org.rhq.core.domain.configuration.ConfigurationUpdateStatus" %>
 <%@ page import="org.rhq.core.domain.configuration.ResourceConfigurationUpdate" %>
@@ -9,7 +11,6 @@
 <%@ page import="org.rhq.enterprise.gui.util.WebUtility" %>
 <%@ page import="org.rhq.enterprise.server.configuration.ConfigurationManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
-<%@ page import="java.text.SimpleDateFormat" %>
 
 <%
     int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
@@ -28,7 +29,7 @@
 { "events": [
 
     <%
-        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss z");
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss Z", Locale.US);
 
         boolean first = true;
 
@@ -64,7 +65,7 @@
 //                    "    </event>\n\n");
             %>
 
-{ "start" : new Date('<%=sdf.format(configUpdate.getCreatedTime())%>'),
+{ "start" : "<%=sdf.format(configUpdate.getCreatedTime())%>",
   "title" : "Configuration Change",
   "link" : "<%=link%>",
   "description" : "<b>User:</b> <%=configUpdate.getSubjectName()%><br/><b>Status:</b> <%=configUpdate.getStatus()%>",

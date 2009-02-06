@@ -1,3 +1,6 @@
+<%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="java.util.Date" %>
+<%@ page import="java.util.Locale" %>
 <%@ page import="org.rhq.core.domain.auth.Subject" %>
 <%@ page import="org.rhq.core.domain.operation.OperationRequestStatus" %>
 <%@ page import="org.rhq.core.domain.operation.ResourceOperationHistory" %>
@@ -9,8 +12,6 @@
 <%@ page import="org.rhq.enterprise.gui.util.WebUtility" %>
 <%@ page import="org.rhq.enterprise.server.operation.OperationManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
-<%@ page import="java.text.SimpleDateFormat" %>
-<%@ page import="java.util.Date" %>
 
 <%
     int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
@@ -30,7 +31,7 @@
 
 
     <%
-        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss z");
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss Z", Locale.US);
 
         boolean first = true;
 
@@ -69,7 +70,7 @@
 //                    "    </event>\n\n");
 %>
 
-{ "start" : new Date('<%=sdf.format(new Date(operation.getCreatedTime()))%>'),
+{ "start" : "<%=sdf.format(new Date(operation.getCreatedTime()))%>",
   "title" : "Operation: <%=operation.getOperationDefinition().getName()%>",
   "link" : "<%=link%>",
   "description" : "<b>User:</b> <%=operation.getSubjectName()%><br/><b>Status:</b> <%=operation.getStatus()%>",
@@ -80,5 +81,5 @@
     <%
         }
     %>
-] 
+]
 }

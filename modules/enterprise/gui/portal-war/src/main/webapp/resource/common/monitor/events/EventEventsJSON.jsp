@@ -9,7 +9,11 @@
 <%@ page import="org.rhq.enterprise.gui.util.WebUtility" %>
 <%@ page import="org.rhq.enterprise.server.event.EventManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
-<%@ page import="java.text.SimpleDateFormat" %><%@ page import="java.util.regex.Pattern"%><%@ page import="java.util.*"%><%@ page import="org.rhq.core.domain.event.EventSeverity"%><%@ page import="org.rhq.core.domain.util.PageOrdering"%>
+<%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="java.util.regex.Pattern"%>
+<%@ page import="java.util.*"%>
+<%@ page import="org.rhq.core.domain.event.EventSeverity"%>
+<%@ page import="org.rhq.core.domain.util.PageOrdering"%>
 <%@ page contentType="text/javascript" language="java" %>
 
 
@@ -57,7 +61,7 @@
                 return "red";
         }
     }
-    
+
     public String escapeBackslashes(String s) {
         return s.replaceAll("\\\\", "\\\\\\\\");
     }
@@ -131,7 +135,7 @@
             } while (current != null);
         }
 
-        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss z");
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss Z",Locale.US);
 
         boolean first = true;
         for (EventComposite event : groupedList) {
@@ -180,7 +184,7 @@
 
             %>
 
-{ "start" : new Date('<%=sdf.format(event.getTimestamp())%>'),
+{ "start" : "<%=sdf.format(event.getTimestamp())%>",
   "title" : "<%= title%>",
   "link" : "<%=link%>",
   "description" : "<%=detail%>",

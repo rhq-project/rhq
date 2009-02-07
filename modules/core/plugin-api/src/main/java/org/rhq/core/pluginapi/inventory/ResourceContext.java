@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pluginapi.inventory;
 
 import java.io.File;
@@ -58,6 +58,7 @@ import org.rhq.core.system.pquery.ProcessInfoQuery;
 public class ResourceContext<T extends ResourceComponent> {
     private final String resourceKey;
     private final ResourceType resourceType;
+    private final String version;
     private final T parentResourceComponent;
     private final Configuration pluginConfiguration;
     private final SystemInfo systemInformation;
@@ -100,6 +101,7 @@ public class ResourceContext<T extends ResourceComponent> {
         ContentContext contentContext) {
         this.resourceKey = resource.getResourceKey();
         this.resourceType = resource.getResourceType();
+        this.version = resource.getVersion();
         this.parentResourceComponent = parentResourceComponent;
         this.resourceDiscoveryComponent = resourceDiscoveryComponent;
         this.systemInformation = systemInfo;
@@ -135,6 +137,15 @@ public class ResourceContext<T extends ResourceComponent> {
      */
     public ResourceType getResourceType() {
         return this.resourceType;
+    }
+
+    /**
+     * The {@link Resource#getVersion() version} of the resource this context is associated with.
+     *
+     * @return the resource's version string
+     */
+    public String getVersion() {
+        return this.version;
     }
 
     /**
@@ -183,8 +194,8 @@ public class ResourceContext<T extends ResourceComponent> {
                 Set<DiscoveredResourceDetails> details;
                 ResourceDiscoveryContext context;
 
-                context = new ResourceDiscoveryContext(this.resourceType, this.parentResourceComponent,
-                        this, this.systemInformation, getNativeProcessesForType(), Collections.EMPTY_LIST,
+                context = new ResourceDiscoveryContext(this.resourceType, this.parentResourceComponent, this,
+                    this.systemInformation, getNativeProcessesForType(), Collections.EMPTY_LIST,
                     getPluginContainerName());
 
                 details = this.resourceDiscoveryComponent.discoverResources(context);

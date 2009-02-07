@@ -240,7 +240,7 @@
                      <rich:column>
                         <h:selectBooleanCheckbox id="checkbox_server"
                                                  onchange="checkServer(this, #{platformQueueItem.id}, #{serverQueueItem.id})"
-                                                 value=""
+                                                 value="#{AutoDiscoverySessionUIBean.selectedResources[serverQueueItem.id]}"
                                                  style="float:right;" />
                      </rich:column>
 

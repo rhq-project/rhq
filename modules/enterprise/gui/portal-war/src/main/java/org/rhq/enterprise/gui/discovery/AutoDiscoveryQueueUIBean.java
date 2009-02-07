@@ -23,10 +23,13 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -338,7 +341,7 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
                 platformsAndServers.put(platform, queuedServers);
             }
 
-            getSelectedResources().clear();
+            //getSelectedResources().clear();
 
             return queuedPlatforms;
         }

@@ -45,6 +45,7 @@ import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
+import org.rhq.core.domain.resource.composite.LockedResource;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.gui.util.FacesComponentUtility;
@@ -169,8 +170,10 @@ public class ResourceTreeModelUIBean {
                         agc = new AutoGroupComposite(avail, parentResource, (ResourceType) rsc, entries.size());
                     }
                     ResourceTreeNode node = new ResourceTreeNode(agc);
-                    parentNode.getChildren().add(node);
                     load(node, resources);
+                    if (!(node.getData() instanceof LockedResource && node.getChildren().isEmpty())) {
+                        parentNode.getChildren().add(node);
+                    }
                 } else {
                     List<Resource> entries = children.get(rsc);
                     for (Resource res : entries) {
@@ -190,7 +193,10 @@ public class ResourceTreeModelUIBean {
             for (Resource res : resources) {
                 if (compositeParent.getSubcategory() != null) {
                     // parent is a sub category
-                    if (res.getResourceType().getSubCategory() != null && compositeParent.getSubcategory().equals(res.getResourceType().getSubCategory().getParentSubCategory())) {
+                    if (res.getResourceType().getSubCategory() != null
+                            && compositeParent.getSubcategory().equals(res.getResourceType().getSubCategory().getParentSubCategory())
+                            && compositeParent.getParentResource().equals(res.getParentResource())) {
+
                         // A subSubCategory in a subcategory
                         if (children.containsKey(res.getResourceType().getSubCategory())) {
                             children.get(res.getResourceType().getSubCategory()).add(res);
@@ -199,7 +205,8 @@ public class ResourceTreeModelUIBean {
                             list.add(res);
                             children.put(res.getResourceType().getSubCategory(), list);
                         }
-                    } else if (compositeParent.getSubcategory().equals(res.getResourceType().getSubCategory())) {
+                    } else if (compositeParent.getSubcategory().equals(res.getResourceType().getSubCategory())
+                            && compositeParent.getParentResource().equals(res.getParentResource())) {
                         // Direct entries in a subcategory... now group them by autogroup (type)
                         if (children.containsKey(res.getResourceType())) {
                             children.get(res.getResourceType()).add(res);
@@ -255,7 +262,9 @@ public class ResourceTreeModelUIBean {
 
     public ResourceTreeNode getTreeNode() {
         if (rootNode == null) {
+            long start = System.currentTimeMillis();
             loadTree();
+            System.out.println("Loaded tree in " + (System.currentTimeMillis() - start));
         }
 
         return rootNode;

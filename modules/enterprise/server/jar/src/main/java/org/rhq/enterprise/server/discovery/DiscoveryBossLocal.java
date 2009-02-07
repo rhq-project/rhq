@@ -21,15 +21,17 @@ package org.rhq.enterprise.server.discovery;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+
 import javax.ejb.Local;
+
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.InventoryReport;
-import org.rhq.core.domain.discovery.InventoryReportResponse;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -154,11 +156,14 @@ public interface DiscoveryBossLocal {
 
     /**
      * Updates the version of the specified Resource in inventory, if it is indeed in inventory.
-     *
+     * If the resource is already in inventory and its version is already <code>version</code>, then
+     * this method does nothing and returns <code>true</code>.
+     * 
      * @param resourceId the id of the Resource to be updated
      * @param version the new version
      * 
-     * @return true if the Resource was updated, or false if the Resource was not in inventory
+     * @return <code>true</code> if the Resource was in inventory and its version is now that of <code>version</code>.
+     *         <code>false</code> if the Resource was not in inventory
      */
     boolean updateResourceVersion(int resourceId, String version);
 }

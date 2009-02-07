@@ -367,23 +367,47 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
     public boolean updateResourceVersion(int resourceId, String version) {
         Resource existingResource = this.entityManager.find(Resource.class, resourceId);
         if (existingResource != null) {
-            String existingVersion = existingResource.getVersion();
-            boolean versionChanged = (existingVersion != null) ? !existingVersion.equals(version) : version != null;
-            if (versionChanged) {
-                log.info("Version of " + existingResource + " changed from '" + existingVersion + "' to '" + version
-                    + "'.");
-                existingResource.setVersion(version);
-
-                ProductVersion productVersion = productVersionManager.addProductVersion(existingResource
-                    .getResourceType(), version);
-                existingResource.setProductVersion(productVersion);
-
+            boolean changed = updateResourceVersion(existingResource, version);
+            if (changed) {
                 this.entityManager.merge(existingResource);
             }
             return true;
         } else {
             return false;
         }
+    }
+
+    /**
+     * Convienence method that looks at <code>resource</code> and if its version is not
+     * the same as <code>newVersion</code>, its version string will be set to it. If
+     * the resource's version was different and was changed by this method, <code>true</code>
+     * will be returned.
+     * 
+     * @param resource the resource whose version is to be checked
+     * @param newVersion what the version of the resource should be
+     * 
+     * @return <code>true</code> if the resource's version was not <code>newVersion</code> and was
+     *         changed to it. <code>false</code> if the version was already the same as <code>newVersion</code>
+     *         or <code>resource</code> was <code>null</code>. In other words, this returns <code>true</code>
+     *         iff the resource's version was actually changed.
+     */
+    private boolean updateResourceVersion(Resource resource, String newVersion) {
+        boolean versionChanged = false;
+        if (resource != null) {
+            String oldVersion = resource.getVersion();
+            versionChanged = (oldVersion != null) ? !oldVersion.equals(newVersion) : newVersion != null;
+            if (versionChanged) {
+                log.info("Resource [" + resource + "] changed its version from [" + oldVersion + "] to [" + newVersion
+                    + "]");
+                resource.setVersion(newVersion);
+
+                // TODO: why is this being done?
+                ProductVersion productVersion = productVersionManager.addProductVersion(resource.getResourceType(),
+                    newVersion);
+                resource.setProductVersion(productVersion);
+            }
+        }
+        return versionChanged;
     }
 
     private void validateInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
@@ -543,6 +567,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
             log.warn("Agent reported that key for " + existingResource + " has changed from '"
                 + existingResource.getResourceKey() + "' to '" + resource.getResourceKey() + "'.");
         }
+
+        updateResourceVersion(existingResource, resource.getVersion());
 
         // If the resource was marked as deleted, reactivate it again.
         if (existingResource.getInventoryStatus() == InventoryStatus.DELETED)

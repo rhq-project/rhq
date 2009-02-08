@@ -41,6 +41,11 @@
                if (all_elements[i].name.indexOf('checkbox_platform') > -1)
                   if ( all_elements[i].checked != checkbox.checked )
                      all_elements[i].click();
+                  else
+                  {
+                     all_elements[i].click();
+                     all_elements[i].click();
+                  }
             }  
          }
 

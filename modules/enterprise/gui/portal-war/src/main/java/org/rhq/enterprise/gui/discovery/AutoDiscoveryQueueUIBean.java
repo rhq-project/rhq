@@ -167,7 +167,6 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
         rebuildSelectedResources();
 
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        int platformCount = 0;
         int serverCount = 0;
 
         try {
@@ -340,8 +339,6 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
 
                 platformsAndServers.put(platform, queuedServers);
             }
-
-            //getSelectedResources().clear();
 
             return queuedPlatforms;
         }

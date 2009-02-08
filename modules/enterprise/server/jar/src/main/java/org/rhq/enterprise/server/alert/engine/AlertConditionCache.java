@@ -89,7 +89,7 @@ public final class AlertConditionCache {
     /**
      * the batch size of conditions into the cache at a time
      */
-   final int PAGE_SIZE = 250;
+    final int PAGE_SIZE = 250;
 
     /**
      * The actual cache - this is a singleton.
@@ -374,8 +374,8 @@ public final class AlertConditionCache {
 
                 while (true) {
                     PageList<? extends AbstractAlertConditionCategoryComposite> alertConditions = null;
-                    alertConditions = alertConditionManager.getAlertConditionComposites(overlord, null, nextCategory,
-                        pc);
+                    alertConditions = alertConditionManager.getAlertConditionComposites(overlord, agentId,
+                        nextCategory, pc);
 
                     if (alertConditions.isEmpty()) {
                         break; // didn't get any rows back, must not have any data or no more rows left to process

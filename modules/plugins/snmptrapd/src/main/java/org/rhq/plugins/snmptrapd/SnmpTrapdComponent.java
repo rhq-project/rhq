@@ -22,6 +22,8 @@ package org.rhq.plugins.snmptrapd;
 import java.io.IOException;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.snmp4j.Snmp;
 import org.snmp4j.TransportMapping;
 import org.snmp4j.smi.UdpAddress;
@@ -38,6 +40,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * The actual implementation of the Snmp trapd
@@ -45,6 +48,8 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
  *
  */
 public class SnmpTrapdComponent implements ResourceComponent, MeasurementFacet {
+
+    private final Log log = LogFactory.getLog(SnmpTrapdComponent.class);
 
     public static final String TRAP_TYPE = "SnmpTrap";
 
@@ -87,8 +92,7 @@ public class SnmpTrapdComponent implements ResourceComponent, MeasurementFacet {
             snmp.addCommandResponder(snmpTrapEventPoller);
             transport.listen();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.error("Cannot start snmp engine. Cause: " + ThrowableUtil.getAllMessages(e));
         }
     }
 
@@ -102,8 +106,7 @@ public class SnmpTrapdComponent implements ResourceComponent, MeasurementFacet {
             try {
                 snmp.close();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error("Cannot stop snmp engine. Cause: " + ThrowableUtil.getAllMessages(e));
             }
             snmp = null;
         }

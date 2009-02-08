@@ -93,4 +93,6 @@ public interface AlertConditionCacheManagerLocal {
     void printAllCaches();
 
     void reloadCachesForAgent(int agentId);
+
+    void reloadAllCaches();
 }

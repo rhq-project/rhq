@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.alert.engine.mbean;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -88,6 +89,10 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
 
     public int getOperationCacheElementCount() {
         return AlertConditionCache.getInstance().getCacheSize(AlertConditionCache.CacheName.ResourceOperationCache);
+    }
+
+    public Map<String, Integer> getCacheCounts() {
+        return AlertConditionCache.getInstance().getCacheCounts();
     }
 
     public int getAvailabilityCacheElementMatches() {
@@ -182,6 +187,10 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     public void incrementOperationProcessingTime(long moreMillis) {
         operationProcessingTime.addAndGet(moreMillis);
         totalProcessingTime.addAndGet(moreMillis);
+    }
+
+    public void getReloadCaches() {
+        LookupUtil.getAlertConditionCacheManager().reloadAllCaches();
     }
 
     public String[] getCacheNames() {

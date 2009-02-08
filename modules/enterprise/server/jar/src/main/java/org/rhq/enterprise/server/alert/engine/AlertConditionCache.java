@@ -119,6 +119,8 @@ public final class AlertConditionCache {
         counts.put(CacheName.AvailabilityCache.name(), getMapListCount(availabilityCache));
         counts.put(CacheName.EventsCache.name(), getMapListCount(eventsCache));
         counts.put(CacheName.ResourceConfigurationCache.name(), getMapListCount(resourceConfigurationCache));
+        counts.put(CacheName.Inverse.name(), getMapListCount(inverseAgentConditionMap));
+        counts.put(CacheName.Inverse.name(), getMapListCount(inverseAlertConditionMap));
         return counts;
     }
 
@@ -414,11 +416,14 @@ public final class AlertConditionCache {
         rwLock.writeLock().lock();
 
         try {
+            availabilityCache.clear();
+            eventsCache.clear();
+            resourceConfigurationCache.clear();
+            resourceOperationCache.clear();
             measurementDataCache.clear();
             measurementTraitCache.clear();
-            resourceOperationCache.clear();
-            availabilityCache.clear();
             inverseAlertConditionMap.clear();
+            inverseAgentConditionMap.clear();
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error(t);

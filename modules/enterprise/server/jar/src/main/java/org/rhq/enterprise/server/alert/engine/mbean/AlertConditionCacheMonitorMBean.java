@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.alert.engine.mbean;
 
+import java.util.Map;
+
 /**
  * An MBean that exposes various structures contained with the AlertConditionCache
  * 
@@ -61,6 +63,8 @@ public interface AlertConditionCacheMonitorMBean {
 
     public int getOperationCacheElementCount();
 
+    public Map<String, Integer> getCacheCounts();
+
     /*
      * for out-bound traffic
      */
@@ -89,6 +93,8 @@ public interface AlertConditionCacheMonitorMBean {
     /*
      * cache contents
      */
+    public void getReloadCaches();
+
     public String[] getCacheNames();
 
     public void printCache(String cacheName);

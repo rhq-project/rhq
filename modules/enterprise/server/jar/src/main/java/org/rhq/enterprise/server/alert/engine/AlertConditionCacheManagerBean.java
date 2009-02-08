@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.server.alert.engine;
 
+import java.util.List;
+
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -31,6 +34,8 @@ import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.operation.OperationHistory;
+import org.rhq.core.domain.resource.Agent;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 
 /**
  * @author Joseph Marques
@@ -41,6 +46,12 @@ import org.rhq.core.domain.operation.OperationHistory;
 public class AlertConditionCacheManagerBean implements AlertConditionCacheManagerLocal {
     @SuppressWarnings("unused")
     private static final Log log = LogFactory.getLog(AlertConditionCacheManagerBean.class);
+
+    @EJB
+    private ServerManagerLocal serverManager;
+
+    @EJB
+    private AlertConditionCacheManagerLocal alertConditionCacheManager;
 
     public AlertConditionCacheStats checkConditions(MeasurementData... measurementData) {
         AlertConditionCacheStats stats;
@@ -89,5 +100,12 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void reloadCachesForAgent(int agentId) {
         AlertConditionCache.getInstance().reloadCachesForAgent(agentId);
+    }
+
+    public void reloadAllCaches() {
+        List<Agent> agents = serverManager.getAgents();
+        for (Agent agent : agents) {
+            alertConditionCacheManager.reloadCachesForAgent(agent.getId());
+        }
     }
 }

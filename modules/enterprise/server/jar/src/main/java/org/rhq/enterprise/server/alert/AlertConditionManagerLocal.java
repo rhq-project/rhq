@@ -42,6 +42,6 @@ public interface AlertConditionManagerLocal {
     PageList<AlertDefinition> getAllAlertDefinitionsWithConditions(Subject user, PageControl pageControl);
 
     PageList<? extends AbstractAlertConditionCategoryComposite> getAlertConditionComposites(Subject user,
-        AlertConditionCategory category, PageControl pageControl);
+        Integer agentId, AlertConditionCategory category, PageControl pageControl);
 
 }

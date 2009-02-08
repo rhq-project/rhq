@@ -66,12 +66,14 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "       ) " //
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ad.resource res " //
         + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms JOIN ms.baseline mb " //
         + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
+        + "     AND ( res.agent.id = :agentId OR :agentId IS NULL ) " //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ms.definition = md " //
-        + "     AND ms.resource = ad.resource " //
+        + "     AND ms.resource = res " //
         + "     AND mb IS NOT NULL " //
         + "     AND ac.category = 'BASELINE' " //
         + "ORDER BY ac.id"), //
@@ -79,12 +81,14 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "  SELECT count(ac.id) " //
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ad.resource res " //
         + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms JOIN ms.baseline mb " //
         + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
+        + "     AND ( res.agent.id = :agentId OR :agentId IS NULL ) " //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ms.definition = md " //
-        + "     AND ms.resource = ad.resource " //
+        + "     AND ms.resource = res " //
         + "     AND mb IS NOT NULL " //
         + "     AND ac.category = 'BASELINE' "), // 
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_CHANGE, query = "" //
@@ -95,12 +99,14 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "       ) " //
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ad.resource res " //
         + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms " //
         + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
+        + "     AND ( res.agent.id = :agentId OR :agentId IS NULL ) " //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ms.definition = md " //
-        + "     AND ms.resource = ad.resource " //
+        + "     AND ms.resource = res " //
         + "     AND ac.category = 'CHANGE' " //
         + "ORDER BY ac.id"), //
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_TRAIT, query = "" //
@@ -122,12 +128,14 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "       ) " //
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ad.resource res " //
         + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms " //
         + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
+        + "     AND ( res.agent.id = :agentId OR :agentId IS NULL ) " //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ms.definition = md " //
-        + "     AND ms.resource = ad.resource " //
+        + "     AND ms.resource = res " //
         + "     AND ac.category = 'TRAIT' " //
         + "ORDER BY ac.id"), //
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_AVAILABILITY, query = "" //
@@ -147,6 +155,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "    JOIN ac.alertDefinition ad " //
         + "    JOIN ad.resource res " //
         + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
+        + "     AND ( res.agent.id = :agentId OR :agentId IS NULL ) " //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ac.category = 'AVAILABILITY' " //
@@ -168,6 +177,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "    JOIN ad.resource res " //
         + "    JOIN res.resourceType type " //
         + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
+        + "     AND ( res.agent.id = :agentId OR :agentId IS NULL ) " //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ac.category = 'CONTROL' " //
@@ -180,12 +190,14 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "       ) " //
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ad.resource res " //
         + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms " //
         + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
+        + "     AND ( res.agent.id = :agentId OR :agentId IS NULL ) " //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ms.definition = md " //
-        + "     AND ms.resource = ad.resource " //
+        + "     AND ms.resource = res " //
         + "     AND ac.category = 'THRESHOLD' " //
         + "ORDER BY ac.id"), //
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_EVENT, query = "" //
@@ -198,6 +210,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "    JOIN ac.alertDefinition ad " //
         + "    JOIN ad.resource res " //
         + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
+        + "     AND ( res.agent.id = :agentId OR :agentId IS NULL ) " //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ac.category = 'EVENT' " //
@@ -214,6 +227,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "    JOIN ad.resource res " //
         + "    LEFT JOIN res.resourceConfiguration resConfig " //
         + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
+        + "     AND ( res.agent.id = :agentId OR :agentId IS NULL ) " //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
         + "     AND ac.category = 'RESOURCE_CONFIG' " //
@@ -222,11 +236,12 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "  SELECT count(ac.id) " //
         + "    FROM AlertCondition AS ac " //
         + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ad.resource res " //
         + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
+        + "     AND ( res.agent.id = :agentId OR :agentId IS NULL ) " //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
-        + "     AND ac.category = :category " //
-        + "     AND ad.resource IS NOT NULL") })
+        + "     AND ac.category = :category ") })
 @SequenceGenerator(name = "RHQ_ALERT_CONDITION_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_ID_SEQ")
 @Table(name = "RHQ_ALERT_CONDITION")
 public class AlertCondition implements Serializable {

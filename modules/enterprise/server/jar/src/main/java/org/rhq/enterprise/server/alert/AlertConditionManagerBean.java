@@ -93,7 +93,7 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
 
     @SuppressWarnings("unchecked")
     public PageList<? extends AbstractAlertConditionCategoryComposite> getAlertConditionComposites(Subject user,
-        AlertConditionCategory category, PageControl pageControl) {
+        Integer agentId, AlertConditionCategory category, PageControl pageControl) {
         if (authorizationManager.isOverlord(user) == false) {
             throw new PermissionException("User [" + user.getName() + "] does not have permission to call "
                 + "getAlertConditionComposites; only the overlord has that right");
@@ -140,6 +140,8 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
         if (countQueryName == AlertCondition.QUERY_BY_CATEGORY_COUNT_PARAMETERIZED) {
             queryCount.setParameter("category", category);
         }
+        query.setParameter("agentId", agentId);
+        queryCount.setParameter("agentId", agentId);
 
         long totalCount = (Long) queryCount.getSingleResult();
         List<? extends AbstractAlertConditionCategoryComposite> list = query.getResultList();

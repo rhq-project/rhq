@@ -120,7 +120,6 @@ public final class AlertConditionCache {
         counts.put(CacheName.EventsCache.name(), getMapListCount(eventsCache));
         counts.put(CacheName.ResourceConfigurationCache.name(), getMapListCount(resourceConfigurationCache));
         counts.put(CacheName.Inverse.name(), getMapListCount(inverseAgentConditionMap));
-        counts.put(CacheName.Inverse.name(), getMapListCount(inverseAlertConditionMap));
         return counts;
     }
 

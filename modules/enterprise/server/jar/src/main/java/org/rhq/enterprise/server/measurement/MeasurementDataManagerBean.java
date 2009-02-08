@@ -266,7 +266,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
                 log.warn("  +-> \n" + next.getMessage());
             }
         } catch (Exception e) {
-            log.error(e);
+            log.error("Error persisting numeric data", e);
         } finally {
             for (PreparedStatement ps : statements.values()) {
                 JDBCUtil.safeClose(ps);

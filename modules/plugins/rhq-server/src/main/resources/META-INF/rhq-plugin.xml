@@ -11,7 +11,7 @@
 
    <service name="RHQ Server Alerts Engine Subsystem"
             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-            class="org.rhq.plugins.jmx.MBeanResourceComponent"
+            class="AlertsCacheResourceComponent"
             description="RHQ Server Alerts Engine Subsystem">
 
       <runs-inside>
@@ -23,8 +23,22 @@
          <c:simple-property name="nameTemplate" default="RHQ Server Alerts Engine Subsystem"/>
          <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Alerts Engine Subsystem."/>
       </plugin-configuration>
+      
+      <operation name="reloadCaches" description="Unloads then reloads all caches managed by the containing RHQ Server">
+         <results>
+            <c:list-property name="reloadStatistics">
+               <c:map-property name="stat">
+                  <c:simple-property name="cacheName" summary="true" type="string"
+                                     description="The internal name of the cache being reloaded" />
+                  <c:simple-property name="beforeReloading" summary="true" type="long"
+                                     description="The count of elements in this cache before reloading" />
+                  <c:simple-property name="afterReloading" summary="true" type="long"
+                                     description="The count of elements in this cache after reloading" />
+               </c:map-property>
+            </c:list-property>
+         </results>
+      </operation>
 
-      <metric property="TotalCacheElementCount" category="throughput" displayType="summary" />
       <metric property="AvailabilityCacheElementCount" category="throughput" displayType="summary" />
       <metric property="MeasurementCacheElementCount" category="throughput" displayType="summary" />
       <metric property="EventCacheElementCount" category="throughput" displayType="summary" />
@@ -44,6 +58,7 @@
       <metric property="EventProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
       <metric property="ResourceConfigurationProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
       <metric property="OperationProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
+      
    </service>
 
    <service name="RHQ Server Measurement Subsystem"
@@ -78,6 +93,7 @@
       <metric property="PurgedCallTimeData" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of call time data purged by the last purge job"/>
       <metric property="PurgedEvents" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of events purged by the last purge job"/>
       <metric property="PurgedMeasurementTraits" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of traits purged by the last purge job"/>
+      
    </service>
    
    <service name="RHQ Server Group Definition / DynaGroups Subsystem"

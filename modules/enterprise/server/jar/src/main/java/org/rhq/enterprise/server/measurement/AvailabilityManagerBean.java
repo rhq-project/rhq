@@ -52,8 +52,8 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceIdWithAvailabilityComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.StopWatch;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -154,6 +154,11 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
 
     public List<AvailabilityPoint> getAvailabilitiesForResource(Subject whoami, int resourceId,
         long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints) {
+        // adjust down so the start time of the first point equals the begin time of the metric display range prefs
+        long adjust = (fullRangeEndTime - fullRangeBeginTime) / numberOfPoints;
+        fullRangeBeginTime -= adjust;
+        fullRangeEndTime -= adjust;
+
         if ((numberOfPoints <= 0) || (fullRangeBeginTime >= fullRangeEndTime)) {
             return new ArrayList<AvailabilityPoint>();
         }
@@ -652,11 +657,11 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         pageControl.initDefaultOrderingField("av.startTime", PageOrdering.DESC);
 
         Query countQuery = PersistenceUtility.createCountQuery(entityManager, Availability.FIND_BY_RESOURCE_NO_SORT);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Availability.FIND_BY_RESOURCE_NO_SORT, pageControl);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Availability.FIND_BY_RESOURCE_NO_SORT,
+            pageControl);
 
-        countQuery.setParameter("resourceId",resourceId);
-        query.setParameter("resourceId",resourceId);
-
+        countQuery.setParameter("resourceId", resourceId);
+        query.setParameter("resourceId", resourceId);
 
         long count = (Long) countQuery.getSingleResult();
         List<Availability> availabilities = query.getResultList();

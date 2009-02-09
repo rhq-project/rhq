@@ -177,11 +177,10 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
     public AlertsPortletPreferences getAlertsPortletPreferences() {
         AlertsPortletPreferences prefs = new AlertsPortletPreferences();
-        prefs.count = getIntPref(PREF_DASH_ALERTS_COUNT);
         prefs.priority = getIntPref(PREF_DASH_ALERTS_PRIORITY);
         prefs.timeRange = getLongPref(PREF_DASH_ALERTS_PAST);
         prefs.displayAll = getPreference(PREF_DASH_ALERTS_SELECTED_OR_ALL);
-        prefs.resourceIds = getPreferenceAsIntegerList(PREF_DASH_ALERTS_RESOURCES, DashboardUtils.DASHBOARD_DELIMITER);
+        prefs.resourceIds = getPreferenceAsIntegerList(PREF_DASH_ALERTS_RESOURCES, PREF_ITEM_DELIM);
         removeDeletedResources(prefs.resourceIds);
         return prefs;
     }
@@ -263,10 +262,31 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     public static class FavoriteResourcePortletPreferences {
         public boolean showAvailability;
         public boolean showAlerts;
-        public List<Integer> resourceIds;
+        private List<Integer> resourceIds;
 
         public Integer[] asArray() {
             return resourceIds.toArray(new Integer[resourceIds.size()]);
+        }
+
+        public void removeFavorite(int resourceId) {
+            for (int i = resourceIds.size() - 1; i >= 0; i--) {
+                if (resourceId == resourceIds.get(i)) {
+                    resourceIds.remove(i);
+                    return;
+                }
+            }
+        }
+
+        public void addFavorite(int resourceId) {
+            resourceIds.add(resourceId);
+        }
+
+        public void setFavorites(List<Integer> resourceIds) {
+            this.resourceIds = resourceIds;
+        }
+
+        public boolean isFavorite(int resourceId) {
+            return resourceIds.contains(resourceId);
         }
     }
 
@@ -274,7 +294,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         FavoriteResourcePortletPreferences prefs = new FavoriteResourcePortletPreferences();
         prefs.showAvailability = getBooleanPref(PREF_DASH_FAVORITE_RESOURCES_AVAILABILITY);
         prefs.showAlerts = getBooleanPref(PREF_DASH_FAVORITE_RESOURCES_ALERTS);
-        prefs.resourceIds = getPreferenceAsIntegerList(PREF_DASH_FAVORITE_RESOURCES, DashboardUtils.DASHBOARD_DELIMITER);
+        prefs.resourceIds = getPreferenceAsIntegerList(PREF_DASH_FAVORITE_RESOURCES, PREF_ITEM_DELIM);
         removeDeletedResources(prefs.resourceIds);
         return prefs;
     }
@@ -282,7 +302,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     public void setFavoriteResourcePortletPreferences(FavoriteResourcePortletPreferences prefs) {
         setPreference(PREF_DASH_FAVORITE_RESOURCES_AVAILABILITY, prefs.showAvailability);
         setPreference(PREF_DASH_FAVORITE_RESOURCES_ALERTS, prefs.showAlerts);
-        setPreference(PREF_DASH_FAVORITE_RESOURCES, prefs.resourceIds, DashboardUtils.DASHBOARD_DELIMITER);
+        setPreference(PREF_DASH_FAVORITE_RESOURCES, prefs.resourceIds, PREF_ITEM_DELIM);
     }
 
     public static class DashboardPreferences {

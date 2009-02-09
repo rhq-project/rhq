@@ -55,7 +55,7 @@ public class QuickFavoritesUtil {
         try {
             FavoriteResourcePortletPreferences favoriteResources = user.getWebPreferences()
                 .getFavoriteResourcePortletPreferences();
-            return favoriteResources.resourceIds.contains(id);
+            return favoriteResources.isFavorite(id);
         } catch (Exception e) {
             LogFactory.getLog(QuickFavoritesUtil.class).error("Cannot determine if [" + id + "] is a favorite", e);
             return false;

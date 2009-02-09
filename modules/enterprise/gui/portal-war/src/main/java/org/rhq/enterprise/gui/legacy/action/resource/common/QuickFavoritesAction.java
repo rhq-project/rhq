@@ -63,7 +63,7 @@ public class QuickFavoritesAction extends BaseAction {
             // Add to favorites and save
             FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
                 .getFavoriteResourcePortletPreferences();
-            favoriteResourcePreferences.resourceIds.add(resourceId);
+            favoriteResourcePreferences.addFavorite(resourceId);
             preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
         } else if (mode.equals("remove")) {
             if (!isFavorite.booleanValue()) {
@@ -74,7 +74,7 @@ public class QuickFavoritesAction extends BaseAction {
             // Remove from favorites and save
             FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
                 .getFavoriteResourcePortletPreferences();
-            favoriteResourcePreferences.resourceIds.remove(resourceId);
+            favoriteResourcePreferences.removeFavorite(resourceId);
             preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
         } else {
             return returnFailure(request, mapping, forwardParams);

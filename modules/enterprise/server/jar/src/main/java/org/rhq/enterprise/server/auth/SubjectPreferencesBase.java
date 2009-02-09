@@ -189,7 +189,7 @@ public abstract class SubjectPreferencesBase {
      * @param key the name of the preference
      * @return <code>List</code> of <code>String</code> tokens
      */
-    protected List<String> getPreferenceAsList(String key, String delimiter) {
+    public List<String> getPreferenceAsList(String key, String delimiter) {
         String pref = null;
         try {
             pref = getPreference(key);

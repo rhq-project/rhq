@@ -40,21 +40,16 @@ public class ModifyAction extends BaseAction {
         HttpServletResponse response) throws Exception {
 
         PropertiesForm pForm = (PropertiesForm) form;
-        ActionForward forward = checkSubmit(request, mapping, form);
-
-        if (forward != null) {
-            return forward;
-        }
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getWebPreferences();
 
         String forwardStr = RetCodeConstants.SUCCESS_URL;
         if (pForm.isRemoveClicked()) {
-            FavoriteResourcePortletPreferences favoriteResourcePreferences = pForm
+            FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
                 .getFavoriteResourcePortletPreferences();
             for (Integer doomedResourceId : pForm.getIds()) {
-                favoriteResourcePreferences.resourceIds.remove(doomedResourceId);
+                favoriteResourcePreferences.removeFavorite(doomedResourceId);
             }
             preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
             preferences.persistPreferences();
@@ -66,6 +61,12 @@ public class ModifyAction extends BaseAction {
         }
 
         request.getSession().removeAttribute(Constants.USERS_SES_PORTAL);
+
+        ActionForward forward = checkSubmit(request, mapping, form);
+
+        if (forward != null) {
+            return forward;
+        }
 
         return mapping.findForward(forwardStr);
     }

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.addresource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -42,7 +43,9 @@ import org.rhq.core.gui.util.StringUtility;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
+import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -75,19 +78,21 @@ public class AddResourcesPrepareAction extends Action {
         // first, get the pending resources (those that have been added to the RHS
         // pending resources are those on the right side of the "add to list" widget that are awaiting association with the group when the form's "ok" button is clicked. */
         log.debug("check session if there are pending resources");
-        List<String> pendingResourceList = (List<String>) session.getAttribute(Constants.PENDING_RESOURCES_SES_ATTR);
+        List<String> pendingResourceList = new ArrayList<String>();
 
-        if (pendingResourceList == null) {
+        if (session.getAttribute(Constants.PENDING_RESOURCES_SES_ATTR) == null) {
             // if hitting the page for the first time, load resources already associated with user via preferences
             log.debug("get pending resources from user preferences");
             WebUserPreferences preferences = user.getWebPreferences();
-            pendingResourceList = preferences.getPreferenceAsList(addForm.getKey());
+            pendingResourceList = preferences.getPreferenceAsList(addForm.getKey(), DashboardUtils.DASHBOARD_DELIMITER);
 
             if (pendingResourceList != null) {
                 // otherwise, we've been here for a while but the user paged, performed changed LHS<->RHS, etc
                 log.debug("put entire list of pending resources in session");
                 session.setAttribute(Constants.PENDING_RESOURCES_SES_ATTR, pendingResourceList);
             }
+        } else {
+            pendingResourceList = SessionUtils.getListAsList(session, Constants.PENDING_RESOURCES_SES_ATTR);
         }
 
         // get the resources, so we can display name & description in the UI

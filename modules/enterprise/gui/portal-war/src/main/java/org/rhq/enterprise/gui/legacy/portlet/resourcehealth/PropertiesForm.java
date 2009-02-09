@@ -48,7 +48,7 @@ public class PropertiesForm extends DashboardBaseForm {
     }
 
     public void setIds(Integer[] ids) {
-        this.prefs.resourceIds = Arrays.asList(ids);
+        this.prefs.setFavorites(Arrays.asList(ids));
     }
 
     public FavoriteResourcePortletPreferences getFavoriteResourcePortletPreferences() {

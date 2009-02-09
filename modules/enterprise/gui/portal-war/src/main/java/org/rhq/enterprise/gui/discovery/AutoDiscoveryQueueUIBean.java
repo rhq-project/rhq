@@ -67,6 +67,13 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
         return platformsAndServers;
     }
 
+    public String rebuildTable() {
+        // this method is called when the table needs to be rebuilt - clear out our session to start anew
+        getExpandedPlatforms().clear();
+        getSelectedResources().clear();
+        return "sort";
+    }
+
     public String importResources() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         int platformCount = 0;

@@ -291,6 +291,9 @@
 
             </h:panelGrid>
 
+            <!-- use a hidden button trick (which sends the same action a column click would) so request params aren't lost -->
+            <h:commandButton id="hiddenQueueButton" style="visibility: hidden;" action="#{AutoDiscoveryQueueUIBean.rebuildTable}" />
+
          </rich:panel>
       </h:form>
 

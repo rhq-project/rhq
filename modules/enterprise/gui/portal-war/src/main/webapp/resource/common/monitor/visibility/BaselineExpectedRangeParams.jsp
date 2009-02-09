@@ -48,9 +48,9 @@ value="resource.common.monitor.visibility.chart.MetricBaselineAndExpectedRangeTa
       </c:otherwise>
       </c:choose>
       </span>
-      - <html:link href="javascript:document.forms[0].submit();" onclick="clickLink('ViewChartForm', 'saveBaseline')"><fmt:message
+      - <html:link href="javascript:document.forms['ViewChartForm'].submit();" onclick="clickLink('ViewChartForm', 'saveBaseline')"><fmt:message
       key="resource.common.monitor.visibility.chart.baseline.SaveValueLink"/></html:link>
-      | <html:link href="javascript:document.forms[0].submit();" onclick="clickLink('ViewChartForm', 'cancelBaseline')"><fmt:message
+      | <html:link href="javascript:document.forms['ViewChartForm'].submit();" onclick="clickLink('ViewChartForm', 'cancelBaseline')"><fmt:message
       key="resource.common.monitor.visibility.chart.baseline.CancelLink"/></html:link>
       </c:when>
       <c:otherwise>
@@ -65,7 +65,7 @@ value="resource.common.monitor.visibility.chart.MetricBaselineAndExpectedRangeTa
       </c:choose>
       </span>
       <hq:authorization permission="MANAGE_MEASUREMENTS">
-      - <html:link href="javascript:document.forms[0].submit();" onclick="clickLink('ViewChartForm', 'changeBaseline')"><fmt:message
+      - <html:link href="javascript:document.forms['ViewChartForm'].submit();" onclick="clickLink('ViewChartForm', 'changeBaseline')"><fmt:message
       key="resource.common.monitor.visibility.chart.baseline.ChangeValueLink"/></html:link>
       </hq:authorization>
       </c:otherwise>
@@ -90,9 +90,9 @@ value="resource.common.monitor.visibility.chart.MetricBaselineAndExpectedRangeTa
       <c:choose>
       <c:when test="${editHighRange}">
       <html:text property="highRange" size="15"/>
-      - <html:link href="javascript:document.forms[0].submit();" onclick="clickLink('ViewChartForm', 'saveHighRange')"><fmt:message
+      - <html:link href="javascript:document.forms['ViewChartForm'].submit();" onclick="clickLink('ViewChartForm', 'saveHighRange')"><fmt:message
       key="resource.common.monitor.visibility.chart.baseline.SaveValueLink"/></html:link>
-      | <html:link href="javascript:document.forms[0].submit();" onclick="clickLink('ViewChartForm', 'cancelHighRange')"><fmt:message
+      | <html:link href="javascript:document.forms['ViewChartForm'].submit();" onclick="clickLink('ViewChartForm', 'cancelHighRange')"><fmt:message
       key="resource.common.monitor.visibility.chart.baseline.CancelLink"/></html:link>
       <logic:messagesPresent property="highRange">
       <br>-- <html:errors property="highRange"/>
@@ -108,7 +108,7 @@ value="resource.common.monitor.visibility.chart.MetricBaselineAndExpectedRangeTa
       </c:otherwise>
       </c:choose>
       <hq:authorization permission="MANAGE_MEASUREMENTS">
-      - <html:link href="javascript:document.forms[0].submit();" onclick="clickLink('ViewChartForm', 'changeHighRange')"><fmt:message
+      - <html:link href="javascript:document.forms['ViewChartForm'].submit();" onclick="clickLink('ViewChartForm', 'changeHighRange')"><fmt:message
       key="resource.common.monitor.visibility.chart.baseline.ChangeValueLink"/></html:link>
       </hq:authorization>
       </c:otherwise>
@@ -130,9 +130,9 @@ value="resource.common.monitor.visibility.chart.MetricBaselineAndExpectedRangeTa
       <c:choose>
       <c:when test="${editLowRange}">
       <html:text property="lowRange" size="15"/>
-      - <html:link href="javascript:document.forms[0].submit();" onclick="clickLink('ViewChartForm', 'saveLowRange')"><fmt:message
+      - <html:link href="javascript:document.forms['ViewChartForm'].submit();" onclick="clickLink('ViewChartForm', 'saveLowRange')"><fmt:message
       key="resource.common.monitor.visibility.chart.baseline.SaveValueLink"/></html:link>
-      | <html:link href="javascript:document.forms[0].submit();" onclick="clickLink('ViewChartForm', 'cancelLowRange')"><fmt:message
+      | <html:link href="javascript:document.forms['ViewChartForm'].submit();" onclick="clickLink('ViewChartForm', 'cancelLowRange')"><fmt:message
       key="resource.common.monitor.visibility.chart.baseline.CancelLink"/></html:link>
       <logic:messagesPresent property="lowRange">
       <br>-- <html:errors property="lowRange"/>
@@ -148,7 +148,7 @@ value="resource.common.monitor.visibility.chart.MetricBaselineAndExpectedRangeTa
       </c:otherwise>
       </c:choose>
       <hq:authorization permission="MANAGE_MEASUREMENTS">
-      - <html:link href="javascript:document.forms[0].submit();" onclick="clickLink('ViewChartForm', 'changeLowRange')"><fmt:message
+      - <html:link href="javascript:document.forms['ViewChartForm'].submit();" onclick="clickLink('ViewChartForm', 'changeLowRange')"><fmt:message
       key="resource.common.monitor.visibility.chart.baseline.ChangeValueLink"/></html:link>
       </hq:authorization>
       </c:otherwise>

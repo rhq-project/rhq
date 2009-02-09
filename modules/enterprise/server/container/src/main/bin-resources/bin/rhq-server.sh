@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# chkconfig: 2345 92 26
+# description: Starts and stops the RHQ server
+#
+# processname: java
+
 # =============================================================================
 # RHQ Server UNIX Startup Script
 #

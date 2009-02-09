@@ -168,10 +168,31 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         public int priority;
         public long timeRange;
         public String displayAll;
-        public List<Integer> resourceIds;
+        private List<Integer> resourceIds;
 
         public Integer[] asArray() {
             return resourceIds.toArray(new Integer[resourceIds.size()]);
+        }
+
+        public void removeResource(int resourceId) {
+            for (int i = resourceIds.size() - 1; i >= 0; i--) {
+                if (resourceId == resourceIds.get(i)) {
+                    resourceIds.remove(i);
+                    return;
+                }
+            }
+        }
+
+        public void addResource(int resourceId) {
+            resourceIds.add(resourceId);
+        }
+
+        public void setResource(List<Integer> resourceIds) {
+            this.resourceIds = resourceIds;
+        }
+
+        public boolean contains(int resourceId) {
+            return resourceIds.contains(resourceId);
         }
     }
 
@@ -190,10 +211,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         setPreference(PREF_DASH_ALERTS_PRIORITY, prefs.priority);
         setPreference(PREF_DASH_ALERTS_PAST, prefs.timeRange);
         setPreference(PREF_DASH_ALERTS_SELECTED_OR_ALL, prefs.displayAll);
-        /* 
-         * setting resources happens in the AddResourcesAction class since
-         * all portlets that can be filtered by resources use the same logic 
-         */
+        setPreference(PREF_DASH_ALERTS_RESOURCES, prefs.resourceIds, PREF_ITEM_DELIM);
     }
 
     public static class ProblemResourcesPortletPreferences {

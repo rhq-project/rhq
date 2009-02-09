@@ -164,10 +164,10 @@ public class MetricsDisplayAction extends MetricsControlAction {
 
         // add selected metrics, discarding any that are already favorites
         for (Integer resourceIdToAdd : selectedIds) {
-            if (prefs.resourceIds.contains(resourceIdToAdd)) {
+            if (prefs.isFavorite(resourceIdToAdd)) {
                 continue;
             }
-            prefs.resourceIds.add(resourceIdToAdd);
+            prefs.addFavorite(resourceIdToAdd);
         }
 
         preferences.setFavoriteResourcePortletPreferences(prefs);
@@ -180,7 +180,7 @@ public class MetricsDisplayAction extends MetricsControlAction {
 
         // add selected metrics, discarding any that are already favorites
         for (Integer resourceIdToAdd : selectedIds) {
-            prefs.resourceIds.remove(resourceIdToAdd);
+            prefs.removeFavorite(resourceIdToAdd);
         }
 
         preferences.setFavoriteResourcePortletPreferences(prefs);

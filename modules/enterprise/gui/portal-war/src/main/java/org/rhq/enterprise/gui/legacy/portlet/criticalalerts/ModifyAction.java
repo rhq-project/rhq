@@ -40,11 +40,6 @@ public class ModifyAction extends BaseAction {
         HttpServletResponse response) throws Exception {
 
         PropertiesForm pForm = (PropertiesForm) form;
-        ActionForward forward = checkSubmit(request, mapping, form);
-
-        if (forward != null) {
-            return forward;
-        }
 
         WebUser user = SessionUtils.getWebUser(request.getSession());
         WebUserPreferences preferences = user.getWebPreferences();
@@ -53,7 +48,7 @@ public class ModifyAction extends BaseAction {
         if (pForm.isRemoveClicked()) {
             AlertsPortletPreferences alertPrefs = preferences.getAlertsPortletPreferences();
             for (Integer doomedResourceId : pForm.getIds()) {
-                alertPrefs.resourceIds.remove(doomedResourceId);
+                alertPrefs.removeResource(doomedResourceId);
             }
             preferences.setAlertsPortletPreferences(alertPrefs);
             preferences.persistPreferences();
@@ -62,6 +57,12 @@ public class ModifyAction extends BaseAction {
 
         if (!pForm.isDisplayOnDash()) {
             DashboardUtils.removePortlet(user, pForm.getPortletName());
+        }
+
+        ActionForward forward = checkSubmit(request, mapping, form);
+
+        if (forward != null) {
+            return forward;
         }
 
         request.getSession().removeAttribute(Constants.USERS_SES_PORTAL); // clean-up

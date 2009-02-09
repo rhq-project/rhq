@@ -77,7 +77,7 @@ public class PropertiesForm extends DashboardBaseForm {
     }
 
     public void setIds(Integer[] ids) {
-        this.prefs.resourceIds = Arrays.asList(ids);
+        this.prefs.setResource(Arrays.asList(ids));
     }
 
     public AlertsPortletPreferences getAlertsPortletPreferences() {

@@ -154,10 +154,6 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
 
     public List<AvailabilityPoint> getAvailabilitiesForResource(Subject whoami, int resourceId,
         long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints) {
-        // adjust down so the start time of the first point equals the begin time of the metric display range prefs
-        long adjust = (fullRangeEndTime - fullRangeBeginTime) / numberOfPoints;
-        fullRangeBeginTime -= adjust;
-        fullRangeEndTime -= adjust;
 
         if ((numberOfPoints <= 0) || (fullRangeBeginTime >= fullRangeEndTime)) {
             return new ArrayList<AvailabilityPoint>();

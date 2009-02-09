@@ -1,0 +1,196 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main.xhtml">
+
+    <ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Metric Tables"/>
+    <ui:param name="selectedTabName" value="Monitor.Availability"/>
+
+    <ui:define name="content">
+
+
+
+            <f:facet name="header" styleClass="BlockTitle">
+                <a name="AvailabilityHistory"/>
+                Availability History
+            </f:facet>
+
+
+            <h:panelGroup layout="block" rendered="#{ListAvailabilityHistoryUIBean.dataModel.rowCount == 0}">
+                This resource does not currently have any availability history.
+            </h:panelGroup>
+
+            <rich:panel styleClass="BlockContent" rendered="#{ListAvailabilityHistoryUIBean.dataModel.rowCount != 0}">
+
+
+                <h:panelGrid columns="2" styleClass="general-props-table" columnClasses="general-prop-cell">
+
+
+                    <h:panelGroup layout="block">
+                        <h:outputText value="Resource has been #{ResourceUIBean.availabilityType.name} since: "/>
+                        <h:outputText value="#{ResourceUIBean.availabilitySummary.lastChange}">
+                            <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz"
+                                               timeZone="#{ServerInfoUIBean.timeZone}"/>
+                        </h:outputText>
+                    </h:panelGroup>
+
+                    <rich:spacer/>
+
+
+                    <h:panelGroup layout="block">
+                        <b>Down for: </b>
+                        <h:outputText value="#{ResourceUIBean.availabilitySummary.downTime}">
+                            <f:converter converterId="LongDurationConverter"/>
+                        </h:outputText>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block">
+
+                        <b>Up for: </b>
+                        <h:outputText value="#{ResourceUIBean.availabilitySummary.upTime}">
+                            <f:converter converterId="LongDurationConverter"/>
+                        </h:outputText>
+                    </h:panelGroup>
+
+                    <h:panelGroup layout="block">
+                        <b>Failures: </b>
+                        <h:outputText value="#{ResourceUIBean.availabilitySummary.failures}"/>
+                    </h:panelGroup>
+
+                    <rich:spacer/>
+
+                    <h:panelGroup layout="block">
+                        <h:outputText value="MTBF: " styleClass="BoldText"/>
+                        <h:outputText value="#{ResourceUIBean.availabilitySummary.MTBF}">
+                            <f:converter converterId="LongDurationConverter"/>
+                        </h:outputText>
+                        <rich:toolTip>
+                            Mean Time Between Failures over the known resource lifetime.
+                        </rich:toolTip>
+                    </h:panelGroup>
+
+
+                    <h:panelGroup layout="block">
+                        <h:outputText value="MTTR: " styleClass="BoldText"/>
+                        <h:outputText value="#{ResourceUIBean.availabilitySummary.MTTR}">
+                            <f:converter converterId="LongDurationConverter"/>
+                        </h:outputText>
+                        <rich:toolTip>
+                            Mean Time To Recover from failure over the known resource lifetime.
+                        </rich:toolTip>
+                    </h:panelGroup>
+
+                </h:panelGrid>
+
+
+                <h:form id="availabilityHistoryForm">
+
+                    <input type="hidden" name="id" value="#{param.id}"/>
+
+                    <ui:param name="availabilityHistoryDataModel" value="#{ListAvailabilityHistoryUIBean.dataModel}"/>
+                    <rich:dataTable id="availabilityHistoryDataTable"
+                                    rows="#{PageControl.AvailabilityHistoryList.pageSize}"
+                                    value="#{availabilityHistoryDataModel}"
+                                    rendered="#{ListAvailabilityHistoryUIBean.dataModel.rowCount > 0}"
+                                    var="availability"
+                                    columnsWidth="5%,25%,25%, 25%"
+                                    footerClass="on-pager-footer">
+
+
+                        <f:facet name="PageControlView">
+                            <onc:paginationControl id="AvailabilityHistoryList"/>
+                        </f:facet>
+
+
+                        <rich:column
+                                style="background-color: #{availability.availabilityType == 'UP' ? '#E2F2E6' : '#E2D2D2'}">
+                            <f:facet name="header">
+
+
+                                <onc:sortableColumnHeader sort="av.availabilityType">
+                                    <h:outputText styleClass="headerText" value="Availablility"/>
+                                </onc:sortableColumnHeader>
+                            </f:facet>
+
+                            <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up"
+                                            rendered="#{availability.availabilityType == 'UP'}"/>
+                            <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down"
+                                            rendered="#{availability.availabilityType == 'DOWN'}"/>
+                            <h:graphicImage value="/images/icon_available_grey.png" alt="Unknown" title="Unknown"
+                                            rendered="#{availability.availabilityType == null}"/>
+                            &nbsp; &nbsp;
+                            <h:outputText value="#{availability.availabilityType}"/>
+                        </rich:column>
+
+                        <rich:column
+                                style="background-color: #{availability.availabilityType == 'UP' ? '#E2F2E6' : '#E2D2D2'}">
+                            <f:facet name="header">
+                                <onc:sortableColumnHeader sort="av.startTime">
+                                    <h:outputText styleClass="headerText" value="Start"/>
+                                </onc:sortableColumnHeader>
+                            </f:facet>
+
+                            <h:outputText value="#{availability.startTime}"/>
+                        </rich:column>
+
+                        <rich:column
+                                style="background-color: #{availability.availabilityType == 'UP' ? '#E2F2E6' : '#E2D2D2'}">
+                            <f:facet name="header">
+                                <onc:sortableColumnHeader sort="av.endTime">
+                                    <h:outputText styleClass="headerText" value="End"/>
+                                </onc:sortableColumnHeader>
+                            </f:facet>
+
+                            <h:outputText value="#{availability.endTime}"/>
+                        </rich:column>
+
+                        <rich:column
+                                style="background-color: #{availability.availabilityType == 'UP' ? '#E2F2E6' : '#E2D2D2'}">
+                            <f:facet name="header">
+                                <onc:sortableColumnHeader sort="(av.endTime - av.startTime)">
+                                    <h:outputText styleClass="headerText" value="Duration"/>
+                                </onc:sortableColumnHeader>
+                            </f:facet>
+
+                            <h:outputText value="#{availability.endTime.time - availability.startTime.time}">
+                                <f:converter converterId="LongDurationConverter"/>
+                            </h:outputText>
+                        </rich:column>
+
+
+                        <f:facet name="footer">
+                            <rich:columnGroup>
+                                <rich:column colspan="4">
+
+                                    <ui:include src="../include/pagination.xhtml">
+                                        <ui:param name="paginationDataTableName" value="availabilityHistoryDataTable"/>
+                                        <ui:param name="paginationDataModel" value="#{availabilityHistoryDataModel}"/>
+                                        <ui:param name="paginationPageControl"
+                                                  value="#{PageControl.AvailabilityHistoryList}"/>
+                                    </ui:include>
+                                </rich:column>
+                            </rich:columnGroup>
+                        </f:facet>
+
+                    </rich:dataTable>
+
+                </h:form>
+            </rich:panel>
+
+    </ui:define>
+
+</ui:composition>
+
+</html>

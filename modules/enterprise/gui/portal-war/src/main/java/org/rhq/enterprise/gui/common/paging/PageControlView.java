@@ -72,6 +72,7 @@ import org.rhq.enterprise.gui.inventory.resource.ListContainingGroupsUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListCreateResourceHistoryUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListDeleteResourceHistoryUIBean;
 import org.rhq.enterprise.gui.inventory.resource.history.ListPluginConfigurationUpdateUIBean;
+import org.rhq.enterprise.gui.inventory.resource.history.ListAvailabilityHistoryUIBean;
 import org.rhq.enterprise.gui.measurement.calltime.CallTimeUIBean;
 import org.rhq.enterprise.gui.measurement.schedule.group.ListResourceGroupMeasurementScheduleUIBean;
 import org.rhq.enterprise.gui.measurement.schedule.resource.ListResourceMeasurementScheduleUIBean;
@@ -250,6 +251,8 @@ public enum PageControlView {
     EventsHistoryList(EventHistoryUIBean.class),
     /** */
     CallTimeHistory(CallTimeUIBean.class),
+
+    AvailabilityHistoryList(ListAvailabilityHistoryUIBean.class),
 
     // Subsystem Views
 

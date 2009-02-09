@@ -160,6 +160,8 @@ id - the id of the Resource being accessed
 
           <h:panelGrid columns="2">
               <h:panelGroup id="availDisplay">
+                  <h:outputLink value="/rhq/resource/monitor/availabilityHistory.xhtml">
+                      <f:param name="id" value="#{ResourceUIBean.id}"/>
                   <h:graphicImage value="/images/icon_available_green_24.png" alt="Resource is Up" title="Up"
                                   rendered="#{ResourceUIBean.availabilityType == 'UP'}"/>
                   <h:graphicImage value="/images/icon_available_red_24.png" alt="Resource is Down" title="Down"
@@ -167,6 +169,7 @@ id - the id of the Resource being accessed
                   <h:graphicImage value="/images/icon_available_grey_24.png" alt="Resource availability is Unknown"
                                   title="Unknown"
                                   rendered="#{ResourceUIBean.availabilityType == null}"/>
+                  </h:outputLink>
                   <rich:toolTip for="availDisplay">
                       <h:outputText value="Resource has been #{ResourceUIBean.availabilityType.name} since: "/>
                       <h:outputText value="#{ResourceUIBean.availabilitySummary.lastChange}">

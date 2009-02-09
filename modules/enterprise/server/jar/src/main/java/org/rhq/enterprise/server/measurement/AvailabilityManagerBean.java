@@ -50,6 +50,10 @@ import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceIdWithAvailabilityComposite;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.StopWatch;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -642,6 +646,22 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         q.setParameter("end", endDate.getTime());
         List<Availability> results = q.getResultList();
         return results;
+    }
+
+    public PageList<Availability> findByResource(Subject user, int resourceId, PageControl pageControl) {
+        pageControl.initDefaultOrderingField("av.startTime", PageOrdering.DESC);
+
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Availability.FIND_BY_RESOURCE_NO_SORT);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Availability.FIND_BY_RESOURCE_NO_SORT, pageControl);
+
+        countQuery.setParameter("resourceId",resourceId);
+        query.setParameter("resourceId",resourceId);
+
+
+        long count = (Long) countQuery.getSingleResult();
+        List<Availability> availabilities = query.getResultList();
+
+        return new PageList(availabilities, (int) count, pageControl);
     }
 
     private void notifyAlertConditionCacheManager(String callingMethod, Availability... availabilities) {

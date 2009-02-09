@@ -18,11 +18,20 @@
  */
 package org.rhq.enterprise.gui.common.framework;
 
+import java.util.List;
+
 import org.richfaces.event.SimpleToggleEvent;
 
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
+import org.rhq.enterprise.gui.legacy.action.resource.common.QuickFavoritesUtil;
+import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.gui.util.FacesContextUtility;
 
 /**
  * @author Greg Hinkle
@@ -31,6 +40,9 @@ public class UserPreferencesUIBean {
 
     public static final String LEFT_RESOURCE_NAV_SHOWING = "ui.leftResourceNavShowing";
     public static final String SUMMARY_PANEL_DISPLAY_STATE = "ui.summaryPanelDisplayState";
+
+
+    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
     public Subject getSubject() {
         return EnterpriseFacesContextUtility.getSubject();
@@ -59,5 +71,13 @@ public class UserPreferencesUIBean {
     public void setSummaryPanelDisplayState(String state) {
         EnterpriseFacesContextUtility.getWebUser().getWebPreferences().setPreference(SUMMARY_PANEL_DISPLAY_STATE, state);
     }
-    
+
+
+    public List<Resource> getResourceFavorites() {
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        WebUserPreferences.FavoriteResourcePortletPreferences favoriteResources =
+                user.getWebPreferences().getFavoriteResourcePortletPreferences();
+
+        return resourceManager.getResourceByIds(getSubject(), favoriteResources.resourceIds.toArray(new Integer[favoriteResources.resourceIds.size()]), false,  PageControl.getUnlimitedInstance());
+    }
 }

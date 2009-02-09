@@ -61,6 +61,8 @@ import org.rhq.core.domain.resource.Resource;
         + " WHERE av.resource.id = :resourceId " + "   AND av.endTime IS NULL " + "ORDER BY av.startTime ASC "), // this order by is on purpose - for handling NonUniqueResultException problems
     @NamedQuery(name = Availability.FIND_BY_RESOURCE, query = "  SELECT av FROM Availability av "
         + "   WHERE av.resource.id = :resourceId " + "ORDER BY av.startTime ASC"),
+    @NamedQuery(name = Availability.FIND_BY_RESOURCE_NO_SORT, query = "  SELECT av FROM Availability av "
+        + "   WHERE av.resource.id = :resourceId "),
 
     // get all current resource availabilities for those that do not match a given availability type
     @NamedQuery(name = Availability.FIND_NONMATCHING_WITH_RESOURCE_ID_BY_AGENT_AND_TYPE, query = "SELECT new org.rhq.core.domain.resource.composite.ResourceIdWithAvailabilityComposite(av.resource.id, av) "
@@ -94,6 +96,7 @@ public class Availability implements Serializable {
 
     public static final String FIND_CURRENT_BY_RESOURCE = "Availability.findCurrentByResource";
     public static final String FIND_BY_RESOURCE = "Availability.findByResource";
+    public static final String FIND_BY_RESOURCE_NO_SORT = "Availability.findByResourceNoSort";
     public static final String FIND_NONMATCHING_WITH_RESOURCE_ID_BY_AGENT_AND_TYPE = "Availability.findNonmatchingWithResourceIdByAgentAndType";
     public static final String FIND_FOR_RESOURCE_WITHIN_INTERVAL = "Availability.findForResourceWithinInterval";
     public static final String FIND_BY_RESOURCE_AND_DATE = "Availability.findByResourceAndDate";

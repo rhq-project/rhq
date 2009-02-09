@@ -24,5 +24,15 @@
       <managed-bean-class>org.rhq.enterprise.gui.measurement.tables.resource.ResourceMetricsTableUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
+
+
+   <!-- /rhq/resource/monitor/availabilityHistory.xhtml -->
+   <managed-bean>
+      <managed-bean-name>ListAvailabilityHistoryUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.history.ListAvailabilityHistoryUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+
    
 </faces-config>

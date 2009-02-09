@@ -27,6 +27,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 
 /**
@@ -136,4 +138,8 @@ public interface AvailabilityManagerLocal {
     boolean isAgentBackfilled(String agentName);
 
     List<Availability> findAvailabilityWithinInterval(int resourceId, Date startDate, Date endDate);
+
+
+    PageList<Availability> findByResource(Subject user, int resourceId, PageControl pageControl);
+
 }

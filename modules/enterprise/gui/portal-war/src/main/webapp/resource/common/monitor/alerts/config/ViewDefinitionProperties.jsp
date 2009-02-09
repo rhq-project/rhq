@@ -55,6 +55,7 @@
   <tr>
     <td colspan="4" class="BlockContent"><span style="height: 3px;"></span></td>
   </tr>
+  <c:if test="${!alertDef.deleted}">
   <tr>
     <td colspan="4" class="BlockContent">
       <span class="red" style="padding-left: 15px;">
@@ -64,6 +65,7 @@
       (<html:link page="/alerts/Config.do?mode=viewRoles&type=${Resource.resourceType.id}&ad=${alertDef.parentId}"><fmt:message key="alert.config.props.ViewTemplate"/></html:link>)
     </td>
   </tr>
+  </c:if>
   
   </c:if>
   <tr>

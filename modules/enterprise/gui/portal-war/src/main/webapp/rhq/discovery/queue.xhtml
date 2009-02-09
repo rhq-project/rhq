@@ -149,11 +149,15 @@
                               <h:selectBooleanCheckbox onchange="checkAll(this)" />
                               <rich:spacer width="3" height="1" />
                               <h:commandLink action="#{AutoDiscoverySessionUIBean.collapseAll}">
-                                 <h:graphicImage value="/images/minus.gif" height="12" width="12" title="Collapse All" />
+                                 <h:graphicImage id="collapse-all-image" value="/images/minus.gif" height="12" width="12" title="Collapse All">
+                                    <rich:toolTip value="Collapse All"/>
+                                 </h:graphicImage>
                               </h:commandLink>
                               <rich:spacer width="3" height="1" />
                               <h:commandLink action="#{AutoDiscoverySessionUIBean.expandAll}">
-                                 <h:graphicImage value="/images/plus.gif" height="12" width="12" title="Expand All"/>
+                                 <h:graphicImage id="expand-all-image" value="/images/plus.gif" height="12" width="12" title="Expand All">
+                                    <rich:toolTip value="Expand All"/>
+                                 </h:graphicImage>
                               </h:commandLink>
                         </h:panelGrid>
                      </f:facet>

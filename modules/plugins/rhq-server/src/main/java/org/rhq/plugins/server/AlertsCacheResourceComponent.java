@@ -23,7 +23,6 @@ public class AlertsCacheResourceComponent extends MBeanResourceComponent {
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if ("reloadCaches".equals(name)) {
             EmsBean emsBean = getEmsBean();
-            String[] cacheNames = (String[]) emsBean.getAttribute("CacheNames").refresh();
             Map<String, Integer> before = (Map<String, Integer>) emsBean.getAttribute("CacheCounts").refresh();
             emsBean.getAttribute("ReloadCaches"); // void return
             Map<String, Integer> after = (Map<String, Integer>) emsBean.getAttribute("CacheCounts").refresh();
@@ -31,7 +30,7 @@ public class AlertsCacheResourceComponent extends MBeanResourceComponent {
             OperationResult result = new OperationResult();
             PropertyList statistics = new PropertyList("reloadStatistics");
             result.getComplexResults().put(statistics);
-            for (String cacheName : cacheNames) {
+            for (String cacheName : before.keySet()) {
                     PropertyMap stat = new PropertyMap("stat");
                     stat.put(new PropertySimple("cacheName", cacheName));
                     stat.put(new PropertySimple("beforeReloading", before.get(cacheName)));

@@ -35,7 +35,12 @@ public class LibVirtConnection {
     private Log log = LogFactory.getLog(LibVirtConnection.class);
 
     public LibVirtConnection() {
-        this.connectionPointer = LibVirt.INSTANCE.virConnectOpen(null);
+        LibVirt virtInstance = LibVirt.INSTANCE;
+        if (virtInstance == null) {
+            log.warn("Can not obtain an instance of libvirt");
+            return;
+        }
+        this.connectionPointer = virtInstance.virConnectOpen(null);
         if (this.connectionPointer == null) {
             log.warn("Couldn't created authorized access to libvirt, using read only access");
             this.connectionPointer = LibVirt.INSTANCE.virConnectOpenReadOnly(null);
@@ -43,12 +48,18 @@ public class LibVirtConnection {
     }
 
     public List<String> getDomainNames() {
+        LibVirt virtInstance = LibVirt.INSTANCE;
+        if (virtInstance==null) {
+            return new ArrayList<String>(); // Return empty list, so VirtualizationDiscovery will find no hosts.
+        }
+
         // this works though I should really figure out how to allocate the Memory with the jna Memory thing
         String[] names = new String[100];
         for (int i = 0; i<100;i++) {
                 names[i] = new String();
         }
-        int code = LibVirt.INSTANCE.virConnectListDefinedDomains(connectionPointer, names, 100);
+
+        int code = virtInstance.virConnectListDefinedDomains(connectionPointer, names, 100);
         List<String> results = new ArrayList<String>();
 
         for (int i = 0; i< code;i++) {
@@ -65,7 +76,9 @@ public class LibVirtConnection {
 
     protected void finalize() throws Throwable {
         super.finalize();
-        LibVirt.INSTANCE.virConnectClose(connectionPointer);
+        LibVirt virtInstance = LibVirt.INSTANCE;
+        if (virtInstance!=null)
+            virtInstance.virConnectClose(connectionPointer);
     }
 
 

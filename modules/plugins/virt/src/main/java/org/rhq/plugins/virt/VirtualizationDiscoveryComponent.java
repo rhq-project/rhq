@@ -42,18 +42,28 @@ public class VirtualizationDiscoveryComponent implements ResourceDiscoveryCompon
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
         throws InvalidPluginConfigurationException, Exception {
-        LibVirtConnection virt = new LibVirtConnection();
+
+        Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
+
+        LibVirtConnection virt;
+        try {
+            virt = new LibVirtConnection();
+        }
+        catch (UnsatisfiedLinkError e) {
+            log.warn("Can not load native library for libvirt: " + e.getMessage());
+            return details;
+        }
         int[] ids;
         try {
             ids = virt.getDomainIds();
         }
         catch (Exception e) {
-            log.info(e.getMessage());
-            return null;
+            log.info("Failure obtaining domains from libvirt: " + e.getMessage());
+            return details;
         }
         List<String> guests = virt.getDomainNames();
 
-        Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
+
 
         for (int id : ids) {
             if ((id == 0 && resourceDiscoveryContext.getResourceType().getName().equals("Virtual Host"))

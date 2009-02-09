@@ -68,8 +68,6 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
     }
 
     public String importResources() {
-        rebuildSelectedResources();
-
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         int platformCount = 0;
         int serverCount = 0;
@@ -121,8 +119,6 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
     }
 
     public String ignoreResources() {
-        rebuildSelectedResources();
-
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         int serverCount = 0;
 
@@ -164,8 +160,6 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
     }
 
     public String unignoreResources() {
-        rebuildSelectedResources();
-
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         int serverCount = 0;
 
@@ -214,63 +208,12 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
         return "success";
     }
 
-    public String rebuildTable() {
-        rebuildSelectedResources();
-        return "sort";
-    }
-
-    /**
-     * Returns a string in the form "platformID:serverID,platformID:serverID..." where platformID is a selected platform
-     * and serverID is a child server of that platform that is also selected. You can't have a selected server without
-     * having its parent selected, so it makes sense to have a serverID paired with its parent. The purpose of this
-     * method is to be called via JSF #{} notation and be used within JavaScript.
-     *
-     * @return string that can be parsed and used within JavaScript
-     */
-    public String getSelectedResourcesString() {
-        Map<Resource, List<Resource>> selectedPlatformsServers = new HashMap<Resource, List<Resource>>();
-
-        Map<Integer, Boolean> selectedResources = getSelectedResources();
-        for (Map.Entry<Integer, Boolean> entry : selectedResources.entrySet()) {
-            Resource resource = findResource(entry.getKey());
-            if (entry.getValue().booleanValue()) {
-                if (platformsAndServers.containsKey(resource)) {
-                    if (!selectedPlatformsServers.containsKey(resource)) {
-                        selectedPlatformsServers.put(resource, new ArrayList<Resource>());
-                    }
-                } else {
-                    Resource parentPlatform = findParentPlatform(resource);
-                    if (!selectedPlatformsServers.containsKey(parentPlatform)) {
-                        selectedPlatformsServers.put(parentPlatform, new ArrayList<Resource>());
-                    }
-
-                    selectedPlatformsServers.get(parentPlatform).add(resource);
-                }
-            }
-        }
-
-        StringBuilder str = new StringBuilder();
-        for (Map.Entry<Resource, List<Resource>> entry : selectedPlatformsServers.entrySet()) {
-            if (entry.getValue().size() > 0) {
-                for (Resource server : entry.getValue()) {
-                    if (str.length() > 0) {
-                        str.append(',');
-                    }
-
-                    str.append(entry.getKey().getId() + ":" + server.getId());
-                }
-            }
-        }
-
-        return str.toString();
-    }
-
-    private void rebuildSelectedResources() {
-        FacesContextUtility.getManagedBean(AutoDiscoverySessionUIBean.class).rebuildSelectedResources();
-    }
-
     private Map<Integer, Boolean> getSelectedResources() {
         return FacesContextUtility.getManagedBean(AutoDiscoverySessionUIBean.class).getSelectedResources();
+    }
+
+    private Map<Integer, Boolean> getExpandedPlatforms() {
+        return FacesContextUtility.getManagedBean(AutoDiscoverySessionUIBean.class).getExpandedMap();
     }
 
     private Resource findResource(Integer id) {
@@ -286,16 +229,6 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
                 if (server.getId() == id.intValue()) {
                     return server;
                 }
-            }
-        }
-
-        return null;
-    }
-
-    private Resource findParentPlatform(Resource server) {
-        for (Map.Entry<Resource, List<Resource>> entry : platformsAndServers.entrySet()) {
-            if (entry.getValue().contains(server)) {
-                return entry.getKey();
             }
         }
 
@@ -339,6 +272,17 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
 
                 platformsAndServers.put(platform, queuedServers);
             }
+
+            // In order to be able to expandAll/collapseAll, the expandedPlatforms map must have all platforms in it.
+            // Prepare the expandedPlatforms, maintaining prior state for platforms that were already in the map.
+            Map<Integer, Boolean> expandedPlatforms = getExpandedPlatforms();
+            Map<Integer, Boolean> newExpandedPlatforms = new HashMap<Integer, Boolean>();
+            for (Resource platform : platformsAndServers.keySet()) {
+                Boolean expanded = expandedPlatforms.get(platform.getId());
+                newExpandedPlatforms.put(platform.getId(), (expanded != null) ? expanded : Boolean.FALSE);
+            }
+            expandedPlatforms.clear();
+            expandedPlatforms.putAll(newExpandedPlatforms);
 
             return queuedPlatforms;
         }

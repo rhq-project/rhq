@@ -46,7 +46,7 @@
                      all_elements[i].click();
                      all_elements[i].click();
                   }
-            }  
+            }
          }
 
          // if the platform checkbox is (un)checked, all of its servers are automatically (un)checked
@@ -76,17 +76,6 @@
 
          function checkServer( checkbox, platformId, serverId )
          {
-            var platform_servers_ele = document.getElementById('platform_servers_' + platformId);
-            var platform_servers_arr = platform_servers_ele.value.split(",");
-
-            // remove the original "-1" value if it exists and any duplicate serverId item
-            var new_array = new Array();
-            for (var x=0; x < platform_servers_arr.length; x++)
-            {
-               if (platform_servers_arr[x] != serverId && platform_servers_arr[x] != "-1")
-                  new_array.push(platform_servers_arr[x]);
-            }
-
             // if user selected a server, the platform will be selected automatically
             if (checkbox.checked)
             {
@@ -103,13 +92,7 @@
                      break;
                   }
                }
-               
-               // add it to the set of selected servers
-               new_array.push(serverId);
             }
-
-            // make the hidden element the comma-separated list of current servers selected
-            platform_servers_ele.value = new_array.join(",");
          }
       //]]>
       </script>
@@ -135,7 +118,7 @@
                <h:selectOneListbox id="newOrIgnored"
                                    size="1"
                                    onchange="document.getElementById('queueForm:hiddenQueueButton').click();"
-                                   value="#{AutoDiscoverySessionUIBean.showNewIgnore}"> 
+                                   value="#{AutoDiscoverySessionUIBean.showNewIgnore}">
                   <f:selectItem itemValue="NEW" itemLabel="New Only" />
                   <f:selectItem itemValue="IGNORED" itemLabel="Ignored Only" />
                   <f:selectItem itemValue="BOTH" itemLabel="Both New and Ignored" />
@@ -145,7 +128,7 @@
             <h:panelGrid columns="1" width="90%" style="min-width: 800px;">
 
                <ui:param name="autoDiscoveryQueueDataModel" value="#{AutoDiscoveryQueueUIBean.dataModel}"/>
-               <rich:dataTable id="autoDiscoveryQueueDataTable" 
+               <rich:dataTable id="autoDiscoveryQueueDataTable"
                                rows="#{PageControl.AutoDiscoveryPlatformList.pageSize}"
                                value="#{autoDiscoveryQueueDataModel}"
                                var="platformQueueItem"
@@ -162,7 +145,17 @@
 
                   <rich:column>
                      <f:facet name="header">
-                        <h:selectBooleanCheckbox onchange="checkAll(this)" />
+                        <h:panelGrid id="panel" columns="5">
+                              <h:selectBooleanCheckbox onchange="checkAll(this)" />
+                              <rich:spacer width="3" height="1" />
+                              <h:commandLink action="#{AutoDiscoverySessionUIBean.collapseAll}">
+                                 <h:graphicImage value="/images/minus.gif" height="12" width="12" title="Collapse All" />
+                              </h:commandLink>
+                              <rich:spacer width="3" height="1" />
+                              <h:commandLink action="#{AutoDiscoverySessionUIBean.expandAll}">
+                                 <h:graphicImage value="/images/plus.gif" height="12" width="12" title="Expand All"/>
+                              </h:commandLink>
+                        </h:panelGrid>
                      </f:facet>
 
                      <h:commandLink action="#{AutoDiscoverySessionUIBean.collapse}"
@@ -197,8 +190,8 @@
                      <f:facet name="header">
                         <onc:sortableColumnHeader sort="res.name">
                            <h:outputText styleClass="headerText" value="Resource Name" />
-                        </onc:sortableColumnHeader>                     
-                     </f:facet>            
+                        </onc:sortableColumnHeader>
+                     </f:facet>
                      <h:outputText value="#{platformQueueItem.name}" />
                   </rich:column>
 
@@ -220,7 +213,7 @@
                      <f:facet name="header">
                         <onc:sortableColumnHeader sort="res.ctime">
                            <h:outputText styleClass="headerText" value="Date Detected" />
-                        </onc:sortableColumnHeader>                     
+                        </onc:sortableColumnHeader>
                      </f:facet>
                      <h:outputText value="#{platformQueueItem.ctime}">
                         <f:converter converterId="UserDateTimeConverter" />
@@ -297,9 +290,6 @@
                </rich:dataTable>
 
             </h:panelGrid>
-
-            <!-- use a hidden button trick (which sends the same action a column click would) so request params aren't lost -->
-            <h:commandButton id="hiddenQueueButton" style="visibility: hidden;" action="#{AutoDiscoveryQueueUIBean.rebuildTable}" />
 
          </rich:panel>
       </h:form>

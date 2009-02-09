@@ -146,7 +146,9 @@
                   <rich:column>
                      <f:facet name="header">
                         <h:panelGrid id="panel" columns="5">
-                              <h:selectBooleanCheckbox onchange="checkAll(this)" />
+                              <h:selectBooleanCheckbox id="select-all-checkbox" onchange="checkAll(this)">
+                                 <rich:toolTip value="Select All Platforms (Selects All Servers In Expanded Platforms Only)"/>
+                              </h:selectBooleanCheckbox>
                               <rich:spacer width="3" height="1" />
                               <h:commandLink action="#{AutoDiscoverySessionUIBean.collapseAll}">
                                  <h:graphicImage id="collapse-all-image" value="/images/minus.gif" height="12" width="12" title="Collapse All">

@@ -141,6 +141,15 @@
             </h:panelGrid> 
          </rich:panel>
          
+         <rich:panel rendered="#{not empty param.opId}" styleClass="BlockContent">
+            <f:facet name="header">
+               <h:outputText value="Operation Schedule Details"/>
+            </f:facet>
+            <!-- bug in rich:panel renders children even if the panel isn't rendered -->
+            <onc:simpleTrigger binding="#{ResourceGroupOperationScheduleUIBean.trigger}" 
+                               renderType="classic" />
+         </rich:panel>
+         
          <rich:panel rendered="#{not empty param.opId}" styleClass="BlockContent"> 
             <f:facet name="header">
                <h:outputText value="Other Options"/>
@@ -161,20 +170,12 @@
                <h:inputText id="notes" maxlength="120" size="40" value="#{ResourceGroupOperationDefinitionUIBean.description}" />
                <h:outputText value="Optional notes, if the operation is scheduled for execution later" />
             </h:panelGrid>
-         </rich:panel>
-         
-         <rich:panel rendered="#{not empty param.opId}" styleClass="BlockContent">
-            <f:facet name="header">
-               <h:outputText value="Operation Schedule Details"/>
-            </f:facet>
-            <!-- bug in rich:panel renders children even if the panel isn't rendered -->
-            <onc:simpleTrigger binding="#{ResourceGroupOperationScheduleUIBean.trigger}" 
-                               renderType="classic" />
             <hr />
             <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell" 
                          rendered="#{not empty param.opId}">
                <h:commandButton action="#{ResourceGroupOperationScheduleUIBean.schedule}" value="SCHEDULE" styleClass="buttonmed"/>
             </h:panelGrid>
+            <br />
          </rich:panel>
 
       </h:form>

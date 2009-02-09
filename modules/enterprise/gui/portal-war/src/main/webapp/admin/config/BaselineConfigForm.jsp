@@ -13,6 +13,16 @@
 </tiles:insert>
 <!--  /  -->
 
+<hq:constant
+    classname="org.rhq.enterprise.gui.legacy.Constants"
+    symbol="MINUTES_LABEL" var="CONST_MINUTES" />
+<hq:constant
+    classname="org.rhq.enterprise.gui.legacy.Constants"
+    symbol="HOURS_LABEL" var="CONST_HOURS" />
+<hq:constant
+    classname="org.rhq.enterprise.gui.legacy.Constants"
+    symbol="DAYS_LABEL" var="CONST_DAYS" />
+
 <!--  Baseline configuration -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <!-- Baseline frequency -->

@@ -6,12 +6,23 @@
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-tiles" prefix="tiles" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-logic" prefix="logic" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="/WEB-INF/tld/hq.tld" prefix="hq" %>
 
 <!--  DATA MANAGER CONFIG TITLE -->
 <tiles:insert definition=".header.tab">
   <tiles:put name="tabKey" value="admin.settings.DataMangerConfigTab"/>
 </tiles:insert>
 <!--  /  -->
+
+<hq:constant
+    classname="org.rhq.enterprise.gui.legacy.Constants"
+    symbol="MINUTES_LABEL" var="CONST_MINUTES" />
+<hq:constant
+    classname="org.rhq.enterprise.gui.legacy.Constants"
+    symbol="HOURS_LABEL" var="CONST_HOURS" />
+<hq:constant
+    classname="org.rhq.enterprise.gui.legacy.Constants"
+    symbol="DAYS_LABEL" var="CONST_DAYS" />
 
 <!--  DATA MANAGER CONFIG CONTENTS -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">

@@ -35,6 +35,7 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 
 /**
@@ -55,51 +56,37 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
 
     public AlertConditionCacheStats checkConditions(MeasurementData... measurementData) {
         AlertConditionCacheStats stats;
-        stats = AlertConditionCache.getInstance().checkConditions(measurementData);
+        stats = AlertConditionCacheCoordinator.getInstance().checkConditions(measurementData);
         return stats;
     }
 
     public AlertConditionCacheStats checkConditions(OperationHistory operationHistory) {
         AlertConditionCacheStats stats;
-        stats = AlertConditionCache.getInstance().checkConditions(operationHistory);
+        stats = AlertConditionCacheCoordinator.getInstance().checkConditions(operationHistory);
         return stats;
     }
 
     public AlertConditionCacheStats checkConditions(Availability... availabilities) {
         AlertConditionCacheStats stats;
-        stats = AlertConditionCache.getInstance().checkConditions(availabilities);
+        stats = AlertConditionCacheCoordinator.getInstance().checkConditions(availabilities);
         return stats;
     }
 
     public AlertConditionCacheStats checkConditions(EventSource source, Event... events) {
         AlertConditionCacheStats stats;
-        stats = AlertConditionCache.getInstance().checkConditions(source, events);
+        stats = AlertConditionCacheCoordinator.getInstance().checkConditions(source, events);
         return stats;
     }
 
     public AlertConditionCacheStats checkConditions(ResourceConfigurationUpdate update) {
         AlertConditionCacheStats stats;
-        stats = AlertConditionCache.getInstance().checkConditions(update);
+        stats = AlertConditionCacheCoordinator.getInstance().checkConditions(update);
         return stats;
-    }
-
-    public String[] getCacheNames() {
-        String[] names;
-        names = AlertConditionCache.getInstance().getCacheNames();
-        return names;
-    }
-
-    public void printCache(String cacheName) {
-        AlertConditionCache.getInstance().printCache(cacheName);
-    }
-
-    public void printAllCaches() {
-        AlertConditionCache.getInstance().printAllCaches();
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void reloadCachesForAgent(int agentId) {
-        AlertConditionCache.getInstance().reloadCachesForAgent(agentId);
+        AlertConditionCacheCoordinator.getInstance().reloadCachesForAgent(agentId);
     }
 
     public void reloadAllCaches() {
@@ -108,4 +95,5 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
             alertConditionCacheManager.reloadCachesForAgent(agent.getId());
         }
     }
+
 }

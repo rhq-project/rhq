@@ -159,6 +159,24 @@ public interface AgentManagerLocal {
     Agent getAgentByResourceId(int resourceId);
 
     /**
+     * Given a resource ID, this will return the agent responsible for servicing that resource.
+     *
+     * @param  resourceId
+     *
+     * @return the agentId that services the resource, or <code>null</code> if the resource ID was invalid
+     */
+    Integer getAgentIdByResourceId(int resourceId);
+
+    /**
+     * Given a schedule ID, this will return the agent responsible for servicing that scheduleId.
+     *
+     * @param  scheduleId
+     *
+     * @return the agentId that services the resource, or <code>null</code> if the schedule ID was invalid
+     */
+    Integer getAgentIdByScheduleId(int scheduleId);
+
+    /**
      * This method is called whenever an agent is going down.
      *
      * <p>This will usually be triggered when an agent explicitly tells us that it is shutting down. See

@@ -86,12 +86,6 @@ public interface AlertConditionCacheManagerLocal {
      */
     AlertConditionCacheStats checkConditions(ResourceConfigurationUpdate update);
 
-    String[] getCacheNames();
-
-    void printCache(String cacheName);
-
-    void printAllCaches();
-
     void reloadCachesForAgent(int agentId);
 
     void reloadAllCaches();

@@ -27,7 +27,7 @@ import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 
-import org.rhq.enterprise.server.alert.engine.AlertConditionCache;
+import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -71,28 +71,34 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     }
 
     public int getAvailabilityCacheElementCount() {
-        return AlertConditionCache.getInstance().getCacheSize(AlertConditionCache.CacheName.AvailabilityCache);
+        return AlertConditionCacheCoordinator.getInstance().getCacheSize(
+            AlertConditionCacheCoordinator.Cache.AvailabilityCache);
     }
 
     public int getEventCacheElementCount() {
-        return AlertConditionCache.getInstance().getCacheSize(AlertConditionCache.CacheName.EventsCache);
+        return AlertConditionCacheCoordinator.getInstance().getCacheSize(
+            AlertConditionCacheCoordinator.Cache.EventsCache);
     }
 
     public int getMeasurementCacheElementCount() {
-        return AlertConditionCache.getInstance().getCacheSize(AlertConditionCache.CacheName.MeasurementDataCache)
-            + AlertConditionCache.getInstance().getCacheSize(AlertConditionCache.CacheName.MeasurementTraitCache);
+        return AlertConditionCacheCoordinator.getInstance().getCacheSize(
+            AlertConditionCacheCoordinator.Cache.MeasurementDataCache)
+            + AlertConditionCacheCoordinator.getInstance().getCacheSize(
+                AlertConditionCacheCoordinator.Cache.MeasurementTraitCache);
     }
 
     public int getResourceConfigurationCacheElementCount() {
-        return AlertConditionCache.getInstance().getCacheSize(AlertConditionCache.CacheName.ResourceConfigurationCache);
+        return AlertConditionCacheCoordinator.getInstance().getCacheSize(
+            AlertConditionCacheCoordinator.Cache.ResourceConfigurationCache);
     }
 
     public int getOperationCacheElementCount() {
-        return AlertConditionCache.getInstance().getCacheSize(AlertConditionCache.CacheName.ResourceOperationCache);
+        return AlertConditionCacheCoordinator.getInstance().getCacheSize(
+            AlertConditionCacheCoordinator.Cache.ResourceOperationCache);
     }
 
     public Map<String, Integer> getCacheCounts() {
-        return AlertConditionCache.getInstance().getCacheCounts();
+        return AlertConditionCacheCoordinator.getInstance().getCacheCounts();
     }
 
     public int getAvailabilityCacheElementMatches() {
@@ -191,18 +197,6 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
 
     public void getReloadCaches() {
         LookupUtil.getAlertConditionCacheManager().reloadAllCaches();
-    }
-
-    public String[] getCacheNames() {
-        return LookupUtil.getAlertConditionCacheManager().getCacheNames();
-    }
-
-    public void printCache(String cacheName) {
-        LookupUtil.getAlertConditionCacheManager().printCache(cacheName);
-    }
-
-    public void printAllCaches() {
-        LookupUtil.getAlertConditionCacheManager().printAllCaches();
     }
 
     public ObjectName preRegister(MBeanServer server, ObjectName name) throws Exception {

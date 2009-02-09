@@ -55,6 +55,8 @@ import org.rhq.core.domain.cloud.Server;
     @NamedQuery(name = Agent.QUERY_FIND_BY_ADDRESS_AND_PORT, query = "SELECT a FROM Agent a WHERE a.address = :address AND a.port = :port"),
     @NamedQuery(name = Agent.QUERY_FIND_BY_AGENT_TOKEN, query = "SELECT a FROM Agent a WHERE a.agentToken = :agentToken"),
     @NamedQuery(name = Agent.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT r.agent FROM Resource r WHERE r.id = :resourceId"),
+    @NamedQuery(name = Agent.QUERY_FIND_AGENT_ID_BY_RESOURCE_ID, query = "SELECT r.agent.id FROM Resource r WHERE r.id = :resourceId"),
+    @NamedQuery(name = Agent.QUERY_FIND_AGENT_ID_BY_SCHEDULE_ID, query = "SELECT r.agent.id FROM MeasurementSchedule sched JOIN sched.resource r WHERE sched.id = :scheduleId"),
     @NamedQuery(name = Agent.QUERY_FIND_ALL, query = "SELECT a FROM Agent a"),
     @NamedQuery(name = Agent.QUERY_FIND_BY_SERVER, query = "SELECT a FROM Agent a WHERE (a.server.id = :serverId OR :serverId IS NULL)"),
     @NamedQuery(name = Agent.QUERY_REMOVE_SERVER_REFERENCE, query = "UPDATE Agent a SET a.server.id = NULL WHERE a.server.id = :serverId "),
@@ -95,6 +97,8 @@ public class Agent implements Serializable {
     public static final String QUERY_FIND_BY_ADDRESS_AND_PORT = "Agent.findByAddressAndPort";
     public static final String QUERY_FIND_BY_AGENT_TOKEN = "Agent.findByAgentToken";
     public static final String QUERY_FIND_BY_RESOURCE_ID = "Agent.findByResourceId";
+    public static final String QUERY_FIND_AGENT_ID_BY_RESOURCE_ID = "Agent.findAgentIdByResourceId";
+    public static final String QUERY_FIND_AGENT_ID_BY_SCHEDULE_ID = "Agent.findAgentIdByScheduleId";
     public static final String QUERY_FIND_ALL = "Agent.findAll";
     public static final String QUERY_FIND_BY_SERVER = "Agent.findByServer";
     public static final String QUERY_COUNT_ALL = "Agent.countAll";
@@ -164,8 +168,7 @@ public class Agent implements Serializable {
      * @param remoteEndpoint
      * @param agentToken
      */
-    public Agent(@NotNull
-    String name, String address, int port, String remoteEndpoint, String agentToken) {
+    public Agent(@NotNull String name, String address, int port, String remoteEndpoint, String agentToken) {
         this.name = name;
         this.address = address;
         this.port = port;
@@ -197,8 +200,7 @@ public class Agent implements Serializable {
         return this.name;
     }
 
-    public void setName(@NotNull
-    String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 
@@ -213,8 +215,7 @@ public class Agent implements Serializable {
         return this.address;
     }
 
-    public void setAddress(@NotNull
-    String address) {
+    public void setAddress(@NotNull String address) {
         this.address = address;
     }
 
@@ -243,8 +244,7 @@ public class Agent implements Serializable {
         return agentToken;
     }
 
-    public void setAgentToken(@NotNull
-    String agentToken) {
+    public void setAgentToken(@NotNull String agentToken) {
         this.agentToken = agentToken;
     }
 

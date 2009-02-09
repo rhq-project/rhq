@@ -94,10 +94,4 @@ public interface AlertConditionCacheMonitorMBean {
      * cache contents
      */
     public void getReloadCaches();
-
-    public String[] getCacheNames();
-
-    public void printCache(String cacheName);
-
-    public void printAllCaches();
 }

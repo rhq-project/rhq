@@ -342,6 +342,36 @@ public class AgentManagerBean implements AgentManagerLocal {
         return agent;
     }
 
+    public Integer getAgentIdByResourceId(int resourceId) {
+        Integer agentId;
+
+        try {
+            Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_AGENT_ID_BY_RESOURCE_ID);
+            query.setParameter("resourceId", resourceId);
+            agentId = (Integer) query.getSingleResult();
+        } catch (NoResultException e) {
+            log.debug("Failed to lookup agent for resource with ID of [" + resourceId + "] : " + e);
+            agentId = null;
+        }
+
+        return agentId;
+    }
+
+    public Integer getAgentIdByScheduleId(int scheduleId) {
+        Integer agentId;
+
+        try {
+            Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_AGENT_ID_BY_SCHEDULE_ID);
+            query.setParameter("scheduleId", scheduleId);
+            agentId = (Integer) query.getSingleResult();
+        } catch (NoResultException e) {
+            log.debug("Failed to lookup agent for resource with ID of [" + scheduleId + "] : " + e);
+            agentId = null;
+        }
+
+        return agentId;
+    }
+
     public boolean isAgentVersionSupported(AgentVersion agentVersionInfo) {
         try {
             Properties properties = getAgentUpdateVersionFileContent();

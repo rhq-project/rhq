@@ -196,7 +196,7 @@ public final class AlertConditionCacheCoordinator {
 
         Integer agentId = getAgentId(source);
         if (agentId == null) {
-            log.error("Could not find agent for resourceId = " + source.getResourceId());
+            log.error("Could not find agent for resourceId = " + source.getResource().getId());
             return new AlertConditionCacheStats();
         }
 
@@ -228,7 +228,7 @@ public final class AlertConditionCacheCoordinator {
 
     private Integer getAgentId(EventSource source) {
         try {
-            int resourceId = source.getResourceId();
+            int resourceId = source.getResource().getId();
             Integer agentId = agentManager.getAgentIdByResourceId(resourceId);
             return agentId;
         } catch (Throwable t) {

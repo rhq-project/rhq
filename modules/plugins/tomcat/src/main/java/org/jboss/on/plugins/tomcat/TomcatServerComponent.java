@@ -70,7 +70,7 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, A
          * Starts a Tomcat instance by calling a configurable start script.
          */
         START,
-        
+
         /**
          * Restarts a Tomcat instance by calling a configurable restart script.
          */
@@ -174,10 +174,15 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, A
                 // application files (making us unable to update them)  Bug: JBNADM-670
                 connectionSettings.getControlProperties().setProperty(ConnectionFactory.COPY_JARS_TO_TEMP, String.valueOf(Boolean.TRUE));
 
-                // But tell it to put them in a place that we clean up when shutting down the agent
-                connectionSettings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR, resourceContext.getTemporaryDirectory().getAbsolutePath());
+                // But tell it to put them in a place that we clean up when shutting down the agent (make sure tmp dir exists)
+                File tempDir = resourceContext.getTemporaryDirectory();
+                if (!tempDir.exists()) {
+                    tempDir.mkdirs();
+                }
+                connectionSettings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR, tempDir.getAbsolutePath());
 
-                log.info("Loading connection [" + connectionSettings.getServerUrl() + "] with install path [" + connectionSettings.getLibraryURI() + "]...");
+                log.info("Loading connection [" + connectionSettings.getServerUrl() + "] with install path [" + connectionSettings.getLibraryURI() + "] and temp directory ["
+                    + tempDir.getAbsolutePath() + "]");
 
                 ConnectionProvider connectionProvider = connectionFactory.getConnectionProvider(connectionSettings);
                 this.connection = connectionProvider.connect();

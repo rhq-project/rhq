@@ -49,8 +49,8 @@ public class VirtualizationDiscoveryComponent implements ResourceDiscoveryCompon
         try {
             virt = new LibVirtConnection();
         }
-        catch (UnsatisfiedLinkError e) {
-            log.warn("Can not load native library for libvirt: " + e.getMessage());
+        catch (Throwable t) {
+            log.warn("Can not load native library for libvirt: " + t.getMessage());
             return details;
         }
         int[] ids;

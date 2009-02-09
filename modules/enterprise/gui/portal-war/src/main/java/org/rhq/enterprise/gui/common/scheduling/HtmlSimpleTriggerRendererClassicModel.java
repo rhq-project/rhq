@@ -384,6 +384,7 @@ public class HtmlSimpleTriggerRendererClassicModel implements HtmlSimpleTriggerR
         HtmlCalendar calendar = new HtmlCalendar();
         calendar.setId(id);
         calendar.setValue(value);
+        calendar.setEnableManualInput(true);
         calendar.setShowApplyButton(true);
         calendar.setShowWeeksBar(false);
         calendar.setDatePattern(trigger.getDateFormat());

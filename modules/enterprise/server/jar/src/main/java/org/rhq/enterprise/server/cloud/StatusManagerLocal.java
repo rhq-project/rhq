@@ -26,7 +26,7 @@ import javax.ejb.Local;
  * @author Joseph Marques
  */
 @Local
-public interface AgentStatusManagerLocal {
+public interface StatusManagerLocal {
 
     List<Integer> getAndClearAgentsWithStatusForServer(String serverName);
 

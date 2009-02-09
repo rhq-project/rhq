@@ -89,7 +89,13 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
         AlertConditionCacheCoordinator.getInstance().reloadCachesForAgent(agentId);
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void reloadGlobalCache() {
+        AlertConditionCacheCoordinator.getInstance().reloadGlobalCache();
+    }
+
     public void reloadAllCaches() {
+        alertConditionCacheManager.reloadGlobalCache();
         List<Agent> agents = serverManager.getAgents();
         for (Agent agent : agents) {
             alertConditionCacheManager.reloadCachesForAgent(agent.getId());

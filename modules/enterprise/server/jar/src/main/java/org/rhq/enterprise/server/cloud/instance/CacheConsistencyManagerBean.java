@@ -93,6 +93,34 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void reloadServerCacheIfNeeded() {
+        // try reload the global cache separate from the agent caches for purposes of isolated failures
+        reloadGlobalCacheIfNeeded();
+        reloadAgentCachesAsNeeded();
+    }
+
+    private void reloadGlobalCacheIfNeeded() {
+        try {
+            boolean hadServerStatus = serverManager.getAndClearServerStatus();
+            if (hadServerStatus == false) {
+                return;
+            }
+
+            long startTime = System.currentTimeMillis();
+            cacheManager.reloadGlobalCache();
+            long endTime = System.currentTimeMillis();
+
+            String serverName = serverManager.getIdentity();
+            log.info(serverName + " took [" + (endTime - startTime) + "]ms to reload global cache");
+        } catch (Throwable t) {
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to reload global cache", t);
+            } else {
+                log.error("Failed to reload global cache, cause: " + t.getMessage());
+            }
+        }
+    }
+
+    private void reloadAgentCachesAsNeeded() {
         /* 
          * catch absolutely everything, so that even if this REQUIRES_NEW transaction rollback, 
          * it doesn't rollback the caller (where we reschedule the TIMER to trigger this job again
@@ -132,4 +160,5 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
             }
         }
     }
+
 }

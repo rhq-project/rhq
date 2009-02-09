@@ -39,7 +39,7 @@ import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.communications.GlobalSuspendCommandListener;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.cloud.AgentStatusManagerLocal;
+import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -75,7 +75,7 @@ public class ServerManagerBean implements ServerManagerLocal {
     private CloudManagerLocal cloudManager;
 
     @EJB
-    private AgentStatusManagerLocal agentStatusManager;
+    private StatusManagerLocal agentStatusManager;
 
     private final String TIMER_DATA = "ServerManagerBean.beat";
 
@@ -130,6 +130,17 @@ public class ServerManagerBean implements ServerManagerLocal {
     public List<Integer> getAndClearAgentsWithStatus() {
         List<Integer> results = agentStatusManager.getAndClearAgentsWithStatusForServer(getIdentity());
         return results;
+    }
+
+    public boolean getAndClearServerStatus() {
+        String identity = getIdentity();
+        Server server = cloudManager.getServerByName(identity);
+        if (server == null) {
+            return false; // don't reload caches if we don't know who we are
+        }
+        boolean hadStatus = (server.getStatus() != 0);
+        server.clearStatus();
+        return hadStatus;
     }
 
     public Server getServer() throws ServerNotFoundException {

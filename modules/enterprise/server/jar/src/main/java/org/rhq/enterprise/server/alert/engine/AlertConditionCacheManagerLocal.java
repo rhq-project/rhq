@@ -88,5 +88,7 @@ public interface AlertConditionCacheManagerLocal {
 
     void reloadCachesForAgent(int agentId);
 
+    void reloadGlobalCache();
+
     void reloadAllCaches();
 }

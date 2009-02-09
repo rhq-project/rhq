@@ -377,7 +377,7 @@ public class Agent implements Serializable {
 
         RESOURCE_HIERARCHY_UPDATED(1, "This agent's managed resource hierarchy has been updated"), //
         BASELINES_CALCULATED(2, "This agent's baselines have been recalculated"), //
-        ALERT_DEFINITIONS_CHANGED(4, "This agent's alert definitions have changed");
+        ALERT_DEFINITION(4, "Some alert definition with an agent-specific condition category was updated");
 
         public final int mask;
         public final String message;

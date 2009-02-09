@@ -18,6 +18,7 @@
         <column name="AFFINITY_GROUP_ID" type="INTEGER" references="RHQ_AFFINITY_GROUP" required="false"/>
         <column name="COMPUTE_POWER" required="true" type="INTEGER"/>        
         <column name="OPERATION_MODE" required="true" size="32" type="VARCHAR2"/>
+        <column name="STATUS" type="INTEGER" required="false" default="0" />
     
         <!--  This index is for constraint, not performance -->    
         <index name="RHQ_SERVER_NAME_UNIQUE" unique="true">

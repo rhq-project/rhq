@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.cloud;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -31,12 +32,20 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
+
+import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
+import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator.Cache.Type;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerBean;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 
 /**
@@ -49,15 +58,23 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
  */
 
 @Stateless
-public class AgentStatusManagerBean implements AgentStatusManagerLocal {
+public class StatusManagerBean implements StatusManagerLocal {
 
-    private final Log log = LogFactory.getLog(AgentStatusManagerBean.class);
+    private final Log log = LogFactory.getLog(StatusManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
     @EJB
     AgentManagerLocal agentManager;
+
+    @EJB
+    @IgnoreDependency
+    ServerManagerLocal serverManager;
+
+    @EJB
+    @IgnoreDependency
+    CloudManagerLocal cloudManager;
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -87,17 +104,31 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
         if (isAlertTemplate)
             return;
 
-        Agent agent = definition.getResource().getAgent();
+        // figure out what the conditions on this updated definition are, only only reload the caches that need it
+        EnumSet<AlertConditionCacheCoordinator.Cache.Type> types = getCacheTypes(definition);
+        if (types.contains(Type.Global)) {
+            Server server = serverManager.getServer();
+            server.addStatus(Server.Status.ALERT_DEFINITION);
 
-        agent.addStatus(Agent.Status.ALERT_DEFINITIONS_CHANGED);
+            if (log.isDebugEnabled()) {
+                log.debug("Marking status, server[id=" + server.getId() + ", status=" + server.getStatus()
+                    + "] for alertDefinition[id=" + alertDefinitionId + "]");
+            }
+        }
+        if (types.contains(Type.Agent)) {
+            Agent agent = definition.getResource().getAgent();
 
-        if (log.isDebugEnabled()) {
-            log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
-                + "] for alertDefinition[id=" + alertDefinitionId + "]");
+            agent.addStatus(Agent.Status.ALERT_DEFINITION);
+
+            if (log.isDebugEnabled()) {
+                log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
+                    + "] for alertDefinition[id=" + alertDefinitionId + "]");
+            }
         }
     }
 
     public void updateByMeasurementBaseline(int baselineId) {
+        // baselines refer to measurement-based alert conditions, thus only agent statuses need to be set
         MeasurementBaseline baseline = entityManager.find(MeasurementBaseline.class, baselineId);
         Agent agent = baseline.getSchedule().getResource().getAgent();
 
@@ -109,16 +140,26 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
         }
     }
 
+    /* 
+     * is it absolutely necessary to execute this method at all?  caches will eventually be cleaned up
+     * when they need to be reloaded.  do we have to reload caches when we uninventory resources too?
+     */
     public void updateByResource(int resourceId) {
+        List<Server> servers = cloudManager.getAllServers();
+        for (Server server : servers) {
+            server.addStatus(Server.Status.RESOURCE_HIERARCHY_UPDATED);
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Marking status=" + Server.Status.RESOURCE_HIERARCHY_UPDATED + " for all servers in the cloud");
+        }
+
         Resource resource = entityManager.find(Resource.class, resourceId);
         Agent agent = resource.getAgent();
         if (agent == null) {
             //TODO: jmarques - fix ResourceFactoryManagerBeanTest, see rev1202-1204 for examples of the proper fix
             return; // some unit tests won't always have attached agents for all resources
         }
-
         agent.addStatus(Agent.Status.RESOURCE_HIERARCHY_UPDATED);
-
         if (log.isDebugEnabled()) {
             log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
                 + "] for resource[id=" + resourceId + "]");
@@ -126,6 +167,7 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
     }
 
     public void updateByAutoBaselineCalculationJob() {
+        // baselines refer to measurement-based alert conditions, thus only agent statuses need to be set
         List<Agent> agents = agentManager.getAllAgents();
         for (Agent agent : agents) {
             agent.addStatus(Agent.Status.BASELINES_CALCULATED);
@@ -135,5 +177,23 @@ public class AgentStatusManagerBean implements AgentStatusManagerLocal {
                     + "] for AutoBaselineCalculationJob");
             }
         }
+    }
+
+    private EnumSet<AlertConditionCacheCoordinator.Cache.Type> getCacheTypes(AlertDefinition definition) {
+        EnumSet<AlertConditionCacheCoordinator.Cache.Type> results = EnumSet.noneOf(Type.class);
+        for (AlertCondition condition : definition.getConditions()) {
+            AlertConditionCategory category = condition.getCategory();
+            if (category == AlertConditionCategory.AVAILABILITY || category == AlertConditionCategory.CONTROL
+                || category == AlertConditionCategory.RESOURCE_CONFIG) {
+                results.add(Type.Global);
+            } else if (category == AlertConditionCategory.BASELINE || category == AlertConditionCategory.CHANGE
+                || category == AlertConditionCategory.EVENT || category == AlertConditionCategory.THRESHOLD
+                || category == AlertConditionCategory.TRAIT) {
+                results.add(Type.Agent);
+            } else {
+                log.warn("No support for setting system status for alert conditions of type " + category);
+            }
+        }
+        return results;
     }
 }

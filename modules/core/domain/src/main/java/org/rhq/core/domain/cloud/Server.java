@@ -128,6 +128,9 @@ public class Server implements Serializable {
     @OneToMany(mappedBy = "server", fetch = FetchType.LAZY)
     private List<Agent> agents = new ArrayList<Agent>();
 
+    @Column(name = "STATUS", nullable = false)
+    private int status;
+
     // required for JPA
     public Server() {
     }
@@ -240,6 +243,66 @@ public class Server implements Serializable {
 
     public ServerEntry getServerEntry() {
         return new FailoverListComposite.ServerEntry(address, port, securePort);
+    }
+
+    /**
+     * Returns 0 if this server is current.  Otherwise, returns a mask of {@link Server.Status}
+     * elements corresponding to the updates that have occurred that are related to this server.
+     * 
+     * @return 0 if this server is current.  Otherwise, returns a mask of {@link Server.Status}
+     * elements corresponding to the updates that have occurred that are related to this server.
+     */
+    public int getStatus() {
+        return status;
+    }
+
+    /**
+     * If this status was non-zero, some scheduled job would have had to come along to perform
+     * some work on behalf of this server.  After that work is complete, the status can be reset
+     * (set to 0) signifying that no further work needs to be done on this server (as long as the 
+     * status remains 0). 
+     */
+    public void clearStatus() {
+        status = 0;
+    }
+
+    /**
+     * If some subsystem makes a change to some data that this server cares about (as summarized
+     * by the various {@link Status} elements), then that change should be added via this method.
+     * Periodically, a background job will come along, check the status, and possibly perform
+     * work on behalf of this server based on the type of change.
+     */
+    public void addStatus(Status newStatus) {
+        this.status |= newStatus.mask;
+    }
+
+    public List<String> getStatusMessages() {
+        return Status.getMessages(status);
+    }
+
+    public enum Status {
+
+        RESOURCE_HIERARCHY_UPDATED(1, "The resource hierarchy has been updated"), //
+        ALERT_DEFINITION(2, "Some alert definition with a global condition category was updated");
+
+        public final int mask;
+        public final String message;
+
+        private Status(int mask, String message) {
+            this.mask = mask;
+            this.message = message;
+        }
+
+        public static List<String> getMessages(int mask) {
+            List<String> results = new ArrayList<String>();
+            for (Status next : Status.values()) {
+                if (next.mask == (next.mask & mask)) {
+                    results.add(next.message);
+                }
+            }
+            return results;
+        }
+
     }
 
     @Override

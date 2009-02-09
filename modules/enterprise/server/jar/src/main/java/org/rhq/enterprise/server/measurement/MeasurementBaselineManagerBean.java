@@ -50,7 +50,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.cloud.AgentStatusManagerLocal;
+import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
@@ -70,7 +70,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     private DataSource dataSource;
 
     @EJB
-    private AgentStatusManagerLocal agentStatusManager;
+    private StatusManagerLocal agentStatusManager;
     @EJB
     private AuthorizationManagerLocal authorizationManager;
     @EJB

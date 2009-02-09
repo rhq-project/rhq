@@ -48,7 +48,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.AlertDefinitionEvent;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.cloud.AgentStatusManagerLocal;
+import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -67,7 +67,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
     private AuthorizationManagerLocal authorizationManager;
 
     @EJB
-    private AgentStatusManagerLocal agentStatusManager;
+    private StatusManagerLocal agentStatusManager;
 
     private boolean checkPermission(Subject subject, AlertDefinition alertDefinition) {
         /*

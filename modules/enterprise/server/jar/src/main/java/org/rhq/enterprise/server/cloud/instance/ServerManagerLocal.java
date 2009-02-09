@@ -68,12 +68,20 @@ public interface ServerManagerLocal {
     List<Agent> getAgents();
 
     /**
-     * An Agent can have various status settings {@Link org.rhq.core.domain.resource.Agent}.  The Status, when set, indicates
+     * An Agent can have various status settings {@link Agent}.  The Status, when set, indicates
      * that this agent has some necessary work pending, typically processed by a periodic job.
      * 
-     * @return The subset of agents referencing this server that currently have some Status set.  
+     * @return The subset of agents referencing this server that currently have some Status set.
      */
     List<Integer> getAndClearAgentsWithStatus();
+
+    /**
+     * A Server can have various status settings {@link Server}.  The Status, when set, indicates
+     * that this server has some necessary work pending, typically processed by a periodic job.
+     * 
+     * @return whether or not this server had its Status set.
+     */
+    boolean getAndClearServerStatus();
 
     /**
      * Returns an object representing this server as it is known within the registered cloud of servers.

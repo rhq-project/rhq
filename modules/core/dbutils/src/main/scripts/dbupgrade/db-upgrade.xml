@@ -1281,9 +1281,19 @@ DB Upgrade:
            <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R14 (SCHEDULE_ID)">
               CREATE INDEX RHQ_MEAS_DATA_R14_SID_IDX ON RHQ_MEAS_DATA_NUM_R14 (schedule_id)
            </statement>
-        </schema-directSQL>    
+        </schema-directSQL>
     </schemaSpec>
-	
+
+   <schemaSpec version="2.45">
+        <schema-addColumn   table="RHQ_SERVER" column="STATUS" columnType="INTEGER" />
+        <schema-directSQL>
+             <statement desc="Updating existing servers with default STATUS flag">
+                 UPDATE RHQ_SERVER SET STATUS = 0
+             </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_SERVER" column="STATUS" default="0" />
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

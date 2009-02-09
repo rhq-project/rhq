@@ -193,9 +193,9 @@ public class ResourceUIBean {
         int resourceId = EnterpriseFacesContextUtility.getResource().getId();
 
 
-        String mode = FacesContextUtility.getRequiredRequestParameter("mode");
+        String mode = FacesContextUtility.getOptionalRequestParameter("mode", (String) null);
 
-        if (mode.equals("add")) {
+        if (mode != null && mode.equals("add")) {
             if (!isFavorite) {
 
                 // Add to favorites and save
@@ -204,7 +204,7 @@ public class ResourceUIBean {
                 favoriteResourcePreferences.resourceIds.add(resourceId);
                 preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
             }
-        } else if (mode.equals("remove")) {
+        } else if (mode != null && mode.equals("remove")) {
             if (isFavorite) {
                 // Remove from favorites and save
                 WebUserPreferences.FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
@@ -213,7 +213,7 @@ public class ResourceUIBean {
                 preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
             }
         }
-        isFavorite = mode.equals("add");
+        isFavorite = mode != null && mode.equals("add");
         preferences.persistPreferences();
     }
 

@@ -60,7 +60,7 @@
             <f:converter converterId="UserDateTimeConverter" />
          </h:outputText>
       </h:panelGroup>
-      
+
       <h:panelGroup layout="block">
          <h:outputText value="Description: " styleClass="BoldText"/>
          <h:outputText value="#{ResourceUIBean.description}" rendered="#{!empty ResourceUIBean.description}"/>
@@ -170,6 +170,11 @@
                    alt="Monitor"
                    visible="#{monitorEnabled}">
          </onc:icon>
+
+         <onc:icon name="e"
+                   url="/rhq/resource/events/history.xhtml"
+                   alt="Inventory"/>
+
 
          <onc:icon name="i"
                    url="/rhq/resource/inventory/view.xhtml"

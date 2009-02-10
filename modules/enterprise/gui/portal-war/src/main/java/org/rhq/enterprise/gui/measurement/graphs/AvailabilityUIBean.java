@@ -47,7 +47,7 @@ public class AvailabilityUIBean {
 
             if (context.category == EntityContext.Category.Resource) {
                 // adjust down so the start time of the first point equals the begin time of the metric display range prefs
-                long adjust = (rangePreferences.begin - rangePreferences.end) / DefaultConstants.DEFAULT_CHART_POINTS;
+                long adjust = (rangePreferences.end - rangePreferences.begin) / DefaultConstants.DEFAULT_CHART_POINTS;
                 data = availabilityManager.getAvailabilitiesForResource(user.getSubject(), context.resourceId,
                     rangePreferences.begin - adjust, rangePreferences.end - adjust,
                     DefaultConstants.DEFAULT_CHART_POINTS);

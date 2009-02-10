@@ -20,7 +20,6 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
-
 package org.rhq.plugins.jbosscache;
 
 import java.io.File;
@@ -73,10 +72,6 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 public class JBossCacheComponent implements ResourceComponent<JMXComponent>, MeasurementFacet, OperationFacet,
     ConfigurationFacet {
 
-    private String[] CACHE_PROPS = { "TransactionManagerLookupClass", "IsolationLevel", "NodeLockingScheme",
-        "CacheMode", "UseReplQueue", "ReplQueueInterval", "ReplQueueMaxElements", "ClusterName", "FetchStateOnStartup",
-        "InitialStateRetrievalTimeout", "SyncReplTimeout", "LockAcquisitionTimeout" };
-
     private final static Log log = LogFactory.getLog(JBossCacheComponent.class);
     private String baseObjectName;
     JBossCacheSubsystemComponent parentServer;
@@ -91,7 +86,10 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
         this.context = context;
 
         PropertySimple tcProp = context.getPluginConfiguration().getSimple("isTreeCache");
-        isTreeCache = tcProp.getBooleanValue();
+        if (tcProp==null || tcProp.getBooleanValue()==null)
+            throw new InvalidPluginConfigurationException("Cache flavour not provided");
+        else
+            isTreeCache = tcProp.getBooleanValue();
 
         parentServer = (JBossCacheSubsystemComponent) context.getParentResourceComponent();
 
@@ -176,7 +174,7 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
                 if (ops != null) // base bean has no resetStatistics
                     ops.invoke(new Object[] {});
             }
-            result = null; // no result 
+            result = null; // no result
 
         } else if ("listAssociatedMBeans".equals(name)) {
             StringBuilder sb = new StringBuilder();

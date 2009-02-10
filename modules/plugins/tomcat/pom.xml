@@ -49,13 +49,6 @@
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       </dependency>
               
-      <dependency>
-         <groupId>org.apache.tomcat</groupId>
-         <artifactId>catalina</artifactId>
-         <version>6.0.16</version>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      </dependency>
-
    </dependencies>
 
    <profiles>

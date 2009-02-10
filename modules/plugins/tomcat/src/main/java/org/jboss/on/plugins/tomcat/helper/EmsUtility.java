@@ -47,19 +47,34 @@ public class EmsUtility {
      *
      * @throws NoSuchMethodException if a matching operation is not found
      */
-    public static EmsOperation getOperation(EmsBean mbean, String name, Class... parameterTypes) throws NoSuchMethodException {
+    public static EmsOperation getOperation(EmsBean mbean, String name, Class<?>... parameterTypes) throws NoSuchMethodException {
         if (mbean == null || name == null || parameterTypes == null)
             throw new IllegalArgumentException("All parameters must be non-null.");
+
+        String[] parameterTypeNames = new String[parameterTypes.length];
+        int i = 0;
+        for (Class<?> paramType : parameterTypes) {
+            parameterTypeNames[i] = paramType.getName();
+        }
+
+        return getOperation(mbean, name, parameterTypeNames);
+    }
+
+    public static EmsOperation getOperation(EmsBean mbean, String name, String... parameterTypeNames) throws NoSuchMethodException {
+        if (mbean == null || name == null || parameterTypeNames == null)
+            throw new IllegalArgumentException("All parameters must be non-null.");
         SortedSet<EmsOperation> operations = mbean.getOperations();
+
         operationsLoop: for (EmsOperation operation : operations) {
             List<EmsParameter> operationParameters = operation.getParameters();
-            if (operationParameters.size() != parameterTypes.length || !operation.getName().equals(name))
+
+            if (operationParameters.size() != parameterTypeNames.length || !operation.getName().equals(name))
                 // Different name or number of params than what we are looking for - move on...
                 continue;
             // At this point, name and number of params match. Now compare the parameter types...
             for (int i = 0; i < operationParameters.size(); i++) {
                 EmsParameter operationParameter = operationParameters.get(i);
-                if (!operationParameter.getType().equals(parameterTypes[i].getName()))
+                if (!operationParameter.getType().equals(parameterTypeNames[i]))
                     // One of the params doesn't match - move on...
                     continue operationsLoop;
             }
@@ -67,6 +82,7 @@ public class EmsUtility {
             return operation;
         }
         // If we made it here, we failed to find a match.
-        throw new NoSuchMethodException("Operation named [" + name + "] with parameters [" + Arrays.asList(parameterTypes) + "] not found on MBean [" + mbean.getBeanName() + "].");
+        throw new NoSuchMethodException("Operation named [" + name + "] with parameters [" + Arrays.asList(parameterTypeNames) + "] not found on MBean [" + mbean.getBeanName() + "].");
     }
+
 }

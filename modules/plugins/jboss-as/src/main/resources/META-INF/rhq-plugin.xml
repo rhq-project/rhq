@@ -136,7 +136,7 @@
       </operation>
       <operation name="restart" displayName="Restart"
                  description="Shutdown and then start this application server.">
-          <results><c:simple-property name="operationResult" description="Outcome of re¡starting the server."/></results>
+          <results><c:simple-property name="operationResult" description="Outcome of restarting the server."/></results>
       </operation>
 
       <metric property="partitionName" dataType="trait" displayType="summary"

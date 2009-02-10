@@ -35,6 +35,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author John Mazzitelli
  * @author Ian Springer
+ *
+ * @see org.rhq.core.system.JavaSystemInfo#executeProcess(ProcessExecution)
+ * @see org.rhq.core.pluginapi.util.ProcessExecutionUtility
  */
 public class ProcessExecution {
     private String executable;
@@ -73,11 +76,19 @@ public class ProcessExecution {
         this.executable = executable;
     }
 
+    /**
+     * Obtain the optional set of arguments to the executable as List.
+     * @return List of arguments or null if no arguments are set.
+     */
     @Nullable
     public List<String> getArguments() {
         return arguments;
     }
 
+    /**
+     * Obtain the optional set of arguments to the executable as String array
+     * @return Array of arguments or null if no arguments are set.
+     */
     @Nullable
     public String[] getArgumentsAsArray() {
         String[] argArray;
@@ -107,7 +118,7 @@ public class ProcessExecution {
      */
     public void setArguments(@Nullable
     String[] arguments) {
-        this.arguments = new ArrayList(Arrays.asList(arguments));
+        this.arguments = new ArrayList<String>(Arrays.asList(arguments));
     }
 
     @Nullable
@@ -158,7 +169,7 @@ public class ProcessExecution {
      * If not <code>null</code>, will be the working directory of the new process (if <code>null</code>, the new
      * process's working directory will be the current working directory of caller).
      *
-     * @param workingDirectory
+     * @param workingDirectory The directory the process should get as working directory.
      */
     public void setWorkingDirectory(@Nullable
     String workingDirectory) {
@@ -172,7 +183,7 @@ public class ProcessExecution {
     /**
      * The time, in milliseconds, to wait for the process to exit (will not wait if 0 or less).
      *
-     * @param waitForCompletion
+     * @param waitForCompletion The wait time in ms.
      */
     public void setWaitForCompletion(long waitForCompletion) {
         this.waitForCompletion = waitForCompletion;
@@ -205,7 +216,7 @@ public class ProcessExecution {
      * for as long as it needs - {@link #getWaitForCompletion()} will only force the caller to "wake up" and not block
      * waiting for the process to finish.
      *
-     * @param killOnTimeout
+     * @param killOnTimeout Should the process be killed after the timeout timed out?
      */
     public void setKillOnTimeout(boolean killOnTimeout) {
         this.killOnTimeout = killOnTimeout;

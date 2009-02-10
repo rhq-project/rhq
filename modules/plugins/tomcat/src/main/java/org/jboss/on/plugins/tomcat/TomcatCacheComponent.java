@@ -23,7 +23,6 @@
 
 package org.jboss.on.plugins.tomcat;
 
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
@@ -33,7 +32,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * @author Heiko W. Rupp
  *
  */
-public class TomcatCacheComponent extends MBeanResourceComponent<TomcatVHostComponent> implements MeasurementFacet {
+public class TomcatCacheComponent extends MBeanResourceComponent<TomcatVHostComponent> {
 
     public static final String PROPERTY_HOST = "host";
     public static final String PROPERTY_PATH = "path";

@@ -42,7 +42,6 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
@@ -56,7 +55,7 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * @author Ian Springer
  * @author Heiko W. Rupp
  */
-public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerComponent> implements OperationFacet {
+public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerComponent> {
 
     private static final String METRIC_PREFIX_APPLICATION = "Application.";
     private static final String METRIC_PREFIX_SERVLET = "Servlet.";

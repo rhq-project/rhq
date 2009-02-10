@@ -35,7 +35,7 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
- * JON plugin component for representing Tomcat connectors. Much of the functionality is left to the super class,
+ * Plugin component for representing Tomcat connectors. Much of the functionality is left to the super class,
  * however the metrics required special handling.
  *
  * @author Jay Shaughnessy

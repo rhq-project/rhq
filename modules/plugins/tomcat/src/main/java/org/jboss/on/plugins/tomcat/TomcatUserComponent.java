@@ -30,8 +30,6 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
@@ -39,7 +37,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * 
  * @author Jay Shaughnessy
  */
-public class TomcatUserComponent extends MBeanResourceComponent<TomcatServerComponent> implements MeasurementFacet, ConfigurationFacet {
+public class TomcatUserComponent extends MBeanResourceComponent<TomcatServerComponent> {
 
     public static final String PROPERTY_FULL_NAME = "fullName";
     public static final String PROPERTY_PASSWORD = "password";

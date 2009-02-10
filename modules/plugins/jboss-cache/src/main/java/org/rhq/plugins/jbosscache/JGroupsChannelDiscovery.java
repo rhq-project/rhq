@@ -48,7 +48,7 @@ import org.rhq.plugins.jbossas.util.DeploymentUtility;
 /**
  * This component will discover JGroups channels within a JBoss Cache instance.
  * The deal here is that we want to have zero or one JGroups channels per cache.
- * We will look at the Cache config and see if it contains a 
+ * We will look at the Cache config and see if it contains a
  * &lt;attribute name="ClusterConfig"&gt; element. If so, we return a JGroups instance,
  * else we return nothing.
  *
@@ -68,6 +68,10 @@ public class JGroupsChannelDiscovery implements ResourceDiscoveryComponent {
         EmsConnection emsConnection = parent.getEmsConnection();
         String resKey = context.getParentResourceContext().getResourceKey();
         File file = DeploymentUtility.getDescriptorFile(emsConnection, resKey);
+        if (file == null) {
+            log.warn("File is null for " + resKey);
+            return null;
+        }
 
         boolean found = false;
         try {

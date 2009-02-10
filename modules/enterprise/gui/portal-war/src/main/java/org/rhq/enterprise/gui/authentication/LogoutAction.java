@@ -22,15 +22,18 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
+import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -53,7 +56,7 @@ public class LogoutAction extends Action {
         HttpSession session = request.getSession();
 
         session.removeAttribute(Constants.USER_PARAM);
-        session.removeAttribute(Constants.WEBUSER_SES_ATTR);
+        SessionUtils.setWebUser(session, null);
         session.invalidate();
 
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);

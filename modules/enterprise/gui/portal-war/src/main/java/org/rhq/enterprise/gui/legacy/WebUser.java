@@ -35,7 +35,6 @@ public class WebUser {
     private final Log log = LogFactory.getLog(WebUser.class);
 
     private Subject subject;
-    private String password;
 
     /**
      * Indicates whether or not the user has an entry in the principals table.
@@ -53,15 +52,6 @@ public class WebUser {
     public WebUser(Subject subject) {
         this.subject = subject;
         this.hasPrincipal = false;
-        this.webPreferences = new WebUserPreferences(this.subject);
-        this.measurementPreferences = new MeasurementPreferences(this.subject);
-    }
-
-    public WebUser(Subject subject, Integer sessionId, String password, boolean hasPrincipal) {
-        this.subject = subject;
-        this.subject.setSessionId(sessionId);
-        this.setPassword(password);
-        this.hasPrincipal = hasPrincipal;
         this.webPreferences = new WebUserPreferences(this.subject);
         this.measurementPreferences = new MeasurementPreferences(this.subject);
     }
@@ -186,14 +176,6 @@ public class WebUser {
         str.append("subject=").append(getSubject()).append(" ");
         str.append("}");
         return (str.toString());
-    }
-
-    public String getPassword() {
-        return this.password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public boolean getHasPrincipal() {

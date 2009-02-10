@@ -30,7 +30,6 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
 
-import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 
@@ -49,7 +48,7 @@ public class EditUserFormPrepareAction extends TilesAction {
         Log log = LogFactory.getLog(EditUserFormPrepareAction.class.getName());
         EditForm userForm = (EditForm) form;
 
-        WebUser user = (WebUser) request.getAttribute(Constants.WEBUSER_SES_ATTR);
+        WebUser user = SessionUtils.getWebUser(request.getSession());
 
         if (userForm.getFirstName() == null) {
             userForm.setFirstName(user.getFirstName());

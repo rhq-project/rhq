@@ -73,11 +73,11 @@ public final class AuthenticationFilter extends BaseFilter {
                 SessionManager.getInstance().getSubject(subject.getSessionId());
             } catch (SessionNotFoundException snfe) {
                 session.removeAttribute(ParamConstants.USER_PARAM);
-                session.removeAttribute(AttrConstants.WEBUSER_SES_ATTR);
+                SessionUtils.setWebUser(session, null);
                 webUser = null;
             } catch (SessionTimeoutException ste) {
                 session.removeAttribute(ParamConstants.USER_PARAM);
-                session.removeAttribute(AttrConstants.WEBUSER_SES_ATTR);
+                SessionUtils.setWebUser(session, null);
                 webUser = null;
             }
         }

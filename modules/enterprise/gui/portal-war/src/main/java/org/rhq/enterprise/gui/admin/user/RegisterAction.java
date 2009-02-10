@@ -19,14 +19,17 @@
 package org.rhq.enterprise.gui.admin.user;
 
 import java.util.HashMap;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.enterprise.gui.legacy.Constants;
@@ -96,8 +99,8 @@ public class RegisterAction extends BaseAction {
         newSubject = subjectManager.login(newSubject.getName(), password);
 
         // we also need to create up a new web user
-        webUser = new WebUser(newSubject, newSubject.getSessionId(), password, false);
-        session.setAttribute(Constants.WEBUSER_SES_ATTR, webUser);
+        webUser = new WebUser(newSubject);
+        SessionUtils.setWebUser(session, webUser);
         session.setAttribute(Constants.USER_OPERATIONS_ATTR, new HashMap()); // user has no permissions yet
 
         HashMap parms = new HashMap(1);

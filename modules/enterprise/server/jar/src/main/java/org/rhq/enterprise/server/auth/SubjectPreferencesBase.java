@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.auth;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -257,7 +258,20 @@ public abstract class SubjectPreferencesBase {
      * This forces a flush of the user preferences to the database.
      */
     public void persistPreferences() {
+        try {
+            throw new Exception("Fakey");
+        } catch (Throwable t) {
+            t.printStackTrace(); // find out who called us
+        }
         Integer sessionId = this.subject.getSessionId(); // let's remember our transient session ID
+        Collection<PropertySimple> properties = this.subject.getUserConfiguration().getSimpleProperties().values();
+        for (PropertySimple simpleProperty : properties) {
+            if (simpleProperty.getName().startsWith(".resource.common.monitor.visibility.metricRange")) {
+                System.out.println("Property[name=" + simpleProperty.getName() + ", value="
+                    + simpleProperty.getStringValue() + "]");
+            }
+        }
+
         this.subject = LookupUtil.getSubjectManager().updateSubject(this.subject, this.subject);
         this.subject.setSessionId(sessionId); // put the transient data back into our new subject
     }

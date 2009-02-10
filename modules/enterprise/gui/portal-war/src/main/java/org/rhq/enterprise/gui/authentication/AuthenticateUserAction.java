@@ -41,6 +41,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -117,7 +118,7 @@ public class AuthenticateUserAction extends TilesAction {
                 }
             }
 
-            webUser = new WebUser(subject, sessionId, logonForm.getJ_password(), hasPrincipal);
+            webUser = new WebUser(subject);
         } catch (Exception e) {
             String msg = e.getMessage().toLowerCase();
             if ((msg.indexOf("username") >= 0) || (msg.indexOf("password") >= 0)) {
@@ -154,7 +155,7 @@ public class AuthenticateUserAction extends TilesAction {
         // setting the web user to show that we're logged in
         session.invalidate();
         session = request.getSession(true);
-        session.setAttribute(Constants.WEBUSER_SES_ATTR, webUser);
+        SessionUtils.setWebUser(session, webUser);
         session.setAttribute(Constants.USER_OPERATIONS_ATTR, userGlobalPermissionsMap);
 
         if (needsRegistration) {

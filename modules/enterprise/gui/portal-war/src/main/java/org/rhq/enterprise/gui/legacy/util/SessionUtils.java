@@ -25,16 +25,21 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+
 import org.apache.struts.Globals;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionMessages;
-import org.rhq.enterprise.gui.legacy.WebUser;
+
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
+import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.beans.ReturnPath;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 public class SessionUtils {
     // Limit the size of the return stack so that it
@@ -57,7 +62,21 @@ public class SessionUtils {
             return null;
         }
 
-        return (WebUser) attr;
+        WebUser user = (WebUser) attr;
+        Subject subject = user.getSubject();
+        Integer sessionId = subject.getSessionId();
+        subject = LookupUtil.getSubjectManager().loadUserConfiguration(subject.getId());
+        subject.setSessionId(sessionId); // put the transient data back into our new subject
+        user = new WebUser(subject); // reset
+        return user;
+    }
+
+    public static void setWebUser(HttpSession session, WebUser user) {
+        if (user == null) {
+            session.removeAttribute(AttrConstants.WEBUSER_SES_ATTR);
+        } else {
+            session.setAttribute(AttrConstants.WEBUSER_SES_ATTR, user);
+        }
     }
 
     /**

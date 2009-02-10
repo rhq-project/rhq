@@ -237,7 +237,23 @@
             </c:group>
 
          </plugin-configuration>
-
+         
+         <operation name="start"
+             displayName="Start" 
+            description ="Starts this connector" />
+            
+         <operation name="stop" 
+             displayName="Stop"
+            description ="Stops this connector" />
+            
+         <operation name="pause"
+             displayName="Pause" 
+            description ="Pauses this connector" />
+            
+         <operation name="resume" 
+             displayName="Resume"
+            description ="Resumes this connector" />
+        
          <!-- Catalina:type=GlobalRequestProcessor,name=http-8080:maxTime -->
          <metric
             property="Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%:maxTime"
@@ -280,7 +296,7 @@
             defaultOn="true"
             category="utilization"
             displayType="summary" />
-
+         
          <service
             name="Tomcat ThreadPool"
             discovery="TomcatThreadPoolDiscoveryComponent"

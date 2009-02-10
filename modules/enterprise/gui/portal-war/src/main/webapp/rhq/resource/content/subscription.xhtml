@@ -111,7 +111,9 @@
                   <rich:columnGroup>
                      <rich:column colspan="6" width="100%">
                         <onc:selectCommandButton action="#{ResourceChannelsUIBean.deleteSelectedResourceChannels}"
-                                                 value="REMOVE SUBSCRIPTIONS" target="selectedResourceChannels" styleClass="on-pager-button buttonsmall"
+                                                 value="REMOVE SUBSCRIPTIONS"
+                                                 target="selectedResourceChannels"
+                                                 styleClass="on-pager-button buttonsmall"
                                                  rendered="${GlobalPermissionsUIBean.inventory}"/>
 
                         <ui:include src="/rhq/resource/include/pagination.xhtml">
@@ -219,8 +221,11 @@
                <f:facet name="footer">
                   <rich:columnGroup>
                      <rich:column colspan="6" width="100%">
-                        <h:commandButton action="#{AvailableResourceChannelsUIBean.subscribeSelectedResourceChannels}"
-                                         value="ADD SUBSCRIPTIONS" styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{AvailableResourceChannelsUIBean.subscribeSelectedResourceChannels}"
+                                                 value="ADD SUBSCRIPTIONS"
+                                                 target="selectedAvailableResourceChannels"
+                                                 styleClass="on-pager-button buttonsmall"
+                                                 rendered="${GlobalPermissionsUIBean.inventory}"/>
 
                         <ui:include src="/rhq/resource/include/pagination.xhtml">
                            <ui:param name="paginationDataTableName" value="availableResourceChannelsDataTable"/>

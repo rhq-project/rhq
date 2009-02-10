@@ -145,10 +145,10 @@ public class JBossASServerOperationsDelegate {
         String bindingAddress = pluginConfiguration.getSimple(JBossASServerComponent.BINDING_ADDRESS_CONFIG_PROP)
             .getStringValue();
 
-        String configArgument = "--configuration=" + configName;
+        String configArgument = "-c" + configName;
         String bindingAddressArgument = null;
         if (bindingAddress != null)
-            bindingAddressArgument = "--host=" + bindingAddress;
+            bindingAddressArgument = "-b" + bindingAddress;
 
         ProcessExecution processExecution;
 
@@ -156,10 +156,12 @@ public class JBossASServerOperationsDelegate {
         if (prefix == null || prefix.replaceAll("\\s", "").equals("")) {
             processExecution = ProcessExecutionUtility.createProcessExecution(startScriptFile);
 
-            processExecution.getArguments().add(configArgument);
+            processExecution.getArguments().add("-c");
+            processExecution.getArguments().add(configName);
 
             if (bindingAddressArgument != null) {
-                processExecution.getArguments().add(bindingAddressArgument);
+                processExecution.getArguments().add("-b");
+                processExecution.getArguments().add(bindingAddress);
             }
         } else {
             // The process execution should be tied to the process represented as the prefix. If there are any other

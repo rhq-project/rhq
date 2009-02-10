@@ -122,8 +122,8 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/ant/ant-launcher/1.6.5/ant-launcher-1.6.5.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/cglib/cglib-nodep/2.1_3/cglib-nodep-2.1_3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-logging/commons-logging/1.1/commons-logging-1.1.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/javax/faces/jsf-api/1.2_06/jsf-api-1.2_06.jar" sourcepath="/M2_REPO/javax/faces/jsf-api/1.2_06/jsf-api-1.2_06-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/javax/faces/jsf-impl/1.2_06/jsf-impl-1.2_06.jar" sourcepath="/M2_REPO/javax/faces/jsf-impl/1.2_06/jsf-impl-1.2_06-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/javax/faces/jsf-api/1.2_12/jsf-api-1.2_12.jar" sourcepath="/M2_REPO/javax/faces/jsf-api/1.2_06/jsf-api-1.2_06-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/javax/faces/jsf-impl/1.2_12/jsf-impl-1.2_12.jar" sourcepath="/M2_REPO/javax/faces/jsf-impl/1.2_06/jsf-impl-1.2_06-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/el/el-api/1.0/el-api-1.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/sun/facelets/jsf-facelets/1.1.14/jsf-facelets-1.1.14.jar" sourcepath="/M2_REPO/com/sun/facelets/jsf-facelets/1.1.13/jsf-facelets-1.1.13-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/mc4j/org-mc4j-ems/1.2.6/org-mc4j-ems-1.2.6.jar"/>

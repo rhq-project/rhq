@@ -146,7 +146,7 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, A
     private synchronized EmsConnection loadConnection() throws Exception {
         if (this.connection == null) {
             try {
-                Configuration pluginConfig = resourceContext.getPluginConfiguration();
+                Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
                 String installationPath = pluginConfig.getSimpleValue(PROP_INSTALLATION_PATH, null);
 
                 ConnectionSettings connectionSettings = new ConnectionSettings();
@@ -236,8 +236,6 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, A
 
     // Here we do any validation that couldn't be achieved via the metadata-based constraints.
     private void validatePluginConfiguration() {
-        //validateJBossHomeDirProperty();
-        //validateJavaHomePathProperty();
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String principal = pluginConfig.getSimpleValue(TomcatServerComponent.PRINCIPAL_CONFIG_PROP, null);
         String credentials = pluginConfig.getSimpleValue(TomcatServerComponent.CREDENTIALS_CONFIG_PROP, null);
@@ -255,24 +253,9 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, A
     @SuppressWarnings("unchecked")
     public void start(ResourceContext context) throws SQLException {
         this.resourceContext = context;
-
         this.operationsDelegate = new TomcatServerOperationsDelegate(this, resourceContext.getSystemInformation());
 
-        // Until the bugs get worked out of the calls back into the PC's operation framework, use the implementation
-        // that will simply make calls directly in the plugin.
-        // controlFacade = new PluginContainerControlActionFacade(operationContext, this);
-        //controlFacade = new InPluginControlActionFacade(this);
-        //workflowManager = new JBPMWorkflowManager(contentContext, controlFacade, getPluginConfiguration());
-
         validatePluginConfiguration();
-
-        Configuration pluginConfig = context.getPluginConfiguration();
-
-        //        this.configPath = resolvePathRelativeToHomeDir(getRequiredPropertyValue(pluginConfig, CONFIGURATION_PATH_CONFIG_PROP));
-        //        if (!this.configPath.exists()) {
-        //            throw new InvalidPluginConfigurationException("Configuration path '" + configPath + "' does not exist.");
-        //        }
-        //        this.configSet = pluginConfig.getSimpleValue(CONFIGURATION_SET_CONFIG_PROP, this.configPath.getName());
 
         // Attempt to load the connection now. If we cannot, do not consider the start operation as failed. The only
         // exception to this rule is if the connection cannot be made due to a JMX security exception. In this case,
@@ -290,7 +273,6 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, A
                     throw new InvalidPluginConfigurationException("Invalid JMX credentials specified for connecting to this server.", e);
                 }
             }
-
         }
 
         // TODO: If we add event checking by default
@@ -337,7 +319,7 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, A
 
     @SuppressWarnings("unchecked")
     ResourceContext getResourceContext() {
-        return resourceContext;
+        return this.resourceContext;
     }
 
     public File getStartScriptPath() {

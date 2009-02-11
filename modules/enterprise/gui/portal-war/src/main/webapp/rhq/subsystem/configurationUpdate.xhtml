@@ -14,13 +14,13 @@
       xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
-      
+
 <ui:composition>
 
       <h:form id="configurationUpdateSubsystemHistoryForm">
             <input type="hidden" name="tab" value="#{SubsystemViewsUIBean.tabPanel.selectedTab}" />
             <rich:simpleTogglePanel switchType="client" label="Search Results">
-            
+
             <h:panelGrid columns="3" cellspacing="3">
                <h:outputLabel for="resourceFilter" value="Resource Name Filter: " />
                <h:inputText id="resourceFilter" value="#{SubsystemConfigurationUpdateUIBean.resourceFilter}"
@@ -36,7 +36,7 @@
 
                <h:outputLabel for="dateSubmittedFilter" value="Submitted After Filter: " />
                <rich:calendar id="dateSubmittedFilter" value="#{SubsystemConfigurationUpdateUIBean.dateSubmittedFilter}"
-                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}" 
+                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
                               showApplyButton="true"
                               showWeeksBar="false"
                               style="width: 300px;" />
@@ -44,7 +44,7 @@
 
                <h:outputLabel for="dateCompletedFilter" value="Completed Before Filter: " />
                <rich:calendar id="dateCompletedFilter" value="#{SubsystemConfigurationUpdateUIBean.dateCompletedFilter}"
-                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}" 
+                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
                               showApplyButton="true"
                               showWeeksBar="false"
                               style="width: 300px;" />
@@ -60,13 +60,13 @@
                    <s:defaultAction/>
                </a4j:commandButton>
             </h:panelGrid>
-            
+
             </rich:simpleTogglePanel>
 
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="configurationUpdateDataModel" value="#{SubsystemConfigurationUpdateUIBean.dataModel}"/>
-            <rich:dataTable id="configurationUpdateDataTable" 
+            <rich:dataTable id="configurationUpdateDataTable"
                             rows="#{PageControl.SubsystemConfigurationHistory.pageSize}"
                             value="#{configurationUpdateDataModel}"
                             var="item"
@@ -76,7 +76,7 @@
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                             onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
-                            
+
                <f:facet name="PageControlView">
                   <onc:paginationControl id="SubsystemConfigurationHistory" />
                </f:facet>
@@ -85,7 +85,7 @@
                   <f:facet name="header">
                      <onc:allSelect target="selectedItems" />
                   </f:facet>
-                  
+
                   <onc:select name="selectedItems"
                               value="#{item.id}" />
                </rich:column>
@@ -96,7 +96,7 @@
                         <h:outputText styleClass="headerText" value="Resource" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputLink value="/rhq/resource/inventory/view.xhtml">
                      <f:param name="id" value="#{item.resourceId}" />
                      <h:outputText value="#{item.resourceName}" />
@@ -109,7 +109,7 @@
                         <h:outputText styleClass="headerText" value="Parent" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputLink value="/rhq/resource/inventory/view.xhtml" rendered="#{not empty item.parentResourceId}">
                      <f:param name="id" value="#{item.parentResourceId}" />
                      <h:outputText value="#{item.parentResourceName}" />
@@ -131,47 +131,47 @@
                      </h:outputText>
                   </h:outputLink>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="cu.modifiedTime">
                         <h:outputText styleClass="headerText" value="Date Completed" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputText value="#{item.modifiedTime}" rendered="#{item.status ne 'INPROGRESS'}" >
                      <f:converter converterId="UserDateTimeConverter" />
                   </h:outputText>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="cu.status">
                         <h:outputText styleClass="headerText" value="Status" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputLink rendered="#{item.status eq 'FAILURE'}"
                                 value="javascript:displayMessageModal('Stack Trace','#{item.errorMessage}')">
                      <h:outputText value="#{item.status}"/>
                   </h:outputLink>
                   <h:outputText rendered="#{item.status ne 'FAILURE'}" value="#{item.status}"/>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="cu.subjectName">
                         <h:outputText styleClass="headerText" value="User" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputText value="#{item.subjectName}" rendered="#{not empty item.subjectName}" />
                   <h:outputText value="Unknown" rendered="#{empty item.subjectName}" />
                </rich:column>
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="#{configurationUpdateDataTable.columns}" width="100%">
+                     <rich:column colspan="7" width="100%">
 
                         <ui:param name="paginationDataTableName" value="configurationUpdateDataTable"/>
                         <ui:param name="paginationDataModel" value="#{configurationUpdateDataModel}"/>
@@ -180,7 +180,7 @@
                      </rich:column>
                   </rich:columnGroup>
                </f:facet>
-               
+
             </rich:dataTable>
 
             </h:panelGrid>

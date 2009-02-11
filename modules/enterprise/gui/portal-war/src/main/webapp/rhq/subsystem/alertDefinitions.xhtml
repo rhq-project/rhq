@@ -14,13 +14,13 @@
       xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
-      
+
 <ui:composition>
 
       <h:form id="alertDefinitionSubsystemForm">
             <input type="hidden" name="tab" value="#{SubsystemViewsUIBean.tabPanel.selectedTab}" />
             <rich:simpleTogglePanel switchType="client" label="Search Results">
-            
+
             <h:panelGrid columns="3" cellspacing="3">
                <h:outputLabel for="resourceFilter" value="Resource Name Filter: " />
                <h:inputText id="resourceFilter" value="#{SubsystemAlertDefinitionUIBean.resourceFilter}"
@@ -36,7 +36,7 @@
 
                <h:outputLabel for="dateBeginFilter" value="Begin Date Filter: " />
                <rich:calendar id="dateBeginFilter" value="#{SubsystemAlertDefinitionUIBean.dateBeginFilter}"
-                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}" 
+                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
                               showApplyButton="true"
                               showWeeksBar="false"
                               style="width: 300px;" />
@@ -44,7 +44,7 @@
 
                <h:outputLabel for="dateEndFilter" value="End Date Filter: " />
                <rich:calendar id="dateEndFilter" value="#{SubsystemAlertDefinitionUIBean.dateEndFilter}"
-                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}" 
+                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
                               showApplyButton="true"
                               showWeeksBar="false"
                               style="width: 300px;" />
@@ -60,13 +60,13 @@
                    <s:defaultAction/>
                </a4j:commandButton>
             </h:panelGrid>
-            
+
             </rich:simpleTogglePanel>
 
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="alertDefinitionDataModel" value="#{SubsystemAlertDefinitionUIBean.dataModel}"/>
-            <rich:dataTable id="alertDefinitionDataTable" 
+            <rich:dataTable id="alertDefinitionDataTable"
                             rows="#{PageControl.SubsystemAlertDefinition.pageSize}"
                             value="#{alertDefinitionDataModel}"
                             var="item"
@@ -76,7 +76,7 @@
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                             onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
-                            
+
                <f:facet name="PageControlView">
                   <onc:paginationControl id="SubsystemAlertDefinition" />
                </f:facet>
@@ -85,7 +85,7 @@
                   <f:facet name="header">
                      <onc:allSelect target="selectedItems" />
                   </f:facet>
-                  
+
                   <onc:select name="selectedItems"
                               value="#{item.alertDefinition.id}" />
                </rich:column>
@@ -96,7 +96,7 @@
                         <h:outputText styleClass="headerText" value="Resource" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputLink value="/rhq/resource/inventory/view.xhtml">
                      <f:param name="id" value="#{item.alertDefinition.resource.id}" />
                      <h:outputText value="#{item.alertDefinition.resource.name}" />
@@ -109,13 +109,13 @@
                         <h:outputText styleClass="headerText" value="Parent" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputLink value="/rhq/resource/inventory/view.xhtml" rendered="#{not empty item.parentResourceName}">
                      <f:param name="id" value="#{item.parentResourceId}" />
                      <h:outputText value="#{item.parentResourceName}" />
                   </h:outputLink>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Type" />
@@ -131,19 +131,19 @@
                         <h:outputText styleClass="headerText" value="Date" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputText value="#{item.alertDefinition.ctime}">
                      <f:converter converterId="UserDateTimeConverter" />
                   </h:outputText>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="ad.name">
                         <h:outputText styleClass="headerText" value="Name" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputLink value="/alerts/Config.do" rendered="#{empty item.alertDefinition.resourceType}">
                      <f:param name="mode" value="viewRoles" />
                      <f:param name="id" value="#{item.alertDefinition.resource.id}"  />
@@ -155,23 +155,23 @@
                      <f:param name="type" value="#{item.alertDefinition.resourceType.id}" />
                      <f:param name="ad" value="#{item.alertDefinition.id}" />
                      <h:outputText value="#{item.alertDefinition.name}" />
-                  </h:outputLink> 
+                  </h:outputLink>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Alert Condition" />
                   </f:facet>
                   <h:outputText value="#{item.conditionText}" />
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="ad.enabled">
                         <h:outputText styleClass="headerText" value="Active" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputText value="#{item.alertDefinition.enabled}"/>
                </rich:column>
 
@@ -179,7 +179,7 @@
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Template" />
                   </f:facet>
-                  
+
                   <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.alertDefinition.parentId and item.alertDefinition.parentId ne 0}">
                      <f:param name="mode" value="viewRoles"/>
                      <f:param name="type" value="#{item.alertDefinition.resource.resourceType.id}"/>
@@ -191,7 +191,7 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="#{alertDefinitionDataTable.columns}" width="100%">
+                     <rich:column colspan="9" width="100%">
                         <onc:selectCommandButton action="#{SubsystemAlertDefinitionUIBean.deleteSelected}"
                                                  value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{GlobalPermissionsUIBean.superuser}" />
@@ -203,7 +203,7 @@
                      </rich:column>
                   </rich:columnGroup>
                </f:facet>
-               
+
             </rich:dataTable>
 
             </h:panelGrid>

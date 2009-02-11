@@ -14,13 +14,13 @@
       xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
-      
+
 <ui:composition>
 
       <h:form id="operationHistorySubsystemForm">
             <input type="hidden" name="tab" value="#{SubsystemViewsUIBean.tabPanel.selectedTab}" />
             <rich:simpleTogglePanel switchType="client" label="Search Results">
-            
+
             <h:panelGrid columns="3" cellspacing="3">
                <h:outputLabel for="resourceFilter" value="Resource Name Filter: " />
                <h:inputText id="resourceFilter" value="#{SubsystemOperationHistoryUIBean.resourceFilter}"
@@ -36,7 +36,7 @@
 
                <h:outputLabel for="dateSubmittedFilter" value="Submitted After Filter: " />
                <rich:calendar id="dateSubmittedFilter" value="#{SubsystemOperationHistoryUIBean.dateSubmittedFilter}"
-                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}" 
+                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
                               showApplyButton="true"
                               showWeeksBar="false"
                               style="width: 300px;" />
@@ -44,7 +44,7 @@
 
                <h:outputLabel for="dateCompletedFilter" value="Completed Before Filter: " />
                <rich:calendar id="dateCompletedFilter" value="#{SubsystemOperationHistoryUIBean.dateCompletedFilter}"
-                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}" 
+                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
                               showApplyButton="true"
                               showWeeksBar="false"
                               style="width: 300px;" />
@@ -60,13 +60,13 @@
                    <s:defaultAction/>
                </a4j:commandButton>
             </h:panelGrid>
-            
+
             </rich:simpleTogglePanel>
 
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="operationHistoryDataModel" value="#{SubsystemOperationHistoryUIBean.dataModel}"/>
-            <rich:dataTable id="operationHistoryDataTable" 
+            <rich:dataTable id="operationHistoryDataTable"
                             rows="#{PageControl.SubsystemResourceOperationHistory.pageSize}"
                             value="#{operationHistoryDataModel}"
                             var="item"
@@ -76,7 +76,7 @@
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                             onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
-                            
+
                <f:facet name="PageControlView">
                   <onc:paginationControl id="SubsystemResourceOperationHistory" />
                </f:facet>
@@ -85,7 +85,7 @@
                   <f:facet name="header">
                      <onc:allSelect target="selectedItems" />
                   </f:facet>
-                  
+
                   <onc:select name="selectedItems"
                               value="#{item.history.id}" />
                </rich:column>
@@ -96,7 +96,7 @@
                         <h:outputText styleClass="headerText" value="Resource" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputLink value="/rhq/resource/inventory/view.xhtml">
                      <f:param name="id" value="#{item.history.resource.id}" />
                      <h:outputText value="#{item.history.resource.name}" />
@@ -109,7 +109,7 @@
                         <h:outputText styleClass="headerText" value="Parent" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputLink value="/rhq/resource/inventory/view.xhtml" rendered="#{not empty item.parentResourceName}">
                      <f:param name="id" value="#{item.parentResourceId}" />
                      <h:outputText value="#{item.parentResourceName}" />
@@ -122,66 +122,66 @@
                         <h:outputText styleClass="headerText" value="Date Submitted" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputText value="#{item.history.createdTime}">
                      <f:converter converterId="UserDateTimeConverter" />
                   </h:outputText>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="roh.modifiedTime">
                         <h:outputText styleClass="headerText" value="Date Completed" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputText value="#{item.history.modifiedTime}"  rendered="#{item.history.status ne 'INPROGRESS'}" >
                      <f:converter converterId="UserDateTimeConverter" />
                   </h:outputText>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="roh.operationDefinition.name">
                         <h:outputText styleClass="headerText" value="Name" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputLink value="/rhq/resource/operation/resourceOperationHistoryDetails.xhtml">
                      <f:param name="id" value="#{item.history.resource.id}" />
                      <f:param name="opId" value="#{item.history.id}" />
                      <h:outputText value="#{item.history.operationDefinition.name}" />
                   </h:outputLink>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="roh.status">
                         <h:outputText styleClass="headerText" value="Status" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputLink rendered="#{item.history.status eq 'FAILURE'}"
                                 value="javascript:displayMessageModal('Stack Trace','#{item.history.errorMessage}')">
                      <h:outputText value="#{item.history.status}"/>
                   </h:outputLink>
                   <h:outputText rendered="#{item.history.status ne 'FAILURE'}" value="#{item.history.status}"/>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="roh.subjectName">
                         <h:outputText styleClass="headerText" value="User" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputText value="#{item.history.subjectName}" rendered="#{not empty item.history.subjectName}" />
                   <h:outputText value="Unknown" rendered="#{empty item.history.subjectName}" />
                </rich:column>
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="#{operationHistoryDataTable.columns}" width="100%">
+                     <rich:column colspan="8" width="100%">
 
                         <ui:param name="paginationDataTableName" value="operationHistoryDataTable"/>
                         <ui:param name="paginationDataModel" value="#{operationHistoryDataModel}"/>
@@ -190,7 +190,7 @@
                      </rich:column>
                   </rich:columnGroup>
                </f:facet>
-               
+
             </rich:dataTable>
 
             </h:panelGrid>

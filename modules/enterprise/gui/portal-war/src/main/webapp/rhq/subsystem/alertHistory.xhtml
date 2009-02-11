@@ -14,13 +14,13 @@
       xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
-      
+
 <ui:composition>
 
       <h:form id="alertHistorySubsystemForm">
             <input type="hidden" name="tab" value="#{SubsystemViewsUIBean.tabPanel.selectedTab}" />
             <rich:simpleTogglePanel switchType="client" label="Search Results">
-            
+
             <h:panelGrid columns="3" cellspacing="3">
                <h:outputLabel for="resourceFilter" value="Resource Name Filter: " />
                <h:inputText id="resourceFilter" value="#{SubsystemAlertHistoryUIBean.resourceFilter}"
@@ -36,7 +36,7 @@
 
                <h:outputLabel for="dateBeginFilter" value="Begin Date Filter: " />
                <rich:calendar id="dateBeginFilter" value="#{SubsystemAlertHistoryUIBean.dateBeginFilter}"
-                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}" 
+                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
                               showApplyButton="true"
                               showWeeksBar="false"
                               style="width: 300px;" />
@@ -44,7 +44,7 @@
 
                <h:outputLabel for="dateEndFilter" value="End Date Filter: " />
                <rich:calendar id="dateEndFilter" value="#{SubsystemAlertHistoryUIBean.dateEndFilter}"
-                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}" 
+                              datePattern="#{onf:getWebUserPreferences().dateTimeDisplayPreferences.dateTimeFormatTrigger}"
                               showApplyButton="true"
                               showWeeksBar="false"
                               style="width: 300px;" />
@@ -60,13 +60,13 @@
                    <s:defaultAction/>
                </a4j:commandButton>
             </h:panelGrid>
-            
+
             </rich:simpleTogglePanel>
 
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="alertHistoryDataModel" value="#{SubsystemAlertHistoryUIBean.dataModel}"/>
-            <rich:dataTable id="alertHistoryDataTable" 
+            <rich:dataTable id="alertHistoryDataTable"
                             rows="#{PageControl.SubsystemAlertHistory.pageSize}"
                             value="#{alertHistoryDataModel}"
                             var="item"
@@ -76,7 +76,7 @@
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                             onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
-                            
+
                <f:facet name="PageControlView">
                   <onc:paginationControl id="SubsystemAlertHistory" />
                </f:facet>
@@ -85,7 +85,7 @@
                   <f:facet name="header">
                      <onc:allSelect target="selectedItems" />
                   </f:facet>
-                  
+
                   <onc:select name="selectedItems"
                               value="#{item.alert.id}" />
                </rich:column>
@@ -96,7 +96,7 @@
                         <h:outputText styleClass="headerText" value="Resource" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputLink value="/rhq/resource/inventory/view.xhtml">
                      <f:param name="id" value="#{item.alert.alertDefinition.resource.id}" />
                      <h:outputText value="#{item.alert.alertDefinition.resource.name}" />
@@ -109,7 +109,7 @@
                         <h:outputText styleClass="headerText" value="Parent" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputLink value="/rhq/resource/inventory/view.xhtml" rendered="#{not empty item.parentResourceName}">
                      <f:param name="id" value="#{item.parentResourceId}" />
                      <h:outputText value="#{item.parentResourceName}" />
@@ -132,36 +132,36 @@
                      </h:outputText>
                   </h:outputLink>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="ad.name">
                         <h:outputText styleClass="headerText" value="Alert Definition" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputLink value="/alerts/Config.do">
                      <f:param name="mode" value="viewRoles" />
                      <f:param name="id" value="#{item.alert.alertDefinition.resource.id}" />
                      <f:param name="ad" value="#{item.alert.alertDefinition.id}" />
                      <h:outputText value="#{item.alert.alertDefinition.name}" />
-                  </h:outputLink> 
+                  </h:outputLink>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Alert Condition" />
                   </f:facet>
                   <h:outputText value="#{item.conditionText}" />
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Actual Value" />
                   </f:facet>
                   <h:outputText value="#{item.conditionValue}" />
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Recovery Info" />
@@ -181,7 +181,7 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="#{alertHistoryDataTable.columns}" width="100%">
+                     <rich:column colspan="8" width="100%">
                         <onc:selectCommandButton action="#{SubsystemAlertHistoryUIBean.deleteSelected}"
                                                  value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{GlobalPermissionsUIBean.superuser}" />
@@ -196,7 +196,7 @@
                      </rich:column>
                   </rich:columnGroup>
                </f:facet>
-               
+
             </rich:dataTable>
 
             </h:panelGrid>

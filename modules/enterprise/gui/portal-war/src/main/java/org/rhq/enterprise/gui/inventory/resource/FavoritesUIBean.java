@@ -44,7 +44,7 @@ public class FavoritesUIBean {
     }
 
     public boolean isFavorite() {
-        log.info("isFavorite for " + id);
+        log.debug("isFavorite for " + id);
         id = WebUtility.getResourceId(FacesContextUtility.getRequest());
         this.favorite = QuickFavoritesUtil.determineIfFavoriteResource(FacesContextUtility.getRequest());
         return this.favorite;
@@ -55,7 +55,7 @@ public class FavoritesUIBean {
     }
 
     public String toggleFavorite() {
-        log.info("toggleFavorite for " + id);
+        log.debug("toggleFavorite for " + id);
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
         WebUserPreferences preferences = user.getWebPreferences();
         WebUserPreferences.FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
@@ -76,13 +76,13 @@ public class FavoritesUIBean {
         preferences.persistPreferences();
 
         favorite = !isFav;
-        log.info("Setting favorite to: " + this.favorite);
+        log.debug("Setting favorite to: " + this.favorite);
 
         return null;
     }
 
     public void setFavorite(boolean favorite) {
-        log.info("setFavorite(" + favorite + ") for " + id);
+        log.debug("setFavorite(" + favorite + ") for " + id);
         this.favorite = favorite;
     }
 }

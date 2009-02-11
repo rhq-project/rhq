@@ -395,15 +395,27 @@ public class DiscoveryBossBean implements DiscoveryBossLocal {
         boolean versionChanged = false;
         if (resource != null) {
             String oldVersion = resource.getVersion();
-            versionChanged = (oldVersion != null) ? !oldVersion.equals(newVersion) : newVersion != null;
+
+            // we consider null and "" versions the same - and they should not be product versions
+            if (oldVersion == null) {
+                oldVersion = "";
+            }
+
+            if (newVersion == null) {
+                newVersion = "";
+            }
+
+            versionChanged = !oldVersion.equals(newVersion);
+
             if (versionChanged) {
                 log.info("Resource [" + resource + "] changed its version from [" + oldVersion + "] to [" + newVersion
                     + "]");
                 resource.setVersion(newVersion);
 
-                // TODO: why is this being done?
-                ProductVersion productVersion = productVersionManager.addProductVersion(resource.getResourceType(),
-                    newVersion);
+                ProductVersion productVersion = null;
+                if (newVersion.length() > 0) {
+                    productVersion = productVersionManager.addProductVersion(resource.getResourceType(), newVersion);
+                }
                 resource.setProductVersion(productVersion);
             }
         }

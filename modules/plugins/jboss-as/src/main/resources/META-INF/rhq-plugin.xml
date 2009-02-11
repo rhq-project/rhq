@@ -2146,11 +2146,17 @@
             </plugin-configuration>
 
             <operation name="start"
-                       description="starts this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)"/>
+                       description="starts this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)">
+                <results><c:simple-property name="operationResult" description="Outcome of starting the webapp."/></results>
+            </operation>
             <operation name="stop"
-                       description="stops this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)"/>
+                       description="stops this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)">
+                <results><c:simple-property name="operationResult" description="Outcome of stopping the webapp."/></results>
+            </operation>
             <operation name="reload"
-                       description="reloads this webapp; NOTE: if the webapp is not in the started state, this operation will fail"/>
+                       description="reloads this webapp; NOTE: if the webapp is not in the started state, this operation will fail">
+                <results><c:simple-property name="operationResult" description="Outcome of restarting the webapp."/></results>
+            </operation>
 
             <!-- The two traits below are collected by the ApplicationComponent class, which WarComponent extends.. -->
             <metric property="Application.path" displayName="Path"
@@ -2263,11 +2269,17 @@
          </plugin-configuration>
 
          <operation name="start"
-                    description="starts this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)"/>
+                    description="starts this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)">
+             <results><c:simple-property name="operationResult" description="Outcome of starting the webapp."/></results>
+         </operation>
          <operation name="stop"
-                    description="stops this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)"/>
+                    description="stops this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)">
+             <results><c:simple-property name="operationResult" description="Outcome of stopping the webapp."/></results>
+         </operation>
          <operation name="reload"
-                    description="reloads this webapp; NOTE: if the webapp is not in the started state, this operation will fail"/>
+                    description="reloads this webapp; NOTE: if the webapp is not in the started state, this operation will fail">
+             <results><c:simple-property name="operationResult" description="Outcome of restarting the webapp."/></results>
+         </operation>
 
          <!-- The two traits below are collected by the ApplicationComponent class, which WarComponent extends.. -->
          <metric property="Application.path" displayName="Path"

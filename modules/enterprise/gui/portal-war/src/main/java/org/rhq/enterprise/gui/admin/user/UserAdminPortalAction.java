@@ -186,7 +186,7 @@ public class UserAdminPortalAction extends BaseDispatchAction {
         WebUser webUser = new WebUser(user);
         webUser.setHasPrincipal(hasPrincipal);
 
-        SessionUtils.setWebUser(request.getSession(), webUser);
+        request.setAttribute(Constants.USER_ATTR, webUser);
         request.setAttribute(Constants.TITLE_PARAM_ATTR, BizappUtils.makeSubjectFullName(user));
     }
 

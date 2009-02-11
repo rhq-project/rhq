@@ -23,21 +23,25 @@ public class WebUserTrackingFilter extends BaseFilter {
         ServletException {
         HttpServletRequest request = (HttpServletRequest) req;
 
-        // do not create a session if one does not exist, that is the job of the AuthenticationFilter
-        HttpSession session = request.getSession(false);
-        WebUser webUser = SessionUtils.getWebUser(session); // will handle null session argument
-        if (webUser == null) {
-            chain.doFilter(req, res);
-            return;
-        }
+        // only record GET requests, resubmitting to POST pages is dangerous
+        String method = request.getMethod();
+        if (method.equals("GET")) {
+            // do not create a session if one does not exist, that is the job of the AuthenticationFilter
+            HttpSession session = request.getSession(false);
+            WebUser webUser = SessionUtils.getWebUser(session); // will handle null session argument
+            if (webUser == null) {
+                chain.doFilter(req, res);
+                return;
+            }
 
-        String lastURL = getRequestURL(request);
-        WebUserPreferences preferences = webUser.getWebPreferences();
+            String lastURL = getRequestURL(request);
+            WebUserPreferences preferences = webUser.getWebPreferences();
 
-        preferences.addLastVisitedURL(lastURL);
-        preferences.persistPreferences();
-        if (log.isDebugEnabled()) {
-            log.debug("User [" + webUser.getSubject().getName() + "] visited [" + lastURL + "]");
+            preferences.addLastVisitedURL(lastURL);
+            preferences.persistPreferences();
+            if (log.isDebugEnabled()) {
+                log.debug("User [" + webUser.getSubject().getName() + "] visited [" + lastURL + "]");
+            }
         }
 
         try {

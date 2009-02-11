@@ -26,7 +26,12 @@ import javax.faces.context.FacesContext;
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesComponentIdFactory;
+import org.rhq.core.gui.util.FacesExpressionUtility;
+import org.rhq.core.gui.configuration.helper.ConfigurationUtility;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.PropertySimple;
 
 /**
  * @author Ian Springer
@@ -36,7 +41,7 @@ public class PropertySetComponent extends UIComponentBase implements FacesCompon
     private static final String COMPONENT_FAMILY = "rhq";
     public static final String COMPONENT_TYPE = "org.rhq.PropertySet";
 
-    public static final String PROPERTY_DEFINITION_ATTRIBUTE = "propertyDefinition";
+    public static final String PROPERTY_EXPRESSION_STRING_ATTRIBUTE = "propertyExpressionString";
     public static final String CONFIGURATION_SET_ATTRIBUTE = "configurationSet";
 
     private Boolean readOnly;    
@@ -58,9 +63,19 @@ public class PropertySetComponent extends UIComponentBase implements FacesCompon
     @Nullable
     public PropertyDefinitionSimple getPropertyDefinition() {
         //noinspection UnnecessaryLocalVariable
-        PropertyDefinitionSimple propertyDefinition = FacesComponentUtility.getExpressionAttribute(this,
-                PROPERTY_DEFINITION_ATTRIBUTE, PropertyDefinitionSimple.class);
-        return propertyDefinition;
+        String propertyExpressionString = FacesComponentUtility.getExpressionAttribute(this,
+                PROPERTY_EXPRESSION_STRING_ATTRIBUTE, String.class);
+        if (propertyExpressionString == null || propertyExpressionString.equals(""))
+            propertyExpressionString = (String)getAttributes().get(PROPERTY_EXPRESSION_STRING_ATTRIBUTE);
+        if (propertyExpressionString == null || propertyExpressionString.equals(""))
+            return null;
+        propertyExpressionString = FacesExpressionUtility.unwrapExpressionString(propertyExpressionString);
+        propertyExpressionString = "#{" + propertyExpressionString.replace(".stringValue", "") + "}";
+        PropertySimple propertySimple = FacesExpressionUtility.getValue(propertyExpressionString, PropertySimple.class);
+        ConfigurationDefinition configurationDefinition = getConfigurationSet().getConfigurationDefinition();
+        PropertyDefinition propertyDefinition = ConfigurationUtility.getPropertyDefinitionForProperty(propertySimple,
+                configurationDefinition);
+        return (PropertyDefinitionSimple)propertyDefinition;
     }
 
     @Nullable
@@ -68,9 +83,10 @@ public class PropertySetComponent extends UIComponentBase implements FacesCompon
         //noinspection UnnecessaryLocalVariable
         ConfigurationSet configurationSet = FacesComponentUtility.getExpressionAttribute(this,
                 CONFIGURATION_SET_ATTRIBUTE, ConfigurationSet.class);
+        if (configurationSet == null)
+            throw new IllegalStateException("The '" + CONFIGURATION_SET_ATTRIBUTE + "' attribute is required.");   
         return configurationSet;
     }
-
 
     public Boolean getReadOnly()
     {

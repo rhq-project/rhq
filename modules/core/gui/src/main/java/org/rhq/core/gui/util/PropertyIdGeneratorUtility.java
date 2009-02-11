@@ -27,8 +27,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.gui.configuration.helper.ConfigurationUtility;
 
-/*
+ /*
  * Class used to generate identifiers based on a configuration Property.
  *
  * @author Ian Springer @author Charles Crouch
@@ -74,7 +75,7 @@ public class PropertyIdGeneratorUtility {
             throw new IllegalArgumentException("Property parameter cannot be null.");
         }
 
-        LinkedList<Property> propertyHierarchy = getPropertyHierarchy(property);
+        LinkedList<Property> propertyHierarchy = ConfigurationUtility.getPropertyHierarchy(property);
 
         StringBuilder identifier = new StringBuilder(ID_PREFIX);
 
@@ -109,19 +110,7 @@ public class PropertyIdGeneratorUtility {
         return identifier.toString();
     }
 
-    private static LinkedList<Property> getPropertyHierarchy(Property property)
-    {
-        LinkedList<Property> propertyHierarchy = new LinkedList<Property>();
-        Property parentProperty = property;
-        while ((parentProperty = getParentProperty(parentProperty)) != null) {
-            propertyHierarchy.addFirst(parentProperty);
-        }
-
-        propertyHierarchy.add(property);
-        return propertyHierarchy;
-    }
-
-    public static String getIdentifier(@NotNull
+     public static String getIdentifier(@NotNull
     Configuration configuration, @Nullable String suffix) {
         //noinspection ConstantConditions
         if (configuration == null) {
@@ -144,17 +133,4 @@ public class PropertyIdGeneratorUtility {
         return identifier.toString();
     }
 
-    @Nullable
-    private static Property getParentProperty(Property property) {
-        Property parentProperty;
-        if (property.getParentList() != null) {
-            parentProperty = property.getParentList();
-        } else if (property.getParentMap() != null) {
-            parentProperty = property.getParentMap();
-        } else {
-            parentProperty = null;
-        }
-
-        return parentProperty;
-    }
-}
+ }

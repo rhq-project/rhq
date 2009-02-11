@@ -22,7 +22,11 @@
   */
 package org.rhq.core.gui.configuration;
 
-/**
+ import org.rhq.core.gui.configuration.propset.ConfigurationSetComponent;
+ import org.rhq.core.gui.configuration.propset.ConfigurationSet;
+ import org.rhq.core.gui.util.FacesExpressionUtility;
+
+ /**
  * A JSF managed bean that is used for the action methods for all buttons rendered for {@link ConfigUIComponent}s that
  * take the user to a new page. Note, none of the action methods actually do anything - their only purpose is so they
  * can be used to define navigation rules that map the corresponding buttons to the appropriate pages.

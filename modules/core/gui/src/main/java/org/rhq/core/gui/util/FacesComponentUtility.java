@@ -27,6 +27,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+
 import javax.el.ValueExpression;
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
@@ -51,8 +53,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.richfaces.component.html.HtmlSeparator;
 import org.richfaces.component.html.HtmlSimpleTogglePanel;
+import org.richfaces.component.html.HtmlRichMessage;
 
-/**
+ /**
  * A set of utility methods for working with JSF {@link UIComponent}s.
  *
  * @author Ian Springer
@@ -124,6 +127,8 @@ public abstract class FacesComponentUtility {
     public static HtmlOutputText createOutputText(FacesComponentIdFactory idFactory, CharSequence value,
         String styleClass) {
         HtmlOutputText text = createComponent(HtmlOutputText.class, idFactory);
+        if (value != null)
+            value = value.toString().trim();
         text.setValue(value);
         text.setStyleClass(styleClass);
         return text;
@@ -144,7 +149,8 @@ public abstract class FacesComponentUtility {
     @NotNull
     public static HtmlOutputText addVerbatimText(@NotNull
     UIComponent parent, CharSequence html) {
-        HtmlOutputText outputText = createComponent(HtmlOutputText.class);
+        // NOTE: Do NOT set the id on the HtmlOutputText, otherwise it will be rendered as a span tag!
+        HtmlOutputText outputText = new HtmlOutputText();
         outputText.setEscape(false);
         outputText.setValue(html);
         parent.getChildren().add(outputText);
@@ -525,10 +531,10 @@ public abstract class FacesComponentUtility {
         return componentType;
     }
 
-    private static class DefaultFacesComponentIdFactory implements FacesComponentIdFactory {
+     private static class DefaultFacesComponentIdFactory implements FacesComponentIdFactory {
         public String createUniqueId()
         {
-            return FacesContext.getCurrentInstance().getViewRoot().createUniqueId();
+            return "rhq_" + UUID.randomUUID();
         }
     }
 }

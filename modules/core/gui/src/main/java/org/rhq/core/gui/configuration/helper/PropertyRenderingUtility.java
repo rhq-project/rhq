@@ -71,7 +71,9 @@ public class PropertyRenderingUtility
                                                        PropertySimple propertySimple,
                                                        ValueExpression propertyValueExpression,
                                                        Integer listIndex,
-                                                       boolean readOnly, boolean prevalidate) {
+                                                       boolean configReadOnly,
+                                                       boolean configFullyEditable,
+                                                       boolean prevalidate) {
         UIInput input;
         switch (propertyDefinitionSimple.getType()) {
         case BOOLEAN: {
@@ -104,7 +106,7 @@ public class PropertyRenderingUtility
         }
 
         boolean isUnset = isUnset(propertyDefinitionSimple, propertySimple);
-        boolean isReadOnly = isReadOnly(propertyDefinitionSimple, propertySimple, readOnly);
+        boolean isReadOnly = isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable);
 
         String propertyId = PropertyIdGeneratorUtility.getIdentifier(propertySimple, listIndex);
         input.setId(propertyId);
@@ -121,7 +123,7 @@ public class PropertyRenderingUtility
         FacesComponentUtility.setUnset(input, isUnset);
         FacesComponentUtility.setReadonly(input, isReadOnly);
 
-        addValidatorsAndConverter(input, propertyDefinitionSimple, readOnly);
+        addValidatorsAndConverter(input, propertyDefinitionSimple, configReadOnly);
 
         addErrorMessages(input, propertyDefinitionSimple, propertySimple, prevalidate);
         return input;
@@ -144,15 +146,17 @@ public class PropertyRenderingUtility
     }
 
     public static HtmlSelectBooleanCheckbox addUnsetControl(UIComponent parent,
-                                                                         PropertyDefinitionSimple propertyDefinitionSimple,
-                                                    PropertySimple propertySimple,
-                                                    UIInput valueInput, boolean readOnlyConfig) {
+                                                            PropertyDefinitionSimple propertyDefinitionSimple,
+                                                            PropertySimple propertySimple,
+                                                            UIInput valueInput,
+                                                            boolean configReadOnly,
+                                                            boolean configFullyEditable) {
         HtmlSelectBooleanCheckbox unsetCheckbox = FacesComponentUtility.createComponent(
                 HtmlSelectBooleanCheckbox.class, null);
         if (!propertyDefinitionSimple.isRequired()) {
             parent.getChildren().add(unsetCheckbox);
             unsetCheckbox.setValue(Boolean.valueOf(isUnset(propertyDefinitionSimple, propertySimple)));
-            if (isReadOnly(propertyDefinitionSimple, propertySimple, readOnlyConfig)) {
+            if (isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable)) {
                 FacesComponentUtility.setDisabled(unsetCheckbox, true);
             } else {
                 // Add JavaScript that will disable/enable the corresponding input element when the unset checkbox is
@@ -463,11 +467,14 @@ public class PropertyRenderingUtility
         return (!propertyDefinitionSimple.isRequired() && propertySimple.getStringValue() == null);
     }
 
-    private static boolean isReadOnly(PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple, boolean readOnlyConfig
-    ) {
-        // a fully editable config overrides any other means of setting read only
-        return (readOnlyConfig || (propertyDefinitionSimple.isReadOnly() &&
-                !isInvalidRequiredProperty(propertyDefinitionSimple, propertySimple)));
+    public static boolean isReadOnly(PropertyDefinitionSimple propertyDefinitionSimple,
+                                     PropertySimple propertySimple,
+                                     boolean configReadOnly,
+                                     boolean configFullyEditable) {
+        // A fully editable config overrides any other means of setting read-only.
+        return (!configFullyEditable &&
+                (configReadOnly || (propertyDefinitionSimple.isReadOnly() &&
+                (propertySimple == null || !isInvalidRequiredProperty(propertyDefinitionSimple, propertySimple)))));
     }
 
     private static boolean isInvalidRequiredProperty(PropertyDefinitionSimple propertyDefinitionSimple,

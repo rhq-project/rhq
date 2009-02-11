@@ -31,6 +31,9 @@ public class EditTestConfigurationUIBean extends AbstractTestConfigurationUIBean
     protected static final String FAILURE_OUTCOME = "failure";
 
     public String updateConfiguration() {
+        // Any values changed in the aggregate config (i.e. via the inputs on the main page) need to be
+        // applied to all member configs before persisting them.
+        getConfigurationSet().applyAggregateConfiguration();
         // TODO (low priority): Persist the test config somewhere.
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration updated.");
         return Outcomes.SUCCESS;

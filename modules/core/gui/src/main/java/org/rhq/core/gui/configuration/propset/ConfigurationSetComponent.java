@@ -90,6 +90,7 @@ public class ConfigurationSetComponent extends AbstractConfigurationComponent im
     public HtmlModalPanel getMemberValuesModalPanel() {
         UIForm form = FacesComponentUtility.getEnclosingForm(this);
         //noinspection ConstantConditions
-        return (HtmlModalPanel)(form.getParent().findComponent(getMemberValuesModalPanelId(this)));
+        //return (HtmlModalPanel)(form.getParent().findComponent(getMemberValuesModalPanelId(this)));
+        return (HtmlModalPanel)(findComponent(getMemberValuesModalPanelId(this)));
     }    
 }

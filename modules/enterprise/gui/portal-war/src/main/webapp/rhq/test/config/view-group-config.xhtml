@@ -8,38 +8,49 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.org/rich"
       xmlns:onc="http://jboss.org/on/component">
 
 THIS TEXT WILL BE REMOVED.
 
 <ui:composition template="/rhq/layout/main.xhtml">
 
-   THIS TEXT WILL BE REMOVED AS WELL.
+    THIS TEXT WILL BE REMOVED AS WELL.
 
-   <ui:param name="pageTitle" value="View Test Configuration"/>
+    <ui:param name="pageTitle" value="View Test Group Configuration"/>
 
-   <ui:define name="body">
+    <ui:define name="body">
 
-      <h:messages showSummary="true"
-                  showDetail="true"
-                  errorClass="ErrorBlock"
-                  warnClass="ErrorBlock"
-                  infoClass="ConfirmationBlock"
-                  globalOnly="true"
-                  layout="table"
-                  width="100%"/>
-      
-      <h:form id="viewTestConfigurationForm">
-         <onc:configSet configurationSet="#{EditTestConfigurationUIBean.configurationSet}"
-                        readOnly="true"/>
-         <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
-            <h:commandButton type="submit" action="#{ViewTestConfigurationUIBean.editConfiguration}"
-                             value="Edit this Configuration Set"/>
-         </h:panelGrid>
-      </h:form>
+        BLAH BLAH BLAH
 
-   </ui:define>
+        <h:messages showSummary="true"
+                    showDetail="true"
+                    errorClass="ErrorBlock"
+                    warnClass="ErrorBlock"
+                    infoClass="ConfirmationBlock"
+                    globalOnly="true"
+                    layout="table"
+                    width="100%"/>
+
+        <h:form id="viewTestConfigurationForm">
+
+            <a4j:region selfRendered="false">
+                <a4j:outputPanel layout="block" ajaxRendered="true" keepTransient="true">
+
+                    <onc:configSet configurationSet="#{EditTestConfigurationUIBean.configurationSet}"
+                                   readOnly="true"/>
+                    <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
+                        <h:commandButton type="submit" action="#{ViewTestConfigurationUIBean.editConfiguration}"
+                                         value="Edit this Configuration Set"/>
+                    </h:panelGrid>
+
+                </a4j:outputPanel>
+            </a4j:region>
+
+        </h:form>
+
+    </ui:define>
 
 </ui:composition>
 

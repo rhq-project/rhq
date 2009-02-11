@@ -28,7 +28,6 @@ package org.rhq.core.gui.configuration;
  import javax.el.ValueExpression;
  import javax.faces.component.UIComponent;
  import javax.faces.component.UIInput;
- import javax.faces.component.UIPanel;
  import javax.faces.component.UIParameter;
  import javax.faces.component.html.HtmlCommandLink;
  import javax.faces.component.html.HtmlPanelGrid;
@@ -280,14 +279,12 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     }
 
     private void addProperty(UIComponent parent, PropertyDefinition propertyDefinition, String rowStyleClass) {
-        UIPanel propertyPanel = FacesComponentUtility.addBlockPanel(parent, this.config,
-            FacesComponentUtility.NO_STYLE_CLASS);
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
-            addSimpleProperty(propertyPanel, (PropertyDefinitionSimple) propertyDefinition, rowStyleClass);
+            addSimpleProperty(parent, (PropertyDefinitionSimple) propertyDefinition, rowStyleClass);
         } else if (propertyDefinition instanceof PropertyDefinitionList) {
-            addListProperty(propertyPanel, (PropertyDefinitionList) propertyDefinition, rowStyleClass);
+            addListProperty(parent, (PropertyDefinitionList) propertyDefinition, rowStyleClass);
         } else if (propertyDefinition instanceof PropertyDefinitionMap) {
-            addMapProperty(propertyPanel, (PropertyDefinitionMap) propertyDefinition, rowStyleClass);
+            addMapProperty(parent, (PropertyDefinitionMap) propertyDefinition, rowStyleClass);
         } else {
             throw new IllegalStateException("Unsupported subclass of " + PropertyDefinition.class.getName() + ".");
         }
@@ -306,7 +303,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         // TODO: Only create input when it's actually going to be displayed.
         UIInput input = PropertyRenderingUtility.createInputForSimpleProperty(propertyDefinitionSimple,
                 propertySimple, propertyValueExpression, getListIndex(), this.config.isReadOnly(),
-                this.config.isPrevalidate());
+                this.config.isFullyEditable(), this.config.isPrevalidate());
         // done generating
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_DISPLAY_NAME_CELL + "'>");
@@ -321,11 +318,11 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
         PropertyRenderingUtility.addUnsetControl(parent, propertyDefinitionSimple, propertySimple, input,
-                this.config.isReadOnly());
+                this.config.isReadOnly(), this.config.isFullyEditable());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_VALUE_CELL + "'>");
-        addPropertySimpleValue(parent, propertyDefinitionSimple, propertySimple, input);
+        addPropertySimpleValue(parent, propertySimple, input);
         FacesComponentUtility.addVerbatimText(parent, "<br/>");
         PropertyRenderingUtility.addMessageComponentForInput(parent, input);
         FacesComponentUtility.addVerbatimText(parent, "</td>");
@@ -339,8 +336,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         addDebug(parent, false, ".addSimpleProperty()");
     }
 
-     private void addPropertySimpleValue(UIComponent parent, PropertyDefinitionSimple propertyDefinitionSimple,
-                                         PropertySimple propertySimple, UIInput input)
+     private void addPropertySimpleValue(UIComponent parent, PropertySimple propertySimple, UIInput input)
      {
          if (this.isAggregate) {
              if (propertySimple.getOverride() != null && propertySimple.getOverride()) {
@@ -351,15 +347,18 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
              }
              HtmlAjaxCommandLink ajaxCommandLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
              parent.getChildren().add(ajaxCommandLink);
-             ajaxCommandLink.setOncomplete("Richfaces.showModalPanel('" +
+             //ajaxCommandLink.setImmediate(true);
+             if (this.memberValuesModalPanel != null)
+                 ajaxCommandLink.setOncomplete("Richfaces.showModalPanel('" +
                      this.memberValuesModalPanel.getClientId(FacesContext.getCurrentInstance()) + "');");
-             StringBuilder reRenderIds = new StringBuilder();
-             for (UIComponent component : this.memberValuesModalPanel.getChildren())
-                 reRenderIds.append(":" + component.getId() + ", ");
-             reRenderIds.delete(reRenderIds.length() - 2, reRenderIds.length()); // chop off the extra ", "
-             ajaxCommandLink.setReRender(reRenderIds.toString());
+             //String propertySetFormId = this.config.getId() + "PropertySetForm";
+             //ajaxCommandLink.setReRender(":" + propertySetFormId + ":rhq_propSet");
+             //ajaxCommandLink.setReRender("rhq_configSet");
              ajaxCommandLink.setTitle(MEMBER_VALUES_BUTTON_TITLE);
-             FacesComponentUtility.addParameter(ajaxCommandLink, null, "prop", "foobar");
+             FacesComponentUtility.addParameter(ajaxCommandLink, null, "propertyExpressionString",
+                input.getValueExpression("value").getExpressionString());
+             FacesComponentUtility.addParameter(ajaxCommandLink, null, "refresh",
+                     ConfigRenderer.PROPERTY_SET_COMPONENT_ID);
              FacesComponentUtility.addButton(ajaxCommandLink, MEMBER_VALUES_BUTTON_LABEL, CssStyleClasses.BUTTON_SMALL);
          } else {
              parent.getChildren().add(input);
@@ -369,33 +368,34 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
      private void addOpenMapMemberProperty(HtmlPanelGroup parent, PropertyDefinitionMap propertyDefinitionMap,
         PropertySimple propertySimple, String rowStyleClass) {
         addDebug(parent, true, ".addOpenMapMemberProperty()");
-        HtmlPanelGroup panel = FacesComponentUtility.addBlockPanel(parent, getConfigurationComponent(),
-            FacesComponentUtility.NO_STYLE_CLASS);
         String mapName = ((PropertyMap) this.propertyMap).getName();
         String memberName = propertySimple.getName();
-        String panelId = PropertyIdGeneratorUtility.getIdentifier(propertySimple, getListIndex(), PANEL_ID_SUFFIX);
-        panel.setId(panelId);
 
-        FacesComponentUtility.addVerbatimText(panel, "\n\n<tr class='" + rowStyleClass + "'>");
+        NullComponent wrapper = new NullComponent();
+        parent.getChildren().add(wrapper);
+        String wrapperId = PropertyIdGeneratorUtility.getIdentifier(propertySimple, getListIndex(), PANEL_ID_SUFFIX);
+        wrapper.setId(wrapperId);
 
-        FacesComponentUtility.addVerbatimText(panel, "<td class='" + OPENMAP_PROPERTY_DISPLAY_NAME_CELL_STYLE_CLASS
+        FacesComponentUtility.addVerbatimText(wrapper, "\n\n<tr class='" + rowStyleClass + "'>");
+
+        FacesComponentUtility.addVerbatimText(wrapper, "<td class='" + OPENMAP_PROPERTY_DISPLAY_NAME_CELL_STYLE_CLASS
             + "'>");
-        FacesComponentUtility.addOutputText(panel, this.config, propertySimple.getName(),
+        FacesComponentUtility.addOutputText(wrapper, this.config, propertySimple.getName(),
             CssStyleClasses.PROPERTY_DISPLAY_NAME_TEXT);
-        FacesComponentUtility.addVerbatimText(panel, "</td>");
+        FacesComponentUtility.addVerbatimText(wrapper, "</td>");
 
-        FacesComponentUtility.addVerbatimText(panel, "<td class='" + OPENMAP_PROPERTY_VALUE_CELL_STYLE_CLASS + "'>");
+        FacesComponentUtility.addVerbatimText(wrapper, "<td class='" + OPENMAP_PROPERTY_VALUE_CELL_STYLE_CLASS + "'>");
          // TODO: Only create input when it's actually going to be displayed.
          UIInput input = PropertyRenderingUtility.createInputForSimpleProperty(propertySimple,
                 this.valueExpressionFormat, this.config.isReadOnly());
-        addPropertySimpleValue(panel, null, propertySimple, input);
-        FacesComponentUtility.addVerbatimText(panel, "</td>");
+        addPropertySimpleValue(wrapper, propertySimple, input);
+        FacesComponentUtility.addVerbatimText(wrapper, "</td>");
 
         if (!isReadOnly(propertyDefinitionMap)) {
             // add Actions column w/ delete button
-            FacesComponentUtility.addVerbatimText(panel, "<td class='" + OPENMAP_PROPERTY_ACTIONS_CELL_STYLE_CLASS
+            FacesComponentUtility.addVerbatimText(wrapper, "<td class='" + OPENMAP_PROPERTY_ACTIONS_CELL_STYLE_CLASS
                 + "'>");
-            HtmlCommandLink deleteLink = FacesComponentUtility.addCommandLink(panel, this.config);
+            HtmlCommandLink deleteLink = FacesComponentUtility.addCommandLink(wrapper, this.config);
             deleteLink.setTitle(DELETE_MAP_BUTTON_TITLE);
             //deleteLink.setImmediate(true); // skip validation (we only want to validate upon Save)
 
@@ -407,11 +407,11 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
                 RequestParameterNameConstants.MEMBER_NAME_PARAM, memberName);
 
             FacesComponentUtility.addButton(deleteLink, DELETE_MAP_BUTTON_LABEL, CssStyleClasses.BUTTON_SMALL);
-            FacesComponentUtility.addVerbatimText(panel, "</td>");
+            FacesComponentUtility.addVerbatimText(wrapper, "</td>");
         }
 
-        FacesComponentUtility.addVerbatimText(panel, "</tr>");
-        addDebug(parent, false, ".addOpenMapMemberProperty()");
+        FacesComponentUtility.addVerbatimText(wrapper, "</tr>");
+        addDebug(wrapper, false, ".addOpenMapMemberProperty()");
     }
 
     /**
@@ -792,8 +792,9 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     }
 
     private boolean isReadOnly(PropertyDefinition propertyDefinition) {
-        // a fully editable config overrides any other means of setting read only
-        return (!this.config.isFullyEditable() && (this.config.isReadOnly() || (propertyDefinition.isReadOnly() && !isInvalidRequiredProperty(propertyDefinition))));
+        // A fully editable config overrides any other means of setting read only.
+        return (!this.config.isFullyEditable() &&
+                (this.config.isReadOnly() || (propertyDefinition.isReadOnly() && !isInvalidRequiredProperty(propertyDefinition))));
     }
 
     private boolean isInvalidRequiredProperty(PropertyDefinition propertyDefinition) {

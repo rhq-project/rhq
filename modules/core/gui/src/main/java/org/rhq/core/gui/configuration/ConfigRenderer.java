@@ -32,8 +32,8 @@ import javax.faces.component.UIParameter;
 import javax.faces.component.UIForm;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.component.html.HtmlOutputLink;
-import javax.faces.component.html.HtmlForm;
 import javax.faces.context.FacesContext;
+import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
 import javax.el.ValueExpression;
 
@@ -50,7 +50,6 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.gui.RequestParameterNameConstants;
 import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
-import org.rhq.core.gui.configuration.helper.ConfigurationExpressionUtility;
 import org.rhq.core.gui.configuration.propset.ConfigurationSetComponent;
 import org.rhq.core.gui.configuration.propset.PropertySetComponent;
 import org.rhq.core.gui.configuration.propset.ConfigurationSet;
@@ -68,6 +67,8 @@ import org.ajax4jsf.component.html.HtmlAjaxCommandLink;
  * @author Ian Springer
  */
 public class ConfigRenderer extends Renderer {
+    public static final String PROPERTY_SET_COMPONENT_ID = "rhq_propSet";
+
     protected static final String NOTE_PANEL_STYLE_CLASS = "note-panel";
     protected static final String PROPERTY_GROUP_HEADER_STYLE_CLASS = "BlockTitle";
     protected static final String PROPERTY_GROUP_BODY_STYLE_CLASS = "BlockContent";
@@ -89,25 +90,25 @@ public class ConfigRenderer extends Renderer {
      */
     @Override
     public void decode(FacesContext facesContext, UIComponent component) {
-        AbstractConfigurationComponent config = (AbstractConfigurationComponent) component;
-        validateAttributes(config);
+        AbstractConfigurationComponent configurationComponent = (AbstractConfigurationComponent) component;
+        validateAttributes(configurationComponent);
         
         String function = FacesContextUtility.getOptionalRequestParameter(RequestParameterNameConstants.FUNCTION_PARAM);
         if (function != null) {
             if (function.equals(AbstractPropertyBagUIComponentTreeFactory.DELETE_LIST_MEMBER_PROPERTY_FUNCTION)) {
-                deleteListMemberProperty(config);
+                deleteListMemberProperty(configurationComponent);
             } else if (function
                 .equals(AbstractPropertyBagUIComponentTreeFactory.DELETE_OPEN_MAP_MEMBER_PROPERTY_FUNCTION)) {
-                deleteOpenMapMemberProperty(config);
+                deleteOpenMapMemberProperty(configurationComponent);
             }
         }
 
-        if (config.getConfiguration() != null) {
-            String id = getInitInputsJavaScriptComponentId(config);
-            UIComponent initInputsJavaScriptComponent = config.findComponent(id);
+        if (configurationComponent.getConfiguration() != null) {
+            String id = getInitInputsJavaScriptComponentId(configurationComponent);
+            UIComponent initInputsJavaScriptComponent = configurationComponent.findComponent(id);
             if (initInputsJavaScriptComponent != null) {
                 FacesComponentUtility.detachComponent(initInputsJavaScriptComponent);
-                PropertyRenderingUtility.addInitInputsJavaScript(config, id, config.isFullyEditable(), true);
+                PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent.isFullyEditable(), true);
             }
         }
     }
@@ -121,9 +122,12 @@ public class ConfigRenderer extends Renderer {
     @Override
     public void encodeBegin(FacesContext facesContext, UIComponent component) throws IOException {
         AbstractConfigurationComponent configurationComponent = (AbstractConfigurationComponent) component;
+
+        // If it's an AJAX request for this component, recalculate the aggregate config from the member configs
+        // and clear our child components. NOTE: This can *not* be done in decode(), because the model
+        // will not have been updated yet with any changes made to child UIInput values.
         String refresh = FacesContextUtility.getOptionalRequestParameter("refresh");
-        if (refresh != null)
-        {
+        if (refresh != null && refresh.equals(configurationComponent.getId())) {
             if (configurationComponent instanceof ConfigurationSetComponent) {
                 ConfigurationSet configurationSet = ((ConfigurationSetComponent)configurationComponent).getConfigurationSet();
                 //noinspection ConstantConditions
@@ -132,11 +136,29 @@ public class ConfigRenderer extends Renderer {
             component.getChildren().clear();
         }
 
-        // Only create the child components the first time around (i.e. once per JSF lifecycle).
-        if (component.getChildCount() != 0)
-            return;
-        
+        ResponseWriter writer = facesContext.getResponseWriter();
+        String clientId = component.getClientId(facesContext);
+        writer.write('\n');
+        writer.writeComment("********** Start of " + component.getClass().getSimpleName() + " component **********");
+        writer.startElement("div", component);
+        writer.writeAttribute("id", clientId, "clientId");
 
+        // Only create the child components the first time around (i.e. once per JSF lifecycle).
+        if (component.getChildCount() == 0)
+            addChildComponents(configurationComponent);
+    }
+
+    @Override
+    public void encodeEnd(FacesContext context, UIComponent component) throws IOException
+    {
+        ResponseWriter writer = context.getResponseWriter();
+        writer.writeText("\n", component, null);
+        writer.endElement("div");
+        writer.writeComment("********** End of " + component.getClass().getSimpleName() + " component **********");
+    }
+
+    public void addChildComponents(AbstractConfigurationComponent configurationComponent)
+    {
         if ((configurationComponent.getConfigurationDefinition() == null)
             || ((configurationComponent.getConfiguration() != null) && configurationComponent.getConfiguration().getMap().isEmpty())) {
             String styleClass = (configurationComponent.getNullConfigurationStyle() == null) ? "ErrorBlock" : configurationComponent
@@ -156,14 +178,13 @@ public class ConfigRenderer extends Renderer {
 
         if (configurationComponent instanceof ConfigurationSetComponent) {
             ConfigurationSetComponent configurationSetComponent = (ConfigurationSetComponent)configurationComponent;
-            if (configurationSetComponent.getMemberValuesModalPanel() == null)
-                addMemberValuesModalPanel(configurationSetComponent, null);
+            addMemberValuesModalPanel(configurationSetComponent);
         }
 
         FacesComponentUtility.addVerbatimText(configurationComponent, JAVASCRIPT_INCLUDES);
-        if (!configurationComponent.isReadOnly()) {
+
+        if (!configurationComponent.isReadOnly())
             addRequiredNotationsKey(configurationComponent);
-        }
 
         if (configurationComponent.getListName() != null) {
             if (configurationComponent.getListIndex() == null) {
@@ -178,9 +199,6 @@ public class ConfigRenderer extends Renderer {
 
         String id = getInitInputsJavaScriptComponentId(configurationComponent);
         PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent.isFullyEditable(), false);
-
-//        if (refresh != null)
-//            throw new RuntimeException("This sucks!");
     }
 
     private void addListMemberProperty(AbstractConfigurationComponent config) {
@@ -324,6 +342,7 @@ public class ConfigRenderer extends Renderer {
     private HtmlSimpleTogglePanel addGroupPanel(AbstractConfigurationComponent config, PropertyGroupDefinition group) {
         addDebug(config, true, ".addGroupPanel()");
         HtmlSimpleTogglePanel groupPanel = FacesComponentUtility.addSimpleTogglePanel(config, config, null);
+        // TODO: On AJAX requests, set "opened" attribute to its previous state.
         groupPanel.setOpened(!group.isDefaultHidden());
         groupPanel.setHeaderClass(PROPERTY_GROUP_HEADER_STYLE_CLASS);
         groupPanel.setBodyClass(PROPERTY_GROUP_BODY_STYLE_CLASS);
@@ -353,15 +372,15 @@ public class ConfigRenderer extends Renderer {
         return groupPanel;
     }
 
-    private void validateAttributes(AbstractConfigurationComponent config) {
+    private void validateAttributes(AbstractConfigurationComponent configurationComponent) {
         // TODO: Add back attribute validation - remember config and configSet components require different attributes.
-        /*if (config.getValueExpression("configurationDefinition") == null) {
-            throw new IllegalStateException("The " + config.getClass().getName()
+        /*if (configurationComponent.getValueExpression("configurationDefinition") == null) {
+            throw new IllegalStateException("The " + configurationComponent.getClass().getName()
                 + " component requires a 'configurationDefinition' attribute.");
         }
 
-        if (config.getValueExpression("configuration") == null) {
-            throw new IllegalStateException("The " + config.getClass().getName()
+        if (configurationComponent.getValueExpression("configuration") == null) {
+            throw new IllegalStateException("The " + configurationComponent.getClass().getName()
                 + " component requires a 'configuration' attribute.");
         }*/
     }
@@ -407,54 +426,66 @@ public class ConfigRenderer extends Renderer {
         return configUIComponent.getId() + INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID_SUFFIX;
     }
 
-     private HtmlModalPanel addMemberValuesModalPanel(ConfigurationSetComponent configurationSetComponent,
-                                                      PropertyDefinitionSimple propertyDefinitionSimple)
+     private HtmlModalPanel addMemberValuesModalPanel(ConfigurationSetComponent configurationSetComponent)
      {
-         UIForm mainForm = FacesComponentUtility.getEnclosingForm(configurationSetComponent);
+         //UIForm mainForm = FacesComponentUtility.getEnclosingForm(configurationSetComponent);
          HtmlModalPanel modalPanel = FacesComponentUtility.createComponent(HtmlModalPanel.class);
+         // The below setting is critical - it allows us to be enclosed in a form (in this case, the form surrounding
+         // the config component) (see https://jira.jboss.org/jira/browse/RF-5588).
+         modalPanel.setDomElementAttachment("form");
+
          modalPanel.setId(ConfigurationSetComponent.getMemberValuesModalPanelId(configurationSetComponent));
          modalPanel.setWidth(400);
-         modalPanel.setHeight(600);
+         modalPanel.setHeight(650);
          // TODO: Add vertical scrollbar to the modal panel
          //       (see http://jboss.org/file-access/default/members/jbossrichfaces/freezone/docs/development/faq/en/html_single/faq.html, item 1.32).
          //       Horizontal scrollbar shouldn't be necessary, since the content has a fixed width.
-         //noinspection ConstantConditions
+
+         configurationSetComponent.getChildren().add(modalPanel);
+
          // Insert the modal panel as a sibling of the main form, just after the main form in the tree.
-         int index = getComponentIndex(mainForm);
+         /*int index = getComponentIndex(mainForm);
          mainForm.getParent().getChildren().add(index + 1, modalPanel);
          HtmlForm form = new HtmlForm();
+         form.setId(configurationSetComponent.getId() + "PropertySetForm");
          modalPanel.getChildren().add(form);
-         form.setOnsubmit("prepareInputsForSubmission(this)");
-         PropertySetComponent propertySet = FacesComponentUtility.createComponent(PropertySetComponent.class);
-         form.getChildren().add(propertySet);
+         form.setOnsubmit("prepareInputsForSubmission(this)");*/
+         PropertySetComponent propertySet = new PropertySetComponent();
+         propertySet.setId(PROPERTY_SET_COMPONENT_ID);
+         //form.getChildren().add(propertySet);
+         modalPanel.getChildren().add(propertySet);
          propertySet.setReadOnly(configurationSetComponent.isReadOnly());
          propertySet.setListIndex(configurationSetComponent.getListIndex());
-         ValueExpression valueExpression;
-         if (propertyDefinitionSimple == null) {
-             valueExpression = FacesExpressionUtility.createValueExpression(
-                     "#{EditTestConfigurationUIBean.configurationDefinition.propertyDefinitions['Float']}",
-                     PropertyDefinitionSimple.class);
+         ValueExpression valueExpression = FacesExpressionUtility.createValueExpression("#{param.propertyExpressionString}",
+                 String.class);
+         propertySet.setValueExpression(PropertySetComponent.PROPERTY_EXPRESSION_STRING_ATTRIBUTE, valueExpression);
+         // The below can be uncommented in order for the "propertyExpressionValue" attribute to have a valid value
+         // on the initial page load (i.e. for testing purposes).
+         //propertySet.getAttributes().put(PropertySetComponent.PROPERTY_EXPRESSION_STRING_ATTRIBUTE,
+         //            "#{EditTestConfigurationUIBean.configurationSet.aggregateConfiguration.map['String1'].stringValue}");
 
-
-         } else {
-             valueExpression = ConfigurationExpressionUtility.createValueExpressionForPropertyDefiniton(
-                    configurationSetComponent.getConfigurationDefinitionExpressionString(), propertyDefinitionSimple);
-         }
-         propertySet.setValueExpression(PropertySetComponent.PROPERTY_DEFINITION_ATTRIBUTE, valueExpression);
          propertySet.setValueExpression(PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE,
                      configurationSetComponent.getValueExpression(ConfigurationSetComponent.CONFIGURATION_SET_ATTRIBUTE));
 
          String modalPanelClientId = modalPanel.getClientId(FacesContext.getCurrentInstance());
 
          HtmlAjaxCommandLink ajaxCommandLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
-         form.getChildren().add(ajaxCommandLink);
-         ajaxCommandLink.setOncomplete("Richfaces.hideModalPanel('" + modalPanelClientId + "');");
-         ajaxCommandLink.setReRender(mainForm.getId() + ":" + configurationSetComponent.getId());
+         //form.getChildren().add(ajaxCommandLink);
+         modalPanel.getChildren().add(ajaxCommandLink);
+         //ajaxCommandLink.setImmediate(true);
+         //ajaxCommandLink.setOncomplete("Richfaces.hideModalPanel('" + modalPanelClientId + "');");
+
+         //ajaxCommandLink.setReRender(mainForm.getId() + ":" + configurationSetComponent.getId());
+         //ajaxCommandLink.setReRender("rhq_configSet");
+         //MethodExpression actionExpression = FacesExpressionUtility.createMethodExpression(
+         //   "#{EditTestConfigurationUIBean.updateConfiguration}", String.class, new Class[0]);
+         //ajaxCommandLink.setActionExpression(actionExpression);
          ajaxCommandLink.setTitle("OK");
-         FacesComponentUtility.addParameter(ajaxCommandLink, null, "refresh", "true");
+         FacesComponentUtility.addParameter(ajaxCommandLink, null, "refresh", configurationSetComponent.getId());
          FacesComponentUtility.addButton(ajaxCommandLink, "OK", CssStyleClasses.BUTTON_SMALL);
 
-         HtmlOutputLink closeModalLink = FacesComponentUtility.addOutputLink(form, null, "#");
+         //HtmlOutputLink closeModalLink = FacesComponentUtility.addOutputLink(form, null, "#");
+         HtmlOutputLink closeModalLink = FacesComponentUtility.addOutputLink(modalPanel, null, "#");
          closeModalLink.setOnclick("Richfaces.hideModalPanel('" + modalPanelClientId + "'); return false;");
          closeModalLink.setTitle("Cancel");
          FacesComponentUtility.addButton(closeModalLink, "Cancel", CssStyleClasses.BUTTON_SMALL);

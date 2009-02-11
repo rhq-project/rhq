@@ -28,7 +28,7 @@
                             value="#{oobHistoryDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="35%, 35%, 10%, 10%, 10 "
+                            columnsWidth="26%, 26%, 8%, 8%, 8%, 8%, 8%, 8% "
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -73,8 +73,8 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="sum(o.oobFactor)">
-                        <h:outputText styleClass="headerText" value="Factor 72h (%)" />
+                     <onc:sortableColumnHeader sort="max(o.oobFactor)">
+                        <h:outputText styleClass="headerText" value="Max 72h" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
@@ -84,8 +84,19 @@
 
                 <rich:column>
                    <f:facet name="header">
+                      <onc:sortableColumnHeader sort="avg(o.oobFactor)">
+                         <h:outputText styleClass="headerText" value="Avg 72h (%)" />
+                      </onc:sortableColumnHeader>
+                   </f:facet>
 
-                         <h:outputText styleClass="headerText" value="Factor 48h (%)" />
+                   <h:outputText value="#{item.avg72}" >
+                   </h:outputText>
+                </rich:column>
+
+                <rich:column>
+                   <f:facet name="header">
+
+                         <h:outputText styleClass="headerText" value="Max 48h (%)" />
                    </f:facet>
 
                    <h:outputText value="#{item.factor48}" >
@@ -94,10 +105,30 @@
 
                 <rich:column>
                    <f:facet name="header">
-                         <h:outputText styleClass="headerText" value="Factor 24h (%)" />
+
+                         <h:outputText styleClass="headerText" value="Avg 48h (%)" />
+                   </f:facet>
+
+                   <h:outputText value="#{item.avg48}" >
+                   </h:outputText>
+                </rich:column>
+
+                <rich:column>
+                   <f:facet name="header">
+                         <h:outputText styleClass="headerText" value="Max 24h (%)" />
                    </f:facet>
 
                    <h:outputText value="#{item.factor24}" >
+                   </h:outputText>
+                </rich:column>
+
+                <rich:column>
+                   <f:facet name="header">
+
+                         <h:outputText styleClass="headerText" value="Avg 24h (%)" />
+                   </f:facet>
+
+                   <h:outputText value="#{item.avg24}" >
                    </h:outputText>
                 </rich:column>
 

@@ -35,7 +35,7 @@ import javax.persistence.Table;
  */
 @NamedQueries({
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE,
-                query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.displayName,sched.id,def.id,sum(o.oobFactor)) " +
+                query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.displayName,sched.id,def.id,max(o.oobFactor),avg(o.oobFactor)) " +
                         "FROM MeasurementOOB o "+
                         "LEFT JOIN o.schedule sched " +
                         "LEFT JOIN sched.definition def " +
@@ -59,7 +59,7 @@ import javax.persistence.Table;
                         "  GROUP BY sched.id "
                         ),
         @NamedQuery(name=MeasurementOOB.GET_FACTOR_FOR_SCHEDULES,
-                query= "SELECT o.id.scheduleId,sum(o.oobFactor)" +
+                query= "SELECT o.id.scheduleId,max(o.oobFactor),avg(o.oobFactor)" +
                         "FROM MeasurementOOB o "+
                         "WHERE (o.id.timestamp >= :begin AND o.id.timestamp <= :end )" +
                         "  AND o.id.scheduleId IN (:schedules)  " +

@@ -37,16 +37,20 @@ public class MeasurementOOBComposite implements Serializable {
     private int factor72;
     private int factor48;
     private int factor24;
+    private int avg72;
+    private int avg48;
+    private int avg24;
 
 
     public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, int definitionId,
-                                   long factor72) {
+                                   int factor72, double avg72) {
         this.resourceName = resourceName;
         this.resourceId = resourceId;
         this.scheduleName = scheduleName;
         this.scheduleId = scheduleId;
         this.definitionId = definitionId;
         this.factor72 = (int) factor72;
+        this.avg72 = (int)avg72;
     }
 
     public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, int definitionId,
@@ -100,6 +104,30 @@ public class MeasurementOOBComposite implements Serializable {
 
     public int getFactor72() {
         return factor72;
+    }
+
+    public int getAvg72() {
+        return avg72;
+    }
+
+    public void setAvg72(int avg72) {
+        this.avg72 = avg72;
+    }
+
+    public int getAvg48() {
+        return avg48;
+    }
+
+    public void setAvg48(int avg48) {
+        this.avg48 = avg48;
+    }
+
+    public int getAvg24() {
+        return avg24;
+    }
+
+    public void setAvg24(int avg24) {
+        this.avg24 = avg24;
     }
 
     @Override

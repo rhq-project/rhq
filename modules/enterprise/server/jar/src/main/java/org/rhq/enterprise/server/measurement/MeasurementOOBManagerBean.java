@@ -224,8 +224,10 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
             for (Object[] objs : ret) {
                 Integer id = (Integer) objs[0];
-                Long fac = (Long) objs[1];
+                Integer fac = (Integer) objs[1];
+                Double avg = (Double) objs[2];
                 map.get(id).setFactor48(fac.intValue());
+                map.get(id).setAvg48(avg.intValue());
             }
 
             begin = end - (2L * 86400L * 1000L);
@@ -238,8 +240,10 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
             for (Object[] objs : ret) {
                 Integer id = (Integer) objs[0];
-                Long fac = (Long) objs[1];
+                Integer fac = (Integer) objs[1];
+                Double avg = (Double) objs[2];
                 map.get(id).setFactor24(fac.intValue());
+                map.get(id).setAvg24(avg.intValue());
             }
         }
 

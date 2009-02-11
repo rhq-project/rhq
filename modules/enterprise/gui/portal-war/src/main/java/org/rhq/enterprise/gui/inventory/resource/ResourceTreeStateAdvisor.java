@@ -121,7 +121,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                     if (ag.getSubcategory() != null) {
                         // this is a subcategory or subsubcategory, no page to display right now
                         FacesContextUtility.getManagedBean(ResourceUIBean.class).setMessage(
-                            "No pages exist for this type of ");
+                            "No pages exist for subcategory types");
                         return;
                     } else {
                         String path = "/rhq/autogroup/monitor/graphs.xhtml?parent=" + ag.getParentResource().getId()

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.content;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -27,21 +28,21 @@ import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.richfaces.model.UploadItem;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Channel;
+import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.composite.ChannelComposite;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -111,14 +112,21 @@ public class CreateNewPackageUIBean {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
+    public String cancel() {
+        UploadNewPackageUIBean uploadUIBean = FacesContextUtility.getManagedBean(UploadNewPackageUIBean.class);
+        if (uploadUIBean != null) {
+            uploadUIBean.clear();
+        }
+        return "cancel";
+    }
+
     public String createPackage() {
         HttpServletRequest request = FacesContextUtility.getRequest();
 
         String response;
         if (request.getParameter("newPackage") != null) {
-            response = createNewPackage(packageName, version, selectedArchitectureId, selectedPackageTypeId);            
-        }
-        else {
+            response = createNewPackage(packageName, version, selectedArchitectureId, selectedPackageTypeId);
+        } else {
             String packageName = getBackingPackageName();
             String version = Long.toString(System.currentTimeMillis());
             int architectureId = getBackingPackageArchitectureId();
@@ -137,9 +145,10 @@ public class CreateNewPackageUIBean {
         Resource resource = EnterpriseFacesContextUtility.getResource();
 
         HttpServletRequest request = FacesContextUtility.getRequest();
+        UploadNewPackageUIBean uploadUIBean = FacesContextUtility.getManagedBean(UploadNewPackageUIBean.class);
 
         String channelOption = request.getParameter("channelOption");
-        FileItem fileItem = (FileItem) request.getAttribute("uploadForm:uploadFile");
+        UploadItem fileItem = uploadUIBean.getFileItem();
 
         // Validate
         if (packageName == null || packageName.trim().equals("")) {
@@ -164,7 +173,7 @@ public class CreateNewPackageUIBean {
             return null;
         }
 
-        if ((fileItem.getName() == null) || fileItem.getName().equals("")) {
+        if ((fileItem == null) || fileItem.getFile() == null) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package file must be specified");
             return null;
         }
@@ -180,56 +189,62 @@ public class CreateNewPackageUIBean {
             return "failure";
         }
 
-        // Grab a stream for the file being uploaded
-        InputStream packageStream;
-
         try {
-            packageStream = fileItem.getInputStream();
-        } catch (IOException e) {
-            String errorMessages = ThrowableUtil.getAllMessages(e);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to retrieve the input stream. Cause: "
-                + errorMessages);
-            return "failure";
+            // Grab a stream for the file being uploaded
+            InputStream packageStream;
+
+            try {
+                log.debug("Streaming new package bits from uploaded file: " + fileItem.getFile());
+                packageStream = new FileInputStream(fileItem.getFile());
+            } catch (IOException e) {
+                String errorMessages = ThrowableUtil.getAllMessages(e);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Failed to retrieve the input stream. Cause: " + errorMessages);
+                return "failure";
+            }
+
+            // Ask the bean to create the package
+
+            /* Currently, this is just used in the workflow for deploying a new package. This will probably get
+               refactored in the future for a general way of adding packages to the channel as its own operation. For
+               now, don't worry about that. The rest of this will be written assuming it's part of the deploy
+               workflow and we'll deal with the refactoring later.
+               jdobies, Feb 27, 2008
+             */
+            PackageVersion packageVersion;
+            try {
+                ContentManagerLocal contentManager = LookupUtil.getContentManager();
+                packageVersion = contentManager.createPackageVersion(packageName, packageTypeId, version,
+                    architectureId, packageStream);
+            } catch (Exception e) {
+                String errorMessages = ThrowableUtil.getAllMessages(e);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to create package [" + packageName
+                    + "] in channel. Cause: " + errorMessages);
+                return "failure";
+            }
+
+            int[] packageVersionList = new int[] { packageVersion.getId() };
+
+            // Add the package to the channel
+            try {
+                int iChannelId = Integer.parseInt(channelId);
+
+                ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
+                channelManager.addPackageVersionsToChannel(subject, iChannelId, packageVersionList);
+            } catch (Exception e) {
+                String errorMessages = ThrowableUtil.getAllMessages(e);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to associate package ["
+                    + packageName + "] with channel ID [" + channelId + "]. Cause: " + errorMessages);
+                return "failure";
+            }
+
+            // Put the package ID in the session so it can fit into the deploy existing package workflow
+            HttpSession session = request.getSession();
+            session.setAttribute("selectedPackages", packageVersionList);
+        } finally {
+            // clean up the temp file
+            uploadUIBean.clear();
         }
-
-        // Ask the bean to create the package
-
-        /* Currently, this is just used in the workflow for deploying a new package. This will probably get
-           refactored in the future for a general way of adding packages to the channel as its own operation. For
-           now, don't worry about that. The rest of this will be written assuming it's part of the deploy
-           workflow and we'll deal with the refactoring later.
-           jdobies, Feb 27, 2008
-         */
-        PackageVersion packageVersion;
-        try {
-            ContentManagerLocal contentManager = LookupUtil.getContentManager();
-            packageVersion = contentManager.createPackageVersion(packageName, packageTypeId, version,
-                architectureId, packageStream);
-        } catch (Exception e) {
-            String errorMessages = ThrowableUtil.getAllMessages(e);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to create package [" + packageName
-                + "] in channel. Cause: " + errorMessages);
-            return "failure";
-        }
-
-        int[] packageVersionList = new int[] { packageVersion.getId() };
-
-        // Add the package to the channel
-        try {
-            int iChannelId = Integer.parseInt(channelId);
-
-            ChannelManagerLocal channelManager = LookupUtil.getChannelManagerLocal();
-            channelManager.addPackageVersionsToChannel(subject, iChannelId, packageVersionList);
-        } catch (Exception e) {
-            String errorMessages = ThrowableUtil.getAllMessages(e);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to associate package [" + packageName
-                + "] with channel ID [" + channelId + "]. Cause: " + errorMessages);
-            return "failure";
-        }
-
-        // Put the package ID in the session so it can fit into the deploy existing package workflow
-        HttpSession session = request.getSession();
-        session.setAttribute("selectedPackages", packageVersionList);
 
         return "success";
     }

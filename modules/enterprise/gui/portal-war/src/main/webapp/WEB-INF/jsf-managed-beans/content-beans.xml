@@ -63,6 +63,11 @@
       <managed-bean-class>org.rhq.enterprise.gui.content.ListPackageTypesUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
+   <managed-bean>
+      <managed-bean-name>UploadNewPackageUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.UploadNewPackageUIBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
 
    <!-- /rhq/resource/content/package_history.xhtml -->
    <managed-bean>

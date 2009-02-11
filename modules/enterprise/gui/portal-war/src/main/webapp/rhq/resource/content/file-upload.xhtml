@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:h="http://java.sun.com/jsf/html" 
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets" 
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax" 
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+    <ui:composition template="/rhq/layout/popup.xhtml">
+        <ui:param name="pageTitle" value="Package File Upload"/>
+        
+        <ui:define name="body-area">
+            <rich:panel id="fileUploadPanel">
+                <f:facet name="header">
+                    <h:outputText value="Package File Upload"/>
+                </f:facet>
+
+                <h:panelGrid columns="1" width="100%">
+                    <rich:fileUpload
+                          id="contentUpload"
+                          fileUploadListener="#{UploadNewPackageUIBean.fileUploadListener}"
+                          listHeight="60px"
+                          maxFilesQuantity="1"
+                          immediateUpload="false"
+                          autoclear="false"
+                          allowFlash="false">
+                    </rich:fileUpload>
+                </h:panelGrid>
+            </rich:panel>
+        </ui:define>
+    </ui:composition>
+</html>
+

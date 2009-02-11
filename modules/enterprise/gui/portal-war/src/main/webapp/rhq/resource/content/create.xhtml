@@ -9,7 +9,7 @@
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
-      xmlns:onc="http://jboss.org/on/component"
+      xmlns:a4j="http://richfaces.org/a4j"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
@@ -18,7 +18,27 @@
    <ui:param name="selectedTabName" value="Content.New"/>
    <ui:define name="content">
 
-      <h:form id="uploadForm" enctype="multipart/form-data">
+         <rich:panel id="fileUploadPanel">
+            <f:facet name="header">
+               <h:outputText value="Package File"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%" rendered="${ResourceUIBean.permissions.content}">
+               <input type="button"
+                      style="margin-top: 10px;"
+                      class="buttonmed"
+                      value="UPLOAD FILE..."
+                      onclick="javascript:open('/rhq/resource/content/file-upload.xhtml', 'uploadwin', 'titlebar=0,toolbar=0,location=0,menubar=0,directories=0,height=160,width=450')"/>
+            </h:panelGrid>
+
+            <h:outputText rendered="#{!ResourceUIBean.permissions.content}"
+                          value="You do not have permissions to upload content"/>
+
+            <h:outputText rendered="#{UploadNewPackageUIBean.fileUploaded}"
+                          value="#{UploadNewPackageUIBean.fileItem.fileName}"/>
+         </rich:panel>
+
+      <h:form id="uploadForm">
          <input type="hidden" name="id" value="${param.id}"/>
 
          <rich:panel rendered="#{CreateNewPackageUIBean.needRequestPackageDetails}">
@@ -59,45 +79,36 @@
          </rich:panel>
 
          <rich:panel>
-            <f:facet name="header">Package File</f:facet>
-            
-            <table>
-               <tr>
-                  <td align="right"><b>File*</b></td>
-                  <td align="left"><onc:upload id="uploadFile"/></td>
-               </tr>
-            </table>            
-         </rich:panel>
-
-         <rich:panel>
 
             <f:facet name="header">Channel</f:facet>
 
             <p>Select one of the following options describing in which channel the new package should be created.</p>
 
             <input type="radio" name="channelOption" value="subscribed">Currently Subscribed Channel</input>
+               <rich:spacer width="5"/>
                <h:selectOneMenu value="#{CreateNewPackageUIBean.subscribedChannelId}">
                   <f:selectItems value="#{CreateNewPackageUIBean.subscribedChannels}" />
                </h:selectOneMenu>
             <br/>
             <input type="radio" name="channelOption" value="unsubscribed">Subscribe to Existing Channel</input>
+               <rich:spacer width="5"/>
                <h:selectOneMenu value="#{CreateNewPackageUIBean.unsubscribedChannelId}">
                   <f:selectItems value="#{CreateNewPackageUIBean.unsubscribedChannels}" />
                </h:selectOneMenu>
             <br/>
             <input type="radio" name="channelOption" value="new">Create New Channel</input>
-               <h:inputText value="#{CreateNewPackageUIBean.newChannelName}"/>
+            <rich:spacer width="5"/><h:inputText value="#{CreateNewPackageUIBean.newChannelName}"/>
 
          </rich:panel>
 
          <h:panelGrid id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
 
             <h:commandButton style="margin-top: 10px;" value="CANCEL"
-                             action="cancel" styleClass="buttonmed"/>
+                             action="#{CreateNewPackageUIBean.cancel}" styleClass="buttonmed"/>
 
             <h:commandButton style="margin-top: 10px;" value="CONTINUE"
                              action="#{CreateNewPackageUIBean.createPackage}" styleClass="buttonmed"
-                             rendered="${ResourceUIBean.permissions.content}"/>
+                             disabled="#{!UploadNewPackageUIBean.fileUploaded}"/>
 
          </h:panelGrid>
 

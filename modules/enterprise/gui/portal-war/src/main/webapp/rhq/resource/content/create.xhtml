@@ -24,18 +24,20 @@
             </f:facet>
 
             <h:panelGrid columns="1" width="100%" rendered="${ResourceUIBean.permissions.content}">
-               <input type="button"
-                      style="margin-top: 10px;"
-                      class="buttonmed"
-                      value="UPLOAD FILE..."
-                      onclick="javascript:open('/rhq/resource/content/file-upload.xhtml', 'uploadwin', 'titlebar=0,toolbar=0,location=0,menubar=0,directories=0,height=160,width=450')"/>
+               <rich:panel>
+                  <input type="button"
+                         class="buttonmed"
+                         value="UPLOAD FILE..."
+                         onclick="javascript:open('/rhq/resource/content/file-upload.xhtml', 'uploadwin', 'titlebar=0,toolbar=0,location=0,menubar=0,directories=0,resizable=0,height=160,width=450')"/>
+                  <rich:spacer width="5" />
+                  <h:outputText rendered="#{UploadNewPackageUIBean.fileUploaded}"
+                                value="File Uploaded: #{UploadNewPackageUIBean.fileItem.fileName}"/>
+               </rich:panel>
             </h:panelGrid>
 
             <h:outputText rendered="#{!ResourceUIBean.permissions.content}"
                           value="You do not have permissions to upload content"/>
 
-            <h:outputText rendered="#{UploadNewPackageUIBean.fileUploaded}"
-                          value="#{UploadNewPackageUIBean.fileItem.fileName}"/>
          </rich:panel>
 
       <h:form id="uploadForm">
@@ -90,13 +92,13 @@
                   <f:selectItems value="#{CreateNewPackageUIBean.subscribedChannels}" />
                </h:selectOneMenu>
             <br/>
-            <input type="radio" name="channelOption" value="unsubscribed">Subscribe to Existing Channel</input>
+            <input type="radio" name="channelOption" value="unsubscribed">Existing Channel</input>
                <rich:spacer width="5"/>
                <h:selectOneMenu value="#{CreateNewPackageUIBean.unsubscribedChannelId}">
                   <f:selectItems value="#{CreateNewPackageUIBean.unsubscribedChannels}" />
                </h:selectOneMenu>
             <br/>
-            <input type="radio" name="channelOption" value="new">Create New Channel</input>
+            <input type="radio" name="channelOption" value="new">New Channel</input>
             <rich:spacer width="5"/><h:inputText value="#{CreateNewPackageUIBean.newChannelName}"/>
 
          </rich:panel>

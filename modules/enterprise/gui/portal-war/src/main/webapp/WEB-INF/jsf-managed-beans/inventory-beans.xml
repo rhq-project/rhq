@@ -12,6 +12,12 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
+   <managed-bean>
+      <managed-bean-name>FavoritesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.FavoritesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
    <!-- /rhq/admin/listAlertTemplates.xhtml & others -->
 
    <managed-bean>

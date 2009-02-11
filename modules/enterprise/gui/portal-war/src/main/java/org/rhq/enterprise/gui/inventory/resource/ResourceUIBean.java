@@ -21,6 +21,8 @@ package org.rhq.enterprise.gui.inventory.resource;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +38,6 @@ import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.resource.common.QuickFavoritesUtil;
@@ -56,6 +57,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public class ResourceUIBean {
+
+    protected final Log log = LogFactory.getLog(ResourceUIBean.class);
+
     public static final String MANAGED_BEAN_NAME = "ResourceUIBean";
 
     private Resource resource;
@@ -63,14 +67,25 @@ public class ResourceUIBean {
     private ResourcePermission permissions;
     private ResourceFacets facets;
     private ResourceError invalidPluginConfigurationError;
-    private Boolean isFavorite; // true if this resource has been added to the favorites dashboard portlet
+    private Boolean favorite; // true if this resource has been added to the favorites dashboard portlet
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
     private AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
 
+    private String message;
+
+    public String getMessage() {
+        return this.message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
     public ResourceUIBean() {
-        this(lookupResource());
+        this(EnterpriseFacesContextUtility.getResource());
+        log.info("Creating " + ResourceUIBean.class.getSimpleName());
     }
 
     public ResourceUIBean(Resource resource) {
@@ -167,42 +182,43 @@ public class ResourceUIBean {
     }
 
     public boolean isFavorite() {
-        if (this.isFavorite == null) {
-            this.isFavorite = QuickFavoritesUtil.determineIfFavoriteResource(FacesContextUtility.getRequest());
+        if (this.favorite == null) {
+            this.favorite = QuickFavoritesUtil.determineIfFavoriteResource(FacesContextUtility.getRequest());
+            log.info("Getting initial favorite: " + this.favorite);
+        }
+        log.info("Favorite is: " + this.favorite);
+
+        return this.favorite;
+    }
+
+    public String toggleFavorite() {
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        WebUserPreferences preferences = user.getWebPreferences();
+        WebUserPreferences.FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
+            .getFavoriteResourcePortletPreferences();
+
+        int resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
+
+        boolean isFav = favoriteResourcePreferences.isFavorite(resourceId);
+        if (isFav) {
+            favoriteResourcePreferences.removeFavorite(resourceId);
+            log.info("Removing favorite: " + resourceId);
+        } else {
+            favoriteResourcePreferences.addFavorite(resourceId);
+            log.info("Adding favorite: " + resourceId);
         }
 
-        return this.isFavorite;
+        preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
+        preferences.persistPreferences();
+
+        favorite = !isFav;
+        log.info("Setting favorite to: " + this.favorite);
+
+        return null;
     }
 
     public void setFavorite(boolean favorite) {
-
-        WebUser user = EnterpriseFacesContextUtility.getWebUser();
-        WebUserPreferences preferences = user.getWebPreferences();
-
-        int resourceId = EnterpriseFacesContextUtility.getResource().getId();
-
-        String mode = FacesContextUtility.getOptionalRequestParameter("mode", (String) null);
-
-        if (mode != null && mode.equals("add")) {
-            if (!isFavorite) {
-
-                // Add to favorites and save
-                WebUserPreferences.FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
-                    .getFavoriteResourcePortletPreferences();
-                favoriteResourcePreferences.addFavorite(resourceId);
-                preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
-            }
-        } else if (mode != null && mode.equals("remove")) {
-            if (isFavorite) {
-                // Remove from favorites and save
-                WebUserPreferences.FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
-                    .getFavoriteResourcePortletPreferences();
-                favoriteResourcePreferences.removeFavorite(resourceId);
-                preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
-            }
-        }
-        isFavorite = mode != null && mode.equals("add");
-        preferences.persistPreferences();
+        this.favorite = favorite;
     }
 
     public AvailabilityType getAvailabilityType() {
@@ -216,12 +232,4 @@ public class ResourceUIBean {
         return resourceManager.getAvailabilitySummary(EnterpriseFacesContextUtility.getSubject(), getId());
     }
 
-    private static Resource lookupResource() {
-        int resourceId = FacesContextUtility.getRequiredRequestParameter(ParamConstants.RESOURCE_ID_PARAM,
-            Integer.class);
-
-        // TODO: To be more efficient, instead call a manager method that returns a ResourceComposite.
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-        return LookupUtil.getResourceManager().getResourceById(subject, resourceId);
-    }
 }

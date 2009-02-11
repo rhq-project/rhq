@@ -18,37 +18,28 @@
  */
 package org.rhq.enterprise.gui.inventory.resource;
 
-
 import java.io.IOException;
-import java.util.Map;
-import java.util.HashMap;
 
-import javax.faces.component.UIComponent;
-import javax.faces.context.FacesContext;
 import javax.servlet.ServletContext;
-import javax.servlet.ServletResponse;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
 import org.richfaces.component.UITree;
 import org.richfaces.component.html.HtmlTree;
-import org.richfaces.component.state.TreeStateAdvisor;
 import org.richfaces.component.state.TreeState;
+import org.richfaces.component.state.TreeStateAdvisor;
 import org.richfaces.model.TreeRowKey;
-import org.ajax4jsf.model.DataVisitor;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-
 
 /**
  * Manages the tree selection and node openess for the left nav resource tree
@@ -65,8 +56,6 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
 
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-
-
 
     public void changeExpandListener(org.richfaces.event.NodeExpandedEvent e) {
         altered = true;
@@ -87,24 +76,23 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
             ResourceTreeNode node = (ResourceTreeNode) tree.getRowData(tree.getRowKey());
 
             if (node != null) {
-                ServletContext context = (ServletContext) FacesContextUtility.getFacesContext().getExternalContext().getContext();
-                HttpServletResponse response = (HttpServletResponse) FacesContextUtility.getFacesContext().getExternalContext().getResponse();
+                ServletContext context = (ServletContext) FacesContextUtility.getFacesContext().getExternalContext()
+                    .getContext();
+                HttpServletResponse response = (HttpServletResponse) FacesContextUtility.getFacesContext()
+                    .getExternalContext().getResponse();
 
                 Subject subject = EnterpriseFacesContextUtility.getSubject();
 
                 if (node.getData() instanceof Resource) {
                     String path = FacesContextUtility.getRequest().getRequestURI();
 
-                    Resource resource = this.resourceManager.getResourceById(subject, ((Resource) node.getData()).getId());
-                    ResourceFacets facets  = this.resourceTypeManager.getResourceFacets(subject, resource.getResourceType().getId());
+                    Resource resource = this.resourceManager.getResourceById(subject, ((Resource) node.getData())
+                        .getId());
+                    ResourceFacets facets = this.resourceTypeManager.getResourceFacets(subject, resource
+                        .getResourceType().getId());
 
-
-                    String fallbackPath = LookupUtil.getSystemManager().isMonitoringEnabled()
-                            ? "/rhq/resource/monitor/graphs.xhtml"
-                            : "/rhq/resource/inventory/view.xhtml";
-
-                    
-
+                    String fallbackPath = LookupUtil.getSystemManager().isMonitoringEnabled() ? "/rhq/resource/monitor/graphs.xhtml"
+                        : "/rhq/resource/inventory/view.xhtml";
 
                     // Switching from a auto group view... default to monitor page
                     if (!path.startsWith("/rhq/resource")) {
@@ -115,11 +103,11 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                             || (path.startsWith("/rhq/resource/operation") && !facets.isOperation())) {
                             // This resource doesn't support those facets
                             path = fallbackPath;
-                        } else if (path.startsWith("/rhq/resource/configuration/edit.xhtml") && facets.isConfiguration()) {
+                        } else if (path.startsWith("/rhq/resource/configuration/edit.xhtml")
+                            && facets.isConfiguration()) {
                             path = "/rhq/resource/configuration/view.xhtml";
                         } else if (!path.startsWith("/rhq/resource/content/view.xhtml")
-                                && path.startsWith("/rhq/resource/content/")
-                                && facets.isContent()) {
+                            && path.startsWith("/rhq/resource/content/") && facets.isContent()) {
                             path = "/rhq/resource/content/view.xhtml";
                         } else if (!path.startsWith("/rhq/resource/inventory/view.xhtml")
                             && path.startsWith("/rhq/resource/inventory/")) {
@@ -130,19 +118,24 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                     response.sendRedirect(path + "?id=" + ((Resource) node.getData()).getId());
                 } else if (node.getData() instanceof AutoGroupComposite) {
                     AutoGroupComposite ag = (AutoGroupComposite) node.getData();
-                    String path = "/rhq/autogroup/monitor/graphs.xhtml?parent="
-                            + ag.getParentResource().getId()
+                    if (ag.getSubcategory() != null) {
+                        // this is a subcategory or subsubcategory, no page to display right now
+                        FacesContextUtility.getManagedBean(ResourceUIBean.class).setMessage(
+                            "No pages exist for this type of ");
+                        return;
+                    } else {
+                        String path = "/rhq/autogroup/monitor/graphs.xhtml?parent=" + ag.getParentResource().getId()
                             + "&type=" + ag.getResourceType().getId();
-                    response.sendRedirect(path);
+                        response.sendRedirect(path);
+                    }
                 }
             }
         } catch (IOException e1) {
-            e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e1.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
         } catch (ResourceTypeNotFoundException e1) {
-            e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e1.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
         }
     }
-
 
     public Boolean adviseNodeOpened(UITree tree) {
         TreeRowKey key = (TreeRowKey) tree.getRowKey();
@@ -151,7 +144,6 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
             ResourceTreeNode treeNode = ((ResourceTreeNode) tree.getRowData(key));
 
             TreeState state = (TreeState) tree.getComponentState();
-
 
             TreeRowKey selectedKey = state.getSelectedNode();
             if (selectedKey == null) {
@@ -180,10 +172,8 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                 }
             }
 
-
             if (selectedKey != null && (key.isSubKey(selectedKey)))
                 return Boolean.TRUE;
-
 
             if (altered) {
                 if (state.isExpanded(key))
@@ -206,12 +196,11 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
             }
         } else if (resourceTreeNode.getData() instanceof AutoGroupComposite) {
             AutoGroupComposite ag = (AutoGroupComposite) resourceTreeNode.getData();
-            if (ag.getParentResource().getId() == selectedResourceId
-                    && ag.getResourceType() != null && ag.getResourceType().getId() == selectedAGTypeId) {
+            if (ag.getParentResource().getId() == selectedResourceId && ag.getResourceType() != null
+                && ag.getResourceType().getId() == selectedAGTypeId) {
                 return true;
             }
         }
-
 
         for (ResourceTreeNode child : resourceTreeNode.getChildren()) {
             if (preopen(child, selectedResourceId, selectedAGTypeId)) {
@@ -233,8 +222,8 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
             if (node.getData() instanceof AutoGroupComposite) {
                 AutoGroupComposite ag = (AutoGroupComposite) node.getData();
                 if (ag.getParentResource() != null && ag.getResourceType() != null
-                        && String.valueOf(ag.getParentResource().getId()).equals(parent)
-                        && String.valueOf(ag.getResourceType().getId()).equals(type)) {
+                    && String.valueOf(ag.getParentResource().getId()).equals(parent)
+                    && String.valueOf(ag.getResourceType().getId()).equals(type)) {
                     return true;
                 }
             }

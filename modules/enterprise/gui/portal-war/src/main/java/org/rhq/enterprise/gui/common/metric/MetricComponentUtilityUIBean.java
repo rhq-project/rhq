@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.common.metric;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.metric.MetricComponent.TimeUnit;
 import org.rhq.enterprise.gui.legacy.WebUser;
@@ -27,6 +30,8 @@ import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangeP
 
 public class MetricComponentUtilityUIBean {
 
+    private static final Log LOG = LogFactory.getLog(MetricComponentUtilityUIBean.class);
+
     private boolean readOnly;
 
     public MetricComponentUtilityUIBean() {
@@ -34,6 +39,8 @@ public class MetricComponentUtilityUIBean {
         MeasurementPreferences preferences = user.getMeasurementPreferences();
         MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
         this.readOnly = rangePreferences.readOnly;
+
+        LOG.debug("Creating MetricComponentUtilityUIBean: " + rangePreferences);
     }
 
     public boolean getReadOnly() {
@@ -48,11 +55,16 @@ public class MetricComponentUtilityUIBean {
         int value = FacesContextUtility.getOptionalRequestParameter(MetricComponent.VALUE, Integer.class, -1);
         String unit = FacesContextUtility.getOptionalRequestParameter(MetricComponent.UNIT, String.class, null);
 
+        readOnly = false;
+        rangePreferences.readOnly = false;
         rangePreferences.lastN = value;
         rangePreferences.unit = TimeUnit.valueOf(unit).getMetricUntilOrdinal();
-        rangePreferences.readOnly = readOnly = false;
+
         preferences.setMetricRangePreferences(rangePreferences);
         preferences.persistPreferences();
+
+        LOG.debug("Updating - MetricComponentUtilityUIBean: " + rangePreferences);
+
         return "success";
     }
 
@@ -60,11 +72,17 @@ public class MetricComponentUtilityUIBean {
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
         MeasurementPreferences preferences = user.getMeasurementPreferences();
         MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
+
+        readOnly = false;
+        rangePreferences.readOnly = false;
         rangePreferences.unit = 3;
         rangePreferences.lastN = 8;
-        rangePreferences.readOnly = readOnly = false;
+
         preferences.setMetricRangePreferences(rangePreferences);
         preferences.persistPreferences();
+
+        LOG.debug("Switching to simple mode - MetricComponentUtilityUIBean: " + rangePreferences);
+
         return "success";
     }
 }

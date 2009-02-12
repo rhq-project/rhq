@@ -21,6 +21,9 @@ package org.rhq.enterprise.gui.common.metric;
 import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -31,6 +34,8 @@ import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangeP
  * @author Fady Matar
  */
 public class MetricComponent extends UIComponentBase {
+
+    protected final Log log = LogFactory.getLog(MetricComponent.class);
 
     public final static String VALUE = "metricComponentValue";
     public final static String UNIT = "metricComponentUnit";
@@ -158,5 +163,6 @@ public class MetricComponent extends UIComponentBase {
          * be deserialized for rerendering 
          */
         loadPreferences(); // reload transient data
+        log.debug("Restoring state for MetricComponent: " + this.rangePreferences);
     }
 }

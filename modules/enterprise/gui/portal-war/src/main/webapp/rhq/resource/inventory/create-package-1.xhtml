@@ -21,7 +21,7 @@
 <ui:param name="selectedTabName" value="Inventory"/>
 <ui:define name="content">
 
-   <h:form id="uploadForm" enctype="multipart/form-data">
+   <h:form id="uploadForm">
 
       <input type="hidden" name="id" value="${ResourceUIBean.id}"/>
       <input type="hidden" name="type" value="#{CreateNewPackageChildResourceUIBean.resourceType.id}"/>
@@ -46,12 +46,22 @@
                   </td>
                </tr>
             </c:if>
-            
-            <tr>
-               <td align="right"><b>File</b></td>
-               <td align="left"><onc:upload id="uploadFile"/></td>
-            </tr>
          </table>
+
+         <h:panelGrid columns="1" width="100%">
+            <rich:panel>
+               <input type="button"
+                      class="buttonmed"
+                      value="UPLOAD FILE..."
+                      onclick="javascript:open('/rhq/resource/inventory/create-file-upload.xhtml', 'uploadwin', 'titlebar=0,toolbar=0,location=0,menubar=0,directories=0,resizable=0,height=160,width=450')"/>
+               <rich:spacer width="5" />
+               <h:outputText rendered="#{UploadNewChildPackageUIBean.fileUploaded}"
+                             value="File Uploaded: #{UploadNewChildPackageUIBean.fileItem.fileName}"/>
+            </rich:panel>
+         </h:panelGrid>
+
+         <h:outputText rendered="#{!ResourceUIBean.permissions.content}"
+                       value="You do not have permissions to upload content"/>
 
          <onc:config configurationDefinition="#{CreateNewPackageChildResourceUIBean.configurationDefinition}"
                      configuration="#{CreateNewPackageChildResourceUIBean.configuration}"
@@ -61,13 +71,15 @@
          <h:panelGrid id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
 
             <h:commandButton style="margin-top: 10px;" value="CREATE"
-                             action="#{CreateNewPackageChildResourceUIBean.createResource}" styleClass="buttonmed">
+                             action="#{CreateNewPackageChildResourceUIBean.createResource}"
+                             disabled="#{!UploadNewChildPackageUIBean.fileUploaded}"
+                             styleClass="buttonmed">
                <s:defaultAction />
             </h:commandButton>
 
             <h:commandButton style="margin-top: 10px;" value="CANCEL"
                              immediate="true"
-                             action="cancel" styleClass="buttonmed"/>
+                             action="#{CreateNewPackageChildResourceUIBean.cancel}" styleClass="buttonmed"/>
 
          </h:panelGrid>
 

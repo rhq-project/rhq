@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.inventory.resource;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -26,7 +27,9 @@ import java.util.List;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
 
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.richfaces.model.UploadItem;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -59,12 +62,15 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public class CreateNewPackageChildResourceUIBean {
+    private final Log log = LogFactory.getLog(this.getClass());
+
     // Constants  --------------------------------------------
 
     public static final String MANAGED_BEAN_NAME = "CreateNewPackageChildResourceUIBean";
 
     private static final String OUTCOME_SUCCESS_OR_FAILURE = "successOrFailure";
     private static final String OUTCOME_SUCCESS = "success";
+    private static final String OUTCOME_CANCEL = "cancel";
 
     // Attributes  --------------------------------------------
 
@@ -95,11 +101,13 @@ public class CreateNewPackageChildResourceUIBean {
     public String createResource() {
         Subject user = EnterpriseFacesContextUtility.getSubject();
 
-        FileItem fileItem = (FileItem) FacesContextUtility.getRequest().getAttribute("uploadForm:uploadFile");
+        UploadNewChildPackageUIBean uploadUIBean;
+        uploadUIBean = FacesContextUtility.getManagedBean(UploadNewChildPackageUIBean.class);
+        UploadItem fileItem = uploadUIBean.getFileItem();
 
         // Validate
-        if ((fileItem.getName() == null) || fileItem.getName().equals("")) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package file must be specified");
+        if ((fileItem == null) || fileItem.getFile() == null) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package file must be uploaded");
             return null;
         }
 
@@ -112,57 +120,69 @@ public class CreateNewPackageChildResourceUIBean {
             pluginConfiguration = pluginConfigurationDefinition.getDefaultTemplate().getConfiguration();
         }
 
-        InputStream packageContentStream;
         try {
-            packageContentStream = fileItem.getInputStream();
-        } catch (IOException e) {
-            String errorMessages = ThrowableUtil.getAllMessages(e);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to retrieve the input stream. Cause: "
-                + errorMessages);
-            return OUTCOME_SUCCESS_OR_FAILURE;
+            InputStream packageContentStream;
+            try {
+                log.debug("Streaming new package bits from uploaded file: " + fileItem.getFile());
+                packageContentStream = new FileInputStream(fileItem.getFile());
+            } catch (IOException e) {
+                String errorMessages = ThrowableUtil.getAllMessages(e);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Failed to retrieve the input stream. Cause: " + errorMessages);
+                return OUTCOME_SUCCESS_OR_FAILURE;
+            }
+
+            // If the type does not support architectures, load the no architecture entity and use that
+            if (!packageType.isSupportsArchitecture()) {
+                ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
+                Architecture noArchitecture = contentUIManager.getNoArchitecture();
+
+                selectedArchitectureId = noArchitecture.getId();
+            }
+
+            // Collect data for create call
+            Resource parentResource = EnterpriseFacesContextUtility.getResource();
+            Configuration deployTimeConfiguration = getConfiguration();
+            ConfigurationMaskingUtility.unmaskConfiguration(deployTimeConfiguration, getConfigurationDefinition());
+            String packageName = fileItem.getFileName();
+
+            // For JON 2.0 RC3, no longer request the package version on a package-backed create, simply
+            // use the timestamp. The timestamp will also be used when creating new packages of this type, so
+            // we are effectively controlling the versioning for the user
+            packageVersion = Long.toString(System.currentTimeMillis());
+
+            try {
+                ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
+
+                // RHQ-666 - Changed to not request the resource name from the user; simply pass null
+                resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
+                    pluginConfiguration, packageName, packageVersion, selectedArchitectureId, deployTimeConfiguration,
+                    packageContentStream);
+            } catch (Exception e) {
+                String errorMessages = ThrowableUtil.getAllMessages(e);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Failed to send create resource request to agent. Cause: " + errorMessages);
+                return OUTCOME_SUCCESS_OR_FAILURE;
+            }
+
+            // If we got this far, there were no errors, so output a success message
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                "Create resource request successfully sent to the agent.");
+        } finally {
+            // clean up the temp file
+            uploadUIBean.clear();
         }
 
-        // If the type does not support architectures, load the no architecture entity and use that
-        if (!packageType.isSupportsArchitecture()) {
-            ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
-            Architecture noArchitecture = contentUIManager.getNoArchitecture();
-
-            selectedArchitectureId = noArchitecture.getId();
-        }
-
-        // Collect data for create call
-        Resource parentResource = EnterpriseFacesContextUtility.getResource();
-        Configuration deployTimeConfiguration = getConfiguration();
-        ConfigurationMaskingUtility.unmaskConfiguration(deployTimeConfiguration, getConfigurationDefinition());
-        String packageName = fileItem.getName();
-
-        // For JON 2.0 RC3, no longer request the package version on a package-backed create, simply
-        // use the timestamp. The timestamp will also be used when creating new packages of this type, so
-        // we are effectively controlling the versioning for the user
-        packageVersion = Long.toString(System.currentTimeMillis());
-
-        try {
-            ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
-
-            // RHQ-666 - Changed to not request the resource name from the user; simply pass null
-            resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
-                pluginConfiguration, packageName, packageVersion, selectedArchitectureId, deployTimeConfiguration,
-                packageContentStream);
-        } catch (Exception e) {
-            String errorMessages = ThrowableUtil.getAllMessages(e);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                "Failed to send create resource request to agent. Cause: " + errorMessages);
-            return OUTCOME_SUCCESS_OR_FAILURE;
-        }
-
-        // If we got this far, there were no errors, so output a success message
-        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
-            "Create resource request successfully sent to the agent.");
         return OUTCOME_SUCCESS_OR_FAILURE;
     }
 
     public String cancel() {
-        return OUTCOME_SUCCESS;
+        UploadNewChildPackageUIBean uploadUIBean;
+        uploadUIBean = FacesContextUtility.getManagedBean(UploadNewChildPackageUIBean.class);
+        if (uploadUIBean != null) {
+            uploadUIBean.clear();
+        }
+        return OUTCOME_CANCEL;
     }
 
     public SelectItem[] getArchitectures() {

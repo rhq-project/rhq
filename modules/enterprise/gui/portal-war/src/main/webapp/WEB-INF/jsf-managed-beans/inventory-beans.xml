@@ -103,6 +103,12 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
+   <managed-bean>
+      <managed-bean-name>UploadNewChildPackageUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.UploadNewChildPackageUIBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
    <!-- /rhq/resource/inventory/add.xhtml -->
 
    <managed-bean>

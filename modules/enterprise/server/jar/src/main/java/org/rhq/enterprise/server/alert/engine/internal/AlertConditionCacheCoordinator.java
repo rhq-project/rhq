@@ -104,12 +104,12 @@ public final class AlertConditionCacheCoordinator {
     }
 
     private ReentrantReadWriteLock getAgentLock(int agentId) {
-        synchronized (instance) {
+        synchronized (agentReadWriteLocks) {
             if (!agentReadWriteLocks.containsKey(agentId)) {
                 agentReadWriteLocks.put(agentId, new ReentrantReadWriteLock());
             }
+            return agentReadWriteLocks.get(agentId);
         }
-        return agentReadWriteLocks.get(agentId);
     }
 
     public void reloadGlobalCache() {

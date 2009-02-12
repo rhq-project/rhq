@@ -294,6 +294,11 @@
    <listener>
       <listener-class>org.rhq.enterprise.gui.startup.Configurator</listener-class>
    </listener>
+   
+   <!-- Listener used to clear SubjectPreferencesCache when user logs outs / times out -->
+   <listener>
+      <listener-class>org.rhq.enterprise.gui.startup.SessionCacheListener</listener-class>
+   </listener>
 
    <!-- This is the object that finishes the RHQ Server startup initialization. -->
    <servlet>

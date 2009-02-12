@@ -30,11 +30,14 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.RetCodeConstants;
+import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCache;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class LogoutAction extends Action {
@@ -55,10 +58,22 @@ public class LogoutAction extends Action {
 
         HttpSession session = request.getSession();
 
+        clearSubjectPreferences(session);
+
         session.removeAttribute(Constants.USER_PARAM);
         SessionUtils.setWebUser(session, null);
         session.invalidate();
 
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);
+    }
+
+    private void clearSubjectPreferences(HttpSession session) {
+        WebUser webUser = SessionUtils.getWebUser(session);
+        if (webUser != null) {
+            Subject subject = webUser.getSubject();
+            if (subject != null) {
+                SubjectPreferencesCache.getInstance().clearConfiguration(subject.getId());
+            }
+        }
     }
 }

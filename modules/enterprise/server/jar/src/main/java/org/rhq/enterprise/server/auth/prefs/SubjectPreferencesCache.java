@@ -36,6 +36,9 @@ public class SubjectPreferencesCache {
     }
 
     public synchronized Configuration getUserConfiguration(int subjectId) {
+        if (log.isTraceEnabled()) {
+            log.trace("Loading PreferencesCache For " + subjectId);
+        }
         if (!subjectPreferences.containsKey(subjectId)) {
             Subject subject = subjectManager.loadUserConfiguration(subjectId);
             Configuration configuration = subject.getUserConfiguration();
@@ -45,12 +48,24 @@ public class SubjectPreferencesCache {
     }
 
     public synchronized void setUserConfiguration(int subjectId, Configuration configuration, Set<String> changed) {
+        if (log.isTraceEnabled()) {
+            log.trace("Updated PreferencesCache For " + subjectId);
+        }
         for (PropertySimple simpleProperty : configuration.getSimpleProperties().values()) {
             if (changed.contains(simpleProperty.getName())) {
-                log.debug("Changed: " + simpleProperty);
+                if (log.isDebugEnabled()) {
+                    log.debug("Changed: " + simpleProperty);
+                }
                 entityManagerFacade.merge(simpleProperty); // only merge changes
             }
         }
         subjectPreferences.put(subjectId, configuration);
+    }
+
+    public synchronized void clearConfiguration(int subjectId) {
+        if (log.isTraceEnabled()) {
+            log.trace("Removing PreferencesCache For " + subjectId);
+        }
+        subjectPreferences.remove(subjectId);
     }
 }

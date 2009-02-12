@@ -22,6 +22,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -242,9 +243,9 @@ public class ApplicationComponent
         if (!file.exists()) {
             throw new Exception("Cannot find application file to delete: " + fullFileName);
         }
-        
+
         try {
-        	getParentResourceComponent().undeployFile(file);            
+        	getParentResourceComponent().undeployFile(file);
         }
         catch (Exception e) {
             log.error("Failed to undeploy file [" + file + "].", e);
@@ -265,7 +266,7 @@ public class ApplicationComponent
                 throw e;
             }
         }
-             
+
     }
 
     // MeasurementFacet Implementation  --------------------------------------------
@@ -315,6 +316,32 @@ public class ApplicationComponent
     public JBossASServerComponent getParentResourceComponent() {
         return this.resourceContext.getParentResourceComponent();
     }
+
+    /**
+     * Revert the resource from a possibly existing backup file with the same basename
+     * and ending in .bak
+     * @throws Exception If anything goes wrong.
+     */
+    public void revertFromBackupFile() throws Exception {
+        Configuration pluginConfiguration = super.resourceContext.getPluginConfiguration();
+        String fullFileName = pluginConfiguration.getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
+
+        File backup = new File (fullFileName + ".bak"); // See FileContentDelegate#createContent
+        if (!backup.exists()) {
+            throw new FileNotFoundException("Backup file " + fullFileName + ".bak does not exist");
+        }
+        File directory = backup.getParentFile();
+        if (!directory.canWrite()) {
+            throw new IOException("Can not modify directory " + directory );
+        }
+
+        deleteResource();
+        File file = new File(fullFileName);
+
+        boolean good = backup.renameTo(file);
+        getParentResourceComponent().deployFile(file);
+    }
+
 
 
     // Private  --------------------------------------------

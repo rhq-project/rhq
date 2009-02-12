@@ -289,6 +289,21 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
             throw new IllegalStateException("Could not find jboss.web MBean for WAR '" + getApplicationName() + "'.");
         }
 
+        if (operation==WarOperation.REVERT) {
+            // Lets see if we have a backup of ouselves. If so, install it.
+
+            try {
+                revertFromBackupFile();
+                return new OperationResult("Successfully reverted from backup");
+            }
+            catch (Exception e) {
+                throw new RuntimeException("Error reverting from Backup: " + e.getMessage());
+            }
+        }
+
+
+        // The following are MBean operations.
+
         EmsOperation mbeanOperation = this.jbossWebMBean.getOperation(name);
         if (mbeanOperation == null) {
             throw new IllegalStateException("Operation [" + name + "] not found on bean ["
@@ -406,7 +421,7 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
     }
 
     private enum WarOperation {
-        START, STOP, RELOAD
+        START, STOP, RELOAD, REVERT
     }
 
     private interface JBossWebMBeanState {

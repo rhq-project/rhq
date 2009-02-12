@@ -2089,6 +2089,11 @@
             </c:group>
          </plugin-configuration>
 
+          <operation name="revert"
+                     description="Tries to revert this enterprise application to a saved backup in the same directory and with a name ending in .bak">
+              <results><c:simple-property name="operationResult" description="Outcome of reverting the webapp."/></results>
+          </operation>
+
          <!-- The two traits below are collected by the ApplicationComponent class. -->
          <metric property="Application.path" displayName="Path"
                  dataType="trait" displayType="summary"
@@ -2281,6 +2286,10 @@
          <operation name="reload"
                     description="reloads this webapp; NOTE: if the webapp is not in the started state, this operation will fail">
              <results><c:simple-property name="operationResult" description="Outcome of restarting the webapp."/></results>
+         </operation>
+         <operation name="revert"
+                    description="Tries to revert this web application to a saved backup in the same directory and with a name ending in .bak">
+             <results><c:simple-property name="operationResult" description="Outcome of reverting the webapp."/></results>
          </operation>
 
          <!-- The two traits below are collected by the ApplicationComponent class, which WarComponent extends.. -->

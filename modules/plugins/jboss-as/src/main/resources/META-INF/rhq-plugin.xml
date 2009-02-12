@@ -2090,7 +2090,7 @@
          </plugin-configuration>
 
           <operation name="revert"
-                     description="Tries to revert this enterprise application to a saved backup in the same directory and with a name ending in .bak">
+                     description="Tries to revert this enterprise application from a saved backup in the same directory and with a name ending in .bak">
               <results><c:simple-property name="operationResult" description="Outcome of reverting the webapp."/></results>
           </operation>
 
@@ -2288,7 +2288,7 @@
              <results><c:simple-property name="operationResult" description="Outcome of restarting the webapp."/></results>
          </operation>
          <operation name="revert"
-                    description="Tries to revert this web application to a saved backup in the same directory and with a name ending in .bak">
+                    description="Tries to revert this web application from a saved backup in the same directory and with a name ending in .bak">
              <results><c:simple-property name="operationResult" description="Outcome of reverting the webapp."/></results>
          </operation>
 

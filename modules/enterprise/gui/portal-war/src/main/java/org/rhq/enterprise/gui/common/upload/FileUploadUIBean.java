@@ -75,13 +75,17 @@ public class FileUploadUIBean {
         try {
             clear(); // clean up any old file that was previously uploaded, we can only handle one at a time
             setFileItem(event.getUploadItem());
+
             File uploadedFile = getFileItem().getFile();
-            String uploadedFilename = getFileItem().getFileName();
-            log.info("A file named [" + uploadedFilename + "] has been uploaded to [" + uploadedFile + "]");
 
             if (uploadedFile == null || !uploadedFile.exists()) {
                 throw new FileNotFoundException("The uploaded file [" + uploadedFile + "] does not exist!");
             }
+
+            String uploadedFilename = getFileItem().getFileName();
+            long uploadedFileSize = uploadedFile.length();
+            log.info("A file named [" + uploadedFilename + "] with a size of [" + uploadedFileSize
+                + "] has been uploaded to [" + uploadedFile + "]");
 
             onSuccess();
         } catch (Throwable t) {

@@ -174,7 +174,7 @@ public class CreateNewPackageUIBean {
         }
 
         if ((fileItem == null) || fileItem.getFile() == null) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package file must be specified");
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "A package file must be uploaded");
             return null;
         }
 

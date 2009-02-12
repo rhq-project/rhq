@@ -255,8 +255,13 @@ public final class AlertConditionCacheCoordinator {
             result += globalCache.getCacheSize(cache);
         } else if (cache.type == Cache.Type.Agent) {
             List<AgentConditionCache> cachesCopy = null;
-            synchronized (agentReadWriteLock) {
+            agentReadWriteLock.readLock().lock();
+            try {
                 cachesCopy = new ArrayList<AgentConditionCache>(agentCaches.values());
+            } catch (Throwable t) {
+                log.error("Error during getCacheSize", t); // don't let any exceptions bubble up to the calling SLSB layer
+            } finally {
+                agentReadWriteLock.readLock().unlock();
             }
 
             for (AgentConditionCache agentCache : cachesCopy) {

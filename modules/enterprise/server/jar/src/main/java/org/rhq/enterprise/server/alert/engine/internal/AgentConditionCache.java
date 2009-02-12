@@ -99,7 +99,8 @@ class AgentConditionCache extends AbstractConditionCache {
         AlertConditionCacheStats stats = new AlertConditionCacheStats();
 
         try {
-            log.debug("Loading Alert Condition Caches for agent[id=" + agentId + "]...");
+            if (log.isDebugEnabled())
+                log.debug("Loading Alert Condition Caches for agent[id=" + agentId + "]...");
 
             Subject overlord = subjectManager.getOverlord();
 
@@ -137,10 +138,12 @@ class AgentConditionCache extends AbstractConditionCache {
 
                     pc.setPageNumber(pc.getPageNumber() + 1);
                 }
-                log.debug("Loaded " + rowsProcessed + " Alert Condition Composites of type '" + nextCategory + "'");
+                if (log.isDebugEnabled())
+                    log.debug("Loaded " + rowsProcessed + " Alert Condition Composites of type '" + nextCategory + "'");
             }
 
-            log.debug("Loaded Alert Condition Caches for agent[id=" + agentId + "]");
+            if (log.isDebugEnabled())
+                log.debug("Loaded Alert Condition Caches for agent[id=" + agentId + "]");
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error("Error loading cache for agent[id=" + agentId + "]", t);
@@ -292,7 +295,8 @@ class AgentConditionCache extends AbstractConditionCache {
 
             AlertConditionCacheMonitor.getMBean().incrementMeasurementCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementMeasurementProcessingTime(stats.getAge());
-            log.debug("Check Measurements[size=" + measurementData.length + "] - " + stats);
+            if (log.isDebugEnabled())
+                log.debug("Check Measurements[size=" + measurementData.length + "] - " + stats);
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error(t);
@@ -316,7 +320,8 @@ class AgentConditionCache extends AbstractConditionCache {
 
             AlertConditionCacheMonitor.getMBean().incrementEventCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementEventProcessingTime(stats.getAge());
-            log.debug("Check Events[size=" + events.length + "] - " + stats);
+            if (log.isDebugEnabled())
+                log.debug("Check Events[size=" + events.length + "] - " + stats);
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error(t);

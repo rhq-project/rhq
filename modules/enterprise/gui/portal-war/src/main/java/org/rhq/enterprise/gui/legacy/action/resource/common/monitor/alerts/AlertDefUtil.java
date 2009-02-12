@@ -38,7 +38,6 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.enterprise.gui.legacy.Constants;
-import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.SyslogActionForm;
 import org.rhq.enterprise.gui.legacy.beans.AlertConditionBean;
 import org.rhq.enterprise.gui.legacy.beans.OptionItem;
 import org.rhq.enterprise.gui.legacy.exception.ParameterNotFoundException;
@@ -46,8 +45,6 @@ import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import sun.security.pkcs.EncodingException;
 
 /**
  * Utility class for dealing with rendering alert definition conditions.
@@ -268,67 +265,4 @@ public final class AlertDefUtil {
         return operations;
     }
 
-    /**
-     * Get the control action ActionValue and string from an AlertDefinitionValue. If none exists, return null;
-     *
-     * @param alertDef
-     */
-    public static ControlActionInfo getControlActionInfo(AlertDefinition alertDef) {
-        //        Set<Action> actions = alertDef.getActions();
-        //        ControlActionConfig ca = new ControlActionConfig();
-        //        for (Action action: actions) {
-        //            if ( ca.getImplementor().equals(action.getClassname())) {
-        //                ConfigResponse configResponse =
-        //                    ConfigResponse.decode( action.getConfig() );
-        //                ca.init(configResponse);
-        //                return new ControlActionInfo(action,
-        //                                             ca.getControlAction());
-        //            }
-        //        }
-        return null;
-    }
-
-    public static class ControlActionInfo {
-        //        public ControlActionInfo(Action action, String controlAction) {
-        //            this.action = action;
-        //            this.controlAction = controlAction;
-        //        }
-        //        public Action action;
-        //        public String controlAction;
-    }
-
-    //    public static Action getSyslogActionValue(AlertDefinition alertDef) {
-    //        Set<Action> actions = alertDef.getActions();
-    //        for (Action action: actions) {
-    //            if (
-    //                    action.getClassname() != null &&
-    //                    !action.getClassname().equals("") ) {
-    //                try {
-    //                    Class clazz = Class.forName( action.getClassname() );
-    //                    if ( SyslogActionConfig.class.isAssignableFrom(clazz) ) {
-    //                        return action;
-    //                    }
-    //                } catch (ClassNotFoundException e) {
-    //                    // ignore
-    //                }
-    //            }
-    //        }
-    //        return null;
-    //    }
-
-    public static void prepareSyslogActionForm(AlertDefinition alertDef, SyslogActionForm form)
-        throws EncodingException {
-        //        Action action = getSyslogActionValue(alertDef);
-        //        if (null != action) {
-        //            SyslogActionConfig sa = new SyslogActionConfig();
-        //            ConfigResponse configResponse =
-        //                ConfigResponse.decode( action.getConfig() );
-        //            sa.init(configResponse);
-        //            form.setAd( alertDef.getId() );
-        //            form.setMetaProject( sa.getMeta() );
-        //            form.setProject( sa.getProduct() );
-        //            form.setVersion( sa.getVersion() );
-        //            form.setId( action.getId() );
-        //        }
-    }
 }

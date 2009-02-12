@@ -131,10 +131,10 @@ public class PropertyRenderingUtility
     }
 
     @NotNull
-    public static UIInput createInputForSimpleProperty(PropertySimple propertySimple, String valueExpressionFormat, 
+    public static UIInput createInputForSimpleProperty(PropertySimple propertySimple, ValueExpression valueExpression,
                                                        boolean readOnly) {
         UIInput input = createInputForStringProperty();
-        setInputValueExpression(input, propertySimple.getName(), valueExpressionFormat);
+        input.setValue(valueExpression);        
         FacesComponentUtility.setReadonly(input, readOnly);
         addTitleAttribute(input, propertySimple.getStringValue());
         return input;
@@ -177,11 +177,6 @@ public class PropertyRenderingUtility
             }
         }
         return unsetCheckbox;
-    }
-
-    private static boolean isAggregateWithDifferingValues(PropertySimple propertySimple, boolean configIsAggregate)
-    {
-        return configIsAggregate && (propertySimple.getOverride() == null || !propertySimple.getOverride());
     }
 
     public static void addInitInputsJavaScript(UIComponent parent, String componentId, boolean configFullyEditable, boolean postBack) {
@@ -457,19 +452,6 @@ public class PropertyRenderingUtility
         }
     }
 
-    /**
-     * Binds the value of the specified UIInput to an EL expression corresponding to the Configuration property with the
-     * specified name.
-     */
-    // TODO: Add support for properties inside lists.
-    @SuppressWarnings( { "JavaDoc" })
-    private static void setInputValueExpression(UIInput input, String propertyName, String valueExpressionFormat) {
-        // e.g.: #{configuration.simpleProperties['useJavaContext'].stringValue}
-        String expression = String.format(valueExpressionFormat, propertyName);
-        ValueExpression valueExpression = FacesExpressionUtility.createValueExpression(expression, String.class);
-        input.setValueExpression("value", valueExpression);
-    }
-
     private static boolean isUnset(PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple,
                                    boolean configIsAggregate) {
         if (isAggregateWithDifferingValues(propertySimple, configIsAggregate))
@@ -486,6 +468,11 @@ public class PropertyRenderingUtility
         return (!configFullyEditable &&
                 (configReadOnly || (propertyDefinitionSimple.isReadOnly() &&
                 (propertySimple == null || !isInvalidRequiredProperty(propertyDefinitionSimple, propertySimple)))));
+    }
+
+    public static boolean isAggregateWithDifferingValues(PropertySimple propertySimple, boolean configIsAggregate)
+    {
+        return configIsAggregate && (propertySimple.getOverride() == null || !propertySimple.getOverride());
     }
 
     private static boolean isInvalidRequiredProperty(PropertyDefinitionSimple propertyDefinitionSimple,

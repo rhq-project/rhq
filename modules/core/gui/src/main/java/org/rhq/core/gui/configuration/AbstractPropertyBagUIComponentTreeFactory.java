@@ -38,6 +38,7 @@ package org.rhq.core.gui.configuration;
  import org.apache.commons.logging.Log;
  import org.apache.commons.logging.LogFactory;
  import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
  import org.rhq.core.domain.configuration.AbstractPropertyMap;
  import org.rhq.core.domain.configuration.Property;
  import org.rhq.core.domain.configuration.PropertyList;
@@ -296,20 +297,24 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         FacesComponentUtility.addVerbatimText(parent, "\n\n<tr class='" + rowStyleClass + "'>");
 
-        // generate some elements ahead of time, so that dependent
         PropertySimple propertySimple = this.propertyMap.getSimple(propertyDefinitionSimple.getName());
         ValueExpression propertyValueExpression = createPropertyValueExpression(propertySimple.getName(),
                 this.valueExpressionFormat);
-        // TODO: Only create input when it's actually going to be displayed.
-        UIInput input = PropertyRenderingUtility.createInputForSimpleProperty(propertyDefinitionSimple,
-                propertySimple, propertyValueExpression, getListIndex(), this.isAggregate, this.config.isReadOnly(),
-                this.config.isFullyEditable(), this.config.isPrevalidate());
-        // done generating
+
+        UIInput input = null;
+        if (!this.isAggregate || (propertySimple.getOverride() != null && propertySimple.getOverride()))
+            // We need to create the input component ahead of when we need to add it to the component tree, since we
+            // need to know the input component's id in order to render the unset control.
+            input = PropertyRenderingUtility.createInputForSimpleProperty(propertyDefinitionSimple,
+                    propertySimple, propertyValueExpression, getListIndex(), this.isAggregate, this.config.isReadOnly(),
+                    this.config.isFullyEditable(), this.config.isPrevalidate());
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_DISPLAY_NAME_CELL + "'>");
         PropertyRenderingUtility.addPropertyDisplayName(parent, propertyDefinitionSimple, this.config.isReadOnly());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
+        // TODO: Get rid of the override checkbox once the group plugin config has been converted over to the new
+        //       group config GUI.
         if (config.isAggregate()) {
             FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
             addPropertyOverrideControl(parent, propertyDefinitionSimple, input);
@@ -322,9 +327,10 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_VALUE_CELL + "'>");
-        addPropertySimpleValue(parent, propertySimple, input);
+        addPropertySimpleValue(parent, input, propertyValueExpression);
         FacesComponentUtility.addVerbatimText(parent, "<br/>");
-        PropertyRenderingUtility.addMessageComponentForInput(parent, input);
+        if (input != null)
+            PropertyRenderingUtility.addMessageComponentForInput(parent, input);
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_DESCRIPTION_CELL + "'>");
@@ -336,32 +342,25 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         addDebug(parent, false, ".addSimpleProperty()");
     }
 
-     private void addPropertySimpleValue(UIComponent parent, PropertySimple propertySimple, UIInput input)
+     private void addPropertySimpleValue(UIComponent parent, @Nullable UIInput input,
+                                         ValueExpression propertyValueExpression)
      {
+         if (input != null)
+             parent.getChildren().add(input);
          if (this.isAggregate) {
-             if (propertySimple.getOverride() != null && propertySimple.getOverride()) {
-                 parent.getChildren().add(input);
-             } else {
-                 FacesComponentUtility.addOutputText(parent, null, "Member Values Differ",
-                         VALUES_DIFFER_TEXT_STYLE_CLASS);
-             }
+             FacesComponentUtility.addOutputText(parent, null, "Member Values Differ",
+                     VALUES_DIFFER_TEXT_STYLE_CLASS);
              HtmlAjaxCommandLink ajaxCommandLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
              parent.getChildren().add(ajaxCommandLink);
-             //ajaxCommandLink.setImmediate(true);
-             if (this.memberValuesModalPanel != null)
-                 ajaxCommandLink.setOncomplete("Richfaces.showModalPanel('" +
-                     this.memberValuesModalPanel.getClientId(FacesContext.getCurrentInstance()) + "');");
-             //String propertySetFormId = this.config.getId() + "PropertySetForm";
-             //ajaxCommandLink.setReRender(":" + propertySetFormId + ":rhq_propSet");
-             //ajaxCommandLink.setReRender("rhq_configSet");
+             ajaxCommandLink.setOncomplete("Richfaces.showModalPanel('" +
+                 this.memberValuesModalPanel.getClientId(FacesContext.getCurrentInstance()) + "');");
+             //ajaxCommandLink.setReRender("rhq_propSet");
              ajaxCommandLink.setTitle(MEMBER_VALUES_BUTTON_TITLE);
              FacesComponentUtility.addParameter(ajaxCommandLink, null, "propertyExpressionString",
-                input.getValueExpression("value").getExpressionString());
+                propertyValueExpression.getExpressionString());
              FacesComponentUtility.addParameter(ajaxCommandLink, null, "refresh",
                      ConfigRenderer.PROPERTY_SET_COMPONENT_ID);
              FacesComponentUtility.addButton(ajaxCommandLink, MEMBER_VALUES_BUTTON_LABEL, CssStyleClasses.BUTTON_SMALL);
-         } else {
-             parent.getChildren().add(input);
          }
      }
 
@@ -385,10 +384,13 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         FacesComponentUtility.addVerbatimText(wrapper, "</td>");
 
         FacesComponentUtility.addVerbatimText(wrapper, "<td class='" + OPENMAP_PROPERTY_VALUE_CELL_STYLE_CLASS + "'>");
-         // TODO: Only create input when it's actually going to be displayed.
-         UIInput input = PropertyRenderingUtility.createInputForSimpleProperty(propertySimple,
-                this.valueExpressionFormat, this.config.isReadOnly());
-        addPropertySimpleValue(wrapper, propertySimple, input);
+        String expressionString = String.format(valueExpressionFormat, propertySimple.getName());
+        ValueExpression valueExpression = FacesExpressionUtility.createValueExpression(expressionString, String.class);
+        UIInput input = null;
+        if (!this.isAggregate || propertySimple.getOverride() != null && propertySimple.getOverride())
+            input = PropertyRenderingUtility.createInputForSimpleProperty(propertySimple,
+                   valueExpression, this.config.isReadOnly());
+        addPropertySimpleValue(wrapper, input, valueExpression);
         FacesComponentUtility.addVerbatimText(wrapper, "</td>");
 
         if (!isReadOnly(propertyDefinitionMap)) {

@@ -302,7 +302,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
                 this.valueExpressionFormat);
         // TODO: Only create input when it's actually going to be displayed.
         UIInput input = PropertyRenderingUtility.createInputForSimpleProperty(propertyDefinitionSimple,
-                propertySimple, propertyValueExpression, getListIndex(), this.config.isReadOnly(),
+                propertySimple, propertyValueExpression, getListIndex(), this.isAggregate, this.config.isReadOnly(),
                 this.config.isFullyEditable(), this.config.isPrevalidate());
         // done generating
 
@@ -318,7 +318,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
         PropertyRenderingUtility.addUnsetControl(parent, propertyDefinitionSimple, propertySimple, input,
-                this.config.isReadOnly(), this.config.isFullyEditable());
+                this.isAggregate, this.config.isReadOnly(), this.config.isFullyEditable());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_VALUE_CELL + "'>");

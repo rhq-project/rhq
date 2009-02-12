@@ -293,8 +293,7 @@ public class PropertySetRenderer extends Renderer
         UIInput input = PropertyRenderingUtility.createInputForSimpleProperty(
                 propertyDefinitionSimple, propertyInfo.getProperty(),
                 propertyInfo.getPropertyValueExpression(), propertySetComponent.getListIndex(),
-                propertySetComponent.getReadOnly(),
-                false, true);
+                false, propertySetComponent.getReadOnly(), false, true);
         propertyInfo.setInput(input);
 
         FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='" + CssStyleClasses.PROPERTY_DISPLAY_NAME_CELL + "'>"); // TODO: CSS
@@ -303,10 +302,11 @@ public class PropertySetRenderer extends Renderer
 
         FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
         PropertyRenderingUtility.addUnsetControl(propertySetComponent, propertyDefinitionSimple,
-                    propertyInfo.getProperty(), input, propertySetComponent.getReadOnly(), false);
+                    propertyInfo.getProperty(), input, false, propertySetComponent.getReadOnly(), false);
         FacesComponentUtility.addVerbatimText(propertySetComponent, "</td>");
-
-        FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='" + CssStyleClasses.PROPERTY_VALUE_CELL + "'>");
+         
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='" +
+                CssStyleClasses.AGGREGATE_PROPERTY_VALUE_CELL + "'>");
         propertySetComponent.getChildren().add(input);
         FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/>");
         PropertyRenderingUtility.addMessageComponentForInput(propertySetComponent, input);

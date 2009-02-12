@@ -71,6 +71,7 @@ public class PropertyRenderingUtility
                                                        PropertySimple propertySimple,
                                                        ValueExpression propertyValueExpression,
                                                        Integer listIndex,
+                                                       boolean configIsAggregate,
                                                        boolean configReadOnly,
                                                        boolean configFullyEditable,
                                                        boolean prevalidate) {
@@ -105,7 +106,7 @@ public class PropertyRenderingUtility
         }
         }
 
-        boolean isUnset = isUnset(propertyDefinitionSimple, propertySimple);
+        boolean isUnset = isUnset(propertyDefinitionSimple, propertySimple, configIsAggregate);
         boolean isReadOnly = isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable);
 
         String propertyId = PropertyIdGeneratorUtility.getIdentifier(propertySimple, listIndex);
@@ -149,14 +150,16 @@ public class PropertyRenderingUtility
                                                             PropertyDefinitionSimple propertyDefinitionSimple,
                                                             PropertySimple propertySimple,
                                                             UIInput valueInput,
+                                                            boolean configIsAggregate,
                                                             boolean configReadOnly,
                                                             boolean configFullyEditable) {
         HtmlSelectBooleanCheckbox unsetCheckbox = FacesComponentUtility.createComponent(
                 HtmlSelectBooleanCheckbox.class, null);
         if (!propertyDefinitionSimple.isRequired()) {
             parent.getChildren().add(unsetCheckbox);
-            unsetCheckbox.setValue(Boolean.valueOf(isUnset(propertyDefinitionSimple, propertySimple)));
-            if (isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable)) {
+            unsetCheckbox.setValue(isUnset(propertyDefinitionSimple, propertySimple, configIsAggregate));
+            if (isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable) ||
+                isAggregateWithDifferingValues(propertySimple, configIsAggregate)) {
                 FacesComponentUtility.setDisabled(unsetCheckbox, true);
             } else {
                 // Add JavaScript that will disable/enable the corresponding input element when the unset checkbox is
@@ -170,11 +173,15 @@ public class PropertyRenderingUtility
                 for (String htmlDomReference : getHtmlDomReferences(valueInput)) {
                     onchange.append("setInputUnset(").append(htmlDomReference).append(", this.checked);");
                 }
-
                 unsetCheckbox.setOnchange(onchange.toString());
             }
         }
         return unsetCheckbox;
+    }
+
+    private static boolean isAggregateWithDifferingValues(PropertySimple propertySimple, boolean configIsAggregate)
+    {
+        return configIsAggregate && (propertySimple.getOverride() == null || !propertySimple.getOverride());
     }
 
     public static void addInitInputsJavaScript(UIComponent parent, String componentId, boolean configFullyEditable, boolean postBack) {
@@ -463,7 +470,11 @@ public class PropertyRenderingUtility
         input.setValueExpression("value", valueExpression);
     }
 
-    private static boolean isUnset(PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple) {
+    private static boolean isUnset(PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple,
+                                   boolean configIsAggregate) {
+        if (isAggregateWithDifferingValues(propertySimple, configIsAggregate))
+        // Properties from aggregate configs that have differing values should not be marked unset.
+            return false;
         return (!propertyDefinitionSimple.isRequired() && propertySimple.getStringValue() == null);
     }
 

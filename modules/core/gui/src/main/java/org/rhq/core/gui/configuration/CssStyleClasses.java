@@ -31,6 +31,7 @@ public class CssStyleClasses
     public static final String REQUIRED_MARKER_TEXT = "required-marker-text";
     public static final String PROPERTY_DISPLAY_NAME_CELL = "property-display-name-cell";
     public static final String PROPERTY_VALUE_CELL = "property-value-cell";
+    public static final String AGGREGATE_PROPERTY_VALUE_CELL = "aggregate-property-value-cell";
     public static final String PROPERTY_DESCRIPTION_CELL = "property-description-cell";
     public static final String PROPERTY_ENABLED_CELL = "property-enabled-cell";
     public static final String PROPERTY_VALUE_INPUT = "";

@@ -107,7 +107,10 @@
 
             <h:commandButton style="margin-top: 10px;" value="CONTINUE"
                              action="#{CreateNewPackageUIBean.createPackage}" styleClass="buttonmed"
-                             disabled="#{!UploadNewPackageUIBean.fileUploaded}"/>
+                             rendered="#{UploadNewPackageUIBean.fileUploaded}"/>
+            <h:commandButton style="margin-top: 10px;" value="CONTINUE"
+                             disabled="true" styleClass="buttonmed-disabled"
+                             rendered="#{!UploadNewPackageUIBean.fileUploaded}"/>
 
             <h:commandButton style="margin-top: 10px;" value="CANCEL"
                              action="#{CreateNewPackageUIBean.cancel}" styleClass="buttonmed"/>

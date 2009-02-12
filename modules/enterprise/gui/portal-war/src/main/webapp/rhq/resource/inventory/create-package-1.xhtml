@@ -72,8 +72,15 @@
 
             <h:commandButton style="margin-top: 10px;" value="CREATE"
                              action="#{CreateNewPackageChildResourceUIBean.createResource}"
-                             disabled="#{!UploadNewChildPackageUIBean.fileUploaded}"
+                             rendered="#{UploadNewChildPackageUIBean.fileUploaded}"
                              styleClass="buttonmed">
+               <s:defaultAction />
+            </h:commandButton>
+            <h:commandButton style="margin-top: 10px;" value="CREATE"
+                             action="#{CreateNewPackageChildResourceUIBean.createResource}"
+                             disabled="true"
+                             rendered="#{!UploadNewChildPackageUIBean.fileUploaded}"
+                             styleClass="buttonmed-disabled">
                <s:defaultAction />
             </h:commandButton>
 

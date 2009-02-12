@@ -124,7 +124,8 @@ class GlobalConditionCache extends AbstractConditionCache {
 
                     pc.setPageNumber(pc.getPageNumber() + 1);
                 }
-                log.debug("Loaded " + rowsProcessed + " Alert Condition Composites of type '" + nextCategory + "'");
+                if (log.isDebugEnabled())
+                    log.debug("Loaded " + rowsProcessed + " Alert Condition Composites of type '" + nextCategory + "'");
             }
 
             log.debug("Loaded Global Condition Cache");
@@ -215,13 +216,15 @@ class GlobalConditionCache extends AbstractConditionCache {
 
                 processCacheElements(cacheElements, operationStatus, resourceOperationHistory.getModifiedTime(), stats);
             } else {
-                log.debug(getClass().getSimpleName() + " does not support checking conditions against "
-                    + operationHistory.getClass().getSimpleName() + " types");
+                if (log.isDebugEnabled())
+                    log.debug(getClass().getSimpleName() + " does not support checking conditions against "
+                        + operationHistory.getClass().getSimpleName() + " types");
             }
 
             AlertConditionCacheMonitor.getMBean().incrementOperationCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementOperationProcessingTime(stats.getAge());
-            log.debug("Check OperationHistory[size=1] - " + stats);
+            if (log.isDebugEnabled())
+                log.debug("Check OperationHistory[size=1] - " + stats);
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error(t);
@@ -245,7 +248,8 @@ class GlobalConditionCache extends AbstractConditionCache {
 
             AlertConditionCacheMonitor.getMBean().incrementResourceConfigurationCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementResourceConfigurationProcessingTime(stats.getAge());
-            log.debug("Check " + update + " - " + stats);
+            if (log.isDebugEnabled())
+                log.debug("Check " + update + " - " + stats);
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error(t);
@@ -271,7 +275,8 @@ class GlobalConditionCache extends AbstractConditionCache {
 
             AlertConditionCacheMonitor.getMBean().incrementAvailabilityCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementAvailabilityProcessingTime(stats.getAge());
-            log.debug("Check Availability[size=" + availabilities.length + "] - " + stats);
+            if (log.isDebugEnabled())
+                log.debug("Check Availability[size=" + availabilities.length + "] - " + stats);
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error(t);

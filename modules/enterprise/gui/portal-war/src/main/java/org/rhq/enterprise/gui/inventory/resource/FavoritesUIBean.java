@@ -50,6 +50,13 @@ public class FavoritesUIBean {
         return this.favorite;
     }
 
+    public boolean getFavorite() {
+        log.debug("isFavorite for " + id);
+        id = WebUtility.getResourceId(FacesContextUtility.getRequest());
+        this.favorite = QuickFavoritesUtil.determineIfFavoriteResource(FacesContextUtility.getRequest());
+        return this.favorite;
+    }
+
     public int getId() {
         return id;
     }

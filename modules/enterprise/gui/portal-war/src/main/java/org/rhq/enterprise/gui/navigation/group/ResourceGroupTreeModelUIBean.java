@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.inventory.group;
+package org.rhq.enterprise.gui.navigation.group;
 
 import java.io.IOException;
 
@@ -49,7 +49,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.gui.inventory.resource.ResourceTreeNode;
+import org.rhq.enterprise.gui.navigation.resource.ResourceTreeNode;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;

@@ -15,7 +15,7 @@
    <managed-bean>
       <managed-bean-name>FavoritesUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.FavoritesUIBean</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
+      <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
 
    <!-- /rhq/admin/listAlertTemplates.xhtml & others -->
@@ -115,18 +115,23 @@
 
    <managed-bean>
       <managed-bean-name>EditGeneralPropertiesUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.EditGeneralPropertiesUIBean</managed-bean-class>
+      <managed-bean-class>org.rhq.enterprise.gui.navigation.resource.EditGeneralPropertiesUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
     <managed-bean>
         <managed-bean-name>ResourceTreeModelUIBean</managed-bean-name>
-        <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ResourceTreeModelUIBean</managed-bean-class>
+        <managed-bean-class>org.rhq.enterprise.gui.navigation.resource.ResourceTreeModelUIBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>
+    <managed-bean>
+        <managed-bean-name>ResourceTreeContextMenuUIBean</managed-bean-name>
+        <managed-bean-class>org.rhq.enterprise.gui.navigation.resource.ResourceTreeContextMenuUIBean</managed-bean-class>
         <managed-bean-scope>request</managed-bean-scope>
     </managed-bean>
     <managed-bean>
         <managed-bean-name>ResourceTreeStateAdvisor</managed-bean-name>
-        <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ResourceTreeStateAdvisor</managed-bean-class>
+        <managed-bean-class>org.rhq.enterprise.gui.navigation.resource.ResourceTreeStateAdvisor</managed-bean-class>
         <managed-bean-scope>session</managed-bean-scope>
     </managed-bean>
 

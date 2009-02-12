@@ -216,11 +216,11 @@ id - the id of the Resource being accessed
               </h:panelGroup>
 
               <h:panelGroup>
-                  <a4j:keepAlive beanName="FavoritesUIBean" />
                   <a4j:outputPanel id="favoritesPanel">
                       <a4j:form id="favoritesForm">
                           <a4j:commandButton id="favoritesButton"
-                                             reRender="favoritesPanel" status="commonStatus"
+                                             reRender="favoritesPanel" 
+                                             status="commonStatus"
                                              image="#{FavoritesUIBean.favorite ? '/images/star_on_24.png' : '/images/star_off_24.png'}"
                                              action="#{FavoritesUIBean.toggleFavorite}">
                               <f:param name="id" value="#{FavoritesUIBean.id}"/>

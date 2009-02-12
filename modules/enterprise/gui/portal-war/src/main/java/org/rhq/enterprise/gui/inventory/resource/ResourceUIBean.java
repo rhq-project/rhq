@@ -37,10 +37,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
-import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.action.resource.common.QuickFavoritesUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
@@ -67,7 +63,6 @@ public class ResourceUIBean {
     private ResourcePermission permissions;
     private ResourceFacets facets;
     private ResourceError invalidPluginConfigurationError;
-    private Boolean favorite; // true if this resource has been added to the favorites dashboard portlet
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
@@ -85,7 +80,7 @@ public class ResourceUIBean {
 
     public ResourceUIBean() {
         this(EnterpriseFacesContextUtility.getResource());
-        log.info("Creating " + ResourceUIBean.class.getSimpleName());
+        log.debug("Creating " + ResourceUIBean.class.getSimpleName());
     }
 
     public ResourceUIBean(Resource resource) {
@@ -179,46 +174,6 @@ public class ResourceUIBean {
     @Nullable
     public ResourceError getInvalidPluginConfigurationError() {
         return this.invalidPluginConfigurationError;
-    }
-
-    public boolean isFavorite() {
-        if (this.favorite == null) {
-            this.favorite = QuickFavoritesUtil.determineIfFavoriteResource(FacesContextUtility.getRequest());
-            log.info("Getting initial favorite: " + this.favorite);
-        }
-        log.info("Favorite is: " + this.favorite);
-
-        return this.favorite;
-    }
-
-    public String toggleFavorite() {
-        WebUser user = EnterpriseFacesContextUtility.getWebUser();
-        WebUserPreferences preferences = user.getWebPreferences();
-        WebUserPreferences.FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
-            .getFavoriteResourcePortletPreferences();
-
-        int resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
-
-        boolean isFav = favoriteResourcePreferences.isFavorite(resourceId);
-        if (isFav) {
-            favoriteResourcePreferences.removeFavorite(resourceId);
-            log.info("Removing favorite: " + resourceId);
-        } else {
-            favoriteResourcePreferences.addFavorite(resourceId);
-            log.info("Adding favorite: " + resourceId);
-        }
-
-        preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
-        preferences.persistPreferences();
-
-        favorite = !isFav;
-        log.info("Setting favorite to: " + this.favorite);
-
-        return null;
-    }
-
-    public void setFavorite(boolean favorite) {
-        this.favorite = favorite;
     }
 
     public AvailabilityType getAvailabilityType() {

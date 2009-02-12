@@ -108,6 +108,7 @@
          /WEB-INF/jsf-managed-beans/inventory-beans.xml,
          /WEB-INF/jsf-managed-beans/admin-beans.xml,
          /WEB-INF/jsf-managed-beans/measurement-beans.xml,
+         /WEB-INF/jsf-managed-beans/navigation-beans.xml,
          /WEB-INF/jsf-managed-beans/operation-beans.xml,
          /WEB-INF/jsf-managed-beans/test-beans.xml,
 
@@ -122,6 +123,7 @@
          /WEB-INF/jsf-managed-beans-resource-group/inventory-beans.xml,
          /WEB-INF/jsf-managed-beans-resource-group/operation-beans.xml,
          /WEB-INF/jsf-managed-beans-resource-group/measurement-beans.xml,
+         /WEB-INF/jsf-managed-beans-resource-group/navigation-beans.xml,
 
          /WEB-INF/jsf-managed-beans-subsystem/alert-beans.xml,
          /WEB-INF/jsf-managed-beans-subsystem/common-beans.xml,

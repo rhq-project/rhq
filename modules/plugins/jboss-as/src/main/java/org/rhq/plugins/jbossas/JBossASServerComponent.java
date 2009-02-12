@@ -840,12 +840,18 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
             return;
         }
 
+        boolean createBackup = false;
+        PropertySimple backupProperty = deployTimeConfiguration.getSimple("createBackup");
+        if (backupProperty != null && backupProperty.getBooleanValue() != null && backupProperty.getBooleanValue())
+            createBackup = true;
+
+
         // Perform the deployment
         File deployDir = new File(getConfigurationPath(), deployDirectory);
         FileContentDelegate deployer = new FileContentDelegate(deployDir, "", details.getPackageTypeName());
 
         File path = deployer.getPath(details);
-        if (path.exists()) {
+        if (!createBackup && path.exists()) {
             setErrorOnCreateResourceReport(report, "A " + resourceTypeName + " file named " + path.getName()
                     + " is already deployed with path " + path + ".");
             return;
@@ -878,7 +884,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         }
 
         InputStream isForTempDir = new BufferedInputStream(new FileInputStream(tempFile));
-        deployer.createContent(details, isForTempDir, !zip);
+        deployer.createContent(details, isForTempDir, !zip, createBackup);
 
         String vhost = null;
         if (resourceTypeName.equals(RESOURCE_TYPE_WAR)) {

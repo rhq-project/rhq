@@ -2105,6 +2105,8 @@
                                      description="Indicates if the EAR is deployed either zipped or exploded."/>
                   <c:simple-property name="deployDirectory" displayName="Deploy Directory" type="string" required="true" default="deploy"
                                      description="Path to deploy the file. This must be a path relative to the AS configuration set in use."/>
+                  <c:simple-property name="createBackup" displayName="Create Backup" type="boolean" default="false" required="true"
+                                     description="Should an existing file with this name moved to a backup file ending in .bak."/>
                </c:group>
             </configuration>
          </content>
@@ -2356,6 +2358,8 @@
                                      description="Indicates if the WAR is deployed either zipped or exploded."/>
                   <c:simple-property name="deployDirectory" displayName="Deploy Directory" type="string" default="deploy" required="true"
                                      description="Path to deploy the file. This must be a path relative to the AS configuration set in use."/>
+                  <c:simple-property name="createBackup" displayName="Create Backup" type="boolean" default="false" required="true"
+                                     description="Should an existing file with this name moved to a backup file ending in .bak."/>
                </c:group>
             </configuration>
          </content>

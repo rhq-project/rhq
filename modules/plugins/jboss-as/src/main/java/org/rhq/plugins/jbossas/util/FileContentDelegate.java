@@ -22,20 +22,23 @@
   */
 package org.rhq.plugins.jbossas.util;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Set;
+ import java.io.BufferedInputStream;
+ import java.io.File;
+ import java.io.FileInputStream;
+ import java.io.FileNotFoundException;
+ import java.io.IOException;
+ import java.io.InputStream;
+ import java.util.Set;
 
-import org.rhq.core.domain.content.PackageDetails;
-import org.rhq.core.domain.content.PackageDetailsKey;
-import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.util.ZipUtil;
-import org.rhq.core.util.file.FileUtil;
-import org.rhq.core.pluginapi.util.FileUtils;
+ import org.apache.commons.logging.Log;
+ import org.apache.commons.logging.LogFactory;
+
+ import org.rhq.core.domain.content.PackageDetails;
+ import org.rhq.core.domain.content.PackageDetailsKey;
+ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+ import org.rhq.core.pluginapi.util.FileUtils;
+ import org.rhq.core.util.ZipUtil;
+ import org.rhq.core.util.file.FileUtil;
 
  /**
  * Delegate class used for manipulating artifacts in a JON plugin.
@@ -45,6 +48,8 @@ import org.rhq.core.pluginapi.util.FileUtils;
  */
 public class FileContentDelegate {
     // Attributes  --------------------------------------------
+
+     private Log log = LogFactory.getLog(FileContentDelegate.class);
 
     protected File directory;
 
@@ -80,12 +85,15 @@ public class FileContentDelegate {
      * @param  details  describes the package being created
      * @param  content  content to be written for the package. NOTE this Stream will be closed by this method.
      * @param  unzip    if <code>true</code>, the content stream will be treated like a ZIP file and be unzipped as
-     *                  it is written, using the package name as the base directory; if <code>false</code> the
-     *                  content will be written to directly to a file using the package name as the file name
+*                  it is written, using the package name as the base directory; if <code>false</code> the
+     * @param createBackup If <code>true</code>, the original file will be backed up to file.bak
      */
-    public void createContent(PackageDetails details, InputStream content, boolean unzip) {
+    public void createContent(PackageDetails details, InputStream content, boolean unzip, boolean createBackup) {
         File contentFile = getPath(details);
         try {
+            if (createBackup) {
+                moveToBackup(contentFile,".bak");
+            }
             if (unzip) {
                 ZipUtil.unzipFile(content, contentFile);
             } else {
@@ -97,7 +105,25 @@ public class FileContentDelegate {
         }
     }
 
-    public File getPath(PackageDetails details) {
+     /**
+      * Try to move the passed contentFile to a backup named contentFile + suffix
+      * @param contentFile File object pointing to the original file
+      * @param suffix the suffix to tack on
+      */
+     private void moveToBackup(File contentFile, String suffix) {
+
+         File backupFile = new File(contentFile.getAbsolutePath() + suffix);
+         if (backupFile.exists()) {
+             // remove
+             if (!backupFile.delete())
+                 log.warn("Removing of old backup file " + backupFile + " failed ");
+         }
+         if (!contentFile.renameTo(backupFile)) {
+             log.warn("Moving " + contentFile + " to backup " + backupFile + " failed");
+         }
+     }
+
+     public File getPath(PackageDetails details) {
         /* JBNADM-2022 - It still needs to be determined if it is the responsibility of the plugin container or the
          *               plugin to be concerned with path information in the package name. For now, it's the plugin's
          *               responsibility. We strip out the path information to keep control of where the JARs are
@@ -156,10 +182,10 @@ public class FileContentDelegate {
     }
 
     public Set<ResourcePackageDetails> discoverDeployedPackages() {
-        /* 
+        /*
          * This is a stub implementation, you need to implement a
          * discovery for artifacts of your particular content type
          */
         return null;
     }
-}
+ }

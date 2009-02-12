@@ -484,11 +484,13 @@ public class ConfigRenderer extends Renderer {
          FacesComponentUtility.addParameter(ajaxCommandLink, null, "refresh", configurationSetComponent.getId());
          FacesComponentUtility.addButton(ajaxCommandLink, "OK", CssStyleClasses.BUTTON_SMALL);
 
-         //HtmlOutputLink closeModalLink = FacesComponentUtility.addOutputLink(form, null, "#");
-         HtmlOutputLink closeModalLink = FacesComponentUtility.addOutputLink(modalPanel, null, "#");
-         closeModalLink.setOnclick("Richfaces.hideModalPanel('" + modalPanelClientId + "'); return false;");
-         closeModalLink.setTitle("Cancel");
-         FacesComponentUtility.addButton(closeModalLink, "Cancel", CssStyleClasses.BUTTON_SMALL);
+         if (!configurationSetComponent.isReadOnly()) {
+             //HtmlOutputLink closeModalLink = FacesComponentUtility.addOutputLink(form, null, "#");
+             HtmlOutputLink closeModalLink = FacesComponentUtility.addOutputLink(modalPanel, null, "#");
+             closeModalLink.setOnclick("Richfaces.hideModalPanel('" + modalPanelClientId + "'); return false;");
+             closeModalLink.setTitle("Cancel");
+             FacesComponentUtility.addButton(closeModalLink, "Cancel", CssStyleClasses.BUTTON_SMALL);
+         }
          
          return modalPanel;
      }

@@ -170,18 +170,27 @@ public class CreateNewPackageChildResourceUIBean {
                 "Create resource request successfully sent to the agent.");
         } finally {
             // clean up the temp file
-            uploadUIBean.clear();
+            cleanup(uploadUIBean);
         }
 
         return OUTCOME_SUCCESS_OR_FAILURE;
     }
 
-    public String cancel() {
-        UploadNewChildPackageUIBean uploadUIBean;
-        uploadUIBean = FacesContextUtility.getManagedBean(UploadNewChildPackageUIBean.class);
+    private void cleanup(UploadNewChildPackageUIBean uploadUIBean) {
         if (uploadUIBean != null) {
             uploadUIBean.clear();
         }
+        // clean out fields for next usage
+        this.configuration = null;
+        this.configurationDefinition = null;
+        this.packageType = null;
+        this.resourceType = null;
+    }
+
+    public String cancel() {
+        UploadNewChildPackageUIBean uploadUIBean;
+        uploadUIBean = FacesContextUtility.getManagedBean(UploadNewChildPackageUIBean.class);
+        cleanup(uploadUIBean);
         return OUTCOME_CANCEL;
     }
 
@@ -213,12 +222,16 @@ public class CreateNewPackageChildResourceUIBean {
     }
 
     private PackageType lookupPackageType() {
+        if (resourceType == null)
+            resourceType = lookupResourceType();
         ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
         PackageType packageType = contentUIManager.getResourceCreationPackageType(this.resourceType.getId());
         return packageType;
     }
 
     protected ConfigurationDefinition lookupConfigurationDefinition() {
+        if (packageType == null)
+            packageType = lookupPackageType();
         ConfigurationDefinition configurationDefinition = this.packageType.getDeploymentConfigurationDefinition();
         return configurationDefinition;
     }
@@ -273,6 +286,8 @@ public class CreateNewPackageChildResourceUIBean {
     }
 
     public PackageType getPackageType() {
+        if (this.packageType == null)
+            this.packageType = lookupPackageType();
         return packageType;
     }
 
@@ -281,6 +296,8 @@ public class CreateNewPackageChildResourceUIBean {
     }
 
     public ResourceType getResourceType() {
+        if (this.resourceType == null)
+            this.resourceType = lookupResourceType();
         return resourceType;
     }
 
@@ -305,10 +322,14 @@ public class CreateNewPackageChildResourceUIBean {
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
+        if (this.configurationDefinition == null)
+            this.configurationDefinition = lookupConfigurationDefinition();
         return configurationDefinition;
     }
 
     public Configuration getConfiguration() {
+        if (this.configuration == null)
+            this.configuration = lookupConfiguration();
         return configuration;
     }
 

@@ -70,7 +70,7 @@
       <managed-bean-class>
          org.rhq.enterprise.gui.inventory.resource.CreateNewChildResourceAddNewOpenMapMemberPropertyUIBean
       </managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
+      <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
 
    <managed-bean>
@@ -146,7 +146,7 @@
         <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ResourceSelectUIBean</managed-bean-class>
         <managed-bean-scope>request</managed-bean-scope>
     </managed-bean>
-    
+
    <!-- /rhq/resource/inventory/history.xhtml -->
    <managed-bean>
       <managed-bean-name>ListPluginConfigurationUpdateUIBean</managed-bean-name>
@@ -163,6 +163,5 @@
       <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.history.ViewPluginConfigurationUpdateUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
-    
+
 </faces-config>
-      

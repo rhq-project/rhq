@@ -203,4 +203,44 @@
 
    </target>
 
+    <!-- ========== -->
+    <target name="kill" description="Stops all the agent VMs. On unix uses kill -9, on windows its the same as stop">
+       <echo>Killing all agent VMs...</echo>
+       <foreach param="_index"
+                list="${perftest.agent.vm.startports}"
+                target="kill-single-agent" />
+       <echo>All agent VMs should have been killed.</echo>
+    </target>
+
+    <!-- ========== -->
+    <target name="kill-single-agent">
+       <loadfile property="_pid"
+                 srcfile="${perftest.agent.vm.dir}/${_index}/agentspawn.pid"
+                 failonerror="false">
+          <filterchain>
+             <striplinebreaks/>
+          </filterchain>
+       </loadfile>
+
+       <echo>Killing agent VM [${_index}] with pid [${_pid}]</echo>
+
+       <if>
+          <os family="windows"/>
+          <then>
+             <exec executable="taskkill.exe">
+                <arg value="/F" />
+                <arg value="/PID" />
+                <arg value="${_pid}" />
+             </exec>
+          </then>
+          <else>
+             <exec executable="kill">
+                <arg value="-9" />
+                <arg value="${_pid}" />
+             </exec>
+          </else>
+       </if>
+
+    </target>	
+
 </project>

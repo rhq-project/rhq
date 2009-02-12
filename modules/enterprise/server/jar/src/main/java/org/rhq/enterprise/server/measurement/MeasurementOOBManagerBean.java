@@ -130,7 +130,15 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         }
         long timeStamp = (Long) res;
 
-        computeOOBsFromHourBeginingAt(subject, timeStamp);
+        // check if we did this already (because the server did not get data for > 1h
+        q = entityManager.createNamedQuery(MeasurementOOB.COUNT_FOR_DATE);
+        q.setParameter("timestamp",timeStamp);
+        Long count = (Long) q.getSingleResult();
+
+        if (count==0)
+            computeOOBsFromHourBeginingAt(subject, timeStamp);
+        else
+            log.info("Calculation of OOBs already done for hour " + new Date(timeStamp));
 
     }
 

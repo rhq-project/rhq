@@ -72,6 +72,10 @@ import javax.persistence.Table;
                         "  FROM MeasurementBaseline b " +
                         "  WHERE b.computeTime > :cutOff" +
                         ")"
+        ),
+        @NamedQuery(name=MeasurementOOB.COUNT_FOR_DATE,
+                query = "SELECT COUNT(o) FROM MeasurementOOB o " +
+                        "WHERE o.id.timestamp = :timestamp"
         )
 })
 @Entity
@@ -85,6 +89,8 @@ public class MeasurementOOB {
     public static final String GET_FACTOR_FOR_SCHEDULES = "GetFactorForSchedules";
 
     public static final String DELETE_OUTDATED = "DeleteOutdatedOOBs";
+
+    public static final String COUNT_FOR_DATE = "CountForDate";
 
     public static final String INSERT_QUERY_POSTGRES =
             "insert into rhq_measurement_oob (oob_factor, schedule_id,  time_stamp )  \n" +
@@ -154,11 +160,10 @@ public class MeasurementOOB {
             "GROUP BY id, mx\n" +
             "HAVING mx > 0.01" +
             ") ";
-
     private static final long serialVersionUID = 1L;
+
     @EmbeddedId
     MeasurementDataPK id; // Same PK, so reuse of that class
-
     @JoinColumn(name = "SCHEDULE_ID", insertable = false, updatable = false, nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     MeasurementSchedule schedule;

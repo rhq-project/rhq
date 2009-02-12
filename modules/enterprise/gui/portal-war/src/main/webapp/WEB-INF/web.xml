@@ -231,8 +231,9 @@
          <param-value>true</param-value>
       </init-param>
       <init-param>
+         <!-- is 250MB the largest package we'll ever want to upload? -->
          <param-name>maxRequestSize</param-name>
-         <param-value>10000000</param-value>
+         <param-value>250000000</param-value>
       </init-param>
    </filter>
 

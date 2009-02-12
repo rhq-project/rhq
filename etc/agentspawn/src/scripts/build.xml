@@ -24,7 +24,7 @@
    <!-- ========== -->
    <target name="help">
       <echo>
-         Target are: copy, start, stop, clean
+         Target are: copy, start, stop, kill, clean
          Run ant -projecthelp for more info.
       </echo>
    </target>

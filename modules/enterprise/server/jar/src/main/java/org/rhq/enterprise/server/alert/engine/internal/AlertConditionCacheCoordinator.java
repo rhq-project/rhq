@@ -18,7 +18,9 @@
  */
 package org.rhq.enterprise.server.alert.engine.internal;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -76,8 +78,7 @@ public final class AlertConditionCacheCoordinator {
     private GlobalConditionCache globalCache;
     private Map<Integer, AgentConditionCache> agentCaches;
 
-    private ReentrantReadWriteLock globalReadWriteLock;
-    private Map<Integer, ReentrantReadWriteLock> agentReadWriteLocks;
+    private ReentrantReadWriteLock agentReadWriteLock;
 
     private AgentManagerLocal agentManager;
 
@@ -85,56 +86,45 @@ public final class AlertConditionCacheCoordinator {
         agentManager = LookupUtil.getAgentManager();
 
         globalCache = new GlobalConditionCache();
-        /*
-         * can create the global lock ahead of time because there is only one of them; however, because
-         * we don't know the IDs of the agents that will connect to this server (or, more generally, we
-         * don't even know the IDs of the agents that are in the system) the agent-specific caches will
-         * need to be created lazily, on-the-fly, at the time the lock is needed.  see getAgentLock(agentId)
-         * for more details.
-         */
-        globalReadWriteLock = new ReentrantReadWriteLock();
 
         // create the collections ahead of time
         agentCaches = new HashMap<Integer, AgentConditionCache>();
-        agentReadWriteLocks = new HashMap<Integer, ReentrantReadWriteLock>();
+        agentReadWriteLock = new ReentrantReadWriteLock();
     }
 
     public static AlertConditionCacheCoordinator getInstance() {
         return instance;
     }
 
-    private ReentrantReadWriteLock getAgentLock(int agentId) {
-        synchronized (agentReadWriteLocks) {
-            if (!agentReadWriteLocks.containsKey(agentId)) {
-                agentReadWriteLocks.put(agentId, new ReentrantReadWriteLock());
-            }
-            return agentReadWriteLocks.get(agentId);
-        }
-    }
-
     public void reloadGlobalCache() {
-        globalReadWriteLock.writeLock().lock();
         try {
             // simply "forget" about the old cache, let the JVM release the memory in time
             globalCache = new GlobalConditionCache();
             log.debug("Reloaded global cache");
         } catch (Throwable t) {
             log.error("Error reloading global cache", t); // don't let any exceptions bubble up to the calling SLSB layer
-        } finally {
-            globalReadWriteLock.writeLock().unlock();
         }
     }
 
     public void reloadCachesForAgent(int agentId) {
-        getAgentLock(agentId).writeLock().lock();
+        AgentConditionCache agentCache = null;
         try {
-            // simply "forget" about the old cache, let the JVM release the memory in time
-            agentCaches.put(agentId, new AgentConditionCache(agentId));
-            log.debug("Reloaded agent[id=" + agentId + "] cache");
+            agentCache = new AgentConditionCache(agentId);
         } catch (Throwable t) {
             log.error("Error reloading cache for agent[id=" + agentId + "]", t); // don't let any exceptions bubble up to the calling SLSB layer
-        } finally {
-            getAgentLock(agentId).writeLock().unlock();
+        }
+
+        if (agentCache != null) {
+            agentReadWriteLock.writeLock().lock();
+            try {
+                // simply "forget" about the old cache, let the JVM release the memory in time
+                agentCaches.put(agentId, agentCache);
+                log.debug("Reloaded agent[id=" + agentId + "] cache");
+            } catch (Throwable t) {
+                log.error("Error reloading cache for agent[id=" + agentId + "]", t); // don't let any exceptions bubble up to the calling SLSB layer
+            } finally {
+                agentReadWriteLock.writeLock().unlock();
+            }
         }
     }
 
@@ -150,41 +140,47 @@ public final class AlertConditionCacheCoordinator {
             return new AlertConditionCacheStats();
         }
 
-        AlertConditionCacheStats stats = new AlertConditionCacheStats();
-        getAgentLock(agentId).readLock().lock();
+        AlertConditionCacheStats stats = null;
+        AgentConditionCache agentCache = null;
+        agentReadWriteLock.readLock().lock();
         try {
-            AgentConditionCache agentCache = agentCaches.get(agentId);
-            stats = agentCache.checkConditions(measurementData);
+            agentCache = agentCaches.get(agentId);
         } catch (Throwable t) {
             log.error("Error during checkConditions", t); // don't let any exceptions bubble up to the calling SLSB layer
         } finally {
-            getAgentLock(agentId).readLock().unlock();
+            agentReadWriteLock.readLock().unlock();
         }
+        if (agentCache != null) {
+            stats = agentCache.checkConditions(measurementData);
+        } else {
+            stats = new AlertConditionCacheStats();
+        }
+
         return stats;
     }
 
     public AlertConditionCacheStats checkConditions(OperationHistory operationHistory) {
-        AlertConditionCacheStats stats = new AlertConditionCacheStats();
-        globalReadWriteLock.readLock().lock();
+        AlertConditionCacheStats stats = null;
         try {
             stats = globalCache.checkConditions(operationHistory);
         } catch (Throwable t) {
             log.error("Error during checkConditions", t); // don't let any exceptions bubble up to the calling SLSB layer
-        } finally {
-            globalReadWriteLock.readLock().unlock();
+        }
+        if (stats == null) {
+            stats = new AlertConditionCacheStats();
         }
         return stats;
     }
 
     public AlertConditionCacheStats checkConditions(ResourceConfigurationUpdate update) {
-        AlertConditionCacheStats stats = new AlertConditionCacheStats();
-        globalReadWriteLock.readLock().lock();
+        AlertConditionCacheStats stats = null;
         try {
             stats = globalCache.checkConditions(update);
         } catch (Throwable t) {
             log.error("Error during checkConditions", t); // don't let any exceptions bubble up to the calling SLSB layer
-        } finally {
-            globalReadWriteLock.readLock().unlock();
+        }
+        if (stats == null) {
+            stats = new AlertConditionCacheStats();
         }
         return stats;
     }
@@ -200,28 +196,33 @@ public final class AlertConditionCacheCoordinator {
             return new AlertConditionCacheStats();
         }
 
-        AlertConditionCacheStats stats = new AlertConditionCacheStats();
-        getAgentLock(agentId).readLock().lock();
+        AlertConditionCacheStats stats = null;
+        AgentConditionCache agentCache = null;
+        agentReadWriteLock.readLock().lock();
         try {
-            AgentConditionCache agentCache = agentCaches.get(agentId);
-            stats = agentCache.checkConditions(source, events);
+            agentCache = agentCaches.get(agentId);
         } catch (Throwable t) {
             log.error("Error during checkConditions", t); // don't let any exceptions bubble up to the calling SLSB layer
         } finally {
-            getAgentLock(agentId).readLock().unlock();
+            agentReadWriteLock.readLock().unlock();
+        }
+        if (agentCache != null) {
+            stats = agentCache.checkConditions(source, events);
+        } else {
+            stats = new AlertConditionCacheStats();
         }
         return stats;
     }
 
     public AlertConditionCacheStats checkConditions(Availability... availabilities) {
-        AlertConditionCacheStats stats = new AlertConditionCacheStats();
-        globalReadWriteLock.readLock().lock();
+        AlertConditionCacheStats stats = null;
         try {
             stats = globalCache.checkConditions(availabilities);
         } catch (Throwable t) {
             log.error("Error during checkConditions", t); // don't let any exceptions bubble up to the calling SLSB layer
-        } finally {
-            globalReadWriteLock.readLock().unlock();
+        }
+        if (stats == null) {
+            stats = new AlertConditionCacheStats();
         }
         return stats;
     }
@@ -253,7 +254,12 @@ public final class AlertConditionCacheCoordinator {
         if (cache.type == Cache.Type.Global) {
             result += globalCache.getCacheSize(cache);
         } else if (cache.type == Cache.Type.Agent) {
-            for (AgentConditionCache agentCache : agentCaches.values()) {
+            List<AgentConditionCache> cachesCopy = null;
+            synchronized (agentReadWriteLock) {
+                cachesCopy = new ArrayList<AgentConditionCache>(agentCaches.values());
+            }
+
+            for (AgentConditionCache agentCache : cachesCopy) {
                 result += agentCache.getCacheSize(cache);
             }
         } else {

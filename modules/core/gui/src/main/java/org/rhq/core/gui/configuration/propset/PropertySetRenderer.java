@@ -356,17 +356,7 @@ public class PropertySetRenderer extends Renderer
 
         public int compareTo(PropertyInfo that)
         {
-            int result = this.label.compareTo(that.label); // NOTE: this.label will never be null.
-            if (result == 0)
-                if (this.property.getStringValue() != null && that.property.getStringValue() != null)
-                    //noinspection ConstantConditions
-                    result = this.property.getStringValue().compareTo(that.property.getStringValue());
-                else if (this.property.getStringValue() != null && that.property.getStringValue() == null)
-                    result = 0;
-                else
-                    // Show properties with null values (i.e. unset properties) last.
-                    result = (this.property.getStringValue() == null) ? 1 : -1;
-            return result;
+            return this.label.compareTo(that.label); // NOTE: this.label will never be null.                        
         }
     }
 }

@@ -1,4 +1,4 @@
-#Mon Feb 11 14:31:53 EST 2008
+#Sun Aug 10 02:43:51 EDT 2008
 cleanup.add_default_serial_version_id=true
 cleanup.add_generated_serial_version_id=false
 cleanup.add_missing_annotations=true
@@ -28,8 +28,8 @@ cleanup.remove_private_constructors=true
 cleanup.remove_trailing_whitespaces=true
 cleanup.remove_trailing_whitespaces_all=true
 cleanup.remove_trailing_whitespaces_ignore_empty=false
-cleanup.remove_unnecessary_casts=true
-cleanup.remove_unnecessary_nls_tags=true
+cleanup.remove_unnecessary_casts=false
+cleanup.remove_unnecessary_nls_tags=false
 cleanup.remove_unused_imports=true
 cleanup.remove_unused_local_variables=true
 cleanup.remove_unused_private_fields=false
@@ -80,7 +80,7 @@ sp_cleanup.make_private_fields_final=true
 sp_cleanup.make_variable_declarations_final=false
 sp_cleanup.never_use_blocks=false
 sp_cleanup.never_use_parentheses_in_expressions=true
-sp_cleanup.on_save_use_additional_actions=true
+sp_cleanup.on_save_use_additional_actions=false
 sp_cleanup.organize_imports=true
 sp_cleanup.qualify_static_field_accesses_with_declaring_class=false
 sp_cleanup.qualify_static_member_accesses_through_instances_with_declaring_class=true

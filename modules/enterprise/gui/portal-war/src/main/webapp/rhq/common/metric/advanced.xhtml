@@ -19,8 +19,8 @@
         
         <ui:define name="body-area">
             <a4j:loadScript src="/js/advanced-metrics.js"/>
-            <h:form id="advancedMetricsValuesForm">
-                <rich:panel styleClass="BlockContent" style="height: 100%">
+            <a4j:form id="advancedMetricsValuesForm">
+                <rich:panel styleClass="BlockContent">
                     <f:facet name="header">
                         <h:outputText value="#{msg['resource.common.monitor.visibility.MetricDisplayRangeTab']}" />
                     </f:facet>
@@ -34,7 +34,7 @@
                                  globalOnly="true"
                                      layout="table"
                                       width="100%"/>
-                    <table height="100%">
+                    <table>
                         <tr>
                             <td rowspan="5" class="BlockLabel">#{msg['resource.common.monitor.visibility.DefineRangeLabel']}</td>
                             <td class="BlockContent">
@@ -91,6 +91,7 @@
                                         <td>
                                             <rich:calendar id="fromDate" datePattern="dd/MMM/yyyy HH:mm" 
                                                            value="#{AdvancedMetricSettingsUIBean.fromTime}" 
+                                                           showApplyButton="true"
                                                            onchange="checkUncheckRadio('advancedMetricsValuesForm:intervalMetricType', 'advancedMetricsValuesForm:durationMetricType');"/>
                                         </td>
                                     </tr>
@@ -100,7 +101,8 @@
                                         </td>
                                         <td>
                                             <rich:calendar id="toDate" datePattern="dd/MMM/yyyy HH:mm" 
-                                                           value="#{AdvancedMetricSettingsUIBean.toTime}" 
+                                                           value="#{AdvancedMetricSettingsUIBean.toTime}"
+                                                           showApplyButton="true" 
                                                            onchange="checkUncheckRadio('advancedMetricsValuesForm:intervalMetricType', 'advancedMetricsValuesForm:durationMetricType');"/>
                                         </td>
                                     </tr>
@@ -108,24 +110,29 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>These settings will be persistent for all Monitoring pages within RHQ.</td>
-                        </tr>
-                        <tr>                        
                             <td>
                                 <table>
-                                    <tr>                        
-                                        <td><input type="reset" class="on-pager-button buttonsmall"/></td>
-                                        <td><input type="button" id="cancelBtn" value="Close" class="on-pager-button buttonsmall" onclick="closePopupAndReloadParent();"/></td>
+                                    <tr>
                                         <td>
-                                            <h:commandButton action="#{AdvancedMetricSettingsUIBean.execute}" value="Ok" styleClass="on-pager-button buttonsmall"/>
+                                            <a4j:commandButton action="#{AdvancedMetricSettingsUIBean.execute}" 
+                                                               value="Ok" styleClass="on-pager-button buttonsmall"
+                                                               oncomplete="closePopupAndReloadParent();" />
+                                        </td>
+                                        <td>
+                                            <input type="button" id="cancelBtn" 
+                                                   value="Cancel" class="on-pager-button buttonsmall" 
+                                                   onclick="closePopupAndReloadParent();" />
                                         </td>
                                     </tr>
                                 </table>
                             </td>
                         </tr>
                     </table>
+                   <br /><br /><br /><br />
+                   <br /><br /><br /><br />
+                   <br /><br /><br /><br />
                 </rich:panel>
-            </h:form>
+            </a4j:form>
         </ui:define>
     </ui:composition>
 </html>

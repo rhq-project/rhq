@@ -122,11 +122,9 @@ public class MetricRenderer extends Renderer {
 
         writer.startElement("a", null);
         writer.writeAttribute("href", "#", null);
-        writer
-            .writeAttribute(
-                "onclick",
-                "javascript:window.open('/rhq/common/metric/advanced.xhtml','Metric Display Range Settings','menubar=no,width=540,height=360,toolbar=no');",
-                null);
+        writer.writeAttribute("onclick",
+            "javascript:window.open('/rhq/common/metric/advanced.xhtml','Metric Display Range Settings','"
+                + getWindowOptions() + "');", null);
         if (rangePreferences.readOnly) {
             writer.write("Edit Settings...");
         } else {
@@ -136,5 +134,12 @@ public class MetricRenderer extends Renderer {
         if (rangePreferences.readOnly) {
             writer.write(" | ");
         }
+    }
+
+    private String getWindowOptions() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("width=450");
+        builder.append(",height=375");
+        return builder.toString();
     }
 }

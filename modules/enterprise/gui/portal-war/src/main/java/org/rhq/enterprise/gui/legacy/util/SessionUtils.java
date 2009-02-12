@@ -29,19 +29,22 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.struts.Globals;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionMessages;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.beans.ReturnPath;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 public class SessionUtils {
+
+    private static final Log log = LogFactory.getLog(SessionUtils.class);
+
     // Limit the size of the return stack so that it
     // doesn't grow to infinite proportions.
     private static final int RETURN_STACK_MAX_SIZE = 128;
@@ -63,11 +66,14 @@ public class SessionUtils {
         }
 
         WebUser user = (WebUser) attr;
+        log.debug("Loading WebUser");
+        /*
         Subject subject = user.getSubject();
         Integer sessionId = subject.getSessionId();
         subject = LookupUtil.getSubjectManager().loadUserConfiguration(subject.getId());
         subject.setSessionId(sessionId); // put the transient data back into our new subject
         user = new WebUser(subject); // reset
+        */
         return user;
     }
 

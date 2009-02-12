@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.server.auth.SubjectPreferencesBase;
+import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesBase;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 public class MeasurementPreferences extends SubjectPreferencesBase {
@@ -50,8 +50,11 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
         public Long end;
 
         public String toString() {
-            return getClass().getSimpleName() + "[readOnly=" + readOnly + ",lastN=" + lastN + ",unit=" + unit
-                + ",begin=" + begin + end + ",end=" + end + "]";
+            if (readOnly) {
+                return getClass().getSimpleName() + "[begin=" + begin + end + ",end=" + end + "]";
+            } else {
+                return getClass().getSimpleName() + "[lastN=" + lastN + ",unit=" + unit + "]";
+            }
         }
     }
 
@@ -59,44 +62,28 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
         MetricRangePreferences prefs = new MetricRangePreferences();
 
         prefs.readOnly = getPreference(PREF_METRIC_RANGE_RO, DEFAULT_VALUE_RANGE_RO);
-        prefs.lastN = getPreference(PREF_METRIC_RANGE_LASTN, DEFAULT_VALUE_RANGE_LASTN);
-        prefs.unit = getPreference(PREF_METRIC_RANGE_UNIT, DEFAULT_VALUE_RANGE_UNIT);
+        if (prefs.readOnly == false) {
+            prefs.lastN = getPreference(PREF_METRIC_RANGE_LASTN, DEFAULT_VALUE_RANGE_LASTN);
+            prefs.unit = getPreference(PREF_METRIC_RANGE_UNIT, DEFAULT_VALUE_RANGE_UNIT);
 
-        List<?> range = null;
-        try {
-            range = getPreferenceAsList(PREF_METRIC_RANGE);
-        } catch (IllegalArgumentException iae) {
-            // that's OK, range will remain null and we might use the lastN / unit
-        }
-
-        if (range != null && range.size() > 0) {
+            List<Long> range = MeasurementUtils.calculateTimeFrame(prefs.lastN, prefs.unit);
+            prefs.begin = range.get(0);
+            prefs.end = range.get(1);
+        } else {
             try {
+                List<String> range = getPreferenceAsList(PREF_METRIC_RANGE);
                 prefs.begin = new Long((String) range.get(0));
                 prefs.end = new Long((String) range.get(1));
-            } catch (NumberFormatException nfe) {
-                // also OK, errors still might default to lastN / unit
+            } catch (IllegalArgumentException iae) {
+                // that's OK, range will remain null and we might use the lastN / unit
+                List<Long> range = MeasurementUtils.calculateTimeFrame(DEFAULT_VALUE_RANGE_LASTN,
+                    DEFAULT_VALUE_RANGE_UNIT);
+                prefs.begin = range.get(0);
+                prefs.end = range.get(1);
             }
         }
 
-        /* 
-         * get the begin/end range if: 
-         * 
-         * 1) we are in "last X units" mode, or
-         * 2) we're in "advanced" mode, but the begin/end is not set
-         */
-        if (prefs.readOnly == false | (prefs.begin == null && prefs.end == null)) {
-            // try to get the range from the "last X units" preferences first
-            range = MeasurementUtils.calculateTimeFrame(prefs.lastN, prefs.unit);
-            if (range == null) {
-                // but if that fails, fall back to default preferences
-                range = MeasurementUtils.calculateTimeFrame(DEFAULT_VALUE_RANGE_LASTN, DEFAULT_VALUE_RANGE_UNIT);
-            }
-
-            prefs.begin = (Long) range.get(0);
-            prefs.end = (Long) range.get(1);
-        }
-
-        log.debug("Getting Metric Range Preferences:" + prefs);
+        //log.debug("Getting Metric Range Preferences:" + prefs);
 
         return prefs;
     }
@@ -106,15 +93,15 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
         if (prefs.readOnly) {
             // persist advanced mode
             setPreference(PREF_METRIC_RANGE, Arrays.asList(prefs.begin, prefs.end));
-            unsetPreference(PREF_METRIC_RANGE_LASTN);
-            unsetPreference(PREF_METRIC_RANGE_UNIT);
+            //unsetPreference(PREF_METRIC_RANGE_LASTN);
+            //unsetPreference(PREF_METRIC_RANGE_UNIT);
         } else {
             setPreference(PREF_METRIC_RANGE_LASTN, prefs.lastN);
             setPreference(PREF_METRIC_RANGE_UNIT, prefs.unit);
-            unsetPreference(PREF_METRIC_RANGE);
+            //unsetPreference(PREF_METRIC_RANGE);
         }
 
-        log.debug("Setting Metric Range Preferences:" + prefs);
+        //log.debug("Setting Metric Range Preferences:" + prefs);
     }
 
     /**

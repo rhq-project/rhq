@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.legacy;
 
+import java.io.Serializable;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -30,20 +32,11 @@ import org.rhq.enterprise.server.measurement.MeasurementPreferences;
  * {@link Subject#setSessionId(Integer) session ID}.  Instances of this object
  * are placed in HTTP session.
  */
-public class WebUser {
+public class WebUser implements Serializable {
 
     private final Log log = LogFactory.getLog(WebUser.class);
 
     private Subject subject;
-
-    /**
-     * Indicates whether or not the user has an entry in the principals table.
-     * If true, it means this user was or can be authenticated via the JDBC login module.
-     * If false, it means this user is to be authenticated via LDAP.
-     */
-    private boolean hasPrincipal;
-    private WebUserPreferences webPreferences;
-    private MeasurementPreferences measurementPreferences;
 
     public WebUser() {
         this(null);
@@ -51,9 +44,6 @@ public class WebUser {
 
     public WebUser(Subject subject) {
         this.subject = subject;
-        this.hasPrincipal = false;
-        this.webPreferences = new WebUserPreferences(this.subject);
-        this.measurementPreferences = new MeasurementPreferences(this.subject);
     }
 
     /**
@@ -172,25 +162,16 @@ public class WebUser {
         StringBuffer str = new StringBuffer("{");
         str.append("id=").append(getId()).append(" ");
         str.append("sessionId=").append(getSessionId()).append(" ");
-        str.append("hasPrincipal=").append(getHasPrincipal()).append(" ");
         str.append("subject=").append(getSubject()).append(" ");
         str.append("}");
         return (str.toString());
     }
 
-    public boolean getHasPrincipal() {
-        return this.hasPrincipal;
-    }
-
-    public void setHasPrincipal(boolean hasPrincipal) {
-        this.hasPrincipal = hasPrincipal;
-    }
-
     public WebUserPreferences getWebPreferences() {
-        return this.webPreferences;
+        return new WebUserPreferences(subject);
     }
 
     public MeasurementPreferences getMeasurementPreferences() {
-        return this.measurementPreferences;
+        return new MeasurementPreferences(subject);
     }
 }

@@ -16,7 +16,7 @@ import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.uibeans.UIConstants;
 import org.rhq.enterprise.server.alert.engine.internal.Tuple;
-import org.rhq.enterprise.server.auth.SubjectPreferencesBase;
+import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesBase;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -202,7 +202,9 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         prefs.timeRange = getLongPref(PREF_DASH_ALERTS_PAST);
         prefs.displayAll = getPreference(PREF_DASH_ALERTS_SELECTED_OR_ALL);
         prefs.resourceIds = getPreferenceAsIntegerList(PREF_DASH_ALERTS_RESOURCES, PREF_ITEM_DELIM);
-        removeDeletedResources(prefs.resourceIds);
+        if (removeDeletedResources(prefs.resourceIds)) {
+            setAlertsPortletPreferences(prefs);
+        }
         return prefs;
     }
 
@@ -313,7 +315,9 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         prefs.showAvailability = getBooleanPref(PREF_DASH_FAVORITE_RESOURCES_AVAILABILITY);
         prefs.showAlerts = getBooleanPref(PREF_DASH_FAVORITE_RESOURCES_ALERTS);
         prefs.resourceIds = getPreferenceAsIntegerList(PREF_DASH_FAVORITE_RESOURCES, PREF_ITEM_DELIM);
-        removeDeletedResources(prefs.resourceIds);
+        if (removeDeletedResources(prefs.resourceIds)) {
+            setFavoriteResourcePortletPreferences(prefs);
+        }
         return prefs;
     }
 
@@ -558,9 +562,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         } while (chart != null && !chart.equals(""));
 
         if (errorOccurred) {
-            // re-persist the new list so we don't read the error again 
             setSavedChartsPortletPreferences(prefs);
-            persistPreferences();
         }
 
         Collections.sort(prefs.chartList, new SavedChartsPortletPreferences.ChartsComparator());
@@ -589,7 +591,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         }
     }
 
-    private void removeDeletedResources(List<Integer> resourceIds) {
+    private boolean removeDeletedResources(List<Integer> resourceIds) {
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
         List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(resourceIds
             .toArray(new Integer[resourceIds.size()]));
@@ -609,9 +611,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
                 removed = true;
             }
         }
-        if (removed) {
-            persistPreferences();
-        }
+        return removed;
     }
 
     public PageControl getPageControl(PageControlView view) {

@@ -27,11 +27,11 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 
-public class AggregatePluginConfigurationUpdateJob extends AbstractAggregateConfigurationUpdateJob {
+public class AggregateResourceConfigurationUpdateJob extends AbstractAggregateConfigurationUpdateJob {
     /**
-     * Prefix for all job names and job group names of aggregate plugin configuration updates.
+     * Prefix for all job names and job group names of aggregate resource configuration updates.
      */
-    private static final String JOB_NAME_PREFIX = "rhq-apcu-";
+    private static final String JOB_NAME_PREFIX = "rhq-arcu-";
 
     public static JobDetail getJobDetail(ResourceGroup group, Subject subject, JobDataMap jobDataMap) {
         return AbstractAggregateConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap, JOB_NAME_PREFIX);
@@ -41,19 +41,22 @@ public class AggregatePluginConfigurationUpdateJob extends AbstractAggregateConf
                                                             ConfigurationManagerLocal configurationManager,
                                                             String errorMessages)
     {
-        configurationManager.updateAggregatePluginConfigurationUpdateStatus(aggregatePluginConfigurationUpdateId,
-                errorMessages);
+        // TODO
+        //configurationManager.updateAggregatePluginConfigurationUpdateStatus(aggregatePluginConfigurationUpdateId,
+        //        errorMessages);
     }
 
     protected void completeConfigurationUpdate(ConfigurationManagerLocal configurationManager, Integer childUpdateId)
     {
-        configurationManager.completePluginConfigurationUpdate(childUpdateId);
+        //TODO
+        //configurationManager.completePluginConfigurationUpdate(childUpdateId);
     }
 
     protected List<Integer> getConfigurationUpdates(Integer aggregatePluginConfigurationUpdateId,
                                                     ConfigurationManagerLocal configurationManager, PageControl pc)
     {
-        List<Integer> pagedChildUpdateIds = configurationManager.getPluginConfigurationUpdatesByParentId(
+        @SuppressWarnings({"UnnecessaryLocalVariable"})
+        List<Integer> pagedChildUpdateIds = configurationManager.getResourceConfigurationUpdatesByParentId(
             aggregatePluginConfigurationUpdateId, pc);
         return pagedChildUpdateIds;
     }
@@ -61,8 +64,9 @@ public class AggregatePluginConfigurationUpdateJob extends AbstractAggregateConf
     protected long getConfigurationUpdateCount(Integer aggregatePluginConfigurationUpdateId,
                                                ConfigurationManagerLocal configurationManager)
     {
+        @SuppressWarnings({"UnnecessaryLocalVariable"})
         long childPluginConfigurationUpdateCount = configurationManager
-            .getPluginConfigurationUpdateCountByParentId(aggregatePluginConfigurationUpdateId);
+            .getResourceConfigurationUpdateCountByParentId(aggregatePluginConfigurationUpdateId);
         return childPluginConfigurationUpdateCount;
     }
 }

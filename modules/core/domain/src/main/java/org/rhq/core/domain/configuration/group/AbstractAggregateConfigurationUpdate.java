@@ -60,6 +60,10 @@ public abstract class AbstractAggregateConfigurationUpdate extends AbstractConfi
     protected AbstractAggregateConfigurationUpdate() {
     }
 
+    public AbstractAggregateConfigurationUpdate(ResourceGroup group, String subjectName) {
+        this(group, null, subjectName);
+    }
+
     public AbstractAggregateConfigurationUpdate(ResourceGroup group, Configuration configuration, String subjectName) {
         this.group = group;
         this.subjectName = subjectName;

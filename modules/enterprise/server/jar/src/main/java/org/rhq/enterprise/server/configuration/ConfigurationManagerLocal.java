@@ -381,4 +381,10 @@ public interface ConfigurationManagerLocal {
         AggregatePluginConfigurationUpdate groupUpdate);
 
     void deleteConfigurations(List<Integer> configurationIds);
+
+    @SuppressWarnings("unchecked")
+    PageList<Integer> getResourceConfigurationUpdatesByParentId(int aggregateConfigurationUpdateId,
+                                                                       PageControl pageControl);
+
+    long getResourceConfigurationUpdateCountByParentId(int aggregateConfigurationUpdateId);
 }

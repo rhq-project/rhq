@@ -35,9 +35,15 @@ import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 
 @MappedSuperclass
+/**
+ * Base class for resource configuration and plugin configuration updates.
+ */
 public abstract class AbstractConfigurationUpdate {
+
     @JoinColumn(name = "CONFIGURATION_ID", referencedColumnName = "ID", nullable = false)
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     protected Configuration configuration;

@@ -28,7 +28,6 @@ import javax.persistence.CascadeType;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
@@ -43,8 +42,8 @@ public class AggregateResourceConfigurationUpdate extends AbstractAggregateConfi
     protected AggregateResourceConfigurationUpdate() {
     } // JPA
 
-    public AggregateResourceConfigurationUpdate(ResourceGroup group, Configuration configuration, String subjectName) {
-        super(group, configuration, subjectName);
+    public AggregateResourceConfigurationUpdate(ResourceGroup group, String subjectName) {
+        super(group, subjectName);
     }
 
     public void setConfigurationUpdates(List<ResourceConfigurationUpdate> configurationUpdates) {
@@ -55,7 +54,7 @@ public class AggregateResourceConfigurationUpdate extends AbstractAggregateConfi
         return this.configurationUpdates;
     }
 
-    public void addConfigurationUpdates(ResourceConfigurationUpdate groupMember) {
+    public void addConfigurationUpdate(ResourceConfigurationUpdate groupMember) {
         this.configurationUpdates.add(groupMember);
     }
 

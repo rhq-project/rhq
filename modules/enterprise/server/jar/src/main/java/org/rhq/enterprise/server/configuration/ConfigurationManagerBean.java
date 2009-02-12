@@ -55,7 +55,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
 import org.rhq.core.domain.resource.Agent;
@@ -1100,7 +1100,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Integer> getPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl) {
+    public PageList<Integer> getPluginConfigurationUpdatesByParentId(int configurationUpdateId,
+                                                                     PageControl pageControl) {
         pageControl.initDefaultOrderingField("cu.modifiedTime");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -1118,6 +1119,29 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
             PluginConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID);
         countQuery.setParameter("aggregateConfigurationUpdateId", configurationUpdateId);
+        return (Long) countQuery.getSingleResult();
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<Integer> getResourceConfigurationUpdatesByParentId(int aggregateConfigurationUpdateId,
+                                                                       PageControl pageControl) {
+        pageControl.initDefaultOrderingField("cu.modifiedTime");
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            ResourceConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID, pageControl);
+        query.setParameter("aggregateConfigurationUpdateId", aggregateConfigurationUpdateId);
+
+        long count = getResourceConfigurationUpdateCountByParentId(aggregateConfigurationUpdateId);
+
+        List<Integer> results = query.getResultList();
+
+        return new PageList<Integer>(results, (int) count, pageControl);
+    }
+
+    public long getResourceConfigurationUpdateCountByParentId(int aggregateConfigurationUpdateId) {
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
+            ResourceConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID);
+        countQuery.setParameter("aggregateConfigurationUpdateId", aggregateConfigurationUpdateId);
         return (Long) countQuery.getSingleResult();
     }
 
@@ -1144,7 +1168,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         for (String propertyName : configurationDefinition.getPropertyDefinitions().keySet()) {
             // Skip properties that are not simples.
-            if (configurationDefinition.getPropertyDefinitionSimple(propertyName) == null)
+            if (!(configurationDefinition.get(propertyName) instanceof PropertyDefinitionSimple))
                 continue;
             query.setParameter("propertyName", propertyName);
             List<Object[]> results = query.getResultList();

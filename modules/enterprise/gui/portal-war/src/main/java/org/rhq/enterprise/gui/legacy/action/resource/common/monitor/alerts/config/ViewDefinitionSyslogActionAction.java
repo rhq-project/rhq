@@ -19,14 +19,17 @@
 package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config;
 
 import java.util.Properties;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -49,7 +52,7 @@ public class ViewDefinitionSyslogActionAction extends TilesAction {
         if (syslogActionsEnabled) {
             AlertDefinition alertDef = AlertDefUtil.getAlertDefinition(request);
             SyslogActionForm saForm = new SyslogActionForm();
-            AlertDefUtil.prepareSyslogActionForm(alertDef, saForm);
+            //AlertDefUtil.prepareSyslogActionForm(alertDef, saForm);
             request.setAttribute("syslogActionForm", saForm);
         }
 

@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
@@ -86,7 +87,7 @@ public class PluginManager implements ContainerService {
 
                     PluginDescriptor descriptor;
                     try {
-                        descriptor = PluginDescriptorLoader.loadPluginDescriptorFromUrl(url);
+                        descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(url);
                     } catch (Throwable t) {
                         // probably due to invalid XML syntax in the deployment descriptor - the plugin will be ignored
                         log.error("Plugin at [" + url + "] could not be loaded and will therefore not be deployed.", t);

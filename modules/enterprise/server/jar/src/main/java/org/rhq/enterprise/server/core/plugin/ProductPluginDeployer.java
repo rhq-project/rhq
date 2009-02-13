@@ -491,13 +491,6 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
                 + " ] - it should have been initialized by preprocessPlugin().");
         }
 
-        String md5 = null;
-        try {
-            md5 = MD5Generator.getDigestString(new File(deploymentInfo.localUrl.toURI()));
-        } catch (Exception e) {
-            log.error("Error generating MD5 for plugin [" + pluginName + "]. Cause: " + e);
-        }
-
         ResourceMetadataManagerLocal metadataManager = LookupUtil.getResourceMetadataManager();
         Plugin plugin;
         try {
@@ -506,6 +499,14 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             log.debug("New plugin [" + pluginName + "] detected.");
             return true;
         }
+
+        String md5 = null;
+        try {
+            md5 = MD5Generator.getDigestString(new File(deploymentInfo.localUrl.toURI()));
+        } catch (Exception e) {
+            log.error("Error generating MD5 for plugin [" + pluginName + "]. Cause: " + e);
+        }
+
         if (!plugin.getMd5().equals(md5)) {
             log.debug("Updated plugin [" + pluginName + "] detected.");
             return true;

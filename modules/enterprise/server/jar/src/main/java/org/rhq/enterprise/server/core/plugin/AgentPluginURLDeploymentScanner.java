@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.core.plugin;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -42,6 +43,8 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.deployment.scanner.URLDeploymentScanner;
 import org.jboss.mx.util.ObjectNameFactory;
 
+import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.util.MD5Generator;
 import org.rhq.core.util.jdbc.JDBCUtil;
@@ -185,31 +188,54 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
         // that did not support database-stored plugin content.
         Map<String, String> pluginsMissingContentInDb = new HashMap<String, String>();
 
+        // This map contains the names/MD5s of plugins that are missing their content in the database.
+        // This map will only have entries if this server was recently upgraded from an older version
+        // that did not support database-stored plugin content.
+        Map<String, String> pluginsMissingContentInDbMD5 = new HashMap<String, String>();
+
         try {
             DataSource ds = LookupUtil.getDataSource();
             conn = ds.getConnection();
-            ps = conn.prepareStatement("SELECT NAME, PATH FROM " + Plugin.TABLE_NAME + " WHERE CONTENT IS NULL");
+            ps = conn.prepareStatement("SELECT NAME, PATH, MD5 FROM " + Plugin.TABLE_NAME + " WHERE CONTENT IS NULL");
             rs = ps.executeQuery();
             while (rs.next()) {
                 String name = rs.getString(1);
                 String path = rs.getString(2);
+                String md5 = rs.getString(3);
                 pluginsMissingContentInDb.put(name, path);
+                pluginsMissingContentInDbMD5.put(name, md5);
             }
         } finally {
             JDBCUtil.safeClose(conn, ps, rs);
         }
 
-        for (Map.Entry<String, String> entry : pluginsMissingContentInDb.entrySet()) {
-            String name = entry.getKey();
-            String path = entry.getValue();
-            File pluginFile = new File(this.pluginDirectory, path);
-            if (pluginFile.exists()) {
-                streamPluginFileContentToDatabase(name, pluginFile);
-                log.info("Populating the missing content for plugin [" + name + "] file=" + pluginFile);
-            } else {
-                throw new Exception("The database knows of a plugin named [" + name + "] with path [" + path
-                    + "] but the content is missing. This server does not have this plugin at [" + pluginFile
-                    + "] so the database cannot be updated with the content.");
+        if (!pluginsMissingContentInDb.isEmpty()) {
+            // in all likelihood, the new plugins have different filenames; but since the descriptors
+            // will have the same plugin names, we'll be able to key off of plugin name
+            PluginDescriptor descriptor;
+            Map<String, File> existingPluginFiles = new HashMap<String, File>(); // keyed on plugin name
+            for (File file : this.pluginDirectory.listFiles()) {
+                descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
+                existingPluginFiles.put(descriptor.getName(), file);
+            }
+
+            // now let's take the new content and stream it into the DB
+            for (Map.Entry<String, String> entry : pluginsMissingContentInDb.entrySet()) {
+                String name = entry.getKey();
+                String path = entry.getValue();
+                String expectedMD5 = pluginsMissingContentInDbMD5.get(name);
+                File pluginFile = existingPluginFiles.get(name);
+                if (pluginFile != null) {
+                    String newMD5 = MD5Generator.getDigestString(pluginFile);
+                    boolean different = !expectedMD5.equals(newMD5);
+                    streamPluginFileContentToDatabase(name, pluginFile, different);
+                    log.info("Missing content for plugin [" + name + "] will be uploaded from [" + pluginFile
+                        + "]. different=" + different);
+                } else {
+                    throw new Exception("The database knows of a plugin named [" + name + "] with path [" + path
+                        + "] but the content is missing. This server does not have this plugin in ["
+                        + this.pluginDirectory + "] so the database cannot be updated with the content.");
+                }
             }
         }
 
@@ -221,22 +247,37 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
      * This will store both the contents and the MD5 in an atomic transaction
      * so they remain insync.
      * 
+     * When <code>different</code> is <code>false</code>, it means the original
+     * plugin and the one currently found on the file system are the same.
+     *
+     * When <code>different</code> is <code>true</code>, it means the plugin
+     * is most likely a different one than the one that originally existed.
+     * When this happens, it is assumed that the {@link ProductPluginDeployer} needs
+     * to see the plugin on the file system as new and needing to be processed, therefore
+     * the MD5, CONTENT and MTIME columns will be updated to ensure the deployer
+     * will process this plugin and thus update all the metadata for this plugin.
+     *
      * @param name the name of the plugin whose content is being updated
      * @param file the plugin file whose content will be streamed to the database
+     * @param different this will be <code>true</code> if the given file has a different filename
+     *                  that the plugin's "path" as found in the database.
+     *                   
      * 
      * @throws Exception
      */
-    private void streamPluginFileContentToDatabase(String name, File file) throws Exception {
+    private void streamPluginFileContentToDatabase(String name, File file, boolean different) throws Exception {
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
         TransactionManager tm = null;
 
-        String sql = "UPDATE " + Plugin.TABLE_NAME + " SET CONTENT = ?, MD5 = ?, MTIME = ? WHERE NAME = ?";
+        String sql = "UPDATE " + Plugin.TABLE_NAME + " SET CONTENT = ?, MD5 = ?, MTIME = ?, PATH = ? WHERE NAME = ?";
 
-        String md5 = MD5Generator.getDigestString(file);
-        long mtime = file.lastModified();
-        FileInputStream fis = new FileInputStream(file);
+        // if 'different' is true, give bogus data so the plugin deployer will think the plugin on the file system is new
+        String md5 = (!different) ? MD5Generator.getDigestString(file) : "TO BE UPDATED";
+        long mtime = (!different) ? file.lastModified() : 0L;
+        InputStream fis = (!different) ? new FileInputStream(file) : new ByteArrayInputStream(new byte[0]);
+        int contentSize = (int) ((!different) ? file.length() : 0);
 
         try {
             tm = LookupUtil.getTransactionManager();
@@ -244,10 +285,11 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
             DataSource ds = LookupUtil.getDataSource();
             conn = ds.getConnection();
             ps = conn.prepareStatement(sql);
-            ps.setBinaryStream(1, new BufferedInputStream(fis), (int) file.length());
+            ps.setBinaryStream(1, new BufferedInputStream(fis), contentSize);
             ps.setString(2, md5);
             ps.setLong(3, mtime);
-            ps.setString(4, name);
+            ps.setString(4, file.getName());
+            ps.setString(5, name);
             int updateResults = ps.executeUpdate();
             if (updateResults == 1) {
                 log.debug("Stored content for plugin [" + name + "] in the db. file=" + file);

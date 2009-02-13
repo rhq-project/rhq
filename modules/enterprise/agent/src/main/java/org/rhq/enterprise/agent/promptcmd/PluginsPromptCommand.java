@@ -26,12 +26,12 @@ import java.util.List;
 
 import mazz.i18n.Msg;
 
+import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.util.MD5Generator;
 import org.rhq.core.pc.PluginContainerConfiguration;
-import org.rhq.core.pc.plugin.PluginDescriptorLoader;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.PluginUpdate;
@@ -121,7 +121,7 @@ public class PluginsPromptCommand implements AgentPromptCommand {
                 String plugin_name;
                 try {
                     URL url = current_plugin.toURI().toURL();
-                    PluginDescriptor descriptor = PluginDescriptorLoader.loadPluginDescriptorFromUrl(url);
+                    PluginDescriptor descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(url);
                     plugin_name = descriptor.getName();
                 } catch (Throwable t) {
                     plugin_name = "?cannot-parse-descriptor?";

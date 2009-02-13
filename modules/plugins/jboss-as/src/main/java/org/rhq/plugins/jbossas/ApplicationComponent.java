@@ -52,6 +52,8 @@ import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.content.version.PackageVersions;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas.helper.MainDeployer;
@@ -63,7 +65,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * @author Ian Springer
  */
 public class ApplicationComponent
-    extends MBeanResourceComponent<JBossASServerComponent> implements ContentFacet, DeleteResourceFacet {
+    extends MBeanResourceComponent<JBossASServerComponent> implements ContentFacet, DeleteResourceFacet, OperationFacet {
     private static final String BACKUP_FILE_EXTENSION = ".rej";
 
     /**
@@ -291,6 +293,24 @@ public class ApplicationComponent
         }
     }
 
+
+    // OperationFacet Implementation ------------------------------------------------
+
+    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException, Exception {
+        if ("revert".equals(name)) {
+            try {
+                revertFromBackupFile();
+                return new OperationResult("Successfully reverted from backup");
+            }
+            catch (Exception e) {
+                throw new RuntimeException("Error reverting from Backup: " + e.getMessage());
+            }
+        }
+        else {
+            return super.invokeOperation(name,parameters);
+        }
+    }
+
      // Public  --------------------------------------------
 
     /**
@@ -335,11 +355,32 @@ public class ApplicationComponent
             throw new IOException("Can not modify directory " + directory );
         }
 
-        deleteResource();
+        File tmpBackup = new File(fullFileName + ".tmp.bak");
         File file = new File(fullFileName);
+        boolean good = file.renameTo(tmpBackup);
 
-        boolean good = backup.renameTo(file);
+        if (!good) {
+            throw new IOException("Aborted as it is not possible to move to original to a tmp backup at " + tmpBackup);
+        }
+
+        // Now that we have moved the original to a backup, try to move the real backup in
+
+        good = backup.renameTo(file);
+        if (!good) {
+            // move backup in failed
+            good = tmpBackup.renameTo(file);
+            if (!good) {
+                throw new IOException("Installing backup " + backup + " failed and re-installing the original from " +
+                        tmpBackup + " failed too. Please correct this manually" );
+            }
+        }
+        else {
+            // installing from backup worked
+            FileUtils.purge(tmpBackup,true);
+        }
         getParentResourceComponent().deployFile(file);
+
+
     }
 
 

@@ -627,18 +627,16 @@
             destinationType="URL"
             description="the minimum, maximum, and average response times for HTTP requests serviced by this web application" />
 
-         <!-- 
-            <content name="file" displayName="WAR File" category="deployable" isCreationType="true">
+          
+         <content name="file" displayName="WAR File" category="deployable" isCreationType="true">
             <configuration>
-            <c:group name="deployment" displayName="Deployment Options">
-            <c:simple-property name="deployZipped" displayName="Deploy Zipped" type="boolean" default="false" required="true"
-            description="Indicates if the WAR is deployed either zipped or exploded."/>
-            <c:simple-property name="deployDirectory" displayName="Deploy Directory" type="string" default="deploy" required="true"
-            description="Path to deploy the file. This must be a path relative to the AS configuration set in use."/>
-            </c:group>
+               <c:group name="deployment" displayName="Deployment Options">
+                  <c:simple-property name="deployZipped" displayName="Deploy Zipped" type="boolean" default="false" required="true" description="Indicates if the WAR is deployed either zipped or exploded."/>
+                  <c:simple-property name="deployDirectory" displayName="Deploy Directory" type="string" default="deploy" required="true" description="Path to deploy the file. This must be a path relative to the AS configuration set in use."/>
+               </c:group>
             </configuration>
-            </content>
-         -->
+         </content>
+         
       </service>
 
       <service

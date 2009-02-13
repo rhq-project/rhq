@@ -75,7 +75,7 @@ public final class AlertConditionCacheCoordinator {
         }
     }
 
-    private GlobalConditionCache globalCache;
+    private volatile GlobalConditionCache globalCache;
     private Map<Integer, AgentConditionCache> agentCaches;
 
     private ReentrantReadWriteLock agentReadWriteLock;

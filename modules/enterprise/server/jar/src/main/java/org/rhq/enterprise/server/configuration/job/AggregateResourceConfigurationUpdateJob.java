@@ -34,25 +34,11 @@ public class AggregateResourceConfigurationUpdateJob extends AbstractAggregateCo
     private static final String JOB_NAME_PREFIX = "rhq-arcu-";
 
     public static JobDetail getJobDetail(ResourceGroup group, Subject subject, JobDataMap jobDataMap) {
-        return AbstractAggregateConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap, JOB_NAME_PREFIX);
+        return AbstractAggregateConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap, 
+                AggregateResourceConfigurationUpdateJob.class, JOB_NAME_PREFIX);
     }
 
-    protected void updateAggregateConfigurationUpdateStatus(Integer aggregatePluginConfigurationUpdateId,
-                                                            ConfigurationManagerLocal configurationManager,
-                                                            String errorMessages)
-    {
-        // TODO
-        //configurationManager.updateAggregatePluginConfigurationUpdateStatus(aggregatePluginConfigurationUpdateId,
-        //        errorMessages);
-    }
-
-    protected void completeConfigurationUpdate(ConfigurationManagerLocal configurationManager, Integer childUpdateId)
-    {
-        //TODO
-        //configurationManager.completePluginConfigurationUpdate(childUpdateId);
-    }
-
-    protected List<Integer> getConfigurationUpdates(Integer aggregatePluginConfigurationUpdateId,
+    protected List<Integer> getConfigurationUpdateIds(Integer aggregatePluginConfigurationUpdateId,
                                                     ConfigurationManagerLocal configurationManager, PageControl pc)
     {
         @SuppressWarnings({"UnnecessaryLocalVariable"})
@@ -68,5 +54,18 @@ public class AggregateResourceConfigurationUpdateJob extends AbstractAggregateCo
         long childPluginConfigurationUpdateCount = configurationManager
             .getResourceConfigurationUpdateCountByParentId(aggregatePluginConfigurationUpdateId);
         return childPluginConfigurationUpdateCount;
+    }
+
+    protected void executeConfigurationUpdate(ConfigurationManagerLocal configurationManager, Integer childUpdateId,
+                                              Subject subject)
+    {
+        configurationManager.executeResourceConfigurationUpdate(subject, childUpdateId);
+    }
+
+    protected void handleSynchronousConfigurationUpdateErrors(ConfigurationManagerLocal configurationManager,
+                                                              Integer aggregateConfigurationUpdateId,
+                                                              String errorMessages)
+    {
+        // TODO: Stick the errors in the group update.
     }
 }

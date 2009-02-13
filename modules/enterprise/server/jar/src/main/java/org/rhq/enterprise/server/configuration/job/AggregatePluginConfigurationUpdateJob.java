@@ -34,23 +34,11 @@ public class AggregatePluginConfigurationUpdateJob extends AbstractAggregateConf
     private static final String JOB_NAME_PREFIX = "rhq-apcu-";
 
     public static JobDetail getJobDetail(ResourceGroup group, Subject subject, JobDataMap jobDataMap) {
-        return AbstractAggregateConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap, JOB_NAME_PREFIX);
+        return AbstractAggregateConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap,
+                AggregatePluginConfigurationUpdateJob.class, JOB_NAME_PREFIX);
     }
 
-    protected void updateAggregateConfigurationUpdateStatus(Integer aggregatePluginConfigurationUpdateId,
-                                                            ConfigurationManagerLocal configurationManager,
-                                                            String errorMessages)
-    {
-        configurationManager.updateAggregatePluginConfigurationUpdateStatus(aggregatePluginConfigurationUpdateId,
-                errorMessages);
-    }
-
-    protected void completeConfigurationUpdate(ConfigurationManagerLocal configurationManager, Integer childUpdateId)
-    {
-        configurationManager.completePluginConfigurationUpdate(childUpdateId);
-    }
-
-    protected List<Integer> getConfigurationUpdates(Integer aggregatePluginConfigurationUpdateId,
+    protected List<Integer> getConfigurationUpdateIds(Integer aggregatePluginConfigurationUpdateId,
                                                     ConfigurationManagerLocal configurationManager, PageControl pc)
     {
         List<Integer> pagedChildUpdateIds = configurationManager.getPluginConfigurationUpdatesByParentId(
@@ -64,5 +52,17 @@ public class AggregatePluginConfigurationUpdateJob extends AbstractAggregateConf
         long childPluginConfigurationUpdateCount = configurationManager
             .getPluginConfigurationUpdateCountByParentId(aggregatePluginConfigurationUpdateId);
         return childPluginConfigurationUpdateCount;
+    }
+
+    protected void executeConfigurationUpdate(ConfigurationManagerLocal configurationManager, Integer childUpdateId, Subject subject)
+    {
+        configurationManager.completePluginConfigurationUpdate(childUpdateId);
+    }
+
+    protected void handleSynchronousConfigurationUpdateErrors(ConfigurationManagerLocal configurationManager,
+                                                              Integer aggregateConfigurationUpdateId, String errorMessages)
+    {
+        configurationManager.updateAggregateConfigurationUpdateStatus(aggregateConfigurationUpdateId,
+                errorMessages);
     }
 }

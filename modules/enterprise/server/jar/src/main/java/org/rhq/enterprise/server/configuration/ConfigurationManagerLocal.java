@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.configuration;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.Local;
 
@@ -37,6 +38,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.AggregateResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -371,14 +373,14 @@ public interface ConfigurationManagerLocal {
     PageList<AggregatePluginConfigurationUpdate> getAggregatePluginConfigurationUpdatesByGroupId(int groupId,
         PageControl pc);
 
-    ConfigurationUpdateStatus updateAggregatePluginConfigurationUpdateStatus(int aggregatePluginConfigurationUpdateId,
+    ConfigurationUpdateStatus updateAggregateConfigurationUpdateStatus(int aggregatePluginConfigurationUpdateId,
         String errorMessages);
 
     int deleteAggregatePluginConfigurationUpdates(Subject subject, Integer resourceGroupId,
         Integer[] aggregatePluginConfigurationUpdateIds);
 
-    AggregatePluginConfigurationUpdate updateAggregatePluginConfigurationUpdate(
-        AggregatePluginConfigurationUpdate groupUpdate);
+    void updateAggregateConfigurationUpdate(
+        AbstractAggregateConfigurationUpdate groupUpdate);
 
     void deleteConfigurations(List<Integer> configurationIds);
 
@@ -387,4 +389,11 @@ public interface ConfigurationManagerLocal {
                                                                        PageControl pageControl);
 
     long getResourceConfigurationUpdateCountByParentId(int aggregateConfigurationUpdateId);
+
+    void executeResourceConfigurationUpdate(Subject whoami, int updateId);
+
+    AggregateResourceConfigurationUpdate getAggregateResourceConfigurationById(int configurationUpdateId);
+
+    int scheduleAggregateResourceConfigurationUpdate(Subject whoami, int compatibleGroupId,
+        Map<Integer, Configuration> memberConfigurations) throws SchedulerException, ConfigurationUpdateException;
 }

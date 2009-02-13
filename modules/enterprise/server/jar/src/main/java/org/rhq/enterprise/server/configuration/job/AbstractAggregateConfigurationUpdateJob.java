@@ -40,7 +40,7 @@ public abstract class AbstractAggregateConfigurationUpdateJob implements Job
     public static final String DATAMAP_INT_SUBJECT_ID = "subjectId";
 
     protected static JobDetail getJobDetail(ResourceGroup group, Subject subject, JobDataMap jobDataMap,
-                                            String jobNamePrefix)
+                                            Class jobClass, String jobNamePrefix)
     {
         JobDetail jobDetail = new JobDetail();
         jobDetail.setName(createUniqueJobName(group, subject, jobNamePrefix));
@@ -48,7 +48,7 @@ public abstract class AbstractAggregateConfigurationUpdateJob implements Job
         jobDetail.setVolatility(false); // we want it persisted
         jobDetail.setDurability(false);
         jobDetail.setRequestsRecovery(false);
-        jobDetail.setJobClass(AggregatePluginConfigurationUpdateJob.class);
+        jobDetail.setJobClass(jobClass);
         jobDetail.setJobDataMap(jobDataMap);
         return jobDetail;
     }
@@ -60,32 +60,31 @@ public abstract class AbstractAggregateConfigurationUpdateJob implements Job
 
         Integer configurationGroupUpdateId = jobDataMap.getIntFromString(DATAMAP_INT_CONFIG_GROUP_UPDATE_ID);
 
-        // TODO: Add authz checks?
         Integer subjectId = jobDataMap.getIntFromString(DATAMAP_INT_SUBJECT_ID);
         Subject subject = LookupUtil.getSubjectManager().findSubjectById(subjectId);
 
-        processAggregateConfigurationUpdate(configurationGroupUpdateId);
+        processAggregateConfigurationUpdate(configurationGroupUpdateId, subject);
     }
 
-    private void processAggregateConfigurationUpdate(Integer aggregatePluginConfigurationUpdateId) {
+    private void processAggregateConfigurationUpdate(Integer aggregateConfigurationUpdateId, Subject subject) {
         ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
         String errorMessages = null;
         try {
-            long childPluginConfigurationUpdateCount = getConfigurationUpdateCount(aggregatePluginConfigurationUpdateId,
+            long childPluginConfigurationUpdateCount = getConfigurationUpdateCount(aggregateConfigurationUpdateId,
                     configurationManager);
 
             int rowsProcessed = 0;
-            PageControl pc = new PageControl(0, 50, new OrderingField("cu.id", PageOrdering.ASC));
+            PageControl pc = new PageControl(0, 1000, new OrderingField("cu.id", PageOrdering.ASC));
             while (true) {
-                List<Integer> pagedChildUpdateIds = getConfigurationUpdates(aggregatePluginConfigurationUpdateId,
+                List<Integer> pagedChildUpdateIds = getConfigurationUpdateIds(aggregateConfigurationUpdateId,
                         configurationManager, pc);
                 if (pagedChildUpdateIds.size() <= 0) {
                     break;
                 }
 
                 for (Integer childUpdateId : pagedChildUpdateIds) {
-                    completeConfigurationUpdate(configurationManager, childUpdateId);
+                    executeConfigurationUpdate(configurationManager, childUpdateId, subject);
                 }
 
                 rowsProcessed += pagedChildUpdateIds.size();
@@ -98,14 +97,15 @@ public abstract class AbstractAggregateConfigurationUpdateJob implements Job
         } catch (Exception e) {
             errorMessages = ThrowableUtil.getAllMessages(e);
         } finally {
-            updateAggregateConfigurationUpdateStatus(aggregatePluginConfigurationUpdateId, configurationManager,
+            handleSynchronousConfigurationUpdateErrors(configurationManager, aggregateConfigurationUpdateId,
                     errorMessages);
         }
     }
 
     private static String createUniqueJobName(ResourceGroup group, Subject subject, String jobNamePrefix)
     {
-        return createJobGroupName(group, jobNamePrefix) + "-" + subject.getName().hashCode() + "-" + System.currentTimeMillis();
+        return createJobGroupName(group, jobNamePrefix) + "-" + subject.getName().hashCode() + "-"
+                + System.currentTimeMillis();
     }
 
     private static String createJobGroupName(ResourceGroup group, String jobNamePrefix)
@@ -113,16 +113,17 @@ public abstract class AbstractAggregateConfigurationUpdateJob implements Job
         return jobNamePrefix + group.getId();
     }
 
-    protected abstract List<Integer> getConfigurationUpdates(Integer aggregatePluginConfigurationUpdateId,
+    protected abstract List<Integer> getConfigurationUpdateIds(Integer aggregatePluginConfigurationUpdateId,
                                                              ConfigurationManagerLocal configurationManager,
                                                              PageControl pc);
 
     protected abstract long getConfigurationUpdateCount(Integer aggregatePluginConfigurationUpdateId,
                                                         ConfigurationManagerLocal configurationManager);
 
-    protected abstract void completeConfigurationUpdate(ConfigurationManagerLocal configurationManager, Integer childUpdateId);
+    protected abstract void executeConfigurationUpdate(ConfigurationManagerLocal configurationManager,
+                                                       Integer childUpdateId, Subject subject);
 
-    protected abstract void updateAggregateConfigurationUpdateStatus(Integer aggregatePluginConfigurationUpdateId,
-                                                                     ConfigurationManagerLocal configurationManager,
-                                                                     String errorMessages);
+    protected abstract void handleSynchronousConfigurationUpdateErrors(ConfigurationManagerLocal configurationManager,
+                                                                       Integer aggregateConfigurationUpdateId,
+                                                                       String errorMessages);
 }

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -58,6 +59,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.AggregateResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -80,6 +82,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.configuration.job.AbstractAggregateConfigurationUpdateJob;
 import org.rhq.enterprise.server.configuration.job.AggregatePluginConfigurationUpdateJob;
+import org.rhq.enterprise.server.configuration.job.AggregateResourceConfigurationUpdateJob;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -661,25 +664,35 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(whoami, resourceId,
             newConfiguration, ConfigurationUpdateStatus.INPROGRESS, whoami.getName());
 
+        executeResourceConfigurationUpdate(newUpdate);
+
+        return newUpdate;
+    }
+
+    public void executeResourceConfigurationUpdate(Subject whoami, int updateId) {
+        ResourceConfigurationUpdate update = getResourceConfigurationUpdate(whoami, updateId);
+        executeResourceConfigurationUpdate(update);
+    }
+
+    private void executeResourceConfigurationUpdate(ResourceConfigurationUpdate update)
+    {
         // now let's tell the agent to actually update the managed resource's configuration
         try {
-            AgentClient agentClient = agentManager.getAgentClient(newUpdate.getResource().getAgent());
-            ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(newUpdate.getId(), newUpdate
-                .getConfiguration(), newUpdate.getResource().getId());
+            AgentClient agentClient = agentManager.getAgentClient(update.getResource().getAgent());
+            ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(update.getId(), update
+                .getConfiguration(), update.getResource().getId());
             agentClient.getConfigurationAgentService().updateResourceConfiguration(request);
         } catch (RuntimeException e) {
             // Any exception means the remote call itself failed - make sure to change the status on the update to FAILURE
             // and set its error message field.
-            if (null != newUpdate) {
-                newUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
-                newUpdate.setErrorMessageFromThrowable(e);
+            if (null != update) {
+                update.setStatus(ConfigurationUpdateStatus.FAILURE);
+                update.setErrorMessageFromThrowable(e);
 
                 // here we call ourself, but we do so via the EJB interface so we pick up the REQUIRES_NEW semantics
-                this.configurationManager.mergeConfigurationUpdate(newUpdate);
+                this.configurationManager.mergeConfigurationUpdate(update);
             }
         }
-
-        return newUpdate;
     }
 
     public void rollbackResourceConfiguration(Subject whoami, int resourceId, int configHistoryId)
@@ -775,41 +788,82 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     private void notifyAlertConditionCacheManager(String callingMethod, ResourceConfigurationUpdate update) {
         AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(update);
 
-        log.debug(callingMethod + ": " + stats.toString());
+        log.debug(callingMethod + ": " + stats);
     }
 
     public void completeResourceConfigurationUpdate(ConfigurationUpdateResponse response) {
         log.debug("Received a configuration-update-completed message: " + response);
 
-        ResourceConfigurationUpdate persistedRequest;
-
         // find the current update request that is persisted - this is the one that is being reported as being complete
-        persistedRequest = entityManager.find(ResourceConfigurationUpdate.class, response.getConfigurationUpdateId());
-        if (persistedRequest == null) {
-
+        ResourceConfigurationUpdate update = entityManager.find(ResourceConfigurationUpdate.class,
+                response.getConfigurationUpdateId());
+        if (update == null) {
             throw new IllegalStateException(
                 "The completed request passed in does not match any request for any resource in inventory: " + response);
         }
 
         if (response.getStatus() == ConfigurationUpdateStatus.FAILURE) {
-            // TODO [mazz]: what happens if the plugin dorked with the configuration ID? need to assert is hasn't changed
+            // TODO [mazz]: what happens if the plugin dorked with the configuration ID? need to assert it hasn't changed
             if (response.getConfiguration() != null) {
                 Configuration failedConfiguration = response.getConfiguration();
                 failedConfiguration = entityManager.merge(failedConfiguration); // merge in any property error messages
-                persistedRequest.setConfiguration(failedConfiguration);
+                update.setConfiguration(failedConfiguration);
             }
         } else if (response.getStatus() == ConfigurationUpdateStatus.SUCCESS) {
             // link to the newer, persisted configuration object
-            Resource resource = persistedRequest.getResource();
-            resource.setResourceConfiguration(persistedRequest.getConfiguration().deepCopy(false));
+            Resource resource = update.getResource();
+            resource.setResourceConfiguration(update.getConfiguration().deepCopy(false));
         }
 
         // make sure we update the persisted request with the new status and any error message
-        persistedRequest.setStatus(response.getStatus());
-        persistedRequest.setErrorMessage(response.getErrorMessage());
+        update.setStatus(response.getStatus());
+        update.setErrorMessage(response.getErrorMessage());
 
+        checkForCompletedGroupResourceConfigurationUpdate(update);
         return;
     }
+
+    private void checkForCompletedGroupResourceConfigurationUpdate(ResourceConfigurationUpdate resourceConfigurationUpdate) {
+        if (resourceConfigurationUpdate.getStatus() == ConfigurationUpdateStatus.INPROGRESS)
+            // If this update isn't done, then by definition the group update isn't done either.
+            return;
+
+        AggregateResourceConfigurationUpdate groupUpdate = resourceConfigurationUpdate.getAggregateConfigurationUpdate();
+        if (groupUpdate == null)
+            // The update's not part of a group update - nothing we need to do.
+            return;
+
+        // See if the rest of the group members are done too - if so, mark the group update as completed.
+        List<ResourceConfigurationUpdate> allUpdates = groupUpdate.getConfigurationUpdates();
+        boolean stillInProgress = false; // assume all are finished
+        ConfigurationUpdateStatus groupStatus = ConfigurationUpdateStatus.SUCCESS; // will be FAILURE if at least one update failed
+        StringBuilder groupErrorMessage = null; // will be the group error message if at least one update failed
+
+        for (ResourceConfigurationUpdate update : allUpdates) {
+            if (update.getStatus() == ConfigurationUpdateStatus.INPROGRESS) {
+                stillInProgress = true;
+                break;
+            } else if (update.getStatus() == ConfigurationUpdateStatus.FAILURE) {
+                groupStatus = ConfigurationUpdateStatus.FAILURE;
+                if (groupErrorMessage == null) {
+                    groupErrorMessage = new StringBuilder(
+                        "The following Resources failed to update their Configurations: ");
+                } else {
+                    groupErrorMessage.append(',');
+                }
+                groupErrorMessage.append(update.getResource().getName());
+            }
+        }
+
+        if (!stillInProgress) {
+            groupUpdate.setErrorMessage((groupErrorMessage == null) ? null : groupErrorMessage.toString());
+            groupUpdate.setStatus(groupStatus);
+            // TODO: Add support for alerting on completion of group resource config updates.
+            //notifyAlertConditionCacheManager("checkForCompletedGroupResourceConfigurationUpdate", groupUpdate);
+        }
+
+        return;
+    }    
 
     @Nullable
     public ConfigurationDefinition getResourceConfigurationDefinitionForResourceType(Subject whoami, int resourceTypeId) {
@@ -1045,6 +1099,81 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateId;
     }
 
+    public int scheduleAggregateResourceConfigurationUpdate(Subject whoami, int compatibleGroupId,
+        Map<Integer, Configuration> memberConfigurations) throws SchedulerException, ConfigurationUpdateException {
+        ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, compatibleGroupId);
+
+        ensureModifyPermission(whoami, group);
+        if (memberConfigurations == null) {
+            throw new IllegalArgumentException(
+                "AggregateResourceConfigurationUpdate must have non-null configurations.");
+        }
+
+        /*
+         * we need to create and persist the aggregate in a new/separate transaction before the rest of the
+         * processing of this method; if we try to create and attach the PluginConfigurationUpdate children
+         * to the parent aggregate before the aggregate is actually persisted, we'll get StaleStateExceptions
+         * from Hibernate because of our use of flush/clear (we're trying to update the aggregate before it
+         * actually exists); this is also why we need to retrieve the aggregate and overlord fresh in the loop
+         */
+        AggregateResourceConfigurationUpdate aggregateUpdate = new AggregateResourceConfigurationUpdate(group,
+                whoami.getName());
+        int updateId = configurationManager.createAggregateConfigurationUpdate(aggregateUpdate);
+
+        /*
+         * Efficiently create all Resource-level Resource configuration update objects by
+         * iterating the implicit list in smaller, more memory-manageable chunks.
+         */
+        int pageNumber = 0;
+        int rowsProcessed = 0;
+        int groupMemberCount = resourceGroupManager.getImplicitGroupMemberCount(group.getId());
+
+        PageControl pc = new PageControl(pageNumber, 50, new OrderingField("res.id", PageOrdering.ASC));
+        while (true) {
+            Subject overlord = subjectManager.getOverlord();
+            List<Resource> pagedImplicitMembers = resourceManager.getImplicitResourcesByResourceGroup(overlord, group, pc);
+            if (pagedImplicitMembers.size() <= 0)
+                break;
+
+            for (Resource implicitMember : pagedImplicitMembers) {
+                /*
+                 * addConfigurationUpdate does all the magic of creating a new plugin configuration from the to-update
+                 * elements of the aggregate
+                 */
+                Configuration memberConfiguration = memberConfigurations.get(implicitMember.getId());
+                ResourceConfigurationUpdate newUpdate =
+                        configurationManager.persistNewResourceConfigurationUpdateHistory(whoami, implicitMember.getId(),
+                            memberConfiguration, ConfigurationUpdateStatus.INPROGRESS, whoami.getName());
+                newUpdate.setAggregateConfigurationUpdate(aggregateUpdate);
+                entityManager.persist(newUpdate);
+            }
+
+            rowsProcessed += pagedImplicitMembers.size();
+            if (rowsProcessed >= groupMemberCount)
+                break;
+
+            pc.setPageNumber(pc.getPageNumber() + 1);
+            entityManager.flush();
+            entityManager.clear();
+        }
+
+        JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.putAsString(AbstractAggregateConfigurationUpdateJob.DATAMAP_INT_CONFIG_GROUP_UPDATE_ID, updateId);
+        jobDataMap.putAsString(AbstractAggregateConfigurationUpdateJob.DATAMAP_INT_SUBJECT_ID, whoami.getId());
+
+        /*
+         * Acquire Quartz objects and schedule the aggregate update, but defer the execution for 10 seconds,
+         * because we need this transaction to complete so that the data is available when the Quartz job triggers.
+         */
+        JobDetail jobDetail = AggregateResourceConfigurationUpdateJob.getJobDetail(group, whoami, jobDataMap);
+        Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, 10000);
+        scheduler.scheduleJob(jobDetail, trigger);
+
+        log.debug("Scheduled Resource configuration update against compatible ResourceGroup[id=" + compatibleGroupId + "].");
+
+        return updateId;
+    }
+
     private ResourceGroup getCompatibleGroupIfAuthorized(Subject whoami, int compatibleGroupId) {
         ResourceGroup group;
 
@@ -1076,10 +1205,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public AggregatePluginConfigurationUpdate getAggregatePluginConfigurationById(int configurationUpdateId) {
         AggregatePluginConfigurationUpdate update = entityManager.find(AggregatePluginConfigurationUpdate.class,
             configurationUpdateId);
-        if (update == null) {
-            return null;
-        }
+        return update;
+    }
 
+    public AggregateResourceConfigurationUpdate getAggregateResourceConfigurationById(int configurationUpdateId) {
+        AggregateResourceConfigurationUpdate update = entityManager.find(AggregateResourceConfigurationUpdate.class,
+            configurationUpdateId);
         return update;
     }
 
@@ -1211,14 +1342,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public ConfigurationUpdateStatus updateAggregatePluginConfigurationUpdateStatus(
-        int aggregatePluginConfigurationUpdateId, String errorMessages) {
+    public ConfigurationUpdateStatus updateAggregateConfigurationUpdateStatus(
+        int aggregateConfigurationUpdateId, String errorMessages) {
 
         AggregatePluginConfigurationUpdate groupUpdate = configurationManager
-            .getAggregatePluginConfigurationById(aggregatePluginConfigurationUpdateId);
+            .getAggregatePluginConfigurationById(aggregateConfigurationUpdateId);
 
         Query query = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID);
-        query.setParameter("aggregateConfigurationUpdateId", aggregatePluginConfigurationUpdateId);
+        query.setParameter("aggregateConfigurationUpdateId", aggregateConfigurationUpdateId);
 
         ConfigurationUpdateStatus groupUpdateStatus = null;
         List<ConfigurationUpdateStatus> updateStatusTuples = query.getResultList();
@@ -1230,7 +1361,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         groupUpdate.setStatus(groupUpdateStatus);
         groupUpdate.setErrorMessage(errorMessages);
-        configurationManager.updateAggregatePluginConfigurationUpdate(groupUpdate);
+        configurationManager.updateAggregateConfigurationUpdate(groupUpdate);
 
         return groupUpdateStatus; // if the caller wants to know what the new status was
     }
@@ -1260,10 +1391,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return removed;
     }
 
-    public AggregatePluginConfigurationUpdate updateAggregatePluginConfigurationUpdate(
-        AggregatePluginConfigurationUpdate groupUpdate) {
+    public void updateAggregateConfigurationUpdate(
+        AbstractAggregateConfigurationUpdate groupUpdate) {
         // TODO jmarques: if (errorMessages != null) set any remaining INPROGRESS children to FAILURE
-        return entityManager.merge(groupUpdate);
+        entityManager.merge(groupUpdate);
     }
 
     public void deleteConfigurations(List<Integer> configurationIds) {

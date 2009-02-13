@@ -24,6 +24,7 @@ package org.rhq.plugins.jmx;
 
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,7 +34,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.lang.reflect.Method;
 
 import javax.management.openmbean.CompositeData;
 
@@ -143,8 +143,8 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
             loadBean();
             if (this.bean == null)
                 throw new IllegalStateException("EMS bean was null for Resource with type ["
-                        + this.resourceContext.getResourceType() + "] and key [" + this.resourceContext.getResourceKey()
-                        + "].");
+                    + this.resourceContext.getResourceType() + "] and key [" + this.resourceContext.getResourceKey()
+                    + "].");
         }
         return this.bean;
     }
@@ -288,17 +288,15 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
             }
         }
 
-        if (value.getClass().getName().equals(CompositeData.class.getName())
-            || isCompositeData) {
+        if (value.getClass().getName().equals(CompositeData.class.getName()) || isCompositeData) {
             try {
                 Method m = value.getClass().getMethod("get", String.class);
-                value = m.invoke(value, "used");
+                value = m.invoke(value, ps[1]);
             } catch (NoSuchMethodException e) {
                 /* Won't happen */
             } catch (Exception e) {
                 log.info("Unable to read attribute property [" + property + "] from composite data value", e);
             }
-
         } else {
             // Try to use reflection
             try {
@@ -420,10 +418,10 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
         return invokeOperation(name, parameters, getEmsBean());
     }
 
-    public OperationResult invokeOperation(String name, Configuration parameters, EmsBean emsBean)  throws Exception
-    {
-        if (emsBean==null) {
-            throw new Exception("Can not invoke operation [" + name + "], as we can't connect to the bean - is it down?");
+    public OperationResult invokeOperation(String name, Configuration parameters, EmsBean emsBean) throws Exception {
+        if (emsBean == null) {
+            throw new Exception("Can not invoke operation [" + name
+                + "], as we can't connect to the bean - is it down?");
         }
 
         EmsOperation operation = emsBean.getOperation(name);
@@ -449,12 +447,12 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
         Object resultObject = operation.invoke(parameterValues);
         // TODO: Figure out what EMS actually returns to represent a void return type, so we can avoid doing
         //       unnecessary extra checks. (ips, 08/21/08)
-        boolean hasVoidReturnType = (operation.getReturnType() == null ||
-                                     Void.class.getName().equals(operation.getReturnType()) ||
-                                     void.class.getName().equals(operation.getReturnType()));
+        boolean hasVoidReturnType = (operation.getReturnType() == null
+            || Void.class.getName().equals(operation.getReturnType()) || void.class.getName().equals(
+            operation.getReturnType()));
         //noinspection UnnecessaryLocalVariable
-        OperationResult result = (resultObject == null && hasVoidReturnType) ? null :
-                new OperationResult(String.valueOf(resultObject));
+        OperationResult result = (resultObject == null && hasVoidReturnType) ? null : new OperationResult(String
+            .valueOf(resultObject));
         return result;
     }
 }

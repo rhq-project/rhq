@@ -214,22 +214,19 @@ id - the id of the Resource being accessed
                   </rich:toolTip>
 
               </h:panelGroup>
-
+              
               <h:panelGroup>
                   <a4j:outputPanel id="favoritesPanel">
-                      <a4j:form id="favoritesForm">
                           <a4j:commandButton id="favoritesButton"
-                                             reRender="favoritesPanel" 
-                                             status="commonStatus"
+                                             reRender="favoritesPanel" status="commonStatus"
                                              image="#{FavoritesUIBean.favorite ? '/images/star_on_24.png' : '/images/star_off_24.png'}"
                                              action="#{FavoritesUIBean.toggleFavorite}">
-                              <f:param name="id" value="#{FavoritesUIBean.id}"/>
+                              
                           </a4j:commandButton>
                           <rich:toolTip for="favoritesPanel">
                               <h:outputText value="Add resource to favorites list" rendered="#{!FavoritesUIBean.favorite}"/>
                               <h:outputText value="Remove resource from favorites list" rendered="#{FavoritesUIBean.favorite}"/>
                           </rich:toolTip>
-                      </a4j:form>
                   </a4j:outputPanel>
               </h:panelGroup>
           </h:panelGrid>

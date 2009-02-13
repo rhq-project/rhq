@@ -38,31 +38,18 @@ public class FavoritesUIBean {
     protected final Log log = LogFactory.getLog(FavoritesUIBean.class);
 
     private Boolean favorite; // true if this resource has been added to the favorites dashboard portlet
-    private int id;
 
     public FavoritesUIBean() {
     }
 
     public boolean isFavorite() {
-        log.debug("isFavorite for " + id);
-        id = WebUtility.getResourceId(FacesContextUtility.getRequest());
+        log.debug("isFavorite for " + getResourceId());
         this.favorite = QuickFavoritesUtil.determineIfFavoriteResource(FacesContextUtility.getRequest());
         return this.favorite;
-    }
-
-    public boolean getFavorite() {
-        log.debug("isFavorite for " + id);
-        id = WebUtility.getResourceId(FacesContextUtility.getRequest());
-        this.favorite = QuickFavoritesUtil.determineIfFavoriteResource(FacesContextUtility.getRequest());
-        return this.favorite;
-    }
-
-    public int getId() {
-        return id;
     }
 
     public String toggleFavorite() {
-        log.debug("toggleFavorite for " + id);
+        log.debug("toggleFavorite for " + getResourceId());
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
         WebUserPreferences preferences = user.getWebPreferences();
         WebUserPreferences.FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
@@ -73,23 +60,21 @@ public class FavoritesUIBean {
         boolean isFav = favoriteResourcePreferences.isFavorite(resourceId);
         if (isFav) {
             favoriteResourcePreferences.removeFavorite(resourceId);
-            log.info("Removing favorite: " + resourceId);
+            log.debug("Removing favorite: " + resourceId);
         } else {
             favoriteResourcePreferences.addFavorite(resourceId);
-            log.info("Adding favorite: " + resourceId);
+            log.debug("Adding favorite: " + resourceId);
         }
 
         preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
         preferences.persistPreferences();
 
         favorite = !isFav;
-        log.debug("Setting favorite to: " + this.favorite);
 
         return null;
     }
 
-    public void setFavorite(boolean favorite) {
-        log.debug("setFavorite(" + favorite + ") for " + id);
-        this.favorite = favorite;
+    private int getResourceId() {
+        return WebUtility.getResourceId(FacesContextUtility.getRequest());
     }
 }

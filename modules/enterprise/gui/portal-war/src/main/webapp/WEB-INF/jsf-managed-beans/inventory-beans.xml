@@ -62,7 +62,7 @@
    <managed-bean>
       <managed-bean-name>CreateNewPackageChildResourceUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.CreateNewPackageChildResourceUIBean</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
+      <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
 
    <managed-bean>
@@ -70,7 +70,7 @@
       <managed-bean-class>
          org.rhq.enterprise.gui.inventory.resource.CreateNewChildResourceAddNewOpenMapMemberPropertyUIBean
       </managed-bean-class>
-      <managed-bean-scope>session</managed-bean-scope>
+      <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
    <managed-bean>

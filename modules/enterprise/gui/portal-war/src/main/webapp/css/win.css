@@ -1798,6 +1798,10 @@ P.compact {
    width: 175px;
 }
 
+.aggregate-property-value-cell {
+   width: 205px;
+}
+
 .list-property-display-name-cell, .list-property-value-cell, .list-property-description-cell, .list-property-enabled-cell, .list-property-error-cell {
    padding: 4px;
    vertical-align: top;

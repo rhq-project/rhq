@@ -26,12 +26,16 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class AggregateResourceConfigurationUpdateJob extends AbstractAggregateConfigurationUpdateJob {
     /**
      * Prefix for all job names and job group names of aggregate resource configuration updates.
      */
     private static final String JOB_NAME_PREFIX = "rhq-arcu-";
+
+    private final Log log = LogFactory.getLog(AggregateResourceConfigurationUpdateJob.class);
 
     public static JobDetail getJobDetail(ResourceGroup group, Subject subject, JobDataMap jobDataMap) {
         return AbstractAggregateConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap, 
@@ -66,6 +70,8 @@ public class AggregateResourceConfigurationUpdateJob extends AbstractAggregateCo
                                                               Integer aggregateConfigurationUpdateId,
                                                               String errorMessages)
     {
-        // TODO: Stick the errors in the group update.
+        log.error("Failed to execute one or more Resource Configuration updates that were part of a group update - details: "
+                + errorMessages);
+        // TODO: Stick the errors in the individual updates.
     }
 }

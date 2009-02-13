@@ -395,5 +395,7 @@ public interface ConfigurationManagerLocal {
     AggregateResourceConfigurationUpdate getAggregateResourceConfigurationById(int configurationUpdateId);
 
     int scheduleAggregateResourceConfigurationUpdate(Subject whoami, int compatibleGroupId,
-        Map<Integer, Configuration> memberConfigurations) throws SchedulerException, ConfigurationUpdateException;
+        Map<Integer, Configuration> memberConfigurations) throws Exception;
+
+    Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(ResourceGroup compatibleGroup);
 }

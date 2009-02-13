@@ -22,24 +22,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import javax.faces.component.html.HtmlPanelGroup;
-import javax.faces.component.html.HtmlOutputText;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.gui.configuration.ConfigRenderer;
-import org.rhq.core.gui.configuration.CssStyleClasses;
 import org.rhq.core.gui.configuration.propset.ConfigurationSet;
-import org.rhq.core.gui.configuration.propset.ConfigurationSetComponent;
 import org.rhq.core.gui.configuration.propset.ConfigurationSetMember;
-import org.rhq.core.gui.util.FacesExpressionUtility;
-import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.enterprise.gui.common.Outcomes;
-import org.ajax4jsf.component.html.HtmlAjaxCommandLink;
 
 /**
  * @author Ian Springer
@@ -51,8 +42,6 @@ public abstract class AbstractTestConfigurationUIBean {
     private Configuration configuration;
     private List<Property> properties;
     private ConfigurationSet configurationSet;
-    private ConfigurationSetComponent configurationSetComponent;
-    private HtmlPanelGroup panelGroup;
 
     protected AbstractTestConfigurationUIBean()
     {
@@ -121,43 +110,5 @@ public abstract class AbstractTestConfigurationUIBean {
 
     public String getNullConfigurationMessage() {
         return "Test config is null (should never happen).";
-    }
-
-    public ConfigurationSetComponent getConfigurationSetComponent() {        
-        return this.configurationSetComponent;
-    }
-
-    public void setConfigurationSetComponent(ConfigurationSetComponent configurationSetComponent) {
-        this.configurationSetComponent = configurationSetComponent;
-        this.configurationSetComponent.setValueExpression("configurationSet",
-                FacesExpressionUtility.createValueExpression("#{EditTestConfigurationUIBean.configurationSet}",
-                        ConfigurationSet.class));
-        ConfigRenderer renderer = new ConfigRenderer();
-        this.configurationSetComponent.getChildren().clear();
-        renderer.addChildComponents(configurationSetComponent);
-    }
-
-    public HtmlPanelGroup getPanelGroup() {
-        return this.panelGroup;
-    }
-
-    public void setPanelGroup(HtmlPanelGroup panelGroup) {
-        this.panelGroup = panelGroup;
-        this.panelGroup.getChildren().clear();
-        HtmlOutputText outputText = FacesComponentUtility.createComponent(HtmlOutputText.class);
-        outputText.setValue("ABCDE" + UUID.randomUUID());
-        this.panelGroup.getChildren().add(outputText);
-        HtmlAjaxCommandLink ajaxCommandLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
-        this.panelGroup.getChildren().add(ajaxCommandLink);
-             //ajaxCommandLink.setOncomplete("Richfaces.showModalPanel('" +
-             //        this.memberValuesModalPanel.getClientId(FacesContext.getCurrentInstance()) + "');");
-             //String propertySetFormId = this.config.getId() + "PropertySetForm";
-             //ajaxCommandLink.setReRender(":" + propertySetFormId + ":rhq_propSet");
-             //ajaxCommandLink.setReRender("rhq_configSet");
-        ajaxCommandLink.setTitle("Refresh");
-        //FacesComponentUtility.addParameter(ajaxCommandLink, null, "propertyExpressionString",
-        //        input.getValueExpression("value").getExpressionString());
-        FacesComponentUtility.addParameter(ajaxCommandLink, null, "reload", "true");
-        FacesComponentUtility.addButton(ajaxCommandLink, "Refresh", CssStyleClasses.BUTTON_SMALL);
     }
 }

@@ -28,22 +28,29 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.action.resource.common.QuickFavoritesUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 
 public class ResourceGroupUIBean {
     public static final String MANAGED_BEAN_NAME = "ResourceGroupUIBean";
+
+    private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
 
     private ResourceGroup resourceGroup;
     private Double availability;
     private long count;
     private ResourcePermission permissions;
+    private ResourceFacets facets; // this will only be non-null for compat groups
     private Boolean isFavorite; // true if this resource has been added to the favorites dashboard portlet
     private ResourceError invalidPluginConfigurationError;
     private Subject subject;
@@ -64,6 +71,14 @@ public class ResourceGroupUIBean {
         Set<Permission> permissions = LookupUtil.getAuthorizationManager().getImplicitGroupPermissions(subject,
             this.resourceGroup.getId());
         this.permissions = new ResourcePermission(permissions);
+        if (this.resourceGroup.getGroupCategory() == GroupCategory.COMPATIBLE) {
+            try {
+                this.facets = this.resourceTypeManager.getResourceFacets(subject,
+                        this.resourceGroup.getResourceType().getId());
+            } catch (ResourceTypeNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public int getGroupId() {
@@ -110,6 +125,11 @@ public class ResourceGroupUIBean {
 
     public ResourcePermission getPermissions() {
         return this.permissions;
+    }
+
+    public ResourceFacets getFacets()
+    {
+        return this.facets;
     }
 
     @Nullable

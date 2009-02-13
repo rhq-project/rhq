@@ -23,6 +23,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -674,9 +675,13 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         executeResourceConfigurationUpdate(update);
     }
 
+    /**
+     * Tells the Agent to asynchonously update a managed resource's configuration as per the specified
+     * <code>ResourceConfigurationUpdate</code>.
+     */
     private void executeResourceConfigurationUpdate(ResourceConfigurationUpdate update)
     {
-        // now let's tell the agent to actually update the managed resource's configuration
+
         try {
             AgentClient agentClient = agentManager.getAgentClient(update.getResource().getAgent());
             ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(update.getId(), update
@@ -1100,7 +1105,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public int scheduleAggregateResourceConfigurationUpdate(Subject whoami, int compatibleGroupId,
-        Map<Integer, Configuration> memberConfigurations) throws SchedulerException, ConfigurationUpdateException {
+        Map<Integer, Configuration> memberConfigurations) throws Exception {
         ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, compatibleGroupId);
 
         ensureModifyPermission(whoami, group);
@@ -1274,6 +1279,47 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             ResourceConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID);
         countQuery.setParameter("aggregateConfigurationUpdateId", aggregateConfigurationUpdateId);
         return (Long) countQuery.getSingleResult();
+    }
+
+    public Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(ResourceGroup compatibleGroup) {
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
+            Configuration.QUERY_GET_RESOURCE_CONFIG_BY_GROUP_ID);
+        countQuery.setParameter("resourceGroupId", compatibleGroup.getId());
+        long count = (Long) countQuery.getSingleResult();
+        final int MAX_RESULTS = 100;
+        int resultsSize;
+        if (count > MAX_RESULTS) {
+            log.error("Compatible group " + compatibleGroup + " contains more than " + MAX_RESULTS + " members - " +
+               "returning only " + MAX_RESULTS + " Configurations (the maximum allowed).");
+            resultsSize = MAX_RESULTS;
+        } else {
+            resultsSize = (int)count;
+        }
+
+        // Configurations are very expensive to load, so load 'em in chunks to ease the strain on the DB.
+        PageControl pageControl = new PageControl(0, 10);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            Configuration.QUERY_GET_RESOURCE_CONFIG_BY_GROUP_ID, pageControl);
+        query.setParameter("resourceGroupId", compatibleGroup.getId());
+
+        Map<Integer, Configuration> results = new HashMap(resultsSize);
+        int rowsProcessed = 0;
+        while (true) {
+            List<Object[]> pagedResults = query.getResultList();
+
+            if (pagedResults.size() <= 0)
+                break;
+
+            for (Object[] result : pagedResults)
+                results.put((Integer)result[0], (Configuration)result[1]);
+
+            rowsProcessed += pagedResults.size();
+            if (rowsProcessed >= resultsSize)
+                break;
+
+            pageControl.setPageNumber(pageControl.getPageNumber() + 1);
+        }
+        return results;
     }
 
     public Configuration getAggregatePluginConfigurationForCompatibleGroup(ResourceGroup group) {

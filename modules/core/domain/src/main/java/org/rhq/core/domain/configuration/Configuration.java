@@ -84,6 +84,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Jason Dobies
  * @author Greg Hinkle
+ * 
  * @see    Property
  * @see    PropertySimple
  * @see    PropertyList
@@ -105,6 +106,8 @@ import org.jetbrains.annotations.NotNull;
         + "select r.pluginConfiguration from Resource r where r.id = :resourceId"),
     @NamedQuery(name = Configuration.QUERY_GET_RESOURCE_CONFIG_BY_RESOURCE_ID, query = "" //
         + "select r.resourceConfiguration from Resource r where r.id = :resourceId"),
+    @NamedQuery(name = Configuration.QUERY_GET_RESOURCE_CONFIG_BY_GROUP_ID, query = "" //
+        + "select r.id, r.resourceConfiguration from ResourceGroup rg JOIN rg.implicitResources r where rg.id = :resourceGroupId"),
     @NamedQuery(name = Configuration.QUERY_DELETE_PROPERTIES_BY_CONFIGURATION_IDS, query = "" //
         + "DELETE FROM Property p WHERE p.configuration.id IN ( :configurationIds )"),
     @NamedQuery(name = Configuration.QUERY_DELETE_CONFIGURATIONS_BY_CONFIGURATION_IDs, query = "" //
@@ -119,6 +122,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     public static final String QUERY_GET_PLUGIN_CONFIG_UNIQUE_COUNT_BY_GROUP_AND_PROP_NAME = "Configuration.getPluginConfigUniqueCountByGroupAndPropertyName";
     public static final String QUERY_GET_PLUGIN_CONFIG_BY_RESOURCE_ID = "Configuration.getPluginConfigByResourceId";
     public static final String QUERY_GET_RESOURCE_CONFIG_BY_RESOURCE_ID = "Configuration.getResourceConfigByResourceId";
+    public static final String QUERY_GET_RESOURCE_CONFIG_BY_GROUP_ID = "Configuration.getResourceConfigByGroupId";
 
     public static final String QUERY_DELETE_PROPERTIES_BY_CONFIGURATION_IDS = "Property.deleteByConfigurationIds";
     public static final String QUERY_DELETE_CONFIGURATIONS_BY_CONFIGURATION_IDs = "Configuration.deleteByConfigurationIdS";

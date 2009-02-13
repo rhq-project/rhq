@@ -9,7 +9,8 @@
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
-      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.org/rich"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function">
 
@@ -74,8 +75,14 @@ THIS TEXT WILL BE REMOVED AS WELL.
       </onc:tab>
 
       <onc:tab name="Inventory" url="/rhq/group/inventory/view.xhtml"/>
-      
-      <onc:tab name="Operations" rendered="#{param.category eq 'COMPATIBLE'}">
+
+      <onc:tab name="Configuration" displayName="Configure"
+               rendered="#{param.category eq 'COMPATIBLE' and ResourceGroupUIBean.facets.configuration}">
+         <onc:subtab name="Current" url="/rhq/group/configuration/current.xhtml" />
+         <onc:subtab name="History" url="/rhq/group/configuration/history.xhtml" />
+      </onc:tab>
+
+      <onc:tab name="Operations" rendered="#{param.category eq 'COMPATIBLE' and ResourceGroupUIBean.facets.operation}">
          <onc:subtab name="New" url="/rhq/group/operation/groupOperationScheduleNew.xhtml"/>
          <onc:subtab name="Schedules" url="/rhq/group/operation/groupOperationSchedules.xhtml"/>
          <onc:subtab name="History" url="/rhq/group/operation/groupOperationHistory.xhtml"/>

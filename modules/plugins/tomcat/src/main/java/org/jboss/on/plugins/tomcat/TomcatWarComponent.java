@@ -22,29 +22,54 @@
  */
 package org.jboss.on.plugins.tomcat;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.on.plugins.tomcat.helper.TomcatApplicationDeployer;
 import org.jetbrains.annotations.Nullable;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
+import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
+import org.rhq.core.domain.content.transfer.DeployPackageStep;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.content.ContentFacet;
+import org.rhq.core.pluginapi.content.ContentServices;
+import org.rhq.core.pluginapi.content.version.PackageVersions;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
+import org.rhq.core.util.ZipUtil;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
@@ -55,7 +80,8 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * @author Ian Springer
  * @author Heiko W. Rupp
  */
-public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerComponent> {
+public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerComponent> implements ContentFacet,
+    DeleteResourceFacet {
 
     private static final String METRIC_PREFIX_APPLICATION = "Application.";
     private static final String METRIC_PREFIX_SERVLET = "Servlet.";
@@ -88,6 +114,22 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
     protected static final String PROPERTY_VHOST = "vHost";
 
     private final Log log = LogFactory.getLog(this.getClass());
+
+    private static final String BACKUP_FILE_EXTENSION = ".rej";
+
+    /**
+     * Name of the backing package type that will be used when discovering packages. This corresponds to the name
+     * of the package type defined in the plugin descriptor. For simplicity, the package type for both EARs and
+     * WARs is simply called "file". This is still unique within the context of the parent resource type and lets
+     * this class use the same package type name in both cases.
+     */
+    private static final String PKG_TYPE_FILE = "file";
+
+    /**
+     * Architecture string used in describing discovered packages.
+     */
+    private static final String ARCHITECTURE = "noarch";
+    private PackageVersions versions;
 
     private EmsBean webModuleMBean;
     private ResponseTimeLogParser logParser;
@@ -156,7 +198,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
                             log.error("Failed to retrieve HTTP call-time data.", e);
                         }
                     } else {
-                        log.error("The '" + METRIC_RESPONSE_TIME + "' metric is enabled for WAR resource '" + getApplicationName() + "', but no value is defined for the '"
+                        log.error("The '" + METRIC_RESPONSE_TIME + "' metric is enabled for WAR resource '"
+                            + getApplicationName() + "', but no value is defined for the '"
                             + PROPERTY_RESPONSE_TIME_LOG_FILE + "' connection property.");
                         // TODO: Communicate this error back to the server for display in the GUI.
                     }
@@ -306,7 +349,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
 
         EmsOperation mbeanOperation = this.webModuleMBean.getOperation(name);
         if (mbeanOperation == null) {
-            throw new IllegalStateException("Operation [" + name + "] not found on bean [" + this.webModuleMBean.getBeanName() + "]");
+            throw new IllegalStateException("Operation [" + name + "] not found on bean ["
+                + this.webModuleMBean.getBeanName() + "]");
         }
 
         // NOTE: None of the supported operations have any parameters or return values, which makes our job easier.
@@ -315,7 +359,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
         int state = (Integer) this.webModuleMBean.getAttribute("state").refresh();
         int expectedState = getExpectedPostExecutionState(operation);
         if (state != expectedState) {
-            throw new Exception("Failed to " + name + " webapp (value of the 'state' attribute of MBean '" + this.webModuleMBean.getBeanName() + "' is " + state + ", not " + expectedState + ").");
+            throw new Exception("Failed to " + name + " webapp (value of the 'state' attribute of MBean '"
+                + this.webModuleMBean.getBeanName() + "' is " + state + ", not " + expectedState + ").");
         }
 
         return new OperationResult();
@@ -399,7 +444,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
     private List<EmsBean> getVHosts() {
         EmsConnection emsConnection = getEmsConnection();
         String query = QUERY_TEMPLATE_HOST;
-        query = query.replace("%PATH%", this.resourceContext.getPluginConfiguration().getSimpleValue(PROPERTY_CONTEXT_ROOT, ""));
+        query = query.replace("%PATH%", this.resourceContext.getPluginConfiguration().getSimpleValue(
+            PROPERTY_CONTEXT_ROOT, ""));
         ObjectNameQueryUtility queryUtil = new ObjectNameQueryUtility(query);
         List<EmsBean> mBeans = emsConnection.queryBeans(queryUtil.getTranslatedQuery());
         return mBeans;
@@ -416,4 +462,276 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
         return appName;
     }
 
+    public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
+        // You can only update the one application file referenced by this resource, so punch out if multiple are
+        // specified.
+        if (packages.size() != 1) {
+            log.warn("Request to update a WAR file contained multiple packages.");
+            DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
+            response
+                .setOverallRequestErrorMessage("When deploying an EAR/WAR, only one EAR/WAR can be updated at a time.");
+            return response;
+        }
+
+        ResourcePackageDetails packageDetails = packages.iterator().next();
+
+        // Find location of existing application
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+        File appFile = new File(pluginConfig.getSimple(PROPERTY_FILENAME).getStringValue());
+        if (!appFile.exists()) {
+            return failApplicationDeployment("Could not find application to update at location: " + appFile,
+                packageDetails);
+        }
+
+        File tempFile;
+        try {
+            tempFile = writeNewAppBitsToTempFile(appFile, contentServices, packageDetails);
+        } catch (Exception e) {
+            return failApplicationDeployment("Error writing new application bits to temporary file - cause: " + e,
+                packageDetails);
+        }
+
+        // Backup the existing app file/dir to <filename>.rej.
+        File backupOfOriginalFile = new File(appFile.getPath() + BACKUP_FILE_EXTENSION);
+        appFile.renameTo(backupOfOriginalFile);
+
+        // Write the new bits for the application
+        moveTempFileToDeployLocation(tempFile, appFile);
+
+        // The file has been written successfully to the deploy dir. Now try to actually deploy it.
+        TomcatApplicationDeployer mainDeployer = getParentResourceComponent().getDeployer();
+        try {
+            mainDeployer.redeploy(appFile);
+        } catch (Exception e) {
+            // Deploy failed - rollback to the original app file...
+            String errorMessage = ThrowableUtil.getAllMessages(e);
+            try {
+                FileUtils.purge(appFile, true);
+                backupOfOriginalFile.renameTo(appFile);
+                // Need to redeploy the original file - this generally should succeed.
+                mainDeployer.redeploy(appFile);
+                errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
+            } catch (Exception e1) {
+                errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
+                    + ThrowableUtil.getAllMessages(e1);
+            }
+            return failApplicationDeployment(errorMessage, packageDetails);
+        }
+
+        // Deploy was successful!
+
+        deleteBackupOfOriginalFile(backupOfOriginalFile);
+        persistApplicationVersion(packageDetails, appFile);
+
+        DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
+        DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),
+            ContentResponseResult.SUCCESS);
+        response.addPackageResponse(packageResponse);
+
+        return response;
+    }
+
+    public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
+        Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
+
+        Configuration pluginConfiguration = super.resourceContext.getPluginConfiguration();
+        String fullFileName = pluginConfiguration.getSimpleValue(PROPERTY_FILENAME, null);
+
+        if (fullFileName == null) {
+            throw new IllegalStateException(
+                "Plugin configuration does not contain the full file name of the EAR/WAR file.");
+        }
+
+        // If the parent EAR/WAR resource was found, this file should exist
+        File file = new File(fullFileName);
+        if (file.exists()) {
+            // Package name and file name of the application are the same
+            String fileName = new File(fullFileName).getName();
+
+            PackageVersions versions = loadApplicationVersions();
+            String version = versions.getVersion(fileName);
+
+            // First discovery of this WAR/WAR
+            if (version == null) {
+                version = "1.0";
+                versions.putVersion(fileName, version);
+                versions.saveToDisk();
+            }
+
+            PackageDetailsKey key = new PackageDetailsKey(fileName, version, PKG_TYPE_FILE, ARCHITECTURE);
+            ResourcePackageDetails details = new ResourcePackageDetails(key);
+            details.setFileName(fileName);
+            details.setLocation(file.getPath());
+            if (!file.isDirectory())
+                details.setFileSize(file.length());
+            details.setFileCreatedDate(null); // TODO: get created date via SIGAR
+
+            packages.add(details);
+        }
+
+        return packages;
+    }
+
+    public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
+        return null;
+    }
+
+    public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
+        throw new UnsupportedOperationException("Cannot remove the package backing a WAR resource.");
+    }
+
+    public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
+        File packageFile = new File(packageDetails.getName());
+        File fileToSend;
+        try {
+            if (packageFile.isDirectory()) {
+                fileToSend = File.createTempFile("rhq", ".zip");
+                ZipUtil.zipFileOrDirectory(packageFile, fileToSend);
+            } else
+                fileToSend = packageFile;
+            return new BufferedInputStream(new FileInputStream(fileToSend));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to retrieve package bits for " + packageDetails, e);
+        }
+    }
+
+    private DeployPackagesResponse failApplicationDeployment(String errorMessage, ResourcePackageDetails packageDetails) {
+        DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
+
+        DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),
+            ContentResponseResult.FAILURE);
+        packageResponse.setErrorMessage(errorMessage);
+
+        response.addPackageResponse(packageResponse);
+
+        return response;
+    }
+
+    private void persistApplicationVersion(ResourcePackageDetails packageDetails, File appFile) {
+        String packageName = appFile.getName();
+        PackageVersions versions = loadApplicationVersions();
+        versions.putVersion(packageName, packageDetails.getVersion());
+    }
+
+    private void deleteBackupOfOriginalFile(File backupOfOriginalFile) {
+        try {
+            FileUtils.purge(backupOfOriginalFile, true);
+        } catch (Exception e) {
+            // not critical.
+            log.warn("Failed to delete backup of original file: " + backupOfOriginalFile);
+        }
+    }
+
+    private void moveTempFileToDeployLocation(File tempFile, File appFile) {
+        InputStream tempIs = null;
+        try {
+            if (appFile.isDirectory()) {
+                tempIs = new BufferedInputStream(new FileInputStream(tempFile));
+                appFile.mkdir();
+                ZipUtil.unzipFile(tempIs, appFile);
+            } else {
+                tempFile.renameTo(appFile);
+            }
+        } catch (IOException e) {
+            log.error("Error writing updated package bits to the existing application location: " + appFile, e);
+            //return failApplicationDeployment("Error writing updated package bits to the existing application location: " +
+            //    appFile, packageDetails);
+        } finally {
+            if (tempIs != null) {
+                try {
+                    tempIs.close();
+                } catch (IOException e) {
+                    log.error("Error closing temporary input stream", e);
+                }
+            }
+        }
+    }
+
+    private File writeNewAppBitsToTempFile(File file, ContentServices contentServices,
+        ResourcePackageDetails packageDetails) throws Exception {
+        File tempDir = getResourceContext().getTemporaryDirectory();
+        File tempFile = new File(tempDir.getAbsolutePath(), file.getName() + System.currentTimeMillis());
+
+        // The temp file shouldn't be there, but check and delete it if it is
+        if (tempFile.exists()) {
+            log.warn("Existing temporary file found and will be deleted at: " + tempFile);
+            tempFile.delete();
+        }
+        OutputStream tempOutputStream = null;
+        try {
+            tempOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
+            contentServices.downloadPackageBits(resourceContext.getContentContext(), packageDetails.getKey(),
+                tempOutputStream, true);
+        } catch (IOException e) {
+            log.error("Error writing updated application bits to temporary location: " + tempFile, e);
+            throw e;
+        } finally {
+            if (tempOutputStream != null) {
+                try {
+                    tempOutputStream.close();
+                } catch (IOException e) {
+                    log.error("Error closing temporary output stream", e);
+                }
+            }
+        }
+        if (!tempFile.exists()) {
+            log.error("Temporary file for application update not written to: " + tempFile);
+            throw new Exception();
+        }
+        return tempFile;
+    }
+
+    public TomcatServerComponent getParentResourceComponent() {
+        return this.resourceContext.getParentResourceComponent();
+    }
+
+    private PackageVersions loadApplicationVersions() {
+        if (versions == null) {
+            ResourceType resourceType = super.resourceContext.getResourceType();
+            String pluginName = resourceType.getPlugin();
+
+            File dataDirectoryFile = super.resourceContext.getDataDirectory();
+
+            if (!dataDirectoryFile.exists()) {
+                dataDirectoryFile.mkdir();
+            }
+
+            String dataDirectory = dataDirectoryFile.getAbsolutePath();
+
+            log.debug("Creating application versions store with plugin name [" + pluginName + "] and data directory ["
+                + dataDirectory + "]");
+
+            versions = new PackageVersions(pluginName, dataDirectory);
+            versions.loadFromDisk();
+        }
+
+        return versions;
+    }
+
+    public void deleteResource() throws Exception {
+        Configuration pluginConfiguration = super.resourceContext.getPluginConfiguration();
+        String fullFileName = pluginConfiguration.getSimple(PROPERTY_FILENAME).getStringValue();
+        File file = new File(fullFileName);
+        if (!file.exists()) {
+            throw new Exception("Cannot find application file to delete: " + fullFileName);
+        }
+        try {
+            getParentResourceComponent().undeployFile(file);
+        } catch (Exception e) {
+            log.error("Failed to undeploy file [" + file + "].", e);
+            throw e;
+        } finally {
+            try {
+                FileUtils.purge(file, true);
+            } catch (IOException e) {
+                log.error("Failed to delete file [" + file + "].", e);
+                // if the undeploy also failed that exception will be lost
+                // and this one will be seen by the caller instead.
+                // arguably both these conditions indicate failure, since
+                // not being able to delete the file will mean that it will
+                // likely get picked up again by the deployment scanner
+                throw e;
+            }
+        }
+    }
 }

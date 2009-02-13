@@ -468,6 +468,7 @@
          discovery="TomcatWarDiscoveryComponent"
          class="TomcatWarComponent"
          description="Tomcat deployed Web Application"
+         createDeletePolicy="both"
          creationDataType="content">
 
          <plugin-configuration>

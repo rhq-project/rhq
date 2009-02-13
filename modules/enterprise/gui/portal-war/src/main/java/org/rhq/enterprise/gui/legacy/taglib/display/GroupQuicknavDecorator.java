@@ -73,12 +73,12 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isMonitorSupported() {
-        return (this.resourceGroupComposite.getResourceGroup().getGroupCategory() == GroupCategory.COMPATIBLE);
+        return (isCompatibleGroup());
     }
 
     @Override
     protected boolean isEventsSupported() {
-        return (this.resourceGroupComposite.getResourceGroup().getGroupCategory() == GroupCategory.COMPATIBLE);
+        return (isCompatibleGroup());
     }
 
     @Override
@@ -88,22 +88,29 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isConfigureSupported() {
-        return (false && this.resourceGroupComposite.getResourceFacets().isConfiguration());
+        return (isCompatibleGroup() && this.resourceGroupComposite.getResourceFacets().isConfiguration());
     }
 
     @Override
     protected boolean isOperationsSupported() {
-        return (this.resourceGroupComposite.getResourceGroup().getGroupCategory() == GroupCategory.COMPATIBLE);
+        return (isCompatibleGroup() && this.resourceGroupComposite.getResourceFacets().isOperation());
     }
 
     @Override
     protected boolean isAlertSupported() {
         return false;
+        //return (isCompatibleGroup());
     }
 
     @Override
     protected boolean isContentSupported() {
-        return (false && this.resourceGroupComposite.getResourceFacets().isContent());
+        return false;
+        //return (isCompatibleGroup() && this.resourceGroupComposite.getResourceFacets().isContent());
+    }
+
+    private boolean isCompatibleGroup()
+    {
+        return this.resourceGroupComposite.getResourceGroup().getGroupCategory() == GroupCategory.COMPATIBLE;
     }
 
     // TODO: For now, all icons are "allowed", but this may change in the future.
@@ -126,7 +133,7 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isConfigureAllowed() {
-        return false;
+        return true;
     }
 
     @Override
@@ -136,7 +143,8 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isAlertAllowed() {
-        return false && LookupUtil.getSystemManager().isMonitoringEnabled();
+        return false;
+        //return LookupUtil.getSystemManager().isMonitoringEnabled();
     }
 
     @Override

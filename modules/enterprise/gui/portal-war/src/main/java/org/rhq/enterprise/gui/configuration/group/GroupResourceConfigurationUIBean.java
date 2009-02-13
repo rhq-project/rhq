@@ -31,6 +31,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.gui.configuration.propset.ConfigurationSet;
 import org.rhq.core.gui.configuration.propset.ConfigurationSetMember;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -39,10 +40,10 @@ import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.Begin;
 import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.Out;
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.international.StatusMessage;
 import org.jboss.seam.faces.FacesMessages;
+import org.jboss.seam.faces.Redirect;
 import org.jboss.seam.core.Conversation;
 
 /**
@@ -58,6 +59,9 @@ public class GroupResourceConfigurationUIBean
 
     @In
     private FacesMessages facesMessages;
+
+    @In(value = "org.jboss.seam.faces.redirect")
+    private Redirect redirect;
 
     private ResourceGroup group;
     private Map<Integer,Configuration> resourceConfigurations;
@@ -93,6 +97,7 @@ public class GroupResourceConfigurationUIBean
             configurationSetMembers.add(configurationSetMember);
         }
         this.configurationSet = new ConfigurationSet(configurationDefinition, configurationSetMembers);
+        this.redirect.setParameter(ParamConstants.GROUP_ID_PARAM, this.group.getId());
         return null;
     }
 
@@ -110,13 +115,16 @@ public class GroupResourceConfigurationUIBean
         }
         catch (Exception e)
         {
+            e.printStackTrace();
             this.facesMessages.add(StatusMessage.Severity.FATAL,
                     "Failed to schedule group Resource Configuration update - cause: " + e);
-            return null;
+            this.redirect.setViewId("/rhq/group/configuration/current.xhtml");
+            this.redirect.execute();
         }
         this.facesMessages.add(StatusMessage.Severity.INFO, "Group Resource Configuration update scheduled.");
         Conversation.instance().endBeforeRedirect();
-        // TODO: Redirect to History subtab.
+        this.redirect.setViewId("/rhq/group/configuration/history.xhtml");
+        this.redirect.execute();
         return null;
     }
 

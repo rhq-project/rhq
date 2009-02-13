@@ -95,6 +95,10 @@ public class ResourceGroupUIBean {
         return this.resourceGroup.getGroupCategory().name();
     }
 
+    public boolean isCompatible() {
+        return (this.resourceGroup.getGroupCategory() == GroupCategory.COMPATIBLE);
+    }
+
     public String getDescription() {
         return this.resourceGroup.getDescription();
     }

@@ -114,7 +114,7 @@ public class TabBarRenderer extends Renderer {
         for (SubtabComponent subtab : subtabs) {
             if (subtab.getRendererOutput() == null) {
                 throw new IllegalStateException("Subtabs for selected tab '" + tabBar.getSelectedTab().getName()
-                    + "' were not rendered - the tab is most likely not legitimate for the current resource.");
+                    + "' were not rendered - the tab is most likely not legitimate for the current Resource or Group.");
             }
 
             writer.write(subtab.getRendererOutput());

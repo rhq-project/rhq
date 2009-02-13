@@ -673,6 +673,7 @@
             </f:facet>
 
             <onc:quickNav>
+               <ui:remove><!-- Pass 'groupId' param to all child icons. --></ui:remove>
                <f:param name="groupId" value="#{resourceGroupComposite.resourceGroup.id}"/>
 
                <onc:icon name="m" url="/rhq/group/monitor/graphs.xhtml" alt="Monitor"
@@ -681,24 +682,29 @@
                </onc:icon>
 
                <onc:icon name="i" url="/rhq/group/inventory/view.xhtml" alt="Inventory">
-                  <f:param name="groupId" value="#{resourceGroupComposite.resourceGroup.id}"/>
                   <f:param name="category" value="#{resourceGroupComposite.category.name}"/>
                </onc:icon>
 
-               <onc:icon name="c" url="/rhq/group/configuration/view.xhtml" alt="Configure"
-                         visible="#{false and resourceGroupComposite.resourceFacets.configuration}"/>
+               <onc:icon name="c" url="/rhq/group/configuration/current.xhtml" alt="Configure"
+                         visible="#{resourceGroupComposite.category.name eq 'COMPATIBLE' and
+                                    resourceGroupComposite.resourceFacets.configuration}"/>
 
                <onc:icon name="o" url="/rhq/group/operation/groupOperationScheduleNew.xhtml" alt="Operations"
-                         visible="#{resourceGroupComposite.category.name eq 'COMPATIBLE'}">
-                  <f:param name="groupId" value="#{resourceGroupComposite.resourceGroup.id}"/>
+                         visible="#{resourceGroupComposite.category.name eq 'COMPATIBLE' and
+                                    resourceGroupComposite.resourceFacets.operation}">
                   <f:param name="category" value="#{resourceGroupComposite.category.name}"/>
                </onc:icon>
 
+               <ui:remove>
+               <!-- Include the Alert and Content tabs even though we currently don't support them for
+                    Groups, so that the icon renderer can still render spacers. -->
+               </ui:remove>
                <onc:icon name="a" url="/rhq/group/alert/listAlertDefinitions.xhtml" alt="Alert"
-                         visible="#{false and resourceGroupComposite.resourceFacets.measurement}"/>
+                         visible="#{false and resourceGroupComposite.category.name eq 'COMPATIBLE'}"/>
 
                <onc:icon name="t" url="/rhq/group/artifact/view.xhtml" alt="Content"
-                         visible="#{false and resourceGroupComposite.resourceFacets.content}"/>
+                         visible="#{false and resourceGroupComposite.category.name eq 'COMPATIBLE' and
+                                    resourceGroupComposite.resourceFacets.content}"/>
 
             </onc:quickNav>
          </rich:column>

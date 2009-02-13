@@ -2163,11 +2163,6 @@ ul.radio-group .unspecified {
 }
 
 
-
-
-
-
-
 .dr-tree-i-sel {
     background-color: #94AECF;
 }
@@ -2178,7 +2173,6 @@ ul.radio-group .unspecified {
     font-family:tahoma,verdana,sans-serif;
     font-size:11px;
 }
-
 
 .availLinkUp {
     color: black;
@@ -2193,8 +2187,6 @@ ul.radio-group .unspecified {
     font-family:tahoma,verdana,sans-serif;
     font-size:11px;    
 }
-
-
 
 #contentParent {
     width: 100%;
@@ -2227,7 +2219,13 @@ ul.radio-group .unspecified {
     right: 0;
     height: 100%;
     margin-left: 6px;
+    overflow: auto;
+}
+
+.content-full {
+    width: 100%;
     height: 100%;
+    background: #FFFFFF;
     overflow: auto;
 }
 

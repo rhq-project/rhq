@@ -55,7 +55,11 @@ public class UserPreferencesUIBean {
     }
 
     public void setLeftResourceNavState(String state) {
-        EnterpriseFacesContextUtility.getWebUser().getWebPreferences().setPreference(LEFT_RESOURCE_NAV_SHOWING, state);
+        WebUser webUser = EnterpriseFacesContextUtility.getWebUser();
+        WebUserPreferences preferences = webUser.getWebPreferences();
+        preferences.setPreference(LEFT_RESOURCE_NAV_SHOWING, state);
+        preferences.persistPreferences();
+        ;
     }
 
     public void updateSummaryPanelDisplayState(javax.faces.event.ActionEvent event) {
@@ -68,8 +72,10 @@ public class UserPreferencesUIBean {
     }
 
     public void setSummaryPanelDisplayState(String state) {
-        EnterpriseFacesContextUtility.getWebUser().getWebPreferences()
-            .setPreference(SUMMARY_PANEL_DISPLAY_STATE, state);
+        WebUser webUser = EnterpriseFacesContextUtility.getWebUser();
+        WebUserPreferences preferences = webUser.getWebPreferences();
+        preferences.setPreference(SUMMARY_PANEL_DISPLAY_STATE, state);
+        preferences.persistPreferences();
     }
 
     public List<Resource> getResourceFavorites() {

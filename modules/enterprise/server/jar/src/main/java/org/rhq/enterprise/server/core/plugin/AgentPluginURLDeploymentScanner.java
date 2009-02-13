@@ -215,8 +215,14 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
             PluginDescriptor descriptor;
             Map<String, File> existingPluginFiles = new HashMap<String, File>(); // keyed on plugin name
             for (File file : this.pluginDirectory.listFiles()) {
-                descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
-                existingPluginFiles.put(descriptor.getName(), file);
+                if (file.getName().endsWith(".jar")) {
+                    try {
+                        descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
+                        existingPluginFiles.put(descriptor.getName(), file);
+                    } catch (Exception e) {
+                        log.warn("File [" + file + "] is not a valid plugin and will be ignored: " + e);
+                    }
+                }
             }
 
             // now let's take the new content and stream it into the DB

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<scenario xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="urn:xmlns:jboss.org:on-perftest">
+
+
+   <resource type="server-e">
+      <simpleResourceGenerator property="on.perftest.server-e-count"/>
+      <OOBNumericMeasurementGenerator/>
+   </resource>
+
+   <resource type="service-e-metrics">
+      <simpleResourceGenerator property="on.perftest.service-e-metrics-count"/>
+      <OOBNumericMeasurementGenerator/>
+   </resource>
+
+</scenario>

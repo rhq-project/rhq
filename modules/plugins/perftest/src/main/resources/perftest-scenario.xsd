@@ -58,6 +58,15 @@
       </xs:complexContent>
    </xs:complexType>
 
+   <xs:element name="OOBNumericMeasurementGenerator" type="perf:OOBNumericMeasurementGenerator"
+               substitutionGroup="perf:measurementGenerator"/>
+   <xs:complexType name="OOBNumericMeasurementGenerator">
+      <xs:complexContent>
+         <xs:extension base="perf:measurementGenerator"/>
+      </xs:complexContent>
+   </xs:complexType>
+
+
    <xs:element name="pluginConfigurationGenerator" type="perf:configurationGenerator" abstract="true"/>
    <xs:complexType name="configurationGenerator"/>
 

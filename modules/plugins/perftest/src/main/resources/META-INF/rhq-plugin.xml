@@ -210,6 +210,17 @@
       </service>
    </server>
 
+   <server name="server-e" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server E">
+      <service name="service-e-metrics" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Nested Service E With Metrics">
+         <metric property="metric000" defaultOn="true" displayType="summary"/>
+         <metric property="metric001" defaultOn="true" displayType="summary"/>
+         <metric property="metric002" defaultOn="true" displayType="summary"/>
+         <metric property="metric003" defaultOn="true" displayType="summary"/>
+         <metric property="metric004" defaultOn="true" displayType="summary"/>
+      </service>
+   </server>
+
+
    <help>
       <![CDATA[
       To enable the perftest plugin, start the agent with <i>-Don.perftest.scenario=scenario-name</i> where the scenario

@@ -23,15 +23,23 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 
 /**
- * The simplest algorithm for generating measurement values
+ * Generates measurement values, using a step function which repeats every 7days
  *
- * @author Jason Dobies
+ * @author Charles Crouch
  */
-public class SimpleNumericMeasurementFactory implements MeasurementFactory {
+public class OOBNumericMeasurementFactory implements MeasurementFactory {
     // MeasurementFactory Implementation  --------------------------------------------
 
     public MeasurementData nextValue(MeasurementScheduleRequest request) {
         double value = request.getScheduleId();
+
+        long currentMillis = System.currentTimeMillis();
+        int currentDays = (int) currentMillis / (24 * 60 * 60 * 1000);
+        int dayOfWeek = currentDays % 7;
+
+        // depending on what day it is add 0%, 10%, ... 60% to the value
+        // Thursday is 0%
+        value += (value * 0.1 * dayOfWeek);
 
         MeasurementDataNumeric data = new MeasurementDataNumeric(request, value);
         return data;

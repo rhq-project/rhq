@@ -22,19 +22,23 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.util.ValidationEventCollector;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.plugins.perftest.configuration.ConfigurationFactory;
 import org.rhq.plugins.perftest.configuration.SimpleConfigurationFactory;
 import org.rhq.plugins.perftest.content.ContentFactory;
 import org.rhq.plugins.perftest.content.SimpleContentFactory;
 import org.rhq.plugins.perftest.measurement.EmptyMeasurementFactory;
 import org.rhq.plugins.perftest.measurement.MeasurementFactory;
+import org.rhq.plugins.perftest.measurement.OOBNumericMeasurementFactory;
 import org.rhq.plugins.perftest.measurement.SimpleNumericMeasurementFactory;
 import org.rhq.plugins.perftest.resource.EmptyResourceFactory;
 import org.rhq.plugins.perftest.resource.ResourceFactory;
@@ -42,6 +46,7 @@ import org.rhq.plugins.perftest.resource.SimpleResourceFactory;
 import org.rhq.plugins.perftest.scenario.ConfigurationGenerator;
 import org.rhq.plugins.perftest.scenario.ContentGenerator;
 import org.rhq.plugins.perftest.scenario.MeasurementGenerator;
+import org.rhq.plugins.perftest.scenario.OOBNumericMeasurementGenerator;
 import org.rhq.plugins.perftest.scenario.Resource;
 import org.rhq.plugins.perftest.scenario.ResourceGenerator;
 import org.rhq.plugins.perftest.scenario.Scenario;
@@ -282,6 +287,8 @@ public class ScenarioManager {
     private MeasurementFactory createMeasurementFactory(MeasurementGenerator generator) {
         if (generator instanceof SimpleNumericMeasurementGenerator) {
             return new SimpleNumericMeasurementFactory();
+        } else if (generator instanceof OOBNumericMeasurementGenerator) {
+            return new OOBNumericMeasurementFactory();
         }
 
         return null;

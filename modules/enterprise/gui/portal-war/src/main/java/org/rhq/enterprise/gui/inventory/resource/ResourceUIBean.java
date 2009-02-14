@@ -18,7 +18,9 @@
  */
 package org.rhq.enterprise.gui.inventory.resource;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -38,6 +40,7 @@ import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.alert.engine.internal.Tuple;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -185,6 +188,16 @@ public class ResourceUIBean {
 
     public ResourceAvailabilitySummary getAvailabilitySummary() {
         return resourceManager.getAvailabilitySummary(EnterpriseFacesContextUtility.getSubject(), getId());
+    }
+
+    public List<Tuple<String, String>> getSummaryInfo() {
+        Map<String, String> info = resourceManager.getSummaryInfo(EnterpriseFacesContextUtility.getSubject(), getId());
+
+        List<Tuple<String, String>> results = new ArrayList<Tuple<String, String>>();
+        for (Map.Entry<String, String> infoPair : info.entrySet()) {
+            results.add(new Tuple<String, String>(infoPair.getKey(), infoPair.getValue()));
+        }
+        return results;
     }
 
 }

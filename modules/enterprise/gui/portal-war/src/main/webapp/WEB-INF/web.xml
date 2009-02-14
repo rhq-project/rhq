@@ -141,6 +141,7 @@
          /WEB-INF/jsf-navigation/admin-navigation.xml,
          /WEB-INF/jsf-navigation/operation-navigation.xml,
          /WEB-INF/jsf-navigation/measurement-navigation.xml,
+         /WEB-INF/jsf-navigation/summary-navigation.xml,
          /WEB-INF/jsf-navigation/test-navigation.xml,
 
          /WEB-INF/jsf-navigation-definition/group-definition-navigation.xml,

@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+
+<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+   
+   <navigation-rule>
+
+      <from-view-id>/rhq/resource/summary/overview.xhtml</from-view-id>
+      
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/summary/overview?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+</faces-config>
+      

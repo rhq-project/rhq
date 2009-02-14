@@ -113,4 +113,17 @@ public class EntityContext {
             + "groupId =" + groupId + "," + "parentResourceId =" + parentResourceId + "," + "resourceTypeId ="
             + resourceTypeId + "]";
     }
+
+    public String toShortString() {
+        switch (category) {
+        case Resource:
+            return "resource[id=" + resourceId + "]";
+        case ResourceGroup:
+            return "resourceGroup[groupId=" + resourceId + "]";
+        case AutoGroup:
+            return "autoGroup[parent=" + parentResourceId + ",type=" + resourceTypeId + "]";
+        default:
+            return toString();
+        }
+    }
 }

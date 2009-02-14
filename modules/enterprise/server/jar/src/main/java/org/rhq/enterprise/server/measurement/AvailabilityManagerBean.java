@@ -61,6 +61,7 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
@@ -154,6 +155,38 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
 
     public List<AvailabilityPoint> getAvailabilitiesForResource(Subject whoami, int resourceId,
         long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints) {
+        EntityContext context = new EntityContext(resourceId, -1, -1, -1);
+        return getAvailabilitiesForContext(whoami, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints);
+    }
+
+    public List<AvailabilityPoint> getAvailabilitiesForResourceGroup(Subject whoami, int groupId,
+        long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints) {
+        EntityContext context = new EntityContext(-1, groupId, -1, -1);
+        return getAvailabilitiesForContext(whoami, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints);
+    }
+
+    public List<AvailabilityPoint> getAvailabilitiesForAutoGroup(Subject whoami, int parentResourceId,
+        int resourceTypeId, long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints) {
+        EntityContext context = new EntityContext(-1, -1, parentResourceId, resourceTypeId);
+        return getAvailabilitiesForContext(whoami, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints);
+    }
+
+    private List<AvailabilityPoint> getAvailabilitiesForContext(Subject whoami, EntityContext context,
+        long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints) {
+
+        if (context.category == EntityContext.Category.Resource) {
+            if (!authorizationManager.canViewResource(whoami, context.resourceId)) {
+                throw new PermissionException("User [" + whoami.getName() + "] does not have permission to view "
+                    + context.toShortString());
+            }
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            if (!authorizationManager.canViewGroup(whoami, context.groupId)) {
+                throw new PermissionException("User [" + whoami.getName() + "] does not have permission to view "
+                    + context.toShortString());
+            }
+        } else {
+
+        }
 
         if ((numberOfPoints <= 0) || (fullRangeBeginTime >= fullRangeEndTime)) {
             return new ArrayList<AvailabilityPoint>();
@@ -164,9 +197,18 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         Date fullRangeEndDate = new Date(fullRangeEndTime);
 
         try {
-            availabilities = findAvailabilityWithinInterval(resourceId, fullRangeBeginDate, fullRangeEndDate);
+            if (context.category == EntityContext.Category.Resource) {
+                availabilities = findAvailabilityWithinInterval(context.resourceId, fullRangeBeginDate,
+                    fullRangeEndDate);
+            } else if (context.category == EntityContext.Category.ResourceGroup) {
+                availabilities = findResourceGroupAvailabilityWithinInterval(context.groupId, fullRangeBeginDate,
+                    fullRangeEndDate);
+            } else {
+                availabilities = findAutoGroupAvailabilityWithinInterval(context.parentResourceId,
+                    context.resourceTypeId, fullRangeBeginDate, fullRangeEndDate);
+            }
         } catch (Exception e) {
-            log.warn("Can't obtain Availability for resource with id [" + resourceId + "]", e);
+            log.warn("Can't obtain Availability for " + context.toShortString(), e);
 
             // create a full list of unknown points
             // the for loop goes backwards so the times are calculated in the same way as the rest of this method
@@ -194,8 +236,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
                 availabilities.add(0, surrogateAvailability); // add at the head of the list
             }
         } else {
-            Resource resource = resourceManager.getResourceById(whoami, resourceId); // perm check is done here
-            Availability surrogateAvailability = new Availability(resource, fullRangeBeginDate, null);
+            Resource surrogateResource = context.category == EntityContext.Category.Resource ? entityManager.find(
+                Resource.class, context.resourceId) : new Resource(-1);
+            Availability surrogateAvailability = new Availability(surrogateResource, fullRangeBeginDate, null);
             surrogateAvailability.setEndTime(fullRangeEndDate);
             availabilities.add(surrogateAvailability); // add as the only element
         }
@@ -288,16 +331,10 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         // This should never happen, but add a check just to be safe.
         if (availabilityPoints.size() != numberOfPoints) {
             String errorMsg = "Calculation of availability did not produce the proper number of data points! "
-                + "resource-id=[" + resourceId + "]; begin=[" + fullRangeBeginTime + "(" + new Date(fullRangeBeginTime)
-                + ")" + "]; end=[" + fullRangeEndTime + "(" + new Date(fullRangeEndTime) + ")" + "]; numberOfPoints=["
+                + context.toShortString() + "; begin=[" + fullRangeBeginTime + "(" + new Date(fullRangeBeginTime) + ")"
+                + "]; end=[" + fullRangeEndTime + "(" + new Date(fullRangeEndTime) + ")" + "]; numberOfPoints=["
                 + numberOfPoints + "]; actual-number=[" + availabilityPoints.size() + "]";
             log.warn(errorMsg);
-        }
-
-        // we have to wait to do this now because now we have at least one Availability (and it has the Resource)
-        if (!authorizationManager.canViewResource(whoami, availabilities.get(0).getResource().getId())) {
-            throw new PermissionException("User [" + whoami.getName() + "] does not have permission to view resource ["
-                + resourceId + "]");
         }
 
         return availabilityPoints;
@@ -643,6 +680,28 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
     public List<Availability> findAvailabilityWithinInterval(int resourceId, Date startDate, Date endDate) {
         Query q = entityManager.createNamedQuery(Availability.FIND_FOR_RESOURCE_WITHIN_INTERVAL);
         q.setParameter("resourceId", resourceId);
+        q.setParameter("start", startDate.getTime());
+        q.setParameter("end", endDate.getTime());
+        List<Availability> results = q.getResultList();
+        return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Availability> findResourceGroupAvailabilityWithinInterval(int groupId, Date startDate, Date endDate) {
+        Query q = entityManager.createNamedQuery(Availability.FIND_FOR_RESOURCE_GROUP_WITHIN_INTERVAL);
+        q.setParameter("groupId", groupId);
+        q.setParameter("start", startDate.getTime());
+        q.setParameter("end", endDate.getTime());
+        List<Availability> results = q.getResultList();
+        return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Availability> findAutoGroupAvailabilityWithinInterval(int parentResourceId, int resourceTypeId,
+        Date startDate, Date endDate) {
+        Query q = entityManager.createNamedQuery(Availability.FIND_FOR_AUTO_GROUP_WITHIN_INTERVAL);
+        q.setParameter("parentId", parentResourceId);
+        q.setParameter("typeId", resourceTypeId);
         q.setParameter("start", startDate.getTime());
         q.setParameter("end", endDate.getTime());
         List<Availability> results = q.getResultList();

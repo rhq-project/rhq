@@ -27,8 +27,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 
 /**
@@ -92,6 +92,35 @@ public interface AvailabilityManagerLocal {
         int points);
 
     /**
+     * Get the individual availability data points for the given resource group.
+     *
+     * @param  whoami
+     * @param  groupId PK of the resource group wanted
+     * @param  begin   start time for data we are interested in
+     * @param  end     end time for data we are interested in
+     * @param  points  number of data points to return
+     *
+     * @return the availabilities over the given time span in a list
+     */
+    List<AvailabilityPoint> getAvailabilitiesForResourceGroup(Subject whoami, int groupId, long begin, long end,
+        int points);
+
+    /**
+     * Get the individual availability data points for the given auto group.
+     *
+     * @param  whoami
+     * @param  parentResourceId PK of the parent resource of the auto group wanted
+     * @param  resourceTypeId   PK of the resource type of the auto group wanted
+     * @param  begin            start time for data we are interested in
+     * @param  end              end time for data we are interested in
+     * @param  points           number of data points to return
+     *
+     * @return the availabilities over the given time span in a list
+     */
+    List<AvailabilityPoint> getAvailabilitiesForAutoGroup(Subject whoami, int parentResourceId, int resourceTypeId,
+        long begin, long end, int points);
+
+    /**
      * Merge an {@link AvailabilityReport} that has been received from an agent. A report will only contain those
      * availabilities that have changed since the agent's last sent report. Note that if an agent has been restarted, it
      * will always send a full report as its first. An agent is obliged to sent at least one availability record in the
@@ -138,7 +167,6 @@ public interface AvailabilityManagerLocal {
     boolean isAgentBackfilled(String agentName);
 
     List<Availability> findAvailabilityWithinInterval(int resourceId, Date startDate, Date endDate);
-
 
     PageList<Availability> findByResource(Subject user, int resourceId, PageControl pageControl);
 

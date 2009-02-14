@@ -76,6 +76,17 @@ import org.rhq.core.domain.resource.Resource;
         + "   AND ((av.startTime <= :start AND (av.endTime >= :start OR av.endTime IS NULL) ) " /* availability straddles :start */
         + "       OR (av.startTime BETWEEN :start AND :end)) " /* interval straddles availability.startTime */
         + "ORDER BY av.startTime ASC"),
+    @NamedQuery(name = Availability.FIND_FOR_RESOURCE_GROUP_WITHIN_INTERVAL, query = "SELECT av FROM Availability av "
+        + " WHERE av.resource.id IN (SELECT ires.id FROM ResourceGroup rg JOIN rg.implicitResources ires WHERE rg.id = :groupId) "
+        + "   AND ((av.startTime <= :start AND (av.endTime >= :start OR av.endTime IS NULL) ) " /* availability straddles :start */
+        + "       OR (av.startTime BETWEEN :start AND :end)) " /* interval straddles availability.startTime */
+        + "ORDER BY av.startTime ASC"),
+    @NamedQuery(name = Availability.FIND_FOR_AUTO_GROUP_WITHIN_INTERVAL, query = "SELECT av FROM Availability av "
+        + " JOIN av.resource res JOIN res.parentResource parent JOIN res.resourceType type " //
+        + " WHERE parent.id = :parentId AND type.id = :typeId "
+        + "   AND ((av.startTime <= :start AND (av.endTime >= :start OR av.endTime IS NULL) ) " /* availability straddles :start */
+        + "       OR (av.startTime BETWEEN :start AND :end)) " /* interval straddles availability.startTime */
+        + "ORDER BY av.startTime ASC"),
     @NamedQuery(name = Availability.FIND_BY_RESOURCE_AND_DATE, query = "SELECT av FROM Availability av "
         + " WHERE av.resource.id = :resourceId " + "   AND av.startTime <= :aTime "
         + "   AND (av.endTime >= :aTime OR av.endTime IS NULL) "),
@@ -99,6 +110,8 @@ public class Availability implements Serializable {
     public static final String FIND_BY_RESOURCE_NO_SORT = "Availability.findByResourceNoSort";
     public static final String FIND_NONMATCHING_WITH_RESOURCE_ID_BY_AGENT_AND_TYPE = "Availability.findNonmatchingWithResourceIdByAgentAndType";
     public static final String FIND_FOR_RESOURCE_WITHIN_INTERVAL = "Availability.findForResourceWithinInterval";
+    public static final String FIND_FOR_RESOURCE_GROUP_WITHIN_INTERVAL = "Availability.findForResourceGroupWithinInterval";
+    public static final String FIND_FOR_AUTO_GROUP_WITHIN_INTERVAL = "Availability.findForAutoGroupWithinInterval";
     public static final String FIND_BY_RESOURCE_AND_DATE = "Availability.findByResourceAndDate";
     public static final String QUERY_IS_AGENT_BACKFILLED = "Availability.isAgentBackfilled";
     public static final String QUERY_DELETE_BY_RESOURCES = "Availability.deleteByResources";

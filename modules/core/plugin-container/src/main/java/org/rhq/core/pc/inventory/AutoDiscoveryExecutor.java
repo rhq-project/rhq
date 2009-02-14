@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.inventory;
 
 import java.io.ByteArrayOutputStream;
@@ -28,19 +28,20 @@ import java.lang.reflect.Method;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.discovery.InventoryReport;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.state.discovery.AutoDiscoveryRequest;
 import org.rhq.core.domain.state.discovery.AutoDiscoveryScanType;
 import org.rhq.core.pc.PluginContainer;
@@ -139,7 +140,6 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
         Set<ResourceType> serverTypes = pluginManager.getMetadataManager().getTypesForCategory(ResourceCategory.SERVER);
         ResourceComponent platformComponent = inventoryManager.getResourceComponent(inventoryManager.getPlatform());
 
-
         for (ResourceType serverType : serverTypes) {
             if (!serverType.getParentResourceTypes().isEmpty()) {
                 continue; // TODO GH: Need to stop discovering embedded tomcats here and other non-top level servers
@@ -199,10 +199,6 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                 if (discoveredResources != null) {
                     Resource platformResource = platformContainer.getResource();
 
-                    // Need to keep track of which already discovered resources were not in the latest discovery
-                    // so they can be deleted in the embedded console.
-                    Set<Resource> removalCandidates = new HashSet<Resource>(platformResource.getChildResources());
-
                     for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
                         Resource newResource = InventoryManager.createNewResource(discoveredResource);
                         newResource.setResourceType(serverType);
@@ -210,25 +206,12 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                         Resource inventoriedResource = inventoryManager.mergeResourceFromDiscovery(newResource,
                             platformResource);
 
-                        // Once the resource has been merged, it will have the correct UUID if it was previously discovered
-                        // Now we can remove it from the set of existing UUIDs to indicate it should not be deleted.
-                        removalCandidates.remove(inventoriedResource);
-
                         if (inventoriedResource.getInventoryStatus() == InventoryStatus.NEW) {
                             // The resource is new to the Server inventory.
                             if (platformContainer.getSynchronizationState() == ResourceContainer.SynchronizationState.SYNCHRONIZED) {
                                 // The Platform is already in Server inventory, so this'll be a report root. Otherwise, it'll get included in the report under the Platform.
                                 report.addAddedRoot(inventoriedResource);
                             }
-                        }
-                    }
-
-                    // Remove all child resources from the platform that were not re-discovered when embedded
-                    // With the event listener model, this might get moved to a better place
-                    if (!configuration.isInsideAgent()) {
-                        // TODO GH : Jay, this doesn't work, it's removing stuff it shouldn't
-                        for (Resource removeMe : removalCandidates) {
-                            //inventoryManager.removeResource(removeMe);
                         }
                     }
                 }

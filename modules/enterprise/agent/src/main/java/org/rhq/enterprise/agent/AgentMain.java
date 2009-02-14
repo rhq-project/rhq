@@ -2232,6 +2232,8 @@ public class AgentMain {
 
                 String agent_name = getConfiguration().getAgentName();
                 ClientRemotePojoFactory pojo_factory = sender.getClientRemotePojoFactory();
+                pojo_factory.setSendThrottled(false); // send it immediately, avoid any throttling
+                pojo_factory.setTimeout(10000L); // try to be quick about it, if it can't send immediately, fail fast
                 CoreServerService remote_pojo = pojo_factory.getRemotePojo(CoreServerService.class);
 
                 remote_pojo.agentIsShuttingDown(agent_name);

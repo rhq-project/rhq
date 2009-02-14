@@ -1,35 +1,32 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.resource.composite;
 
 import java.io.Serializable;
-import java.util.Set;
 
 import javax.xml.bind.annotation.XmlElement;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 
@@ -107,9 +104,7 @@ public class ResourceComposite implements Serializable {
 
         // TODO: Add support for retrieving the supported facets to the Resource.QUERY_FIND_COMPOSITE_COUNT query.
         ResourceType resourceType = this.resource.getResourceType();
-        this.resourceFacets = new ResourceFacets(!resourceType.getMetricDefinitions().isEmpty(), resourceType
-            .getResourceConfigurationDefinition() != null, !resourceType.getOperationDefinitions().isEmpty(),
-            !resourceType.getPackageTypes().isEmpty(), exposesCallTimeMetrics(resourceType));
+        this.resourceFacets = new ResourceFacets(resourceType);
     }
 
     public Resource getResource() {
@@ -136,16 +131,5 @@ public class ResourceComposite implements Serializable {
     public String toString() {
         return "[ResourceComposite] Resource: " + resource + "\n\tAvailability: " + availability + "\n\tPermissions: "
             + resourcePermission + "\n\tFacets: " + resourceFacets;
-    }
-
-    private static boolean exposesCallTimeMetrics(ResourceType resourceType) {
-        Set<MeasurementDefinition> measurementDefs = resourceType.getMetricDefinitions();
-        for (MeasurementDefinition measurementDef : measurementDefs) {
-            if (measurementDef.getDataType() == DataType.CALLTIME) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

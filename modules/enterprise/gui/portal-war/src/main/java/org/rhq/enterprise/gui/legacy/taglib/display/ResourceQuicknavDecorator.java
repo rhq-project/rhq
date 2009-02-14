@@ -66,7 +66,7 @@ public class ResourceQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isEventsSupported() {
-        return true;
+        return this.resourceComposite.getResourceFacets().isEvent();
     }
 
     @Override

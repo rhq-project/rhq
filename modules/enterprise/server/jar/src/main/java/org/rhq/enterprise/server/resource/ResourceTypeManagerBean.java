@@ -89,9 +89,8 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
         return resourceType;
     }
 
-    public ResourceType getResourceTypeByParentAndName(Subject subject, @Nullable
-    ResourceType parent, @NotNull
-    String name) throws ResourceTypeNotFoundException {
+    public ResourceType getResourceTypeByParentAndName(Subject subject, @Nullable ResourceType parent,
+        @NotNull String name) throws ResourceTypeNotFoundException {
         // TODO: authz check - or does this operation really need to be secured?
         // TODO: these queries can actually return a set - resource type uniqueness is on parent/name/plugin not just parent/name
         try {
@@ -390,9 +389,7 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
      */
     public ResourceFacets getResourceFacets(Subject subject, int resourceTypeId) throws ResourceTypeNotFoundException {
         ResourceType resourceType = this.getResourceTypeById(subject, resourceTypeId);
-        ResourceFacets resourceFacets = new ResourceFacets(!resourceType.getMetricDefinitions().isEmpty(), resourceType
-            .getResourceConfigurationDefinition() != null, !resourceType.getOperationDefinitions().isEmpty(),
-            !resourceType.getPackageTypes().isEmpty(), exposesCallTimeMetrics(resourceType));
+        ResourceFacets resourceFacets = new ResourceFacets(resourceType);
         return resourceFacets;
     }
 

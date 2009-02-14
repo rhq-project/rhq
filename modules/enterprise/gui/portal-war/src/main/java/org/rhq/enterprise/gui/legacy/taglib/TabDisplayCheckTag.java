@@ -21,7 +21,9 @@ package org.rhq.enterprise.gui.legacy.taglib;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
+
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
@@ -117,7 +119,7 @@ public class TabDisplayCheckTag extends VarSetterBaseTag {
             ResourceGroup group = RequestUtils.getResourceGroup(request);
             if (group != null) {
                 // TODO: Add support for retrieving the ResourceFacts for a group.
-                resourceFacets = new ResourceFacets(true, true, true, true, true);
+                resourceFacets = new ResourceFacets(true, true, true, true, true, true);
             }
         }
 

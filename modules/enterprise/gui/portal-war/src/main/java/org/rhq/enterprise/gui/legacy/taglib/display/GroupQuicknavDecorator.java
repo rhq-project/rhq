@@ -78,7 +78,7 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isEventsSupported() {
-        return (isCompatibleGroup());
+        return (isCompatibleGroup() && this.resourceGroupComposite.getResourceFacets().isEvent());
     }
 
     @Override
@@ -108,8 +108,7 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
         //return (isCompatibleGroup() && this.resourceGroupComposite.getResourceFacets().isContent());
     }
 
-    private boolean isCompatibleGroup()
-    {
+    private boolean isCompatibleGroup() {
         return this.resourceGroupComposite.getResourceGroup().getGroupCategory() == GroupCategory.COMPATIBLE;
     }
 

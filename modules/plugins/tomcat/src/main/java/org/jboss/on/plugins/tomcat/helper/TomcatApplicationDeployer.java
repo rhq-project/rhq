@@ -33,6 +33,8 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 /**
+ * @author Fady Matar
+ * @author Jay Shaughnessy
  * @author Ian Springer
  */
 public class TomcatApplicationDeployer {

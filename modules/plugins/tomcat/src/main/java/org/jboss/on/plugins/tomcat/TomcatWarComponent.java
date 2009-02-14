@@ -77,11 +77,11 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * A resource component for managing a web application (WAR) deployed to a Tomcat server.
  *
  * @author Jay Shaughnessy
+ * @author Fady Matar
  * @author Ian Springer
  * @author Heiko W. Rupp
  */
-public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerComponent> implements ContentFacet,
-    DeleteResourceFacet {
+public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerComponent> implements ContentFacet, DeleteResourceFacet {
 
     private static final String METRIC_PREFIX_APPLICATION = "Application.";
     private static final String METRIC_PREFIX_SERVLET = "Servlet.";
@@ -112,6 +112,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
     protected static final String PROPERTY_RESPONSE_TIME_URL_EXCLUDES = ResponseTimeConfiguration.RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP;
     protected static final String PROPERTY_RESPONSE_TIME_URL_TRANSFORMS = ResponseTimeConfiguration.RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP;
     protected static final String PROPERTY_VHOST = "vHost";
+
+    protected static final String RESOURCE_TYPE_NAME = "Tomcat Web Application (WAR)";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -198,8 +200,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
                             log.error("Failed to retrieve HTTP call-time data.", e);
                         }
                     } else {
-                        log.error("The '" + METRIC_RESPONSE_TIME + "' metric is enabled for WAR resource '"
-                            + getApplicationName() + "', but no value is defined for the '"
+                        log.error("The '" + METRIC_RESPONSE_TIME + "' metric is enabled for WAR resource '" + getApplicationName() + "', but no value is defined for the '"
                             + PROPERTY_RESPONSE_TIME_LOG_FILE + "' connection property.");
                         // TODO: Communicate this error back to the server for display in the GUI.
                     }
@@ -349,8 +350,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
 
         EmsOperation mbeanOperation = this.webModuleMBean.getOperation(name);
         if (mbeanOperation == null) {
-            throw new IllegalStateException("Operation [" + name + "] not found on bean ["
-                + this.webModuleMBean.getBeanName() + "]");
+            throw new IllegalStateException("Operation [" + name + "] not found on bean [" + this.webModuleMBean.getBeanName() + "]");
         }
 
         // NOTE: None of the supported operations have any parameters or return values, which makes our job easier.
@@ -359,8 +359,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
         int state = (Integer) this.webModuleMBean.getAttribute("state").refresh();
         int expectedState = getExpectedPostExecutionState(operation);
         if (state != expectedState) {
-            throw new Exception("Failed to " + name + " webapp (value of the 'state' attribute of MBean '"
-                + this.webModuleMBean.getBeanName() + "' is " + state + ", not " + expectedState + ").");
+            throw new Exception("Failed to " + name + " webapp (value of the 'state' attribute of MBean '" + this.webModuleMBean.getBeanName() + "' is " + state + ", not " + expectedState + ").");
         }
 
         return new OperationResult();
@@ -444,8 +443,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
     private List<EmsBean> getVHosts() {
         EmsConnection emsConnection = getEmsConnection();
         String query = QUERY_TEMPLATE_HOST;
-        query = query.replace("%PATH%", this.resourceContext.getPluginConfiguration().getSimpleValue(
-            PROPERTY_CONTEXT_ROOT, ""));
+        query = query.replace("%PATH%", this.resourceContext.getPluginConfiguration().getSimpleValue(PROPERTY_CONTEXT_ROOT, ""));
         ObjectNameQueryUtility queryUtil = new ObjectNameQueryUtility(query);
         List<EmsBean> mBeans = emsConnection.queryBeans(queryUtil.getTranslatedQuery());
         return mBeans;

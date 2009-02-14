@@ -22,10 +22,12 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -187,42 +189,45 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
      */
     @Nullable
     private static String getUrl(Configuration pluginConfig) throws Exception {
-        SNMPSession snmpSession = ApacheServerComponent.getSNMPSession(new SNMPClient(), pluginConfig);
-        if (!snmpSession.ping()) {
-            return null;
-        }
-
-        SNMPValue nameValue;
-        SNMPValue portValue;
+        SNMPClient snmpClient = new SNMPClient();
         try {
-            nameValue = snmpSession.getNextValue(SNMPConstants.COLUMN_VHOST_NAME);
-        } catch (SNMPException e) {
-            throw new Exception("Error getting SNMP value: " + SNMPConstants.COLUMN_VHOST_NAME + ": " + e.getMessage(),
-                e);
+            SNMPSession snmpSession = ApacheServerComponent.getSNMPSession(snmpClient, pluginConfig);
+            if (!snmpSession.ping()) {
+                return null;
+            }
+
+            SNMPValue nameValue;
+            SNMPValue portValue;
+            try {
+                nameValue = snmpSession.getNextValue(SNMPConstants.COLUMN_VHOST_NAME);
+            } catch (SNMPException e) {
+                throw new Exception("Error getting SNMP value: " + SNMPConstants.COLUMN_VHOST_NAME + ": "
+                    + e.getMessage(), e);
+            }
+
+            try {
+                portValue = snmpSession.getNextValue(SNMPConstants.COLUMN_VHOST_PORT);
+            } catch (SNMPException e) {
+                throw new Exception("Error getting SNMP column: " + SNMPConstants.COLUMN_VHOST_PORT + ": "
+                    + e.getMessage(), e);
+            }
+
+            String host = nameValue.toString();
+            String fullPort = portValue.toString();
+
+            // The port value will be in the form "1.3.6.1.2.1.6.XXXXX",
+            // where "1.3.6.1.2.1.6" represents the TCP protocol ID,
+            // and XXXXX is the actual port number
+            int port = Integer.parseInt(fullPort.substring(fullPort.lastIndexOf(".") + 1));
+
+            return "http://" + host + ":" + port + "/";
+        } finally {
+            snmpClient.close();
         }
-
-        try {
-            portValue = snmpSession.getNextValue(SNMPConstants.COLUMN_VHOST_PORT);
-        } catch (SNMPException e) {
-            throw new Exception(
-                "Error getting SNMP column: " + SNMPConstants.COLUMN_VHOST_PORT + ": " + e.getMessage(), e);
-        }
-
-        String host = nameValue.toString();
-        String fullPort = portValue.toString();
-
-        // The port value will be in the form "1.3.6.1.2.1.6.XXXXX",
-        // where "1.3.6.1.2.1.6" represents the TCP protocol ID,
-        // and XXXXX is the actual port number
-        int port = Integer.parseInt(fullPort.substring(fullPort.lastIndexOf(".") + 1));
-
-        return "http://" + host + ":" + port + "/";
     }
 
     @Nullable
-    private String getServerRoot(@NotNull
-    ApacheBinaryInfo binaryInfo, @NotNull
-    ProcessInfo processInfo) {
+    private String getServerRoot(@NotNull ApacheBinaryInfo binaryInfo, @NotNull ProcessInfo processInfo) {
         String root = null;
         String[] cmdLine = processInfo.getCommandLine();
         for (int i = 1; i < cmdLine.length; i++) {

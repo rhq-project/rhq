@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
@@ -99,6 +100,16 @@ class SNMPSession_v1 implements SNMPSession {
         this.target.setVersion(this.version);
         this.target.setRetries(DEFAULT_RETRIES);
         this.target.setTimeout(DEFAULT_TIMEOUT);
+    }
+
+    public void close() {
+        if (session != null) {
+            try {
+                session.close();
+            } catch (Exception e) {
+                log.warn("Failed to close the SNMP session. Cause: " + e);
+            }
+        }
     }
 
     @NotNull

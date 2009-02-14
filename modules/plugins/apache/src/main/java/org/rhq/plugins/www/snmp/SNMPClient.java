@@ -22,10 +22,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.snmp4j.smi.OID;
@@ -180,6 +182,13 @@ public class SNMPClient {
         }
 
         return true;
+    }
+
+    public void close() {
+        Collection<SNMPSession> sessions = SESSION_CACHE.values();
+        for (SNMPSession session : sessions) {
+            session.close();
+        }
     }
 
     public SNMPSession getSession(String host, Integer port, String community, SNMPVersion version)

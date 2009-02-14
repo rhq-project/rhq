@@ -20,6 +20,7 @@ package org.rhq.plugins.www.snmp;
 
 import java.util.List;
 import java.util.Map;
+
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -124,4 +125,9 @@ public interface SNMPSession {
      * @param retries the retries value for this session
      */
     void setRetries(int retries);
+
+    /**
+     * Closes the session and all underlying resources.
+     */
+    void close();
 }

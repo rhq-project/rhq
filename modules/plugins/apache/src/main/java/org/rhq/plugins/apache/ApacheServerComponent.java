@@ -120,9 +120,9 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
                     + "2) the Apache server is running, and\n"
                     + "3) the SNMP agent host, port, and community are set correctly in this resource's connection properties.\n"
                     + "The agent will not be able to record metrics from apache httpd without SNMP");
-        }
-        else
+        } else {
             configured = true;
+        }
 
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String url = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_URL, null);
@@ -136,8 +136,9 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
                         "after autodiscovery, you most likely did not include the port in the ServerName directive for " +
                         "the \"main\" Apache server in httpd.conf.");
                 }
-                else
+                else {
                     configured = true;
+                }
             } catch (MalformedURLException e) {
                 throw new InvalidPluginConfigurationException("Value of '" + PLUGIN_CONFIG_PROP_URL
                     + "' connection property ('" + url + "') is not a valid URL.");
@@ -164,6 +165,10 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
 
     public void stop() {
         stopEventPollers();
+        if (this.snmpClient != null) {
+            this.snmpClient.close();
+        }
+        return;
     }
 
     public AvailabilityType getAvailability() {
@@ -172,12 +177,11 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         //       process is running.
         boolean available;
         try {
-            if (this.url != null ) {
+            if (this.url != null) {
                 long t1 = System.currentTimeMillis();
                 available = WWWUtils.isAvailable(this.url);
-                availPingTime =System.currentTimeMillis()-t1;
-            }
-            else {
+                availPingTime = System.currentTimeMillis() - t1;
+            } else {
                 available = getSNMPSession().ping();
                 availPingTime = -1;
             }
@@ -237,9 +241,7 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
     }
 
     @Nullable
-    public OperationResult invokeOperation(@NotNull
-    String name, @NotNull
-    Configuration params) throws Exception {
+    public OperationResult invokeOperation(@NotNull String name, @NotNull Configuration params) throws Exception {
         log.info("Invoking operation [" + name + "] on server [" + this.resourceContext.getResourceKey() + "]...");
         return this.operationsDelegate.invokeOperation(name, params);
     }
@@ -327,9 +329,9 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
     public File getHttpdConfFile() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         PropertySimple prop = pluginConfig.getSimple(PLUGIN_CONFIG_PROP_HTTPD_CONF);
-        if (prop==null || prop.getStringValue()==null)
+        if (prop == null || prop.getStringValue() == null)
             return null;
-        return resolvePathRelativeToServerRoot(pluginConfig,prop.getStringValue());
+        return resolvePathRelativeToServerRoot(pluginConfig, prop.getStringValue());
     }
 
     /**
@@ -402,14 +404,12 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
     }
 
     @NotNull
-    private File resolvePathRelativeToServerRoot(@NotNull
-    String path) {
+    private File resolvePathRelativeToServerRoot(@NotNull String path) {
         return resolvePathRelativeToServerRoot(this.resourceContext.getPluginConfiguration(), path);
     }
 
     @NotNull
-    static File resolvePathRelativeToServerRoot(Configuration pluginConfig, @NotNull
-    String path) {
+    static File resolvePathRelativeToServerRoot(Configuration pluginConfig, @NotNull String path) {
         File file = new File(path);
         if (!file.isAbsolute()) {
             String serverRoot = getRequiredPropertyValue(pluginConfig, PLUGIN_CONFIG_PROP_SERVER_ROOT);
@@ -420,9 +420,7 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
     }
 
     @NotNull
-    static String getRequiredPropertyValue(@NotNull
-    Configuration config, @NotNull
-    String propName) {
+    static String getRequiredPropertyValue(@NotNull Configuration config, @NotNull String propName) {
         String propValue = config.getSimpleValue(propName, null);
         if (propValue == null) {
             // Something's not right - neither autodiscovery, nor the config edit GUI, should ever allow this.

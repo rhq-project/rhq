@@ -70,7 +70,7 @@
 
                <h:outputLabel for="detailsFilter" value="Details Filter: " />
                <h:inputText id="detailsFilter" value="#{ListPartitionEventsUIBean.detailsFilter}" 
-                            onkeypress="return ignoreEnterKey();"
+                            onkeypress="return ignoreEnterKey(event);"
                             style="width: 300px;"/>
                <a4j:commandButton value="GO" reRender="partitionEventsDataTable, partitionEventsDataTableScroller"
                                   styleClass="buttonmed">

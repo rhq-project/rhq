@@ -24,13 +24,13 @@
             <h:panelGrid columns="3" cellspacing="3">
                <h:outputLabel for="resourceFilter" value="Resource Name Filter: " />
                <h:inputText id="resourceFilter" value="#{SubsystemOperationHistoryUIBean.resourceFilter}"
-                            onkeypress="return ignoreEnterKey();"
+                            onkeypress="return ignoreEnterKey(event);"
                             style="width: 300px;" />
                <rich:spacer/>
 
                <h:outputLabel for="parentFilter" value="Parent Name Filter: " />
                <h:inputText id="parentFilter" value="#{SubsystemOperationHistoryUIBean.parentFilter}"
-                            onkeypress="return ignoreEnterKey();"
+                            onkeypress="return ignoreEnterKey(event);"
                             style="width: 300px;" />
                <rich:spacer/>
 

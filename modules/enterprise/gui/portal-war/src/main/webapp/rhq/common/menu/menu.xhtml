@@ -109,7 +109,8 @@
 
             <h:panelGroup>
 
-                <h:inputText id="selectedResource" style="width: 250px;" immediate="true"/>
+                <h:inputText id="selectedResource" style="width: 250px;" immediate="true"
+                             onkeypress="return ignoreEnterKey(event);" />
 
                 <rich:suggestionbox id="resourceSelectBox" for="selectedResource" tokens=",[]"
                                     ajaxSingle="true" immediate="true"

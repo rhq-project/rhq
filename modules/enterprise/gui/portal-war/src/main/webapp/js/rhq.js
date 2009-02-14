@@ -453,8 +453,17 @@ function clickRadio(radioName, valueToClick)
    }
 }
 
-function ignoreEnterKey() {
-   return !( window.event && window.event.keyCode == 13 ); 
+function ignoreEnterKey(evt) {
+   var e = (evt) ? evt : window.event;
+   var charCode = (e.charCode) ? e.charCode : ((e.which) ? e.which : e.keyCode);
+   if (charCode == 13 || charCode == 3) {
+       e.returnValue=false;
+       e.cancel = true;
+       return false;
+   } else {
+       return true;
+   }
+
 }
 
 function updateDependent(e, dep, disableValue) {

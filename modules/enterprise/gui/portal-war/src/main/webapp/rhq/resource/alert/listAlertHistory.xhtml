@@ -53,7 +53,7 @@
 
                <h:outputLabel for="dateFilter" value="Date Filter: " />
                <h:inputText id="dateFilter" value="#{ListAlertHistoryUIBean.dateFilter}"
-                            onkeypress="return ignoreEnterKey();"
+                            onkeypress="return ignoreEnterKey(event);"
                             style="width: 300px;" />
                <a4j:commandButton value="GO" reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
                                   styleClass="buttonmed">

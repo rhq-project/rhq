@@ -52,7 +52,7 @@
 
                <h:outputLabel for="searchFilter" value="Details Filter: " />
                <h:inputText id="searchFilter" value="#{EventHistoryUIBean.searchFilter}"
-                            onkeypress="return ignoreEnterKey();"
+                            onkeypress="return ignoreEnterKey(event);"
                             style="width: 300px;" />
                <a4j:commandButton value="GO" reRender="eventHistoryDataTable,eventHistoryDataTableScroller"
                                   styleClass="buttonmed">

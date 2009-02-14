@@ -142,13 +142,13 @@
             <c:simple-property
                name="shutdownMBeanName"
                displayName="Shutdown MBean Name"
-               required="false"               
+               required="false"
                default="Catalina:type=Server"
                description="Name of the MBean to use when shutting down this server through JMX." />
             <c:simple-property
                name="shutdownMBeanOperation"
                displayName="Shutdown MBean Operation"
-               required="false"               
+               required="false"
                default="await"
                description="Name of the operation to invoke when shutting down this server through JMX.
                                  Note that only operations with no parameter or with one int parameter are supported. If the
@@ -238,23 +238,27 @@
             </c:group>
 
          </plugin-configuration>
-         
-         <operation name="start"
-             displayName="Start" 
-            description ="Starts this connector" />
-            
-         <operation name="stop" 
-             displayName="Stop"
-            description ="Stops this connector" />
-            
-         <operation name="pause"
-             displayName="Pause" 
-            description ="Pauses this connector" />
-            
-         <operation name="resume" 
-             displayName="Resume"
-            description ="Resumes this connector" />
-        
+
+         <operation
+            name="start"
+            displayName="Start"
+            description="Starts this connector" />
+
+         <operation
+            name="stop"
+            displayName="Stop"
+            description="Stops this connector" />
+
+         <operation
+            name="pause"
+            displayName="Pause"
+            description="Pauses this connector" />
+
+         <operation
+            name="resume"
+            displayName="Resume"
+            description="Resumes this connector" />
+
          <!-- Catalina:type=GlobalRequestProcessor,name=http-8080:maxTime -->
          <metric
             property="Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%:maxTime"
@@ -297,7 +301,7 @@
             defaultOn="true"
             category="utilization"
             displayType="summary" />
-         
+
          <service
             name="Tomcat ThreadPool"
             discovery="TomcatThreadPoolDiscoveryComponent"
@@ -497,7 +501,7 @@
                   required="false"
                   description="The (virtual) host that this application is running on. If no virtual host is set, this defaults to 'localhost'" />
             </c:group>
-            
+
             <c:group name="ResponseTime">
                <c:simple-property
                   name="responseTimeLogFile"
@@ -512,7 +516,7 @@
                   required="false"
                   description="a space-delimited list of Perl-style substitution expressions to apply to URLs actively collecting response-time statistics (e.g. |^/dept/finance/.*|/dept/finance/*|)" />
             </c:group>
-            
+
             <c:group
                name="Advanced"
                hiddenByDefault="true">
@@ -627,16 +631,27 @@
             destinationType="URL"
             description="the minimum, maximum, and average response times for HTTP requests serviced by this web application" />
 
-          
-         <content name="file" displayName="WAR File" category="deployable" isCreationType="true">
+         <content
+            name="file"
+            displayName="WAR File"
+            category="deployable"
+            isCreationType="true">
+            
             <configuration>
-               <c:group name="deployment" displayName="Deployment Options">
-                  <c:simple-property name="deployZipped" displayName="Deploy Zipped" type="boolean" default="false" required="true" description="Indicates if the WAR is deployed either zipped or exploded."/>
-                  <c:simple-property name="deployDirectory" displayName="Deploy Directory" type="string" default="deploy" required="true" description="Path to deploy the file. This must be a path relative to the AS configuration set in use."/>
+               <c:group
+                  name="deployment"
+                  displayName="Deployment Options">
+                  <c:simple-property
+                     name="explodeOnDeploy"
+                     displayName="Explode on Deploy"
+                     type="boolean"
+                     default="true"
+                     required="true"
+                     description="If true then explode the WAR file into the Tomcat deploy directory. If false leave as a .war file (typically used only when Tomcat is configured to not explode .war files)." />
                </c:group>
             </configuration>
          </content>
-         
+
       </service>
 
       <service

@@ -109,58 +109,68 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         this.resourceContext = resourceContext;
         this.eventContext = resourceContext.getEventContext();
         this.snmpClient = new SNMPClient();
-        boolean configured = false;
 
-        SNMPSession snmpSession = getSNMPSession();
-        if (!snmpSession.ping()) {
-            log.warn(
-                "Failed to connect to SNMP agent at "
-                    + snmpSession + "\n"
-                    + ". Make sure\n1) the managed Apache server has been instrumented with the JON SNMP module,\n"
-                    + "2) the Apache server is running, and\n"
-                    + "3) the SNMP agent host, port, and community are set correctly in this resource's connection properties.\n"
-                    + "The agent will not be able to record metrics from apache httpd without SNMP");
-        } else {
-            configured = true;
-        }
-
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        String url = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_URL, null);
-        if (url != null) {
-            try {
-                this.url = new URL(url);
-                if (this.url.getPort() == 0) {
-                    log.error(
-                        "The 'url' connection property is invalid - 0 is not a valid port; please change the value to the " +
-                        "port the \"main\" Apache server is listening on. NOTE: If the 'url' property was set this way " +
-                        "after autodiscovery, you most likely did not include the port in the ServerName directive for " +
-                        "the \"main\" Apache server in httpd.conf.");
-                }
-                else {
-                    configured = true;
-                }
-            } catch (MalformedURLException e) {
-                throw new InvalidPluginConfigurationException("Value of '" + PLUGIN_CONFIG_PROP_URL
-                    + "' connection property ('" + url + "') is not a valid URL.");
-            }
-        }
-
-        if (!configured) {
-            throw new InvalidPluginConfigurationException("Neither SNMP nor an URL for checking availability has been configured");
-        }
-
-        File executablePath = getExecutablePath();
         try {
-            this.binaryInfo = ApacheBinaryInfo.getInfo(executablePath.getPath(), this.resourceContext
+            boolean configured = false;
+
+            SNMPSession snmpSession = getSNMPSession();
+            if (!snmpSession.ping()) {
+                log
+                    .warn("Failed to connect to SNMP agent at "
+                        + snmpSession
+                        + "\n"
+                        + ". Make sure\n1) the managed Apache server has been instrumented with the JON SNMP module,\n"
+                        + "2) the Apache server is running, and\n"
+                        + "3) the SNMP agent host, port, and community are set correctly in this resource's connection properties.\n"
+                        + "The agent will not be able to record metrics from apache httpd without SNMP");
+            } else {
+                configured = true;
+            }
+
+            Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+            String url = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_URL, null);
+            if (url != null) {
+                try {
+                    this.url = new URL(url);
+                    if (this.url.getPort() == 0) {
+                        log
+                            .error("The 'url' connection property is invalid - 0 is not a valid port; please change the value to the "
+                                + "port the \"main\" Apache server is listening on. NOTE: If the 'url' property was set this way "
+                                + "after autodiscovery, you most likely did not include the port in the ServerName directive for "
+                                + "the \"main\" Apache server in httpd.conf.");
+                    } else {
+                        configured = true;
+                    }
+                } catch (MalformedURLException e) {
+                    throw new InvalidPluginConfigurationException("Value of '" + PLUGIN_CONFIG_PROP_URL
+                        + "' connection property ('" + url + "') is not a valid URL.");
+                }
+            }
+
+            if (!configured) {
+                throw new InvalidPluginConfigurationException(
+                    "Neither SNMP nor an URL for checking availability has been configured");
+            }
+
+            File executablePath = getExecutablePath();
+            try {
+                this.binaryInfo = ApacheBinaryInfo.getInfo(executablePath.getPath(), this.resourceContext
+                    .getSystemInformation());
+            } catch (Exception e) {
+                throw new InvalidPluginConfigurationException("'" + executablePath
+                    + "' is not a valid Apache executable (" + e + ").");
+            }
+
+            this.operationsDelegate = new ApacheServerOperationsDelegate(this, this.resourceContext
                 .getSystemInformation());
+
+            startEventPollers();
         } catch (Exception e) {
-            throw new InvalidPluginConfigurationException("'" + executablePath + "' is not a valid Apache executable ("
-                + e + ").");
+            if (this.snmpClient != null) {
+                this.snmpClient.close();
+            }
+            throw e;
         }
-
-        this.operationsDelegate = new ApacheServerOperationsDelegate(this, this.resourceContext.getSystemInformation());
-
-        startEventPollers();
     }
 
     public void stop() {
@@ -432,32 +442,40 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
 
     private void startEventPollers() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        Boolean enabled = Boolean.valueOf(pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_EVENTS_ENABLED, null));
+        Boolean enabled = Boolean.valueOf(pluginConfig
+            .getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_EVENTS_ENABLED, null));
         if (enabled) {
-            File errorLogFile = resolvePathRelativeToServerRoot(pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH, DEFAULT_ERROR_LOG_PATH));
-            ApacheErrorLogEntryProcessor processor = new ApacheErrorLogEntryProcessor(ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile);
-            String includesPatternString = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_INCLUDES_PATTERN, null);
+            File errorLogFile = resolvePathRelativeToServerRoot(pluginConfig.getSimpleValue(
+                PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH, DEFAULT_ERROR_LOG_PATH));
+            ApacheErrorLogEntryProcessor processor = new ApacheErrorLogEntryProcessor(ERROR_LOG_ENTRY_EVENT_TYPE,
+                errorLogFile);
+            String includesPatternString = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_INCLUDES_PATTERN,
+                null);
             if (includesPatternString != null) {
                 try {
                     Pattern includesPattern = Pattern.compile(includesPatternString);
                     processor.setIncludesPattern(includesPattern);
                 } catch (PatternSyntaxException e) {
-                    throw new InvalidPluginConfigurationException("Includes pattern [" + includesPatternString + "] is not a valid regular expression.");
+                    throw new InvalidPluginConfigurationException("Includes pattern [" + includesPatternString
+                        + "] is not a valid regular expression.");
                 }
             }
-            String minimumSeverityString = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_MINIMUM_SEVERITY, null);
+            String minimumSeverityString = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_MINIMUM_SEVERITY,
+                null);
             if (minimumSeverityString != null) {
                 EventSeverity minimumSeverity = EventSeverity.valueOf(minimumSeverityString.toUpperCase());
                 processor.setMinimumSeverity(minimumSeverity);
             }
-            EventPoller poller = new LogFileEventPoller(this.eventContext, ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile, processor);
+            EventPoller poller = new LogFileEventPoller(this.eventContext, ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile,
+                processor);
             this.eventContext.registerEventPoller(poller, 60, errorLogFile.getPath());
         }
     }
 
     private void stopEventPollers() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        File errorLogFile = resolvePathRelativeToServerRoot(pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH, DEFAULT_ERROR_LOG_PATH));
+        File errorLogFile = resolvePathRelativeToServerRoot(pluginConfig.getSimpleValue(
+            PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH, DEFAULT_ERROR_LOG_PATH));
         this.eventContext.unregisterEventPoller(ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile.getPath());
     }
 }

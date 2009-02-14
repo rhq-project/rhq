@@ -20,7 +20,10 @@ package org.rhq.enterprise.agent;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryUsage;
+import java.util.ArrayList;
+import java.util.List;
 
 import mazz.i18n.Logger;
 
@@ -75,6 +78,11 @@ public class VMHealthCheckThread extends Thread {
      */
     private final float nonheapThreshold;
 
+    /**
+     * These are names used to identify MemoryPoolMXBeans that are to be monitored.
+     */
+    private final List<String> memoryPoolsToMonitor;
+
     public VMHealthCheckThread(AgentMain agent) {
         super("RHQ VM Health Check Thread");
         setDaemon(false);
@@ -92,6 +100,15 @@ public class VMHealthCheckThread extends Thread {
             this.heapThreshold = 0.90f;
             this.nonheapThreshold = 0.90f;
         }
+
+        // TODO: put these in agent configuration
+        this.memoryPoolsToMonitor = new ArrayList<String>();
+        String memoryPoolNames = System.getProperty("rhq.agent.vm-health-check.mem-pools-to-check", "perm gen");
+        for (String memoryPoolName : memoryPoolNames.split(",")) {
+            this.memoryPoolsToMonitor.add(memoryPoolName.toLowerCase()); // lowercase so our checks are case-insensitive
+        }
+
+        return;
     }
 
     /**
@@ -120,12 +137,24 @@ public class VMHealthCheckThread extends Thread {
 
         LOG.debug(AgentI18NResourceKeys.VM_HEALTH_CHECK_THREAD_STARTED, this.interval);
 
-        MemoryMXBean memoryMxBean = ManagementFactory.getMemoryMXBean();
+        final MemoryMXBean memoryMxBean = ManagementFactory.getMemoryMXBean();
+        final List<MemoryPoolMXBean> memoryPoolMxBeans = getMemoryPoolMXBeansToMonitor();
 
         try {
+            // perform an initial sleep to prevent us from trying to stop while agent is still starting
+            synchronized (this) {
+                wait(this.interval);
+            }
+
             while (!this.stop) {
                 try {
                     if (checkMemory(memoryMxBean)) {
+                        LOG.fatal(AgentI18NResourceKeys.VM_HEALTH_CHECK_SEES_MEM_PROBLEM);
+                        restartAgent(60000L);
+                        continue;
+                    }
+
+                    if (checkPoolMemories(memoryPoolMxBeans, memoryMxBean)) {
                         LOG.fatal(AgentI18NResourceKeys.VM_HEALTH_CHECK_SEES_MEM_PROBLEM);
                         restartAgent(60000L);
                         continue;
@@ -235,8 +264,8 @@ public class VMHealthCheckThread extends Thread {
         boolean nonheapCritical = false;
 
         try {
-            heapCritical = isCriticallyLow(bean.getHeapMemoryUsage(), this.heapThreshold, "heap");
-            nonheapCritical = isCriticallyLow(bean.getNonHeapMemoryUsage(), this.nonheapThreshold, "nonheap");
+            heapCritical = isCriticallyLow(bean.getHeapMemoryUsage(), this.heapThreshold, "VM heap");
+            nonheapCritical = isCriticallyLow(bean.getNonHeapMemoryUsage(), this.nonheapThreshold, "VM nonheap");
 
             if (heapCritical || nonheapCritical) {
                 // uh-oh, we are low on memory, before we say we are truly critical, try to GC
@@ -245,8 +274,8 @@ public class VMHealthCheckThread extends Thread {
                     bean.gc();
 
                     // let see what our memory usage is now
-                    heapCritical = isCriticallyLow(bean.getHeapMemoryUsage(), this.heapThreshold, "heap");
-                    nonheapCritical = isCriticallyLow(bean.getNonHeapMemoryUsage(), this.nonheapThreshold, "nonheap");
+                    heapCritical = isCriticallyLow(bean.getHeapMemoryUsage(), this.heapThreshold, "VM heap");
+                    nonheapCritical = isCriticallyLow(bean.getNonHeapMemoryUsage(), this.nonheapThreshold, "VM nonheap");
                 } catch (Throwable t) {
                     // something bad is happening, let's return true and see if we can recover
                     return true;
@@ -258,6 +287,56 @@ public class VMHealthCheckThread extends Thread {
         }
 
         return heapCritical || nonheapCritical;
+    }
+
+    /**
+     * Checks the given pools' memories and if it detects the pool is critically
+     * low on memory, <code>true</code> will be returned.
+     * 
+     * @param memoryPoolMxBeans the MBeans that contain the memory statistics
+     * @param memoryMxBean the memory MX bean, used to perform GC if we need to
+     * 
+     * @return <code>true</code> if one of the pools is critically low on memory
+     */
+
+    private boolean checkPoolMemories(List<MemoryPoolMXBean> memoryPoolMxBeans, MemoryMXBean memoryMxBean) {
+        boolean critical = false;
+        boolean allValid = true;
+
+        try {
+            for (MemoryPoolMXBean bean : memoryPoolMxBeans) {
+                if (bean.isValid()) {
+                    critical = isCriticallyLow(bean.getUsage(), this.heapThreshold, bean.getName());
+
+                    if (critical) {
+                        // uh-oh, we are low on memory, before we say we are truly critical, try to GC
+                        try {
+                            LOG.warn(AgentI18NResourceKeys.VM_HEALTH_CHECK_THREAD_GC);
+                            memoryMxBean.gc();
+
+                            // let see what our memory usage is now
+                            critical = isCriticallyLow(bean.getUsage(), this.heapThreshold, bean.getName());
+                        } catch (Throwable t) {
+                            // something bad is happening, let's return true and see if we can recover
+                            return true;
+                        }
+                    }
+                } else {
+                    allValid = false;
+                }
+            }
+        } catch (Throwable t) {
+            // this should never happen unless something odd occurred.
+            // let's return true only if we have previously detected critically low memory
+        }
+
+        // we aren't critical, but for some reason, one of our MBeans aren't valid anymore, re-obtain them
+        if (!critical && !allValid) {
+            memoryPoolMxBeans.clear();
+            memoryPoolMxBeans.addAll(getMemoryPoolMXBeansToMonitor());
+        }
+
+        return critical;
     }
 
     /**
@@ -274,8 +353,8 @@ public class VMHealthCheckThread extends Thread {
      * @return <code>true</code> if the amount of used memory is over the threshold
      */
     private boolean isCriticallyLow(MemoryUsage memoryUsage, float thresholdPercentage, String type) {
-        long used = memoryUsage.getUsed();
-        long max = memoryUsage.getMax();
+        final long used = memoryUsage.getUsed();
+        final long max = memoryUsage.getMax();
 
         if ((max > -1) && (used > (max * thresholdPercentage))) {
             LOG.warn(AgentI18NResourceKeys.VM_HEALTH_CHECK_THREAD_MEM_LOW, type, thresholdPercentage, memoryUsage);
@@ -283,5 +362,25 @@ public class VMHealthCheckThread extends Thread {
         }
 
         return false;
+    }
+
+    /**
+     * Gets a list of all the memory pool MBeans that are to be monitored.
+     *  
+     * @return the list of MBeans that need to be monitored
+     */
+    private List<MemoryPoolMXBean> getMemoryPoolMXBeansToMonitor() {
+        final List<MemoryPoolMXBean> memoryPoolMxBeansToMonitor = new ArrayList<MemoryPoolMXBean>();
+
+        if (!this.memoryPoolsToMonitor.isEmpty()) {
+            final List<MemoryPoolMXBean> allMemoryPoolMxBeans = ManagementFactory.getMemoryPoolMXBeans();
+            for (MemoryPoolMXBean memoryPoolMXBean : allMemoryPoolMxBeans) {
+                if (this.memoryPoolsToMonitor.contains(memoryPoolMXBean.getName().toLowerCase())) {
+                    memoryPoolMxBeansToMonitor.add(memoryPoolMXBean);
+                }
+            }
+        }
+
+        return memoryPoolMxBeansToMonitor;
     }
 }

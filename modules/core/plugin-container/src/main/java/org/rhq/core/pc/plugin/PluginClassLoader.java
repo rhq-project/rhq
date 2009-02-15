@@ -60,6 +60,9 @@ public class PluginClassLoader extends URLClassLoader {
         } catch (IOException e) {
             log.warn("Failed to purge embedded jars directory. Cause: " + e);
         }
+
+        // help GC
+        LogFactory.release(this);
     }
 
     public static PluginClassLoader create(String pluginJarName, URL pluginUrl, boolean unpackNestedJars,

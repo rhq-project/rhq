@@ -22,6 +22,7 @@
  */
 package org.rhq.core.pc;
 
+import java.beans.Introspector;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -269,6 +270,8 @@ public class PluginContainer implements ContainerService {
                 purgeTmpDirectoryContents();
 
                 ResourceContainer.shutdown();
+
+                Introspector.flushCaches();
 
                 started = false;
             }

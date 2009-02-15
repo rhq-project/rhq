@@ -194,10 +194,16 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         public boolean contains(int resourceId) {
             return resourceIds.contains(resourceId);
         }
+
+        public String toString() {
+            return AlertsPortletPreferences.class.getSimpleName() + "[count=" + count + ",priority=" + priority
+                + ",timeRange=" + timeRange + ",displayAll=" + displayAll + ",resourceIds=" + resourceIds + "]";
+        }
     }
 
     public AlertsPortletPreferences getAlertsPortletPreferences() {
         AlertsPortletPreferences prefs = new AlertsPortletPreferences();
+        prefs.count = getIntPref(PREF_DASH_ALERTS_COUNT);
         prefs.priority = getIntPref(PREF_DASH_ALERTS_PRIORITY);
         prefs.timeRange = getLongPref(PREF_DASH_ALERTS_PAST);
         prefs.displayAll = getPreference(PREF_DASH_ALERTS_SELECTED_OR_ALL);
@@ -307,6 +313,11 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
         public boolean isFavorite(int resourceId) {
             return resourceIds.contains(resourceId);
+        }
+
+        public String toString() {
+            return AlertsPortletPreferences.class.getSimpleName() + "[showAvailability=" + showAvailability
+                + ",showAlerts=" + showAlerts + ",resourceIds=" + resourceIds + "]";
         }
     }
 

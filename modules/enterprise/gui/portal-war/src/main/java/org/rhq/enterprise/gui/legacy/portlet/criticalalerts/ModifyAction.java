@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.criticalalerts;
 
+import java.util.Arrays;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -53,6 +55,13 @@ public class ModifyAction extends BaseAction {
             preferences.setAlertsPortletPreferences(alertPrefs);
             preferences.persistPreferences();
             forwardStr = "review";
+        } else if (pForm.isOkClicked()) {
+            AlertsPortletPreferences alertPrefs = preferences.getAlertsPortletPreferences();
+            Integer[] savedResourceIds = alertPrefs.asArray();
+            alertPrefs = pForm.getAlertsPortletPreferences();
+            alertPrefs.setResource(Arrays.asList(savedResourceIds));
+            preferences.setAlertsPortletPreferences(alertPrefs);
+            preferences.persistPreferences();
         }
 
         if (!pForm.isDisplayOnDash()) {

@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.legacy.portlet.resourcehealth;
 
+import java.util.Arrays;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -54,6 +56,14 @@ public class ModifyAction extends BaseAction {
             preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
             preferences.persistPreferences();
             forwardStr = "review";
+        } else if (pForm.isOkClicked()) {
+            FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
+                .getFavoriteResourcePortletPreferences();
+            Integer[] savedResourceIds = favoriteResourcePreferences.asArray();
+            favoriteResourcePreferences = pForm.getFavoriteResourcePortletPreferences();
+            favoriteResourcePreferences.setFavorites(Arrays.asList(savedResourceIds));
+            preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
+            preferences.persistPreferences();
         }
 
         if (!pForm.isDisplayOnDash()) {

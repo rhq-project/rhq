@@ -284,8 +284,10 @@ function goToSelectLocation (e, param, base) {
 
 function goToLocationSelfAndElement(param,elementName,base) {
     var sep = base.indexOf("?") >=0 ? '&' : "?";
-    var val = document.forms[0].elements[elementName].value;
-    window.location = base + sep + param + "=" + val;
+    var elts = document.getElementsByName(elementName);
+    if (elts.length == 1) {
+        window.location = base + sep + param + "=" + elts[0].value;
+    }
 }
 
 /*--------------------------- END getters for individual elements ------------------------------*/

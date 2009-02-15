@@ -197,7 +197,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      */
     public PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, long end, PageControl pc) {
 
-        pc.initDefaultOrderingField("sum(o.oobFactor)", PageOrdering.DESC);
+        pc.initDefaultOrderingField("max(o.oobFactor)", PageOrdering.DESC);
 
         long begin = end - (3L * 86400L * 1000L);
 

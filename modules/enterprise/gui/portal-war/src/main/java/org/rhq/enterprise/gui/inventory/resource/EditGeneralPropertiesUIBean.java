@@ -33,7 +33,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public class EditGeneralPropertiesUIBean {
-    public static final String MANAGED_BEAN_NAME = "EditGeneralPropertiesUIBean";
 
     private static final String OUTCOME_SUCCESS = "success";
 
@@ -44,7 +43,7 @@ public class EditGeneralPropertiesUIBean {
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
     public EditGeneralPropertiesUIBean() {
-        Resource resource = EnterpriseFacesContextUtility.getResource();
+        Resource resource = getResource();
         this.name = resource.getName();
         this.description = resource.getDescription();
         this.location = resource.getLocation();
@@ -57,14 +56,18 @@ public class EditGeneralPropertiesUIBean {
     public String update() {
         // Get an up-to-date copy of the Resource from the DB in case anything else has changed since the page was first
         // displayed.
-        Resource resource = this.resourceManager.getResourceById(EnterpriseFacesContextUtility.getSubject(),
-            EnterpriseFacesContextUtility.getResource().getId());
+        Resource resource = getResource();
         resource.setName(this.name);
         resource.setDescription(this.description);
         resource.setLocation(this.location);
         this.resourceManager.updateResource(EnterpriseFacesContextUtility.getSubject(), resource);
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "General properties updated.");
         return OUTCOME_SUCCESS;
+    }
+
+    private Resource getResource() {
+        return resourceManager.getResourceById(EnterpriseFacesContextUtility.getSubject(), FacesContextUtility
+            .getRequiredRequestParameter("id", Integer.class));
     }
 
     public String cancel() {

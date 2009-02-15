@@ -21,7 +21,7 @@
 
 <ui:define name="content">
 
-<a4j:region renderRegionOnly="true" selfRendered="true">
+
 
 <!-- =================== GENERAL PROPERTIES =================== -->
 <rich:panel styleClass="BlockContent">
@@ -101,9 +101,6 @@
 <h:form id="childResourcesForm">
 
     <input type="hidden" name="id" value="#{param.id}"/>
-
-    <a4j:keepAlive beanName="ListChildResourcesUIBean"/>
-
 
 <!-- CHILD RESOURCE TYPE FILTER -->
 <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.utilizedChildTypesCount > 1}" style="margin-bottom: 6px;">
@@ -300,7 +297,6 @@
    <ui:remove><!-- column 1 --></ui:remove>
    <h:panelGroup>
        <h:form id="manuallyAddResourceForm" onsubmit="addManuallyAddResourceTypeRequestParam(this)">
-           <a4j:keepAlive beanName="ListChildResourcesUIBean"/>
 
        <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.manuallyAddableChildTypesCount > 0}">
 
@@ -325,7 +321,6 @@
    <h:panelGroup>
        <h:form id="createNewResourceForm" onsubmit="addCreateNewResourceTypeRequestParam(this)">
 
-           <a4j:keepAlive beanName="ListChildResourcesUIBean"/>
            <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.creatableChildTypesCount > 0}">
 
             <input type="hidden" name="id" value="#{param.id}"/>
@@ -352,8 +347,6 @@
 <!-- =================== CREATE CHILD RESOURCES HISTORY =================== -->
 <h:form id="createResourceHistoryForm">
     <input type="hidden" name="id" value="#{param.id}"/>
-
-    <a4j:keepAlive beanName="ListContainingGroupsUIBean"/>
 
 <rich:panel rendered="#{ListCreateResourceHistoryUIBean.createHistoryCount > 0}" styleClass="BlockContent">
 <f:facet name="header" styleClass="BlockTitle"><h:outputText value="History of create child resource requests"/></f:facet>
@@ -478,8 +471,6 @@
 <!-- =================== DELETE CHILD RESOURCES HISTORY =================== -->
 <h:form id="deleteResourceHistoryForm">
     <input type="hidden" name="id" value="#{param.id}"/>
-
-    <a4j:keepAlive beanName="ListContainingGroupsUIBean"/>
 
 <rich:panel rendered="#{ListDeleteResourceHistoryUIBean.deleteHistoryCount > 0}" styleClass="BlockContent">
 <f:facet name="header" styleClass="BlockTitle"><h:outputText value="History of delete child resource requests"/></f:facet>
@@ -632,8 +623,6 @@
    </f:facet>
 
    <h:form id="containingGroupsForm">
-
-       <a4j:keepAlive beanName="ListContainingGroupsUIBean"/>
 
        <input type="hidden" name="id" value="#{param.id}"/>
 
@@ -845,7 +834,7 @@
 
 </rich:panel>
 
-</a4j:region>
+
 </ui:define>
 
 </ui:composition>

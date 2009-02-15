@@ -26,7 +26,8 @@
 
       <navigation-case>
          <from-action>#{EditGeneralPropertiesUIBean.begin}</from-action>
-         <to-view-id>/rhq/resource/inventory/edit-general.xhtml</to-view-id>
+         <to-view-id>/rhq/resource/inventory/edit-general.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
       </navigation-case>
 
       <!-- === ConnectionPropertiesUIBean ======================= -->

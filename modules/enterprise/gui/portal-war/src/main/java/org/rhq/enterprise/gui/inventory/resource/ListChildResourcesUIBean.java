@@ -219,7 +219,7 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
     @Override
     public DataModel getDataModel() {
         if (this.dataModel == null) {
-            refreshDataModel();
+            this.dataModel = new ListChildResourcesDataModel(PageControlView.ChildResourcesList, MANAGED_BEAN_NAME);
         }
         return this.dataModel;
     }
@@ -246,10 +246,6 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
         if (this.childTypeFilter == null) {
             this.childTypeFilter = FacesContextUtility.getOptionalRequestParameter(CHILD_TYPE_FILTER_INPUT_CLIENT_ID);
         }
-    }
-
-    private void refreshDataModel() {
-        this.dataModel = new ListChildResourcesDataModel(PageControlView.ChildResourcesList, MANAGED_BEAN_NAME);
     }
 
     private List<ResourceType> getManuallyAddableResourceTypes(List<ResourceType> resourceTypes) {
@@ -296,7 +292,6 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
     }
 
     protected class ListChildResourcesDataModel extends PagedListDataModel<ResourceComposite> {
-        private static final String DEFAULT_SORT_COLUMN = "res.name";
 
         ListChildResourcesDataModel(PageControlView view, String beanName) {
             super(view, beanName);
@@ -304,7 +299,6 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
 
         @Override
         public PageList<ResourceComposite> fetchPage(PageControl pageControl) {
-            pageControl.initDefaultOrderingField(DEFAULT_SORT_COLUMN);
             ResourceCategory resourceCategory = null;
             int resourceTypeId = -1;
             ListChildResourcesUIBean.this.initChildTypeFilter();

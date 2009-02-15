@@ -121,7 +121,7 @@
 
    <managed-bean>
       <managed-bean-name>EditGeneralPropertiesUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.navigation.resource.EditGeneralPropertiesUIBean</managed-bean-class>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.EditGeneralPropertiesUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
@@ -143,7 +143,7 @@
 
     <managed-bean>
         <managed-bean-name>ResourceSelectUIBean</managed-bean-name>
-        <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ResourceSelectUIBean</managed-bean-class>
+        <managed-bean-class>org.rhq.enterprise.gui.navigation.resource.ResourceSelectUIBean</managed-bean-class>
         <managed-bean-scope>request</managed-bean-scope>
     </managed-bean>
 

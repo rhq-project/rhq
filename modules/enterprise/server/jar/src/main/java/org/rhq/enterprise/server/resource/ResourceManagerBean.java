@@ -965,7 +965,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public PageList<ResourceComposite> findResourceComposites(Subject user, ResourceCategory category,
         ResourceType type, Resource parentResource, String searchString, boolean attachParentResource,
         PageControl pageControl) {
-        pageControl.addDefaultOrderingField("res.name");
+        pageControl.initDefaultOrderingField("res.name");
         pageControl.addDefaultOrderingField("res.id");
 
         String queryName;

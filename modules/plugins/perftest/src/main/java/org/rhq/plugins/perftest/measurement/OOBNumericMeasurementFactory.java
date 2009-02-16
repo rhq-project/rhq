@@ -34,7 +34,7 @@ public class OOBNumericMeasurementFactory implements MeasurementFactory {
         double value = request.getScheduleId();
 
         long currentMillis = System.currentTimeMillis();
-        int currentDays = (int) currentMillis / (24 * 60 * 60 * 1000);
+        int currentDays = (int) (currentMillis / (24 * 60 * 60 * 1000));
         int dayOfWeek = currentDays % 7;
 
         // depending on what day it is add 0%, 10%, ... 60% to the value

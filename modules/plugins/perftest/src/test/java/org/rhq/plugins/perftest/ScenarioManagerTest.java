@@ -18,6 +18,7 @@
  */
 package org.rhq.plugins.perftest;
 
+import java.util.Calendar;
 import java.util.Set;
 
 import org.testng.annotations.BeforeSuite;
@@ -26,11 +27,15 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.perftest.content.ContentFactory;
+import org.rhq.plugins.perftest.measurement.MeasurementFactory;
 import org.rhq.plugins.perftest.resource.ResourceFactory;
 
 /**
@@ -46,7 +51,8 @@ public class ScenarioManagerTest {
     public void discoverResources() {
         // Setup
         ResourceType resourceType = new ResourceType("server-a", "plugin", ResourceCategory.SERVER, null);
-        ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, null, null, null, null, null, "test");
+        ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, null, null, null, null, null,
+            "test");
 
         // Test
         ScenarioManager manager = ScenarioManager.getInstance();
@@ -63,7 +69,8 @@ public class ScenarioManagerTest {
     public void discoverNoResources() {
         // Setup
         ResourceType resourceType = new ResourceType("server-c", "plugin", ResourceCategory.SERVER, null);
-        ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, null, null, null, null, null, "test");
+        ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, null, null, null, null, null,
+            "test");
 
         // Test
         ScenarioManager manager = ScenarioManager.getInstance();
@@ -82,7 +89,8 @@ public class ScenarioManagerTest {
         System.setProperty("on.perftest.server-b-test", "20");
 
         ResourceType resourceType = new ResourceType("server-b", "plugin", ResourceCategory.SERVER, null);
-        ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, null, null, null, null, null, "test");
+        ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, null, null, null, null, null,
+            "test");
 
         // Test
         ScenarioManager manager = ScenarioManager.getInstance();
@@ -93,6 +101,29 @@ public class ScenarioManagerTest {
         assert resources != null : "Null set of resources returned from resource factory";
         assert resources.size() == 20 : "Incorrect number of resources returned from resource factory. Expected: 20, Found: "
             + resources.size();
+    }
+
+    @Test
+    public void OOBMetrics() {
+        // Setup
+        System.setProperty("on.perftest.server-e-count", "3");
+        System.setProperty("on.perftest.service-e-metrics-count", "10");
+
+        // Test
+        ScenarioManager manager = ScenarioManager.getInstance();
+        MeasurementFactory measurementFactory = manager.getMeasurementFactory("service-e-metrics");
+        MeasurementScheduleRequest request = new MeasurementScheduleRequest(1000, "name", 30000, true,
+            DataType.MEASUREMENT);
+
+        MeasurementData data = measurementFactory.nextValue(request);
+        Double value = (Double) data.getValue();
+
+        Calendar cal = Calendar.getInstance();
+        //sunday is zero, but for our OOB calculator its really 3
+        int javaDay = cal.getTime().getDay();
+        int metricDay = (javaDay + 3) % 7;
+
+        assert value == (metricDay * 0.1 * 1000) + 1000 : "Value was [" + value + "].";
     }
 
     @Test

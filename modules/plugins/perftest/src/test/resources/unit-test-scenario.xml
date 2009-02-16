@@ -13,4 +13,14 @@
       <simpleResourceGenerator property="on.perftest.server-b-test"/>
    </resource>
 
+  <resource type="server-e">
+      <simpleResourceGenerator property="on.perftest.server-e-count"/>
+      <OOBNumericMeasurementGenerator/>
+   </resource>
+
+   <resource type="service-e-metrics">
+      <simpleResourceGenerator property="on.perftest.service-e-metrics-count"/>
+      <OOBNumericMeasurementGenerator/>
+   </resource>
+
 </scenario>

@@ -288,7 +288,8 @@
                         <onc:selectCommandButton action="#{ResourceGroupOperationCompletedHistoryUIBean.delete}"
                                                  value="DELETE SELECTED" target="completedSelectedItems" 
                                                  styleClass="on-pager-button buttonsmall"
-                                                 rendered="#{ResourceGroupUIBean.permissions.control}"/>
+                                                 rendered="#{ResourceGroupUIBean.permissions.control}"
+                                                 onclick="return preventDoubleClick();"/>
 
                         <ui:param name="paginationDataTableName" value="resourceGroupOperationCompletedHistoryDataTable"/>
                         <ui:param name="paginationDataModel" value="#{resourceGroupOperationCompletedHistoryDataModel}"/>
@@ -307,6 +308,18 @@
 
          </rich:panel>
       </h:form>
+      
+      <script type="text/javascript">
+         var submitted = false;
+         function preventDoubleClick() {
+            if (submitted) {
+               return false;
+            } else {
+               submitted = true;
+               return true;
+            }
+         }
+      </script>
 
    </ui:define>
 

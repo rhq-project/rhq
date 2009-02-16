@@ -144,7 +144,8 @@
                          styleClass="buttons-table" columnClasses="button-cell">
                <h:commandButton action="#{ResourceOperationScheduleUIBean.schedule}" 
                                 value="SCHEDULE" styleClass="buttonmed"
-                                rendered="#{ResourceUIBean.permissions.control}" />
+                                rendered="#{ResourceUIBean.permissions.control}" 
+                                onclick="return preventDoubleClick();"/>
                <h:outputText value="Sorry, you do not have permission to execute or schedule operations against this resource"
                              styleClass="InfoBlock"
                              rendered="#{!ResourceUIBean.permissions.control}"/>
@@ -153,9 +154,21 @@
          </rich:panel>
       </h:form>
 
-   <script type="text/javascript">
-      clickAlreadySelectedElements();
-   </script>
+      <script type="text/javascript">
+         clickAlreadySelectedElements();
+      </script>
+
+      <script type="text/javascript">
+         var submitted = false;
+         function preventDoubleClick() {
+            if (submitted) {
+               return false;
+            } else {
+               submitted = true;
+               return true;
+            }
+         }
+      </script>
 
    </ui:define>
 

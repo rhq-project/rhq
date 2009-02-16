@@ -135,7 +135,9 @@
                   <rich:columnGroup>
                      <rich:column colspan="6" width="100%">
                         <onc:selectCommandButton action="#{ResourceGroupOperationPendingHistoryUIBean.cancel}"
-                                                 value="CANCEL SELECTED" target="pendingSelectedItems" styleClass="on-pager-button buttonsmall"/>
+                                                 value="CANCEL SELECTED" target="pendingSelectedItems" 
+                                                 styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{ResourceGroupUIBean.permissions.control}"/>
 
                         <ui:param name="paginationDataTableName" value="resourceGroupOperationPendingHistoryDataTable"/>
                         <ui:param name="paginationDataModel" value="#{resourceGroupOperationPendingHistoryDataModel}"/>
@@ -284,7 +286,9 @@
                   <rich:columnGroup>
                      <rich:column colspan="7" width="100%">
                         <onc:selectCommandButton action="#{ResourceGroupOperationCompletedHistoryUIBean.delete}"
-                                                 value="DELETE SELECTED" target="completedSelectedItems" styleClass="on-pager-button buttonsmall"/>
+                                                 value="DELETE SELECTED" target="completedSelectedItems" 
+                                                 styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{ResourceGroupUIBean.permissions.control}"/>
 
                         <ui:param name="paginationDataTableName" value="resourceGroupOperationCompletedHistoryDataTable"/>
                         <ui:param name="paginationDataModel" value="#{resourceGroupOperationCompletedHistoryDataModel}"/>

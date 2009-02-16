@@ -95,10 +95,14 @@
                   <rich:columnGroup>
                      <rich:column colspan="4" width="100%">
                         <onc:selectCommandButton action="#{ResourceGroupOperationScheduleUIBean.unschedule}"
-                                                 value="UNSCHEDULE" target="selectedItems" styleClass="on-pager-button buttonsmall"/>   
+                                                 value="UNSCHEDULE" target="selectedItems" 
+                                                 styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{ResourceGroupUIBean.permissions.control}"/>
                         <onc:selectCommandButton action="#{ResourceGroupOperationScheduleUIBean.executeNow}" 
-                                                 value="EXECUTE NOW" target="selectedItems" styleClass="on-pager-button buttonsmall"
-                                                 low="1" high="1"/>
+                                                 value="EXECUTE NOW" target="selectedItems" 
+                                                 styleClass="on-pager-button buttonsmall"
+                                                 low="1" high="1"
+                                                 rendered="#{ResourceGroupUIBean.permissions.control}"/>
                      </rich:column>
                   </rich:columnGroup>
                </f:facet>

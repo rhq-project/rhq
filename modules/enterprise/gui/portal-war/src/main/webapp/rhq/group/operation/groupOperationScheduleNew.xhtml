@@ -173,7 +173,9 @@
             <hr />
             <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell" 
                          rendered="#{not empty param.opId}">
-               <h:commandButton action="#{ResourceGroupOperationScheduleUIBean.schedule}" value="SCHEDULE" styleClass="buttonmed"/>
+               <h:commandButton action="#{ResourceGroupOperationScheduleUIBean.schedule}" 
+                                value="SCHEDULE" styleClass="buttonmed"
+                                rendered="#{ResourceGroupUIBean.permissions.control}" />
             </h:panelGrid>
             <br />
          </rich:panel>

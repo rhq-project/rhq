@@ -108,7 +108,9 @@
          <input type="hidden" name="groupId" value="${param.groupId}"/>
          <input type="hidden" name="jobId" value="${param.jobId}"/>   
          <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
-            <h:commandButton action="#{ResourceGroupOperationScheduleUIBean.executeNow}" value="EXECUTE NOW" styleClass="buttonmed"/>
+            <h:commandButton action="#{ResourceGroupOperationScheduleUIBean.executeNow}" 
+                             value="EXECUTE NOW" styleClass="buttonmed"
+                             rendered="#{ResourceGroupUIBean.permissions.control}" />
          </h:panelGrid>
       </h:form>
       

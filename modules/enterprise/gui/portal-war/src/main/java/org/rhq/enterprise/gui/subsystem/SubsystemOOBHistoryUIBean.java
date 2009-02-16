@@ -20,9 +20,6 @@ package org.rhq.enterprise.gui.subsystem;
 
 import javax.faces.model.DataModel;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -33,16 +30,13 @@ import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * TODO document me
+ * Backing bean fr the OOB subsysems view, oobHistory.xhtml
  *
  * @author Heiko W. Rupp
  */
 public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
 
     public static final String MANAGED_BEAN_NAME = "SubsystemOOBHistoryUIBean";
-    private static final String FORM_PREFIX = "oobHistorySubsystemForm:";
-
-    private final Log log = LogFactory.getLog(SubsystemOOBHistoryUIBean.class);
 
     private int selectedSchedule;
 

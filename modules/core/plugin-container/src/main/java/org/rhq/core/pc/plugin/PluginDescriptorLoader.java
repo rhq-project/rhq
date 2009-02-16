@@ -44,7 +44,7 @@ public class PluginDescriptorLoader {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private final URL pluginJarUrl;
-    private final ClassLoader pluginClassLoader;
+    private ClassLoader pluginClassLoader;
 
     /**
      * This will create the plugin's {@link #getPluginClassLoader() classloader}. If <code>classLoader</code> is
@@ -117,6 +117,7 @@ public class PluginDescriptorLoader {
         if (this.pluginClassLoader instanceof PluginClassLoader) {
             ((PluginClassLoader) this.pluginClassLoader).destroy();
         }
+        this.pluginClassLoader = null;
     }
 
     @Override

@@ -58,9 +58,9 @@ public class PluginManager implements ContainerService {
     /**
      * The map of all plugins keyed on plugin name.
      */
-    private Map<String, PluginEnvironment> loadedPlugins = new HashMap<String, PluginEnvironment>();
+    private Map<String, PluginEnvironment> loadedPlugins;
 
-    private PluginMetadataManager metadataManager = new PluginMetadataManager();
+    private PluginMetadataManager metadataManager;
     private PluginContainerConfiguration configuration;
 
     /**
@@ -71,6 +71,9 @@ public class PluginManager implements ContainerService {
      * @see ContainerService#initialize()
      */
     public void initialize() {
+        loadedPlugins = new HashMap<String, PluginEnvironment>();
+        metadataManager = new PluginMetadataManager();
+
         PluginFinder finder = configuration.getPluginFinder();
         File tmpDir = configuration.getTemporaryDirectory();
 
@@ -173,6 +176,8 @@ public class PluginManager implements ContainerService {
             pluginEnvironment.destroy();
         }
         this.loadedPlugins.clear();
+        this.loadedPlugins = null;
+        this.metadataManager = null;
     }
 
     /**

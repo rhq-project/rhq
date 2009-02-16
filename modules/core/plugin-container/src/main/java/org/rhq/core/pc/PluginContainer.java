@@ -24,7 +24,10 @@ package org.rhq.core.pc;
 
 import java.beans.Introspector;
 import java.io.IOException;
+import java.sql.Driver;
+import java.sql.DriverManager;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -271,15 +274,44 @@ public class PluginContainer implements ContainerService {
 
                 ResourceContainer.shutdown();
 
-                Introspector.flushCaches();
+                eventManager = null;
+                contentManager = null;
+                resourceFactoryManager = null;
+                operationManager = null;
+                configurationManager = null;
+                measurementManager = null;
+                inventoryManager = null;
+                pluginComponentFactory = null;
+                pluginManager = null;
 
                 started = false;
+
+                cleanMemory();
             }
         } finally {
             releaseLock(lock);
         }
 
         return;
+    }
+
+    /**
+     * Does things that help the garbage collector clean up the memory.
+     * Only call this after the plugin container has been shutdown.
+     */
+    private void cleanMemory() {
+        Introspector.flushCaches();
+
+        for (Enumeration<Driver> drivers = DriverManager.getDrivers(); drivers.hasMoreElements();) {
+            Driver driver = drivers.nextElement();
+            try {
+                DriverManager.deregisterDriver(driver);
+            } catch (Exception e) {
+                log.info("Failed to deregister JDBC driver, memory leak may occur: " + driver);
+            }
+        }
+
+        System.gc();
     }
 
     private void purgeTmpDirectoryContents() {

@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -47,16 +46,12 @@ import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.MetricsDisplayMode;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.auth.SessionNotFoundException;
-import org.rhq.enterprise.server.auth.SessionTimeoutException;
-import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementViewException;
 import org.rhq.enterprise.server.measurement.MeasurementViewManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
-import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricViewData;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -122,71 +117,6 @@ public class IndicatorChartsAction extends DispatchAction {
         return new EntityContext(resourceId, groupId, parentResourceId, resourceTypeId);
     }
 
-    /**
-     * Stores the metric in the session and also in the passed form, so it can be
-     * identified in moveUp()/moveDown()/remove() 
-     */
-    private void storeMetricsInSession(HttpServletRequest request, List<MetricDisplaySummary> metrics,
-        IndicatorViewsForm form) throws ServletException, SessionTimeoutException, SessionNotFoundException {
-        request.setAttribute(AttrConstants.CHART_DATA_KEYS, metrics);
-
-        String[] scheduleIds = new String[metrics.size()];
-        int i = 0;
-        for (MetricDisplaySummary summary : metrics) {
-            scheduleIds[i++] = getContextKeyChart(summary);
-        }
-        form.setMetric(scheduleIds);
-
-        // Set the metrics in the session
-        EntityContext context = new EntityContext(form.getId(), form.getGroupId(), form.getParent(), form.getCtype());
-        String key = context.getLegacyKey() + "." + form.getView();
-        HttpSession session = request.getSession();
-
-        session.setAttribute(key, metrics);
-        session.setAttribute("metricKey", key);
-
-        storeMetricsInUserPreferences(request, metrics, form);
-    }
-
-    /**
-     * Look up metrics from session and load them if they are not yet there
-     */
-    private List<MetricDisplaySummary> retrieveMetricsFromSession(HttpServletRequest request, IndicatorViewsForm form)
-        throws SessionNotFoundException, SessionTimeoutException, PermissionException, ServletException {
-
-        List<MetricDisplaySummary> metrics = new ArrayList<MetricDisplaySummary>();
-
-        Subject subject = WebUtility.getSubject(request);
-        try {
-            String viewName = form.getView();
-            EntityContext context = null;
-            try {
-                context = new EntityContext(form.getId(), form.getGroupId(), form.getParent(), form.getCtype());
-            } catch (IllegalArgumentException iae) {
-                // ok, the form didn't have what we wanted, let's fallback on the request
-                context = getContext(request);
-            }
-
-            if (context.category == EntityContext.Category.Resource) {
-                int resourceId = WebUtility.getResourceId(request);
-                metrics = chartsManager.getMetricDisplaySummariesForResource(subject, context.resourceId, viewName);
-            } else if (context.category == EntityContext.Category.ResourceGroup) {
-                int groupId = WebUtility.getRequiredIntRequestParameter(request, AttrConstants.GROUP_ID);
-                metrics = chartsManager.getMetricDisplaySummariesForCompatibleGroup(subject, groupId, viewName);
-            } else if (context.category == EntityContext.Category.AutoGroup) {
-                int parent = WebUtility.getRequiredIntRequestParameter(request, "parent");
-                int type = getChildTypeId(request);
-                metrics = chartsManager.getMetricDisplaySummariesForAutoGroup(subject, parent, type, viewName);
-            } else {
-                throw new IllegalArgumentException("Unknown or unsupported context: " + context);
-            }
-        } catch (Exception e) {
-            log.error("Error loading metrics (they were not found in the session)", e);
-        }
-
-        return metrics;
-    }
-
     public ActionForward fresh(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         HttpSession session = request.getSession();
@@ -212,7 +142,6 @@ public class IndicatorChartsAction extends DispatchAction {
                 metrics.add(tmp);
             }
             metrics = reloadMetrics(request, metrics, true);
-            storeMetricsInSession(request, metrics, ivf);
 
             return mapping.findForward(RetCodeConstants.SUCCESS_URL);
 
@@ -253,8 +182,6 @@ public class IndicatorChartsAction extends DispatchAction {
             }
             request.setAttribute(AttrConstants.CHART_DATA_KEYS, metrics);
         }
-        // Set the metrics in the session and preferences
-        storeMetricsInSession(request, metrics, ivf);
 
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);
     }
@@ -317,129 +244,6 @@ public class IndicatorChartsAction extends DispatchAction {
         return ret;
     }
 
-    /**
-     * A refresh() event coming in from the JSP layer. Is also called at the end of add() to
-     * get the actual data from the backend of the newly added metric.
-     */
-    public ActionForward refresh(ActionMapping mapping, ActionForm form, HttpServletRequest request,
-        HttpServletResponse response) throws Exception {
-        IndicatorViewsForm ivf = (IndicatorViewsForm) form;
-
-        // Look up the metrics from the session
-        List<MetricDisplaySummary> metrics = retrieveMetricsFromSession(request, ivf);
-
-        // refresh the metrics
-        metrics = reloadMetrics(request, metrics, false);
-
-        // Now store the metrics back
-        storeMetricsInSession(request, metrics, ivf);
-
-        return mapping.findForward(RetCodeConstants.SUCCESS_URL);
-    }
-
-    /**
-     * Add a metric encoded in the form to the list of indicator charts to display.
-     */
-    public ActionForward add(ActionMapping mapping, ActionForm form, HttpServletRequest request,
-        HttpServletResponse response) throws Exception {
-        IndicatorViewsForm ivf = (IndicatorViewsForm) form;
-
-        // Look up the metrics from the session
-        List<MetricDisplaySummary> metrics = retrieveMetricsFromSession(request, ivf);
-
-        if (metrics == null) {
-            return mapping.findForward(RetCodeConstants.FAILURE_URL);
-        }
-
-        // Now look up the metric that we have to add and parse it
-        String newMetric = ivf.getMetric()[0];
-        MetricDisplaySummary newSummary = MeasurementUtils.parseMetricToken(newMetric);
-
-        // Get the Metric Display summary , taking the display mode into account
-        MetricsDisplayMode mode = getDisplayModeForSummary(newSummary); //WebUtility.getMetricsDisplayMode(request);
-
-        // First check if the metric to add is already present
-        boolean found = false;
-        for (MetricDisplaySummary metric : metrics) {
-            Integer definitionId = metric.getDefinitionId();
-            switch (mode) {
-            case RESOURCE:
-                Integer schedId = metric.getScheduleId();
-                if (schedId != null && schedId.equals(newSummary.getScheduleId())) {
-                    found = true;
-                    break;
-                }
-                break;
-            case COMPGROUP:
-                if (metric.getGroupId() == newSummary.getGroupId() && definitionId == newSummary.getDefinitionId()) {
-                    found = true;
-                    break;
-                }
-                break;
-            case AUTOGROUP:
-                int parent = metric.getParentId();
-                int type = metric.getChildTypeId();
-                if (parent == newSummary.getParentId() && type == newSummary.getChildTypeId()
-                    && definitionId == newSummary.getDefinitionId()) {
-                    found = true;
-                    break;
-                }
-                break;
-            default:
-                throw new IllegalArgumentException(mode + " not valid here");
-
-            }
-        }
-
-        // Add the new metrics
-        if (!found) {
-            WebUser user = SessionUtils.getWebUser(request.getSession());
-            MeasurementPreferences preferences = user.getMeasurementPreferences();
-            MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
-            long begin = rangePreferences.begin;
-            long end = rangePreferences.end;
-
-            int[] measurementDefinitionIds = new int[1];
-            List<MetricDisplaySummary> newSummaries = new ArrayList<MetricDisplaySummary>();
-            ;
-            switch (mode) {
-            case RESOURCE:
-                newSummaries = chartsManager.getMetricDisplaySummariesForResource(user.getSubject(), newSummary
-                    .getResourceId(), new int[] { newSummary.getScheduleId() }, begin, end);
-                metrics.addAll(newSummaries);
-                // Now store the metrics back
-                storeMetricsInSession(request, metrics, ivf);
-                break;
-            case COMPGROUP:
-                // Get MetricDisplaySummaries from the backend for the new metrics and add them
-                measurementDefinitionIds[0] = newSummary.getDefinitionId();
-
-                newSummaries = chartsManager.getMetricDisplaySummariesForCompatibleGroup(user.getSubject(), newSummary
-                    .getGroupId(), measurementDefinitionIds, begin, end, false);
-                metrics.addAll(newSummaries);
-
-                // Set the metrics in the session
-                storeMetricsInSession(request, metrics, ivf);
-                break;
-            case AUTOGROUP:
-                // Get MetricDisplaySummaries from the backend for the new metrics and add them
-                measurementDefinitionIds[0] = newSummary.getDefinitionId();
-                newSummaries = chartsManager.getMetricDisplaySummariesForAutoGroup(user.getSubject(), newSummary
-                    .getParentId(), newSummary.getChildTypeId(), measurementDefinitionIds, begin, end, false);
-                metrics.addAll(newSummaries);
-                // Set the metrics in the session
-                storeMetricsInSession(request, metrics, ivf);
-                break;
-            default:
-                throw new IllegalArgumentException(mode + " not valid here");
-            }
-        }
-
-        // trigger an immediate refresh 
-        // return mapping.findForward(RetCodeConstants.SUCCESS_URL);
-        return refresh(mapping, form, request, response);
-    }
-
     public ActionForward addChart(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
@@ -447,10 +251,6 @@ public class IndicatorChartsAction extends DispatchAction {
         Subject subject = WebUtility.getSubject(request);
         EntityContext context = new EntityContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf.getCtype());
         viewManager.addChart(subject, context, ivf.getView(), ivf.getMetric()[0]);
-
-        List<MetricDisplaySummary> metrics = retrieveMetricsFromSession(request, ivf);
-        // Now store the metrics back
-        storeMetricsInSession(request, metrics, ivf);
 
         return mapping.findForward(RetCodeConstants.AJAX_URL);
     }
@@ -463,10 +263,6 @@ public class IndicatorChartsAction extends DispatchAction {
         EntityContext context = new EntityContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf.getCtype());
         viewManager.removeChart(subject, context, ivf.getView(), ivf.getMetric()[0]);
 
-        List<MetricDisplaySummary> metrics = retrieveMetricsFromSession(request, ivf);
-        // Now store the metrics back
-        storeMetricsInSession(request, metrics, ivf);
-
         return mapping.findForward(RetCodeConstants.AJAX_URL);
     }
 
@@ -478,10 +274,6 @@ public class IndicatorChartsAction extends DispatchAction {
         EntityContext context = new EntityContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf.getCtype());
         viewManager.moveChartUp(subject, context, ivf.getView(), ivf.getMetric()[0]);
 
-        List<MetricDisplaySummary> metrics = retrieveMetricsFromSession(request, ivf);
-        // Now store the metrics back
-        storeMetricsInSession(request, metrics, ivf);
-
         return mapping.findForward(RetCodeConstants.AJAX_URL);
     }
 
@@ -492,10 +284,6 @@ public class IndicatorChartsAction extends DispatchAction {
         Subject subject = WebUtility.getSubject(request);
         EntityContext context = new EntityContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf.getCtype());
         viewManager.moveChartDown(subject, context, ivf.getView(), ivf.getMetric()[0]);
-
-        List<MetricDisplaySummary> metrics = retrieveMetricsFromSession(request, ivf);
-        // Now store the metrics back
-        storeMetricsInSession(request, metrics, ivf);
 
         return mapping.findForward(RetCodeConstants.AJAX_URL);
     }
@@ -586,30 +374,9 @@ public class IndicatorChartsAction extends DispatchAction {
     public ActionForward update(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
 
-        refresh(mapping, form, request, response);
+        //refresh(mapping, form, request, response);
 
         return mapping.findForward(KeyConstants.MODE_MON_CUR);
-    }
-
-    /**
-     * Stores the metrics in the user preferences so that they
-     * survive a logout.
-     */
-    private void storeMetricsInUserPreferences(HttpServletRequest request, List<MetricDisplaySummary> metrics,
-        IndicatorViewsForm ivf) throws SessionNotFoundException, SessionTimeoutException, ServletException {
-
-        MetricViewData data = new MetricViewData();
-        data.charts = new ArrayList<String>();
-        for (MetricDisplaySummary mds : metrics) {
-            String chart = getContextKeyChart(mds);
-            data.charts.add(chart);
-        }
-
-        // Set the user preferences now
-        Subject subject = WebUtility.getSubject(request);
-
-        EntityContext context = new EntityContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf.getCtype());
-        viewManager.saveCharts(subject, context, ivf.getView(), data.charts);
     }
 
     public ActionForward delete(ActionMapping mapping, ActionForm form, HttpServletRequest request,

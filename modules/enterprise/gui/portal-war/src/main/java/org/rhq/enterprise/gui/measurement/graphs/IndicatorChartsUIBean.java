@@ -73,6 +73,7 @@ public class IndicatorChartsUIBean {
     }
 
     public IndicatorChartsUIBean() {
+        log.debug("Creating " + IndicatorChartsUIBean.class.getSimpleName());
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
         Subject subject = user.getSubject();
 
@@ -93,8 +94,21 @@ public class IndicatorChartsUIBean {
                     context.resourceTypeId, view);
             }
 
+            // re-persist just in case we created the list for the first time
+            if (data != null) {
+                MetricViewData viewData = new MetricViewData();
+                viewData.charts = new ArrayList<String>();
+                for (MetricDisplaySummary mds : data) {
+                    String chart = getContextKeyChart(context, mds);
+                    log.debug("Chart was " + chart);
+                    viewData.charts.add(chart);
+                }
+
+                viewManager.saveCharts(subject, context, view, viewData.charts);
+            }
+
         } catch (Exception e) {
-            log.info("Error while looking up metric chart data for " + context);
+            log.error("Error while looking up metric chart data for " + context, e);
         }
 
         for (MetricDisplaySummary summary : data) {
@@ -136,12 +150,13 @@ public class IndicatorChartsUIBean {
     private String getContextKeyChart(EntityContext context, MetricDisplaySummary summary) {
         if (context.category == EntityContext.Category.Resource) {
             if (summary.getScheduleId() != null)
-                return summary.getResourceId() + "," + summary.getScheduleId().toString();
+                return context.getResourceId() + "," + summary.getScheduleId().toString();
             throw new IllegalStateException("MetricsDisplayMode was 'RESOURCE', but the scheduleId was null");
         } else if (context.category == EntityContext.Category.ResourceGroup) {
-            return "cg," + summary.getGroupId() + "," + summary.getDefinitionId();
+            return "cg," + context.getGroupId() + "," + summary.getDefinitionId();
         } else if (context.category == EntityContext.Category.AutoGroup) {
-            return "ag," + summary.getParentId() + "," + summary.getDefinitionId() + "," + summary.getChildTypeId();
+            return "ag," + context.getParentResourceId() + "," + summary.getDefinitionId() + ","
+                + context.getResourceTypeId();
         } else {
             throw new IllegalArgumentException("Unknown or unsupported context '" + context + "'");
         }
@@ -211,6 +226,7 @@ public class IndicatorChartsUIBean {
 
     public ActionForward fresh(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
+        log.debug("Calling " + IndicatorChartsUIBean.class.getSimpleName() + " fresh");
         HttpSession session = request.getSession();
         WebUser user = SessionUtils.getWebUser(session);
         //MeasurementPreferences preferences = user.getMeasurementPreferences();
@@ -346,6 +362,7 @@ public class IndicatorChartsUIBean {
      */
     public ActionForward refresh(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
+        log.debug("Calling " + IndicatorChartsUIBean.class.getSimpleName() + " refresh");
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
 
         // Look up the metrics from the session
@@ -365,6 +382,7 @@ public class IndicatorChartsUIBean {
      */
     public ActionForward add(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
+        log.debug("Calling " + IndicatorChartsUIBean.class.getSimpleName() + " add");
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
 
         // Look up the metrics from the session
@@ -454,6 +472,7 @@ public class IndicatorChartsUIBean {
 
     public ActionForward remove(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
+        log.debug("Calling " + IndicatorChartsUIBean.class.getSimpleName() + " remove");
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
 
         Subject subject = WebUtility.getSubject(request);
@@ -469,6 +488,7 @@ public class IndicatorChartsUIBean {
 
     public ActionForward moveUp(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
+        log.debug("Calling " + IndicatorChartsUIBean.class.getSimpleName() + " moveUp");
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
 
         Subject subject = WebUtility.getSubject(request);
@@ -484,6 +504,7 @@ public class IndicatorChartsUIBean {
 
     public ActionForward moveDown(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
+        log.debug("Calling " + IndicatorChartsUIBean.class.getSimpleName() + " moveDown");
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
 
         Subject subject = WebUtility.getSubject(request);
@@ -499,6 +520,7 @@ public class IndicatorChartsUIBean {
 
     public ActionForward go(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
+        log.debug("Calling " + IndicatorChartsUIBean.class.getSimpleName() + " go");
         return mapping.findForward(KeyConstants.MODE_MON_CUR);
     }
 
@@ -547,6 +569,7 @@ public class IndicatorChartsUIBean {
      */
     public ActionForward create(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
+        log.debug("Calling " + IndicatorChartsUIBean.class.getSimpleName() + " create");
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
         WebUser user = SessionUtils.getWebUser(request.getSession());
         MeasurementPreferences preferences = user.getMeasurementPreferences();
@@ -582,6 +605,7 @@ public class IndicatorChartsUIBean {
 
     public ActionForward update(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
+        log.debug("Calling " + IndicatorChartsUIBean.class.getSimpleName() + " update");
 
         refresh(mapping, form, request, response);
 
@@ -611,6 +635,7 @@ public class IndicatorChartsUIBean {
 
     public ActionForward delete(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
+        log.debug("Calling " + IndicatorChartsUIBean.class.getSimpleName() + " delete");
         IndicatorViewsForm ivf = (IndicatorViewsForm) form;
         Subject subject = WebUtility.getSubject(request);
 

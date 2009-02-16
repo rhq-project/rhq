@@ -158,6 +158,7 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
             viewName = "default";
         }
         MetricViewData chartPreferences = new MetricViewData();
+        // important to let IllegalArgumentException bubble out of here, so the caller can persist the default set
         String data = getPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context + "." + viewName);
         chartPreferences.charts = StringUtil.explode(data, PREF_ITEM_DELIM);
         return chartPreferences;

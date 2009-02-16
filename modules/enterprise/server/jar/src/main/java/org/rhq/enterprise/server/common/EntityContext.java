@@ -109,9 +109,8 @@ public class EntityContext {
 
     @Override
     public String toString() {
-        return EntityContext.class.getSimpleName() + "[category=" + category + ",resourceId =" + resourceId + ","
-            + "groupId =" + groupId + "," + "parentResourceId =" + parentResourceId + "," + "resourceTypeId ="
-            + resourceTypeId + "]";
+        return EntityContext.class.getSimpleName() + "[category=" + category + ",resourceId=" + resourceId + ","
+            + "groupId=" + groupId + "," + "parent=" + parentResourceId + "," + "type=" + resourceTypeId + "]";
     }
 
     public String toShortString() {

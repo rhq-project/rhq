@@ -43,7 +43,6 @@ public class TomcatApplicationDeployer {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private EmsOperation deployOperation;
-    private EmsOperation redeployOperation;
     private EmsOperation undeployOperation;
 
     public TomcatApplicationDeployer(EmsConnection connection) throws NoSuchMethodException {
@@ -53,48 +52,26 @@ public class TomcatApplicationDeployer {
         }
 
         connection.getConnectionProvider().getConnectionSettings().getClassPathEntries();
-        this.deployOperation = EmsUtility.getOperation(mainDeployer, "manageApp", "org.apache.catalina.Context");
-        this.undeployOperation = EmsUtility.getOperation(mainDeployer, "unmanageApp", String.class);
+        this.deployOperation = EmsUtility.getOperation(mainDeployer, "addServiced", String.class);
+        this.undeployOperation = EmsUtility.getOperation(mainDeployer, "removeServiced", String.class);
     }
 
-    public void deploy(File file) throws DeployerException {
-        log.debug("Deploying " + file + "...");
+    public void deploy(String contextPath) throws DeployerException {
+        log.debug("Servicing " + contextPath + "...");
         try {
-            URL url = toURL(file);
-            this.deployOperation.invoke(new Object[] { url });
+            this.deployOperation.invoke(contextPath);
         } catch (RuntimeException e) {
-            throw new DeployerException("Failed to deploy " + file, e);
+            throw new DeployerException("Failed to service " + contextPath, e);
         }
     }
 
-    public void redeploy(File file) throws DeployerException {
-        log.debug("Redeploying " + file + "...");
+    public void undeploy(String contextPath) throws DeployerException {
+        log.debug("Undeploying " + contextPath + "...");
         try {
-            URL url = toURL(file);
-            this.redeployOperation.invoke(new Object[] { url });
+            this.undeployOperation.invoke(contextPath);
         } catch (RuntimeException e) {
-            throw new DeployerException("Failed to redeploy " + file, e);
+            throw new DeployerException("Failed to undeploy " + contextPath, e);
         }
-    }
-
-    public void undeploy(File file) throws DeployerException {
-        log.debug("Undeploying " + file + "...");
-        try {
-            URL url = toURL(file);
-            this.undeployOperation.invoke(new Object[] { url });
-        } catch (RuntimeException e) {
-            throw new DeployerException("Failed to undeploy " + file, e);
-        }
-    }
-
-    private static URL toURL(File file) {
-        URL url;
-        try {
-            url = file.toURI().toURL();
-        } catch (MalformedURLException e) {
-            throw new IllegalStateException(e);
-        }
-        return url;
     }
 
     public class DeployerException extends Exception {

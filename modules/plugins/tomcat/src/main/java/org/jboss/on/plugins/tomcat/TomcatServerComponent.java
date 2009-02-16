@@ -391,16 +391,20 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, A
         return this.deployer;
     }
 
-    void undeployFile(File file) throws TomcatApplicationDeployer.DeployerException {
+    void undeployWar(String contextRoot) throws TomcatApplicationDeployer.DeployerException {
+        // As it stands Tomcat will respond to the placement or removal of the physical Web App itself. We
+        // call removeServiced prior to the file delete to let TC know to stop servicing the app, hopefully
+        // for a cleaner removal.
+        // There is no additional MBean interaction required 
         getEmsConnection();
-        if (this.connection == null) {
-            log.warn("Unable to undeploy " + file + ", because we could not connect to the Tomcat instance.");
+        if (null == this.connection) {
+            log.warn("Unable to undeploy " + contextRoot + ", because we could not connect to the Tomcat instance.");
             return;
         }
-        if (this.deployer == null) {
-            throw new IllegalStateException("Unable to undeploy " + file + ", because MainDeployer MBean could " + "not be accessed - this should never happen.");
+        if (null == this.deployer) {
+            throw new IllegalStateException("Unable to undeploy " + contextRoot + ", because MainDeployer MBean could " + "not be accessed - this should never happen.");
         }
-        this.deployer.undeploy(file);
+        this.deployer.undeploy(contextRoot);
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {

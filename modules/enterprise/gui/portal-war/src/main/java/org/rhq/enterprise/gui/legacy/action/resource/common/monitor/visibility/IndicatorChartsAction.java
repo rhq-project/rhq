@@ -352,7 +352,7 @@ public class IndicatorChartsAction extends DispatchAction {
         }
 
         // Now look up the metric that we have to add and parse it
-        String newMetric = ivf.getAddMetric();
+        String newMetric = ivf.getMetric()[0];
         MetricDisplaySummary newSummary = MeasurementUtils.parseMetricToken(newMetric);
 
         // Get the Metric Display summary , taking the display mode into account
@@ -438,6 +438,21 @@ public class IndicatorChartsAction extends DispatchAction {
         // trigger an immediate refresh 
         // return mapping.findForward(RetCodeConstants.SUCCESS_URL);
         return refresh(mapping, form, request, response);
+    }
+
+    public ActionForward addChart(ActionMapping mapping, ActionForm form, HttpServletRequest request,
+        HttpServletResponse response) throws Exception {
+        IndicatorViewsForm ivf = (IndicatorViewsForm) form;
+
+        Subject subject = WebUtility.getSubject(request);
+        EntityContext context = new EntityContext(ivf.getId(), ivf.getGroupId(), ivf.getParent(), ivf.getCtype());
+        viewManager.addChart(subject, context, ivf.getView(), ivf.getMetric()[0]);
+
+        List<MetricDisplaySummary> metrics = retrieveMetricsFromSession(request, ivf);
+        // Now store the metrics back
+        storeMetricsInSession(request, metrics, ivf);
+
+        return mapping.findForward(RetCodeConstants.AJAX_URL);
     }
 
     public ActionForward remove(ActionMapping mapping, ActionForm form, HttpServletRequest request,

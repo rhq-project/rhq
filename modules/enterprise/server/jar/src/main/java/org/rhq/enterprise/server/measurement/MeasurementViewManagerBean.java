@@ -41,8 +41,7 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         return prefs.views;
     }
 
-    public void createView(Subject user, EntityContext context, String viewName)
-        throws MeasurementViewException {
+    public void createView(Subject user, EntityContext context, String viewName) throws MeasurementViewException {
         String key = context.getLegacyKey();
         MeasurementPreferences measurementPreferences = new MeasurementPreferences(user);
         MetricViewsPreferences prefs = measurementPreferences.getMetricViews(key);
@@ -64,8 +63,7 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         measurementPreferences.persistPreferences();
     }
 
-    public List<String> getCharts(Subject user, EntityContext context, String viewName)
-        throws MeasurementViewException {
+    public List<String> getCharts(Subject user, EntityContext context, String viewName) throws MeasurementViewException {
         try {
             String key = context.getLegacyKey();
             MeasurementPreferences measurementPreferences = new MeasurementPreferences(user);
@@ -123,9 +121,12 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         String key = context.getLegacyKey();
         MeasurementPreferences measurementPreferences = new MeasurementPreferences(user);
         MetricViewData viewData = measurementPreferences.getMetricViewData(key, viewName);
-        viewData.charts.add(viewKey); // new charts always go at the end
-        measurementPreferences.setMetricViewData(key, viewName, viewData);
-        measurementPreferences.persistPreferences();
+        // only add chart if it's not already in the list
+        if (!viewData.charts.contains(viewKey)) {
+            viewData.charts.add(viewKey); // new charts always go at the end
+            measurementPreferences.setMetricViewData(key, viewName, viewData);
+            measurementPreferences.persistPreferences();
+        }
     }
 
     public void removeChart(Subject user, EntityContext context, String viewName, String viewKey) {

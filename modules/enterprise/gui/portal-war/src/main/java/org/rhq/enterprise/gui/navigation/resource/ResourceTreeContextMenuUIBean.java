@@ -5,6 +5,7 @@ import java.util.List;
 import javax.faces.component.html.HtmlGraphicImage;
 import javax.faces.component.html.HtmlOutputLink;
 import javax.faces.context.FacesContext;
+import javax.servlet.http.HttpServletRequest;
 
 import org.richfaces.component.UITree;
 import org.richfaces.component.html.ContextMenu;
@@ -163,6 +164,10 @@ public class ResourceTreeContextMenuUIBean {
     }
 
     private void addMeasurementsMenu(String resourceId, List<MeasurementSchedule> schedules) {
+        HttpServletRequest request = FacesContextUtility.getRequest();
+        String requestURL = request.getRequestURL().toString().toLowerCase();
+        boolean onMonitorGraphsSubtab = (requestURL.indexOf("/monitor/graphs.xhtml") != -1);
+
         if (schedules != null) {
             HtmlMenuGroup measurementsMenu = new HtmlMenuGroup();
             measurementsMenu.setValue("Measurements");
@@ -175,13 +180,25 @@ public class ResourceTreeContextMenuUIBean {
                 menuItem.setValue(subOption);
                 menuItem.setId("measurement_" + schedule.getId());
 
-                String url = "/resource/common/monitor/Visibility.do";
-                url += "?mode=chartSingleMetricSingleResource";
-                url += "&m=" + schedule.getDefinition().getId();
-                url += "&id=" + resourceId;
+                // addChartToGraph functionality only works if you're looking at the graphs
+                if (onMonitorGraphsSubtab) {
+                    /**
+                     * resource    '<resourceId>,<scheduleId>'
+                     * compatgroup 'cg,<groupId>,<definitionId>'
+                     * autogroup   'ag,<parentId>,<definitionId>,<typeId>'
+                     */
+                    String onClickAddMeasurements = "addMetric('" + resourceId + "," + schedule.getId() + "');";
+                    String onClickRefreshPage = "setTimeout(window.location.reload(), 5000);"; // refresh after 5 secs
 
-                menuItem.setSubmitMode("none");
-                menuItem.setOnclick("document.location.href='" + url + "'");
+                    String url = "/resource/common/monitor/Visibility.do";
+                    url += "?mode=chartSingleMetricSingleResource";
+                    url += "&m=" + schedule.getDefinition().getId();
+                    url += "&id=" + resourceId;
+
+                    menuItem.setSubmitMode("none");
+                    //menuItem.setOnclick("document.location.href='" + url + "'");
+                    menuItem.setOnclick(onClickAddMeasurements + onClickRefreshPage);
+                }
 
                 measurementsMenu.getChildren().add(menuItem);
             }

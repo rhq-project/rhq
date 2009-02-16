@@ -56,7 +56,13 @@ public class SubjectPreferencesCache {
                 if (log.isDebugEnabled()) {
                     log.debug("Changed: " + simpleProperty);
                 }
-                entityManagerFacade.merge(simpleProperty); // only merge changes
+                log.info("Merging property with id=" + simpleProperty.getId());
+                // merge will persist if property doesn't exist (i.e., id = 0)
+                PropertySimple mergedProperty = entityManagerFacade.merge(simpleProperty); // only merge changes
+                if (simpleProperty.getId() == 0) {
+                    // so subsequent merges do not continue re-persisting property as new
+                    simpleProperty.setId(mergedProperty.getId());
+                }
             }
         }
         subjectPreferences.put(subjectId, configuration);

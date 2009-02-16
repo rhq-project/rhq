@@ -1136,24 +1136,27 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         PageControl pc = new PageControl(pageNumber, 50, new OrderingField("res.id", PageOrdering.ASC));
         while (true) {
             Subject overlord = subjectManager.getOverlord();
-            List<Resource> pagedImplicitMembers = resourceManager.getImplicitResourcesByResourceGroup(overlord, group, pc);
-            if (pagedImplicitMembers.size() <= 0)
+            // TODO: We really only need to load the Resource id's here , not the entire Resources.
+            List<Resource> pagedMemberResources = resourceManager.getImplicitResourcesByResourceGroup(overlord, group, pc);
+            if (pagedMemberResources.size() <= 0)
                 break;
 
-            for (Resource implicitMember : pagedImplicitMembers) {
+            for (Resource memberResource : pagedMemberResources) {
                 /*
                  * addConfigurationUpdate does all the magic of creating a new plugin configuration from the to-update
                  * elements of the aggregate
                  */
-                Configuration memberConfiguration = memberConfigurations.get(implicitMember.getId());
+                Configuration memberConfiguration = memberConfigurations.get(memberResource.getId());
                 ResourceConfigurationUpdate newUpdate =
-                        configurationManager.persistNewResourceConfigurationUpdateHistory(whoami, implicitMember.getId(),
+                        configurationManager.persistNewResourceConfigurationUpdateHistory(whoami, memberResource.getId(),
                             memberConfiguration, ConfigurationUpdateStatus.INPROGRESS, whoami.getName());
-                newUpdate.setAggregateConfigurationUpdate(aggregateUpdate);
-                entityManager.persist(newUpdate);
+                if (newUpdate != null) {
+                    newUpdate.setAggregateConfigurationUpdate(aggregateUpdate);
+                    entityManager.merge(newUpdate);
+                }
             }
 
-            rowsProcessed += pagedImplicitMembers.size();
+            rowsProcessed += pagedMemberResources.size();
             if (rowsProcessed >= groupMemberCount)
                 break;
 

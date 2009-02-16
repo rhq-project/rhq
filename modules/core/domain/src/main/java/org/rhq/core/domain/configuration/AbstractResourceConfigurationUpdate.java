@@ -57,7 +57,8 @@ public abstract class AbstractResourceConfigurationUpdate extends AbstractConfig
     @Id
     private int id;
 
-    protected AbstractResourceConfigurationUpdate() {
+    protected AbstractResourceConfigurationUpdate()
+    {
     }
 
     /**
@@ -67,12 +68,9 @@ public abstract class AbstractResourceConfigurationUpdate extends AbstractConfig
      * @param config      contains the values for the new configuration
      * @param subjectName the user that is requesting the update
      */
-    public AbstractResourceConfigurationUpdate(Configuration config, String subjectName) {
+    protected AbstractResourceConfigurationUpdate(Configuration config, String subjectName) {
+        super(subjectName);
         this.configuration = config.deepCopy(false);
-        this.subjectName = subjectName;
-
-        setStatus(ConfigurationUpdateStatus.INPROGRESS);
-        setErrorMessage(null);
     }
 
     public int getId() {

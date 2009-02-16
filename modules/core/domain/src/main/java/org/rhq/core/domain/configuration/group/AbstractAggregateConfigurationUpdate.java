@@ -37,8 +37,6 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.rhq.core.domain.configuration.AbstractConfigurationUpdate;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
 @DiscriminatorColumn(name = "DTYPE")
@@ -60,17 +58,9 @@ public abstract class AbstractAggregateConfigurationUpdate extends AbstractConfi
     protected AbstractAggregateConfigurationUpdate() {
     }
 
-    public AbstractAggregateConfigurationUpdate(ResourceGroup group, String subjectName) {
-        this(group, null, subjectName);
-    }
-
-    public AbstractAggregateConfigurationUpdate(ResourceGroup group, Configuration configuration, String subjectName) {
+    protected AbstractAggregateConfigurationUpdate(ResourceGroup group, String subjectName) {
+        super(subjectName);
         this.group = group;
-        this.subjectName = subjectName;
-        this.configuration = configuration.deepCopy(false);
-
-        setStatus(ConfigurationUpdateStatus.INPROGRESS);
-        setErrorMessage(null);
     }
 
     public int getId() {

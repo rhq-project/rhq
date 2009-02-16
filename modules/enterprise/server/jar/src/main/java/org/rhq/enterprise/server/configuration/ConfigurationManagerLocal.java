@@ -222,7 +222,8 @@ public interface ConfigurationManagerLocal {
      * For internal use only - do not call this method. This is for
      * {@link #updateResourceConfiguration(Subject, int, Configuration)} to call with REQUIRES_NEW transaction scope so
      * it can force the new request to be committed to the DB. Also used by
-     * {@link #getLatestResourceConfigurationUpdate(Subject, int)}.
+     * {@link #getLatestResourceConfigurationUpdate(Subject, int)} and
+     * {@link #scheduleAggregateResourceConfigurationUpdate}.
      *
      * @param  whoami
      * @param  resourceId
@@ -230,8 +231,10 @@ public interface ConfigurationManagerLocal {
      * @param  newStatus
      * @param  newSubject       user to associate with this update change (may be <code>null</code>)
      *
-     * @return the persisted request
+     * @return the persisted Resource Configuration update, or null if the specified Configuration is identical to the
+     *         currently persisted Configuration
      */
+    @Nullable
     ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject whoami, int resourceId,
         Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject);
 

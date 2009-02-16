@@ -29,6 +29,7 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
 @DiscriminatorValue("resource")
@@ -44,6 +45,9 @@ public class AggregateResourceConfigurationUpdate extends AbstractAggregateConfi
 
     public AggregateResourceConfigurationUpdate(ResourceGroup group, String subjectName) {
         super(group, subjectName);
+        // TODO (ips, 02/13/09): This is a temporary workaround - we don't really need to store a Configuration at all,
+        //      but the AbstractConfigurationUpdate base class requires the configuration field to be non-null.
+        this.configuration = new Configuration();
     }
 
     public void setConfigurationUpdates(List<ResourceConfigurationUpdate> configurationUpdates) {

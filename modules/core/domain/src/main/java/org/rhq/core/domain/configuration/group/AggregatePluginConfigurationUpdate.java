@@ -64,7 +64,8 @@ public class AggregatePluginConfigurationUpdate extends AbstractAggregateConfigu
 
     public AggregatePluginConfigurationUpdate(ResourceGroup group, Configuration aggregateConfiguration,
         String subjectName) {
-        super(group, aggregateConfiguration, subjectName);
+        super(group, subjectName);
+        this.configuration = aggregateConfiguration.deepCopy(false);
     }
 
     public void setConfigurationUpdates(List<PluginConfigurationUpdate> configurationUpdates) {

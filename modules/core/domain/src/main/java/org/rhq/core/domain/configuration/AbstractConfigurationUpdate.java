@@ -35,15 +35,12 @@ import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 
 @MappedSuperclass
 /**
- * Base class for resource configuration and plugin configuration updates.
+ * Base class for resource configuration and plugin configuration updates (i.e. history items).
  */
 public abstract class AbstractConfigurationUpdate {
-
     @JoinColumn(name = "CONFIGURATION_ID", referencedColumnName = "ID", nullable = false)
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     protected Configuration configuration;
@@ -63,6 +60,16 @@ public abstract class AbstractConfigurationUpdate {
 
     @Column(name = "MTIME", nullable = false)
     protected long modifiedTime = System.currentTimeMillis();
+
+    protected AbstractConfigurationUpdate()
+    {
+    }
+
+    protected AbstractConfigurationUpdate(String subjectName)
+    {
+        this.subjectName = subjectName;
+        this.status = ConfigurationUpdateStatus.INPROGRESS;
+    }
 
     /**
      * Contains the entire configuration that was submitted as the new configuration for a resource. If the update

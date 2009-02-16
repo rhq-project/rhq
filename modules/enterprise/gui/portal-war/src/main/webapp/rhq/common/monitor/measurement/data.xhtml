@@ -10,6 +10,7 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function">
 
@@ -25,6 +26,14 @@
 
   // Register the remove metric chart method
   ajaxEngine.registerRequest( 'indicatorCharts', baseUrl );
+
+  function addMetric(token) {
+    ajaxEngine.sendRequest(
+        'indicatorCharts',
+        'metric=' + token,
+        'action=addChart',
+        'view=' + '#{IndicatorChartsUIBean.view}');  
+  }
 
   function removeMetric(token) {
     ajaxEngine.sendRequest(

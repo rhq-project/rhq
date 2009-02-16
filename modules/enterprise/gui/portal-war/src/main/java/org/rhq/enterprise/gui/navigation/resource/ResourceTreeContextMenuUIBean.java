@@ -91,7 +91,8 @@ public class ResourceTreeContextMenuUIBean {
             // measurement menu
             List<MeasurementSchedule> schedules = measurementScheduleManager.getMeasurementSchedulesForResourceAndType(
                 subject, resourceId, DataType.MEASUREMENT, null, true);
-            addMeasurementsMenu(resourceIdString, schedules);
+            addMeasurementsViewMetricChartMenu(resourceIdString, schedules);
+            addMeasurementGraphToViewsMenu(resourceIdString, schedules);
 
             // operations menu
             List<OperationDefinition> operations = operationManager.getSupportedResourceTypeOperations(subject,
@@ -163,44 +164,62 @@ public class ResourceTreeContextMenuUIBean {
         this.resourceContextMenu.getChildren().add(quickLinksItem);
     }
 
-    private void addMeasurementsMenu(String resourceId, List<MeasurementSchedule> schedules) {
-        HttpServletRequest request = FacesContextUtility.getRequest();
-        String requestURL = request.getRequestURL().toString().toLowerCase();
-        boolean onMonitorGraphsSubtab = (requestURL.indexOf("/monitor/graphs.xhtml") != -1);
-
+    private void addMeasurementsViewMetricChartMenu(String resourceId, List<MeasurementSchedule> schedules) {
         if (schedules != null) {
-            HtmlMenuGroup measurementsMenu = new HtmlMenuGroup();
-            measurementsMenu.setValue("Measurements");
-            this.resourceContextMenu.getChildren().add(measurementsMenu);
-            measurementsMenu.setDisabled(schedules.isEmpty());
+            HtmlMenuGroup addGraphToViewMenu = new HtmlMenuGroup();
+            addGraphToViewMenu.setValue("View Metric Chart");
+            this.resourceContextMenu.getChildren().add(addGraphToViewMenu);
+            addGraphToViewMenu.setDisabled(schedules.isEmpty());
 
             for (MeasurementSchedule schedule : schedules) {
                 HtmlMenuItem menuItem = new HtmlMenuItem();
                 String subOption = schedule.getDefinition().getDisplayName();
                 menuItem.setValue(subOption);
-                menuItem.setId("measurement_" + schedule.getId());
+                menuItem.setId("measurementChartMenuItem_" + schedule.getId());
 
-                // addChartToGraph functionality only works if you're looking at the graphs
-                if (onMonitorGraphsSubtab) {
-                    /**
-                     * resource    '<resourceId>,<scheduleId>'
-                     * compatgroup 'cg,<groupId>,<definitionId>'
-                     * autogroup   'ag,<parentId>,<definitionId>,<typeId>'
-                     */
-                    String onClickAddMeasurements = "addMetric('" + resourceId + "," + schedule.getId() + "');";
-                    String onClickRefreshPage = "setTimeout(window.location.reload(), 5000);"; // refresh after 5 secs
+                String url = "/resource/common/monitor/Visibility.do";
+                url += "?mode=chartSingleMetricSingleResource";
+                url += "&m=" + schedule.getDefinition().getId();
+                url += "&id=" + resourceId;
 
-                    String url = "/resource/common/monitor/Visibility.do";
-                    url += "?mode=chartSingleMetricSingleResource";
-                    url += "&m=" + schedule.getDefinition().getId();
-                    url += "&id=" + resourceId;
+                menuItem.setSubmitMode("none");
+                menuItem.setOnclick("document.location.href='" + url + "'");
 
-                    menuItem.setSubmitMode("none");
-                    //menuItem.setOnclick("document.location.href='" + url + "'");
-                    menuItem.setOnclick(onClickAddMeasurements + onClickRefreshPage);
-                }
+                addGraphToViewMenu.getChildren().add(menuItem);
+            }
+        }
+    }
 
-                measurementsMenu.getChildren().add(menuItem);
+    private void addMeasurementGraphToViewsMenu(String resourceId, List<MeasurementSchedule> schedules) {
+        HttpServletRequest request = FacesContextUtility.getRequest();
+        String requestURL = request.getRequestURL().toString().toLowerCase();
+        boolean onMonitorGraphsSubtab = (requestURL.indexOf("/monitor/graphs.xhtml") != -1);
+
+        // addChartToGraph menu only if you're looking at the graphs
+        if (onMonitorGraphsSubtab && schedules != null) {
+            HtmlMenuGroup measurementMenu = new HtmlMenuGroup();
+            measurementMenu.setValue("Add Graph to View");
+            this.resourceContextMenu.getChildren().add(measurementMenu);
+            measurementMenu.setDisabled(schedules.isEmpty());
+
+            for (MeasurementSchedule schedule : schedules) {
+                HtmlMenuItem menuItem = new HtmlMenuItem();
+                String subOption = schedule.getDefinition().getDisplayName();
+                menuItem.setValue(subOption);
+                menuItem.setId("measurementGraphMenuItem_" + schedule.getId());
+
+                /**
+                 * resource    '<resourceId>,<scheduleId>'
+                 * compatgroup 'cg,<groupId>,<definitionId>'
+                 * autogroup   'ag,<parentId>,<definitionId>,<typeId>'
+                 */
+                String onClickAddMeasurements = "addMetric('" + resourceId + "," + schedule.getId() + "');";
+                String onClickRefreshPage = "setTimeout(window.location.reload(), 5000);"; // refresh after 5 secs
+
+                menuItem.setSubmitMode("none");
+                menuItem.setOnclick(onClickAddMeasurements + onClickRefreshPage);
+
+                measurementMenu.getChildren().add(menuItem);
             }
         }
     }
@@ -208,7 +227,7 @@ public class ResourceTreeContextMenuUIBean {
     private void addOperationsMenu(String resourceId, List<OperationDefinition> operations) {
         if (operations != null) {
             HtmlMenuGroup operationsMenu = new HtmlMenuGroup();
-            operationsMenu.setValue("Operations");
+            operationsMenu.setValue("Execute Operation");
             this.resourceContextMenu.getChildren().add(operationsMenu);
             operationsMenu.setDisabled(operations.isEmpty());
 

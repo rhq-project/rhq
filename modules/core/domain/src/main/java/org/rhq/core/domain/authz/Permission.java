@@ -59,7 +59,7 @@ public enum Permission {
     VIEW_RESOURCE(Target.RESOURCE),
 
     /**
-     * can modify resource name, description, and plugin config (e.g. set principal/credentials JBoss plugin uses to access the server)
+     * can modify resource name, description, and plugin config (e.g. set principal/credentials jboss-as plugin uses to access the managed JBossAS instance)
      */
     MODIFY_RESOURCE(Target.RESOURCE),
 

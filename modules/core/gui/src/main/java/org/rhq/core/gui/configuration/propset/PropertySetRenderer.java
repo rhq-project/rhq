@@ -104,8 +104,12 @@ public class PropertySetRenderer extends Renderer
         if (component.getChildCount() != 0)
             return;
 
-        PropertyDefinitionSimple propertyDefinitionSimple = propertySetComponent.getPropertyDefinition();
         PropertySimple propertySimple = propertySetComponent.getProperty();
+        if (propertySimple == null)
+            // This means the 'propertyExpressionString' request parameter was not specified, which means this is
+            // the initial display of the main configSet page, which means there's nothing for us to render.
+            return;
+        PropertyDefinitionSimple propertyDefinitionSimple = propertySetComponent.getPropertyDefinition();
 
         addPropertyDisplayNameAndDescription(propertySetComponent, propertyDefinitionSimple, propertySimple);
 
@@ -185,7 +189,7 @@ public class PropertySetRenderer extends Renderer
     }
 
     private List<PropertyInfo> createPropertyInfos(PropertySetComponent propertySetComponent,
-                                                   PropertySimple propertySimple)
+                                                   PropertySimple aggregatePropertySimple)
     {
         ValueExpression configurationInfosExpression = propertySetComponent.getValueExpression(
                 PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE);
@@ -194,8 +198,10 @@ public class PropertySetRenderer extends Renderer
                 + FacesExpressionUtility.unwrapExpressionString(configurationInfosExpressionString)
                 + ".members[%d].configuration}";
 
-        String propertyExpressionStringFormat = createPropertyValueExpressionFormat(configurationExpressionStringFormat,
-                propertySimple, propertySetComponent.getListIndex());
+        String propertyExpressionStringFormat = createPropertyExpressionFormat(configurationExpressionStringFormat,
+                aggregatePropertySimple, propertySetComponent.getListIndex());
+        String propertyValueExpressionStringFormat = "#{" +
+                FacesExpressionUtility.unwrapExpressionString(propertyExpressionStringFormat) + ".stringValue}";
         //noinspection ConstantConditions
         List<ConfigurationSetMember> configurationSetMembers = propertySetComponent.getConfigurationSet().getMembers();
         List<PropertyInfo> propertyInfos = new ArrayList(configurationSetMembers.size());
@@ -203,12 +209,16 @@ public class PropertySetRenderer extends Renderer
         {
             @SuppressWarnings({"ConstantConditions"})
             ConfigurationSetMember memberInfo = configurationSetMembers.get(i);
+
             String propertyExpressionString = String.format(propertyExpressionStringFormat, i);
-            ValueExpression propertyValueExpression = FacesExpressionUtility.createValueExpression(propertyExpressionString,
-                    String.class);
+            PropertySimple propertySimple = FacesExpressionUtility.getValue(propertyExpressionString, PropertySimple.class);
+
+            String propertyValueExpressionString = String.format(propertyValueExpressionStringFormat, i);
+            ValueExpression propertyValueExpression =
+                    FacesExpressionUtility.createValueExpression(propertyValueExpressionString, String.class);
+
             PropertyInfo propertyInfo = new PropertyInfo(memberInfo.getLabel(), propertySimple, propertyValueExpression);
             propertyInfos.add(propertyInfo);
-
         }
         Collections.sort(propertyInfos);
         return propertyInfos;
@@ -244,7 +254,7 @@ public class PropertySetRenderer extends Renderer
         }
     }
 
-    private static String createPropertyValueExpressionFormat(String configurationExpressionString,
+    private static String createPropertyExpressionFormat(String configurationExpressionString,
                                                       PropertySimple propertySimple,
                                                       Integer listIndex)
     {
@@ -264,7 +274,7 @@ public class PropertySetRenderer extends Renderer
                 stringBuilder.append("list[").append(listIndex).append("]");
             }
         }
-        stringBuilder.append(".stringValue}");
+        stringBuilder.append("}");
         return stringBuilder.toString();
     }
 

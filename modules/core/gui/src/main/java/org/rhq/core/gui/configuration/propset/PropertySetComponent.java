@@ -63,6 +63,8 @@ public class PropertySetComponent extends UIComponentBase implements FacesCompon
     @Nullable
     public PropertyDefinitionSimple getPropertyDefinition() {
         PropertySimple propertySimple = getProperty();
+        if (propertySimple == null)
+            return null;
         ConfigurationDefinition configurationDefinition = getConfigurationSet().getConfigurationDefinition();
         PropertyDefinition propertyDefinition = ConfigurationUtility.getPropertyDefinitionForProperty(propertySimple,
                 configurationDefinition);

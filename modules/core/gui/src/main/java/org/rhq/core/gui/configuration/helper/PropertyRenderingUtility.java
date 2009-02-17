@@ -442,10 +442,8 @@ public class PropertyRenderingUtility
             // the value, so the user can see the untruncated value via a tooltip.
             // (see http://jira.jboss.com/jira/browse/JBNADM-1608)
             HtmlInputText inputText = (HtmlInputText) input;
-            if ((propertyValue != null) && (propertyValue.length() > INPUT_TEXT_COMPONENT_WIDTH)) {
-                inputText.setTitle(propertyValue);
-            }
-
+            if ((propertyValue != null) && (propertyValue.length() > INPUT_TEXT_COMPONENT_WIDTH))
+                inputText.setTitle(propertyValue);            
             inputText.setOnchange("setInputTitle(this)");
         }
     }
@@ -465,8 +463,10 @@ public class PropertyRenderingUtility
                                      boolean configFullyEditable) {
         // A fully editable config overrides any other means of setting read-only.
         return (!configFullyEditable &&
-                (configReadOnly || (propertyDefinitionSimple.isReadOnly() &&
-                (propertySimple == null || !isInvalidRequiredProperty(propertyDefinitionSimple, propertySimple)))));
+                (configReadOnly || (
+                        (propertyDefinitionSimple != null &&propertyDefinitionSimple.isReadOnly()) &&
+                        (propertySimple == null || !isInvalidRequiredProperty(propertyDefinitionSimple, propertySimple))
+                )));
     }
 
     public static boolean isAggregateWithDifferingValues(PropertySimple propertySimple, boolean configIsAggregate)

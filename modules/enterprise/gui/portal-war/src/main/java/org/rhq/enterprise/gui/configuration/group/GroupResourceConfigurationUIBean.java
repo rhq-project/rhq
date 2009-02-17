@@ -26,6 +26,7 @@ import javax.faces.application.FacesMessage;
 
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.gui.configuration.propset.ConfigurationSet;
@@ -34,6 +35,7 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
@@ -56,6 +58,7 @@ import org.jboss.seam.core.Conversation;
 public class GroupResourceConfigurationUIBean
 {
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
+    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
     @In
     private FacesMessages facesMessages;
@@ -91,7 +94,7 @@ public class GroupResourceConfigurationUIBean
         this.resourceConfigurations = this.configurationManager.getResourceConfigurationsForCompatibleGroup(this.group);
         List<ConfigurationSetMember> configurationSetMembers = new ArrayList(resourceConfigurations.size());
         for (Integer resourceId : this.resourceConfigurations.keySet()) {
-            String label = resourceId.toString();
+            String label = createLabel(resourceId);
             Configuration configuration = this.resourceConfigurations.get(resourceId);
             ConfigurationSetMember configurationSetMember = new ConfigurationSetMember(label, configuration);
             configurationSetMembers.add(configurationSetMember);
@@ -110,6 +113,9 @@ public class GroupResourceConfigurationUIBean
     public String updateConfigurations() {
         try
         {
+            // TODO: See if there's some way for the config renderer to handle calling applyAggregateConfiguration(),
+            //       so the managed bean doesn't have to worry about doing it.
+            this.configurationSet.applyAggregateConfiguration();
             this.configurationManager.scheduleAggregateResourceConfigurationUpdate(EnterpriseFacesContextUtility.getSubject(),
                     this.group.getId(), this.resourceConfigurations);
         }
@@ -148,5 +154,21 @@ public class GroupResourceConfigurationUIBean
             throw new Exception("Group with id " + group.getId() + " is not a compatible group.");
         }
         return group;
+    }
+
+    private String createLabel(Integer resourceId)
+    {
+        List<Resource> resourceLineage = this.resourceManager.getResourceLineage(resourceId);
+        String previousName = resourceLineage.get(0).getName();
+        StringBuilder label = new StringBuilder(previousName);
+        for (int i = 1; i < resourceLineage.size(); i++)
+        {
+            Resource resource = resourceLineage.get(i);
+            String name = resource.getName();
+            name = (name.startsWith(previousName)) ? name.substring(previousName.length()) : name;
+            label.append(" > ").append(name);
+        }
+        label.append(" (id=").append(resourceId).append(")");
+        return label.toString();
     }
 }

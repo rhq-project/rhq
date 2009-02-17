@@ -231,12 +231,13 @@ public interface ConfigurationManagerLocal {
      * @param  newStatus
      * @param  newSubject       user to associate with this update change (may be <code>null</code>)
      *
+     * @param isPartofAggregateUpdate
      * @return the persisted Resource Configuration update, or null if the specified Configuration is identical to the
      *         currently persisted Configuration
      */
     @Nullable
     ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject whoami, int resourceId,
-        Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject);
+                                                                             Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject, boolean isPartofAggregateUpdate);
 
     /**
      * A callback method that is called when an agent has completed updating a resource's configuration.
@@ -393,7 +394,7 @@ public interface ConfigurationManagerLocal {
 
     long getResourceConfigurationUpdateCountByParentId(int aggregateConfigurationUpdateId);
 
-    void executeResourceConfigurationUpdate(Subject whoami, int updateId);
+    void executeResourceConfigurationUpdate(int updateId);
 
     AggregateResourceConfigurationUpdate getAggregateResourceConfigurationById(int configurationUpdateId);
 
@@ -401,4 +402,6 @@ public interface ConfigurationManagerLocal {
         Map<Integer, Configuration> memberConfigurations) throws Exception;
 
     Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(ResourceGroup compatibleGroup);
+
+    boolean isAggregateResourceConfigurationUpdateInProgress(Subject whoami, int groupId);
 }

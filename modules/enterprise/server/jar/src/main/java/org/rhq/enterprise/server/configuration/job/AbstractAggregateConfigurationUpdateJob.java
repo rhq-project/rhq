@@ -97,8 +97,9 @@ public abstract class AbstractAggregateConfigurationUpdateJob implements Job
         } catch (Exception e) {
             errorMessages = ThrowableUtil.getAllMessages(e);
         } finally {
-            handleSynchronousConfigurationUpdateErrors(configurationManager, aggregateConfigurationUpdateId,
-                    errorMessages);
+            if (errorMessages != null)
+                handleSynchronousConfigurationUpdateErrors(configurationManager, aggregateConfigurationUpdateId,
+                        errorMessages);
         }
     }
 

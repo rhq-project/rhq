@@ -321,7 +321,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             // config...
         }
 
-        // ask the agent to get us the live, most up-to-date configuration for the resource
+        // ask the agent to get us the live, most up-to-date configuration for the resource,
         // then compare it to make sure what we think is the latest configuration is really the latest
         Configuration liveConfig = getLiveResourceConfiguration(resource);
 
@@ -350,7 +350,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                      */
                     Subject overlord = subjectManager.getOverlord();
                     current = configurationManager.persistNewResourceConfigurationUpdateHistory(overlord, resourceId,
-                        liveConfig, ConfigurationUpdateStatus.SUCCESS, null);
+                        liveConfig, ConfigurationUpdateStatus.SUCCESS, null, false);
                     resource.setResourceConfiguration(liveConfig.deepCopy(false));
                 } catch (UpdateStillInProgressException e) {
                     // This means a config update is INPROGRESS.
@@ -410,13 +410,35 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             latestConfigUpdate = (ResourceConfigurationUpdate) query.getSingleResult();
             if (!authorizationManager.canViewResource(whoami, latestConfigUpdate.getResource().getId())) {
                 throw new PermissionException("User [" + whoami.getName()
-                    + "] does not have permission to view resource configuration for ["
+                    + "] does not have permission to view Resource configuration for ["
                     + latestConfigUpdate.getResource() + "]");
             }
 
             updateInProgress = (latestConfigUpdate.getStatus() == ConfigurationUpdateStatus.INPROGRESS);
         } catch (NoResultException nre) {
             // The resource config history is empty, so there's obviously no update in progress.
+            updateInProgress = false;
+        }
+
+        return updateInProgress;
+    }
+
+    public boolean isAggregateResourceConfigurationUpdateInProgress(Subject whoami, int groupId) {
+        boolean updateInProgress;
+        AggregateResourceConfigurationUpdate latestConfigGroupUpdate;
+        try {
+            Query query = entityManager.createNamedQuery(AggregateResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_GROUP_ID);
+            query.setParameter("groupId", groupId);
+            latestConfigGroupUpdate = (AggregateResourceConfigurationUpdate) query.getSingleResult();
+            if (!authorizationManager.canViewGroup(whoami, latestConfigGroupUpdate.getGroup().getId())) {
+                throw new PermissionException("User [" + whoami.getName()
+                    + "] does not have permission to view group Resource configuration for ["
+                    + latestConfigGroupUpdate.getGroup() + "]");
+            }
+
+            updateInProgress = (latestConfigGroupUpdate.getStatus() == ConfigurationUpdateStatus.INPROGRESS);
+        } catch (NoResultException nre) {
+            // The group resource config history is empty, so there's obviously no update in progress.
             updateInProgress = false;
         }
 
@@ -663,15 +685,15 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // here we call ourself, but we do so via the EJB interface so we pick up the REQUIRES_NEW semantics
         // this can return null if newConfiguration is not actually different.
         newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(whoami, resourceId,
-            newConfiguration, ConfigurationUpdateStatus.INPROGRESS, whoami.getName());
+            newConfiguration, ConfigurationUpdateStatus.INPROGRESS, whoami.getName(), false);
 
         executeResourceConfigurationUpdate(newUpdate);
 
         return newUpdate;
     }
 
-    public void executeResourceConfigurationUpdate(Subject whoami, int updateId) {
-        ResourceConfigurationUpdate update = getResourceConfigurationUpdate(whoami, updateId);
+    public void executeResourceConfigurationUpdate(int updateId) {
+        ResourceConfigurationUpdate update = getResourceConfigurationUpdate(subjectManager.getOverlord(), updateId);
         executeResourceConfigurationUpdate(update);
     }
 
@@ -681,7 +703,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
      */
     private void executeResourceConfigurationUpdate(ResourceConfigurationUpdate update)
     {
-
         try {
             AgentClient agentClient = agentManager.getAgentClient(update.getResource().getAgent());
             ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(update.getId(), update
@@ -715,7 +736,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject whoami, int resourceId,
-        Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject)
+                                                                                    Configuration newConfiguration,
+                                                                                    ConfigurationUpdateStatus newStatus,
+                                                                                    String newSubject,
+                                                                                    boolean isPartofAggregateUpdate)
         throws UpdateStillInProgressException {
         // get the resource that we will be updating
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -729,15 +753,24 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // see if there was a previous update request and make sure it isn't still in progress
         List<ResourceConfigurationUpdate> previousRequests = resource.getResourceConfigurationUpdates();
 
+        String errorMessage = null;
         if (previousRequests != null) {
             for (ResourceConfigurationUpdate previousRequest : previousRequests) {
                 if (previousRequest.getStatus() == ConfigurationUpdateStatus.INPROGRESS) {
-                    // if you change this to another exception, make sure you change getLatestResourceConfigurationUpdate
-                    throw new UpdateStillInProgressException(
-                        "Resource ["
-                            + resource
-                            + "] has a resource configuration update request already in progress - please wait for it to finish: "
-                            + previousRequest);
+                    // A previous update is still in progresss for this Resource. If this update is part of an aggregate
+                    // update, persist it with FAILURE status, so it is still listed as part of the group history.
+                    // Otherwise, throw an exception that can bubble up to the GUI.
+                    if (isPartofAggregateUpdate) {
+                        newStatus = ConfigurationUpdateStatus.FAILURE;
+                        errorMessage = "Resource configuration Update was aborted because an update request for the Resource was already in progress.";
+                    } else {
+                        // NOTE: If you change this to another exception, make sure you change getLatestResourceConfigurationUpdate().
+                        throw new UpdateStillInProgressException(
+                            "Resource ["
+                                + resource
+                                + "] has a resource configuration update request already in progress - please wait for it to finish: "
+                                + previousRequest);
+                    }
                 }
             }
         }
@@ -755,39 +788,43 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             current = null; // The resource hasn't been successfully configured yet.
         }
 
-        // Don't bother persisting new entries if there has been no change
-        if (current == null || !newConfiguration.equals(current.getConfiguration())) {
-            // let's make sure all IDs are zero - we want to persist a brand new copy
-            Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
-
-            // create our new update request and assign it to our resource - its status will initially be "in progress"
-            ResourceConfigurationUpdate newUpdateRequest = new ResourceConfigurationUpdate(resource,
-                zeroedConfiguration, newSubject);
-
-            newUpdateRequest.setStatus(newStatus);
-
-            entityManager.persist(newUpdateRequest);
-            if (current != null) {
-                if (newStatus == ConfigurationUpdateStatus.SUCCESS) {
-                    // If this is the first configuration update since the resource was imported, don't alert
-                    notifyAlertConditionCacheManager("persistNewResourceConfigurationUpdateHistory", newUpdateRequest);
-                }
-            }
-
-            resource.addResourceConfigurationUpdates(newUpdateRequest);
-
-            resource.getChildResources().size();
-
-            // agent field is LAZY - force it to load because the caller will need it.
-            Agent agent = resource.getAgent();
-            if (agent != null) {
-                agent.getName();
-            }
-
-            return newUpdateRequest;
-        } else {
+        // If this update is not part of an aggregate update, don't bother persisting a new entry if the Configuration
+        // hasn't changed. If it's part of an aggregate update, persist a new entry no matter what, so the group
+        // update isn't missing any member updates.
+        if (!isPartofAggregateUpdate && current != null && newConfiguration.equals(current.getConfiguration())) {
             return null;
         }
+
+        Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
+
+        // create our new update request and assign it to our resource - its status will initially be "in progress"
+        ResourceConfigurationUpdate newUpdateRequest = new ResourceConfigurationUpdate(resource,
+            zeroedConfiguration, newSubject);
+
+        newUpdateRequest.setStatus(newStatus);
+        if (newStatus == ConfigurationUpdateStatus.FAILURE) {
+            newUpdateRequest.setErrorMessage(errorMessage);
+        }
+
+        entityManager.persist(newUpdateRequest);
+        if (current != null) {
+            if (newStatus == ConfigurationUpdateStatus.SUCCESS) {
+                // If this is the first configuration update since the resource was imported, don't alert
+                notifyAlertConditionCacheManager("persistNewResourceConfigurationUpdateHistory", newUpdateRequest);
+            }
+        }
+
+        resource.addResourceConfigurationUpdates(newUpdateRequest);
+
+        resource.getChildResources().size();
+
+        // agent field is LAZY - force it to load because the caller will need it.
+        Agent agent = resource.getAgent();
+        if (agent != null) {
+            agent.getName();
+        }
+
+        return newUpdateRequest;
     }
 
     private void notifyAlertConditionCacheManager(String callingMethod, ResourceConfigurationUpdate update) {
@@ -1106,20 +1143,28 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public int scheduleAggregateResourceConfigurationUpdate(Subject whoami, int compatibleGroupId,
         Map<Integer, Configuration> memberConfigurations) throws Exception {
-        ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, compatibleGroupId);
-
-        ensureModifyPermission(whoami, group);
         if (memberConfigurations == null) {
             throw new IllegalArgumentException(
                 "AggregateResourceConfigurationUpdate must have non-null configurations.");
         }
+
+        ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, compatibleGroupId);
+
+        if (!authorizationManager.hasGroupPermission(whoami, Permission.CONFIGURE, group.getId())) {
+            throw new PermissionException("User [" + whoami.getName() + "] does not have permission "
+                + "to modify Resource configurations for members of group [" + group + "].");
+        }
+
+        if (isAggregateResourceConfigurationUpdateInProgress(whoami, group.getId()))
+            throw new UpdateStillInProgressException("Group Resource configuration update aborted, because another Resource configuration update is already in progress for this group. Please wait a few minutes, then try again.");        
 
         /*
          * we need to create and persist the aggregate in a new/separate transaction before the rest of the
          * processing of this method; if we try to create and attach the PluginConfigurationUpdate children
          * to the parent aggregate before the aggregate is actually persisted, we'll get StaleStateExceptions
          * from Hibernate because of our use of flush/clear (we're trying to update the aggregate before it
-         * actually exists); this is also why we need to retrieve the aggregate and overlord fresh in the loop
+         * actually exists); this is also why we need to retrieve the aggregate and overlord fresh in the loop.
+         * TODO (ips, 02/16/09): Oops, I removed the fresh retriveal in the loop - add it back if needed.
          */
         AggregateResourceConfigurationUpdate aggregateUpdate = new AggregateResourceConfigurationUpdate(group,
                 whoami.getName());
@@ -1149,7 +1194,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 Configuration memberConfiguration = memberConfigurations.get(memberResource.getId());
                 ResourceConfigurationUpdate newUpdate =
                         configurationManager.persistNewResourceConfigurationUpdateHistory(whoami, memberResource.getId(),
-                            memberConfiguration, ConfigurationUpdateStatus.INPROGRESS, whoami.getName());
+                            memberConfiguration, ConfigurationUpdateStatus.INPROGRESS, whoami.getName(), true);
                 if (newUpdate != null) {
                     newUpdate.setAggregateConfigurationUpdate(aggregateUpdate);
                     entityManager.merge(newUpdate);
@@ -1301,8 +1346,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // Configurations are very expensive to load, so load 'em in chunks to ease the strain on the DB.
         PageControl pageControl = new PageControl(0, 10);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            Configuration.QUERY_GET_RESOURCE_CONFIG_BY_GROUP_ID, pageControl);
+        Query query = entityManager.createNamedQuery(Configuration.QUERY_GET_RESOURCE_CONFIG_BY_GROUP_ID);
         query.setParameter("resourceGroupId", compatibleGroup.getId());
 
         Map<Integer, Configuration> results = new HashMap(resultsSize);
@@ -1320,7 +1364,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             if (rowsProcessed >= resultsSize)
                 break;
 
-            pageControl.setPageNumber(pageControl.getPageNumber() + 1);
+            pageControl.setPageNumber(pageControl.getPageNumber() + 1); // advance the page
+            PersistenceUtility.setDataPage(query, pageControl); // and update the query to retrieve the new page
         }
         return results;
     }

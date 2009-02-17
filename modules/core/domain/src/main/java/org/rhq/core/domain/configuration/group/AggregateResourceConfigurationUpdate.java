@@ -28,18 +28,32 @@ import javax.persistence.CascadeType;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
+import javax.persistence.NamedQuery;
+import javax.persistence.NamedQueries;
+
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
 @DiscriminatorValue("resource")
 @Entity
+@NamedQueries( {
+    @NamedQuery(name = AggregateResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_GROUP_ID, query = "" //
+        + "SELECT cgu " //
+        + "  FROM AggregateResourceConfigurationUpdate cgu " //
+        + " WHERE cgu.group.id = :groupId " //
+        + "   AND cgu.modifiedTime = ( SELECT MAX(cgu2.modifiedTime) " //
+        + "                             FROM AggregateResourceConfigurationUpdate cgu2 " //
+        + "                            WHERE cgu2.group.id = :groupId ) ")
+        } )
 public class AggregateResourceConfigurationUpdate extends AbstractAggregateConfigurationUpdate {
     private static final long serialVersionUID = 1L;
 
+    public static final String QUERY_FIND_LATEST_BY_GROUP_ID = "findLatestByGroupId";
+
     @OneToMany(mappedBy = "aggregateConfigurationUpdate", cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
     private List<ResourceConfigurationUpdate> configurationUpdates = new ArrayList<ResourceConfigurationUpdate>();
-
+        
     protected AggregateResourceConfigurationUpdate() {
     } // JPA
 

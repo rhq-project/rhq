@@ -63,13 +63,13 @@ public class AggregateResourceConfigurationUpdateJob extends AbstractAggregateCo
     protected void executeConfigurationUpdate(ConfigurationManagerLocal configurationManager, Integer childUpdateId,
                                               Subject subject)
     {
-        configurationManager.executeResourceConfigurationUpdate(subject, childUpdateId);
+        configurationManager.executeResourceConfigurationUpdate(childUpdateId);
     }
 
     protected void handleSynchronousConfigurationUpdateErrors(ConfigurationManagerLocal configurationManager,
                                                               Integer aggregateConfigurationUpdateId,
                                                               String errorMessages)
-    {
+    {        
         log.error("Failed to execute one or more Resource Configuration updates that were part of a group update - details: "
                 + errorMessages);
         // TODO: Stick the errors in the individual updates.

@@ -66,15 +66,21 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
         Subject overlord = subjectManager.getOverlord();
-        configurationManager.persistNewResourceConfigurationUpdateHistory(
+        ResourceConfigurationUpdate update = configurationManager.persistNewResourceConfigurationUpdateHistory(
                 overlord,
                 resourceId,
                 resourceConfiguration,
                 ConfigurationUpdateStatus.SUCCESS,
-                null);
+                null, false);
 
-        Resource resource = resourceManager.getResourceById(overlord, resourceId);
-        resource.setResourceConfiguration(resourceConfiguration.deepCopy(false));
+        if (update == null) {
+            LOG.warn("Not persisting Configuration " + resourceConfiguration
+                    + ", since it is identical to the current revision.");
+            return;
+        }
+
+        Resource resource = update.getResource();
+        resource.setResourceConfiguration(update.getConfiguration().deepCopy(false));
         resourceManager.updateResource(overlord, resource);
     }
 }

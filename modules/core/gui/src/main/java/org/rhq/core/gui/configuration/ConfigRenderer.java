@@ -30,6 +30,7 @@ import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIParameter;
 import javax.faces.component.UIForm;
+import javax.faces.component.UIInput;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.component.html.HtmlOutputLink;
 import javax.faces.context.FacesContext;
@@ -128,12 +129,22 @@ public class ConfigRenderer extends Renderer {
         // will not have been updated yet with any changes made to child UIInput values.
         String refresh = FacesContextUtility.getOptionalRequestParameter("refresh");
         if (refresh != null && refresh.equals(configurationComponent.getId())) {
-            if (configurationComponent instanceof ConfigurationSetComponent) {
-                ConfigurationSet configurationSet = ((ConfigurationSetComponent)configurationComponent).getConfigurationSet();
-                //noinspection ConstantConditions
-                configurationSet.calculateAggregateConfiguration();
+            if (propertySetComponentContainsInvalidInputs(configurationComponent)) {
+                // Make sure the modal panel is shown when rendered, so the user will see the validation errors.
+                List<HtmlModalPanel> modalPanels = FacesComponentUtility.getDescendantsOfType(configurationComponent,
+                        HtmlModalPanel.class);
+                if (modalPanels.size() == 1) {
+                    HtmlModalPanel modalPanel = modalPanels.get(0);
+                    modalPanel.setShowWhenRendered(true);
+                }
+            } else {
+                if (configurationComponent instanceof ConfigurationSetComponent) {
+                    ConfigurationSet configurationSet = ((ConfigurationSetComponent)configurationComponent).getConfigurationSet();
+                    //noinspection ConstantConditions
+                    configurationSet.calculateAggregateConfiguration();
+                }
+                component.getChildren().clear();
             }
-            component.getChildren().clear();
         }
 
         ResponseWriter writer = facesContext.getResponseWriter();
@@ -146,6 +157,24 @@ public class ConfigRenderer extends Renderer {
         // Only create the child components the first time around (i.e. once per JSF lifecycle).
         if (component.getChildCount() == 0)
             addChildComponents(configurationComponent);
+    }
+
+    private static boolean propertySetComponentContainsInvalidInputs(AbstractConfigurationComponent configurationComponent)
+    {
+        boolean containsInvalidInputs = false;
+        List<PropertySetComponent> propertySetComponents =
+                FacesComponentUtility.getDescendantsOfType(configurationComponent, PropertySetComponent.class);
+        if (propertySetComponents.size() == 1) {
+            PropertySetComponent propertySetComponent = propertySetComponents.get(0);
+            List<UIInput> inputs = FacesComponentUtility.getDescendantsOfType(propertySetComponent, UIInput.class);
+            for (UIInput input : inputs) {
+                if (!input.isValid()) {
+                    containsInvalidInputs = true;
+                    break;
+                }
+            }
+        }
+        return containsInvalidInputs;
     }
 
     @Override
@@ -469,9 +498,9 @@ public class ConfigRenderer extends Renderer {
 
          String modalPanelClientId = modalPanel.getClientId(FacesContext.getCurrentInstance());
 
-         HtmlAjaxCommandLink ajaxCommandLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
+         HtmlAjaxCommandLink okLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
          //form.getChildren().add(ajaxCommandLink);
-         modalPanel.getChildren().add(ajaxCommandLink);
+         modalPanel.getChildren().add(okLink);
          //ajaxCommandLink.setImmediate(true);
          //ajaxCommandLink.setOncomplete("Richfaces.hideModalPanel('" + modalPanelClientId + "');");
 
@@ -480,16 +509,16 @@ public class ConfigRenderer extends Renderer {
          //MethodExpression actionExpression = FacesExpressionUtility.createMethodExpression(
          //   "#{EditTestConfigurationUIBean.updateConfiguration}", String.class, new Class[0]);
          //ajaxCommandLink.setActionExpression(actionExpression);
-         ajaxCommandLink.setTitle("OK");
-         FacesComponentUtility.addParameter(ajaxCommandLink, null, "refresh", configurationSetComponent.getId());
-         FacesComponentUtility.addButton(ajaxCommandLink, "OK", CssStyleClasses.BUTTON_SMALL);
+         okLink.setTitle("OK");
+         FacesComponentUtility.addParameter(okLink, null, "refresh", configurationSetComponent.getId());
+         FacesComponentUtility.addButton(okLink, "OK", CssStyleClasses.BUTTON_SMALL);
 
          if (!configurationSetComponent.isReadOnly()) {
              //HtmlOutputLink closeModalLink = FacesComponentUtility.addOutputLink(form, null, "#");
-             HtmlOutputLink closeModalLink = FacesComponentUtility.addOutputLink(modalPanel, null, "#");
-             closeModalLink.setOnclick("Richfaces.hideModalPanel('" + modalPanelClientId + "'); return false;");
-             closeModalLink.setTitle("Cancel");
-             FacesComponentUtility.addButton(closeModalLink, "Cancel", CssStyleClasses.BUTTON_SMALL);
+             HtmlOutputLink cancelLink = FacesComponentUtility.addOutputLink(modalPanel, null, "#");
+             cancelLink.setOnclick("Richfaces.hideModalPanel('" + modalPanelClientId + "'); return false;");
+             cancelLink.setTitle("Cancel");
+             FacesComponentUtility.addButton(cancelLink, "Cancel", CssStyleClasses.BUTTON_SMALL);
          }
          
          return modalPanel;

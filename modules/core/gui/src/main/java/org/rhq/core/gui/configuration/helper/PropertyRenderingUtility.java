@@ -41,12 +41,12 @@ import javax.faces.application.FacesMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.gui.converter.PropertySimpleValueConverter;
 import org.rhq.core.gui.util.FacesComponentUtility;
-import org.rhq.core.gui.util.FacesExpressionUtility;
 import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.validator.PropertySimpleValueValidator;
@@ -134,7 +134,7 @@ public class PropertyRenderingUtility
     public static UIInput createInputForSimpleProperty(PropertySimple propertySimple, ValueExpression valueExpression,
                                                        boolean readOnly) {
         UIInput input = createInputForStringProperty();
-        input.setValue(valueExpression);        
+        input.setValueExpression("value", valueExpression);
         FacesComponentUtility.setReadonly(input, readOnly);
         addTitleAttribute(input, propertySimple.getStringValue());
         return input;
@@ -146,37 +146,34 @@ public class PropertyRenderingUtility
         // TODO: specify a component id
     }
 
-    public static HtmlSelectBooleanCheckbox addUnsetControl(UIComponent parent,
-                                                            PropertyDefinitionSimple propertyDefinitionSimple,
-                                                            PropertySimple propertySimple,
-                                                            UIInput valueInput,
-                                                            boolean configIsAggregate,
-                                                            boolean configReadOnly,
-                                                            boolean configFullyEditable) {
+    public static void addUnsetControl(UIComponent parent,
+                                        PropertyDefinitionSimple propertyDefinitionSimple,
+                                        PropertySimple propertySimple,
+                                        UIInput valueInput,
+                                        boolean configIsAggregate,
+                                        boolean configReadOnly,
+                                        boolean configFullyEditable) {
         HtmlSelectBooleanCheckbox unsetCheckbox = FacesComponentUtility.createComponent(
-                HtmlSelectBooleanCheckbox.class, null);
-        if (!propertyDefinitionSimple.isRequired()) {
-            parent.getChildren().add(unsetCheckbox);
-            unsetCheckbox.setValue(isUnset(propertyDefinitionSimple, propertySimple, configIsAggregate));
-            if (isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable) ||
-                isAggregateWithDifferingValues(propertySimple, configIsAggregate)) {
-                FacesComponentUtility.setDisabled(unsetCheckbox, true);
-            } else {
-                // Add JavaScript that will disable/enable the corresponding input element when the unset checkbox is
-                // checked/unchecked.
-                // IMPORTANT: We must use document.formName.inputName, rather than document.getElementById('inputId'),
-                //            to reference the HTML DOM element, because the id of the HTML DOM input element is not the same as the
-                //            id of the corresponding JSF input component in some cases (e.g. radio buttons). However, the
-                //            name property that JSF renders on the HTML DOM input element does always match the JSF
-                //            component id. (ips, 05/31/07)
-                StringBuilder onchange = new StringBuilder();
-                for (String htmlDomReference : getHtmlDomReferences(valueInput)) {
-                    onchange.append("setInputUnset(").append(htmlDomReference).append(", this.checked);");
-                }
-                unsetCheckbox.setOnchange(onchange.toString());
+            HtmlSelectBooleanCheckbox.class, null);
+        parent.getChildren().add(unsetCheckbox);
+        unsetCheckbox.setValue(isUnset(propertyDefinitionSimple, propertySimple, configIsAggregate));
+        if (isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable) ||
+            isAggregateWithDifferingValues(propertySimple, configIsAggregate)) {
+            FacesComponentUtility.setDisabled(unsetCheckbox, true);
+        } else {
+            // Add JavaScript that will disable/enable the corresponding input element when the unset checkbox is
+            // checked/unchecked.
+            // IMPORTANT: We must use document.formName.inputName, rather than document.getElementById('inputId'),
+            //            to reference the HTML DOM element, because the id of the HTML DOM input element is not the same as the
+            //            id of the corresponding JSF input component in some cases (e.g. radio buttons). However, the
+            //            name property that JSF renders on the HTML DOM input element does always match the JSF
+            //            component id. (ips, 05/31/07)
+            StringBuilder onchange = new StringBuilder();
+            for (String htmlDomReference : getHtmlDomReferences(valueInput)) {
+                onchange.append("setInputUnset(").append(htmlDomReference).append(", this.checked);");
             }
+            unsetCheckbox.setOnchange(onchange.toString());
         }
-        return unsetCheckbox;
     }
 
     public static void addInitInputsJavaScript(UIComponent parent, String componentId, boolean configFullyEditable, boolean postBack) {
@@ -280,10 +277,11 @@ public class PropertyRenderingUtility
 
     // <h:outputLabel value="DISPLAY_NAME" styleClass="..." />
     public static void addPropertyDisplayName(UIComponent parent, PropertyDefinition propertyDefinition,
-                                              boolean configReadOnly) {
-        FacesComponentUtility.addOutputText(parent, null, propertyDefinition.getDisplayName(),
-            CssStyleClasses.PROPERTY_DISPLAY_NAME_TEXT);
-        if (!configReadOnly && propertyDefinition.isRequired()
+                                              Property property, boolean configReadOnly) {
+        String displayName = (propertyDefinition != null) ? propertyDefinition.getDisplayName() :
+                property.getName();
+        FacesComponentUtility.addOutputText(parent, null, displayName, CssStyleClasses.PROPERTY_DISPLAY_NAME_TEXT);
+        if (!configReadOnly && propertyDefinition != null && propertyDefinition.isRequired()
             && (propertyDefinition instanceof PropertyDefinitionSimple)) {
             // Print a required marker next to required simples.
             // Ignore the required field for maps and lists, as it is has no significance for them.
@@ -457,7 +455,8 @@ public class PropertyRenderingUtility
         if (isAggregateWithDifferingValues(propertySimple, configIsAggregate))
         // Properties from aggregate configs that have differing values should not be marked unset.
             return false;
-        return (!propertyDefinitionSimple.isRequired() && propertySimple.getStringValue() == null);
+        return ((propertyDefinitionSimple == null || !propertyDefinitionSimple.isRequired())
+                && propertySimple.getStringValue() == null);
     }
 
     public static boolean isReadOnly(PropertyDefinitionSimple propertyDefinitionSimple,

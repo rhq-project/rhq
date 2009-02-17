@@ -132,8 +132,9 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         this.topLevel = topLevel;
         this.valueExpressionFormat = valueExpressionFormat;
         this.overrideExpressionFormat = getOverrideExpressionFormat(valueExpressionFormat);
+        // The below variable is for the new group config impl being implemented by Ian.
         this.isAggregate = (this.config instanceof ConfigurationSetComponent);
-        if (isAggregate) {
+        if (this.isAggregate) {
             ConfigurationSetComponent configurationSetComponent = (ConfigurationSetComponent)this.config;
             this.memberValuesModalPanel = configurationSetComponent.getMemberValuesModalPanel();
         }
@@ -219,7 +220,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         FacesComponentUtility.addVerbatimText(parent, "</th>");
 
         // TODO: Get rid of the Override column, once the new group config stuff is operational.
-        if (config.isAggregate()) {
+        if (this.config.isAggregate()) {
             FacesComponentUtility.addVerbatimText(parent, "<th class='" + headerCellStyleClass + "'>");
             FacesComponentUtility.addOutputText(parent, this.config, "Override", FacesComponentUtility.NO_STYLE_CLASS);
             FacesComponentUtility.addVerbatimText(parent, "</th>");
@@ -310,20 +311,21 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
                     this.config.isFullyEditable(), this.config.isPrevalidate());
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_DISPLAY_NAME_CELL + "'>");
-        PropertyRenderingUtility.addPropertyDisplayName(parent, propertyDefinitionSimple, this.config.isReadOnly());
+        PropertyRenderingUtility.addPropertyDisplayName(parent, propertyDefinitionSimple, propertySimple, this.config.isReadOnly());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         // TODO: Get rid of the override checkbox once the group plugin config has been converted over to the new
         //       group config GUI.
-        if (config.isAggregate()) {
+        if (this.config.isAggregate()) {
             FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
             addPropertyOverrideControl(parent, propertyDefinitionSimple, input);
             FacesComponentUtility.addVerbatimText(parent, "</td>");
         }
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
-        PropertyRenderingUtility.addUnsetControl(parent, propertyDefinitionSimple, propertySimple, input,
-                this.isAggregate, this.config.isReadOnly(), this.config.isFullyEditable());
+        if (!propertyDefinitionSimple.isRequired())
+            PropertyRenderingUtility.addUnsetControl(parent, propertyDefinitionSimple, propertySimple, input,
+                    this.isAggregate, this.config.isReadOnly(), this.config.isFullyEditable());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_VALUE_CELL + "'>");
@@ -348,8 +350,9 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
          if (input != null)
              parent.getChildren().add(input);
          if (this.isAggregate) {
-             FacesComponentUtility.addOutputText(parent, null, "Member Values Differ",
-                     VALUES_DIFFER_TEXT_STYLE_CLASS);
+             if (input == null)
+                 FacesComponentUtility.addOutputText(parent, null, "Member Values Differ", VALUES_DIFFER_TEXT_STYLE_CLASS);
+             // Add the Members button which will display the "drill-down" modal panel.
              HtmlAjaxCommandLink ajaxCommandLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
              parent.getChildren().add(ajaxCommandLink);
              ajaxCommandLink.setOncomplete("Richfaces.showModalPanel('" +
@@ -431,7 +434,8 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + LIST_PROPERTY_DISPLAY_NAME_CELL_STYLE_CLASS
             + "'>");
-        PropertyRenderingUtility.addPropertyDisplayName(parent, listPropertyDefinition, this.config.isReadOnly());
+        PropertyRenderingUtility.addPropertyDisplayName(parent, listPropertyDefinition, listProperty,
+                this.config.isReadOnly());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + LIST_PROPERTY_ENABLED_CELL_STYLE_CLASS + "' />");
@@ -656,7 +660,8 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + LIST_PROPERTY_DISPLAY_NAME_CELL_STYLE_CLASS
             + "'>");
-        PropertyRenderingUtility.addPropertyDisplayName(parent, propertyDefinitionMap, this.config.isReadOnly());
+        PropertyRenderingUtility.addPropertyDisplayName(parent, propertyDefinitionMap,
+                this.propertyMap.get(propertyDefinitionMap.getName()), this.config.isReadOnly());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + LIST_PROPERTY_ENABLED_CELL_STYLE_CLASS + "' />");
@@ -732,11 +737,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             input.setId(propertyId);
 
             Boolean shouldOverride = ((PropertySimple) property).getOverride();
-            if (shouldOverride == null) {
-                FacesComponentUtility.setOverride(input, false);
-            } else {
-                FacesComponentUtility.setOverride(input, shouldOverride);
-            }
+            FacesComponentUtility.setOverride(input, (shouldOverride != null && shouldOverride) );
         }
 
         setInputOverrideExpression(input, propertyDefinitionSimple.getName());
@@ -816,12 +817,6 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         }
 
         return isInvalidRequiredProperty;
-    }
-
-    private boolean isUnset(PropertyDefinitionSimple propertyDefinitionSimple) {
-        return !propertyDefinitionSimple.isRequired()
-            && ((this.propertyMap.get(propertyDefinitionSimple.getName()) == null) || (this.propertyMap.getSimple(
-                propertyDefinitionSimple.getName()).getStringValue() == null));
     }
 
     /**

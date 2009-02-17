@@ -33,11 +33,11 @@ import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
 
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.gui.configuration.helper.ConfigurationExpressionUtility;
 import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
+import org.rhq.core.gui.configuration.helper.ConfigurationUtility;
 import org.rhq.core.gui.configuration.CssStyleClasses;
 import org.rhq.core.gui.configuration.ConfigRenderer;
 import org.rhq.core.gui.util.FacesComponentUtility;
@@ -104,12 +104,10 @@ public class PropertySetRenderer extends Renderer
         if (component.getChildCount() != 0)
             return;
 
-        // TODO: Add support for open map member properties, which do not have an associated definition.
         PropertyDefinitionSimple propertyDefinitionSimple = propertySetComponent.getPropertyDefinition();
-        if (propertyDefinitionSimple == null)
-            return;
+        PropertySimple propertySimple = propertySetComponent.getProperty();
 
-        addPropertyDisplayNameAndDescription(propertySetComponent, propertyDefinitionSimple);
+        addPropertyDisplayNameAndDescription(propertySetComponent, propertyDefinitionSimple, propertySimple);
 
         // The below panel is a placeholder. We'll add children to it later once we know the client id's of the
         // property value inputs.
@@ -121,7 +119,7 @@ public class PropertySetRenderer extends Renderer
                 + CssStyleClasses.MEMBER_PROPERTIES_TABLE + "'>");
         addPropertiesTableHeaderRow(propertySetComponent);
 
-        List<PropertyInfo> propertyInfos = createPropertyInfos(propertySetComponent, propertyDefinitionSimple);
+        List<PropertyInfo> propertyInfos = createPropertyInfos(propertySetComponent, propertySimple);
         for (PropertyInfo propertyInfo : propertyInfos)
             addPropertyRow(propertySetComponent, propertyDefinitionSimple, propertyInfo, null);
 
@@ -172,20 +170,22 @@ public class PropertySetRenderer extends Renderer
     }
 
     private void addPropertyDisplayNameAndDescription(PropertySetComponent propertySetComponent,
-                                                      PropertyDefinitionSimple propertyDefinitionSimple)
+                                                      PropertyDefinitionSimple propertyDefinitionSimple,
+                                                      PropertySimple propertySimple)
     {
         FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/>\n");
+        PropertyRenderingUtility.addPropertyDisplayName(propertySetComponent, propertyDefinitionSimple,
+                propertySimple,
+                propertySetComponent.getReadOnly());
         if (propertyDefinitionSimple != null) {
-            PropertyRenderingUtility.addPropertyDisplayName(propertySetComponent, propertyDefinitionSimple,
-                    propertySetComponent.getReadOnly());
-            FacesComponentUtility.addVerbatimText(propertySetComponent, "-");
-            PropertyRenderingUtility.addPropertyDescription(propertySetComponent, propertyDefinitionSimple);            
-            FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/><br/>\n");
+            FacesComponentUtility.addVerbatimText(propertySetComponent, " - ");
+            PropertyRenderingUtility.addPropertyDescription(propertySetComponent, propertyDefinitionSimple);
         }
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/><br/>\n");
     }
 
     private List<PropertyInfo> createPropertyInfos(PropertySetComponent propertySetComponent,
-                                                   PropertyDefinitionSimple propertyDefinitionSimple)
+                                                   PropertySimple propertySimple)
     {
         ValueExpression configurationInfosExpression = propertySetComponent.getValueExpression(
                 PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE);
@@ -194,8 +194,8 @@ public class PropertySetRenderer extends Renderer
                 + FacesExpressionUtility.unwrapExpressionString(configurationInfosExpressionString)
                 + ".members[%d].configuration}";
 
-        String propertyExpressionStringFormat = createPropertyExpressionString(configurationExpressionStringFormat,
-                propertyDefinitionSimple, propertySetComponent.getListIndex());
+        String propertyExpressionStringFormat = createPropertyValueExpressionFormat(configurationExpressionStringFormat,
+                propertySimple, propertySetComponent.getListIndex());
         //noinspection ConstantConditions
         List<ConfigurationSetMember> configurationSetMembers = propertySetComponent.getConfigurationSet().getMembers();
         List<PropertyInfo> propertyInfos = new ArrayList(configurationSetMembers.size());
@@ -204,9 +204,9 @@ public class PropertySetRenderer extends Renderer
             @SuppressWarnings({"ConstantConditions"})
             ConfigurationSetMember memberInfo = configurationSetMembers.get(i);
             String propertyExpressionString = String.format(propertyExpressionStringFormat, i);
-            PropertySimple property = FacesExpressionUtility.getValue(propertyExpressionString, PropertySimple.class);
-            ValueExpression propertyValueExpression = createPropertyValueExpression(propertyExpressionString);
-            PropertyInfo propertyInfo = new PropertyInfo(memberInfo.getLabel(), property, propertyValueExpression);
+            ValueExpression propertyValueExpression = FacesExpressionUtility.createValueExpression(propertyExpressionString,
+                    String.class);
+            PropertyInfo propertyInfo = new PropertyInfo(memberInfo.getLabel(), propertySimple, propertyValueExpression);
             propertyInfos.add(propertyInfo);
 
         }
@@ -244,39 +244,28 @@ public class PropertySetRenderer extends Renderer
         }
     }
 
-    private static String createPropertyExpressionString(String configurationExpressionString,
-                                                      PropertyDefinitionSimple propertyDefinitionSimple,
+    private static String createPropertyValueExpressionFormat(String configurationExpressionString,
+                                                      PropertySimple propertySimple,
                                                       Integer listIndex)
     {
         StringBuilder stringBuilder = new StringBuilder("#{");
         stringBuilder.append(FacesExpressionUtility.unwrapExpressionString(configurationExpressionString));
-        LinkedList<PropertyDefinition> propertyDefinitionHierarchy =
-                ConfigurationExpressionUtility.getPropertyDefinitionHierarchy(propertyDefinitionSimple);
-        for (PropertyDefinition propertyDefinition : propertyDefinitionHierarchy)
+        LinkedList<Property> propertyHierarchy = ConfigurationUtility.getPropertyHierarchy(propertySimple);
+        for (Property property : propertyHierarchy)
         {
-            PropertyDefinition parentPropertyDefinition =
-                    ConfigurationExpressionUtility.getParentPropertyDefinition(propertyDefinition);
+            Property parentProperty = ConfigurationUtility.getParentProperty(property);
             stringBuilder.append(".");
-            if (parentPropertyDefinition == null || parentPropertyDefinition instanceof PropertyDefinitionMap)
+            if (parentProperty == null || parentProperty instanceof PropertyMap)
             {
                 // top-level or map member property
-                stringBuilder.append("map['").append(propertyDefinition.getName()).append("']");
+                stringBuilder.append("map['").append(property.getName()).append("']");
             } else {
                 // list member property
                 stringBuilder.append("list[").append(listIndex).append("]");
             }
         }
-        stringBuilder.append("}");
-        return stringBuilder.toString();
-    }
-
-    private static ValueExpression createPropertyValueExpression(String propertyExpressionString)
-    {
-        StringBuilder stringBuilder = new StringBuilder("#{");
-        stringBuilder.append(FacesExpressionUtility.unwrapExpressionString(propertyExpressionString));
         stringBuilder.append(".stringValue}");
-        String propertyValueExpressionString = stringBuilder.toString();
-        return FacesExpressionUtility.createValueExpression(propertyValueExpressionString, String.class);
+        return stringBuilder.toString();
     }
 
     private String getInitInputsJavaScriptComponentId(PropertySetComponent propertySetComponent)
@@ -290,10 +279,15 @@ public class PropertySetRenderer extends Renderer
 
         FacesComponentUtility.addVerbatimText(propertySetComponent, "\n\n<tr class='" + rowStyleClass + "'>");
 
-        UIInput input = PropertyRenderingUtility.createInputForSimpleProperty(
-                propertyDefinitionSimple, propertyInfo.getProperty(),
-                propertyInfo.getPropertyValueExpression(), propertySetComponent.getListIndex(),
-                false, propertySetComponent.getReadOnly(), false, true);
+        UIInput input;
+        if (propertyDefinitionSimple != null)
+            input = PropertyRenderingUtility.createInputForSimpleProperty(
+                    propertyDefinitionSimple, propertyInfo.getProperty(),
+                    propertyInfo.getPropertyValueExpression(), propertySetComponent.getListIndex(),
+                    false, propertySetComponent.getReadOnly(), false, true);
+        else
+            input = PropertyRenderingUtility.createInputForSimpleProperty(propertyInfo.getProperty(),
+                    propertyInfo.getPropertyValueExpression(), propertySetComponent.getReadOnly());
         propertyInfo.setInput(input);
 
         FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='" + CssStyleClasses.PROPERTY_DISPLAY_NAME_CELL + "'>"); // TODO: CSS
@@ -301,6 +295,7 @@ public class PropertySetRenderer extends Renderer
         FacesComponentUtility.addVerbatimText(propertySetComponent, "</td>");
 
         FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
+        if (propertyDefinitionSimple == null || !propertyDefinitionSimple.isRequired())
         PropertyRenderingUtility.addUnsetControl(propertySetComponent, propertyDefinitionSimple,
                     propertyInfo.getProperty(), input, false, propertySetComponent.getReadOnly(), false);
         FacesComponentUtility.addVerbatimText(propertySetComponent, "</td>");

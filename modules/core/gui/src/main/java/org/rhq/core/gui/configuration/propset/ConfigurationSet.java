@@ -114,8 +114,11 @@ public class ConfigurationSet
         else if (propertyDefinition instanceof PropertyDefinitionMap)
         {
             List<AbstractPropertyMap> nestedSourceParentPropertyMaps = new ArrayList();
-            for (AbstractPropertyMap sourceParentPropertyMap : sourceParentPropertyMaps)
-                nestedSourceParentPropertyMaps.add(sourceParentPropertyMap.getMap(propertyDefinition.getName()));
+            for (AbstractPropertyMap sourceParentPropertyMap : sourceParentPropertyMaps) {
+                PropertyMap nestedSourceParentPropertyMap = sourceParentPropertyMap.getMap(propertyDefinition.getName());
+                nestedSourceParentPropertyMaps.add((nestedSourceParentPropertyMap != null) ? nestedSourceParentPropertyMap :
+                        new PropertyMap(propertyDefinition.getName()));
+            }
             PropertyMap targetPropertyMap = new PropertyMap(propertyDefinition.getName());
             targetParentPropertyMap.put(targetPropertyMap);
             aggregatePropertyMap((PropertyDefinitionMap)propertyDefinition, nestedSourceParentPropertyMaps,

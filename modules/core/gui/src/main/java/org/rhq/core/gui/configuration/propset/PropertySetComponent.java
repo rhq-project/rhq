@@ -62,6 +62,15 @@ public class PropertySetComponent extends UIComponentBase implements FacesCompon
 
     @Nullable
     public PropertyDefinitionSimple getPropertyDefinition() {
+        PropertySimple propertySimple = getProperty();
+        ConfigurationDefinition configurationDefinition = getConfigurationSet().getConfigurationDefinition();
+        PropertyDefinition propertyDefinition = ConfigurationUtility.getPropertyDefinitionForProperty(propertySimple,
+                configurationDefinition);
+        return (PropertyDefinitionSimple)propertyDefinition;
+    }
+
+    @Nullable
+    public PropertySimple getProperty() {
         //noinspection UnnecessaryLocalVariable
         String propertyExpressionString = FacesComponentUtility.getExpressionAttribute(this,
                 PROPERTY_EXPRESSION_STRING_ATTRIBUTE, String.class);
@@ -72,10 +81,7 @@ public class PropertySetComponent extends UIComponentBase implements FacesCompon
         propertyExpressionString = FacesExpressionUtility.unwrapExpressionString(propertyExpressionString);
         propertyExpressionString = "#{" + propertyExpressionString.replace(".stringValue", "") + "}";
         PropertySimple propertySimple = FacesExpressionUtility.getValue(propertyExpressionString, PropertySimple.class);
-        ConfigurationDefinition configurationDefinition = getConfigurationSet().getConfigurationDefinition();
-        PropertyDefinition propertyDefinition = ConfigurationUtility.getPropertyDefinitionForProperty(propertySimple,
-                configurationDefinition);
-        return (PropertyDefinitionSimple)propertyDefinition;
+        return propertySimple;
     }
 
     @Nullable

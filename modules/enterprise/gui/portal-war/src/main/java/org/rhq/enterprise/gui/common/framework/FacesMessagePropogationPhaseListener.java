@@ -30,6 +30,9 @@ import javax.faces.event.PhaseId;
 import javax.faces.event.PhaseListener;
 import org.jetbrains.annotations.Nullable;
 
+import org.jboss.seam.faces.FacesMessages;
+import org.jboss.seam.contexts.Contexts;
+
 /**
  * A phase listener that propogates global JSF messages across redirects.
  *
@@ -49,8 +52,8 @@ public class FacesMessagePropogationPhaseListener implements PhaseListener {
         PhaseId phaseId = event.getPhaseId();
         if (phaseId == PhaseId.RESTORE_VIEW) {
             // We want to add the saved messages back to the context immediately after the view is restored.
-            // Remove them once we've added them back, otherwise the messages will just keep building up,
-            // because they are stored in session scope.
+            // Remove them from the session once we've added them back, otherwise the messages will just keep
+            // building up, since they are stored in session scope.
             List<FacesMessage> savedMessages = removeGlobalFacesMessagesFromSession();
             putGlobalFacesMessagesInFacesContext(savedMessages);
         }
@@ -60,7 +63,8 @@ public class FacesMessagePropogationPhaseListener implements PhaseListener {
         PhaseId phaseId = event.getPhaseId();
         if (phaseId == PhaseId.INVOKE_APPLICATION) {
             // We want to store the messages in the context after the application has done its processing.
-            putGlobalFacesMessagesInSession();
+            if (!Contexts.isConversationContextActive() || FacesMessages.instance().getCurrentMessages().isEmpty())
+                putGlobalFacesMessagesInSession();
         } else if (phaseId == PhaseId.RENDER_RESPONSE) {
             // If we've just rendered a response, this isn't a redirect, so we don't want to propogate messages.
             // (fix for http://jira.jboss.com/jira/browse/JBNADM-1548, ips, 08/15/07)
@@ -99,8 +103,12 @@ public class FacesMessagePropogationPhaseListener implements PhaseListener {
         }
 
         FacesContext facesContext = FacesContext.getCurrentInstance();
-        for (FacesMessage message : messages) {
-            facesContext.addMessage(null, message);
+        // Only add the messages if there aren't already any messages in the context. If there's already messages,
+        // it's probably because Seam FacesMessages already took care of propogating them.
+        if (!facesContext.getMessages().hasNext()) {
+            for (FacesMessage message : messages) {
+                facesContext.addMessage(null, message);
+            }
         }
     }
 

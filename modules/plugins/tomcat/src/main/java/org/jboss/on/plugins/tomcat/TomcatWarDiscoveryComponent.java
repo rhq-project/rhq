@@ -130,13 +130,13 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
             String resourceKey = determineResourceKey(defaultConfiguration, file.getName());
             String objectName = resourceKey;
             String resourceName = file.getName();
-            String description = defaultConfiguration.getSimple("descriptionTemplate").getStringValue();
+            String description = defaultConfiguration.getSimple(MBeanResourceDiscoveryComponent.PROPERTY_DESCRIPTION_TEMPLATE).getStringValue();
 
             DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, "", description, null, null);
             Configuration resourcePluginConfiguration = resource.getPluginConfiguration();
-            resourcePluginConfiguration.put(new PropertySimple("name", resourceName));
-            resourcePluginConfiguration.put(new PropertySimple("objectName", objectName));
-            resourcePluginConfiguration.put(new PropertySimple("filename", deployDirectoryPath + resourceName));
+            resourcePluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_NAME, resourceName));
+            resourcePluginConfiguration.put(new PropertySimple(MBeanResourceDiscoveryComponent.PROPERTY_OBJECT_NAME, objectName));
+            resourcePluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_FILENAME, file.getAbsolutePath()));
 
             resources.add(resource);
         }
@@ -156,7 +156,7 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
      * @return resource key to use for the indicated application file
      */
     private String determineResourceKey(Configuration defaultConfiguration, String fileName) {
-        String template = defaultConfiguration.getSimple("objectName").getStringValue();
+        String template = defaultConfiguration.getSimple(MBeanResourceDiscoveryComponent.PROPERTY_OBJECT_NAME).getStringValue();
         String resourceKey = template.replaceAll("%name%", fileName);
         return resourceKey;
     }

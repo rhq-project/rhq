@@ -234,7 +234,7 @@ public class JBossASServerOperationsDelegate {
         processExecution.setKillOnTimeout(false);
     }
 
-    private String shutdown() throws InterruptedException {
+    private String shutdown() {
         JBossASServerShutdownMethod shutdownMethod = Enum.valueOf(JBossASServerShutdownMethod.class,
             this.serverComponent.getPluginConfiguration().getSimple(JBossASServerComponent.SHUTDOWN_METHOD_CONFIG_PROP)
                 .getStringValue());
@@ -319,6 +319,9 @@ public class JBossASServerOperationsDelegate {
             JBossASServerComponent.SHUTDOWN_MBEAN_OPERATION_CONFIG_PROP).getStringValue();
 
         EmsConnection connection = this.serverComponent.getEmsConnection();
+        if (connection == null) {
+            throw new RuntimeException("Can not connect to the server");
+        }
         EmsBean bean = connection.getBean(mbeanName);
         EmsOperation operation = bean.getOperation(operationName);
         /*
@@ -360,27 +363,25 @@ public class JBossASServerOperationsDelegate {
         try {
             shutdown();
         } catch (Exception e) {
+            throw new RuntimeException("Shutdown may have failed: " +e );
+        }
+
+
+        try {
+            // Wait for server to show as unavailable, up to max wait time.
+            AvailabilityType avail = waitForServerToShutdown();
+            if (avail == AvailabilityType.UP) {
+                problem = true;
+                result.append("Shutdown may have failed (server appears to still be running), ");
+            }
+            // Perform the restart.
+            start();
+
+        } catch (Exception e) {
             problem = true;
-            result.append("Shutdown may have failed: ");
+            result.append("Startup may have failed: ");
             result.append(e);
             result.append(", ");
-        } finally {
-            try {
-                // Wait for server to show as unavailable, up to max wait time.
-                AvailabilityType avail = waitForServerToShutdown();
-                if (avail == AvailabilityType.UP) {
-                    problem = true;
-                    result.append("Shutdown may have failed (server appears to still be running), ");
-                }
-                // Perform the restart.
-                start();
-
-            } catch (Exception e) {
-                problem = true;
-                result.append("Startup may have failed: ");
-                result.append(e);
-                result.append(", ");
-            }
         }
 
         if (problem) {

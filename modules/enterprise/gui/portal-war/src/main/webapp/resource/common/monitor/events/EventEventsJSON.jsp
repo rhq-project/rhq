@@ -160,7 +160,7 @@
             icon = "/images/icn_info_" + color + (grouped?"_multi":"") + ".png";
 
             if (color == "yellow") {
-                color = "#F5EB0A";
+                color = "olive";
             }
 
             String link = "/rhq/resource/events/history.xhtml?id=" + resourceId + "&eventId=" + event.getEventId();

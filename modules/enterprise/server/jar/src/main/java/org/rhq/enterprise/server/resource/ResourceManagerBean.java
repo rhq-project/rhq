@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.LinkedList;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -771,7 +772,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @NotNull
     public List<Resource> getResourceLineage(int resourceId) {
-        List<Resource> resourceLineage = new ArrayList<Resource>();
+        LinkedList<Resource> resourceLineage = new LinkedList<Resource>();
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource == null) {
             throw new ResourceNotFoundException(resourceId);
@@ -781,7 +782,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         int childResourceId = resourceId;
         Resource parent;
         while ((parent = getParentResource(childResourceId)) != null) {
-            resourceLineage.add(0, parent);
+            resourceLineage.addFirst(parent);
             childResourceId = parent.getId(); // This also ensures Hibernate actually populates parent's fields.
         }
 

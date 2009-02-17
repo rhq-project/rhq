@@ -1022,12 +1022,12 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
             if (enabled) {
                 String logFilePathname = logEventSource.getSimpleValue(LogEventSourcePropertyNames.LOG_FILE_PATH, null);
                 if (logFilePathname==null) {
-                    log.info("No logfile path given, can not watch this event log.");
+                    log.info("LOGFILE: No logfile path given, can not watch this event log.");
                     return;
                 }
                 File logFile = new File(logFilePathname);
                 if (!logFile.exists() || !logFile.canRead()) {
-                    log.error("Logfile at location " + logFilePathname + " does not exist or is not readable. Can not start watching the event log.");
+                    log.error("LOGFILE: Logfile at location " + logFilePathname + " does not exist or is not readable. Can not start watching the event log.");
                     return;
                 }
 

@@ -18,16 +18,12 @@
     WebUser user = SessionUtils.getWebUser(request.getSession());
     Subject subject = user.getSubject();
 
-    long end = Long.parseLong(WebUtility.getRequiredRequestParameter(request, "end"));
-    long begin = Long.parseLong(WebUtility.getRequiredRequestParameter(request, "begin"));
-
     ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
     PageList<ResourceConfigurationUpdate> configurationUpdates = configurationManager.getResourceConfigurationUpdates(subject, resourceId, new PageControl(0,100));
 %>
 
 
 { "events": [
-
     <%
         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss Z", Locale.US);
 
@@ -55,16 +51,7 @@
 
             String link = "/rhq/resource/configuration/history.xhtml?id=" + resourceId + "&configId=" + configUpdate.getId();
 
-//            out.write(
-//                    "    <event start=\"" + sdf.format(configUpdate.getCreatedTime()) + "\" " +
-//                    "title=\"Configuration Change\" \n" +
-//                    "link=\"/rhq/resource/configuration/history.xhtml?id=" + resourceId + "&amp;configId=" + configUpdate.getId() + "\" " +
-//                    "icon=\"" + icon + "\" >\n" +
-//                            "&lt;b&gt;User:&lt;/b&gt; " + configUpdate.getSubjectName() + "&lt;br/&gt;" +
-//                            "&lt;b&gt;Status:&lt;/b&gt; " + configUpdate.getStatus() +
-//                    "    </event>\n\n");
             %>
-
 { "start" : "<%=sdf.format(configUpdate.getCreatedTime())%>",
   "title" : "Configuration Change",
   "link" : "<%=link%>",
@@ -72,9 +59,7 @@
   "icon" : "<%=icon%>",
   "color" : "<%=(configUpdate.getStatus() != ConfigurationUpdateStatus.FAILURE ? "#4EB84E" : "#DD5656")%>"
 }
-
     <%
         }
     %>
-
 ]}

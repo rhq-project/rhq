@@ -234,6 +234,10 @@ public class JBossASServerOperationsDelegate {
         processExecution.setKillOnTimeout(false);
     }
 
+    /**
+     * Shuts down the server by dispatching to shutdown via script or JMX. Waits until the server is down.
+     * @return The result of the shutdown operation - is successful
+     */
     private String shutdown() {
         JBossASServerShutdownMethod shutdownMethod = Enum.valueOf(JBossASServerShutdownMethod.class,
             this.serverComponent.getPluginConfiguration().getSimple(JBossASServerComponent.SHUTDOWN_METHOD_CONFIG_PROP)
@@ -356,9 +360,11 @@ public class JBossASServerOperationsDelegate {
         }
     }
 
+    /**
+     * Restart the server by first trying a shutdown and then a start. This is fail fast.
+     * @return A success message on success
+     */
     private String restart() {
-        StringBuffer result = new StringBuffer();
-        boolean problem = false;
 
         try {
             shutdown();
@@ -368,29 +374,15 @@ public class JBossASServerOperationsDelegate {
 
 
         try {
-            // Wait for server to show as unavailable, up to max wait time.
-            AvailabilityType avail = waitForServerToShutdown();
-            if (avail == AvailabilityType.UP) {
-                problem = true;
-                result.append("Shutdown may have failed (server appears to still be running), ");
-            }
             // Perform the restart.
             start();
 
         } catch (Exception e) {
-            problem = true;
-            result.append("Startup may have failed: ");
-            result.append(e);
-            result.append(", ");
+            throw new RuntimeException("Re-Startup may have failed: " +e );
         }
 
-        if (problem) {
-            result.append("Restart may have failed.");
-        } else {
-            result.append("Server has been restarted.");
-        }
+        return"Server has been restarted.";
 
-        return result.toString();
     }
 
     private AvailabilityType waitForServerToStart(long start) throws InterruptedException {

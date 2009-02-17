@@ -24,10 +24,7 @@ package org.rhq.core.pc;
 
 import java.beans.Introspector;
 import java.io.IOException;
-import java.sql.Driver;
-import java.sql.DriverManager;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -301,16 +298,6 @@ public class PluginContainer implements ContainerService {
      */
     private void cleanMemory() {
         Introspector.flushCaches();
-
-        for (Enumeration<Driver> drivers = DriverManager.getDrivers(); drivers.hasMoreElements();) {
-            Driver driver = drivers.nextElement();
-            try {
-                DriverManager.deregisterDriver(driver);
-            } catch (Exception e) {
-                log.info("Failed to deregister JDBC driver, memory leak may occur: " + driver);
-            }
-        }
-
         System.gc();
     }
 

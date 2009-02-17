@@ -99,7 +99,9 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
         query += "cache-interceptor=%name%";
         ObjectNameQueryUtility util = new ObjectNameQueryUtility(query);
         query = util.getTranslatedQuery();
-        interceptors = parentServer.getEmsConnection().queryBeans(query);
+        EmsConnection connection = parentServer.getEmsConnection();
+        if (connection != null)
+            interceptors = connection.queryBeans(query);
 
     }
 
@@ -150,7 +152,11 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
     public AvailabilityType getAvailability() {
 
         try {
-            boolean up = parentServer.getEmsConnection().getBean(baseObjectName).isRegistered();
+            EmsConnection connection = parentServer.getEmsConnection();
+            if (connection == null)
+                return AvailabilityType.DOWN;
+            
+            boolean up = connection.getBean(baseObjectName).isRegistered();
             return up ? AvailabilityType.UP : AvailabilityType.DOWN;
         } catch (Exception e) {
             if (log.isDebugEnabled())

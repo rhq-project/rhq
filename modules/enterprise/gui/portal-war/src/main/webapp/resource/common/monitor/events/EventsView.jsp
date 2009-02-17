@@ -163,7 +163,7 @@ for (Availability avail : availabilities) {
 
   tl = Timeline.create(document.getElementById("t1"), bandInfos);
 
-    var toLoad = 4;
+    var toLoad = 5;
      function done() {
          toLoad--;
          if (toLoad == 0) {
@@ -176,6 +176,13 @@ for (Availability avail : availabilities) {
      }
 
       var link = "/resource/common/monitor/events/EventConfigJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+      Timeline.loadJSON(link, function(json, url) {
+          eventSource.loadJSON(json, url);
+          document.getElementById("event-count").innerHTML = eventSource.getCount();
+          done();
+      });
+
+      link = "/resource/common/monitor/events/EventPluginConfigJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
       Timeline.loadJSON(link, function(json, url) {
           eventSource.loadJSON(json, url);
           document.getElementById("event-count").innerHTML = eventSource.getCount();

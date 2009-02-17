@@ -98,7 +98,7 @@ A.NotBold:hover {
 }
 
 .StackTrace {
-   font-size: 9px;
+   font-size: 10px;
    font-family: Courier New, Courier, monospace;
    white-space: pre-wrap;
 }
@@ -171,7 +171,7 @@ A.NotBold:hover {
    padding: 0;
 }
 
-/* BLOCK */ 
+/* BLOCK */
 .BlockContent {
    background-color: #E5E5E5;
    padding: 3px;
@@ -1101,7 +1101,7 @@ A.displaylink:hover {
 
 }
 
-/* These are the style specifications for the menu layers.  
+/* These are the style specifications for the menu layers.
    Set width to get more browsers corporation  */
 div.menu {
    position: absolute;
@@ -1139,7 +1139,7 @@ div.menu table{
 
 div.menu table th{
    text-align: left;
-} 
+}
 
 /* Style specifications for menu items and links  */
 div.menu ul {
@@ -1703,7 +1703,7 @@ P.compact {
 .summary-props-table {
    width: 100%;
    border-style: none;
-   border-collapse: collapse;   
+   border-collapse: collapse;
 }
 
 .summary-prop-cell {
@@ -1766,7 +1766,7 @@ P.compact {
    color: #339;
 /*   border: 1px solid #BBB;*/
    border-style: none;
-   border-bottom: 1px solid #BBB;   
+   border-bottom: 1px solid #BBB;
    padding: 4px;
    text-align: center;
 }
@@ -2098,7 +2098,7 @@ ul.radio-group .unspecified {
 }
 
 .rich-datascr-act {
-   color: #000000; 
+   color: #000000;
    border-top-style: none;
 	width: inherit;
 	padding: 0px 2px;
@@ -2185,7 +2185,7 @@ ul.radio-group .unspecified {
     color: #b08002;
     font-weight: normal;
     font-family:tahoma,verdana,sans-serif;
-    font-size:11px;    
+    font-size:11px;
 }
 
 #contentParent {

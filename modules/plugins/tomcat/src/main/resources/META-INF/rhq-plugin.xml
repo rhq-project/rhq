@@ -236,7 +236,6 @@
                   name="descriptionTemplate"
                   default="A Tomcat connector" />
             </c:group>
-
          </plugin-configuration>
 
          <operation
@@ -308,7 +307,6 @@
             class="TomcatThreadPoolComponent">
 
             <plugin-configuration>
-
                <c:group
                   name="general"
                   displayName="General">
@@ -334,7 +332,6 @@
                      name="descriptionTemplate"
                      default="A Tomcat connector thread pool" />
                </c:group>
-
             </plugin-configuration>
 
             <metric
@@ -394,8 +391,33 @@
                   name="descriptionTemplate"
                   default="A Tomcat virtual host" />
             </c:group>
-
          </plugin-configuration>
+
+         <operation
+            name="addAlias"
+            description="Add an alias name mapped to this Host.">
+            <parameters>
+               <c:simple-property
+                  name="alias"
+                  displayName="Alias"
+                  description="The alias to add."
+                  type="string"
+                  required="true" />
+            </parameters>
+         </operation>
+
+         <operation
+            name="removeAlias"
+            description="Remove an alias currently mapped to this Host.">
+            <parameters>
+               <c:simple-property
+                  name="alias"
+                  displayName="Alias"
+                  description="The alias to remove."
+                  type="string"
+                  required="true" />
+            </parameters>
+         </operation>
 
          <metric
             property="Catalina:type=Host,host=%name%:aliases"
@@ -409,6 +431,23 @@
             defaultOn="true"
             dataType="trait" />
 
+         <resource-configuration>
+            <c:group name="Attributes">
+               <c:simple-property
+                  name="autoDeploy"
+                  type="boolean"
+                  description="Does this host deploy new applications dropped in appBase at runtime?" />
+               <c:simple-property
+                  name="deployOnStartup"
+                  type="boolean"
+                  description="Does this host deploy applications in appBase at startup?" />
+               <c:simple-property
+                  name="unpackWARs"
+                  type="boolean"
+                  description="Does this Host automatically unpack deployed WAR files?" />
+            </c:group>
+         </resource-configuration>
+
          <service
             name="Tomcat Cache"
             discovery="TomcatCacheDiscoveryComponent"
@@ -417,7 +456,6 @@
 
             <plugin-configuration>
                <c:group name="General">
-
                   <c:simple-property
                      name="objectName"
                      readOnly="true"
@@ -443,7 +481,6 @@
                      default="Tomcat Web Application Cache"
                      readOnly="true" />
                </c:group>
-
             </plugin-configuration>
 
             <metric
@@ -463,7 +500,6 @@
                displayType="summary"
                description="Maximum number of cache entries" />
          </service>
-
       </service>
 
       <service
@@ -636,7 +672,7 @@
             displayName="WAR File"
             category="deployable"
             isCreationType="true">
-            
+
             <configuration>
                <c:group
                   name="deployment"
@@ -652,6 +688,15 @@
             </configuration>
          </content>
 
+         <resource-configuration>
+            <c:group name="Attributes">
+               <c:simple-property
+                  name="docBase"
+                  readOnly="true"
+                  required="true"
+                  description="The docBase set for this application" />
+            </c:group>
+         </resource-configuration>
       </service>
 
       <service
@@ -762,7 +807,6 @@
                   description="The Role description." />
             </c:group>
          </resource-configuration>
-
       </service>
 
       <service
@@ -874,7 +918,6 @@
                   description="The credentials used to authenticate the username." />
             </c:group>
          </resource-configuration>
-
       </service>
 
       <service
@@ -1011,7 +1054,6 @@
             name="save"
             description="Save current users and groups to persistent storage.">
          </operation>
-
       </service>
 
    </server>

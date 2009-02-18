@@ -81,7 +81,7 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * @author Ian Springer
  * @author Heiko W. Rupp
  */
-public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerComponent> implements ContentFacet, DeleteResourceFacet {
+public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostComponent> implements ContentFacet, DeleteResourceFacet {
 
     private static final String METRIC_PREFIX_APPLICATION = "Application.";
     private static final String METRIC_PREFIX_SERVLET = "Servlet.";
@@ -170,9 +170,9 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
     }
 
     @Override
-    public void start(ResourceContext<TomcatServerComponent> resourceContext) {
+    public void start(ResourceContext<TomcatVHostComponent> resourceContext) {
         super.start(resourceContext);
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         this.webModuleMBean = getWebModuleMBean();
 
         ResponseTimeConfiguration responseTimeConfig = new ResponseTimeConfiguration(pluginConfig);
@@ -228,7 +228,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
                     }
                 } else if (metricName.startsWith(METRIC_PREFIX_APPLICATION)) {
                     if (metricName.equals(TRAIT_EXPLODED)) {
-                        Configuration pluginConfig = super.resourceContext.getPluginConfiguration();
+                        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
                         String filename = pluginConfig.getSimpleValue(PROPERTY_FILENAME, null);
                         boolean exploded = new File(filename).isDirectory();
                         MeasurementDataTrait trait = new MeasurementDataTrait(schedule, (exploded) ? "yes" : "no");
@@ -246,7 +246,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
     private Double getSessionMetric(String metricName) {
         EmsConnection jmxConnection = getEmsConnection();
         String servletMBeanNames = QUERY_TEMPLATE_SESSION;
-        Configuration config = this.resourceContext.getPluginConfiguration();
+        Configuration config = getResourceContext().getPluginConfiguration();
         servletMBeanNames = servletMBeanNames.replace("%PATH%", config.getSimpleValue(PROPERTY_CONTEXT_ROOT, ""));
         servletMBeanNames = servletMBeanNames.replace("%HOST%", config.getSimpleValue(PROPERTY_VHOST, ""));
         ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(servletMBeanNames);
@@ -272,7 +272,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
         EmsConnection jmxConnection = getEmsConnection();
 
         String servletMBeanNames = QUERY_TEMPLATE_SERVLET;
-        Configuration config = this.resourceContext.getPluginConfiguration();
+        Configuration config = getResourceContext().getPluginConfiguration();
         servletMBeanNames = servletMBeanNames.replace("%WEBMODULE%", config.getSimpleValue(PROPERTY_NAME, ""));
         ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(servletMBeanNames);
         List<EmsBean> mBeans = jmxConnection.queryBeans(queryUtility.getTranslatedQuery());
@@ -425,7 +425,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
 
     @Nullable
     private String getWebModuleMBeanName() {
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         String name = pluginConfig.getSimpleValue(PROPERTY_NAME, null);
         String webModuleMBeanName = "Catalina:j2eeType=WebModule,J2EEApplication=none,J2EEServer=none,name=" + name;
         return webModuleMBeanName;
@@ -443,7 +443,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
     private List<EmsBean> getVHosts() {
         EmsConnection emsConnection = getEmsConnection();
         String query = QUERY_TEMPLATE_HOST;
-        query = query.replace("%PATH%", this.resourceContext.getPluginConfiguration().getSimpleValue(PROPERTY_CONTEXT_ROOT, ""));
+        query = query.replace("%PATH%", getResourceContext().getPluginConfiguration().getSimpleValue(PROPERTY_CONTEXT_ROOT, ""));
         ObjectNameQueryUtility queryUtil = new ObjectNameQueryUtility(query);
         List<EmsBean> mBeans = emsConnection.queryBeans(queryUtil.getTranslatedQuery());
         return mBeans;
@@ -455,7 +455,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
      * @return application name
      */
     private String getApplicationName() {
-        String resourceKey = resourceContext.getResourceKey();
+        String resourceKey = getResourceContext().getResourceKey();
         String appName = resourceKey.substring(resourceKey.lastIndexOf('=') + 1);
         return appName;
     }
@@ -527,7 +527,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
         Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
 
-        Configuration pluginConfiguration = super.resourceContext.getPluginConfiguration();
+        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
         String fullFileName = pluginConfiguration.getSimpleValue(PROPERTY_FILENAME, null);
 
         if (fullFileName == null) {
@@ -650,7 +650,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
         OutputStream tempOutputStream = null;
         try {
             tempOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
-            contentServices.downloadPackageBits(resourceContext.getContentContext(), packageDetails.getKey(), tempOutputStream, true);
+            contentServices.downloadPackageBits(getResourceContext().getContentContext(), packageDetails.getKey(), tempOutputStream, true);
         } catch (IOException e) {
             log.error("Error writing updated application bits to temporary location: " + tempFile, e);
             throw e;
@@ -670,16 +670,16 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
         return tempFile;
     }
 
-    public TomcatServerComponent getParentResourceComponent() {
-        return this.resourceContext.getParentResourceComponent();
+    public TomcatVHostComponent getParentResourceComponent() {
+        return getResourceContext().getParentResourceComponent();
     }
 
     private PackageVersions loadApplicationVersions() {
         if (versions == null) {
-            ResourceType resourceType = super.resourceContext.getResourceType();
+            ResourceType resourceType = getResourceContext().getResourceType();
             String pluginName = resourceType.getPlugin();
 
-            File dataDirectoryFile = super.resourceContext.getDataDirectory();
+            File dataDirectoryFile = getResourceContext().getDataDirectory();
 
             if (!dataDirectoryFile.exists()) {
                 dataDirectoryFile.mkdir();
@@ -697,7 +697,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatServerCompo
     }
 
     public void deleteResource() throws Exception {
-        Configuration pluginConfiguration = super.resourceContext.getPluginConfiguration();
+        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
         String fullFileName = pluginConfiguration.getSimple(PROPERTY_FILENAME).getStringValue();
         String contextRoot = pluginConfiguration.getSimple(PROPERTY_CONTEXT_ROOT).getStringValue();
         File file = new File(fullFileName);

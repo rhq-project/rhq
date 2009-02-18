@@ -119,7 +119,6 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
         private String address;
         private String scheme;
         private String port;
-        private String protocol;
 
         public ConfigInfo(EmsBean bean) {
             EmsBeanName eName = bean.getBeanName();
@@ -151,10 +150,5 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
         public String getPort() {
             return port;
         }
-
-        public String getProtocol() {
-            return protocol;
-        }
-
     }
 }

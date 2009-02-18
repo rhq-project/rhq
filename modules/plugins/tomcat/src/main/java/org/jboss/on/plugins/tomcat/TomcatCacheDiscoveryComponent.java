@@ -40,13 +40,13 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * @author Heiko W. Rupp
  *
  */
-public class TomcatCacheDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatVHostComponent> {
+public class TomcatCacheDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatWarComponent> {
 
     static Pattern hostPattern = Pattern.compile(".*host=([\\w.]+).*");
     static Pattern pathPattern = Pattern.compile(".*path=([\\w.]+).*");
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatVHostComponent> discoveryContext) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatWarComponent> discoveryContext) {
 
         Set<DiscoveredResourceDetails> resources = super.discoverResources(discoveryContext);
         Configuration pluginConfiguration = discoveryContext.getDefaultPluginConfiguration();

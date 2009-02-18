@@ -46,7 +46,7 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * @author Jay Shaughnessy
  * @author Jason Dobies
  */
-public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatServerComponent> {
+public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatVHostComponent> {
 
     /**
      * The name MBean attribute for each application is of the form "Tomcat WAR (//vHost/contextRoot)". 
@@ -57,11 +57,11 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatServerComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatVHostComponent> context) {
         // Parent will discover deployed applications through JMX
         Set<DiscoveredResourceDetails> jmxResources = super.discoverResources(context);
 
-        TomcatServerComponent parentComponent = context.getParentResourceComponent();
+        TomcatVHostComponent parentComponent = context.getParentResourceComponent();
         ApplicationServerComponent applicationServerComponent = (ApplicationServerComponent) parentComponent;
         String deployDirectoryPath = applicationServerComponent.getConfigurationPath().getPath();
         Matcher m = PATTERN_NAME.matcher("");
@@ -107,11 +107,11 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
      * @return set of all applications discovered on the file system; this should include at least some of the
      *         applications discovered through JMX as well
      */
-    private Set<DiscoveredResourceDetails> discoverFileSystem(ResourceDiscoveryContext<TomcatServerComponent> context) {
+    private Set<DiscoveredResourceDetails> discoverFileSystem(ResourceDiscoveryContext<TomcatVHostComponent> context) {
         Configuration defaultConfiguration = context.getDefaultPluginConfiguration();
 
         // Find the location of the deploy directory
-        TomcatServerComponent parentComponent = context.getParentResourceComponent();
+        TomcatVHostComponent parentComponent = context.getParentResourceComponent();
         ApplicationServerComponent applicationServerComponent = (ApplicationServerComponent) parentComponent;
 
         String deployDirectoryPath = applicationServerComponent.getConfigurationPath().getPath();

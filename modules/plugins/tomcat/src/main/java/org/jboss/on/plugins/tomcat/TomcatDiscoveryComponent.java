@@ -153,8 +153,8 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
         boolean isEWS = isEWS(installationPath);
         String productName = isEWS ? PRODUCT_NAME_EWS : PRODUCT_NAME_APACHE;
         String productDescription = isEWS ? PRODUCT_DESCRIPTION_EWS : PRODUCT_DESCRIPTION_APACHE;
-        String resourceName = ((hostname == null) ? "" : (hostname + " ")) + productName + " " + resourceVersion + " ("
-            + ((tomcatConfig.getAddress() == null) ? "" : (tomcatConfig.getAddress() + ":")) + tomcatConfig.getPort() + ")";
+        String resourceName = ((hostname == null) ? "" : (hostname + " ")) + productName + " (" + ((tomcatConfig.getAddress() == null) ? "" : (tomcatConfig.getAddress() + ":"))
+            + tomcatConfig.getPort() + ")";
         String resourceKey = installationPath;
 
         Configuration pluginConfiguration = populatePluginConfiguration(installationPath, commandLine);

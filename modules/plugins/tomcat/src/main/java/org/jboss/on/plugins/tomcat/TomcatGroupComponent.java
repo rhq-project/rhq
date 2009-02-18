@@ -23,18 +23,26 @@
 
 package org.jboss.on.plugins.tomcat;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
- * Handle generic information about an application cache
+ * Manage a Tomcat Group
  * 
  * @author Jay Shaughnessy
- * @author Heiko W. Rupp
- *
  */
-public class TomcatCacheComponent extends MBeanResourceComponent<TomcatWarComponent> {
+public class TomcatGroupComponent extends MBeanResourceComponent<TomcatUserDatabaseComponent> implements DeleteResourceFacet {
 
-    public static final String PROPERTY_HOST = "host";
-    public static final String PROPERTY_PATH = "path";
+    public static final String PROPERTY_GROUP_NAME = "groupname";
+    public static final String RESOURCE_TYPE_NAME = "Tomcat Group";
+
+    public void deleteResource() throws Exception {
+        Configuration opConfig = new Configuration();
+        ResourceContext<TomcatUserDatabaseComponent> resourceContext = getResourceContext();
+        opConfig.put(resourceContext.getPluginConfiguration().getSimple(PROPERTY_GROUP_NAME));
+        resourceContext.getParentResourceComponent().invokeOperation("removeGroup", opConfig);
+    }
 
 }

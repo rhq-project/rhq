@@ -23,18 +23,26 @@
 
 package org.jboss.on.plugins.tomcat;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
- * Handle generic information about an application cache
+ * Manage a Tomcat Role
  * 
  * @author Jay Shaughnessy
- * @author Heiko W. Rupp
- *
  */
-public class TomcatCacheComponent extends MBeanResourceComponent<TomcatWarComponent> {
+public class TomcatRoleComponent extends MBeanResourceComponent<TomcatUserDatabaseComponent> implements DeleteResourceFacet {
 
-    public static final String PROPERTY_HOST = "host";
-    public static final String PROPERTY_PATH = "path";
+    public static final String PROPERTY_ROLE_NAME = "rolename";
+    public static final String RESOURCE_TYPE_NAME = "Tomcat Role";
+
+    public void deleteResource() throws Exception {
+        Configuration opConfig = new Configuration();
+        ResourceContext<TomcatUserDatabaseComponent> resourceContext = getResourceContext();
+        opConfig.put(resourceContext.getPluginConfiguration().getSimple(PROPERTY_ROLE_NAME));
+        resourceContext.getParentResourceComponent().invokeOperation("removeRole", opConfig);
+    }
 
 }

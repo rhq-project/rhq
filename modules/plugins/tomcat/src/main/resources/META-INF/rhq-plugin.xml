@@ -17,12 +17,6 @@
       class="TomcatServerComponent"
       description="Tomcat Server">
 
-      <subcategories>
-         <subcategory name="Applications" />
-         <subcategory name="Resources" />
-         <subcategory name="Security" />
-      </subcategories>
-
       <plugin-configuration>
          <c:group
             name="connection"
@@ -74,62 +68,7 @@
                required="false"
                description="The path to the script used by the 'Shutdown' operation to shutdown this Tomcat server;                                            
                                             if the path is not absolute it will be resolved relative to {installationPath}." />
-            <c:simple-property
-               name="shutdownMethod"
-               displayName="Shutdown Method"
-               type="string"
-               required="false"
-               default="JMX"
-               description="The method used to execute the Shutdown operation;
-                                            defaults to 'Shutdown Script'.">
-               <c:property-options>
-                  <c:option
-                     value="JMX"
-                     name="JMX MBean" />
-                  <c:option
-                     value="SCRIPT"
-                     name="Shutdown Script"
-                     default="true" />
-               </c:property-options>
-            </c:simple-property>
          </c:group>
-
-         <!-- 
-            <c:group name="event" displayName="Events">
-            <c:list-property name="logEventSources">
-            <c:map-property name="logEventSource">
-            <c:simple-property name="logFilePath" type="file" summary="true"
-            description="The absolute path to the source log file."/>
-            <c:simple-property name="enabled" type="boolean" summary="false"
-            description="A flag indicating whether of not this log Event source is currently
-            enabled (i.e. whether the associated log file should be tailed for
-            new entries)."/>
-            <c:simple-property name="dateFormat" required="false"
-            description="The date format to use when parsing the dates in log entries. The
-            format must be in the syntax defined by the Java SimpleDateFormat
-            class. If not specified, the three date formats that are predefined
-            by Log4J (ISO8601, DATE, and ABSOLUTE) will be tried."/>
-            <c:simple-property name="includesPattern" required="false"
-            description="A regular expression against which a log entry's detail is matched
-            to determine if an Event should be fired for that entry. If not
-            specified, no filtering of log entries will be done based on their
-            detail."/>
-            <c:simple-property name="minimumSeverity" required="false" default="error"
-            description="The minimum severity of Events that should be collected for this
-            source. If not specified, there is no minimum severity (i.e. all
-            events will be collected).">
-            <c:property-options>
-            <c:option name="debug" value="debug"/>
-            <c:option name="info"  value="info"/>
-            <c:option name="warn"  value="warn"/>
-            <c:option name="error" value="error" default="true"/>
-            <c:option name="fatal" value="fatal"/>
-            </c:property-options>
-            </c:simple-property>
-            </c:map-property>
-            </c:list-property>
-            </c:group>
-         -->
 
          <c:group
             name="advanced"
@@ -139,24 +78,10 @@
                name="type"
                description="The type used to establish the EMS connection to the Tomcat server."
                default="org.mc4j.ems.connection.support.metadata.Tomcat55ConnectionTypeDescriptor" />
-            <c:simple-property
-               name="shutdownMBeanName"
-               displayName="Shutdown MBean Name"
-               required="false"
-               default="Catalina:type=Server"
-               description="Name of the MBean to use when shutting down this server through JMX." />
-            <c:simple-property
-               name="shutdownMBeanOperation"
-               displayName="Shutdown MBean Operation"
-               required="false"
-               default="await"
-               description="Name of the operation to invoke when shutting down this server through JMX.
-                                 Note that only operations with no parameter or with one int parameter are supported. If the
-                                 operation requires an int parameter, '0' will be supplied." />
          </c:group>
       </plugin-configuration>
 
-      <!--  This will pick up any Tomcat process, whether standalone or embedded. We narrow it down further by examining the install dir -->
+      <!--  This will pick up any Tomcat process, whether standalone or embedded. We narrow it down further by examining the command line -->
       <process-scan
          name="Tomcat"
          query="process|basename|match=^java.*,arg|org.apache.catalina.startup.Bootstrap|match=.*" />
@@ -183,183 +108,8 @@
          displayType="summary"
          description="Tomcat server release identifier" />
 
-      <!--                  
-         
-         <event name="logEntry" description="an entry in a log file"/>
-         
-      -->
-
-      <service
-         name="Tomcat Connector"
-         subCategory="Resources"
-         discovery="TomcatConnectorDiscoveryComponent"
-         class="TomcatConnectorComponent">
-
-         <plugin-configuration>
-            <c:group
-               name="general"
-               displayName="General">
-               <c:simple-property
-                  name="objectName"
-                  readOnly="true"
-                  default="Catalina:type=Connector,port=%port%" />
-               <c:simple-property
-                  name="address"
-                  type="string"
-                  description="IP Address on which this connector listens."
-                  readOnly="true" />
-               <c:simple-property
-                  name="port"
-                  type="string"
-                  description="Port on which this connector listens."
-                  readOnly="true" />
-               <c:simple-property
-                  name="scheme"
-                  type="string"
-                  description="Protocol scheme. (jk, ajp, http)."
-                  default="http" />
-               <c:simple-property
-                  name="protocol"
-                  type="string"
-                  description="Protocol handler."
-                  readOnly="true" />
-            </c:group>
-
-            <c:group
-               name="advanced"
-               displayName="Advanced"
-               hiddenByDefault="true">
-               <c:simple-property
-                  name="nameTemplate"
-                  default="Tomcat Connector ({port})" />
-               <c:simple-property
-                  name="descriptionTemplate"
-                  default="A Tomcat connector" />
-            </c:group>
-         </plugin-configuration>
-
-         <operation
-            name="start"
-            displayName="Start"
-            description="Starts this connector" />
-
-         <operation
-            name="stop"
-            displayName="Stop"
-            description="Stops this connector" />
-
-         <operation
-            name="pause"
-            displayName="Pause"
-            description="Pauses this connector" />
-
-         <operation
-            name="resume"
-            displayName="Resume"
-            description="Resumes this connector" />
-
-         <!-- Catalina:type=GlobalRequestProcessor,name=http-8080:maxTime -->
-         <metric
-            property="Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%:maxTime"
-            displayName="Maximum Request Time"
-            description="Maximum time it took to process a request"
-            units="milliseconds"
-            defaultOn="true"
-            category="performance" />
-
-         <!-- Catalina:type=GlobalRequestProcessor,name=http-8080:requestCount -->
-         <metric
-            property="Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%:requestCount"
-            displayName="Request count"
-            description="Total number of requests processed since last restart."
-            defaultOn="false"
-            category="utilization"
-            measurementType="trendsup" />
-
-         <!-- Catalina:type=GlobalRequestProcessor,name=http-8080:errorCount -->
-         <metric
-            property="Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%:errorCount"
-            displayName="Error count"
-            description="Number of errors while processing since last restart."
-            defaultOn="true"
-            category="utilization"
-            measurementType="trendsup" />
-
-         <!-- Catalina:type=ThreadPool,name=http-8080:currentThreadsBusy -->
-         <metric
-            property="Catalina:type=ThreadPool,name=%scheme%-%port%:currentThreadsBusy"
-            displayName="Threads Active"
-            defaultOn="true"
-            category="utilization"
-            displayType="summary" />
-
-         <!-- Catalina:type=ThreadPool,name=http-8080:currentThreadCount -->
-         <metric
-            property="Catalina:type=ThreadPool,name=%scheme%-%port%:currentThreadCount"
-            displayName="Threads Allocated"
-            defaultOn="true"
-            category="utilization"
-            displayType="summary" />
-
-         <service
-            name="Tomcat ThreadPool"
-            discovery="TomcatThreadPoolDiscoveryComponent"
-            class="TomcatThreadPoolComponent">
-
-            <plugin-configuration>
-               <c:group
-                  name="general"
-                  displayName="General">
-                  <c:simple-property
-                     name="objectName"
-                     readOnly="true"
-                     default="Catalina:type=ThreadPool,name=%name%" />
-                  <c:simple-property
-                     name="name"
-                     type="string"
-                     description="Generated name based on parent connector."
-                     readOnly="true" />
-               </c:group>
-
-               <c:group
-                  name="advanced"
-                  displayName="Advanced"
-                  hiddenByDefault="true">
-                  <c:simple-property
-                     name="nameTemplate"
-                     default="Tomcat ThreadPool ({name})" />
-                  <c:simple-property
-                     name="descriptionTemplate"
-                     default="A Tomcat connector thread pool" />
-               </c:group>
-            </plugin-configuration>
-
-            <metric
-               property="Catalina:type=ThreadPool,name=%name%:currentThreadsBusy"
-               displayName="Threads Active"
-               defaultOn="true"
-               category="utilization"
-               displayType="summary" />
-
-            <metric
-               property="Catalina:type=ThreadPool,name=%name%:currentThreadCount"
-               displayName="Threads Allocated"
-               defaultOn="true"
-               category="utilization"
-               displayType="summary" />
-
-            <metric
-               property="Catalina:type=ThreadPool,name=%name%:maxThreads"
-               displayName="Max Threads"
-               defaultOn="true"
-               dataType="trait" />
-         </service>
-
-      </service>
-
       <service
          name="Tomcat Virtual Host"
-         subCategory="Resources"
          discovery="TomcatVHostDiscoveryComponent"
          class="TomcatVHostComponent"
          description="A virtual host in the web container">
@@ -378,6 +128,11 @@
                   type="string"
                   description="The virtual host"
                   readOnly="true" />
+               <c:simple-property
+                  name="appBase"
+                  required="true"
+                  readOnly="true"
+                  description="The Application Base directory for this virtual host." />                  
             </c:group>
 
             <c:group
@@ -425,12 +180,6 @@
             defaultOn="true"
             dataType="trait" />
 
-         <metric
-            property="Catalina:type=Host,host=%name%:appBase"
-            displayName="Application root"
-            defaultOn="true"
-            dataType="trait" />
-
          <resource-configuration>
             <c:group name="Attributes">
                <c:simple-property
@@ -449,25 +198,53 @@
          </resource-configuration>
 
          <service
-            name="Tomcat Cache"
-            discovery="TomcatCacheDiscoveryComponent"
-            class="TomcatCacheComponent"
-            description="A Tomcat Application (WAR) Cache">
+            name="Tomcat Web Application (WAR)"
+            discovery="TomcatWarDiscoveryComponent"
+            class="TomcatWarComponent"
+            description="Tomcat deployed Web Application"
+            createDeletePolicy="both"
+            creationDataType="content">
 
             <plugin-configuration>
                <c:group name="General">
                   <c:simple-property
                      name="objectName"
                      readOnly="true"
-                     default="Catalina:type=Cache,host=%host%,path=%path%" />
+                     default="Catalina:j2eeType=WebModule,name=%name%,J2EEApplication=none,J2EEServer=none" />
                   <c:simple-property
-                     name="host"
-                     description="The VHost for the cache"
-                     readOnly="true" />
+                     name="name"
+                     readOnly="true"
+                     description="The name of this Web Module (WAR)" />
                   <c:simple-property
-                     name="path"
-                     description="The relevant application path"
-                     readOnly="true" />
+                     name="filename"
+                     readOnly="true"
+                     description="The deployment root file name (.war or directory)" />
+                  <c:simple-property
+                     name="contextRoot"
+                     readOnly="true"
+                     required="false"
+                     description="The unique path prefix for URLs corresponding to this WAR" />
+                  <c:simple-property
+                     name="vHost"
+                     displayName="Virtual Host"
+                     readOnly="true"
+                     required="false"
+                     description="The (virtual) host that this application is running on. If no virtual host is set, this defaults to 'localhost'" />
+               </c:group>
+
+               <c:group name="ResponseTime">
+                  <c:simple-property
+                     name="responseTimeLogFile"
+                     required="false"
+                     description="the absolute path to the log file containing response-time statistics for this web application" />
+                  <c:simple-property
+                     name="responseTimeUrlExcludes"
+                     required="false"
+                     description="a space-delimited list of regular expressions matching URLs to exclude from response-time statisics" />
+                  <c:simple-property
+                     name="responseTimeUrlTransforms"
+                     required="false"
+                     description="a space-delimited list of Perl-style substitution expressions to apply to URLs actively collecting response-time statistics (e.g. |^/dept/finance/.*|/dept/finance/*|)" />
                </c:group>
 
                <c:group
@@ -475,456 +252,328 @@
                   hiddenByDefault="true">
                   <c:simple-property
                      name="nameTemplate"
-                     default="Tomcat Cache ({host}{path})" />
+                     default="Tomcat WAR ({name})" />
+                  <c:simple-property
+                     name="extension"
+                     default="war"
+                     readOnly="true" />
                   <c:simple-property
                      name="descriptionTemplate"
-                     default="Tomcat Web Application Cache"
+                     default="Tomcat Web Application"
                      readOnly="true" />
                </c:group>
             </plugin-configuration>
 
+            <operation
+               name="start"
+               description="starts this web application." />
+
+            <operation
+               name="stop"
+               description="stops this web application." />
+
+            <operation
+               name="reload"
+               description="reloads this web application." />
+
+            <!-- The two traits below are collected by the ApplicationComponent class, which WarComponent extends.. -->
             <metric
-               property="accessCount"
+               property="Application.exploded"
+               displayName="Exploded deployment"
+               dataType="trait"
                displayType="summary"
-               description="Number of cache accesses" />
+               description="Whether deployed as a .war file or an exploded directory" />
+
             <metric
-               property="hitsCount"
-               displayType="summary"
-               description="Number of cache hits" />
+               property="Servlet.NumRequests"
+               displayName="Requests served"
+               units="none"
+               description="Number of requests served by servlets"
+               measurementType="trendsup"
+               displayType="summary" />
+
             <metric
-               property="cacheSize"
-               displayType="summary"
-               description="Number of cache entries" />
+               property="Servlet.NumErrors"
+               displayName="Errors while processing"
+               units="none"
+               description="Number of errors while processing"
+               measurementType="trendsup"
+               displayType="summary" />
+
             <metric
-               property="cacheMaxSize"
-               displayType="summary"
-               description="Maximum number of cache entries" />
+               property="Session.activeSessions"
+               displayName="Currently Active Sessions"
+               units="none"
+               description="Number active sessions for the webapp right now" />
+
+            <metric
+               property="Session.maxActive"
+               displayName="Maximum number of Active Sessions"
+               units="none"
+               description="Maximum number of active sessions for the webapp" />
+
+            <metric
+               property="Session.sessionCounter"
+               displayName="Sessions created"
+               units="none"
+               description="Number of sessions created for the webapp"
+               measurementType="trendsup" />
+
+            <metric
+               property="Session.expiredSessions"
+               displayName="Expired Sessions"
+               units="none"
+               description="Number of expired sessions for the webapp"
+               measurementType="trendsup" />
+
+            <metric
+               property="Session.rejectedSessions"
+               displayName="Rejected Sessions"
+               units="none"
+               description="Number of sessions rejected for the webapp"
+               measurementType="trendsup" />
+
+            <metric
+               property="Session.sessionAverageAliveTime"
+               displayName="Session Average alive time"
+               units="seconds"
+               description="Average alive time of a Sessions" />
+
+            <metric
+               property="Session.sessionMaxAliveTime"
+               displayName="Max Session alive time"
+               units="seconds"
+               description="Maximum alive time of a Sessions" />
+
+            <metric
+               property="VHost.name"
+               displayName="Virtual Hosts"
+               dataType="trait"
+               defaultOn="true"
+               description="Virtual hosts this app runs on" />
+
+            <metric
+               property="ResponseTime"
+               displayName="HTTP Response Time"
+               dataType="calltime"
+               defaultOn="false"
+               units="milliseconds"
+               destinationType="URL"
+               description="the minimum, maximum, and average response times for HTTP requests serviced by this web application" />
+
+            <content
+               name="file"
+               displayName="WAR File"
+               category="deployable"
+               isCreationType="true">
+
+               <configuration>
+                  <c:group
+                     name="deployment"
+                     displayName="Deployment Options">
+                     <c:simple-property
+                        name="vHost"
+                        displayName="Virtual Host"
+                        type="string"
+                        default="localhost"
+                        required="false"
+                        description="The virtual host to which this web application will be deployed. Default is localhost." />
+                     <c:simple-property
+                        name="explodeOnDeploy"
+                        displayName="Explode on Deploy"
+                        type="boolean"
+                        default="true"
+                        required="true"
+                        description="If yes then explode the WAR file into the Tomcat deploy directory. If no leave as a .war file (for no, unpackWARs=false is required on the virtual host)." />
+                  </c:group>
+               </configuration>
+            </content>
+
+            <resource-configuration>
+               <c:group name="Attributes">
+                  <c:simple-property
+                     name="docBase"
+                     readOnly="true"
+                     required="true"
+                     description="The docBase set for this application" />
+               </c:group>
+            </resource-configuration>
+
+            <service
+               name="Tomcat Cache"
+               discovery="TomcatCacheDiscoveryComponent"
+               class="TomcatCacheComponent"
+               description="A Tomcat Application (WAR) Cache">
+
+               <plugin-configuration>
+                  <c:group name="General">
+                     <c:simple-property
+                        name="objectName"
+                        readOnly="true"
+                        default="Catalina:type=Cache,host=%host%,path=%path%" />
+                     <c:simple-property
+                        name="host"
+                        description="The VHost for the cache"
+                        readOnly="true" />
+                     <c:simple-property
+                        name="path"
+                        description="The relevant application path"
+                        readOnly="true" />
+                  </c:group>
+
+                  <c:group
+                     name="Advanced"
+                     hiddenByDefault="true">
+                     <c:simple-property
+                        name="nameTemplate"
+                        default="Tomcat Cache ({host}{path})" />
+                     <c:simple-property
+                        name="descriptionTemplate"
+                        default="Tomcat Web Application Cache"
+                        readOnly="true" />
+                  </c:group>
+               </plugin-configuration>
+
+               <metric
+                  property="accessCount"
+                  displayType="summary"
+                  description="Number of cache accesses" />
+               <metric
+                  property="hitsCount"
+                  displayType="summary"
+                  description="Number of cache hits" />
+               <metric
+                  property="cacheSize"
+                  displayType="summary"
+                  description="Number of cache entries" />
+               <metric
+                  property="cacheMaxSize"
+                  displayType="summary"
+                  description="Maximum number of cache entries" />
+            </service>
          </service>
+
       </service>
 
       <service
-         name="Tomcat Web Application (WAR)"
-         subCategory="Applications"
-         discovery="TomcatWarDiscoveryComponent"
-         class="TomcatWarComponent"
-         description="Tomcat deployed Web Application"
-         createDeletePolicy="both"
-         creationDataType="content">
+         name="Tomcat Connector"
+         discovery="TomcatConnectorDiscoveryComponent"
+         class="TomcatConnectorComponent">
 
          <plugin-configuration>
-            <c:group name="General">
+            <c:group
+               name="general"
+               displayName="General">
                <c:simple-property
                   name="objectName"
                   readOnly="true"
-                  default="Catalina:j2eeType=WebModule,name=%name%,J2EEApplication=none,J2EEServer=none" />
+                  default="Catalina:type=Connector,port=%port%" />
                <c:simple-property
-                  name="name"
+                  name="address"
+                  type="string"
+                  description="IP Address on which this connector listens."
+                  readOnly="true" />
+               <c:simple-property
+                  name="port"
+                  type="string"
+                  description="Port on which this connector listens."
+                  readOnly="true" />
+               <c:simple-property
+                  name="scheme"
+                  type="string"
+                  description="Protocol scheme. (jk, ajp, http)."
                   readOnly="true"
-                  description="The name of this Web Module (WAR)" />
+                  default="http" />
                <c:simple-property
-                  name="filename"
-                  readOnly="true"
-                  description="The deployment root file name (.war or directory)" />
-               <c:simple-property
-                  name="contextRoot"
-                  readOnly="true"
-                  required="false"
-                  description="The unique path prefix for URLs corresponding to this WAR" />
-               <c:simple-property
-                  name="vHost"
-                  displayName="Virtual Host"
-                  readOnly="true"
-                  required="false"
-                  description="The (virtual) host that this application is running on. If no virtual host is set, this defaults to 'localhost'" />
-            </c:group>
-
-            <c:group name="ResponseTime">
-               <c:simple-property
-                  name="responseTimeLogFile"
-                  required="false"
-                  description="the absolute path to the log file containing response-time statistics for this web application" />
-               <c:simple-property
-                  name="responseTimeUrlExcludes"
-                  required="false"
-                  description="a space-delimited list of regular expressions matching URLs to exclude from response-time statisics" />
-               <c:simple-property
-                  name="responseTimeUrlTransforms"
-                  required="false"
-                  description="a space-delimited list of Perl-style substitution expressions to apply to URLs actively collecting response-time statistics (e.g. |^/dept/finance/.*|/dept/finance/*|)" />
+                  name="protocol"
+                  type="string"
+                  description="Protocol handler."
+                  readOnly="true" />
             </c:group>
 
             <c:group
-               name="Advanced"
+               name="advanced"
+               displayName="Advanced"
                hiddenByDefault="true">
                <c:simple-property
                   name="nameTemplate"
-                  default="Tomcat WAR ({name})" />
-               <c:simple-property
-                  name="extension"
-                  default="war"
-                  readOnly="true" />
+                  default="Tomcat Connector ({scheme}-{port})" />
                <c:simple-property
                   name="descriptionTemplate"
-                  default="Tomcat Web Application"
-                  readOnly="true" />
+                  default="A Tomcat connector" />
             </c:group>
          </plugin-configuration>
 
          <operation
             name="start"
-            description="starts this web application." />
+            displayName="Start"
+            description="Starts this connector" />
 
          <operation
             name="stop"
-            description="stops this web application." />
+            displayName="Stop"
+            description="Stops this connector" />
 
          <operation
-            name="reload"
-            description="reloads this web application." />
+            name="pause"
+            displayName="Pause"
+            description="Pauses this connector" />
 
-         <!-- The two traits below are collected by the ApplicationComponent class, which WarComponent extends.. -->
-         <metric
-            property="Application.exploded"
-            displayName="Exploded deployment"
-            dataType="trait"
-            displayType="summary"
-            description="Whether deployed as a .war file or an exploded directory" />
+         <operation
+            name="resume"
+            displayName="Resume"
+            description="Resumes this connector" />
 
          <metric
-            property="Servlet.NumRequests"
-            displayName="Requests served"
-            units="none"
-            description="Number of requests served by servlets"
-            measurementType="trendsup"
-            displayType="summary" />
-
-         <metric
-            property="Servlet.NumErrors"
-            displayName="Errors while processing"
-            units="none"
-            description="Number of errors while processing"
-            measurementType="trendsup"
-            displayType="summary" />
-
-         <metric
-            property="Session.activeSessions"
-            displayName="Currently Active Sessions"
-            units="none"
-            description="Number active sessions for the webapp right now" />
-
-         <metric
-            property="Session.maxActive"
-            displayName="Maximum number of Active Sessions"
-            units="none"
-            description="Maximum number of active sessions for the webapp" />
-
-         <metric
-            property="Session.sessionCounter"
-            displayName="Sessions created"
-            units="none"
-            description="Number of sessions created for the webapp"
-            measurementType="trendsup" />
-
-         <metric
-            property="Session.expiredSessions"
-            displayName="Expired Sessions"
-            units="none"
-            description="Number of expired sessions for the webapp"
-            measurementType="trendsup" />
-
-         <metric
-            property="Session.rejectedSessions"
-            displayName="Rejected Sessions"
-            units="none"
-            description="Number of sessions rejected for the webapp"
-            measurementType="trendsup" />
-
-         <metric
-            property="Session.sessionAverageAliveTime"
-            displayName="Session Average alive time"
-            units="seconds"
-            description="Average alive time of a Sessions" />
-
-         <metric
-            property="Session.sessionMaxAliveTime"
-            displayName="Max Session alive time"
-            units="seconds"
-            description="Maximum alive time of a Sessions" />
-
-         <metric
-            property="VHost.name"
-            displayName="Virtual Hosts"
-            dataType="trait"
-            defaultOn="true"
-            description="Virtual hosts this app runs on" />
-
-         <metric
-            property="ResponseTime"
-            displayName="HTTP Response Time"
-            dataType="calltime"
-            defaultOn="false"
+            property="Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%:maxTime"
+            displayName="Maximum Request Time"
+            description="Maximum time it took to process a request"
             units="milliseconds"
-            destinationType="URL"
-            description="the minimum, maximum, and average response times for HTTP requests serviced by this web application" />
-
-         <content
-            name="file"
-            displayName="WAR File"
-            category="deployable"
-            isCreationType="true">
-
-            <configuration>
-               <c:group
-                  name="deployment"
-                  displayName="Deployment Options">
-                  <c:simple-property
-                     name="explodeOnDeploy"
-                     displayName="Explode on Deploy"
-                     type="boolean"
-                     default="true"
-                     required="true"
-                     description="If true then explode the WAR file into the Tomcat deploy directory. If false leave as a .war file (typically used only when Tomcat is configured to not explode .war files)." />
-               </c:group>
-            </configuration>
-         </content>
-
-         <resource-configuration>
-            <c:group name="Attributes">
-               <c:simple-property
-                  name="docBase"
-                  readOnly="true"
-                  required="true"
-                  description="The docBase set for this application" />
-            </c:group>
-         </resource-configuration>
-      </service>
-
-      <service
-         name="Tomcat Group"
-         subCategory="Security"
-         discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-         class="org.rhq.plugins.jmx.MBeanResourceComponent"
-         description="Tomcat User Group">
-
-         <plugin-configuration>
-            <c:group name="General">
-               <c:simple-property
-                  name="objectName"
-                  readOnly="true"
-                  default="Users:type=Group,groupname=%groupname%,database=UserDatabase" />
-               <c:simple-property
-                  name="groupname"
-                  readOnly="true"
-                  description="The Group name." />
-            </c:group>
-
-            <c:group
-               name="Advanced"
-               hiddenByDefault="true">
-               <c:simple-property
-                  name="nameTemplate"
-                  default="Tomcat Group ({groupname})" />
-               <c:simple-property
-                  name="descriptionTemplate"
-                  default="A Tomcat Group"
-                  readOnly="true" />
-            </c:group>
-         </plugin-configuration>
-
-         <operation
-            name="addRole"
-            description="Add a Role to this Group.">
-            <parameters>
-               <c:simple-property
-                  name="rolename"
-                  displayName="Role Name"
-                  description="The Role to add."
-                  type="string"
-                  required="true" />
-            </parameters>
-         </operation>
-
-         <operation
-            name="removeRole"
-            description="Remove the specified Role from this Group.">
-            <parameters>
-               <c:simple-property
-                  name="rolename"
-                  displayName="Role Name"
-                  description="The Role to remove."
-                  type="string"
-                  required="true" />
-            </parameters>
-         </operation>
-
-         <resource-configuration>
-            <c:group name="Attributes">
-               <c:simple-property
-                  name="description"
-                  required="false"
-                  description="The Group description." />
-            </c:group>
-         </resource-configuration>
-      </service>
-
-      <service
-         name="Tomcat Role"
-         subCategory="Security"
-         discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-         class="org.rhq.plugins.jmx.MBeanResourceComponent"
-         description="Tomcat User Role">
-
-         <plugin-configuration>
-            <c:group name="General">
-               <c:simple-property
-                  name="objectName"
-                  readOnly="true"
-                  default="Users:type=Role,rolename=%rolename%,database=UserDatabase" />
-               <c:simple-property
-                  name="rolename"
-                  readOnly="true"
-                  description="The Role name." />
-            </c:group>
-
-            <c:group
-               name="Advanced"
-               hiddenByDefault="true">
-               <c:simple-property
-                  name="nameTemplate"
-                  default="Tomcat Role ({rolename})" />
-               <c:simple-property
-                  name="descriptionTemplate"
-                  default="A Tomcat Role"
-                  readOnly="true" />
-            </c:group>
-         </plugin-configuration>
-
-         <resource-configuration>
-            <c:group name="Attributes">
-               <c:simple-property
-                  name="description"
-                  required="false"
-                  description="The Role description." />
-            </c:group>
-         </resource-configuration>
-      </service>
-
-      <service
-         name="Tomcat User"
-         subCategory="Security"
-         discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-         class="TomcatUserComponent"
-         description="Tomcat User">
-
-         <plugin-configuration>
-            <c:group name="General">
-               <c:simple-property
-                  name="objectName"
-                  readOnly="true"
-                  default="Users:type=User,username=%username%,database=UserDatabase" />
-               <c:simple-property
-                  name="username"
-                  readOnly="true"
-                  description="The User name." />
-            </c:group>
-
-            <c:group
-               name="Advanced"
-               hiddenByDefault="true">
-               <c:simple-property
-                  name="nameTemplate"
-                  default="Tomcat User ({username})" />
-               <c:simple-property
-                  name="descriptionTemplate"
-                  default="A Tomcat User"
-                  readOnly="true" />
-            </c:group>
-         </plugin-configuration>
-
-         <operation
-            name="addGroup"
-            description="Add the User to the specified Group.">
-            <parameters>
-               <c:simple-property
-                  name="groupname"
-                  displayName="Group Name"
-                  description="The Group to add."
-                  type="string"
-                  required="true" />
-            </parameters>
-         </operation>
-
-         <operation
-            name="removeGroup"
-            description="Remove the User from the specified Group.">
-            <parameters>
-               <c:simple-property
-                  name="groupname"
-                  displayName="Group Name"
-                  description="The Group to remove."
-                  type="string"
-                  required="true" />
-            </parameters>
-         </operation>
-
-         <operation
-            name="addRole"
-            description="Add the specified Role to the User.">
-            <parameters>
-               <c:simple-property
-                  name="rolename"
-                  displayName="Role Name"
-                  description="The Role to add."
-                  type="string"
-                  required="true" />
-            </parameters>
-         </operation>
-
-         <operation
-            name="removeRole"
-            description="Remove the specified Role from the User.">
-            <parameters>
-               <c:simple-property
-                  name="rolename"
-                  displayName="Role Name"
-                  description="The Role to remove."
-                  type="string"
-                  required="true" />
-            </parameters>
-         </operation>
+            defaultOn="true"
+            category="performance" />
 
          <metric
-            property="Users:type=User,username=%username%,database=UserDatabase:roles"
-            displayName="Roles"
-            defaultOn="true"
-            dataType="trait" />
+            property="Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%:requestCount"
+            displayName="Request count"
+            description="Total number of requests processed since last restart."
+            defaultOn="false"
+            category="utilization"
+            measurementType="trendsup" />
 
          <metric
-            property="Users:type=User,username=%username%,database=UserDatabase:groups"
-            displayName="Groups"
+            property="Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%:errorCount"
+            displayName="Error count"
+            description="Number of errors while processing since last restart."
             defaultOn="true"
-            dataType="trait" />
+            category="utilization"
+            measurementType="trendsup" />
 
-         <resource-configuration>
-            <c:group name="Attributes">
-               <c:simple-property
-                  name="fullName"
-                  required="false"
-                  description="The full name of User" />
-               <c:simple-property
-                  name="password"
-                  type="password"
-                  required="false"
-                  description="The credentials used to authenticate the username." />
-            </c:group>
-         </resource-configuration>
+         <metric
+            property="Catalina:type=ThreadPool,name=%scheme%-%port%:currentThreadsBusy"
+            displayName="Threadpool Threads Active"
+            defaultOn="true"
+            category="utilization"
+            displayType="summary" />
+
+         <metric
+            property="Catalina:type=ThreadPool,name=%scheme%-%port%:currentThreadCount"
+            displayName="Threadpool Threads Allocated"
+            defaultOn="true"
+            category="utilization"
+            displayType="summary" />
+
+         <metric
+            property="Catalina:type=ThreadPool,name=%name%:maxThreads"
+            displayName="Threadpool Max Threads"
+            defaultOn="true"
+            category="utilization"
+            displayType="detail" />
       </service>
 
       <service
          name="Tomcat User Database"
-         subCategory="Security"
          discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-         class="org.rhq.plugins.jmx.MBeanResourceComponent"
+         class="TomcatUserDatabaseComponent"
          description="Tomcat User Database">
 
          <plugin-configuration>
@@ -949,111 +598,240 @@
          </plugin-configuration>
 
          <operation
-            name="createGroup"
-            description="Add a new Group to the database.">
-            <parameters>
-               <c:simple-property
-                  name="groupname"
-                  displayName="Group Name"
-                  description="The Group name."
-                  type="string"
-                  required="true" />
-               <c:simple-property
-                  name="description"
-                  displayName="Description"
-                  description="The Group description."
-                  type="string"
-                  required="false" />
-            </parameters>
-         </operation>
-
-         <operation
-            name="createRole"
-            description="Add a new Role to the database.">
-            <parameters>
-               <c:simple-property
-                  name="rolename"
-                  displayName="Role Name"
-                  description="The Role name."
-                  type="string"
-                  required="true" />
-               <c:simple-property
-                  name="description"
-                  displayName="Description"
-                  description="The Role description."
-                  type="string"
-                  required="false" />
-            </parameters>
-         </operation>
-
-         <operation
-            name="createUser"
-            description="Add a new User to the database.">
-            <parameters>
-               <c:simple-property
-                  name="username"
-                  displayName="Username"
-                  description="The new username."
-                  type="string"
-                  required="true" />
-               <c:simple-property
-                  name="password"
-                  displayName="Password"
-                  description="A password for the new User."
-                  type="string"
-                  required="true" />
-               <c:simple-property
-                  name="fullName"
-                  displayName="Full Name"
-                  description="A full name for the new User."
-                  type="string"
-                  required="false" />
-            </parameters>
-         </operation>
-
-         <operation
-            name="removeGroup"
-            description="Remove an existing Group from the database.">
-            <parameters>
-               <c:simple-property
-                  name="groupname"
-                  displayName="Group Name"
-                  description="The existing Group name."
-                  type="string"
-                  required="true" />
-            </parameters>
-         </operation>
-
-         <operation
-            name="removeRole"
-            description="Remove an existing Role from the database.">
-            <parameters>
-               <c:simple-property
-                  name="rolename"
-                  displayName="Role Name"
-                  description="The existing Role name."
-                  type="string"
-                  required="true" />
-            </parameters>
-         </operation>
-
-         <operation
-            name="removeUser"
-            description="Remove an existing User from the database.">
-            <parameters>
-               <c:simple-property
-                  name="username"
-                  displayName="Username"
-                  description="The existing User."
-                  type="string"
-                  required="true" />
-            </parameters>
-         </operation>
-
-         <operation
             name="save"
             description="Save current users and groups to persistent storage.">
          </operation>
+
+         <service
+            name="Tomcat Group"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            class="org.rhq.plugins.jmx.MBeanResourceComponent"
+            description="Tomcat User Group"
+            createDeletePolicy="both"
+            creationDataType="configuration">            
+
+            <plugin-configuration>
+               <c:group name="General">
+                  <c:simple-property
+                     name="objectName"
+                     readOnly="true"
+                     default="Users:type=Group,groupname=%groupname%,database=UserDatabase" />
+               </c:group>
+
+               <c:group
+                  name="Advanced"
+                  hiddenByDefault="true">
+                  <c:simple-property
+                     name="nameTemplate"
+                     default="Tomcat Group ({groupname})" />
+                  <c:simple-property
+                     name="descriptionTemplate"
+                     default="A Tomcat Group"
+                     readOnly="true" />                     
+               </c:group>
+            </plugin-configuration>
+
+            <operation
+               name="addRole"
+               description="Add a Role to this Group.">
+               <parameters>
+                  <c:simple-property
+                     name="rolename"
+                     displayName="Role Name"
+                     description="The Role to add."
+                     type="string"
+                     required="true" />
+               </parameters>               
+            </operation>
+
+            <operation
+               name="removeRole"
+               description="Remove the specified Role from this Group.">
+               <parameters>
+                  <c:simple-property
+                     name="rolename"
+                     displayName="Role Name"
+                     description="The Role to remove."
+                     type="string"
+                     required="true" />
+               </parameters>
+            </operation>
+
+            <resource-configuration>
+               <c:group name="Attributes">
+                  <c:simple-property
+                     name="groupname"
+                     required="true"
+                     readOnly="true"
+                     description="The Group name." />
+                  <c:simple-property
+                     name="description"
+                     required="false"
+                     description="The Group description." />
+               </c:group>
+            </resource-configuration>
+         </service>
+
+         <service
+            name="Tomcat Role"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            class="TomcatRoleComponent"
+            description="Tomcat User Role"
+            createDeletePolicy="both"
+            creationDataType="configuration">            
+
+            <plugin-configuration>
+               <c:group name="General">
+                  <c:simple-property
+                     name="objectName"
+                     readOnly="true"
+                     default="Users:type=Role,rolename=%rolename%,database=UserDatabase" />
+                  <c:simple-property
+                     name="rolename"
+                     required="true"                     
+                     readOnly="true"
+                     description="The Role name." />
+                  <c:simple-property
+                     name="description"
+                     description="A description of the Role." />                     
+               </c:group>
+
+               <c:group
+                  name="Advanced"
+                  hiddenByDefault="true">
+                  <c:simple-property
+                     name="nameTemplate"
+                     default="Tomcat Role ({rolename})" />
+                  <c:simple-property
+                     name="descriptionTemplate"
+                     default="A Tomcat Role"
+                     readOnly="true" />                     
+               </c:group>
+            </plugin-configuration>
+
+            <resource-configuration>
+               <c:group name="Attributes">
+                  <c:simple-property
+                     name="description"
+                     required="false"
+                     description="The Role description." />
+               </c:group>
+            </resource-configuration>
+         </service>
+
+         <service
+            name="Tomcat User"
+            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+            class="TomcatUserComponent"
+            description="Tomcat User"
+            createDeletePolicy="both"
+            creationDataType="configuration">            
+
+            <plugin-configuration>
+               <c:group name="General">
+                  <c:simple-property
+                     name="objectName"
+                     readOnly="true"
+                     default="Users:type=User,username=%username%,database=UserDatabase" />
+                  <c:simple-property
+                     name="username"
+                     readOnly="true"
+                     required="true"                     
+                     description="The User name." />
+               </c:group>
+
+               <c:group
+                  name="Advanced"
+                  hiddenByDefault="true">
+                  <c:simple-property
+                     name="nameTemplate"
+                     default="Tomcat User ({username})" />
+                  <c:simple-property
+                     name="descriptionTemplate"
+                     default="A Tomcat User"
+                     readOnly="true" />
+               </c:group>
+            </plugin-configuration>
+
+            <operation
+               name="addGroup"
+               description="Add the User to the specified Group.">
+               <parameters>
+                  <c:simple-property
+                     name="groupname"
+                     displayName="Group Name"
+                     description="The Group to add."
+                     type="string"
+                     required="true" />
+               </parameters>
+            </operation>
+
+            <operation
+               name="removeGroup"
+               description="Remove the User from the specified Group.">
+               <parameters>
+                  <c:simple-property
+                     name="groupname"
+                     displayName="Group Name"
+                     description="The Group to remove."
+                     type="string"
+                     required="true" />
+               </parameters>
+            </operation>
+
+            <operation
+               name="addRole"
+               description="Add the specified Role to the User.">
+               <parameters>
+                  <c:simple-property
+                     name="rolename"
+                     displayName="Role Name"
+                     description="The Role to add."
+                     type="string"
+                     required="true" />
+               </parameters>
+            </operation>
+
+            <operation
+               name="removeRole"
+               description="Remove the specified Role from the User.">
+               <parameters>
+                  <c:simple-property
+                     name="rolename"
+                     displayName="Role Name"
+                     description="The Role to remove."
+                     type="string"
+                     required="true" />
+               </parameters>
+            </operation>
+
+            <metric
+               property="Users:type=User,username=%username%,database=UserDatabase:roles"
+               displayName="Roles"
+               defaultOn="true"
+               dataType="trait" />
+
+            <metric
+               property="Users:type=User,username=%username%,database=UserDatabase:groups"
+               displayName="Groups"
+               defaultOn="true"
+               dataType="trait" />
+
+            <resource-configuration>
+               <c:group name="Attributes">
+                  <c:simple-property
+                     name="fullName"
+                     required="false"
+                     description="The full name of User" />
+                  <c:simple-property
+                     name="password"
+                     type="password"
+                     required="false"
+                     description="The credentials used to authenticate the username." />
+               </c:group>
+            </resource-configuration>
+         </service>
+
       </service>
 
    </server>

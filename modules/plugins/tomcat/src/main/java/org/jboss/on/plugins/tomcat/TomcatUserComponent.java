@@ -27,25 +27,29 @@ import java.util.Arrays;
 import java.util.Set;
 
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
- * Manage a Tomcat User component
+ * Manage a Tomcat User
  * 
  * @author Jay Shaughnessy
  */
-public class TomcatUserComponent extends MBeanResourceComponent<TomcatServerComponent> {
+public class TomcatUserComponent extends MBeanResourceComponent<TomcatUserDatabaseComponent> implements DeleteResourceFacet {
 
     public static final String PROPERTY_FULL_NAME = "fullName";
     public static final String PROPERTY_PASSWORD = "password";
     public static final String PROPERTY_USERNAME = "username";
+    public static final String RESOURCE_TYPE_NAME = "Tomcat User";
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
-        TomcatServerComponent parentComponent = super.resourceContext.getParentResourceComponent();
+        TomcatUserDatabaseComponent parentComponent = getResourceContext().getParentResourceComponent();
         parentComponent.getEmsConnection(); // first make sure the connection is loaded
 
         for (MeasurementScheduleRequest request : metrics) {
@@ -54,7 +58,7 @@ public class TomcatUserComponent extends MBeanResourceComponent<TomcatServerComp
             String attributeName = name.substring(name.lastIndexOf(':') + 1);
 
             try {
-                EmsAttribute attribute = bean.getAttribute(attributeName);
+                EmsAttribute attribute = getEmsBean().getAttribute(attributeName);
 
                 Object valueObject = attribute.refresh();
 
@@ -67,4 +71,12 @@ public class TomcatUserComponent extends MBeanResourceComponent<TomcatServerComp
             }
         }
     }
+
+    public void deleteResource() throws Exception {
+        Configuration opConfig = new Configuration();
+        ResourceContext<TomcatUserDatabaseComponent> resourceContext = getResourceContext();
+        opConfig.put(resourceContext.getPluginConfiguration().getSimple(PROPERTY_USERNAME));
+        resourceContext.getParentResourceComponent().invokeOperation("removeUser", opConfig);
+    }
+
 }

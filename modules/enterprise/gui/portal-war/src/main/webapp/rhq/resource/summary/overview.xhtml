@@ -24,12 +24,17 @@
    <table width="100%">
       <tr>
          <td width="50%" valign="top">
-            <ui:include src="/rhq/resource/summary/table/recentAlerts.xhtml"/>
-            <ui:include src="/rhq/resource/summary/table/recentConfigUpdates.xhtml"/>
+            <ui:include src="/rhq/resource/summary/table/recentAlerts.xhtml" />
+            <ui:include src="/rhq/resource/summary/table/recentOperations.xhtml" 
+                        rendered="#{ResourceUIBean.facets.operation}" />
+            <ui:include src="/rhq/resource/summary/table/recentEventCounts.xhtml"
+                        rendered="#{ResourceUIBean.facets.event}" />
          </td>
          <td width="50%" valign="top">
-            <ui:include src="/rhq/resource/summary/table/recentOperations.xhtml"/>
-            <ui:include src="/rhq/resource/summary/table/recentEventCounts.xhtml"/>
+            <ui:include src="/rhq/resource/summary/table/recentConfigUpdates.xhtml"
+                        rendered="#{ResourceUIBean.facets.configuration}" />
+            <ui:include src="/rhq/resource/summary/table/recentPackageHistory.xhtml"
+                        rendered="#{ResourceUIBean.facets.content}" />
          </td>
       </tr>
    </table>

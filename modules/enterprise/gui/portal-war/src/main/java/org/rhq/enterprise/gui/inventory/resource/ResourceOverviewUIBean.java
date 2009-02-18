@@ -6,6 +6,7 @@ import java.util.List;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
@@ -22,6 +23,7 @@ public class ResourceOverviewUIBean {
     private List<ResourceOperationLastCompletedComposite> recentOperations;
     private List<ResourceConfigurationUpdate> recentConfigChanges;
     private List<Tuple<EventSeverity, Integer>> recentEventCounts;
+    private List<InstalledPackageHistory> recentPackageHistory;
 
     private Subject subject;
     private int resourceId;
@@ -68,6 +70,12 @@ public class ResourceOverviewUIBean {
         return results;
     }
 
+    private List<InstalledPackageHistory> getPackageHistory(Subject subject, int resourceId, int count) {
+        PageControl lastFive = new PageControl(0, count);
+        lastFive.initDefaultOrderingField("iph.timestamp", PageOrdering.DESC);
+        return LookupUtil.getContentUIManager().getInstalledPackageHistoryForResource(resourceId, lastFive);
+    }
+
     public List<Alert> getRecentAlerts() {
         if (recentAlerts == null) {
             recentAlerts = getAlerts(subject, resourceId, 5);
@@ -94,5 +102,12 @@ public class ResourceOverviewUIBean {
             recentEventCounts = getEventCounts(subject, resourceId, 100);
         }
         return recentEventCounts;
+    }
+
+    public List<InstalledPackageHistory> getRecentPackageHistory() {
+        if (recentPackageHistory == null) {
+            recentPackageHistory = getPackageHistory(subject, resourceId, 5);
+        }
+        return recentPackageHistory;
     }
 }

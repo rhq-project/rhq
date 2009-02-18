@@ -17,9 +17,7 @@ function getElementValue(formElement)
          for (var i = 0; i < formElement.length; i++)
          {
             if (formElement[i].checked)
-            {
                return formElement[i].value;
-            }
          }
          return null;
       case 'select-multiple':
@@ -27,9 +25,7 @@ function getElementValue(formElement)
          for (var i = 0; i < formElement.length; i++)
          {
             if (formElement[i].selected)
-            {
-               values[values.length] = formElement[i].value;
-            }
+               values[values.length] = formElement[i].value;            
          }
          return values;
       case 'checkbox':
@@ -41,13 +37,22 @@ function getElementValue(formElement)
 
 function setElementValue(formElement, value)
 {
-   switch (formElement.type)
+   if (formElement.length != null)
+       var type = formElement[0].type;
+   if ((typeof(type) == 'undefined') || (type == 0))
+       var type = formElement.type;
+   switch (type)
    {
       case 'undefined':
          break;
       case 'radio':
       case 'checkbox':
-         formElement.checked = value; break;
+         for (var i = 0; i < formElement.length; i++)
+         {
+            if (formElement[i].value == value)
+               formElement[i].checked = true;            
+         }
+         break;
       case 'select-one':
          formElement.selectedIndex = value; break;
       case 'select-multiple':

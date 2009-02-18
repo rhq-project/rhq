@@ -20,6 +20,7 @@ package org.rhq.core.gui.configuration.helper;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.UUID;
 
 import javax.el.ValueExpression;
 import javax.faces.component.UIInput;
@@ -45,6 +46,7 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.gui.converter.PropertySimpleValueConverter;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
@@ -66,6 +68,8 @@ public class PropertyRenderingUtility
      */
     private static final int LISTBOX_THRESHOLD_ENUM_SIZE = 6;
 
+    private static final String UNIQUE_ID_PREFIX = "rhq_id";
+
     @NotNull
     public static UIInput createInputForSimpleProperty(PropertyDefinitionSimple propertyDefinitionSimple,
                                                        PropertySimple propertySimple,
@@ -75,36 +79,10 @@ public class PropertyRenderingUtility
                                                        boolean configReadOnly,
                                                        boolean configFullyEditable,
                                                        boolean prevalidate) {
-        UIInput input;
-        switch (propertyDefinitionSimple.getType()) {
-        case BOOLEAN: {
-            input = createInputForBooleanProperty();
-            break;
-        }
+        UIInput input = createInput(propertyDefinitionSimple);
 
-        case LONG_STRING: {
-            input = createInputForLongStringProperty();
-            break;
-        }
-
-        case PASSWORD: {
-            input = createInputForPasswordProperty();
-            break;
-        }
-
-        default: {
-            if (isEnum(propertyDefinitionSimple)) {
-                input = createInputForEnumProperty(propertyDefinitionSimple);
-            } else {
-                input = createInputForStringProperty();
-            }
-            // TODO (ips, 01/21/09): Figure out some way to do this for the propertySet component, where propertySimple will
-            //      be null. Perhaps perform this logic in PropertySetRenderer.encodeEnd() after the UIInputs have been
-            //      rendered.
-            if (propertySimple != null)
-                addTitleAttribute(input, propertySimple.getStringValue());
-        }
-        }
+        if (propertySimple != null)
+            addTitleAttribute(input, propertySimple.getStringValue());
 
         boolean isUnset = isUnset(propertyDefinitionSimple, propertySimple, configIsAggregate);
         boolean isReadOnly = isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable);
@@ -114,19 +92,54 @@ public class PropertyRenderingUtility
 
         input.setValueExpression("value", propertyValueExpression);
 
-        // It's important to set the label attribute, since we include it in our validation error messages.
-        input.getAttributes().put("label", propertyDefinitionSimple.getDisplayName());
-
-        // The below adds an inert attribute to the input that contains the name of the associated property - useful
-        // for debugging (i.e. when viewing source of the page or using a JavaScript debugger).
-        input.getAttributes().put("ondblclick", "//" + propertyDefinitionSimple.getName());
-
         FacesComponentUtility.setUnset(input, isUnset);
         FacesComponentUtility.setReadonly(input, isReadOnly);
 
         addValidatorsAndConverter(input, propertyDefinitionSimple, configReadOnly);
 
         addErrorMessages(input, propertyDefinitionSimple, propertySimple, prevalidate);
+        return input;
+    }
+
+    public static UIInput createInput(PropertyDefinitionSimple propertyDefinitionSimple)
+    {
+        UIInput input;
+        PropertySimpleType type = (propertyDefinitionSimple != null) ? propertyDefinitionSimple.getType() :
+                PropertySimpleType.STRING;
+        switch (type) {
+            case BOOLEAN: {
+                input = createInputForBooleanProperty();
+                break;
+            }
+
+            case LONG_STRING: {
+                input = createInputForLongStringProperty();
+                break;
+            }
+
+            case PASSWORD: {
+                input = createInputForPasswordProperty();
+                break;
+            }
+
+            default: {
+                if (propertyDefinitionSimple != null && isEnum(propertyDefinitionSimple)) {
+                    input = createInputForEnumProperty(propertyDefinitionSimple);
+                } else {
+                    input = createInputForStringProperty();
+                }
+            }
+        }
+        input.setId(UNIQUE_ID_PREFIX + UUID.randomUUID());
+
+        if (propertyDefinitionSimple != null) {
+            // It's important to set the label attribute, since we include it in our validation error messages.
+            input.getAttributes().put("label", propertyDefinitionSimple.getDisplayName());
+
+            // The below adds an inert attribute to the input that contains the name of the associated property - useful
+            // for debugging (i.e. when viewing source of the page or using a JavaScript debugger).
+            input.getAttributes().put("ondblclick", "//" + propertyDefinitionSimple.getName());
+        }
         return input;
     }
 
@@ -451,7 +464,9 @@ public class PropertyRenderingUtility
     private static boolean isUnset(PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple,
                                    boolean configIsAggregate) {
         if (isAggregateWithDifferingValues(propertySimple, configIsAggregate))
-        // Properties from aggregate configs that have differing values should not be marked unset.
+            // Properties from aggregate configs that have differing values should not be marked unset.
+            return false;
+        if (propertySimple == null)
             return false;
         return ((propertyDefinitionSimple == null || !propertyDefinitionSimple.isRequired())
                 && propertySimple.getStringValue() == null);

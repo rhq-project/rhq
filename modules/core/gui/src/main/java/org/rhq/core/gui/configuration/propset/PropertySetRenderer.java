@@ -27,7 +27,9 @@ import java.util.List;
 import javax.el.ValueExpression;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
+import javax.faces.component.UIForm;
 import javax.faces.component.html.HtmlPanelGroup;
+import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
@@ -113,8 +115,7 @@ public class PropertySetRenderer extends Renderer
 
         addPropertyDisplayNameAndDescription(propertySetComponent, propertyDefinitionSimple, propertySimple);
 
-        // The below panel is a placeholder. We'll add children to it later once we know the client id's of the
-        // property value inputs.
+        // NOTE: We'll add children to the below panel a bit later when we know the id's of the inputs. 
         HtmlPanelGroup setAllToSameValueControlPanel = FacesComponentUtility.addBlockPanel(propertySetComponent, null, null);
 
         FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/><br/>\n");
@@ -132,36 +133,76 @@ public class PropertySetRenderer extends Renderer
 
         boolean configReadOnly = propertySetComponent.getReadOnly() != null && propertySetComponent.getReadOnly();
         if (!PropertyRenderingUtility.isReadOnly(propertyDefinitionSimple, null, configReadOnly, false))
-            addSetAllToSameValueControls(propertySetComponent, setAllToSameValueControlPanel, propertyInfos);
+            addSetAllToSameValueControls(propertySetComponent, propertyDefinitionSimple, setAllToSameValueControlPanel,
+                    propertyInfos);
                 
         String id = getInitInputsJavaScriptComponentId(propertySetComponent);
         PropertyRenderingUtility.addInitInputsJavaScript(propertySetComponent, id, false, false);
     }
 
-    private void addSetAllToSameValueControls(PropertySetComponent propertySetComponent, HtmlPanelGroup setAllToSameValueControlPanel, List<PropertyInfo> propertyInfos)
+    private void addSetAllToSameValueControls(PropertySetComponent propertySetComponent,
+                                              PropertyDefinitionSimple propertyDefinitionSimple,
+                                              HtmlPanelGroup setAllToSameValueControlPanel,
+                                              List<PropertyInfo> propertyInfos)
     {
-        String masterInputId = propertySetComponent.getId() + ":setAllToSameValue";
+        String masterInputId = propertySetComponent.getId() + "_setAllToSameValue";
+        UIInput input = PropertyRenderingUtility.createInput(propertyDefinitionSimple);
+        input.setId(masterInputId);
+        // NOTE: Don't add the input to the component tree yet - we'll add it a bit later.
 
-        String functionName = "setAllToSameValue_" + propertySetComponent.getId();
+        /*String functionName = "setAllToSameValue_" + propertySetComponent.getId();
         StringBuilder script = new StringBuilder();
         script.append("function ").append(functionName).append("() {\n");
         script.append("var valueInputArray = new Array(");
+        // NOTE: Don't pass the input to getEnclosingForm(), since we haven't yet added it to the component tree.
+        UIForm form = FacesComponentUtility.getEnclosingForm(propertySetComponent);
         for (PropertyInfo propertyInfo : propertyInfos)
-            for (String htmlDomReference : PropertyRenderingUtility.getHtmlDomReferences(propertyInfo.getInput()))
-                script.append(htmlDomReference).append(", ");
+        {
+            String htmlDomReference = getHtmlDomReference(propertyInfo.getInput(), form);
+            script.append(htmlDomReference).append(", ");
+        }
         script.delete(script.length() - 2, script.length()); // chop off the extra ", "
         script.append(");\n");
-        script.append("setInputsToValue(valueInputArray, document.getElementById('");
-        script.append(masterInputId).append("').value);\n");
+
+        String inputHtmlDomReference = getHtmlDomReference(input, form);
+        script.append("setInputsToValue(valueInputArray, getElementValue(").append(inputHtmlDomReference).append("));\n");
         script.append("}\n");
-        FacesComponentUtility.addJavaScript(setAllToSameValueControlPanel, null, null, script);
+        FacesComponentUtility.addJavaScript(setAllToSameValueControlPanel, null, null, script);*/
+
+        HtmlPanelGrid panelGrid = FacesComponentUtility.createComponent(HtmlPanelGrid.class);
+        panelGrid.setColumns(3);
+        setAllToSameValueControlPanel.getChildren().add(panelGrid);
 
         StringBuilder html = new StringBuilder();
-        html.append("Set All Values To: <input id='").append(masterInputId).append("' type='text' ");
-        html.append("autocomplete='off' maxLength='").append(PropertySimple.MAX_VALUE_LENGTH).append("' ");
-        html.append("class='").append(CssStyleClasses.PROPERTY_VALUE_INPUT).append("'/>");
-        html.append("<button type='button' onClick='").append(functionName).append("()'>OK</button>");
-        FacesComponentUtility.addVerbatimText(setAllToSameValueControlPanel, html);
+        html.append("Set All Values To: ");
+        FacesComponentUtility.addVerbatimText(panelGrid, html);
+
+        panelGrid.getChildren().add(input);
+
+        html = new StringBuilder();
+        html.append("<button type='button' onclick='setInputsToValue(");
+        html.append("new Array(");
+        UIForm form = FacesComponentUtility.getEnclosingForm(input);
+        for (PropertyInfo propertyInfo : propertyInfos)
+        {
+            String htmlDomReference = getHtmlDomReference(propertyInfo.getInput(), form, '"');
+            html.append(htmlDomReference).append(", ");
+        }
+        html.delete(html.length() - 2, html.length()); // chop off the extra ", "
+        html.append("), ");
+        String inputHtmlDomReference = getHtmlDomReference(input, form, '"');
+        html.append("getElementValue(").append(inputHtmlDomReference).append("))");
+        html.append("'>OK</button>");
+
+        FacesComponentUtility.addVerbatimText(panelGrid, html);
+    }
+
+    private static String getHtmlDomReference(UIInput input, UIForm form, char quoteChar)
+    {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        String inputHtmlDomReference = "document." + form.getClientId(facesContext) + "[" + quoteChar
+                + input.getClientId(facesContext) + quoteChar + "]";
+        return inputHtmlDomReference;
     }
 
     @Override

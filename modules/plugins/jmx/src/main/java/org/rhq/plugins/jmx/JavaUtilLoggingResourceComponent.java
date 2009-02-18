@@ -24,7 +24,9 @@ package org.rhq.plugins.jmx;
 
 import java.util.Arrays;
 import java.util.logging.LoggingMXBean;
+
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
@@ -39,7 +41,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 public class JavaUtilLoggingResourceComponent extends MBeanResourceComponent {
     @Override
     public Configuration loadResourceConfiguration() {
-        EmsAttribute namesAttribute = this.bean.getAttribute("LoggerNames");
+        EmsAttribute namesAttribute = getEmsBean().getAttribute("LoggerNames");
 
         String[] names = (String[]) namesAttribute.refresh();
 
@@ -47,7 +49,7 @@ public class JavaUtilLoggingResourceComponent extends MBeanResourceComponent {
         //so I put code in the for loop to not add if the name is blank
         Arrays.sort(names);
 
-        LoggingMXBean logging = bean.getProxy(LoggingMXBean.class);
+        LoggingMXBean logging = getEmsBean().getProxy(LoggingMXBean.class);
 
         Configuration configuration = new Configuration();
         PropertyList list = new PropertyList("AppenderList");
@@ -87,7 +89,7 @@ public class JavaUtilLoggingResourceComponent extends MBeanResourceComponent {
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         PropertyList list = report.getConfiguration().getList("AppenderList");
-        LoggingMXBean logging = bean.getProxy(LoggingMXBean.class);
+        LoggingMXBean logging = getEmsBean().getProxy(LoggingMXBean.class);
         for (Property property : list.getList()) {
             PropertyMap map = (PropertyMap) property;
             String name = map.getSimple("name").getStringValue();

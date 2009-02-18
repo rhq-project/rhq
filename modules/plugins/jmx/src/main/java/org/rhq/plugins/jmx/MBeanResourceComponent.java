@@ -59,6 +59,7 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -69,40 +70,106 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  * will determine what MBean is to be managed by this component.
  *
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
 public class MBeanResourceComponent<T extends JMXComponent> implements MeasurementFacet, OperationFacet,
     ConfigurationFacet, JMXComponent<T> {
+
+    /**
+     * Subclasses are free to use this directly as a way to log messages.
+     */
     protected static Log log = LogFactory.getLog(MBeanResourceComponent.class);
 
     public static final String OBJECT_NAME_PROP = "objectName";
-
     public static final String PROPERTY_TRANSFORM = "propertyTransform";
 
     private static final Pattern PROPERTY_PATTERN = Pattern.compile("^\\{(?:\\{([^\\}]*)\\})?([^\\}]*)\\}$");
-
     private static final Pattern TEMPLATE_PATTERN = Pattern.compile("%([^%]+)%");
 
-    protected EmsBean bean;
+    // these should be private - subclasses need to override the getter/setter/load methods to affect these
+    private EmsBean emsBean;
+    private ResourceContext<T> resourceContext;
 
-    protected ResourceContext<T> resourceContext;
-
+    /**
+     * Stores the context and loads the MBean.
+     * @see ResourceComponent#start(ResourceContext)
+     */
     public void start(ResourceContext<T> context) {
-        this.resourceContext = context;
-        loadBean();
-        //      pluginConfiguration.getSimple(PROPERTY_TRANSFORM)
+        setResourceContext(context);
+        setEmsBean(loadBean());
     }
 
+    /**
+     * Cleans the old resource context and the old MBean.
+     * @see ResourceComponent#stop()
+     */
     public void stop() {
-        this.resourceContext = null;
-        this.bean = null;
+        setResourceContext(null);
+        setEmsBean(null);
     }
 
-    protected void loadBean() {
+    /**
+     * Gets the loaded MBean. This will attempt to {@link #loadBean() load} the bean if it
+     * is not yet loaded. This might still return <code>null</code> if the MBean could
+     * not be loaded.
+     * 
+     * @return the loaded MBean or <code>null</code> if it could not be loaded
+     * 
+     * @see #loadBean()
+     */
+    public EmsBean getEmsBean() {
+        if (this.emsBean == null) {
+            this.emsBean = loadBean();
+            if (this.emsBean == null)
+                throw new IllegalStateException("EMS bean was null for Resource with type ["
+                    + this.resourceContext.getResourceType() + "] and key [" + this.resourceContext.getResourceKey()
+                    + "].");
+        }
+        return this.emsBean;
+    }
+
+    /**
+     * Sets the MBean that this component considers loaded.
+     * 
+     * @param bean the new MBean representing the component resource
+     */
+    protected void setEmsBean(EmsBean bean) {
+        this.emsBean = bean;
+    }
+
+    public ResourceContext<T> getResourceContext() {
+        return this.resourceContext;
+    }
+
+    protected void setResourceContext(ResourceContext<T> resourceContext) {
+        this.resourceContext = resourceContext;
+    }
+
+    /**
+     * Loads the MBean in a default way. This default mechanism is to look in the
+     * plugin configuration for a key of {@link #OBJECT_NAME_PROP} and uses that
+     * as the object name to load via {@link #loadBean(String)}.
+     * 
+     * Subclasses are free to override this method in order to provide its own
+     * default loading mechanism.
+     * 
+     * @return the bean that is loaded
+     */
+    protected EmsBean loadBean() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String objectName = pluginConfig.getSimple(OBJECT_NAME_PROP).getStringValue();
-        this.bean = loadBean(objectName);
+        EmsBean loadedBean = loadBean(objectName);
+        return loadedBean;
     }
 
+    /**
+     * Loads the bean with the given object name.
+     *
+     * Subclasses are free to override this method in order to load the bean.
+     * 
+     * @param objectName the name of the bean to load
+     * @return the bean that is loaded
+     */
     protected EmsBean loadBean(String objectName) {
         EmsConnection emsConnection = getEmsConnection();
         EmsBean bean = emsConnection.getBean(objectName);
@@ -125,28 +192,25 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
      */
     public AvailabilityType getAvailability() {
         try {
-            return (getEmsBean().isRegistered()) ? AvailabilityType.UP : AvailabilityType.DOWN;
+            if (getEmsBean().isRegistered()) {
+                return AvailabilityType.UP;
+            } else {
+                return AvailabilityType.DOWN;
+            }
         } catch (RuntimeException e) {
-            if (this.bean != null) {
+            if (this.emsBean != null) {
                 // Retry by connecting to a new parent connection (this bean might have been connected to by an old
                 // provider that's since been recreated).
-                this.bean = null;
-                return (getEmsBean().isRegistered()) ? AvailabilityType.UP : AvailabilityType.DOWN;
+                this.emsBean = null;
+                if (getEmsBean().isRegistered()) {
+                    return AvailabilityType.UP;
+                } else {
+                    return AvailabilityType.DOWN;
+                }
             } else {
                 throw e;
             }
         }
-    }
-
-    public EmsBean getEmsBean() {
-        if (this.bean == null) {
-            loadBean();
-            if (this.bean == null)
-                throw new IllegalStateException("EMS bean was null for Resource with type ["
-                    + this.resourceContext.getResourceType() + "] and key [" + this.resourceContext.getResourceKey()
-                    + "].");
-        }
-        return this.bean;
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
@@ -334,7 +398,7 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
     /**
      * This default setup of configuration properties can map to mbean attributes
      *
-     * @return
+     * @return the configuration of the component
      */
     public Configuration loadResourceConfiguration() {
         Configuration configuration = new Configuration();
@@ -363,7 +427,7 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
         for (String key : report.getConfiguration().getSimpleProperties().keySet()) {
             PropertySimple property = report.getConfiguration().getSimple(key);
             if (property != null) {
-                EmsAttribute attribute = this.bean.getAttribute(key);
+                EmsAttribute attribute = this.emsBean.getAttribute(key);
                 try {
                     switch (configurationDefinition.getPropertyDefinitionSimple(property.getName()).getType()) {
                     case INTEGER: {
@@ -410,10 +474,6 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
         return this.resourceContext.getParentResourceComponent().getEmsConnection();
     }
 
-    protected ResourceContext<T> getResourceContext() {
-        return this.resourceContext;
-    }
-
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         return invokeOperation(name, parameters, getEmsBean());
     }
@@ -426,7 +486,7 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
 
         EmsOperation operation = emsBean.getOperation(name);
         if (operation == null) {
-            throw new Exception("Operation [" + name + "] not found on bean [" + bean.getBeanName() + "]");
+            throw new Exception("Operation [" + name + "] not found on bean [" + emsBean.getBeanName() + "]");
         }
 
         Object[] parameterValues = new Object[operation.getParameters().size()];
@@ -450,7 +510,7 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
         boolean hasVoidReturnType = (operation.getReturnType() == null
             || Void.class.getName().equals(operation.getReturnType()) || void.class.getName().equals(
             operation.getReturnType()));
-        //noinspection UnnecessaryLocalVariable
+
         OperationResult result = (resultObject == null && hasVoidReturnType) ? null : new OperationResult(String
             .valueOf(resultObject));
         return result;

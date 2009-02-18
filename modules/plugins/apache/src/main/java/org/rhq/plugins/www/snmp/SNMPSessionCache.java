@@ -90,7 +90,7 @@ class SNMPSessionCache implements InvocationHandler {
 
         invoker.append('(');
 
-        if (args.length != 0) {
+        if (args!= null && args.length != 0) {
             String arg = args[0].toString();
 
             invoker.append(arg);
@@ -104,8 +104,8 @@ class SNMPSessionCache implements InvocationHandler {
                 invoker.append('/').append(cacheKey);
             }
 
-            invoker.append(')');
         }
+        invoker.append(')');
 
         return invoker;
     }

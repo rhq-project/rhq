@@ -71,7 +71,7 @@ public class JBossASTomcatConnectorComponent extends MBeanResourceComponent<JBos
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
-        JBossASTomcatServerComponent parentTomcatComponent = super.resourceContext.getParentResourceComponent();
+        JBossASTomcatServerComponent parentTomcatComponent = getResourceContext().getParentResourceComponent();
         parentTomcatComponent.getEmsConnection(); // reload the EMS connection
 
         for (MeasurementScheduleRequest request : requests) {
@@ -112,7 +112,7 @@ public class JBossASTomcatConnectorComponent extends MBeanResourceComponent<JBos
     protected String getAttributeName(String property) {
         String theProperty = property;
 
-        Configuration pluginConfiguration = super.resourceContext.getPluginConfiguration();
+        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
         String address = pluginConfiguration.getSimple(PROPERTY_ADDRESS).getStringValue();
         String port = pluginConfiguration.getSimple(PROPERTY_PORT).getStringValue();
         String schema = pluginConfiguration.getSimple(PROPERTY_SCHEMA).getStringValue();

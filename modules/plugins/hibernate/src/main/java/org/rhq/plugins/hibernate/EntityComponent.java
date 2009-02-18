@@ -23,29 +23,31 @@
 package org.rhq.plugins.hibernate;
 
 import java.util.Set;
+
+import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
+
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
+ * Manages a Hibernate Entity.
+ * 
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
 public class EntityComponent extends MBeanResourceComponent<MBeanResourceComponent> {
-    private ResourceContext<MBeanResourceComponent> context;
-
     @Override
-    public void start(ResourceContext<MBeanResourceComponent> context) {
-        this.context = context;
-        this.bean = context.getParentResourceComponent().getEmsBean();
+    protected EmsBean loadBean() {
+        return getResourceContext().getParentResourceComponent().getEmsBean();
     }
-
+    
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
         EmsOperation operation = getEmsBean().getOperation("getEntityStatistics");
-        Object entityStatistics = operation.invoke(context.getResourceKey());
+        Object entityStatistics = operation.invoke(getResourceContext().getResourceKey());
 
         for (MeasurementScheduleRequest request : requests) {
             Object val = super.lookupAttributeProperty(entityStatistics, request.getName());

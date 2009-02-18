@@ -56,7 +56,7 @@ public class DatasourceComponent extends MBeanResourceComponent<JBossASServerCom
     @Override
     public AvailabilityType getAvailability()
     {
-        return (JBossMBeanUtility.isStarted(getEmsBean(), this.resourceContext)) ? AvailabilityType.UP
+        return (JBossMBeanUtility.isStarted(getEmsBean(), getResourceContext())) ? AvailabilityType.UP
             : AvailabilityType.DOWN;
     }
 
@@ -64,7 +64,7 @@ public class DatasourceComponent extends MBeanResourceComponent<JBossASServerCom
     public void start(ResourceContext<JBossASServerComponent> resourceContext)
     {
         super.start(resourceContext);
-        this.name = this.resourceContext.getPluginConfiguration().getSimpleValue("name", null);
+        this.name = getResourceContext().getPluginConfiguration().getSimpleValue("name", null);
         this.connectionPoolBeanName = CONNECTION_POOL_OBJECT_NAME.replace("%NAME%", this.name);
         this.connectionPoolBean = getConnectionPoolBean();
     }
@@ -72,11 +72,11 @@ public class DatasourceComponent extends MBeanResourceComponent<JBossASServerCom
     @Override
     public Configuration loadResourceConfiguration()
     {
-        File deploymentFile = this.resourceContext.getParentResourceComponent().getDeploymentFilePath(
-            this.resourceContext.getResourceKey());
+        File deploymentFile = getResourceContext().getParentResourceComponent().getDeploymentFilePath(
+            getResourceContext().getResourceKey());
 
         assert deploymentFile.exists() : "Deployment file " + deploymentFile + " doesn't exist for Datasource ["
-            + this.resourceContext.getResourceKey() + "].";
+            + getResourceContext().getResourceKey() + "].";
 
         return DatasourceConfigurationEditor.loadDatasource(deploymentFile, this.name);
     }
@@ -84,9 +84,9 @@ public class DatasourceComponent extends MBeanResourceComponent<JBossASServerCom
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report)
     {
-        JBossASServerComponent parentComponent = this.resourceContext.getParentResourceComponent();
+        JBossASServerComponent parentComponent = getResourceContext().getParentResourceComponent();
 
-        File deploymentFile = parentComponent.getDeploymentFilePath(this.resourceContext.getResourceKey());
+        File deploymentFile = parentComponent.getDeploymentFilePath(getResourceContext().getResourceKey());
 
         if (deploymentFile == null) {
             report.setErrorMessage("Parent Resource is currently down - unable to complete update of Datasource ["
@@ -102,10 +102,10 @@ public class DatasourceComponent extends MBeanResourceComponent<JBossASServerCom
     }
 
     public void deleteResource() throws Exception {
-        JBossASServerComponent jbossASComponent = this.resourceContext.getParentResourceComponent();
-        File deploymentFile = jbossASComponent.getDeploymentFilePath(this.resourceContext.getResourceKey());
+        JBossASServerComponent jbossASComponent = getResourceContext().getParentResourceComponent();
+        File deploymentFile = jbossASComponent.getDeploymentFilePath(getResourceContext().getResourceKey());
         assert deploymentFile.exists() : "Deployment file " + deploymentFile + " doesn't exist for Datasource ["
-            + this.resourceContext.getResourceKey() + "].";
+            + getResourceContext().getResourceKey() + "].";
         DatasourceConfigurationEditor.deleteDataSource(deploymentFile, this.name);
         jbossASComponent.redeployFile(deploymentFile);
     }

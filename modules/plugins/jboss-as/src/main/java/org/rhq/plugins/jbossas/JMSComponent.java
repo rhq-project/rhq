@@ -62,7 +62,7 @@ public class JMSComponent extends AbstractMessagingComponent implements Configur
 
     @Override
     public AvailabilityType getAvailability() {
-        return (JBossMBeanUtility.isStarted(getEmsBean(), this.resourceContext)) ? AvailabilityType.UP
+        return (JBossMBeanUtility.isStarted(getEmsBean(), getResourceContext())) ? AvailabilityType.UP
             : AvailabilityType.DOWN;
     }
 
@@ -78,7 +78,7 @@ public class JMSComponent extends AbstractMessagingComponent implements Configur
 
     public CreateResourceReport createResource(CreateResourceReport report) {
 
-        JBossASServerComponent parentResourceComponent = resourceContext.getParentResourceComponent();
+        JBossASServerComponent parentResourceComponent = getResourceContext().getParentResourceComponent();
 
         String resourceTypeName = report.getResourceType().getName();
 
@@ -106,7 +106,7 @@ public class JMSComponent extends AbstractMessagingComponent implements Configur
             return report;
         }
         PropertySimple pluginNameProperty = new PropertySimple("name", rName);
-        resourceContext.getPluginConfiguration().put(pluginNameProperty);
+        getResourceContext().getPluginConfiguration().put(pluginNameProperty);
 
         File deployDir = new File(parentResourceComponent.getConfigurationPath() + "/deploy");
         File deploymentFile = new File(deployDir, FileNameUtility.formatFileName(name) + "-jms-service.xml");

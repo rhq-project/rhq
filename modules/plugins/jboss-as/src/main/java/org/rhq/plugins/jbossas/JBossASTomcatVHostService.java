@@ -51,13 +51,13 @@ public class JBossASTomcatVHostService extends MBeanResourceComponent<JMXCompone
         //        JBossASTomcatServerComponent parentTomcatComponent = (JBossASTomcatServerComponent) super.resourceContext
         //            .getParentResourceComponent();
         //        EmsConnection connection = parentTomcatComponent.getEmsConnection();
-        boolean isreg = bean.isRegistered();
+        boolean isreg = getEmsBean().isRegistered();
         return isreg ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
-        JBossASTomcatServerComponent parentTomcatComponent = (JBossASTomcatServerComponent) super.resourceContext
+        JBossASTomcatServerComponent parentTomcatComponent = (JBossASTomcatServerComponent) getResourceContext()
             .getParentResourceComponent();
         parentTomcatComponent.getEmsConnection(); // first make sure the connection is loaded
 
@@ -68,7 +68,7 @@ public class JBossASTomcatVHostService extends MBeanResourceComponent<JMXCompone
             String attributeName = name.substring(name.lastIndexOf(':') + 1);
 
             try {
-                EmsAttribute attribute = bean.getAttribute(attributeName);
+                EmsAttribute attribute = getEmsBean().getAttribute(attributeName);
 
                 Object valueObject = attribute.refresh();
 

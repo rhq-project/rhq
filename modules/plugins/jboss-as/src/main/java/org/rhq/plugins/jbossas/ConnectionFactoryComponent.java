@@ -51,7 +51,7 @@ public class ConnectionFactoryComponent extends MBeanResourceComponent<JBossASSe
 
     @Override
     public AvailabilityType getAvailability() {
-        return (JBossMBeanUtility.isStarted(getEmsBean(), this.resourceContext)) ? AvailabilityType.UP
+        return (JBossMBeanUtility.isStarted(getEmsBean(), getResourceContext())) ? AvailabilityType.UP
             : AvailabilityType.DOWN;
     }
 
@@ -59,7 +59,7 @@ public class ConnectionFactoryComponent extends MBeanResourceComponent<JBossASSe
     public void start(ResourceContext<JBossASServerComponent> resourceContext) {
         super.start(resourceContext);
 
-        this.name = this.resourceContext.getPluginConfiguration().getSimpleValue("name", null);
+        this.name = getResourceContext().getPluginConfiguration().getSimpleValue("name", null);
 
         String connectionPoolBeanName = CONNECTION_POOL_OBJECT_NAME.replace("%NAME%", this.name);
         this.connectionPoolBean = getEmsConnection().getBean(connectionPoolBeanName);
@@ -67,20 +67,20 @@ public class ConnectionFactoryComponent extends MBeanResourceComponent<JBossASSe
 
     @Override
     public Configuration loadResourceConfiguration() {
-        File deploymentFile = this.resourceContext.getParentResourceComponent().getDeploymentFilePath(
-            this.resourceContext.getResourceKey());
+        File deploymentFile = getResourceContext().getParentResourceComponent().getDeploymentFilePath(
+            getResourceContext().getResourceKey());
 
         assert deploymentFile.exists() : "Deployment file " + deploymentFile + " doesn't exist for resource "
-            + resourceContext.getResourceKey();
+            + getResourceContext().getResourceKey();
 
         return ConnectionFactoryConfigurationEditor.loadConnectionFactory(deploymentFile, this.name);
     }
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        JBossASServerComponent parentComponent = this.resourceContext.getParentResourceComponent();
+        JBossASServerComponent parentComponent = getResourceContext().getParentResourceComponent();
 
-        File deploymentFile = parentComponent.getDeploymentFilePath(this.resourceContext.getResourceKey());
+        File deploymentFile = parentComponent.getDeploymentFilePath(getResourceContext().getResourceKey());
 
         if (deploymentFile == null) {
             report.setErrorMessage("Parent resource is currently down. Unable to complete update of connection factory "
@@ -96,10 +96,10 @@ public class ConnectionFactoryComponent extends MBeanResourceComponent<JBossASSe
     }
 
     public void deleteResource() throws Exception {
-        JBossASServerComponent jbossASComponent = this.resourceContext.getParentResourceComponent();
-        File deploymentFile = jbossASComponent.getDeploymentFilePath(this.resourceContext.getResourceKey());
+        JBossASServerComponent jbossASComponent = getResourceContext().getParentResourceComponent();
+        File deploymentFile = jbossASComponent.getDeploymentFilePath(getResourceContext().getResourceKey());
         assert deploymentFile.exists() : "Deployment file " + deploymentFile + " doesn't exist for resource "
-            + resourceContext.getResourceKey();
+            + getResourceContext().getResourceKey();
         ConnectionFactoryConfigurationEditor.deleteConnectionFactory(deploymentFile, this.name);
         jbossASComponent.redeployFile(deploymentFile);
     }

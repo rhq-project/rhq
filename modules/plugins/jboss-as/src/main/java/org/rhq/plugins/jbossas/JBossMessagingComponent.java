@@ -73,7 +73,7 @@ public class JBossMessagingComponent extends AbstractMessagingComponent implemen
 
     public CreateResourceReport createResource(CreateResourceReport report) {
 
-        JBossASServerComponent parentResourceComponent = resourceContext.getParentResourceComponent();
+        JBossASServerComponent parentResourceComponent = getResourceContext().getParentResourceComponent();
 
         String resourceTypeName = report.getResourceType().getName();
 
@@ -102,7 +102,7 @@ public class JBossMessagingComponent extends AbstractMessagingComponent implemen
             return report;
         }
         PropertySimple pluginNameProperty = new PropertySimple("name", rName);
-        resourceContext.getPluginConfiguration().put(pluginNameProperty);
+        getResourceContext().getPluginConfiguration().put(pluginNameProperty);
 
         File deployDir = new File(parentResourceComponent.getConfigurationPath() + "/deploy");
         File deploymentFile = new File(deployDir, FileNameUtility.formatFileName(name) + "-destination-service.xml");

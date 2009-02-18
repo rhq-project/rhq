@@ -123,7 +123,7 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
     @Override
     public void start(ResourceContext resourceContext) {
         super.start(resourceContext);
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         this.jbossWebMBean = getJBossWebMBean();
         this.vhost = pluginConfig.getSimple(VHOST_CONFIG_PROP).getStringValue();
         this.contextRoot = pluginConfig.getSimple(CONTEXT_ROOT_CONFIG_PROP).getStringValue();
@@ -385,7 +385,7 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
 
     @Nullable
     private String getJBossWebMBeanName() {
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         String jbossWebMBeanName = pluginConfig.getSimpleValue(WarComponent.JBOSS_WEB_NAME, null);
         if (jbossWebMBeanName == null) {
             WarDeploymentInformation deploymentInformation = getDeploymentInformation();

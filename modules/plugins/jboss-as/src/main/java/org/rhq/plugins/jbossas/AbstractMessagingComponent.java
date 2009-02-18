@@ -121,7 +121,7 @@ public abstract class AbstractMessagingComponent extends MBeanResourceComponent<
     @Override
     public Configuration loadResourceConfiguration() {
 
-        String resourceKey = resourceContext.getResourceKey();
+        String resourceKey = getResourceContext().getResourceKey();
 
         JBossASServerComponent jasco = getOurJBossASComponent();
         File deploymentFile = jasco.getDeploymentFilePath(resourceKey);
@@ -135,12 +135,12 @@ public abstract class AbstractMessagingComponent extends MBeanResourceComponent<
 
     private JBossASServerComponent getOurJBossASComponent() {
 
-        ResourceComponent parent = resourceContext.getParentResourceComponent();
+        ResourceComponent parent = getResourceContext().getParentResourceComponent();
         JBossASServerComponent jasco;
         if (parent instanceof JMSComponent) {
-            jasco = ((JMSComponent) parent).resourceContext.getParentResourceComponent();
+            jasco = ((JMSComponent) parent).getResourceContext().getParentResourceComponent();
         } else if (parent instanceof JBossMessagingComponent) {
-            jasco = ((JBossMessagingComponent) parent).resourceContext.getParentResourceComponent();
+            jasco = ((JBossMessagingComponent) parent).getResourceContext().getParentResourceComponent();
         } else if (parent instanceof JBossASServerComponent) {
             jasco = (JBossASServerComponent) parent;
         } else
@@ -152,7 +152,7 @@ public abstract class AbstractMessagingComponent extends MBeanResourceComponent<
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
         JBossASServerComponent jasco = getOurJBossASComponent();
-        File deploymentFile = jasco.getDeploymentFilePath(resourceContext.getResourceKey());
+        File deploymentFile = jasco.getDeploymentFilePath(getResourceContext().getResourceKey());
 
         // Check to see if the user is changing the name of this JMS Topic/Queue
         String mBeanName = report.getConfiguration().getSimpleValue(MBEAN_NAME_PROP, null);
@@ -163,13 +163,13 @@ public abstract class AbstractMessagingComponent extends MBeanResourceComponent<
                     + "this Topic/Queue.");
 
             // User has changed the name, so update the plugin configuration.
-            PropertySimple nameProp = this.resourceContext.getPluginConfiguration().getSimple(PLUGIN_CONFIG_NAME_PROP);
+            PropertySimple nameProp = getResourceContext().getPluginConfiguration().getSimple(PLUGIN_CONFIG_NAME_PROP);
             nameProp.setStringValue(mBeanName);
             mBeanNameChanged = true;
         }
 
         if ((deploymentFile == null) || !deploymentFile.exists()) {
-            deploymentFile = new File(resourceContext.getParentResourceComponent().getConfigurationPath(), name
+            deploymentFile = new File(getResourceContext().getParentResourceComponent().getConfigurationPath(), name
                 + ".xml");
         }
 
@@ -180,7 +180,7 @@ public abstract class AbstractMessagingComponent extends MBeanResourceComponent<
     }
 
     public void deleteResource() throws Exception {
-        String resourceKey = resourceContext.getResourceKey();
+        String resourceKey = getResourceContext().getResourceKey();
         JBossASServerComponent parent = getOurJBossASComponent();
         File deploymentFile = parent.getDeploymentFilePath(resourceKey);
         assert deploymentFile.exists() : "Deployment file " + deploymentFile + " doesn't exist for resource "

@@ -59,7 +59,7 @@ public class EJB3BeanComponent extends MBeanResourceComponent<JBossASServerCompo
 
     @Override
     public AvailabilityType getAvailability() {
-        return (JBossMBeanUtility.isStarted(getEmsBean(), this.resourceContext)) ? AvailabilityType.UP
+        return (JBossMBeanUtility.isStarted(getEmsBean(), getResourceContext())) ? AvailabilityType.UP
             : AvailabilityType.DOWN;
     }
 

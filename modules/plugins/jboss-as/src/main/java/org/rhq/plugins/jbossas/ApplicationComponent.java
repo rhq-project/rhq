@@ -116,7 +116,7 @@ public class ApplicationComponent
 
         Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
 
-        Configuration pluginConfiguration = super.resourceContext.getPluginConfiguration();
+        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
         String fullFileName = pluginConfiguration.getSimpleValue(FILENAME_PLUGIN_CONFIG_PROP, null);
 
         if (fullFileName == null) {
@@ -237,7 +237,7 @@ public class ApplicationComponent
     // DeleteResourceFacet Implementation  --------------------------------------------
 
     public void deleteResource() throws Exception {
-        Configuration pluginConfiguration = super.resourceContext.getPluginConfiguration();
+        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
         String fullFileName = pluginConfiguration.getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
 
         File file = new File(fullFileName);
@@ -276,7 +276,7 @@ public class ApplicationComponent
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
         if (!requests.isEmpty()) {
-            Configuration pluginConfig = super.resourceContext.getPluginConfiguration();
+            Configuration pluginConfig = getResourceContext().getPluginConfiguration();
             String path = pluginConfig.getSimpleValue(FILENAME_PLUGIN_CONFIG_PROP, null);
             for (MeasurementScheduleRequest request : requests) {
                  String metricName = request.getName();
@@ -319,7 +319,7 @@ public class ApplicationComponent
      * @return application name
      */
     public String getApplicationName() {
-        String resourceKey = resourceContext.getResourceKey();
+        String resourceKey = getResourceContext().getResourceKey();
         return resourceKey.substring(resourceKey.lastIndexOf('=') + 1);
     }
 
@@ -329,12 +329,12 @@ public class ApplicationComponent
      * @return full directory and file name of the application
      */
     public String getFileName() {
-        Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
+        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
         return pluginConfiguration.getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
     }
 
     public JBossASServerComponent getParentResourceComponent() {
-        return this.resourceContext.getParentResourceComponent();
+        return getResourceContext().getParentResourceComponent();
     }
 
     /**
@@ -343,7 +343,7 @@ public class ApplicationComponent
      * @throws Exception If anything goes wrong.
      */
     public void revertFromBackupFile() throws Exception {
-        Configuration pluginConfiguration = super.resourceContext.getPluginConfiguration();
+        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
         String fullFileName = pluginConfiguration.getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
 
         File backup = new File (fullFileName + ".bak"); // See FileContentDelegate#createContent
@@ -394,10 +394,10 @@ public class ApplicationComponent
      */
     private PackageVersions loadApplicationVersions() {
         if (versions == null) {
-            ResourceType resourceType = super.resourceContext.getResourceType();
+            ResourceType resourceType = getResourceContext().getResourceType();
             String pluginName = resourceType.getPlugin();
 
-            File dataDirectoryFile = super.resourceContext.getDataDirectory();
+            File dataDirectoryFile = getResourceContext().getDataDirectory();
 
             if (!dataDirectoryFile.exists()) {
                 dataDirectoryFile.mkdir();
@@ -489,7 +489,7 @@ public class ApplicationComponent
         OutputStream tempOutputStream = null;
         try {
             tempOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
-            contentServices.downloadPackageBits(resourceContext.getContentContext(), packageDetails.getKey(), tempOutputStream, true);
+            contentServices.downloadPackageBits(getResourceContext().getContentContext(), packageDetails.getKey(), tempOutputStream, true);
         } catch (IOException e) {
             log.error("Error writing updated application bits to temporary location: " + tempFile, e);
             throw e;

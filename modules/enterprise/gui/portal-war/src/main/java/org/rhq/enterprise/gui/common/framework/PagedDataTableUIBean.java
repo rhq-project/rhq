@@ -26,6 +26,7 @@ import org.richfaces.component.UIDatascroller;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 
 public abstract class PagedDataTableUIBean extends EnterpriseFacesContextUIBean {
     private PageControl pageControl;
@@ -42,7 +43,9 @@ public abstract class PagedDataTableUIBean extends EnterpriseFacesContextUIBean 
     }
 
     public void setPageControl(WebUser user, PageControlView view, PageControl pageControl) {
-        user.getWebPreferences().setPageControl(view, pageControl);
+        WebUserPreferences preferences = user.getWebPreferences();
+        preferences.setPageControl(view, pageControl);
+        preferences.persistPreferences();
         this.pageControl = pageControl;
     }
 

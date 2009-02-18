@@ -185,9 +185,12 @@ public class SNMPClient {
     }
 
     public void close() {
-        Collection<SNMPSession> sessions = SESSION_CACHE.values();
-        for (SNMPSession session : sessions) {
-            session.close();
+        synchronized (SESSION_CACHE) {
+            Collection<SNMPSession> sessions = SESSION_CACHE.values();
+            for (SNMPSession session : sessions) {
+                session.close();
+            }
+            SESSION_CACHE.clear(); // clean out old sessions after they have been closed.
         }
     }
 

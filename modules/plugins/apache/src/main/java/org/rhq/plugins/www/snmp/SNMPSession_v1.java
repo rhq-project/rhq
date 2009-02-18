@@ -108,6 +108,8 @@ class SNMPSession_v1 implements SNMPSession {
                 session.close();
             } catch (Exception e) {
                 log.warn("Failed to close the SNMP session. Cause: " + e);
+            } finally {
+                session = null;
             }
         }
     }

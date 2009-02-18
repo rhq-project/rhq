@@ -72,6 +72,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -258,13 +259,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
 
             notifyAlertConditionCacheManager("mergeMeasurementReport", data.toArray(new MeasurementData[data.size()]));
         } catch (SQLException e) {
-            // TODO hwr What do we do here ? Depending on driver  database ..
-            log.warn("Failure saving measurement data:\n" + e.getMessage());
-
-            if ((dbType != null) && DatabaseTypeFactory.isPostgres(dbType)) {
-                SQLException next = e.getNextException();
-                log.warn("  +-> \n" + next.getMessage());
-            }
+            log.warn("Failure saving measurement numeric data:\n" + ThrowableUtil.getAllMessages(e));
         } catch (Exception e) {
             log.error("Error persisting numeric data", e);
         } finally {
@@ -315,15 +310,9 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
 
             notifyAlertConditionCacheManager("mergeMeasurementReport", data.toArray(new MeasurementData[data.size()]));
         } catch (SQLException e) {
-            // TODO hwr What do we do here ? Depending on driver  database ..
-            log.warn("Failure saving measurement data:\n" + e.getMessage());
-
-            if ((dbType != null) && DatabaseTypeFactory.isPostgres(dbType)) {
-                SQLException next = e.getNextException();
-                log.warn("  +-> \n" + next.getMessage());
-            }
+            log.warn("Failure saving measurement trait data:\n" + ThrowableUtil.getAllMessages(e));
         } catch (Exception e) {
-            log.error(e);
+            log.error("Error persisting trait data", e);
         } finally {
             JDBCUtil.safeClose(conn, ps, null);
         }

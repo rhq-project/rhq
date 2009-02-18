@@ -65,7 +65,7 @@
                   </f:facet>
 
                   <h:outputLink
-                     value="/rhq/resource/monitor/graphs.xhtml">
+                     value="#{onf:getDefaultResourceTabURL()}">
                      <f:param name="id" value="#{healthSummary.id}" />
                      <h:outputText value="#{healthSummary.name}" />
                   </h:outputLink>

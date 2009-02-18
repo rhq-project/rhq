@@ -31,6 +31,7 @@ import org.apache.struts.util.MessageResources;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
+import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.ProblemResourcesPortletPreferences;
@@ -70,7 +71,7 @@ public class RSSAction extends BaseRSSAction {
 
             if ((results != null) && (results.size() > 0)) {
                 for (ProblemResourceComposite problem : results) {
-                    String link = feed.getBaseUrl() + "/rhq/resource/monitor/graphs.xhtml&id="
+                    String link = feed.getBaseUrl() + FunctionTagLibrary.getDefaultResourceTabURL() + "?id="
                         + problem.getResourceId();
 
                     String availText = "";

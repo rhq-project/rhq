@@ -32,6 +32,7 @@ import org.apache.struts.util.MessageResources;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
@@ -66,7 +67,8 @@ public class RSSAction extends BaseRSSAction {
 
             if ((results != null) && (results.size() > 0)) {
                 for (ResourceHealthComposite summary : results) {
-                    String link = feed.getBaseUrl() + "/rhq/resource/monitor/graphs.xhtml&id=" + summary.getId();
+                    String link = feed.getBaseUrl() + FunctionTagLibrary.getDefaultResourceTabURL() + "?id="
+                        + summary.getId();
 
                     String availText = res.getMessage("dash.home.ResourceHealth.rss.item.availability", summary
                         .getAvailabilityType().toString());

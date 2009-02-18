@@ -101,7 +101,7 @@
                 <h:outputText value="#{metric.label} " />
           </h:outputLink>
           &nbsp;&nbsp;
-          <h:outputLink target="_top" value="/rhq/resource/monitor/graphs.xhtml">
+          <h:outputLink target="_top" value="#{onf:getDefaultResourceTabURL()}">
              <f:param name="id" value="#{metric.metricSourceId}" />
              <h:outputFormat value="#{msg['common.value.parenthesis']}">
                 <f:param value="#{metric.metricSource}" />

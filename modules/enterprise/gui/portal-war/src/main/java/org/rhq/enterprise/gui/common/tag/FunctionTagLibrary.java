@@ -281,4 +281,8 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         String valueStr = (value == null ? null : value.toString());
         return (valueStr == null ? "" : valueStr);
     }
+
+    public static String getDefaultResourceTabURL() {
+        return "/rhq/resource/summary/overview.xhtml";
+    }
 }

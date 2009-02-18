@@ -264,13 +264,13 @@
 
          <display:column width="20%" property="resource.name" title="${entityTypeTH}"
                          isLocalizedTitle="false" sortAttr="res.name"
-                         href="/rhq/resource/monitor/graphs.xhtml?id=${resourceComposite.resource.id}"/>
+                         href="/rhq/resource/summary/overview.xhtml?id=${resourceComposite.resource.id}"/>
 
          <c:if test="${ResourceHubForm.resourceCategory != PLATFORM}">
             <display:column property="parent.name" title="resource.group.inventory.ParentTH" 
                             width="20%" 
                             sortAttr="res.parentResource.name"
-                            href="/rhq/resource/monitor/graphs.xhtml?id=${resourceComposite.parent.id}" />
+                            href="/rhq/resource/summary/overview.xhtml?id=${resourceComposite.parent.id}" />
          </c:if>
 
          <c:if test="${not empty resourceTypeTH}">

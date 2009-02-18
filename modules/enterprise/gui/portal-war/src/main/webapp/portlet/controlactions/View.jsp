@@ -53,7 +53,7 @@
               </tr>  
               <c:forEach items="${lastCompletedResource}" var="obj">
                 <tr class="ListRow">                                                   
-                  <td class="ListCell"><html:link page="/rhq/resource/monitor/graphs.xhtml?id=${obj.resourceId}"><c:out value="${obj.resourceName}"/></html:link></td>
+                  <td class="ListCell"><html:link page="/rhq/resource/summary/overview.xhtml?id=${obj.resourceId}"><c:out value="${obj.resourceName}"/></html:link></td>
                   <td class="ListCell"><c:out value="${obj.resourceTypeName}"/></td>
                   <td class="ListCell"><c:out value="${obj.operationName}"/></td>
                   <td class="ListCell"><hq:dateFormatter value="${obj.operationStartTime}"/></td>

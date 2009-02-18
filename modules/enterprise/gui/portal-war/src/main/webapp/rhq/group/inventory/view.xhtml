@@ -221,7 +221,7 @@
          </onc:sortableColumnHeader>
       </f:facet>
 
-      <h:outputLink value="/rhq/resource/monitor/graphs.xhtml">
+      <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
          <f:param name="id" value="#{resourceWithAvailability.resource.id}"/>
          <h:outputText value="#{resourceWithAvailability.resource.name}"/>
       </h:outputLink>
@@ -234,7 +234,7 @@
          </onc:sortableColumnHeader>
       </f:facet>
 
-      <h:outputLink value="/rhq/resource/monitor/graphs.xhtml">
+      <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
          <f:param name="id" value="#{resourceWithAvailability.parent.id}"/>
          <h:outputText value="#{resourceWithAvailability.parent.name}"/>
       </h:outputLink>

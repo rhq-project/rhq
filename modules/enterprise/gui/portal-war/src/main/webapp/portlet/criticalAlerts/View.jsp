@@ -44,7 +44,7 @@
             <fmt:message key="dash.home.removed.resource"/>
           </c:when>
           <c:otherwise>
-            <html:link page="/rhq/resource/monitor/graphs.xhtml?id=${alert.alertDefinition.resource.id}"><c:out value="${alert.alertDefinition.resource.name}"/>&nbsp;</html:link>
+            <html:link page="/rhq/resource/summary/overview.xhtml?id=${alert.alertDefinition.resource.id}"><c:out value="${alert.alertDefinition.resource.name}"/>&nbsp;</html:link>
           </c:otherwise>
         </c:choose>
         </td>

@@ -35,6 +35,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
 import org.rhq.enterprise.gui.inventory.resource.ResourceUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -92,8 +93,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                     ResourceFacets facets = this.resourceTypeManager.getResourceFacets(subject, resource
                         .getResourceType().getId());
 
-                    String fallbackPath = LookupUtil.getSystemManager().isMonitoringEnabled() ? "/rhq/resource/monitor/graphs.xhtml"
-                        : "/rhq/resource/inventory/view.xhtml";
+                    String fallbackPath = FunctionTagLibrary.getDefaultResourceTabURL();
 
                     // Switching from a auto group view... default to monitor page
                     if (!path.startsWith("/rhq/resource")) {

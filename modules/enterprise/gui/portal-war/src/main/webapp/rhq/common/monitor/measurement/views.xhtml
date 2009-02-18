@@ -10,10 +10,33 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function">
 
 <ui:composition>
+
+<script type="text/javascript">
+function reviewAction(option) {
+    var form = document.metricViewsForm;
+    if (option.value == 'go') {
+        form.view.disabled = false;
+        form.view.value = option.text;
+        form.submit();
+    }
+    else if (option.value == 'delete') {
+        form.view.value = "";
+    }
+    else if (option.value == 'create') {
+        form.view.disabled = false;
+        return;
+    }
+    else if (option.value == 'update') {
+        form.view.value = "#{IndicatorChartsUIBean.view}";
+    }
+    form.view.disabled = true;
+}
+</script>
 
 <table align="left" width="750" cellpadding="0" cellspacing="0" border="0">
    <tr>

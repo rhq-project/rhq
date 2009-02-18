@@ -207,7 +207,7 @@
          </onc:sortableColumnHeader>
       </f:facet>
 
-      <h:outputLink value="/rhq/resource/monitor/graphs.xhtml">
+      <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
          <f:param name="id" value="#{resourceComposite.resource.id}"/>
          <h:outputText value="#{resourceComposite.resource.name}"/>
       </h:outputLink>

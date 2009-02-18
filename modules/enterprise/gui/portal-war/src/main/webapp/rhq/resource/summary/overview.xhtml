@@ -17,55 +17,22 @@
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
 <ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Summary"/>
-<ui:param name="selectedTabName" value="Summary"/>
+<ui:param name="selectedTabName" value="Summary.Overview"/>
 
 <ui:define name="content">
 
-      <rich:panel styleClass="BlockContent">
-         <f:facet name="header">
-            Quick Counts
-         </f:facet>
-         <h:outputText value="*Note: all quick counts reflect what happened to the resource between the specified metric display range." />
-         <br /><br />
-         <ui:repeat var="summaryInfoEntry" value="#{ResourceUIBean.summaryInfo}"> 
-            <h:outputText value="#{summaryInfoEntry.lefty} - #{summaryInfoEntry.righty}" /><br />
-         </ui:repeat>
-         <hr />
-         <h:form id="metricDisplayRangeForm" >
-            <input type="hidden" name="id" value="${param.id}"/>
-            <table>
-               <tr>
-                  <td><onc:metric optionList="m,h,d" /></td>
-                  <td>
-                     <h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}"
-                                   action="#{MetricComponentUtilityUIBean.update}" >
-                        <img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
-                     </h:commandLink>
-                     <h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" 
-                                   action="#{MetricComponentUtilityUIBean.switchToSimpleMode}">
-                        <h:outputText value="Switch to Simple Mode" />
-                     </h:commandLink>
-                  </td>
-               </tr>
-            </table>
-         </h:form>
-      </rich:panel>
-
-      <h:form id="resourceTimelineForm">
-         <input type="hidden" name="id" value="${param.id}"/>
-
-         <rich:panel styleClass="BlockContent">
-            <f:facet name="header">
-               <h:outputText value="Resource Timeline"/>
-            </f:facet>
-
-            <h:panelGrid columns="1" width="100%">
-               <iframe src ="/resource/common/monitor/events/EventsView.jsp?id=#{param.id}" 
-                       width="100%" height="550" scrolling="no" frameborder="0" />
-            </h:panelGrid>
-            
-         </rich:panel>
-      </h:form>
+   <table width="100%">
+      <tr>
+         <td width="50%" valign="top">
+            <ui:include src="/rhq/resource/summary/table/recentAlerts.xhtml"/>
+            <ui:include src="/rhq/resource/summary/table/recentConfigUpdates.xhtml"/>
+         </td>
+         <td width="50%" valign="top">
+            <ui:include src="/rhq/resource/summary/table/recentOperations.xhtml"/>
+            <ui:include src="/rhq/resource/summary/table/recentEventCounts.xhtml"/>
+         </td>
+      </tr>
+   </table>
 
 </ui:define>
 

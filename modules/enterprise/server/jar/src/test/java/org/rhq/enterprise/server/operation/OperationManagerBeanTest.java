@@ -1298,7 +1298,8 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert history.getSubjectName().equals(superuser.getName()) : history;
 
         PageList<ResourceOperationLastCompletedComposite> list;
-        list = operationManager.getRecentlyCompletedResourceOperations(superuser, PageControl.getUnlimitedInstance());
+        list = operationManager.getRecentlyCompletedResourceOperations(superuser, null, PageControl
+            .getUnlimitedInstance());
         assert list.size() == 1;
         assert list.get(0).getOperationHistoryId() == history.getId();
         assert list.get(0).getResourceId() == resource.getId();
@@ -1311,7 +1312,8 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert results != null;
         assert results.size() == 0;
 
-        list = operationManager.getRecentlyCompletedResourceOperations(superuser, PageControl.getUnlimitedInstance());
+        list = operationManager.getRecentlyCompletedResourceOperations(superuser, null, PageControl
+            .getUnlimitedInstance());
         assert list.size() == 0;
     }
 

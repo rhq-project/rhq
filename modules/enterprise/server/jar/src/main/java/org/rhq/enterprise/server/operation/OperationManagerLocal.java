@@ -509,13 +509,14 @@ public interface OperationManagerLocal {
      * operation was executed, all of the resource executions that occurred as part of it will be returned (that is, the
      * resources in that group will have its resource operations returned.</p>
      *
-     * @param  subject the user asking for the data; the returned list is limited to what this user can see
-     * @param  pc      limits the number of composite objects returned
+     * @param  subject    the user asking for the data; the returned list is limited to what this user can see
+     * @param  resourceId if non-null, will only result recent completed operations for this resource
+     * @param  pc         limits the number of composite objects returned
      *
      * @return the list of recently completed resource operations
      */
     PageList<ResourceOperationLastCompletedComposite> getRecentlyCompletedResourceOperations(Subject subject,
-        PageControl pc);
+        Integer resourceId, PageControl pc);
 
     /**
      * Gets a list of all recently completed group operations. This is used to support the dashboard operations portlet.

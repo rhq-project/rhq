@@ -21,14 +21,13 @@ package org.rhq.enterprise.server.resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.LinkedList;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -106,9 +105,7 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -1980,55 +1977,5 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 prefetchResource(child, recursive);
             }
         }
-    }
-
-    public Map<String, String> getSummaryInfo(Subject user, int resourceId) {
-        Map<String, String> info = new HashMap<String, String>();
-
-        try {
-            Query operationCountQuery = entityManager.createQuery("" //
-                + "SELECT COUNT(roh.id) FROM ResourceOperationHistory roh " //
-                + " WHERE roh.resource.id = :resourceId " //
-                + "   AND roh.createdTime BETWEEN :begin AND :end");
-
-            Query alertsCountQuery = entityManager.createQuery("" //
-                + "SELECT COUNT(a.id) FROM Alert a " //
-                + " WHERE a.alertDefinition.resource.id = :resourceId " //
-                + "   AND a.ctime BETWEEN :begin AND :end");
-
-            Query configurationUpdateCountQuery = entityManager.createQuery("" //
-                + "SELECT COUNT(rcu.id) FROM ResourceConfigurationUpdate rcu " //
-                + " WHERE rcu.resource.id = :resourceId " //
-                + "   AND rcu.createdTime BETWEEN :begin AND :end");
-
-            MeasurementPreferences preferences = new MeasurementPreferences(user);
-            MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
-            long begin = rangePreferences.begin;
-            long end = rangePreferences.end;
-
-            operationCountQuery.setParameter("resourceId", resourceId);
-            alertsCountQuery.setParameter("resourceId", resourceId);
-            configurationUpdateCountQuery.setParameter("resourceId", resourceId);
-
-            operationCountQuery.setParameter("begin", begin);
-            alertsCountQuery.setParameter("begin", begin);
-            configurationUpdateCountQuery.setParameter("begin", begin);
-
-            operationCountQuery.setParameter("end", end);
-            alertsCountQuery.setParameter("end", end);
-            configurationUpdateCountQuery.setParameter("end", end);
-
-            long operationCount = (Long) operationCountQuery.getSingleResult();
-            long alertCount = (Long) alertsCountQuery.getSingleResult();
-            long configurationUpdateCount = (Long) configurationUpdateCountQuery.getSingleResult();
-
-            info.put("Operation Executions", String.valueOf(operationCount));
-            info.put("Alerts Fired", String.valueOf(alertCount));
-            info.put("Configuration Changes", String.valueOf(configurationUpdateCount));
-        } catch (Throwable t) {
-            log.error("Could not get summary info for resource[id=" + resourceId + "]", t);
-        }
-
-        return info;
     }
 }

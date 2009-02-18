@@ -394,5 +394,4 @@ public interface ResourceManagerLocal {
 
     ResourceAvailabilitySummary getAvailabilitySummary(Subject user, int resourceId);
 
-    Map<String, String> getSummaryInfo(Subject user, int resourceId);
 }

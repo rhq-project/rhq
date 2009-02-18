@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <rich:panel styleClass="BlockContent">
+      <f:facet name="header">
+         Recent Operations
+      </f:facet>
+
+      <rich:dataTable id="operationsDataTable"
+                      rows="0"
+                      value="#{ResourceOverviewUIBean.recentOperations}"
+                      var="item"
+                      width="100%"
+                      columnsWidth="40%, 20%, 40%"
+                      headerClass="tableRowHeader"
+                      footerClass="on-pager-footer"
+                      onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                      onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+         <rich:column>
+            <f:facet name="header">
+               <h:outputText styleClass="headerText" value="Operation Name" />
+            </f:facet>
+            <h:outputLink value="/rhq/resource/operation/resourceOperationHistoryDetails.xhtml">
+               <f:param name="id" value="#{item.resourceId}" />
+               <f:param name="opId" value="#{item.operationHistoryId}" />
+               <h:outputText value="#{item.operationName}" />
+            </h:outputLink>
+         </rich:column>
+
+         <rich:column>
+            <f:facet name="header">
+               <h:outputText styleClass="headerText" value="Status" />
+            </f:facet>
+            <h:outputText value="#{item.operationStatus}" />
+         </rich:column>
+
+         <rich:column>
+            <f:facet name="header">
+               <h:outputText styleClass="headerText" value="Date" />
+            </f:facet>
+            <h:outputText value="#{item.operationStartTime}">
+               <f:converter converterId="RelativeDurationConverter" />
+            </h:outputText>
+         </rich:column>
+
+          <f:facet name="footer">
+             <rich:columnGroup>
+                <rich:column colspan="3" width="100%">
+                   <h:outputText value="Up to 5 items are shown" 
+                                 rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentOperations) ne 0}"/>
+                   <h:outputText value="This resource has no operation history" 
+                                 rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentOperations) eq 0}"/>
+                </rich:column>
+             </rich:columnGroup>
+          </f:facet>
+
+      </rich:dataTable>
+   </rich:panel>
+
+</ui:composition>

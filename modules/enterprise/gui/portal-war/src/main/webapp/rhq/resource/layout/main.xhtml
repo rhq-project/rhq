@@ -67,7 +67,10 @@ REQUEST PARAMETERS:
 
          <f:param name="id" value="#{param.id}" />
 
-         <onc:tab name="Summary" url="/rhq/resource/summary/overview.xhtml" />
+         <onc:tab name="Summary">
+            <onc:subtab name="Overview" url="/rhq/resource/summary/overview.xhtml" />
+            <onc:subtab name="Timeline" url="/rhq/resource/summary/timeline.xhtml" />
+         </onc:tab>
 
          <onc:tab name="Monitor" rendered="#{monitorEnabled}">
             <onc:subtab name="Graphs"      url="/rhq/resource/monitor/graphs.xhtml" />
@@ -81,7 +84,6 @@ REQUEST PARAMETERS:
 
          <onc:tab name="Events">
             <onc:subtab name="History"  url="/rhq/resource/events/history.xhtml" />
-            <onc:subtab name="Timeline" url="/rhq/resource/events/timeline.xhtml" />
          </onc:tab>
 
          <onc:tab name="Inventory" url="/rhq/resource/inventory/view.xhtml" />

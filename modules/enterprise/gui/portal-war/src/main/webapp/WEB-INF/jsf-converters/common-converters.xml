@@ -28,6 +28,11 @@
       <converter-id>ShortDurationConverter</converter-id>
       <converter-class>org.rhq.enterprise.gui.common.time.converter.ShortDurationConverter</converter-class>
    </converter>
+   
+   <converter>
+      <converter-id>RelativeDurationConverter</converter-id>
+      <converter-class>org.rhq.enterprise.gui.common.time.converter.RelativeDurationConverter</converter-class>
+   </converter>
     
    <converter>
       <converter-id>UserDateTimeConverter</converter-id>

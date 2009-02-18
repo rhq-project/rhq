@@ -1268,7 +1268,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
     @SuppressWarnings("unchecked")
     public PageList<ResourceOperationLastCompletedComposite> getRecentlyCompletedResourceOperations(Subject subject,
-        PageControl pageControl) {
+        Integer resourceId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("ro.createdTime", PageOrdering.ASC);
 
         Query query;
@@ -1287,6 +1287,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             query.setParameter("subject", subject);
             count.setParameter("subject", subject);
         }
+
+        query.setParameter("resourceId", resourceId);
+        count.setParameter("resourceId", resourceId);
 
         int totalCount = ((Number) count.getSingleResult()).intValue();
         List<ResourceOperationLastCompletedComposite> results = query.getResultList();

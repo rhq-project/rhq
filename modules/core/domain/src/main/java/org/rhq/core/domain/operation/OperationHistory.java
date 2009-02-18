@@ -72,7 +72,9 @@ import org.rhq.core.domain.configuration.Configuration;
         + "    ro.resource.id, "
         + "    ro.resource.name, "
         + "    ro.resource.resourceType.name) "
-        + " FROM ResourceOperationHistory ro " + " WHERE ro.status != 'INPROGRESS' "),
+        + " FROM ResourceOperationHistory ro "
+        + " WHERE ro.status != 'INPROGRESS' "
+        + "   AND ( ro.resource.id = :resourceId OR :resourceId IS NULL )"),
     @NamedQuery(name = OperationHistory.QUERY_GET_RECENTLY_COMPLETED_RESOURCE, query = "SELECT DISTINCT new org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite( "
         + "    ro.id, "
         + "    ro.operationDefinition.displayName, "
@@ -82,7 +84,8 @@ import org.rhq.core.domain.configuration.Configuration;
         + "    ro.resource.name, "
         + "    ro.resource.resourceType.name) "
         + " FROM ResourceOperationHistory ro JOIN ro.resource.implicitGroups g JOIN g.roles r JOIN r.subjects s "
-        + " WHERE ro.status != 'INPROGRESS' AND s = :subject "),
+        + " WHERE ro.status != 'INPROGRESS' AND s = :subject "
+        + "   AND ( ro.resource.id = :resourceId OR :resourceId IS NULL )"),
     @NamedQuery(name = OperationHistory.QUERY_GET_RECENTLY_COMPLETED_GROUP_ADMIN, query = "SELECT DISTINCT new org.rhq.core.domain.operation.composite.GroupOperationLastCompletedComposite( "
         + "    go.id, "
         + "    go.operationDefinition.displayName, "

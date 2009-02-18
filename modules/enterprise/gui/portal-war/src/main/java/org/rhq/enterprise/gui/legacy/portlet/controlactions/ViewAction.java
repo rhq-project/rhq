@@ -78,7 +78,7 @@ public class ViewAction extends TilesAction {
             if (operationPreferences.useLastCompleted) {
                 PageControl pageControl = new PageControl(0, operationPreferences.lastCompleted);
                 pageControl.initDefaultOrderingField("ro.createdTime", PageOrdering.DESC);
-                lastCompletedResourceOps = manager.getRecentlyCompletedResourceOperations(user.getSubject(),
+                lastCompletedResourceOps = manager.getRecentlyCompletedResourceOperations(user.getSubject(), null,
                     pageControl);
 
                 pageControl = new PageControl(0, operationPreferences.lastCompleted);

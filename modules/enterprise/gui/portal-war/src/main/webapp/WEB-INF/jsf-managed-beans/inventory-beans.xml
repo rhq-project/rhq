@@ -11,6 +11,12 @@
       <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ResourceUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>ResourceOverviewUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.resource.ResourceOverviewUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
 
    <managed-bean>
       <managed-bean-name>FavoritesUIBean</managed-bean-name>

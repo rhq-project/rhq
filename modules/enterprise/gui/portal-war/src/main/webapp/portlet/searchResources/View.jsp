@@ -30,10 +30,10 @@ function checkGroup() {
     <td class="BlockContent" colspan="3"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>
   <tr valign="top">
-    <td class="BlockContent" nowrap valign="center">
+    <td class="BlockContent" nowrap="nowrap" valign="center">
       <input type="text" size="12" maxlength="40" value="<fmt:message key="common.header.ResourceName"/>" onfocus="ClearText(this)" name="keywords">      
     </td>
-    <td class="BlockContent" nowrap valign="center">
+    <td class="BlockContent" nowrap="nowrap" valign="center">
       <html:select property="resourceCategory" styleClass="FilterFormText" size="1" >
         <hq:optionMessageList property="functions" baseKey="resource.hub.filter"/>        
       </html:select>

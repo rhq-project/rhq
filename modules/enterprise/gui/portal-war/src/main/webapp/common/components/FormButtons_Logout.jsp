@@ -25,7 +25,7 @@
           <td><html:image page="/images/fb_ok.gif" border="0" titleKey="FormButtons.ClickToOk" property="ok" onmouseover="imageSwap(this, imagePath + 'fb_ok', '_over');" onmouseout="imageSwap(this, imagePath +  'fb_ok', '');" onmousedown="imageSwap(this, imagePath +  'fb_ok', '_down')" onclick="checkSubmit(); isButtonClicked=true;"/></td>
           <td><html:img page="/images/spacer.gif" width="10" height="1" border="0"/></td>
           <td><html:image page="/images/fb_reset.gif" border="0" titleKey="FormButtons.ClickToReset" property="reset" onmouseover="imageSwap(this, imagePath + 'fb_reset', '_over');" onmouseout="imageSwap(this, imagePath + 'fb_reset', '');" onmousedown="imageSwap(this, imagePath + 'fb_reset', '_down')"/></td>
-          <td nowrap><html:link page="/Logout.do"><fmt:message key="admin.user.generalProperties.Logout"/></html:link> <fmt:message key="admin.user.generalProperties.CompleteLater"/></td>
+          <td nowrap="nowrap"><html:link page="/Logout.do"><fmt:message key="admin.user.generalProperties.Logout"/></html:link> <fmt:message key="admin.user.generalProperties.CompleteLater"/></td>
 		  <td width="100%"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
         </tr>
       </table>

@@ -36,7 +36,7 @@
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
          <tr valign="top">
           <td width="20%" class="BlockLabel" rowspan="3"><fmt:message key="dash.settings.FormLabel.ControlRange"/></td>
-          <td width="5%" class="BlockContent" nowrap>
+          <td width="5%" class="BlockContent" nowrap="nowrap">
              <table><tr><td valign="middle"><html:checkbox property="useLastCompleted"/></td>
                     <td valign="middle"><fmt:message key="dash.settings.controlActions.last"/></td></tr></table>
           </td>
@@ -52,7 +52,7 @@
           </td>
         </tr>
         <tr>
-          <td width="5%" class="BlockContent" nowrap>
+          <td width="5%" class="BlockContent" nowrap="nowrap">
              <table><tr><td valign="middle"><html:checkbox property="useNextScheduled"/></td>
                     <td valign="middle"><fmt:message key="dash.settings.controlActions.next"/></td></tr></table>
           <td width="75%" class="BlockContent">

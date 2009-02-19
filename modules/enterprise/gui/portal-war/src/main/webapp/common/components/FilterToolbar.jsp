@@ -28,7 +28,7 @@
   	<td class="FilterLine" colspan="2"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>
   <tr>		
-    <td class="FilterLabelText" nowrap align="right"><fmt:message key="Filter.ViewLabel"/></td>
+    <td class="FilterLabelText" nowrap="nowrap" align="right"><fmt:message key="Filter.ViewLabel"/></td>
     <td class="FilterLabelText" width="100%">
       <html:select property="f" styleClass="FilterFormText" size="1" onchange="goToSelectLocation(this, '${filterParam}',  '${filterAction}');">
         <html:option value="-1" key="${defaultKey}"/>

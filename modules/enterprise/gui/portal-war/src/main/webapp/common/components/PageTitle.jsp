@@ -65,7 +65,7 @@
       <td colspan="3">
          <table width="100%" border="0" cellspacing="0" cellpadding="0">
             <tr>
-               <td colspan=3>
+               <td colspan="3">
                   <div id="resourceSummary"/>
                   <script language="JavaScript" type="text/javascript">
                      loadResourceSummary('<c:url value="/rhq/resource/layout/summary.xhtml?id=${param.id}"/>', "resourceSummary");
@@ -102,7 +102,7 @@
          <!--  SEARCH TOOLBAR CONTENTS -->
          <table width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr>
-               <td nowrap class="SearchBold">
+               <td nowrap="nowrap" class="SearchBold">
                   <fmt:message key="resource.hub.search.label.Search"/>
                </td>
                <td class="SearchRegular">

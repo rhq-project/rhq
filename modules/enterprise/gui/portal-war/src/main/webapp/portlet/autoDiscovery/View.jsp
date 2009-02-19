@@ -152,7 +152,7 @@ function collapseExpandPlatform(platformId)
           <table width="100%" cellpadding="0" cellspacing="0" border="0">
             <c:set var="platform" value="${resource.key}"/>
             <tr class="ListRowHeader">
-              <td nowrap class="ListCell" align="left" width="5%"><a href="." onclick="return false;"><img id="arrow_${platform.id}" align="left" vspace="4" src="/images/plus.gif" onclick="collapseExpandPlatform('${platform.id}')"/></a><html:multibox property="platformsToProcess" value="${platform.id}" onclick="setAllServers(AIQueueForm,this);"/>&nbsp;</td>
+              <td nowrap="nowrap" class="ListCell" align="left" width="5%"><a href="." onclick="return false;"><img id="arrow_${platform.id}" align="left" vspace="4" src="/images/plus.gif" onclick="collapseExpandPlatform('${platform.id}')"/></a><html:multibox property="platformsToProcess" value="${platform.id}" onclick="setAllServers(AIQueueForm,this);"/>&nbsp;</td>
               <td class="ListCell" align="left">
                   <c:out value="${platform.name}"/>
                   <c:choose>
@@ -164,7 +164,7 @@ function collapseExpandPlatform(platformId)
                     </c:otherwise>
                   </c:choose>
               </td>
-              <td nowrap class="ListCell" align="right"><c:out value="${platform.inventoryStatus}"/></td>
+              <td nowrap="nowrap" class="ListCell" align="right"><c:out value="${platform.inventoryStatus}"/></td>
             </tr>
           </table>
 
@@ -175,9 +175,9 @@ function collapseExpandPlatform(platformId)
             <c:if test="${server.inventoryStatus == status_new}">
               <tr class="ListRow" >
                 <hq:shortenPath property="shortenedInstallPath" value="${server.resourceKey}" preChars="20" postChars="25"/>
-                <td nowrap class="ListCell" align="left" width="5%">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<html:multibox property="serversToProcess" value="${server.id}" onclick="setPlatformCheckbox(AIQueueForm,this);"/></td>
-                <td nowrap class="ListCell" align="left"><hq:removePrefix prefix="IGNOREME__${platform.name}" value="${server.name}"/></td>
-                <td nowrap class="ListCell" align="left">
+                <td nowrap="nowrap" class="ListCell" align="left" width="5%">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<html:multibox property="serversToProcess" value="${server.id}" onclick="setPlatformCheckbox(AIQueueForm,this);"/></td>
+                <td nowrap="nowrap" class="ListCell" align="left"><hq:removePrefix prefix="IGNOREME__${platform.name}" value="${server.name}"/></td>
+                <td nowrap="nowrap" class="ListCell" align="left">
                   <c:choose>
                     <c:when test="${wasShortened}">
                       <a href="." onclick="return false;" class="ListCellPopup2">
@@ -190,7 +190,7 @@ function collapseExpandPlatform(platformId)
                     </c:otherwise>
                   </c:choose>
                 </td>
-                <td nowrap class="ListCell" align="right"><c:out value="${server.inventoryStatus}"/></td>
+                <td nowrap="nowrap" class="ListCell" align="right"><c:out value="${server.inventoryStatus}"/></td>
               </tr>
             </c:if>
             </c:forEach>

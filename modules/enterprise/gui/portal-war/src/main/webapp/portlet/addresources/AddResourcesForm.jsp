@@ -326,7 +326,7 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
           <td><html:img page="/images/spacer.gif" width="5" height="1" border="0"/></td>
         </tr>
         <tr>
-          <td class="FilterLabelText" nowrap align="right">View:</td>
+          <td class="FilterLabelText" nowrap="nowrap" align="right">View:</td>
           <td class="FilterLabelText" width="100%">      
             <html:select property="category" styleClass="FilterFormText" size="1" onchange="goToSelectLocation(this, 'category', '${categoryAction}');">
               <hq:optionMessageList property="functions" baseKey="resource.hub.filter"/>

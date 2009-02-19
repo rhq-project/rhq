@@ -81,7 +81,7 @@
 			<table width="100%" cellpadding="0" cellspacing="0" border="0">
 				<tr>
 					<td><html:radio property="startTime" value="onDate" onclick="turnOnRecurrence(true)"/>&nbsp;</td>
-					<td nowrap>
+					<td nowrap="nowrap">
 						<html:select property="startMonth" styleId="startMonth" onchange="turnOnRecurrence(true); toggleRadio('startTime', 1); changeDropDown('startMonth', 'startDay', 'startYear');">
 							<html:option value="0">01 (Jan)</html:option>
 							<html:option value="1">02 (Feb)</html:option>
@@ -140,7 +140,7 @@
 						</html:select>
 					</td>
 					<td><html:link href="#" onclick="cal('startMonth', 'startDay', 'startYear'); return false;"><html:img page="/images/schedule_iconCal.gif" width="19" height="17" hspace="5" border="0"/></html:link></td>
-					<td nowrap>&nbsp;&nbsp;<b>@</b>&nbsp;&nbsp;</td>
+					<td nowrap="nowrap">&nbsp;&nbsp;<b>@</b>&nbsp;&nbsp;</td>
 					<td width="100%">
 						<html:text property="startHour" styleId="startHour" size="2" maxlength="2"/> : <html:text property="startMin" styleId="startMin" size="2" maxlength="2" />
 						<html:select property="startAmPm">
@@ -202,7 +202,7 @@
 			<table width="100%" border="0" cellspacing="0" cellpadding="0">
 	          <tr valign="top"> 
 	            <td class="BlockContent"><html:img page="/images/schedule_return.gif" width="17" height="21" border="0"/></td>
-	            <td class="BlockContent" nowrap><fmt:message key="resource.autodiscovery.schedule.recur.Every"/> 
+	            <td class="BlockContent" nowrap="nowrap"><fmt:message key="resource.autodiscovery.schedule.recur.Every"/> 
 	              <html:text property="numWeeks" styleId="numWeeks" size="2" maxlength="2"/>
 	              <fmt:message key="resource.autodiscovery.schedule.weekly.WeeksOn"/></td>
 	            <td class="BlockContent" width="100%">
@@ -234,12 +234,12 @@
 			<table width="100%" border="0" cellspacing="0" cellpadding="2">
           <tr> 
             <td><html:img page="/images/schedule_return.gif" width="17" height="21" border="0"/></td>
-            <td nowrap><fmt:message key="resource.autodiscovery.schedule.recur.Every"/> 
+            <td nowrap="nowrap"><fmt:message key="resource.autodiscovery.schedule.recur.Every"/> 
               <html:text property="numMonths" styleId="numMonths" size="2" maxlength="2" />
               <fmt:message key="resource.autodiscovery.schedule.monthly.MonthsOn"/></td>
             <td><html:radio property="recurrenceFrequencyMonthly" value="onDay" /> 
             </td>
-            <td nowrap><fmt:message key="resource.autodiscovery.schedule.monthly.OnThe"/></td>
+            <td nowrap="nowrap"><fmt:message key="resource.autodiscovery.schedule.monthly.OnThe"/></td>
             <td><html:select property="recurrenceWeek" styleId="recurrenceWeek" onchange="toggleRadio('recurrenceFrequencyMonthly', 0);">
                 <html:option value="1"><fmt:message key="resource.autodiscovery.schedule.monthly.first"/></html:option>
                 <html:option value="2"><fmt:message key="resource.autodiscovery.schedule.monthly.second"/></html:option>
@@ -317,7 +317,7 @@
 				  <td class="BlockContent">
 						<table width="100%" cellpadding="0" cellspacing="0" border="0">
 							<tr>
-								<td nowrap>
+								<td nowrap="nowrap">
 									<html:radio property="endTime" value="onDate"/>
 									<html:select property="endMonth" styleId="endMonth" onchange="toggleRadio('endTime', 1); changeDropDown('endMonth', 'endDay', 'endYear');">
 										<html:option value="0">01 (Jan)</html:option>

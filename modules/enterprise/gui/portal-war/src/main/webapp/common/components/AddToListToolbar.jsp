@@ -103,7 +103,7 @@
       </td>
       
       <c:if test="${not empty showIntervalControls and showIntervalControls}">
-         <td class="BoldText" nowrap>
+         <td class="BoldText" nowrap="nowrap">
             <fmt:message key="resource.common.monitor.visibility.config.CollectionIntervalForSelectedLabel"/>
          </td>
          <td>
@@ -149,7 +149,7 @@
          <tr>
             <td width="40">&nbsp;</td>
             <td width="40">&nbsp;</td>
-            <td class="ErrorField" nowrap="true" colspan="3"><span class="ErrorFieldContent">- <html:errors
+            <td class="ErrorField" nowrap="nowrap" colspan="3"><span class="ErrorFieldContent">- <html:errors
                   property="collectionInterval"/></span></td>
             <td width="100%">&nbsp;</td>
          </tr>

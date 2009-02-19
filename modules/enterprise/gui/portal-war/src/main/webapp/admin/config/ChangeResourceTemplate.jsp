@@ -23,8 +23,8 @@
 <!-- PLATFORMS -->
 	<tr class="ListHeaderDark">
       <td width="50%" class="ListHeaderInactiveSorted"><fmt:message key="resource.hub.PlatformTypeTH"/>s</td>
-      <td width="25%" class="ListHeaderInactive" nowrap>&nbsp;</td>
-      <td width="25%" class="ListHeaderInactive" nowrap>&nbsp;</td>
+      <td width="25%" class="ListHeaderInactive" nowrap="nowrap">&nbsp;</td>
+      <td width="25%" class="ListHeaderInactive" nowrap="nowrap">&nbsp;</td>
       </tr>
   	<c:set var="PlatformServices" value="${PlatformServices}"/>
     <c:forEach var="entry" varStatus="status" items="${platformTypes}">
@@ -68,8 +68,8 @@
 <!-- PLATFORM SERVICES -->
     <tr class="ListHeaderDark">
       <td width="50%" class="ListHeaderInactiveSorted"><fmt:message key="resource.hub.PlatformServiceTypeTH"/>s</td>
-      <td width="25%" class="ListHeaderInactive" nowrap>&nbsp;</td>
-      <td width="25%" class="ListHeaderInactive" nowrap>&nbsp;</td>
+      <td width="25%" class="ListHeaderInactive" nowrap="nowrap">&nbsp;</td>
+      <td width="25%" class="ListHeaderInactive" nowrap="nowrap">&nbsp;</td>
       </tr>
     <c:set var="PlatformServices" value="${PlatformServices}"/>
     <c:forEach var="entry" varStatus="status" items="${platformTypes}">
@@ -90,8 +90,8 @@
 <!-- SERVER CONTENTS -->
 	<tr class="ListHeaderDark">
       <td width="50%" class="ListHeaderInactiveSorted"><fmt:message key="resource.hub.ServerTypeTH"/>s</td>
-      <td width="25%" class="ListHeaderInactive" nowrap>&nbsp;</td>
-      <td width="25%" class="ListHeaderInactive" nowrap>&nbsp;</td>
+      <td width="25%" class="ListHeaderInactive" nowrap="nowrap">&nbsp;</td>
+      <td width="25%" class="ListHeaderInactive" nowrap="nowrap">&nbsp;</td>
   	</tr>
   	<c:set var="Services" value="${Services}"/> 
     <c:forEach var="entry" varStatus="status" items="${serverTypes}">

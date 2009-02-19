@@ -29,14 +29,14 @@
 <td width="100%">
    <table width="100%" cellpadding="0" cellspacing="0" border="0" class="ToolbarContent">
       <tr>
-         <td width="100%" align="right" nowrap><b>
+         <td width="100%" align="right" nowrap="nowrap"><b>
             <fmt:message key="ListToolbar.Total"/>
             &nbsp;${totalSize}</b>
          </td>
          <td>
             <html:img page="/images/spacer.gif" width="10" height="1" border="0"/>
          </td>
-         <td align="right" nowrap>
+         <td align="right" nowrap="nowrap">
             <b>
                <fmt:message key="ListToolbar.ItemsPerPageLabel"/>
             </b>

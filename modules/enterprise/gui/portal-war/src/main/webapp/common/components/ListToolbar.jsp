@@ -62,7 +62,7 @@
   <div id="goButtonDiv">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td class="BoldText" nowrap><fmt:message key="alert.config.list.SetActiveLabel"/></td>
+        <td class="BoldText" nowrap="nowrap"><fmt:message key="alert.config.list.SetActiveLabel"/></td>
         <td><html:img page="/images/spacer.gif" width="10" height="1" alt="" border="0"/></td>
         <td>
           <select name="active" id="active" size="1">

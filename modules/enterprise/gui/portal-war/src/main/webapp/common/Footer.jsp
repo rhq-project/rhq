@@ -16,13 +16,13 @@
       <table width="80%" border="0" cellspacing="0" cellpadding="0">
         <c:set var="tmpTime"><%= java.lang.System.currentTimeMillis() %></c:set>
         <tr>
-          <td class="FooterRegular" nowrap><a href="http://www.redhat.com"><html:img page="/images/logo_rh_home.png" alt="" border="0"/></a></td>
+          <td class="FooterRegular" nowrap="nowrap"><a href="http://www.redhat.com"><html:img page="/images/logo_rh_home.png" alt="" border="0"/></a></td>
         </tr>
         <tr>
-          <td class="FooterRegular" nowrap><fmt:message key="footer.copyright"/></td>
+          <td class="FooterRegular" nowrap="nowrap"><fmt:message key="footer.copyright"/></td>
         </tr>
         <tr>
-          <td class="FooterRegular" nowrap>
+          <td class="FooterRegular" nowrap="nowrap">
              <script language="JavaScript" type="text/javascript">var aboutWindowTitle = '<fmt:message key="about.Title"/>';</script>
              <a href="#" onclick="openAbout(aboutWindowTitle)"><fmt:message key="footer.aboutLink"/></a>
           </td>

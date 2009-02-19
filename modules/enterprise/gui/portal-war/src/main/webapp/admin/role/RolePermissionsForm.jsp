@@ -100,7 +100,7 @@
       <html:img page="/images/spacer.gif" width="175" height="1" border="0"/><br>
       <fmt:message key="admin.role.perms.ResourcePermissions"/></td>
 
-    <td class="ListHeaderInactive" nowrap><div align="center">
+    <td class="ListHeaderInactive" nowrap="nowrap"><div align="center">
       <html:img page="/images/spacer.gif" width="50" height="1" border="0"/><br>
       <fmt:message key="admin.role.perms.Authorized"/></div></td>
   </tr>

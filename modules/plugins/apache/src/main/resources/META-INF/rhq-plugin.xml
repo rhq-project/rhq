@@ -68,7 +68,7 @@
       </plugin-configuration>
 
       <!-- all httpd processes that are not child processes of another httpd process -->
-      <process-scan name="HttpdOnUnix"     query="process|basename|match=httpd,process|basename|nomatch|parent=httpd"/>
+      <process-scan name="HttpdOnUnix"     query="process|basename|match=httpd.*,process|basename|nomatch|parent=httpd.*"/>
       <!-- all apache2 processes that are not child processes of another apache2 process -->
       <process-scan name="Apache2OnUnix"   query="process|basename|match=apache2,process|basename|nomatch|parent=apache2"/>
       <!-- all Apache.exe processes that are child processes of another Apache.exe process -->

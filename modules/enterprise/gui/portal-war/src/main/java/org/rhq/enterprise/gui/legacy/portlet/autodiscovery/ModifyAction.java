@@ -54,7 +54,6 @@ public class ModifyAction extends BaseAction {
         }
 
         preferences.setAutoDiscoveryRange(Integer.parseInt(range));
-        preferences.persistPreferences();
 
         session.removeAttribute(Constants.USERS_SES_PORTAL);
 

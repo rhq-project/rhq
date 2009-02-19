@@ -2,13 +2,13 @@ package org.rhq.enterprise.server.auth.prefs;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
@@ -35,36 +35,53 @@ public class SubjectPreferencesCache {
         return instance;
     }
 
-    public synchronized Configuration getUserConfiguration(int subjectId) {
-        if (log.isTraceEnabled()) {
-            log.trace("Loading PreferencesCache For " + subjectId);
-        }
+    private void load(int subjectId) {
         if (!subjectPreferences.containsKey(subjectId)) {
             Subject subject = subjectManager.loadUserConfiguration(subjectId);
             Configuration configuration = subject.getUserConfiguration();
             subjectPreferences.put(subjectId, configuration);
         }
-        return subjectPreferences.get(subjectId).deepCopy(true);
     }
 
-    public synchronized void setUserConfiguration(int subjectId, Configuration configuration, Set<String> changed) {
-        if (log.isTraceEnabled()) {
-            log.trace("Updated PreferencesCache For " + subjectId);
+    public synchronized PropertySimple getUserProperty(int subjectId, String propertyName) {
+        load(subjectId);
+        PropertySimple prop = subjectPreferences.get(subjectId).getSimple(propertyName);
+        if (prop == null) {
+            return null;
         }
-        for (PropertySimple simpleProperty : configuration.getSimpleProperties().values()) {
-            if (changed.contains(simpleProperty.getName())) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Changed: " + simpleProperty);
-                }
-                // merge will persist if property doesn't exist (i.e., id = 0)
-                PropertySimple mergedProperty = entityManagerFacade.merge(simpleProperty); // only merge changes
-                if (simpleProperty.getId() == 0) {
-                    // so subsequent merges do not continue re-persisting property as new
-                    simpleProperty.setId(mergedProperty.getId());
-                }
-            }
+        return new PropertySimple(propertyName, prop.getStringValue());
+    }
+
+    public synchronized void setUserProperty(int subjectId, String propertyName, String value) {
+        load(subjectId);
+        Configuration config = subjectPreferences.get(subjectId);
+        PropertySimple prop = config.getSimple(propertyName);
+
+        if (prop == null) {
+            prop = new PropertySimple(propertyName, value);
+            config.put(prop); // add new to collection
+            mergeProperty(prop);
+        } else if (!prop.getStringValue().equals(value)) {
+            prop.setStringValue(value);
+            mergeProperty(prop);
         }
-        subjectPreferences.put(subjectId, configuration);
+    }
+
+    private void mergeProperty(PropertySimple prop) {
+        // merge will persist if property doesn't exist (i.e., id = 0)
+        PropertySimple mergedProperty = entityManagerFacade.merge(prop); // only merge changes
+        if (prop.getId() == 0) {
+            // so subsequent merges do not continue re-persisting property as new
+            prop.setId(mergedProperty.getId());
+        }
+    }
+
+    public synchronized void unsetUserProperty(int subjectId, String propertyName) {
+        load(subjectId);
+        Property property = subjectPreferences.get(subjectId).remove(propertyName);
+        if (property.getId() != 0) {
+            entityManagerFacade.remove(property);
+        }
     }
 
     public synchronized void clearConfiguration(int subjectId) {

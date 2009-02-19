@@ -80,15 +80,11 @@ public class MetricsControlAction extends BaseAction {
             rangePreferences.unit = unit;
             rangePreferences.readOnly = false;
             preferences.setMetricRangePreferences(rangePreferences);
-
-            preferences.persistPreferences();
         } else if (controlForm.isSimpleClicked()) {
 
             MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
             rangePreferences.readOnly = false;
             preferences.setMetricRangePreferences(rangePreferences);
-
-            preferences.persistPreferences();
         }
 
         // assume the return path has been set- don't use forwardParams

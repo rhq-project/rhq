@@ -83,7 +83,6 @@ public class MetricsDisplayAction extends MetricsControlAction {
             LogFactory.getLog("user.preferences").trace(
                 "Invoking setUserPrefs" + " in MetricsDisplayAction " + " for " + user.getId() + " at "
                     + System.currentTimeMillis() + " user.prefs = " + user.getWebPreferences());
-            preferences.persistPreferences();
         } else if (displayForm.isUsersetClicked()) {
             Integer[] m = displayForm.getM();
             if ((m != null) && (m.length > 0)) {
@@ -120,7 +119,6 @@ public class MetricsDisplayAction extends MetricsControlAction {
                 LogFactory.getLog("user.preferences").trace(
                     "Invoking setUserPrefs" + " in MetricsDisplayAction " + " for " + user.getId() + " at "
                         + System.currentTimeMillis() + " user.prefs = " + user.getWebPreferences());
-                preferences.persistPreferences();
             }
 
             RequestUtils.setConfirmation(request, Constants.CNF_FAVORITE_METRICS_ADDED);
@@ -131,7 +129,6 @@ public class MetricsDisplayAction extends MetricsControlAction {
                 LogFactory.getLog("user.preferences").trace(
                     "Invoking setUserPrefs" + " in MetricsDisplayAction " + " for " + user.getId() + " at "
                         + System.currentTimeMillis() + " user.prefs = " + user.getWebPreferences());
-                preferences.persistPreferences();
             }
 
             RequestUtils.setConfirmation(request, Constants.CNF_FAVORITE_METRICS_REMOVED);
@@ -171,7 +168,6 @@ public class MetricsDisplayAction extends MetricsControlAction {
         }
 
         preferences.setFavoriteResourcePortletPreferences(prefs);
-        preferences.persistPreferences();
     }
 
     private void removeFavoriteMetrics(Integer[] selectedIds, WebUserPreferences preferences, String entityType)
@@ -184,6 +180,5 @@ public class MetricsDisplayAction extends MetricsControlAction {
         }
 
         preferences.setFavoriteResourcePortletPreferences(prefs);
-        preferences.persistPreferences();
     }
 }

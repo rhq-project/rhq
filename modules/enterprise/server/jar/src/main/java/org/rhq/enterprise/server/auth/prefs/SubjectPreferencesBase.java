@@ -29,7 +29,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 
 public abstract class SubjectPreferencesBase {
@@ -41,12 +40,10 @@ public abstract class SubjectPreferencesBase {
     protected static final String PREF_ITEM_DELIM = "|";
 
     private int subjectId;
-    private Configuration configuration;
     private Set<String> changed;
 
     public SubjectPreferencesBase(Subject subject) {
         this.subjectId = subject.getId();
-        this.configuration = SubjectPreferencesCache.getInstance().getUserConfiguration(subjectId);
         this.changed = new HashSet<String>();
     }
 
@@ -120,11 +117,7 @@ public abstract class SubjectPreferencesBase {
     }
 
     protected String getPreference(String key) throws IllegalArgumentException {
-        Configuration userConfiguration = configuration;
-        PropertySimple prop = null;
-
-        if (userConfiguration != null)
-            prop = userConfiguration.getSimple(key);
+        PropertySimple prop = SubjectPreferencesCache.getInstance().getUserProperty(subjectId, key);
 
         if (prop == null)
             throw new IllegalArgumentException("preference '" + key + "' requested is not valid");
@@ -242,30 +235,10 @@ public abstract class SubjectPreferencesBase {
             val = value.toString();
         }
 
-        PropertySimple existingProp = configuration.getSimple(key);
-        if (existingProp == null) {
-            log.trace("Setting " + key + "[" + value + "]");
-            configuration.put(new PropertySimple(key, val));
-        } else {
-            log.trace("Overriding " + key + "[" + value + "]");
-            existingProp.setStringValue(val);
-        }
-        changed.add(key);
+        SubjectPreferencesCache.getInstance().setUserProperty(subjectId, key, val);
     }
 
     protected void unsetPreference(String key) {
-        Configuration config = configuration;
-        if (config != null) {
-            config.remove(key);
-        }
-    }
-
-    protected Configuration getConfiguration() {
-        return this.configuration;
-    }
-
-    public void persistPreferences() {
-        SubjectPreferencesCache.getInstance().setUserConfiguration(subjectId, configuration, changed);
-        changed.clear();
+        SubjectPreferencesCache.getInstance().unsetUserProperty(subjectId, key);
     }
 }

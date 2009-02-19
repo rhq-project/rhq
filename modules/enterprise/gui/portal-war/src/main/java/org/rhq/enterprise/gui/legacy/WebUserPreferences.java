@@ -13,6 +13,7 @@ import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
+import org.rhq.enterprise.gui.legacy.action.resource.hub.HubView;
 import org.rhq.enterprise.gui.legacy.util.DashboardUtils;
 import org.rhq.enterprise.gui.uibeans.UIConstants;
 import org.rhq.enterprise.server.alert.engine.internal.Tuple;
@@ -441,7 +442,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     }
 
     public String getResourceBrowserViewMode() {
-        return getPreference(PREF_RESOURCE_BROWSER_VIEW_MODE);
+        return getPreference(PREF_RESOURCE_BROWSER_VIEW_MODE, HubView.LIST.name());
     }
 
     public void setResourceBrowserViewMode(String mode) {
@@ -670,7 +671,6 @@ public class WebUserPreferences extends SubjectPreferencesBase {
                  */
                 pageControl = getDefaultPageControl(view);
             }
-
             return pageControl;
         }
     }

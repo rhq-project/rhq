@@ -67,7 +67,6 @@ public class FavoritesUIBean {
         }
 
         preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
-        preferences.persistPreferences();
 
         favorite = !isFav;
 

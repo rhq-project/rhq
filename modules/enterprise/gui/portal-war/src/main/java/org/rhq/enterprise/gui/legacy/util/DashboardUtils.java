@@ -33,6 +33,5 @@ public class DashboardUtils {
         DashboardPreferences dashboardPreferences = preferences.getDashboardPreferences();
         dashboardPreferences.removePortlet(portletName);
         preferences.setDashboardPreferences(dashboardPreferences);
-        preferences.persistPreferences();
     }
 }

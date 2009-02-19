@@ -36,12 +36,7 @@ public class HubUtils {
     public static void initView(HubForm hubForm, WebUser user) throws Exception {
         WebUserPreferences preferences = user.getWebPreferences();
 
-        HubView prefView;
-        try {
-            prefView = HubView.valueOf(preferences.getResourceBrowserViewMode());
-        } catch (IllegalArgumentException ioe) {
-            prefView = HubView.LIST;
-        }
+        HubView prefView = HubView.valueOf(preferences.getResourceBrowserViewMode());
 
         String viewStr = hubForm.getView();
         if (viewStr == null) {
@@ -51,7 +46,6 @@ public class HubUtils {
         HubView view = HubView.valueOf(hubForm.getView().toUpperCase());
         if (view != prefView) {
             preferences.setResourceBrowserViewMode(view.name()); // Save new preference.
-            preferences.persistPreferences();
         }
     }
 

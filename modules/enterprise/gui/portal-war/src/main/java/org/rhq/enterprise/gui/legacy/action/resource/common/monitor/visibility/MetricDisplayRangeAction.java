@@ -92,7 +92,6 @@ public class MetricDisplayRangeAction extends BaseAction {
         }
 
         preferences.setMetricRangePreferences(rangePreferences);
-        preferences.persistPreferences();
 
         // XXX: assume return path is set, don't use forward params
         return returnSuccess(request, mapping);

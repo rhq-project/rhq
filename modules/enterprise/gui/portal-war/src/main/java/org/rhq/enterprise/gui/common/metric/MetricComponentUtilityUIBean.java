@@ -61,7 +61,6 @@ public class MetricComponentUtilityUIBean {
         rangePreferences.unit = TimeUnit.valueOf(unit).getMetricUntilOrdinal();
 
         preferences.setMetricRangePreferences(rangePreferences);
-        preferences.persistPreferences();
 
         LOG.debug("Updating - MetricComponentUtilityUIBean: " + rangePreferences);
 
@@ -79,7 +78,6 @@ public class MetricComponentUtilityUIBean {
         rangePreferences.lastN = 8;
 
         preferences.setMetricRangePreferences(rangePreferences);
-        preferences.persistPreferences();
 
         LOG.debug("Switching to simple mode - MetricComponentUtilityUIBean: " + rangePreferences);
 

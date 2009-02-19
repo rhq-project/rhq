@@ -58,7 +58,6 @@ public class ModifyAction extends BaseAction {
                 savedCharts.removeByTuple(chartToRemove);
             }
             preferences.setSavedChartsPortletPreferences(savedCharts);
-            preferences.persistPreferences();
 
             returnString = "remove";
         }

@@ -172,7 +172,6 @@ public class PageControlELResolver extends ELResolver {
 
                     log.debug("Setting PageControlView[" + view + "] to " + pc);
                     preferences.setPageControl(view, pc);
-                    preferences.persistPreferences();
                 }
 
                 // don't let other resolvers touch this
@@ -190,7 +189,6 @@ public class PageControlELResolver extends ELResolver {
 
                     log.debug("Setting PageControlView[" + view + "] to " + pc);
                     preferences.setPageControl(view, pc);
-                    preferences.persistPreferences();
                 }
 
                 // don't let other resolvers touch this

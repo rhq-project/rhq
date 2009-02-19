@@ -74,7 +74,6 @@ public class EditAction extends BaseAction {
                 Integer pageRefreshPeriod = Integer.valueOf(userForm.getPageRefreshPeriod());
                 WebUserPreferences preferences = currentUser.getWebPreferences();
                 preferences.setPageRefreshPeriod(pageRefreshPeriod);
-                preferences.persistPreferences();
             } catch (NumberFormatException e) {
                 throw new RuntimeException(
                     "pageRefreshPeriod is not an integer, this should have been caught earlier by the form validation.");

@@ -38,7 +38,6 @@ public class WebUserTrackingFilter extends BaseFilter {
             WebUserPreferences preferences = webUser.getWebPreferences();
 
             preferences.addLastVisitedURL(lastURL);
-            preferences.persistPreferences();
             if (log.isDebugEnabled()) {
                 log.debug("User [" + webUser.getSubject().getName() + "] visited [" + lastURL + "]");
             }

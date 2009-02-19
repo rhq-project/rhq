@@ -109,7 +109,6 @@ public class ViewAction extends TilesAction {
             if (removeExpandedPlatforms.size() > 0) {
                 recentlyApprovedPreferences.expandedPlatforms.removeAll(removeExpandedPlatforms);
                 preferences.setRecentlyApprovedPortletPreferences(recentlyApprovedPreferences);
-                preferences.persistPreferences();
             }
 
             // Make the list available to the jsp.

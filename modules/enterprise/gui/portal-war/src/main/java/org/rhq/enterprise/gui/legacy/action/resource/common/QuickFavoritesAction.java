@@ -80,8 +80,6 @@ public class QuickFavoritesAction extends BaseAction {
             return returnFailure(request, mapping, forwardParams);
         }
 
-        preferences.persistPreferences();
-
         return returnSuccess(request, mapping, forwardParams, BaseAction.YES_RETURN_PATH);
     }
 }

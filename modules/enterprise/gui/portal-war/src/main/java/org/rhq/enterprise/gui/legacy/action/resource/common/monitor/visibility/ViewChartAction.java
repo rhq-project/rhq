@@ -382,7 +382,6 @@ public class ViewChartAction extends MetricDisplayRangeAction {
         boolean changed = savedCharts.add(name, url);
         if (changed) {
             preferences.setSavedChartsPortletPreferences(savedCharts);
-            preferences.persistPreferences();
         }
         return changed;
     }

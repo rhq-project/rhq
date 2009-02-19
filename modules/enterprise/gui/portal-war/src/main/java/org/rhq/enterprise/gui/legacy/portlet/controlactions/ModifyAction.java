@@ -56,8 +56,6 @@ public class ModifyAction extends BaseAction {
         OperationPortletPreferences prefs = pForm.getOperationPortletPreferences();
         preferences.setOperationPortletPreferences(prefs);
 
-        preferences.persistPreferences();
-
         request.getSession().removeAttribute(Constants.USERS_SES_PORTAL);
 
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);

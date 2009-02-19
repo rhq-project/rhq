@@ -54,7 +54,6 @@ public class ProcessRAList extends BaseAction {
             expandedPlatforms.add(platformId);
         }
         preferences.setRecentlyApprovedPortletPreferences(recentlyApprovedPreferences);
-        preferences.persistPreferences();
 
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);
     }

@@ -53,8 +53,6 @@ public class AddPortletAction extends BaseAction {
         dashboardPreferences.addPortlet(pForm.getPortlet(), !pForm.isWide());
         preferences.setDashboardPreferences(dashboardPreferences);
 
-        preferences.persistPreferences();
-
         session.removeAttribute(Constants.USERS_SES_PORTAL);
 
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);

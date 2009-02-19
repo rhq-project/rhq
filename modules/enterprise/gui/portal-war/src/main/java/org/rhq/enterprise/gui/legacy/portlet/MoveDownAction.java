@@ -47,7 +47,6 @@ public class MoveDownAction extends BaseAction {
         DashboardPreferences dashboardPreferences = preferences.getDashboardPreferences();
         dashboardPreferences.moveDown(portlet);
         preferences.setDashboardPreferences(dashboardPreferences);
-        preferences.persistPreferences();
 
         request.getSession().removeAttribute(Constants.USERS_SES_PORTAL);
 

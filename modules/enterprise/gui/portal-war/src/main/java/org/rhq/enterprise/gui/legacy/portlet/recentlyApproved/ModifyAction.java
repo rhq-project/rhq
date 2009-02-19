@@ -58,8 +58,6 @@ public class ModifyAction extends BaseAction {
         RecentlyApprovedPortletPreferences problemResourcePreferences = pForm.getRecentlyApprovedPortletPreferences();
         preferences.setRecentlyApprovedPortletPreferences(problemResourcePreferences);
 
-        preferences.persistPreferences();
-
         session.removeAttribute(Constants.USERS_SES_PORTAL);
 
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);

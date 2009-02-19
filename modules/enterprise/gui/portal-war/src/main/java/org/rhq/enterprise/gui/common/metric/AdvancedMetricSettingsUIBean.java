@@ -132,7 +132,6 @@ public class AdvancedMetricSettingsUIBean {
                 "Your preferences have been successfully updated"));
         }
         preferences.setMetricRangePreferences(rangePreferences);
-        preferences.persistPreferences();
     }
 
     public void init() {

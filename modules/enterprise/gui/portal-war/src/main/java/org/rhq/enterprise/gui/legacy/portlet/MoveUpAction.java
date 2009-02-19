@@ -47,7 +47,6 @@ public class MoveUpAction extends BaseAction {
         DashboardPreferences dashboardPreferences = preferences.getDashboardPreferences();
         dashboardPreferences.moveUp(portlet);
         preferences.setDashboardPreferences(dashboardPreferences);
-        preferences.persistPreferences();
 
         request.getSession().removeAttribute(Constants.USERS_SES_PORTAL);
 

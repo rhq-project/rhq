@@ -321,7 +321,6 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
         WebUserPreferences preferences = user.getWebPreferences();
         SavedChartsPortletPreferences savedCharts = preferences.getSavedChartsPortletPreferences();
         savedCharts.removeByURL(query);
-        preferences.persistPreferences();
         return null;
     }
 

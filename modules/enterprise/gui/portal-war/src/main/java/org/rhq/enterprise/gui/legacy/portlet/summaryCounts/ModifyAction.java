@@ -56,7 +56,6 @@ public class ModifyAction extends BaseAction {
         SummaryCountPortletPreferences counts = pForm.getSummaryCounts();
         preferences.setSummaryCounts(counts);
 
-        preferences.persistPreferences();
         request.getSession().removeAttribute(Constants.USERS_SES_PORTAL);
         return mapping.findForward(RetCodeConstants.SUCCESS_URL);
     }

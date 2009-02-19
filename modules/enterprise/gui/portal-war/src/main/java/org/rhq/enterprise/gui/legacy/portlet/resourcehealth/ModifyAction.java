@@ -54,7 +54,6 @@ public class ModifyAction extends BaseAction {
                 favoriteResourcePreferences.removeFavorite(doomedResourceId);
             }
             preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
-            preferences.persistPreferences();
             forwardStr = "review";
         } else if (pForm.isOkClicked()) {
             FavoriteResourcePortletPreferences favoriteResourcePreferences = preferences
@@ -63,7 +62,6 @@ public class ModifyAction extends BaseAction {
             favoriteResourcePreferences = pForm.getFavoriteResourcePortletPreferences();
             favoriteResourcePreferences.setFavorites(Arrays.asList(savedResourceIds));
             preferences.setFavoriteResourcePortletPreferences(favoriteResourcePreferences);
-            preferences.persistPreferences();
         }
 
         if (!pForm.isDisplayOnDash()) {

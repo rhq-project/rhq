@@ -50,7 +50,6 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         }
         prefs.views.add(viewName);
         measurementPreferences.setMetricViews(prefs, key);
-        measurementPreferences.persistPreferences();
     }
 
     public void deleteView(Subject user, EntityContext context, String viewName) {
@@ -60,7 +59,6 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         prefs.views.remove(viewName); // graceful no-op if viewName did not exist in context
         measurementPreferences.setMetricViews(prefs, key);
         measurementPreferences.deleteMetricViewData(key, viewName);
-        measurementPreferences.persistPreferences();
     }
 
     public List<String> getCharts(Subject user, EntityContext context, String viewName) throws MeasurementViewException {
@@ -82,7 +80,6 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         // don't even bother reading the current value out of the preferences, it's being overridden
         viewData.charts = charts;
         measurementPreferences.setMetricViewData(key, viewName, viewData);
-        measurementPreferences.persistPreferences();
     }
 
     public void moveChartUp(Subject user, EntityContext context, String viewName, String viewKey) {
@@ -98,7 +95,6 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         charts.set(index, charts.get(index - 1)); // there is at least one guy in front of us, move him back
         charts.set(index - 1, viewKey);
         measurementPreferences.setMetricViewData(key, viewName, viewData);
-        measurementPreferences.persistPreferences();
     }
 
     public void moveChartDown(Subject user, EntityContext context, String viewName, String viewKey) {
@@ -114,7 +110,6 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         charts.set(index, charts.get(index + 1)); // there is at least one guy in front of us, move him back
         charts.set(index + 1, viewKey);
         measurementPreferences.setMetricViewData(key, viewName, viewData);
-        measurementPreferences.persistPreferences();
     }
 
     public void addChart(Subject user, EntityContext context, String viewName, String viewKey) {
@@ -125,7 +120,6 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         if (!viewData.charts.contains(viewKey)) {
             viewData.charts.add(viewKey); // new charts always go at the end
             measurementPreferences.setMetricViewData(key, viewName, viewData);
-            measurementPreferences.persistPreferences();
         }
     }
 
@@ -135,7 +129,6 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         MetricViewData viewData = measurementPreferences.getMetricViewData(key, viewName);
         viewData.charts.remove(viewKey); // graceful no-op if viewKey did not exist in context
         measurementPreferences.setMetricViewData(key, viewName, viewData);
-        measurementPreferences.persistPreferences();
     }
 
 }

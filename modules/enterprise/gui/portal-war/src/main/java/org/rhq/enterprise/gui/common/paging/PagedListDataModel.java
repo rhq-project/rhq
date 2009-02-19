@@ -130,6 +130,9 @@ public abstract class PagedListDataModel<T> extends DataModel {
             pageList = getDataPage(pageControl);
         }
 
+        // no longer needed because changes to the PageControl as a result of getting results are repersisted automatically
+        //setPageControl(pageList.getPageControl());
+
         return pageList;
     }
 
@@ -277,7 +280,7 @@ public abstract class PagedListDataModel<T> extends DataModel {
              * RF components, the DataTable component does not see this change.  so, we have to explicitly
              * update the page control to get the view consistent with the backend once again.
              */
-            if (results.getTotalSize() <= pc.getStartRow()) {
+            if (results.getTotalSize() <= pc.getStartRow() || (results.isEmpty() && pc.getPageNumber() != 0)) {
                 resetToDefaults(pc, true);
                 results = fetchPage(pc);
             }

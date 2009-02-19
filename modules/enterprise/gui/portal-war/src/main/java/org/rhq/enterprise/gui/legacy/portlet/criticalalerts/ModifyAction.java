@@ -53,7 +53,6 @@ public class ModifyAction extends BaseAction {
                 alertPrefs.removeResource(doomedResourceId);
             }
             preferences.setAlertsPortletPreferences(alertPrefs);
-            preferences.persistPreferences();
             forwardStr = "review";
         } else if (pForm.isOkClicked()) {
             AlertsPortletPreferences alertPrefs = preferences.getAlertsPortletPreferences();
@@ -61,7 +60,6 @@ public class ModifyAction extends BaseAction {
             alertPrefs = pForm.getAlertsPortletPreferences();
             alertPrefs.setResource(Arrays.asList(savedResourceIds));
             preferences.setAlertsPortletPreferences(alertPrefs);
-            preferences.persistPreferences();
         }
 
         if (!pForm.isDisplayOnDash()) {

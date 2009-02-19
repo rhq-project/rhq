@@ -21,19 +21,6 @@
 
 <ui:define name="content">
 
-      <rich:panel styleClass="BlockContent">
-         <f:facet name="header">
-            Quick Counts
-         </f:facet>
-         <h:outputText value="*Note: all quick counts reflect what happened to the resource between the specified metric display range." />
-         <br /><br />
-         <ui:repeat var="summaryInfoEntry" value="#{ResourceUIBean.summaryInfo}"> 
-            <h:outputText value="#{summaryInfoEntry.lefty} - #{summaryInfoEntry.righty}" /><br />
-         </ui:repeat>
-         <hr />
-
-      </rich:panel>
-
       <h:form id="resourceTimelineForm">
          <input type="hidden" name="id" value="${param.id}"/>
 

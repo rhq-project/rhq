@@ -135,6 +135,16 @@
                </xs:documentation>
             </xs:annotation>
          </xs:attribute>
+         <xs:attribute name="overseer" type="rhq:classNameType" use="optional">
+            <xs:annotation>
+               <xs:documentation>
+                  A class that performs global initialization and shutdown of the plugin. If specified,
+                  this class will be notified when the plugin is loaded and unloaded. This provides a place
+                  for plugin developers to allocate global resources needed by all plugin components and
+                  a place to clean up those resources.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
          <xs:attribute name="version" type="xs:string">
             <xs:annotation>
                <xs:documentation>

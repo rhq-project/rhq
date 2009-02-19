@@ -3,6 +3,7 @@
 <plugin name="Oracle"
         displayName="Oracle Database"
         package="org.rhq.plugins.oracle"
+        overseer="OraclePluginOverseer"
         ampsVersion="1.0"
         description="Basic monitoring for Oracle RDBMS"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

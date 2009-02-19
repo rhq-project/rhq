@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.plugin;
 
 import java.util.HashMap;
@@ -42,6 +42,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
  * This class builds and lifecycles the various plugin components for use by the other services.
  *
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
 public class PluginComponentFactory implements ContainerService {
     private static final Log log = LogFactory.getLog(PluginComponentFactory.class);
@@ -72,15 +73,11 @@ public class PluginComponentFactory implements ContainerService {
             PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
             PluginEnvironment pluginEnvironment = pluginManager.getPlugin(resourceType.getPlugin());
             String className = pluginManager.getMetadataManager().getDiscoveryClass(resourceType);
-
+            String typeName = resourceType.getName();
+            log.debug("Creating discovery component [" + className + "] for resource type [" + typeName + "]");
             discoveryComponent = (ResourceDiscoveryComponent) instantiateClass(pluginEnvironment, className);
-            log.debug("Loading and creating the discovery component [" + className + "] for resource type ["
-                + resourceType.getName() + "]");
-
-            discoveryComponentsCache.put(resourceType, discoveryComponent);
-
-            log.debug("Created and cached the discovery component [" + className + "] for resource type ["
-                + resourceType.getName() + "]");
+            this.discoveryComponentsCache.put(resourceType, discoveryComponent);
+            log.debug("Created discovery component [" + className + "] for resource type [" + typeName + "]");
         }
 
         return discoveryComponent;
@@ -149,7 +146,7 @@ public class PluginComponentFactory implements ContainerService {
      * @see ContainerService#initialize()
      */
     public void initialize() {
-        discoveryComponentsCache = new HashMap<ResourceType, ResourceDiscoveryComponent>();
+        this.discoveryComponentsCache = new HashMap<ResourceType, ResourceDiscoveryComponent>();
     }
 
     /**
@@ -158,7 +155,8 @@ public class PluginComponentFactory implements ContainerService {
      * @see ContainerService#shutdown()
      */
     public void shutdown() {
-        discoveryComponentsCache.clear();
+        this.discoveryComponentsCache.clear();
+        this.discoveryComponentsCache = null;
     }
 
     public void setConfiguration(PluginContainerConfiguration configuration) {

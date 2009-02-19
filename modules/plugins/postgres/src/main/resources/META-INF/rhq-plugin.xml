@@ -3,6 +3,7 @@
 <plugin name="Postgres"
         displayName="PostgreSQL Database"
         package="org.rhq.plugins.postgres"
+        overseer="PostgresPluginOverseer"
         description="Management and monitoring of PostgreSQL versions 8.2 and higher"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"

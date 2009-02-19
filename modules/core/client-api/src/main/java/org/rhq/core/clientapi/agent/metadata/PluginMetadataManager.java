@@ -82,7 +82,10 @@ public class PluginMetadataManager {
         return TEST_PLATFORM_TYPE;
     }
 
-    // views
+    public String getPluginOverseerClass(String pluginName) {
+        PluginMetadataParser parser = this.parsersByPlugin.get(pluginName);
+        return (parser != null) ? parser.getPluginOverseerClass() : null;
+    }
 
     public String getDiscoveryClass(ResourceType resourceType) {
         PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());

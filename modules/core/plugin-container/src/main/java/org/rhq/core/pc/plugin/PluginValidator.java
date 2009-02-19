@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.plugin;
 
 import java.io.File;
@@ -34,14 +34,15 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainerConfiguration;
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationFacet;
-import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.plugin.PluginOverseer;
 
 /**
  * A utility to test a set of plugins are valid.
@@ -128,37 +129,37 @@ public class PluginValidator {
                         + resourceType.getPlugin() + "]");
                 } else {
                     try {
-                        Class componentClazz =
-                                Class.forName(componentClass, false, pluginEnvironment.getPluginClassLoader());
+                        Class componentClazz = Class.forName(componentClass, false, pluginEnvironment
+                            .getPluginClassLoader());
                         if (!ResourceComponent.class.isAssignableFrom(componentClazz)) {
                             success = false;
                             LOG.error("Component class [" + componentClass + "] for resource type ["
                                 + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
-                                + "] does not implement ResourceComponent.");
+                                + "] does not implement " + ResourceComponent.class.toString());
                         }
                         if (!resourceType.getMetricDefinitions().isEmpty()
-                                && !MeasurementFacet.class.isAssignableFrom(componentClazz)) {
+                            && !MeasurementFacet.class.isAssignableFrom(componentClazz)) {
                             success = false;
                             LOG.error("Component class [" + componentClass + "] for resource type ["
                                 + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
                                 + "] does not support measurement collection.");
                         }
                         if (!resourceType.getOperationDefinitions().isEmpty()
-                                && !OperationFacet.class.isAssignableFrom(componentClazz)) {
+                            && !OperationFacet.class.isAssignableFrom(componentClazz)) {
                             success = false;
                             LOG.error("Component class [" + componentClass + "] for resource type ["
                                 + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
                                 + "] does not support operations.");
                         }
                         if (!resourceType.getPackageTypes().isEmpty()
-                                && !ContentFacet.class.isAssignableFrom(componentClazz)) {
+                            && !ContentFacet.class.isAssignableFrom(componentClazz)) {
                             success = false;
                             LOG.error("Component class [" + componentClass + "] for resource type ["
                                 + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
                                 + "] does not support content management.");
                         }
                         if (resourceType.getResourceConfigurationDefinition() != null
-                                && !ConfigurationFacet.class.isAssignableFrom(componentClazz)) {
+                            && !ConfigurationFacet.class.isAssignableFrom(componentClazz)) {
                             success = false;
                             LOG.error("Component class [" + componentClass + "] for resource type ["
                                 + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
@@ -171,14 +172,12 @@ public class PluginValidator {
                                 break;
                             }
                         }
-                        if (hasCreatableChild
-                                && !CreateChildResourceFacet.class.isAssignableFrom(componentClazz)) {
+                        if (hasCreatableChild && !CreateChildResourceFacet.class.isAssignableFrom(componentClazz)) {
                             LOG.error("Component class [" + componentClass + "] for resource type ["
                                 + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
                                 + "] does not support creation of child resources.");
                         }
-                        if (resourceType.isDeletable()
-                                && !DeleteResourceFacet.class.isAssignableFrom(componentClazz)) {
+                        if (resourceType.isDeletable() && !DeleteResourceFacet.class.isAssignableFrom(componentClazz)) {
                             LOG.error("Component class [" + componentClass + "] for resource type ["
                                 + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
                                 + "] does not support deletion.");
@@ -194,21 +193,42 @@ public class PluginValidator {
                 String discoveryClass = mm.getDiscoveryClass(resourceType);
                 if (discoveryClass != null) {
                     try {
-                        Class discoveryClazz =
-                            Class.forName(discoveryClass, false, pluginEnvironment.getPluginClassLoader());
+                        Class discoveryClazz = Class.forName(discoveryClass, false, pluginEnvironment
+                            .getPluginClassLoader());
 
                         if (discoveryClazz != null) {
                             if (!ResourceDiscoveryComponent.class.isAssignableFrom(discoveryClazz)) {
                                 success = false;
                                 LOG.error("Discovery class [" + discoveryClass + "] for resource type ["
                                     + resourceType.getName() + "] from plugin [" + resourceType.getPlugin()
-                                    + "] does not implement ResourceDiscoveryComponent.");
+                                    + "] does not implement " + ResourceDiscoveryComponent.class.toString());
                             }
                         }
                     } catch (Exception e) {
                         success = false;
                         LOG.error("Cannot find discovery class [" + discoveryClass + "] for resource type ["
                             + resourceType.getName() + "] from plugin [" + resourceType.getPlugin() + "]");
+                    }
+                }
+
+                String overseerClass = mm.getPluginOverseerClass(resourceType.getPlugin());
+                if (overseerClass != null) {
+                    try {
+                        Class overseerClazz = Class.forName(overseerClass, false, pluginEnvironment
+                            .getPluginClassLoader());
+
+                        if (overseerClazz != null) {
+                            if (!PluginOverseer.class.isAssignableFrom(overseerClazz)) {
+                                success = false;
+                                LOG.error("Overseer class [" + overseerClass + "] for plugin ["
+                                    + resourceType.getPlugin() + "] does not implement "
+                                    + PluginOverseer.class.toString());
+                            }
+                        }
+                    } catch (Exception e) {
+                        success = false;
+                        LOG.error("Cannot find overseer class [" + overseerClass + "] for plugin ["
+                            + resourceType.getPlugin() + "]");
                     }
                 }
             }

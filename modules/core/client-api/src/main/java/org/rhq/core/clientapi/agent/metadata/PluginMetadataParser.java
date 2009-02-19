@@ -54,8 +54,8 @@ import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceSubCategory;
+import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * This is a stateful class intended to hold the related metadata for a single plugin descriptor. It is designed to be
@@ -87,6 +87,12 @@ public class PluginMetadataParser {
         this.pluginDescriptor = descriptor;
         this.parsersByPlugin = parsersByPlugin;
         parseDescriptor();
+    }
+
+    public String getPluginOverseerClass() {
+        String pkg = this.pluginDescriptor.getPackage();
+        String clazz = this.pluginDescriptor.getOverseer();
+        return getFullyQualifiedComponentClassName(pkg, clazz);
     }
 
     public List<ResourceType> getAllTypes() {
@@ -135,7 +141,7 @@ public class PluginMetadataParser {
     }
 
     private ResourceType parseServerDescriptor(ServerDescriptor serverDescriptor, ResourceType parentServerType)
-            throws InvalidPluginDescriptorException {
+        throws InvalidPluginDescriptorException {
         ResourceType serverResourceType;
         String sourcePlugin = serverDescriptor.getSourcePlugin();
         String sourceServer = serverDescriptor.getSourceType();
@@ -363,15 +369,15 @@ public class PluginMetadataParser {
     }
 
     private static void setSubCategory(ResourceDescriptor resourceDescriptor, ResourceType resourceType)
-            throws InvalidPluginDescriptorException {
+        throws InvalidPluginDescriptorException {
         String subCatName = resourceDescriptor.getSubCategory();
         if (subCatName != null) {
             ResourceSubCategory subCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
-                    resourceType, subCatName);
+                resourceType, subCatName);
             if (subCat == null)
                 throw new InvalidPluginDescriptorException("Resource type [" + resourceType.getName()
-                        + "] specified a subcategory (" + subCatName
-                        + ") that is not defined as a child subcategory of one of its ancestor resource types.");
+                    + "] specified a subcategory (" + subCatName
+                    + ") that is not defined as a child subcategory of one of its ancestor resource types.");
             resourceType.setSubCategory(subCat);
         }
     }
@@ -406,7 +412,7 @@ public class PluginMetadataParser {
         // TODO (ips): I don't think platforms can have a subcategory.
         if (resourceType.getSubCategory() == null)
             setSubCategory(resourceDescriptor, resourceType);
-        
+
         if (discoveryClass == null) {
             discoveryClass = getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(), resourceDescriptor
                 .getDiscovery());
@@ -441,7 +447,8 @@ public class PluginMetadataParser {
             }
 
             for (EventDescriptor eventDescriptor : resourceDescriptor.getEvent()) {
-                EventDefinition eventDefinition = EventsMetadataParser.parseEventsMetadata(eventDescriptor, resourceType);
+                EventDefinition eventDefinition = EventsMetadataParser.parseEventsMetadata(eventDescriptor,
+                    resourceType);
                 resourceType.addEventDefinition(eventDefinition);
             }
 

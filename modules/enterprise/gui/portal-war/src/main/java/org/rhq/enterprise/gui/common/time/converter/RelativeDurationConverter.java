@@ -88,9 +88,11 @@ public class RelativeDurationConverter implements Converter {
         StringBuilder buf = new StringBuilder();
         long timeAgo = System.currentTimeMillis() - millis;
 
+        int count = 0;
         int days = (int) (timeAgo / MILLIS_IN_DAY);
         timeAgo %= MILLIS_IN_DAY;
         if (days > 0) {
+            count++;
             buf.append(days + " day");
             if (days != 1)
                 buf.append("s");
@@ -99,6 +101,7 @@ public class RelativeDurationConverter implements Converter {
         int hours = (int) (timeAgo / MILLIS_IN_HOUR);
         timeAgo %= MILLIS_IN_HOUR;
         if (hours > 0) {
+            count++;
             if (buf.length() > 0)
                 buf.append(", ");
             buf.append(hours + " hour");
@@ -106,14 +109,16 @@ public class RelativeDurationConverter implements Converter {
                 buf.append("s");
         }
 
-        int mins = (int) (timeAgo / MILLIS_IN_MINUTE);
-        timeAgo %= MILLIS_IN_MINUTE;
-        if (mins > 0) {
-            if (buf.length() > 0)
-                buf.append(", ");
-            buf.append(mins + " minute");
-            if (mins != 1)
-                buf.append("s");
+        if (count < 2) {
+            int mins = (int) (timeAgo / MILLIS_IN_MINUTE);
+            timeAgo %= MILLIS_IN_MINUTE;
+            if (mins > 0) {
+                if (buf.length() > 0)
+                    buf.append(", ");
+                buf.append(mins + " minute");
+                if (mins != 1)
+                    buf.append("s");
+            }
         }
 
         return buf.toString();

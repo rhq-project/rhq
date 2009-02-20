@@ -13,34 +13,6 @@
 <div id="PageHeader">
     <jsp:include page="/rhq/common/menu/menu.xhtml"/>
 
-
-  <%--  <table width="100%" border="0" cellpadding="0" cellspacing="0" height="70px">
-        --%><%--<tr valign="bottom">
-            <td align="left">
-                <fmt:message var="urlDomain" key="product.url.domain"/>
-                <fmt:message var="productName" key="product.fullName"/>
-                <html:link page="http://${urlDomain}">
-                    <html:img page="/images/logo_header.gif" title="${productName}"/>
-                </html:link>
-            </td>
-            <td valign="top" align="right">
-               <map name="redhat-jboss-logo-map">
-                  <area href="http://www.redhat.com/" alt="Red Hat Homepage" title="Red Hat" shape="rect" coords="0,0,100,42" />
-                  <area href="http://www.jboss.org/" alt="JBoss Homepage" title="JBoss" shape="rect" coords="100,0,200,42" />
-               </map>
-               <div>
-                  <img src="/images/redhat-jboss-logo.gif" usemap="#redhat-jboss-logo-map" />
-               </div>
-            </td>
-        </tr>--%><%--
-        <tr>
-            <td align="right" class="topMenu" colspan="2">
-             </td>
-        </tr>
-    </table>--%>
-
-    <%--<hr style="margin-top: 6px; background-color: #090909; color: #090909" size="1" noshade="noshade"/>--%>
-
 </div>
 
 <div id="about" class="dialog" style="display: none; position: absolute; top: 0; left: 0">

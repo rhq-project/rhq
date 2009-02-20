@@ -10,62 +10,29 @@
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-   <rich:panel styleClass="BlockContent">
-      <f:facet name="header">
-         Recent Alerts
-      </f:facet>
+   <h3>Recent Alerts</h3>
+   <ui:repeat var="item" 
+              value="#{ResourceOverviewUIBean.recentAlerts}">
+      <div style="text-indent: 20px;">
+         <h:graphicImage value="#{onf:getAlertPriorityURL(item.alertDefinition.priority)}" />
+         <h:outputText value=" " />
+         <h:outputLink value="/alerts/Alerts.do">
+            <f:param name="mode" value="viewAlert" />
+            <f:param name="id" value="#{item.alertDefinition.resource.id}" />
+            <f:param name="a" value="#{item.id}" />
+            <h:outputText value="#{item.alertDefinition.name}" />
+         </h:outputLink>
+         <h:outputText value=" @ " />
+         <h:outputText value="#{item.ctime}">
+            <f:converter converterId="RelativeDurationConverter" />
+         </h:outputText>
+         <br />
+      </div>
+   </ui:repeat>
 
-      <rich:dataTable id="alertsDataTable"
-                      rows="0"
-                      value="#{ResourceOverviewUIBean.recentAlerts}"
-                      var="item"
-                      width="100%"
-                      columnsWidth="40%, 20%, 40%"
-                      headerClass="tableRowHeader"
-                      footerClass="on-pager-footer"
-                      onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
-                      onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
-
-         <rich:column>
-            <f:facet name="header">
-               <h:outputText styleClass="headerText" value="Alert Name" />
-            </f:facet>
-            <h:outputLink value="/alerts/Alerts.do">
-               <f:param name="mode" value="viewAlert" />
-               <f:param name="id" value="#{item.alertDefinition.resource.id}" />
-               <f:param name="a" value="#{item.id}" />
-               <h:outputText value="#{item.alertDefinition.name}" />
-            </h:outputLink>
-         </rich:column>
-
-         <rich:column>
-            <f:facet name="header">
-               <h:outputText styleClass="headerText" value="Priority" />
-            </f:facet>
-            <h:outputText value="#{item.alertDefinition.priority}" />
-         </rich:column>
-
-         <rich:column>
-            <f:facet name="header">
-               <h:outputText styleClass="headerText" value="Date" />
-            </f:facet>
-            <h:outputText value="#{item.ctime}">
-               <f:converter converterId="RelativeDurationConverter" />
-            </h:outputText>
-         </rich:column>
-
-          <f:facet name="footer">
-             <rich:columnGroup>
-                <rich:column colspan="3" width="100%">
-                   <h:outputText value="Up to 5 items are shown" 
-                                 rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentAlerts) ne 0}"/>
-                   <h:outputText value="This resource has no alerts" 
-                                 rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentAlerts) eq 0}"/>
-                </rich:column>
-             </rich:columnGroup>
-          </f:facet>
-
-      </rich:dataTable>
-   </rich:panel>
+   <div style="text-indent: 20px;">
+      <h:outputText value="No recent alerts" 
+                    rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentAlerts) eq 0}"/>
+   </div>
 
 </ui:composition>

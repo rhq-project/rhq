@@ -3,6 +3,7 @@
 <%@ page import="org.rhq.core.domain.util.OrderingField" %>
 <%@ page import="org.rhq.core.domain.util.PageControl" %>
 <%@ page import="org.rhq.core.domain.util.PageList" %>
+<%@ page import="org.rhq.enterprise.gui.common.tag.FunctionTagLibrary" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.ParamConstants" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.WebUser" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
@@ -53,7 +54,7 @@
             case INFO:
                 return "blue";
             case WARN:
-                return "yellow";
+                return "olive";
             case ERROR:
                 return "orange";
             case FATAL:
@@ -150,18 +151,10 @@
 
             title = escapeBackslashes(trimLength(title,30));
 
-            String icon = null;
-            String color = null;
-
             boolean grouped = (event instanceof GroupedEventComposite);
 
-            color = eventColor(event.getSeverity());
-
-            icon = "/images/icn_info_" + color + (grouped?"_multi":"") + ".png";
-
-            if (color == "yellow") {
-                color = "olive";
-            }
+            String color = eventColor(event.getSeverity());
+            String icon = FunctionTagLibrary.getEventSeverityURL(event.getSeverity(), grouped);
 
             String link = "/rhq/resource/events/history.xhtml?id=" + resourceId + "&eventId=" + event.getEventId();
 

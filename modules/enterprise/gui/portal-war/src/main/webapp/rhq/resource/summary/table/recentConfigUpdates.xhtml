@@ -10,61 +10,29 @@
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-   <rich:panel styleClass="BlockContent">
-      <f:facet name="header">
-         Recent Configuration Updates
-      </f:facet>
+   <h3>Recent Configuration Updates</h3>
+   <ui:repeat var="item" 
+              value="#{ResourceOverviewUIBean.recentConfigChanges}">
+      <div style="text-indent: 20px;">
+         <h:graphicImage value="#{onf:getResourceConfigStatusURL(item.status)}" />
+         <h:outputText value=" " />
+         <h:outputLink value="/rhq/resource/configuration/history.xhtml">
+            <f:param name="id" value="#{item.resource.id}" />
+            <f:param name="configId" value="#{item.id}" />
+            <h:outputText value="Changed by #{item.subjectName}" rendered="#{not empty item.subjectName}" />
+            <h:outputText value="Change auto-detected" rendered="#{empty item.subjectName}" />
+         </h:outputLink>
+         <h:outputText value=" @ " />
+         <h:outputText value="#{item.createdTime}">
+            <f:converter converterId="RelativeDurationConverter" />
+         </h:outputText>
+         <br />
+      </div>
+   </ui:repeat>
 
-      <rich:dataTable id="configUpdatesDataTable"
-                      rows="0"
-                      value="#{ResourceOverviewUIBean.recentConfigChanges}"
-                      var="item"
-                      width="100%"
-                      columnsWidth="40%, 20%, 40%"
-                      headerClass="tableRowHeader"
-                      footerClass="on-pager-footer"
-                      onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
-                      onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
-
-         <rich:column>
-            <f:facet name="header">
-               <h:outputText styleClass="headerText" value="Status" />
-            </f:facet>
-            <h:outputLink value="/rhq/resource/configuration/history.xhtml">
-               <f:param name="id" value="#{item.resource.id}" />
-               <f:param name="configId" value="#{item.id}" />
-               <h:outputText value="#{item.status}" />
-            </h:outputLink>
-         </rich:column>
-
-         <rich:column>
-            <f:facet name="header">
-               <h:outputText styleClass="headerText" value="User" />
-            </f:facet>
-            <h:outputText value="#{item.subjectName}" />
-         </rich:column>
-
-         <rich:column>
-            <f:facet name="header">
-               <h:outputText styleClass="headerText" value="Date" />
-            </f:facet>
-            <h:outputText value="#{item.createdTime}">
-               <f:converter converterId="RelativeDurationConverter" />
-            </h:outputText>
-         </rich:column>
-
-          <f:facet name="footer">
-             <rich:columnGroup>
-                <rich:column colspan="3" width="100%">
-                   <h:outputText value="Up to 5 items are shown" 
-                                 rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentConfigChanges) ne 0}"/>
-                   <h:outputText value="This resource has no configuration change history" 
-                                 rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentConfigChanges) eq 0}"/>
-                </rich:column>
-             </rich:columnGroup>
-          </f:facet>
-
-      </rich:dataTable>
-   </rich:panel>
+   <div style="text-indent: 20px;">
+      <h:outputText value="No configuration change history" 
+                    rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentConfigChanges) eq 0}"/>
+   </div>
 
 </ui:composition>

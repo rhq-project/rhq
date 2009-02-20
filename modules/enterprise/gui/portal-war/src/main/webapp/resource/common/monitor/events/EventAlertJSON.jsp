@@ -7,12 +7,15 @@
 <%@ page import="org.rhq.core.domain.util.PageControl" %>
 <%@ page import="org.rhq.core.domain.util.PageList" %>
 <%@ page import="org.rhq.core.domain.util.PageOrdering" %>
+<%@ page import="org.rhq.enterprise.gui.common.tag.FunctionTagLibrary" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.ParamConstants" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.WebUser" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
 <%@ page import="org.rhq.enterprise.gui.util.WebUtility" %>
-<%@ page import="org.rhq.enterprise.server.alert.AlertManagerLocal" %><%@ page import="org.rhq.enterprise.server.util.LookupUtil"%>
-        <%@ page contentType="text/javascript" language="java" %>
+<%@ page import="org.rhq.enterprise.server.alert.AlertManagerLocal" %>
+<%@ page import="org.rhq.enterprise.server.util.LookupUtil"%>
+
+<%@ page contentType="text/javascript" language="java" %>
 
 <%
     int resourceId = WebUtility.getOptionalIntRequestParameter(request, ParamConstants.RESOURCE_ID_PARAM, -1);
@@ -44,19 +47,7 @@
             else
                 first = false;
 
-
-            String icon = null;
-            switch (alert.getAlertDefinition().getPriority()) {
-                case HIGH:
-                    icon = "/images/icn_flag_red.png";
-                    break;
-                case MEDIUM:
-                    icon = "/images/icn_flag_yellow.png";
-                    break;
-                case LOW:
-                    icon = "/images/icn_flag_blue.png";
-                    break;
-            }
+            String icon = FunctionTagLibrary.getAlertPriorityURL(alert.getAlertDefinition().getPriority());
             StringBuilder buf = new StringBuilder();
             for (AlertConditionLog log : alert.getConditionLogs()) {
                 buf.append("<b>Condition:</b>" + log.getCondition().getName() + "<br/>");

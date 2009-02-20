@@ -5,6 +5,7 @@
 <%@ page import="org.rhq.core.domain.configuration.ResourceConfigurationUpdate" %>
 <%@ page import="org.rhq.core.domain.util.PageControl" %>
 <%@ page import="org.rhq.core.domain.util.PageList" %>
+<%@ page import="org.rhq.enterprise.gui.common.tag.FunctionTagLibrary" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.ParamConstants" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.WebUser" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
@@ -39,18 +40,7 @@
             else
                 first = false;
 
-            String icon = null;
-            switch (configUpdate.getStatus()) {
-                case SUCCESS:
-                    icon = "/images/icn_config_success.png";
-                    break;
-                case FAILURE:
-                    icon = "/images/icn_config_error.png";
-                    break;
-                case INPROGRESS:
-                    icon = "/images/icn_config.png";
-                    break;
-            }
+            String icon = FunctionTagLibrary.getResourceConfigStatusURL(configUpdate.getStatus());
 
             String link = "/rhq/resource/configuration/history.xhtml?id=" + resourceId + "&configId=" + configUpdate.getId();
 

@@ -52,11 +52,14 @@ public class ResourceOverviewUIBean {
             lastFive);
     }
 
-    private List<Tuple<EventSeverity, Integer>> getEventCounts(Subject subject, int resourceId, int count) {
-        PageControl lastFive = new PageControl(0, count);
-        lastFive.initDefaultOrderingField("ev.timestamp", PageOrdering.DESC);
-        List<EventComposite> events = LookupUtil.getEventManager().getEventsForResource(subject, resourceId, 0,
-            System.currentTimeMillis(), null, lastFive);
+    private List<Tuple<EventSeverity, Integer>> getEventCounts(Subject subject, int resourceId) {
+        PageControl unlimited = PageControl.getUnlimitedInstance();
+        unlimited.initDefaultOrderingField("ev.timestamp", PageOrdering.DESC);
+
+        long now = System.currentTimeMillis();
+        long nowMinus24Hours = now - (24 * 60 * 60 * 1000);
+        List<EventComposite> events = LookupUtil.getEventManager().getEventsForResource(subject, resourceId,
+            nowMinus24Hours, now, null, unlimited);
 
         int[] counts = new int[EventSeverity.values().length];
         for (EventComposite event : events) {
@@ -66,7 +69,10 @@ public class ResourceOverviewUIBean {
         List<Tuple<EventSeverity, Integer>> results = new ArrayList<Tuple<EventSeverity, Integer>>();
 
         for (EventSeverity severity : EventSeverity.values()) {
-            results.add(new Tuple<EventSeverity, Integer>(severity, counts[severity.getOrdinal()]));
+            int count = counts[severity.getOrdinal()];
+            if (count > 0) {
+                results.add(new Tuple<EventSeverity, Integer>(severity, count));
+            }
         }
         return results;
     }
@@ -100,7 +106,7 @@ public class ResourceOverviewUIBean {
 
     public List<Tuple<EventSeverity, Integer>> getRecentEventCounts() {
         if (recentEventCounts == null) {
-            recentEventCounts = getEventCounts(subject, resourceId, 100);
+            recentEventCounts = getEventCounts(subject, resourceId);
         }
         return recentEventCounts;
     }

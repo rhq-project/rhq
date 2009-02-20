@@ -6,6 +6,7 @@
 <%@ page import="org.rhq.core.domain.operation.ResourceOperationHistory" %>
 <%@ page import="org.rhq.core.domain.util.PageControl" %>
 <%@ page import="org.rhq.core.domain.util.PageList" %>
+<%@ page import="org.rhq.enterprise.gui.common.tag.FunctionTagLibrary" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.ParamConstants" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.WebUser" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
@@ -42,21 +43,7 @@
             else
                 first = false;
 
-            String icon = null;
-            switch (operation.getStatus()) {
-                case SUCCESS:
-                    icon = "/images/icn_operation_success.png";
-                    break;
-                case FAILURE:
-                    icon = "/images/icn_operation_failed.png";
-                    break;
-                case INPROGRESS:
-                    icon = "/images/icn_operation_inprogress.png";
-                    break;
-                case CANCELED:
-                    icon = "/images/icn_operation_canceled.png";
-            }
-
+            String icon = FunctionTagLibrary.getOperationStatusURL(operation.getStatus()); 
 
             String link = "/rhq/resource/operation/resourceOperationHistoryDetails.xhtml?id=" + resourceId + "&opId=" + operation.getId();
 

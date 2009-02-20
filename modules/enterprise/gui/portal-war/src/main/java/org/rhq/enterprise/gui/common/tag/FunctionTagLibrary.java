@@ -37,8 +37,12 @@ import org.rhq.core.clientapi.util.units.UnitsConstants;
 import org.rhq.core.clientapi.util.units.UnitsFormat;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
@@ -284,5 +288,72 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
 
     public static String getDefaultResourceTabURL() {
         return "/rhq/resource/summary/overview.xhtml";
+    }
+
+    public static String getAlertPriorityURL(AlertPriority priority) {
+        switch (priority) {
+        case HIGH:
+            return "/images/icn_flag_red.png";
+        case MEDIUM:
+            return "/images/icn_flag_yellow.png";
+        case LOW:
+            return "/images/icn_flag_blue.png";
+        default:
+            throw new IllegalArgumentException("No icon for AlertPriority[" + priority + "]");
+        }
+    }
+
+    public static String getResourceConfigStatusURL(ConfigurationUpdateStatus status) {
+        switch (status) {
+        case SUCCESS:
+            return "/images/icn_config_success.png";
+        case FAILURE:
+            return "/images/icn_config_error.png";
+        case INPROGRESS:
+            return "/images/icn_config.png";
+        default:
+            throw new IllegalArgumentException("No icon for ConfigurationUpdateStatus[" + status + "]");
+        }
+    }
+
+    public static String getOperationStatusURL(OperationRequestStatus status) {
+        switch (status) {
+        case SUCCESS:
+            return "/images/icn_operation_success.png";
+        case FAILURE:
+            return "/images/icn_operation_failed.png";
+        case INPROGRESS:
+            return "/images/icn_operation_inprogress.png";
+        case CANCELED:
+            return "/images/icn_operation_canceled.png";
+        default:
+            throw new IllegalArgumentException("No icon for OperationRequestStatus[" + status + "]");
+        }
+    }
+
+    public static String getEventSeverityURL(EventSeverity severity, boolean grouped) {
+        String color = null;
+        switch (severity) {
+        case DEBUG:
+            color = "green";
+            break;
+        case INFO:
+            color = "blue";
+            break;
+        case WARN:
+            color = "yellow";
+            break;
+        case ERROR:
+            color = "orange";
+            break;
+        case FATAL:
+            color = "red";
+            break;
+        default:
+            throw new IllegalArgumentException("No icon for EventSeverity[" + severity + "]");
+        }
+
+        String additional = (grouped ? "_multi" : "");
+        return "/images/icn_info_" + color + additional + ".png";
     }
 }

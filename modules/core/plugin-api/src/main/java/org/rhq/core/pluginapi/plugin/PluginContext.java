@@ -25,8 +25,8 @@ public class PluginContext {
      *                                   running
      * @param temporaryDirectory         a temporary directory for plugin use that is destroyed at agent shutdown
      * @param dataDirectory              a directory where plugins can store persisted data that survives agent restarts
-     * @param pluginContainerName        the name of the plugin container in which the discovery component is running.
-     *                                   Components can be assured this name is unique across <b>all</b> plugin
+     * @param pluginContainerName        the name of the plugin container in which the plugin is running.
+     *                                   You can be assured this name is unique across <b>all</b> plugin
      *                                   containers/agents running in the RHQ environment.
      */
     public PluginContext(String pluginName, SystemInfo systemInfo, File temporaryDirectory, File dataDirectory,

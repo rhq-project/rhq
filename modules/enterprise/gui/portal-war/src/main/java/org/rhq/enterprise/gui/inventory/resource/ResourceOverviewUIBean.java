@@ -36,7 +36,7 @@ public class ResourceOverviewUIBean {
     private List<Alert> getAlerts(Subject subject, int resourceId, int count) {
         PageControl lastFive = new PageControl(0, count);
         lastFive.initDefaultOrderingField("a.ctime", PageOrdering.DESC);
-        return LookupUtil.getAlertManager().findAlerts(resourceId, null, null, null, lastFive);
+        return LookupUtil.getAlertManager().findAlerts(resourceId, null, null, null, null, lastFive);
     }
 
     private List<ResourceOperationLastCompletedComposite> getOperations(Subject subject, int resourceId, int count) {
@@ -48,7 +48,8 @@ public class ResourceOverviewUIBean {
     private List<ResourceConfigurationUpdate> getConfigUpdates(Subject subject, int resourceId, int count) {
         PageControl lastFive = new PageControl(0, count);
         lastFive.initDefaultOrderingField("cu.createdTime", PageOrdering.DESC);
-        return LookupUtil.getConfigurationManager().getResourceConfigurationUpdates(subject, resourceId, lastFive);
+        return LookupUtil.getConfigurationManager().getResourceConfigurationUpdates(subject, resourceId, null, null,
+            lastFive);
     }
 
     private List<Tuple<EventSeverity, Integer>> getEventCounts(Subject subject, int resourceId, int count) {

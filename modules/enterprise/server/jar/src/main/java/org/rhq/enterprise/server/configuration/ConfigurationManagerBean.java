@@ -497,7 +497,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @SuppressWarnings("unchecked")
     public PageList<PluginConfigurationUpdate> getPluginConfigurationUpdates(Subject whoami, int resourceId,
-        PageControl pc) {
+        Long beginDate, Long endDate, PageControl pc) {
 
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource.getResourceType().getPluginConfigurationDefinition() == null
@@ -513,6 +513,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         queryCount.setParameter("resourceId", resourceId);
         query.setParameter("resourceId", resourceId);
+
+        queryCount.setParameter("startTime", beginDate);
+        query.setParameter("startTime", beginDate);
+
+        queryCount.setParameter("endTime", endDate);
+        query.setParameter("endTime", endDate);
 
         long totalCount = (Long) queryCount.getSingleResult();
         List<PluginConfigurationUpdate> updates = query.getResultList();
@@ -537,7 +543,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @SuppressWarnings("unchecked")
     public PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject whoami, Integer resourceId,
-        PageControl pc) {
+        Long beginDate, Long endDate, PageControl pc) {
 
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource.getResourceType().getResourceConfigurationDefinition() == null
@@ -553,6 +559,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         queryCount.setParameter("resourceId", resourceId);
         query.setParameter("resourceId", resourceId);
+
+        queryCount.setParameter("startTime", beginDate);
+        query.setParameter("startTime", beginDate);
+
+        queryCount.setParameter("endTime", endDate);
+        query.setParameter("endTime", endDate);
 
         long totalCount = (Long) queryCount.getSingleResult();
         List<ResourceConfigurationUpdate> updates = query.getResultList();

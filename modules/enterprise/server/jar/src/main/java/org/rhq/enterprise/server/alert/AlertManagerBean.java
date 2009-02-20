@@ -418,15 +418,12 @@ public class AlertManagerBean implements AlertManagerLocal {
         return new PageList<Alert>(alerts, (int) totalCount, pageControl);
     }
 
-    /**
-     * Get a page list of alerts for the resource using various filters
-     */
     @SuppressWarnings("unchecked")
     public PageList<Alert> findAlerts(int resourceId, Integer alertDefinitionId, AlertPriority priority,
-        Date dateFilter, PageControl pageControl) {
+        Long beginDate, Long endDate, PageControl pageControl) {
         pageControl.initDefaultOrderingField("a.ctime", PageOrdering.DESC);
 
-        String queryStr = ((dateFilter == null) ? Alert.QUERY_FIND_BY_RESOURCE : Alert.QUERY_FIND_BY_RESOURCE_DATED);
+        String queryStr = Alert.QUERY_FIND_BY_RESOURCE_DATED;
 
         Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryStr);
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryStr, pageControl);
@@ -434,15 +431,11 @@ public class AlertManagerBean implements AlertManagerLocal {
         queryCount.setParameter("id", resourceId);
         query.setParameter("id", resourceId);
 
-        if (dateFilter != null) {
-            Date nextDay = new Date(dateFilter.getTime() + (24 * 60 * 60 * 1000));
+        queryCount.setParameter("startDate", beginDate);
+        query.setParameter("startDate", beginDate);
 
-            queryCount.setParameter("startDate", dateFilter.getTime());
-            queryCount.setParameter("endDate", nextDay.getTime());
-
-            query.setParameter("startDate", dateFilter.getTime());
-            query.setParameter("endDate", nextDay.getTime());
-        }
+        queryCount.setParameter("endDate", endDate);
+        query.setParameter("endDate", endDate);
 
         queryCount.setParameter("alertDefinitionId", alertDefinitionId);
         query.setParameter("alertDefinitionId", alertDefinitionId);

@@ -20,9 +20,12 @@
     WebUser user = SessionUtils.getWebUser(request.getSession());
     Subject subject = user.getSubject();
 
+    long end = Long.parseLong(WebUtility.getRequiredRequestParameter(request, "end"));
+    long begin = Long.parseLong(WebUtility.getRequiredRequestParameter(request, "begin"));
+
     ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
-    PageList<CreateResourceHistory> creates = resourceFactoryManager.getCreateChildResourceHistory(resourceId, new PageControl(0,100));
-    PageList<DeleteResourceHistory> deletes = resourceFactoryManager.getDeleteChildResourceHistory(resourceId, new PageControl(0,100));
+    PageList<CreateResourceHistory> creates = resourceFactoryManager.getCreateChildResourceHistory(resourceId, begin, end, new PageControl(0,100));
+    PageList<DeleteResourceHistory> deletes = resourceFactoryManager.getDeleteChildResourceHistory(resourceId, begin, end, new PageControl(0,100));
 %>
 
 

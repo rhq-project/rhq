@@ -24,7 +24,7 @@
 
     OperationManagerLocal operationManager = LookupUtil.getOperationManager();
     PageList<ResourceOperationHistory> operations = operationManager.getCompletedResourceOperationHistories(
-            subject, resourceId, new PageControl(0,100));
+            subject, resourceId, begin, end, new PageControl(0,100));
 %>
 
 { "events": [

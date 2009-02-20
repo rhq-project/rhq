@@ -120,7 +120,8 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "   WHERE a.alertDefinition.resource.id = :id "
         + "     AND (a.alertDefinition.id = :alertDefinitionId OR :alertDefinitionId IS NULL) "
         + "     AND (a.alertDefinition.priority = :priority OR :priority IS NULL) "
-        + "     AND (a.ctime BETWEEN :startDate AND :endDate)"),
+        + "     AND (a.ctime > :startDate OR :startDate IS NULL) "
+        + "     AND (a.ctime < :endDate OR :endDate IS NULL) "),
     @NamedQuery(name = Alert.QUERY_FIND_ALL, query = "SELECT a FROM Alert AS a"),
     @NamedQuery(name = Alert.QUERY_DELETE_BY_CTIME, query = "" //
         + "DELETE FROM Alert AS a " //

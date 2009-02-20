@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.alert;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -67,9 +66,8 @@ public interface AlertManagerLocal {
     PageList<Alert> findAlerts(Subject subject, Integer[] resourceIds, AlertPriority priority, long timeRange,
         PageControl pageControl);
 
-    // dateFilter is nullable
-    PageList<Alert> findAlerts(int resourceId, Integer alertDefinitionId, AlertPriority priority, Date dateFilter,
-        PageControl pc);
+    PageList<Alert> findAlerts(int resourceId, Integer alertDefinitionId, AlertPriority priority, Long beginDate,
+        Long endDate, PageControl pageControl);
 
     void fireAlert(int alertDefinitionId);
 

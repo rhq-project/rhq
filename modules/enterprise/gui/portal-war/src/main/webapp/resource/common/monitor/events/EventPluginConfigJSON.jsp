@@ -18,8 +18,11 @@
     WebUser user = SessionUtils.getWebUser(request.getSession());
     Subject subject = user.getSubject();
 
+    long end = Long.parseLong(WebUtility.getRequiredRequestParameter(request, "end"));
+    long begin = Long.parseLong(WebUtility.getRequiredRequestParameter(request, "begin"));
+
     ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
-    PageList<PluginConfigurationUpdate> configurationUpdates = configurationManager.getPluginConfigurationUpdates(subject, resourceId, new PageControl(0,100));
+    PageList<PluginConfigurationUpdate> configurationUpdates = configurationManager.getPluginConfigurationUpdates(subject, resourceId, begin, end, new PageControl(0,100));
 %>
 
 

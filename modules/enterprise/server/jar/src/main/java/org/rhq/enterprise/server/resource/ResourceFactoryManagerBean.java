@@ -481,10 +481,13 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
         return history;
     }
 
-    public int getCreateChildResourceHistoryCount(int parentResourceId) {
+    public int getCreateChildResourceHistoryCount(int parentResourceId, Long beginDate, Long endDate) {
         Query query = PersistenceUtility.createCountQuery(entityManager,
             CreateResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID);
+
         query.setParameter("id", parentResourceId);
+        query.setParameter("startTime", beginDate);
+        query.setParameter("endTime", endDate);
 
         long totalCount = (Long) query.getSingleResult();
 
@@ -492,14 +495,18 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<CreateResourceHistory> getCreateChildResourceHistory(int parentResourceId, PageControl pageControl) {
+    public PageList<CreateResourceHistory> getCreateChildResourceHistory(int parentResourceId, Long beginDate,
+        Long endDate, PageControl pageControl) {
         pageControl.initDefaultOrderingField("crh.id", PageOrdering.DESC);
 
-        int totalCount = getCreateChildResourceHistoryCount(parentResourceId);
+        int totalCount = getCreateChildResourceHistoryCount(parentResourceId, beginDate, endDate);
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
             CreateResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, pageControl);
+
         query.setParameter("id", parentResourceId);
+        query.setParameter("startTime", beginDate);
+        query.setParameter("endTime", endDate);
 
         List<CreateResourceHistory> history = query.getResultList();
 
@@ -507,10 +514,13 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
         return pageList;
     }
 
-    public int getDeleteChildResourceHistoryCount(int parentResourceId) {
+    public int getDeleteChildResourceHistoryCount(int parentResourceId, Long beginDate, Long endDate) {
         Query query = PersistenceUtility.createCountQuery(entityManager,
             DeleteResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID);
+
         query.setParameter("id", parentResourceId);
+        query.setParameter("startTime", beginDate);
+        query.setParameter("endTime", endDate);
 
         long totalCount = (Long) query.getSingleResult();
 
@@ -518,14 +528,18 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<DeleteResourceHistory> getDeleteChildResourceHistory(int parentResourceId, PageControl pageControl) {
+    public PageList<DeleteResourceHistory> getDeleteChildResourceHistory(int parentResourceId, Long beginDate,
+        Long endDate, PageControl pageControl) {
         pageControl.initDefaultOrderingField("drh.id", PageOrdering.DESC);
 
-        int totalCount = getDeleteChildResourceHistoryCount(parentResourceId);
+        int totalCount = getDeleteChildResourceHistoryCount(parentResourceId, beginDate, endDate);
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
             DeleteResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, pageControl);
+
         query.setParameter("id", parentResourceId);
+        query.setParameter("startTime", beginDate);
+        query.setParameter("endTime", endDate);
 
         List<DeleteResourceHistory> history = query.getResultList();
 

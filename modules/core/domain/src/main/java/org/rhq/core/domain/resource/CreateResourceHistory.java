@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.resource;
 
 import java.io.ByteArrayOutputStream;
@@ -57,7 +57,12 @@ import org.rhq.core.domain.content.InstalledPackage;
 @Entity(name = "CreateResourceHistory")
 @NamedQueries( {
     @NamedQuery(name = CreateResourceHistory.QUERY_FIND_WITH_STATUS, query = "SELECT crh FROM CreateResourceHistory AS crh WHERE crh.status = :status"),
-    @NamedQuery(name = CreateResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, query = "SELECT crh FROM CreateResourceHistory AS crh WHERE crh.parentResource.id = :id"),
+    @NamedQuery(name = CreateResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, query = "" //
+        + "SELECT crh " //
+        + "  FROM CreateResourceHistory AS crh " //
+        + " WHERE crh.parentResource.id = :id" //
+        + "   AND ( crh.ctime > :startTime OR :startTime IS NULL ) " //
+        + "   AND ( crh.mtime < :endTime OR :endTime IS NULL ) "),
     @NamedQuery(name = CreateResourceHistory.QUERY_FIND_BY_ID, query = "SELECT crh FROM CreateResourceHistory AS crh WHERE crh.id = :id"),
     @NamedQuery(name = CreateResourceHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM CreateResourceHistory crh WHERE crh.parentResource IN (:resources))") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CREATE_RES_HIST_ID_SEQ")

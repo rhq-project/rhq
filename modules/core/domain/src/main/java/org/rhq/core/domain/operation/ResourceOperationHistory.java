@@ -49,8 +49,13 @@ import org.rhq.core.domain.resource.Resource;
         + "from ResourceOperationHistory h " + "where h.groupOperationHistory.id = :groupHistoryId "),
     @NamedQuery(name = ResourceOperationHistory.QUERY_FIND_BY_RESOURCE_ID_AND_STATUS, query = "select h "
         + "from ResourceOperationHistory h " + "where h.resource.id = :resourceId " + "and h.status = :status"),
-    @NamedQuery(name = ResourceOperationHistory.QUERY_FIND_BY_RESOURCE_ID_AND_NOT_STATUS, query = "select h "
-        + "from ResourceOperationHistory h " + "where h.resource.id = :resourceId " + "and h.status <> :status"),
+    @NamedQuery(name = ResourceOperationHistory.QUERY_FIND_BY_RESOURCE_ID_AND_NOT_STATUS, query = "" //
+        + "SELECT h " //
+        + "  FROM ResourceOperationHistory h " //
+        + " WHERE h.resource.id = :resourceId " //
+        + "   AND h.status <> :status " //
+        + "   AND (h.startedTime > :beginTime OR :beginTime IS NULL) " //
+        + "   AND (h.modifiedTime < :endTime OR :endTime IS NULL) "),
     @NamedQuery(name = ResourceOperationHistory.QUERY_FIND_LATEST_COMPLETED_OPERATION, query = "select h "
         + "from ResourceOperationHistory h " + "where h.resource.id = :resourceId " + "  and h.status <> 'INPROGRESS' "
         + "  and h.modifiedTime = (select max(h2.modifiedTime) " + "from ResourceOperationHistory h2 "

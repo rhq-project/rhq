@@ -139,7 +139,7 @@ public class ListPluginConfigurationUpdateUIBean extends PagedDataTableUIBean {
             }
 
             PageList<PluginConfigurationUpdate> result;
-            result = manager.getPluginConfigurationUpdates(subject, requestResource.getId(), pc);
+            result = manager.getPluginConfigurationUpdates(subject, requestResource.getId(), null, null, pc);
 
             return result;
         }

@@ -22,8 +22,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -36,8 +38,8 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.configuration.resource.ExistingResourceConfigurationUIBean;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -90,7 +92,8 @@ public class ListConfigurationUpdateUIBean extends PagedDataTableUIBean {
 
             // We've just updated the current Configuration, so clear the current Configuration that is cached in the
             // Session, so the config view/edit pages will not display a stale version of the Configuration.
-            ExistingResourceConfigurationUIBean configUIBean = FacesContextUtility.getManagedBean(ExistingResourceConfigurationUIBean.class);
+            ExistingResourceConfigurationUIBean configUIBean = FacesContextUtility
+                .getManagedBean(ExistingResourceConfigurationUIBean.class);
             configUIBean.clearConfiguration();
 
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Rolled back resource configuration to version "
@@ -168,7 +171,7 @@ public class ListConfigurationUpdateUIBean extends PagedDataTableUIBean {
             }
 
             PageList<ResourceConfigurationUpdate> result;
-            result = manager.getResourceConfigurationUpdates(subject, requestResource.getId(), pc);
+            result = manager.getResourceConfigurationUpdates(subject, requestResource.getId(), null, null, pc);
 
             return result;
         }

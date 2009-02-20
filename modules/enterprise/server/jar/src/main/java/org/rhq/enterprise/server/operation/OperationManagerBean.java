@@ -575,7 +575,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
     @SuppressWarnings("unchecked")
     public PageList<ResourceOperationHistory> getCompletedResourceOperationHistories(Subject whoami, int resourceId,
-        PageControl pc) {
+        Long beginDate, Long endDate, PageControl pc) {
         pc.initDefaultOrderingField("h.createdTime", PageOrdering.DESC);
 
         String queryName = ResourceOperationHistory.QUERY_FIND_BY_RESOURCE_ID_AND_NOT_STATUS;
@@ -587,6 +587,12 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         queryCount.setParameter("status", OperationRequestStatus.INPROGRESS);
         query.setParameter("status", OperationRequestStatus.INPROGRESS);
+
+        queryCount.setParameter("beginTime", beginDate);
+        query.setParameter("beginTime", beginDate);
+
+        queryCount.setParameter("endTime", endDate);
+        query.setParameter("endTime", endDate);
 
         long totalCount = (Long) queryCount.getSingleResult();
 

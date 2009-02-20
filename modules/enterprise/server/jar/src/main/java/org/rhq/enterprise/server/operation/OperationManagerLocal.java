@@ -258,12 +258,13 @@ public interface OperationManagerLocal {
      *
      * @param  whoami
      * @param  resourceId
+     * @param  beginDate filter used to show only results occurring after this epoch millis parameter, nullable
+     * @param  endDate   filter used to show only results occurring before this epoch millis parameter, nullable
      * @param  pc
-     *
      * @return all operation histories for the given resource
      */
     PageList<ResourceOperationHistory> getCompletedResourceOperationHistories(Subject whoami, int resourceId,
-        PageControl pc);
+        Long startDate, Long endDate, PageControl pc);
 
     /**
      * Returns the list of pending operation histories for the given resource. This will return all items that are still
@@ -283,7 +284,7 @@ public interface OperationManagerLocal {
      * Returns the list of completed operation histories for the group resource. This will return all items that are no
      * longer INPROGRESS that were invoked on this group. This only returns the "aggregate" history item - not the
      * individual resource operation histories for the group member invocation results. See
-     * {@link #getCompletedResourceOperationHistories(Subject, int, PageControl)} for that.
+     * {@link #getCompletedResourceOperationHistories(Subject, int, Long, Long, PageControl)} for that.
      *
      * @param  whoami
      * @param  groupId

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.inventory.resource;
 
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
@@ -41,7 +42,8 @@ public class ListCreateResourceHistoryUIBean extends PagedDataTableUIBean {
     public int getCreateHistoryCount() {
         ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
         Resource parentResource = EnterpriseFacesContextUtility.getResourceIfExists();
-        int resourceHistoryCount = resourceFactoryManager.getCreateChildResourceHistoryCount(parentResource.getId());
+        int resourceHistoryCount = resourceFactoryManager.getCreateChildResourceHistoryCount(parentResource.getId(),
+            null, null);
         return resourceHistoryCount;
     }
 
@@ -71,7 +73,7 @@ public class ListCreateResourceHistoryUIBean extends PagedDataTableUIBean {
             ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
 
             PageList<CreateResourceHistory> pageList = resourceFactoryManager.getCreateChildResourceHistory(
-                parentresource.getId(), pageControl);
+                parentresource.getId(), null, null, pageControl);
 
             return pageList;
         }

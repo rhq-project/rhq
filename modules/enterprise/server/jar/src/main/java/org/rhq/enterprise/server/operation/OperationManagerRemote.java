@@ -57,12 +57,9 @@ public interface OperationManagerRemote {
      */
     @WebMethod
     void cancelOperationHistory( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "historyId")
-        int historyId, //
-        @WebParam(name = "ignoreAgentErrors")
-        boolean ignoreAgentErrors);
+        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "historyId") int historyId, //
+        @WebParam(name = "ignoreAgentErrors") boolean ignoreAgentErrors);
 
     /**
      * Purges the history from the database. Doing this loses all audit trails of the invoked operation. This can handle
@@ -80,32 +77,29 @@ public interface OperationManagerRemote {
      */
     @WebMethod
     void deleteOperationHistory( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "historyId")
-        int historyId, //
-        @WebParam(name = "purgeInProgress")
-        boolean purgeInProgress);
+        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "historyId") int historyId, //
+        @WebParam(name = "purgeInProgress") boolean purgeInProgress);
 
     /**
      * Returns the list of completed operation histories for the given resource. This will return all items that are no
      * longer INPROGRESS that were invoked as part of a group operation to which this resource belongs or on the
      * resource directly.
-     *
-     * @param  user           The logged in user's subject.
      * @param  resourceId
+     * @param  beginDate      filter used to show only results occurring after this epoch millis parameter, nullable
+     * @param  endate         filter used to show only results occurring before this epoch millis parameter, nullable
      * @param  pc
+     * @param  user           The logged in user's subject.
      *
      * @return all operation histories for the given resource
      */
     @WebMethod
     PageList<ResourceOperationHistory> getCompletedResourceOperationHistories( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "resourceId")
-        int resourceId, //
-        @WebParam(name = "pc")
-        PageControl pc);
+        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "resourceId") int resourceId, //
+        @WebParam(name = "startDate") Long startDate, //
+        @WebParam(name = "endDate") Long endDate, // 
+        @WebParam(name = "pc") PageControl pc);
 
     /**
      * Returns the list of pending operation histories for the given resource. This will return all items that are still
@@ -120,12 +114,9 @@ public interface OperationManagerRemote {
      */
     @WebMethod
     PageList<ResourceOperationHistory> getPendingResourceOperationHistories( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "resourceId")
-        int resourceId, //
-        @WebParam(name = "pc")
-        PageControl pc);
+        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "resourceId") int resourceId, //
+        @WebParam(name = "pc") PageControl pc);
 
     /**
      * Returns the list of scheduled operations for the given resource. This only includes scheduled jobs on the
@@ -141,10 +132,8 @@ public interface OperationManagerRemote {
      */
     @WebMethod
     List<ResourceOperationSchedule> getScheduledResourceOperations( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "resourceId")
-        int resourceId) throws Exception;
+        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "resourceId") int resourceId) throws Exception;
 
     /**
      * Schedules an operation for execution on the given resource.
@@ -165,24 +154,15 @@ public interface OperationManagerRemote {
      */
     @WebMethod
     ResourceOperationSchedule scheduleResourceOperation( //
-        @WebParam(name = "user")
-        Subject user, // 
-        @WebParam(name = "resourceid")
-        int resourceId, //
-        @WebParam(name = "operationName")
-        String operationName, //
-        @WebParam(name = "delay")
-        long delay, //
-        @WebParam(name = "repeatInterval")
-        long repeatInterval, //
-        @WebParam(name = "repeatCount")
-        int repeatCount, //        
-        @WebParam(name = "timeout")
-        int timeout, //
-        @WebParam(name = "parameters")
-        Configuration parameters, //        
-        @WebParam(name = "description")
-        String description) throws Exception;
+        @WebParam(name = "user") Subject user, // 
+        @WebParam(name = "resourceid") int resourceId, //
+        @WebParam(name = "operationName") String operationName, //
+        @WebParam(name = "delay") long delay, //
+        @WebParam(name = "repeatInterval") long repeatInterval, //
+        @WebParam(name = "repeatCount") int repeatCount, //        
+        @WebParam(name = "timeout") int timeout, //
+        @WebParam(name = "parameters") Configuration parameters, //        
+        @WebParam(name = "description") String description) throws Exception;
 
     /**
      * Unschedules the resource operation identified with the given job ID.
@@ -195,11 +175,8 @@ public interface OperationManagerRemote {
      */
     @WebMethod
     void unscheduleResourceOperation( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "jobId")
-        String jobId, //
-        @WebParam(name = "resourceId")
-        int resourceId) throws Exception;
+        @WebParam(name = "user") Subject user, //
+        @WebParam(name = "jobId") String jobId, //
+        @WebParam(name = "resourceId") int resourceId) throws Exception;
 
 }

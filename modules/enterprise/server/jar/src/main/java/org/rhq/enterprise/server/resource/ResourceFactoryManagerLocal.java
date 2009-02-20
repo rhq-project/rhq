@@ -19,7 +19,9 @@
 package org.rhq.enterprise.server.resource;
 
 import java.io.InputStream;
+
 import javax.ejb.Local;
+
 import org.rhq.core.clientapi.agent.inventory.CreateResourceResponse;
 import org.rhq.core.clientapi.agent.inventory.DeleteResourceResponse;
 import org.rhq.core.domain.auth.Subject;
@@ -127,10 +129,12 @@ public interface ResourceFactoryManagerLocal {
      * parent resource.
      *
      * @param  parentResourceId resource to check for child resource creation requests
+     * @param  beginDate        filter used to show only results occurring after this epoch millis parameter, nullable
+     * @param  endDate          filter used to show only results occurring before this epoch millis parameter, nullable
      *
      * @return number of requests in the resource creation history for the specified parent
      */
-    int getCreateChildResourceHistoryCount(int parentResourceId);
+    int getCreateChildResourceHistoryCount(int parentResourceId, Long beginDate, Long endDate);
 
     /**
      * Returns the number of requests to delete a child resource from the specified parent resource. These requests may
@@ -138,10 +142,12 @@ public interface ResourceFactoryManagerLocal {
      * resource.
      *
      * @param  parentResourceId resource to check for child resource delete requests
+     * @param  beginDate        filter used to show only results occurring after this epoch millis parameter, nullable
+     * @param  endDate          filter used to show only results occurring before this epoch millis parameter, nullable
      *
      * @return number of delete requests for child resources
      */
-    int getDeleteChildResourceHistoryCount(int parentResourceId);
+    int getDeleteChildResourceHistoryCount(int parentResourceId, Long beginDate, Long endDate);
 
     /**
      * Returns a pagination enabled list of requests for the creation of new child resources to the specified parent.
@@ -149,11 +155,14 @@ public interface ResourceFactoryManagerLocal {
      * parent resource.
      *
      * @param  parentResourceId resource to check for child resource creations
+     * @param  beginDate        filter used to show only results occurring after this epoch millis parameter, nullable
+     * @param  endDate          filter used to show only results occurring before this epoch millis parameter, nullable
      * @param  pageControl      control for pagination
      *
      * @return list of requests
      */
-    PageList<CreateResourceHistory> getCreateChildResourceHistory(int parentResourceId, PageControl pageControl);
+    PageList<CreateResourceHistory> getCreateChildResourceHistory(int parentResourceId, Long beginDate, Long endDate,
+        PageControl pageControl);
 
     /**
      * Returns a pagination enabled list of requests to delete a child resource on the specified parent. These requests
@@ -161,11 +170,14 @@ public interface ResourceFactoryManagerLocal {
      * resource.
      *
      * @param  parentResourceId resource to check for deleted child resources
+     * @param  beginDate        filter used to show only results occurring after this epoch millis parameter, nullable
+     * @param  endate           filter used to show only results occurring before this epoch millis parameter, nullable
      * @param  pageControl      control for pagination
      *
      * @return list of requests
      */
-    PageList<DeleteResourceHistory> getDeleteChildResourceHistory(int parentResourceId, PageControl pageControl);
+    PageList<DeleteResourceHistory> getDeleteChildResourceHistory(int parentResourceId, Long beginDate, Long endDate,
+        PageControl pageControl);
 
     /**
      * Creates a new resource in the inventory.

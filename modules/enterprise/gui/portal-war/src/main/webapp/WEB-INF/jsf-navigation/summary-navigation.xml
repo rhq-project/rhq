@@ -6,15 +6,14 @@
    
    <navigation-rule>
 
-      <from-view-id>/rhq/resource/summary/overview.xhtml</from-view-id>
+      <from-view-id>/rhq/resource/summary/timeline.xhtml</from-view-id>
       
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/resource/summary/overview?id=#{param.id}</to-view-id>
+         <to-view-id>/rhq/resource/summary/timeline.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
    </navigation-rule>
 
 </faces-config>
-      

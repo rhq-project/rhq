@@ -621,7 +621,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         // at this point in time, the round trip messaging is done and we have the agent response
         List<ResourceConfigurationUpdate> requests;
 
-        requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), pageControl);
+        requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), null, null,
+            pageControl);
 
         assert requests.size() == 1;
         assert requests.get(0) != null;
@@ -662,7 +663,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         System.out.println("REQUEST WAS: " + request.toString());
         configurationManager.purgeResourceConfigurationUpdate(overlord, request.getId(), false);
 
-        requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), pageControl);
+        requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), null, null,
+            pageControl);
 
         assert requests.size() == 1; // it will create one for us from the "live" configuration
     }
@@ -691,7 +693,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(2000); // wait for the test agent to complete the request
 
         List<ResourceConfigurationUpdate> history;
-        history = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), pageControl);
+        history = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), null, null,
+            pageControl);
 
         assert history != null;
         assert history.size() == 3;
@@ -709,7 +712,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         configurationManager.updateResourceConfiguration(overlord, resource.getId(), rollbackToHere);
         Thread.sleep(2000); // wait for the test agent to complete the request
 
-        history = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), pageControl);
+        history = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), null, null,
+            pageControl);
         assert history != null;
         assert history.size() == 4;
         ResourceConfigurationUpdate newConfigUpdate = history.get(3);
@@ -753,7 +757,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         // at this point in time, the round trip messaging is done and we have the agent response
         List<ResourceConfigurationUpdate> requests;
 
-        requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), pageControl);
+        requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), null, null,
+            pageControl);
 
         assert requests != null;
         assert requests.size() == 1 : "Got " + requests.size() + " config update requests - expected 1.";
@@ -783,7 +788,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         // at this point in time, the round trip messaging is done and we have the agent response
         List<ResourceConfigurationUpdate> requests;
 
-        requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), pageControl);
+        requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), null, null,
+            pageControl);
 
         assert requests != null;
         assert requests.size() == 2 : "Got " + requests.size() + " config update requests - expected 2.";
@@ -796,7 +802,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         // now get the current configs/requests and
         // make sure we deleted just the one configuration, leaving one left
-        requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), pageControl);
+        requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), null, null,
+            pageControl);
 
         assert requests.size() == 1;
         assert requests.get(0).getId() == savedRequest.getId();
@@ -839,7 +846,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         // at this point in time, the round trip messaging is done and we have the agent response
         List<ResourceConfigurationUpdate> requests;
 
-        requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), pageControl);
+        requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), null, null,
+            pageControl);
 
         assert requests != null;
         assert requests.size() == 2; // one succeeded and one failed
@@ -854,7 +862,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         // now get the current configs/requests and
         // make sure we deleted the only one configuration that succeeded, leaving one update record
-        requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), pageControl);
+        requests = configurationManager.getResourceConfigurationUpdates(overlord, resource.getId(), null, null,
+            pageControl);
 
         assert requests.size() == 1;
 

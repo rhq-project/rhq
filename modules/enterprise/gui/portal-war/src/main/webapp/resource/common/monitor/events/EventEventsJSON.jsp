@@ -31,7 +31,7 @@
     boolean tooManyEvents = false;
 
     PageList<EventComposite> list =
-            eventManager.getEvents(subject, new int[] {resourceId} , begin, end, null,
+            eventManager.getEvents(subject, new int[] {resourceId}, begin, end, null,
                 null, null, new PageControl(0,10000, new OrderingField("ev.timestamp", PageOrdering.ASC)));
 
     /* TODO GH: Add alert to screen

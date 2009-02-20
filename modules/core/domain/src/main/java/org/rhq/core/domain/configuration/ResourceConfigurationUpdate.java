@@ -42,7 +42,9 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_ALL_BY_RESOURCE_ID, query = "" //
         + "SELECT cu " //
         + "  FROM ResourceConfigurationUpdate cu " //
-        + " WHERE ( cu.resource.id = :resourceId OR :resourceId IS NULL ) "),
+        + " WHERE ( cu.resource.id = :resourceId OR :resourceId IS NULL ) " //
+        + "   AND ( cu.createdTime > :startTime OR :startTime IS NULL ) " //
+        + "   AND ( cu.modifiedTime < :endTime OR :endTime IS NULL ) "),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_CURRENTLY_ACTIVE_CONFIG, query = "" //
         + "SELECT cu " //
         + "  FROM ResourceConfigurationUpdate cu " //

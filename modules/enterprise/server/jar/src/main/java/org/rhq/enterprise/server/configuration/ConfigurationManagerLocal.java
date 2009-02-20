@@ -152,7 +152,8 @@ public interface ConfigurationManagerLocal {
      */
     void checkForTimedOutUpdateRequests();
 
-    PageList<PluginConfigurationUpdate> getPluginConfigurationUpdates(Subject whoami, int resourceId, PageControl pc);
+    PageList<PluginConfigurationUpdate> getPluginConfigurationUpdates(Subject whoami, int resourceId, Long beginDate,
+        Long endDate, PageControl pc);
 
     /**
      * Returns the list of all resource configuration updates for the given resource. This will show you an audit trail
@@ -162,12 +163,14 @@ public interface ConfigurationManagerLocal {
      *
      * @param  whoami     the user who wants to see the information
      * @param  resourceId the resource whose update requests are to be returned, if null will not filter by resourceId
+     * @param  beginDate  filter used to show only results occurring after this epoch millis parameter, nullable
+     * @param  endDate    filter used to show only results occurring before this epoch millis parameter, nullable
      * @param  pc         the pagination controls
      *
      * @return the resource's complete list of updates (will be empty (not <code>null</code>) if none)
      */
     PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject whoami, Integer resourceId,
-        PageControl pc);
+        Long beginDate, Long endDate, PageControl pc);
 
     PluginConfigurationUpdate getPluginConfigurationUpdate(Subject whoami, int configurationUpdateId);
 
@@ -237,7 +240,8 @@ public interface ConfigurationManagerLocal {
      */
     @Nullable
     ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject whoami, int resourceId,
-                                                                             Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject, boolean isPartofAggregateUpdate);
+        Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject,
+        boolean isPartofAggregateUpdate);
 
     /**
      * A callback method that is called when an agent has completed updating a resource's configuration.
@@ -360,8 +364,8 @@ public interface ConfigurationManagerLocal {
 
     AggregatePluginConfigurationUpdate getAggregatePluginConfigurationById(int configurationUpdateId);
 
-    PageList<ConfigurationUpdateComposite> getPluginConfigurationUpdateCompositesByParentId(
-        int configurationUpdateId, PageControl pageControl);
+    PageList<ConfigurationUpdateComposite> getPluginConfigurationUpdateCompositesByParentId(int configurationUpdateId,
+        PageControl pageControl);
 
     PageList<Integer> getPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl);
 
@@ -383,14 +387,13 @@ public interface ConfigurationManagerLocal {
     int deleteAggregatePluginConfigurationUpdates(Subject subject, Integer resourceGroupId,
         Integer[] aggregatePluginConfigurationUpdateIds);
 
-    void updateAggregateConfigurationUpdate(
-        AbstractAggregateConfigurationUpdate groupUpdate);
+    void updateAggregateConfigurationUpdate(AbstractAggregateConfigurationUpdate groupUpdate);
 
     void deleteConfigurations(List<Integer> configurationIds);
 
     @SuppressWarnings("unchecked")
     PageList<Integer> getResourceConfigurationUpdatesByParentId(int aggregateConfigurationUpdateId,
-                                                                       PageControl pageControl);
+        PageControl pageControl);
 
     long getResourceConfigurationUpdateCountByParentId(int aggregateConfigurationUpdateId);
 

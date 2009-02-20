@@ -219,8 +219,11 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
             Integer alertDefinitionId = getAlertDefinitionId();
             AlertPriority alertPriority = getAlertPriority();
 
+            long MILLIS_IN_DAY = 24 * 60 * 60 * 1000;
+            long beginTime = date.getTime();
+            long endTime = new Date(beginTime + MILLIS_IN_DAY).getTime();
             PageList<Alert> alerts = alertManager.findAlerts(getResource().getId(), alertDefinitionId, alertPriority,
-                date, pc);
+                beginTime, endTime, pc);
 
             List<AlertWithLatestConditionLog> results = new ArrayList<AlertWithLatestConditionLog>(alerts.size());
 

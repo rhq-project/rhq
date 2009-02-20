@@ -23,12 +23,14 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.operation.HistoryJobId;
 import org.rhq.core.domain.operation.JobId;
 
+import java.io.Serializable;
+
 /**
  * A simple non-entity POJO that describes a particular scheduled operation.
  *
  * @author John Mazzitelli
  */
-public abstract class OperationSchedule {
+public abstract class OperationSchedule implements Serializable {
     private String jobName;
     private String jobGroup;
     private String operationName;

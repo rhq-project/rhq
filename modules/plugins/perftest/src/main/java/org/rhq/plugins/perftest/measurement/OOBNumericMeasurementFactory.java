@@ -18,6 +18,9 @@
  */
 package org.rhq.plugins.perftest.measurement;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -29,9 +32,10 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
  */
 public class OOBNumericMeasurementFactory implements MeasurementFactory {
     // MeasurementFactory Implementation  --------------------------------------------
+    private final Log log = LogFactory.getLog(OOBNumericMeasurementFactory.class);
 
     public MeasurementData nextValue(MeasurementScheduleRequest request) {
-        double value = request.getScheduleId();
+        double scheduleId = request.getScheduleId();
 
         long currentMillis = System.currentTimeMillis();
         int currentDays = (int) (currentMillis / (24 * 60 * 60 * 1000));
@@ -39,7 +43,8 @@ public class OOBNumericMeasurementFactory implements MeasurementFactory {
 
         // depending on what day it is add 0%, 10%, ... 60% to the value
         // Thursday is 0%
-        value += (value * 0.1 * dayOfWeek);
+        double value = scheduleId + (scheduleId * 0.1 * dayOfWeek);
+        log.debug("ScheduledId [" + scheduleId + "], value [" + value + "]");
 
         MeasurementDataNumeric data = new MeasurementDataNumeric(request, value);
         return data;

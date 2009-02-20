@@ -77,8 +77,10 @@ public class QueriesTest extends AbstractEJB3Test {
         add(Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, new Object[] { "resourceId", 1 });
 
         add(PackageBits.QUERY_PACKAGE_BITS_LOADED_STATUS_PACKAGE_VERSION_ID, new Object[] { "id", 1 });
-        add(CreateResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, new Object[] { "id", 1 });
-        add(DeleteResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, new Object[] { "id", 1 });
+        add(CreateResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, new Object[] { "id", 1, "startTime", null,
+            "endTime", null });
+        add(DeleteResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, new Object[] { "id", 1, "startTime", null,
+            "endTime", null });
         add(ContentSource.QUERY_FIND_ALL_WITH_CONFIG, new Object[] {});
 
         add(InstalledPackageHistory.QUERY_FIND_BY_CSR_ID_AND_PKG_VER_ID, new Object[] { "contentServiceRequestId", 1,

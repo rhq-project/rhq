@@ -21,9 +21,9 @@ package org.rhq.enterprise.server.configuration;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -427,7 +427,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         boolean updateInProgress;
         AggregateResourceConfigurationUpdate latestConfigGroupUpdate;
         try {
-            Query query = entityManager.createNamedQuery(AggregateResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_GROUP_ID);
+            Query query = entityManager
+                .createNamedQuery(AggregateResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_GROUP_ID);
             query.setParameter("groupId", groupId);
             latestConfigGroupUpdate = (AggregateResourceConfigurationUpdate) query.getSingleResult();
             if (!authorizationManager.canViewGroup(whoami, latestConfigGroupUpdate.getGroup().getId())) {
@@ -701,8 +702,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
      * Tells the Agent to asynchonously update a managed resource's configuration as per the specified
      * <code>ResourceConfigurationUpdate</code>.
      */
-    private void executeResourceConfigurationUpdate(ResourceConfigurationUpdate update)
-    {
+    private void executeResourceConfigurationUpdate(ResourceConfigurationUpdate update) {
         try {
             AgentClient agentClient = agentManager.getAgentClient(update.getResource().getAgent());
             ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(update.getId(), update
@@ -736,11 +736,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject whoami, int resourceId,
-                                                                                    Configuration newConfiguration,
-                                                                                    ConfigurationUpdateStatus newStatus,
-                                                                                    String newSubject,
-                                                                                    boolean isPartofAggregateUpdate)
-        throws UpdateStillInProgressException {
+        Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject,
+        boolean isPartofAggregateUpdate) throws UpdateStillInProgressException {
         // get the resource that we will be updating
         Resource resource = entityManager.find(Resource.class, resourceId);
 
@@ -798,8 +795,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
 
         // create our new update request and assign it to our resource - its status will initially be "in progress"
-        ResourceConfigurationUpdate newUpdateRequest = new ResourceConfigurationUpdate(resource,
-            zeroedConfiguration, newSubject);
+        ResourceConfigurationUpdate newUpdateRequest = new ResourceConfigurationUpdate(resource, zeroedConfiguration,
+            newSubject);
 
         newUpdateRequest.setStatus(newStatus);
         if (newStatus == ConfigurationUpdateStatus.FAILURE) {
@@ -837,8 +834,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         log.debug("Received a configuration-update-completed message: " + response);
 
         // find the current update request that is persisted - this is the one that is being reported as being complete
-        ResourceConfigurationUpdate update = entityManager.find(ResourceConfigurationUpdate.class,
-                response.getConfigurationUpdateId());
+        ResourceConfigurationUpdate update = entityManager.find(ResourceConfigurationUpdate.class, response
+            .getConfigurationUpdateId());
         if (update == null) {
             throw new IllegalStateException(
                 "The completed request passed in does not match any request for any resource in inventory: " + response);
@@ -855,6 +852,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             // link to the newer, persisted configuration object
             Resource resource = update.getResource();
             resource.setResourceConfiguration(update.getConfiguration().deepCopy(false));
+            notifyAlertConditionCacheManager("completeResourceConfigurationUpdate", update);
         }
 
         // make sure we update the persisted request with the new status and any error message
@@ -865,12 +863,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return;
     }
 
-    private void checkForCompletedGroupResourceConfigurationUpdate(ResourceConfigurationUpdate resourceConfigurationUpdate) {
+    private void checkForCompletedGroupResourceConfigurationUpdate(
+        ResourceConfigurationUpdate resourceConfigurationUpdate) {
         if (resourceConfigurationUpdate.getStatus() == ConfigurationUpdateStatus.INPROGRESS)
             // If this update isn't done, then by definition the group update isn't done either.
             return;
 
-        AggregateResourceConfigurationUpdate groupUpdate = resourceConfigurationUpdate.getAggregateConfigurationUpdate();
+        AggregateResourceConfigurationUpdate groupUpdate = resourceConfigurationUpdate
+            .getAggregateConfigurationUpdate();
         if (groupUpdate == null)
             // The update's not part of a group update - nothing we need to do.
             return;
@@ -905,7 +905,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         return;
-    }    
+    }
 
     @Nullable
     public ConfigurationDefinition getResourceConfigurationDefinitionForResourceType(Subject whoami, int resourceTypeId) {
@@ -1156,7 +1156,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         if (isAggregateResourceConfigurationUpdateInProgress(whoami, group.getId()))
-            throw new UpdateStillInProgressException("Group Resource configuration update aborted, because another Resource configuration update is already in progress for this group. Please wait a few minutes, then try again.");        
+            throw new UpdateStillInProgressException(
+                "Group Resource configuration update aborted, because another Resource configuration update is already in progress for this group. Please wait a few minutes, then try again.");
 
         /*
          * we need to create and persist the aggregate in a new/separate transaction before the rest of the
@@ -1166,8 +1167,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
          * actually exists); this is also why we need to retrieve the aggregate and overlord fresh in the loop.
          * TODO (ips, 02/16/09): Oops, I removed the fresh retriveal in the loop - add it back if needed.
          */
-        AggregateResourceConfigurationUpdate aggregateUpdate = new AggregateResourceConfigurationUpdate(group,
-                whoami.getName());
+        AggregateResourceConfigurationUpdate aggregateUpdate = new AggregateResourceConfigurationUpdate(group, whoami
+            .getName());
         int updateId = configurationManager.createAggregateConfigurationUpdate(aggregateUpdate);
 
         /*
@@ -1182,7 +1183,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         while (true) {
             Subject overlord = subjectManager.getOverlord();
             // TODO: We really only need to load the Resource id's here , not the entire Resources.
-            List<Resource> pagedMemberResources = resourceManager.getImplicitResourcesByResourceGroup(overlord, group, pc);
+            List<Resource> pagedMemberResources = resourceManager.getImplicitResourcesByResourceGroup(overlord, group,
+                pc);
             if (pagedMemberResources.size() <= 0)
                 break;
 
@@ -1192,9 +1194,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                  * elements of the aggregate
                  */
                 Configuration memberConfiguration = memberConfigurations.get(memberResource.getId());
-                ResourceConfigurationUpdate newUpdate =
-                        configurationManager.persistNewResourceConfigurationUpdateHistory(whoami, memberResource.getId(),
-                            memberConfiguration, ConfigurationUpdateStatus.INPROGRESS, whoami.getName(), true);
+                ResourceConfigurationUpdate newUpdate = configurationManager
+                    .persistNewResourceConfigurationUpdateHistory(whoami, memberResource.getId(), memberConfiguration,
+                        ConfigurationUpdateStatus.INPROGRESS, whoami.getName(), true);
                 if (newUpdate != null) {
                     newUpdate.setAggregateConfigurationUpdate(aggregateUpdate);
                     entityManager.merge(newUpdate);
@@ -1222,7 +1224,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Trigger trigger = QuartzUtil.getFireOnceOffsetTrigger(jobDetail, 10000);
         scheduler.scheduleJob(jobDetail, trigger);
 
-        log.debug("Scheduled Resource configuration update against compatible ResourceGroup[id=" + compatibleGroupId + "].");
+        log.debug("Scheduled Resource configuration update against compatible ResourceGroup[id=" + compatibleGroupId
+            + "].");
 
         return updateId;
     }
@@ -1284,8 +1287,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Integer> getPluginConfigurationUpdatesByParentId(int configurationUpdateId,
-                                                                     PageControl pageControl) {
+    public PageList<Integer> getPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("cu.modifiedTime");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -1308,7 +1310,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @SuppressWarnings("unchecked")
     public PageList<Integer> getResourceConfigurationUpdatesByParentId(int aggregateConfigurationUpdateId,
-                                                                       PageControl pageControl) {
+        PageControl pageControl) {
         pageControl.initDefaultOrderingField("cu.modifiedTime");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -1337,11 +1339,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         final int MAX_RESULTS = 100;
         int resultsSize;
         if (count > MAX_RESULTS) {
-            log.error("Compatible group " + compatibleGroup + " contains more than " + MAX_RESULTS + " members - " +
-               "returning only " + MAX_RESULTS + " Configurations (the maximum allowed).");
+            log.error("Compatible group " + compatibleGroup + " contains more than " + MAX_RESULTS + " members - "
+                + "returning only " + MAX_RESULTS + " Configurations (the maximum allowed).");
             resultsSize = MAX_RESULTS;
         } else {
-            resultsSize = (int)count;
+            resultsSize = (int) count;
         }
 
         // Configurations are very expensive to load, so load 'em in chunks to ease the strain on the DB.
@@ -1358,7 +1360,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 break;
 
             for (Object[] result : pagedResults)
-                results.put((Integer)result[0], (Configuration)result[1]);
+                results.put((Integer) result[0], (Configuration) result[1]);
 
             rowsProcessed += pagedResults.size();
             if (rowsProcessed >= resultsSize)
@@ -1400,7 +1402,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Object propertyValue;
             if (results.size() == 1) {
                 Object[] identicalPropertyValueTuple = results.get(0);
-                if (((Long)identicalPropertyValueTuple[1]).intValue() == groupSize) {
+                if (((Long) identicalPropertyValueTuple[1]).intValue() == groupSize) {
                     propertyValue = identicalPropertyValueTuple[0];
                 } else {
                     propertyValue = AbstractAggregateConfigurationUpdate.MIXED_VALUES_MARKER;
@@ -1408,7 +1410,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             } else {
                 propertyValue = AbstractAggregateConfigurationUpdate.MIXED_VALUES_MARKER;
             }
-            PropertySimple property = new PropertySimple(propertyName, propertyValue);            
+            PropertySimple property = new PropertySimple(propertyName, propertyValue);
             resultConfiguration.put(property);
         }
 
@@ -1436,8 +1438,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public ConfigurationUpdateStatus updateAggregateConfigurationUpdateStatus(
-        int aggregateConfigurationUpdateId, String errorMessages) {
+    public ConfigurationUpdateStatus updateAggregateConfigurationUpdateStatus(int aggregateConfigurationUpdateId,
+        String errorMessages) {
 
         AggregatePluginConfigurationUpdate groupUpdate = configurationManager
             .getAggregatePluginConfigurationById(aggregateConfigurationUpdateId);
@@ -1485,8 +1487,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return removed;
     }
 
-    public void updateAggregateConfigurationUpdate(
-        AbstractAggregateConfigurationUpdate groupUpdate) {
+    public void updateAggregateConfigurationUpdate(AbstractAggregateConfigurationUpdate groupUpdate) {
         // TODO jmarques: if (errorMessages != null) set any remaining INPROGRESS children to FAILURE
         entityManager.merge(groupUpdate);
     }

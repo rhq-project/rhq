@@ -172,7 +172,6 @@
          MetricRangePreferences rangePrefs = prefs.getMetricRangePreferences();
          rangePrefs.lastN = lastHours;
          prefs.setMetricRangePreferences(rangePrefs);
-         prefs.persistPreferences();
       }
    }
    catch (Exception e)

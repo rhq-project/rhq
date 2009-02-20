@@ -45,7 +45,6 @@ public abstract class PagedDataTableUIBean extends EnterpriseFacesContextUIBean 
     public void setPageControl(WebUser user, PageControlView view, PageControl pageControl) {
         WebUserPreferences preferences = user.getWebPreferences();
         preferences.setPageControl(view, pageControl);
-        //preferences.persistPreferences();
         this.pageControl = pageControl;
     }
 

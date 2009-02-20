@@ -20,6 +20,7 @@ package org.rhq.plugins.perftest;
 
 import java.util.Calendar;
 import java.util.Set;
+import java.util.SimpleTimeZone;
 
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -118,12 +119,16 @@ public class ScenarioManagerTest {
         MeasurementData data = measurementFactory.nextValue(request);
         Double value = (Double) data.getValue();
 
-        Calendar cal = Calendar.getInstance();
-        //sunday is zero, but for our OOB calculator its really 3
-        int javaDay = cal.getTime().getDay();
-        int metricDay = (javaDay + 3) % 7;
+        // the OOBNumericMeasurementFactory algorithm uses millis from midnight GMT/UTC when calculating day of week,
+        // so do the same here
+        Calendar cal = Calendar.getInstance(new SimpleTimeZone(0, "UTC"));
+        int javaDay = cal.get(Calendar.DAY_OF_WEEK);
 
-        assert value == (metricDay * 0.1 * 1000) + 1000 : "Value was [" + value + "].";
+        //sunday is one, but for our OOB calculator its really three
+        int metricDay = (javaDay + 2) % 7;
+        double expectedValue = (metricDay * 0.1 * 1000) + 1000;
+
+        assert value == expectedValue : "Value was [" + value + "], expected [" + expectedValue + "].";
     }
 
     @Test

@@ -57,11 +57,12 @@ public class TabBarRenderer extends Renderer {
         writer.startElement("table", tabBar);
         writer.writeAttribute("width", "100%", null);
         writer.writeAttribute("border", "0", null);
+        writer.writeAttribute("border-spacing", "0", null);
         writer.writeAttribute("cellspacing", "0", null);
         writer.writeAttribute("cellpadding", "0", null);
 
         writer.startElement("tr", tabBar);
-        writeCSSSpacerCell(writer, tabBar, true, false);
+        writeCSSEdgeSpacerCell(writer, tabBar, true, false);
     }
 
     /**
@@ -75,7 +76,7 @@ public class TabBarRenderer extends Renderer {
         ResponseWriter writer = facesContext.getResponseWriter();
 
         // Add a spacer cell to fill up any remaining horizontal space remaining in the row of tabs.
-        writeCSSSpacerCell(writer, tabBar, false, false);
+        writeCSSEdgeSpacerCell(writer, tabBar, false, false);
 
         writer.endElement("tr");
         writeSubTabs(writer, tabBar);
@@ -96,7 +97,7 @@ public class TabBarRenderer extends Renderer {
 
         // <td colspan="x">
         writer.startElement("td", tabBar);
-        writer.writeAttribute("colspan", tabBar.getTabs().size() + 2, null);
+        writer.writeAttribute("colspan", tabBar.getTabs().size() * 2, null);
 
         // <table width="100%" border="0" cellspacing="0" cellpadding="0">
         writer.startElement("table", tabBar);
@@ -106,8 +107,8 @@ public class TabBarRenderer extends Renderer {
         writer.writeAttribute("cellpadding", "0", null);
 
         writer.startElement("tr", tabBar);
-        writer.writeAttribute("style", "background-color: RGB(217, 217, 217);", null);
-        writeCSSSpacerCell(writer, tabBar, true, true);
+        writer.writeAttribute("style", "background-color: #D9D9D9;", null);
+        writeCSSEdgeSpacerCell(writer, tabBar, true, true);
 
         // Write out the actual subtabs, which already rendered themselves earlier.
         List<SubtabComponent> subtabs = tabBar.getSelectedTab().getSubtabs();
@@ -121,29 +122,27 @@ public class TabBarRenderer extends Renderer {
         }
 
         // Add a spacer cell to fill up any remaining horizontal space remaining in the row of subtabs.
-        writeCSSSpacerCell(writer, tabBar, false, true);
+        writeCSSEdgeSpacerCell(writer, tabBar, false, true);
 
         writer.endElement("tr");
         writer.endElement("table");
         writer.endElement("td");
     }
 
-    private void writeCSSSpacerCell(ResponseWriter writer, TabBarComponent tabBar, boolean isLeft, boolean isSub)
+    private void writeCSSEdgeSpacerCell(ResponseWriter writer, TabBarComponent tabBar, boolean isLeft, boolean isSub)
         throws IOException {
         writer.startElement("td", tabBar);
+        writer.writeAttribute("style", "vertical-align: bottom;", null);
         if (!isLeft) { // last column takes up remainder of width
             writer.writeAttribute("width", "100%", null);
         }
 
         writer.startElement("div", tabBar);
-        if (isLeft) { // first column is a fixed-width spacer
-            writer.writeAttribute("style", "width: 25px;", null);
-        }
         String prefix = (isSub) ? "sub" : "";
-        String styleClass = prefix + "tab-inactive " + prefix + "tab-common " + prefix + "tab-spacer";
+        String styleClass = prefix + "tab-spacer";
 
         writer.writeAttribute("class", styleClass, null);
-        writer.write("q"); // won't see this because text color will match background oolor
+        writer.write("."); // won't see this because text color will match background color
         writer.endElement("div");
 
         writer.endElement("td");

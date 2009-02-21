@@ -82,11 +82,16 @@ REQUEST PARAMETERS:
             </c:if>
          </onc:tab>
 
-         <onc:tab name="Events" rendered="#{ResourceUIBean.facets.event}">
-            <onc:subtab name="History"  url="/rhq/resource/events/history.xhtml" />
-         </onc:tab>
-
          <onc:tab name="Inventory" url="/rhq/resource/inventory/view.xhtml" />
+
+         <onc:tab name="Alert" rendered="#{monitorEnabled}">
+            <onc:subtab name="Definitions" url="/rhq/resource/alert/listAlertDefinitions.xhtml">
+               <f:param name="mode" value="listDefinitions" />
+            </onc:subtab>
+            <onc:subtab name="History"     url="/rhq/resource/alert/listAlertHistory.xhtml">
+               <f:param name="mode" value="list" />
+            </onc:subtab>
+         </onc:tab>
 
          <onc:tab name="Configuration" displayName="Configure" rendered="#{ResourceUIBean.facets.configuration}">
             <onc:subtab name="Current" url="/rhq/resource/configuration/view.xhtml" />
@@ -99,13 +104,8 @@ REQUEST PARAMETERS:
             <onc:subtab name="History"   url="/rhq/resource/operation/resourceOperationHistory.xhtml" />
          </onc:tab>
 
-         <onc:tab name="Alert" rendered="#{monitorEnabled}">
-            <onc:subtab name="Definitions" url="/rhq/resource/alert/listAlertDefinitions.xhtml">
-               <f:param name="mode" value="listDefinitions" />
-            </onc:subtab>
-            <onc:subtab name="History"     url="/rhq/resource/alert/listAlertHistory.xhtml">
-               <f:param name="mode" value="list" />
-            </onc:subtab>
+         <onc:tab name="Events" rendered="#{ResourceUIBean.facets.event}">
+            <onc:subtab name="History"  url="/rhq/resource/events/history.xhtml" />
          </onc:tab>
 
          <onc:tab name="Content"

@@ -53,6 +53,7 @@ public class TabRenderer extends Renderer {
 
         ResponseWriter writer = facesContext.getResponseWriter();
         writer.startElement("td", tab);
+        writer.writeAttribute("style", "vertical-align: bottom;", null);
 
         if (!tab.isSelected()) {
             writer.startElement("a", tab);
@@ -79,6 +80,15 @@ public class TabRenderer extends Renderer {
             writer.endElement("a");
         }
 
+        writer.endElement("td");
+        writer.startElement("td", tab);
+        writer.writeAttribute("style", "vertical-align: bottom;", null);
+        writer.startElement("div", tab);
+        String styleClass = "tab-spacer";
+        writer.writeAttribute("class", styleClass, null);
+        writer.writeAttribute("style", "width: 2px;", null);
+        writer.write(" "); // won't see this because text color will match background color
+        writer.endElement("div");
         writer.endElement("td");
     }
 

@@ -1761,6 +1761,10 @@ P.compact {
    border: 1px solid #BBB;
 }
 
+.member-properties-table {
+   width: 100%;
+}
+
 .properties-table-header-cell, .nested-properties-table-header-cell {
 /*   background-color: #DDD;*/
    color: #339;

@@ -26,20 +26,24 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import javax.el.ValueExpression;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
-import javax.faces.component.UIParameter;
 import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
-import javax.faces.component.html.HtmlPanelGroup;
+import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlOutputLink;
+import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
-import javax.el.ValueExpression;
 
+import org.ajax4jsf.component.html.HtmlAjaxCommandLink;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.richfaces.component.html.HtmlModalPanel;
+import org.richfaces.component.html.HtmlSimpleTogglePanel;
+
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -51,16 +55,13 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.gui.RequestParameterNameConstants;
 import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
+import org.rhq.core.gui.configuration.propset.ConfigurationSet;
 import org.rhq.core.gui.configuration.propset.ConfigurationSetComponent;
 import org.rhq.core.gui.configuration.propset.PropertySetComponent;
-import org.rhq.core.gui.configuration.propset.ConfigurationSet;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
 import org.rhq.core.gui.util.FacesExpressionUtility;
-import org.richfaces.component.html.HtmlSimpleTogglePanel;
-import org.richfaces.component.html.HtmlModalPanel;
-import org.ajax4jsf.component.html.HtmlAjaxCommandLink;
+import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
 
 /**
  * A renderer that renders an {@link AbstractConfigurationComponent} component as XHTML.
@@ -93,7 +94,7 @@ public class ConfigRenderer extends Renderer {
     public void decode(FacesContext facesContext, UIComponent component) {
         AbstractConfigurationComponent configurationComponent = (AbstractConfigurationComponent) component;
         validateAttributes(configurationComponent);
-        
+
         String function = FacesContextUtility.getOptionalRequestParameter(RequestParameterNameConstants.FUNCTION_PARAM);
         if (function != null) {
             if (function.equals(AbstractPropertyBagUIComponentTreeFactory.DELETE_LIST_MEMBER_PROPERTY_FUNCTION)) {
@@ -109,7 +110,8 @@ public class ConfigRenderer extends Renderer {
             UIComponent initInputsJavaScriptComponent = configurationComponent.findComponent(id);
             if (initInputsJavaScriptComponent != null) {
                 FacesComponentUtility.detachComponent(initInputsJavaScriptComponent);
-                PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent.isFullyEditable(), true);
+                PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
+                    .isFullyEditable(), true);
             }
         }
     }
@@ -132,14 +134,15 @@ public class ConfigRenderer extends Renderer {
             if (propertySetComponentContainsInvalidInputs(configurationComponent)) {
                 // Make sure the modal panel is shown when rendered, so the user will see the validation errors.
                 List<HtmlModalPanel> modalPanels = FacesComponentUtility.getDescendantsOfType(configurationComponent,
-                        HtmlModalPanel.class);
+                    HtmlModalPanel.class);
                 if (modalPanels.size() == 1) {
                     HtmlModalPanel modalPanel = modalPanels.get(0);
                     modalPanel.setShowWhenRendered(true);
                 }
             } else {
                 if (configurationComponent instanceof ConfigurationSetComponent) {
-                    ConfigurationSet configurationSet = ((ConfigurationSetComponent)configurationComponent).getConfigurationSet();
+                    ConfigurationSet configurationSet = ((ConfigurationSetComponent) configurationComponent)
+                        .getConfigurationSet();
                     //noinspection ConstantConditions
                     configurationSet.calculateAggregateConfiguration();
                 }
@@ -159,11 +162,11 @@ public class ConfigRenderer extends Renderer {
             addChildComponents(configurationComponent);
     }
 
-    private static boolean propertySetComponentContainsInvalidInputs(AbstractConfigurationComponent configurationComponent)
-    {
+    private static boolean propertySetComponentContainsInvalidInputs(
+        AbstractConfigurationComponent configurationComponent) {
         boolean containsInvalidInputs = false;
-        List<PropertySetComponent> propertySetComponents =
-                FacesComponentUtility.getDescendantsOfType(configurationComponent, PropertySetComponent.class);
+        List<PropertySetComponent> propertySetComponents = FacesComponentUtility.getDescendantsOfType(
+            configurationComponent, PropertySetComponent.class);
         if (propertySetComponents.size() == 1) {
             PropertySetComponent propertySetComponent = propertySetComponents.get(0);
             List<UIInput> inputs = FacesComponentUtility.getDescendantsOfType(propertySetComponent, UIInput.class);
@@ -178,35 +181,38 @@ public class ConfigRenderer extends Renderer {
     }
 
     @Override
-    public void encodeEnd(FacesContext context, UIComponent component) throws IOException
-    {
+    public void encodeEnd(FacesContext context, UIComponent component) throws IOException {
         ResponseWriter writer = context.getResponseWriter();
         writer.writeText("\n", component, null);
         writer.endElement("div");
         writer.writeComment("********** End of " + component.getClass().getSimpleName() + " component **********");
     }
 
-    public void addChildComponents(AbstractConfigurationComponent configurationComponent)
-    {
+    public void addChildComponents(AbstractConfigurationComponent configurationComponent) {
         if ((configurationComponent.getConfigurationDefinition() == null)
-            || ((configurationComponent.getConfiguration() != null) && configurationComponent.getConfiguration().getMap().isEmpty())) {
-            String styleClass = (configurationComponent.getNullConfigurationStyle() == null) ? "ErrorBlock" : configurationComponent
-                .getNullConfigurationStyle();
-            HtmlPanelGroup messagePanel = FacesComponentUtility.addBlockPanel(configurationComponent, configurationComponent, styleClass);
-            FacesComponentUtility.addVerbatimText(messagePanel, configurationComponent.getNullConfigurationDefinitionMessage());
+            || ((configurationComponent.getConfiguration() != null) && configurationComponent.getConfiguration()
+                .getMap().isEmpty())) {
+            String styleClass = (configurationComponent.getNullConfigurationStyle() == null) ? "ErrorBlock"
+                : configurationComponent.getNullConfigurationStyle();
+            HtmlPanelGroup messagePanel = FacesComponentUtility.addBlockPanel(configurationComponent,
+                configurationComponent, styleClass);
+            FacesComponentUtility.addVerbatimText(messagePanel, configurationComponent
+                .getNullConfigurationDefinitionMessage());
             return;
         }
 
         if (configurationComponent.getConfiguration() == null) {
-            HtmlPanelGroup messagePanel = FacesComponentUtility.addBlockPanel(configurationComponent, configurationComponent, "WarnBlock");
+            HtmlPanelGroup messagePanel = FacesComponentUtility.addBlockPanel(configurationComponent,
+                configurationComponent, "WarnBlock");
             FacesComponentUtility.addVerbatimText(messagePanel, configurationComponent.getNullConfigurationMessage());
             return;
         }
 
-        ConfigurationUtility.normalizeConfiguration(configurationComponent.getConfiguration(), configurationComponent.getConfigurationDefinition());
+        ConfigurationUtility.normalizeConfiguration(configurationComponent.getConfiguration(), configurationComponent
+            .getConfigurationDefinition());
 
         if (configurationComponent instanceof ConfigurationSetComponent) {
-            ConfigurationSetComponent configurationSetComponent = (ConfigurationSetComponent)configurationComponent;
+            ConfigurationSetComponent configurationSetComponent = (ConfigurationSetComponent) configurationComponent;
             addMemberValuesModalPanel(configurationSetComponent);
         }
 
@@ -227,7 +233,8 @@ public class ConfigRenderer extends Renderer {
         }
 
         String id = getInitInputsJavaScriptComponentId(configurationComponent);
-        PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent.isFullyEditable(), false);
+        PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
+            .isFullyEditable(), false);
     }
 
     private void addListMemberProperty(AbstractConfigurationComponent config) {
@@ -450,86 +457,83 @@ public class ConfigRenderer extends Renderer {
         }
     }
 
-    private String getInitInputsJavaScriptComponentId(AbstractConfigurationComponent configUIComponent)
-    {
+    private String getInitInputsJavaScriptComponentId(AbstractConfigurationComponent configUIComponent) {
         return configUIComponent.getId() + INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID_SUFFIX;
     }
 
-     private HtmlModalPanel addMemberValuesModalPanel(ConfigurationSetComponent configurationSetComponent)
-     {
-         //UIForm mainForm = FacesComponentUtility.getEnclosingForm(configurationSetComponent);
-         HtmlModalPanel modalPanel = FacesComponentUtility.createComponent(HtmlModalPanel.class);
-         // The below setting is critical - it allows us to be enclosed in a form (in this case, the form surrounding
-         // the config component) (see https://jira.jboss.org/jira/browse/RF-5588).
-         modalPanel.setDomElementAttachment("form");
+    private HtmlModalPanel addMemberValuesModalPanel(ConfigurationSetComponent configurationSetComponent) {
+        //UIForm mainForm = FacesComponentUtility.getEnclosingForm(configurationSetComponent);
+        HtmlModalPanel modalPanel = FacesComponentUtility.createComponent(HtmlModalPanel.class);
+        // The below setting is critical - it allows us to be enclosed in a form (in this case, the form surrounding
+        // the config component) (see https://jira.jboss.org/jira/browse/RF-5588).
+        modalPanel.setDomElementAttachment("form");
 
-         modalPanel.setId(ConfigurationSetComponent.getMemberValuesModalPanelId(configurationSetComponent));
-         modalPanel.setWidth(400);
-         modalPanel.setHeight(650);
-         // TODO: Add vertical scrollbar to the modal panel
-         //       (see http://jboss.org/file-access/default/members/jbossrichfaces/freezone/docs/development/faq/en/html_single/faq.html, item 1.32).
-         //       Horizontal scrollbar shouldn't be necessary, since the content has a fixed width.
+        modalPanel.setId(ConfigurationSetComponent.getMemberValuesModalPanelId(configurationSetComponent));
+        modalPanel.setWidth(600);
+        modalPanel.setHeight(800);
+        // TODO: Add vertical scrollbar to the modal panel
+        //       (see http://jboss.org/file-access/default/members/jbossrichfaces/freezone/docs/development/faq/en/html_single/faq.html, item 1.32).
+        //       Horizontal scrollbar shouldn't be necessary, since the content has a fixed width.
 
-         configurationSetComponent.getChildren().add(modalPanel);
+        configurationSetComponent.getChildren().add(modalPanel);
 
-         // Insert the modal panel as a sibling of the main form, just after the main form in the tree.
-         /*int index = getComponentIndex(mainForm);
-         mainForm.getParent().getChildren().add(index + 1, modalPanel);
-         HtmlForm form = new HtmlForm();
-         form.setId(configurationSetComponent.getId() + "PropertySetForm");
-         modalPanel.getChildren().add(form);
-         form.setOnsubmit("prepareInputsForSubmission(this)");*/
-         PropertySetComponent propertySet = new PropertySetComponent();
-         propertySet.setId(PROPERTY_SET_COMPONENT_ID);
-         //form.getChildren().add(propertySet);
-         modalPanel.getChildren().add(propertySet);
-         propertySet.setReadOnly(configurationSetComponent.isReadOnly());
-         propertySet.setListIndex(configurationSetComponent.getListIndex());
-         ValueExpression valueExpression = FacesExpressionUtility.createValueExpression("#{param.propertyExpressionString}",
-                 String.class);
-         propertySet.setValueExpression(PropertySetComponent.PROPERTY_EXPRESSION_STRING_ATTRIBUTE, valueExpression);
-         // The below can be uncommented in order for the "propertyExpressionValue" attribute to have a valid value
-         // on the initial page load (i.e. for testing purposes).
-         //propertySet.getAttributes().put(PropertySetComponent.PROPERTY_EXPRESSION_STRING_ATTRIBUTE,
-         //            "#{EditTestConfigurationUIBean.configurationSet.aggregateConfiguration.map['String1'].stringValue}");
+        // Insert the modal panel as a sibling of the main form, just after the main form in the tree.
+        /*int index = getComponentIndex(mainForm);
+        mainForm.getParent().getChildren().add(index + 1, modalPanel);
+        HtmlForm form = new HtmlForm();
+        form.setId(configurationSetComponent.getId() + "PropertySetForm");
+        modalPanel.getChildren().add(form);
+        form.setOnsubmit("prepareInputsForSubmission(this)");*/
+        PropertySetComponent propertySet = new PropertySetComponent();
+        propertySet.setId(PROPERTY_SET_COMPONENT_ID);
+        //form.getChildren().add(propertySet);
+        modalPanel.getChildren().add(propertySet);
+        propertySet.setReadOnly(configurationSetComponent.isReadOnly());
+        propertySet.setListIndex(configurationSetComponent.getListIndex());
+        ValueExpression valueExpression = FacesExpressionUtility.createValueExpression(
+            "#{param.propertyExpressionString}", String.class);
+        propertySet.setValueExpression(PropertySetComponent.PROPERTY_EXPRESSION_STRING_ATTRIBUTE, valueExpression);
+        // The below can be uncommented in order for the "propertyExpressionValue" attribute to have a valid value
+        // on the initial page load (i.e. for testing purposes).
+        //propertySet.getAttributes().put(PropertySetComponent.PROPERTY_EXPRESSION_STRING_ATTRIBUTE,
+        //            "#{EditTestConfigurationUIBean.configurationSet.aggregateConfiguration.map['String1'].stringValue}");
 
-         propertySet.setValueExpression(PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE,
-                     configurationSetComponent.getValueExpression(ConfigurationSetComponent.CONFIGURATION_SET_ATTRIBUTE));
+        propertySet.setValueExpression(PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE, configurationSetComponent
+            .getValueExpression(ConfigurationSetComponent.CONFIGURATION_SET_ATTRIBUTE));
 
-         String modalPanelClientId = modalPanel.getClientId(FacesContext.getCurrentInstance());
+        String modalPanelClientId = modalPanel.getClientId(FacesContext.getCurrentInstance());
 
-         HtmlAjaxCommandLink okLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
-         //form.getChildren().add(ajaxCommandLink);
-         modalPanel.getChildren().add(okLink);
-         //ajaxCommandLink.setImmediate(true);
-         //ajaxCommandLink.setOncomplete("Richfaces.hideModalPanel('" + modalPanelClientId + "');");
+        HtmlAjaxCommandLink okLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
+        //form.getChildren().add(ajaxCommandLink);
+        modalPanel.getChildren().add(okLink);
+        //ajaxCommandLink.setImmediate(true);
+        //ajaxCommandLink.setOncomplete("Richfaces.hideModalPanel('" + modalPanelClientId + "');");
 
-         //ajaxCommandLink.setReRender(mainForm.getId() + ":" + configurationSetComponent.getId());
-         //ajaxCommandLink.setReRender("rhq_configSet");
-         //MethodExpression actionExpression = FacesExpressionUtility.createMethodExpression(
-         //   "#{EditTestConfigurationUIBean.updateConfiguration}", String.class, new Class[0]);
-         //ajaxCommandLink.setActionExpression(actionExpression);
-         okLink.setTitle("OK");
-         FacesComponentUtility.addParameter(okLink, null, "refresh", configurationSetComponent.getId());
-         FacesComponentUtility.addButton(okLink, "OK", CssStyleClasses.BUTTON_SMALL);
+        //ajaxCommandLink.setReRender(mainForm.getId() + ":" + configurationSetComponent.getId());
+        //ajaxCommandLink.setReRender("rhq_configSet");
+        //MethodExpression actionExpression = FacesExpressionUtility.createMethodExpression(
+        //   "#{EditTestConfigurationUIBean.updateConfiguration}", String.class, new Class[0]);
+        //ajaxCommandLink.setActionExpression(actionExpression);
+        okLink.setTitle("OK");
+        FacesComponentUtility.addParameter(okLink, null, "refresh", configurationSetComponent.getId());
+        FacesComponentUtility.addButton(okLink, "OK", CssStyleClasses.BUTTON_SMALL);
 
-         if (!configurationSetComponent.isReadOnly()) {
-             //HtmlOutputLink closeModalLink = FacesComponentUtility.addOutputLink(form, null, "#");
-             HtmlOutputLink cancelLink = FacesComponentUtility.addOutputLink(modalPanel, null, "#");
-             cancelLink.setOnclick("Richfaces.hideModalPanel('" + modalPanelClientId + "'); return false;");
-             cancelLink.setTitle("Cancel");
-             FacesComponentUtility.addButton(cancelLink, "Cancel", CssStyleClasses.BUTTON_SMALL);
-         }
-         
-         return modalPanel;
-     }
+        if (!configurationSetComponent.isReadOnly()) {
+            //HtmlOutputLink closeModalLink = FacesComponentUtility.addOutputLink(form, null, "#");
+            HtmlOutputLink cancelLink = FacesComponentUtility.addOutputLink(modalPanel, null, "#");
+            cancelLink.setOnclick("Richfaces.hideModalPanel('" + modalPanelClientId + "'); return false;");
+            cancelLink.setTitle("Cancel");
+            FacesComponentUtility.addButton(cancelLink, "Cancel", CssStyleClasses.BUTTON_SMALL);
+        }
 
-    private static int getComponentIndex(UIForm component)
-    {
+        return modalPanel;
+    }
+
+    private static int getComponentIndex(UIForm component) {
         if (component.getParent() == null)
             return -1;
         List<UIComponent> children = component.getParent().getChildren();
-        for (int i = 0; i < children.size(); i++) {                    
+        for (int i = 0; i < children.size(); i++) {
             if (children.get(i) == component)
                 return i;
         }

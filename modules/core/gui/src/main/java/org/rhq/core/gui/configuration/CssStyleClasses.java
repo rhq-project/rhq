@@ -21,8 +21,7 @@ package org.rhq.core.gui.configuration;
 /**
  * @author Ian Springer
  */
-public class CssStyleClasses
-{
+public class CssStyleClasses {
     public static final String PROPERTIES_TABLE = "properties-table";
     public static final String MEMBER_PROPERTIES_TABLE = "member-properties-table";
     public static final String PROPERTIES_TABLE_HEADER_CELL = "properties-table-header-cell";
@@ -37,7 +36,6 @@ public class CssStyleClasses
     public static final String PROPERTY_VALUE_INPUT = "";
     public static final String BUTTON_SMALL = "buttonsmall";
 
-    private CssStyleClasses()
-    {
+    private CssStyleClasses() {
     }
 }

@@ -114,8 +114,11 @@ public class PropertySetRenderer extends Renderer {
         addPropertyDisplayNameAndDescription(propertySetComponent, propertyDefinitionSimple, propertySimple);
 
         // NOTE: We'll add children to the below panel a bit later when we know the id's of the inputs. 
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "<table class='"
+            + CssStyleClasses.MEMBER_PROPERTIES_TABLE + "'><tr><td align=\"center\">");
         HtmlPanelGroup setAllToSameValueControlPanel = FacesComponentUtility.addBlockPanel(propertySetComponent, null,
             null);
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "</td></tr></table>");
 
         FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/><br/>\n");
 

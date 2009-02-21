@@ -1294,6 +1294,13 @@ DB Upgrade:
         <schema-alterColumn table="RHQ_SERVER" column="STATUS" default="0" />
    </schemaSpec>
 
+   <schemaSpec version="2.46">
+      <schema-alterColumn table="RHQ_MEASUREMENT_DATA_TRAIT"
+                          column="VALUE"
+                          columnType="VARCHAR2"
+                          precision="4000" />
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

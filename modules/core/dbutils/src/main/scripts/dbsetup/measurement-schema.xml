@@ -128,7 +128,7 @@
    <table name="RHQ_MEASUREMENT_DATA_TRAIT">
       <column name="TIME_STAMP" type="LONG"/>
       <column name="SCHEDULE_ID" type="INTEGER" />
-      <column name="VALUE" type="VARCHAR2" size="255" />
+      <column name="VALUE" type="VARCHAR2" size="4000" />
       <constraint name="RHQ_MEAS_DATA_TRAIT_ID_TIME_PK">
          <primaryKey>
             <field ref="SCHEDULE_ID"/>

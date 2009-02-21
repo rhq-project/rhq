@@ -188,6 +188,11 @@
                    url="/rhq/resource/inventory/view.xhtml" 
                    alt="Inventory"/>
 
+         <onc:icon name="a" 
+                   url="/rhq/resource/alert/listAlertDefinitions.xhtml" 
+                   alt="Alerts" 
+                   visible="#{monitorEnabled}"/>
+
          <onc:icon name="c" 
                    url="/rhq/resource/configuration/view.xhtml" 
                    alt="Configure" 
@@ -198,14 +203,9 @@
                    alt="Operations" 
                    visible="#{resourceWithAvailability.resourceFacets.operation}"/>
 
-         <onc:icon name="a" 
-                   url="/rhq/resource/alert/listAlertDefinitions.xhtml" 
-                   alt="Alerts" 
-                   visible="#{monitorEnabled}"/>
-
          <onc:icon name="p" 
                    url="/rhq/resource/content/view.xhtml" 
-                   alt="Packages"
+                   alt="Content"
                    visible="#{resourceWithAvailability.resourceFacets.content}"/>
          
          <!--  Is this necessary? It's being passed for all quick nav urls. -->   

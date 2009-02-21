@@ -51,7 +51,7 @@ public abstract class QuicknavDecorator extends ColumnDecorator implements Tag {
 
     private static final IconInfo ALERT_ICON_INFO = new IconInfo("/images/icon_hub_a.gif", "Alerts");
 
-    private static final IconInfo CONTENT_ICON_INFO = new IconInfo("/images/icon_hub_p.gif", "Packages");
+    private static final IconInfo CONTENT_ICON_INFO = new IconInfo("/images/icon_hub_p.gif", "Content"); // aka Packages
 
     private static final String ICON_SRC_LOCKED = "/images/icon_hub_locked.gif";
 
@@ -67,26 +67,26 @@ public abstract class QuicknavDecorator extends ColumnDecorator implements Tag {
 
         stringBuilder.append("<table class=\"").append(DATA_TABLE_STYLE_CLASS).append("\"><tr>");
 
-        // MONITOR (M) icon
+        // MONITOR icon
         appendCell(stringBuilder, isMonitorSupported(), isMonitorAllowed(), getMonitorURL(), MONITOR_ICON_INFO);
 
-        // EVENTS (E) icon
-        appendCell(stringBuilder, isEventsSupported(), isEventsAllowed(), getEventsURL(), EVENT_ICON_INFO);
-
-        // INVENTORY (I) icon
+        // INVENTORY icon
         appendCell(stringBuilder, isInventorySupported(), isInventoryAllowed(), getInventoryURL(), INVENTORY_ICON_INFO);
 
-        // CONFIGURE (C) icon
+        // ALERTS icon
+        appendCell(stringBuilder, isAlertSupported(), isAlertAllowed(), getAlertURL(), ALERT_ICON_INFO);
+
+        // CONFIGURE icon
         appendCell(stringBuilder, isConfigureSupported(), isConfigureAllowed(), getConfigureURL(), CONFIGURE_ICON_INFO);
 
-        // OPERATIONS (O) icon
+        // OPERATIONS icon
         appendCell(stringBuilder, isOperationsSupported(), isOperationsAllowed(), getOperationsURL(),
             OPERATIONS_ICON_INFO);
 
-        // ALERTS (A) icon
-        appendCell(stringBuilder, isAlertSupported(), isAlertAllowed(), getAlertURL(), ALERT_ICON_INFO);
+        // EVENTS icon
+        appendCell(stringBuilder, isEventsSupported(), isEventsAllowed(), getEventsURL(), EVENT_ICON_INFO);
 
-        // CONTENT (T) icon
+        // CONTENT/PACKAGES icon
         appendCell(stringBuilder, isContentSupported(), isContentAllowed(), getContentURL(), CONTENT_ICON_INFO);
 
         stringBuilder.append("</tr></table>");

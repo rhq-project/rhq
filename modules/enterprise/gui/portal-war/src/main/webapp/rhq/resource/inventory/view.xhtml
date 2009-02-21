@@ -168,14 +168,14 @@
                    visible="#{monitorEnabled}">
          </onc:icon>
 
-         <onc:icon name="e"
-                   url="/rhq/resource/events/history.xhtml"
-                   alt="Inventory"/>
-
-
          <onc:icon name="i"
                    url="/rhq/resource/inventory/view.xhtml"
                    alt="Inventory"/>
+
+         <onc:icon name="a"
+                   url="/rhq/resource/alert/listAlertDefinitions.xhtml"
+                   alt="Alerts"
+                   visible="#{monitorEnabled}"/>
 
          <onc:icon name="c"
                    url="/rhq/resource/configuration/view.xhtml"
@@ -187,14 +187,13 @@
                    alt="Operations"
                    visible="#{resourceComposite.resourceFacets.operation}"/>
 
-         <onc:icon name="a"
-                   url="/rhq/resource/alert/listAlertDefinitions.xhtml"
-                   alt="Alerts"
-                   visible="#{monitorEnabled}"/>
+         <onc:icon name="e"
+                   url="/rhq/resource/events/history.xhtml"
+                   alt="Events"/>
 
          <onc:icon name="p"
                    url="/rhq/resource/content/view.xhtml"
-                   alt="Packages"
+                   alt="Content"
                    visible="#{resourceComposite.resourceFacets.content}"/>
 
       </onc:quickNav>

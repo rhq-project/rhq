@@ -471,6 +471,9 @@ public class ConfigRenderer extends Renderer {
         modalPanel.setId(ConfigurationSetComponent.getMemberValuesModalPanelId(configurationSetComponent));
         modalPanel.setWidth(600);
         modalPanel.setHeight(800);
+        modalPanel.setTrimOverlayedElements(false);
+        modalPanel.setStyle("overflow-y: scroll;");
+
         // TODO: Add vertical scrollbar to the modal panel
         //       (see http://jboss.org/file-access/default/members/jbossrichfaces/freezone/docs/development/faq/en/html_single/faq.html, item 1.32).
         //       Horizontal scrollbar shouldn't be necessary, since the content has a fixed width.

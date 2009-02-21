@@ -48,10 +48,12 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  */
 public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatVHostComponent> {
 
+    public static final String PLUGIN_CONFIG_NAME = "name";
+
     /**
      * The name MBean attribute for each application is of the form "Tomcat WAR (//vHost/contextRoot)". 
      */
-    private static final Pattern PATTERN_NAME = Pattern.compile(".*//(.*)(/.*)\\).*");
+    private static final Pattern PATTERN_NAME = Pattern.compile("//(.*)(/.*)");
 
     private static final String RT_LOG_FILE_NAME_SUFFIX = "_rt.log";
 
@@ -59,19 +61,25 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatVHostComponent> context) {
         // Parent will discover deployed applications through JMX
-        Set<DiscoveredResourceDetails> jmxResources = super.discoverResources(context);
+        Set<DiscoveredResourceDetails> resources = super.discoverResources(context);
+        Set<DiscoveredResourceDetails> result = new HashSet<DiscoveredResourceDetails>();
 
         TomcatVHostComponent parentComponent = context.getParentResourceComponent();
         ApplicationServerComponent applicationServerComponent = (ApplicationServerComponent) parentComponent;
         String deployDirectoryPath = applicationServerComponent.getConfigurationPath().getPath();
+        String parentHost = parentComponent.getName();
         Matcher m = PATTERN_NAME.matcher("");
 
-        for (DiscoveredResourceDetails jmxResource : jmxResources) {
-            Configuration pluginConfiguration = jmxResource.getPluginConfiguration();
-            String name = jmxResource.getResourceName();
+        for (DiscoveredResourceDetails resource : resources) {
+            Configuration pluginConfiguration = resource.getPluginConfiguration();
+            String name = pluginConfiguration.getSimpleValue(PLUGIN_CONFIG_NAME, "");
             m.reset(name);
             if (m.matches()) {
-                String vHost = m.group(1);
+                String host = m.group(1);
+                // skip entries that are not for this vHost
+                if (!host.equalsIgnoreCase(parentHost)) {
+                    continue;
+                }
                 String contextRoot = m.group(2);
                 String filename = deployDirectoryPath + contextRoot;
                 try {
@@ -80,23 +88,26 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
                     // leave path as is
                     log.warn("Unexpected discovered web application path: " + filename);
                 }
-                pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_VHOST, vHost));
+                pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_VHOST, host));
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_CONTEXT_ROOT, contextRoot));
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_FILENAME, filename));
-                pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_RESPONSE_TIME_LOG_FILE, getResponseTimeLogFile(parentComponent.getInstallationPath(), vHost, contextRoot)));
+                pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_RESPONSE_TIME_LOG_FILE, getResponseTimeLogFile(parentComponent.getInstallationPath(), host, contextRoot)));
+                resource.setResourceName(resource.getResourceName().replace("{contextRoot}", contextRoot));
+
+                result.add(resource);
             } else {
                 log.warn("Skipping discovered web application with unexpected name: " + name);
             }
         }
 
         // Find all deployed but unstarted applications
-        Set<DiscoveredResourceDetails> fileSystemResources = discoverFileSystem(context);
+        // Set<DiscoveredResourceDetails> fileSystemResources = discoverFileSystem(context);
 
         // Merge. The addAll operation will only add items that are not already present, so resources discovered
         // by JMX will be used instead of those found by the file system scan.
-        jmxResources.addAll(fileSystemResources);
+        //jmxResources.addAll(fileSystemResources);
 
-        return jmxResources;
+        return result;
     }
 
     /**

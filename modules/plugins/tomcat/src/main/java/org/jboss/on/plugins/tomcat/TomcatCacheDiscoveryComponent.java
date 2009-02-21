@@ -24,8 +24,6 @@
 package org.jboss.on.plugins.tomcat;
 
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -42,34 +40,28 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  */
 public class TomcatCacheDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatWarComponent> {
 
-    static Pattern hostPattern = Pattern.compile(".*host=([\\w.]+).*");
-    static Pattern pathPattern = Pattern.compile(".*path=([\\w.]+).*");
-
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatWarComponent> discoveryContext) {
 
-        Set<DiscoveredResourceDetails> resources = super.discoverResources(discoveryContext);
-        Configuration pluginConfiguration = discoveryContext.getDefaultPluginConfiguration();
+        Configuration defaultPluginConfig = discoveryContext.getDefaultPluginConfiguration();
+        String objectNameTemplate = defaultPluginConfig.getSimple(PROPERTY_OBJECT_NAME).getStringValue();
+        String host = discoveryContext.getParentResourceContext().getPluginConfiguration().getSimpleValue(TomcatWarComponent.PROPERTY_VHOST, null);
+        String path = discoveryContext.getParentResourceContext().getPluginConfiguration().getSimpleValue(TomcatWarComponent.PROPERTY_CONTEXT_ROOT, null);
+        objectNameTemplate = objectNameTemplate.replace("%host%", host);
+        objectNameTemplate = objectNameTemplate.replace("%path%", path);
+        defaultPluginConfig.put(new PropertySimple(PROPERTY_OBJECT_NAME, objectNameTemplate));
 
+        Set<DiscoveredResourceDetails> resources = super.performDiscovery(defaultPluginConfig, discoveryContext.getParentResourceComponent(), discoveryContext.getResourceType());
+
+        // returns only one resource.
         for (DiscoveredResourceDetails detail : resources) {
-            String name = detail.getResourceName();
-            Matcher m = hostPattern.matcher(name);
-            String host = null;
-            String path = null;
-            if (m.matches()) {
-                host = m.group(1);
-                pluginConfiguration.put(new PropertySimple(TomcatCacheComponent.PROPERTY_HOST, host));
-            }
-            m = pathPattern.matcher(name);
-            if (m.matches()) {
-                path = m.group(1);
-                pluginConfiguration.put(new PropertySimple(TomcatCacheComponent.PROPERTY_PATH, path));
-            }
-
-            if ((null != host) && (null != path)) {
-                name = host + path;
-                detail.setResourceName(name);
-            }
+            Configuration pluginConfiguration = detail.getPluginConfiguration();
+            pluginConfiguration.put(new PropertySimple(TomcatCacheComponent.PROPERTY_HOST, host));
+            pluginConfiguration.put(new PropertySimple(TomcatCacheComponent.PROPERTY_PATH, path));
+            String resourceName = detail.getResourceName();
+            resourceName = resourceName.replace("{host}", host);
+            resourceName = resourceName.replace("{path}", path);
+            detail.setResourceName(resourceName);
         }
         return resources;
     }

@@ -331,19 +331,19 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
     private Configuration populatePluginConfiguration(String installationPath, String[] commandLine) {
         Configuration configuration = new Configuration();
 
-        configuration.put(new PropertySimple(TomcatServerComponent.PROP_INSTALLATION_PATH, installationPath));
+        configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH, installationPath));
 
         String binPath = installationPath + File.separator + "bin" + File.separator;
         if (isEWS(installationPath)) {
             String script = this.isEWSTomcat5(installationPath) ? EWS_TOMCAT_5 : EWS_TOMCAT_6;
 
-            configuration.put(new PropertySimple(TomcatServerComponent.PROP_START_SCRIPT, binPath + script + " start"));
-            configuration.put(new PropertySimple(TomcatServerComponent.PROP_SHUTDOWN_SCRIPT, binPath + script + " stop"));
+            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, binPath + script + " start"));
+            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, binPath + script + " stop"));
         } else {
             String scriptExtension = (File.separatorChar == '/') ? ".sh" : ".bat";
 
-            configuration.put(new PropertySimple(TomcatServerComponent.PROP_START_SCRIPT, binPath + "startup" + scriptExtension));
-            configuration.put(new PropertySimple(TomcatServerComponent.PROP_SHUTDOWN_SCRIPT, binPath + "shutdown" + scriptExtension));
+            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, binPath + "startup" + scriptExtension));
+            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, binPath + "shutdown" + scriptExtension));
         }
 
         populateJMXConfiguration(configuration, commandLine);

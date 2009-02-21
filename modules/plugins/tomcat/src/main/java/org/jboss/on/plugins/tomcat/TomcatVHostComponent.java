@@ -31,8 +31,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -42,13 +41,12 @@ import org.jboss.on.plugins.tomcat.helper.TomcatApplicationDeployer;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
-import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.ApplicationServerComponent;
@@ -65,32 +63,115 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  */
 public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerComponent> implements ApplicationServerComponent, CreateChildResourceFacet {
 
-    protected static final String PROP_APP_BASE = "appBase";
+    public static final String CONFIG_ALIASES = "aliases";
+    public static final String CONFIG_APP_BASE = "appBase";
+    public static final String CONTENT_CONFIG_EXPLODE_ON_DEPLOY = "explodeOnDeploy";
+    public static final String PLUGIN_CONFIG_NAME = "name";
 
-    protected static final String CONTENT_PROP_EXPLODE_ON_DEPLOY = "explodeOnDeploy";
+    /**
+     * Roles and Groups are handled as comma delimited lists and offered up as a String array of object names by the MBean 
+     */
+    @Override
+    public Configuration loadResourceConfiguration() {
+        Configuration configuration = super.loadResourceConfiguration();
+        try {
+            resetConfig(CONFIG_ALIASES, configuration);
+        } catch (Exception e) {
+            log.error("Failed to reset role property value", e);
+        }
+
+        return configuration;
+    }
+
+    // Reset the StringArray provided by the MBean with a more user friendly longString
+    private void resetConfig(String property, Configuration configuration) {
+        EmsAttribute attribute = getEmsBean().getAttribute(property);
+        Object valueObject = attribute.refresh();
+        String[] vals = (String[]) valueObject;
+        if (vals.length > 0) {
+            String delim = "";
+            StringBuilder sb = new StringBuilder();
+            for (String val : vals) {
+                sb.append(delim);
+                sb.append(val);
+                delim = "\n";
+            }
+            configuration.put(new PropertySimple(property, sb.toString()));
+        } else {
+            configuration.put(new PropertySimple(property, null));
+        }
+    }
 
     @Override
-    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
-        TomcatServerComponent parentComponent = getResourceContext().getParentResourceComponent();
-        parentComponent.getEmsConnection(); // first make sure the connection is loaded
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        // updating Role membership is done via MBean operation, not manipulation of the attribute
 
-        for (MeasurementScheduleRequest request : metrics) {
-            String name = request.getName();
+        Configuration reportConfiguration = report.getConfiguration();
+        // reserve the new alias settings 
+        PropertySimple newAliases = reportConfiguration.getSimple(CONFIG_ALIASES);
+        // get the current alias settings
+        resetConfig(CONFIG_ALIASES, reportConfiguration);
+        PropertySimple currentAliases = reportConfiguration.getSimple(CONFIG_ALIASES);
+        // remove the aliases config from the report so they are ignored by the mbean config processing
+        reportConfiguration.remove(CONFIG_ALIASES);
 
-            String attributeName = name.substring(name.lastIndexOf(':') + 1);
+        // perform standard processing on remaining config
+        super.updateResourceConfiguration(report);
 
-            try {
-                EmsAttribute attribute = getEmsBean().getAttribute(attributeName);
+        // add back the aliases config so the report is complete
+        reportConfiguration.put(newAliases);
 
-                Object valueObject = attribute.refresh();
+        // if the mbean update failed, return now
+        if (ConfigurationUpdateStatus.SUCCESS != report.getStatus()) {
+            return;
+        }
 
-                if (attributeName.equals("aliases")) {
-                    String[] vals = (String[]) valueObject;
-                    MeasurementDataTrait mdt = new MeasurementDataTrait(request, Arrays.toString(vals));
-                    report.addData(mdt);
+        // try updating the alias settings
+        try {
+            consolidateSettings(newAliases, currentAliases, "addAlias", "removeAlias", "alias");
+        } catch (Exception e) {
+            newAliases.setErrorMessageFromThrowable(e);
+            report.setErrorMessage("Failed setting resource configuration - see property error messages for details");
+            log.info("Failure setting Tomcat VHost aliases configuration value", e);
+        }
+    }
+
+    private void consolidateSettings(PropertySimple newVals, PropertySimple currentVals, String addOp, String removeOp, String arg) throws Exception {
+
+        // add new values not in the current settings
+        String currentValsLongString = currentVals.getStringValue();
+        String newValsLongString = newVals.getStringValue();
+        StringTokenizer tokenizer = null;
+        Configuration opConfig = null;
+
+        if (null != newValsLongString) {
+            tokenizer = new StringTokenizer(newValsLongString, "\n");
+            opConfig = new Configuration();
+            while (tokenizer.hasMoreTokens()) {
+                String newVal = tokenizer.nextToken().trim();
+                if ((null == currentValsLongString) || !currentValsLongString.contains(newVal)) {
+                    opConfig.put(new PropertySimple(arg, newVal));
+                    try {
+                        invokeOperation(addOp, opConfig);
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException("Could not add " + arg + "=" + newVal + ". Please check spelling/existence.");
+                    }
                 }
-            } catch (Exception e) {
-                log.error("Failed to obtain measurement [" + name + "]", e);
+            }
+        }
+
+        if (null != currentValsLongString) {
+            tokenizer = new StringTokenizer(currentValsLongString, "\n");
+            while (tokenizer.hasMoreTokens()) {
+                String currentVal = tokenizer.nextToken().trim();
+                if ((null == newValsLongString) || !newValsLongString.contains(currentVal)) {
+                    opConfig.put(new PropertySimple(arg, currentVal));
+                    try {
+                        invokeOperation(removeOp, opConfig);
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException("Could not remove " + arg + "=" + currentVal + ". Please check spelling/existence.");
+                    }
+                }
             }
         }
     }
@@ -99,8 +180,15 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
         return getResourceContext().getParentResourceComponent().getInstallationPath();
     }
 
+    public String getName() {
+        return getResourceContext().getPluginConfiguration().getSimpleValue(PLUGIN_CONFIG_NAME, "localhost");
+    }
+
     public File getConfigurationPath() {
-        String appBase = getResourceContext().getPluginConfiguration().getSimpleValue(PROP_APP_BASE, "webapps");
+        String appBase = (String) getEmsBean().getAttribute(CONFIG_APP_BASE).getValue();
+        if (null == appBase) {
+            appBase = "webapps";
+        }
 
         return new File(getInstallationPath(), appBase);
     }
@@ -130,7 +218,7 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
         }
 
         Configuration deployTimeConfiguration = details.getDeploymentTimeConfiguration();
-        PropertySimple explodeOnDeployProp = deployTimeConfiguration.getSimple(CONTENT_PROP_EXPLODE_ON_DEPLOY);
+        PropertySimple explodeOnDeployProp = deployTimeConfiguration.getSimple(CONTENT_CONFIG_EXPLODE_ON_DEPLOY);
 
         if (explodeOnDeployProp == null || explodeOnDeployProp.getBooleanValue() == null) {
             CreateResourceHelper.setErrorOnReport(report, "Explode On Deploy property is required.");

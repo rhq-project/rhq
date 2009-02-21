@@ -78,13 +78,10 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
     /**
      * Plugin configuration properties.
      */
-    static final String PROP_INSTALLATION_PATH = "installationPath";
-    static final String PROP_SCRIPT_PREFIX = "scriptPrefix";
-    static final String PROP_SHUTDOWN_MBEAN_NAME = "shutdownMBeanName";
-    static final String PROP_SHUTDOWN_MBEAN_OPERATION = "shutdownMBeanOperation";
-    static final String PROP_SHUTDOWN_METHOD = "shutdownMethod";
-    static final String PROP_SHUTDOWN_SCRIPT = "shutdownScript";
-    static final String PROP_START_SCRIPT = "startScript";
+    public static final String PLUGIN_CONFIG_INSTALLATION_PATH = "installationPath";
+    public static final String PLUGIN_CONFIG_SCRIPT_PREFIX = "scriptPrefix";
+    public static final String PLUGIN_CONFIG_SHUTDOWN_SCRIPT = "shutdownScript";
+    public static final String PLUGIN_CONFIG_START_SCRIPT = "startScript";
 
     private Log log = LogFactory.getLog(this.getClass());
 
@@ -143,7 +140,7 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
         if (this.connection == null) {
             try {
                 Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-                String installationPath = pluginConfig.getSimpleValue(PROP_INSTALLATION_PATH, null);
+                String installationPath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_INSTALLATION_PATH, null);
 
                 ConnectionSettings connectionSettings = new ConnectionSettings();
 
@@ -313,19 +310,19 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
 
     public File getStartScriptPath() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        String script = pluginConfig.getSimpleValue(TomcatServerComponent.PROP_START_SCRIPT, "");
+        String script = pluginConfig.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, "");
         File scriptFile = resolvePathRelativeToHomeDir(script);
         return scriptFile;
     }
 
     public File getInstallationPath() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        return new File(pluginConfig.getSimpleValue(TomcatServerComponent.PROP_INSTALLATION_PATH, ""));
+        return new File(pluginConfig.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH, ""));
     }
 
     public File getShutdownScriptPath() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        String script = pluginConfig.getSimpleValue(TomcatServerComponent.PROP_SHUTDOWN_SCRIPT, "");
+        String script = pluginConfig.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, "");
         File scriptFile = resolvePathRelativeToHomeDir(script);
         return scriptFile;
     }
@@ -338,7 +335,7 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
     static File resolvePathRelativeToHomeDir(Configuration pluginConfig, String path) {
         File configDir = new File(path);
         if (!configDir.isAbsolute()) {
-            String jbossHomeDir = getRequiredPropertyValue(pluginConfig, TomcatServerComponent.PROP_INSTALLATION_PATH);
+            String jbossHomeDir = getRequiredPropertyValue(pluginConfig, TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH);
             configDir = new File(jbossHomeDir, path);
         }
 

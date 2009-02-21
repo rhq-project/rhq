@@ -24,6 +24,7 @@
 package org.jboss.on.plugins.tomcat;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
@@ -35,13 +36,18 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  */
 public class TomcatRoleComponent extends MBeanResourceComponent<TomcatUserDatabaseComponent> implements DeleteResourceFacet {
 
-    public static final String PROPERTY_ROLE_NAME = "rolename";
+    public static final String CONFIG_DESCRIPTION = "description";
+    public static final String CONFIG_ROLE_NAME = "rolename";
+    public static final String PLUGIN_CONFIG_NAME = "name";
     public static final String RESOURCE_TYPE_NAME = "Tomcat Role";
 
     public void deleteResource() throws Exception {
         Configuration opConfig = new Configuration();
         ResourceContext<TomcatUserDatabaseComponent> resourceContext = getResourceContext();
-        opConfig.put(resourceContext.getPluginConfiguration().getSimple(PROPERTY_ROLE_NAME));
+        PropertySimple nameProperty = resourceContext.getPluginConfiguration().getSimple(PLUGIN_CONFIG_NAME);
+        String name = nameProperty.getStringValue();
+        nameProperty = new PropertySimple(CONFIG_ROLE_NAME, name);
+        opConfig.put(nameProperty);
         resourceContext.getParentResourceComponent().invokeOperation("removeRole", opConfig);
     }
 

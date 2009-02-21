@@ -24,7 +24,7 @@
 package org.jboss.on.plugins.tomcat;
 
 import org.jboss.on.plugins.tomcat.helper.CreateResourceHelper;
-import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
@@ -38,23 +38,39 @@ public class TomcatUserDatabaseComponent extends MBeanResourceComponent<TomcatSe
 
     public CreateResourceReport createResource(CreateResourceReport report) {
         String resourceTypeName = report.getResourceType().getName();
+        String name = null;
+        String objectName = null;
+        String operation = null;
         try {
             if (TomcatGroupComponent.RESOURCE_TYPE_NAME.equals(resourceTypeName)) {
-                this.invokeOperation("createGroup", report.getPluginConfiguration());
+                name = report.getResourceConfiguration().getSimple("groupname").getStringValue();
+                objectName = String.format("Users:type=Group,groupname=\"%s\",database=UserDatabase", name);
+                operation = "createGroup";
             } else if (TomcatRoleComponent.RESOURCE_TYPE_NAME.equals(resourceTypeName)) {
-                this.invokeOperation("createRole", report.getPluginConfiguration());
+                name = report.getResourceConfiguration().getSimple("rolename").getStringValue();
+                objectName = String.format("Users:type=Role,rolename=%s,database=UserDatabase", name);
+                operation = "createRole";
             } else if (TomcatUserComponent.RESOURCE_TYPE_NAME.equals(resourceTypeName)) {
-                Configuration opConfig = report.getPluginConfiguration();
-                opConfig.put(report.getResourceConfiguration().get(TomcatUserComponent.PROPERTY_FULL_NAME));
-                opConfig.put(report.getResourceConfiguration().get(TomcatUserComponent.PROPERTY_PASSWORD));
+                name = report.getResourceConfiguration().getSimple("username").getStringValue();
+                objectName = String.format("Users:type=User,username=\"%s\",database=UserDatabase", name);
+                operation = "createUser";
             } else {
                 throw new UnsupportedOperationException("Unsupported Resource type: " + resourceTypeName);
             }
+
+            // IMPORTANT: The object name must be canonicalized so it matches the resource key that
+            //            MBeanResourceDiscoveryComponent uses, which is the canonical object name.
+            report.setResourceKey(CreateResourceHelper.getCanonicalName(objectName));
+            CreateResourceHelper.setResourceName(report, name);
+            this.invokeOperation(operation, report.getResourceConfiguration());
+
+            report.setStatus(CreateResourceStatus.SUCCESS);
+
         } catch (Exception e) {
             CreateResourceHelper.setErrorOnReport(report, e);
         }
-        return report;
 
+        return report;
     }
 
 }

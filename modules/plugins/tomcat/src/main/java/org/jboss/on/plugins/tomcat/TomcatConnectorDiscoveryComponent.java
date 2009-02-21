@@ -93,6 +93,7 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
 
             pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PROPERTY_SCHEME, configInfo.getScheme()));
             pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PROPERTY_ADDRESS, configInfo.getAddress()));
+            resource.setResourceName(resource.getResourceName().replace("{scheme}", configInfo.getScheme()));
 
             queryUtility = new ObjectNameQueryUtility("Catalina:type=Connector,port=" + port);
             beans = connection.queryBeans(queryUtility.getTranslatedQuery());

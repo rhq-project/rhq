@@ -123,22 +123,17 @@
                   name="objectName"
                   readOnly="true"
                   default="Catalina:type=Host,host=%name%" />
-               <c:simple-property
-                  name="name"
-                  type="string"
-                  description="The virtual host"
-                  readOnly="true" />
-               <c:simple-property
-                  name="appBase"
-                  required="true"
-                  readOnly="true"
-                  description="The Application Base directory for this virtual host." />                  
             </c:group>
 
             <c:group
                name="advanced"
                displayName="Advanced"
                hiddenByDefault="true">
+               <c:simple-property
+                  name="name"
+                  type="string"
+                  readOnly="true"
+                  description="The virtual host" />
                <c:simple-property
                   name="nameTemplate"
                   default="Tomcat VHost ({name})" />
@@ -148,40 +143,13 @@
             </c:group>
          </plugin-configuration>
 
-         <operation
-            name="addAlias"
-            description="Add an alias name mapped to this Host.">
-            <parameters>
-               <c:simple-property
-                  name="alias"
-                  displayName="Alias"
-                  description="The alias to add."
-                  type="string"
-                  required="true" />
-            </parameters>
-         </operation>
-
-         <operation
-            name="removeAlias"
-            description="Remove an alias currently mapped to this Host.">
-            <parameters>
-               <c:simple-property
-                  name="alias"
-                  displayName="Alias"
-                  description="The alias to remove."
-                  type="string"
-                  required="true" />
-            </parameters>
-         </operation>
-
-         <metric
-            property="Catalina:type=Host,host=%name%:aliases"
-            displayName="Aliases"
-            defaultOn="true"
-            dataType="trait" />
-
          <resource-configuration>
             <c:group name="Attributes">
+               <c:simple-property
+                  name="appBase"
+                  required="true"
+                  readOnly="true"
+                  description="The Application Base directory for this virtual host." />
                <c:simple-property
                   name="autoDeploy"
                   type="boolean"
@@ -194,6 +162,11 @@
                   name="unpackWARs"
                   type="boolean"
                   description="Does this Host automatically unpack deployed WAR files?" />
+               <c:simple-property
+                  name="aliases"
+                  required="false"
+                  type="longString"
+                  description="Aliases assigned to the Host. When editing, each alias must be on a new line. Aliases are automatically lowercased." />                  
             </c:group>
          </resource-configuration>
 
@@ -212,14 +185,6 @@
                      readOnly="true"
                      default="Catalina:j2eeType=WebModule,name=%name%,J2EEApplication=none,J2EEServer=none" />
                   <c:simple-property
-                     name="name"
-                     readOnly="true"
-                     description="The name of this Web Module (WAR)" />
-                  <c:simple-property
-                     name="filename"
-                     readOnly="true"
-                     description="The deployment root file name (.war or directory)" />
-                  <c:simple-property
                      name="contextRoot"
                      readOnly="true"
                      required="false"
@@ -229,7 +194,12 @@
                      displayName="Virtual Host"
                      readOnly="true"
                      required="false"
-                     description="The (virtual) host that this application is running on. If no virtual host is set, this defaults to 'localhost'" />
+                     description="The (virtual) host for this deployed application. If no host is set, this defaults to 'localhost'" />
+                  <c:simple-property
+                     name="filename"
+                     required="true"
+                     readOnly="true"
+                     description="The deployment root file name (.war or directory)" />
                </c:group>
 
                <c:group name="ResponseTime">
@@ -251,12 +221,12 @@
                   name="Advanced"
                   hiddenByDefault="true">
                   <c:simple-property
-                     name="nameTemplate"
-                     default="Tomcat WAR ({name})" />
+                     name="name"
+                     readOnly="true"
+                     description="The name of this Web Module (WAR)" />
                   <c:simple-property
-                     name="extension"
-                     default="war"
-                     readOnly="true" />
+                     name="nameTemplate"
+                     default="Tomcat WAR ({contextRoot})" />
                   <c:simple-property
                      name="descriptionTemplate"
                      default="Tomcat Web Application"
@@ -411,19 +381,19 @@
                         name="objectName"
                         readOnly="true"
                         default="Catalina:type=Cache,host=%host%,path=%path%" />
-                     <c:simple-property
-                        name="host"
-                        description="The VHost for the cache"
-                        readOnly="true" />
-                     <c:simple-property
-                        name="path"
-                        description="The relevant application path"
-                        readOnly="true" />
                   </c:group>
 
                   <c:group
                      name="Advanced"
                      hiddenByDefault="true">
+                     <c:simple-property
+                        name="host"
+                        description="The cache host"
+                        readOnly="true" />
+                     <c:simple-property
+                        name="path"
+                        description="The cache application path"
+                        readOnly="true" />
                      <c:simple-property
                         name="nameTemplate"
                         default="Tomcat Cache ({host}{path})" />
@@ -605,62 +575,42 @@
          <service
             name="Tomcat Group"
             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-            class="org.rhq.plugins.jmx.MBeanResourceComponent"
+            class="TomcatGroupComponent"
             description="Tomcat User Group"
             createDeletePolicy="both"
-            creationDataType="configuration">            
+            creationDataType="configuration">
 
             <plugin-configuration>
                <c:group name="General">
                   <c:simple-property
                      name="objectName"
                      readOnly="true"
-                     default="Users:type=Group,groupname=%groupname%,database=UserDatabase" />
+                     default="Users:type=Group,groupname=%name%,database=UserDatabase" />
                </c:group>
 
                <c:group
                   name="Advanced"
                   hiddenByDefault="true">
                   <c:simple-property
+                     name="name"
+                     displayName="groupname"
+                     readOnly="true"
+                     description="ObjectName groupname value." />
+                  <c:simple-property
                      name="nameTemplate"
-                     default="Tomcat Group ({groupname})" />
+                     default="Tomcat Group ({name})" />
                   <c:simple-property
                      name="descriptionTemplate"
                      default="A Tomcat Group"
-                     readOnly="true" />                     
+                     readOnly="true" />
                </c:group>
             </plugin-configuration>
-
-            <operation
-               name="addRole"
-               description="Add a Role to this Group.">
-               <parameters>
-                  <c:simple-property
-                     name="rolename"
-                     displayName="Role Name"
-                     description="The Role to add."
-                     type="string"
-                     required="true" />
-               </parameters>               
-            </operation>
-
-            <operation
-               name="removeRole"
-               description="Remove the specified Role from this Group.">
-               <parameters>
-                  <c:simple-property
-                     name="rolename"
-                     displayName="Role Name"
-                     description="The Role to remove."
-                     type="string"
-                     required="true" />
-               </parameters>
-            </operation>
 
             <resource-configuration>
                <c:group name="Attributes">
                   <c:simple-property
                      name="groupname"
+                     displayName="Group Name"
                      required="true"
                      readOnly="true"
                      description="The Group name." />
@@ -668,6 +618,11 @@
                      name="description"
                      required="false"
                      description="The Group description." />
+                  <c:simple-property
+                     name="roles"
+                     type="longString"
+                     required="false"
+                     description="Roles assigned to the Group. When editing, roles are case sensitive, must exist, and be on a new line." />
                </c:group>
             </resource-configuration>
          </service>
@@ -678,39 +633,42 @@
             class="TomcatRoleComponent"
             description="Tomcat User Role"
             createDeletePolicy="both"
-            creationDataType="configuration">            
+            creationDataType="configuration">
 
             <plugin-configuration>
                <c:group name="General">
                   <c:simple-property
                      name="objectName"
                      readOnly="true"
-                     default="Users:type=Role,rolename=%rolename%,database=UserDatabase" />
-                  <c:simple-property
-                     name="rolename"
-                     required="true"                     
-                     readOnly="true"
-                     description="The Role name." />
-                  <c:simple-property
-                     name="description"
-                     description="A description of the Role." />                     
+                     default="Users:type=Role,rolename=%name%,database=UserDatabase" />
                </c:group>
 
                <c:group
                   name="Advanced"
                   hiddenByDefault="true">
                   <c:simple-property
+                     name="name"
+                     displayName="rolename"
+                     readOnly="true"
+                     description="ObjectName rolename value." />
+                  <c:simple-property
                      name="nameTemplate"
-                     default="Tomcat Role ({rolename})" />
+                     default="Tomcat Role ({name})" />
                   <c:simple-property
                      name="descriptionTemplate"
                      default="A Tomcat Role"
-                     readOnly="true" />                     
+                     readOnly="true" />
                </c:group>
             </plugin-configuration>
 
             <resource-configuration>
                <c:group name="Attributes">
+                  <c:simple-property
+                     name="rolename"
+                     displayName="Role Name"
+                     required="true"
+                     readOnly="true"
+                     description="The Role name." />
                   <c:simple-property
                      name="description"
                      required="false"
@@ -725,27 +683,28 @@
             class="TomcatUserComponent"
             description="Tomcat User"
             createDeletePolicy="both"
-            creationDataType="configuration">            
+            creationDataType="configuration">
 
             <plugin-configuration>
                <c:group name="General">
                   <c:simple-property
                      name="objectName"
                      readOnly="true"
-                     default="Users:type=User,username=%username%,database=UserDatabase" />
-                  <c:simple-property
-                     name="username"
-                     readOnly="true"
-                     required="true"                     
-                     description="The User name." />
+                     default="Users:type=User,username=%name%,database=UserDatabase" />
                </c:group>
 
                <c:group
                   name="Advanced"
                   hiddenByDefault="true">
                   <c:simple-property
+                     name="name"
+                     displayName="username"
+                     readOnly="true"
+                     required="true"
+                     description="ObjectName username value." />
+                  <c:simple-property
                      name="nameTemplate"
-                     default="Tomcat User ({username})" />
+                     default="Tomcat User ({name})" />
                   <c:simple-property
                      name="descriptionTemplate"
                      default="A Tomcat User"
@@ -753,81 +712,32 @@
                </c:group>
             </plugin-configuration>
 
-            <operation
-               name="addGroup"
-               description="Add the User to the specified Group.">
-               <parameters>
-                  <c:simple-property
-                     name="groupname"
-                     displayName="Group Name"
-                     description="The Group to add."
-                     type="string"
-                     required="true" />
-               </parameters>
-            </operation>
-
-            <operation
-               name="removeGroup"
-               description="Remove the User from the specified Group.">
-               <parameters>
-                  <c:simple-property
-                     name="groupname"
-                     displayName="Group Name"
-                     description="The Group to remove."
-                     type="string"
-                     required="true" />
-               </parameters>
-            </operation>
-
-            <operation
-               name="addRole"
-               description="Add the specified Role to the User.">
-               <parameters>
-                  <c:simple-property
-                     name="rolename"
-                     displayName="Role Name"
-                     description="The Role to add."
-                     type="string"
-                     required="true" />
-               </parameters>
-            </operation>
-
-            <operation
-               name="removeRole"
-               description="Remove the specified Role from the User.">
-               <parameters>
-                  <c:simple-property
-                     name="rolename"
-                     displayName="Role Name"
-                     description="The Role to remove."
-                     type="string"
-                     required="true" />
-               </parameters>
-            </operation>
-
-            <metric
-               property="Users:type=User,username=%username%,database=UserDatabase:roles"
-               displayName="Roles"
-               defaultOn="true"
-               dataType="trait" />
-
-            <metric
-               property="Users:type=User,username=%username%,database=UserDatabase:groups"
-               displayName="Groups"
-               defaultOn="true"
-               dataType="trait" />
-
             <resource-configuration>
                <c:group name="Attributes">
                   <c:simple-property
-                     name="fullName"
-                     required="false"
-                     description="The full name of User" />
+                     name="username"
+                     required="true"
+                     readOnly="true"
+                     description="The username" />
                   <c:simple-property
                      name="password"
                      type="password"
                      required="false"
                      description="The credentials used to authenticate the username." />
+                  <c:simple-property
+                     name="fullName"
+                     required="false"
+                     description="The full name of User" />
+                  <c:simple-property
+                     name="groups"
+                     type="longString"
+                     required="false"
+                     description="Groups assigned to the User. When editing, groups are case sensitive, must exist, and be on a new line." />
+                  <c:simple-property
+                     name="roles"
+                     type="longString"
+                     required="false"
+                     description="Roles assigned to the User. When editing, roles are case sensitive, must exist, and be on a new line." />
                </c:group>
             </resource-configuration>
          </service>

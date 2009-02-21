@@ -134,9 +134,9 @@ public class TomcatServerOperationsDelegate {
     private String start() throws InterruptedException {
         Configuration pluginConfiguration = this.serverComponent.getPluginConfiguration();
         File startScriptFile = this.serverComponent.getStartScriptPath();
-        validateScriptFile(startScriptFile, TomcatServerComponent.PROP_START_SCRIPT);
+        validateScriptFile(startScriptFile, TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT);
 
-        String prefix = pluginConfiguration.getSimple(TomcatServerComponent.PROP_SCRIPT_PREFIX).getStringValue();
+        String prefix = pluginConfiguration.getSimple(TomcatServerComponent.PLUGIN_CONFIG_SCRIPT_PREFIX).getStringValue();
 
         ProcessExecution processExecution;
 
@@ -220,7 +220,7 @@ public class TomcatServerOperationsDelegate {
 
         // Set necessary environment variables
         String installationPath = this.serverComponent.getPluginConfiguration().getSimple(
-            TomcatServerComponent.PROP_INSTALLATION_PATH).getStringValue();
+            TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH).getStringValue();
         setProcessExecutionEnvironment(processExecution, installationPath);
 
         processExecution.setCaptureOutput(true);
@@ -257,8 +257,8 @@ public class TomcatServerOperationsDelegate {
     private String shutdownViaScript() {
         Configuration pluginConfiguration = this.serverComponent.getPluginConfiguration();
         File shutdownScriptFile = this.serverComponent.getShutdownScriptPath();
-        validateScriptFile(shutdownScriptFile, TomcatServerComponent.PROP_SHUTDOWN_SCRIPT);
-        String prefix = pluginConfiguration.getSimple(TomcatServerComponent.PROP_SCRIPT_PREFIX).getStringValue();
+        validateScriptFile(shutdownScriptFile, TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT);
+        String prefix = pluginConfiguration.getSimple(TomcatServerComponent.PLUGIN_CONFIG_SCRIPT_PREFIX).getStringValue();
         ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(prefix, shutdownScriptFile);
 
         initProcessExecution(processExecution, shutdownScriptFile);

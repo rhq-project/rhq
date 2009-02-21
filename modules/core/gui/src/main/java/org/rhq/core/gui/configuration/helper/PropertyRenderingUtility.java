@@ -18,47 +18,47 @@
  */
 package org.rhq.core.gui.configuration.helper;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import javax.el.ValueExpression;
+import javax.faces.application.FacesMessage;
+import javax.faces.component.NamingContainer;
+import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
+import javax.faces.component.UIOutput;
 import javax.faces.component.UISelectItem;
 import javax.faces.component.UISelectOne;
-import javax.faces.component.UIComponent;
-import javax.faces.component.UIOutput;
-import javax.faces.component.NamingContainer;
 import javax.faces.component.html.HtmlInputSecret;
 import javax.faces.component.html.HtmlInputText;
 import javax.faces.component.html.HtmlInputTextarea;
+import javax.faces.component.html.HtmlSelectBooleanCheckbox;
 import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.component.html.HtmlSelectOneRadio;
-import javax.faces.component.html.HtmlSelectBooleanCheckbox;
 import javax.faces.context.FacesContext;
 import javax.faces.validator.ValidatorException;
-import javax.faces.application.FacesMessage;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.rhq.core.domain.configuration.PropertySimple;
+
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.gui.configuration.CssStyleClasses;
 import org.rhq.core.gui.converter.PropertySimpleValueConverter;
 import org.rhq.core.gui.util.FacesComponentUtility;
-import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
 import org.rhq.core.gui.validator.PropertySimpleValueValidator;
-import org.rhq.core.gui.configuration.CssStyleClasses;
 
 /**
  * @author Ian Springer
  */
-public class PropertyRenderingUtility
-{    
+public class PropertyRenderingUtility {
     private static final int INPUT_TEXT_COMPONENT_WIDTH = 30;
     private static final int INPUT_TEXTAREA_COMPONENT_ROWS = 4;
     private static final String ERROR_MSG_STYLE_CLASS = "error-msg";
@@ -72,13 +72,8 @@ public class PropertyRenderingUtility
 
     @NotNull
     public static UIInput createInputForSimpleProperty(PropertyDefinitionSimple propertyDefinitionSimple,
-                                                       PropertySimple propertySimple,
-                                                       ValueExpression propertyValueExpression,
-                                                       Integer listIndex,
-                                                       boolean configIsAggregate,
-                                                       boolean configReadOnly,
-                                                       boolean configFullyEditable,
-                                                       boolean prevalidate) {
+        PropertySimple propertySimple, ValueExpression propertyValueExpression, Integer listIndex,
+        boolean configIsAggregate, boolean configReadOnly, boolean configFullyEditable, boolean prevalidate) {
         UIInput input = createInput(propertyDefinitionSimple);
 
         if (propertySimple != null)
@@ -101,34 +96,33 @@ public class PropertyRenderingUtility
         return input;
     }
 
-    public static UIInput createInput(PropertyDefinitionSimple propertyDefinitionSimple)
-    {
+    public static UIInput createInput(PropertyDefinitionSimple propertyDefinitionSimple) {
         UIInput input;
-        PropertySimpleType type = (propertyDefinitionSimple != null) ? propertyDefinitionSimple.getType() :
-                PropertySimpleType.STRING;
+        PropertySimpleType type = (propertyDefinitionSimple != null) ? propertyDefinitionSimple.getType()
+            : PropertySimpleType.STRING;
         switch (type) {
-            case BOOLEAN: {
-                input = createInputForBooleanProperty();
-                break;
-            }
+        case BOOLEAN: {
+            input = createInputForBooleanProperty();
+            break;
+        }
 
-            case LONG_STRING: {
-                input = createInputForLongStringProperty();
-                break;
-            }
+        case LONG_STRING: {
+            input = createInputForLongStringProperty();
+            break;
+        }
 
-            case PASSWORD: {
-                input = createInputForPasswordProperty();
-                break;
-            }
+        case PASSWORD: {
+            input = createInputForPasswordProperty();
+            break;
+        }
 
-            default: {
-                if (propertyDefinitionSimple != null && isEnum(propertyDefinitionSimple)) {
-                    input = createInputForEnumProperty(propertyDefinitionSimple);
-                } else {
-                    input = createInputForStringProperty();
-                }
+        default: {
+            if (propertyDefinitionSimple != null && isEnum(propertyDefinitionSimple)) {
+                input = createInputForEnumProperty(propertyDefinitionSimple);
+            } else {
+                input = createInputForStringProperty();
             }
+        }
         }
         input.setId(UNIQUE_ID_PREFIX + UUID.randomUUID());
 
@@ -145,7 +139,7 @@ public class PropertyRenderingUtility
 
     @NotNull
     public static UIInput createInputForSimpleProperty(PropertySimple propertySimple, ValueExpression valueExpression,
-                                                       boolean readOnly) {
+        boolean readOnly) {
         UIInput input = createInputForStringProperty();
         input.setValueExpression("value", valueExpression);
         FacesComponentUtility.setReadonly(input, readOnly);
@@ -159,19 +153,15 @@ public class PropertyRenderingUtility
         // TODO: specify a component id
     }
 
-    public static void addUnsetControl(UIComponent parent,
-                                        PropertyDefinitionSimple propertyDefinitionSimple,
-                                        PropertySimple propertySimple,
-                                        UIInput valueInput,
-                                        boolean configIsAggregate,
-                                        boolean configReadOnly,
-                                        boolean configFullyEditable) {
+    public static void addUnsetControl(UIComponent parent, PropertyDefinitionSimple propertyDefinitionSimple,
+        PropertySimple propertySimple, UIInput valueInput, boolean configIsAggregate, boolean configReadOnly,
+        boolean configFullyEditable) {
         HtmlSelectBooleanCheckbox unsetCheckbox = FacesComponentUtility.createComponent(
             HtmlSelectBooleanCheckbox.class, null);
         parent.getChildren().add(unsetCheckbox);
         unsetCheckbox.setValue(isUnset(propertyDefinitionSimple, propertySimple, configIsAggregate));
-        if (isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable) ||
-            isAggregateWithDifferingValues(propertySimple, configIsAggregate)) {
+        if (isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable)
+            || isAggregateWithDifferingValues(propertySimple, configIsAggregate)) {
             FacesComponentUtility.setDisabled(unsetCheckbox, true);
         } else {
             // Add JavaScript that will disable/enable the corresponding input element when the unset checkbox is
@@ -189,7 +179,8 @@ public class PropertyRenderingUtility
         }
     }
 
-    public static void addInitInputsJavaScript(UIComponent parent, String componentId, boolean configFullyEditable, boolean postBack) {
+    public static void addInitInputsJavaScript(UIComponent parent, String componentId, boolean configFullyEditable,
+        boolean postBack) {
         List<UIInput> inputs = FacesComponentUtility.getDescendantsOfType(parent, UIInput.class);
         List<UIInput> overrideInputs = new ArrayList<UIInput>();
         List<UIInput> unsetInputs = new ArrayList<UIInput>();
@@ -290,9 +281,8 @@ public class PropertyRenderingUtility
 
     // <h:outputLabel value="DISPLAY_NAME" styleClass="..." />
     public static void addPropertyDisplayName(UIComponent parent, PropertyDefinition propertyDefinition,
-                                              Property property, boolean configReadOnly) {
-        String displayName = (propertyDefinition != null) ? propertyDefinition.getDisplayName() :
-                property.getName();
+        Property property, boolean configReadOnly) {
+        String displayName = (propertyDefinition != null) ? propertyDefinition.getDisplayName() : property.getName();
         FacesComponentUtility.addOutputText(parent, null, displayName, CssStyleClasses.PROPERTY_DISPLAY_NAME_TEXT);
         if (!configReadOnly && propertyDefinition != null && propertyDefinition.isRequired()
             && (propertyDefinition instanceof PropertyDefinitionSimple)) {
@@ -304,7 +294,9 @@ public class PropertyRenderingUtility
 
     public static void addPropertyDescription(UIComponent parent, PropertyDefinition propertyDefinition) {
         // <span class="description">DESCRIPTION</span>
-        if (propertyDefinition.getDescription() != null) {
+        if (propertyDefinition.getDescription() == null || propertyDefinition.getDescription().trim().equals("")) {
+            FacesComponentUtility.addOutputText(parent, null, "<No Descrption Available>", CssStyleClasses.DESCRIPTION);
+        } else {
             FacesComponentUtility.addOutputText(parent, null, propertyDefinition.getDescription(),
                 CssStyleClasses.DESCRIPTION);
         }
@@ -318,8 +310,7 @@ public class PropertyRenderingUtility
         // <h:selectOneRadio id="#{identifier}" value="#{beanValue}" layout="pageDirection" styleClass="radiolabels">
         //    <f:selectItems value="#{itemValues}"></f:selectItems>
         // </h:selectOneRadio>
-        HtmlSelectOneRadio selectOneRadio = FacesComponentUtility
-            .createComponent(HtmlSelectOneRadio.class, null);
+        HtmlSelectOneRadio selectOneRadio = FacesComponentUtility.createComponent(HtmlSelectOneRadio.class, null);
         selectOneRadio.setLayout("lineDirection");
         // TODO: We may want to use CSS to get less space between the radio buttons
         //      (see http://jira.jboss.com/jira/browse/JBMANCON-21).
@@ -405,7 +396,7 @@ public class PropertyRenderingUtility
     }
 
     private static void addValidatorsAndConverter(UIInput input, PropertyDefinitionSimple propertyDefinitionSimple,
-                                           boolean readOnly) {
+        boolean readOnly) {
         if (!readOnly) {
             input.setRequired(propertyDefinitionSimple.isRequired());
             input.addValidator(new PropertySimpleValueValidator(propertyDefinitionSimple));
@@ -414,12 +405,12 @@ public class PropertyRenderingUtility
     }
 
     private static void addErrorMessages(UIInput input, @Nullable PropertyDefinitionSimple propertyDefinitionSimple,
-                                  PropertySimple propertySimple, boolean prevalidate) {
+        PropertySimple propertySimple, boolean prevalidate) {
         if (prevalidate) {
             // Pre-validate the property's value, in case the PC sent us an invalid live config.
             PropertySimpleValueValidator validator = new PropertySimpleValueValidator(propertyDefinitionSimple);
             //PropertySimple propertySimple = this.propertyMap.getSimple(propertyDefinitionSimple.getName());
-            prevalidatePropertyValue(input, propertySimple, validator);                
+            prevalidatePropertyValue(input, propertySimple, validator);
         }
         // If there is a PC-detected error associated with the property, associate it with the input.
         addPluginContainerDetectedErrorMessage(input, propertySimple);
@@ -456,41 +447,36 @@ public class PropertyRenderingUtility
             // (see http://jira.jboss.com/jira/browse/JBNADM-1608)
             HtmlInputText inputText = (HtmlInputText) input;
             if ((propertyValue != null) && (propertyValue.length() > INPUT_TEXT_COMPONENT_WIDTH))
-                inputText.setTitle(propertyValue);            
+                inputText.setTitle(propertyValue);
             inputText.setOnchange("setInputTitle(this)");
         }
     }
 
     private static boolean isUnset(PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple,
-                                   boolean configIsAggregate) {
+        boolean configIsAggregate) {
         if (isAggregateWithDifferingValues(propertySimple, configIsAggregate))
             // Properties from aggregate configs that have differing values should not be marked unset.
             return false;
         if (propertySimple == null)
             return false;
-        return ((propertyDefinitionSimple == null || !propertyDefinitionSimple.isRequired())
-                && propertySimple.getStringValue() == null);
+        return ((propertyDefinitionSimple == null || !propertyDefinitionSimple.isRequired()) && propertySimple
+            .getStringValue() == null);
     }
 
-    public static boolean isReadOnly(PropertyDefinitionSimple propertyDefinitionSimple,
-                                     PropertySimple propertySimple,
-                                     boolean configReadOnly,
-                                     boolean configFullyEditable) {
+    public static boolean isReadOnly(PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple,
+        boolean configReadOnly, boolean configFullyEditable) {
         // A fully editable config overrides any other means of setting read-only.
-        return (!configFullyEditable &&
-                (configReadOnly || (
-                        (propertyDefinitionSimple != null &&propertyDefinitionSimple.isReadOnly()) &&
-                        (propertySimple == null || !isInvalidRequiredProperty(propertyDefinitionSimple, propertySimple))
-                )));
+        return (!configFullyEditable && (configReadOnly || ((propertyDefinitionSimple != null && propertyDefinitionSimple
+            .isReadOnly()) && (propertySimple == null || !isInvalidRequiredProperty(propertyDefinitionSimple,
+            propertySimple)))));
     }
 
-    public static boolean isAggregateWithDifferingValues(PropertySimple propertySimple, boolean configIsAggregate)
-    {
+    public static boolean isAggregateWithDifferingValues(PropertySimple propertySimple, boolean configIsAggregate) {
         return configIsAggregate && (propertySimple.getOverride() == null || !propertySimple.getOverride());
     }
 
     private static boolean isInvalidRequiredProperty(PropertyDefinitionSimple propertyDefinitionSimple,
-                                                     PropertySimple propertySimple) {
+        PropertySimple propertySimple) {
         boolean isInvalidRequiredProperty = false;
         if (propertyDefinitionSimple.isRequired()) {
             String errorMessage = propertySimple.getErrorMessage();

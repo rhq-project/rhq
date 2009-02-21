@@ -64,28 +64,28 @@ THIS TEXT WILL BE REMOVED AS WELL.
       <f:param name="groupId" value="#{param.groupId}"/>
       <f:param name="category" value="#{param.category}"/>
 
-      <onc:tab name="Monitor" rendered="#{ResourceGroupUIBean.compatible}">
+      <onc:tab name="Monitor" image="/images/icon_hub_m.gif" rendered="#{ResourceGroupUIBean.compatible}">
          <onc:subtab name="Graphs" url="/rhq/group/monitor/graphs.xhtml"/>
          <onc:subtab name="Tables" url="/rhq/group/monitor/tables.xhtml"/>
          <onc:subtab name="Schedules" url="/rhq/group/monitor/schedules.xhtml"/>
       </onc:tab>
       
-      <onc:tab name="Events" rendered="#{ResourceGroupUIBean.compatible}">
-         <onc:subtab name="History" url="/rhq/group/events/history.xhtml"/>
-      </onc:tab>
+      <onc:tab name="Inventory" image="/images/icon_hub_i.gif" url="/rhq/group/inventory/view.xhtml"/>
 
-      <onc:tab name="Inventory" url="/rhq/group/inventory/view.xhtml"/>
-
-      <onc:tab name="Configuration" displayName="Configure"
+      <onc:tab name="Configuration" displayName="Configure" image="/images/icon_hub_c.gif"
                rendered="#{ResourceGroupUIBean.compatible and ResourceGroupUIBean.facets.configuration}">
          <onc:subtab name="Current" url="/rhq/group/configuration/current.xhtml" />
          <onc:subtab name="History" url="/rhq/group/configuration/history.xhtml" />
       </onc:tab>
 
-      <onc:tab name="Operations" rendered="#{ResourceGroupUIBean.compatible and ResourceGroupUIBean.facets.operation}">
+      <onc:tab name="Operations" image="/images/icon_hub_o.gif" rendered="#{ResourceGroupUIBean.compatible and ResourceGroupUIBean.facets.operation}">
          <onc:subtab name="New" url="/rhq/group/operation/groupOperationScheduleNew.xhtml"/>
          <onc:subtab name="Schedules" url="/rhq/group/operation/groupOperationSchedules.xhtml"/>
          <onc:subtab name="History" url="/rhq/group/operation/groupOperationHistory.xhtml"/>
+      </onc:tab>
+
+      <onc:tab name="Events" image="/images/icon_hub_e.gif" rendered="#{ResourceGroupUIBean.compatible}">
+         <onc:subtab name="History" url="/rhq/group/events/history.xhtml"/>
       </onc:tab>
       
    </onc:tabBar>

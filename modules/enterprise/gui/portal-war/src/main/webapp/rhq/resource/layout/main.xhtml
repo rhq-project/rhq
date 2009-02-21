@@ -72,7 +72,7 @@ REQUEST PARAMETERS:
             <onc:subtab name="Timeline" url="/rhq/resource/summary/timeline.xhtml" />
          </onc:tab>
 
-         <onc:tab name="Monitor" rendered="#{monitorEnabled}">
+         <onc:tab name="Monitor" image="/images/icon_hub_m.gif" rendered="#{monitorEnabled}">
             <onc:subtab name="Graphs"      url="/rhq/resource/monitor/graphs.xhtml" />
             <onc:subtab name="Tables"      url="/rhq/resource/monitor/tables.xhtml" />
             <onc:subtab name="Availability"   url="/rhq/resource/monitor/availabilityHistory.xhtml" />
@@ -82,9 +82,9 @@ REQUEST PARAMETERS:
             </c:if>
          </onc:tab>
 
-         <onc:tab name="Inventory" url="/rhq/resource/inventory/view.xhtml" />
+         <onc:tab name="Inventory" image="/images/icon_hub_i.gif" url="/rhq/resource/inventory/view.xhtml" />
 
-         <onc:tab name="Alert" rendered="#{monitorEnabled}">
+         <onc:tab name="Alert" image="/images/icon_hub_a.gif" rendered="#{monitorEnabled}">
             <onc:subtab name="Definitions" url="/rhq/resource/alert/listAlertDefinitions.xhtml">
                <f:param name="mode" value="listDefinitions" />
             </onc:subtab>
@@ -93,22 +93,22 @@ REQUEST PARAMETERS:
             </onc:subtab>
          </onc:tab>
 
-         <onc:tab name="Configuration" displayName="Configure" rendered="#{ResourceUIBean.facets.configuration}">
+         <onc:tab name="Configuration" image="/images/icon_hub_c.gif" displayName="Configure" rendered="#{ResourceUIBean.facets.configuration}">
             <onc:subtab name="Current" url="/rhq/resource/configuration/view.xhtml" />
             <onc:subtab name="History" url="/rhq/resource/configuration/history.xhtml" />
          </onc:tab>
 
-         <onc:tab name="Operations" rendered="#{ResourceUIBean.facets.operation}">
+         <onc:tab name="Operations" image="/images/icon_hub_o.gif" rendered="#{ResourceUIBean.facets.operation}">
             <onc:subtab name="New"       url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml" />
             <onc:subtab name="Schedules" url="/rhq/resource/operation/resourceOperationSchedules.xhtml" />
             <onc:subtab name="History"   url="/rhq/resource/operation/resourceOperationHistory.xhtml" />
          </onc:tab>
 
-         <onc:tab name="Events" rendered="#{ResourceUIBean.facets.event}">
+         <onc:tab name="Events" image="/images/icon_hub_e.gif" rendered="#{ResourceUIBean.facets.event}">
             <onc:subtab name="History"  url="/rhq/resource/events/history.xhtml" />
          </onc:tab>
 
-         <onc:tab name="Content"
+         <onc:tab name="Content" image="/images/icon_hub_p.gif"
             rendered="#{ResourceUIBean.facets.content}">
             <onc:subtab name="Deployed"      url="/rhq/resource/content/view.xhtml" />
             <onc:subtab name="New"           url="/rhq/resource/content/deploy.xhtml" />

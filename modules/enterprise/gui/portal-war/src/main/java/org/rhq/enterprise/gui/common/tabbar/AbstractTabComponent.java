@@ -38,6 +38,7 @@ public abstract class AbstractTabComponent extends UIComponentBase {
     private String name;
     private String displayName;
     private String url;
+    private String image;
     private String alt;
     private boolean selected;
     private Map<String, String> parameters = new HashMap<String, String>();
@@ -72,6 +73,18 @@ public abstract class AbstractTabComponent extends UIComponentBase {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public String getImage() {
+        if (this.image == null) {
+            this.image = FacesComponentUtility.getExpressionAttribute(this, "image");
+        }
+
+        return this.image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
     }
 
     public String getAlt() {

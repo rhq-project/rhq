@@ -11,6 +11,12 @@
       <managed-bean-class>org.rhq.enterprise.gui.configuration.group.GroupResourceConfigurationHistoryUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>GroupResourceConfigurationHistoryDetailsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.configuration.group.GroupResourceConfigurationHistoryDetailsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
 
 </faces-config>
       

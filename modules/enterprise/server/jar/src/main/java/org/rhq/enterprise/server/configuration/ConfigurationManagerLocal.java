@@ -367,6 +367,9 @@ public interface ConfigurationManagerLocal {
     PageList<ConfigurationUpdateComposite> getPluginConfigurationUpdateCompositesByParentId(int configurationUpdateId,
         PageControl pageControl);
 
+    PageList<ConfigurationUpdateComposite> getResourceConfigurationUpdateCompositesByParentId(
+        int configurationUpdateId, PageControl pageControl);
+
     PageList<Integer> getPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl);
 
     long getPluginConfigurationUpdateCountByParentId(int configurationUpdateId);

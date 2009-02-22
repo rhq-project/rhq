@@ -61,6 +61,13 @@ import org.rhq.core.domain.resource.Resource;
         + "   AND cu.modifiedTime = ( SELECT MAX(cu2.modifiedTime) " // 
         + "                             FROM ResourceConfigurationUpdate cu2 " //
         + "                            WHERE cu2.resource.id = :resourceId ) "),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_COMPOSITE_BY_PARENT_UPDATE_ID, query = "" //
+        + "SELECT new org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite" //
+        + "       ( cu.id, cu.status, cu.errorMessage, cu.subjectName, cu.createdTime, cu.modifiedTime, " // update w/o config
+        + "         res.id, res.name ) " //
+        + "  FROM ResourceConfigurationUpdate cu " //
+        + "  JOIN cu.resource res " //
+        + " WHERE cu.aggregateConfigurationUpdate.id = :aggregateConfigurationUpdateId"),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID, query = "" //
         + "SELECT cu.id " //
         + "  FROM ResourceConfigurationUpdate cu " //
@@ -126,6 +133,7 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
     public static final String QUERY_FIND_ALL_BY_RESOURCE_ID = "ResourceConfigurationUpdate.findAllByResourceId";
     public static final String QUERY_FIND_CURRENTLY_ACTIVE_CONFIG = "ResourceConfigurationUpdate.findCurrentlyActiveConfig";
     public static final String QUERY_FIND_LATEST_BY_RESOURCE_ID = "ResourceConfigurationUpdate.findByResource";
+    public static final String QUERY_FIND_COMPOSITE_BY_PARENT_UPDATE_ID = "ResourceConfigurationUpdate.findCompositeByParentUpdateId";
     public static final String QUERY_FIND_BY_PARENT_UPDATE_ID = "ResourceConfigurationUpdate.findByParentUpdateId";
 
     // for subsystem views

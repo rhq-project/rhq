@@ -31,9 +31,7 @@ import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.core.Conversation;
-import org.jboss.seam.faces.FacesMessages;
 import org.jboss.seam.faces.Redirect;
-import org.jboss.seam.international.StatusMessage;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -42,6 +40,7 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.gui.configuration.propset.ConfigurationSet;
 import org.rhq.core.gui.configuration.propset.ConfigurationSetMember;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
@@ -58,9 +57,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class GroupResourceConfigurationUIBean {
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-
-    @In
-    private FacesMessages facesMessages;
 
     @In(value = "org.jboss.seam.faces.redirect")
     private Redirect redirect;
@@ -80,7 +76,7 @@ public class GroupResourceConfigurationUIBean {
         try {
             this.group = loadGroup();
         } catch (Exception e) {
-            FacesMessages.instance().add(FacesMessage.SEVERITY_FATAL, e.getMessage());
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_FATAL, e.getMessage());
             return null;
         }
         ConfigurationDefinition configurationDefinition = this.configurationManager
@@ -113,13 +109,13 @@ public class GroupResourceConfigurationUIBean {
             this.configurationManager.scheduleAggregateResourceConfigurationUpdate(EnterpriseFacesContextUtility
                 .getSubject(), this.group.getId(), this.resourceConfigurations);
         } catch (Exception e) {
-            this.facesMessages.add(StatusMessage.Severity.FATAL,
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "Failed to schedule group Resource Configuration update - cause: " + e);
             this.redirect.setViewId("/rhq/group/configuration/current.xhtml");
             this.redirect.execute();
             return null;
         }
-        this.facesMessages.add(StatusMessage.Severity.INFO, "Group Resource Configuration update scheduled.");
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Group Resource Configuration update scheduled.");
         Conversation.instance().endBeforeRedirect();
         this.redirect.setViewId("/rhq/group/configuration/history.xhtml");
         this.redirect.execute();

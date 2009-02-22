@@ -1298,6 +1298,22 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
+    public PageList<ConfigurationUpdateComposite> getResourceConfigurationUpdateCompositesByParentId(
+        int configurationUpdateId, PageControl pageControl) {
+        pageControl.initDefaultOrderingField("cu.modifiedTime");
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            ResourceConfigurationUpdate.QUERY_FIND_COMPOSITE_BY_PARENT_UPDATE_ID, pageControl);
+        query.setParameter("aggregateConfigurationUpdateId", configurationUpdateId);
+
+        long count = getPluginConfigurationUpdateCountByParentId(configurationUpdateId);
+
+        List<ConfigurationUpdateComposite> results = query.getResultList();
+
+        return new PageList<ConfigurationUpdateComposite>(results, (int) count, pageControl);
+    }
+
+    @SuppressWarnings("unchecked")
     public PageList<Integer> getPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("cu.modifiedTime");
 

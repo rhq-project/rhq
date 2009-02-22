@@ -381,11 +381,17 @@ public interface ConfigurationManagerLocal {
     PageList<AggregatePluginConfigurationUpdate> getAggregatePluginConfigurationUpdatesByGroupId(int groupId,
         PageControl pc);
 
+    PageList<AggregateResourceConfigurationUpdate> getAggregateResourceConfigurationUpdatesByGroupId(int groupId,
+        PageControl pc);
+
     ConfigurationUpdateStatus updateAggregateConfigurationUpdateStatus(int aggregatePluginConfigurationUpdateId,
         String errorMessages);
 
     int deleteAggregatePluginConfigurationUpdates(Subject subject, Integer resourceGroupId,
         Integer[] aggregatePluginConfigurationUpdateIds);
+
+    int deleteAggregateResourceConfigurationUpdates(Subject subject, Integer resourceGroupId,
+        Integer[] aggregateResourceConfigurationUpdateIds);
 
     void updateAggregateConfigurationUpdate(AbstractAggregateConfigurationUpdate groupUpdate);
 

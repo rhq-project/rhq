@@ -112,6 +112,12 @@ import org.rhq.core.domain.resource.Resource;
         + "   SET rcu.aggregateConfigurationUpdate = NULL " //
         + " WHERE rcu.aggregateConfigurationUpdate IN ( SELECT arcu " //
         + "                                               FROM AggregateResourceConfigurationUpdate arcu " //
+        + "                                              WHERE arcu.id = :arcuId )"),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP, query = "" //
+        + "UPDATE ResourceConfigurationUpdate rcu " //
+        + "   SET rcu.aggregateConfigurationUpdate = NULL " //
+        + " WHERE rcu.aggregateConfigurationUpdate IN ( SELECT arcu " //
+        + "                                               FROM AggregateResourceConfigurationUpdate arcu " //
         + "                                              WHERE arcu.group.id = :groupId )") })
 public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUpdate {
     private static final long serialVersionUID = 1L;
@@ -130,6 +136,7 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
     public static final String QUERY_DELETE_BY_RESOURCES_1 = "ResourceConfigurationUpdate.deleteByResources1";
     public static final String QUERY_DELETE_BY_RESOURCES_2 = "ResourceConfigurationUpdate.deleteByResources2";
     public static final String QUERY_DELETE_UPDATE_AGGREGATE = "ResourceConfigurationUpdate.deleteUpdateAggregate";
+    public static final String QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP = "ResourceConfigurationUpdate.deleteUpdateAggregateByGroup";
 
     @JoinColumn(name = "CONFIG_RES_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne

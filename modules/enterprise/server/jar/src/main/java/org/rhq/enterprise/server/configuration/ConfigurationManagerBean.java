@@ -1176,7 +1176,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
          * processing of this method; if we try to create and attach the PluginConfigurationUpdate children
          * to the parent aggregate before the aggregate is actually persisted, we'll get StaleStateExceptions
          * from Hibernate because of our use of flush/clear (we're trying to update the aggregate before it
-         * actually exists); this is also why we need to retrieve the aggregate and overlord fresh in the loop.
+         * actually exists); this is also why we need to retrieve the aggregate as overlord fresh in the loop.
          * TODO (ips, 02/16/09): Oops, I removed the fresh retriveal in the loop - add it back if needed.
          */
         AggregateResourceConfigurationUpdate aggregateUpdate = new AggregateResourceConfigurationUpdate(group, whoami
@@ -1206,12 +1206,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                  * elements of the aggregate
                  */
                 Configuration memberConfiguration = memberConfigurations.get(memberResource.getId());
-                ResourceConfigurationUpdate newUpdate = configurationManager
-                    .persistNewResourceConfigurationUpdateHistory(whoami, memberResource.getId(), memberConfiguration,
-                        ConfigurationUpdateStatus.INPROGRESS, whoami.getName(), true);
-                if (newUpdate != null) {
-                    newUpdate.setAggregateConfigurationUpdate(aggregateUpdate);
-                    entityManager.merge(newUpdate);
+                ResourceConfigurationUpdate memberUpdate = configurationManager.updateResourceConfiguration(whoami,
+                    memberResource.getId(), memberConfiguration);
+                if (memberUpdate != null) {
+                    memberUpdate.setAggregateConfigurationUpdate(aggregateUpdate);
+                    entityManager.merge(memberUpdate);
                 }
             }
 
@@ -1450,6 +1449,26 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
+    public PageList<AggregateResourceConfigurationUpdate> getAggregateResourceConfigurationUpdatesByGroupId(
+        int groupId, PageControl pc) {
+        pc.initDefaultOrderingField("modifiedTime", PageOrdering.DESC);
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            AggregateResourceConfigurationUpdate.QUERY_FIND_BY_GROUP_ID, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
+            AggregateResourceConfigurationUpdate.QUERY_FIND_BY_GROUP_ID);
+        query.setParameter("groupId", groupId);
+        countQuery.setParameter("groupId", groupId);
+
+        long count = (Long) countQuery.getSingleResult();
+
+        List<AggregateResourceConfigurationUpdate> results = null;
+        results = query.getResultList();
+
+        return new PageList<AggregateResourceConfigurationUpdate>(results, (int) count, pc);
+    }
+
+    @SuppressWarnings("unchecked")
     public ConfigurationUpdateStatus updateAggregateConfigurationUpdateStatus(int aggregateConfigurationUpdateId,
         String errorMessages) {
 
@@ -1493,6 +1512,40 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 entityManager.remove(update);
                 removed++;
             } catch (Exception e) {
+                log.error("Problem removing group plugin configuration update", e);
+            }
+        }
+
+        return removed;
+    }
+
+    public int deleteAggregateResourceConfigurationUpdates(Subject subject, Integer resourceGroupId,
+        Integer[] aggregateResourceConfigurationUpdateIds) {
+
+        if (authorizationManager.hasGroupPermission(subject, Permission.CONFIGURE, resourceGroupId) == false) {
+            log.error(subject + " attempted to delete " + aggregateResourceConfigurationUpdateIds.length
+                + " group resource configuration updates for ResourceGroup[id" + resourceGroupId
+                + "], but did not have the " + Permission.CONFIGURE.name() + " permission for this group");
+            return 0;
+        }
+
+        int removed = 0;
+        for (Integer arcuId : aggregateResourceConfigurationUpdateIds) {
+            /*
+             * use this strategy instead of AggregateResourceConfigurationUpdate.QUERY_DELETE_BY_ID because removing via
+             * the entityManager will respect cascading rules, using a JPQL DELETE statement will not
+             */
+            try {
+                // break the resource configuration update links in order to preserve individual change history
+                Query q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE);
+                q.setParameter("arcuId", arcuId);
+                q.executeUpdate();
+
+                AggregateResourceConfigurationUpdate update = getAggregateResourceConfigurationById(arcuId);
+                entityManager.remove(update);
+                removed++;
+            } catch (Exception e) {
+                log.error("Problem removing group resource configuration update", e);
             }
         }
 

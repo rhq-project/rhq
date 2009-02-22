@@ -120,6 +120,7 @@
 
          /WEB-INF/jsf-managed-beans-definition/group-definition-beans.xml,
 
+         /WEB-INF/jsf-managed-beans-resource-group/configuration-beans.xml,
          /WEB-INF/jsf-managed-beans-resource-group/inventory-beans.xml,
          /WEB-INF/jsf-managed-beans-resource-group/operation-beans.xml,
          /WEB-INF/jsf-managed-beans-resource-group/measurement-beans.xml,
@@ -146,6 +147,7 @@
 
          /WEB-INF/jsf-navigation-definition/group-definition-navigation.xml,
 
+         /WEB-INF/jsf-navigation-resource-group/configuration-navigation.xml,
          /WEB-INF/jsf-navigation-resource-group/events-navigation.xml,
          /WEB-INF/jsf-navigation-resource-group/inventory-navigation.xml,
          /WEB-INF/jsf-navigation-resource-group/operation-navigation.xml,

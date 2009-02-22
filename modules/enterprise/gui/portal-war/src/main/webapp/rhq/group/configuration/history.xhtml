@@ -20,9 +20,112 @@
    <ui:param name="selectedTabName" value="Configuration.History"/>
    <ui:define name="content">
 
-       <h2>TODO</h2>
+      <h:form id="historyForm">
+         <input type="hidden" name="groupId" value="${param.groupId}"/>
+            
+          <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Group Configuration Update History"/>
+            </f:facet>
 
-       <ui:remove><!--<a4j:log popup="false" level="ALL" style="width: 800px; height: 300px;"/>--></ui:remove>
+            <ui:param name="groupResourceConfigUpdateHistoryDataModel" value="#{GroupResourceConfigurationHistoryUIBean.dataModel}"/>
+            <rich:dataTable id="groupResourceConfigUpdateHistoryDataTable"
+                            rows="#{PageControl.GroupResourceConfigurationUpdateHistory.pageSize}"
+                            value="#{groupResourceConfigUpdateHistoryDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 20%, 20%, 20%, 30%, 9%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="GroupResourceConfigurationUpdateHistory" />
+               </f:facet>
+      
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedUpdates" />
+                  </f:facet>
+                  
+                  <onc:select name="selectedUpdates" value="#{item.id}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="arcu.status">
+                        <h:outputText styleClass="headerText" value="Status" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                 
+                  <h:outputText value="#{item.status}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                      <h:outputText styleClass="headerText" value="Details" />
+                  </f:facet>
+                 
+                  <h:outputText value="#{item.errorMessage}"/>
+               </rich:column>
+ 
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="arcu.createdTime">
+                        <h:outputText styleClass="headerText" value="Date Created" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputLink value="/rhq/group/configuration/details.xhtml">
+                     <f:param name="groupId" value="#{param.groupId}" />
+                     <f:param name="arcuId" value="#{item.id}" />
+                     <h:outputText value="#{item.createdTime}">
+                        <f:converter converterId="UserDateTimeConverter" />
+                     </h:outputText>
+                  </h:outputLink>
+               </rich:column>
+ 
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="arcu.modifiedTime">
+                        <h:outputText styleClass="headerText" value="Last Updated" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.modifiedTime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="arcu.subjectName">
+                        <h:outputText styleClass="headerText" value="Subject" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{item.subjectName}" />
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="6" width="100%">
+                        <onc:selectCommandButton action="#{GroupResourceConfigurationHistoryUIBean.deleteSelectedUpdates}"
+                                                 value="DELETE SELECTED" target="selectedUpdates" styleClass="on-pager-button buttonsmall"/>
+
+                        <ui:param name="paginationDataTableName" value="groupResourceConfigUpdateHistoryDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{groupResourceConfigUpdateHistoryDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.GroupResourceConfigurationUpdateHistory}"/>
+                        <ui:include src="/rhq/resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+         </rich:panel>
+      </h:form>
 
    </ui:define>
 

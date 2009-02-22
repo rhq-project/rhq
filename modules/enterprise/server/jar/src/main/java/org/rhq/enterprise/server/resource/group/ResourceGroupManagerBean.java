@@ -216,7 +216,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         Query q = null;
         int numRows = -1;
 
-        q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE);
+        q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP);
         q.setParameter("groupId", groupId);
         numRows = q.executeUpdate();
 

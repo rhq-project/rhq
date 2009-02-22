@@ -23,6 +23,7 @@ import org.rhq.enterprise.gui.admin.ListAlertTemplatesUIBean;
 import org.rhq.enterprise.gui.alert.ListAlertDefinitionsUIBean;
 import org.rhq.enterprise.gui.alert.ListAlertHistoryUIBean;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
+import org.rhq.enterprise.gui.configuration.group.GroupResourceConfigurationHistoryUIBean;
 import org.rhq.enterprise.gui.configuration.history.ListConfigurationUpdateUIBean;
 import org.rhq.enterprise.gui.content.AuditTrailUIBean;
 import org.rhq.enterprise.gui.content.AvailableResourceChannelsUIBean;
@@ -204,6 +205,8 @@ public enum PageControlView {
     GroupConnectionPropertyUpdateHistory(ViewGroupConnectionPropertyHistoryUIBean.class),
     /** */
     GroupConnectionPropertyUpdateDetails(ViewGroupConnectionPropertyDetailsUIBean.class),
+    /** */
+    GroupResourceConfigurationUpdateHistory(GroupResourceConfigurationHistoryUIBean.class),
     /** */
     ResourceGroupHealthSummary(ResourceGroupMetricsTableUIBean.class),
 

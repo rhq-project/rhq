@@ -468,11 +468,15 @@ public class ConfigRenderer extends Renderer {
         // the config component) (see https://jira.jboss.org/jira/browse/RF-5588).
         modalPanel.setDomElementAttachment("form");
 
-        modalPanel.setId(ConfigurationSetComponent.getMemberValuesModalPanelId(configurationSetComponent));
-        modalPanel.setWidth(600);
-        modalPanel.setHeight(800);
+        String modalPanelId = ConfigurationSetComponent.getMemberValuesModalPanelId(configurationSetComponent);
+        modalPanel.setId(modalPanelId);
+        modalPanel.setWidth(500);
+        modalPanel.setHeight(600);
+        modalPanel.setAutosized(false);
         modalPanel.setTrimOverlayedElements(false);
         modalPanel.setStyle("overflow-y: scroll;");
+        modalPanel.setOnbeforeshow("sizeAppropriately('configSetForm:" + modalPanelId + "')");
+        modalPanel.setOnresize("keepCentered('configSetForm:" + modalPanelId + "')");
 
         // TODO: Add vertical scrollbar to the modal panel
         //       (see http://jboss.org/file-access/default/members/jbossrichfaces/freezone/docs/development/faq/en/html_single/faq.html, item 1.32).

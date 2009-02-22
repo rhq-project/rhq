@@ -227,7 +227,7 @@ class GlobalConditionCache extends AbstractConditionCache {
                 log.debug("Check OperationHistory[size=1] - " + stats);
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
-            log.error(t);
+            log.error("Error during global cache processing: ", t);
         }
         return stats;
     }
@@ -252,7 +252,7 @@ class GlobalConditionCache extends AbstractConditionCache {
                 log.debug("Check " + update + " - " + stats);
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
-            log.error(t);
+            log.error("Error during global cache processing: ", t);
         }
         return stats;
     }
@@ -279,7 +279,7 @@ class GlobalConditionCache extends AbstractConditionCache {
                 log.debug("Check Availability[size=" + availabilities.length + "] - " + stats);
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
-            log.error(t);
+            log.error("Error during global cache processing: ", t);
         }
         return stats;
     }

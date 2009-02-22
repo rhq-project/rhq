@@ -71,8 +71,12 @@ class AgentConditionCache extends AbstractConditionCache {
     private SubjectManagerLocal subjectManager;
     private EntityManagerFacadeLocal entityManagerFacade;
 
+    private int agentId;
+
     public AgentConditionCache(int agentId) {
         super();
+
+        this.agentId = agentId;
 
         measurementDataCache = new HashMap<Integer, List<NumericDoubleCacheElement>>();
         measurementTraitCache = new HashMap<Integer, List<MeasurementTraitCacheElement>>();
@@ -299,7 +303,7 @@ class AgentConditionCache extends AbstractConditionCache {
                 log.debug("Check Measurements[size=" + measurementData.length + "] - " + stats);
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
-            log.error(t);
+            log.error("Error during cache processing for agent[id=" + agentId + "]", t);
         }
         return stats;
     }
@@ -324,7 +328,7 @@ class AgentConditionCache extends AbstractConditionCache {
                 log.debug("Check Events[size=" + events.length + "] - " + stats);
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
-            log.error(t);
+            log.error("Error during cache processing for agent[id=" + agentId + "]", t);
         }
         return stats;
     }

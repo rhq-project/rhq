@@ -95,13 +95,6 @@
       <from-view-id>/rhq/resource/configuration/history.xhtml</from-view-id>
 
       <navigation-case>
-         <from-action>#{ListConfigurationUpdateUIBean.selectConfigurationToView}</from-action>
-         <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/resource/configuration/history.xhtml?id=#{param.id}&amp;configId=#{param.configId}</to-view-id>
-         <redirect/>
-      </navigation-case>
-
-      <navigation-case>
          <!-- catch all navigation-case: if any actions return 'success', go here -->
          <from-outcome>success</from-outcome>
          <to-view-id>/rhq/resource/configuration/history.xhtml?id=#{param.id}</to-view-id>

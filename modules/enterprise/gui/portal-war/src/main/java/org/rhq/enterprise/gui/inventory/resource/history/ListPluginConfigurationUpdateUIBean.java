@@ -27,7 +27,6 @@ import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
@@ -38,7 +37,6 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.configuration.history.ViewResourceConfigurationUpdateUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -62,23 +60,6 @@ public class ListPluginConfigurationUpdateUIBean extends PagedDataTableUIBean {
         }
 
         return dataModel;
-    }
-
-    public Integer getSelectedResourceConfiguration() {
-        return selectedResourceConfiguration;
-    }
-
-    public void setSelectedResourceConfiguration(Integer selectedResourceConfiguration) {
-        this.selectedResourceConfiguration = selectedResourceConfiguration;
-        FacesContextUtility.getFacesContext().getExternalContext().getRequestMap().remove(
-            ViewResourceConfigurationUpdateUIBean.MANAGED_BEAN_NAME);
-    }
-
-    public String selectConfigurationToView() {
-        AbstractResourceConfigurationUpdate selected;
-        selected = (AbstractResourceConfigurationUpdate) FacesContextUtility.getRequest().getAttribute("item");
-        setSelectedResourceConfiguration((selected != null) ? selected.getId() : null);
-        return "success";
     }
 
     public String delete() {

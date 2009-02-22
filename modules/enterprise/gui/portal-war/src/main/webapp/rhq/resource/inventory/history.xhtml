@@ -107,12 +107,13 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:commandLink action="#{ListPluginConfigurationUpdateUIBean.selectConfigurationToView}">
+                  <h:outputLink action="/rhq/resource/inventory/history.xhtml">
                      <f:param name="id" value="#{param.id}"/>
                      <f:param name="configId" value="#{item.id}"/>
-                     <h:outputText value="#{item.id} *" rendered="#{latestConfig.id == item.id}"/>
-                     <h:outputText value="#{item.id}" rendered="#{latestConfig.id != item.id}"/>
-                  </h:commandLink>
+                     <h:outputText value="#{item.id}"/>
+                     <h:outputText value="*" rendered="#{latestConfig.id == item.id}"/>
+                     <h:outputText value=" (selected)" rendered="#{!empty param.configId and param.configId == item.id}"/>
+                  </h:outputLink>
                </rich:column>
                
                <rich:column>

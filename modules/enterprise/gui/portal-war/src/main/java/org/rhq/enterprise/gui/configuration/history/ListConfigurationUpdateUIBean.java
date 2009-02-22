@@ -27,7 +27,6 @@ import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
@@ -59,23 +58,6 @@ public class ListConfigurationUpdateUIBean extends PagedDataTableUIBean {
         }
 
         return dataModel;
-    }
-
-    public Integer getSelectedResourceConfiguration() {
-        return selectedResourceConfiguration;
-    }
-
-    public void setSelectedResourceConfiguration(Integer selectedResourceConfiguration) {
-        this.selectedResourceConfiguration = selectedResourceConfiguration;
-        FacesContextUtility.getFacesContext().getExternalContext().getRequestMap().remove(
-            ViewResourceConfigurationUpdateUIBean.MANAGED_BEAN_NAME);
-    }
-
-    public String selectConfigurationToView() {
-        AbstractResourceConfigurationUpdate selected;
-        selected = (AbstractResourceConfigurationUpdate) FacesContextUtility.getRequest().getAttribute("item");
-        setSelectedResourceConfiguration((selected != null) ? selected.getId() : null);
-        return "success";
     }
 
     public String rollback() {

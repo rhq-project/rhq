@@ -22,16 +22,18 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.faces.event.PhaseEvent;
 import javax.faces.event.PhaseId;
 import javax.faces.event.PhaseListener;
+
 import org.jetbrains.annotations.Nullable;
 
+import org.jboss.seam.core.Manager;
 import org.jboss.seam.faces.FacesMessages;
-import org.jboss.seam.contexts.Contexts;
 
 /**
  * A phase listener that propogates global JSF messages across redirects.
@@ -63,8 +65,10 @@ public class FacesMessagePropogationPhaseListener implements PhaseListener {
         PhaseId phaseId = event.getPhaseId();
         if (phaseId == PhaseId.INVOKE_APPLICATION) {
             // We want to store the messages in the context after the application has done its processing.
-            if (!Contexts.isConversationContextActive() || FacesMessages.instance().getCurrentMessages().isEmpty())
+            if (!Manager.instance().isReallyLongRunningConversation()
+                || FacesMessages.instance().getCurrentMessages().isEmpty()) {
                 putGlobalFacesMessagesInSession();
+            }
         } else if (phaseId == PhaseId.RENDER_RESPONSE) {
             // If we've just rendered a response, this isn't a redirect, so we don't want to propogate messages.
             // (fix for http://jira.jboss.com/jira/browse/JBNADM-1548, ips, 08/15/07)
@@ -95,8 +99,7 @@ public class FacesMessagePropogationPhaseListener implements PhaseListener {
         return (List<FacesMessage>) sessionMap.remove(SAVED_GLOBAL_FACES_MESSAGES);
     }
 
-    private void putGlobalFacesMessagesInFacesContext(@Nullable
-    List<FacesMessage> messages) {
+    private void putGlobalFacesMessagesInFacesContext(@Nullable List<FacesMessage> messages) {
         // no work to do, if there weren't any messages
         if (messages == null) {
             return;

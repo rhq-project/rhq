@@ -23,18 +23,26 @@
 
                       <h:outputText value="#{item.scheduleName}"/>
           </h:outputLink>
-          <h:outputText value="{item.factor72}, "/>
-          <h:outputText value=" "/>
-          <h:outputText value="{item.formattedOutlier}"/>
+          <h:outputText value=": "/>
+          <h:outputText value="${item.factor72}, "/>
+          <h:outputText value=", "/>
+          <h:outputText value="${item.formattedOutlier}"/>
           <h:outputText value=" "/>
           <h:outputText value="( ${item.formattedBaseband} )"/>
+          <br/>
+          <div style="text-indent: 20px;">
+            <h:outputText value=" @ "/>
+              <h:outputText value="#{item.timestamp}">
+                <f:converter converterId="RelativeDurationConverter" />
+            </h:outputText>
+          </div>
          <br />
       </div>
    </ui:repeat>
 
    <div style="text-indent: 20px;">
-      <h:outputText value="No recent operation history"
-                    rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentOperations) eq 0}"/>
+      <h:outputText value="No OOB conditions in the last 72h"
+                    rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentOOBs) eq 0}"/>
    </div>
 
 </ui:composition>

@@ -212,8 +212,8 @@ public class MeasurementOOBComposite implements Serializable {
 
     public String getFormattedBaseband() {
 
-        String min = MeasurementConverter.format(blMin,units,true);
-        String max = MeasurementConverter.format(blMax,units,true);
+        String min = MeasurementConverter.format(blMin,units,true) + units;
+        String max = MeasurementConverter.format(blMax,units,true) + units;
 
         String result;
         if (outlierIsLow)
@@ -225,7 +225,7 @@ public class MeasurementOOBComposite implements Serializable {
     }
 
     public String getFormattedOutlier() {
-        return MeasurementConverter.format(outlier,units,true);
+        return MeasurementConverter.format(outlier,units,true) + units;
     }
 
     @Override

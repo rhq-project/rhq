@@ -54,7 +54,7 @@ public class MeasurementOOBComposite implements Serializable {
     private MeasurementUnits units;
 
     public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, long timestamp, int definitionId,
-                                   int factor72, double avg72, double blMax, double blMin) {
+                                   int factor72, double avg72, double blMax, double blMin, MeasurementUnits units) {
         this.resourceName = resourceName;
         this.resourceId = resourceId;
         this.scheduleName = scheduleName;
@@ -65,6 +65,7 @@ public class MeasurementOOBComposite implements Serializable {
         this.blMin = blMin;
         this.blMax = blMax;
         this.timestamp = timestamp;
+        this.units = units;
     }
 
         public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, long timestamp, int definitionId,

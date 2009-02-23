@@ -234,7 +234,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             List<MeasurementDataNumeric1H> datas = getOneHourDataForPKs(pks);
             for (MeasurementDataNumeric1H data : datas) {
                 MeasurementDataPK pk = new MeasurementDataPK(data.getTimestamp(), data.getScheduleId());
-                MeasurementOOBComposite comp = map.get(pk);
+                MeasurementOOBComposite comp = map2.get(pk);
                 comp.setData(data);
                 comp.calculateOutlier();
             }

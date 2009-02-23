@@ -36,7 +36,7 @@ import javax.persistence.Table;
 @NamedQueries({
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE,
                 query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.displayName," +
-                        "           sched.id,o.id.timestamp,def.id,max(o.oobFactor),avg(o.oobFactor),bal.baselineMin , bal.baselineMax) " +
+                        "           sched.id,o.id.timestamp,def.id,max(o.oobFactor),avg(o.oobFactor),bal.baselineMin , bal.baselineMax, def.units) " +
                         "FROM MeasurementOOB o "+
                         "LEFT JOIN o.schedule sched " +
                         "LEFT JOIN sched.definition def " +

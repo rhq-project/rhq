@@ -50,7 +50,6 @@ public class MeasurementOOBComposite implements Serializable {
     private double dataMin;
     private double dataMax;
     private double outlier;
-    private boolean outlierIsLow;
     private MeasurementUnits units;
 
     public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, long timestamp, int definitionId,
@@ -203,11 +202,9 @@ public class MeasurementOOBComposite implements Serializable {
     public void calculateOutlier() {
         if ((blMin - dataMin) < (dataMax-blMax)) {
             outlier = dataMax;
-            outlierIsLow = false;
         }
         else {
             outlier = dataMin;
-            outlierIsLow = true;
         }
     }
 
@@ -216,11 +213,7 @@ public class MeasurementOOBComposite implements Serializable {
         String min = MeasurementConverter.format(blMin,units,true) ;
         String max = MeasurementConverter.format(blMax,units,true) ;
 
-        String result;
-        if (outlierIsLow)
-            result = max + " - " + min;
-        else
-            result = min + " - " + max;
+        String result = min + " - " + max;
 
         return result;
     }

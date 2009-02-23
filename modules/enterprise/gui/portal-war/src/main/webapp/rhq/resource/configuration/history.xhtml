@@ -92,7 +92,9 @@
                   
                   <onc:select name="selectedItems"
                               value="#{item.id}"
-                              rendered="#{latestConfig.id != item.id and item.status ne 'INPROGRESS'}" />
+                              rendered="#{latestConfig.id != item.id 
+                                          and item.status ne 'INPROGRESS'
+                                          and empty item.aggregateConfigurationUpdate}" />
                </rich:column>
                
                <rich:column>
@@ -102,7 +104,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputLink action="/rhq/resource/configuration/history.xhtml">
+                  <h:outputLink value="/rhq/resource/configuration/history.xhtml">
                      <f:param name="id" value="#{param.id}"/>
                      <f:param name="configId" value="#{item.id}"/>
                      <h:outputText value="#{item.id}"/>
@@ -158,10 +160,24 @@
                   
                   <h:outputText value="#{item.subjectName}"/>
                </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Update Type" />
+                  </f:facet>
+                  
+                  <h:outputText value="Individual Resource Update" rendered="#{empty item.aggregateConfigurationUpdate}" />
+                  <h:outputLink value="/rhq/group/configuration/details.xhtml"
+                                rendered="#{not empty item.aggregateConfigurationUpdate}">
+                     <f:param name="groupId" value="#{item.aggregateConfigurationUpdate.group.id}"/>
+                     <f:param name="arcuId" value="#{item.aggregateConfigurationUpdate.id}"/>
+                     <h:outputText value="Group Update Member" />
+                  </h:outputLink>
+               </rich:column>
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="#{ResourceUIBean.permissions.configure ? 6 : 5}" width="100%">
+                     <rich:column colspan="#{ResourceUIBean.permissions.configure ? 7 : 6}" width="100%">
                         <onc:selectCommandButton action="#{ListConfigurationUpdateUIBean.delete}"
                                                  value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
                                                  rendered="${ResourceUIBean.permissions.configure}" />
@@ -180,7 +196,7 @@
                </f:facet>
                
             </rich:dataTable>
-
+            <h:outputText value="Note: group updates must be deleted before individual updates become eligible for deletion" />
             </h:panelGrid>
 
          </rich:panel>

@@ -84,7 +84,7 @@ THIS TEXT WILL BE REMOVED AS WELL.
          <onc:subtab name="History" url="/rhq/group/operation/groupOperationHistory.xhtml"/>
       </onc:tab>
 
-      <onc:tab name="Events" image="/images/icon_hub_e.gif" rendered="#{ResourceGroupUIBean.compatible}">
+      <onc:tab name="Events" image="/images/icon_hub_e.gif" rendered="#{ResourceGroupUIBean.compatible and ResourceGroupUIBean.facets.event}">
          <onc:subtab name="History" url="/rhq/group/events/history.xhtml"/>
       </onc:tab>
       

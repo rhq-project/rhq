@@ -123,15 +123,17 @@ public class ResourceTreeContextMenuUIBean {
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 
-        url = "/rhq/resource/events/history.xhtml?id=" + resourceId;
-        link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-        image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_e.gif", "Events");
-        image.setStyle(STYLE_QUICK_LINKS_ICON);
-
         url = "/rhq/resource/inventory/view.xhtml?id=" + resourceId;
         link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
         image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_i.gif", "Inventory");
         image.setStyle(STYLE_QUICK_LINKS_ICON);
+
+        if (LookupUtil.getSystemManager().isMonitoringEnabled()) {
+            url = "/rhq/resource/alert/listAlertDefinitions.xhtml?id=" + resourceId;
+            link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_a.gif", "Alerts");
+            image.setStyle(STYLE_QUICK_LINKS_ICON);
+        }
 
         if (facets.isConfiguration()) {
             url = "/rhq/resource/configuration/view.xhtml?id=" + resourceId;
@@ -147,10 +149,10 @@ public class ResourceTreeContextMenuUIBean {
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 
-        if (LookupUtil.getSystemManager().isMonitoringEnabled()) {
-            url = "/rhq/resource/alert/listAlertDefinitions.xhtml?id=" + resourceId;
+        if (facets.isEvent()) {
+            url = "/rhq/resource/events/history.xhtml?id=" + resourceId;
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_a.gif", "Alerts");
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_e.gif", "Events");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 

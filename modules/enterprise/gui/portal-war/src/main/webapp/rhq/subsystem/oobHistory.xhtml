@@ -28,7 +28,7 @@
                             value="#{oobHistoryDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="26%, 26%, 8%, 8%, 8%, 8%, 8%, 8% "
+                            columnsWidth="26%, 26%, 8%, 6%, 8%, 6%, 6%, 6%, 6%, 6%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -70,6 +70,12 @@
                    </h:outputLink>
                 </rich:column>
 
+                <rich:column>
+                    <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Band"/>
+                    </f:facet>
+                    <h:outputText value="#{item.formattedBaseband}"/>
+                </rich:column>
 
                <rich:column style="background-color: rgb(216,216,216);text-align:right">
                   <f:facet name="header">
@@ -81,6 +87,13 @@
                   <h:outputText value="#{item.factor72}" >
                   </h:outputText>
                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Outlier value"/>
+                    </f:facet>
+                    <h:outputText value="#{item.formattedOutlier}"/>
+                </rich:column>
 
                 <rich:column style="text-align:right">
                    <f:facet name="header">
@@ -135,7 +148,7 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="8" width="100%">
+                     <rich:column colspan="10" width="100%">
 
                         <ui:param name="paginationDataTableName" value="oobHistoryDataTable"/>
                         <ui:param name="paginationDataModel" value="#{oobHistoryDataModel}"/>

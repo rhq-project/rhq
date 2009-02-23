@@ -219,12 +219,25 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             //  add 24h and 48h factors
             Map<Integer, MeasurementOOBComposite> map = new HashMap<Integer, MeasurementOOBComposite>(results.size());
             List<Integer> scheduleIds = new ArrayList<Integer>(results.size());
+            List<MeasurementDataPK> pks = new ArrayList<MeasurementDataPK>(results.size());
+            Map<MeasurementDataPK,MeasurementOOBComposite> map2 = new HashMap<MeasurementDataPK,MeasurementOOBComposite>();
             for (MeasurementOOBComposite comp : results) {
                 scheduleIds.add(comp.getScheduleId());
                 map.put(comp.getScheduleId(), comp);
+                MeasurementDataPK key = new MeasurementDataPK(comp.getTimestamp(), comp.getScheduleId());
+                map2.put(key,comp);
+                pks.add(key);
+
             }
 
-            // TODO add outlier data
+            //  add outlier data
+            List<MeasurementDataNumeric1H> datas = getOneHourDataForPKs(pks);
+            for (MeasurementDataNumeric1H data : datas) {
+                MeasurementDataPK pk = new MeasurementDataPK(data.getTimestamp(), data.getScheduleId());
+                MeasurementOOBComposite comp = map.get(pk);
+                comp.setData(data);
+                comp.calculateOutlier();
+            }
 
             begin = end - (2L * 86400L * 1000L);
 

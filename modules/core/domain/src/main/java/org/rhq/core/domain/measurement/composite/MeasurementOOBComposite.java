@@ -217,15 +217,15 @@ public class MeasurementOOBComposite implements Serializable {
 
         String result;
         if (outlierIsLow)
-            result = max + "-" + min;
+            result = max + " - " + min;
         else
-            result = min + "-" + max;
+            result = min + " - " + max;
 
         return result;
     }
 
     public String getFormattedOutlier() {
-        return MeasurementConverter.format(outlier,units,true) + units;
+        return MeasurementConverter.format(outlier,units,true) ;
     }
 
     @Override

@@ -10,7 +10,7 @@
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-   <h3>Recent Operations</h3>
+   <h3>Recent Out of Bound metrics</h3>
    <ui:repeat var="item"
               value="#{ResourceOverviewUIBean.recentOOBs}">
       <div style="text-indent: 20px;">
@@ -23,17 +23,17 @@
 
                       <h:outputText value="#{item.scheduleName}"/>
           </h:outputLink>
-          <h:outputText value=": "/>
-          <h:outputText value="${item.factor72}, "/>
-          <h:outputText value="${item.formattedOutlier}"/>
-          <h:outputText value=" "/>
-          <h:outputText value="( ${item.formattedBaseband} )"/>
-          <br/>
-          <div style="text-indent: 20px;">
-            <h:outputText value=" @ "/>
+          <strong>
+          <h:outputText value=" f= ${item.factor72}, "/>
+          </strong>
+          <h:outputText value=" @ "/>
               <h:outputText value="#{item.timestamp}">
                 <f:converter converterId="RelativeDurationConverter" />
             </h:outputText>
+          <br/>
+          <div style="text-indent: 30px;">
+              <h:outputText value="value= ${item.formattedOutlier}"/>
+              <h:outputText value=", band= ( ${item.formattedBaseband} )"/>
           </div>
          <br />
       </div>

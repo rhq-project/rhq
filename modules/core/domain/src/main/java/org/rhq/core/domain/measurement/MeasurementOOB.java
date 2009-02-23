@@ -48,7 +48,7 @@ import javax.persistence.Table;
                         "  AND sched.resource = res " +
                         "  AND bal.schedule = sched " +
                         "  AND (:resourceId = res.id OR :resourceId is null )" +
-                        "GROUP BY res.name, res.id, def.displayName, sched.id, o.id.timestamp, def.id, bal.baselineMin , bal.baselineMax "
+                        "GROUP BY res.name, res.id, def.displayName, sched.id, o.id.timestamp, def.id, bal.baselineMin , bal.baselineMax, def.units "
                             ),
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT,
                 query = "  SELECT sched.id " +

@@ -287,23 +287,24 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
         List<MeasurementOOBComposite> results = query.getResultList();
 
-        // we have the n OOBs, so lets fetch the MeasurementData for those
-        List<MeasurementDataPK> pks = new ArrayList<MeasurementDataPK>(results.size());
-        Map<MeasurementDataPK,MeasurementOOBComposite> map = new HashMap<MeasurementDataPK,MeasurementOOBComposite>();
-        for (MeasurementOOBComposite comp : results) {
-            MeasurementDataPK key = new MeasurementDataPK(comp.getTimestamp(), comp.getScheduleId());
-            pks.add(key);
-            map.put(key,comp);
+        if (!results.isEmpty()) {
+            // we have the n OOBs, so lets fetch the MeasurementData for those
+            List<MeasurementDataPK> pks = new ArrayList<MeasurementDataPK>(results.size());
+            Map<MeasurementDataPK,MeasurementOOBComposite> map = new HashMap<MeasurementDataPK,MeasurementOOBComposite>();
+            for (MeasurementOOBComposite comp : results) {
+                MeasurementDataPK key = new MeasurementDataPK(comp.getTimestamp(), comp.getScheduleId());
+                pks.add(key);
+                map.put(key,comp);
+            }
+            // compute and add the outlier data
+            List<MeasurementDataNumeric1H> datas = getOneHourDataForPKs(pks);
+            for (MeasurementDataNumeric1H data : datas) {
+                MeasurementDataPK pk = new MeasurementDataPK(data.getTimestamp(), data.getScheduleId());
+                MeasurementOOBComposite comp = map.get(pk);
+                comp.setData(data);
+                comp.calculateOutlier();
+            }
         }
-        // compute and add the outlier data
-        List<MeasurementDataNumeric1H> datas = getOneHourDataForPKs(pks);
-        for (MeasurementDataNumeric1H data : datas) {
-            MeasurementDataPK pk = new MeasurementDataPK(data.getTimestamp(), data.getScheduleId());
-            MeasurementOOBComposite comp = map.get(pk);
-            comp.setData(data);
-            comp.calculateOutlier();
-        }
-
         // return the result
         PageList<MeasurementOOBComposite> result = new PageList<MeasurementOOBComposite>(results,n,pc);
 

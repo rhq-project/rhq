@@ -46,7 +46,6 @@ public class ListConfigurationUpdateUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ListConfigurationUpdateUIBean";
 
     private Resource resource;
-    private Integer selectedResourceConfiguration;
 
     public ListConfigurationUpdateUIBean() {
     }

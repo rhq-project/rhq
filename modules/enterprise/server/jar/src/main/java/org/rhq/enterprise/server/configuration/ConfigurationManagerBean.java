@@ -78,6 +78,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
+import org.rhq.enterprise.server.alert.engine.internal.Tuple;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -1358,43 +1359,50 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return (Long) countQuery.getSingleResult();
     }
 
-    public Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(ResourceGroup compatibleGroup) {
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-            Configuration.QUERY_GET_RESOURCE_CONFIG_BY_GROUP_ID);
-        countQuery.setParameter("resourceGroupId", compatibleGroup.getId());
+    @SuppressWarnings("unchecked")
+    public Map<Integer, Configuration> getResourceConfigurationMapForAggregateUpdate(
+        Integer aggregateResourceConfigurationUpdateId) {
+        Tuple<String, Object> aggregateIdParameter = new Tuple<String, Object>("aggregateConfigurationUpdateId",
+            aggregateResourceConfigurationUpdateId);
+        return getResourceConfiguratioMap_helper(Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_AGGREGATE_ID, 100,
+            aggregateIdParameter);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<Integer, Configuration> getResourceConfigurationMapForCompatibleGroup(ResourceGroup compatibleGroup) {
+        Tuple<String, Object> groupIdParameter = new Tuple<String, Object>("resourceGroupId", compatibleGroup.getId());
+        return getResourceConfiguratioMap_helper(Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID, 100,
+            groupIdParameter);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Integer, Configuration> getResourceConfiguratioMap_helper(String memberQueryName, int maxSize,
+        Tuple<String, Object>... parameters) {
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, memberQueryName);
+        Query query = entityManager.createNamedQuery(memberQueryName);
+
+        for (Tuple<String, Object> param : parameters) {
+            countQuery.setParameter(param.lefty, param.righty);
+            query.setParameter(param.lefty, param.righty);
+        }
+
+        PersistenceUtility.setDataPage(query, new PageControl(0, maxSize)); // limit the results
+
         long count = (Long) countQuery.getSingleResult();
-        final int MAX_RESULTS = 100;
         int resultsSize;
-        if (count > MAX_RESULTS) {
-            log.error("Compatible group " + compatibleGroup + " contains more than " + MAX_RESULTS + " members - "
-                + "returning only " + MAX_RESULTS + " Configurations (the maximum allowed).");
-            resultsSize = MAX_RESULTS;
+        if (count > maxSize) {
+            log.error("Configuration set contains more than " + maxSize + " members - " + "returning only " + maxSize
+                + " Configurations (the maximum allowed).");
+            resultsSize = maxSize;
         } else {
             resultsSize = (int) count;
         }
 
-        // Configurations are very expensive to load, so load 'em in chunks to ease the strain on the DB.
-        PageControl pageControl = new PageControl(0, 10);
-        Query query = entityManager.createNamedQuery(Configuration.QUERY_GET_RESOURCE_CONFIG_BY_GROUP_ID);
-        query.setParameter("resourceGroupId", compatibleGroup.getId());
-
-        Map<Integer, Configuration> results = new HashMap(resultsSize);
-        int rowsProcessed = 0;
-        while (true) {
-            List<Object[]> pagedResults = query.getResultList();
-
-            if (pagedResults.size() <= 0)
-                break;
-
-            for (Object[] result : pagedResults)
-                results.put((Integer) result[0], (Configuration) result[1]);
-
-            rowsProcessed += pagedResults.size();
-            if (rowsProcessed >= resultsSize)
-                break;
-
-            pageControl.setPageNumber(pageControl.getPageNumber() + 1); // advance the page
-            PersistenceUtility.setDataPage(query, pageControl); // and update the query to retrieve the new page
+        // initialize the map to be 150% more than the results, so that the fill factor only reached 66%
+        Map<Integer, Configuration> results = new HashMap<Integer, Configuration>((int) (resultsSize * 1.5));
+        List<Object[]> pagedResults = query.getResultList();
+        for (Object[] result : pagedResults) {
+            results.put((Integer) result[0], (Configuration) result[1]);
         }
         return results;
     }

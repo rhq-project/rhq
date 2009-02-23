@@ -18,15 +18,22 @@
  */
 package org.rhq.enterprise.gui.configuration.group;
 
+import java.util.Map;
+
 import javax.faces.model.DataModel;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.gui.configuration.propset.ConfigurationSet;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -39,6 +46,9 @@ public class GroupResourceConfigurationHistoryDetailsUIBean extends PagedDataTab
 
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
+    private Map<Integer, Configuration> resourceConfigurations;
+    private ConfigurationSet configurationSet;
+
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
@@ -47,6 +57,24 @@ public class GroupResourceConfigurationHistoryDetailsUIBean extends PagedDataTab
                 GroupResourceConfigurationHistoryDetailsUIBean.MANAGED_BEAN_NAME);
         }
         return dataModel;
+    }
+
+    public ConfigurationSet getConfigurationSet() {
+        if (configurationSet == null) {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            ResourceGroup group = EnterpriseFacesContextUtility.getResourceGroup();
+            int groupResourceConfigurationUpdateId = getGroupResourceConfigurationUpdateId();
+            
+            this.resourceConfigurations = this.configurationManager
+                .getResourceConfigurationMapForAggregateUpdate(groupResourceConfigurationUpdateId);
+            this.configurationSet = GroupResourceConfigurationUtility.buildConfigurationSet(subject, group,
+                resourceConfigurations);
+        }
+        return configurationSet;
+    }
+
+    private int getGroupResourceConfigurationUpdateId() {
+        return FacesContextUtility.getRequiredRequestParameter("arcuId", Integer.class);
     }
 
     private class ListGroupResourceConfigurationUpdateDetailsDataModel extends
@@ -58,10 +86,9 @@ public class GroupResourceConfigurationHistoryDetailsUIBean extends PagedDataTab
 
         @Override
         public PageList<ConfigurationUpdateComposite> fetchPage(PageControl pc) {
-            int aggregateResourceConfigurationUpdateId = FacesContextUtility.getRequiredRequestParameter("arcuId",
-                Integer.class);
+            int groupResourceConfigurationUpdateId = getGroupResourceConfigurationUpdateId();
             PageList<ConfigurationUpdateComposite> childUpdates = configurationManager
-                .getResourceConfigurationUpdateCompositesByParentId(aggregateResourceConfigurationUpdateId, pc);
+                .getResourceConfigurationUpdateCompositesByParentId(groupResourceConfigurationUpdateId, pc);
 
             return childUpdates;
         }

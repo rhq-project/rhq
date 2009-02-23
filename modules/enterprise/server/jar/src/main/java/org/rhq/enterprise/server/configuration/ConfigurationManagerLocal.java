@@ -413,7 +413,10 @@ public interface ConfigurationManagerLocal {
     int scheduleAggregateResourceConfigurationUpdate(Subject whoami, int compatibleGroupId,
         Map<Integer, Configuration> memberConfigurations) throws Exception;
 
-    Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(ResourceGroup compatibleGroup);
+    Map<Integer, Configuration> getResourceConfigurationMapForAggregateUpdate(
+        Integer aggregateResourceConfigurationUpdateId);
+
+    Map<Integer, Configuration> getResourceConfigurationMapForCompatibleGroup(ResourceGroup compatibleGroup);
 
     boolean isAggregateResourceConfigurationUpdateInProgress(Subject whoami, int groupId);
 }

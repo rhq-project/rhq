@@ -11,6 +11,7 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="http://richfaces.org/a4j"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
       
 <ui:composition template="/rhq/group/layout/main.xhtml">
@@ -20,18 +21,32 @@
    
    <ui:define name="content">
 
+      <h:outputLink value="/rhq/group/configuration/history.xhtml">
+         <f:param name="groupId" value="#{param.groupId}" />
+         <h:outputText value="&lt; Return to History List"/>
+      </h:outputLink>
+
+      <rich:simpleTogglePanel switchType="client" 
+                              label="Group Resource Configuration Update Request (click to expand/collapse)"
+                              opened="false">
+         <h:form id="configSetForm" onsubmit="prepareInputsForSubmission(this)">
+            <a4j:region selfRendered="false">
+               <a4j:outputPanel layout="block" ajaxRendered="true" keepTransient="true">
+                  <onc:configSet id="rhq_configSet"
+                                 configurationSet="#{GroupResourceConfigurationHistoryDetailsUIBean.configurationSet}"/>
+               </a4j:outputPanel>
+            </a4j:region>
+         </h:form>
+      </rich:simpleTogglePanel>
+      <br />
+
       <h:form id="resourceConfigurationUpdateDetailsForm">
          <input type="hidden" name="groupId" value="${param.groupId}"/>
          <input type="hidden" name="arcuId" value="${param.arcuId}"/>
 
-         <h:outputLink value="/rhq/group/configuration/history.xhtml">
-            <f:param name="groupId" value="#{param.groupId}" />
-            <h:outputText value="&lt; Return to History List"/>
-         </h:outputLink>
-
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Resource Configuration Updates Results"/>
+               <h:outputText value="Individual Resource Configuration Updates"/>
             </f:facet>
 
             <h:panelGrid columns="1" width="100%" style="min-width: 800px;">
@@ -132,15 +147,13 @@
             </rich:dataTable>
  
             </h:panelGrid>
-
          </rich:panel>
- 
-         <h:outputLink value="/rhq/group/configuration/history.xhtml">
-            <f:param name="groupId" value="#{param.groupId}" />
-            <h:outputText value="&lt; Return to History List"/>
-         </h:outputLink>
- 
       </h:form>
+      
+      <h:outputLink value="/rhq/group/configuration/history.xhtml">
+         <f:param name="groupId" value="#{param.groupId}" />
+         <h:outputText value="&lt; Return to History List"/>
+      </h:outputLink>
 
    </ui:define>
 

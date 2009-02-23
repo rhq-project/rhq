@@ -89,4 +89,14 @@ public interface MeasurementOOBManagerLocal {
      * @param sched the schedule for which we want to clean out the data
      */
     void removeOOBsForSchedule(Subject subject, MeasurementSchedule sched);
+
+    /**
+     * Returns the highest n OOBs for the passed resource id within the last 72h
+     * @param subject caller
+     * @param end end time
+     * @param resourceId the resource we are interested in
+     * @param n max number of entries wanted
+     * @return
+     */
+    PageList<MeasurementOOBComposite> getHighestNOOBsForResource(Subject subject,  long end, int resourceId, int n);
 }

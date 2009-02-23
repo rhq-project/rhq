@@ -26,13 +26,13 @@
          <td width="50%" valign="top" nowrap="nowrap">
             <ui:include src="/rhq/resource/summary/table/recentAlerts.xhtml" />
             <br />
-            <rich:separator lineType="beveled" 
+            <rich:separator lineType="beveled"
                             width="50%" height="3px"
                             style="align: center;" />
-            <ui:include src="/rhq/resource/summary/table/recentOperations.xhtml" 
+            <ui:include src="/rhq/resource/summary/table/recentOperations.xhtml"
                         rendered="#{ResourceUIBean.facets.operation}" />
             <br />
-            <rich:separator lineType="beveled" 
+            <rich:separator lineType="beveled"
                             width="50%" height="3px"
                             style="align: center;" />
             <ui:include src="/rhq/resource/summary/table/recentEventCounts.xhtml"
@@ -42,11 +42,17 @@
             <ui:include src="/rhq/resource/summary/table/recentConfigUpdates.xhtml"
                         rendered="#{ResourceUIBean.facets.configuration}" />
             <br />
-            <rich:separator lineType="beveled" 
+            <rich:separator lineType="beveled"
                             width="50%" height="3px"
                             style="align: center;" />
-            <ui:include src="/rhq/resource/summary/table/recentPackageHistory.xhtml" 
+            <ui:include src="/rhq/resource/summary/table/recentPackageHistory.xhtml"
                         rendered="#{ResourceUIBean.facets.content}" />
+
+            <rich:separator lineType="beveled"
+                            width="50%" height="3px"
+                            style="align: center;" />
+            <ui:include src="/rhq/resource/summary/table/recentOOBs.xhtml"
+                        rendered="#{ResourceUIBean.facets.measurement}" />
          </td>
       </tr>
    </table>

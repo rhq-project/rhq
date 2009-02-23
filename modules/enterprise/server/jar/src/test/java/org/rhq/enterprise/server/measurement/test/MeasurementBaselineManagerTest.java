@@ -305,7 +305,10 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             List<MeasurementOOBComposite> comps = oobManager.getSchedulesWithOOBs(overlord, 5000, pc);
    //         System.out.println("Composites: " + comps);
-            assert comps.size() == 2;
+            assert comps.size() == 2 : "Expected 2 composites, but got " + comps.size();
+
+            comps = oobManager.getHighestNOOBsForResource(overlord,5000,platform.getId(),2);
+            assert comps.size() == 1:  "Expected 1 composite, but got " + comps.size();
 
             // Compute some more OOBs
             oobManager.computeOOBsFromHourBeginingAt(overlord,1000);

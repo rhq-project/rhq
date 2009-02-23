@@ -12,6 +12,7 @@ import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.alert.engine.internal.Tuple;
@@ -27,6 +28,7 @@ public class ResourceOverviewUIBean {
 
     private Subject subject;
     private int resourceId;
+    private List<MeasurementOOBComposite> recentOObs;
 
     public ResourceOverviewUIBean() {
         subject = EnterpriseFacesContextUtility.getSubject();
@@ -83,6 +85,11 @@ public class ResourceOverviewUIBean {
         return LookupUtil.getContentUIManager().getInstalledPackageHistoryForResource(resourceId, lastFive);
     }
 
+    private List<MeasurementOOBComposite> getRecentOObs(Subject subject, int resourceId, int n) {
+        return LookupUtil.getOOBManager().getHighestNOOBsForResource(subject,System.currentTimeMillis(),resourceId,n);
+    }
+
+
     public List<Alert> getRecentAlerts() {
         if (recentAlerts == null) {
             recentAlerts = getAlerts(subject, resourceId, 5);
@@ -117,4 +124,12 @@ public class ResourceOverviewUIBean {
         }
         return recentPackageHistory;
     }
+
+    public List<MeasurementOOBComposite> getRecentOOBs() {
+        if (recentOObs == null)
+            recentOObs = getRecentOObs(subject,resourceId, 5);
+
+        return recentOObs;
+    }
+
 }

@@ -35,16 +35,20 @@ import javax.persistence.Table;
  */
 @NamedQueries({
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE,
-                query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.displayName,sched.id,def.id,max(o.oobFactor),avg(o.oobFactor)) " +
+                query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.displayName," +
+                        "           sched.id,o.id.timestamp,def.id,max(o.oobFactor),avg(o.oobFactor),bal.baselineMin , bal.baselineMax) " +
                         "FROM MeasurementOOB o "+
                         "LEFT JOIN o.schedule sched " +
                         "LEFT JOIN sched.definition def " +
                         "LEFT JOIN sched.resource res " +
+                        "LEFT JOIN sched.baseline bal " +
                         "WHERE (o.id.timestamp >= :begin AND o.id.timestamp <= :end )" +
                         "  AND o.id.scheduleId = sched.id " +
                         "  AND sched.definition = def " +
                         "  AND sched.resource = res " +
-                        "GROUP BY res.name, res.id, def.displayName, sched.id, def.id "
+                        "  AND bal.schedule = sched " +
+                        "  AND (:resourceId = res.id OR :resourceId is null )" +
+                        "GROUP BY res.name, res.id, def.displayName, sched.id, o.id.timestamp, def.id, bal.baselineMin , bal.baselineMax "
                             ),
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT,
                 query = "  SELECT sched.id " +
@@ -76,6 +80,21 @@ import javax.persistence.Table;
         @NamedQuery(name=MeasurementOOB.COUNT_FOR_DATE,
                 query = "SELECT COUNT(o) FROM MeasurementOOB o " +
                         "WHERE o.id.timestamp = :timestamp"
+        ),
+        @NamedQuery(name=MeasurementOOB.GET_HIGHEST_FACTORS_FOR_RESOURCE,
+                query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.displayName," +
+                        "           sched.id,o.id.timestamp,def.id,o.oobFactor,bal.baselineMin , bal.baselineMax, def.units ) " +
+                        "FROM MeasurementOOB o "+
+                        "LEFT JOIN o.schedule sched " +
+                        "LEFT JOIN sched.definition def " +
+                        "LEFT JOIN sched.resource res " +
+                        "LEFT JOIN sched.baseline bal " +
+                        "WHERE (o.id.timestamp >= :begin AND o.id.timestamp <= :end )" +
+                        "  AND o.id.scheduleId = sched.id " +
+                        "  AND sched.definition = def " +
+                        "  AND sched.resource = res " +
+                        "  AND bal.schedule = sched " +
+                        "  AND :resourceId = res.id "// +
         )
 })
 @Entity
@@ -91,6 +110,8 @@ public class MeasurementOOB {
     public static final String DELETE_OUTDATED = "DeleteOutdatedOOBs";
 
     public static final String COUNT_FOR_DATE = "CountForDate";
+
+    public static final String GET_HIGHEST_FACTORS_FOR_RESOURCE = "GetHighestFactorForResource";
 
     public static final String INSERT_QUERY_POSTGRES =
             "insert into rhq_measurement_oob (oob_factor, schedule_id,  time_stamp )  \n" +

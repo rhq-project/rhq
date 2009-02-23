@@ -46,6 +46,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
 import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.MeasurementDataPK;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -208,8 +209,8 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         queryCount.setParameter("end", end);
         query.setParameter("begin", begin);
         query.setParameter("end", end);
+        query.setParameter("resourceId", null);
 
-        query.getResultList();
 
         List<MeasurementOOBComposite> results = query.getResultList();
         long totalCount = queryCount.getResultList().size();
@@ -222,6 +223,9 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
                 scheduleIds.add(comp.getScheduleId());
                 map.put(comp.getScheduleId(), comp);
             }
+
+            // TODO add outlier data
+
             begin = end - (2L * 86400L * 1000L);
 
             Query q = entityManager.createNamedQuery(MeasurementOOB.GET_FACTOR_FOR_SCHEDULES);
@@ -256,6 +260,69 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         }
 
         return new PageList<MeasurementOOBComposite>(results, (int) totalCount, pc);
+    }
+
+    /**
+     * Returns the highest n OOBs for the passed resource id within the last 72h
+     * @param subject caller
+     * @param end end time
+     * @param resourceId the resource we are interested in
+     * @param n max number of entries wanted
+     * @return
+     */
+    public PageList<MeasurementOOBComposite> getHighestNOOBsForResource(Subject subject,  long end, int resourceId, int n) {
+
+        PageControl pc = new PageControl(0,n);
+        pc.initDefaultOrderingField("o.oobFactor", PageOrdering.DESC);
+
+        long begin = end - (3L * 86400L * 1000L);
+        if (begin<0)
+            begin = 0;
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            MeasurementOOB.GET_HIGHEST_FACTORS_FOR_RESOURCE, pc);
+        query.setParameter("begin", begin);
+        query.setParameter("end", end);
+        query.setParameter("resourceId", resourceId);
+
+        List<MeasurementOOBComposite> results = query.getResultList();
+
+        // we have the n OOBs, so lets fetch the MeasurementData for those
+        List<MeasurementDataPK> pks = new ArrayList<MeasurementDataPK>(results.size());
+        Map<MeasurementDataPK,MeasurementOOBComposite> map = new HashMap<MeasurementDataPK,MeasurementOOBComposite>();
+        for (MeasurementOOBComposite comp : results) {
+            MeasurementDataPK key = new MeasurementDataPK(comp.getTimestamp(), comp.getScheduleId());
+            pks.add(key);
+            map.put(key,comp);
+        }
+        // compute and add the outlier data
+        List<MeasurementDataNumeric1H> datas = getOneHourDataForPKs(pks);
+        for (MeasurementDataNumeric1H data : datas) {
+            MeasurementDataPK pk = new MeasurementDataPK(data.getTimestamp(), data.getScheduleId());
+            MeasurementOOBComposite comp = map.get(pk);
+            comp.setData(data);
+            comp.calculateOutlier();
+        }
+
+        // return the result
+        PageList<MeasurementOOBComposite> result = new PageList<MeasurementOOBComposite>(results,n,pc);
+
+        return result;
+
+    }
+
+    /**
+     * Return the 1h numeric data for the passed primary keys (schedule, timestamp)
+     * @param pks Primary keys to look up
+     * @return List of 1h data
+     */
+    private List<MeasurementDataNumeric1H> getOneHourDataForPKs(List<MeasurementDataPK> pks) {
+
+        Query q = entityManager.createQuery("SELECT data FROM MeasurementDataNumeric1H data WHERE data.id IN (:pks)");
+        q.setParameter("pks",pks);
+        List<MeasurementDataNumeric1H> res = q.getResultList();
+
+        return res;
     }
 
 }

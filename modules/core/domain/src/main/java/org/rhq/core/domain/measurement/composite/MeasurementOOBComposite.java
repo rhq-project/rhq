@@ -20,6 +20,10 @@ package org.rhq.core.domain.measurement.composite;
 
 import java.io.Serializable;
 
+import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
+import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.util.MeasurementConverter;
+
 /**
  * Composite that holds information about an oob
  *
@@ -33,6 +37,7 @@ public class MeasurementOOBComposite implements Serializable {
     private int resourceId;
     private String scheduleName;
     private int scheduleId;
+    private long timestamp;
     private int definitionId;
     private int factor72;
     private int factor48;
@@ -40,10 +45,16 @@ public class MeasurementOOBComposite implements Serializable {
     private int avg72;
     private int avg48;
     private int avg24;
+    private double blMin;
+    private double blMax;
+    private double dataMin;
+    private double dataMax;
+    private double outlier;
+    private boolean outlierIsLow;
+    private MeasurementUnits units;
 
-
-    public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, int definitionId,
-                                   int factor72, double avg72) {
+    public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, long timestamp, int definitionId,
+                                   int factor72, double avg72, double blMax, double blMin) {
         this.resourceName = resourceName;
         this.resourceId = resourceId;
         this.scheduleName = scheduleName;
@@ -51,6 +62,23 @@ public class MeasurementOOBComposite implements Serializable {
         this.definitionId = definitionId;
         this.factor72 = (int) factor72;
         this.avg72 = (int)avg72;
+        this.blMin = blMin;
+        this.blMax = blMax;
+        this.timestamp = timestamp;
+    }
+
+        public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, long timestamp, int definitionId,
+                                   int factor72, double blMax, double blMin, MeasurementUnits unit) {
+        this.resourceName = resourceName;
+        this.resourceId = resourceId;
+        this.scheduleName = scheduleName;
+        this.scheduleId = scheduleId;
+        this.definitionId = definitionId;
+        this.factor72 = (int) factor72;
+        this.blMin = blMin;
+        this.blMax = blMax;
+        this.timestamp = timestamp;
+        this.units = unit;
     }
 
     public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, int definitionId,
@@ -130,6 +158,76 @@ public class MeasurementOOBComposite implements Serializable {
         this.avg24 = avg24;
     }
 
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public double getBlMin() {
+        return blMin;
+    }
+
+    public double getBlMax() {
+        return blMax;
+    }
+
+    public double getDataMin() {
+        return dataMin;
+    }
+
+    public double getDataMax() {
+        return dataMax;
+    }
+
+    public void setDataMin(double dataMin) {
+        this.dataMin = dataMin;
+    }
+
+    public void setDataMax(double dataMax) {
+        this.dataMax = dataMax;
+    }
+
+    public void setData(MeasurementDataNumeric1H data) {
+        this.dataMin = data.getMin();
+        this.dataMax = data.getMax();
+    }
+
+    public double getOutlier() {
+        return outlier;
+    }
+
+    public void setOutlier(double outlier) {
+        this.outlier = outlier;
+    }
+
+    public void calculateOutlier() {
+        if ((blMin - dataMin) < (dataMax-blMax)) {
+            outlier = dataMax;
+            outlierIsLow = false;
+        }
+        else {
+            outlier = dataMin;
+            outlierIsLow = true;
+        }
+    }
+
+    public String getFormattedBaseband() {
+
+        String min = MeasurementConverter.format(blMin,units,true);
+        String max = MeasurementConverter.format(blMax,units,true);
+
+        String result;
+        if (outlierIsLow)
+            result = max + "-" + min;
+        else
+            result = min + "-" + max;
+
+        return result;
+    }
+
+    public String getFormattedOutlier() {
+        return MeasurementConverter.format(outlier,units,true);
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -138,10 +236,19 @@ public class MeasurementOOBComposite implements Serializable {
         sb.append(", resourceId=").append(resourceId);
         sb.append(", scheduleName='").append(scheduleName).append('\'');
         sb.append(", scheduleId=").append(scheduleId);
+        sb.append(", timestamp=").append(timestamp);
         sb.append(", definitionId=").append(definitionId);
         sb.append(", factor72=").append(factor72);
         sb.append(", factor48=").append(factor48);
         sb.append(", factor24=").append(factor24);
+        sb.append(", avg72=").append(avg72);
+        sb.append(", avg48=").append(avg48);
+        sb.append(", avg24=").append(avg24);
+        sb.append(", blMin=").append(blMin);
+        sb.append(", blMax=").append(blMax);
+        sb.append(", dataMin=").append(dataMin);
+        sb.append(", dataMax=").append(dataMax);
+        sb.append(", outlier=").append(outlier);
         sb.append('}');
         return sb.toString();
     }

@@ -132,7 +132,7 @@
                               <rich:componentControl for="lastDownloadErrorModalPanel" attachTo="lastDownloadErrorModalPanelHideLink" operation="hide" event="onclick"/>
                            </h:panelGroup>
                         </f:facet>
-                        <h:outputText escape="false" value="#{ContentSourceDetailsUIBean.contentSource.loadErrorMessage}" />
+                        <PRE><h:outputText value="#{ContentSourceDetailsUIBean.contentSource.loadErrorMessage}" /></PRE>
                      </rich:modalPanel>                     
                   </td>
                </tr>
@@ -395,7 +395,7 @@
                            <rich:componentControl for="resultsModalPanel" attachTo="resultsModelPanelHideLink" operation="hide" event="onclick"/>
                         </h:panelGroup>
                      </f:facet>
-                     <h:outputText value="#{syncitem.results}" />
+                     <PRE><h:outputText value="#{syncitem.results}" /></PRE>
                   </rich:modalPanel>
                </rich:column>
                

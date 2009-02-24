@@ -115,10 +115,25 @@
                   <td align="right"><b>Last Download Error:</b></td>
                   <td align="left">
                      <h:outputLink rendered="#{ContentSourceDetailsUIBean.contentSource.loadErrorMessage ne null}"
-                                   value="javascript:displayMessageModal('Last Download Error','#{ContentSourceDetailsUIBean.contentSource.loadErrorMessage}')">
+                                   value="#" id="lastDownloadErrorLink">
                         <h:outputText value="Click here to view..."/>
+                        <rich:componentControl for="lastDownloadErrorModalPanel" attachTo="lastDownloadErrorLink" operation="show" event="onclick"/>
                      </h:outputLink>
                      <h:outputText rendered="#{ContentSourceDetailsUIBean.contentSource.loadErrorMessage eq null}" value="None"/>
+                     <rich:modalPanel id="lastDownloadErrorModalPanel" width="350" height="300">
+                        <f:facet name="header">
+                           <h:panelGroup>
+                              <h:outputText value="Last Download Error" />
+                           </h:panelGroup>
+                        </f:facet>
+                        <f:facet name="controls">
+                           <h:panelGroup>
+                              <h:graphicImage value="/images/close.png" style="cursor:pointer" id="lastDownloadErrorModalPanelHideLink"/>
+                              <rich:componentControl for="lastDownloadErrorModalPanel" attachTo="lastDownloadErrorModalPanelHideLink" operation="hide" event="onclick"/>
+                           </h:panelGroup>
+                        </f:facet>
+                        <h:outputText escape="false" value="#{ContentSourceDetailsUIBean.contentSource.loadErrorMessage}" />
+                     </rich:modalPanel>                     
                   </td>
                </tr>
             </table>
@@ -363,10 +378,25 @@
                   </f:facet>
                
                   <h:outputLink rendered="#{syncitem.results ne null}"
-                                value="javascript:displayMessageModal('Results','#{syncitem.results}')">
-                     <h:outputText value="Click to view..."/>
+                                value="#" id="resultsLink">
+                     <h:outputText value="Click here to view..."/>
+                     <rich:componentControl for="resultsModalPanel" attachTo="resultsLink" operation="show" event="onclick"/>
                   </h:outputLink>
                   <h:outputText rendered="#{syncitem.results eq null}" value=""/>
+                  <rich:modalPanel id="resultsModalPanel" width="350" height="300">
+                     <f:facet name="header">
+                        <h:panelGroup>
+                           <h:outputText value="Results" />
+                        </h:panelGroup>
+                     </f:facet>
+                     <f:facet name="controls">
+                        <h:panelGroup>
+                           <h:graphicImage value="/images/close.png" style="cursor:pointer" id="resultsModelPanelHideLink"/>
+                           <rich:componentControl for="resultsModalPanel" attachTo="resultsModelPanelHideLink" operation="hide" event="onclick"/>
+                        </h:panelGroup>
+                     </f:facet>
+                     <h:outputText value="#{syncitem.results}" />
+                  </rich:modalPanel>
                </rich:column>
                
                <f:facet name="footer">
@@ -388,6 +418,7 @@
             </h:panelGrid>
             
          </rich:panel>
+         
       </h:form>
 
       <!-- PACKAGE VERSION LIST -->

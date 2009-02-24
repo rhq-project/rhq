@@ -186,9 +186,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         updateImplicitMembership(overlord, resource);
 
         // Because this resource is in the process of creation it has no measurement schedules
-        // defined. These are needed before applying alert templates for the resource type. 
+        // defined. These are needed before applying alert templates for the resource type.
         // This call will create the schedules as necessary and, as a side effect, apply the templates.
-        // TODO: jshaughn - This fails for resource types without metric definitions 
+        // TODO: jshaughn - This fails for resource types without metric definitions
         measurementScheduleManager.getSchedulesForResourceAndItsDescendants(resource.getId(), false);
     }
 
@@ -373,13 +373,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         /*
          * Perform bulk deletes at the beginning of a new transaction only: From bill burke's ejb3 book:
-         * "Be very careful how you use bulk UPDATE and DELETE. It is possible, depending on the vendor impl 
-         * to create inconsistencies between the database and entities that are already being managed by 
-         * the current persistence context. Vendor impls are required only to execute the update/delete 
-         * directly on the database, they do not have to modify the state of any currently managed entity. 
-         * For this reason it is recommended that you do these operations within their own transaction or 
-         * at the beginning of a transaction (before any entities are access that might be affected by these 
-         * bulk op calls). Alternatively, executing entitymanager.flush() and clear() before executing a bulk 
+         * "Be very careful how you use bulk UPDATE and DELETE. It is possible, depending on the vendor impl
+         * to create inconsistencies between the database and entities that are already being managed by
+         * the current persistence context. Vendor impls are required only to execute the update/delete
+         * directly on the database, they do not have to modify the state of any currently managed entity.
+         * For this reason it is recommended that you do these operations within their own transaction or
+         * at the beginning of a transaction (before any entities are access that might be affected by these
+         * bulk op calls). Alternatively, executing entitymanager.flush() and clear() before executing a bulk
          * op will keep you safe"
          */
 
@@ -412,7 +412,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         q.executeUpdate();
 
         // bulk delete: unmap from explicit groups
-        // TODO: should this be a NamedQuery to protect the cache? How to do this on a JoinTable(jshaughn)        
+        // TODO: should this be a NamedQuery to protect the cache? How to do this on a JoinTable(jshaughn)
         q = entityManager.createNativeQuery(ResourceGroup.QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS);
         q.setParameter("resourceIds", resources);
         q.executeUpdate();
@@ -428,17 +428,17 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         q.setParameter("resources", resources);
         q.executeUpdate();
 
-        // bulk delete: measurement traits, must come before MeasurementSchedule 
+        // bulk delete: measurement traits, must come before MeasurementSchedule
         q = entityManager.createNamedQuery(MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
-        // bulk delete: measurement call time data values, must come before MeasurementSchedule and call time data keys   
+        // bulk delete: measurement call time data values, must come before MeasurementSchedule and call time data keys
         q = entityManager.createNamedQuery(CallTimeDataValue.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
-        // bulk delete: measurement call time data keys, must come before MeasurementSchedule   
+        // bulk delete: measurement call time data keys, must come before MeasurementSchedule
         q = entityManager.createNamedQuery(CallTimeDataKey.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
@@ -468,12 +468,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         q.setParameter("resources", resources);
         q.executeUpdate();
 
-        // bulk delete: Installed package history install step, must come before installed package history  
+        // bulk delete: Installed package history install step, must come before installed package history
         q = entityManager.createNamedQuery(PackageInstallationStep.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
 
-        // bulk delete: Installed package history, must come before installed packages, content request  
+        // bulk delete: Installed package history, must come before installed packages, content request
         q = entityManager.createNamedQuery(InstalledPackageHistory.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
@@ -581,7 +581,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         agentStatusManager.updateByResource(resourceId);
     }
 
-    /** 
+    /**
      * @param overlord
      * @param resourceId
      * @return The number of scheduled operations for the resourceId
@@ -1202,7 +1202,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         query.setParameter("ids", resourceIds);
 
         // We are not doing a query with constructor here, as this would fire a select per
-        // resource and row. So we need to construct the ResourceWithAvailability objects ourselves. 
+        // resource and row. So we need to construct the ResourceWithAvailability objects ourselves.
         List<Object[]> objs = query.getResultList();
         for (Object[] ob : objs) {
             Resource r = (Resource) ob[0];
@@ -1393,7 +1393,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
-    // similar to Arrays.copyOfRange, but this allows execution on JDK5 
+    // similar to Arrays.copyOfRange, but this allows execution on JDK5
     private Integer[] copyOfRange(Integer[] arr, int from, int to) {
         if (to < from) {
             throw new IllegalArgumentException(to + "<" + from);
@@ -1558,7 +1558,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         /*
          * don't use WITH_PARENT form for the queryCount; after it runs through the PersistenceUtility
-         * you'll get the error "query specified join fetching, but the owner of the fetched association 
+         * you'll get the error "query specified join fetching, but the owner of the fetched association
          * was not present in the select list"
          */
         if ((excludeIds != null) && (excludeIds.length != 0)) {
@@ -1688,7 +1688,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         /*
          * don't use WITH_PARENT form for the queryCountName; after it runs through the PersistenceUtility
-         * you'll get the error "query specified join fetching, but the owner of the fetched association 
+         * you'll get the error "query specified join fetching, but the owner of the fetched association
          * was not present in the select list"
          */
         if (authorizationManager.isInventoryManager(subject)) {
@@ -1910,10 +1910,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // Note: I didn't put these queries in as named queries since they have very specific prefeching
         // for this use case.
 
-        String ql = "SELECT res "
-            + "FROM Resource res join fetch res.currentAvailability join fetch res.resourceType rt "
-            + "left join fetch rt.subCategory sc left join fetch sc.parentSubCategory "
-            + "WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g WHERE g.id = :groupId)";
+        String ql = "SELECT res \n" +
+                "FROM Resource res \n" +
+                "  JOIN FETCH res.currentAvailability JOIN FETCH res.resourceType rt \n" +
+                "  LEFT JOIN FETCH rt.subCategory sc LEFT JOIN FETCH sc.parentSubCategory \n" +
+                "WHERE \n" +
+                "    res.id IN (SELECT rr.id FROM Resource rr JOIN rr.explicitGroups g WHERE g.id = :groupId)\n" +
+                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
+                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
+                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
+                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)";
 
         EntityManager em = LookupUtil.getEntityManager();
         Query query = em.createQuery(ql);
@@ -1921,17 +1927,22 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         query.setParameter("groupId", compatibleGroupId);
         List<Resource> resources = query.getResultList();
 
-        if (!authorizationManager.isInventoryManager(user)) {
-            String secQueryString = "SELECT res.id "
-                + "FROM Resource res "
-                + "WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g WHERE g.id = :groupId) "
-                + " AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)";
+        if (false) { //!authorizationManager.isInventoryManager(user)) {
+            String secQueryString = "SELECT res \n" +
+                "FROM Resource res \n" +
+                "  JOIN FETCH res.currentAvailability JOIN FETCH res.resourceType rt \n" +
+                "  LEFT JOIN FETCH rt.subCategory sc LEFT JOIN FETCH sc.parentSubCategory \n" +
+                "WHERE \n" +
+                "    (res.id IN (SELECT rr.id FROM Resource rr JOIN rr.explicitGroups g WHERE g.id = :groupId)\n" +
+                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
+                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
+                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
+                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId) \n"
+                + ") AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)";
             Query secQuery = em.createQuery(secQueryString);
             secQuery.setParameter("groupId", compatibleGroupId);
             secQuery.setParameter("subject", user);
-
             List<Integer> visible = secQuery.getResultList();
-
             ListIterator<Resource> iter = resources.listIterator();
             while (iter.hasNext()) {
                 Resource res = iter.next();

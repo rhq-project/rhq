@@ -55,29 +55,38 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     ResourceGroupManagerLocal resourceGroupManager;
 
     public ResourceGroup createAutoClusterBackingGroup(Subject subject, ClusterKey clusterKey, boolean addResources) {
-        ResourceGroup result = null;
+        ResourceGroup autoClusterBackingGroup = null;
 
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY);
         query.setParameter("clusterKey", clusterKey.toString());
-        if (!query.getResultList().isEmpty()) {
-            throw new IllegalArgumentException("Backing Group exists for clusterKey: " + clusterKey);
-        }
+
 
         ResourceType resourceType = entityManager.find(ResourceType.class, ClusterKey.getResourceType(clusterKey));
         ResourceGroup resourceGroup = entityManager.find(ResourceGroup.class, clusterKey.getClusterGroupId());
 
-        // For AutoClusters the group name is the unique cluster key
-        result = new ResourceGroup(clusterKey.toString(), resourceType);
-        result.setClusterResourceGroup(resourceGroup);
-        result.setVisible(false);
 
         try {
-            resourceGroupManager.createResourceGroup(subject, result);
-        } catch (ResourceGroupAlreadyExistsException e) {
-            // This should not happen since the group name is actually generated
-            log.error("Unexpected Error, group exists: " + e);
-            return null;
+            autoClusterBackingGroup = (ResourceGroup) query.getSingleResult();
+        } catch (NoResultException nre) {
+             try {
+
+                 // For AutoClusters the group name is the unique cluster key
+                 autoClusterBackingGroup = new ResourceGroup(clusterKey.toString(), resourceType);
+                 autoClusterBackingGroup.setClusterResourceGroup(resourceGroup);
+                 autoClusterBackingGroup.setVisible(false);
+
+                int id = resourceGroupManager.createResourceGroup(subject, autoClusterBackingGroup);
+                 autoClusterBackingGroup = entityManager.find(ResourceGroup.class, id);
+
+            } catch (ResourceGroupAlreadyExistsException e) {
+                // This should not happen since the group name is actually generated
+                log.error("Unexpected Error, group exists: " + e);
+                return null;
+            }
         }
+
+
+
 
         if (addResources) {
             List<Resource> resources = getAutoClusterResources(subject, clusterKey);
@@ -87,13 +96,13 @@ public class ClusterManagerBean implements ClusterManagerLocal {
             }
 
             try {
-                resourceGroupManager.addResourcesToGroup(subject, result.getId(), resourceIds);
+                resourceGroupManager.addResourcesToGroup(subject, autoClusterBackingGroup.getId(), resourceIds);
             } catch (ResourceGroupUpdateException e) {
                 log.error("Could not add resources to group:" + e);
             }
         }
 
-        return result;
+        return autoClusterBackingGroup;
     }
 
     public ResourceGroup getAutoClusterBackingGroup(Subject subject, ClusterKey clusterKey) {

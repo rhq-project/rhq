@@ -12,62 +12,90 @@
       xmlns:rich="http://richfaces.ajax4jsf.org/rich"
       xmlns:onc="http://jboss.org/on/component">
 
- <body>
+<body>
 
-      <f:view>
+<f:view>
 
-         Usage: The following parameters must be set in the calling page
+    Usage: The following parameters must be set in the calling page
 
-         paginationDataTableName - Name of the data table to be controlled
-         paginationDataModel - Data model of the underlying table being controlled (used for total row count)
-         paginationPageControl - Page control value to set when changing the number of rows per page
+    paginationDataTableName - Name of the data table to be controlled
+    paginationDataModel - Data model of the underlying table being controlled (used for total row count)
+    paginationPageControl - Page control value to set when changing the number of rows per page
 
-         <ui:composition>
+    <ui:composition>
 
-    <h:form> <!-- datascroll tag wants a form to be present -->
+        <h:form id="leftNavGroupTreeForm"> <!-- datascroll tag wants a form to be present -->
 
-        <input type="hidden" name="groupId" value="#{param.groupId}"/>
+            <input type="hidden" name="groupId" value="#{param.groupId}"/>
+            <input type="hidden" name="parentGroupId" value="#{param.parentGroupId}"/>
 
-        <a4j:region renderRegionOnly="true">
+            <a4j:region renderRegionOnly="true">
 
-            <f:facet name="header">
-                Server Resources (in single element pages)
-            </f:facet>
+                <f:facet name="header">
+                    Server Resources (in single element pages)
+                </f:facet>
 
+                <h:panelGroup id="leftTreeHolder">
 
-            <h:form id="leftNavGroupTreeForm">
+                    <ui:param name="clusterSize" value="#{ResourceGroupTreeModelUIBean.roots[0].members.size}"/>
 
-
-
-                <!--stateAdvisor="#{ResourceTreeStateAdvisor}"-->
+                    <!--stateAdvisor="#{ResourceTreeStateAdvisor}"-->
                     <rich:tree style="width: 100%; height: 100%" switchType="ajax"
                                var="treeNode"
+                               stateAdvisor="#{ResourceGroupTreeStateAdvisor}"
+                               nodeSelectListener="#{ResourceGroupTreeStateAdvisor.nodeSelectListener}"
+                               adviseNodeSelected="#{ResourceGroupTreeStateAdvisor.adviseNodeSelected}"
+                               ajaxSubmitSelection="true"
                                status="commonStatus"
                                icon="/images/icn_tree_Platform.gif"
                                nodeFace="#{treeNode.data.class.simpleName}">
-                        
-                        <rich:recursiveTreeNodesAdaptor roots="#{ResourceGroupTreeModelUIBean.roots}" var="groupTreeItem"
-                                                        nodes="#{groupTreeItem.nodes}">
+
+                        <rich:recursiveTreeNodesAdaptor roots="#{ResourceGroupTreeModelUIBean.roots}"
+                                                        var="groupTreeItem"
+                                                        nodes="#{groupTreeItem.children}">
 
 
                         </rich:recursiveTreeNodesAdaptor>
 
 
                         <rich:treeNode type="ResourceGroup"
+                                       icon="/images/icn_tree_Cluster_on.png"
+                                       iconLeaf="/images/icn_tree_Cluster_on.png">
+
+                            <h:outputText value="#{groupTreeItem.data.name}"/>
+
+                        </rich:treeNode>
+
+                        <rich:treeNode type="AutoGroupComposite"
                                        iconLeaf="/images/icn_tree_folder.gif" icon="/images/icn_tree_folder.gif">
-                            <h:outputText value="#{groupTreeItem}"/>
+
+                            <h:outputText
+                                    value="#{groupTreeItem.data.subcategory == null ? groupTreeItem.data.resourceType.name : groupTreeItem.data.subcategory.name}"/>
+
 
                         </rich:treeNode>
 
 
-                        <rich:treeNode type="ResourceWithAvailability"
-                                       icon="/images/icn_tree_#{groupTreeItem.data.resource.resourceType.category}.gif"
-                                       iconLeaf="/images/icn_tree_#{groupTreeItem.data.resource.resourceType.category}.gif">
+                        <rich:treeNode type="ClusterKey"
+                                       icon="/images/icn_tree_group_on.png"
+                                       iconLeaf="/images/icn_tree_group_on.png">
 
 
-                            <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000" status="commonStatus">
+                            <h:outputText value="#{groupTreeItem.members[0]}"/>
+                            <h:outputText value="(#{groupTreeItem.members.size} / #{clusterSize})" rendered="#{groupTreeItem.members.size lt clusterSize}"/>
+                        </rich:treeNode>
+
+
+                        <rich:treeNode type="Resource"
+                                       icon="/images/icn_tree_#{groupTreeItem.data.resourceType.category}_#{groupTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'off' : 'on'}.png"
+                                       iconLeaf="/images/icn_tree_#{groupTreeItem.data.resourceType.category}_#{groupTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'off' : 'on'}.png">
+
+
+                            <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000"
+                                         status="commonStatus">
                                 <f:param name="contextResourceId" value="#{groupTreeItem.data.resource.id}"/>
-                                <f:param name="contextResourceTypeId" value="#{groupTreeItem.data.resource.resourceType.id}"/>
+                                <f:param name="contextResourceTypeId"
+                                         value="#{groupTreeItem.data.resource.resourceType.id}"/>
 
                                 <rich:componentControl disableDefault="true" event="oncomplete" for="resourceMenu"
                                                        operation="show">
@@ -87,24 +115,30 @@
                     </rich:tree>
 
 
+                    <!--<a4j:log popup="false" level="WARN" style="width: 800px; height: 300px;"></a4j:log>-->
 
-            </h:form>
+                    <!-- TODO: Implement GroupTreeContextMenuUIBean. -->
+                    <rich:contextMenu attached="false" id="resourceMenu" binding="#{ResourceTreeContextMenuUIBean.menu}"
+                                      disableDefaultMenu="true">
 
+                    </rich:contextMenu>
 
-
-        <!--<a4j:log popup="false" level="WARN" style="width: 800px; height: 300px;"></a4j:log>-->
-
-        <!-- TODO: Implement GroupTreeContextMenuUIBean. -->
-        <rich:contextMenu attached="false" id="resourceMenu" binding="#{ResourceTreeContextMenuUIBean.menu}" disableDefaultMenu="true">
-
-        </rich:contextMenu>
-
-        </a4j:region>
+                </h:panelGroup>
 
 
-    </h:form>
+            </a4j:region>
 
-          </ui:composition>
+
+        </h:form>
+
+        <f:verbatim>
+            <script type="text/javascript">
+
+                Event.observe("#{rich:clientId('leftTreeHolder')}", "contextmenu", Event.stop);
+            </script>
+        </f:verbatim>
+
+    </ui:composition>
 
 </f:view>
 

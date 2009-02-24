@@ -68,10 +68,12 @@ import org.rhq.core.domain.resource.ResourceType;
         + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s "
         + "LEFT JOIN g.implicitResources res LEFT JOIN res.currentAvailability a "
         + "LEFT JOIN g.resourceType type "
-        + "WHERE s = :subject " + "AND g.groupCategory = :groupCategory " + "AND "
-        + "(UPPER(g.name) LIKE :search "
-        + "OR UPPER(g.description) LIKE :search " + "OR :search is null) "
-        + "AND ( type is null OR ( "
+        + "WHERE s = :subject "
+        + " AND g.visible = true "
+        + " AND g.groupCategory = :groupCategory "
+        + " AND (UPPER(g.name) LIKE :search "
+        + " OR UPPER(g.description) LIKE :search " + "OR :search is null) "
+        + " AND ( type is null OR ( "
         + "      (type = :resourceType AND :resourceType is not null) "
         + "    OR "
         + "      (type.category = :category AND :category is not null) "
@@ -81,51 +83,61 @@ import org.rhq.core.domain.resource.ResourceType;
         + "GROUP BY g,g.name,g.resourceType.name,g.description "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT, query = "SELECT count(DISTINCT g) "
         + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s " + "LEFT JOIN g.resourceType type "
-        + "WHERE s = :subject " + "AND g.groupCategory = :groupCategory " + "AND " + "(UPPER(g.name) LIKE :search "
-        + "OR UPPER(g.description) LIKE :search " + "OR :search is null) " + "AND ( type is null OR ( "
-        + "      (type = :resourceType AND :resourceType is not null) " + "    OR "
-        + "      (type.category = :category AND :category is not null) " + "    OR "
-        + "      (:resourceType is null AND :category is null ) " + "     ) ) "),
+        + "WHERE s = :subject "
+        + " AND g.visible = true "
+        + " AND g.groupCategory = :groupCategory "
+        + " AND (UPPER(g.name) LIKE :search "
+        + " OR UPPER(g.description) LIKE :search "
+        + "OR :search is null) "
+        + "AND ( type is null OR ( "
+        + "      (type = :resourceType AND :resourceType is not null) "
+        + "    OR (type.category = :category AND :category is not null) "
+        + "    OR (:resourceType is null AND :category is null )     ) ) "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_ADMIN, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(res)) "
         + "FROM ResourceGroup g "
         + "LEFT JOIN g.implicitResources res LEFT JOIN res.currentAvailability a "
         + "LEFT JOIN g.resourceType type "
         + "WHERE g.groupCategory = :groupCategory "
-        + "AND "
-        + "(UPPER(g.name) LIKE :search "
-        + "OR UPPER(g.description) LIKE :search "
-        + "OR :search is null) "
-        + "AND ( type is null OR ( "
+        + " AND g.visible = true "
+        + " AND (UPPER(g.name) LIKE :search "
+        + " OR UPPER(g.description) LIKE :search "
+        + " OR :search is null) "
+        + " AND ( type is null OR ( "
         + "      (type = :resourceType AND :resourceType is not null) "
-        + "    OR "
-        + "      (type.category = :category AND :category is not null) "
-        + "    OR "
-        + "      (:resourceType is null AND :category is null ) "
-        + "     ) ) "
+        + "    OR (type.category = :category AND :category is not null) "
+        + "    OR (:resourceType is null AND :category is null )  ) ) "
         + "GROUP BY g,g.name,g.resourceType.name,g.description "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT_ADMIN, query = "SELECT count(g) FROM ResourceGroup g "
         + "LEFT JOIN g.resourceType type "
         + "WHERE g.groupCategory = :groupCategory "
-        + "AND "
-        + "(UPPER(g.name) LIKE :search "
-        + "OR UPPER(g.description) LIKE :search "
-        + "OR :search is null) "
-        + "AND ( type is null OR ( "
+        + " AND g.visible = true "
+        + " AND (UPPER(g.name) LIKE :search "
+        + " OR UPPER(g.description) LIKE :search "
+        + " OR :search is null) "
+        + " AND ( type is null OR ( "
         + "      (type = :resourceType AND :resourceType is not null) "
-        + "    OR "
-        + "      (type.category = :category AND :category is not null) "
-        + "    OR "
-        + "      (:resourceType is null AND :category is null) " + "     ) ) "),
+        + "    OR (type.category = :category AND :category is not null) "
+        + "    OR (:resourceType is null AND :category is null)    ) ) "),
+
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_COUNT, query = "SELECT COUNT(DISTINCT rg) "
-        + "  FROM ResourceGroup AS rg JOIN rg.roles r JOIN r.subjects s " + " WHERE s = :subject "
+        + "  FROM ResourceGroup AS rg JOIN rg.roles r JOIN r.subjects s "
+        + " WHERE s = :subject "
+        + " AND rg.visible = true "
         + "   AND rg.groupCategory = :category "),
+
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_COUNT_admin, query = "SELECT COUNT(rg) "
-        + "  FROM ResourceGroup AS rg " + " WHERE rg.groupCategory = :category "),
+        + "  FROM ResourceGroup AS rg "
+        + " WHERE rg.groupCategory = :category "
+        + " AND rg.visible = true "),
 
     // finds all the groups that the given resource belongs to
     @NamedQuery(name = ResourceGroup.QUERY_FIND_GROUP_IDS_BY_RESOURCE_ID, query = "SELECT DISTINCT g.id "
-        + "  FROM ResourceGroup g " + "       LEFT JOIN g.explicitResources er "
-        + "       LEFT JOIN g.implicitResources ir " + " WHERE er.id = :id " + "    OR ir.id = :id "),
+        + "  FROM ResourceGroup g "
+        + "       LEFT JOIN g.explicitResources er "
+        + "       LEFT JOIN g.implicitResources ir "
+        + " WHERE er.id = :id "
+            + "    OR ir.id = :id "),
+
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_NAME, query = "SELECT rg FROM ResourceGroup AS rg WHERE LOWER(rg.name) = LOWER(:name)"),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY, query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.name = :clusterKey"),
     @NamedQuery(name = ResourceGroup.QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE, query = "SELECT DISTINCT rg "
@@ -152,12 +164,17 @@ import org.rhq.core.domain.resource.ResourceType;
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT rg FROM Resource AS res JOIN res.implicitGroups rg WHERE res.id = :id "),
 
     // TODO: Add authz checks to the following two queries (i.e. only return groups that are viewable by the specified subject).
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_RESOURCE_ID_COMPOSITE, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), rg, COUNT(memberRes)) "
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_RESOURCE_ID_COMPOSITE,
+    query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), rg, COUNT(memberRes)) "
         + "FROM Resource AS res JOIN res.implicitGroups rg "
         + "LEFT JOIN rg.implicitResources memberRes JOIN memberRes.currentAvailability a "
-        + "WHERE res.id = :resourceId " + "GROUP BY rg, rg.name, rg.description "),
+        + "WHERE res.id = :resourceId "
+        + " AND rg.visible = true "
+        + "GROUP BY rg, rg.name, rg.description "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_RESOURCE_ID_COMPOSITE_COUNT, query = "SELECT COUNT(rg) "
-        + "FROM Resource AS res JOIN res.implicitGroups rg " + "WHERE res.id = :resourceId "),
+        + "FROM Resource AS res JOIN res.implicitGroups rg "
+            + "WHERE res.id = :resourceId "
+            + " AND rg.visible = true "),
 
     /* the following two are for auto-groups summary */
     @NamedQuery(name = ResourceGroup.QUERY_FIND_AUTOGROUP_BY_ID, query = "SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(AVG(a.availabilityType), res.parentResource, res.resourceType, COUNT(res)) "

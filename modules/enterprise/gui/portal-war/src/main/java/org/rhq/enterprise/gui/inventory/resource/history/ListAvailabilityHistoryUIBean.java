@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.inventory.resource.history;
 
+import java.util.Date;
+
 import javax.faces.model.DataModel;
 
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -66,5 +68,9 @@ public class ListAvailabilityHistoryUIBean extends PagedDataTableUIBean {
                 .findByResource(EnterpriseFacesContextUtility.getSubject(), resourceId, pageControl);
             return availabilities;
         }
+    }
+
+    public Date getCurrentTime() {
+        return new Date();
     }
 }

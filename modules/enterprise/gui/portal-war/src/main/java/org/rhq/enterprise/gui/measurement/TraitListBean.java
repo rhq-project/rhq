@@ -41,10 +41,11 @@ public class TraitListBean {
 
     private MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
 
-    /**
-     * Fetch the data in the constructor.
-     */
     public TraitListBean() {
+
+    }
+
+    private  void load() {
         int resourceId = EnterpriseFacesContextUtility.getResource().getId();
         List<MeasurementDataTrait> traits = this.dataManager.getCurrentTraitsForResource(resourceId,
             DisplayType.SUMMARY);
@@ -69,10 +70,14 @@ public class TraitListBean {
     }
 
     public List<List<MeasurementDataTrait>> getTraitPairs() {
+        if (this.traitPairs == null)
+            load();
         return this.traitPairs;
     }
 
     public int getTotalTraits() {
+        if (this.traitPairs == null)
+                    load();
         return this.totalTraits;
     }
 }

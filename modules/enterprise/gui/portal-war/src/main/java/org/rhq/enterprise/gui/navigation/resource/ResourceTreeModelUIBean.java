@@ -71,7 +71,7 @@ public class ResourceTreeModelUIBean {
         rootNode = load(rootResource.getId(), resources);
     }
 
-    private ResourceTreeNode load(int rootId, List<Resource> resources) {
+    public static ResourceTreeNode load(int rootId, List<Resource> resources) {
         Resource found = null;
         for (Resource res : resources) {
             if (res.getId() == rootId) {
@@ -83,7 +83,7 @@ public class ResourceTreeModelUIBean {
         return root;
     }
 
-    private void load(ResourceTreeNode parentNode, List<Resource> resources) {
+    public static void load(ResourceTreeNode parentNode, List<Resource> resources) {
 
         if (parentNode.getData() instanceof Resource) {
             Resource parentResource = (Resource) parentNode.getData();

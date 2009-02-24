@@ -18,6 +18,7 @@
 <ui:composition>
 
     <h:form id="leftNavTreeForm"> <!-- tree needs a form to be present -->
+        <h:panelGroup id="leftTreeHolder">
 
         <input type="hidden" name="id" value="#{param.id}"/>
         <input type="hidden" name="parent" value="#{param.parent}"/>
@@ -29,7 +30,6 @@
                 <h:outputText value="#{ResourceUIBean.message}" />
             </a4j:outputPanel>
 
-            <h:form id="leftNavResourceTreeForm">
                 <rich:tree style="width: 100%; height: 100%; " switchType="ajax"
                            stateAdvisor="#{ResourceTreeStateAdvisor}"
                            status="commonStatus"
@@ -47,15 +47,16 @@
                                                     nodes="#{resourceTreeItem.children}" />
 
                     <rich:treeNode type="AutoGroupComposite"
-                                   iconLeaf="/images/icn_tree_folder.gif" 
-                                   icon="/images/icn_tree_folder.gif">
+                                   iconLeaf="/images/icn_tree_#{resourceTreeItem.data.resourceType == null? 'Category' : 'group'}_on.png"
+                                   icon="/images/icn_tree_#{resourceTreeItem.data.resourceType == null? 'Category' : 'group'}_on.png">
+
                         <h:outputText value="#{resourceTreeItem}" 
                                       styleClass="availLink#{resourceTreeItem.data.availability == 0 ? 'Down' : resourceTreeItem.data.availability == 1 ? 'Up' : 'Mixed'}"/>
                     </rich:treeNode>
 
                     <rich:treeNode type="LockedResource"
-                                   icon="/images/lock_16.png"
-                                   iconLeaf="/images/lock_16.png">
+                                   icon="/images/icn_tree_Lock.png"
+                                   iconLeaf="/images/icn_tree_Lock.png">
                         <h:outputText value="#{resourceTreeItem}"
                                       styleClass="availLink#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'Down' : 'Up'}"/>
                     </rich:treeNode>
@@ -81,7 +82,9 @@
                                       styleClass="availLink#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'Down' : 'Up'}"/>
                     </rich:treeNode>
                 </rich:tree>
-            </h:form>
+
+
+
 
        <!-- </a4j:region>
 
@@ -90,11 +93,27 @@
             <!-- This can be useful for debugging ajax update problems -->
             <!--<a4j:log popup="false" level="WARN" style="width: 800px; height: 300px;"></a4j:log>-->
 
+                <a4j:outputPanel layout="none" id="contextMenuPanel">
 
-            <rich:contextMenu attached="false" id="resourceMenu" binding="#{ResourceTreeContextMenuUIBean.menu}"
-                              disableDefaultMenu="true" style="z-index: 25;" />
+                    <h:panelGroup id="contentMenuPanelGroup">
+                    <rich:contextMenu attached="true" id="resourceMenu" binding="#{ResourceTreeContextMenuUIBean.menu}"
+                                      disableDefaultMenu="false" style="z-index: 50;" />
+                    </h:panelGroup>
+
+                </a4j:outputPanel>
+
+
         </a4j:region>
+        </h:panelGroup>
     </h:form>
+
+    <f:verbatim>
+        <script type="text/javascript">
+
+            Event.observe("#{rich:clientId('leftTreeHolder')}", "contextmenu", Event.stop);
+        </script>
+    </f:verbatim>
+
 </ui:composition>
 
 </f:subview>

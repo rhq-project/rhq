@@ -60,15 +60,13 @@ public class ClusterKey {
     private String namedKey = null;
 
     /** Construct ClusterKey with to-be-defined Hierarcrhy */
-    private ClusterKey(int clusterResourceGroupId) {
-        super();
+    public ClusterKey(int clusterResourceGroupId) {
         this.clusterGroupId = clusterResourceGroupId;
         this.hierarchy = new ArrayList<ClusterKey.Node>();
     }
 
     /** Construct ClusterKey for a top level AutoCluster */
     public ClusterKey(int clusterResourceGroupId, int resourceTypeId, String resourceKey) {
-        super();
         this.clusterGroupId = clusterResourceGroupId;
         this.hierarchy = new ArrayList<ClusterKey.Node>();
         this.hierarchy.add(new ClusterKey.Node(resourceTypeId, resourceKey));
@@ -76,14 +74,15 @@ public class ClusterKey {
 
     /** Construct a new ClusterKey for a child AutoCluster of the provided parentKey*/
     public ClusterKey(ClusterKey parentKey, int childResourceTypeId, String childResourceKey) {
-        super();
         List<ClusterKey.Node> rootClusterNodes = parentKey.getHierarchy();
 
         this.clusterGroupId = parentKey.getClusterGroupId();
-        this.hierarchy = new ArrayList<ClusterKey.Node>(rootClusterNodes.size() + 1);
-        Collections.copy(this.hierarchy, rootClusterNodes);
+        this.hierarchy = new ArrayList<ClusterKey.Node>(rootClusterNodes); //.size() + 1);
+//        Collections.copy(this.hierarchy, rootClusterNodes);
         this.hierarchy.add(new ClusterKey.Node(childResourceTypeId, childResourceKey));
     }
+
+
 
     public int getClusterGroupId() {
         return clusterGroupId;
@@ -202,6 +201,24 @@ public class ClusterKey {
         return nodes.get(nodes.size() - 1).getResourceTypeId();
     }
 
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ClusterKey)) return false;
+
+        ClusterKey that = (ClusterKey) o;
+
+        if (!getKey().equals(that.getKey())) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return getKey().hashCode();
+    }
+
     /**
      * Immutable class representing a node in an AutoCluster hierarchy. The node describes a
      * Set of like resources (same type and same resource key). By itself the node lacks any context
@@ -214,7 +231,7 @@ public class ClusterKey {
         public Node(int resourceTypeId, String resourceKey) {
             super();
             this.resourceTypeId = resourceTypeId;
-            this.resourceKey = resourceKey;
+            this.resourceKey = encode(resourceKey);
         }
 
         public int getResourceTypeId() {
@@ -222,7 +239,7 @@ public class ClusterKey {
         }
 
         public String getResourceKey() {
-            return resourceKey;
+            return decode(resourceKey);
         }
 
         /**
@@ -246,6 +263,13 @@ public class ClusterKey {
                 resourceTypePart = resourceType.getPlugin() + DELIM + resourceType.getName();
 
             return resourceTypePart + DELIM + resourceKey;
+        }
+
+        private String encode(String info) {
+            return info.replace(":","%3a");
+        }
+        private String decode(String code) {
+            return code.replace("%3a", ":");
         }
     }
 }

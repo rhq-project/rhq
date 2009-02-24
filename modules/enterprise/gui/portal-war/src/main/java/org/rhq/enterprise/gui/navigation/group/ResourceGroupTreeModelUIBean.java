@@ -26,6 +26,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.HashMap;
 
 import javax.faces.FacesException;
 import javax.faces.el.MethodBinding;
@@ -41,26 +44,33 @@ import org.richfaces.component.html.*;
 import org.richfaces.event.NodeSelectedEvent;
 import org.richfaces.model.TreeNode;
 import org.richfaces.model.TreeNodeImpl;
+
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.resource.cluster.ClusterKey;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.navigation.resource.ResourceTreeNode;
+import org.rhq.enterprise.gui.navigation.resource.ResourceTreeModelUIBean;
+import org.rhq.enterprise.gui.uibeans.AutoGroupCompositeDisplaySummary;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.gui.util.FacesContextUtility;
 
 /**
- *
  * @author Greg Hinkle
  */
 public class ResourceGroupTreeModelUIBean {
@@ -81,40 +91,112 @@ public class ResourceGroupTreeModelUIBean {
     private ContextMenu resourceContextMenu;
 
     private void loadTree() {
+
+        long start = System.currentTimeMillis();
+        
         FacesContext facesContext = FacesContext.getCurrentInstance();
         ExternalContext externalContext = facesContext.getExternalContext();
 
-        ResourceGroup currentGroup = EnterpriseFacesContextUtility.getResourceGroup();
 
-//        Resource currentResource = EnterpriseFacesContextUtility.getResourceIfExists();
-
-
-        rootNode = new ResourceGroupTreeNode(currentGroup);
-
-        /*
-        List<AutoGroupComposite> children =
-                resourceManager.getChildrenAutoGroups(EnterpriseFacesContextUtility.getSubject(), rootResource.getId());
-
-        for (AutoGroupComposite child : children) {
-            ResourceGroupTreeNode node = new ResourceGroupTreeNode(child);
-            this.children.add(node);
+        Integer parentGroupId = FacesContextUtility.getOptionalRequestParameter("parentGroupId", Integer.class);
+        ResourceGroup parentGroup;
+        if (parentGroupId != null) {
+            parentGroup = groupManager.getResourceGroupById(EnterpriseFacesContextUtility.getSubject(), parentGroupId, GroupCategory.COMPATIBLE);
+        } else {
+            parentGroup = EnterpriseFacesContextUtility.getResourceGroup();
         }
-        */
+
+        rootNode = new ResourceGroupTreeNode(parentGroup);
+
+        List<Resource> resources =
+                resourceManager.getResourcesByCompatibleGroup(EnterpriseFacesContextUtility.getSubject(), parentGroup.getId(), PageControl.getUnlimitedInstance());
+
+        List<Resource> members = groupManager.getResourcesForResourceGroup(EnterpriseFacesContextUtility.getSubject(), parentGroup.getId(), GroupCategory.COMPATIBLE);
+
+        rootNode = load(parentGroup, resources, members);
+        System.out.println("Loaded group tree in: " + (System.currentTimeMillis() - start));
+    }
+
+    private ResourceGroupTreeNode load(ResourceGroup group, List<Resource> resources, List<Resource> members) {
+
+        Set<ResourceTreeNode> memberNodes = new HashSet<ResourceTreeNode>();
+
+        for (Resource member : members) {
+            memberNodes.add(ResourceTreeModelUIBean.load(member.getId(), resources));
+        }
+
+
+        ResourceGroupTreeNode root = new ResourceGroupTreeNode(group);
+        root.setClusterKey(new ClusterKey(group.getId()));
+        root.addMembers(memberNodes);
+        load(root, memberNodes);
+        return root;
+    }
+
+    private void load(ResourceGroupTreeNode parentNode, Set<ResourceTreeNode> resources) {
+
+        Map<Object, ResourceGroupTreeNode> children = new HashMap<Object, ResourceGroupTreeNode>();
+
+        for (ResourceTreeNode childNode : parentNode.getMembers()) {
+            for (ResourceTreeNode node : childNode.getChildren()) {
+                Object level = node.getData();
+
+                if (level instanceof AutoGroupComposite) {
+                    AutoGroupComposite agc = (AutoGroupComposite) level;
+                    Object key = agc.getResourceType() != null ? agc.getResourceType() : agc.getSubcategory();
+
+                    ResourceGroupTreeNode childGroupNode = children.get(key);
+                    if (childGroupNode == null) {
+                        childGroupNode = new ResourceGroupTreeNode(level);
+                        children.put(key, childGroupNode);
+                    }
+                    childGroupNode.addMember(node);
+                    childGroupNode.setClusterKey(parentNode.getClusterKey());
+
+                } else if (level instanceof ResourceWithAvailability) {
+                } else if (level instanceof Resource) {
+                    Resource res = (Resource) level;
+                    ClusterKey parentKey = parentNode.getClusterKey();
+                    ClusterKey key = null;
+                    if (parentKey == null) {
+                        key = new ClusterKey(((ResourceGroup) parentNode.getData()).getId(), res.getResourceType().getId(), res.getResourceKey());
+                    } else {
+                        key = new ClusterKey(parentKey, res.getResourceType().getId(), res.getResourceKey());
+                    }
+                    ResourceGroupTreeNode childGroupNode = children.get(key);
+
+                    if (childGroupNode == null) {
+                        childGroupNode = new ResourceGroupTreeNode(key);
+                        childGroupNode.setClusterKey(key);
+                        children.put(key, childGroupNode);
+                    }
+
+                    childGroupNode.addMember(node);
+
+                }
+            }
+        }
+
+        parentNode.addChildren(children.values());
+
+
+        for (ResourceGroupTreeNode child : children.values()) {
+            Set<ResourceTreeNode> childChildren = new HashSet<ResourceTreeNode>();
+            for (ResourceTreeNode childChild : child.getMembers()) {
+                childChildren.addAll(childChild.getChildren());
+            }
+            if (childChildren.size() > 0)
+                load(child, childChildren);
+        }
     }
 
 
-    public ResourceGroupTreeNode getTreeNode() {
+    public List<ResourceGroupTreeNode> getRoots() {
         if (rootNode == null) {
             loadTree();
         }
-
-        return rootNode;
-    }
-
-    public List<ResourceGroupTreeNode> getRoots() {
-        if (roots.isEmpty()) {
-            roots.add(getTreeNode());
-        }
+        List<ResourceGroupTreeNode> roots = new ArrayList<ResourceGroupTreeNode>();
+        roots.add(this.rootNode);
         return roots;
     }
 
@@ -191,10 +273,6 @@ public class ResourceGroupTreeModelUIBean {
                     measurementsMenu.getChildren().add(menuItem);
                 }
             }
-
-
-
-
 
 
             // **** Operations menugroup

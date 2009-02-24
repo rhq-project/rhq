@@ -25,6 +25,7 @@ import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.cluster.ClusterKey;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -34,6 +35,8 @@ import java.util.Set;
 import java.util.List;
 import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
@@ -45,7 +48,11 @@ public class ResourceGroupTreeNode implements Comparable {
 
     private static ResourceGroupTreeNode[] CHILDREN_ABSENT = new ResourceGroupTreeNode[0];
 
-    private List<ResourceGroupTreeNode> children;
+    private ClusterKey clusterKey;
+
+    private List<ResourceGroupTreeNode> children = new ArrayList<ResourceGroupTreeNode>();
+
+    private List<ResourceTreeNode> members = new ArrayList<ResourceTreeNode>();
 
     private Object level;
 
@@ -55,38 +62,30 @@ public class ResourceGroupTreeNode implements Comparable {
         this.level = level;
     }
 
+    public ClusterKey getClusterKey() {
+        return clusterKey;
+    }
+
+    public void setClusterKey(ClusterKey clusterKey) {
+        this.clusterKey = clusterKey;
+    }
+
+    public void addMembers(Set<ResourceTreeNode> members) {
+        this.members.addAll(members);
+    }
+    public void addMember(ResourceTreeNode member) {
+        this.members.add(member);
+    }
+
+    public List<ResourceGroupTreeNode> getChildren() {
+        return children;
+    }
+
+    public List<ResourceTreeNode> getMembers() {
+        return members;
+    }
+
     public synchronized List<ResourceGroupTreeNode> getNodes() {
-        if (children == null) {
-            FacesContext facesContext = FacesContext.getCurrentInstance();
-
-            ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
-
-            children = new ArrayList<ResourceGroupTreeNode>();
-
-            /*if (level instanceof Resource) {
-                List<AutoGroupComposite> comps = groupManager.getChildrenAutoGroups(EnterpriseFacesContextUtility.getSubject(), ((Resource) level).getId());
-                for (AutoGroupComposite comp : comps) {
-                    children.add(new ResourceGroupTreeNode(comp));
-                }
-            } else if (level instanceof AutoGroupComposite) {
-                AutoGroupComposite comp = (AutoGroupComposite) level;
-                List resources = comp.getResources();
-                if (resources != null) {
-                    for (Object res : resources) {
-                        children.add(new ResourceGroupTreeNode(res));
-                    }
-                }
-            } else if (level instanceof ResourceWithAvailability) {
-                List<AutoGroupComposite> comps = groupManager.getChildrenAutoGroups(EnterpriseFacesContextUtility.getSubject(), ((ResourceWithAvailability) level).getResource().getId());
-                for (AutoGroupComposite comp : comps) {
-                    children.add(new ResourceGroupTreeNode(comp));
-                }
-            } else {
-                children = Collections.EMPTY_LIST;
-            }
-            Collections.sort(children);*/
-        }
-
         return children;
     }
 
@@ -104,5 +103,9 @@ public class ResourceGroupTreeNode implements Comparable {
 
     public int compareTo(Object o) {
         return toString().compareTo(((ResourceGroupTreeNode)o).toString());
+    }
+
+    public void addChildren(Collection<ResourceGroupTreeNode> resourceGroupTreeNodes) {
+        this.children.addAll(resourceGroupTreeNodes);
     }
 }

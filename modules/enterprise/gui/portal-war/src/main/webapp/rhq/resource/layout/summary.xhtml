@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 
 <!DOCTYPE html
-      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
@@ -27,224 +27,235 @@ id - the id of the Resource being accessed
 <rich:panel rendered="#{!empty ResourceUIBean.invalidPluginConfigurationError}" styleClass="WarnBlock"
             style="width: 800px; margin: 4px; padding: 4px">
 
-   <ui:remove><!-- TODO: i18n the below text --></ui:remove>
-   The agent reported the following error on its last attempt
-   (<h:outputText value="#{ResourceUIBean.invalidPluginConfigurationError.timeOccurred}">
-   <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+    <ui:remove><!-- TODO: i18n the below text --></ui:remove>
+    The agent reported the following error on its last attempt
+    (<h:outputText value="#{ResourceUIBean.invalidPluginConfigurationError.timeOccurred}">
+    <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
 </h:outputText>)
-   to connect to this resource:
-   <h:panelGroup layout="block" style="margin: 7px">
-      <strong><em>#{ResourceUIBean.invalidPluginConfigurationError.summary}</em></strong>
-   </h:panelGroup>
-   For more details, see the
-   <a href="javascript:displayStackTrace()">stack trace</a>.
-   <p/>
-   Please make sure that the managed resource is running and that its
-   <span> </span>
-   <h:outputLink value="/rhq/resource/inventory/edit-connection.xhtml"><f:param name="id" value="#{param.id}"/>connection
-      properties</h:outputLink>
-   are set correctly.
+    to connect to this resource:
+    <h:panelGroup layout="block" style="margin: 7px">
+        <strong><em>#{ResourceUIBean.invalidPluginConfigurationError.summary}</em></strong>
+    </h:panelGroup>
+    For more details, see the
+    <a href="javascript:displayStackTrace()">stack trace</a>.
+    <p/>
+    Please make sure that the managed resource is running and that its
+    <span> </span>
+    <h:outputLink value="/rhq/resource/inventory/edit-connection.xhtml"><f:param name="id" value="#{param.id}"/>connection
+        properties</h:outputLink>
+    are set correctly.
 </rich:panel>
 
 <div id="connectionError" style="display: none">
-   <div id="PageHeader" align="right">
-      <a href="javascript:window.close()">${msg['common.action.window.close']}</a>
-   </div>
-   <div style="align: center; margin: 8px">
-      <pre class="StackTrace" wrap="on">#{ResourceUIBean.invalidPluginConfigurationError.detail}</pre>
-   </div>
-   <p/>
+    <div id="PageHeader" align="right">
+        <a href="javascript:window.close()">${msg['common.action.window.close']}</a>
+    </div>
+    <div style="align: center; margin: 8px">
+        <pre class="StackTrace" wrap="on">#{ResourceUIBean.invalidPluginConfigurationError.detail}</pre>
+    </div>
+    <p/>
 </div>
 
 <script type="text/javascript">
 
-   function displayStackTrace()
-   {
-      var errorPopup = open("", "errorPopup", "width=750,height=600,resizable=yes,scrollbars=yes,left=200,top=10");
-      errorPopup.document.open();
-      errorPopup.document.writeln('&lt;html&gt;&lt;head&gt;');
-      errorPopup.document.writeln('&lt;title&gt;Resource Connection Error Details&lt;/title&gt;');
-      errorPopup.document.writeln('&lt;link rel="stylesheet" href="/css/win.css" type="text/css"/&gt;');
-      errorPopup.document.writeln('&lt;/head&gt;&lt;body&gt;');
-      errorPopup.document.writeln($('connectionError').innerHTML);
-      errorPopup.document.writeln('&lt;/body&gt;&lt;/html&gt;');
-      errorPopup.document.close();
-   }
+    function displayStackTrace()
+    {
+        var errorPopup = open("", "errorPopup", "width=750,height=600,resizable=yes,scrollbars=yes,left=200,top=10");
+        errorPopup.document.open();
+        errorPopup.document.writeln('&lt;html&gt;&lt;head&gt;');
+        errorPopup.document.writeln('&lt;title&gt;Resource Connection Error Details&lt;/title&gt;');
+        errorPopup.document.writeln('&lt;link rel="stylesheet" href="/css/win.css" type="text/css"/&gt;');
+        errorPopup.document.writeln('&lt;/head&gt;&lt;body&gt;');
+        errorPopup.document.writeln($('connectionError').innerHTML);
+        errorPopup.document.writeln('&lt;/body&gt;&lt;/html&gt;');
+        errorPopup.document.close();
+    }
 
-   function popupStackTrace(divName)
-   {
-      var errorPopup = open("", "errorPopup", "width=750,height=600,resizable=yes,scrollbars=yes,left=200,top=10");
-      errorPopup.document.open();
-      errorPopup.document.writeln('&lt;html&gt;&lt;head&gt;');
-      errorPopup.document.writeln('&lt;title&gt;Resource Connection Error Details&lt;/title&gt;');
-      errorPopup.document.writeln('&lt;link rel="stylesheet" href="/css/win.css" type="text/css"/&gt;');
-      errorPopup.document.writeln('&lt;/head&gt;&lt;body&gt;');
-      errorPopup.document.writeln($(divName).innerHTML);
-      errorPopup.document.writeln('&lt;/body&gt;&lt;/html&gt;');
-      errorPopup.document.close();
-   }
+    function popupStackTrace(divName)
+    {
+        var errorPopup = open("", "errorPopup", "width=750,height=600,resizable=yes,scrollbars=yes,left=200,top=10");
+        errorPopup.document.open();
+        errorPopup.document.writeln('&lt;html&gt;&lt;head&gt;');
+        errorPopup.document.writeln('&lt;title&gt;Resource Connection Error Details&lt;/title&gt;');
+        errorPopup.document.writeln('&lt;link rel="stylesheet" href="/css/win.css" type="text/css"/&gt;');
+        errorPopup.document.writeln('&lt;/head&gt;&lt;body&gt;');
+        errorPopup.document.writeln($(divName).innerHTML);
+        errorPopup.document.writeln('&lt;/body&gt;&lt;/html&gt;');
+        errorPopup.document.close();
+    }
 
 </script>
 <h:form>
     <input type="hidden" name="id" value="#{param.id}"/>
 
-<rich:simpleTogglePanel switchType="ajax" id="summary-toggle-panel"
-                        actionListener="#{UserPreferencesUIBean.updateSummaryPanelDisplayState}"
-                        value="#{UserPreferencesUIBean.summaryPanelDisplayState}">
-    <f:facet name="header">  <onc:resourceLineage resourceId="#{ResourceUIBean.id}"/> </f:facet>
+    <rich:simpleTogglePanel switchType="ajax" id="summary-toggle-panel"
+                            actionListener="#{UserPreferencesUIBean.updateSummaryPanelDisplayState}"
+                            value="#{UserPreferencesUIBean.summaryPanelDisplayState}">
+        <f:facet name="header">
+            <h:panelGrid columns="3" width="90%">
 
-<h:panelGrid columns="2" width="100%" style="padding: 3px">
+                <h:panelGroup>
+                    <onc:resourceLineage resourceId="#{ResourceUIBean.id}"/>
+                </h:panelGroup>
 
-   <h:panelGroup layout="block" styleClass="summary-content">
+                <h:panelGroup id="availDisplay" style="float: right;">
+                    <h:outputLink value="/rhq/resource/monitor/availabilityHistory.xhtml">
+                        <f:param name="id" value="#{ResourceUIBean.id}"/>
+                        <h:graphicImage value="/images/icon_available_green_24.png" alt="Resource is Up" title="Up"
+                                        rendered="#{ResourceUIBean.availabilityType == 'UP'}"/>
+                        <h:graphicImage value="/images/icon_available_red_24.png" alt="Resource is Down" title="Down"
+                                        rendered="#{ResourceUIBean.availabilityType == 'DOWN'}"/>
+                        <h:graphicImage value="/images/icon_available_grey_24.png"
+                                        alt="Resource availability is Unknown"
+                                        title="Unknown"
+                                        rendered="#{ResourceUIBean.availabilityType == null}"/>
+                    </h:outputLink>
+                    <rich:toolTip for="availDisplay">
+                        <h:outputText value="Resource has been #{ResourceUIBean.availabilityType.name} since: "/>
+                        <h:outputText value="#{ResourceUIBean.availabilitySummary.lastChange}">
+                            <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz"
+                                               timeZone="#{ServerInfoUIBean.timeZone}"/>
+                        </h:outputText>
+                        <br/>
 
-      <!-- general properties (type, version, etc.) -->
-      <h:panelGrid columns="2" styleClass="summary-props-table" style="" columnClasses="summary-prop-cell">
-         <h:panelGroup layout="block">
-            <h:outputText value="Type: " styleClass="BoldText"/>
-            <h:panelGroup>#{ResourceUIBean.resourceType.name}
-               (#{ResourceUIBean.resourceType.category.displayName})</h:panelGroup>
-         </h:panelGroup>
+                        <h:outputText value="Availability: " styleClass="BoldText"/>
+                        <h:outputText value="#{ResourceUIBean.availabilitySummary.upPercentage}">
+                            <f:convertNumber type="percent" maxFractionDigits="3"/>
+                        </h:outputText>
+                        <br/>
 
-         <h:panelGroup layout="block">
-            <h:outputText value="Description: " styleClass="BoldText"/>
-            <h:outputText value="#{ResourceUIBean.description}" rendered="#{!empty ResourceUIBean.description}"/>
-            <h:outputText value="none" style="font-style: italic" rendered="#{empty ResourceUIBean.description}"/>
-         </h:panelGroup>
+                        <b>Down for: </b>
+                        <h:outputText value="#{ResourceUIBean.availabilitySummary.downTime}">
+                            <f:converter converterId="LongDurationConverter"/>
+                        </h:outputText>
+                        <br/>
+                        <b>Up for: </b>
+                        <h:outputText value="#{ResourceUIBean.availabilitySummary.upTime}">
+                            <f:converter converterId="LongDurationConverter"/>
+                        </h:outputText>
+                        <br/>
+                        <b>Failures: </b>
+                        <h:outputText value="#{ResourceUIBean.availabilitySummary.failures}"/>
+                        <br/>
 
-         <h:panelGroup layout="block">
-            <h:outputText value="Version: " styleClass="BoldText"/>
-            <h:outputText value="#{ResourceUIBean.version}" rendered="#{!empty ResourceUIBean.version}"/>
-            <h:outputText value="none" style="font-style: italic" rendered="#{empty ResourceUIBean.version}"/>
-         </h:panelGroup>
+                        <h:panelGroup layout="block">
+                            <h:outputText value="MTBF: " styleClass="BoldText"/>
+                            <h:outputText value="#{ResourceUIBean.availabilitySummary.MTBF}">
+                                <f:converter converterId="LongDurationConverter"/>
+                            </h:outputText>
+                            <rich:toolTip>
+                                Mean Time Between Failures over the known resource lifetime.
+                            </rich:toolTip>
+                        </h:panelGroup>
+                        <br/>
 
-         <h:panelGroup layout="block">
-            <h:outputText value="Parent: " styleClass="BoldText"/>
-            <h:outputText value="#{ResourceUIBean.parent.resourceType.name} "
-                          rendered="#{ResourceUIBean.parent ne null}"/>
-            <h:outputLink value="/rhq/resource/inventory/view.xhtml" rendered="#{ResourceUIBean.parent != null}">
-               <f:param name="id" value="#{ResourceUIBean.parent.id}"/>
-               '#{ResourceUIBean.parent.name}'
-            </h:outputLink>
-            <h:outputText value="none" style="font-style: italic" rendered="#{ResourceUIBean.parent == null}"/>
-         </h:panelGroup>
-      </h:panelGrid>
+                        <h:panelGroup layout="block">
+                            <h:outputText value="MTTR: " styleClass="BoldText"/>
+                            <h:outputText value="#{ResourceUIBean.availabilitySummary.MTTR}">
+                                <f:converter converterId="LongDurationConverter"/>
+                            </h:outputText>
+                            <rich:toolTip>
+                                Mean Time To Recover from failure over the known resource lifetime.
+                            </rich:toolTip>
+                        </h:panelGroup>
 
-      <!-- spacer -->
+                    </rich:toolTip>
 
-      <!-- summary traits -->
-      <h:dataTable var="traitPair" value="#{ListOfTraits.traitPairs}" styleClass="summary-props-table"
-                   columnClasses="summary-prop-cell" rendered="#{!empty ListOfTraits.traitPairs}">
-         <h:column>
-            <h:outputText value="#{traitPair[0].name}: " styleClass="BoldText"/>
-            <h:panelGroup><h:outputText value="#{traitPair[0].value}"/></h:panelGroup>
-         </h:column>
-         <h:column>
-            <h:panelGroup layout="block" rendered="#{!empty traitPair[1]}">
-               <h:outputText value="#{traitPair[1].name}: " styleClass="BoldText"/>
-               <h:panelGroup><h:outputText value="#{traitPair[1].value}"/></h:panelGroup>
+                </h:panelGroup>
+
+                <h:panelGroup>
+                    <a4j:outputPanel id="favoritesPanel">
+                        <a4j:commandButton id="favoritesButton"
+                                           reRender="favoritesPanel" status="commonStatus"
+                                           image="#{FavoritesUIBean.favorite ? '/images/star_on_24.png' : '/images/star_off_24.png'}"
+                                           action="#{FavoritesUIBean.toggleFavorite}">
+
+                        </a4j:commandButton>
+                        <rich:toolTip for="favoritesPanel">
+                            <h:outputText value="Add resource to favorites list"
+                                          rendered="#{!FavoritesUIBean.favorite}"/>
+                            <h:outputText value="Remove resource from favorites list"
+                                          rendered="#{FavoritesUIBean.favorite}"/>
+                        </rich:toolTip>
+                    </a4j:outputPanel>
+                </h:panelGroup>
+            </h:panelGrid>
+
+
+        </f:facet>
+
+        <h:panelGrid columns="2" width="100%" style="padding: 3px">
+
+            <h:panelGroup layout="block" styleClass="summary-content">
+
+                <!-- general properties (type, version, etc.) -->
+                <h:panelGrid columns="2" styleClass="summary-props-table" style="" columnClasses="summary-prop-cell">
+                    <h:panelGroup layout="block">
+                        <h:outputText value="Type: " styleClass="BoldText"/>
+                        <h:panelGroup>#{ResourceUIBean.resourceType.name}
+                            (#{ResourceUIBean.resourceType.category.displayName})</h:panelGroup>
+                    </h:panelGroup>
+
+                    <h:panelGroup layout="block">
+                        <h:outputText value="Description: " styleClass="BoldText"/>
+                        <h:outputText value="#{ResourceUIBean.description}"
+                                      rendered="#{!empty ResourceUIBean.description}"/>
+                        <h:outputText value="none" style="font-style: italic"
+                                      rendered="#{empty ResourceUIBean.description}"/>
+                    </h:panelGroup>
+
+                    <h:panelGroup layout="block">
+                        <h:outputText value="Version: " styleClass="BoldText"/>
+                        <h:outputText value="#{ResourceUIBean.version}" rendered="#{!empty ResourceUIBean.version}"/>
+                        <h:outputText value="none" style="font-style: italic"
+                                      rendered="#{empty ResourceUIBean.version}"/>
+                    </h:panelGroup>
+
+                    <h:panelGroup layout="block">
+                        <h:outputText value="Parent: " styleClass="BoldText"/>
+                        <h:outputText value="#{ResourceUIBean.parent.resourceType.name} "
+                                      rendered="#{ResourceUIBean.parent ne null}"/>
+                        <h:outputLink value="/rhq/resource/inventory/view.xhtml"
+                                      rendered="#{ResourceUIBean.parent != null}">
+                            <f:param name="id" value="#{ResourceUIBean.parent.id}"/>
+                            '#{ResourceUIBean.parent.name}'
+                        </h:outputLink>
+                        <h:outputText value="none" style="font-style: italic"
+                                      rendered="#{ResourceUIBean.parent == null}"/>
+                    </h:panelGroup>
+                </h:panelGrid>
+
+                <!-- spacer -->
+
+                <!-- summary traits -->
+                <h:dataTable var="traitPair" value="#{ListOfTraits.traitPairs}" styleClass="summary-props-table"
+                             columnClasses="summary-prop-cell" rendered="#{!empty ListOfTraits.traitPairs}">
+                    <h:column>
+                        <h:outputText value="#{traitPair[0].name}: " styleClass="BoldText"/>
+                        <h:panelGroup><h:outputText value="#{traitPair[0].value}"/></h:panelGroup>
+                    </h:column>
+                    <h:column>
+                        <h:panelGroup layout="block" rendered="#{!empty traitPair[1]}">
+                            <h:outputText value="#{traitPair[1].name}: " styleClass="BoldText"/>
+                            <h:panelGroup><h:outputText value="#{traitPair[1].value}"/></h:panelGroup>
+                        </h:panelGroup>
+                    </h:column>
+                </h:dataTable>
+                <a4j:keepAlive beanName="ResourceUIBean"/>
+                <a4j:keepAlive beanName="ListOfTraits"/>
+
+                <!-- spacer -->
+                <h:panelGroup layout="block" style="height: 13px"/>
+
             </h:panelGroup>
-         </h:column>
-      </h:dataTable>
-      <a4j:keepAlive beanName="ResourceUIBean" />
-      <a4j:keepAlive beanName="ListOfTraits" />
-      
-      <!-- spacer -->
-      <h:panelGroup layout="block" style="height: 13px"/>
-
-   </h:panelGroup>
-
-   <ui:remove><!-- the blue box at the top right --></ui:remove>
-   <h:panelGroup layout="block">
-      <h:panelGrid columns="1" width="100%" columnClasses="LinkBoxCell">
 
 
-          <h:panelGrid columns="2">
-              <h:panelGroup id="availDisplay">
-                  <h:outputLink value="/rhq/resource/monitor/availabilityHistory.xhtml">
-                      <f:param name="id" value="#{ResourceUIBean.id}"/>
-                  <h:graphicImage value="/images/icon_available_green_24.png" alt="Resource is Up" title="Up"
-                                  rendered="#{ResourceUIBean.availabilityType == 'UP'}"/>
-                  <h:graphicImage value="/images/icon_available_red_24.png" alt="Resource is Down" title="Down"
-                                  rendered="#{ResourceUIBean.availabilityType == 'DOWN'}"/>
-                  <h:graphicImage value="/images/icon_available_grey_24.png" alt="Resource availability is Unknown"
-                                  title="Unknown"
-                                  rendered="#{ResourceUIBean.availabilityType == null}"/>
-                  </h:outputLink>
-                  <rich:toolTip for="availDisplay">
-                      <h:outputText value="Resource has been #{ResourceUIBean.availabilityType.name} since: "/>
-                      <h:outputText value="#{ResourceUIBean.availabilitySummary.lastChange}">
-                          <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                      </h:outputText>
-                      <br/>
-                      <b>Down for: </b>
-                      <h:outputText value="#{ResourceUIBean.availabilitySummary.downTime}">
-                          <f:converter converterId="LongDurationConverter"/>
-                      </h:outputText>
-                      <br/>
-                      <b>Up for: </b>
-                      <h:outputText value="#{ResourceUIBean.availabilitySummary.upTime}">
-                          <f:converter converterId="LongDurationConverter"/>
-                      </h:outputText>
-                      <br/>
-                      <b>Failures: </b>
-                      <h:outputText value="#{ResourceUIBean.availabilitySummary.failures}"/>
-                      <br/>
-    
-                      <h:panelGroup layout="block">
-                          <h:outputText value="MTBF: " styleClass="BoldText"/>
-                          <h:outputText value="#{ResourceUIBean.availabilitySummary.MTBF}">
-                              <f:converter converterId="LongDurationConverter" />
-                          </h:outputText>
-                          <rich:toolTip>
-                              Mean Time Between Failures over the known resource lifetime.
-                          </rich:toolTip>
-                      </h:panelGroup>
-                      <br/>
-
-                      <h:panelGroup layout="block">
-                          <h:outputText value="MTTR: " styleClass="BoldText"/>
-                          <h:outputText value="#{ResourceUIBean.availabilitySummary.MTTR}">
-                            <f:converter converterId="LongDurationConverter" />
-                          </h:outputText>
-                          <rich:toolTip>
-                              Mean Time To Recover from failure over the known resource lifetime.
-                          </rich:toolTip>
-                      </h:panelGroup>
-
-                  </rich:toolTip>
-
-              </h:panelGroup>
-              
-              <h:panelGroup>
-                  <a4j:outputPanel id="favoritesPanel">
-                          <a4j:commandButton id="favoritesButton"
-                                             reRender="favoritesPanel" status="commonStatus"
-                                             image="#{FavoritesUIBean.favorite ? '/images/star_on_24.png' : '/images/star_off_24.png'}"
-                                             action="#{FavoritesUIBean.toggleFavorite}">
-                              
-                          </a4j:commandButton>
-                          <rich:toolTip for="favoritesPanel">
-                              <h:outputText value="Add resource to favorites list" rendered="#{!FavoritesUIBean.favorite}"/>
-                              <h:outputText value="Remove resource from favorites list" rendered="#{FavoritesUIBean.favorite}"/>
-                          </rich:toolTip>
-                  </a4j:outputPanel>
-              </h:panelGroup>
-          </h:panelGrid>
-
-          <h:panelGroup layout="block" id="availPercent">
-              <h:outputText value="Availability: " styleClass="BoldText"/>
-              <h:outputText value="#{ResourceUIBean.availabilitySummary.upPercentage}">
-                   <f:convertNumber type="percent" maxFractionDigits="3"/>
-              </h:outputText>
-          </h:panelGroup>
-
-      </h:panelGrid>
-   </h:panelGroup>
-
-</h:panelGrid>
+        </h:panelGrid>
     </rich:simpleTogglePanel>
 
-    </h:form>
+</h:form>
+
+<rich:spacer height="10"/>
 
 </ui:composition>
 

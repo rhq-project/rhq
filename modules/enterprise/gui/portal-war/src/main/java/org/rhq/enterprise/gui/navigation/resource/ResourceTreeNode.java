@@ -91,4 +91,21 @@ public class ResourceTreeNode implements Comparable {
     public int compareTo(Object o) {
         return toString().compareTo(((ResourceTreeNode)o).toString());
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ResourceTreeNode that = (ResourceTreeNode) o;
+
+        if (!level.equals(that.level)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return level.hashCode();
+    }
 }

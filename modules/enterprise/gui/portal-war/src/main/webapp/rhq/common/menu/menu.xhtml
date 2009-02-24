@@ -33,17 +33,17 @@
             </h:panelGroup>
         </f:facet>
 
-        <rich:menuItem submitMode="none"
+        <rich:menuItem submitMode="none" icon="/images/icn_tree_Platform_on.png"
                        onclick="window.location = '/ResourceHub.do?resourceCategory=PLATFORM'">
             <h:outputText value="#{msg['resource.hub.filter.platform']}"/>
         </rich:menuItem>
 
-        <rich:menuItem submitMode="none"
+        <rich:menuItem submitMode="none" icon="/images/icn_tree_Server_on.png"
                        onclick="window.location = '/ResourceHub.do?resourceCategory=SERVER'">
             <h:outputText value="#{msg['resource.hub.filter.server']}"/>
         </rich:menuItem>
 
-        <rich:menuItem submitMode="none"
+        <rich:menuItem submitMode="none" icon="/images/icn_tree_Service_on.png"
                        onclick="window.location = '/ResourceHub.do?resourceCategory=SERVICE'">
             <h:outputText value="#{msg['resource.hub.filter.service']}"/>
         </rich:menuItem>
@@ -52,12 +52,13 @@
 
 
         <rich:menuGroup value="Groups">
-            <rich:menuItem submitMode="none"
+            <rich:menuItem submitMode="none" icon="/images/icn_tree_Cluster_on.png"
                            onclick="window.location = '/GroupHub.do?groupCategory=COMPATIBLE'">
                 <h:outputText value="#{msg['resource.hub.filter.compatibleGroups']}"/>
             </rich:menuItem>
 
-            <rich:menuItem submitMode="none" onclick="window.location = '/GroupHub.do?groupCategory=MIXED'">
+            <rich:menuItem submitMode="none" icon="/images/icn_tree_group_on.png"
+                           onclick="window.location = '/GroupHub.do?groupCategory=MIXED'">
                 <h:outputText value="#{msg['resource.hub.filter.mixedGroups']}"/>
             </rich:menuItem>
 
@@ -69,27 +70,27 @@
 
         <rich:menuGroup value="Subsystem Views">
 
-            <rich:menuItem submitMode="none"
+            <rich:menuItem submitMode="none" icon="/images/icn_config.png"
                            onclick="window.location = '/rhq/subsystem/layout/main.xhtml?tab=configurationUpdates'">Configuration Changes
             </rich:menuItem>
 
-            <rich:menuItem submitMode="none"
+            <rich:menuItem submitMode="none" icon="/images/icn_info_red.png"
                            onclick="window.location = '/rhq/subsystem/layout/main.xhtml?tab=problemResources'">Problem Resources
             </rich:menuItem>
-            <rich:menuItem submitMode="none"
+            <rich:menuItem submitMode="none" icon="/images/icn_operation_inprogress.png"
                            onclick="window.location = '/rhq/subsystem/layout/main.xhtml?tab=operations'">Operations
             </rich:menuItem>
-            <rich:menuItem submitMode="none"
+            <rich:menuItem submitMode="none" icon="/images/icn_flag_blue.png"
                            onclick="window.location = '/rhq/subsystem/layout/main.xhtml?tab=alerts'">Alerts
             </rich:menuItem>
-            <rich:menuItem submitMode="none"
+            <rich:menuItem submitMode="none" icon="/images/icn_flag_yellow.png"
                            onclick="window.location = '/rhq/subsystem/layout/main.xhtml?tab=alertDefinitions'">Alert Definitions
             </rich:menuItem>
 
         </rich:menuGroup>
 
 
-        <rich:menuGroup value="Favorites">
+        <rich:menuGroup value="Favorites" icon="/images/star_on_24.png">
 
             <c:forEach var="resource" items="#{UserPreferencesUIBean.resourceFavorites}">
                 
@@ -100,6 +101,28 @@
             </c:forEach>
 
         </rich:menuGroup>
+
+        <rich:menuGroup value="Recently Viewed" icon="/images/bookmark.png">
+
+            <c:forEach var="visit" items="#{UserPreferencesUIBean.recentVisits}">
+
+                <c:if test="#{visit.kind == 'resource'}">
+                <rich:menuItem submitMode="none"
+                               onclick="window.location = '#{onf:getDefaultResourceTabURL()}?id=#{visit.id}'">
+                    <h:outputText value="#{visit.name}"/>
+                </rich:menuItem>
+                </c:if>
+                <c:if test="#{visit.kind == 'group'}">
+                <rich:menuItem submitMode="none"
+                               onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{visit.id}'">
+                    <h:outputText value="#{visit.name}"/>
+                </rich:menuItem>
+                </c:if>
+
+            </c:forEach>
+
+        </rich:menuGroup>
+
 
 
         <rich:menuSeparator/>
@@ -197,7 +220,7 @@
 
         <rich:menuSeparator/>
 
-        <rich:menuItem submitMode="none" id="aboutLink">
+        <rich:menuItem submitMode="none" id="aboutLink" icon="/images/icon_available_grey.png">
                 <h:outputText value="#{msg['header.about.link']}"/>
                 <rich:componentControl for="aboutPanel" attachTo="aboutLink" operation="show" event="onclick"/>
         </rich:menuItem>

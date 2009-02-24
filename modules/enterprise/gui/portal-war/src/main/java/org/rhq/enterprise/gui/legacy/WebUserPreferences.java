@@ -5,6 +5,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.LinkedHashSet;
+import java.util.Iterator;
+import java.util.ListIterator;
 
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
@@ -73,6 +76,10 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
     public static final String PREF_LAST_URL = ".last.url";
 
+    public static final String PREF_RECENT_RESOURCES = ".recent.resources";
+
+
+
     public WebUserPreferences(Subject subject) {
         super(subject);
     }
@@ -84,6 +91,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     public void setPageRefreshPeriod(int period) {
         setPreference(PREF_PAGE_REFRESH_PERIOD, Integer.valueOf(period));
     }
+
 
     public String getLastVisitedURL(int previousOffset) {
         List<String> urls = getPreferenceAsList(PREF_LAST_URL);
@@ -703,4 +711,92 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
         setPreference(view.toString(), pageControlProperties);
     }
+
+
+
+    public void addRecentResource(ResourceVisit visit) {
+        List<ResourceVisit> visits = getRecentResourceVisits();
+        ListIterator<ResourceVisit> iter = visits.listIterator();
+        while (iter.hasNext()) {
+            if (iter.next().equals(visit)) {
+                iter.remove();
+                break;
+            }
+        }
+        visits.add(0, visit);
+
+        if (visits.size() > 10) {
+            visits.remove(10);
+        }
+
+        setPreference(PREF_RECENT_RESOURCES, visits, ",");
+    }
+
+    public List<ResourceVisit> getRecentResourceVisits() {
+        List<String> stringList = getPreferenceAsList(PREF_RECENT_RESOURCES, ",");
+        List<ResourceVisit> visits = new ArrayList<ResourceVisit>();
+        for (String string : stringList) {
+            String[] data = string.split("\\|");
+            if (data.length == 3)
+                visits.add(new ResourceVisit(Integer.parseInt(data[0]),data[2],ResourceVisit.Kind.valueOf(data[1])));
+        }
+        return visits;
+    }
+
+
+    public static class ResourceVisit {
+        public enum Kind { resource, group }
+
+        Kind kind;
+        int id;
+        String name;
+
+        public ResourceVisit(int id, String name, Kind kind) {
+            this.id = id;
+            this.kind = kind;
+            this.name = name;
+        }
+
+        public Kind getKind() {
+            return kind;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ResourceVisit that = (ResourceVisit) o;
+
+            if (id != that.id) return false;
+            if (kind != that.kind) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = kind.hashCode();
+            result = 31 * result + id;
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return id + "|" + kind.name() + "|" + name;
+        }
+    }
+
 }

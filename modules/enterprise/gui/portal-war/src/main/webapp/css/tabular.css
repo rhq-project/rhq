@@ -14,7 +14,7 @@
 div.tab-active {
    border-width: 1px 1px 0px 1px;
    border-style: solid solid none solid;
-   border-color: #DE652D;
+   border-color: #333333;
    color: #000000;
    background-image: url('/images/tab-gradient-selected.png');
    background-repeat: repeat-x;
@@ -24,7 +24,7 @@ div.tab-active {
 div.tab-inactive {
    border-width: 1px 1px 1px 1px;
    border-style: solid solid solid solid;
-   border-color: #CCCCCC #CCCCCC #DE652D #CCCCCC;
+   border-color: #CCCCCC #CCCCCC #333333 #CCCCCC;
    color: #888888;
    background-image: url('/images/tab-gradient-notselected.png');
    background-repeat: repeat-x;
@@ -34,7 +34,7 @@ div.tab-inactive {
 div.tab-hover {
    border-width: 1px 1px 1px 1px;
    border-style: solid solid solid solid;
-   border-color: #AAAAAA #AAAAAA #DE652D #AAAAAA;
+   border-color: #AAAAAA #AAAAAA #333333 #AAAAAA;
    color: #888888;
    background-image: url('/images/tab-gradient-selected.png');
    background-repeat: repeat-x;
@@ -48,12 +48,13 @@ div.tab-common {
    font-size: 11pt;
    text-align: center;
    font-variant: small-caps;
+   white-space: nowrap;
 }
 
 div.tab-spacer {
    border-width: 0px 0px 1px 0px;
    border-style: none none solid none;
-   border-color: #DE652D;
+   border-color: #333333;
    color: #FFFFFF;
    background-image: url('/images/tab-sep.png');
    background-repeat: repeat-x;

@@ -70,7 +70,6 @@ public class TabRenderer extends Renderer {
             writer.writeAttribute("class", "tab-active tab-common", null);
         }
 
-        /* TODO: FIGURE OUT HOW TO PUT THE IMAGE TO THE LEFT OF THE TAB NAME
         String imageUrl = tab.getImage();
         if (imageUrl != null) {
             writer.startElement("img", tab);
@@ -78,7 +77,6 @@ public class TabRenderer extends Renderer {
             writer.endElement("img");
             writer.write(" ");
         }
-        */
 
         if (tab.getDisplayName() != null) {
             writer.write(tab.getDisplayName().toLowerCase());

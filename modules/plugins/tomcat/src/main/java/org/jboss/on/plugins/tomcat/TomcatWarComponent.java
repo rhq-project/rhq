@@ -703,15 +703,31 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         File file = new File(fullFileName);
         if (!file.exists()) {
             log.warn("Could not delete web application files (perhaps removed manually?). Proceeding with resource removal for: " + fullFileName);
-        } else
+        } else {
             try {
+                // this will release locked files. In particular, the .war when deployed as an archive
+                invokeOperation("stop", null);
                 getParentResourceComponent().undeployWar(contextRoot);
             } catch (TomcatApplicationDeployer.DeployerException e) {
-                log.warn("Failed to undeploy WAR (may have been undeployed manually). Procedding with resource delete for  [" + contextRoot + "].", e);
+                log.warn("Failed to undeploy WAR (may have been undeployed manually). Proceeding with resource delete for  [" + contextRoot + "].", e);
             } catch (Exception e) {
                 log.error("Failed to undeploy WAR [" + contextRoot + "].", e);
                 throw e;
             } finally {
+                File associatedWarFile = null;
+                if (file.isDirectory()) {
+                    associatedWarFile = new File(file.getAbsolutePath() + ".war");
+                }
+
+                try {
+                    if ((null != associatedWarFile) && associatedWarFile.exists()) {
+                        FileUtils.purge(associatedWarFile, true);
+                    }
+                } catch (IOException e) {
+                    // don't fail on this but warn, since the app may get redeployed on the next Tomcat startup
+                    log.warn("Failed to delete file [" + associatedWarFile + "].", e);
+                }
+
                 try {
                     FileUtils.purge(file, true);
                 } catch (IOException e) {
@@ -724,5 +740,6 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
                     throw e;
                 }
             }
+        }
     }
 }

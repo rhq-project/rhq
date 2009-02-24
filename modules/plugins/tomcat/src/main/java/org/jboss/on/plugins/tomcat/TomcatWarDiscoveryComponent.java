@@ -1,5 +1,4 @@
-/*
- * Jopr Management Platform
+/** Jopr Management Platform
  * Copyright (C) 2005-2008 Red Hat, Inc.
  * All rights reserved.
  *
@@ -25,13 +24,17 @@ package org.jboss.on.plugins.tomcat;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mc4j.ems.connection.EmsConnection;
+import org.mc4j.ems.connection.bean.EmsBean;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
@@ -50,11 +53,10 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
 
     public static final String PLUGIN_CONFIG_NAME = "name";
 
-    /**
-     * The name MBean attribute for each application is of the form "Tomcat WAR (//vHost/contextRoot)". 
-     */
+    private static final List<String> EMS_ATTRIBUTE_DOC_BASE = Arrays.asList(new String[] { "docBase" });
+    private static final List<String> EMS_ATTRIBUTE_PATH = Arrays.asList(new String[] { "path" });
+    /** The name MBean attribute for each application is of the form "Tomcat WAR (//vHost/contextRoot)". */
     private static final Pattern PATTERN_NAME = Pattern.compile("//(.*)(/.*)");
-
     private static final String RT_LOG_FILE_NAME_SUFFIX = "_rt.log";
 
     private final Log log = LogFactory.getLog(this.getClass());
@@ -80,8 +82,16 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
                 if (!host.equalsIgnoreCase(parentHost)) {
                     continue;
                 }
-                String contextRoot = m.group(2);
-                String filename = deployDirectoryPath + contextRoot;
+
+                // get some info from the MBean (it seems awkward I have to query for the bean I'm basically dealing with)
+                EmsConnection connection = context.getParentResourceComponent().getEmsConnection();
+                EmsBean warBean = connection.getBean(resource.getResourceKey());
+                // this refresh is important in case EMS is caching a stale version of this object. It can happen if
+                // a user deletes and then recreates the same object.
+                String contextRoot = (String) warBean.refreshAttributes(EMS_ATTRIBUTE_PATH).get(0).getValue();
+                String docBase = (String) warBean.refreshAttributes(EMS_ATTRIBUTE_DOC_BASE).get(0).getValue();
+                File docBaseFile = new File(docBase);
+                String filename = (docBaseFile.isAbsolute()) ? docBase : (deployDirectoryPath + File.separator + docBase);
                 try {
                     filename = new File(filename).getCanonicalPath();
                 } catch (IOException e) {
@@ -92,7 +102,7 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_CONTEXT_ROOT, contextRoot));
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_FILENAME, filename));
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_RESPONSE_TIME_LOG_FILE, getResponseTimeLogFile(parentComponent.getInstallationPath(), host, contextRoot)));
-                resource.setResourceName(resource.getResourceName().replace("{contextRoot}", contextRoot));
+                resource.setResourceName(resource.getResourceName().replace("{contextRoot}", (("".equals(contextRoot)) ? docBase : contextRoot)));
 
                 result.add(resource);
             } else {
@@ -100,7 +110,7 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
             }
         }
 
-        // Find all deployed but unstarted applications
+        // Find all deployed but unstarted applications IS THIS NECESSARY?
         // Set<DiscoveredResourceDetails> fileSystemResources = discoverFileSystem(context);
 
         // Merge. The addAll operation will only add items that are not already present, so resources discovered
@@ -111,6 +121,8 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
     }
 
     /**
+     * THIS IS NOT FULLY COOKED.  IT MAY NOT BE NECESSARY FOR TOMCAT AND WILL NEED TO BE FIXED UP IF USED.
+     * 
      * Discovers applications that are deployed but did not start and are thus not discoverable through JMX.
      *
      * @param  context discovery context, will be used to determine what type of application (EAR, WAR) is being found

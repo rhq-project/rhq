@@ -65,6 +65,7 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
 
     public static final String CONFIG_ALIASES = "aliases";
     public static final String CONFIG_APP_BASE = "appBase";
+    public static final String CONFIG_UNPACK_WARS = "unpackWARs";
     public static final String CONTENT_CONFIG_EXPLODE_ON_DEPLOY = "explodeOnDeploy";
     public static final String PLUGIN_CONFIG_NAME = "name";
 
@@ -193,6 +194,12 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
         return new File(getInstallationPath(), appBase);
     }
 
+    private boolean isUnpackWars() {
+        Boolean unpackWars = (Boolean) getEmsBean().getAttribute(CONFIG_UNPACK_WARS).getValue();
+
+        return ((null != unpackWars) && unpackWars.booleanValue());
+    }
+
     public CreateResourceReport createResource(CreateResourceReport report) {
         String resourceTypeName = report.getResourceType().getName();
         try {
@@ -212,27 +219,32 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
         PackageDetailsKey key = details.getKey();
         String archiveName = key.getName();
 
+        // Validate file name
         if (!archiveName.toLowerCase().endsWith(".war")) {
             CreateResourceHelper.setErrorOnReport(report, "Deployed file must have a .war extension");
             return;
         }
 
         Configuration deployTimeConfiguration = details.getDeploymentTimeConfiguration();
+
+        // validate explode option
         PropertySimple explodeOnDeployProp = deployTimeConfiguration.getSimple(CONTENT_CONFIG_EXPLODE_ON_DEPLOY);
 
         if (explodeOnDeployProp == null || explodeOnDeployProp.getBooleanValue() == null) {
             CreateResourceHelper.setErrorOnReport(report, "Explode On Deploy property is required.");
             return;
         }
-        boolean explodeOnDeploy = explodeOnDeployProp.getBooleanValue();
+        // if the host is configured to unpack wars then always explode, this prevents us from having an unnecessary .war
+        // in the deploy directory.
+        boolean explodeOnDeploy = (isUnpackWars() || explodeOnDeployProp.getBooleanValue());
 
         // Perform the deployment        
         File deployDir = getConfigurationPath();
         FileContentDelegate fileContent = new FileContentDelegate(deployDir, details.getPackageTypeName());
-
+        String contextRoot = archiveName.substring(0, archiveName.length() - 4);
         if (explodeOnDeploy) {
             // trim off the .war suffix because we want to deploy into a root directory named after the app name
-            archiveName = archiveName.substring(0, archiveName.length() - 4);
+            archiveName = contextRoot;
         }
 
         File path = new File(deployDir, archiveName);
@@ -261,13 +273,13 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
         InputStream isForTempDir = new BufferedInputStream(new FileInputStream(tempFile));
         fileContent.createContent(path, isForTempDir, explodeOnDeploy);
 
-        // Resource key should match the following:        
-        // Catalina:j2eeType=WebModule,name=//localhost/<archiveName>,J2EEApplication=none,J2EEServer=none        
+        // Resource key is a canonical objectName similar to :        
+        // Catalina:j2eeType=WebModule,name=//<vHost>/<path>,J2EEApplication=none,J2EEServer=none        
 
-        String resourceKey = "Catalina:j2eeType=WebModule,J2EEApplication=none,J2EEServer=none,name=//localhost/" + archiveName;
+        String objectName = "Catalina:j2eeType=WebModule,J2EEApplication=none,J2EEServer=none,name=//" + getName() + "/" + contextRoot;
 
         report.setResourceName(archiveName);
-        report.setResourceKey(resourceKey);
+        report.setResourceKey(CreateResourceHelper.getCanonicalName(objectName));
         report.setStatus(CreateResourceStatus.SUCCESS);
     }
 

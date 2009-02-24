@@ -342,19 +342,12 @@
                      name="deployment"
                      displayName="Deployment Options">
                      <c:simple-property
-                        name="vHost"
-                        displayName="Virtual Host"
-                        type="string"
-                        default="localhost"
-                        required="false"
-                        description="The virtual host to which this web application will be deployed. Default is localhost." />
-                     <c:simple-property
                         name="explodeOnDeploy"
                         displayName="Explode on Deploy"
                         type="boolean"
                         default="true"
                         required="true"
-                        description="If yes then explode the WAR file into the Tomcat deploy directory. If no leave as a .war file (for no, unpackWARs=false is required on the virtual host)." />
+                        description="If yes then explode the WAR file into the Tomcat deploy directory. If no leave as a .war file (for no, unpackWARs=false is required on this virtual host)." />
                   </c:group>
                </configuration>
             </content>

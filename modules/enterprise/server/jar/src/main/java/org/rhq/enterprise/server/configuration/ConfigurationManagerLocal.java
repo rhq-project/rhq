@@ -419,4 +419,6 @@ public interface ConfigurationManagerLocal {
     Map<Integer, Configuration> getResourceConfigurationMapForCompatibleGroup(ResourceGroup compatibleGroup);
 
     boolean isAggregateResourceConfigurationUpdateInProgress(Subject whoami, int groupId);
+
+    Map<Integer,Configuration> getResourceConfigurationsForCompatibleGroup(org.rhq.core.domain.resource.group.ResourceGroup g);
 }

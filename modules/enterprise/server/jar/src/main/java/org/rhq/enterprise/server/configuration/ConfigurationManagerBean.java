@@ -447,6 +447,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateInProgress;
     }
 
+    public Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(ResourceGroup g) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
     public Configuration getLiveResourceConfiguration(Subject whoami, int resourceId) throws Exception {
         Resource resource = entityManager.find(Resource.class, resourceId);
 

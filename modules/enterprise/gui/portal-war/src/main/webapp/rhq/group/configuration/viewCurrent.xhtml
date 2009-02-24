@@ -16,11 +16,11 @@
 
 <ui:composition template="/rhq/group/layout/main.xhtml">
 
-   <ui:param name="pageTitle" value="Current Configuration for Compatible Group '#{ResourceGroupUIBean.name}'"/>
+   <ui:param name="pageTitle" value="View Current Configuration for Compatible Group '#{ResourceGroupUIBean.name}'"/>
    <ui:param name="selectedTabName" value="Configuration.Current"/>
    <ui:define name="content">
 
-       <h:form id="configSetForm" onsubmit="prepareInputsForSubmission(this)">
+       <h:form id="configSetForm">
 
            <input type="hidden" name="groupId" value="#{param.groupId}" />
 
@@ -28,15 +28,16 @@
                <a4j:outputPanel layout="block" ajaxRendered="true" keepTransient="true">
 
                    <onc:configSet id="rhq_configSet"
-                                  configurationSet="#{GroupResourceConfigurationUIBean.configurationSet}"/>
+                                  configurationSet="#{ViewGroupResourceConfigurationUIBean.configurationSet}"
+                                  readOnly="true"/>
 
                </a4j:outputPanel>
            </a4j:region>
 
-           <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
-               <h:commandButton type="submit" action="#{GroupResourceConfigurationUIBean.updateConfigurations}"
-                                value="Save" alt="Click to Save Changes" styleClass="buttonmed"/>
-               <h:commandButton type="reset" immediate="true" value="Reset" alt="Click to Reset Fields"
+           <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
+               <h:commandButton value="EDIT" action="#{ViewGroupResourceConfigurationUIBean.edit}"
+                                title="Edit this Compatible Group Configuration"
+                                rendered="${ResourceGroupUIBean.permissions.configure}"
                                 styleClass="buttonmed"/>
            </h:panelGrid>
 

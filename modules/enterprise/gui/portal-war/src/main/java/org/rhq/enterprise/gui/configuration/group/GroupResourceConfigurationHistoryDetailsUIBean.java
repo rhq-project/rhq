@@ -41,6 +41,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Joseph Marques
  */
 public class GroupResourceConfigurationHistoryDetailsUIBean extends PagedDataTableUIBean {
+    public static final String VIEW_ID = "/rhq/group/configuration/details.xhtml";
 
     public static final String MANAGED_BEAN_NAME = "GroupResourceConfigurationHistoryDetailsUIBean";
 

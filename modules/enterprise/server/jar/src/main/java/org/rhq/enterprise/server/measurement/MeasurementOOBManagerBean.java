@@ -44,9 +44,9 @@ import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
+import org.rhq.core.domain.measurement.MeasurementDataPK;
 import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.measurement.MeasurementDataPK;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -133,10 +133,10 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
         // check if we did this already (because the server did not get data for > 1h
         q = entityManager.createNamedQuery(MeasurementOOB.COUNT_FOR_DATE);
-        q.setParameter("timestamp",timeStamp);
+        q.setParameter("timestamp", timeStamp);
         Long count = (Long) q.getSingleResult();
 
-        if (count==0)
+        if (count == 0)
             computeOOBsFromHourBeginingAt(subject, timeStamp);
         else
             log.info("Calculation of OOBs already done for hour " + new Date(timeStamp));
@@ -211,7 +211,6 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         query.setParameter("end", end);
         query.setParameter("resourceId", null);
 
-
         List<MeasurementOOBComposite> results = query.getResultList();
         long totalCount = queryCount.getResultList().size();
 
@@ -220,12 +219,12 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             Map<Integer, MeasurementOOBComposite> map = new HashMap<Integer, MeasurementOOBComposite>(results.size());
             List<Integer> scheduleIds = new ArrayList<Integer>(results.size());
             List<MeasurementDataPK> pks = new ArrayList<MeasurementDataPK>(results.size());
-            Map<MeasurementDataPK,MeasurementOOBComposite> map2 = new HashMap<MeasurementDataPK,MeasurementOOBComposite>();
+            Map<MeasurementDataPK, MeasurementOOBComposite> map2 = new HashMap<MeasurementDataPK, MeasurementOOBComposite>();
             for (MeasurementOOBComposite comp : results) {
                 scheduleIds.add(comp.getScheduleId());
                 map.put(comp.getScheduleId(), comp);
                 MeasurementDataPK key = new MeasurementDataPK(comp.getTimestamp(), comp.getScheduleId());
-                map2.put(key,comp);
+                map2.put(key, comp);
                 pks.add(key);
 
             }
@@ -283,13 +282,14 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * @param n max number of entries wanted
      * @return
      */
-    public PageList<MeasurementOOBComposite> getHighestNOOBsForResource(Subject subject,  long end, int resourceId, int n) {
+    public PageList<MeasurementOOBComposite> getHighestNOOBsForResource(Subject subject, long end, int resourceId, int n) {
 
-        PageControl pc = new PageControl(0,n);
+        PageControl pc = new PageControl(0, n);
         pc.initDefaultOrderingField("o.oobFactor", PageOrdering.DESC);
+        pc.addDefaultOrderingField("o.id.timestamp", PageOrdering.DESC);
 
         long begin = end - (3L * 86400L * 1000L);
-        if (begin<0)
+        if (begin < 0)
             begin = 0;
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -303,11 +303,11 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         if (!results.isEmpty()) {
             // we have the n OOBs, so lets fetch the MeasurementData for those
             List<MeasurementDataPK> pks = new ArrayList<MeasurementDataPK>(results.size());
-            Map<MeasurementDataPK,MeasurementOOBComposite> map = new HashMap<MeasurementDataPK,MeasurementOOBComposite>();
+            Map<MeasurementDataPK, MeasurementOOBComposite> map = new HashMap<MeasurementDataPK, MeasurementOOBComposite>();
             for (MeasurementOOBComposite comp : results) {
                 MeasurementDataPK key = new MeasurementDataPK(comp.getTimestamp(), comp.getScheduleId());
                 pks.add(key);
-                map.put(key,comp);
+                map.put(key, comp);
             }
             // compute and add the outlier data
             List<MeasurementDataNumeric1H> datas = getOneHourDataForPKs(pks);
@@ -319,7 +319,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             }
         }
         // return the result
-        PageList<MeasurementOOBComposite> result = new PageList<MeasurementOOBComposite>(results,n,pc);
+        PageList<MeasurementOOBComposite> result = new PageList<MeasurementOOBComposite>(results, n, pc);
 
         return result;
 
@@ -333,7 +333,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     private List<MeasurementDataNumeric1H> getOneHourDataForPKs(List<MeasurementDataPK> pks) {
 
         Query q = entityManager.createQuery("SELECT data FROM MeasurementDataNumeric1H data WHERE data.id IN (:pks)");
-        q.setParameter("pks",pks);
+        q.setParameter("pks", pks);
         List<MeasurementDataNumeric1H> res = q.getResultList();
 
         return res;

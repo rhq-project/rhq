@@ -6,13 +6,26 @@
 
    <contentSourceType name="DiskSource"
                       displayName="Local Disk Storage Content Source"
-                      description="This content source retrieves packages from a local file system."
+                      description="This content source retrieves packages from a local file system. If deployed in an HA environment, this must be on a distributed file system that all servers can access."
                       lazyLoad="true"
                       downloadMode="never"
                       apiClass="org.rhq.enterprise.server.plugins.disk.DiskSource">
 
       <configuration>
-         <c:simple-property name="rootDirectory" type="directory" required="true" />
+         <c:simple-property name="rootDirectory" type="directory" required="true" description="The root directory that contains all content that is to be served by this content source. In an HA environment, this must be on a distributed file system that all servers can access."/>
+         <!-- would like to be able to define multiple package types, but the UI doesn't allow editing maps yet
+         <c:list-property name="packageTypes" required="true" description="Defines the different package types that can be found on this disk content source">
+            <c:map-property name="packageType">
+         -->
+               <c:simple-property name="filenameFilter" required="true" summary="true" default=".*" description="A regular expression that identifies a file of this package type (e.g. '.*\.jar', '.*/i686/.*\.rpm$')"/>
+               <c:simple-property name="packageTypeName" required="true" summary="true" description="The name that identifies the kind of package this type represents (e.g. 'ear', 'rpm')"/>
+               <c:simple-property name="architectureName" required="true" summary="true" default="noarch" description="The specific hardware architecture this type of package can be deployed on. If there is no specific architecture required, use 'noarch'. (e.g. 'i686', 'amd64')"/>
+               <c:simple-property name="resourceTypeName" required="true" summary="true" description="The name of the resource type on which this package can be deployed. This is the resource type name as defined in the agent plugin. (e.g. 'Linux', 'JBossAS Server')"/>
+               <c:simple-property name="resourceTypePluginName" required="true" summary="true" description="The name of the plugin that defined the resource type. (e.g. 'Platform', 'JBossAS')"/>
+         <!--
+            </c:map-property>
+         </c:list-property>
+         -->
       </configuration>
 
    </contentSourceType>

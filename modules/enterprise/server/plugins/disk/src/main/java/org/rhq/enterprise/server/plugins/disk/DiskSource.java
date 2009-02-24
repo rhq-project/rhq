@@ -23,15 +23,18 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.util.MD5Generator;
 
 /**
  * This is the most basic <i>reference</i> implementation of a content source. It provides primative package
@@ -39,158 +42,245 @@ import org.rhq.core.domain.configuration.Configuration;
  * useful functionality.
  *
  * @author jortel
+ * @author John Mazzitelli
  */
 public class DiskSource implements ContentSourceAdapter {
     /**
      * The root path (directory) from which to synchronize content.
      */
-    protected String path;
+    private File rootDirectory;
 
     /**
-     * Initialize the adapter. The configuration is expected to have a simple string property named: <b>path</b>.
+     * We cache the root dir's absolute path as a string since we need it often.
      */
+    private String rootDirectoryAbsolutePath;
+
+    /**
+     * Map of all supported package types keyed on filename filter regex's that define
+     * which files match to which package types.
+     */
+    private Map<String, SupportedPackageType> supportedPackageTypes;
+
+    protected File getRootDirectory() {
+        return this.rootDirectory;
+    }
+
+    protected void setRootDirectory(File path) {
+        this.rootDirectory = path;
+        this.rootDirectoryAbsolutePath = this.rootDirectory.getAbsolutePath();
+    }
+
+    protected Map<String, SupportedPackageType> getSupportedPackageTypes() {
+        return this.supportedPackageTypes;
+    }
+
+    protected void setSupportedPackageTypes(Map<String, SupportedPackageType> supportedPackageTypes) {
+        this.supportedPackageTypes = supportedPackageTypes;
+    }
+
     public void initialize(Configuration configuration) throws Exception {
-        path = configuration.getSimpleValue("path", null);
+        initializePackageTypes(configuration);
+        String pathString = configuration.getSimpleValue("rootDirectory", null);
+        setRootDirectory(new File(pathString));
         testConnection();
     }
 
-    /**
-     * Shutdown the adapter.
-     */
     public void shutdown() {
+        this.rootDirectory = null;
+        this.rootDirectoryAbsolutePath = null;
+        this.supportedPackageTypes = null;
     }
 
-    /**
-     * Synchronize with the collection of packages specified by <i>path</i>.
-     *
-     * @param  report           The resulting synchronization report.
-     * @param  existingPackages A list of packages already in inventory.
-     *
-     * @throws Exception
-     */
     public void synchronizePackages(PackageSyncReport report, Collection<ContentSourcePackageDetails> existingPackages)
         throws Exception {
-        File dir = new File(path);
+
+        // put all existing packages in a "to be deleted" list. As we sync, we will remove
+        // packages from this list that still exist on the file system. Any leftover in the list
+        // are packages that no longer exist on the file system and should be removed from the server inventory.
         List<ContentSourcePackageDetails> deletedPackages = new ArrayList<ContentSourcePackageDetails>();
         deletedPackages.addAll(existingPackages);
-        syncPackages(report, deletedPackages, dir);
+
+        // sync now
+        long before = System.currentTimeMillis();
+        syncPackages(report, deletedPackages, getRootDirectory());
+        long elapsed = System.currentTimeMillis() - before;
+
+        // if there are packages that weren't found on the file system, tell server to remove them from inventory
         for (ContentSourcePackageDetails p : deletedPackages) {
             report.addDeletePackage(p);
         }
+
+        report.setSummary("Synchronized [" + getRootDirectory() + "]. Elapsed time=[" + elapsed + "] ms");
+
+        return;
     }
 
-    /**
-     * Test the connection with equates to ensuring that the <i>path</i> references an existing directory that is
-     * readable.
-     *
-     * @throws Exception When the path is not valid.
-     */
     public void testConnection() throws Exception {
-        File file = new File(path);
-        if (file.exists() || file.canRead() || file.isDirectory()) {
-            return; // good
+        File root = getRootDirectory();
+
+        if (!root.exists()) {
+            throw new Exception("Disk source [" + root + "] does not exist");
         }
 
-        throw new Exception("Path: '" + path + "' not found, not a directory or permission denied");
+        if (!root.canRead()) {
+            throw new Exception("Not permitted to read disk source [" + root + "] ");
+        }
+
+        if (!root.isDirectory()) {
+            throw new Exception("Disk source [" + root + "] is not a directory");
+        }
+
+        return; // good
     }
 
-    /**
-     * Get an input stream to the specified packages bits. Uses the index first, then searches the directory tree.
-     *
-     * @param  @ param location The location relative to the basedir
-     *
-     * @return An input stream.
-     *
-     * @throws Exception On error.
-     */
     public InputStream getInputStream(String location) throws Exception {
-        return new FileInputStream(location);
+        return new FileInputStream(new File(getRootDirectory(), location));
     }
 
     /**
-     * Performs the <i>heavy-lifting</i> for synchronization. Recursivly traverses directories and add packages to the
-     * <i>add</i> list that aren't already in inventory, add packages with a newer file data into the <i>updated</i>
-     * list and any packages that are in the existing list that aren't accounted for in on the filesystem are added to
-     * the <i>deleted</i> list.
-     *
-     * @param  report           The resulting synchronization report.
-     * @param  existingPackages A list of packages already in inventory.
-     * @param  directory        The directory to process.
-     *
-     * @throws Exception On all errors.
+     * Recursive function that drills down into subdirectories and builds up the report
+     * of packages for all files found. As files are found, their associated packages
+     * are removed from <code>packages</code> if they exist - leaving only packages
+     * remaining that do not exist on the file system.
+     * 
+     * @param report the report that we are building up
+     * @param packages existing packages not yet found on the file system but exist in server inventory
+     * @param directory the directory (and its subdirectories) to scan
+     * @throws Exception if the sync fails
      */
-    private void syncPackages(PackageSyncReport report, List<ContentSourcePackageDetails> packages, File directory)
+    protected void syncPackages(PackageSyncReport report, List<ContentSourcePackageDetails> packages, File directory)
         throws Exception {
+
         for (File file : directory.listFiles()) {
             if (file.isDirectory()) {
+                // process the directory recursively
                 syncPackages(report, packages, file);
-                continue;
-            }
-
-            ContentSourcePackageDetails p = createPackage(file);
-            ContentSourcePackageDetails existing = findPackage(packages, p);
-            if (existing == null) {
-                report.addNewPackage(p);
-                continue;
-            }
-
-            packages.remove(existing);
-            if (p.getFileCreatedDate().longValue() > existing.getFileCreatedDate().longValue()) {
-                report.addUpdatedPackage(p);
+            } else {
+                // process the file
+                ContentSourcePackageDetails details = createPackage(file);
+                if (details != null) {
+                    ContentSourcePackageDetails existing = findPackage(packages, details);
+                    if (existing == null) {
+                        report.addNewPackage(details);
+                    } else {
+                        packages.remove(existing); // it still exists, remove it from our list
+                        if (details.getFileCreatedDate().compareTo(existing.getFileCreatedDate()) > 0) {
+                            report.addUpdatedPackage(details);
+                        }
+                    }
+                } else {
+                    // file does not match any filter and is therefore an unknown type - ignore it
+                }
             }
         }
+
+        return;
     }
 
-    /**
-     * Create a {@link org.rhq.core.domain.content.PackageDetails } object for the specified file object.
-     *
-     * @param  file A file for which to create the package specification.
-     *
-     * @return A {@link org.rhq.core.domain.content.PackageDetails }
-     */
-    private ContentSourcePackageDetails createPackage(File file) {
-        String version = String.valueOf(file.lastModified());
-        ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey(file.getName(), version, "rpm",
-            "noarch", "Linux", "Platforms");
+    protected ContentSourcePackageDetails createPackage(File file) throws Exception {
+
+        SupportedPackageType supportedPackageType = determinePackageType(file);
+        if (supportedPackageType == null) {
+            return null; // we can't handle this file - it is an unknown/unsupported package type
+        }
+
+        String md5 = MD5Generator.getDigestString(file);
+        String name = file.getName();
+        String version = md5;
+        String packageTypeName = supportedPackageType.packageTypeName;
+        String architectureName = supportedPackageType.architectureName;
+        String resourceTypeName = supportedPackageType.resourceTypeName;
+        String resourceTypePluginName = supportedPackageType.resourceTypePluginName;
+
+        ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey(name, version, packageTypeName,
+            architectureName, resourceTypeName, resourceTypePluginName);
         ContentSourcePackageDetails pkg = new ContentSourcePackageDetails(key);
-        pkg.setDisplayName(file.getName());
+
+        pkg.setDisplayName(name);
+        pkg.setFileName(name);
         pkg.setFileCreatedDate(file.lastModified());
         pkg.setFileSize(file.length());
-        pkg.setLocation(file.getAbsolutePath());
+        pkg.setMD5(md5);
+        pkg.setLocation(getRelativePath(file));
+
         return pkg;
     }
 
-    /**
-     * Find the specified package is the list.
-     *
-     * @param  packages A list of packages.
-     * @param  pkg      The package to find.
-     *
-     * @return The package when found, else null.
-     */
-    private ContentSourcePackageDetails findPackage(List<ContentSourcePackageDetails> packages,
+    protected ContentSourcePackageDetails findPackage(List<ContentSourcePackageDetails> packages,
         ContentSourcePackageDetails pkg) {
         for (ContentSourcePackageDetails p : packages) {
             if (p.equals(pkg)) {
                 return p;
             }
         }
-
         return null;
     }
 
-    /**
-     * Test harness
-     *
-     * @param  args
-     *
-     * @throws Exception TODO: REMOVE BEFORE PRODUCTION BUILD.
-     */
-    public static void main(String[] args) throws Exception {
-        DiskSource ds = new DiskSource();
-        ds.path = "/opt/yum";
-        PackageSyncReport report = new PackageSyncReport();
-        Set<ContentSourcePackageDetails> existingPackages = new HashSet<ContentSourcePackageDetails>();
-        ds.synchronizePackages(report, existingPackages);
+    protected String getRelativePath(File file) {
+        String relativePath;
+        String fileAbsolutePath = file.getAbsolutePath();
+        int idx = fileAbsolutePath.indexOf(this.rootDirectoryAbsolutePath);
+        if (idx > -1) { // this should always be the case, in fact, it should always be 0
+            relativePath = fileAbsolutePath.substring(idx + this.rootDirectoryAbsolutePath.length());
+            if (relativePath.startsWith(File.separator)) {
+                relativePath = relativePath.substring(1);
+            }
+        } else {
+            relativePath = fileAbsolutePath; // this should never happen, but, just in case, default to the full path
+        }
+        return relativePath;
+    }
+
+    protected void initializePackageTypes(Configuration config) {
+
+        Map<String, SupportedPackageType> supportedPackageTypes = new HashMap<String, SupportedPackageType>();
+
+        /* TODO: THE UI CURRENTLY DOES NOT SUPPORT ADDING/EDITING LIST OF MAPS, SO WE CAN ONLY SUPPORT ONE PACKAGE TYPE 
+         * SO FOR NOW, JUST SUPPORT A FLAT SET OF SIMPLE PROPS - WE WILL RE-ENABLE THIS CODE LATER */
+        if (false) {
+            // All of these properties must exist, any nulls should trigger runtime exceptions which is what we want
+            // because if the configuration is bad, this content source should not initialize. 
+            List<Property> packageTypesList = config.getList("packageTypes").getList();
+            for (Property property : packageTypesList) {
+                PropertyMap pkgType = (PropertyMap) property;
+                SupportedPackageType supportedPackageType = new SupportedPackageType();
+                supportedPackageType.packageTypeName = pkgType.getSimpleValue("packageTypeName", null);
+                supportedPackageType.architectureName = pkgType.getSimpleValue("architectureName", null);
+                supportedPackageType.resourceTypeName = pkgType.getSimpleValue("resourceTypeName", null);
+                supportedPackageType.resourceTypePluginName = pkgType.getSimpleValue("resourceTypePluginName", null);
+
+                String filenameFilter = pkgType.getSimpleValue("filenameFilter", null);
+                supportedPackageTypes.put(filenameFilter, supportedPackageType);
+            }
+        } else {
+            /* THIS CODE IS THE FLAT SET OF PROPS - USE UNTIL WE CAN EDIT MAPS AT WHICH TIME DELETE THIS ELSE CLAUSE */
+            SupportedPackageType supportedPackageType = new SupportedPackageType();
+            supportedPackageType.packageTypeName = config.getSimpleValue("packageTypeName", null);
+            supportedPackageType.architectureName = config.getSimpleValue("architectureName", null);
+            supportedPackageType.resourceTypeName = config.getSimpleValue("resourceTypeName", null);
+            supportedPackageType.resourceTypePluginName = config.getSimpleValue("resourceTypePluginName", null);
+            String filenameFilter = config.getSimpleValue("filenameFilter", null);
+            supportedPackageTypes.put(filenameFilter, supportedPackageType);
+        }
+
+        setSupportedPackageTypes(supportedPackageTypes);
+        return;
+    }
+
+    protected SupportedPackageType determinePackageType(File file) {
+        String absolutePath = file.getAbsolutePath();
+        for (Map.Entry<String, SupportedPackageType> entry : getSupportedPackageTypes().entrySet()) {
+            if (absolutePath.matches(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        return null; // the file doesn't match any known types for this content source
+    }
+
+    protected class SupportedPackageType {
+        public String packageTypeName;
+        public String architectureName;
+        public String resourceTypeName;
+        public String resourceTypePluginName;
     }
 }

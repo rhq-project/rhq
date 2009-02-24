@@ -94,6 +94,9 @@ public class ServletUtility {
     private static String getContextRootFromWarFileName(ServletContext servletContext) {
         String ctxName;
         ctxName = servletContext.getRealPath("/");
+        if (null == ctxName) {
+            return null;
+        }
         if (ctxName.endsWith(SEPARATOR)) {
             ctxName = ctxName.substring(0, ctxName.length() - 1);
         }
@@ -120,7 +123,7 @@ public class ServletUtility {
         String ctxRoot = null;
 
         String path = servletContext.getRealPath("/");
-        if (!path.toLowerCase().contains(EAR_CONTENTS)) {
+        if ((null == path) || !path.toLowerCase().contains(EAR_CONTENTS)) {
             return null;
         }
 

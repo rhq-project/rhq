@@ -64,7 +64,7 @@
                       </onc:sortableColumnHeader>
                    </f:facet>
 
-                   <h:outputLink value="/rhq/resource/inventory/view.xhtml">
+                   <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
                       <f:param name="id" value="#{item.resourceId}" />
                       <h:outputText value="#{item.resourceName}" />
                    </h:outputLink>

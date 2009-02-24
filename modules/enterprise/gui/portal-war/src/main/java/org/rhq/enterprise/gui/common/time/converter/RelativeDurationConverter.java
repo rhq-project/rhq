@@ -36,7 +36,9 @@ public class RelativeDurationConverter implements Converter {
     private static final long MILLIS_IN_HOUR = 60 * MILLIS_IN_MINUTE;
     private static final long MILLIS_IN_DAY = 24 * MILLIS_IN_HOUR;
 
+    private static final SimpleDateFormat dayFormatter = new SimpleDateFormat("D");
     private static final SimpleDateFormat formatter = new SimpleDateFormat("hh:mm aaa z");
+    public static TimeZone tz = null;
 
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
         return null; // we only support rendering, deserialization back into object not possible
@@ -56,35 +58,36 @@ public class RelativeDurationConverter implements Converter {
                 + " converter does not support rendering objects of type " + value.getClass().getSimpleName());
         }
 
-        long lastMidnight = getMidnightMillis();
-        long previousMidnight = lastMidnight - MILLIS_IN_DAY;
-        String result = null;
-        if (millis < previousMidnight) {
-            // <time> "ago"
-            result = getRelativeTimeAgo(millis) + " ago";
-        } else if (millis < lastMidnight) {
-            // "yesterday" <time>
-            result = "Yesterday, " + formatter.format(new Date(millis));
-        } else {
-            // <time>
-            result = formatter.format(new Date(millis));
-        }
-
+        String result = format(millis);
         return result;
     }
 
-    private long getMidnightMillis() {
-        long epochNow = System.currentTimeMillis();
-        long epochMillisSinceMidnight = epochNow % MILLIS_IN_DAY;
-
-        int localOffset = TimeZone.getDefault().getOffset(epochNow);
-        long epochMidnight = epochNow - epochMillisSinceMidnight;
-        long localMidnightMillis = epochMidnight - localOffset;
-
-        return localMidnightMillis;
+    public static String format(long eventMillis) {
+        int dayOfYearToday = Integer.parseInt(dayFormatter.format(System.currentTimeMillis()));
+        int dayOfYearEvent = Integer.parseInt(dayFormatter.format(eventMillis));
+        String result = null;
+        if (dayOfYearEvent == dayOfYearToday) {
+            // <time>
+            result = formatter.format(new Date(eventMillis));
+        } else if (dayOfYearEvent == dayOfYearToday - 1) {
+            // "yesterday" <time>
+            result = "Yesterday, " + formatter.format(new Date(eventMillis));
+        } else {
+            // <time> "ago"
+            result = getRelativeTimeAgo(eventMillis) + " ago";
+        }
+        return result;
     }
 
-    private String getRelativeTimeAgo(long millis) {
+    private static TimeZone getTimeZone() {
+        if (tz == null) {
+            return TimeZone.getDefault();
+        } else {
+            return tz;
+        }
+    }
+
+    private static String getRelativeTimeAgo(long millis) {
         StringBuilder buf = new StringBuilder();
         long timeAgo = System.currentTimeMillis() - millis;
 

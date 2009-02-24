@@ -800,6 +800,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
             int fromIndex = 0;
             int toIndex = chunkSize;
             int newPackageCount = newPackages.size();
+            int addedCount = 0; // running tally of what we actually added into DB
 
             progress.append(new Date()).append(": ").append("Adding");
             syncResults.setResults(progress.toString());
@@ -813,11 +814,12 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal, Cont
                 List<ContentSourcePackageDetails> pkgs = newPackages.subList(fromIndex, toIndex);
                 syncResults = contentSourceManager._mergeContentSourceSyncReportADD(contentSource, pkgs, previous,
                     syncResults, progress, fromIndex);
+                addedCount += pkgs.size();
                 fromIndex += chunkSize;
                 toIndex += chunkSize;
             }
 
-            progress.append("...").append(toIndex).append('\n');
+            progress.append("...").append(addedCount).append('\n');
             syncResults.setResults(progress.toString());
             syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
 

@@ -25,10 +25,7 @@
         <input type="hidden" name="type" value="#{param.type}"/>
 
         <a4j:region renderRegionOnly="true">
-               
-            <a4j:outputPanel ajaxRendered="true">
-                <h:outputText value="#{ResourceUIBean.message}" />
-            </a4j:outputPanel>
+
 
                 <rich:tree style="width: 100%; height: 100%; " switchType="ajax"
                            stateAdvisor="#{ResourceTreeStateAdvisor}"

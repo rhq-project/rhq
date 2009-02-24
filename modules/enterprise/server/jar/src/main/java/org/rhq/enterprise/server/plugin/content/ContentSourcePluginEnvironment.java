@@ -19,9 +19,10 @@
 package org.rhq.enterprise.server.plugin.content;
 
 import java.io.File;
-import java.io.InputStream;
 import java.net.URL;
-import java.net.URLClassLoader;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -30,8 +31,10 @@ import javax.xml.bind.ValidationEvent;
 import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.serverplugin.content.ContentSourcePluginDescriptor;
 import org.rhq.core.util.exception.WrappedRemotingException;
@@ -165,14 +168,23 @@ public class ContentSourcePluginEnvironment {
             throw new Exception("Could not instantiate the JAXB Context", new WrappedRemotingException(e));
         }
 
-        InputStream is = null;
-        try {
-            // A classloader with just the primary plugin in it... no dependencies or libraries
-            ClassLoader pluginOnlyClassloader = new URLClassLoader(new URL[] { pluginJarUrl });
+        JarInputStream jis = null;
+        JarEntry descriptorEntry = null;
 
-            is = pluginOnlyClassloader.getResourceAsStream(descriptorPath);
-            if (is == null) {
-                log.warn("Could not load plugin descriptor [" + descriptorPath + "] from URL: " + pluginJarUrl);
+        try {
+            jis = new JarInputStream(pluginJarUrl.openStream());
+            JarEntry nextEntry = jis.getNextJarEntry();
+            while (nextEntry != null && descriptorEntry == null) {
+                if (DEFAULT_PLUGIN_DESCRIPTOR_PATH.equals(nextEntry.getName())) {
+                    descriptorEntry = nextEntry;
+                } else {
+                    jis.closeEntry();
+                    nextEntry = jis.getNextJarEntry();
+                }
+            }
+
+            if (descriptorEntry == null) {
+                throw new Exception("The plugin descriptor does not exist");
             }
 
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
@@ -186,7 +198,7 @@ public class ContentSourcePluginEnvironment {
             ValidationEventCollector vec = new ValidationEventCollector();
             unmarshaller.setEventHandler(vec);
 
-            this.pluginDescriptor = (ContentSourcePluginDescriptor) unmarshaller.unmarshal(is);
+            this.pluginDescriptor = (ContentSourcePluginDescriptor) unmarshaller.unmarshal(jis);
 
             for (ValidationEvent event : vec.getEvents()) {
                 log.debug("Plugin [" + this.pluginDescriptor.getName() + "] descriptor messages {Severity: "
@@ -197,11 +209,11 @@ public class ContentSourcePluginEnvironment {
             throw new Exception("Could not successfully parse the plugin descriptor [" + descriptorPath
                 + " found in URL [" + pluginJarUrl + "]", new WrappedRemotingException(e));
         } finally {
-            if (is != null) {
+            if (jis != null) {
                 try {
-                    is.close();
+                    jis.close();
                 } catch (Exception e) {
-                    // Nothing more we can do here
+                    log.warn("Cannot close jar stream [" + pluginJarUrl + "]. Cause: " + e);
                 }
             }
         }

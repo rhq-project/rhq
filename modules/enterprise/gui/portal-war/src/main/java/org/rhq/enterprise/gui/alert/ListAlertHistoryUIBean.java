@@ -220,8 +220,12 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
             AlertPriority alertPriority = getAlertPriority();
 
             long MILLIS_IN_DAY = 24 * 60 * 60 * 1000;
-            long beginTime = date.getTime();
-            long endTime = new Date(beginTime + MILLIS_IN_DAY).getTime();
+            Long beginTime = null;
+            Long endTime = null;
+            if (date != null) {
+                beginTime = date.getTime();
+                endTime = new Date(beginTime + MILLIS_IN_DAY).getTime();
+            }
             PageList<Alert> alerts = alertManager.findAlerts(getResource().getId(), alertDefinitionId, alertPriority,
                 beginTime, endTime, pc);
 

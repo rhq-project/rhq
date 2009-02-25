@@ -295,7 +295,8 @@ public class PropertyRenderingUtility {
     public static void addPropertyDescription(UIComponent parent, PropertyDefinition propertyDefinition) {
         // <span class="description">DESCRIPTION</span>
         if (propertyDefinition.getDescription() == null || propertyDefinition.getDescription().trim().equals("")) {
-            FacesComponentUtility.addOutputText(parent, null, "<No Descrption Available>", CssStyleClasses.DESCRIPTION);
+            FacesComponentUtility
+                .addOutputText(parent, null, "<No Description Available>", CssStyleClasses.DESCRIPTION);
         } else {
             FacesComponentUtility.addOutputText(parent, null, propertyDefinition.getDescription(),
                 CssStyleClasses.DESCRIPTION);
@@ -404,8 +405,8 @@ public class PropertyRenderingUtility {
         }
     }
 
-    private static void addErrorMessages(UIInput input, @Nullable PropertyDefinitionSimple propertyDefinitionSimple,
-        PropertySimple propertySimple, boolean prevalidate) {
+    private static void addErrorMessages(UIInput input, @Nullable
+    PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple, boolean prevalidate) {
         if (prevalidate) {
             // Pre-validate the property's value, in case the PC sent us an invalid live config.
             PropertySimpleValueValidator validator = new PropertySimpleValueValidator(propertyDefinitionSimple);

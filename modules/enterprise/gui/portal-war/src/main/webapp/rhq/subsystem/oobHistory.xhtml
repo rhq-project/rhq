@@ -28,7 +28,7 @@
                             value="#{oobHistoryDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="20%, 20%, 12%, 8%, 6%, 8%, 6%, 6%, 6%, 6%, 6%"
+                            columnsWidth="20%, 16%, 16%, 8%, 6%, 8%, 6%, 6%, 6%, 6%, 6%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -78,7 +78,7 @@
                   </f:facet>
 
                   <h:outputLink value="#{onf:getDefaultResourceTabURL()}"
-                                rendered="#{not empty item.parentResourceName}">
+                                rendered="#{not empty item.parentName}">
                      <f:param name="id" value="#{item.parentId}" />
                      <h:outputText value="#{item.parentName}" />
                   </h:outputLink>

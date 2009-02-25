@@ -517,12 +517,12 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
 
         Configuration that = (Configuration) obj;
         if ((this.properties == null) || this.properties.isEmpty()) {
-            // NOTE: Use that.getProperties(), rather than that.properties, in case 'that' is a JPA/Hibernate proxy, to
-            //       force loading of the field.
-            return (that.getProperties() == null) || that.getProperties().isEmpty();
+            // NOTE: Use that.getMap() (*not* that.getProperties()!), rather than that.properties, in case 'that' is a
+            //       JPA/Hibernate proxy, to force loading of the field.
+            return (that.getMap() == null) || that.getMap().isEmpty();
         }
 
-        return this.properties.equals(that.getProperties());
+        return this.properties.equals(that.getMap());
     }
 
     @Override

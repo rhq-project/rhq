@@ -81,19 +81,19 @@ public interface EventManagerLocal {
      * @return
      */
     public PageList<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
-        EventSeverity severity, PageControl pc);
+        EventSeverity[] severities, PageControl pc);
 
     public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity severity, PageControl pc);
+        EventSeverity[] severities, PageControl pc);
 
     public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity severity, int eventId, String source, String searchString, PageControl pc);
+        EventSeverity[] severities, int eventId, String source, String searchString, PageControl pc);
 
     public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
-        long endDate, EventSeverity object, PageControl pc);
+        long endDate, EventSeverity[] severities, PageControl pc);
 
     public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
-        long endDate, EventSeverity object, int eventId, String source, String searchString, PageControl pc);
+        long endDate, EventSeverity[] severities, int eventId, String source, String searchString, PageControl pc);
 
     /**
      * Retrieve the count of events for the given resource in the time between begin and end, nicely separated
@@ -156,7 +156,7 @@ public interface EventManagerLocal {
      * @return           List of Events
      */
     public PageList<EventComposite> getEvents(Subject subject, int[] resourceIds, long begin, long end,
-        EventSeverity severity, String source, String searchString, PageControl pc);
+        EventSeverity[] severities, String source, String searchString, PageControl pc);
 
     /**
      * Obtain detail information about the passed event

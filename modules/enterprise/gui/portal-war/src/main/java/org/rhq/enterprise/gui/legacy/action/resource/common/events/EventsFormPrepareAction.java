@@ -107,18 +107,19 @@ public class EventsFormPrepareAction extends MetricsControlFormPrepareAction {
 
         // Perform the query and get the (filtered) events
         EventSeverity eventSeverityFilter = getSeverityFromString(eForm.getSevFilter());
+        EventSeverity[] filters = new EventSeverity[] { eventSeverityFilter };
 
         List<EventComposite> events;
         if (resourceId > 0) {
-            events = eventManager.getEvents(subject, new int[] { resourceId }, begin, end, eventSeverityFilter,
-                sourceFilter, searchString, pc);
+            events = eventManager.getEvents(subject, new int[] { resourceId }, begin, end, filters, sourceFilter,
+                searchString, pc);
         } else if (groupId > 0) {
-            events = eventManager.getEventsForCompGroup(subject, groupId, begin, end, eventSeverityFilter, eventId,
-                sourceFilter, searchString, pc);
+            events = eventManager.getEventsForCompGroup(subject, groupId, begin, end, filters, eventId, sourceFilter,
+                searchString, pc);
 
         } else if (parent > 0 && type > 0) {
-            events = eventManager.getEventsForAutoGroup(subject, parent, type, begin, end, eventSeverityFilter,
-                eventId, sourceFilter, searchString, pc);
+            events = eventManager.getEventsForAutoGroup(subject, parent, type, begin, end, filters, eventId,
+                sourceFilter, searchString, pc);
         } else {
             log.warn("Invalid input combination - can not list events ");
             return null;

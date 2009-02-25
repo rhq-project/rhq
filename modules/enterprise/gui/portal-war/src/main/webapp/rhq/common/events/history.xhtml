@@ -34,15 +34,6 @@
             </f:facet>
 
             <h:panelGrid columns="3" cellspacing="3">
-               <h:outputLabel for="severityFilter" value="Severity Filter: " />
-               <h:selectOneMenu id="severityFilter" value="#{EventHistoryUIBean.severityFilter}"
-                                style="width: 300px;">
-                   <a4j:support event="onchange" reRender="eventHistoryDataTable,eventHistoryDataTableScroller" />
-
-                   <f:selectItems value="#{EventHistoryUIBean.severityFilterSelectItems}"/>
-               </h:selectOneMenu>
-               <rich:spacer/>
-
                <h:outputLabel for="sourceFilter" value="Source Filter: " />
                <h:inputText id="sourceFilter" value="#{EventHistoryUIBean.sourceFilter}"
                             style="width: 300px;">
@@ -54,6 +45,16 @@
                <h:inputText id="searchFilter" value="#{EventHistoryUIBean.searchFilter}"
                             onkeypress="return ignoreEnterKey(event);"
                             style="width: 300px;" />
+               <rich:spacer/>
+               
+               <h:outputLabel for="severityFilter" value="Severity Filter: " />
+               <h:selectManyCheckbox id="severityFilter" value="#{EventHistoryUIBean.severityFilter}"
+                                    style="width: 300px;">
+                   <a4j:support event="onchange" reRender="eventHistoryDataTable,eventHistoryDataTableScroller" />
+
+                   <f:selectItems value="#{EventHistoryUIBean.severityFilterSelectItems}"/>
+               </h:selectManyCheckbox>
+               
                <a4j:commandButton value="GO" reRender="eventHistoryDataTable,eventHistoryDataTableScroller"
                                   styleClass="buttonmed">
                   <s:defaultAction />

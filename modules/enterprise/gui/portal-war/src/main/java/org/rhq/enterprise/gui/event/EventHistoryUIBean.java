@@ -21,8 +21,10 @@ package org.rhq.enterprise.gui.event;
 import java.util.Arrays;
 
 import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
 import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,7 +59,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
     private EntityContext context;
 
-    private String severityFilter;
+    private String[] severityFilter;
     private String sourceFilter;
     private String searchFilter;
     private SelectItem[] severityFilterSelectItems;
@@ -72,23 +74,23 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
         return this.context;
     }
 
-    public String getSeverityFilter() {
+    public String[] getSeverityFilter() {
         if (severityFilter == null) {
-            severityFilter = SelectItemUtils.getSelectItemFilter("eventHistoryForm:severityFilter");
+            FacesContext facesContext = FacesContextUtility.getFacesContext();
+            HttpServletRequest request = (HttpServletRequest) facesContext.getExternalContext().getRequest();
+            severityFilter = request.getParameterValues("eventHistoryForm:severityFilter");
         }
-        if (severityFilter != null) {
-            severityFilter = SelectItemUtils.cleanse(severityFilter);
-        }
+        // do not need to SelectItemUtils.cleanse the value because "ALL" is not rendered in the options list anymore
         return severityFilter;
     }
 
-    public void setSeverityFilter(String severityFilter) {
+    public void setSeverityFilter(String[] severityFilter) {
         this.severityFilter = severityFilter;
     }
 
     public SelectItem[] getSeverityFilterSelectItems() {
         if (severityFilterSelectItems == null) {
-            severityFilterSelectItems = SelectItemUtils.convertFromEnum(EventSeverity.class, true);
+            severityFilterSelectItems = SelectItemUtils.convertFromEnum(EventSeverity.class, false);
         }
 
         return severityFilterSelectItems;
@@ -187,20 +189,20 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
             MeasurementPreferences preferences = user.getMeasurementPreferences();
             MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
-            EventSeverity severity = getEventSeverity();
+            EventSeverity[] severities = getEventSeverity();
             String search = getSearchFilter();
             String source = getSourceFilter();
 
             PageList<EventComposite> results = new PageList<EventComposite>();
             if (context.category == EntityContext.Category.Resource) {
                 results = eventManager.getEvents(getSubject(), new int[] { context.resourceId },
-                    rangePreferences.begin, rangePreferences.end, severity, source, search, pc);
+                    rangePreferences.begin, rangePreferences.end, severities, source, search, pc);
             } else if (context.category == EntityContext.Category.ResourceGroup) {
                 results = eventManager.getEventsForCompGroup(getSubject(), context.groupId, rangePreferences.begin,
-                    rangePreferences.end, severity, -1, source, search, pc);
+                    rangePreferences.end, severities, -1, source, search, pc);
             } else if (context.category == EntityContext.Category.AutoGroup) {
                 results = eventManager.getEventsForAutoGroup(getSubject(), context.parentResourceId,
-                    context.resourceTypeId, rangePreferences.begin, rangePreferences.end, severity, pc);
+                    context.resourceTypeId, rangePreferences.begin, rangePreferences.end, severities, pc);
             } else {
                 log.error(context.getUnknownContextMessage());
             }
@@ -212,10 +214,14 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
         return FacesContextUtility.getRequest().getParameterValues("selectedEvents");
     }
 
-    private EventSeverity getEventSeverity() {
-        String severityName = getSeverityFilter();
-        if (severityName != null) {
-            return Enum.valueOf(EventSeverity.class, severityName);
+    private EventSeverity[] getEventSeverity() {
+        String[] severityNames = getSeverityFilter();
+        if (severityNames != null) {
+            EventSeverity[] severities = new EventSeverity[severityNames.length];
+            for (int i = 0; i < severityNames.length; i++) {
+                severities[i] = Enum.valueOf(EventSeverity.class, severityNames[i]);
+            }
+            return severities;
         }
         return null;
     }

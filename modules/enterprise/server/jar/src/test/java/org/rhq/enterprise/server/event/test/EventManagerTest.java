@@ -159,9 +159,11 @@ public class EventManagerTest extends AbstractEJB3Test {
             List<EventComposite> res = eventManager.getEventsForResource(null, resourceId, t1, t2, null,
                 new PageControl());
             assert res.size() == 1 : "Expected 1 Event, got " + res.size();
-            res = eventManager.getEventsForResource(null, resourceId, t1, t2, EventSeverity.INFO, null);
+            res = eventManager.getEventsForResource(null, resourceId, t1, t2,
+                new EventSeverity[] { EventSeverity.INFO }, null);
             assert res.size() == 1 : "Expected 1 Event, got " + res.size();
-            res = eventManager.getEventsForResource(null, resourceId, t1, t2, EventSeverity.WARN, null);
+            res = eventManager.getEventsForResource(null, resourceId, t1, t2,
+                new EventSeverity[] { EventSeverity.WARN }, null);
             assert res.size() == 0 : "Expected 0 Events, got " + res.size();
 
         } finally {

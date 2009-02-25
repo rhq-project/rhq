@@ -23,6 +23,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -224,7 +225,7 @@ public class EventManagerBean implements EventManagerLocal {
     }
 
     public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
-        long endDate, EventSeverity severity, PageControl pc) {
+        long endDate, EventSeverity[] severities, PageControl pc) {
 
         List<Resource> resources = resGrpMgr.getResourcesForAutoGroup(subject, parent, type);
         int[] resourceIds = new int[resources.size()];
@@ -232,12 +233,12 @@ public class EventManagerBean implements EventManagerLocal {
         for (Resource res : resources)
             resourceIds[i++] = res.getId();
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, null, null, pc);
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severities, null, null, pc);
         return comp;
     }
 
     public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
-        long endDate, EventSeverity severity, int eventId, String source, String searchString, PageControl pc) {
+        long endDate, EventSeverity[] severities, int eventId, String source, String searchString, PageControl pc) {
 
         List<Resource> resources = resGrpMgr.getResourcesForAutoGroup(subject, parent, type);
         int[] resourceIds = new int[resources.size()];
@@ -245,14 +246,14 @@ public class EventManagerBean implements EventManagerLocal {
         for (Resource res : resources)
             resourceIds[i++] = res.getId();
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, source, searchString,
-            pc);
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severities, source,
+            searchString, pc);
 
         return comp;
     }
 
     public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity severity, PageControl pc) {
+        EventSeverity[] severities, PageControl pc) {
 
         List<Resource> resources = resGrpMgr.getResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
         int[] resourceIds = new int[resources.size()];
@@ -260,12 +261,12 @@ public class EventManagerBean implements EventManagerLocal {
         for (Resource res : resources)
             resourceIds[i++] = res.getId();
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, null, null, pc);
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severities, null, null, pc);
         return comp;
     }
 
     public PageList<EventComposite> getEventsForCompGroup(Subject subject, int groupId, long begin, long endDate,
-        EventSeverity severity, int eventId, String source, String searchString, PageControl pc) {
+        EventSeverity[] severities, int eventId, String source, String searchString, PageControl pc) {
 
         List<Resource> resources = resGrpMgr.getResourcesForResourceGroup(subject, groupId, GroupCategory.COMPATIBLE);
         int[] resourceIds = new int[resources.size()];
@@ -273,8 +274,8 @@ public class EventManagerBean implements EventManagerLocal {
         for (Resource res : resources)
             resourceIds[i++] = res.getId();
 
-        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severity, source, searchString,
-            pc);
+        PageList<EventComposite> comp = getEvents(subject, resourceIds, begin, endDate, severities, source,
+            searchString, pc);
 
         return comp;
     }
@@ -361,15 +362,15 @@ public class EventManagerBean implements EventManagerLocal {
 
     @NotNull
     public PageList<EventComposite> getEventsForResource(Subject subject, int resourceId, long startDate, long endDate,
-        EventSeverity severity, PageControl pc) {
+        EventSeverity[] severities, PageControl pc) {
 
-        PageList<EventComposite> comp = getEvents(subject, new int[] { resourceId }, startDate, endDate, severity,
+        PageList<EventComposite> comp = getEvents(subject, new int[] { resourceId }, startDate, endDate, severities,
             null, null, pc);
         return comp;
     }
 
     public PageList<EventComposite> getEvents(Subject subject, int[] resourceIds, long begin, long end,
-        EventSeverity severity, String source, String searchString, PageControl pc) {
+        EventSeverity[] severities, String source, String searchString, PageControl pc) {
 
         if (pc == null) {
             pc = new PageControl();
@@ -385,16 +386,16 @@ public class EventManagerBean implements EventManagerLocal {
          * We're still here - either the specified event was not found or we got called without
          * passing any specific event. Return a bunch of events for the resource etc.
          */
-        String query = setupEventsQuery(resourceIds, severity, source, searchString, pc, false);
-        runEventsQuery(resourceIds, begin, end, severity, source, searchString, pc, pl, query);
-        query = setupEventsQuery(resourceIds, severity, source, searchString, pc, true);
-        int totals = runEventsCountQuery(resourceIds, begin, end, severity, source, searchString, pc, pl, query);
+        String query = setupEventsQuery(resourceIds, severities, source, searchString, pc, false);
+        runEventsQuery(resourceIds, begin, end, severities, source, searchString, pc, pl, query);
+        query = setupEventsQuery(resourceIds, severities, source, searchString, pc, true);
+        int totals = runEventsCountQuery(resourceIds, begin, end, severities, source, searchString, pc, pl, query);
         pl.setTotalSize(totals);
 
         return pl;
     }
 
-    private void runEventsQuery(int[] resourceIds, long begin, long end, EventSeverity severity, String source,
+    private void runEventsQuery(int[] resourceIds, long begin, long end, EventSeverity[] severities, String source,
         String searchString, PageControl pc, PageList<EventComposite> pl, String query) {
         Connection conn = null;
         PreparedStatement stm = null;
@@ -403,12 +404,15 @@ public class EventManagerBean implements EventManagerLocal {
             conn = rhqDs.getConnection();
             stm = conn.prepareStatement(query);
             int i = 1;
-            JDBCUtil.bindNTimes(stm, resourceIds, 1);
+            JDBCUtil.bindNTimes(stm, resourceIds, i);
             i += resourceIds.length;
             stm.setLong(i++, begin);
             stm.setLong(i++, end);
-            if (severity != null)
-                stm.setString(i++, severity.toString());
+            if (severities != null) {
+                for (int j = 0; j < severities.length; j++) {
+                    stm.setString(i++, severities[j].toString());
+                }
+            }
             if (isFilled(searchString))
                 stm.setString(i++, PersistenceUtility.formatSearchParameter(searchString));
             if (isFilled(source))
@@ -426,7 +430,7 @@ public class EventManagerBean implements EventManagerLocal {
             log.error("query is [" + query + "].");
             // these values should be useful in working out how we built the query in setupEventsQuery()
             log.error("resourceIds[] has [" + resourceIds.length + "] members.");
-            log.error("severity is [" + severity + "].");
+            log.error("severities are [" + Arrays.asList(severities) + "].");
             log.error("source is [" + source + "].");
             log.error("searchString is [" + searchString + "].");
             log.error("PageControl is [" + pc + "].");
@@ -436,7 +440,7 @@ public class EventManagerBean implements EventManagerLocal {
         return;
     }
 
-    private int runEventsCountQuery(int[] resourceIds, long begin, long end, EventSeverity severity, String source,
+    private int runEventsCountQuery(int[] resourceIds, long begin, long end, EventSeverity[] severities, String source,
         String searchString, PageControl pc, PageList<EventComposite> pl, String query) {
         Connection conn = null;
         PreparedStatement stm = null;
@@ -446,12 +450,15 @@ public class EventManagerBean implements EventManagerLocal {
             conn = rhqDs.getConnection();
             stm = conn.prepareStatement(query);
             int i = 1;
-            JDBCUtil.bindNTimes(stm, resourceIds, 1);
+            JDBCUtil.bindNTimes(stm, resourceIds, i);
             i += resourceIds.length;
             stm.setLong(i++, begin);
             stm.setLong(i++, end);
-            if (severity != null)
-                stm.setString(i++, severity.toString());
+            if (severities != null) {
+                for (int j = 0; j < severities.length; j++) {
+                    stm.setString(i++, severities[j].toString());
+                }
+            }
             if (isFilled(searchString))
                 stm.setString(i++, PersistenceUtility.formatSearchParameter(searchString));
             if (isFilled(source))
@@ -470,7 +477,7 @@ public class EventManagerBean implements EventManagerLocal {
         return num;
     }
 
-    private String setupEventsQuery(int[] resourceIds, EventSeverity severity, String source, String searchString,
+    private String setupEventsQuery(int[] resourceIds, EventSeverity[] severities, String source, String searchString,
         PageControl pc, boolean isCountQuery) {
         String query;
 
@@ -491,8 +498,11 @@ public class EventManagerBean implements EventManagerLocal {
         query += " ) ";
 
         query += " AND ev.timestamp BETWEEN ? AND ? ";
-        if (severity != null)
-            query += " AND ev.severity = ? ";
+        if (severities != null) {
+            query += " AND ev.severity IN ( ";
+            query += JDBCUtil.generateInBinds(severities.length);
+            query += " ) ";
+        }
         if (isFilled(searchString))
             query += " AND upper(ev.detail) LIKE ? ";
         if (isFilled(source))

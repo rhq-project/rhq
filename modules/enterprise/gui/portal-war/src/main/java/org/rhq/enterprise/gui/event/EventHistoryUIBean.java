@@ -65,6 +65,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
     private SelectItem[] severityFilterSelectItems;
 
     private EventComposite selectedEvent;
+    private Integer eventId;
 
     public EventHistoryUIBean() {
         context = WebUtility.getEntityContext();
@@ -122,13 +123,18 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
         this.searchFilter = searchFilter;
     }
 
+    public void populateEventId(Integer eventId) {
+        this.eventId = eventId;
+    }
+
     public EventComposite getSelectedEvent() {
         if (selectedEvent == null) {
-            int eventId = FacesContextUtility.getOptionalRequestParameter("eventId", Integer.class);
-            try {
-                selectedEvent = eventManager.getEventDetailForEventId(getSubject(), eventId);
-            } catch (EventException ee) {
-                selectedEvent = null; // keep it null, handle at the UI layer
+            if (eventId != null) {
+                try {
+                    selectedEvent = eventManager.getEventDetailForEventId(getSubject(), eventId);
+                } catch (EventException ee) {
+                    selectedEvent = null; // keep it null, handle at the UI layer
+                }
             }
         }
         return selectedEvent;

@@ -65,17 +65,16 @@
 
             <ui:param name="eventHistoryDataModel" value="#{EventHistoryUIBean.dataModel}" />
 
-            <rich:dataTable
-                                 id="eventHistoryDataTable"
-                              value="#{eventHistoryDataModel}" 
-                               rows="#{PageControl.EventsHistoryList.pageSize}" 
-                                var="item"
-                              width="100%"
-                         styleClass="resources-table"
-                        headerClass="tableRowHeader" 
-                        footerClass="on-pager-footer"
-                     onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
-                      onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+            <rich:dataTable id="eventHistoryDataTable"
+                         value="#{eventHistoryDataModel}" 
+                          rows="#{PageControl.EventsHistoryList.pageSize}" 
+                           var="item"
+                         width="100%"
+                    styleClass="resources-table"
+                   headerClass="tableRowHeader" 
+                   footerClass="on-pager-footer"
+                onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                 onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
 
                 <f:facet name="PageControlView">
                     <onc:paginationControl id="EventsHistoryList" />
@@ -121,25 +120,11 @@
                         <h:outputText styleClass="headerText" value="Detail" />
                     </f:facet>
                     
-                    <h:outputLink>
-                        <c:if test="#{EventHistoryUIBean.context.resourceId != -1}">
-                            <f:param name="id" value="#{EventHistoryUIBean.context.resourceId}" />
-                        </c:if>
-                        <c:if test="#{EventHistoryUIBean.context.groupId != -1}">
-                            <f:param name="groupId" value="#{EventHistoryUIBean.context.groupId}" />
-                        </c:if>
-                        <c:if test="#{EventHistoryUIBean.context.parentResourceId != -1}">
-                            <f:param name="parent" value="#{EventHistoryUIBean.context.parentResourceId}" />
-                        </c:if>
-                        <c:if test="#{EventHistoryUIBean.context.resourceTypeId != -1}">
-                            <f:param name="type" value="#{EventHistoryUIBean.context.resourceTypeId}" />
-                        </c:if>
-                        <f:param name="eventId" value="#{item.eventId}" />
-                        <c:if test="#{not empty param.category}">
-                            <f:param name="category" value="#{param.category}" />
-                        </c:if>
-                        <h:outputText value="#{onf:trimString(item.eventDetail,160)}" />
-                    </h:outputLink>
+                    <a4j:commandLink action="#{EventHistoryUIBean.populateEventId(item.eventId)}"
+                                     reRender="eventDetailsModalPanel" ajaxSingle="true"
+                                     oncomplete="Richfaces.showModalPanel('modalPanelForm:eventDetailsModalPanel')">
+                       <h:outputText value="#{onf:trimString(item.eventDetail,160)}" />
+                    </a4j:commandLink>
                 </rich:column>
 
                 <rich:column>
@@ -192,39 +177,42 @@
         </rich:panel>
         <br />
     </h:form>
-
-    <rich:panel id="eventDetailPanel" rendered="#{param.eventId gt 0}" styleClass="BlockContent">
-        <f:facet name="header">
-            <h:outputText value="#{msg['resource.common.monitor.events.DetailsHeader']}" />
-        </f:facet>
-        <ui:param name="event" value="#{EventHistoryUIBean.selectedEvent}" />
-        <h:panelGroup rendered="#{not empty event}">
-            <table width="100%">
-                <tr style="width: 175px">
-                    <td style="font-weight: bold;">Resource: </td>
-                    <td><h:outputText value="#{onf:getResource(event.resourceId).name}" /></td>
-                </tr>
-                <tr>
-                    <td style="font-weight: bold;">Source: </td>
-                    <td><h:outputText value="#{event.sourceLocation}" /></td>
-                </tr>
-                <tr>
-                    <td style="font-weight: bold;">Severity: </td>
-                    <td><h:outputText value="#{event.severity}" /></td>
-                </tr>
-                <tr>
-                    <td style="font-weight: bold; vertical-align: top;">Details: </td>
-                    <td>
-                        <div style="height: 200px; border-style: inset; border-width: 1px; overflow: auto">
-                            <h:outputText value="#{event.eventDetail}" />
-                        </div>
-                    </td>
-                </tr>
-            </table>
-        </h:panelGroup>
-        <h:outputText value="Event details not found: either deleted by another user or purged due to age"
-                      rendered="#{empty event}" />
-    </rich:panel>
+    
+    <h:form id="modalPanelForm">
+       <rich:modalPanel id="eventDetailsModalPanel" width="450" height="450">
+          <f:facet name="header">
+             <h:outputText value="Event Details"/>
+          </f:facet>
+          <f:facet name="controls">
+             <a href="javascript:Richfaces.hideModalPanel('modalPanelForm:eventDetailsModalPanel')">Close</a>
+          </f:facet>
+          <ui:param name="event" value="#{EventHistoryUIBean.selectedEvent}" />
+          <h:panelGroup rendered="#{not empty event}">
+              <table width="100%">
+                  <tr style="width: 200px">
+                      <td style="font-weight: bold;">Resource: </td>
+                      <td><h:outputText value="#{onf:getResource(event.resourceId).name}" /></td>
+                  </tr>
+                  <tr>
+                      <td style="font-weight: bold;">Source: </td>
+                      <td><h:outputText value="#{event.sourceLocation}" /></td>
+                  </tr>
+                  <tr>
+                      <td style="font-weight: bold;">Severity: </td>
+                      <td><h:outputText value="#{event.severity}" /></td>
+                  </tr>
+                  <tr>
+                      <td style="font-weight: bold; vertical-align: top;">Details: </td>
+                      <td>
+                          <div style="height: 300px; border-style: inset; border-width: 1px; overflow: auto">
+                              <h:outputText value="#{event.eventDetail}" />
+                          </div>
+                      </td>
+                  </tr>
+              </table>
+          </h:panelGroup>
+       </rich:modalPanel>
+    </h:form>
 
 </ui:composition>
 

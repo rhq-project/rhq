@@ -192,19 +192,23 @@ public class ConfigRenderer extends Renderer {
         if ((configurationComponent.getConfigurationDefinition() == null)
             || ((configurationComponent.getConfiguration() != null) && configurationComponent.getConfiguration()
                 .getMap().isEmpty())) {
-            String styleClass = (configurationComponent.getNullConfigurationStyle() == null) ? "ErrorBlock"
-                : configurationComponent.getNullConfigurationStyle();
-            HtmlPanelGroup messagePanel = FacesComponentUtility.addBlockPanel(configurationComponent,
-                configurationComponent, styleClass);
-            FacesComponentUtility.addVerbatimText(messagePanel, configurationComponent
-                .getNullConfigurationDefinitionMessage());
+            if (configurationComponent.getNullConfigurationDefinitionMessage() != null) {
+                String styleClass = (configurationComponent.getNullConfigurationStyle() == null) ? "ErrorBlock"
+                    : configurationComponent.getNullConfigurationStyle();
+                HtmlPanelGroup messagePanel = FacesComponentUtility.addBlockPanel(configurationComponent,
+                    configurationComponent, styleClass);
+                FacesComponentUtility.addVerbatimText(messagePanel, configurationComponent
+                    .getNullConfigurationDefinitionMessage());
+            }
             return;
         }
 
         if (configurationComponent.getConfiguration() == null) {
-            HtmlPanelGroup messagePanel = FacesComponentUtility.addBlockPanel(configurationComponent,
-                configurationComponent, "WarnBlock");
-            FacesComponentUtility.addVerbatimText(messagePanel, configurationComponent.getNullConfigurationMessage());
+            if (configurationComponent.getNullConfigurationMessage() != null) {
+                HtmlPanelGroup messagePanel = FacesComponentUtility.addBlockPanel(configurationComponent,
+                    configurationComponent, "WarnBlock");
+                FacesComponentUtility.addVerbatimText(messagePanel, configurationComponent.getNullConfigurationMessage());
+            }
             return;
         }
 

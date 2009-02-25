@@ -28,7 +28,7 @@
                             value="#{oobHistoryDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="26%, 26%, 8%, 6%, 8%, 6%, 6%, 6%, 6%, 6%"
+                            columnsWidth="20%, 20%, 12%, 8%, 6%, 8%, 6%, 6%, 6%, 6%, 6%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -69,6 +69,20 @@
                       <h:outputText value="#{item.resourceName}" />
                    </h:outputLink>
                 </rich:column>
+
+                <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="parent.name">
+                        <h:outputText styleClass="headerText" value="Parent" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}"
+                                rendered="#{not empty item.parentResourceName}">
+                     <f:param name="id" value="#{item.parentId}" />
+                     <h:outputText value="#{item.parentName}" />
+                  </h:outputLink>
+               </rich:column>
 
                 <rich:column>
                     <f:facet name="header">
@@ -148,7 +162,7 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="10" width="100%">
+                     <rich:column colspan="11" width="100%">
 
                         <ui:param name="paginationDataTableName" value="oobHistoryDataTable"/>
                         <ui:param name="paginationDataModel" value="#{oobHistoryDataModel}"/>

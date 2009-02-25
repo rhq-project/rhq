@@ -51,9 +51,11 @@ public class MeasurementOOBComposite implements Serializable {
     private double dataMax;
     private double outlier;
     private MeasurementUnits units;
+    private String parentName;
+    private int parentId;
 
     public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, long timestamp, int definitionId,
-                                   int factor72, double avg72, double blMin, double blMax, MeasurementUnits units) {
+                                   int factor72, double avg72, double blMin, double blMax, MeasurementUnits units, String parentName, int parentId) {
         this.resourceName = resourceName;
         this.resourceId = resourceId;
         this.scheduleName = scheduleName;
@@ -65,6 +67,8 @@ public class MeasurementOOBComposite implements Serializable {
         this.blMax = blMax;
         this.timestamp = timestamp;
         this.units = units;
+        this.parentId = parentId;
+        this.parentName = parentName;
     }
 
         public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, long timestamp, int definitionId,
@@ -178,6 +182,14 @@ public class MeasurementOOBComposite implements Serializable {
         return dataMax;
     }
 
+    public String getParentName() {
+        return parentName;
+    }
+
+    public int getParentId() {
+        return parentId;
+    }
+
     public void setDataMin(double dataMin) {
         this.dataMin = dataMin;
     }
@@ -243,6 +255,9 @@ public class MeasurementOOBComposite implements Serializable {
         sb.append(", dataMin=").append(dataMin);
         sb.append(", dataMax=").append(dataMax);
         sb.append(", outlier=").append(outlier);
+        sb.append(", units=").append(units);
+        sb.append(", parentName='").append(parentName).append('\'');
+        sb.append(", parentId=").append(parentId);
         sb.append('}');
         return sb.toString();
     }

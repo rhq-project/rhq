@@ -73,7 +73,7 @@
                   <area href="http://www.jboss.org/" alt="JBoss Homepage" title="JBoss" shape="rect" coords="100,0,200,42" />
                </map>
                <div>
-                  <img src="/images/redhat-jboss-logo.gif" usemap="#redhat-jboss-logo-map" />
+                  <img src="/images/redhat-jboss-logo.gif" usemap="#redhat-jboss-logo-map" border="0" />
                </div>
             </td>
         </tr>

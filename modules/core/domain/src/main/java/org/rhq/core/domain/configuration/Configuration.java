@@ -509,17 +509,20 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
             return false;
         }
 
-        // instanceof because a) obj may be a JPA/Hibernate proxy or b) obj may be a subclass with same equals semantics
+        // NOTE: Use instanceof, rather than getClass(), because a) obj may be a JPA/Hibernate proxy or b) obj may be a
+        //       subclass with same equals semantics.
         if (!(obj instanceof Configuration)) {
             return false;
         }
 
         Configuration that = (Configuration) obj;
         if ((this.properties == null) || this.properties.isEmpty()) {
-            return (that.properties == null) || that.properties.isEmpty();
+            // NOTE: Use that.getProperties(), rather than that.properties, in case 'that' is a JPA/Hibernate proxy, to
+            //       force loading of the field.
+            return (that.getProperties() == null) || that.getProperties().isEmpty();
         }
 
-        return this.properties.equals(that.properties);
+        return this.properties.equals(that.getProperties());
     }
 
     @Override

@@ -201,10 +201,12 @@ public class PropertyList extends Property {
 
         PropertyList that = (PropertyList) obj;
         if ((this.list == null) || this.list.isEmpty()) {
-            return (that.list == null) || that.list.isEmpty();
+            // NOTE: Use that.getList(), rather than that.list, in case 'that' is a JPA/Hibernate proxy, to
+            //       force loading of the List.
+            return (that.getList() == null) || that.getList().isEmpty();
         }
 
-        return this.list.containsAll(that.list) && that.list.containsAll(this.list);
+        return this.list.containsAll(that.getList()) && that.getList().containsAll(this.list);
     }
 
     @Override

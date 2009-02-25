@@ -250,11 +250,13 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
         }
 
         PropertyMap that = (PropertyMap) obj;
+        // NOTE: Use that.getMap(), rather than that.map, in case 'that' is a JPA/Hibernate proxy, to
+        //       force loading of the Map.
         if ((this.map == null) || this.map.isEmpty()) {
-            return (that.map == null) || that.map.isEmpty();
+            return (that.getMap() == null) || that.getMap().isEmpty();
         }
 
-        return this.map.equals(that.map);
+        return this.map.equals(that.getMap());
     }
 
     @Override

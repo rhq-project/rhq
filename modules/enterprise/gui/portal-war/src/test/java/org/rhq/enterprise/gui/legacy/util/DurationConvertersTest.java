@@ -1,4 +1,4 @@
-package org.rhq.enterprise.server.util;
+package org.rhq.enterprise.gui.legacy.util;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

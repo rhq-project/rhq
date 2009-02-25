@@ -91,23 +91,24 @@
                     <h:outputText value="#{item.formattedBaseband}"/>
                 </rich:column>
 
-               <rich:column style="background-color: rgb(216,216,216);text-align:right">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="max(o.oobFactor)">
-                        <h:outputText styleClass="headerText" value="Max 72h (%)" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{item.factor72}" >
-                  </h:outputText>
-               </rich:column>
-
                 <rich:column style="text-align:right">
                     <f:facet name="header">
                         <h:outputText styleClass="headerText" value="Outlier value"/>
                     </f:facet>
                     <h:outputText value="#{item.formattedOutlier}"/>
                 </rich:column>
+
+                <rich:column style="background-color: rgb(216,216,216);text-align:right">
+                   <f:facet name="header">
+                      <onc:sortableColumnHeader sort="max(o.oobFactor)">
+                         <h:outputText styleClass="headerText" value="Max 72h (%)" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                   <h:outputText value="#{item.factor72}" >
+                  </h:outputText>
+               </rich:column>
+
 
                 <rich:column style="text-align:right">
                    <f:facet name="header">

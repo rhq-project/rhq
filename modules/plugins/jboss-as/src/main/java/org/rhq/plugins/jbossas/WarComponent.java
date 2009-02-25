@@ -45,6 +45,7 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
@@ -60,7 +61,7 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * @author Ian Springer
  * @author Heiko W. Rupp
  */
-public class WarComponent extends ApplicationComponent implements OperationFacet {
+public class WarComponent extends ApplicationComponent implements OperationFacet, DeleteResourceFacet {
     private static final String SERVLET_PREFIX = "Servlet.";
     public static final String CONTEXT_ROOT_CONFIG_PROP = "contextRoot";
     public static final String NAME_CONFIG_PROP = "name";
@@ -419,6 +420,23 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
         }
         return deploymentInformation;
     }
+
+    // DeleteResourceFacet Implementation  --------------------------------------------
+
+    public void deleteResource() throws Exception {
+        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
+        String fullFileName = pluginConfiguration.getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
+
+        File file = new File(fullFileName);
+
+        // If the file does not exist, we don't bother
+        // See https://jira.jboss.org/jira/browse/JOPR-79
+        if (file.exists()) {
+            super.deleteResource();
+        }
+
+    }
+
 
     private enum WarOperation {
         START, STOP, RELOAD, REVERT

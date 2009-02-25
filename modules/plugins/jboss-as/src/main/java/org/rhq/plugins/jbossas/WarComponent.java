@@ -434,6 +434,9 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
         if (file.exists()) {
             super.deleteResource();
         }
+        else {
+            log.info("War file [" + fullFileName + "] was not found - ignoring.");
+        }
 
     }
 

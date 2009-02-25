@@ -99,70 +99,41 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         // as the portion that will be used to get the min/max/average".
         String baselineFrequencyString = conf.getProperty(RHQConstants.BaselineFrequency);
         String baselineDataSetString = conf.getProperty(RHQConstants.BaselineDataSet);
-        String baselineLastCalcTimeString = conf.getProperty(RHQConstants.BaselineLastCalculationTime);
 
         log.debug("Found baseline defaults: " + "frequency=" + baselineFrequencyString + " dataset="
-            + baselineDataSetString + " last-calc-time=" + baselineLastCalcTimeString);
-
-        // see if baseline auto-calculations is disabled; if so, return immediately and do nothing
-        long frequency = Long.parseLong(baselineFrequencyString);
-        if (frequency <= 0) {
-            log.debug("System was configured to never auto-calculate baselines, so not calculating them now");
-            return;
-        }
-
-        // see if its time to auto-calculate the baselines; if not, return immediately and do nothing
-        long now = System.currentTimeMillis();
-        long lastCalcTime = Long.parseLong(baselineLastCalcTimeString);
-        long timeToNextCalc = now - (lastCalcTime + frequency);
-
-        if (timeToNextCalc < 0) {
-            long minutes = (-timeToNextCalc) / (1000L * 60);
-            long hours = minutes / 60L;
-            if (hours > 2) {
-                log.debug("Not time yet to auto-calculate baselines - [" + hours + "] hours more to go");
-            } else {
-                log.debug("Not time yet to auto-calculate baselines - [" + minutes + "] minutes more to go");
-            }
-
-            return;
-        }
+            + baselineDataSetString);
 
         // Its time to auto-calculate the baselines again.
         // Determine how much data we need to calculate baselines for by determining the oldest and youngest
         // measurement data to include in the calculations.
-        long dataSet = Long.parseLong(baselineDataSetString);
-        long endTime = now;
-        long startTime = endTime - dataSet;
+        long amountOfData = Long.parseLong(baselineDataSetString);
+        long baselinesOlderThanTime = System.currentTimeMillis() - Long.parseLong(baselineFrequencyString);
 
-        long computeTime = measurementBaselineManager.calculateAutoBaselines(startTime, endTime);
+        measurementBaselineManager.calculateAutoBaselines(amountOfData, baselinesOlderThanTime);
 
         // everything was calculated successfully, remember this time
         conf = systemManager.getSystemConfiguration(); // reload the config in case it was changed since we started
-        conf.setProperty(RHQConstants.BaselineLastCalculationTime, String.valueOf(computeTime));
         systemManager.setSystemConfiguration(subjectManager.getOverlord(), conf, true);
-
-        log.info("Auto-calculation of baselines done. Next scheduled for " + new Date(computeTime + frequency));
     }
 
-    // this is potentially really long, don't put this method in a transaction, each individual step will be its own tx
     @TransactionAttribute(TransactionAttributeType.NEVER)
-    public long calculateAutoBaselines(long startTime, long endTime) {
+    public long calculateAutoBaselines(long amountOfData, long baselinesOlderThanTime) {
         try {
             log.info("Calculating auto baselines");
-            long computeTime = System.currentTimeMillis();
+            log.info("Deleting baselines computations older than " + new Date(baselinesOlderThanTime));
+            log.info("Inserting new baselines using last " + (amountOfData / (24 * 60 * 60 * 1000L))
+                + " days of 1H data)");
+            long now = System.currentTimeMillis();
+            long computeTime = now;
 
-            log.debug("startTime = " + startTime);
-            log.debug("endTime = " + endTime);
             log.debug("computeTime = " + computeTime);
 
-            long now = System.currentTimeMillis();
-            int deleted = measurementBaselineManager._calculateAutoBaselinesDELETE(startTime, endTime);
+            int deleted = measurementBaselineManager._calculateAutoBaselinesDELETE(baselinesOlderThanTime);
             log.info("Removed [" + deleted + "] old baselines - they will now be recalculated ("
                 + (System.currentTimeMillis() - now) + ")ms");
 
             now = System.currentTimeMillis();
-            int inserted = measurementBaselineManager._calculateAutoBaselinesINSERT(startTime, endTime, computeTime);
+            int inserted = measurementBaselineManager._calculateAutoBaselinesINSERT(amountOfData);
             log.info("Calculated and inserted [" + inserted + "] new baselines. (" + (System.currentTimeMillis() - now)
                 + ")ms");
 
@@ -179,53 +150,21 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     //@TransactionTimeout( 60 * 60 )
-    public int _calculateAutoBaselinesDELETE(long startTime, long endTime) throws Exception {
-        Connection conn = null;
-        PreparedStatement deleteQuery = null;
-
-        try {
-            // delete all existing baselines that we plan on re-calculating
-            // do everything via JDBC - our perf testing shows that we hit entity cache locking timeouts
-            // when the entity manager performs native queries under heavy load
-            conn = dataSource.getConnection();
-            DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
-
-            if (dbType instanceof PostgresqlDatabaseType) {
-                deleteQuery = conn
-                    .prepareStatement(MeasurementBaseline.NATIVE_QUERY_DELETE_EXISTING_AUTOBASELINES_POSTGRES);
-                deleteQuery.setLong(1, startTime);
-                deleteQuery.setLong(2, endTime);
-                deleteQuery.setLong(3, startTime);
-            } else {
-                deleteQuery = conn
-                    .prepareStatement(MeasurementBaseline.NATIVE_QUERY_DELETE_EXISTING_AUTOBASELINES_ORACLE);
-                deleteQuery.setLong(1, startTime);
-                deleteQuery.setLong(2, endTime);
-                deleteQuery.setLong(3, startTime);
-            }
-
-            int deleted = deleteQuery.executeUpdate();
-            return deleted;
-        } finally {
-            if (deleteQuery != null) {
-                try {
-                    deleteQuery.close();
-                } catch (Exception e) {
-                }
-            }
-
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (Exception e) {
-                }
-            }
-        }
+    public int _calculateAutoBaselinesDELETE(long olderThanTime) throws Exception {
+        Query query = entityManager.createNamedQuery(MeasurementBaseline.QUERY_DELETE_BY_COMPUTE_TIME);
+        query.setParameter("timestamp", olderThanTime);
+        int rowsAffected = query.executeUpdate();
+        return rowsAffected;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     //@TransactionTimeout( 60 * 60 )
-    public int _calculateAutoBaselinesINSERT(long startTime, long endTime, long computeTime) throws Exception {
+    public int _calculateAutoBaselinesINSERT(long amountOfData) throws Exception {
+        long now = System.currentTimeMillis();
+        long computeTime = now;
+        long endTime = now;
+        long startTime = endTime - amountOfData;
+
         Connection conn = null;
         PreparedStatement insertQuery = null;
 
@@ -319,7 +258,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         try {
             baseline = calculateBaseline(sched, true, startDate, endDate, save);
             // We have changed the baseline information for the schedule, so remove the now outdated OOB info.
-            oobManager.removeOOBsForSchedule(subject,sched);
+            oobManager.removeOOBsForSchedule(subject, sched);
         } catch (DataNotAvailableException e) {
             throw new BaselineCreationException("Error fetching data for baseline calculation: "
                 + measurementScheduleId);

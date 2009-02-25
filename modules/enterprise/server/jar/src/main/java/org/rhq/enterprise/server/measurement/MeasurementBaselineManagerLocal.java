@@ -49,17 +49,28 @@ public interface MeasurementBaselineManagerLocal {
      * Calculates baselines for all scheduled measurements. The measurement data that was collected between the given
      * start and end times is used to calculate the baselines.
      *
-     * @param  startTime use measurement data that was collected at or after this time (epoch millis)
-     * @param  endtime   use measurement data that was collected at or before this time (epoch millis)
+     * @param  amountOfData  will use amountOfData to compute new min/max/mean for baselines as appropriate
+     * @param  olderThanTime deletes baselines older than the time specified
      *
-     * @return the time that all the baselines were computed; this value must be passed to
-     *         {@link #calculateAutoBaselinesPostProcessing(long)}
+     * @return the time that all the baselines were computed;
      */
-    long calculateAutoBaselines(long startTime, long endtime);
+    long calculateAutoBaselines(long amountOfData, long olderThanTime);
 
-    int _calculateAutoBaselinesDELETE(long startTime, long endtime) throws Exception;
+    /**
+     * Deletes baselines that are older than the time specified
+     * @param olderThanTime deletes baselines older than the time specified
+     * @return number of rows deleted
+     * @throws Exception
+     */
+    int _calculateAutoBaselinesDELETE(long olderThanTime) throws Exception;
 
-    int _calculateAutoBaselinesINSERT(long startTime, long endtime, long computeTime) throws Exception;
+    /**
+     * Inserts baselines "as appropriate" for measurements that have at least amountOfData 
+     * @param amountOfData will use amountOfData to compute new min/max/mean for baselines as appropriate
+     * @return number of rows inserted
+     * @throws Exception
+     */
+    int _calculateAutoBaselinesINSERT(long amountOfData) throws Exception;
 
     /**
      * Calculate a baseline value for the given metric based on the specified date range, optionally setting the

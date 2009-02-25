@@ -97,6 +97,9 @@ import javax.persistence.Table;
         + "     LEFT JOIN mb.schedule sched "
         + "     LEFT JOIN sched.definition def "
         + "WHERE mb.computeTime = :computeTime " + "  AND def.numericType = :numericType "),
+    @NamedQuery(name = MeasurementBaseline.QUERY_DELETE_BY_COMPUTE_TIME, query = "" //
+        + "DELETE MeasurementBaseline bl " //
+        + " WHERE bl.computeTime < :timestamp "),
     @NamedQuery(name = MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, query = "DELETE MeasurementBaseline bl WHERE bl.schedule IN ( SELECT ms FROM MeasurementSchedule ms WHERE ms.resource IN ( :resources ) )") })
 @SequenceGenerator(name = "MEAS_BL_GEN", sequenceName = "RHQ_MEASUREMENT_BLINE_ID_SEQ")
 @SuppressWarnings("unused")
@@ -105,102 +108,66 @@ public class MeasurementBaseline implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE = "MeasurementBaseline.findBaselinesForResource";
     public static final String QUERY_FIND_BY_RESOURCE_IDS_AND_DEF_IDS = "MeasurementBaseline.findBaselineForResourceIdsAndDefinitionIds";
     public static final String QUERY_FIND_BY_COMPUTE_TIME = "MeasurementBaseline.findByComputeTime";
+    public static final String QUERY_DELETE_BY_COMPUTE_TIME = "MeasurementBaseline.deleteByComputeTime";
     public static final String QUERY_DELETE_BY_RESOURCES = "MeasurementBaseline.deleteByResources";
     public static final String QUERY_CALC_FIRST_AUTOBASELINE = "MeasurementBaseline.calcFirstAutoBaseline";
     public static final String QUERY_DELETE_EXISTING_AUTOBASELINES = "MeasurementBaseline.deleteExistingAutoBaseline";
     public static final String NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_POSTGRES;
     public static final String NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_ORACLE;
-    public static final String NATIVE_QUERY_DELETE_EXISTING_AUTOBASELINES_POSTGRES;
-    public static final String NATIVE_QUERY_DELETE_EXISTING_AUTOBASELINES_ORACLE;
 
     static {
         /*
          * we only want to compute baselines for measurements that are DYNAMIC
          */
-        NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_POSTGRES = "insert into "
-            + " RHQ_MEASUREMENT_BLINE "
-            + " ( id, BL_MIN, BL_MAX, BL_MEAN, BL_COMPUTE_TIME, SCHEDULE_ID ) select "
-            + "  nextval ('RHQ_MEASUREMENT_BLINE_ID_SEQ'), "
-            + "  min(measuremen0_.minvalue) as col_0_0_, "
-            + "  max(measuremen0_.maxvalue) as col_1_0_, "
-            + "  avg(measuremen0_.value) as col_2_0_, "
-            + "  ? as col_3_0_, " // ?1=computeTime
-            + "  measuremen0_.SCHEDULE_ID as col_4_0_  " + " from " + "  RHQ_MEASUREMENT_DATA_NUM_1H measuremen0_  "
-            + " inner join " + "  RHQ_MEASUREMENT_SCHED measuremen1_  "
-            + "   on measuremen0_.SCHEDULE_ID=measuremen1_.id  " + " inner join "
-            + "  RHQ_MEASUREMENT_DEF measurement_def" + "   on measuremen1_.definition=measurement_def.id "
-            + " left outer join "
-            + "  RHQ_MEASUREMENT_BLINE measuremen2_  "
-            + "   on measuremen1_.id=measuremen2_.SCHEDULE_ID  "
-            + " where "
-            + "  ( "
-            + "   measurement_def.numeric_type = 0 " // NumericType.DYNAMIC is first enum value -> 0
-            + "  ) " + "  and ( " + "   measuremen2_.id is null "
-            + "  )  "
-            + "  and ( "
-            + "   measuremen0_.TIME_STAMP between ? and ? " // ?2=startTime, ?3=endTime
-            + "  )  " + " group by " + "  measuremen0_.SCHEDULE_ID  " + " having " + "  measuremen0_.SCHEDULE_ID in ( "
-            + "   select " + "    measuremen3_.SCHEDULE_ID  " + "   from "
-            + "    RHQ_MEASUREMENT_DATA_NUM_1H measuremen3_  " + "   where " + "    measuremen3_.TIME_STAMP<=? " // ?4=startTime
-            + "  ) ";
+        NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_POSTGRES = "" //
+            + "    INSERT INTO RHQ_MEASUREMENT_BLINE ( id, BL_MIN, BL_MAX, BL_MEAN, BL_COMPUTE_TIME, SCHEDULE_ID ) " //
+            + "         SELECT nextval('RHQ_MEASUREMENT_BLINE_ID_SEQ'), " //
+            + "                MIN(data1h.minvalue) AS bline_min, " //
+            + "                MAX(data1h.maxvalue) AS bline_max, " //
+            + "                AVG(data1h.value) AS bline_mean, " //
+            + "                ? AS bline_ts, " // ?1=computeTime
+            + "                data1h.SCHEDULE_ID AS bline_sched_id " //
+            + "           FROM RHQ_MEASUREMENT_DATA_NUM_1H data1h  " // baselines are 1H data statistics
+            + "     INNER JOIN RHQ_MEASUREMENT_SCHED sched  " // baselines are aggregates of schedules
+            + "             ON data1h.SCHEDULE_ID = sched.id  " //
+            + "     INNER JOIN RHQ_MEASUREMENT_DEF def " // only compute off of dynamic types 
+            + "             ON sched.definition = def.id " //
+            + "LEFT OUTER JOIN RHQ_MEASUREMENT_BLINE bline " // we want null entries on purpose
+            + "             ON sched.id = bline.SCHEDULE_ID  " //
+            + "          WHERE ( def.numeric_type = 0 ) " // only dynamics (NumericType.DYNAMIC)
+            + "            AND ( bline.id IS NULL ) " // no baseline means it was deleted or never calculated
+            + "            AND ( data1h.TIME_STAMP BETWEEN ? AND ? ) " // ?2=startTime, ?3=endTime
+            + "       GROUP BY data1h.SCHEDULE_ID " // baselines are aggregates per schedule
+            // but only calculate baselines for schedules where we have data that fills (startTime, endTime)
+            + "         HAVING data1h.SCHEDULE_ID in ( SELECT mdata.SCHEDULE_ID "
+            + "                                          FROM RHQ_MEASUREMENT_DATA_NUM_1H mdata  " //
+            + "                                         WHERE mdata.TIME_STAMP <= ? ) "; // ?4=startTime
 
-        NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_ORACLE = "INSERT INTO RHQ_MEASUREMENT_BLINE "
-            + " ( id, BL_MIN, BL_MAX, BL_MEAN, BL_COMPUTE_TIME, SCHEDULE_ID ) "
-            + " SELECT RHQ_MEASUREMENT_BLINE_ID_SEQ.nextval, blMin, blMax, blAvg , coTime, schId  "
-            + " FROM ( "
-            + "  SELECT  "
-            + "    min(data1h.minvalue) as blMin,   max(data1h.maxvalue) as blMax, "
-            + "    avg(data1h.value) as blAvg,   ? as coTime, " // ?1=computeTime
-            + "    data1h.SCHEDULE_ID as schId  " + "  FROM RHQ_MEASUREMENT_DATA_NUM_1H data1h  " + "  inner join "
-            + "    RHQ_MEASUREMENT_SCHED measuremen1_   on data1h.SCHEDULE_ID=measuremen1_.id  "
-            + "  inner join "
-            + "    RHQ_MEASUREMENT_DEF measurement_def  on measuremen1_.definition=measurement_def.id "
-            + "  left outer join "
-            + "    RHQ_MEASUREMENT_BLINE measuremen2_   on measuremen1_.id=measuremen2_.SCHEDULE_ID  "
-            + "  WHERE "
-            + "   (  measurement_def.numeric_type = 0 ) " // NumericType.DYNAMIC is first enum value -> 0
-            + "    AND (   measuremen2_.id is null  )  "
-            + "    AND (   data1h.TIME_STAMP between ? and ? ) " // ?2=startTime, ?3=endTime
-            + "  GROUP BY data1h.SCHEDULE_ID  " + "  HAVING  data1h.SCHEDULE_ID in ( " + "   SELECT "
-            + "    measuremen3_.SCHEDULE_ID  " + "   FROM " + "    RHQ_MEASUREMENT_DATA_NUM_1H measuremen3_  "
-            + "   WHERE " + "    measuremen3_.TIME_STAMP<=? " // ?4=startTime
-            + "  ) " + " ) ";
-
-        NATIVE_QUERY_DELETE_EXISTING_AUTOBASELINES_POSTGRES = "DELETE FROM RHQ_MEASUREMENT_BLINE "
-            + " WHERE "
-            + "  SCHEDULE_ID in "
-            + "  ( "
-            + "   select measuremen1_.SCHEDULE_ID "
-            + "     from RHQ_MEASUREMENT_DATA_NUM_1H measuremen1_ "
-            + "          inner join RHQ_MEASUREMENT_SCHED measuremen2_ "
-            + "                     on measuremen1_.SCHEDULE_ID=measuremen2_.id "
-            + "          left outer join RHQ_MEASUREMENT_BLINE measuremen3_ "
-            + "                          on measuremen2_.id=measuremen3_.SCHEDULE_ID "
-            + "    where ( measuremen3_.id is not null ) "
-            + "      and ( measuremen1_.TIME_STAMP between ? and ? ) " // ?1=startTime, ?2=endTime
-            + "      and measuremen3_.BL_USER_ENTERED=false " + "    group by measuremen1_.SCHEDULE_ID "
-            + "    having measuremen1_.SCHEDULE_ID in " + "           ( "
-            + "            select measuremen4_.SCHEDULE_ID "
-            + "              from RHQ_MEASUREMENT_DATA_NUM_1H measuremen4_ "
-            + "             where measuremen4_.TIME_STAMP<=? " // ?3=startTime
-            + "           ) " + "   ) ";
-
-        NATIVE_QUERY_DELETE_EXISTING_AUTOBASELINES_ORACLE = "DELETE FROM RHQ_MEASUREMENT_BLINE measuremen0_ "
-            + " WHERE " + "  measuremen0_.SCHEDULE_ID in " + "  ( "
-            + "   select measuremen1_.SCHEDULE_ID "
-            + "     from RHQ_MEASUREMENT_DATA_NUM_1H measuremen1_, "
-            + "          RHQ_MEASUREMENT_SCHED measuremen2_, "
-            + "          RHQ_MEASUREMENT_BLINE measuremen3_ "
-            + "    where measuremen1_.SCHEDULE_ID=measuremen2_.id "
-            + "      and measuremen2_.id=measuremen3_.SCHEDULE_ID(+) "
-            + "      and ( measuremen3_.id is not null ) "
-            + "      and ( measuremen1_.TIME_STAMP between ? and ? ) " // ?1=startTime, ?2=endTime
-            + "      and measuremen3_.BL_USER_ENTERED=0 " + "    group by measuremen1_.SCHEDULE_ID "
-            + "    having measuremen1_.SCHEDULE_ID in " + "           ( "
-            + "            select measuremen4_.SCHEDULE_ID "
-            + "              from RHQ_MEASUREMENT_DATA_NUM_1H measuremen4_ "
-            + "             where measuremen4_.TIME_STAMP<=? " // ?3=startTime
-            + "           ) " + "  ) ";
+        NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_ORACLE = "" //
+            + "    INSERT INTO RHQ_MEASUREMENT_BLINE ( id, BL_MIN, BL_MAX, BL_MEAN, BL_COMPUTE_TIME, SCHEDULE_ID ) "
+            + "         SELECT RHQ_MEASUREMENT_BLINE_ID_SEQ.nextval, " //
+            + "                blMin, blMax, blAvg, coTime, schId "
+            + "           FROM ( SELECT MIN(data1h.minvalue) AS blMin, " //
+            + "                         MAX(data1h.maxvalue) AS blMax, " //
+            + "                         AVG(data1h.value) AS blAvg, " //
+            + "                         ? as coTime, " // ?1=computeTime
+            + "                         data1h.SCHEDULE_ID as schId  " //
+            + "                    FROM RHQ_MEASUREMENT_DATA_NUM_1H data1h " // baselines are 1H data statistics
+            + "              INNER JOIN RHQ_MEASUREMENT_SCHED sched " // baselines are aggregates of schedules
+            + "                      ON data1h.SCHEDULE_ID = sched.id " //
+            + "              INNER JOIN RHQ_MEASUREMENT_DEF def " // only compute off of dynamic types
+            + "                      ON sched.definition = def.id " //
+            + "         LEFT OUTER JOIN RHQ_MEASUREMENT_BLINE bline " // we want null entries on purpose
+            + "                      ON sched.id = bline.SCHEDULE_ID  " //
+            + "                   WHERE ( def.numeric_type = 0 ) " // only dynamics (NumericType.DYNAMIC)
+            + "                     AND ( bline.id IS NULL ) " // no baseline means it was deleted or never calculated
+            + "                     AND ( data1h.TIME_STAMP BETWEEN ? AND ? ) " // ?2=startTime, ?3=endTime
+            + "                GROUP BY data1h.SCHEDULE_ID  " // baselines are aggregates per schedule
+            // but only calculate baselines for schedules where we have data that fills (startTime, endTime)
+            + "                  HAVING data1h.SCHEDULE_ID in ( SELECT mdata.SCHEDULE_ID " //
+            + "                                                   FROM RHQ_MEASUREMENT_DATA_NUM_1H mdata "
+            + "                                                  WHERE mdata.TIME_STAMP <= ? ) " // ?4=startTime
+            + "                 ) ";
     }
     private static final long serialVersionUID = 1L;
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "MEAS_BL_GEN")

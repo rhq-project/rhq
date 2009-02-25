@@ -34,7 +34,7 @@
    <appender name="FILE" class="org.jboss.logging.appender.RollingFileAppender">
       <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>
       <param name="File" value="${jboss.server.log.dir}/rhq-server-log4j.log"/>
-      <param name="Append" value="false"/>
+      <param name="Append" value="true"/>
       <param name="MaxFileSize" value="5MB"/>
       <param name="MaxBackupIndex" value="5"/>
 

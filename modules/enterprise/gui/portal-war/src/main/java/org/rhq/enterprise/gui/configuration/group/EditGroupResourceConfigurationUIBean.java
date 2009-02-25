@@ -50,6 +50,7 @@ public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceC
     @Begin
     public void init() {
         loadConfigurations();
+        return;
     }
 
     /**

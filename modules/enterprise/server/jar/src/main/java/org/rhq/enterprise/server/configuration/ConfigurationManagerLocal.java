@@ -54,6 +54,9 @@ import org.rhq.enterprise.server.configuration.job.AggregatePluginConfigurationU
  */
 @Local
 public interface ConfigurationManagerLocal {
+
+    int MAX_GROUP_RESOURCE_CONFIG_MEMBERS = 100;
+
     /**
      * Get the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
      * resource's plugin configuration is not yet initialized.
@@ -139,12 +142,14 @@ public interface ConfigurationManagerLocal {
      *
      * @param  whoami     the user who wants to see the information
      * @param  resourceId a {@link Resource} id
+     * @param  pingAgentFirst true if the underlying Agent should be pinged successfully before attempting to retrieve
+     *                        the configuration, or false otherwise
      *
      * @return the live configuration
      *
      * @throws Exception if failed to get the configuration from the agent
      */
-    Configuration getLiveResourceConfiguration(Subject whoami, int resourceId) throws Exception;
+    Configuration getLiveResourceConfiguration(Subject whoami, int resourceId, boolean pingAgentFirst) throws Exception;
 
     /**
      * This will see if there are any update requests that have not been completed in a long time. Those that timed out
@@ -420,5 +425,15 @@ public interface ConfigurationManagerLocal {
 
     boolean isAggregateResourceConfigurationUpdateInProgress(Subject whoami, int groupId);
 
-    Map<Integer,Configuration> getResourceConfigurationsForCompatibleGroup(org.rhq.core.domain.resource.group.ResourceGroup g);
+    /**
+     * Returns the current Resource configurations for the members in the specified compatible group.
+     *
+     * @param whoami the current subject
+     * @param groupId
+     * @return
+     * @throws Exception if 1) the group contains more than {@link #MAX_GROUP_RESOURCE_CONFIG_MEMBERS} members, 2)
+     *         one or more of the group's members are DOWN, 3) config updates, for the group or any member, are
+     *         in progress, or 4) we fail to retrieve one or more member live configs from the corresponding Agents
+     */
+    Map<Integer,Configuration> getResourceConfigurationsForCompatibleGroup(Subject whoami, int groupId) throws Exception;
 }

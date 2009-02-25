@@ -20,7 +20,7 @@
    <ui:param name="selectedTabName" value="Configuration.Current"/>
    <ui:define name="content">
 
-       <h:form id="configSetForm">
+       <h:form id="configSetForm" rendered="#{ViewGroupResourceConfigurationUIBean.configurationSet ne null}">
 
            <input type="hidden" name="groupId" value="#{param.groupId}" />
 

@@ -42,6 +42,7 @@ public class ViewGroupResourceConfigurationUIBean extends AbstractGroupResourceC
     @Create
     public void init() {
         loadConfigurations();
+        return;
     }
 
     /**

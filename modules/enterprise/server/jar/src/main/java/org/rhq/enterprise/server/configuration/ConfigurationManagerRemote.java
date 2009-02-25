@@ -83,16 +83,17 @@ public interface ConfigurationManagerRemote {
      *
      * @param  user             The logged in user's subject.
      * @param                   resourceId
-     *
+     * @param pingAgentFirst
+     * 
      * @return the live configuration
      *
      * @throws Exception if failed to get the configuration from the agent
      */
     Configuration getLiveResourceConfiguration( //
-        @WebParam(name = "user")
-        Subject user, //
-        @WebParam(name = "resourceId")
-        int resourceId) throws Exception;
+                                                @WebParam(name = "user")
+                                                Subject user, //
+                                                @WebParam(name = "resourceId")
+                                                int resourceId, boolean pingAgentFirst) throws Exception;
 
     /**
      * Get whether the the specified resource is in the process of updating its configuration.

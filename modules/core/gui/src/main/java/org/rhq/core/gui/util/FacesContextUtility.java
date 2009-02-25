@@ -219,18 +219,17 @@ public abstract class FacesContextUtility {
     }
 
     private static String createDetailMessage(@Nullable Throwable t) {
-        if (t == null) {
+        if (t == null)
             return null;
-        }
 
-        String detailMessage = t.getLocalizedMessage() + " - Cause: ";
+        StringBuilder detailMessage = new StringBuilder("Cause: ");
         if (t.getCause() instanceof WrappedRemotingException) {
             WrappedRemotingException wre = (WrappedRemotingException) t.getCause();
-            detailMessage += wre.getActualException().getAllMessages();
+            detailMessage.append(wre.getActualException().getAllMessages());
         } else {
-            detailMessage += ThrowableUtil.getAllMessages(t);
+            detailMessage.append(ThrowableUtil.getAllMessages(t));
         }
 
-        return detailMessage;
+        return detailMessage.toString();
     }
 }

@@ -68,13 +68,16 @@ import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
@@ -122,6 +125,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     private SchedulerLocal scheduler;
     @EJB
     private SubjectManagerLocal subjectManager;
+    @EJB
+    private AvailabilityManagerLocal availabilityManager;
 
     @Nullable
     public Configuration getCurrentPluginConfiguration(Subject whoami, int resourceId) {
@@ -324,35 +329,19 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // ask the agent to get us the live, most up-to-date configuration for the resource,
         // then compare it to make sure what we think is the latest configuration is really the latest
-        Configuration liveConfig = getLiveResourceConfiguration(resource);
+        Configuration liveConfig = getLiveResourceConfiguration(resource, true);
 
         if (liveConfig != null) {
+            Configuration currentConfig = (current != null) ? current.getConfiguration() : null;
             // Compare the live values and, if there is a difference with the current, store the live config as a new
             // update. Note that, if there is no current configuration stored, the live config is stored as the first
             // update.
-            boolean theSame;
-
-            if (current == null) {
-                theSame = false;
-            } else {
-                theSame = current.getConfiguration().equals(liveConfig);
-            }
+            boolean theSame = (currentConfig != null && currentConfig.equals(liveConfig));
 
             // Someone dorked with the configuration on the agent side - save the live config as a new update.
             if (!theSame) {
                 try {
-                    /*
-                     * Note that we pass null as the subject - we don't know who changed it!
-                     *
-                     * also note that we're passing the overlord, since this is a system side-effect.  here, the system
-                     * and *not* the user, is choosing to persist the most recent configuration because it was different
-                     * from the last known value.  again, the user isn't attempting to change the value; instead, *JON*
-                     * is triggering save based on the semantics that we want to provide for configuration updates.
-                     */
-                    Subject overlord = subjectManager.getOverlord();
-                    current = configurationManager.persistNewResourceConfigurationUpdateHistory(overlord, resourceId,
-                        liveConfig, ConfigurationUpdateStatus.SUCCESS, null, false);
-                    resource.setResourceConfiguration(liveConfig.deepCopy(false));
+                    current = persistNewAgentReportedResourceConfiguration(resource, liveConfig);
                 } catch (UpdateStillInProgressException e) {
                     // This means a config update is INPROGRESS.
                     // Return the current in this case since it is our latest committed active config.
@@ -369,6 +358,23 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         return current;
+    }
+
+    private ResourceConfigurationUpdate persistNewAgentReportedResourceConfiguration(Resource resource,
+                                                                                     Configuration liveConfig)
+    {
+        /*
+        * NOTE: We pass the overlord, since this is a system side-effect.  here, the system
+        * and *not* the user, is choosing to persist the most recent configuration because it was different
+        * from the last known value.  again, the user isn't attempting to change the value; instead, *JON*
+        * is triggering save based on the semantics that we want to provide for configuration updates.
+        * For the same reason, we pass null as the subject.
+        */
+        ResourceConfigurationUpdate update = this.configurationManager.persistNewResourceConfigurationUpdateHistory(
+                this.subjectManager.getOverlord(), resource.getId(), liveConfig, ConfigurationUpdateStatus.SUCCESS,
+                null, false);
+        resource.setResourceConfiguration(liveConfig.deepCopy(false));
+        return update;
     }
 
     public PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject whoami, int resourceId) {
@@ -447,11 +453,109 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateInProgress;
     }
 
-    public Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(ResourceGroup g) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(Subject whoami,
+                                                                                   int groupId)
+            throws Exception
+    {
+        // The below call will also handle the check to see if the subject has perms to view the group.
+        ResourceGroupComposite groupComposite = this.resourceGroupManager.getResourceGroupWithAvailabilityById(whoami,
+                groupId);
+
+        if (groupComposite.getMemberCount() > MAX_GROUP_RESOURCE_CONFIG_MEMBERS)
+            throw new Exception("Resource configurations for groups containing more than "
+                    + MAX_GROUP_RESOURCE_CONFIG_MEMBERS + " member Resources cannot be viewed or edited.");
+
+        AvailabilityType availability = (groupComposite.getAvailability() == 1) ? AvailabilityType.UP :
+                AvailabilityType.DOWN;
+        if (availability == AvailabilityType.DOWN)
+            throw new Exception("Current group Resource configuration for " + groupId
+                    + " cannot be calculated, because one or more of this group's member Resources are DOWN.");
+
+        // If we got this far, all member Resources are UP. Now check to make sure no config updates, aggregate or
+        // individual, are in progress.
+        ResourceGroup group = groupComposite.getResourceGroup();
+        ensureNoResourceConfigurationUpdatesInProgress(group);
+
+        // If we got this far, no updates are in progress. Now try to obtain the live configs from the Agents.
+        // If any of the requests for live configs fail (e.g. because an Agent is down) or if all of the live
+        // configs can't be obtained within the specified timeout, this call will throw an exception.
+        final long TIMEOUT_IN_SECONDS = 20;
+        Map<Integer, Configuration> liveConfigs = LiveConfigurationLoader.getInstance().loadLiveResourceConfigurations(
+                group.getImplicitResources(), TIMEOUT_IN_SECONDS);
+
+        // If we got this far, we were able to retrieve all of the live configs from the Agents. Now load the current
+        // persisted configs from the DB and compare them to the corresponding live configs. For any that are not equal,
+        // persist the live config to the DB as the new current config.
+        Map<Integer, Configuration> currentPersistedConfigs = getPersistedResourceConfigurationsForCompatibleGroup(
+                group);
+        for (Resource memberResource : group.getImplicitResources()) {
+            Configuration liveConfig = liveConfigs.get(memberResource.getId());
+            // NOTE: The persisted config may be null if no config has been persisted yet.
+            Configuration currentPersistedConfig = currentPersistedConfigs.get(memberResource.getId());
+            if (!liveConfig.equals(currentPersistedConfig)) {
+                // If the live config is different than the persisted config, persist it as the new current config.
+                ResourceConfigurationUpdate update = persistNewAgentReportedResourceConfiguration(memberResource, liveConfig);
+                currentPersistedConfigs.put(memberResource.getId(), update.getConfiguration());
+            }
+        }
+        return currentPersistedConfigs;
     }
 
-    public Configuration getLiveResourceConfiguration(Subject whoami, int resourceId) throws Exception {
+    private void ensureNoResourceConfigurationUpdatesInProgress(ResourceGroup compatibleGroup)
+            throws Exception
+    {
+        if (isAggregateResourceConfigurationUpdateInProgress(this.subjectManager.getOverlord(), compatibleGroup.getId())) {
+            throw new Exception("Current group Resource configuration for " + compatibleGroup
+                    + " cannot be calculated, because a group Resource configuration update is currently in progress.");
+        }
+        List<Resource> resourcesWithResourceConfigUpdatesInProgress = new ArrayList();
+        for (Resource memberResource : compatibleGroup.getImplicitResources()) {
+            if (isResourceConfigurationUpdateInProgress(this.subjectManager.getOverlord(), memberResource.getId()))
+                resourcesWithResourceConfigUpdatesInProgress.add(memberResource);
+        }
+        if (!resourcesWithResourceConfigUpdatesInProgress.isEmpty())
+             throw new Exception("Current group Resource configuration for " + compatibleGroup
+                     + " cannot be calculated, because a Resource configuration updates are currently in progress for the following Resources: "
+                     + resourcesWithResourceConfigUpdatesInProgress);
+    }
+
+    private Map<Integer, Configuration> getPersistedResourceConfigurationsForCompatibleGroup(ResourceGroup compatibleGroup) {
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
+            Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID);
+        countQuery.setParameter("resourceGroupId", compatibleGroup.getId());
+        long count = (Long) countQuery.getSingleResult();
+        if (count != compatibleGroup.getImplicitResources().size())
+            throw new IllegalStateException("Size of group changed from " + compatibleGroup.getImplicitResources().size()
+                    + " to " + count + " - please retry the operation.");
+
+        // Configurations are very expensive to load, so load 'em in chunks to ease the strain on the DB.
+        PageControl pageControl = new PageControl(0, 10);
+        Query query = entityManager.createNamedQuery(Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID);
+        query.setParameter("resourceGroupId", compatibleGroup.getId());
+
+        Map<Integer, Configuration> results = new HashMap((int)count);
+        int rowsProcessed = 0;
+        while (true) {
+            List<Object[]> pagedResults = query.getResultList();
+
+            if (pagedResults.size() <= 0)
+                break;
+
+            for (Object[] result : pagedResults)
+                results.put((Integer)result[0], (Configuration)result[1]);
+
+            rowsProcessed += pagedResults.size();
+            if (rowsProcessed >= count)
+                break;
+
+            pageControl.setPageNumber(pageControl.getPageNumber() + 1); // advance the page
+            PersistenceUtility.setDataPage(query, pageControl); // and update the query to retrieve the new page
+        }
+        return results;
+    }
+
+    public Configuration getLiveResourceConfiguration(Subject whoami, int resourceId, boolean pingAgentFirst) 
+            throws Exception {
         Resource resource = entityManager.find(Resource.class, resourceId);
 
         if (resource == null) {
@@ -464,7 +568,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         // ask the agent to get us the live, most up-to-date configuration for the resource
-        Configuration liveConfig = getLiveResourceConfiguration(resource);
+        Configuration liveConfig = getLiveResourceConfiguration(resource, pingAgentFirst);
 
         return liveConfig;
     }
@@ -995,22 +1099,26 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
      * returned.</p>
      *
      * @param  resource an existing resource whose live configuration is to be retrieved
+     * @param  pingAgentFirst true if the underlying Agent should be pinged successfully before attempting to retrieve
+     *                        the configuration, or false otherwise
      *
      * @return the resource's live configuration or <code>null</code> if it could not be retrieved from the agent
      */
-    private Configuration getLiveResourceConfiguration(Resource resource) {
+    private Configuration getLiveResourceConfiguration(Resource resource, boolean pingAgentFirst) {
         Configuration liveConfig = null;
 
         try {
             Agent agent = resource.getAgent();
             AgentClient agentClient = this.agentManager.getAgentClient(agent);
 
+            boolean agentPingedSuccessfully = false;
             // Getting live configuration is mostly for the UI's benefit - as such, do not hang
             // for a long time in the event the agent is down or can't be reached.  Let's make the UI
             // responsive even in the case of an agent down by pinging it quickly to verify the agent is up.
-            boolean agentPinged = agentClient.ping(5000L);
+            if (pingAgentFirst)
+                agentPingedSuccessfully = agentClient.ping(5000L);
 
-            if (agentPinged) {
+            if (!pingAgentFirst || agentPingedSuccessfully) {
                 liveConfig = agentClient.getConfigurationAgentService().loadResourceConfiguration(resource.getId());
                 if (liveConfig == null) {
                     // This should really never occur - the PC should never return a null, always at least an empty config.

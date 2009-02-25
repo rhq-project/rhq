@@ -20,7 +20,8 @@
     <ui:param name="selectedTabName" value="Configuration.Current"/>
     <ui:define name="content">
 
-        <h:form id="configSetForm" onsubmit="prepareInputsForSubmission(this)">
+        <h:form id="configSetForm" onsubmit="prepareInputsForSubmission(this)"
+                rendered="#{EditGroupResourceConfigurationUIBean.configurationSet ne null}">
 
             <input type="hidden" name="groupId" value="#{param.groupId}"/>
 

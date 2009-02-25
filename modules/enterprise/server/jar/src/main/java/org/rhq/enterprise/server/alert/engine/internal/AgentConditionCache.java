@@ -355,7 +355,6 @@ class AgentConditionCache extends AbstractConditionCache {
         }
 
         // auto-unboxing of threshold is safe here 
-        double percentage = threshold / 100.0;
         Double baselineValue = 0.0;
 
         if (optionStatus == null) {
@@ -378,7 +377,7 @@ class AgentConditionCache extends AbstractConditionCache {
                 + "]: optionStatus string was '" + optionStatus + "', but the corresponding baseline value was null");
         }
 
-        return percentage * baselineValue;
+        return threshold * baselineValue;
     }
 
     @Override

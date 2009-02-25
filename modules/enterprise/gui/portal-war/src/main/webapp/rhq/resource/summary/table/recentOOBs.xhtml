@@ -23,9 +23,6 @@
 
                       <h:outputText value="#{item.scheduleName}"/>
           </h:outputLink>
-          <strong>
-          <h:outputText value=" f= ${item.factor72} "/>
-          </strong>
           <h:outputText value=" @ "/>
               <h:outputText value="#{item.timestamp}">
                 <f:converter converterId="RelativeDurationConverter" />

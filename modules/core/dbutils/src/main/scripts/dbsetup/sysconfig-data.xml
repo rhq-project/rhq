@@ -83,10 +83,8 @@
         <data ID="30" PROPERTY_KEY="CAM_BASELINE_DATASET"
               PROPERTY_VALUE="604800000" DEFAULT_PROPERTY_VALUE="604800000"
               FREAD_ONLY="FALSE"/>
-        <!-- the next time the baselines are due to be calculated -->
-        <data ID="31" PROPERTY_KEY="CAM_BASELINE_LASTTIME"
-              PROPERTY_VALUE="0" DEFAULT_PROPERTY_VALUE="0"
-              FREAD_ONLY="FALSE"/>
+              
+        <!-- ID 31 has been deleted -->
 
         <!-- How often to run database maintainence routines -->
         <data ID="32" PROPERTY_KEY="CAM_DATA_MAINTENANCE"

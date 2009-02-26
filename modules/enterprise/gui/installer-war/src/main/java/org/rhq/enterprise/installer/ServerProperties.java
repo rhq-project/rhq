@@ -52,9 +52,16 @@ public class ServerProperties {
     public static final String PROP_UNIFIED_INVOKER_PORT = "rhq.server.startup.unifiedinvoker.port";
     public static final String PROP_ASPECT_DEPLOYER_PORT = "rhq.server.startup.aspectdeployer.bind-port";
 
-    public static final String PROP_TOMCAT_KEYSTORE_FILENAME = "rhq.server.startup.keystore.filename";
-    public static final String PROP_TOMCAT_KEYSTORE_PASSWORD = "rhq.server.startup.keystore.password";
-    public static final String PROP_TOMCAT_SSL_PROTOCOL = "rhq.server.startup.keystore.sslprotocol";
+    public static final String PROP_TOMCAT_SECURITY_CLIENT_AUTH_MOD = "rhq.server.tomcat.security.client-auth-mode";
+    public static final String PROP_TOMCAT_SECURITY_SSL_PROTOCOL = "rhq.server.tomcat.security.secure-socket-protocol";
+    public static final String PROP_TOMCAT_SECURITY_ALGORITHM = "rhq.server.tomcat.security.algorithm";
+    public static final String PROP_TOMCAT_SECURITY_KEYSTORE_ALIAS = "rhq.server.tomcat.security.keystore.alias";
+    public static final String PROP_TOMCAT_SECURITY_KEYSTORE_FILENAME = "rhq.server.tomcat.security.keystore.file";
+    public static final String PROP_TOMCAT_SECURITY_KEYSTORE_PASSWORD = "rhq.server.tomcat.security.keystore.password";
+    public static final String PROP_TOMCAT_SECURITY_KEYSTORE_TYPE = "rhq.server.tomcat.security.keystore.type";
+    public static final String PROP_TOMCAT_SECURITY_TRUSTSTORE_FILENAME = "rhq.server.tomcat.security.truststore.file";
+    public static final String PROP_TOMCAT_SECURITY_TRUSTSTORE_PASSWORD = "rhq.server.tomcat.security.truststore.password";
+    public static final String PROP_TOMCAT_SECURITY_TRUSTSTORE_TYPE = "rhq.server.tomcat.security.truststore.type";
 
     public static final String PROP_CONNECTOR_TRANSPORT = "rhq.communications.connector.transport";
     public static final String PROP_CONNECTOR_BIND_ADDRESS = "rhq.communications.connector.bind-address";
@@ -147,6 +154,14 @@ public class ServerProperties {
         CLIENT_AUTH_MODES.add(new SelectItem("need"));
     }
 
+    public static final List<SelectItem> TOMCAT_CLIENT_AUTH_MODES;
+    static {
+        TOMCAT_CLIENT_AUTH_MODES = new ArrayList<SelectItem>();
+        TOMCAT_CLIENT_AUTH_MODES.add(new SelectItem("false"));
+        TOMCAT_CLIENT_AUTH_MODES.add(new SelectItem("want"));
+        TOMCAT_CLIENT_AUTH_MODES.add(new SelectItem("true"));
+    }
+
     private PropertyItem[] allPropertyItems = {
         // the order of DB properties is very important here - start.jsp expects these to be in the configuration in this order
         new PropertyItem(PROP_DATABASE_TYPE, String.class, InstallerI18NResourceKeys.PROP_DATABASE_TYPE,
@@ -192,14 +207,37 @@ public class ServerProperties {
             InstallerI18NResourceKeys.PROP_UNIFIED_INVOKER_PORT_HELP, true, false, true),
         new PropertyItem(PROP_ASPECT_DEPLOYER_PORT, Integer.class, InstallerI18NResourceKeys.PROP_ASPECT_DEPLOYER_PORT,
             InstallerI18NResourceKeys.PROP_ASPECT_DEPLOYER_PORT_HELP, true, false, true),
-        new PropertyItem(PROP_TOMCAT_KEYSTORE_FILENAME, String.class,
-            InstallerI18NResourceKeys.PROP_TOMCAT_KEYSTORE_FILENAME,
-            InstallerI18NResourceKeys.PROP_TOMCAT_KEYSTORE_FILENAME_HELP, true, false, true),
-        new PropertyItem(PROP_TOMCAT_KEYSTORE_PASSWORD, String.class,
-            InstallerI18NResourceKeys.PROP_TOMCAT_KEYSTORE_PASSWORD,
-            InstallerI18NResourceKeys.PROP_TOMCAT_KEYSTORE_PASSWORD_HELP, true, false, true),
-        new PropertyItem(PROP_TOMCAT_SSL_PROTOCOL, String.class, InstallerI18NResourceKeys.PROP_TOMCAT_SSL_PROTOCOL,
-            InstallerI18NResourceKeys.PROP_TOMCAT_SSL_PROTOCOL_HELP, true, false, true),
+        new PropertyItem(PROP_TOMCAT_SECURITY_CLIENT_AUTH_MOD, String.class,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_CLIENT_AUTH_MOD,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_CLIENT_AUTH_MOD_HELP, true, false, true,
+            TOMCAT_CLIENT_AUTH_MODES),
+        new PropertyItem(PROP_TOMCAT_SECURITY_SSL_PROTOCOL, String.class,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_SSL_PROTOCOL,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_SSL_PROTOCOL_HELP, true, false, true),
+        new PropertyItem(PROP_TOMCAT_SECURITY_ALGORITHM, String.class,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_ALGORITHM,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_ALGORITHM_HELP, true, false, true),
+        new PropertyItem(PROP_TOMCAT_SECURITY_KEYSTORE_FILENAME, String.class,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_KEYSTORE_FILENAME,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_KEYSTORE_FILENAME_HELP, true, false, true),
+        new PropertyItem(PROP_TOMCAT_SECURITY_KEYSTORE_TYPE, String.class,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_KEYSTORE_TYPE,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_KEYSTORE_TYPE_HELP, true, false, true),
+        new PropertyItem(PROP_TOMCAT_SECURITY_KEYSTORE_PASSWORD, String.class,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_KEYSTORE_PASSWORD,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_KEYSTORE_PASSWORD_HELP, true, false, true),
+        new PropertyItem(PROP_TOMCAT_SECURITY_KEYSTORE_ALIAS, String.class,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_KEYSTORE_ALIAS,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_KEYSTORE_ALIAS_HELP, true, false, true),
+        new PropertyItem(PROP_TOMCAT_SECURITY_TRUSTSTORE_FILENAME, String.class,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_TRUSTSTORE_FILENAME,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_TRUSTSTORE_FILENAME_HELP, true, false, true),
+        new PropertyItem(PROP_TOMCAT_SECURITY_TRUSTSTORE_TYPE, String.class,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_TRUSTSTORE_TYPE,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_TRUSTSTORE_TYPE_HELP, true, false, true),
+        new PropertyItem(PROP_TOMCAT_SECURITY_TRUSTSTORE_PASSWORD, String.class,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_TRUSTSTORE_PASSWORD,
+            InstallerI18NResourceKeys.PROP_TOMCAT_SECURITY_TRUSTSTORE_PASSWORD_HELP, true, false, true),
         new PropertyItem(PROP_CONNECTOR_TRANSPORT, String.class, InstallerI18NResourceKeys.PROP_CONNECTOR_TRANSPORT,
             InstallerI18NResourceKeys.PROP_CONNECTOR_TRANSPORT_HELP, false, false, true),
         new PropertyItem(PROP_CONNECTOR_BIND_ADDRESS, String.class,

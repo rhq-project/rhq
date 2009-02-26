@@ -330,20 +330,55 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage("-AspectDeployerPort")
     String PROP_ASPECT_DEPLOYER_PORT_HELP = "propertyAspectDeployerPortHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "RHQ Console Keystore") })
-    String PROP_TOMCAT_KEYSTORE_FILENAME = "propertyTomcatKeystoreFilename";
-    @I18NMessage("-RHQConsoleKeystore")
-    String PROP_TOMCAT_KEYSTORE_FILENAME_HELP = "propertyTomcatKeystoreFilenameHelp";
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Tomcat Client Auth Mode") })
+    String PROP_TOMCAT_SECURITY_CLIENT_AUTH_MOD = "propertyTomcatClientAuthMode";
+    @I18NMessage("-TomcatClientAuthMode")
+    String PROP_TOMCAT_SECURITY_CLIENT_AUTH_MOD_HELP = "propertyTomcatClientAuthModeHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "RHQ Console Keystore Password") })
-    String PROP_TOMCAT_KEYSTORE_PASSWORD = "propertyTomcatKeystorePassword";
-    @I18NMessage("-RHQConsoleKeystorePassword")
-    String PROP_TOMCAT_KEYSTORE_PASSWORD_HELP = "propertyTomcatKeystorePasswordHelp";
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Tomcat Keystore/Truststore Algorithm") })
+    String PROP_TOMCAT_SECURITY_ALGORITHM = "propertyTomcatAlgorithm";
+    @I18NMessage("-TomcatAlgorithm")
+    String PROP_TOMCAT_SECURITY_ALGORITHM_HELP = "propertyTomcatAlgorithmHelp";
 
-    @I18NMessages( { @I18NMessage(locale = "en", value = "RHQ Console SSL Protocol") })
-    String PROP_TOMCAT_SSL_PROTOCOL = "propertyTomcatSslProtocol";
-    @I18NMessage("-RHQConsoleSSLProtocol")
-    String PROP_TOMCAT_SSL_PROTOCOL_HELP = "propertyTomcatSslProtocolHelp";
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Tomcat Keystore") })
+    String PROP_TOMCAT_SECURITY_KEYSTORE_FILENAME = "propertyTomcatKeystoreFilename";
+    @I18NMessage("-TomcatKeystore")
+    String PROP_TOMCAT_SECURITY_KEYSTORE_FILENAME_HELP = "propertyTomcatKeystoreFilenameHelp";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Tomcat Keystore Password") })
+    String PROP_TOMCAT_SECURITY_KEYSTORE_PASSWORD = "propertyTomcatKeystorePassword";
+    @I18NMessage("-TomcatKeystorePassword")
+    String PROP_TOMCAT_SECURITY_KEYSTORE_PASSWORD_HELP = "propertyTomcatKeystorePasswordHelp";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Tomcat Keystore Type") })
+    String PROP_TOMCAT_SECURITY_KEYSTORE_TYPE = "propertyTomcatKeystoreType";
+    @I18NMessage("-TomcatKeystoreType")
+    String PROP_TOMCAT_SECURITY_KEYSTORE_TYPE_HELP = "propertyTomcatKeystoreTypeHelp";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Tomcat Keystore Alias") })
+    String PROP_TOMCAT_SECURITY_KEYSTORE_ALIAS = "propertyTomcatKeystoreAlias";
+    @I18NMessage("-TomcatKeystoreAlias")
+    String PROP_TOMCAT_SECURITY_KEYSTORE_ALIAS_HELP = "propertyTomcatKeystoreAliasHelp";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Tomcat Truststore") })
+    String PROP_TOMCAT_SECURITY_TRUSTSTORE_FILENAME = "propertyTomcatTruststoreFilename";
+    @I18NMessage("-TomcatTruststore")
+    String PROP_TOMCAT_SECURITY_TRUSTSTORE_FILENAME_HELP = "propertyTomcatTruststoreFilenameHelp";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Tomcat Truststore Password") })
+    String PROP_TOMCAT_SECURITY_TRUSTSTORE_PASSWORD = "propertyTomcatTruststorePassword";
+    @I18NMessage("-TomcatTruststorePassword")
+    String PROP_TOMCAT_SECURITY_TRUSTSTORE_PASSWORD_HELP = "propertyTomcatTruststorePasswordHelp";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Tomcat Truststore Type") })
+    String PROP_TOMCAT_SECURITY_TRUSTSTORE_TYPE = "propertyTomcatTruststoreType";
+    @I18NMessage("-TomcatTruststoreType")
+    String PROP_TOMCAT_SECURITY_TRUSTSTORE_TYPE_HELP = "propertyTomcatTruststoreTypeHelp";
+
+    @I18NMessages( { @I18NMessage(locale = "en", value = "Tomcat SSL Protocol") })
+    String PROP_TOMCAT_SECURITY_SSL_PROTOCOL = "propertyTomcatSslProtocol";
+    @I18NMessage("-TomcatSSLProtocol")
+    String PROP_TOMCAT_SECURITY_SSL_PROTOCOL_HELP = "propertyTomcatSslProtocolHelp";
 
     @I18NMessages( { @I18NMessage(locale = "en", value = "Incoming Agent Communications Transport") })
     String PROP_CONNECTOR_TRANSPORT = "propertyConnectorTransport";

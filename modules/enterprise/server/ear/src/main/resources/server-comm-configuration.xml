@@ -372,7 +372,8 @@ RHQ Server Communications Configuration
                require one or more of these settings to be customized.
                
                Note that if client-auth-mode is specified, it must be one of:
-               "none", "want", "need".
+               "none", "want", "need". To support Tomcat syntax, "true" can be used
+               in place of "need" and "false" can be used in place of "none".
                -->
                <!--
                <entry key="rhq.communications.connector.security.secure-socket-protocol" value="TLS" />

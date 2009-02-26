@@ -398,12 +398,22 @@ public class ServiceContainerConfiguration {
      *
      * The default is {@link SSLSocketBuilder#CLIENT_AUTH_MODE_NONE} - that will be returned if the client auth mode was
      * not found in the configuration.
+     * 
+     * <i>Note:</i> To support Tomcat syntax, the client authentication mode value is allowed to be "true" or "false".
+     * "true" maps to {@link SSLSocketBuilder#CLIENT_AUTH_MODE_NEED},
+     * "false" maps to {@link SSLSocketBuilder#CLIENT_AUTH_MODE_NONE}.
      *
      * @return the client authentication mode
      */
     public String getConnectorSecurityClientAuthMode() {
         String value = m_preferences.get(ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_CLIENT_AUTH_MODE,
             ServiceContainerConfigurationConstants.DEFAULT_CONNECTOR_SECURITY_CLIENT_AUTH_MODE);
+
+        if (value.equalsIgnoreCase("true")) {
+            value = SSLSocketBuilder.CLIENT_AUTH_MODE_NEED;
+        } else if (value.equalsIgnoreCase("false")) {
+            value = SSLSocketBuilder.CLIENT_AUTH_MODE_NONE;
+        }
 
         if (!value.equals(SSLSocketBuilder.CLIENT_AUTH_MODE_NONE)
             && !value.equals(SSLSocketBuilder.CLIENT_AUTH_MODE_WANT)

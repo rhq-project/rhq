@@ -379,15 +379,10 @@ rhq.server.startup.aspectdeployer.bind-port=4873
 #rhq.server.startup.hapooledinvoker.port=5448
 #jgroups.udp.ip_ttl=2
 
-# Keystore for HTTPS thru Tomcat connector
-rhq.server.startup.keystore.filename=rhq.keystore
-rhq.server.startup.keystore.password=RHQManagement
-rhq.server.startup.keystore.sslprotocol=TLS
-
 # RHQ Server's remote endpoint for agents to talk to
+# bind-address and bind-port are derived from the HA server definition,
+# if you set the address/port here, they will override the HA server definition found in the database
 rhq.communications.connector.transport=servlet
-# In 1.1 the address and port are derived from the HA server definition
-# If you set the address/port here, they will override the HA server definition found in the database
 rhq.communications.connector.bind-address=
 rhq.communications.connector.bind-port=
 rhq.communications.connector.transport-params=/jboss-remoting-servlet-invoker/ServerInvokerServlet
@@ -398,18 +393,33 @@ rhq.communications.multicast-detector.bind-address=${jboss.bind.address}
 rhq.communications.multicast-detector.multicast-address=224.16.16.16
 rhq.communications.multicast-detector.port=16162
 
+# Server-side SSL Security Configuration for HTTPS thru Tomcat
+# These are used for browser https: access and for incoming messages from agents over sslservlet transport
+# [you cannot use ${x} variables - see https://jira.jboss.org/jira/browse/JBWEB-74]
+rhq.server.tomcat.security.client-auth-mode=false
+rhq.server.tomcat.security.secure-socket-protocol=TLS
+rhq.server.tomcat.security.algorithm=SunX509
+rhq.server.tomcat.security.keystore.alias=RHQ
+rhq.server.tomcat.security.keystore.file=conf/rhq.keystore
+rhq.server.tomcat.security.keystore.password=RHQManagement
+rhq.server.tomcat.security.keystore.type=JKS
+rhq.server.tomcat.security.truststore.file=conf/rhq.truststore
+rhq.server.tomcat.security.truststore.password=RHQManagement
+rhq.server.tomcat.security.truststore.type=JKS
+       
 # Server-side SSL Security Configuration (for incoming messages from agents)
+# These are used when secure transports other than sslservlet are used
 rhq.communications.connector.security.secure-socket-protocol=TLS
-rhq.communications.connector.security.keystore.file=${jboss.server.data.dir}/keystore.dat
+rhq.communications.connector.security.keystore.file=${jboss.server.home.dir}/conf/rhq.keystore
 rhq.communications.connector.security.keystore.algorithm=SunX509
 rhq.communications.connector.security.keystore.type=JKS
-rhq.communications.connector.security.keystore.password=rhqpwd
-rhq.communications.connector.security.keystore.key-password=rhqpwd
-rhq.communications.connector.security.keystore.alias=rhq
-rhq.communications.connector.security.truststore.file=${jboss.server.data.dir}/truststore.dat
+rhq.communications.connector.security.keystore.password=RHQManagement
+rhq.communications.connector.security.keystore.key-password=RHQManagement
+rhq.communications.connector.security.keystore.alias=RHQ
+rhq.communications.connector.security.truststore.file=${jboss.server.home.dir}/conf/rhq.truststore
 rhq.communications.connector.security.truststore.algorithm=SunX509
 rhq.communications.connector.security.truststore.type=JKS
-rhq.communications.connector.security.truststore.password=
+rhq.communications.connector.security.truststore.password=RHQManagement
 rhq.communications.connector.security.client-auth-mode=none
 
 # Client-side SSL Security Configuration (for outgoing messages to agents)
@@ -420,10 +430,10 @@ rhq.server.client.security.keystore.type=JKS
 rhq.server.client.security.keystore.password=RHQManagement
 rhq.server.client.security.keystore.key-password=RHQManagement
 rhq.server.client.security.keystore.alias=RHQ
-rhq.server.client.security.truststore.file=${jboss.server.data.dir}/truststore.dat
+rhq.server.client.security.truststore.file=${jboss.server.home.dir}/conf/rhq.truststore
 rhq.server.client.security.truststore.algorithm=SunX509
 rhq.server.client.security.truststore.type=JKS
-rhq.server.client.security.truststore.password=
+rhq.server.client.security.truststore.password=RHQManagement
 rhq.server.client.security.server-auth-mode-enabled=false
 
 # Embedded RHQ Agent
@@ -499,6 +509,7 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
             storepass="RHQManagement"
             validity="7300"
             dname="CN=RHQ, OU=RHQ, O=rhq-project.org, C=US" />
+    <!-- the rhq.truststore is pre-built and checked into SVN. It is empty with the same store pass as above -->
   </target>
 
   <target name="setup-jms-backend"

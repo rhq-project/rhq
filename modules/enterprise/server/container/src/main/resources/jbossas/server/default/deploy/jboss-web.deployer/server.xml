@@ -53,10 +53,16 @@
                  enableLookups="false"
                  secure="true"
                  SSLEnabled="true"
-                 clientAuth="false"
-                 sslProtocol="${rhq.server.startup.keystore.sslprotocol}"
-                 keystoreFile="${jboss.server.home.dir}/conf/${rhq.server.startup.keystore.filename}"
-                 keystorePass="${rhq.server.startup.keystore.password}" />
+                 clientAuth="${rhq.server.tomcat.security.client-auth-mode}"
+                 sslProtocol="${rhq.server.tomcat.security.secure-socket-protocol}"
+                 algorithm="${rhq.server.tomcat.security.algorithm}"
+                 keyAlias="${rhq.server.tomcat.security.keystore.alias}"
+                 keystoreFile="${rhq.server.tomcat.security.keystore.file}"
+                 keystorePass="${rhq.server.tomcat.security.keystore.password}"
+                 keystoreType="${rhq.server.tomcat.security.keystore.type}"
+                 truststoreFile="${rhq.server.tomcat.security.truststore.file}"
+                 truststorePass="${rhq.server.tomcat.security.truststore.password}"
+                 truststoreType="${rhq.server.tomcat.security.truststore.type}" />
 
       <!-- Define an AJP 1.3 Connector --><!-- JON -->
       <Connector port="${rhq.server.startup.ajp.port}" address="${jboss.bind.address}" protocol="AJP/1.3"

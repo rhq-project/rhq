@@ -61,7 +61,7 @@ public class SubjectPreferencesCache {
             prop = new PropertySimple(propertyName, value);
             config.put(prop); // add new to collection
             mergeProperty(prop);
-        } else if (!prop.getStringValue().equals(value)) {
+        } else if (prop.getStringValue() == null || !prop.getStringValue().equals(value)) {
             prop.setStringValue(value);
             mergeProperty(prop);
         }

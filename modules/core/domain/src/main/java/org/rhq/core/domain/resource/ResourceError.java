@@ -53,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 @Entity
 @NamedQueries( {
     @NamedQuery(name = ResourceError.QUERY_DELETE_BY_RESOURCES, query = "DELETE From ResourceError re WHERE re.resource IN (:resources)"),
+    @NamedQuery(name = ResourceError.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT re FROM ResourceError re WHERE re.resource.id = :resourceId"),
     @NamedQuery(name = ResourceError.QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPE, query = "SELECT re FROM ResourceError re WHERE re.resource.id = :resourceId AND re.errorType = :errorType") })
 @SequenceGenerator(name = "RHQ_RESOURCE_ERROR_SEQ", sequenceName = "RHQ_RESOURCE_ERROR_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_ERROR")
@@ -60,6 +61,7 @@ public class ResourceError implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_DELETE_BY_RESOURCES = "ResourceError.deleteByResources";
+    public static final String QUERY_FIND_BY_RESOURCE_ID = "ResourceError.findByResource";
     public static final String QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPE = "ResourceError.findByResourceAndErrorType";
 
     private static final int MAX_SUMMARY_LENGTH = 1000;

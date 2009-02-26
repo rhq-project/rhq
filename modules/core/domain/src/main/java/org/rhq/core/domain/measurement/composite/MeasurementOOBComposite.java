@@ -52,16 +52,16 @@ public class MeasurementOOBComposite implements Serializable {
     private double outlier;
     private MeasurementUnits units;
     private String parentName;
-    private int parentId;
+    private Integer parentId;
 
     public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, long timestamp, int definitionId,
-                                   int factor72, double avg72, double blMin, double blMax, MeasurementUnits units, String parentName, int parentId) {
+                                   int factor72, double avg72, double blMin, double blMax, MeasurementUnits units, String parentName, Integer parentId) {
         this.resourceName = resourceName;
         this.resourceId = resourceId;
         this.scheduleName = scheduleName;
         this.scheduleId = scheduleId;
         this.definitionId = definitionId;
-        this.factor72 = (int) factor72;
+        this.factor72 = factor72;
         this.avg72 = (int)avg72;
         this.blMin = blMin;
         this.blMax = blMax;
@@ -78,7 +78,7 @@ public class MeasurementOOBComposite implements Serializable {
         this.scheduleName = scheduleName;
         this.scheduleId = scheduleId;
         this.definitionId = definitionId;
-        this.factor72 = (int) factor72;
+        this.factor72 = factor72;
         this.blMin = blMin;
         this.blMax = blMax;
         this.timestamp = timestamp;
@@ -186,7 +186,7 @@ public class MeasurementOOBComposite implements Serializable {
         return parentName;
     }
 
-    public int getParentId() {
+    public Integer getParentId() {
         return parentId;
     }
 

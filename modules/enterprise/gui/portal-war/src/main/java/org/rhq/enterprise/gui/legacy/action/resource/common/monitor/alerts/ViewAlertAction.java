@@ -128,6 +128,7 @@ public class ViewAlertAction extends TilesAction {
             }
         }
 
+        request.setAttribute("conditionExpression", adv.getConditionExpression().name());
         request.setAttribute("alertDefConditions", alertCondBeans);
 
         request.setAttribute("controlEnabled", true); // always display control result, even if it's "none"

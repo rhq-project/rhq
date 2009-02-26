@@ -16,6 +16,7 @@ public class DurationConvertersTest extends AssertJUnit {
     private final long millisInHour = (60 * millisInMinute);
     private final long millisInDay = (24 * millisInHour);
 
+    @Test
     public void testRelativeDurationConverter() {
         // exhaustive test of RelativeDurationConverter converter across all timezones
         for (String tz : TimeZone.getAvailableIDs()) {
@@ -80,9 +81,5 @@ public class DurationConvertersTest extends AssertJUnit {
 
     private long mins(int count) {
         return count * millisInMinute;
-    }
-
-    public static void main(String[] args) {
-        new DurationConvertersTest().testRelativeDurationConverter();
     }
 }

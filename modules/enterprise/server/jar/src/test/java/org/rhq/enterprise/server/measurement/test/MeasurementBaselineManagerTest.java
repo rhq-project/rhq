@@ -357,7 +357,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             PageControl pc = PageControl.getUnlimitedInstance();
 
             List<MeasurementOOBComposite> comps = oobManager.getSchedulesWithOOBs(overlord, System.currentTimeMillis(),
-                pc);
+                pc, -1 ,-1 );
             //         System.out.println("Composites: " + comps);
             assert comps.size() == 2 : "Expected 2 composites, but got " + comps.size();
 
@@ -370,7 +370,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             oobs = q.getResultList();
             //    System.out.println("OOBs calculated: \n" + oobs);
 
-            comps = oobManager.getSchedulesWithOOBs(overlord, elder, pc);
+            comps = oobManager.getSchedulesWithOOBs(overlord, elder, pc, -1 , -1);
             //     System.out.println("Composites: " + comps);
             assert comps.size() == 2 : "Expected 2, but was " + comps.size();
 

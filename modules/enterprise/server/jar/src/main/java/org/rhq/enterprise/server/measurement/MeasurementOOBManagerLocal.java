@@ -59,9 +59,12 @@ public interface MeasurementOOBManagerLocal {
      * @param subject The caller
      * @param end end time we are interested in
      * @param pc PageControl to do pagination
+     * @param resourceId A resource id to filter or -1 if not filtering by resource
+     * @param parentId A parent resource id to filter or -1 if not filtering by resource
      * @return List of schedules with the corresponing oob aggregates
      */
-    PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, long end, PageControl pc);
+    PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, long end, PageControl pc, int resourceId,
+                                                           int parentId);
 
     /**
      * Computes the OOBs for the last hour.

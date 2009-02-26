@@ -194,9 +194,12 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * @param subject The caller
      * @param end end time we are interested in
      * @param pc PageControl to do pagination
+     * @param resourceId A resource id to filter or -1 if not filtering by resource
+     * @param parentId A parent resource id to filter or -1 if not filtering by resource
      * @return List of schedules with the corresponing oob aggregates
      */
-    public PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, long end, PageControl pc) {
+    public PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, long end, PageControl pc,
+                                                                  int resourceId, int parentId) {
 
         pc.initDefaultOrderingField("max(o.oobFactor)", PageOrdering.DESC);
 
@@ -209,7 +212,23 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         queryCount.setParameter("end", end);
         query.setParameter("begin", begin);
         query.setParameter("end", end);
-        query.setParameter("resourceId", null);
+        if (resourceId > -1 ) {
+            query.setParameter("resourceId", resourceId);
+            queryCount.setParameter("resourceId", resourceId);
+        }
+        else {
+            query.setParameter("resourceId", null);
+            queryCount.setParameter("resourceId", null);
+        }
+
+        if (parentId > -1 ) {
+            query.setParameter("parentId", parentId);
+            queryCount.setParameter("parentId", parentId);
+        }
+        else {
+            query.setParameter("parentId", null);
+            queryCount.setParameter("parentId", null);
+        }
 
         List<MeasurementOOBComposite> results = query.getResultList();
         long totalCount = queryCount.getResultList().size();

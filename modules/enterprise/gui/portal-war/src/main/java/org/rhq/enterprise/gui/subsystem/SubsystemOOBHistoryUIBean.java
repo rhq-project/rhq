@@ -39,6 +39,9 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "SubsystemOOBHistoryUIBean";
 
     private int selectedSchedule;
+    private String resourceFilter;
+    private String parentFilter;
+
 
     private MeasurementOOBManagerLocal manager = LookupUtil.getOOBManager();
 
@@ -52,6 +55,22 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
 
     public void setSelectedSchedule(int selectedSchedule) {
         this.selectedSchedule = selectedSchedule;
+    }
+
+    public String getResourceFilter() {
+        return resourceFilter;
+    }
+
+    public void setResourceFilter(String resourceFilter) {
+        this.resourceFilter = resourceFilter;
+    }
+
+    public String getParentFilter() {
+        return parentFilter;
+    }
+
+    public void setParentFilter(String parentFilter) {
+        this.parentFilter = parentFilter;
     }
 
     public DataModel getDataModel() {
@@ -69,10 +88,12 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
         }
 
         public PageList<MeasurementOOBComposite> fetchPage(PageControl pc) {
+            String resourceFilter = getResourceFilter();
+            String parentFilter = getParentFilter();
 
             PageList<MeasurementOOBComposite> result;
 
-            result = manager.getSchedulesWithOOBs(getSubject(), System.currentTimeMillis(),pc);
+            result = manager.getSchedulesWithOOBs(getSubject(), System.currentTimeMillis(),pc, -1, -1); // TODO
 
             return result;
         }

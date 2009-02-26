@@ -36,7 +36,8 @@ import javax.persistence.Table;
 @NamedQueries({
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE,
                 query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.displayName," +
-                        "           sched.id,max(o.id.timestamp),def.id,max(o.oobFactor),avg(o.oobFactor),bal.baselineMin , bal.baselineMax, def.units, parent.name, parent.id) " +
+                        "           sched.id,max(o.id.timestamp),def.id,max(o.oobFactor),avg(o.oobFactor),bal.baselineMin , bal.baselineMax," +
+                        "           def.units, parent.name, parent.id) " +
                         "FROM MeasurementOOB o "+
                         "LEFT JOIN o.schedule sched " +
                         "LEFT JOIN sched.definition def " +
@@ -48,7 +49,8 @@ import javax.persistence.Table;
                         "  AND sched.definition = def " +
                         "  AND sched.resource = res " +
                         "  AND bal.schedule = sched " +
-                        "  AND (:resourceId = res.id OR :resourceId is null )" +
+                        "  AND (:resourceId = res.id OR :resourceId is null ) " +
+                        "  AND (:parentId = parent.id OR :parentId is null ) " +
                         "GROUP BY res.name, res.id, def.displayName, sched.id, def.id, bal.baselineMin , bal.baselineMax, def.units, parent.name, parent.id "
                             ),
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT,
@@ -57,10 +59,13 @@ import javax.persistence.Table;
                         "  LEFT JOIN o.schedule sched " +
                         "  LEFT JOIN sched.definition def " +
                         "  LEFT JOIN sched.resource res " +
+                        "  LEFT JOIN res.parentResource parent " +
                         "  WHERE (o.id.timestamp >= :begin AND o.id.timestamp <= :end )" +
                         "    AND o.id.scheduleId = sched.id " +
                         "    AND sched.definition = def " +
                         "    AND sched.resource = res " +
+                        "  AND (:resourceId = res.id OR :resourceId is null ) " +
+                        "  AND (:parentId = parent.id OR :parentId is null ) " +
                         "  GROUP BY sched.id "
                         ),
         @NamedQuery(name=MeasurementOOB.GET_FACTOR_FOR_SCHEDULES,

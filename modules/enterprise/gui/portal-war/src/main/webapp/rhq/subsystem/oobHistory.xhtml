@@ -20,6 +20,24 @@
       <h:form id="oobHistorySubsystemForm">
             <input type="hidden" name="tab" value="#{SubsystemViewsUIBean.tabPanel.selectedTab}" />
 
+            <rich:simpleTogglePanel switchType="client" label="Search Results">
+
+                <h:panelGrid columns="3" cellspacing="3">
+                   <h:outputLabel for="resourceFilter" value="Resource Name Filter: " />
+                   <h:inputText id="resourceFilter" value="#{SubsystemOOOBHistoryUIBean.resourceFilter}"
+                                onkeypress="return ignoreEnterKey(event);"
+                                style="width: 300px;" />
+                   <rich:spacer/>
+
+                   <h:outputLabel for="parentFilter" value="Parent Name Filter: " />
+                   <h:inputText id="parentFilter" value="#{SubsystemOOBHistoryUIBean.parentFilter}"
+                                onkeypress="return ignoreEnterKey(event);"
+                                style="width: 300px;" />
+                   <rich:spacer/>
+                </h:panelGrid>
+
+            </rich:simpleTogglePanel>
+
             <h:panelGrid columns="1" width="100%">
 
             <ui:param name="oobHistoryDataModel" value="#{SubsystemOOBHistoryUIBean.dataModel}"/>

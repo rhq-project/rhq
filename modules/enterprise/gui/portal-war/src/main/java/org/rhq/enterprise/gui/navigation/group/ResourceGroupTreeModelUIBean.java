@@ -18,57 +18,49 @@
  */
 package org.rhq.enterprise.gui.navigation.group;
 
-import java.io.IOException;
-
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
-import java.util.HashSet;
-import java.util.HashMap;
 
-import javax.faces.FacesException;
-import javax.faces.el.MethodBinding;
 import javax.faces.application.Application;
-import javax.faces.component.UIComponent;
+import javax.faces.component.html.HtmlGraphicImage;
+import javax.faces.component.html.HtmlOutputLink;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
-import javax.el.MethodExpression;
-import javax.el.ExpressionFactory;
+import javax.faces.el.MethodBinding;
 
-import org.richfaces.component.UITree;
-import org.richfaces.component.html.*;
-import org.richfaces.event.NodeSelectedEvent;
-import org.richfaces.model.TreeNode;
-import org.richfaces.model.TreeNodeImpl;
+import org.richfaces.component.html.ContextMenu;
+import org.richfaces.component.html.HtmlMenuGroup;
+import org.richfaces.component.html.HtmlMenuItem;
+import org.richfaces.component.html.HtmlMenuSeparator;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
+import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
+import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.gui.util.FacesComponentUtility;
+import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.navigation.resource.ResourceTreeModelUIBean;
+import org.rhq.enterprise.gui.navigation.resource.ResourceTreeNode;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
+import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.cluster.ClusterKey;
+import org.rhq.enterprise.server.resource.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.gui.navigation.resource.ResourceTreeNode;
-import org.rhq.enterprise.gui.navigation.resource.ResourceTreeModelUIBean;
-import org.rhq.enterprise.gui.uibeans.AutoGroupCompositeDisplaySummary;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
-import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
-import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.resource.group.GroupCategory;
-import org.rhq.core.domain.operation.OperationDefinition;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.gui.util.FacesContextUtility;
 
 /**
  * @author Greg Hinkle
@@ -84,16 +76,20 @@ public class ResourceGroupTreeModelUIBean {
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
     private OperationManagerLocal operationManager = LookupUtil.getOperationManager();
     private MeasurementScheduleManagerLocal measurementScheduleManager = LookupUtil.getMeasurementScheduleManager();
+    private ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
 
     private String nodeTitle;
     private static final String DATA_PATH = "/richfaces/tree/examples/simple-tree-data.properties";
+
+    private static final String STYLE_QUICK_LINKS_ICON = "margin: 2px;";
+
 
     private ContextMenu resourceContextMenu;
 
     private void loadTree() {
 
         long start = System.currentTimeMillis();
-        
+
         FacesContext facesContext = FacesContext.getCurrentInstance();
         ExternalContext externalContext = facesContext.getExternalContext();
 
@@ -114,7 +110,7 @@ public class ResourceGroupTreeModelUIBean {
         List<Resource> members = groupManager.getResourcesForResourceGroup(EnterpriseFacesContextUtility.getSubject(), parentGroup.getId(), GroupCategory.COMPATIBLE);
 
         rootNode = load(parentGroup, resources, members);
-        System.out.println("Loaded group tree in: " + (System.currentTimeMillis() - start));
+//        System.out.println("Loaded group tree in: " + (System.currentTimeMillis() - start));
     }
 
     private ResourceGroupTreeNode load(ResourceGroup group, List<Resource> resources, List<Resource> members) {
@@ -124,7 +120,6 @@ public class ResourceGroupTreeModelUIBean {
         for (Resource member : members) {
             memberNodes.add(ResourceTreeModelUIBean.load(member.getId(), resources));
         }
-
 
         ResourceGroupTreeNode root = new ResourceGroupTreeNode(group);
         root.setClusterKey(new ClusterKey(group.getId()));
@@ -218,120 +213,218 @@ public class ResourceGroupTreeModelUIBean {
     }
 
 
-    public void setMenu(ContextMenu menu) {
-        System.out.println("*************************************************");
+    public void setMenu(ContextMenu menu) throws ResourceTypeNotFoundException {
         this.resourceContextMenu = menu;
 
         this.resourceContextMenu.getChildren().clear();
 
         Subject subject = EnterpriseFacesContextUtility.getSubject();
 
-        String resourceIdString = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("contextResourceId");
-        String resourceTypeIdString = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("contextResourceTypeId");
-        if (resourceTypeIdString != null) {
-            int resourceId = Integer.parseInt(resourceIdString);
-            int resourceTypeId = Integer.parseInt(resourceTypeIdString);
+        String clusterKeyString = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("contextClusterKey");
 
-            Resource res = resourceManager.getResourceById(EnterpriseFacesContextUtility.getSubject(), resourceId);
+        String groupIdString = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("contextGroupId");
+        String parentGroupIdString = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("contextParentGroupId");
+
+        ResourceGroup group = null;
+
+        if (clusterKeyString != null) {
+            ClusterKey key = ClusterKey.valueOf(clusterKeyString);
+
+            group = clusterManager.createAutoClusterBackingGroup(subject, key, false);
+
+
+        } else if (groupIdString != null) {
+
+            int groupId = Integer.parseInt(groupIdString);
+            group = groupManager.getResourceGroupById(subject, groupId, null);
+
+        }
+
+        if (group != null) {
+
             Application app = FacesContext.getCurrentInstance().getApplication();
-            // type = resourceTypeManager.getResourceTypeById(EnterpriseFacesContextUtility.getSubject(), resourceTypeId);
+
+            if (group.getResourceType() != null) {
+                ResourceType type = group.getResourceType();
+
+                type = resourceTypeManager.getResourceTypeById(EnterpriseFacesContextUtility.getSubject(), type.getId());
 
 
-            HtmlMenuItem nameItem = new HtmlMenuItem();
-            nameItem.setValue(res.getName());
-            nameItem.setId("menu_res_" + res.getId());
-            MethodBinding mb = app.createMethodBinding("#{otherBean.action}", null);
-            nameItem.setAction(mb);
+                HtmlMenuItem nameItem = new HtmlMenuItem();
+                nameItem.setValue(group.getName());
+                nameItem.setId("menu_group_" + group.getId());
+                MethodBinding mb = app.createMethodBinding("#{otherBean.action}", null);
+                nameItem.setAction(mb);
 
 
-            this.resourceContextMenu.getChildren().add(nameItem);
+                this.resourceContextMenu.getChildren().add(nameItem);
+
+                ResourceFacets facets = this.resourceTypeManager.getResourceFacets(subject, type.getId());
+
+                addQuickLinks(String.valueOf(group.getId()), parentGroupIdString, facets);
 
 
-            this.resourceContextMenu.getChildren().add(new HtmlMenuSeparator());
+                addMembers(group);
 
 
-            // *** Measurements menu
-            List<MeasurementSchedule> scheds = measurementScheduleManager.getMeasurementSchedulesForResourceAndType(
-                    subject, resourceId, DataType.MEASUREMENT, null, true);
+                this.resourceContextMenu.getChildren().add(new HtmlMenuSeparator());
 
-            if (scheds != null) {
-                HtmlMenuGroup measurementsMenu = new HtmlMenuGroup();
-                measurementsMenu.setValue("Measurements");
-                this.resourceContextMenu.getChildren().add(measurementsMenu);
-                measurementsMenu.setDisabled(scheds.isEmpty());
+                
 
-                for (MeasurementSchedule sched : scheds) {
-                    HtmlMenuItem menuItem = new HtmlMenuItem();
-                    String subOption = sched.getDefinition().getDisplayName();
-                    menuItem.setValue(subOption);
-                    menuItem.setId("measurement_" + sched.getId());
+                // *** Measurements menu
+                /* List<MeasurementSchedule> scheds = measurementScheduleManager.getMeasurementSchedulesForResourceAndType(
+                                    subject, resourceId, DataType.MEASUREMENT, null, true);
 
-                    // MethodExpression me = ExpressionFactory.newInstance().createMethodExpression();
-                    MethodBinding binding = app.createMethodBinding("#{otherBean.action}", null);
-                    menuItem.setAction(binding);
+                            if (scheds != null) {
+                                HtmlMenuGroup measurementsMenu = new HtmlMenuGroup();
+                                measurementsMenu.setValue("Measurements");
+                                this.resourceContextMenu.getChildren().add(measurementsMenu);
+                                measurementsMenu.setDisabled(scheds.isEmpty());
 
-                    measurementsMenu.getChildren().add(menuItem);
-                }
-            }
+                                for (MeasurementSchedule sched : scheds) {
+                                    HtmlMenuItem menuItem = new HtmlMenuItem();
+                                    String subOption = sched.getDefinition().getDisplayName();
+                                    menuItem.setValue(subOption);
+                                    menuItem.setId("measurement_" + sched.getId());
+
+                                    // MethodExpression me = ExpressionFactory.newInstance().createMethodExpression();
+                                    MethodBinding binding = app.createMethodBinding("#{otherBean.action}", null);
+                                    menuItem.setAction(binding);
+
+                                    measurementsMenu.getChildren().add(menuItem);
+                                }
+                            }
+                */
+
+                // **** Operations menugroup
+
+                List<OperationDefinition> operations = operationManager.getSupportedResourceTypeOperations(subject, type.getId());
+
+                if (operations != null) {
+                    HtmlMenuGroup operationsMenu = new HtmlMenuGroup();
+                    operationsMenu.setValue("Operations");
+                    this.resourceContextMenu.getChildren().add(operationsMenu);
+                    operationsMenu.setDisabled(operations.isEmpty());
+
+                    for (OperationDefinition def : operations) {
+                        HtmlMenuItem menuItem = new HtmlMenuItem();
+                        String subOption = def.getDisplayName();
+                        menuItem.setValue(subOption);
+                        menuItem.setId("operation_" + def.getId());
 
 
-            // **** Operations menugroup
+                        String url = "/rhq/group/operation/groupOperationScheduleNew.xhtml?opId=" + def.getId()
+                                + "&groupId=" + group.getId();
+                        if (parentGroupIdString != null) {
+                            url += "&parentGroupId=" + parentGroupIdString;
+                        }
 
-            List<OperationDefinition> operations = operationManager.getSupportedResourceTypeOperations(subject, resourceTypeId);
+                        menuItem.setSubmitMode("none");
+                        menuItem.setOnclick("document.location.href='" + url + "'");
 
-            if (operations != null) {
-                HtmlMenuGroup operationsMenu = new HtmlMenuGroup();
-                operationsMenu.setValue("Operations");
-                this.resourceContextMenu.getChildren().add(operationsMenu);
-                operationsMenu.setDisabled(operations.isEmpty());
 
-                for (OperationDefinition def : operations) {
-                    HtmlMenuItem menuItem = new HtmlMenuItem();
-                    String subOption = def.getDisplayName();
-                    menuItem.setValue(subOption);
-                    menuItem.setId("operation_" + def.getId());
-
-                    // MethodExpression me = ExpressionFactory.newInstance().createMethodExpression();
-                    MethodBinding binding = app.createMethodBinding("#{otherBean.action}", null);
-                    menuItem.setAction(binding);
-
-                    operationsMenu.getChildren().add(menuItem);
+                        operationsMenu.getChildren().add(menuItem);
+                    }
                 }
             }
         }
     }
 
-    /*public void setMenu(ContextMenu menu) {
-        this.operationsMenu = menu;
+    private void addMembers(ResourceGroup group) {
+        List<Resource> resources = null;
+        if (group.getClusterKey() != null) {
+            resources = clusterManager.getAutoClusterResources(EnterpriseFacesContextUtility.getSubject(), ClusterKey.valueOf(group.getClusterKey()));
+        } else {
+            resources = groupManager.getResourcesForResourceGroup(EnterpriseFacesContextUtility.getSubject(), group.getId(), null);
+         }
 
-         operationsMenu.getChildren().clear();
+        HtmlMenuGroup membersMenuItem = new HtmlMenuGroup();
+        membersMenuItem.setValue("Members");
+        membersMenuItem.setId("menu_groupMembers_" + group.getId());
 
-        String resourceTypeIdString = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("contextResourceTypeId");
-        if (resourceTypeIdString != null) {
-            int resourceTypeId = Integer.parseInt(resourceTypeIdString);
+        for (Resource res : resources) {
+            HtmlMenuItem menuItem = new HtmlMenuItem();
+            menuItem.setValue(res.getName());
+            menuItem.setId("groupMember_" + res.getId());
 
-            ResourceType type = null;
 
-            // type = resourceTypeManager.getResourceTypeById(EnterpriseFacesContextUtility.getSubject(), resourceTypeId);
-            List<OperationDefinition> operations = operationManager.getSupportedResourceTypeOperations(EnterpriseFacesContextUtility.getSubject(), resourceTypeId);
+            String url = "/rhq/resource/summary/overview.xhtml?id=" + res.getId();
 
-            if (operations != null) {
-                for (OperationDefinition def : operations) {
-                    HtmlMenuItem menuItem = new HtmlMenuItem();
-                    String subOption = def.getDisplayName();
-                    menuItem.setValue(subOption);
-                    menuItem.setId("operation_" + def.getId());
+            menuItem.setSubmitMode("none");
+            menuItem.setOnclick("document.location.href='" + url + "'");
 
-                    Application app = FacesContext.getCurrentInstance().getApplication();
-                    // MethodExpression me = ExpressionFactory.newInstance().createMethodExpression();
-                    MethodBinding mb = app.createMethodBinding("#{otherBean.action}", null);
-                    menuItem.setAction(mb);
 
-                    operationsMenu.getChildren().add(menuItem);
-                }
-            }
+            membersMenuItem.getChildren().add(menuItem);
         }
-    }*/
+
+        this.resourceContextMenu.getChildren().add(membersMenuItem);
+    }
+
+    private void addQuickLinks(String groupId, String parentGroupId, ResourceFacets facets) {
+        HtmlMenuItem quickLinksItem = new HtmlMenuItem();
+        quickLinksItem.setSubmitMode("none");
+        quickLinksItem.setId("menu_groupQuickLinks_" + groupId);
+
+        String url;
+        HtmlOutputLink link;
+        HtmlGraphicImage image;
+
+        String attributes = "groupId=" + groupId;
+        if (parentGroupId != null) {
+            attributes += "&parentGroupId=" + parentGroupId;
+        }
+
+        if (LookupUtil.getSystemManager().isMonitoringEnabled()) {
+            url = "/rhq/group/monitor/graphs.xhtml?" + attributes;
+            link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_m.gif", "Monitor");
+            image.setStyle(STYLE_QUICK_LINKS_ICON);
+        }
+
+        url = "/rhq/group/inventory/view.xhtml?" + attributes;
+        link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
+        image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_i.gif", "Inventory");
+        image.setStyle(STYLE_QUICK_LINKS_ICON);
+
+        // No group alert support yet
+        /*if (LookupUtil.getSystemManager().isMonitoringEnabled()) {
+            url = "/rhq/group/alert/listAlertDefinitions.xhtml?" + attributes;
+            link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_a.gif", "Alerts");
+            image.setStyle(STYLE_QUICK_LINKS_ICON);
+        }*/
+
+        if (facets.isConfiguration()) {
+            url = "/rhq/group/configuration/viewCurrent.xhtml?" + attributes;
+            link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_c.gif", "Configuration");
+            image.setStyle(STYLE_QUICK_LINKS_ICON);
+        }
+
+        if (facets.isOperation()) {
+            url = "/rhq/group/operation/groupOperationScheduleNew.xhtml?" + attributes;
+            link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_o.gif", "Operations");
+            image.setStyle(STYLE_QUICK_LINKS_ICON);
+        }
+
+        if (facets.isEvent()) {
+            url = "/rhq/group/events/history.xhtml?" + attributes;
+            link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_e.gif", "Events");
+            image.setStyle(STYLE_QUICK_LINKS_ICON);
+        }
+
+        // no group content support yet
+        /*if (facets.isContent()) {
+            url = "/rhq/resource/content/view.xhtml?id=" + groupId;
+            link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_p.gif", "Content");
+            image.setStyle(STYLE_QUICK_LINKS_ICON);
+        }*/
+
+        this.resourceContextMenu.getChildren().add(quickLinksItem);
+    }
 
 
 }

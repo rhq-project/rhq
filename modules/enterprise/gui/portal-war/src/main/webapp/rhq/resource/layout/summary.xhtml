@@ -92,95 +92,105 @@ id - the id of the Resource being accessed
                             actionListener="#{UserPreferencesUIBean.updateSummaryPanelDisplayState}"
                             value="#{UserPreferencesUIBean.summaryPanelDisplayState}">
         <f:facet name="header">
-            <h:panelGrid columns="3" width="90%">
 
-                <h:panelGroup>
-                    <onc:resourceLineage resourceId="#{ResourceUIBean.id}"/>
-                </h:panelGroup>
+            <h:panelGroup layout="block" style="width: 100%;">
 
-                <h:panelGroup id="availDisplay" style="float: right;">
-                    <h:outputLink value="/rhq/resource/monitor/availabilityHistory.xhtml">
-                        <f:param name="id" value="#{ResourceUIBean.id}"/>
-                        <h:graphicImage value="/images/icon_available_green_24.png" alt="Resource is Up" title="Up"
-                                        rendered="#{ResourceUIBean.availabilityType == 'UP'}"/>
-                        <h:graphicImage value="/images/icon_available_red_24.png" alt="Resource is Down" title="Down"
-                                        rendered="#{ResourceUIBean.availabilityType == 'DOWN'}"/>
-                        <h:graphicImage value="/images/icon_available_grey_24.png"
-                                        alt="Resource availability is Unknown"
-                                        title="Unknown"
-                                        rendered="#{ResourceUIBean.availabilityType == null}"/>
-                    </h:outputLink>
-                    <rich:toolTip for="availDisplay">
-                        <h:outputText value="Resource has been #{ResourceUIBean.availabilityType.name} since: "/>
-                        <h:outputText value="#{ResourceUIBean.availabilitySummary.lastChange}">
-                            <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz"
-                                               timeZone="#{ServerInfoUIBean.timeZone}"/>
-                        </h:outputText>
-                        <br/>
+                <table width="100%" style="padding-right: 30px;">
+                    <tr>
 
-                        <h:outputText value="Availability: " styleClass="BoldText"/>
-                        <h:outputText value="#{ResourceUIBean.availabilitySummary.upPercentage}">
-                            <f:convertNumber type="percent" maxFractionDigits="3"/>
-                        </h:outputText>
-                        <br/>
+                        <td>
 
-                        <b>Down for: </b>
-                        <h:outputText value="#{ResourceUIBean.availabilitySummary.downTime}">
-                            <f:converter converterId="LongDurationConverter"/>
-                        </h:outputText>
-                        <br/>
-                        <b>Up for: </b>
-                        <h:outputText value="#{ResourceUIBean.availabilitySummary.upTime}">
-                            <f:converter converterId="LongDurationConverter"/>
-                        </h:outputText>
-                        <br/>
-                        <b>Failures: </b>
-                        <h:outputText value="#{ResourceUIBean.availabilitySummary.failures}"/>
-                        <br/>
+                            <onc:resourceLineage resourceId="#{ResourceUIBean.id}"/>
+                        </td>
+                        <td width="30">
+                            <h:outputLink value="/rhq/resource/monitor/availabilityHistory.xhtml" id="availDisplay">
+                                <f:param name="id" value="#{ResourceUIBean.id}"/>
+                                <h:graphicImage value="/images/icon_available_green_24.png" alt="Resource is Up"
+                                                title="Up"
+                                                rendered="#{ResourceUIBean.availabilityType == 'UP'}"/>
+                                <h:graphicImage value="/images/icon_available_red_24.png" alt="Resource is Down"
+                                                title="Down"
+                                                rendered="#{ResourceUIBean.availabilityType == 'DOWN'}"/>
+                                <h:graphicImage value="/images/icon_available_grey_24.png"
+                                                alt="Resource availability is Unknown"
+                                                title="Unknown"
+                                                rendered="#{ResourceUIBean.availabilityType == null}"/>
+                            </h:outputLink>
+                            <rich:toolTip for="availDisplay" style="font-weight: normal;">
+                                <h:outputText
+                                        value="Resource has been #{ResourceUIBean.availabilityType.name} since: "/>
+                                <h:outputText value="#{ResourceUIBean.availabilitySummary.lastChange}">
+                                    <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz"
+                                                       timeZone="#{ServerInfoUIBean.timeZone}"/>
+                                </h:outputText>
+                                <br/>
 
-                        <h:panelGroup layout="block">
-                            <h:outputText value="MTBF: " styleClass="BoldText"/>
-                            <h:outputText value="#{ResourceUIBean.availabilitySummary.MTBF}">
-                                <f:converter converterId="LongDurationConverter"/>
-                            </h:outputText>
-                            <rich:toolTip>
-                                Mean Time Between Failures over the known resource lifetime.
+                                <h:outputText value="Availability: " styleClass="BoldText"/>
+                                <h:outputText value="#{ResourceUIBean.availabilitySummary.upPercentage}">
+                                    <f:convertNumber type="percent" maxFractionDigits="3"/>
+                                </h:outputText>
+                                <br/>
+
+                                <b>Down for: </b>
+                                <h:outputText value="#{ResourceUIBean.availabilitySummary.downTime}">
+                                    <f:converter converterId="LongDurationConverter"/>
+                                </h:outputText>
+                                <br/>
+                                <b>Up for: </b>
+                                <h:outputText value="#{ResourceUIBean.availabilitySummary.upTime}">
+                                    <f:converter converterId="LongDurationConverter"/>
+                                </h:outputText>
+                                <br/>
+                                <b>Failures: </b>
+                                <h:outputText value="#{ResourceUIBean.availabilitySummary.failures}"/>
+                                <br/>
+
+                                <h:panelGroup layout="block">
+                                    <h:outputText value="MTBF: " styleClass="BoldText"/>
+                                    <h:outputText value="#{ResourceUIBean.availabilitySummary.MTBF}">
+                                        <f:converter converterId="LongDurationConverter"/>
+                                    </h:outputText>
+                                    <rich:toolTip>
+                                        Mean Time Between Failures over the known resource lifetime.
+                                    </rich:toolTip>
+                                </h:panelGroup>
+                                <br/>
+
+                                <h:panelGroup layout="block">
+                                    <h:outputText value="MTTR: " styleClass="BoldText"/>
+                                    <h:outputText value="#{ResourceUIBean.availabilitySummary.MTTR}">
+                                        <f:converter converterId="LongDurationConverter"/>
+                                    </h:outputText>
+                                    <rich:toolTip>
+                                        Mean Time To Recover from failure over the known resource lifetime.
+                                    </rich:toolTip>
+                                </h:panelGroup>
+
                             </rich:toolTip>
-                        </h:panelGroup>
-                        <br/>
 
-                        <h:panelGroup layout="block">
-                            <h:outputText value="MTTR: " styleClass="BoldText"/>
-                            <h:outputText value="#{ResourceUIBean.availabilitySummary.MTTR}">
-                                <f:converter converterId="LongDurationConverter"/>
-                            </h:outputText>
-                            <rich:toolTip>
-                                Mean Time To Recover from failure over the known resource lifetime.
-                            </rich:toolTip>
-                        </h:panelGroup>
+                        </td>
+                        <td width="30">
 
-                    </rich:toolTip>
+                            <a4j:outputPanel id="favoritesPanel">
+                                <a4j:commandButton id="favoritesButton"
+                                                   reRender="favoritesPanel" status="commonStatus"
+                                                   image="#{FavoritesUIBean.favorite ? '/images/star_on_24.png' : '/images/star_off_24.png'}"
+                                                   action="#{FavoritesUIBean.toggleFavorite}">
 
-                </h:panelGroup>
+                                </a4j:commandButton>
+                                <rich:toolTip for="favoritesPanel">
+                                    <h:outputText value="Add resource to favorites list"
+                                                  rendered="#{!FavoritesUIBean.favorite}"/>
+                                    <h:outputText value="Remove resource from favorites list"
+                                                  rendered="#{FavoritesUIBean.favorite}"/>
+                                </rich:toolTip>
+                            </a4j:outputPanel>
 
-                <h:panelGroup>
-                    <a4j:outputPanel id="favoritesPanel">
-                        <a4j:commandButton id="favoritesButton"
-                                           reRender="favoritesPanel" status="commonStatus"
-                                           image="#{FavoritesUIBean.favorite ? '/images/star_on_24.png' : '/images/star_off_24.png'}"
-                                           action="#{FavoritesUIBean.toggleFavorite}">
+                        </td>
+                    </tr>
+                </table>
 
-                        </a4j:commandButton>
-                        <rich:toolTip for="favoritesPanel">
-                            <h:outputText value="Add resource to favorites list"
-                                          rendered="#{!FavoritesUIBean.favorite}"/>
-                            <h:outputText value="Remove resource from favorites list"
-                                          rendered="#{FavoritesUIBean.favorite}"/>
-                        </rich:toolTip>
-                    </a4j:outputPanel>
-                </h:panelGroup>
-            </h:panelGrid>
-
+            </h:panelGroup>
 
         </f:facet>
 

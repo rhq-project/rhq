@@ -1309,6 +1309,15 @@ DB Upgrade:
       </schema-directSQL>
    </schemaSpec>
 
+    <schemaSpec version="2.48">
+        <schema-addColumn
+             table="RHQ_RESOURCE_GROUP"
+             column="CLUSTER_KEY"
+             columnType="VARCHAR2"
+             precision="4000"/>
+    </schemaSpec>
+
+
 </dbupgrade>
 
 </target>

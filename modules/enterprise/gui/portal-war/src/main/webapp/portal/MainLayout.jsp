@@ -11,7 +11,6 @@
       <meta http-equiv="MAX-AGE" content="0">
       <meta http-equiv="CACHE-CONTROL" content="NO-CACHE">
 
-      <link rel="stylesheet" type="text/css" media="screen" href="/css/leftMenu.css"/>
       <link rel="stylesheet" type="text/css" media="screen" href="/css/win.css"/>
       <link rel="stylesheet" type="text/css" media="screen" href="/css/layout.css"/>
 

@@ -64,14 +64,30 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         ResourceType resourceType = entityManager.find(ResourceType.class, ClusterKey.getResourceType(clusterKey));
         ResourceGroup resourceGroup = entityManager.find(ResourceGroup.class, clusterKey.getClusterGroupId());
 
-
+        List<Resource> resources = null;
         try {
             autoClusterBackingGroup = (ResourceGroup) query.getSingleResult();
         } catch (NoResultException nre) {
              try {
+                 resources = getAutoClusterResources(subject, clusterKey);
+                 String name = null;
+                 if (resources.isEmpty()) {
+                     name = "Group of " + resourceType.getName();
+                 } else {
+                    for (Resource res : resources) {
+                        if (name == null) {
+                             name = res.getName();
+                        } else {
+                            if (!name.equals(res.getName())) {
+                                name = "Group of " + resourceType.getName();
+                            }
+                        }
+                    }
+                 }
 
                  // For AutoClusters the group name is the unique cluster key
-                 autoClusterBackingGroup = new ResourceGroup(clusterKey.toString(), resourceType);
+                 autoClusterBackingGroup = new ResourceGroup(name, resourceType);
+                 autoClusterBackingGroup.setClusterKey(clusterKey.toString());
                  autoClusterBackingGroup.setClusterResourceGroup(resourceGroup);
                  autoClusterBackingGroup.setVisible(false);
 
@@ -89,7 +105,10 @@ public class ClusterManagerBean implements ClusterManagerLocal {
 
 
         if (addResources) {
-            List<Resource> resources = getAutoClusterResources(subject, clusterKey);
+            if (resources == null) {
+                resources = getAutoClusterResources(subject, clusterKey);
+            }
+
             Integer[] resourceIds = new Integer[resources.size()];
             for (int i = 0; i < resourceIds.length; ++i) {
                 resourceIds[i] = resources.get(i).getId();

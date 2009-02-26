@@ -24,6 +24,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.util.sort.HumaneStringComparator;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.cluster.ClusterKey;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -37,6 +38,7 @@ import java.util.Collections;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.TreeSet;
 
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
@@ -50,7 +52,7 @@ public class ResourceGroupTreeNode implements Comparable {
 
     private ClusterKey clusterKey;
 
-    private List<ResourceGroupTreeNode> children = new ArrayList<ResourceGroupTreeNode>();
+    private TreeSet<ResourceGroupTreeNode> children = new TreeSet<ResourceGroupTreeNode>();
 
     private List<ResourceTreeNode> members = new ArrayList<ResourceTreeNode>();
 
@@ -73,11 +75,12 @@ public class ResourceGroupTreeNode implements Comparable {
     public void addMembers(Set<ResourceTreeNode> members) {
         this.members.addAll(members);
     }
+
     public void addMember(ResourceTreeNode member) {
         this.members.add(member);
     }
 
-    public List<ResourceGroupTreeNode> getChildren() {
+    public TreeSet<ResourceGroupTreeNode> getChildren() {
         return children;
     }
 
@@ -85,7 +88,7 @@ public class ResourceGroupTreeNode implements Comparable {
         return members;
     }
 
-    public synchronized List<ResourceGroupTreeNode> getNodes() {
+    public synchronized TreeSet<ResourceGroupTreeNode> getNodes() {
         return children;
     }
 
@@ -97,13 +100,27 @@ public class ResourceGroupTreeNode implements Comparable {
         if (level instanceof ResourceGroup) {
             ResourceGroup group = (ResourceGroup) level;
             return group.getName();
+        } else if (level instanceof AutoGroupComposite) {
+            AutoGroupComposite ag = (AutoGroupComposite) level;
+            if (ag.getResourceType() != null) {
+                return ag.getResourceType().getName();
+            } else if (ag.getSubcategory() != null) {
+                return ag.getSubcategory().getName();
+            }
         }
         return level.toString();
     }
 
     public int compareTo(Object o) {
-        return toString().compareTo(((ResourceGroupTreeNode)o).toString());
+        try {
+        return HumaneStringComparator.DEFAULT.compare(toString(), ((ResourceGroupTreeNode) o).toString());
+        } catch (Exception e) {
+            System.out.println("Couldn't compare: " + toString() + " || " + ((ResourceGroupTreeNode) o).toString());
+            System.out.println(e.getMessage());
+            return toString().compareTo(((ResourceGroupTreeNode) o).toString());
+        }
     }
+
 
     public void addChildren(Collection<ResourceGroupTreeNode> resourceGroupTreeNodes) {
         this.children.addAll(resourceGroupTreeNodes);

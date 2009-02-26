@@ -25,7 +25,7 @@
         <input type="hidden" name="type" value="#{param.type}"/>
 
         <a4j:region renderRegionOnly="true">
-
+               
 
                 <rich:tree style="width: 100%; height: 100%; " switchType="ajax"
                            stateAdvisor="#{ResourceTreeStateAdvisor}"
@@ -57,7 +57,7 @@
                         <h:outputText value="#{resourceTreeItem}"
                                       styleClass="availLink#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'Down' : 'Up'}"/>
                     </rich:treeNode>
-
+<!-- Tree Node supporting context menu -->
                     <rich:treeNode type="Resource"
                                    icon="/images/icn_tree_#{resourceTreeItem.data.resourceType.category}_#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'off' : 'on'}.png"
                                    iconLeaf="/images/icn_tree_#{resourceTreeItem.data.resourceType.category}_#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'off' : 'on'}.png">

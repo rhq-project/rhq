@@ -164,6 +164,8 @@
         <column name="GROUP_BY" size="500" type="VARCHAR2"/>
 
         <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>
+
+        <column name="CLUSTER_KEY" type="VARCHAR2" size="4000" required="false"/>
         
         <!--  These two only set if this is a backing group for a resource cluster -->
         <column name="CLUSTER_RESOURCE_GROUP_ID" type="INTEGER" references="RHQ_RESOURCE_GROUP"/>

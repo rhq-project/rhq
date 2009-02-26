@@ -26,6 +26,7 @@
             
       <h:form id="newScheduleForm">
          <input type="hidden" name="groupId" value="#{param.groupId}" />
+         <input type="hidden" name="parentGroupId" value="#{param.parentGroupId}" />
          <input type="hidden" name="category" value="#{param.category}" />
          
          <c:if test="${not empty param.opId}">
@@ -80,6 +81,7 @@
                   <h:outputLink action="success">
                      <f:param name="opId" value="#{item.id}" />
                      <f:param name="groupId" value="#{param.groupId}"/>
+                     <f:param name="parentGroupId" value="#{param.parentGroupId}" />
                      <f:param name="category" value="#{param.category}" />
                      
                      <h:outputText value="#{item.displayName} *" rendered="#{(not empty param.opId) and (param.opId == item.id)}"/>

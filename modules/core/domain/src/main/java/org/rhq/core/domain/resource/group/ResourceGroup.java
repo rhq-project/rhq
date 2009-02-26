@@ -139,7 +139,7 @@ import org.rhq.core.domain.resource.ResourceType;
             + "    OR ir.id = :id "),
 
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_NAME, query = "SELECT rg FROM ResourceGroup AS rg WHERE LOWER(rg.name) = LOWER(:name)"),
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY, query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.name = :clusterKey"),
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY, query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.clusterKey = :clusterKey"),
     @NamedQuery(name = ResourceGroup.QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE, query = "SELECT DISTINCT rg "
         + "FROM ResourceGroup AS rg LEFT JOIN rg.roles AS r " + "WHERE rg.id NOT IN " + "( SELECT irg.id "
         + "  FROM Role ir JOIN ir.resourceGroups AS irg " + "  WHERE ir.id = :roleId )"),
@@ -270,6 +270,10 @@ public class ResourceGroup extends Group {
     @JoinColumn(name = "RESOURCE_TYPE_ID", nullable = true)
     @ManyToOne
     private ResourceType resourceType; // if non-null, it implies a compatible group
+
+
+    @Column(name = "CLUSTER_KEY", nullable = true)
+    private String clusterKey;
 
     // The compatible group for which this is an auto-cluster backing group
     @JoinColumn(name = "CLUSTER_RESOURCE_GROUP_ID", referencedColumnName = "ID", nullable = true)
@@ -434,6 +438,14 @@ public class ResourceGroup extends Group {
         } else {
             setGroupCategory(GroupCategory.COMPATIBLE);
         }
+    }
+
+    public String getClusterKey() {
+        return clusterKey;
+    }
+
+    public void setClusterKey(String clusterKey) {
+        this.clusterKey = clusterKey;
     }
 
     public ResourceGroup getClusterResourceGroup() {

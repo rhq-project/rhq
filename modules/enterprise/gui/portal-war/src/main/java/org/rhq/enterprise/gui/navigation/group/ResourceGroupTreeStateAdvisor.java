@@ -63,7 +63,7 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
             ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
             currentGroup = groupManager.getResourceGroupById(EnterpriseFacesContextUtility.getSubject(), this.selectedId, null);
             if (!currentGroup.isVisible()) {
-                this.selectedClusterKey = ClusterKey.valueOf(currentGroup.getName());
+                this.selectedClusterKey = ClusterKey.valueOf(currentGroup.getClusterKey());
             }
         }
         return currentGroup;
@@ -136,45 +136,11 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
 
                 if (node.getData() instanceof ClusterKey) {
 
-                    System.out.println("you selected: " + node.getData());
-
-
                     ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
                     ResourceGroup group = clusterManager.createAutoClusterBackingGroup(subject, (ClusterKey) node.getData(), true);
 
 
                     String path = "/rhq/group/inventory/view.xhtml";
-                    //FacesContextUtility.getRequest().getRequestURI();
-
-                    /*Resource resource = this.resourceManager.getResourceById(subject, ((Resource) node.getData())
-                        .getId());
-                    ResourceFacets facets = this.resourceTypeManager.getResourceFacets(subject, resource
-                        .getResourceType().getId());
-
-                    String fallbackPath = LookupUtil.getSystemManager().isMonitoringEnabled() ? "/rhq/resource/monitor/graphs.xhtml"
-                        : "/rhq/resource/inventory/view.xhtml";
-
-                    // Switching from a auto group view... default to monitor page
-                    if (!path.startsWith("/rhq/resource")) {
-                        path = fallbackPath;
-                    } else {
-                        if ((path.startsWith("/rhq/resource/configuration/") && !facets.isConfiguration())
-                            || (path.startsWith("/rhq/resource/content/") && !facets.isContent())
-                            || (path.startsWith("/rhq/resource/operation") && !facets.isOperation())) {
-                            // This resource doesn't support those facets
-                            path = fallbackPath;
-                        } else if (path.startsWith("/rhq/resource/configuration/edit.xhtml")
-                            && facets.isConfiguration()) {
-                            path = "/rhq/resource/configuration/view.xhtml";
-                        } else if (!path.startsWith("/rhq/resource/content/view.xhtml")
-                            && path.startsWith("/rhq/resource/content/") && facets.isContent()) {
-                            path = "/rhq/resource/content/view.xhtml";
-                        } else if (!path.startsWith("/rhq/resource/inventory/view.xhtml")
-                            && path.startsWith("/rhq/resource/inventory/")) {
-                            path = "/rhq/resource/inventory/view.xhtml";
-                        }
-                    }*/
-
 
                     response.sendRedirect(path + "?groupId=" + group.getId() + "&parentGroupId=" + ((ClusterKey) node.getData()).getClusterGroupId());
 
@@ -190,6 +156,9 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
                                 + "&type=" + ag.getResourceType().getId();
                         response.sendRedirect(path);
                     }
+                } else if (node.getData() instanceof ResourceGroup) {
+                    String path = "/rhq/group/inventory/view.xhtml";
+                    response.sendRedirect(path + "?groupId=" + ((ResourceGroup)node.getData()).getId());
                 }
             }
         } catch (IOException e1) {
@@ -207,7 +176,7 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
         } else if (node.getData() instanceof ClusterKey) {
             ClusterKey key = (ClusterKey) node.getData();
 
-            if (currentGroup.getName().equals(key.getKey())) {
+            if (currentGroup.getClusterKey() != null && currentGroup.getClusterKey().equals(key.getKey())) {
                 return true;
             }
         }

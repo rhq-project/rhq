@@ -14,28 +14,21 @@
 
 <body>
 
-<f:view>
-
-    Usage: The following parameters must be set in the calling page
-
-    paginationDataTableName - Name of the data table to be controlled
-    paginationDataModel - Data model of the underlying table being controlled (used for total row count)
-    paginationPageControl - Page control value to set when changing the number of rows per page
-
+<f:subview id="navigationTreeView">
     <ui:composition>
 
         <h:form id="leftNavGroupTreeForm"> <!-- datascroll tag wants a form to be present -->
+            <h:panelGroup id="leftTreeHolder">
 
-            <input type="hidden" name="groupId" value="#{param.groupId}"/>
-            <input type="hidden" name="parentGroupId" value="#{param.parentGroupId}"/>
+                <input type="hidden" name="groupId" value="#{param.groupId}"/>
+                <input type="hidden" name="parentGroupId" value="#{param.parentGroupId}"/>
 
-            <a4j:region renderRegionOnly="true">
+                <a4j:region renderRegionOnly="true">
 
-                <f:facet name="header">
-                    Server Resources (in single element pages)
-                </f:facet>
+                    <f:facet name="header">
+                        Server Resources (in single element pages)
+                    </f:facet>
 
-                <h:panelGroup id="leftTreeHolder">
 
                     <ui:param name="clusterSize" value="#{ResourceGroupTreeModelUIBean.roots[0].members.size}"/>
 
@@ -62,6 +55,21 @@
                                        icon="/images/icn_tree_Cluster_on.png"
                                        iconLeaf="/images/icn_tree_Cluster_on.png">
 
+
+                            <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000"
+                                         disableDefault="true" status="commonStatus" limitToList="true"
+                                         ajaxSingle="true">
+
+                                <f:param name="contextGroupId" value="#{groupTreeItem.data.id}"/>
+                                <f:param name="contextParentGroupId" value="#{groupTreeItem.data.id}"/>
+
+
+                                <rich:componentControl disableDefault="true" event="oncomplete" for="resourceMenu"
+                                                       operation="show">
+                                    <f:param name="contextGroupId" value="#{groupTreeItem.data.id}"/>
+                                </rich:componentControl>
+                            </a4j:support>
+
                             <h:outputText value="#{groupTreeItem.data.name}"/>
 
                         </rich:treeNode>
@@ -75,37 +83,36 @@
 
                         </rich:treeNode>
 
-
+                        <!-- Tree Node supporting context menu -->
                         <rich:treeNode type="ClusterKey"
                                        icon="/images/icn_tree_group_on.png"
                                        iconLeaf="/images/icn_tree_group_on.png">
 
 
+                            <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000"
+                                         disableDefault="true" status="commonStatus" limitToList="true"
+                                         ajaxSingle="true">
+
+                                <f:param name="contextClusterKey" value="#{groupTreeItem.data.key}"/>
+                                <f:param name="contextParentGroupId" value="#{param.parentGroupId == null ? param.groupId : param.parentGroupId}"/>
+
+                                <rich:componentControl disableDefault="true" event="oncomplete" for="resourceMenu"
+                                                       operation="show">
+                                    <f:param name="clusterKey" value="#{groupTreeItem.data}"/>
+                                </rich:componentControl>
+                            </a4j:support>
+
+
                             <h:outputText value="#{groupTreeItem.members[0]}"/>
-                            <h:outputText value="(#{groupTreeItem.members.size} / #{clusterSize})" rendered="#{groupTreeItem.members.size lt clusterSize}"/>
+                            <h:outputText value="(#{groupTreeItem.members.size} / #{clusterSize})"
+                                          rendered="#{groupTreeItem.members.size lt clusterSize}"/>
+
                         </rich:treeNode>
 
 
                         <rich:treeNode type="Resource"
                                        icon="/images/icn_tree_#{groupTreeItem.data.resourceType.category}_#{groupTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'off' : 'on'}.png"
                                        iconLeaf="/images/icn_tree_#{groupTreeItem.data.resourceType.category}_#{groupTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'off' : 'on'}.png">
-
-
-                            <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000"
-                                         status="commonStatus">
-                                <f:param name="contextResourceId" value="#{groupTreeItem.data.resource.id}"/>
-                                <f:param name="contextResourceTypeId"
-                                         value="#{groupTreeItem.data.resource.resourceType.id}"/>
-
-                                <rich:componentControl disableDefault="true" event="oncomplete" for="resourceMenu"
-                                                       operation="show">
-                                    <f:param value="#{groupTreeItem.data.resource.name}" name="name"/>
-                                    <f:param value="#{groupTreeItem.data.resource.id}" name="id"/>
-                                    <f:param value="#{groupTreeItem.data.resource.resourceType.name}" name="type"/>
-                                    <f:param value="'#{groupTreeItem.data.resource.resourceType.operationDefinitions}'"
-                                             name="ops"/>
-                                </rich:componentControl>
-                            </a4j:support>
 
 
                             <h:outputText value="#{groupTreeItem}"/>
@@ -117,16 +124,24 @@
 
                     <!--<a4j:log popup="false" level="WARN" style="width: 800px; height: 300px;"></a4j:log>-->
 
-                    <!-- TODO: Implement GroupTreeContextMenuUIBean. -->
-                    <rich:contextMenu attached="false" id="resourceMenu" binding="#{ResourceTreeContextMenuUIBean.menu}"
-                                      disableDefaultMenu="true">
+                    <a4j:outputPanel layout="none" id="contextMenuPanel">
 
-                    </rich:contextMenu>
+                        <h:panelGroup id="contentMenuPanelGroup">
 
-                </h:panelGroup>
+                            <!-- TODO: Implement GroupTreeContextMenuUIBean. -->
+                            <rich:contextMenu attached="false" id="resourceMenu"
+                                              binding="#{ResourceGroupTreeModelUIBean.menu}"
+                                              disableDefaultMenu="true">
+
+                            </rich:contextMenu>
+
+                        </h:panelGroup>
+                    </a4j:outputPanel>
 
 
-            </a4j:region>
+                </a4j:region>
+
+            </h:panelGroup>
 
 
         </h:form>
@@ -140,7 +155,7 @@
 
     </ui:composition>
 
-</f:view>
+</f:subview>
 
 
 </body>

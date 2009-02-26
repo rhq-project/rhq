@@ -24,6 +24,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
+import org.rhq.core.util.sort.HumaneStringComparator;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -89,7 +90,7 @@ public class ResourceTreeNode implements Comparable {
     }
 
     public int compareTo(Object o) {
-        return toString().compareTo(((ResourceTreeNode)o).toString());
+        return HumaneStringComparator.DEFAULT.compare(toString(), ((ResourceTreeNode)o).toString());
     }
 
     @Override
@@ -108,4 +109,5 @@ public class ResourceTreeNode implements Comparable {
     public int hashCode() {
         return level.hashCode();
     }
+
 }

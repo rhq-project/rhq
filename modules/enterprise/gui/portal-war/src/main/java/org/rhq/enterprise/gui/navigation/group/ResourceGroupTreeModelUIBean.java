@@ -100,6 +100,9 @@ public class ResourceGroupTreeModelUIBean {
             parentGroup = groupManager.getResourceGroupById(EnterpriseFacesContextUtility.getSubject(), parentGroupId, GroupCategory.COMPATIBLE);
         } else {
             parentGroup = EnterpriseFacesContextUtility.getResourceGroup();
+            if (parentGroup.getClusterResourceGroup() != null) {
+                parentGroup = parentGroup.getClusterResourceGroup();
+            }
         }
 
         rootNode = new ResourceGroupTreeNode(parentGroup);

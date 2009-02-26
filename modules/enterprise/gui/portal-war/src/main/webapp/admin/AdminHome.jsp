@@ -154,6 +154,10 @@
       <td width="20%" class="BlockLabel"></td>
       <td width="30%" class="BlockContent"><html:link page="/agentupdate/download"><fmt:message key="admin.home.AgentUpdateBinary.download"/></html:link></td>
    </tr>
+   <tr>
+      <td width="20%" class="BlockLabel"></td>
+      <td width="30%" class="BlockContent"><html:link page="/downloads"><fmt:message key="admin.home.AgentUpdateBinary.connector-downloads"/></html:link></td>
+   </tr>
 </table>
 <!--  /  -->
 

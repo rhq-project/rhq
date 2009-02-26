@@ -649,7 +649,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert current.getModifiedTime() == request.getModifiedTime();
         assert current.getConfiguration().getId() == request.getConfiguration().getId();
 
-        Configuration live = configurationManager.getLiveResourceConfiguration(overlord, resource.getId());
+        Configuration live = configurationManager.getLiveResourceConfiguration(overlord, resource.getId(), false);
         assert live != null;
         mybool = live.getSimple("myboolean");
         assert mybool != null;

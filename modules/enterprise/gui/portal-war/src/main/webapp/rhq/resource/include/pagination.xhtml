@@ -72,6 +72,7 @@
                                    rendered="#{paginationDataModel.rowCount > PageControlSettingsUIBean.minimumPageSize
                                                and not paginationPageControl.unlimited}">
                   <a4j:support event="onchange" 
+                               status="commonStatus"
                                reRender="#{paginationDataTableName}, #{paginationDataScrollerName}"/>
                   <f:selectItems value="#{PageControlSettingsUIBean.pageSizes}" />
                </h:selectOneListbox>

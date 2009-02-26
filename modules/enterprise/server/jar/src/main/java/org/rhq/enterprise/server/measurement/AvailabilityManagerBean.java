@@ -265,6 +265,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         long currentTime = fullRangeEndTime;
         int currentAvailabilityIndex = availabilities.size() - 1;
         long timeUpInDataPoint = 0;
+        boolean hasDownPeriods = false;
         long dataPointStartBarrier = fullRangeEndTime - perPointMillis;
 
         while (currentTime > fullRangeBeginTime) {
@@ -282,12 +283,18 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
 
                 // end the data point
                 if (currentAvailability.getAvailabilityType() == null) {
-                    // we are on the edge of the range - if we have some data saying we were UP, consider this data point UP;
-                    // otherwise, consider the data point unknown (even though some data might have existed saying DOWN)
-                    if (timeUpInDataPoint > 0) {
-                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UP, currentTime));
+                    // we are on the edge of the range, but know that at least one point there was red, so
+                    // we'll be pessimistic and set our entire point down instead of unknown
+                    if (hasDownPeriods) {
+                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.DOWN, currentTime));
                     } else {
-                        availabilityPoints.add(new AvailabilityPoint(currentTime)); // unknown
+                        // we are on the edge of the range - if we have ANY data saying we were UP, consider this UP
+                        if (timeUpInDataPoint > 0) {
+                            availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UP, currentTime));
+                        } else {
+                            // happens when this timeslice only has surrogates or known avails
+                            availabilityPoints.add(new AvailabilityPoint(currentTime)); // unknown
+                        }
                     }
                 } else {
                     // if the resource has been up in the current time frame, bump up the counter
@@ -295,12 +302,13 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
                         timeUpInDataPoint += currentTime - dataPointStartBarrier;
                     }
 
-                    AvailabilityType type = ((timeUpInDataPoint / perPointMillis) < 0.75) ? AvailabilityType.DOWN
+                    AvailabilityType type = (timeUpInDataPoint != perPointMillis) ? AvailabilityType.DOWN
                         : AvailabilityType.UP;
                     availabilityPoints.add(new AvailabilityPoint(type, currentTime));
                 }
 
                 timeUpInDataPoint = 0;
+                hasDownPeriods = false;
 
                 // if we reached the start of the current availability record, move to the previous one (going back in time, remember)
                 if (dataPointStartBarrier == availabilityStartBarrier) {
@@ -315,6 +323,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
                 // if the resource has been up in the current time frame, bump up the counter
                 if (currentAvailability.getAvailabilityType() == AvailabilityType.UP) {
                     timeUpInDataPoint += currentTime - availabilityStartBarrier;
+                } else if (currentAvailability.getAvailabilityType() == AvailabilityType.DOWN) {
+                    hasDownPeriods = true;
                 }
 
                 // move to the previous availability record

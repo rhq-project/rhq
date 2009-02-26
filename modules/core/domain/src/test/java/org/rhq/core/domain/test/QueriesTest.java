@@ -40,6 +40,7 @@ import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
+import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
@@ -73,6 +74,7 @@ public class QueriesTest extends AbstractEJB3Test {
         add(PackageVersion.QUERY_FIND_BY_CHANNEL_ID, new Object[] { "channelId", 1 });
         add(PackageVersion.QUERY_FIND_METADATA_BY_RESOURCE_ID, new Object[] { "resourceId", 1 });
         add(PackageVersion.QUERY_FIND_BY_CHANNEL_ID_WITH_PACKAGE, new Object[] { "channelId", 1 });
+        add(MeasurementOOB.COUNT_FOR_DATE, new Object[] { "timestamp", 1 });
 
         add(Channel.QUERY_FIND_AVAILABLE_CHANNEL_COMPOSITES_BY_RESOURCE_ID, new Object[] { "resourceId", 1 });
 

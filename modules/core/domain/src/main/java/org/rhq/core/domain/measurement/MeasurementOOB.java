@@ -79,7 +79,7 @@ import javax.persistence.Table;
                         ")"
         ),
         @NamedQuery(name=MeasurementOOB.COUNT_FOR_DATE,
-                query = "SELECT COUNT(o) FROM MeasurementOOB o " +
+                query = "SELECT COUNT(o.id.timestamp) FROM MeasurementOOB o " +
                         "WHERE o.id.timestamp = :timestamp"
         ),
         @NamedQuery(name=MeasurementOOB.GET_HIGHEST_FACTORS_FOR_RESOURCE,

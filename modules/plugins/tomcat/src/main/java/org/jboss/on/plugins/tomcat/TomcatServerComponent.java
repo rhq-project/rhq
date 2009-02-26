@@ -25,7 +25,6 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.on.plugins.tomcat.helper.TomcatApplicationDeployer;
 import org.jetbrains.annotations.NotNull;
 import org.mc4j.ems.connection.ConnectionFactory;
 import org.mc4j.ems.connection.EmsConnectException;
@@ -86,8 +85,6 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
     private Log log = LogFactory.getLog(this.getClass());
 
     private EmsConnection connection;
-
-    private TomcatApplicationDeployer deployer;
 
     /**
      * Controls the dampening of connection error stack traces in an attempt to control spam to the log

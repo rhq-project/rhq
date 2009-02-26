@@ -119,7 +119,7 @@ public class ClusterManagerBeanTest extends AbstractEJB3Test {
 
             ResourceGroup backingGroup = clusterManager.createAutoClusterBackingGroup(subject, clusterKey, true);
             assertNotNull(backingGroup);
-            assertEquals(backingGroup.getName(), clusterKey.toString());
+            assertEquals(backingGroup.getClusterKey(), clusterKey.toString());
             assertEquals(backingGroup.getClusterResourceGroup(), clusterGroup);
             Set<Resource> backingGroupResources = backingGroup.getExplicitResources();
             assertEquals(backingGroupResources.size(), resources.size());

@@ -1301,6 +1301,14 @@ DB Upgrade:
                           precision="4000" />
    </schemaSpec>
 
+   <schemaSpec version="2.47">
+      <schema-directSQL>
+         <statement desc="Removing stale row no longer needed for baseline computations">
+            DELETE FROM RHQ_SYSTEM_CONFIG WHERE PROPERTY_KEY = 'CAM_BASELINE_LASTTIME'
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

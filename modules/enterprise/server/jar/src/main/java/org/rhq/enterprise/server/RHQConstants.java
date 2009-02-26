@@ -98,9 +98,6 @@ public class RHQConstants {
     // How much data to include
     public static final String BaselineDataSet = "CAM_BASELINE_DATASET";
 
-    // When was the last time the baselines were auto-calculated (in epoch millis)
-    public static final String BaselineLastCalculationTime = "CAM_BASELINE_LASTTIME";
-
     // Help related
     public static final String HelpUser = "CAM_HELP_USER";
     public static final String HelpUserPassword = "CAM_HELP_PASSWORD";

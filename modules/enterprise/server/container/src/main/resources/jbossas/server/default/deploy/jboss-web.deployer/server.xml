@@ -64,6 +64,30 @@
                  truststorePass="${rhq.server.tomcat.security.truststore.password}"
                  truststoreType="${rhq.server.tomcat.security.truststore.type}" />
 
+      <!-- Provides a secure but un-authenticated https connector for browsers to use.
+           Uncomment this connector if all of the following are true:
+           1) the server-to-agent communications is secured via the sslservlet transport
+           2) the server-to-agent communications always require agents to authenticate themselves with certificates
+           3) you want to allow users' browsers to access the GUI via the https: protocol
+           4) you do not want to force users' browsers to authenticate themselves with certificates
+      -->
+      <!--
+      <Connector port="9443"
+                 address="${jboss.bind.address}"
+                 protocol="HTTP/1.1"
+                 scheme="https"
+                 maxThreads="${rhq.server.startup.web.max-connections}"
+                 acceptCount="300"
+                 maxHttpHeaderSize="10240"
+                 enableLookups="false"
+                 secure="true"
+                 SSLEnabled="true"
+                 clientAuth="false"
+                 sslProtocol="TLS"
+                 keystoreFile="${jboss.server.home.dir}/conf/rhq.keystore"
+                 keystorePass="RHQManagement" />
+      -->
+
       <!-- Define an AJP 1.3 Connector --><!-- JON -->
       <Connector port="${rhq.server.startup.ajp.port}" address="${jboss.bind.address}" protocol="AJP/1.3"
            emptySessionPath="true" enableLookups="false" redirectPort="${rhq.server.startup.web.https.port}" />

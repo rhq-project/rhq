@@ -189,7 +189,8 @@ public class ResourceTreeModelUIBean {
                         }
                     }
                 } else if (compositeParent.getResourceType() != null) {
-                    if (compositeParent.getResourceType().equals(res.getResourceType())) {
+                    if (compositeParent.getResourceType().equals(res.getResourceType())
+                            && compositeParent.getParentResource().getId() == res.getParentResource().getId()) {
                         if (children.containsKey(res.getResourceType())) {
                             children.get(res.getResourceType()).add(res);
                         } else {

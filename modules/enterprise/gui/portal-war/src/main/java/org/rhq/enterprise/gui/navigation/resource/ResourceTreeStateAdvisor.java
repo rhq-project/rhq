@@ -153,7 +153,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
 
             if (selectedKey == null) {
                 String typeId = FacesContextUtility.getOptionalRequestParameter("type");
-                this.selecteAGTypeId = typeId != null ? Integer.parseInt(typeId) : 0;
+                this.selecteAGTypeId = ((typeId == null || typeId.length() == 0) ? 0 : Integer.parseInt(typeId));
 
                 if (typeId != null) {
                     String id = FacesContextUtility.getOptionalRequestParameter("parent");

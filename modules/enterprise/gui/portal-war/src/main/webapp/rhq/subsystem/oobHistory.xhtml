@@ -24,7 +24,7 @@
 
                 <h:panelGrid columns="3" cellspacing="3">
                    <h:outputLabel for="resourceFilter" value="Resource Name Filter: " />
-                   <h:inputText id="resourceFilter" value="#{SubsystemOOOBHistoryUIBean.resourceFilter}"
+                   <h:inputText id="resourceFilter" value="#{SubsystemOOBHistoryUIBean.resourceFilter}"
                                 onkeypress="return ignoreEnterKey(event);"
                                 style="width: 300px;" />
                    <rich:spacer/>
@@ -34,6 +34,12 @@
                                 onkeypress="return ignoreEnterKey(event);"
                                 style="width: 300px;" />
                    <rich:spacer/>
+
+                    <a4j:commandButton value="GO" reRender="oobHistoryDataTable, oobHistoryDataTableScroller"
+                                       styleClass="buttonmed">
+                        <s:defaultAction/>
+                    </a4j:commandButton>
+
                 </h:panelGrid>
 
             </rich:simpleTogglePanel>

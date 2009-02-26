@@ -93,7 +93,7 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
 
             PageList<MeasurementOOBComposite> result;
 
-            result = manager.getSchedulesWithOOBs(getSubject(), System.currentTimeMillis(),pc, -1, -1); // TODO
+            result = manager.getSchedulesWithOOBs(getSubject(), System.currentTimeMillis(),pc, resourceFilter, parentFilter);
 
             return result;
         }

@@ -49,8 +49,8 @@ import javax.persistence.Table;
                         "  AND sched.definition = def " +
                         "  AND sched.resource = res " +
                         "  AND bal.schedule = sched " +
-                        "  AND (:resourceId = res.id OR :resourceId is null ) " +
-                        "  AND (:parentId = parent.id OR :parentId is null ) " +
+                        "  AND (UPPER(res.name) LIKE :resourceName OR :resourceName is null ) " +
+                        "  AND (UPPER(parent.name) LIKE :parentName OR :parentName is null ) " +
                         "GROUP BY res.name, res.id, def.displayName, sched.id, def.id, bal.baselineMin , bal.baselineMax, def.units, parent.name, parent.id "
                             ),
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT,
@@ -64,8 +64,8 @@ import javax.persistence.Table;
                         "    AND o.id.scheduleId = sched.id " +
                         "    AND sched.definition = def " +
                         "    AND sched.resource = res " +
-                        "  AND (:resourceId = res.id OR :resourceId is null ) " +
-                        "  AND (:parentId = parent.id OR :parentId is null ) " +
+                        "  AND (UPPER(res.name) LIKE :resourceName OR :resourceName is null ) " +
+                        "  AND (UPPER(parent.name) LIKE :parentName OR :parentName is null ) " +
                         "  GROUP BY sched.id "
                         ),
         @NamedQuery(name=MeasurementOOB.GET_FACTOR_FOR_SCHEDULES,

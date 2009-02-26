@@ -452,7 +452,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             return; // should we throw an exception here?
         }
         registerPlugins(dependencyGraph);
-        log.info("Agent plugin deployment is complete.");
+        log.info("Plugin metadata updates are complete: " + this.namesOfPluginsToBeRegistered);
         this.namesOfPluginsToBeRegistered.clear();
 
         // Trigger vacuums on some tables as the initial deployment might have changed a lot of things.

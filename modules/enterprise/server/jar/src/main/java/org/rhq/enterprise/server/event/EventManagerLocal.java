@@ -95,6 +95,9 @@ public interface EventManagerLocal {
     public PageList<EventComposite> getEventsForAutoGroup(Subject subject, int parent, int type, long begin,
         long endDate, EventSeverity[] severities, int eventId, String source, String searchString, PageControl pc);
 
+    public Map<EventSeverity, Integer> getEventCountsBySeverity(Subject subject, int resourceId, long startDate,
+        long endDate);
+
     /**
      * Retrieve the count of events for the given resource in the time between begin and end, nicely separated
      * in numBuckets.

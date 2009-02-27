@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -622,6 +623,23 @@ public class EventManagerBean implements EventManagerLocal {
         int deletedCount = q.executeUpdate();
 
         return deletedCount;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<EventSeverity, Integer> getEventCountsBySeverity(Subject subject, int resourceId, long startDate,
+        long endDate) {
+        Map<EventSeverity, Integer> results = new HashMap<EventSeverity, Integer>();
+        Query q = entityManager.createNamedQuery(Event.QUERY_EVENT_COUNTS_BY_SEVERITY);
+        q.setParameter("resourceId", resourceId);
+        q.setParameter("start", startDate);
+        q.setParameter("end", endDate);
+        List<Object[]> rawResults = (List<Object[]>) q.getResultList();
+        for (Object[] rawResult : rawResults) {
+            EventSeverity severity = (EventSeverity) rawResult[0];
+            long count = (Long) rawResult[1];
+            results.put(severity, (int) count);
+        }
+        return results;
     }
 
 }

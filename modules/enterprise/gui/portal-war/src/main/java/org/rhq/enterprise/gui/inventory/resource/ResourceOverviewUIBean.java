@@ -2,17 +2,17 @@ package org.rhq.enterprise.gui.inventory.resource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.event.EventSeverity;
-import org.rhq.core.domain.event.composite.EventComposite;
+import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.alert.engine.internal.Tuple;
@@ -60,18 +60,12 @@ public class ResourceOverviewUIBean {
 
         long now = System.currentTimeMillis();
         long nowMinus24Hours = now - (24 * 60 * 60 * 1000);
-        List<EventComposite> events = LookupUtil.getEventManager().getEventsForResource(subject, resourceId,
-            nowMinus24Hours, now, null, unlimited);
-
-        int[] counts = new int[EventSeverity.values().length];
-        for (EventComposite event : events) {
-            counts[event.getSeverity().getOrdinal()]++;
-        }
+        Map<EventSeverity, Integer> eventCounts = LookupUtil.getEventManager().getEventCountsBySeverity(subject,
+            resourceId, nowMinus24Hours, now);
 
         List<Tuple<EventSeverity, Integer>> results = new ArrayList<Tuple<EventSeverity, Integer>>();
-
-        for (EventSeverity severity : EventSeverity.values()) {
-            int count = counts[severity.getOrdinal()];
+        for (EventSeverity severity : eventCounts.keySet()) {
+            int count = eventCounts.get(severity);
             if (count > 0) {
                 results.add(new Tuple<EventSeverity, Integer>(severity, count));
             }
@@ -86,9 +80,9 @@ public class ResourceOverviewUIBean {
     }
 
     private List<MeasurementOOBComposite> getRecentOObs(Subject subject, int resourceId, int n) {
-        return LookupUtil.getOOBManager().getHighestNOOBsForResource(subject,System.currentTimeMillis(),resourceId,n);
+        return LookupUtil.getOOBManager()
+            .getHighestNOOBsForResource(subject, System.currentTimeMillis(), resourceId, n);
     }
-
 
     public List<Alert> getRecentAlerts() {
         if (recentAlerts == null) {
@@ -127,7 +121,7 @@ public class ResourceOverviewUIBean {
 
     public List<MeasurementOOBComposite> getRecentOOBs() {
         if (recentOObs == null)
-            recentOObs = getRecentOObs(subject,resourceId, 5);
+            recentOObs = getRecentOObs(subject, resourceId, 5);
 
         return recentOObs;
     }

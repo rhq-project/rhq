@@ -71,7 +71,6 @@ public class ContentJarFileInfo implements ContentFileInfo {
      * @param defaultValue If a version can not be determined, the value to return. Can be null.
      * @return The description. Can be null.
      */
-    @Override
     public String getDescription(String defaultValue) {
         String result = defaultValue;
 
@@ -105,7 +104,6 @@ public class ContentJarFileInfo implements ContentFileInfo {
      * @param defaultValue If a version can not be determined, the value to return. Can be null.
      * @return The version. Can be null.
      */
-    @Override
     public String getVersion(String defaultValue) {
         String result = defaultValue;
 

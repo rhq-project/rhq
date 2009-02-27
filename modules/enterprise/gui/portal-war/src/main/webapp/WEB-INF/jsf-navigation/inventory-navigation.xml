@@ -14,33 +14,12 @@
          <redirect/>
       </navigation-case>
       
-      <!-- === PluginConfiguration History ======================= -->
-      
-      <navigation-case>
-         <from-action>#{ConnectionPropertiesViewUIBean.history}</from-action>
-         <to-view-id>/rhq/resource/inventory/history.xhtml?id=#{param.id}</to-view-id>
-         <redirect/>
-      </navigation-case>
-
       <!-- === EditGeneralPropertiesUIBean ======================= -->
 
       <navigation-case>
          <from-action>#{EditGeneralPropertiesUIBean.begin}</from-action>
          <to-view-id>/rhq/resource/inventory/edit-general.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
-      </navigation-case>
-
-      <!-- === ConnectionPropertiesUIBean ======================= -->
-
-      <navigation-case>
-         <from-action>#{ConnectionPropertiesViewUIBean.edit}</from-action>
-         <to-view-id>/rhq/resource/inventory/edit-connection.xhtml?id=#{param.id}</to-view-id>
-         <redirect/>
-      </navigation-case>
-       
-      <navigation-case>
-         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
-         <to-view-id>/rhq/resource/inventory/view-plugin-config-map.xhtml</to-view-id>
       </navigation-case>
 
       <!-- === DetermineChildResourceCreationTypeUIBean ======================= -->
@@ -110,6 +89,33 @@
       </navigation-case>
       
    </navigation-rule>
+   
+   <navigation-rule>
+
+      <from-view-id>/rhq/resource/inventory/view-connection.xhtml</from-view-id>
+      
+      <!-- === PluginConfiguration History ======================= -->
+      
+      <navigation-case>
+         <from-action>#{ConnectionPropertiesViewUIBean.history}</from-action>
+         <to-view-id>/rhq/resource/inventory/history.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <!-- === ConnectionPropertiesUIBean ======================= -->
+
+      <navigation-case>
+         <from-action>#{ConnectionPropertiesViewUIBean.edit}</from-action>
+         <to-view-id>/rhq/resource/inventory/edit-connection.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+       
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+         <to-view-id>/rhq/resource/inventory/view-plugin-config-map.xhtml</to-view-id>
+      </navigation-case>
+      
+   </navigation-rule>
 
    <navigation-rule>
 
@@ -129,7 +135,7 @@
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/resource/inventory/view.xhtml?id=#{param.id}</to-view-id>
+         <to-view-id>/rhq/resource/inventory/view-connection.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 

@@ -1,0 +1,75 @@
+
+<ui:composition template="/rhq/resource/layout/main.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Managing Agent"/>
+<ui:param name="selectedTabName" value="Inventory.Agent"/>
+
+<ui:define name="content">
+
+<!-- =================== AGENT MANAGING THIS RESOURCE =================== -->
+<rich:panel styleClass="BlockContent">
+   <f:facet name="header" styleClass="BlockTitle">
+      Agent Managing this Resource
+   </f:facet>
+
+   <h:form id="managingAgentForm">
+
+       <input type="hidden" name="id" value="#{param.id}"/>
+
+      <h:panelGrid columns="2" styleClass="general-props-table" columnClasses="general-prop-cell">
+
+         <h:panelGroup layout="block">
+            <b>Name: </b> <h:outputText value="#{PingAgentUIBean.agent.name}"/>
+         </h:panelGroup>
+
+         <h:panelGroup layout="block">
+            <b>Agent Communications Status: </b>
+            <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up"
+                            rendered="#{PingAgentUIBean.pingResults}"/>
+            <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down"
+                            rendered="#{!PingAgentUIBean.pingResults}"/>
+         </h:panelGroup>
+
+         <h:panelGroup layout="block">
+            <b>Address: </b> <h:outputText value="#{PingAgentUIBean.agent.address}"/>
+         </h:panelGroup>
+
+         <h:panelGroup layout="block">
+            <b>Last Received Availability Report: </b>
+            <h:outputText value="#{PingAgentUIBean.agent.lastAvailabilityReport}">
+               <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+            </h:outputText>
+         </h:panelGroup>
+
+         <h:panelGroup layout="block">
+            <b>Port: </b> <h:outputText value="#{PingAgentUIBean.agent.port}"/>
+         </h:panelGroup>
+
+      </h:panelGrid>
+
+      <h:panelGrid columns="1" styleClass="general-props-table" columnClasses="general-prop-cell">
+         <h:panelGroup layout="block">
+            <table><tr>
+            <td><b>Full Endpoint: </b></td>
+            <td style="WORD-BREAK:BREAK-ALL"><h:outputText value="#{PingAgentUIBean.remoteEndpointWrapped}"/></td>
+            </tr></table>
+         </h:panelGroup>
+      </h:panelGrid>
+
+   </h:form>
+
+</rich:panel>
+
+</ui:define>
+
+</ui:composition>
+

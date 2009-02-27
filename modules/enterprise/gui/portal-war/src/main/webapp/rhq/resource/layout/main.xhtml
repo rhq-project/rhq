@@ -82,7 +82,11 @@ REQUEST PARAMETERS:
             </c:if>
          </onc:tab>
 
-         <onc:tab name="Inventory" image="/images/icon_hub_i.gif" url="/rhq/resource/inventory/view.xhtml" />
+         <onc:tab name="Inventory" image="/images/icon_hub_i.gif">
+            <onc:subtab name="Overview" url="/rhq/resource/inventory/view.xhtml" />
+            <onc:subtab name="Connection" url="/rhq/resource/inventory/view-connection.xhtml" />
+            <onc:subtab name="Agent" url="/rhq/resource/inventory/view-agent.xhtml" />
+         </onc:tab>
 
          <onc:tab name="Alert" image="/images/icon_hub_a.gif" rendered="#{monitorEnabled}">
             <onc:subtab name="Definitions" url="/rhq/resource/alert/listAlertDefinitions.xhtml">

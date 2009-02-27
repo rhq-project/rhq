@@ -71,7 +71,7 @@
                             value="#{configurationUpdateDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 22%, 22%, 22%, 22%, 9%"
+                            columnsWidth="1%, 22%, 22%, 15%, 15%, 15%,20%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -154,8 +154,12 @@
 
                   <h:outputLink rendered="#{item.status eq 'FAILURE'}"
                                 value="javascript:displayMessageModal('Stack Trace','#{item.errorMessage}')">
-                     <h:outputText value="#{item.status}"/>
+                      <h:graphicImage value="/images/icn_config_error.png"/>
+                      <h:outputText value="#{item.status}"/>
                   </h:outputLink>
+
+                   <h:graphicImage value="/images/icn_config_success.png" rendered="#{item.status eq 'SUCCESS'}"/>
+
                   <h:outputText rendered="#{item.status ne 'FAILURE'}" value="#{item.status}"/>
                </rich:column>
 
@@ -167,7 +171,7 @@
                   </f:facet>
 
                   <h:outputText value="#{item.subjectName}" rendered="#{not empty item.subjectName}" />
-                  <h:outputText value="Unknown" rendered="#{empty item.subjectName}" />
+                  <h:outputText value="External Change Detected" rendered="#{empty item.subjectName}" />
                </rich:column>
 
                <f:facet name="footer">

@@ -145,6 +145,11 @@
                      <f:param name="mode" value="viewRoles" />
                      <f:param name="id" value="#{item.alert.alertDefinition.resource.id}" />
                      <f:param name="ad" value="#{item.alert.alertDefinition.id}" />
+
+                      
+                      <h:graphicImage rendered="#{item.alert.alertDefinition.priority == 'LOW'}" value="/images/icn_flag_blue.png"/>
+                      <h:graphicImage rendered="#{item.alert.alertDefinition.priority == 'MEDIUM'}" value="/images/icn_flag_yellow.png"/>
+                      <h:graphicImage rendered="#{item.alert.alertDefinition.priority == 'HIGH'}" value="/images/icn_flag_red.png"/>
                      <h:outputText value="#{item.alert.alertDefinition.name}" />
                   </h:outputLink>
                </rich:column>

@@ -61,7 +61,8 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * @author Heiko W. Rupp
  *
  */
-public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerComponent> implements ApplicationServerComponent, CreateChildResourceFacet {
+public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerComponent> implements ApplicationServerComponent,
+    CreateChildResourceFacet {
 
     public static final String CONFIG_ALIASES = "aliases";
     public static final String CONFIG_APP_BASE = "appBase";
@@ -240,7 +241,6 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
 
         // Perform the deployment        
         File deployDir = getConfigurationPath();
-        FileContentDelegate fileContent = new FileContentDelegate(deployDir, details.getPackageTypeName());
         String contextRoot = archiveName.substring(0, archiveName.length() - 4);
         if (explodeOnDeploy) {
             // trim off the .war suffix because we want to deploy into a root directory named after the app name
@@ -249,27 +249,40 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
 
         File path = new File(deployDir, archiveName);
         if (path.exists()) {
-            CreateResourceHelper.setErrorOnReport(report, "A web application named " + path.getName() + " is already deployed with path " + path + ".");
+            CreateResourceHelper.setErrorOnReport(report, "A web application named " + path.getName() + " is already deployed with path " + path
+                + ".");
             return;
         }
 
         File tempDir = getResourceContext().getTemporaryDirectory();
         File tempFile = new File(tempDir.getAbsolutePath(), "tomcat-war.bin");
-        OutputStream osForTempDir = new BufferedOutputStream(new FileOutputStream(tempFile));
         ContentContext contentContext = getResourceContext().getContentContext();
-
         ContentServices contentServices = contentContext.getContentServices();
-        contentServices.downloadPackageBitsForChildResource(contentContext, TomcatWarComponent.RESOURCE_TYPE_NAME, key, osForTempDir);
+        OutputStream osForTempDir = null;
 
-        osForTempDir.close();
+        try {
+            osForTempDir = new BufferedOutputStream(new FileOutputStream(tempFile));
+            contentServices.downloadPackageBitsForChildResource(contentContext, TomcatWarComponent.RESOURCE_TYPE_NAME, key, osForTempDir);
+        } finally {
+            if (null != osForTempDir) {
+                try {
+                    osForTempDir.close();
+                } catch (IOException e) {
+                    log.error("Error closing temporary output stream", e);
+                }
+
+            }
+        }
 
         // check for content
         boolean valid = isWebApplication(tempFile);
         if (!valid) {
-            CreateResourceHelper.setErrorOnReport(report, "Expected a " + TomcatWarComponent.RESOURCE_TYPE_NAME + " file, but its format/content did not match");
+            CreateResourceHelper.setErrorOnReport(report, "Expected a " + TomcatWarComponent.RESOURCE_TYPE_NAME
+                + " file, but its format/content did not match");
             return;
         }
 
+        FileContentDelegate fileContent = new FileContentDelegate(deployDir, details.getPackageTypeName());
         InputStream isForTempDir = new BufferedInputStream(new FileInputStream(tempFile));
         fileContent.createContent(path, isForTempDir, explodeOnDeploy);
 
@@ -313,7 +326,9 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
                 deployer = new TomcatApplicationDeployer(connection);
             }
         } catch (Throwable e) {
-            log.error("Unable to access MainDeployer MBean required for creation and deletion of managed resources - this should never happen. Cause: " + e);
+            log
+                .error("Unable to access MainDeployer MBean required for creation and deletion of managed resources - this should never happen. Cause: "
+                    + e);
         }
 
         return deployer;
@@ -327,7 +342,8 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
 
         TomcatApplicationDeployer deployer = getDeployer();
         if (null == deployer) {
-            throw new IllegalStateException("Unable to undeploy " + contextRoot + ", because MainDeployer MBean could " + "not be accessed - this should never happen.");
+            throw new IllegalStateException("Unable to undeploy " + contextRoot + ", because MainDeployer MBean could "
+                + "not be accessed - this should never happen.");
         }
 
         deployer.undeploy(contextRoot);

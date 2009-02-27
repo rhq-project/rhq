@@ -41,6 +41,13 @@
          <scope>provided</scope>
       </dependency>
 
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-client-api</artifactId>
+         <version>${rhq.version}</version>
+         <scope>provided</scope>
+      </dependency>
+
       <!-- 3rd-party -->
       
       <dependency>

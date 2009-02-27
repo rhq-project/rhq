@@ -43,6 +43,7 @@ import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
+import org.rhq.core.clientapi.server.plugin.content.util.ContentJarFileInfo;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
@@ -200,8 +201,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
                             log.error("Failed to retrieve HTTP call-time data.", e);
                         }
                     } else {
-                        log.error("The '" + METRIC_RESPONSE_TIME + "' metric is enabled for WAR resource '" + getApplicationName() + "', but no value is defined for the '"
-                            + PROPERTY_RESPONSE_TIME_LOG_FILE + "' connection property.");
+                        log.error("The '" + METRIC_RESPONSE_TIME + "' metric is enabled for WAR resource '" + getApplicationName()
+                            + "', but no value is defined for the '" + PROPERTY_RESPONSE_TIME_LOG_FILE + "' connection property.");
                         // TODO: Communicate this error back to the server for display in the GUI.
                     }
                 } else if (metricName.startsWith(METRIC_PREFIX_SERVLET)) {
@@ -359,7 +360,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         int state = (Integer) this.webModuleMBean.getAttribute("state").refresh();
         int expectedState = getExpectedPostExecutionState(operation);
         if (state != expectedState) {
-            throw new Exception("Failed to " + name + " webapp (value of the 'state' attribute of MBean '" + this.webModuleMBean.getBeanName() + "' is " + state + ", not " + expectedState + ").");
+            throw new Exception("Failed to " + name + " webapp (value of the 'state' attribute of MBean '" + this.webModuleMBean.getBeanName()
+                + "' is " + state + ", not " + expectedState + ").");
         }
 
         return new OperationResult();
@@ -461,15 +463,12 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     }
 
     public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
-        // You can only update the one application file referenced by this resource, so punch out if multiple are
-        // specified.
+        // You can only update the one application file referenced by this resource
         if (packages.size() != 1) {
-            log.warn("Request to update a WAR file contained multiple packages.");
             DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
             response.setOverallRequestErrorMessage("When deploying WAR files only one can be updated at a time.");
             return response;
         }
-
         ResourcePackageDetails packageDetails = packages.iterator().next();
 
         // Find location of existing application
@@ -478,33 +477,37 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         if (!appFile.exists()) {
             return failApplicationDeployment("Could not find application to update at location: " + appFile, packageDetails);
         }
+        boolean isExploded = appFile.isDirectory();
 
+        // save the new version of the app to a temp location
         File tempFile;
         try {
-            tempFile = writeNewAppBitsToTempFile(appFile, contentServices, packageDetails);
+            tempFile = writeAppBitsToTempFile(appFile, contentServices, packageDetails);
         } catch (Exception e) {
             return failApplicationDeployment("Error writing new application bits to temporary file - cause: " + e, packageDetails);
         }
 
-        // Backup the existing app file/dir to <filename>.rej.
-        File backupOfOriginalFile = new File(appFile.getPath() + BACKUP_FILE_EXTENSION);
-        appFile.renameTo(backupOfOriginalFile);
-
-        // Write the new bits for the application
-        moveTempFileToDeployLocation(tempFile, appFile);
-
-        // The file has been written successfully to the deploy dir. Now try to actually deploy it.
-        TomcatApplicationDeployer mainDeployer = getParentResourceComponent().getDeployer();
+        // Undeploy (delete) the current app.  Back up the bits in case we need to restore if the new app fails to deploy
+        File backupFile = null;
         try {
-            //mainDeployer.redeploy(appFile);
+            backupFile = this.deleteApp(pluginConfig, appFile, true);
+        } catch (Exception e) {
+            if (appFile.exists()) {
+                return failApplicationDeployment("Error undeploying existing app - cause: " + e, packageDetails);
+            }
+            // log but proceed with no backup
+            log.warn("Failed to create app backup but proceeding with redeploy of " + appFile.getPath() + ": " + e);
+        }
+
+        try {
+            // Write the new bits for the application. If successful Tomcat will pick it up and complete the deploy.
+            moveTempFileToDeployLocation(tempFile, appFile, isExploded);
         } catch (Exception e) {
             // Deploy failed - rollback to the original app file...
             String errorMessage = ThrowableUtil.getAllMessages(e);
             try {
                 FileUtils.purge(appFile, true);
-                backupOfOriginalFile.renameTo(appFile);
-                // Need to redeploy the original file - this generally should succeed.
-                //mainDeployer.redeploy(appFile);
+                moveTempFileToDeployLocation(backupFile, appFile, isExploded);
                 errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
             } catch (Exception e1) {
                 errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: " + ThrowableUtil.getAllMessages(e1);
@@ -514,7 +517,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
         // Deploy was successful!
 
-        deleteBackupOfOriginalFile(backupOfOriginalFile);
+        deleteBackupOfOriginalFile(backupFile);
         persistApplicationVersion(packageDetails, appFile);
 
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
@@ -524,6 +527,74 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         return response;
     }
 
+    private void moveTempFileToDeployLocation(File tempFile, File appFile, boolean isExploded) throws IOException {
+        InputStream tempIs = null;
+        if (isExploded) {
+            tempIs = new BufferedInputStream(new FileInputStream(tempFile));
+            appFile.mkdir();
+            ZipUtil.unzipFile(tempIs, appFile);
+        } else {
+            tempFile.renameTo(appFile);
+        }
+    }
+
+    private File backupAppBitsToTempFile(File appFile) throws Exception {
+        File tempDir = getResourceContext().getTemporaryDirectory();
+        File tempFile = new File(tempDir.getAbsolutePath(), appFile.getName() + System.currentTimeMillis());
+
+        // The temp file shouldn't be there, but check and delete it if it is
+        if (tempFile.exists()) {
+            log.warn("Existing temporary file found and will be deleted at: " + tempFile);
+            tempFile.delete();
+        }
+
+        try {
+            ZipUtil.zipFileOrDirectory(appFile, tempFile);
+        } catch (IOException e) {
+            log.error("Error backing up app " + appFile.getPath() + " to " + tempFile, e);
+            if (tempFile.exists()) {
+                tempFile.delete();
+            }
+            throw e;
+        } finally {
+            if (!tempFile.exists()) {
+                log.error("Temporary file for application update not written to: " + tempFile);
+                throw new Exception();
+            }
+        }
+
+        return tempFile;
+    }
+
+    private File writeAppBitsToTempFile(File file, ContentServices contentServices, ResourcePackageDetails packageDetails) throws Exception {
+        File tempDir = getResourceContext().getTemporaryDirectory();
+        File tempFile = new File(tempDir.getAbsolutePath(), file.getName() + System.currentTimeMillis());
+
+        // The temp file shouldn't be there, but check and delete it if it is
+        if (tempFile.exists()) {
+            log.warn("Existing temporary file found and will be deleted at: " + tempFile);
+            tempFile.delete();
+        }
+        OutputStream tempOutputStream = null;
+        try {
+            tempOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
+            contentServices.downloadPackageBits(getResourceContext().getContentContext(), packageDetails.getKey(), tempOutputStream, true);
+        } finally {
+            if (tempOutputStream != null) {
+                try {
+                    tempOutputStream.close();
+                } catch (IOException e) {
+                    log.error("Error closing temporary output stream", e);
+                }
+            }
+        }
+        if (!tempFile.exists()) {
+            log.error("Temporary file for application update not written to: " + tempFile);
+            throw new Exception();
+        }
+        return tempFile;
+    }
+
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
         Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
 
@@ -531,10 +602,10 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         String fullFileName = pluginConfiguration.getSimpleValue(PROPERTY_FILENAME, null);
 
         if (fullFileName == null) {
-            throw new IllegalStateException("Plugin configuration does not contain the full file name of the EAR/WAR file.");
+            throw new IllegalStateException("Plugin configuration does not contain the full file name of the WAR file.");
         }
 
-        // If the parent EAR/WAR resource was found, this file should exist
+        // If the parent WAR resource was found, this file should exist
         File file = new File(fullFileName);
         if (file.exists()) {
             // Package name and file name of the application are the same
@@ -543,9 +614,10 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             PackageVersions versions = loadApplicationVersions();
             String version = versions.getVersion(fileName);
 
-            // First discovery of this WAR/WAR
-            if (version == null) {
-                version = "1.0";
+            // First discovery of this WAR
+            if (null == version) {
+                ContentJarFileInfo info = new ContentJarFileInfo(file);
+                version = info.getVersion("1.0");
                 versions.putVersion(fileName, version);
                 versions.saveToDisk();
             }
@@ -577,7 +649,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         File fileToSend;
         try {
             if (packageFile.isDirectory()) {
-                fileToSend = File.createTempFile("rhq", ".zip");
+                fileToSend = File.createTempFile("jopr-tomcat", ".zip");
                 ZipUtil.zipFileOrDirectory(packageFile, fileToSend);
             } else
                 fileToSend = packageFile;
@@ -613,63 +685,6 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         }
     }
 
-    private void moveTempFileToDeployLocation(File tempFile, File appFile) {
-        InputStream tempIs = null;
-        try {
-            if (appFile.isDirectory()) {
-                tempIs = new BufferedInputStream(new FileInputStream(tempFile));
-                appFile.mkdir();
-                ZipUtil.unzipFile(tempIs, appFile);
-            } else {
-                tempFile.renameTo(appFile);
-            }
-        } catch (IOException e) {
-            log.error("Error writing updated package bits to the existing application location: " + appFile, e);
-            //return failApplicationDeployment("Error writing updated package bits to the existing application location: " +
-            //    appFile, packageDetails);
-        } finally {
-            if (tempIs != null) {
-                try {
-                    tempIs.close();
-                } catch (IOException e) {
-                    log.error("Error closing temporary input stream", e);
-                }
-            }
-        }
-    }
-
-    private File writeNewAppBitsToTempFile(File file, ContentServices contentServices, ResourcePackageDetails packageDetails) throws Exception {
-        File tempDir = getResourceContext().getTemporaryDirectory();
-        File tempFile = new File(tempDir.getAbsolutePath(), file.getName() + System.currentTimeMillis());
-
-        // The temp file shouldn't be there, but check and delete it if it is
-        if (tempFile.exists()) {
-            log.warn("Existing temporary file found and will be deleted at: " + tempFile);
-            tempFile.delete();
-        }
-        OutputStream tempOutputStream = null;
-        try {
-            tempOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
-            contentServices.downloadPackageBits(getResourceContext().getContentContext(), packageDetails.getKey(), tempOutputStream, true);
-        } catch (IOException e) {
-            log.error("Error writing updated application bits to temporary location: " + tempFile, e);
-            throw e;
-        } finally {
-            if (tempOutputStream != null) {
-                try {
-                    tempOutputStream.close();
-                } catch (IOException e) {
-                    log.error("Error closing temporary output stream", e);
-                }
-            }
-        }
-        if (!tempFile.exists()) {
-            log.error("Temporary file for application update not written to: " + tempFile);
-            throw new Exception();
-        }
-        return tempFile;
-    }
-
     public TomcatVHostComponent getParentResourceComponent() {
         return getResourceContext().getParentResourceComponent();
     }
@@ -699,47 +714,63 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     public void deleteResource() throws Exception {
         Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
         String fullFileName = pluginConfiguration.getSimple(PROPERTY_FILENAME).getStringValue();
-        String contextRoot = pluginConfiguration.getSimple(PROPERTY_CONTEXT_ROOT).getStringValue();
         File file = new File(fullFileName);
         if (!file.exists()) {
             log.warn("Could not delete web application files (perhaps removed manually?). Proceeding with resource removal for: " + fullFileName);
         } else {
-            try {
-                // this will release locked files. In particular, the .war when deployed as an archive
-                invokeOperation("stop", null);
-                getParentResourceComponent().undeployWar(contextRoot);
-            } catch (TomcatApplicationDeployer.DeployerException e) {
-                log.warn("Failed to undeploy WAR (may have been undeployed manually). Proceeding with resource delete for  [" + contextRoot + "].", e);
-            } catch (Exception e) {
-                log.error("Failed to undeploy WAR [" + contextRoot + "].", e);
-                throw e;
-            } finally {
-                File associatedWarFile = null;
-                if (file.isDirectory()) {
-                    associatedWarFile = new File(file.getAbsolutePath() + ".war");
-                }
+            deleteApp(pluginConfiguration, file, false);
+        }
+    }
 
-                try {
-                    if ((null != associatedWarFile) && associatedWarFile.exists()) {
-                        FileUtils.purge(associatedWarFile, true);
-                    }
-                } catch (IOException e) {
-                    // don't fail on this but warn, since the app may get redeployed on the next Tomcat startup
-                    log.warn("Failed to delete file [" + associatedWarFile + "].", e);
-                }
+    private File deleteApp(Configuration pluginConfiguration, File appFile, boolean keepBackup) throws Exception {
+        File backupFile = null;
+        String contextRoot = pluginConfiguration.getSimple(PROPERTY_CONTEXT_ROOT).getStringValue();
 
+        try {
+            // this will release locked files. In particular, the .war when deployed as an archive (this may be a windows issue only)
+            invokeOperation("stop", null);
+            getParentResourceComponent().undeployWar(contextRoot);
+
+            if (keepBackup) {
                 try {
-                    FileUtils.purge(file, true);
-                } catch (IOException e) {
-                    log.error("Failed to delete file [" + file + "].", e);
-                    // if the undeploy also failed that exception will be lost
-                    // and this one will be seen by the caller instead.
-                    // arguably both these conditions indicate failure, since
-                    // not being able to delete the file will mean that it will
-                    // likely get picked up again by the deployment scanner
-                    throw e;
+                    backupFile = this.backupAppBitsToTempFile(appFile);
+                } catch (Exception e) {
+                    log.warn("Failed to create backup while deleting app " + appFile.getPath());
                 }
             }
+        } catch (TomcatApplicationDeployer.DeployerException e) {
+            log.warn("Failed to undeploy WAR (may have been undeployed manually). Proceeding with resource delete for  [" + contextRoot + "].", e);
+        } catch (Exception e) {
+            log.error("Failed to undeploy WAR [" + contextRoot + "].", e);
+            throw e;
+        } finally {
+            File associatedWarFile = null;
+            if (appFile.isDirectory()) {
+                associatedWarFile = new File(appFile.getAbsolutePath() + ".war");
+            }
+
+            try {
+                if ((null != associatedWarFile) && associatedWarFile.exists()) {
+                    FileUtils.purge(associatedWarFile, true);
+                }
+            } catch (IOException e) {
+                // don't fail on this but warn, since the app may get redeployed on the next Tomcat startup
+                log.warn("Failed to delete file [" + associatedWarFile + "].", e);
+            }
+
+            try {
+                FileUtils.purge(appFile, true);
+            } catch (IOException e) {
+                log.error("Failed to delete file [" + appFile + "].", e);
+                // if the undeploy also failed that exception will be lost
+                // and this one will be seen by the caller instead.
+                // arguably both these conditions indicate failure, since
+                // not being able to delete the file will mean that it will
+                // likely get picked up again by the deployment scanner
+                throw e;
+            }
         }
+
+        return backupFile;
     }
 }

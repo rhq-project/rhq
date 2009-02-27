@@ -1,4 +1,5 @@
   var eventsTime = 0;
+  var detailsShowing = false;
 
   function initEventDetails() {
     ajaxEngine.registerRequest( 'getEventDetails', '/resource/common/monitor/visibility/EventDetails.do');
@@ -9,12 +10,14 @@
   function showEventsCallback() {
     var detail = $('eventsSummary');
     if (detail.innerHTML == "") {
-      setTimeout("showEventsCallback()", 500);
+      setTimeout("showEventsCallback()", 200);
     }
     else {
       var div = $('eventDetailTable');
       if (div.style.display == 'none')
-        new Effect.Appear(div);
+        new Effect.Appear(div, {afterFinish: function (obj) { 
+           maxIndicatorDivHeight();
+        }});
     }
   }
 

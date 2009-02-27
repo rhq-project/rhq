@@ -41,7 +41,7 @@
                   <c:set var="count" value="#{status.index}"/>
                   <ui:param name="formattedTimestamp" value="#{onf:formatTimestamp(avail.timestamp)}"/>
                   <td width="9">
-                     <div onmousedown="overlay.moveOverlay(this);overlay.showTimePopup('#{count}','#{formattedTimestamp}')" >
+                     <div onmouseover="overlay.moveOverlay(this);overlay.showTimePopup('#{count}','#{formattedTimestamp}')" >
                         <c:choose>
                            <c:when test="#{avail.value == 1}">
                               <img src="/images/timeline_green.gif" height="10" width="9" border="0" title="UP"/>

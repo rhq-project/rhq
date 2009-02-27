@@ -39,6 +39,9 @@ var overlay = {
         var left = this.findPosX(anchor);
         var top = this.findPosY($('charttop')) - yOffset;
         var bottom = this.findPosY($('timetop')) - yOffset;
+        if (detailsShowing) {
+           bottom -= 230;
+        }
 
         ovl.style.visibility='visible';
         ovl.style.left = left + 'px';
@@ -59,7 +62,7 @@ var overlay = {
         this.curPopup.innerHTML = time; 
         this.curPopup.style.left = left + 'px';
         this.curPopup.style.top = top + 'px';
-        this.curPopup.style.height = '25px';
+        this.curPopup.style.height = '35px';
         this.curPopup.style.visibility ='visible';
         new Effect.Appear(this.curPopup);
     },

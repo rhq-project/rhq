@@ -39,6 +39,7 @@
                               'parent=#{param.parent}',
                               'type=#{param.type}',
                               'begin=' + time);
+
     showEventsCallback();
   }
 </script>
@@ -90,7 +91,7 @@
       <c:if test="#{not empty timeTick.severity}">
          <ui:param name="formattedTimeTick" value="#{onf:formatTimestamp(timeTick.time)}"/>
          <td style="background-image: url(#{icon}); background-repeat:no-repeat;" align="center" valign="middle"
-             onmousedown="overlay.moveOverlay(this);overlay.showTimePopup('#{count}','#{formattedTimeTick}');showEventsDetails(#{timeTick.time});">
+             onmousedown="detailsShowing=true;overlay.moveOverlay(this);overlay.showTimePopup('#{count}','#{formattedTimeTick}');showEventsDetails(#{timeTick.time});">
          </td>
       </c:if>
 
@@ -113,7 +114,7 @@
             </td>
             <td valign="top" style="text-align: right; border-bottom: solid; border-width: 1px; border-color: #000000;">
                <img src="/images/dash-icon_delete.gif"
-                    onclick="new Effect.Fade($('eventDetailTable'));"/>
+                    onclick="detailsShowing=false;new Effect.Fade($('eventDetailTable'), {afterFinish: function (obj) { maxIndicatorDivHeight(); overlay.moveOverlay(this); }})"/>
             </td>
          </tr>
          <tr>
@@ -134,17 +135,15 @@
     
    <tr>
    <td width="10">
-      <img src="/images/timeline_ll.gif" height="10"/>
       <div id="timetop"></div> 
+      <img src="/images/timeline_ll.gif" height="10"/>
    </td>
    <c:forEach var="timeTick" items="#{EventsTimelineUIBean.data}" varStatus="status">
       <c:set var="count" value="#{status.index}"/>
       <ui:param name="formattedTimeTick" value="#{onf:formatTimestamp(timeTick.time)}"/>
       <td width="12">
       <div id="timePopup_#{count}"
-           onmouseover="overlay.showTimePopup('#{count}','#{formattedTimeTick}')" 
-           onmousedown="overlay.moveOverlay(this); overlay.curTime = '#{formattedTimeTick}';" 
-           onmouseout="overlay.curTime = null">
+           onmouseover="overlay.moveOverlay(this);overlay.showTimePopup('#{count}','#{formattedTimeTick}')" >
          <img src="/images/timeline_off.gif" height="10" width="9" 
               onmouseover="imageSwap(this, imagePath + 'timeline', '_on')" 
               onmouseout="imageSwap(this, imagePath +  'timeline', '_off');" 

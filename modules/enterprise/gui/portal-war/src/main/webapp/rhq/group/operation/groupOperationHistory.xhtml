@@ -37,6 +37,8 @@
             <h:panelGrid columns="1" styleClass="data-table">
             
             <ui:param name="resourceGroupOperationPendingHistoryDataModel" value="#{ResourceGroupOperationPendingHistoryUIBean.dataModel}"/>
+
+                <a4j:keepAlive beanName="ResourceGroupOperationPendingHistoryUIBean"/>
             
             <a4j:poll id="resourceGroupOperationPendingHistoryDataTableReRenderer"
                       oncomplete="disableConditionalButtons();"

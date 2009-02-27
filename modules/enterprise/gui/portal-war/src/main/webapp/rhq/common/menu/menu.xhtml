@@ -108,12 +108,14 @@
 
                 <c:if test="#{visit.kind == 'resource'}">
                 <rich:menuItem submitMode="none"
+                               icon="/images/icn_tree_Service_on.png"
                                onclick="window.location = '#{onf:getDefaultResourceTabURL()}?id=#{visit.id}'">
                     <h:outputText value="#{visit.name}"/>
                 </rich:menuItem>
                 </c:if>
                 <c:if test="#{visit.kind == 'group'}">
                 <rich:menuItem submitMode="none"
+                               icon="/images/icn_tree_Cluster_on.png"
                                onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{visit.id}'">
                     <h:outputText value="#{visit.name}"/>
                 </rich:menuItem>
@@ -274,7 +276,7 @@
     </f:facet>
     <f:facet name="controls">
         <h:panelGroup>
-            <h:graphicImage value="/images/close.png" style="cursor:pointer" id="hidelink"/>
+            <h:graphicImage value="/images/close.png" style="cursor:pointer;" id="hidelink"/>
             <rich:componentControl for="aboutPanel" attachTo="hidelink" operation="hide" event="onclick"/>
         </h:panelGroup>
     </f:facet>
@@ -293,7 +295,7 @@
           <area href="http://www.jboss.org/" target="_top" alt="JBoss Homepage" title="JBoss" shape="rect" coords="100,0,200,42" />
        </map>
 
-         <h:graphicImage value="/images/redhat-jboss-logo.gif" usemap="#redhat-jboss-logo-map"/>
+         <h:graphicImage value="/images/redhat-jboss-logo.gif" usemap="#redhat-jboss-logo-map" style="border: none;"/>
     </p>
 
     <p>
@@ -302,7 +304,14 @@
     </p>
 
     <p>
-        <h:outputText value="#{msg['about.MoreInfo.Label']}"/><br/>
+
+        <a href="http://jboss.org/jopr">
+            <h:graphicImage value="/images/logo_icon.png"/>
+            Jopr Project
+        </a>
+
+
+        <!--<h:outputText value="#{msg['about.MoreInfo.Label']}"/><br/>-->
         <!--
                 <a href='mailto:<h:outputText value="#{msg['about.MoreInfo.LinkSales']}"/>'><h:outputText value="#{msg['about.MoreInfo.LinkSales']}"/></a><br/>
                 <a href='mailto:<h:outputText value="#{msg['about.MoreInfo.LinkSupport']}"/>'><h:outputText value="#{msg['about.MoreInfo.LinkSupport']}"/></a>

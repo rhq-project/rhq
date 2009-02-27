@@ -40,6 +40,8 @@
             <input type="hidden" name="groupId"
                value="#{ResourceGroupUIBean.groupId}" />
 
+             <a4j:keepAlive beanName="ResourceGroupMetricsTableUIBean"/>
+
             <rich:dataTable id="resourceGroupHealthSummaryDataTable"
                             rows="#{PageControl.ResourceGroupHealthSummary.pageSize}"
                             value="#{resourceGroupHealthSummaryDataModel}"

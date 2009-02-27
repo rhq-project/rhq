@@ -104,8 +104,9 @@
 
 
                             <h:outputText value="#{groupTreeItem.members[0]}"/>
-                            <h:outputText value="(#{groupTreeItem.members.size} / #{clusterSize})"
-                                          rendered="#{groupTreeItem.members.size lt clusterSize}"/>
+                            <h:outputText value=" (#{groupTreeItem.members.size} / #{clusterSize})"
+                                          rendered="#{groupTreeItem.members.size lt clusterSize}"
+                                    style="color: red;"/>
 
                         </rich:treeNode>
 

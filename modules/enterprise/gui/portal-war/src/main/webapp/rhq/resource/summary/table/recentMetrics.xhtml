@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+   <h3>Recent Measurements</h3>
+   <ui:repeat var="metric"
+              value="#{MetricsTableUIBean.metricSummaries}">
+      <div style="text-indent: 20px;">
+         <h:outputText value=" " />
+         <h:outputLink value="/resource/common/monitor/Visibility.do">
+             <f:param name="mode" value="chartSingleMetricSingleResource"/>
+             <f:param name="id" value="#{param.id}"/>
+             <f:param name="m" value="#{metric.definitionId}"/>
+             <h:outputText value="#{metric.label}" />
+         </h:outputLink>
+         <h:outputText value=": " />
+         <h:outputText value="#{metric.lastMetric.valueFmt}"/>
+         <br />
+      </div>
+   </ui:repeat>
+
+   <div style="text-indent: 20px;">
+      <h:outputText value="No recent alerts" 
+                    rendered="#{MetricsTableUIBean.metricSummaries.size eq 0}"/>
+   </div>
+
+</ui:composition>

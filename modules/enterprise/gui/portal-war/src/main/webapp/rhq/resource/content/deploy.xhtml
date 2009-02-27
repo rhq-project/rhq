@@ -10,6 +10,7 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
@@ -27,6 +28,8 @@
             <p>The following packages were found from the channels currently subscribed to by this resource. In order
             to enable more existing packages for deployment, use the subscriptions sub-tab to subscribe this resource
             to more channels.</p>
+             
+             <a4j:keepAlive beanName="ResourcePackageVersionsUIBean"/>
 
             <ui:param name="resourcePackageVersionsDataModel" value="#{ResourcePackageVersionsUIBean.dataModel}"/>
             <rich:dataTable id="resourcePackageVersionsDataTable"

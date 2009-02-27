@@ -202,6 +202,8 @@ public enum PageControlView {
 
     /** */
     ResourceGroupMemberList(ListResourceGroupMembersUIBean.class),
+    
+    MiniResourceGroupMemberList(ListResourceGroupMembersUIBean.class,true),
     /** */
     GroupConnectionPropertyUpdateHistory(ViewGroupConnectionPropertyHistoryUIBean.class),
     /** */
@@ -276,7 +278,7 @@ public enum PageControlView {
     SubsystemOOBHistory(SubsystemOOBHistoryUIBean.class);
 
     private Class<? extends PagedDataTableUIBean> beanClass;
-    private boolean isUnlimited = false;;
+    private boolean isUnlimited = false;
 
     private PageControlView() {
         this.beanClass = null;

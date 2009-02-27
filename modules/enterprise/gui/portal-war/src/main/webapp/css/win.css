@@ -2277,3 +2277,7 @@ ul.radio-group .unspecified {
 .summaryHeader {
     background-color: #E5E5E5;
 }
+
+.dr-menu-item {
+    z-index: 50;
+}

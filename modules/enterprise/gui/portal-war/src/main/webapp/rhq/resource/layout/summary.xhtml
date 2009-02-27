@@ -23,72 +23,10 @@ REQUEST PARAMETERS:
 id - the id of the Resource being accessed
 
 <ui:composition>
-
-<rich:panel rendered="#{!empty ResourceUIBean.invalidPluginConfigurationError}" styleClass="WarnBlock"
-            style="width: 800px; margin: 4px; padding: 4px">
-
-    <ui:remove><!-- TODO: i18n the below text --></ui:remove>
-    The agent reported the following error on its last attempt
-    (<h:outputText value="#{ResourceUIBean.invalidPluginConfigurationError.timeOccurred}">
-    <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-</h:outputText>)
-    to connect to this resource:
-    <h:panelGroup layout="block" style="margin: 7px">
-        <strong><em>#{ResourceUIBean.invalidPluginConfigurationError.summary}</em></strong>
-    </h:panelGroup>
-    For more details, see the
-    <a href="javascript:displayStackTrace()">stack trace</a>.
-    <p/>
-    Please make sure that the managed resource is running and that its
-    <span> </span>
-    <h:outputLink value="/rhq/resource/inventory/edit-connection.xhtml"><f:param name="id" value="#{param.id}"/>connection
-        properties</h:outputLink>
-    are set correctly.
-</rich:panel>
-
-<div id="connectionError" style="display: none">
-    <div id="PageHeader" align="right">
-        <a href="javascript:window.close()">${msg['common.action.window.close']}</a>
-    </div>
-    <div style="align: center; margin: 8px">
-        <pre class="StackTrace" wrap="on">#{ResourceUIBean.invalidPluginConfigurationError.detail}</pre>
-    </div>
-    <p/>
-</div>
-
-<script type="text/javascript">
-
-    function displayStackTrace()
-    {
-        var errorPopup = open("", "errorPopup", "width=750,height=600,resizable=yes,scrollbars=yes,left=200,top=10");
-        errorPopup.document.open();
-        errorPopup.document.writeln('&lt;html&gt;&lt;head&gt;');
-        errorPopup.document.writeln('&lt;title&gt;Error Details&lt;/title&gt;');
-        errorPopup.document.writeln('&lt;link rel="stylesheet" href="/css/win.css" type="text/css"/&gt;');
-        errorPopup.document.writeln('&lt;/head&gt;&lt;body&gt;');
-        errorPopup.document.writeln($('connectionError').innerHTML);
-        errorPopup.document.writeln('&lt;/body&gt;&lt;/html&gt;');
-        errorPopup.document.close();
-    }
-
-    function popupStackTrace(divName)
-    {
-        var errorPopup = open("", "errorPopup", "width=750,height=600,resizable=yes,scrollbars=yes,left=200,top=10");
-        errorPopup.document.open();
-        errorPopup.document.writeln('&lt;html&gt;&lt;head&gt;');
-        errorPopup.document.writeln('&lt;title&gt;Error Details&lt;/title&gt;');
-        errorPopup.document.writeln('&lt;link rel="stylesheet" href="/css/win.css" type="text/css"/&gt;');
-        errorPopup.document.writeln('&lt;/head&gt;&lt;body&gt;');
-        errorPopup.document.writeln($(divName).innerHTML);
-        errorPopup.document.writeln('&lt;/body&gt;&lt;/html&gt;');
-        errorPopup.document.close();
-    }
-
-</script>
 <h:form>
     <input type="hidden" name="id" value="#{param.id}"/>
 
-    <rich:simpleTogglePanel switchType="ajax" id="summary-toggle-panel"
+    <rich:simpleTogglePanel switchType="ajax" id="summary-toggle-panel" headerClass="summaryHeader"
                             actionListener="#{UserPreferencesUIBean.updateSummaryPanelDisplayState}"
                             value="#{UserPreferencesUIBean.summaryPanelDisplayState}">
         <f:facet name="header">
@@ -99,8 +37,14 @@ id - the id of the Resource being accessed
                     <tr>
 
                         <td>
-
+                            <table><tr><td>
+                            <h:graphicImage value="/images/icn_tree_#{ResourceUIBean.resourceType.category}_on_24.png"/>
+                            </td><td nowrap="nowrap">
+                            <h:outputText value="#{ResourceUIBean.name}" style="font-size: large;"/><br/>
                             <onc:resourceLineage resourceId="#{ResourceUIBean.id}"/>
+                                </td>
+                            </tr>
+                            </table>
                         </td>
                         <td width="30">
                             <h:outputLink value="/rhq/resource/monitor/availabilityHistory.xhtml" id="availDisplay">
@@ -237,6 +181,8 @@ id - the id of the Resource being accessed
 
                 <!-- spacer -->
 
+                <a4j:keepAlive beanName="ListOfTraits"/>
+
                 <!-- summary traits -->
                 <h:dataTable var="traitPair" value="#{ListOfTraits.traitPairs}" styleClass="summary-props-table"
                              columnClasses="summary-prop-cell" rendered="#{!empty ListOfTraits.traitPairs}">
@@ -264,6 +210,72 @@ id - the id of the Resource being accessed
 </h:form>
 
 <rich:spacer height="10"/>
+
+
+
+<rich:panel rendered="#{!empty ResourceUIBean.invalidPluginConfigurationError}" styleClass="WarnBlock"
+            style="width: 800px; margin: 4px; padding: 4px">
+
+    <ui:remove><!-- TODO: i18n the below text --></ui:remove>
+    The agent reported the following error on its last attempt
+    (<h:outputText value="#{ResourceUIBean.invalidPluginConfigurationError.timeOccurred}">
+    <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+</h:outputText>)
+    to connect to this resource:
+    <h:panelGroup layout="block" style="margin: 7px">
+        <strong><em>#{ResourceUIBean.invalidPluginConfigurationError.summary}</em></strong>
+    </h:panelGroup>
+    For more details, see the
+    <a href="javascript:displayStackTrace()">stack trace</a>.
+    <p/>
+    Please make sure that the managed resource is running and that its
+    <span> </span>
+    <h:outputLink value="/rhq/resource/inventory/edit-connection.xhtml"><f:param name="id" value="#{param.id}"/>connection
+        properties</h:outputLink>
+    are set correctly.
+</rich:panel>
+
+<div id="connectionError" style="display: none">
+    <div id="PageHeader" align="right">
+        <a href="javascript:window.close()">${msg['common.action.window.close']}</a>
+    </div>
+    <div style="align: center; margin: 8px">
+        <pre class="StackTrace" wrap="on">#{ResourceUIBean.invalidPluginConfigurationError.detail}</pre>
+    </div>
+    <p/>
+</div>
+
+<script type="text/javascript">
+
+    function displayStackTrace()
+    {
+        var errorPopup = open("", "errorPopup", "width=750,height=600,resizable=yes,scrollbars=yes,left=200,top=10");
+        errorPopup.document.open();
+        errorPopup.document.writeln('&lt;html&gt;&lt;head&gt;');
+        errorPopup.document.writeln('&lt;title&gt;Error Details&lt;/title&gt;');
+        errorPopup.document.writeln('&lt;link rel="stylesheet" href="/css/win.css" type="text/css"/&gt;');
+        errorPopup.document.writeln('&lt;/head&gt;&lt;body&gt;');
+        errorPopup.document.writeln($('connectionError').innerHTML);
+        errorPopup.document.writeln('&lt;/body&gt;&lt;/html&gt;');
+        errorPopup.document.close();
+    }
+
+    function popupStackTrace(divName)
+    {
+        var errorPopup = open("", "errorPopup", "width=750,height=600,resizable=yes,scrollbars=yes,left=200,top=10");
+        errorPopup.document.open();
+        errorPopup.document.writeln('&lt;html&gt;&lt;head&gt;');
+        errorPopup.document.writeln('&lt;title&gt;Error Details&lt;/title&gt;');
+        errorPopup.document.writeln('&lt;link rel="stylesheet" href="/css/win.css" type="text/css"/&gt;');
+        errorPopup.document.writeln('&lt;/head&gt;&lt;body&gt;');
+        errorPopup.document.writeln($(divName).innerHTML);
+        errorPopup.document.writeln('&lt;/body&gt;&lt;/html&gt;');
+        errorPopup.document.close();
+    }
+
+</script>
+
+
 
 </ui:composition>
 

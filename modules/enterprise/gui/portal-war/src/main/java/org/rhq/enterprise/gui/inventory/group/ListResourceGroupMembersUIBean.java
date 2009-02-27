@@ -64,6 +64,16 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
+    public DataModel getSmallDataModel() {
+        if (dataModel == null) {
+            dataModel = new ListResourceGroupMembersDataModel(PageControlView.MiniResourceGroupMemberList,
+                MANAGED_BEAN_NAME, 5);
+        }
+
+        return dataModel;
+    }
+
+
     public void setSuppressRecursiveResults(boolean suppressRecursiveResults) {
         this.suppressRecursiveResults = suppressRecursiveResults;
     }
@@ -116,15 +126,26 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
 
     protected class ListResourceGroupMembersDataModel extends PagedListDataModel<ResourceWithAvailability> {
         private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+        int overridenPageSize;
+
 
         public ListResourceGroupMembersDataModel(PageControlView view, String beanName) {
             super(view, beanName);
+        }
+
+        public ListResourceGroupMembersDataModel(PageControlView view, String beanName, int overidePageSize) {
+            super(view, beanName);
+            this.overridenPageSize = overidePageSize;
         }
 
         @Override
         public PageList<ResourceWithAvailability> fetchPage(PageControl pageControl) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             ResourceGroup resourceGroup = EnterpriseFacesContextUtility.getResourceGroup();
+
+            if (overridenPageSize > 0) {
+                pageControl.setPageSize(overridenPageSize);
+            }
 
             PageList<ResourceWithAvailability> results = null;
             if (getSuppressRecursiveResults()) {

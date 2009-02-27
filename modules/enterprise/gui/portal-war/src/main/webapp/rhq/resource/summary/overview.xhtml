@@ -29,6 +29,12 @@
             <rich:separator lineType="beveled"
                             width="50%" height="3px"
                             style="align: center;" />
+            <ui:include src="/rhq/resource/summary/table/recentMetrics.xhtml"/>
+            <br />
+
+            <rich:separator lineType="beveled"
+                            width="50%" height="3px"
+                            style="align: center;" />
             <ui:include src="/rhq/resource/summary/table/recentOperations.xhtml"
                         rendered="#{ResourceUIBean.facets.operation}" />
             <br />

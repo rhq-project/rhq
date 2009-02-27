@@ -11,66 +11,70 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
-      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
-      
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich" xmlns:a4j="https://ajax4jsf.dev.java.net/ajax">
+
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
-   <ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - View Configuration History"/>
-   <ui:param name="selectedTabName" value="Configuration.History"/>
-   <ui:define name="content">
-   
-      <ui:param name="latestConfig" value="#{GetLatestConfigurationUpdateUIBean.latestConfigurationUpdate}" />
-      
-      <h:form id="historyForm">
-         <input type="hidden" name="id" value="${ResourceUIBean.id}"/>
-         
-	      <rich:panel>
-	         <f:facet name="header">Current Configuration:</f:facet>
-	         <table>
-	            <tr>
-	               <td align="right">Version:</td>
-	               <td align="left">
-                     <h:outputText value="#{latestConfig.id}" />
-	               </td>
-	            </tr>
-	            <tr>
-	               <td align="right">Status:</td>
-	               <td align="left"><h:outputText value="#{latestConfig.status}" /></td>
-	            </tr>
-	            <tr>
-	               <td align="right">User Who Requested Change:</td>
-	               <td align="left">
-	                  <h:outputText value="#{latestConfig.subjectName}" rendered="#{!(empty latestConfig.subjectName)}" />
-	                  <h:outputText value="(unknown)" rendered="#{empty latestConfig.subjectName}" />
-	               </td>
-	            </tr>
-	            <tr>
-	               <td align="right">Date Submitted:</td>
-	               <td align="left">
-                      <h:outputText value="#{latestConfig.createdTime}">
-                         <f:converter converterId="UserDateTimeConverter" />
-                      </h:outputText>
-	               </td>
-	            </tr>
-	            <tr>
-	               <td align="right">Date Completed:</td>
-	               <td align="left">
-                      <h:outputText value="#{latestConfig.modifiedTime}"  rendered="#{latestConfig.status ne 'INPROGRESS'}" >
-                         <f:converter converterId="UserDateTimeConverter" />
-                      </h:outputText>
-	                  <h:outputText value="(in progress)"  rendered="#{latestConfig.status eq 'INPROGRESS'}"/>
-	               </td>
-	            </tr>
-	         </table>
-	      </rich:panel>
-      
-         <rich:panel>
-            <f:facet name="header">Configuration History</f:facet>
-            
-            <h:panelGrid columns="1" width="100%">
+<ui:param name="pageTitle"
+          value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - View Configuration History"/>
+<ui:param name="selectedTabName" value="Configuration.History"/>
+<ui:define name="content">
+
+<ui:param name="latestConfig" value="#{GetLatestConfigurationUpdateUIBean.latestConfigurationUpdate}"/>
+
+<h:form id="historyForm">
+    <input type="hidden" name="id" value="${ResourceUIBean.id}"/>
+
+    <rich:panel>
+        <f:facet name="header">Current Configuration:</f:facet>
+        <table>
+            <tr>
+                <td align="right">Version:</td>
+                <td align="left">
+                    <h:outputText value="#{latestConfig.id}"/>
+                </td>
+            </tr>
+            <tr>
+                <td align="right">Status:</td>
+                <td align="left"><h:outputText value="#{latestConfig.status}"/></td>
+            </tr>
+            <tr>
+                <td align="right">User Who Requested Change:</td>
+                <td align="left">
+                    <h:outputText value="#{latestConfig.subjectName}" rendered="#{!(empty latestConfig.subjectName)}"/>
+                    <h:outputText value="(unknown)" rendered="#{empty latestConfig.subjectName}"/>
+                </td>
+            </tr>
+            <tr>
+                <td align="right">Date Submitted:</td>
+                <td align="left">
+                    <h:outputText value="#{latestConfig.createdTime}">
+                        <f:converter converterId="UserDateTimeConverter"/>
+                    </h:outputText>
+                </td>
+            </tr>
+            <tr>
+                <td align="right">Date Completed:</td>
+                <td align="left">
+                    <h:outputText value="#{latestConfig.modifiedTime}"
+                                  rendered="#{latestConfig.status ne 'INPROGRESS'}">
+                        <f:converter converterId="UserDateTimeConverter"/>
+                    </h:outputText>
+                    <h:outputText value="(in progress)" rendered="#{latestConfig.status eq 'INPROGRESS'}"/>
+                </td>
+            </tr>
+        </table>
+    </rich:panel>
+
+    <rich:panel>
+        <f:facet name="header">Configuration History</f:facet>
+
+        <h:panelGrid columns="1" width="100%">
+
+            <a4j:keepAlive beanName="ListConfigurationUpdateUIBean"/>
 
             <ui:param name="configurationUpdateDataModel" value="#{ListConfigurationUpdateUIBean.dataModel}"/>
-            <rich:dataTable id="configurationUpdateDataTable" 
+            <rich:dataTable id="configurationUpdateDataTable"
                             rows="#{PageControl.ConfigurationHistory.pageSize}"
                             value="#{configurationUpdateDataModel}"
                             var="item"
@@ -80,151 +84,157 @@
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                             onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
-                            
-               <f:facet name="PageControlView">
-                  <onc:paginationControl id="ConfigurationHistory" />
-               </f:facet>
 
-               <rich:column rendered="#{ResourceUIBean.permissions.configure}">
-                  <f:facet name="header">
-                     <onc:allSelect target="selectedItems" />
-                  </f:facet>
-                  
-                  <onc:select name="selectedItems"
-                              value="#{item.id}"
-                              rendered="#{latestConfig.id != item.id 
+                <f:facet name="PageControlView">
+                    <onc:paginationControl id="ConfigurationHistory"/>
+                </f:facet>
+
+                <rich:column rendered="#{ResourceUIBean.permissions.configure}">
+                    <f:facet name="header">
+                        <onc:allSelect target="selectedItems"/>
+                    </f:facet>
+
+                    <onc:select name="selectedItems"
+                                value="#{item.id}"
+                                rendered="#{latestConfig.id != item.id
                                           and item.status ne 'INPROGRESS'
-                                          and empty item.aggregateConfigurationUpdate}" />
-               </rich:column>
-               
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="cu.id">
-                        <h:outputText styleClass="headerText" value="Version" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  
-                  <h:outputLink value="/rhq/resource/configuration/history.xhtml">
-                     <f:param name="id" value="#{param.id}"/>
-                     <f:param name="configId" value="#{item.id}"/>
-                     <h:outputText value="#{item.id}"/>
-                     <h:outputText value="*" rendered="#{latestConfig.id == item.id}"/>
-                     <h:outputText value=" (selected)" rendered="#{!empty param.configId and param.configId == item.id}"/>
-                  </h:outputLink>
-               </rich:column>
-               
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="cu.createdTime">
-                        <h:outputText styleClass="headerText" value="Date Submitted" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  
-                  <h:outputText value="#{item.createdTime}">
-                     <f:converter converterId="UserDateTimeConverter" />
-                  </h:outputText>
-               </rich:column>
-               
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="cu.modifiedTime">
-                        <h:outputText styleClass="headerText" value="Date Completed" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  
-                  <h:outputText value="#{item.modifiedTime}"  rendered="#{item.status ne 'INPROGRESS'}" >
-                     <f:converter converterId="UserDateTimeConverter" />
-                  </h:outputText>
-               </rich:column>
-               
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="cu.status">
-                        <h:outputText styleClass="headerText" value="Status" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  
-                  <h:outputLink rendered="#{item.status eq 'FAILURE'}"
-                                value="javascript:displayMessageModal('Stack Trace','#{item.errorMessage}')">
-                     <h:outputText value="#{item.status}"/>
-                  </h:outputLink>
-                  <h:outputText rendered="#{item.status ne 'FAILURE'}" value="#{item.status}"/>
-               </rich:column>
-               
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="cu.subjectName">
-                        <h:outputText styleClass="headerText" value="User" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  
-                  <h:outputText value="#{item.subjectName}"/>
-               </rich:column>
-               
-               <rich:column>
-                  <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Update Type" />
-                  </f:facet>
-                  
-                  <h:outputText value="Individual Resource Update" rendered="#{empty item.aggregateConfigurationUpdate}" />
-                  <h:outputLink value="/rhq/group/configuration/details.xhtml"
-                                rendered="#{not empty item.aggregateConfigurationUpdate}">
-                     <f:param name="groupId" value="#{item.aggregateConfigurationUpdate.group.id}"/>
-                     <f:param name="arcuId" value="#{item.aggregateConfigurationUpdate.id}"/>
-                     <h:outputText value="Group Update Member" />
-                  </h:outputLink>
-               </rich:column>
+                                          and empty item.aggregateConfigurationUpdate}"/>
+                </rich:column>
 
-               <f:facet name="footer">
-                  <rich:columnGroup>
-                     <rich:column colspan="#{ResourceUIBean.permissions.configure ? 7 : 6}" width="100%">
-                        <onc:selectCommandButton action="#{ListConfigurationUpdateUIBean.delete}"
-                                                 value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
-                                                 rendered="${ResourceUIBean.permissions.configure}" />
-                        <onc:selectCommandButton action="#{ListConfigurationUpdateUIBean.compare}"
-                                                 value="COMPARE SELECTED" low="2" high="2" target="selectedItems" styleClass="on-pager-button buttonsmall" rendered="false"/>
-                        <onc:selectCommandButton action="#{ListConfigurationUpdateUIBean.rollback}"
-                                                 value="ROLLBACK TO SELECTED" high="1" target="selectedItems" styleClass="on-pager-button buttonsmall"
-                                                 rendered="${ResourceUIBean.permissions.configure}" />
+                <rich:column>
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="cu.id">
+                            <h:outputText styleClass="headerText" value="Version"/>
+                        </onc:sortableColumnHeader>
+                    </f:facet>
 
-                        <ui:param name="paginationDataTableName" value="configurationUpdateDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{configurationUpdateDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.ConfigurationHistory}"/>
-                        <ui:include src="../include/pagination.xhtml"/>
-                     </rich:column>
-                  </rich:columnGroup>
-               </f:facet>
-               
+                    <h:outputLink value="/rhq/resource/configuration/history.xhtml">
+                        <f:param name="id" value="#{param.id}"/>
+                        <f:param name="configId" value="#{item.id}"/>
+                        <h:outputText value="#{item.id}"/>
+                        <h:outputText value="*" rendered="#{latestConfig.id == item.id}"/>
+                        <h:outputText value=" (selected)"
+                                      rendered="#{!empty param.configId and param.configId == item.id}"/>
+                    </h:outputLink>
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="cu.createdTime">
+                            <h:outputText styleClass="headerText" value="Date Submitted"/>
+                        </onc:sortableColumnHeader>
+                    </f:facet>
+
+                    <h:outputText value="#{item.createdTime}">
+                        <f:converter converterId="UserDateTimeConverter"/>
+                    </h:outputText>
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="cu.modifiedTime">
+                            <h:outputText styleClass="headerText" value="Date Completed"/>
+                        </onc:sortableColumnHeader>
+                    </f:facet>
+
+                    <h:outputText value="#{item.modifiedTime}" rendered="#{item.status ne 'INPROGRESS'}">
+                        <f:converter converterId="UserDateTimeConverter"/>
+                    </h:outputText>
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="cu.status">
+                            <h:outputText styleClass="headerText" value="Status"/>
+                        </onc:sortableColumnHeader>
+                    </f:facet>
+
+                    <h:outputLink rendered="#{item.status eq 'FAILURE'}"
+                                  value="javascript:displayMessageModal('Stack Trace','#{item.errorMessage}')">
+                        <h:outputText value="#{item.status}"/>
+                    </h:outputLink>
+                    <h:outputText rendered="#{item.status ne 'FAILURE'}" value="#{item.status}"/>
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <onc:sortableColumnHeader sort="cu.subjectName">
+                            <h:outputText styleClass="headerText" value="User"/>
+                        </onc:sortableColumnHeader>
+                    </f:facet>
+
+                    <h:outputText value="#{item.subjectName}"/>
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Update Type"/>
+                    </f:facet>
+
+                    <h:outputText value="Individual Resource Update"
+                                  rendered="#{empty item.aggregateConfigurationUpdate}"/>
+                    <h:outputLink value="/rhq/group/configuration/details.xhtml"
+                                  rendered="#{not empty item.aggregateConfigurationUpdate}">
+                        <f:param name="groupId" value="#{item.aggregateConfigurationUpdate.group.id}"/>
+                        <f:param name="arcuId" value="#{item.aggregateConfigurationUpdate.id}"/>
+                        <h:outputText value="Group Update Member"/>
+                    </h:outputLink>
+                </rich:column>
+
+                <f:facet name="footer">
+                    <rich:columnGroup>
+                        <rich:column colspan="#{ResourceUIBean.permissions.configure ? 7 : 6}" width="100%">
+                            <onc:selectCommandButton action="#{ListConfigurationUpdateUIBean.delete}"
+                                                     value="DELETE SELECTED" target="selectedItems"
+                                                     styleClass="on-pager-button buttonsmall"
+                                                     rendered="${ResourceUIBean.permissions.configure}"/>
+                            <onc:selectCommandButton action="#{ListConfigurationUpdateUIBean.compare}"
+                                                     value="COMPARE SELECTED" low="2" high="2" target="selectedItems"
+                                                     styleClass="on-pager-button buttonsmall" rendered="false"/>
+                            <onc:selectCommandButton action="#{ListConfigurationUpdateUIBean.rollback}"
+                                                     value="ROLLBACK TO SELECTED" high="1" target="selectedItems"
+                                                     styleClass="on-pager-button buttonsmall"
+                                                     rendered="${ResourceUIBean.permissions.configure}"/>
+
+                            <ui:param name="paginationDataTableName" value="configurationUpdateDataTable"/>
+                            <ui:param name="paginationDataModel" value="#{configurationUpdateDataModel}"/>
+                            <ui:param name="paginationPageControl" value="#{PageControl.ConfigurationHistory}"/>
+                            <ui:include src="../include/pagination.xhtml"/>
+                        </rich:column>
+                    </rich:columnGroup>
+                </f:facet>
+
             </rich:dataTable>
-            <h:outputText value="Note: group updates must be deleted before individual updates become eligible for deletion" />
-            </h:panelGrid>
+            <h:outputText
+                    value="Note: group updates must be deleted before individual updates become eligible for deletion"/>
+        </h:panelGrid>
 
-         </rich:panel>
-      </h:form>
+    </rich:panel>
+</h:form>
 
-      <rich:panel rendered="#{!empty param.configId}">
+<rich:panel rendered="#{!empty param.configId}">
 
-         <f:facet name="header">
-            <h:outputText value="Selected Configuration (#{param.configId})"/>
-         </f:facet>
+    <f:facet name="header">
+        <h:outputText value="Selected Configuration (#{param.configId})"/>
+    </f:facet>
 
-         <h:form id="viewResourceConfigurationForm">
+    <h:form id="viewResourceConfigurationForm">
 
-            <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-            <input type="hidden" name="configId" value="#{param.configId}"/>
+        <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+        <input type="hidden" name="configId" value="#{param.configId}"/>
 
-            <onc:config configurationDefinition="#{ViewResourceConfigurationUpdateUIBean.configurationDefinition}"
-                        configuration="#{ViewResourceConfigurationUpdateUIBean.configuration}"
-                        readOnly="true"
-                        nullConfigurationDefinitionMessage="#{ViewResourceConfigurationUpdateUIBean.nullConfigurationDefinitionMessage}"
-                        nullConfigurationMessage="#{ViewResourceConfigurationUpdateUIBean.nullConfigurationMessage}"
-                        prevalidate="true"/>
+        <onc:config configurationDefinition="#{ViewResourceConfigurationUpdateUIBean.configurationDefinition}"
+                    configuration="#{ViewResourceConfigurationUpdateUIBean.configuration}"
+                    readOnly="true"
+                    nullConfigurationDefinitionMessage="#{ViewResourceConfigurationUpdateUIBean.nullConfigurationDefinitionMessage}"
+                    nullConfigurationMessage="#{ViewResourceConfigurationUpdateUIBean.nullConfigurationMessage}"
+                    prevalidate="true"/>
 
-         </h:form>
+    </h:form>
 
-      </rich:panel>
+</rich:panel>
 
-   </ui:define>
+</ui:define>
 
 </ui:composition>
 

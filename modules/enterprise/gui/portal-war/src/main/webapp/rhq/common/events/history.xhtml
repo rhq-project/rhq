@@ -12,6 +12,8 @@
       
     <h:form id="eventHistoryForm" >
 
+        <a4j:keepAlive beanName="EventHistoryUIBean"/>
+
         <c:if test="#{EventHistoryUIBean.context.resourceId != -1}">
             <input type="hidden" name="id" value="#{EventHistoryUIBean.context.resourceId}" />
         </c:if>

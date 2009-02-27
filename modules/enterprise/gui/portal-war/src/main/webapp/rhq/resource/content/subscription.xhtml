@@ -11,6 +11,7 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
@@ -26,6 +27,7 @@
          
          <rich:panel styleClass="BlockContent">
             <f:facet name="header"><h:outputText value="Current Resource Subscriptions"/></f:facet>
+             <a4j:keepAlive beanName="ResourceChannelsUIBean"/>
 
             <ui:param name="resourceChannelsDataModel" value="#{ResourceChannelsUIBean.dataModel}"/>
             <rich:dataTable id="resourceChannelsDataTable" 
@@ -137,6 +139,8 @@
          <input type="hidden" name="id" value="${param.id}"/>
          <rich:panel styleClass="BlockContent">
             <f:facet name="header"><h:outputText value="Available Channels"/></f:facet>
+
+             <a4j:keepAlive beanName="AvailableResourceChannelsUIBean"/>
 
             <ui:param name="availableResourceChannelsDataModel" value="#{AvailableResourceChannelsUIBean.dataModel}"/>
             <rich:dataTable id="availableResourceChannelsDataTable" 

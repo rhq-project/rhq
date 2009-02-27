@@ -23,6 +23,7 @@ import javax.faces.model.DataModel;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -37,6 +38,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
 
     public static final String MANAGED_BEAN_NAME = "SubsystemOOBHistoryUIBean";
+    private static final String FORM_PREFIX = "oobHistorySubsystemForm:";
 
     private int selectedSchedule;
     private String resourceFilter;
@@ -88,6 +90,7 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
         }
 
         public PageList<MeasurementOOBComposite> fetchPage(PageControl pc) {
+            getDataFromRequest();;
             String resourceFilter = getResourceFilter();
             String parentFilter = getParentFilter();
 
@@ -97,5 +100,11 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
 
             return result;
         }
+
+                private void getDataFromRequest() {
+            SubsystemOOBHistoryUIBean outer = SubsystemOOBHistoryUIBean.this;
+            outer.resourceFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "resourceFilter");
+            outer.parentFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "parentFilter");
+                }
     }
 }

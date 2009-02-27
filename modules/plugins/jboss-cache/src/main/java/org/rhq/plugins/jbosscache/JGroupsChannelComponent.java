@@ -23,7 +23,6 @@
 package org.rhq.plugins.jbosscache;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 
@@ -32,9 +31,9 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
  *
  * @author Heiko W. Rupp
  */
-public class JGroupsChannelComponent implements ResourceComponent {
+public class JGroupsChannelComponent implements ResourceComponent<JBossCacheComponent> {
 
-    ResourceContext context;
+    ResourceContext<JBossCacheComponent> context;
 
     /**
      * This one does not (yet) have an availability of its own, but just follows the
@@ -48,7 +47,7 @@ public class JGroupsChannelComponent implements ResourceComponent {
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)
      */
-    public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
+    public void start(ResourceContext<JBossCacheComponent> context) throws  Exception {
         // TODO Auto-generated method stub
         this.context = context;
 

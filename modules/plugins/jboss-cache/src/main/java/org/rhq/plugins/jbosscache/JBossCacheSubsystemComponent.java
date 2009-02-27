@@ -36,7 +36,6 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jbossas.JBossASServerComponent;
@@ -48,8 +47,8 @@ import org.rhq.plugins.jmx.JMXComponent;
  *
  * @author Heiko W. Rupp
  */
-public class JBossCacheSubsystemComponent<T extends JMXComponent> implements ResourceComponent<T>,
-    CreateChildResourceFacet {
+public class JBossCacheSubsystemComponent<T extends JMXComponent<JBossASServerComponent>> implements
+    ResourceComponent<T>, CreateChildResourceFacet {
 
     private final Log log = LogFactory.getLog(JBossCacheSubsystemComponent.class);
 
@@ -123,7 +122,7 @@ public class JBossCacheSubsystemComponent<T extends JMXComponent> implements Res
         //       catch (Exception e) {
         //           JBossASServerComponent.setErrorOnCreateResourceReport(report, e.getLocalizedMessage(), e);
         //           return report;
-        //       }   
+        //       }
 
         report.setStatus(CreateResourceStatus.SUCCESS);
         return report;
@@ -133,7 +132,7 @@ public class JBossCacheSubsystemComponent<T extends JMXComponent> implements Res
         return ctx.getParentResourceComponent().getEmsConnection();
     }
 
-    public void start(ResourceContext<T> context) throws InvalidPluginConfigurationException, Exception {
+    public void start(ResourceContext<T> context) throws Exception {
         // TODO Auto-generated method stub
         ctx = context;
     }

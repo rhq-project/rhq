@@ -17,7 +17,7 @@
 <ui:composition template="/rhq/group/layout/main.xhtml">
 
 <ui:param name="pageTitle" value="#{ResourceGroupUIBean.groupCategoryName} '#{ResourceGroupUIBean.name}' - Inventory Data"/>
-<ui:param name="selectedTabName" value="Inventory"/>
+<ui:param name="selectedTabName" value="Inventory.Overview"/>
 
 <ui:define name="content">
 
@@ -309,42 +309,6 @@
 </rich:dataTable>
 
 </h:form>
-
-</rich:panel>
-
-<!-- =================== GROUP CONNECTION PROPERTIES =================== -->
-<rich:panel styleClass="BlockContent"
-            rendered="#{resourceGroupMembersDataModel.rowCount > 0 and
-                        ResourceGroupUIBean.groupCategoryName == 'COMPATIBLE' and
-                        !empty ViewGroupConnectionPropertiesUIBean.configurationDefinition.propertyDefinitions and
-                        !empty ViewGroupConnectionPropertiesUIBean.configuration.map}">
-
-
-   <f:facet name="header" styleClass="BlockTitle">
-      Group Connection Properties
-   </f:facet>
-
-   <h:form id="viewGroupConnectionPropertiesForm">
-
-      <input type="hidden" name="groupId" value="#{ResourceGroupUIBean.groupId}"/>
-      <input type="hidden" name="category" value="#{param.category}"/>
-
-      <onc:config configurationDefinition="#{ViewGroupConnectionPropertiesUIBean.configurationDefinition}"
-                  configuration="#{ViewGroupConnectionPropertiesUIBean.configuration}"
-                  readOnly="true"
-                  nullConfigurationDefinitionMessage="#{ViewGroupConnectionPropertiesUIBean.nullConfigurationDefinitionMessage}"
-                  nullConfigurationMessage="#{ViewGroupConnectionPropertiesUIBean.nullConfigurationMessage}"
-                  prevalidate="true" />
-
-      <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
-                   rendered="#{ResourceGroupUIBean.permissions.inventory}">
-         <h:commandButton value="EDIT..." action="#{EditGroupConnectionPropertiesUIBean.begin}"
-                          title="Edit Connection Properties" styleClass="buttonmed"/>
-         <h:commandButton value="VIEW HISTORY" action="#{ViewGroupConnectionPropertyHistoryUIBean.begin}"
-                          title="View History for Group Connection Property Updates" styleClass="buttonmed"/>
-      </h:panelGrid>
-
-   </h:form>
 
 </rich:panel>
 

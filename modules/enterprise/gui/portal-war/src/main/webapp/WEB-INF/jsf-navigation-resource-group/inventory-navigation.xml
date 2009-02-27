@@ -20,25 +20,12 @@
          <redirect />
       </navigation-case>
 
-      <navigation-case>
-         <from-action>#{ViewGroupConnectionPropertyHistoryUIBean.begin}</from-action>
-         <to-view-id>/rhq/group/inventory/list-plugin-configuration-update-history.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
-         <redirect />
-      </navigation-case>
-
       <!-- === EditGroupGeneralPropertiesUIBean ======================= -->
 
       <navigation-case>
          <from-action>#{EditGroupGeneralPropertiesUIBean.begin}</from-action>
          <to-view-id>/rhq/group/inventory/edit-general.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect />
-      </navigation-case>
-
-      <!-- === EditGroupConnectionPropertiesUIBean ======================= -->
-
-      <navigation-case>
-         <from-action>#{EditGroupConnectionPropertiesUIBean.begin}</from-action>
-         <to-view-id>/rhq/group/inventory/edit-connection.xhtml</to-view-id>
       </navigation-case>
 
       <!-- === DeleteResourcesFromGroupUIBean ======================= -->
@@ -57,6 +44,25 @@
          <from-outcome>addResourcesToGroup</from-outcome>
          <to-view-id>/resource/group/Inventory.do?mode=addResources&amp;groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect />
+      </navigation-case>
+
+   </navigation-rule>
+   
+   <navigation-rule>
+
+      <from-view-id>/rhq/group/inventory/view-connection.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{ViewGroupConnectionPropertyHistoryUIBean.begin}</from-action>
+         <to-view-id>/rhq/group/inventory/list-plugin-configuration-update-history.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
+         <redirect />
+      </navigation-case>
+
+      <!-- === EditGroupConnectionPropertiesUIBean ======================= -->
+
+      <navigation-case>
+         <from-action>#{EditGroupConnectionPropertiesUIBean.begin}</from-action>
+         <to-view-id>/rhq/group/inventory/edit-connection.xhtml</to-view-id>
       </navigation-case>
 
    </navigation-rule>
@@ -85,7 +91,7 @@
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/group/inventory/view.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
+         <to-view-id>/rhq/group/inventory/view-connection.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect />
       </navigation-case>
 

@@ -16,17 +16,17 @@
 <ui:composition template="/rhq/group/layout/main.xhtml">
 
    <ui:param name="pageTitle" value="List Connection Property Update History for Resource Group '#{ResourceGroupUIBean.name}'"/>
-   <ui:param name="selectedTabName" value="Inventory"/>
+   <ui:param name="selectedTabName" value="Inventory.Connection"/>
    <ui:define name="content">
    
       <h:form id="updateHistoryForm">
          <input type="hidden" name="groupId" value="${param.groupId}"/>
          <input type="hidden" name="category" value="${param.category}"/>
          
-         <h:outputLink value="/rhq/group/inventory/view.xhtml">
+         <h:outputLink value="/rhq/group/inventory/view-connection.xhtml">
             <f:param name="groupId" value="#{param.groupId}" />
             <f:param name="category" value="#{param.category}" />
-            <h:outputText value="&lt; Return to Inventory"/>
+            <h:outputText value="&lt; Return to Current Group Connection Properties"/>
          </h:outputLink>
          
          <rich:panel>
@@ -147,10 +147,10 @@
 
          </rich:panel>
          
-         <h:outputLink value="/rhq/group/inventory/view.xhtml">
+         <h:outputLink value="/rhq/group/inventory/view-connection.xhtml">
             <f:param name="groupId" value="#{param.groupId}" />
             <f:param name="category" value="#{param.category}" />
-            <h:outputText value="&lt; Return to Inventory"/>
+            <h:outputText value="&lt; Return to Current Group Connection Properties"/>
          </h:outputLink>
          
       </h:form>

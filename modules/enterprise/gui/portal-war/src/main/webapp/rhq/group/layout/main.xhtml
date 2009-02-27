@@ -60,7 +60,10 @@ THIS TEXT WILL BE REMOVED AS WELL.
          <onc:subtab name="Schedules" url="/rhq/group/monitor/schedules.xhtml"/>
       </onc:tab>
       
-      <onc:tab name="Inventory" image="/images/icon_hub_i.gif" url="/rhq/group/inventory/view.xhtml"/>
+      <onc:tab name="Inventory" image="/images/icon_hub_i.gif">
+         <onc:subtab name="Overview" url="/rhq/group/inventory/view.xhtml" />
+         <onc:subtab name="Connection" url="/rhq/group/inventory/view-connection.xhtml" />
+      </onc:tab>
 
       <onc:tab name="Configuration" displayName="Configure" image="/images/icon_hub_c.gif"
                rendered="#{ResourceGroupUIBean.compatible and ResourceGroupUIBean.facets.configuration}">

@@ -1062,7 +1062,7 @@ public class ClientCommandSender {
             // interrupting this task thread.  Let's try to acquire it again - if we get interrupted again, then that's strange
             // and we need to log an error and abort.
             try {
-                m_shuttingDownTasksLock.readLock().unlock();
+                m_shuttingDownTasksLock.readLock().lock();
             } catch (Exception ie2) {
                 LOG.error(CommI18NResourceKeys.CLIENT_COMMAND_SENDER_RETRY_READ_LOCK_ACQUIRE_FAILURE, cnc.getCommand());
                 return;

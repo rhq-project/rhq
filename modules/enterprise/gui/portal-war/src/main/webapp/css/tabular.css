@@ -25,7 +25,7 @@ div.tab-inactive {
    border-width: 1px 1px 1px 1px;
    border-style: solid solid solid solid;
    border-color: #CCCCCC #CCCCCC #333333 #CCCCCC;
-   color: #888888;
+   color: #555555;
    background-image: url('/images/tab-gradient-notselected.png');
    background-repeat: repeat-x;
    cursor: default;
@@ -35,7 +35,7 @@ div.tab-hover {
    border-width: 1px 1px 1px 1px;
    border-style: solid solid solid solid;
    border-color: #AAAAAA #AAAAAA #333333 #AAAAAA;
-   color: #888888;
+   color: #555555;
    background-image: url('/images/tab-gradient-selected.png');
    background-repeat: repeat-x;
    cursor: pointer;
@@ -73,7 +73,7 @@ div.subtab-active {
 }
 
 div.subtab-inactive {
-   color: #A9A9A9;
+   color: #666666;
    cursor: default;
 }
 

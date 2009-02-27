@@ -48,12 +48,9 @@
 	<classpathentry kind="src" path="modules/plugins/apache/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/netservices/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/iis/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/mock-jboss/target/generated-sources/xjc"/>
 	<classpathentry kind="src" path="modules/plugins/perftest/target/generated-sources/xjc"/>
 	<classpathentry kind="src" path="modules/plugins/perftest/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/mock-jboss/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/perftest/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/mock-jboss/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/jira/target/generated-sources/axistools/wsdl2java"/>
 	<classpathentry kind="src" path="modules/plugins/jira/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/apt/src/test/java"/>

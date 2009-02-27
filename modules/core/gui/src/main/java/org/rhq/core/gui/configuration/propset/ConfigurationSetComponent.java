@@ -23,6 +23,9 @@
 package org.rhq.core.gui.configuration.propset;
 
 import javax.faces.component.UIForm;
+import javax.faces.component.UIViewRoot;
+import javax.faces.component.UIComponent;
+import javax.faces.context.FacesContext;
 
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.gui.configuration.AbstractConfigurationComponent;
@@ -81,16 +84,24 @@ public class ConfigurationSetComponent extends AbstractConfigurationComponent im
         return configurationSet;
     }
 
-    public static String getMemberValuesModalPanelId(ConfigurationSetComponent configurationSetComponent)
+    public static String getPropSetModalPanelId(ConfigurationSetComponent configurationSetComponent)
     {
-        return configurationSetComponent.getId() + "MemberValuesModalPanel";
+        return configurationSetComponent.getId() + "PropSetModalPanel";
+    }
+
+    public static String getPropSetFormId(ConfigurationSetComponent configurationSetComponent)
+    {
+        return configurationSetComponent.getId() + "PropSetForm";
     }
 
     @Nullable
-    public HtmlModalPanel getMemberValuesModalPanel() {
-        UIForm form = FacesComponentUtility.getEnclosingForm(this);
-        //noinspection ConstantConditions
-        //return (HtmlModalPanel)(form.getParent().findComponent(getMemberValuesModalPanelId(this)));
-        return (HtmlModalPanel)(findComponent(getMemberValuesModalPanelId(this)));
-    }    
+    public HtmlModalPanel getPropSetModalPanel() {
+        UIForm configSetForm = FacesComponentUtility.getEnclosingForm(this);
+        UIForm propSetForm = (UIForm)configSetForm.getParent().findComponent(getPropSetFormId(this));
+        if (propSetForm == null)
+            return null;
+        @SuppressWarnings({"UnnecessaryLocalVariable"})
+        HtmlModalPanel propSetModalPanel = (HtmlModalPanel)propSetForm.findComponent(getPropSetModalPanelId(this));
+        return propSetModalPanel;
+    }
 }

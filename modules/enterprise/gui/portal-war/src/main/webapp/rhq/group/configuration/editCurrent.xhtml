@@ -12,7 +12,8 @@
       xmlns:a4j="http://richfaces.org/a4j"
       xmlns:rich="http://richfaces.org/rich"
       xmlns:onc="http://jboss.org/on/component"
-      xmlns:onf="http://jboss.org/on/function" xmlns:s="http://jboss.com/products/seam/taglib">
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib">
 
 <ui:composition template="/rhq/group/layout/main.xhtml">
 
@@ -24,6 +25,19 @@
                 rendered="#{EditGroupResourceConfigurationUIBean.configurationSet ne null}">
 
             <input type="hidden" name="groupId" value="#{param.groupId}"/>
+
+            <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
+                <h:commandButton type="submit" action="#{EditGroupResourceConfigurationUIBean.updateConfigurations}"
+                                 value="SAVE" title="Click to Save Changes"
+                                 styleClass="buttonmed"/>
+                <h:commandButton type="reset"
+                                 value="RESET" title="Click to Reset All Properties to Their Original Values"
+                                 styleClass="buttonmed"/>
+                <h:commandButton type="submit" immediate="true"
+                                 action="#{EditGroupResourceConfigurationUIBean.cancel}"
+                                 value="CANCEL" title="Click to Cancel Edits and Return to View Page"
+                                 styleClass="buttonmed"/>
+            </h:panelGrid>
 
             <a4j:region selfRendered="false">
                 <a4j:outputPanel layout="block" ajaxRendered="true" keepTransient="true">

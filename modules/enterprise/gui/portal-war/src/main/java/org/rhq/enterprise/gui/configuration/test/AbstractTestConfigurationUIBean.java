@@ -38,6 +38,8 @@ import org.rhq.enterprise.gui.common.Outcomes;
 public abstract class AbstractTestConfigurationUIBean {
     public static final String [] LABELS = new String[] { "AAA", "ZZZ", "BBB", "YYY","AAA", "AAA", "ZZZ", "ZZZ", "YYY", "BBB"};
 
+    public static final int GROUP_SIZE = 100;
+
     private ConfigurationDefinition configurationDefinition;
     private Configuration configuration;
     private List<Property> properties;
@@ -47,8 +49,8 @@ public abstract class AbstractTestConfigurationUIBean {
     {
         this.configurationDefinition = TestConfigurationFactory.createConfigurationDefinition();
         this.configuration = TestConfigurationFactory.createConfiguration();
-        List<ConfigurationSetMember> members = new ArrayList(10);
-        for (int i = 0; i < 10; i++) {
+        List<ConfigurationSetMember> members = new ArrayList(GROUP_SIZE);
+        for (int i = 0; i < GROUP_SIZE; i++) {
             Configuration configuration = this.configuration.deepCopy(true);
             configuration.setId(i + 1);
             configuration.getSimple("String1").setStringValue(UUID.randomUUID().toString());
@@ -57,7 +59,7 @@ public abstract class AbstractTestConfigurationUIBean {
             if (i == 0)
                 configuration.getMap("OpenMapOfSimples").put(new PropertySimple("PROCESSOR_CORES", "4"));
             ConfigurationSetMember memberInfo =
-                    new ConfigurationSetMember(LABELS[i], configuration);
+                    new ConfigurationSetMember(LABELS[GROUP_SIZE % LABELS.length], configuration);
             members.add(memberInfo);
         }
         this.configurationSet = new ConfigurationSet(this.configurationDefinition, members);

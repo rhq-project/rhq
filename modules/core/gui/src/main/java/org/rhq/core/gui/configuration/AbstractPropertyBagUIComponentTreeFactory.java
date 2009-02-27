@@ -84,8 +84,6 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private static final String DELETE_MAP_BUTTON_TITLE = "Delete";
     private static final String ADD_NEW_MAP_BUTTON_LABEL = "Add New";
     private static final String ADD_NEW_MAP_BUTTON_TITLE = "Add New";
-    private static final String MEMBER_VALUES_BUTTON_LABEL = "Members";
-    private static final String MEMBER_VALUES_BUTTON_TITLE = "Members";
 
     private static final String NESTED_PROPERTIES_TABLE_STYLE_CLASS = "nested-properties-table";
     private static final String PROPERTIES_TABLE_HEADER_CELL_STYLE_CLASS = "properties-table-header-cell";
@@ -110,9 +108,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private static final String PROPERTY_MAP_SUMMARY_DATA_TEXT_STYLE_CLASS = "property-map-summary-data-text";
     private static final String PROPERTY_MAP_SUMMARY_BUTTON_FOOTER_STYLE_CLASS = "property-buttonfooterrow";    
     private static final String BUTTONS_TABLE_STYLE_CLASS = "buttons-table";    
-    private static final String VALUES_DIFFER_TEXT_STYLE_CLASS = "values-differ-text";
-    private static final String ROW_ODD_STYLE_CLASS = "OddRow";
-    private static final String ROW_EVEN_STYLE_CLASS = "EvenRow";
+    private static final String VALUES_DIFFER_TEXT_STYLE_CLASS = "values-differ-text";    
 
     private AbstractConfigurationComponent config;
     private Collection<PropertyDefinition> propertyDefinitions;
@@ -136,7 +132,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         this.isAggregate = (this.config instanceof ConfigurationSetComponent);
         if (this.isAggregate) {
             ConfigurationSetComponent configurationSetComponent = (ConfigurationSetComponent)this.config;
-            this.memberValuesModalPanel = configurationSetComponent.getMemberValuesModalPanel();
+            this.memberValuesModalPanel = configurationSetComponent.getPropSetModalPanel();
         }
     }
 
@@ -203,7 +199,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private String getRowStyleClass(String rowStyleClass, int rowCount, boolean alternateRowStyles) {
         if (alternateRowStyles) {
             // add the odd/even row style
-            rowStyleClass = ((rowCount % 2) == 0) ? ROW_ODD_STYLE_CLASS : ROW_EVEN_STYLE_CLASS;
+            rowStyleClass = ((rowCount % 2) == 0) ? CssStyleClasses.ROW_ODD : CssStyleClasses.ROW_EVEN;
         }
 
         return rowStyleClass;
@@ -347,24 +343,33 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
      private void addPropertySimpleValue(UIComponent parent, @Nullable UIInput input,
                                          ValueExpression propertyValueExpression)
      {
-         if (input != null)
+         if (!this.isAggregate) {
              parent.getChildren().add(input);
-         if (this.isAggregate) {
-             if (input == null)
-                 FacesComponentUtility.addOutputText(parent, null, "Member Values Differ", VALUES_DIFFER_TEXT_STYLE_CLASS);
-             // Add the Members button which will display the "drill-down" modal panel.
-             HtmlAjaxCommandLink ajaxCommandLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
-             parent.getChildren().add(ajaxCommandLink);
-             ajaxCommandLink.setOncomplete("Richfaces.showModalPanel('" +
-                 this.memberValuesModalPanel.getClientId(FacesContext.getCurrentInstance()) + "');");
-             //ajaxCommandLink.setReRender("rhq_propSet");
-             ajaxCommandLink.setTitle(MEMBER_VALUES_BUTTON_TITLE);
-             FacesComponentUtility.addParameter(ajaxCommandLink, null, "propertyExpressionString",
-                propertyValueExpression.getExpressionString());
-             FacesComponentUtility.addParameter(ajaxCommandLink, null, "refresh",
-                     ConfigRenderer.PROPERTY_SET_COMPONENT_ID);
-             FacesComponentUtility.addButton(ajaxCommandLink, MEMBER_VALUES_BUTTON_LABEL, CssStyleClasses.BUTTON_SMALL);
+             return;
          }
+
+         HtmlPanelGrid panelGrid = FacesComponentUtility.addPanelGrid(parent, null, 2, CssStyleClasses.BUTTONS_TABLE);
+         panelGrid.setColumnClasses("aggregate-property-value-cell, aggregate-property-members-icon-cell");
+         if (input != null)
+             panelGrid.getChildren().add(input);
+         else
+             FacesComponentUtility.addOutputText(panelGrid, null, "Member Values Differ",
+                     VALUES_DIFFER_TEXT_STYLE_CLASS);
+
+         // Add the Members button which will display the "drill-down" modal panel.
+         HtmlAjaxCommandLink ajaxCommandLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
+         panelGrid.getChildren().add(ajaxCommandLink);
+         ajaxCommandLink.setOncomplete("Richfaces.showModalPanel('" +
+             this.memberValuesModalPanel.getClientId(FacesContext.getCurrentInstance()) + "');");
+         //ajaxCommandLink.setReRender("rhq_propSet");
+         String verb = this.config.isReadOnly() ? "View" : "Edit";
+         String tooltip = verb + " Member Values";
+         ajaxCommandLink.setTitle(tooltip);
+         FacesComponentUtility.addParameter(ajaxCommandLink, null, "propertyExpressionString",
+            propertyValueExpression.getExpressionString());
+         FacesComponentUtility.addParameter(ajaxCommandLink, null, "refresh",
+                 ConfigRenderer.PROPERTY_SET_COMPONENT_ID);
+         FacesComponentUtility.addGraphicImage(ajaxCommandLink, null, "/images/icn_member_configs.png", null);
      }
 
      private void addOpenMapMemberProperty(HtmlPanelGroup parent, PropertyDefinitionMap propertyDefinitionMap,
@@ -691,7 +696,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         AbstractPropertyBagUIComponentTreeFactory propertyListUIComponentTreeFactory = new MapInConfigurationUIComponentTreeFactory(
             this.config, mapName);
         spacerPanelGrid.getChildren().add(
-            propertyListUIComponentTreeFactory.createUIComponentTree(ROW_EVEN_STYLE_CLASS));
+            propertyListUIComponentTreeFactory.createUIComponentTree(CssStyleClasses.ROW_EVEN));
         parent.getChildren().add(spacerPanelGrid);
         FacesComponentUtility.addVerbatimText(parent, "</td></tr>\n");
     }

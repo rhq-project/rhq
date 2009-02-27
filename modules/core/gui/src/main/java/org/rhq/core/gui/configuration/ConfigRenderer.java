@@ -34,11 +34,15 @@ import javax.faces.component.UIInput;
 import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlOutputLink;
 import javax.faces.component.html.HtmlPanelGroup;
+import javax.faces.component.html.HtmlForm;
+import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
 
 import org.ajax4jsf.component.html.HtmlAjaxCommandLink;
+import org.ajax4jsf.component.html.HtmlAjaxRegion;
+import org.ajax4jsf.component.html.HtmlAjaxOutputPanel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.richfaces.component.html.HtmlModalPanel;
@@ -55,7 +59,6 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.gui.RequestParameterNameConstants;
 import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
-import org.rhq.core.gui.configuration.propset.ConfigurationSet;
 import org.rhq.core.gui.configuration.propset.ConfigurationSetComponent;
 import org.rhq.core.gui.configuration.propset.PropertySetComponent;
 import org.rhq.core.gui.util.FacesComponentUtility;
@@ -129,23 +132,16 @@ public class ConfigRenderer extends Renderer {
         // If it's an AJAX request for this component, recalculate the aggregate config from the member configs
         // and clear our child components. NOTE: This can *not* be done in decode(), because the model
         // will not have been updated yet with any changes made to child UIInput values.
-        String refresh = FacesContextUtility.getOptionalRequestParameter("refresh");
-        if (refresh != null && refresh.equals(configurationComponent.getId())) {
-            if (propertySetComponentContainsInvalidInputs(configurationComponent)) {
+        if (isAjaxRefresh(configurationComponent)) {
+            ConfigurationSetComponent configurationSetComponent = ((ConfigurationSetComponent) configurationComponent);
+            HtmlModalPanel propSetModalPanel = configurationSetComponent.getPropSetModalPanel();
+            if (propertySetComponentContainsInvalidInputs(configurationSetComponent)) {
                 // Make sure the modal panel is shown when rendered, so the user will see the validation errors.
-                List<HtmlModalPanel> modalPanels = FacesComponentUtility.getDescendantsOfType(configurationComponent,
-                    HtmlModalPanel.class);
-                if (modalPanels.size() == 1) {
-                    HtmlModalPanel modalPanel = modalPanels.get(0);
-                    modalPanel.setShowWhenRendered(true);
-                }
+                propSetModalPanel.setShowWhenRendered(true);
             } else {
-                if (configurationComponent instanceof ConfigurationSetComponent) {
-                    ConfigurationSet configurationSet = ((ConfigurationSetComponent) configurationComponent)
-                        .getConfigurationSet();
-                    //noinspection ConstantConditions
-                    configurationSet.calculateAggregateConfiguration();
-                }
+                // Otherwise, make sure it's not rendered.
+                propSetModalPanel.setShowWhenRendered(false);
+                configurationSetComponent.getConfigurationSet().calculateAggregateConfiguration();
                 component.getChildren().clear();
             }
         }
@@ -162,11 +158,18 @@ public class ConfigRenderer extends Renderer {
             addChildComponents(configurationComponent);
     }
 
+    private boolean isAjaxRefresh(AbstractConfigurationComponent configurationComponent)
+    {
+        String refresh = FacesContextUtility.getOptionalRequestParameter("refresh");
+        return refresh != null && refresh.equals(configurationComponent.getId());
+    }
+
     private static boolean propertySetComponentContainsInvalidInputs(
-        AbstractConfigurationComponent configurationComponent) {
+        ConfigurationSetComponent configurationSetComponent) {
+        HtmlModalPanel propSetModalPanel = configurationSetComponent.getPropSetModalPanel();
         boolean containsInvalidInputs = false;
         List<PropertySetComponent> propertySetComponents = FacesComponentUtility.getDescendantsOfType(
-            configurationComponent, PropertySetComponent.class);
+            propSetModalPanel, PropertySetComponent.class);
         if (propertySetComponents.size() == 1) {
             PropertySetComponent propertySetComponent = propertySetComponents.get(0);
             List<UIInput> inputs = FacesComponentUtility.getDescendantsOfType(propertySetComponent, UIInput.class);
@@ -217,7 +220,18 @@ public class ConfigRenderer extends Renderer {
 
         if (configurationComponent instanceof ConfigurationSetComponent) {
             ConfigurationSetComponent configurationSetComponent = (ConfigurationSetComponent) configurationComponent;
-            addMemberValuesModalPanel(configurationSetComponent);
+            // Only add the propSet modal panel if it's not already in the component tree.
+            if (configurationSetComponent.getPropSetModalPanel() == null)
+                addPropSetModalPanel(configurationSetComponent);
+            // Otherwise, if the propSet was just submitted and it doesn't contain any validation errors,
+            // close the propSet modal.
+            else if (isAjaxRefresh(configurationSetComponent) &&
+                     !propertySetComponentContainsInvalidInputs(configurationSetComponent)) {
+                HtmlModalPanel propSetModalPanel = configurationSetComponent.getPropSetModalPanel();
+                String script = "Richfaces.hideModalPanel('"
+                        + propSetModalPanel.getClientId(FacesContext.getCurrentInstance()) + "');";
+                FacesComponentUtility.addJavaScript(configurationSetComponent, null, null, script);
+            }
         }
 
         FacesComponentUtility.addVerbatimText(configurationComponent, JAVASCRIPT_INCLUDES);
@@ -465,40 +479,56 @@ public class ConfigRenderer extends Renderer {
         return configUIComponent.getId() + INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID_SUFFIX;
     }
 
-    private HtmlModalPanel addMemberValuesModalPanel(ConfigurationSetComponent configurationSetComponent) {
-        //UIForm mainForm = FacesComponentUtility.getEnclosingForm(configurationSetComponent);
+    private void addPropSetModalPanel(ConfigurationSetComponent configurationSetComponent) {
+        UIForm configSetForm = FacesComponentUtility.getEnclosingForm(configurationSetComponent);
+
+        // Insert the propSet form as a sibling of the configSet form, just after the form in the component tree.
+        HtmlForm propSetForm = new HtmlForm();
+        int index = getComponentIndex(configSetForm);
+        configSetForm.getParent().getChildren().add(index + 1, propSetForm);
+        String propSetFormId = ConfigurationSetComponent.getPropSetFormId(configurationSetComponent);
+        propSetForm.setId(propSetFormId);
+        propSetForm.setOnsubmit("prepareInputsForSubmission(this)");
+
+        // Add the modal panel as a child of the propSet form.
         HtmlModalPanel modalPanel = FacesComponentUtility.createComponent(HtmlModalPanel.class);
+        propSetForm.getChildren().add(modalPanel);
         // The below setting is critical - it allows us to be enclosed in a form (in this case, the form surrounding
         // the config component) (see https://jira.jboss.org/jira/browse/RF-5588).
         modalPanel.setDomElementAttachment("form");
-
-        String modalPanelId = ConfigurationSetComponent.getMemberValuesModalPanelId(configurationSetComponent);
+        String modalPanelId = ConfigurationSetComponent.getPropSetModalPanelId(configurationSetComponent);
         modalPanel.setId(modalPanelId);
-        modalPanel.setWidth(500);
-        modalPanel.setHeight(600);
-        modalPanel.setAutosized(false);
+        modalPanel.setWidth(715);
+        modalPanel.setHeight(535);
         modalPanel.setTrimOverlayedElements(false);
-        modalPanel.setStyle("overflow-y: scroll;");
+        modalPanel.setStyle("overflow-y: auto;");
         modalPanel.setOnbeforeshow("sizeAppropriately('configSetForm:" + modalPanelId + "')");
         modalPanel.setOnresize("keepCentered('configSetForm:" + modalPanelId + "')");
 
-        // TODO: Add vertical scrollbar to the modal panel
-        //       (see http://jboss.org/file-access/default/members/jbossrichfaces/freezone/docs/development/faq/en/html_single/faq.html, item 1.32).
-        //       Horizontal scrollbar shouldn't be necessary, since the content has a fixed width.
+        // Add the *id request params that need to be forwarded when the propSet form is submitted.
+        Map<String, String> requestParamMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+        String id = requestParamMap.get("id");
+        if (id != null)
+            FacesComponentUtility.addVerbatimText(modalPanel, "<input type='hidden' name='id' value='" + id + "'/>");
+        String groupId = requestParamMap.get("groupId");
+        if (groupId != null)
+            FacesComponentUtility.addVerbatimText(modalPanel, "<input type='hidden' name='groupId' value='" + groupId + "'/>");
 
-        configurationSetComponent.getChildren().add(modalPanel);
+        addPropSetButtons(configurationSetComponent, modalPanel);
 
-        // Insert the modal panel as a sibling of the main form, just after the main form in the tree.
-        /*int index = getComponentIndex(mainForm);
-        mainForm.getParent().getChildren().add(index + 1, modalPanel);
-        HtmlForm form = new HtmlForm();
-        form.setId(configurationSetComponent.getId() + "PropertySetForm");
-        modalPanel.getChildren().add(form);
-        form.setOnsubmit("prepareInputsForSubmission(this)");*/
+        // Add an AJAX region+panel as a child of this second form.
+        HtmlAjaxRegion ajaxRegion = FacesComponentUtility.createComponent(HtmlAjaxRegion.class);
+        modalPanel.getChildren().add(ajaxRegion);
+        HtmlAjaxOutputPanel ajaxOutputPanel = FacesComponentUtility.createComponent(HtmlAjaxOutputPanel.class);
+        ajaxRegion.getChildren().add(ajaxOutputPanel);
+        ajaxOutputPanel.setLayout("block");
+        ajaxOutputPanel.setAjaxRendered(true);
+        ajaxOutputPanel.setKeepTransient(true);
+
+        // And finally add the propSet component as a child of this AJAX region.
         PropertySetComponent propertySet = new PropertySetComponent();
+        ajaxOutputPanel.getChildren().add(propertySet);
         propertySet.setId(PROPERTY_SET_COMPONENT_ID);
-        //form.getChildren().add(propertySet);
-        modalPanel.getChildren().add(propertySet);
         propertySet.setReadOnly(configurationSetComponent.isReadOnly());
         propertySet.setListIndex(configurationSetComponent.getListIndex());
         ValueExpression valueExpression = FacesExpressionUtility.createValueExpression(
@@ -512,32 +542,31 @@ public class ConfigRenderer extends Renderer {
         propertySet.setValueExpression(PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE, configurationSetComponent
             .getValueExpression(ConfigurationSetComponent.CONFIGURATION_SET_ATTRIBUTE));
 
+        addPropSetButtons(configurationSetComponent, modalPanel);
+
+        return;
+    }
+
+    private void addPropSetButtons(ConfigurationSetComponent configurationSetComponent, HtmlModalPanel modalPanel)
+    {
         String modalPanelClientId = modalPanel.getClientId(FacesContext.getCurrentInstance());
 
-        HtmlAjaxCommandLink okLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
-        //form.getChildren().add(ajaxCommandLink);
-        modalPanel.getChildren().add(okLink);
-        //ajaxCommandLink.setImmediate(true);
-        //ajaxCommandLink.setOncomplete("Richfaces.hideModalPanel('" + modalPanelClientId + "');");
+        HtmlPanelGrid panelGrid = FacesComponentUtility.addPanelGrid(modalPanel, null, 2, CssStyleClasses.BUTTONS_TABLE);
 
-        //ajaxCommandLink.setReRender(mainForm.getId() + ":" + configurationSetComponent.getId());
-        //ajaxCommandLink.setReRender("rhq_configSet");
-        //MethodExpression actionExpression = FacesExpressionUtility.createMethodExpression(
-        //   "#{EditTestConfigurationUIBean.updateConfiguration}", String.class, new Class[0]);
-        //ajaxCommandLink.setActionExpression(actionExpression);
+        // OK button
+        HtmlAjaxCommandLink okLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
+        panelGrid.getChildren().add(okLink);
         okLink.setTitle("OK");
         FacesComponentUtility.addParameter(okLink, null, "refresh", configurationSetComponent.getId());
-        FacesComponentUtility.addButton(okLink, "OK", CssStyleClasses.BUTTON_SMALL);
+        FacesComponentUtility.addButton(okLink, "OK", CssStyleClasses.BUTTON_MEDIUM);
 
+        // Cancel button (only if not read-only)
         if (!configurationSetComponent.isReadOnly()) {
-            //HtmlOutputLink closeModalLink = FacesComponentUtility.addOutputLink(form, null, "#");
-            HtmlOutputLink cancelLink = FacesComponentUtility.addOutputLink(modalPanel, null, "#");
+            HtmlOutputLink cancelLink = FacesComponentUtility.addOutputLink(panelGrid, null, "#");
             cancelLink.setOnclick("Richfaces.hideModalPanel('" + modalPanelClientId + "'); return false;");
             cancelLink.setTitle("Cancel");
-            FacesComponentUtility.addButton(cancelLink, "Cancel", CssStyleClasses.BUTTON_SMALL);
+            FacesComponentUtility.addButton(cancelLink, "Cancel", CssStyleClasses.BUTTON_MEDIUM);
         }
-
-        return modalPanel;
     }
 
     private static int getComponentIndex(UIForm component) {

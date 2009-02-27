@@ -24,6 +24,13 @@
 
            <input type="hidden" name="groupId" value="#{param.groupId}" />
 
+           <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
+               <h:commandButton value="EDIT" action="#{ViewGroupResourceConfigurationUIBean.edit}"
+                                title="Edit this Compatible Group Configuration"
+                                rendered="${ResourceGroupUIBean.permissions.configure}"
+                                styleClass="buttonmed"/>
+           </h:panelGrid>
+           
            <a4j:region selfRendered="false">
                <a4j:outputPanel layout="block" ajaxRendered="true" keepTransient="true">
 

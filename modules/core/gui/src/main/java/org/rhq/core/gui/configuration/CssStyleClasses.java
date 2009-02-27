@@ -23,18 +23,25 @@ package org.rhq.core.gui.configuration;
  */
 public class CssStyleClasses {
     public static final String PROPERTIES_TABLE = "properties-table";
+    public static final String BUTTONS_TABLE = "buttons-table";
     public static final String MEMBER_PROPERTIES_TABLE = "member-properties-table";
     public static final String PROPERTIES_TABLE_HEADER_CELL = "properties-table-header-cell";
     public static final String PROPERTY_DISPLAY_NAME_TEXT = "property-display-name-text";
+    public static final String DISPLAY_NAME = "display-name";
     public static final String DESCRIPTION = "description";
     public static final String REQUIRED_MARKER_TEXT = "required-marker-text";
     public static final String PROPERTY_DISPLAY_NAME_CELL = "property-display-name-cell";
     public static final String PROPERTY_VALUE_CELL = "property-value-cell";
-    public static final String AGGREGATE_PROPERTY_VALUE_CELL = "aggregate-property-value-cell";
+    public static final String MEMBER_PROPERTY_LABEL_CELL = "member-property-label-cell";
+    public static final String MEMBER_PROPERTY_UNSET_CELL = "member-property-unset-cell";
+    public static final String MEMBER_PROPERTY_VALUE_CELL = "member-property-value-cell";
     public static final String PROPERTY_DESCRIPTION_CELL = "property-description-cell";
     public static final String PROPERTY_ENABLED_CELL = "property-enabled-cell";
-    public static final String PROPERTY_VALUE_INPUT = "";
+    public static final String PROPERTY_VALUE_INPUT = "property-value-input";
     public static final String BUTTON_SMALL = "buttonsmall";
+    public static final String BUTTON_MEDIUM = "buttonmed";
+    public static final String ROW_ODD = "OddRow";
+    public static final String ROW_EVEN = "EvenRow";
 
     private CssStyleClasses() {
     }

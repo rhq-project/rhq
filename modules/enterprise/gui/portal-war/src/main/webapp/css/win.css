@@ -1752,7 +1752,9 @@ P.compact {
 }
 
 .member-properties-table {
-   width: 100%;
+   border: 1px solid #888;
+   border-collapse: collapse;
+   width: 95%;
 }
 
 .properties-table-header-cell, .nested-properties-table-header-cell {
@@ -1780,7 +1782,7 @@ P.compact {
 }
 
 .property-display-name-cell {
-   width: 200px;
+   width: 285px;
 }
 
 .property-enabled-cell {
@@ -1789,11 +1791,35 @@ P.compact {
 }
 
 .property-value-cell {
-   width: 175px;
+   width: 285px;
 }
 
-.aggregate-property-value-cell {
-   width: 205px;
+.property-value-input {
+   width: 95%;
+}
+
+.member-properties-table {
+   border: 1px solid #DDD;
+   width: 100%;
+}
+
+.member-property-label-cell, .member-property-unset-cell, .member-property-value-cell {
+   border-bottom: 1px solid #DDD;
+   padding: 4px;
+   vertical-align: top;
+}
+
+.member-property-label-cell {
+   width: 375px;
+}
+
+.member-property-unset-cell {
+   width: 22px;
+   text-align: center;
+}
+
+.member-property-value-cell {
+   /* don't specify a width - this will take up any remaining horizontal space in the table */
 }
 
 .list-property-display-name-cell, .list-property-value-cell, .list-property-description-cell, .list-property-enabled-cell, .list-property-error-cell {
@@ -1802,11 +1828,11 @@ P.compact {
 }
 
 .list-property-display-name-cell {
-   width: 200px;
+   width: 285px;
 }
 
 .list-property-value-cell {
-   width: 175px;
+   width: 285px;
 }
 
 .list-property-enabled-cell {
@@ -1819,7 +1845,7 @@ P.compact {
 }
 
 .display-name {
-   margin-right: 10px;
+/*   margin-right: 10px;*/
    font-weight: bold;
    font-size: 1em;
 }
@@ -1839,7 +1865,6 @@ P.compact {
 .description {
    color: #444;
    font-size: 1em;
-   font-style: italic;
    font-weight: normal;
 }
 
@@ -1921,6 +1946,21 @@ ul.radio-group .unspecified {
    font-size: 1em;
 }
 
+.aggregate-property-value-cell {
+   width: 335px;
+}
+
+.aggregate-property-members-icon-cell {
+   width: 50px;
+}
+
+.EvenRow {
+	background-color: white;
+}
+
+.OddRow {
+	background-color: #F6F6F6;
+}
 
 /*--- Inventory ---------------------*/
 
@@ -2119,7 +2159,7 @@ ul.radio-group .unspecified {
 
 /* BUTTONS */
 
-.buttonsmall, A.buttonsmall, A.buttonsmall, A.buttonsmall:link, .ListCell A.buttonsmall
+.buttonsmall, A.buttonsmall, A.buttonsmall:link, .ListCell A.buttonsmall
 {
    font-size: 10px;
    font-weight: bold;
@@ -2132,7 +2172,7 @@ ul.radio-group .unspecified {
 }
 
 
-.buttonmed
+.buttonmed, A.buttonmed
 {
    font-size: 11px;
    font-weight: bold;
@@ -2141,6 +2181,7 @@ ul.radio-group .unspecified {
    border: 1px outset #626C83;
    padding: 1px 10px;
    cursor: pointer;
+   text-decoration: none
 }
 
 .buttonmed-disabled
@@ -2153,7 +2194,6 @@ ul.radio-group .unspecified {
    padding: 1px 10px;
    cursor: default;
    text-wrap: none;
-
 }
 
 

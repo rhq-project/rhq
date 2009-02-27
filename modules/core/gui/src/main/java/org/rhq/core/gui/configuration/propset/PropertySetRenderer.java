@@ -113,28 +113,35 @@ public class PropertySetRenderer extends Renderer {
 
         addPropertyDisplayNameAndDescription(propertySetComponent, propertyDefinitionSimple, propertySimple);
 
-        // NOTE: We'll add children to the below panel a bit later when we know the id's of the inputs. 
-        FacesComponentUtility.addVerbatimText(propertySetComponent, "<table class='"
-            + CssStyleClasses.MEMBER_PROPERTIES_TABLE + "'><tr><td align=\"center\">");
-        HtmlPanelGroup setAllToSameValueControlPanel = FacesComponentUtility.addBlockPanel(propertySetComponent, null,
-            null);
-        FacesComponentUtility.addVerbatimText(propertySetComponent, "</td></tr></table>");
-
-        FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/><br/>\n");
+        boolean configReadOnly = propertySetComponent.getReadOnly() != null && propertySetComponent.getReadOnly();
+        boolean propIsReadOnly = PropertyRenderingUtility.isReadOnly(propertyDefinitionSimple, null, configReadOnly, false);
+        HtmlPanelGroup setAllToSameValueControlPanel = null;
+        if (!propIsReadOnly) {
+            // NOTE: We'll add children to the below panel a bit later when we know the id's of the inputs.
+            FacesComponentUtility.addVerbatimText(propertySetComponent, "<table class='"
+                + CssStyleClasses.MEMBER_PROPERTIES_TABLE + "'><tr><td align='center'>");
+            setAllToSameValueControlPanel = FacesComponentUtility.addBlockPanel(propertySetComponent, null, null);
+            FacesComponentUtility.addVerbatimText(propertySetComponent, "</td></tr></table>");
+            FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/>\n");
+        }
 
         FacesComponentUtility.addVerbatimText(propertySetComponent, "\n\n<table class='"
             + CssStyleClasses.MEMBER_PROPERTIES_TABLE + "'>");
-        addPropertiesTableHeaderRow(propertySetComponent);
+        addPropertiesTableHeaderRow(propertySetComponent, propertyDefinitionSimple);
 
         List<PropertyInfo> propertyInfos = createPropertyInfos(propertySetComponent, propertySimple);
-        for (PropertyInfo propertyInfo : propertyInfos)
-            addPropertyRow(propertySetComponent, propertyDefinitionSimple, propertyInfo, null);
+
+        for (int i = 0; i < propertyInfos.size(); i++)
+        {
+            PropertyInfo propertyInfo = propertyInfos.get(i);
+            String rowStyleClass = ((i % 2) == 0) ? CssStyleClasses.ROW_ODD : CssStyleClasses.ROW_EVEN;
+            addPropertyRow(propertySetComponent, propertyDefinitionSimple, propertyInfo, rowStyleClass);
+        }
 
         FacesComponentUtility.addVerbatimText(propertySetComponent, "</table>\n");
         FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/>\n");
 
-        boolean configReadOnly = propertySetComponent.getReadOnly() != null && propertySetComponent.getReadOnly();
-        if (!PropertyRenderingUtility.isReadOnly(propertyDefinitionSimple, null, configReadOnly, false))
+        if (!propIsReadOnly)
             addSetAllToSameValueControls(propertySetComponent, propertyDefinitionSimple, setAllToSameValueControlPanel,
                 propertyInfos);
 
@@ -150,25 +157,6 @@ public class PropertySetRenderer extends Renderer {
         input.setId(masterInputId);
         // NOTE: Don't add the input to the component tree yet - we'll add it a bit later.
 
-        /*String functionName = "setAllToSameValue_" + propertySetComponent.getId();
-        StringBuilder script = new StringBuilder();
-        script.append("function ").append(functionName).append("() {\n");
-        script.append("var valueInputArray = new Array(");
-        // NOTE: Don't pass the input to getEnclosingForm(), since we haven't yet added it to the component tree.
-        UIForm form = FacesComponentUtility.getEnclosingForm(propertySetComponent);
-        for (PropertyInfo propertyInfo : propertyInfos)
-        {
-            String htmlDomReference = getHtmlDomReference(propertyInfo.getInput(), form);
-            script.append(htmlDomReference).append(", ");
-        }
-        script.delete(script.length() - 2, script.length()); // chop off the extra ", "
-        script.append(");\n");
-
-        String inputHtmlDomReference = getHtmlDomReference(input, form);
-        script.append("setInputsToValue(valueInputArray, getElementValue(").append(inputHtmlDomReference).append("));\n");
-        script.append("}\n");
-        FacesComponentUtility.addJavaScript(setAllToSameValueControlPanel, null, null, script);*/
-
         HtmlPanelGrid panelGrid = FacesComponentUtility.createComponent(HtmlPanelGrid.class);
         panelGrid.setColumns(3);
         setAllToSameValueControlPanel.getChildren().add(panelGrid);
@@ -180,7 +168,7 @@ public class PropertySetRenderer extends Renderer {
         panelGrid.getChildren().add(input);
 
         html = new StringBuilder();
-        html.append("<button type='button' onclick='setInputsToValue(");
+        html.append("<button type='button' class='" + CssStyleClasses.BUTTON_SMALL + "' onclick='setInputsToValue(");
         html.append("new Array(");
         UIForm form = FacesComponentUtility.getEnclosingForm(input);
         for (PropertyInfo propertyInfo : propertyInfos) {
@@ -191,7 +179,7 @@ public class PropertySetRenderer extends Renderer {
         html.append("), ");
         String inputHtmlDomReference = getHtmlDomReference(input, form, '"');
         html.append("getElementValue(").append(inputHtmlDomReference).append("))");
-        html.append("'>OK</button>");
+        html.append("'>Apply</button>");
 
         FacesComponentUtility.addVerbatimText(panelGrid, html);
     }
@@ -258,21 +246,23 @@ public class PropertySetRenderer extends Renderer {
         return propertyInfos;
     }
 
-    private void addPropertiesTableHeaderRow(PropertySetComponent propertySetComponent) {
+    private void addPropertiesTableHeaderRow(PropertySetComponent propertySetComponent, PropertyDefinitionSimple propertyDefinitionSimple) {
         FacesComponentUtility.addVerbatimText(propertySetComponent, "\n\n<tr>");
 
         FacesComponentUtility.addVerbatimText(propertySetComponent, "<th class='"
-            + CssStyleClasses.PROPERTIES_TABLE_HEADER_CELL + "' width='40%'>");
+            + CssStyleClasses.PROPERTIES_TABLE_HEADER_CELL + "'>");
         FacesComponentUtility.addOutputText(propertySetComponent, null, "Member", FacesComponentUtility.NO_STYLE_CLASS);
         FacesComponentUtility.addVerbatimText(propertySetComponent, "</th>");
 
-        FacesComponentUtility.addVerbatimText(propertySetComponent, "<th class='"
-            + CssStyleClasses.PROPERTIES_TABLE_HEADER_CELL + "' width='20%'>");
-        FacesComponentUtility.addOutputText(propertySetComponent, null, "Unset", FacesComponentUtility.NO_STYLE_CLASS);
-        FacesComponentUtility.addVerbatimText(propertySetComponent, "</th>");
+        if (isOptional(propertyDefinitionSimple)) {
+            FacesComponentUtility.addVerbatimText(propertySetComponent, "<th class='"
+                + CssStyleClasses.PROPERTIES_TABLE_HEADER_CELL + "'>");
+            FacesComponentUtility.addOutputText(propertySetComponent, null, "Unset", FacesComponentUtility.NO_STYLE_CLASS);
+            FacesComponentUtility.addVerbatimText(propertySetComponent, "</th>");
+        }
 
         FacesComponentUtility.addVerbatimText(propertySetComponent, "<th class='"
-            + CssStyleClasses.PROPERTIES_TABLE_HEADER_CELL + "' width='40%'>");
+            + CssStyleClasses.PROPERTIES_TABLE_HEADER_CELL + "'>");
         FacesComponentUtility.addOutputText(propertySetComponent, null, "Value", FacesComponentUtility.NO_STYLE_CLASS);
         FacesComponentUtility.addVerbatimText(propertySetComponent, "</th>");
 
@@ -319,6 +309,13 @@ public class PropertySetRenderer extends Renderer {
 
         FacesComponentUtility.addVerbatimText(propertySetComponent, "\n\n<tr class='" + rowStyleClass + "'>");
 
+        // Member (i.e. label) column
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='"
+            + CssStyleClasses.MEMBER_PROPERTY_LABEL_CELL + "'>");
+        FacesComponentUtility.addOutputText(propertySetComponent, null, propertyInfo.getLabel(), null);
+        FacesComponentUtility.addVerbatimText(propertySetComponent, "</td>");
+
+        // Create the input, which is referenced by the unset control and rendered under the Value column.
         UIInput input;
         if (propertyDefinitionSimple != null)
             input = PropertyRenderingUtility.createInputForSimpleProperty(propertyDefinitionSimple, propertyInfo
@@ -329,26 +326,29 @@ public class PropertySetRenderer extends Renderer {
                 .getPropertyValueExpression(), propertySetComponent.getReadOnly());
         propertyInfo.setInput(input);
 
-        FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='"
-            + CssStyleClasses.PROPERTY_DISPLAY_NAME_CELL + "'>"); // TODO: CSS
-        FacesComponentUtility.addOutputText(propertySetComponent, null, propertyInfo.getLabel(), null);
-        FacesComponentUtility.addVerbatimText(propertySetComponent, "</td>");
-
-        FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='"
-            + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
-        if (propertyDefinitionSimple == null || !propertyDefinitionSimple.isRequired())
+        // Unset column (only if property is optional)
+        if (isOptional(propertyDefinitionSimple)) {
+            FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='"
+                + CssStyleClasses.MEMBER_PROPERTY_UNSET_CELL + "'>");
             PropertyRenderingUtility.addUnsetControl(propertySetComponent, propertyDefinitionSimple, propertyInfo
                 .getProperty(), input, false, propertySetComponent.getReadOnly(), false);
-        FacesComponentUtility.addVerbatimText(propertySetComponent, "</td>");
+            FacesComponentUtility.addVerbatimText(propertySetComponent, "</td>");
+        }
 
+        // Value column
         FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='"
-            + CssStyleClasses.AGGREGATE_PROPERTY_VALUE_CELL + "'>");
+            + CssStyleClasses.MEMBER_PROPERTY_VALUE_CELL + "'>");
         propertySetComponent.getChildren().add(input);
         FacesComponentUtility.addVerbatimText(propertySetComponent, "<br/>");
         PropertyRenderingUtility.addMessageComponentForInput(propertySetComponent, input);
         FacesComponentUtility.addVerbatimText(propertySetComponent, "</td>");
 
         FacesComponentUtility.addVerbatimText(propertySetComponent, "</tr>");
+    }
+
+    private static boolean isOptional(PropertyDefinitionSimple propertyDefinitionSimple)
+    {
+        return propertyDefinitionSimple == null || !propertyDefinitionSimple.isRequired();
     }
 
     class PropertyInfo implements Comparable<PropertyInfo> {

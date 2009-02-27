@@ -256,8 +256,10 @@ function grayOutInput(input)
 function setInputsToValue(inputs, value)
 {
     //if (confirm("Are you sure you want to set all member values to '" + value + "'?"))    
-    for (var i = 0; i < inputs.length; i++)
+    for (var i = 0; i < inputs.length; i++) {
+        setInputUnset(inputs[i], false);
         setElementValue(inputs[i], value);
+    }
 }
 
 /**

@@ -320,8 +320,9 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
         if (!propertyDefinitionSimple.isRequired())
-            PropertyRenderingUtility.addUnsetControl(parent, propertyDefinitionSimple, propertySimple, input,
-                    this.isAggregate, this.config.isReadOnly(), this.config.isFullyEditable());
+            PropertyRenderingUtility.addUnsetControl(parent, propertyDefinitionSimple, propertySimple,
+                    this.config.getListIndex(), input, this.isAggregate, this.config.isReadOnly(),
+                    this.config.isFullyEditable());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_VALUE_CELL + "'>");

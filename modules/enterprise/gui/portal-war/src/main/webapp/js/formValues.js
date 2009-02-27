@@ -45,8 +45,13 @@ function setElementValue(formElement, value)
    {
       case 'undefined':
          break;
-      case 'radio':
       case 'checkbox':
+         if (typeof value == 'boolean')
+            formElement.checked = value;
+         else
+            formElement.value = value;
+         break;
+      case 'radio':
          for (var i = 0; i < formElement.length; i++)
          {
             if (formElement[i].value == value)

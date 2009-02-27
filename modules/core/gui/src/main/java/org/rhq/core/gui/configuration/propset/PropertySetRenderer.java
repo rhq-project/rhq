@@ -30,6 +30,7 @@ import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
 import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.component.html.HtmlPanelGroup;
+import javax.faces.component.html.HtmlSelectBooleanCheckbox;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
@@ -45,6 +46,7 @@ import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.FacesExpressionUtility;
+import org.rhq.core.util.sort.HumaneStringComparator;
 
 /**
  * @author Ian Springer
@@ -178,7 +180,15 @@ public class PropertySetRenderer extends Renderer {
         html.delete(html.length() - 2, html.length()); // chop off the extra ", "
         html.append("), ");
         String inputHtmlDomReference = getHtmlDomReference(input, form, '"');
-        html.append("getElementValue(").append(inputHtmlDomReference).append("))");
+        html.append("getElementValue(").append(inputHtmlDomReference).append("));");
+
+        html.append("setInputsToValue(new Array(");
+        for (PropertyInfo propertyInfo : propertyInfos) {
+            String htmlDomReference = getHtmlDomReference(propertyInfo.getUnsetCheckbox(), form, '"');
+            html.append(htmlDomReference).append(", ");
+        }
+        html.delete(html.length() - 2, html.length()); // chop off the extra ", "
+        html.append("), false);");
         html.append("'>Apply</button>");
 
         FacesComponentUtility.addVerbatimText(panelGrid, html);
@@ -330,8 +340,10 @@ public class PropertySetRenderer extends Renderer {
         if (isOptional(propertyDefinitionSimple)) {
             FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='"
                 + CssStyleClasses.MEMBER_PROPERTY_UNSET_CELL + "'>");
-            PropertyRenderingUtility.addUnsetControl(propertySetComponent, propertyDefinitionSimple, propertyInfo
-                .getProperty(), input, false, propertySetComponent.getReadOnly(), false);
+            HtmlSelectBooleanCheckbox unsetCheckbox = PropertyRenderingUtility.addUnsetControl(propertySetComponent, propertyDefinitionSimple, propertyInfo
+                    .getProperty(), propertySetComponent.getListIndex(), input, false, propertySetComponent.getReadOnly(),
+                    false);
+            propertyInfo.setUnsetCheckbox(unsetCheckbox);
             FacesComponentUtility.addVerbatimText(propertySetComponent, "</td>");
         }
 
@@ -356,6 +368,7 @@ public class PropertySetRenderer extends Renderer {
         private PropertySimple property;
         private ValueExpression propertyValueExpression;
         private UIInput input;
+        private HtmlSelectBooleanCheckbox unsetCheckbox;
 
         PropertyInfo(String label, PropertySimple property, ValueExpression propertyValueExpression) {
             // Ensure this.label will never be null, so our compareTo() impl doesn't need to deal with null labels.
@@ -384,8 +397,18 @@ public class PropertySetRenderer extends Renderer {
             this.input = input;
         }
 
+        public HtmlSelectBooleanCheckbox getUnsetCheckbox()
+        {
+            return unsetCheckbox;
+        }
+
+        public void setUnsetCheckbox(HtmlSelectBooleanCheckbox unsetCheckbox)
+        {
+            this.unsetCheckbox = unsetCheckbox;
+        }
+
         public int compareTo(PropertyInfo that) {
-            return this.label.compareTo(that.label); // NOTE: this.label will never be null.                        
+            return new HumaneStringComparator().compare(this.label, that.label);
         }
     }
 }

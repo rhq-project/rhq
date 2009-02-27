@@ -153,11 +153,14 @@ public class PropertyRenderingUtility {
         // TODO: specify a component id
     }
 
-    public static void addUnsetControl(UIComponent parent, PropertyDefinitionSimple propertyDefinitionSimple,
-        PropertySimple propertySimple, UIInput valueInput, boolean configIsAggregate, boolean configReadOnly,
+    public static HtmlSelectBooleanCheckbox addUnsetControl(UIComponent parent, PropertyDefinitionSimple propertyDefinitionSimple,
+        PropertySimple propertySimple, Integer listIndex, UIInput valueInput, boolean configIsAggregate, boolean configReadOnly,
         boolean configFullyEditable) {
+        
         HtmlSelectBooleanCheckbox unsetCheckbox = FacesComponentUtility.createComponent(
             HtmlSelectBooleanCheckbox.class, null);
+        String unsetCheckboxId = PropertyIdGeneratorUtility.getIdentifier(propertySimple, listIndex, "Unset");
+        unsetCheckbox.setId(unsetCheckboxId);
         parent.getChildren().add(unsetCheckbox);
         unsetCheckbox.setValue(isUnset(propertyDefinitionSimple, propertySimple, configIsAggregate));
         if (isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable)
@@ -177,6 +180,7 @@ public class PropertyRenderingUtility {
             }
             unsetCheckbox.setOnchange(onchange.toString());
         }
+        return unsetCheckbox;
     }
 
     public static void addInitInputsJavaScript(UIComponent parent, String componentId, boolean configFullyEditable,

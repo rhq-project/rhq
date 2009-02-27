@@ -31,6 +31,7 @@ import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
 import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
+import org.rhq.core.clientapi.server.plugin.content.util.ContentJarFileInfo;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -45,6 +46,7 @@ import org.rhq.core.domain.util.MD5Generator;
  * @author John Mazzitelli
  */
 public class DiskSource implements ContentSourceAdapter {
+
     /**
      * The root path (directory) from which to synchronize content.
      */
@@ -91,8 +93,7 @@ public class DiskSource implements ContentSourceAdapter {
         this.supportedPackageTypes = null;
     }
 
-    public void synchronizePackages(PackageSyncReport report, Collection<ContentSourcePackageDetails> existingPackages)
-        throws Exception {
+    public void synchronizePackages(PackageSyncReport report, Collection<ContentSourcePackageDetails> existingPackages) throws Exception {
 
         // put all existing packages in a "to be deleted" list. As we sync, we will remove
         // packages from this list that still exist on the file system. Any leftover in the list
@@ -148,8 +149,7 @@ public class DiskSource implements ContentSourceAdapter {
      * @param directory the directory (and its subdirectories) to scan
      * @throws Exception if the sync fails
      */
-    protected void syncPackages(PackageSyncReport report, List<ContentSourcePackageDetails> packages, File directory)
-        throws Exception {
+    protected void syncPackages(PackageSyncReport report, List<ContentSourcePackageDetails> packages, File directory) throws Exception {
 
         for (File file : directory.listFiles()) {
             if (file.isDirectory()) {
@@ -184,16 +184,17 @@ public class DiskSource implements ContentSourceAdapter {
             return null; // we can't handle this file - it is an unknown/unsupported package type
         }
 
+        ContentJarFileInfo info = new ContentJarFileInfo(file);
         String md5 = MD5Generator.getDigestString(file);
         String name = file.getName();
-        String version = md5;
+        String version = info.getVersion(md5);
         String packageTypeName = supportedPackageType.packageTypeName;
         String architectureName = supportedPackageType.architectureName;
         String resourceTypeName = supportedPackageType.resourceTypeName;
         String resourceTypePluginName = supportedPackageType.resourceTypePluginName;
 
-        ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey(name, version, packageTypeName,
-            architectureName, resourceTypeName, resourceTypePluginName);
+        ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey(name, version, packageTypeName, architectureName, resourceTypeName,
+            resourceTypePluginName);
         ContentSourcePackageDetails pkg = new ContentSourcePackageDetails(key);
 
         pkg.setDisplayName(name);
@@ -202,12 +203,12 @@ public class DiskSource implements ContentSourceAdapter {
         pkg.setFileSize(file.length());
         pkg.setMD5(md5);
         pkg.setLocation(getRelativePath(file));
+        pkg.setShortDescription(info.getDescription(null));
 
         return pkg;
     }
 
-    protected ContentSourcePackageDetails findPackage(List<ContentSourcePackageDetails> packages,
-        ContentSourcePackageDetails pkg) {
+    protected ContentSourcePackageDetails findPackage(List<ContentSourcePackageDetails> packages, ContentSourcePackageDetails pkg) {
         for (ContentSourcePackageDetails p : packages) {
             if (p.equals(pkg)) {
                 return p;

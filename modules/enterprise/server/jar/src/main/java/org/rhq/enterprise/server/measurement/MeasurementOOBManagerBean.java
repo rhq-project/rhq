@@ -26,6 +26,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -306,22 +308,30 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         if (begin < 0)
             begin = 0;
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            MeasurementOOB.GET_HIGHEST_FACTORS_FOR_RESOURCE, pc);
+        Query query = entityManager.createNamedQuery(MeasurementOOB.GET_HIGHEST_FACTORS_FOR_RESOURCE);
         query.setParameter("begin", begin);
         query.setParameter("end", end);
         query.setParameter("resourceId", resourceId);
 
         List<MeasurementOOBComposite> results = query.getResultList();
 
+        /*
+         * We do now have a list of OOBs sorted by schedule ids, oobFactor desc
+         * We need to filter by schedule id now
+         */
+        Set<Integer> schedules = new HashSet<Integer>();
         if (!results.isEmpty()) {
             // we have the n OOBs, so lets fetch the MeasurementData for those
             List<MeasurementDataPK> pks = new ArrayList<MeasurementDataPK>(results.size());
             Map<MeasurementDataPK, MeasurementOOBComposite> map = new HashMap<MeasurementDataPK, MeasurementOOBComposite>();
             for (MeasurementOOBComposite comp : results) {
-                MeasurementDataPK key = new MeasurementDataPK(comp.getTimestamp(), comp.getScheduleId());
-                pks.add(key);
-                map.put(key, comp);
+                int schedule = comp.getScheduleId();
+                if (!schedules.contains(schedule)) {
+                    MeasurementDataPK key = new MeasurementDataPK(comp.getTimestamp(), schedule);
+                    pks.add(key);
+                    map.put(key, comp);
+                    schedules.add(schedule);
+                }
             }
             // compute and add the outlier data
             List<MeasurementDataNumeric1H> datas = getOneHourDataForPKs(pks);

@@ -100,7 +100,8 @@ import javax.persistence.Table;
                         "  AND sched.definition = def " +
                         "  AND sched.resource = res " +
                         "  AND bal.schedule = sched " +
-                        "  AND :resourceId = res.id "// +
+                        "  AND :resourceId = res.id " +
+                        "ORDER BY sched.id, o.oobFactor DESC "
         )
 })
 @Entity

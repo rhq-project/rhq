@@ -24,9 +24,9 @@
       <h:form id="historyForm">
          <input type="hidden" name="id" value="${ResourceUIBean.id}"/>
          
-         <h:outputLink value="/rhq/resource/inventory/view.xhtml">
+         <h:outputLink value="/rhq/resource/inventory/view-connection.xhtml">
             <f:param name="id" value="#{param.id}" />
-            <h:outputText value="&lt; Return to Inventory"/>
+            <h:outputText value="&lt; Return to Current Connection Properties"/>
          </h:outputLink>
          
           <rich:panel rendered="#{not empty latestConfig}">
@@ -208,9 +208,9 @@
 
       </rich:panel>
       
-      <h:outputLink value="/rhq/resource/inventory/view.xhtml">
+      <h:outputLink value="/rhq/resource/inventory/view-connection.xhtml">
          <f:param name="id" value="#{param.id}" />
-         <h:outputText value="&lt; Return to Inventory"/>
+         <h:outputText value="&lt; Return to Current Connection Properties"/>
       </h:outputLink>
 
    </ui:define>

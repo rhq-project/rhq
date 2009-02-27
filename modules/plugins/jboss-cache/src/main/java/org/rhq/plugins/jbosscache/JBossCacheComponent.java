@@ -79,7 +79,7 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
     List<EmsBean> interceptors = new ArrayList<EmsBean>();
     ResourceContext context;
 
-    public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
+    public void start(ResourceContext context) throws Exception {
 
         PropertySimple objectName = context.getPluginConfiguration().getSimple("objectName");
         baseObjectName = objectName.getStringValue();
@@ -155,7 +155,7 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
             EmsConnection connection = parentServer.getEmsConnection();
             if (connection == null)
                 return AvailabilityType.DOWN;
-            
+
             boolean up = connection.getBean(baseObjectName).isRegistered();
             return up ? AvailabilityType.UP : AvailabilityType.DOWN;
         } catch (Exception e) {
@@ -200,6 +200,10 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
     public Configuration loadResourceConfiguration() throws Exception {
 
         File file = DeploymentUtility.getDescriptorFile(parentServer.getEmsConnection(), context.getResourceKey());
+        if (file==null) {
+            log.warn("Can not find the deployment descriptor for this cache ");
+            return null;
+        }
         try {
             SAXBuilder builder = new SAXBuilder();
             Document doc = builder.build(file);

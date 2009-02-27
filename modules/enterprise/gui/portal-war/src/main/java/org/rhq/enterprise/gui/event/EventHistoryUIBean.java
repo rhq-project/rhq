@@ -208,7 +208,8 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
                     rangePreferences.end, severities, -1, source, search, pc);
             } else if (context.category == EntityContext.Category.AutoGroup) {
                 results = eventManager.getEventsForAutoGroup(getSubject(), context.parentResourceId,
-                    context.resourceTypeId, rangePreferences.begin, rangePreferences.end, severities, pc);
+                    context.resourceTypeId, rangePreferences.begin, rangePreferences.end, severities, -1, source,
+                    search, pc);
             } else {
                 log.error(context.getUnknownContextMessage());
             }

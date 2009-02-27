@@ -50,12 +50,16 @@
                <h:outputLabel for="severityFilter" value="Severity Filter: " />
                <h:selectManyCheckbox id="severityFilter" value="#{EventHistoryUIBean.severityFilter}"
                                     style="width: 300px;">
-                   <a4j:support event="onchange" reRender="eventHistoryDataTable,eventHistoryDataTableScroller" />
+                   <a4j:support event="onchange"
+                                status="commonStatus" 
+                                reRender="eventHistoryDataTable,eventHistoryDataTableScroller" />
 
                    <f:selectItems value="#{EventHistoryUIBean.severityFilterSelectItems}"/>
                </h:selectManyCheckbox>
                
-               <a4j:commandButton value="GO" reRender="eventHistoryDataTable,eventHistoryDataTableScroller"
+               <a4j:commandButton value="GO"
+                                  status="commonStatus" 
+                                  reRender="eventHistoryDataTable,eventHistoryDataTableScroller"
                                   styleClass="buttonmed">
                   <s:defaultAction />
                </a4j:commandButton>

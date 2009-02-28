@@ -59,10 +59,6 @@ public class PluginGen {
     public PluginGen() {
     }
 
-    /**
-     * Starts the show
-     * @throws Exception
-     */
     public void run() throws Exception {
 
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));

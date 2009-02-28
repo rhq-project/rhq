@@ -20,14 +20,15 @@ package org.rhq.enterprise.server.configuration.job;
 
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 public class AggregateResourceConfigurationUpdateJob extends AbstractAggregateConfigurationUpdateJob {
     /**
@@ -38,39 +39,33 @@ public class AggregateResourceConfigurationUpdateJob extends AbstractAggregateCo
     private final Log log = LogFactory.getLog(AggregateResourceConfigurationUpdateJob.class);
 
     public static JobDetail getJobDetail(ResourceGroup group, Subject subject, JobDataMap jobDataMap) {
-        return AbstractAggregateConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap, 
-                AggregateResourceConfigurationUpdateJob.class, JOB_NAME_PREFIX);
+        return AbstractAggregateConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap,
+            AggregateResourceConfigurationUpdateJob.class, JOB_NAME_PREFIX);
     }
 
     protected List<Integer> getConfigurationUpdateIds(Integer aggregatePluginConfigurationUpdateId,
-                                                    ConfigurationManagerLocal configurationManager, PageControl pc)
-    {
-        @SuppressWarnings({"UnnecessaryLocalVariable"})
+        ConfigurationManagerLocal configurationManager, PageControl pc) {
         List<Integer> pagedChildUpdateIds = configurationManager.getResourceConfigurationUpdatesByParentId(
             aggregatePluginConfigurationUpdateId, pc);
         return pagedChildUpdateIds;
     }
 
     protected long getConfigurationUpdateCount(Integer aggregatePluginConfigurationUpdateId,
-                                               ConfigurationManagerLocal configurationManager)
-    {
-        @SuppressWarnings({"UnnecessaryLocalVariable"})
+        ConfigurationManagerLocal configurationManager) {
         long childPluginConfigurationUpdateCount = configurationManager
             .getResourceConfigurationUpdateCountByParentId(aggregatePluginConfigurationUpdateId);
         return childPluginConfigurationUpdateCount;
     }
 
     protected void executeConfigurationUpdate(ConfigurationManagerLocal configurationManager, Integer childUpdateId,
-                                              Subject subject)
-    {
+        Subject subject) {
         configurationManager.executeResourceConfigurationUpdate(childUpdateId);
     }
 
     protected void handleSynchronousConfigurationUpdateErrors(ConfigurationManagerLocal configurationManager,
-                                                              Integer aggregateConfigurationUpdateId,
-                                                              String errorMessages)
-    {        
-        log.error("Failed to execute one or more Resource Configuration updates that were part of a group update - details: "
+        Integer aggregateConfigurationUpdateId, String errorMessages) {
+        log
+            .error("Failed to execute one or more Resource Configuration updates that were part of a group update - details: "
                 + errorMessages);
         // TODO: Stick the errors in the individual updates.
     }

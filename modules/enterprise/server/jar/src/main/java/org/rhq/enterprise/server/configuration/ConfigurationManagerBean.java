@@ -61,6 +61,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.AggregateResourceConfigurationUpdate;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -74,10 +75,8 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
@@ -89,6 +88,7 @@ import org.rhq.enterprise.server.configuration.job.AbstractAggregateConfiguratio
 import org.rhq.enterprise.server.configuration.job.AggregatePluginConfigurationUpdateJob;
 import org.rhq.enterprise.server.configuration.job.AggregateResourceConfigurationUpdateJob;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
@@ -361,8 +361,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     private ResourceConfigurationUpdate persistNewAgentReportedResourceConfiguration(Resource resource,
-                                                                                     Configuration liveConfig)
-    {
+        Configuration liveConfig) {
         /*
         * NOTE: We pass the overlord, since this is a system side-effect.  here, the system
         * and *not* the user, is choosing to persist the most recent configuration because it was different
@@ -371,8 +370,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         * For the same reason, we pass null as the subject.
         */
         ResourceConfigurationUpdate update = this.configurationManager.persistNewResourceConfigurationUpdateHistory(
-                this.subjectManager.getOverlord(), resource.getId(), liveConfig, ConfigurationUpdateStatus.SUCCESS,
-                null, false);
+            this.subjectManager.getOverlord(), resource.getId(), liveConfig, ConfigurationUpdateStatus.SUCCESS, null,
+            false);
         resource.setResourceConfiguration(liveConfig.deepCopy(false));
         return update;
     }
@@ -453,23 +452,21 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateInProgress;
     }
 
-    public Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(Subject whoami,
-                                                                                   int groupId)
-            throws Exception
-    {
+    public Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(Subject whoami, int groupId)
+        throws Exception {
         // The below call will also handle the check to see if the subject has perms to view the group.
         ResourceGroupComposite groupComposite = this.resourceGroupManager.getResourceGroupWithAvailabilityById(whoami,
-                groupId);
+            groupId);
 
         if (groupComposite.getMemberCount() > MAX_GROUP_RESOURCE_CONFIG_MEMBERS)
             throw new Exception("Resource configurations for groups containing more than "
-                    + MAX_GROUP_RESOURCE_CONFIG_MEMBERS + " member Resources cannot be viewed or edited.");
+                + MAX_GROUP_RESOURCE_CONFIG_MEMBERS + " member Resources cannot be viewed or edited.");
 
-        AvailabilityType availability = (groupComposite.getAvailability() == 1) ? AvailabilityType.UP :
-                AvailabilityType.DOWN;
+        AvailabilityType availability = (groupComposite.getAvailability() == 1) ? AvailabilityType.UP
+            : AvailabilityType.DOWN;
         if (availability == AvailabilityType.DOWN)
             throw new Exception("Current group Resource configuration for " + groupId
-                    + " cannot be calculated, because one or more of this group's member Resources are DOWN.");
+                + " cannot be calculated, because one or more of this group's member Resources are DOWN.");
 
         // If we got this far, all member Resources are UP. Now check to make sure no config updates, aggregate or
         // individual, are in progress.
@@ -481,32 +478,30 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // configs can't be obtained within the specified timeout, this call will throw an exception.
         final long TIMEOUT_IN_SECONDS = 20;
         Map<Integer, Configuration> liveConfigs = LiveConfigurationLoader.getInstance().loadLiveResourceConfigurations(
-                group.getImplicitResources(), TIMEOUT_IN_SECONDS);
+            group.getImplicitResources(), TIMEOUT_IN_SECONDS);
 
         // If we got this far, we were able to retrieve all of the live configs from the Agents. Now load the current
         // persisted configs from the DB and compare them to the corresponding live configs. For any that are not equal,
         // persist the live config to the DB as the new current config.
-        Map<Integer, Configuration> currentPersistedConfigs = getPersistedResourceConfigurationsForCompatibleGroup(
-                group);
+        Map<Integer, Configuration> currentPersistedConfigs = getPersistedResourceConfigurationsForCompatibleGroup(group);
         for (Resource memberResource : group.getImplicitResources()) {
             Configuration liveConfig = liveConfigs.get(memberResource.getId());
             // NOTE: The persisted config may be null if no config has been persisted yet.
             Configuration currentPersistedConfig = currentPersistedConfigs.get(memberResource.getId());
             if (!liveConfig.equals(currentPersistedConfig)) {
                 // If the live config is different than the persisted config, persist it as the new current config.
-                ResourceConfigurationUpdate update = persistNewAgentReportedResourceConfiguration(memberResource, liveConfig);
+                ResourceConfigurationUpdate update = persistNewAgentReportedResourceConfiguration(memberResource,
+                    liveConfig);
                 currentPersistedConfigs.put(memberResource.getId(), update.getConfiguration());
             }
         }
         return currentPersistedConfigs;
     }
 
-    private void ensureNoResourceConfigurationUpdatesInProgress(ResourceGroup compatibleGroup)
-            throws Exception
-    {
+    private void ensureNoResourceConfigurationUpdatesInProgress(ResourceGroup compatibleGroup) throws Exception {
         if (isAggregateResourceConfigurationUpdateInProgress(this.subjectManager.getOverlord(), compatibleGroup.getId())) {
             throw new Exception("Current group Resource configuration for " + compatibleGroup
-                    + " cannot be calculated, because a group Resource configuration update is currently in progress.");
+                + " cannot be calculated, because a group Resource configuration update is currently in progress.");
         }
         List<Resource> resourcesWithResourceConfigUpdatesInProgress = new ArrayList();
         for (Resource memberResource : compatibleGroup.getImplicitResources()) {
@@ -514,26 +509,29 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 resourcesWithResourceConfigUpdatesInProgress.add(memberResource);
         }
         if (!resourcesWithResourceConfigUpdatesInProgress.isEmpty())
-             throw new Exception("Current group Resource configuration for " + compatibleGroup
-                     + " cannot be calculated, because a Resource configuration updates are currently in progress for the following Resources: "
-                     + resourcesWithResourceConfigUpdatesInProgress);
+            throw new Exception(
+                "Current group Resource configuration for "
+                    + compatibleGroup
+                    + " cannot be calculated, because a Resource configuration updates are currently in progress for the following Resources: "
+                    + resourcesWithResourceConfigUpdatesInProgress);
     }
 
-    private Map<Integer, Configuration> getPersistedResourceConfigurationsForCompatibleGroup(ResourceGroup compatibleGroup) {
+    private Map<Integer, Configuration> getPersistedResourceConfigurationsForCompatibleGroup(
+        ResourceGroup compatibleGroup) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
             Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID);
         countQuery.setParameter("resourceGroupId", compatibleGroup.getId());
         long count = (Long) countQuery.getSingleResult();
         if (count != compatibleGroup.getImplicitResources().size())
-            throw new IllegalStateException("Size of group changed from " + compatibleGroup.getImplicitResources().size()
-                    + " to " + count + " - please retry the operation.");
+            throw new IllegalStateException("Size of group changed from "
+                + compatibleGroup.getImplicitResources().size() + " to " + count + " - please retry the operation.");
 
         // Configurations are very expensive to load, so load 'em in chunks to ease the strain on the DB.
         PageControl pageControl = new PageControl(0, 10);
         Query query = entityManager.createNamedQuery(Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID);
         query.setParameter("resourceGroupId", compatibleGroup.getId());
 
-        Map<Integer, Configuration> results = new HashMap((int)count);
+        Map<Integer, Configuration> results = new HashMap((int) count);
         int rowsProcessed = 0;
         while (true) {
             List<Object[]> pagedResults = query.getResultList();
@@ -542,7 +540,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 break;
 
             for (Object[] result : pagedResults)
-                results.put((Integer)result[0], (Configuration)result[1]);
+                results.put((Integer) result[0], (Configuration) result[1]);
 
             rowsProcessed += pagedResults.size();
             if (rowsProcessed >= count)
@@ -554,8 +552,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return results;
     }
 
-    public Configuration getLiveResourceConfiguration(Subject whoami, int resourceId, boolean pingAgentFirst) 
-            throws Exception {
+    public Configuration getLiveResourceConfiguration(Subject whoami, int resourceId, boolean pingAgentFirst)
+        throws Exception {
         Resource resource = entityManager.find(Resource.class, resourceId);
 
         if (resource == null) {
@@ -1296,44 +1294,17 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             .getName());
         int updateId = configurationManager.createAggregateConfigurationUpdate(aggregateUpdate);
 
-        /*
-         * Efficiently create all Resource-level Resource configuration update objects by
-         * iterating the implicit list in smaller, more memory-manageable chunks.
-         */
-        int pageNumber = 0;
-        int rowsProcessed = 0;
-        int groupMemberCount = resourceGroupManager.getImplicitGroupMemberCount(group.getId());
-
-        PageControl pc = new PageControl(pageNumber, 50, new OrderingField("res.id", PageOrdering.ASC));
-        while (true) {
-            Subject overlord = subjectManager.getOverlord();
-            // TODO: We really only need to load the Resource id's here , not the entire Resources.
-            List<Resource> pagedMemberResources = resourceManager.getImplicitResourcesByResourceGroup(overlord, group,
-                pc);
-            if (pagedMemberResources.size() <= 0)
-                break;
-
-            for (Resource memberResource : pagedMemberResources) {
-                /*
-                 * addConfigurationUpdate does all the magic of creating a new plugin configuration from the to-update
-                 * elements of the aggregate
-                 */
-                Configuration memberConfiguration = memberConfigurations.get(memberResource.getId());
-                ResourceConfigurationUpdate memberUpdate = configurationManager.updateResourceConfiguration(whoami,
-                    memberResource.getId(), memberConfiguration);
-                if (memberUpdate != null) {
-                    memberUpdate.setAggregateConfigurationUpdate(aggregateUpdate);
-                    entityManager.merge(memberUpdate);
-                }
-            }
-
-            rowsProcessed += pagedMemberResources.size();
-            if (rowsProcessed >= groupMemberCount)
-                break;
-
-            pc.setPageNumber(pc.getPageNumber() + 1);
-            entityManager.flush();
-            entityManager.clear();
+        for (Integer resourceId : memberConfigurations.keySet()) {
+            /*
+             * addConfigurationUpdate does all the magic of creating a new plugin configuration from the to-update
+             * elements of the aggregate
+             */
+            Configuration memberConfiguration = memberConfigurations.get(resourceId);
+            Resource flyWeight = new Resource(resourceId);
+            ResourceConfigurationUpdate memberUpdate = new ResourceConfigurationUpdate(flyWeight, memberConfiguration,
+                whoami.getName());
+            memberUpdate.setAggregateConfigurationUpdate(aggregateUpdate);
+            entityManager.persist(memberUpdate);
         }
 
         JobDataMap jobDataMap = new JobDataMap();

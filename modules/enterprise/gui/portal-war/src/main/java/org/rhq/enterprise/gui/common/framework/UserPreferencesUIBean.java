@@ -20,16 +20,14 @@ package org.rhq.enterprise.gui.common.framework;
 
 import java.util.List;
 
-import org.richfaces.event.SimpleToggleEvent;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -57,7 +55,7 @@ public class UserPreferencesUIBean {
     public String getLeftResourceNavState() {
         updateRecentVisits();
         return EnterpriseFacesContextUtility.getWebUser().getWebPreferences().getPreference(LEFT_RESOURCE_NAV_SHOWING,
-                "30");
+            "30");
     }
 
     public void setLeftResourceNavState(String state) {
@@ -67,11 +65,13 @@ public class UserPreferencesUIBean {
     }
 
     public void updateSummaryPanelDisplayState(javax.faces.event.ActionEvent event) {
-        setSummaryPanelDisplayState(String.valueOf(!((SimpleToggleEvent) event).isIsOpen()));
+        String summaryPanelState = getSummaryPanelDisplayState();
+        setSummaryPanelDisplayState(summaryPanelState.equals("true") ? "false" : "true");
     }
 
     public String getSummaryPanelDisplayState() {
-        return EnterpriseFacesContextUtility.getWebUser().getWebPreferences().getPreference(SUMMARY_PANEL_DISPLAY_STATE, "true");
+        return EnterpriseFacesContextUtility.getWebUser().getWebPreferences().getPreference(
+            SUMMARY_PANEL_DISPLAY_STATE, "true");
     }
 
     public void setSummaryPanelDisplayState(String state) {
@@ -84,21 +84,20 @@ public class UserPreferencesUIBean {
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
 
         WebUserPreferences.FavoriteResourcePortletPreferences favoriteResources = user.getWebPreferences()
-                .getFavoriteResourcePortletPreferences();
+            .getFavoriteResourcePortletPreferences();
 
         return resourceManager.getResourceByIds(getSubject(), favoriteResources.asArray(), false, PageControl
-                .getUnlimitedInstance());
+            .getUnlimitedInstance());
     }
 
     public List<ResourceGroup> getGroupFavorites() {
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
 
         WebUserPreferences.FavoriteGroupPortletPreferences favoriteGroups = user.getWebPreferences()
-                .getFavoriteGroupPortletPreferences();
-        return groupManager.getResourceGroupByIds(
-                getSubject(), favoriteGroups.asArray(), PageControl.getUnlimitedInstance());
+            .getFavoriteGroupPortletPreferences();
+        return groupManager.getResourceGroupByIds(getSubject(), favoriteGroups.asArray(), PageControl
+            .getUnlimitedInstance());
     }
-
 
     public List<WebUserPreferences.ResourceVisit> getRecentVisits() {
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
@@ -115,15 +114,15 @@ public class UserPreferencesUIBean {
         if (resourceId != null) {
             Resource res = resourceManager.getResourceById(getSubject(), Integer.parseInt(resourceId));
             visit = new WebUserPreferences.ResourceVisit(Integer.parseInt(resourceId), res.getName(),
-                    WebUserPreferences.ResourceVisit.Kind.valueOf(res.getResourceType().getCategory().name()));
-        } else if (groupId != null){
+                WebUserPreferences.ResourceVisit.Kind.valueOf(res.getResourceType().getCategory().name()));
+        } else if (groupId != null) {
             ResourceGroup group = groupManager.getResourceGroupById(getSubject(), Integer.parseInt(groupId), null);
-            visit = new WebUserPreferences.ResourceVisit(Integer.parseInt(groupId), group.getName(),
-                    (group.getResourceType() != null ? 
-                    WebUserPreferences.ResourceVisit.Kind.COMPATIBLE_GROUP : WebUserPreferences.ResourceVisit.Kind.MIXED_GROUP));
+            visit = new WebUserPreferences.ResourceVisit(Integer.parseInt(groupId), group.getName(), (group
+                .getResourceType() != null ? WebUserPreferences.ResourceVisit.Kind.COMPATIBLE_GROUP
+                : WebUserPreferences.ResourceVisit.Kind.MIXED_GROUP));
         }
         if (visit != null) {
-            
+
             prefs.addRecentResource(visit);
         }
     }

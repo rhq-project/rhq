@@ -43,7 +43,7 @@ import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
-import org.rhq.core.clientapi.server.plugin.content.util.ContentJarFileInfo;
+import org.rhq.core.clientapi.server.plugin.content.util.JarContentFileInfo;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
@@ -616,7 +616,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
             // First discovery of this WAR
             if (null == version) {
-                ContentJarFileInfo info = new ContentJarFileInfo(file);
+                JarContentFileInfo info = new JarContentFileInfo(file);
                 version = info.getVersion("1.0");
                 versions.putVersion(fileName, version);
                 versions.saveToDisk();

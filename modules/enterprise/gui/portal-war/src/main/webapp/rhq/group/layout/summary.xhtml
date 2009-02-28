@@ -29,50 +29,57 @@ groupId - the group id of the Group being accessed
         <input type="hidden" name="groupId" value="#{ResourceGroupUIBean.groupId}"/>
         <input type="hidden" name="parentGroupId" value="#{param.parentGroupId}"/>
         <input type="hidden" name="category" value="#{param.category}"/>
-        
+
 
         <rich:simpleTogglePanel switchType="ajax" id="summary-toggle-panel" headerClass="summaryHeader"
                                 actionListener="#{UserPreferencesUIBean.updateSummaryPanelDisplayState}"
                                 value="#{UserPreferencesUIBean.summaryPanelDisplayState}">
 
             <f:facet name="header">
-                <h:panelGrid columns="2" width="90%">
-                    <h:panelGroup>
-                        <h:graphicImage value="/images/icn_tree_Cluster_on_24.png"/>
-                        <h:outputText style="font-size: large;" value="#{ResourceGroupUIBean.name}"/>
-                    </h:panelGroup>
 
-                    <h:panelGroup layout="block" style="float: right;">
-                        <h:graphicImage value="/images/icon_available_green_24.png" alt="Up" title="Up"
-                                        rendered="#{ResourceGroupUIBean.availability == 1}"/>
-                        <h:graphicImage value="/images/icon_available_red_24.png" alt="Down" title="Down"
-                                        rendered="#{ResourceGroupUIBean.availability == 0}"/>
-                        <h:graphicImage value="/images/icon_available_yellow_24.png" alt="Mixed" title="Mixed"
-                                        rendered="#{ResourceGroupUIBean.availability gt 0 and ResourceGroupUIBean.availability lt 1}"/>
-                        <h:graphicImage value="/images/icon_available_grey_24.png" alt="Unknown" title="Unknown"
-                                        rendered="#{ResourceGroupUIBean.availability == null}"/>
+                <h:panelGroup layout="block" style="width: 100%">
 
 
-                        <h:outputLink rendered="#{ResourceGroupUIBean.favorite}"
-                                      value="/resource/common/QuickFavorites.do"
-                                      styleClass="PageTitleSmallText">
-                            <f:param name="groupId" value="#{ResourceGroupUIBean.groupId}"/>
-                            <f:param name="mode" value="remove"/>
-                            <h:outputText value="&nbsp;Remove from Favorites"/>
-                            <h:graphicImage value="/images/title_arrow.gif" width="11" height="9"/>
-                        </h:outputLink>
+                    <table width="100%" style="padding-right: 30px;">
+                        <tr>
 
-                        <ui:remove><!-- TODO change rendered to be "!" when favorite groups is implemented --></ui:remove>
-                        <h:outputLink rendered="#{ResourceGroupUIBean.favorite}"
-                                      value="/resource/common/QuickFavorites.do"
-                                      styleClass="PageTitleSmallText">
-                            <f:param name="groupId" value="#{ResourceGroupUIBean.groupId}"/>
-                            <f:param name="mode" value="add"/>
-                            <h:outputText value="&nbsp;Add to Favorites"/>
-                            <h:graphicImage value="/images/title_arrow.gif" width="11" height="9"/>
-                        </h:outputLink>
-                    </h:panelGroup>
-                </h:panelGrid>
+                            <td>
+                                <h:graphicImage value="/images/icn_tree_Cluster_on_24.png"/>
+                                <h:outputText style="font-size: large;" value="#{ResourceGroupUIBean.name}"/>
+                            </td>
+
+                            <td width="30">
+                                <h:graphicImage value="/images/icon_available_green_24.png" alt="Up" title="Up"
+                                                rendered="#{ResourceGroupUIBean.availability == 1}"/>
+                                <h:graphicImage value="/images/icon_available_red_24.png" alt="Down" title="Down"
+                                                rendered="#{ResourceGroupUIBean.availability == 0}"/>
+                                <h:graphicImage value="/images/icon_available_yellow_24.png" alt="Mixed" title="Mixed"
+                                                rendered="#{ResourceGroupUIBean.availability gt 0 and ResourceGroupUIBean.availability lt 1}"/>
+                                <h:graphicImage value="/images/icon_available_grey_24.png" alt="Unknown" title="Unknown"
+                                                rendered="#{ResourceGroupUIBean.availability == null}"/>
+                            </td>
+
+                            <td width="30">
+                                <a4j:outputPanel id="favoritesPanel">
+                                    <a4j:commandButton id="favoritesButton"
+                                                       reRender="favoritesPanel" status="commonStatus"
+                                                       image="#{ResourceGroupUIBean.favorite ? '/images/star_on_24.png' : '/images/star_off_24.png'}"
+                                                       action="#{ResourceGroupUIBean.toggleFavorite}">
+
+                                    </a4j:commandButton>
+                                    <rich:toolTip for="favoritesPanel">
+                                        <h:outputText value="Add resource to favorites list"
+                                                      rendered="#{!ResourceGroupUIBean.favorite}"/>
+                                        <h:outputText value="Remove resource from favorites list"
+                                                      rendered="#{ResourceGroupUIBean.favorite}"/>
+                                    </rich:toolTip>
+                                </a4j:outputPanel>
+                            </td>
+                        </tr>
+                    </table>
+
+
+                </h:panelGroup>
             </f:facet>
 
 

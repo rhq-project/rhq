@@ -48,11 +48,7 @@
             <h:outputText value="#{msg['resource.hub.filter.service']}"/>
         </rich:menuItem>
 
-        <rich:menuSeparator/>
-
-
-        <rich:menuGroup value="Groups">
-            <rich:menuItem submitMode="none" icon="/images/icn_tree_Cluster_on.png"
+             <rich:menuItem submitMode="none" icon="/images/icn_tree_Cluster_on.png"
                            onclick="window.location = '/GroupHub.do?groupCategory=COMPATIBLE'">
                 <h:outputText value="#{msg['resource.hub.filter.compatibleGroups']}"/>
             </rich:menuItem>
@@ -65,7 +61,6 @@
             <rich:menuItem submitMode="none" onclick="window.location = '/rhq/definition/group/list.xhtml'">
                 <h:outputText value="#{msg['resource.hub.filter.groupDefinitions']}"/>
             </rich:menuItem>
-        </rich:menuGroup>
 
 
         <rich:menuGroup value="Subsystem Views">
@@ -89,12 +84,14 @@
 
         </rich:menuGroup>
 
+        <rich:menuSeparator/>
 
-        <rich:menuGroup value="Favorites" icon="/images/star_on_24.png">
+        <rich:menuGroup value="Favorite Resources" icon="/images/star_on_24.png">
 
             <c:forEach var="resource" items="#{UserPreferencesUIBean.resourceFavorites}">
                 
                 <rich:menuItem submitMode="none"
+                               icon="/images/icn_tree_#{resource.resourceType.category}_on.png"                               
                                onclick="window.location = '#{onf:getDefaultResourceTabURL()}?id=#{resource.id}'">
                     <h:outputText value="#{resource.name}"/>
                 </rich:menuItem>
@@ -102,20 +99,35 @@
 
         </rich:menuGroup>
 
+
+        <rich:menuGroup value="Favorite Groups" icon="/images/star_on_24.png">
+
+            <c:forEach var="group" items="#{UserPreferencesUIBean.groupFavorites}">
+
+                <rich:menuItem submitMode="none"
+                               icon="/images/icn_tree_Cluster_on.png"
+                               onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{group.id}'">
+                    <h:outputText value="#{group.name}"/>
+                </rich:menuItem>
+            </c:forEach>
+
+        </rich:menuGroup>
+
+
         <rich:menuGroup value="Recently Viewed" icon="/images/bookmark.png">
 
             <c:forEach var="visit" items="#{UserPreferencesUIBean.recentVisits}">
 
-                <c:if test="#{visit.kind == 'resource'}">
+                <c:if test="#{visit.kind == 'PLATFORM' or visit.kind == 'SERVER' or visit.kind == 'SERVICE'}">
                 <rich:menuItem submitMode="none"
-                               icon="/images/icn_tree_Service_on.png"
+                               icon="/images/icn_tree_#{visit.kind.displayName}_on.png"
                                onclick="window.location = '#{onf:getDefaultResourceTabURL()}?id=#{visit.id}'">
                     <h:outputText value="#{visit.name}"/>
                 </rich:menuItem>
                 </c:if>
-                <c:if test="#{visit.kind == 'group'}">
+                <c:if test="#{visit.kind == 'COMPATIBLE_GROUP' or visit.kind == 'MIXED_GROUP'}">
                 <rich:menuItem submitMode="none"
-                               icon="/images/icn_tree_Cluster_on.png"
+                               icon="/images/icn_tree_#{visit.kind == 'COMPATIBLE_GROUP' ? 'Cluster' : 'group'}_on.png"
                                onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{visit.id}'">
                     <h:outputText value="#{visit.name}"/>
                 </rich:menuItem>

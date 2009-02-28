@@ -90,6 +90,16 @@ public class UserPreferencesUIBean {
                 .getUnlimitedInstance());
     }
 
+    public List<ResourceGroup> getGroupFavorites() {
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+
+        WebUserPreferences.FavoriteGroupPortletPreferences favoriteGroups = user.getWebPreferences()
+                .getFavoriteGroupPortletPreferences();
+        return groupManager.getResourceGroupByIds(
+                getSubject(), favoriteGroups.asArray(), PageControl.getUnlimitedInstance());
+    }
+
+
     public List<WebUserPreferences.ResourceVisit> getRecentVisits() {
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
         return user.getWebPreferences().getRecentResourceVisits();
@@ -104,10 +114,13 @@ public class UserPreferencesUIBean {
         WebUserPreferences.ResourceVisit visit = null;
         if (resourceId != null) {
             Resource res = resourceManager.getResourceById(getSubject(), Integer.parseInt(resourceId));
-            visit = new WebUserPreferences.ResourceVisit(Integer.parseInt(resourceId), res.getName(), WebUserPreferences.ResourceVisit.Kind.resource);
+            visit = new WebUserPreferences.ResourceVisit(Integer.parseInt(resourceId), res.getName(),
+                    WebUserPreferences.ResourceVisit.Kind.valueOf(res.getResourceType().getCategory().name()));
         } else if (groupId != null){
             ResourceGroup group = groupManager.getResourceGroupById(getSubject(), Integer.parseInt(groupId), null);
-            visit = new WebUserPreferences.ResourceVisit(Integer.parseInt(groupId), group.getName(), WebUserPreferences.ResourceVisit.Kind.group);
+            visit = new WebUserPreferences.ResourceVisit(Integer.parseInt(groupId), group.getName(),
+                    (group.getResourceType() != null ? 
+                    WebUserPreferences.ResourceVisit.Kind.COMPATIBLE_GROUP : WebUserPreferences.ResourceVisit.Kind.MIXED_GROUP));
         }
         if (visit != null) {
             

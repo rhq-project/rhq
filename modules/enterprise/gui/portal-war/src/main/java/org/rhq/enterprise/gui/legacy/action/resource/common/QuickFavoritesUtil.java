@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.FavoriteResourcePortletPreferences;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
@@ -46,7 +47,7 @@ public class QuickFavoritesUtil {
 
     public static Boolean determineIfFavoriteGroup(HttpServletRequest request, int groupId) {
         WebUser user = SessionUtils.getWebUser(request.getSession());
-        Boolean isFavorite = isFavorite(user, groupId);
+        Boolean isFavorite = isFavoriteGroup(user, groupId);
         request.setAttribute("isFavorite", isFavorite);
         return isFavorite;
     }
@@ -61,4 +62,17 @@ public class QuickFavoritesUtil {
             return false;
         }
     }
+
+    public static Boolean isFavoriteGroup(WebUser user, int groupId) {
+        try {
+            WebUserPreferences.FavoriteGroupPortletPreferences favoriteGroups = user.getWebPreferences()
+                .getFavoriteGroupPortletPreferences();
+            return favoriteGroups.isFavorite(groupId);
+        } catch (Exception e) {
+            LogFactory.getLog(QuickFavoritesUtil.class).error("Cannot determine if group [" + groupId + "] is a favorite", e);
+            return false;
+        }
+    }
+
+
 }

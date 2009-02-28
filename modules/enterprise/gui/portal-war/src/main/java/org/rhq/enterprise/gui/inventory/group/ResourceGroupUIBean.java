@@ -35,8 +35,11 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
+import org.rhq.enterprise.gui.legacy.WebUser;
+import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.resource.common.QuickFavoritesUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -163,11 +166,39 @@ public class ResourceGroupUIBean {
 
     public boolean isFavorite() {
         if (this.isFavorite == null) {
-            this.isFavorite = QuickFavoritesUtil.determineIfFavoriteGroup(FacesContextUtility.getRequest(),
-                getGroupId());
+            WebUser user = EnterpriseFacesContextUtility.getWebUser();
+            WebUserPreferences preferences = user.getWebPreferences();
+            WebUserPreferences.FavoriteGroupPortletPreferences favorites = preferences
+                        .getFavoriteGroupPortletPreferences();
+
+            this.isFavorite = favorites.isFavorite(getGroupId());
         }
 
         return this.isFavorite;
+    }
+
+
+     public String toggleFavorite() {
+//        log.debug("toggleFavorite for " + resourceGroup);
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        WebUserPreferences preferences = user.getWebPreferences();
+        WebUserPreferences.FavoriteGroupPortletPreferences favorites = preferences
+            .getFavoriteGroupPortletPreferences();
+
+        boolean isFav = favorites.isFavorite(getGroupId());
+        if (isFav) {
+            favorites.removeFavorite(getGroupId());
+//            log.debug("Removing favorite: " + resourceId);
+        } else {
+            favorites.addFavorite(getGroupId());
+//            log.debug("Adding favorite: " + resourceId);
+        }
+
+        preferences.setFavoriteGroupPortletPreferences(favorites);
+
+        this.isFavorite = !isFav;
+
+        return null;
     }
 
     private static ResourceGroupComposite lookupResourceGroup() {

@@ -58,6 +58,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     public static final String PREF_DASH_FAVORITE_RESOURCES_AVAILABILITY = ".dashContent.resourcehealth.availability";
     public static final String PREF_DASH_FAVORITE_RESOURCES_ALERTS = ".dashContent.resourcehealth.alerts";
     public static final String PREF_DASH_FAVORITE_RESOURCES = ".dashContent.resourcehealth.resources";
+    public static final String PREF_DASH_FAVORITE_GROUPS = ".dashContent.grouphealth.groups";
 
     /**
      * The key that holds the user's chart queries
@@ -77,7 +78,6 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     public static final String PREF_LAST_URL = ".last.url";
 
     public static final String PREF_RECENT_RESOURCES = ".recent.resources";
-
 
 
     public WebUserPreferences(Subject subject) {
@@ -330,6 +330,37 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         }
     }
 
+
+    public static class FavoriteGroupPortletPreferences {
+        public boolean showAvailability;
+        private List<Integer> groupIds;
+
+        public Integer[] asArray() {
+            return groupIds.toArray(new Integer[groupIds.size()]);
+        }
+
+        public void removeFavorite(int groupId) {
+            groupIds.remove((Object) new Integer(groupId));
+        }
+
+        public void addFavorite(int resourceId) {
+            groupIds.add(resourceId);
+        }
+
+        public void setFavorites(List<Integer> resourceIds) {
+            this.groupIds = resourceIds;
+        }
+
+        public boolean isFavorite(int groupId) {
+            return groupIds.contains(groupId);
+        }
+
+        public String toString() {
+            return AlertsPortletPreferences.class.getSimpleName() + "[showAvailability=" + showAvailability
+                + ",resourceIds=" + groupIds + "]";
+        }
+    }
+
     public FavoriteResourcePortletPreferences getFavoriteResourcePortletPreferences() {
         FavoriteResourcePortletPreferences prefs = new FavoriteResourcePortletPreferences();
         prefs.showAvailability = getBooleanPref(PREF_DASH_FAVORITE_RESOURCES_AVAILABILITY);
@@ -346,6 +377,18 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         setPreference(PREF_DASH_FAVORITE_RESOURCES_ALERTS, prefs.showAlerts);
         setPreference(PREF_DASH_FAVORITE_RESOURCES, prefs.resourceIds, PREF_ITEM_DELIM);
     }
+
+
+    public FavoriteGroupPortletPreferences getFavoriteGroupPortletPreferences() {
+        FavoriteGroupPortletPreferences prefs = new FavoriteGroupPortletPreferences();
+        prefs.groupIds = getPreferenceAsIntegerList(PREF_DASH_FAVORITE_GROUPS, PREF_ITEM_DELIM);
+        return prefs;
+    }
+
+    public void setFavoriteGroupPortletPreferences(FavoriteGroupPortletPreferences prefs) {
+        setPreference(PREF_DASH_FAVORITE_GROUPS, prefs.groupIds, PREF_ITEM_DELIM);
+    }
+
 
     public static class DashboardPreferences {
         public String leftColumnPortletNames;
@@ -745,7 +788,20 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
 
     public static class ResourceVisit {
-        public enum Kind { resource, group }
+        public enum Kind {
+            @Deprecated resource("Resource"), @Deprecated group("Group"),
+            PLATFORM("Platform"), SERVER("Server"), SERVICE("Service"), COMPATIBLE_GROUP("Cluster"), MIXED_GROUP("Group");
+
+            private String displayName;
+
+            Kind(String displayName) {
+                this.displayName = displayName;
+            }
+
+            public String getDisplayName() {
+                return displayName;
+            }
+        }
 
         Kind kind;
         int id;
@@ -760,6 +816,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         public Kind getKind() {
             return kind;
         }
+
 
         public int getId() {
             return id;

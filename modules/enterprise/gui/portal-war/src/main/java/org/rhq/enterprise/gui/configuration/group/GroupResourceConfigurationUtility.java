@@ -46,7 +46,7 @@ public class GroupResourceConfigurationUtility {
         return label.toString();
     }
 
-    private static ConfigurationDefinition getConfigurationDefinition(Subject subject, ResourceGroup group) {
+    public static ConfigurationDefinition getConfigurationDefinition(Subject subject, ResourceGroup group) {
         Integer resourceTypeId = group.getResourceType().getId();
         ConfigurationDefinition configurationDefinition = LookupUtil.getConfigurationManager()
             .getResourceConfigurationDefinitionForResourceType(subject, resourceTypeId);

@@ -65,7 +65,7 @@ public class GroupResourceConfigurationHistoryDetailsUIBean extends PagedDataTab
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             ResourceGroup group = EnterpriseFacesContextUtility.getResourceGroup();
             int groupResourceConfigurationUpdateId = getGroupResourceConfigurationUpdateId();
-            
+
             this.resourceConfigurations = this.configurationManager
                 .getResourceConfigurationMapForAggregateUpdate(groupResourceConfigurationUpdateId);
             this.configurationSet = GroupResourceConfigurationUtility.buildConfigurationSet(subject, group,

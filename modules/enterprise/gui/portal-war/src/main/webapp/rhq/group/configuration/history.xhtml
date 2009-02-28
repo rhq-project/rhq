@@ -27,6 +27,8 @@
             <f:facet name="header">
                <h:outputText value="Group Configuration Update History"/>
             </f:facet>
+              
+              <a4j:keepAlive beanName="GroupResourceConfigurationHistoryUIBean"/>
 
             <ui:param name="groupResourceConfigUpdateHistoryDataModel" value="#{GroupResourceConfigurationHistoryUIBean.dataModel}"/>
             <rich:dataTable id="groupResourceConfigUpdateHistoryDataTable"

@@ -619,3 +619,14 @@ function getBrowserHeight() {
    }
    return myHeight;
 }
+
+function changeComboBox(selectElementId, value){
+   var selectElement = getElementCrossBrowser(selectElementId);
+   var i;
+   selectElement[0].selected = true;
+   for (i = 0; i < selectElement.length; i++){
+      if ( selectElement[i].value == value ){
+         selectElement[i].selected = true;
+      }
+   }
+}

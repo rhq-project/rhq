@@ -65,6 +65,8 @@ public class MetricRenderer extends Renderer {
 
         MetricComponent metric = (MetricComponent) component;
         MetricRangePreferences rangePreferences = metric.getMetricRangePreferences();
+        TimeUnit preferencesUnit = TimeUnit.getUnitByMetricOrdinal(rangePreferences.unit);
+        int lastN = rangePreferences.lastN;
 
         writer.startElement("b", null);
         writer.write("Metric Display Range:");
@@ -81,7 +83,7 @@ public class MetricRenderer extends Renderer {
             writer.startElement("select", metric);
             writer.writeAttribute("id", MetricComponent.VALUE, null);
             writer.writeAttribute("name", MetricComponent.VALUE, null);
-            int lastN = rangePreferences.lastN;
+
             List<Integer> timeIntervals = new ArrayList<Integer>(timeIntervalValues);
             if (!timeIntervals.contains(Integer.valueOf(lastN))) {
                 timeIntervals.add(lastN);
@@ -92,6 +94,7 @@ public class MetricRenderer extends Renderer {
                 writer.startElement("option", metric);
                 writer.writeAttribute("value", timeIntervalOption, MetricComponent.VALUE);
                 if (timeIntervalOption == lastN) {
+                    // this doesn't work in all browsers, we have javascript below to close the gaps
                     writer.writeAttribute("SELECTED", "SELECTED", null);
                 }
                 writer.write(String.valueOf(timeIntervalOption));
@@ -104,11 +107,12 @@ public class MetricRenderer extends Renderer {
             writer.startElement("select", metric);
             writer.writeAttribute("id", MetricComponent.UNIT, null);
             writer.writeAttribute("name", MetricComponent.UNIT, null);
-            TimeUnit preferencesUnit = TimeUnit.getUnitByMetricOrdinal(rangePreferences.unit);
+
             for (TimeUnit unit : metric.getUnitOptions()) {
                 writer.startElement("option", metric);
                 writer.writeAttribute("value", unit.name(), MetricComponent.UNIT);
                 if (unit.equals(preferencesUnit)) {
+                    // this doesn't work in all browsers, we have javascript below to close the gaps
                     writer.writeAttribute("SELECTED", "SELECTED", null);
                 }
                 writer.write(unit.getDisplayName());
@@ -134,6 +138,12 @@ public class MetricRenderer extends Renderer {
         if (rangePreferences.readOnly) {
             writer.write(" | ");
         }
+
+        writer.startElement("script", null);
+        writer.writeAttribute("type", "text/javascript", null);
+        writer.write("changeComboBox('" + MetricComponent.VALUE + "','" + lastN + "');");
+        writer.write("changeComboBox('" + MetricComponent.UNIT + "','" + preferencesUnit.name() + "');");
+        writer.endElement("script");
     }
 
     private String getWindowOptions() {

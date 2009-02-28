@@ -2102,6 +2102,7 @@ ul.radio-group .unspecified {
 .on-pager-button {
    float: left;
    margin-left: 10px;
+   margin-top: 4px;
    margin-bottom: 4px;
 }
 

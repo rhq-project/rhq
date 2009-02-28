@@ -25,18 +25,43 @@
 
          <ui:composition>
 
-            <h:panelGroup layout="block" style="margin-top: .4ex; float: right;">
+            <h:panelGroup layout="block" style="float: right; margin-right: 20px">
                <ui:param name="paginationDataScrollerName" value="#{paginationDataTableName}Scroller"/>
-            
-               <rich:datascroller id="#{paginationDataScrollerName}"
+
+                <table>
+                    <tr>
+                        <td nowrap="nowrap">
+
+
+               <h:outputText value="Total: #{paginationDataModel.rowCount}" 
+                             style="margin-right: 1em; font-weight: bold; "/>
+               <h:outputText value="Items Per Page:" 
+                             style="margin-right: 2em; font-weight: bold; "
+                             rendered="#{paginationDataModel.rowCount > PageControlSettingsUIBean.minimumPageSize
+                                         and not paginationPageControl.unlimited
+                                         and paginationPageControl.pageSize > PageControlSettingsUIBean.minimumPageSize}"/>
+               <h:selectOneListbox id="currentPageSize" 
+                                   size="1"
+                                   value="#{paginationPageControl.pageSize}"
+                                   rendered="#{paginationDataModel.rowCount > PageControlSettingsUIBean.minimumPageSize
+                                               and not paginationPageControl.unlimited}">
+                  <a4j:support event="onchange" 
+                               status="commonStatus"
+                               reRender="#{paginationDataTableName}, #{paginationDataScrollerName}"/>
+                  <f:selectItems value="#{PageControlSettingsUIBean.pageSizes}" />
+               </h:selectOneListbox>
+
+                            </td>
+                        <td nowrap="nowrap">
+
+                <rich:datascroller id="#{paginationDataScrollerName}"
                                   for="#{paginationDataTableName}"
                                   status="commonStatus"
                                   rendered="#{not paginationPageControl.unlimited}"
-                                  stepControls="show" 
-                                  fastControls="hide" 
+                                  stepControls="show"
+                                  fastControls="hide"
                                   boundaryControls="hide"
-                                  page="#{paginationPageControl.pageNumber}"
-                                  style="margin-top: .5ex;">
+                                  page="#{paginationPageControl.pageNumber}">
                   <f:facet name="next">
                      <h:panelGroup>
                         <h:graphicImage value="/images/tbb_pageright.gif" style="padding: 0px 5px 0px 7px;" />
@@ -59,23 +84,11 @@
                   </f:facet>
                </rich:datascroller>
 
+                        </td>
+                    </tr>
+                </table>
+                
 
-               <h:outputText value="Total: #{paginationDataModel.rowCount}" 
-                             style="margin-right: 1em; font-weight: bold; "/>
-               <h:outputText value="Items Per Page:" 
-                             style="margin-right: 2em; font-weight: bold; "
-                             rendered="#{paginationDataModel.rowCount > PageControlSettingsUIBean.minimumPageSize
-                                         and not paginationPageControl.unlimited}"/>
-               <h:selectOneListbox id="currentPageSize" 
-                                   size="1"
-                                   value="#{paginationPageControl.pageSize}"
-                                   rendered="#{paginationDataModel.rowCount > PageControlSettingsUIBean.minimumPageSize
-                                               and not paginationPageControl.unlimited}">
-                  <a4j:support event="onchange" 
-                               status="commonStatus"
-                               reRender="#{paginationDataTableName}, #{paginationDataScrollerName}"/>
-                  <f:selectItems value="#{PageControlSettingsUIBean.pageSizes}" />
-               </h:selectOneListbox>
             </h:panelGroup>
 
             <div style="clear: both;"/>

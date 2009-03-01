@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -85,9 +86,12 @@ public class RtFilter implements Filter {
     private long lastLogFileSize = 0;
     private long maxLogFileSize = DEFAULT_MAX_LOG_FILE_SIZE;
     private String contextName;
+    private String myHostName;  // InetAddr.getHostname()
+    private String myCHostName; // InetAddr.getCanonicalHostname()
 
     private final Object lock = new Object();
     private Properties vhostMappings = new Properties();
+    private static final String HOST_TOKEN = "%HOST%";
 
     /**
      * Does the real magic. If a fatal exception occurs during processing, the filter will revert to an uninitialized
@@ -174,22 +178,45 @@ public class RtFilter implements Filter {
      * @param serverName Name of the virtual host
      */
     private void openFile(String serverName) {
-        String vhost;
-        if ("localhost".equals(serverName) || "127.0.0.1".equals(serverName))
+        String vhost = "";
+        boolean found = false;
+
+        if ("localhost".equals(serverName) || "127.0.0.1".equals(serverName)) {
             vhost = "";
-        else {
-            // try to see if the user provided a mapping for this server name
-            if (vhostMappings.containsKey(serverName)) {
-                vhost = vhostMappings.getProperty(serverName);
-                if (vhost == null || vhost.equals(""))
+            found = true;
+        }
+
+        // try to see if the user provided a mapping for this server name
+        if (!found && vhostMappings.containsKey(serverName)) {
+            found = true;
+            vhost = vhostMappings.getProperty(serverName);
+            if (vhost == null || vhost.equals(""))
+                vhost = ""; // It is in the mapping, but no value set -> no vhost
+            else
+                vhost += "_"; // Otherwise take it and append the separator
+            if (log.isDebugEnabled())
+                log.debug("Vhost determined from mapping >" + vhost + "<");
+        }
+
+        // check server name against hostname and hostname.fqdn an see if they match
+        if (!found && vhostMappings.containsKey(HOST_TOKEN)) {
+            vhost = vhostMappings.getProperty(HOST_TOKEN);
+            if (myHostName.startsWith(serverName) || myCHostName.startsWith(serverName)) {
+                // Match, so take the mapping from the file
+                if (vhost == null || vhost.equals("")) {
                     vhost = ""; // It is in the mapping, but no value set -> no vhost
-                else
+                } else {
                     vhost += "_"; // Otherwise take it and append the separator
+                }
+                found = true;
                 if (log.isDebugEnabled())
-                    log.debug("Vhost determined from mapping >" + vhost + "<");
-            } else {
-                vhost = serverName + "_"; // Not found in mapping? Take it literal + separator
+                    log.debug("Vhost determined from %HOST% token >" + vhost + "<");
             }
+        }
+
+        // Nothing found? Fall back to serverName + _ as prefix
+        if (!found) {
+            vhost = serverName + "_"; // Not found in mapping? Take it literal + separator
         }
 
         // if this is a sub-context (e.g. news/radio), then replace the / by a _ to
@@ -220,6 +247,8 @@ public class RtFilter implements Filter {
     public void init(FilterConfig filterConfig) throws ServletException {
         try {
             synchronized (lock) {
+                myHostName = InetAddress.getLocalHost().getHostName();
+                myCHostName = InetAddress.getLocalHost().getCanonicalHostName();
                 initializeParameters(filterConfig);
                 ServletContext servletContext = filterConfig.getServletContext();
                 this.contextName = ServletUtility.getContextRoot(servletContext);

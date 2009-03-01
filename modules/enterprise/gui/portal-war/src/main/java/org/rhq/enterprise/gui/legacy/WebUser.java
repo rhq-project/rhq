@@ -37,6 +37,7 @@ public class WebUser implements Serializable {
     private final Log log = LogFactory.getLog(WebUser.class);
 
     private Subject subject;
+    private boolean hasPrincipal;
 
     public WebUser() {
         this(null);
@@ -44,6 +45,12 @@ public class WebUser implements Serializable {
 
     public WebUser(Subject subject) {
         this.subject = subject;
+        this.hasPrincipal = false;
+    }
+
+    public WebUser(Subject subject, boolean hasPrincipal) {
+        this.subject = subject;
+        this.hasPrincipal = hasPrincipal;
     }
 
     /**
@@ -173,5 +180,13 @@ public class WebUser implements Serializable {
 
     public MeasurementPreferences getMeasurementPreferences() {
         return new MeasurementPreferences(subject);
+    }
+
+    public boolean isHasPrincipal() {
+        return hasPrincipal;
+    }
+
+    public void setHasPrincipal(boolean hasPrincipal) {
+        this.hasPrincipal = hasPrincipal;
     }
 }

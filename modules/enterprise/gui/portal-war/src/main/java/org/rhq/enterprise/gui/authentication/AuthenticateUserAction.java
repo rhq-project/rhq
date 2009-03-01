@@ -118,7 +118,7 @@ public class AuthenticateUserAction extends TilesAction {
                 }
             }
 
-            webUser = new WebUser(subject);
+            webUser = new WebUser(subject, hasPrincipal);
         } catch (Exception e) {
             String msg = e.getMessage().toLowerCase();
             if ((msg.indexOf("username") >= 0) || (msg.indexOf("password") >= 0)) {

@@ -184,7 +184,7 @@ public class UserAdminPortalAction extends BaseDispatchAction {
         boolean hasPrincipal = LookupUtil.getSubjectManager().isUserWithPrincipal(user.getName());
 
         WebUser webUser = new WebUser(user);
-        //webUser.setHasPrincipal(hasPrincipal);
+        webUser.setHasPrincipal(hasPrincipal);
 
         request.setAttribute(Constants.USER_ATTR, webUser);
         request.setAttribute(Constants.TITLE_PARAM_ATTR, BizappUtils.makeSubjectFullName(user));

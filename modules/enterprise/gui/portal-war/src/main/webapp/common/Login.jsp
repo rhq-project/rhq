@@ -64,7 +64,7 @@
                 <fmt:message var="productName" key="product.fullName"/>
 
                 <a href="#" onclick="openAbout(aboutWindowTitle)">
-                    <html:img page="/images/logo_header.gif" title="${productName}"/>
+                    <html:img page="/images/logo_header.png" title="${productName}"/>
                 </a>
             </td>
             <td valign="top" align="right">

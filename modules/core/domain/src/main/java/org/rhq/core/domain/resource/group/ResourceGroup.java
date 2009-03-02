@@ -151,7 +151,12 @@ import org.rhq.core.domain.resource.ResourceType;
         + "  WHERE ir.id = :roleId ) "
         + "AND rg.id NOT IN ( :excludeIds )"),
     @NamedQuery(name = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE, query = "SELECT rg FROM ResourceGroup AS rg JOIN rg.roles AS r WHERE r.id = :id"),
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_IDS, query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.id IN ( :ids )"),
+
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_IDS_admin,
+            query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.id IN ( :ids )"),
+
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_IDS, 
+            query = "SELECT rg FROM ResourceGroup AS rg JOIN rg.roles roles JOIN roles.subjects s WHERE rg.id IN ( :ids ) and s = :subject"),
 
     /*
     * For recursive group stuff, we want dups in the results
@@ -211,6 +216,7 @@ public class ResourceGroup extends Group {
     public static final String QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE_WITH_EXCLUDES = "ResourceGroup.getAvailableResourceGroupsForRoleWithExcludes";
     public static final String QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE = "ResourceGroup.getAvailableResourceGroupsForRole";
     public static final String QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE = "ResourceGroup.getResourceGroupsAssignedToRole";
+    public static final String QUERY_FIND_BY_IDS_admin = "ResourceGroup.findByIds_admin";
     public static final String QUERY_FIND_BY_IDS = "ResourceGroup.findByIds";
     public static final String QUERY_FIND_BY_RESOURCE_ID = "ResourceGroup.findByResourceId";
     public static final String QUERY_FIND_BY_RESOURCE_ID_COMPOSITE = "ResourceGroup.findByResourceIdComposite";

@@ -113,14 +113,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public int createResourceGroup(Subject user, ResourceGroup group) throws ResourceGroupNotFoundException,
-        ResourceGroupAlreadyExistsException {
+            ResourceGroupAlreadyExistsException {
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME);
         query.setParameter("name", group.getName());
 
         List<ResourceGroup> groups = query.getResultList();
         if (groups.size() != 0) {
             throw new ResourceGroupAlreadyExistsException("ResourceGroup with name " + group.getName()
-                + " already exists");
+                    + " already exists");
         }
 
         long time = System.currentTimeMillis();
@@ -136,7 +136,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @SuppressWarnings("unchecked")
     public ResourceGroup updateResourceGroup(Subject user, ResourceGroup group)
-        throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException {
+            throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException {
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME);
         query.setParameter("name", group.getName());
 
@@ -147,7 +147,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             } else {
                 //  user is updating the group name to the name of an existing group - this is bad
                 throw new ResourceGroupAlreadyExistsException("ResourceGroup with name " + group.getName()
-                    + " already exists");
+                        + " already exists");
             }
         } catch (NoResultException e) {
             // user is changing the name of the group, this is OK
@@ -160,7 +160,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         ResourceGroup attachedGroup = entityManager.find(ResourceGroup.class, group.getId());
         if (attachedGroup.isRecursive() != group.isRecursive()) {
             throw new ResourceGroupUpdateException("Can not change the " + (attachedGroup.isRecursive() ? "" : "non-")
-                + "recursive nature of this group");
+                    + "recursive nature of this group");
         }
 
         long time = System.currentTimeMillis();
@@ -172,7 +172,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void deleteResourceGroup(Subject user, Integer groupId) throws ResourceGroupNotFoundException,
-        ResourceGroupDeleteException {
+            ResourceGroupDeleteException {
         ResourceGroup group = getResourceGroupById(user, groupId, null);
 
         // for compatible groups, first recursively remove any referring backing groups for auto-clusters
@@ -193,12 +193,12 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
                         operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), groupId);
                     } catch (SchedulerException e) {
                         log.warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group
-                            + "]", e);
+                                + "]", e);
                     }
                 }
             } catch (SchedulerException e1) {
                 log.warn("Failed to get jobs for a group being deleted [" + group
-                    + "]; will not attempt to unschedule anything", e1);
+                        + "]; will not attempt to unschedule anything", e1);
             }
         }
 
@@ -228,7 +228,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     }
 
     public ResourceGroup getResourceGroupById(Subject user, int id, GroupCategory category)
-        throws ResourceGroupNotFoundException {
+            throws ResourceGroupNotFoundException {
         ResourceGroup group = entityManager.find(ResourceGroup.class, id);
 
         if (group == null) {
@@ -242,7 +242,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         // null category means calling context doesn't care about category
         if ((category != null) && (category != group.getGroupCategory())) {
             throw new ResourceGroupNotFoundException("Expected group to belong to '" + category + "' category, "
-                + "it belongs to '" + group.getGroupCategory() + "' category instead");
+                    + "it belongs to '" + group.getGroupCategory() + "' category instead");
         }
 
         initLazyFields(group);
@@ -261,7 +261,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
     @SuppressWarnings("unchecked")
     public PageList<ResourceGroupComposite> getAllResourceGroups(Subject subject, GroupCategory groupCategory,
-        ResourceCategory resourceCategory, ResourceType resourceType, String nameFilter, PageControl pageControl) {
+                                                                 ResourceCategory resourceCategory, ResourceType resourceType, String nameFilter, PageControl pageControl) {
         pageControl.initDefaultOrderingField("g.name");
 
         Query queryCount;
@@ -270,12 +270,12 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         if (authorizationManager.isInventoryManager(subject)) {
             queryCount = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT_ADMIN);
             query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_ADMIN, pageControl);
+                    ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_ADMIN, pageControl);
         } else {
             queryCount = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT);
             queryCount.setParameter("subject", subject);
             query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY, pageControl);
+                    ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY, pageControl);
             query.setParameter("subject", subject);
         }
 
@@ -319,7 +319,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ResourceGroup addResourcesToGroup(Subject subject, Integer groupId, Integer[] resourceIds)
-        throws ResourceGroupNotFoundException, ResourceGroupUpdateException {
+            throws ResourceGroupNotFoundException, ResourceGroupUpdateException {
         long startTime = System.currentTimeMillis();
 
         ResourceGroup attachedGroup = getResourceGroupById(subject, groupId, null);
@@ -337,7 +337,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         List<Integer> alreadyMemberIds = new ArrayList<Integer>();
 
         List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(uniqueResourceIds
-            .toArray(new Integer[uniqueResourceIds.size()]));
+                .toArray(new Integer[uniqueResourceIds.size()]));
 
         for (ResourceIdFlyWeight fly : flyWeights) {
             // if resource is already in the explicit list, no work needs to be done
@@ -355,9 +355,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
         if (alreadyMemberIds.size() != 0) {
             throw new ResourceGroupUpdateException(
-                ((alreadyMemberIds.size() != 0) ? ("The following resources were already members of the group: " + alreadyMemberIds
-                    .toString())
-                    : ""));
+                    ((alreadyMemberIds.size() != 0) ? ("The following resources were already members of the group: " + alreadyMemberIds
+                            .toString())
+                            : ""));
         }
 
         long endTime = System.currentTimeMillis();
@@ -369,7 +369,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ResourceGroup removeResourcesFromGroup(Subject subject, Integer groupId, Integer[] resourceIds)
-        throws ResourceGroupNotFoundException, ResourceGroupUpdateException {
+            throws ResourceGroupNotFoundException, ResourceGroupUpdateException {
         long startTime = System.currentTimeMillis();
 
         ResourceGroup attachedGroup = getResourceGroupById(subject, groupId, null);
@@ -385,7 +385,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         List<Integer> notValidMemberIds = new ArrayList<Integer>();
 
         List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(uniqueResourceIds
-            .toArray(new Integer[uniqueResourceIds.size()]));
+                .toArray(new Integer[uniqueResourceIds.size()]));
         // prepare structures for remove*Helper
 
         for (ResourceIdFlyWeight fly : flyWeights) {
@@ -402,8 +402,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
         if (notValidMemberIds.size() != 0) {
             throw new ResourceGroupUpdateException(
-                ((notValidMemberIds.size() != 0) ? ("The following resources are not members of the group["
-                    + attachedGroup + "]: " + notValidMemberIds.toString()) : ""));
+                    ((notValidMemberIds.size() != 0) ? ("The following resources are not members of the group["
+                            + attachedGroup + "]: " + notValidMemberIds.toString()) : ""));
         }
 
         ResourceGroup mergedResult = entityManager.merge(attachedGroup);
@@ -425,9 +425,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             conn = rhqDs.getConnection();
 
             explicitStatement = conn
-                .prepareStatement("delete from rhq_resource_group_res_exp_map where resource_group_id = ?");
+                    .prepareStatement("delete from rhq_resource_group_res_exp_map where resource_group_id = ?");
             implicitStatement = conn
-                .prepareStatement("delete from rhq_resource_group_res_imp_map where resource_group_id = ?");
+                    .prepareStatement("delete from rhq_resource_group_res_imp_map where resource_group_id = ?");
 
             explicitStatement.setInt(1, groupId);
             implicitStatement.setInt(1, groupId);
@@ -447,7 +447,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     @RequiredPermission(Permission.MANAGE_SECURITY)
     @SuppressWarnings("unchecked")
     public PageList<ResourceGroup> getAvailableResourceGroupsForRole(Subject subject, Integer roleId,
-        Integer[] excludeIds, PageControl pageControl) {
+                                                                     Integer[] excludeIds, PageControl pageControl) {
         pageControl.initDefaultOrderingField("rg.name");
 
         final String queryName;
@@ -476,19 +476,30 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         return new PageList<ResourceGroup>(groups, (int) count, pageControl);
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     @SuppressWarnings("unchecked")
     public PageList<ResourceGroup> getResourceGroupByIds(Subject subject, Integer[] resourceGroupIds,
-        PageControl pageControl) {
+                                                         PageControl pageControl) {
         pageControl.initDefaultOrderingField("rg.name");
 
         if ((resourceGroupIds == null) || (resourceGroupIds.length == 0)) {
             return new PageList<ResourceGroup>(pageControl);
         }
 
-        final String queryName = ResourceGroup.QUERY_FIND_BY_IDS;
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pageControl);
+        Query queryCount = null;
+        Query query = null;
+
+
+        if (authorizationManager.isInventoryManager(subject)) {
+            final String queryName = ResourceGroup.QUERY_FIND_BY_IDS_admin;
+            queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pageControl);
+        } else {
+            final String queryName = ResourceGroup.QUERY_FIND_BY_IDS;
+            queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pageControl);
+            queryCount.setParameter("subject", subject);
+            query.setParameter("subject", subject);
+        }
 
         List<Integer> resourceGroupList = Arrays.asList(resourceGroupIds);
         queryCount.setParameter("ids", resourceGroupList);
@@ -503,12 +514,12 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
     @SuppressWarnings("unchecked")
     public PageList<ResourceGroupComposite> getResourceGroupsForResource(Subject subject, int resourceId,
-        PageControl pageControl) {
+                                                                         PageControl pageControl) {
         pageControl.initDefaultOrderingField("rg.name");
 
         // TODO: Only return groups that are viewable by the specified subject (both named queries need to be updated).
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            ResourceGroup.QUERY_FIND_BY_RESOURCE_ID_COMPOSITE, pageControl);
+                ResourceGroup.QUERY_FIND_BY_RESOURCE_ID_COMPOSITE, pageControl);
         query.setParameter("resourceId", resourceId);
 
         //query.setParameter("subject", subject);
@@ -604,7 +615,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
      */
     @SuppressWarnings("unchecked")
     public List<Resource> getResourcesForAutoGroup(Subject subject, int autoGroupParentResourceId,
-        int autoGroupChildResourceTypeId) {
+                                                   int autoGroupChildResourceTypeId) {
         List<Resource> resources;
         try {
             Query q = entityManager.createNamedQuery(Resource.QUERY_FIND_FOR_AUTOGROUP);
@@ -640,7 +651,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
      * int, int)
      */
     public int[] getDefinitionsForAutoGroup(Subject subject, int autoGroupParentResourceId,
-        int autoGroupChildResourceTypeId, boolean displayTypeSummaryOnly) {
+                                            int autoGroupChildResourceTypeId, boolean displayTypeSummaryOnly) {
         int[] ret;
         try {
             ResourceType rt = entityManager.find(ResourceType.class, autoGroupChildResourceTypeId);
@@ -693,9 +704,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     @SuppressWarnings("unchecked")
     private int[] getMeasurementDefinitionIdsForResourceType(ResourceType type, boolean summariesOnly) {
         String queryString = "" //
-            + "SELECT id " //
-            + "  FROM MeasurementDefinition md " //
-            + " WHERE md.resourceType.id = :resourceTypeId ";
+                + "SELECT id " //
+                + "  FROM MeasurementDefinition md " //
+                + " WHERE md.resourceType.id = :resourceTypeId ";
 
         queryString += " AND md.dataType = :dataType";
         if (summariesOnly) {
@@ -772,7 +783,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
     public int getImplicitGroupMemberCount(int resourceGroupId) {
         Query countQuery = entityManager
-            .createNamedQuery(Resource.QUERY_FIND_IMPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT_ADMIN);
+                .createNamedQuery(Resource.QUERY_FIND_IMPLICIT_RESOURCES_FOR_RESOURCE_GROUP_COUNT_ADMIN);
         countQuery.setParameter("groupId", resourceGroupId);
         long count = (Long) countQuery.getSingleResult();
         return (int) count;
@@ -808,7 +819,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
             // and continue
             List<ResourceIdFlyWeight> children = resourceManager.getChildrenFlyWeights(nextFly.getId(),
-                InventoryStatus.COMMITTED);
+                    InventoryStatus.COMMITTED);
             toBeSearched.addAll(children);
         }
     }

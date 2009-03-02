@@ -250,13 +250,12 @@ P.compact {
 
 .property-display-name-cell, .property-value-cell, .property-description-cell, .property-enabled-cell, .property-error-cell {
    border-bottom: 1px solid #e6eaef;
-   padding: 6px;
+   padding: 4px;
    vertical-align: top;
-   line-height:125%;
 }
 
 .property-display-name-cell {
-   width: 185px;
+   width: 285px;
    border-right: 1px solid #d9e0e3;
 }
 
@@ -267,7 +266,7 @@ P.compact {
 }
 
 .property-value-cell {
-   width: 200px;
+   width: 350px;
    border-right: 1px solid #d9e0e3;
 }
 

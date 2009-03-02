@@ -1781,9 +1781,7 @@ P.compact {
    vertical-align: top;
 }
 
-.property-display-name-cell {
-   width: 285px;
-}
+
 
 .property-enabled-cell {
    width: 22px;
@@ -1951,7 +1949,6 @@ ul.radio-group .unspecified {
 }
 
 .aggregate-property-members-icon-cell {
-   width: 50px;
 }
 
 .EvenRow {

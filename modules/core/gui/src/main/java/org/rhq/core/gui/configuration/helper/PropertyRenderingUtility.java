@@ -159,8 +159,10 @@ public class PropertyRenderingUtility {
         
         HtmlSelectBooleanCheckbox unsetCheckbox = FacesComponentUtility.createComponent(
             HtmlSelectBooleanCheckbox.class, null);
-        String unsetCheckboxId = PropertyIdGeneratorUtility.getIdentifier(propertySimple, listIndex, "Unset");
-        unsetCheckbox.setId(unsetCheckboxId);
+        if (propertySimple != null) {
+            String unsetCheckboxId = PropertyIdGeneratorUtility.getIdentifier(propertySimple, listIndex, "Unset");
+            unsetCheckbox.setId(unsetCheckboxId);
+        }
         parent.getChildren().add(unsetCheckbox);
         unsetCheckbox.setValue(isUnset(propertyDefinitionSimple, propertySimple, configIsAggregate));
         if (isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable)

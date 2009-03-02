@@ -160,35 +160,62 @@ public class PropertySetRenderer extends Renderer {
         // NOTE: Don't add the input to the component tree yet - we'll add it a bit later.
 
         HtmlPanelGrid panelGrid = FacesComponentUtility.createComponent(HtmlPanelGrid.class);
-        panelGrid.setColumns(3);
+        panelGrid.setColumns(isOptional(propertyDefinitionSimple) ? 4 : 3);
         setAllToSameValueControlPanel.getChildren().add(panelGrid);
 
-        StringBuilder html = new StringBuilder();
-        html.append("Set All Values To: ");
-        FacesComponentUtility.addVerbatimText(panelGrid, html);
+        FacesComponentUtility.addOutputText(panelGrid, null, "Set All Values To: ", null);
 
+        // the property value input
         panelGrid.getChildren().add(input);
 
-        html = new StringBuilder();
-        html.append("<button type='button' class='" + CssStyleClasses.BUTTON_SMALL + "' onclick='setInputsToValue(");
-        html.append("new Array(");
-        UIForm form = FacesComponentUtility.getEnclosingForm(input);
-        for (PropertyInfo propertyInfo : propertyInfos) {
-            String htmlDomReference = getHtmlDomReference(propertyInfo.getInput(), form, '"');
-            html.append(htmlDomReference).append(", ");
+        // the unset checkbox (if property is optional)
+        HtmlSelectBooleanCheckbox unsetCheckbox = null;
+        if (isOptional(propertyDefinitionSimple)) {
+            unsetCheckbox = PropertyRenderingUtility.addUnsetControl(panelGrid,
+                    propertyDefinitionSimple, null, propertySetComponent.getListIndex(), input, false,
+                    propertySetComponent.getReadOnly(), false);
         }
-        html.delete(html.length() - 2, html.length()); // chop off the extra ", "
-        html.append("), ");
-        String inputHtmlDomReference = getHtmlDomReference(input, form, '"');
-        html.append("getElementValue(").append(inputHtmlDomReference).append("));");
 
-        html.append("setInputsToValue(new Array(");
-        for (PropertyInfo propertyInfo : propertyInfos) {
-            String htmlDomReference = getHtmlDomReference(propertyInfo.getUnsetCheckbox(), form, '"');
-            html.append(htmlDomReference).append(", ");
+        // the 'APPLY' button
+        UIForm form = FacesComponentUtility.getEnclosingForm(input);
+        StringBuilder html = new StringBuilder();
+        html.append("<button type='button' class='" + CssStyleClasses.BUTTON_SMALL + "' onclick='");
+        if (isOptional(propertyDefinitionSimple)) {
+            html.append("setAllValuesForOptionalProperty(new Array(");
+            for (PropertyInfo propertyInfo : propertyInfos) {
+                String inputHtmlDomReference = getHtmlDomReference(propertyInfo.getInput(), form, '"');
+                html.append(inputHtmlDomReference).append(", ");
+            }
+            html.delete(html.length() - 2, html.length()); // chop off the extra ", "
+            html.append("), new Array(");
+            for (PropertyInfo propertyInfo : propertyInfos) {
+                String unsetCheckboxHtmlDomReference = getHtmlDomReference(propertyInfo.getUnsetCheckbox(), form, '"');
+                html.append(unsetCheckboxHtmlDomReference).append(", ");
+            }
+            html.delete(html.length() - 2, html.length()); // chop off the extra ", "
+            String masterInputHtmlDomReference = getHtmlDomReference(input, form, '"');
+            html.append("), getElementValue(").append(masterInputHtmlDomReference);
+            String masterUnsetCheckboxHtmlDomReference = getHtmlDomReference(unsetCheckbox, form, '"');
+            html.append("), ").append(masterUnsetCheckboxHtmlDomReference).append(".checked);");
+        } else {
+            /*html.append("setInputsUnset(new Array(");
+            for (PropertyInfo propertyInfo : propertyInfos) {
+                String inputHtmlDomReference = getHtmlDomReference(propertyInfo.getInput(), form, '"');
+                html.append(inputHtmlDomReference).append(", ");
+            }
+            html.delete(html.length() - 2, html.length()); // chop off the extra ", "
+            html.append("), false);");*/
+
+            html.append("setInputsToValue(new Array(");
+            for (PropertyInfo propertyInfo : propertyInfos) {
+                String inputHtmlDomReference = getHtmlDomReference(propertyInfo.getInput(), form, '"');
+                html.append(inputHtmlDomReference).append(", ");
+            }
+            html.delete(html.length() - 2, html.length()); // chop off the extra ", "
+            html.append("), ");
+            String masterInputHtmlDomReference = getHtmlDomReference(input, form, '"');
+            html.append("getElementValue(").append(masterInputHtmlDomReference).append("));");
         }
-        html.delete(html.length() - 2, html.length()); // chop off the extra ", "
-        html.append("), false);");
         html.append("'>Apply</button>");
 
         FacesComponentUtility.addVerbatimText(panelGrid, html);

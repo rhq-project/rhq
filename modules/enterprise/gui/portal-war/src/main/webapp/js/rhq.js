@@ -163,6 +163,12 @@ function unsetInputs(inputs)
    }
 }
 
+function setInputsUnset(inputs, unset)
+{
+   for (var i = 0; i < inputs.length; i++)
+      setInputUnset(inputs[i], unset);
+}
+
 function setInputsOverride(inputs, shouldOverride)
 {
    for (var i = 0; i < inputs.length; i++)
@@ -256,9 +262,26 @@ function grayOutInput(input)
 function setInputsToValue(inputs, value)
 {
     //if (confirm("Are you sure you want to set all member values to '" + value + "'?"))    
-    for (var i = 0; i < inputs.length; i++) {
-        setInputUnset(inputs[i], false);
-        setElementValue(inputs[i], value);
+    for (var i = 0; i < inputs.length; i++)
+        setElementValue(inputs[i], value);    
+}
+
+/**
+ * Updates the specified inputs and corresponding unset checkboxes to the specified master value / unset state.
+ *
+ * @param valueInputs an array of input elements for the values
+ * @param unsetInputs an array of input elements for the unset checkboxes
+ * @param masterValue a string representing the new value
+ * @param masterUnsetState a boolean representing the new unset state
+ */
+function setAllValuesForOptionalProperty(valueInputs, unsetInputs, masterValue, masterUnsetState)
+{
+    for (var i = 0; i < valueInputs.length; i++)
+    {
+        setElementValue(unsetInputs[i], masterUnsetState);
+        setInputUnset(valueInputs[i], masterUnsetState);
+        if (!masterUnsetState)
+            setElementValue(valueInputs[i], masterValue);
     }
 }
 

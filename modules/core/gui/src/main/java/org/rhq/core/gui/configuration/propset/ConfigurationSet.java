@@ -45,7 +45,11 @@ public class ConfigurationSet
 
     public ConfigurationSet(ConfigurationDefinition configurationDefinition, List<ConfigurationSetMember> members)
     {
+        if (configurationDefinition == null)
+            throw new IllegalArgumentException("configurationDefinition parameter is null.");
         this.configurationDefinition = configurationDefinition;
+        if (members == null)
+            throw new IllegalArgumentException("members parameter is null.");
         this.members = members;
         this.aggregateConfiguration = new Configuration();
         calculateAggregateConfiguration();
@@ -54,6 +58,8 @@ public class ConfigurationSet
     public void calculateAggregateConfiguration()
     {
         this.aggregateConfiguration.getMap().clear();        
+        if (this.members.isEmpty())
+            return;
         Map<String, PropertyDefinition> childPropertyDefinitions = this.configurationDefinition.getPropertyDefinitions();
         List<AbstractPropertyMap> sourceParentPropertyMaps = new ArrayList();
         for (ConfigurationSetMember member : this.members)
@@ -64,6 +70,8 @@ public class ConfigurationSet
 
     public void applyAggregateConfiguration()
     {
+        if (this.members.isEmpty())
+            return;
         Map<String, PropertyDefinition> childPropertyDefinitions = this.configurationDefinition.getPropertyDefinitions();
         List<AbstractPropertyMap> sourceParentPropertyMaps = new ArrayList();
         for (ConfigurationSetMember member : this.members)

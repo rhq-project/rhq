@@ -565,7 +565,7 @@ public class ConfigRenderer extends Renderer {
             HtmlOutputLink cancelLink = FacesComponentUtility.addOutputLink(panelGrid, null, "#");
             cancelLink.setOnclick("Richfaces.hideModalPanel('" + modalPanelClientId + "'); return false;");
             cancelLink.setTitle("Cancel");
-            FacesComponentUtility.addButton(cancelLink, "Cancel", CssStyleClasses.BUTTON_MEDIUM);
+            FacesComponentUtility.addButton(cancelLink, "CANCEL", CssStyleClasses.BUTTON_MEDIUM);
         }
     }
 

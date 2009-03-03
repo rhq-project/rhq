@@ -1344,8 +1344,8 @@ DB Upgrade:
              ALTER TABLE RHQ_MEASUREMENT_OOB_TMP ADD PRIMARY KEY ( SCHEDULE_ID )
           </statement>
        </schema-directSQL>
-       <schema-addColumn   table="RHQ_MEASUREMENT_OOB_TMP" column="OOB_COUNT" columnType="INTEGER" />
-       <schema-alterColumn table="RHQ_MEASUREMENT_OOB_TMP" column="OOB_COUNT" nullable="FALSE" />
+       <schema-addColumn   table="RHQ_MEASUREMENT_OOB_TMP" column="OOB_FACTOR" columnType="INTEGER" />
+       <schema-alterColumn table="RHQ_MEASUREMENT_OOB_TMP" column="OOB_FACTOR" nullable="FALSE" />
     </schemaSpec>
 
 </dbupgrade>

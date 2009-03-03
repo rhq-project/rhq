@@ -39,6 +39,7 @@ import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 
 /**
  * A manager for {@link MeasurementDefinition}s.
@@ -55,6 +56,12 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
 
     @EJB
     private MeasurementScheduleManagerLocal scheduleManager;
+
+    @EJB
+    private MeasurementOOBManagerLocal oobManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
 
     public MeasurementDefinition getMeasurementDefinitionById(Subject subject, int id) {
         // TODO: AUTHZ CHECK
@@ -87,7 +94,7 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
         // get the schedules and unschedule them on the agents
         List<MeasurementSchedule> schedules = def.getSchedules();
 
-        // remove the schedules 
+        // remove the schedules
         Iterator<MeasurementSchedule> schedIter = schedules.iterator();
         while (schedIter.hasNext()) {
             MeasurementSchedule sched = schedIter.next();
@@ -95,6 +102,7 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
                 entityManager.remove(sched.getBaseline());
                 sched.setBaseline(null);
             }
+            oobManager.removeOOBsForSchedule(subjectManager.getOverlord(), sched);
             sched.getResource().setMtime(now); // changing MTime tells the agent this resource needs to be synced
             entityManager.remove(sched);
             schedIter.remove();

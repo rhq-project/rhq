@@ -71,6 +71,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataKey;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -442,6 +443,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         q = entityManager.createNamedQuery(CallTimeDataKey.QUERY_DELETE_BY_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
+
+        // OOB data
+        q = entityManager.createNamedQuery(MeasurementOOB.DELETE_FOR_RESOURCES);
+        q.setParameter("resources", resources);
+        q.executeUpdate();
+
 
         // bulk delete: measurement schedule, must come after measurement baseline, trait, and calltime data
         q = entityManager.createNamedQuery(MeasurementSchedule.DELETE_BY_RESOURCES);

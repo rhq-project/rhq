@@ -237,6 +237,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
     public MeasurementBaseline calculateAutoBaseline(Subject subject, Integer measurementScheduleId, long startDate,
         long endDate, boolean save) throws BaselineCreationException, MeasurementNotFoundException {
+        
         MeasurementBaseline baseline;
         MeasurementSchedule sched = entityManager.find(MeasurementSchedule.class, measurementScheduleId);
 
@@ -257,8 +258,10 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
         try {
             baseline = calculateBaseline(sched, true, startDate, endDate, save);
-            // We have changed the baseline information for the schedule, so remove the now outdated OOB info.
-            oobManager.removeOOBsForSchedule(subject, sched);
+            if (save) {
+                // We have changed the baseline information for the schedule, so remove the now outdated OOB info.
+                oobManager.removeOOBsForSchedule(subject, sched);
+            }
         } catch (DataNotAvailableException e) {
             throw new BaselineCreationException("Error fetching data for baseline calculation: "
                 + measurementScheduleId);

@@ -69,13 +69,9 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputLink value="/rhq/group/configuration/details.xhtml">
-                     <f:param name="groupId" value="#{param.groupId}" />
-                     <f:param name="arcuId" value="#{item.id}" />
-                     <h:outputText value="#{item.createdTime}">
-                        <f:converter converterId="UserDateTimeConverter" />
-                     </h:outputText>
-                  </h:outputLink>
+                 <h:outputText value="#{item.createdTime}">
+                    <f:converter converterId="UserDateTimeConverter" />
+                 </h:outputText>
                </rich:column>
  
                <rich:column>

@@ -57,14 +57,15 @@ public interface MeasurementOOBManagerLocal {
     /**
      * Return OOB Composites that contain all information about the OOBs in a given time as aggregates.
      * @param subject The caller
-     * @param end end time we are interested in
-     * @param pc PageControl to do pagination
+     * @param metricNameFilter
      * @param resourceNameFilter a resource name to filter for
-     * @param parentNameFilter a parent resource name to filter for
-     * @return List of schedules with the corresponing oob aggregates
+     * @param parentNameFilter a parent resource name to filter for   @return List of schedules with the corresponing oob aggregates
+     * @param pc PageControl to do pagination
      */
-    PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, long end, PageControl pc, String resourceNameFilter,
-                                                           String parentNameFilter);
+    PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, String metricNameFilter,
+                                                           String resourceNameFilter, String parentNameFilter,
+                                                           PageControl pc
+    );
 
     /**
      * Computes the OOBs for the last hour.
@@ -96,10 +97,9 @@ public interface MeasurementOOBManagerLocal {
     /**
      * Returns the highest n OOBs for the passed resource id within the last 72h
      * @param subject caller
-     * @param end end time
      * @param resourceId the resource we are interested in
      * @param n max number of entries wanted
      * @return
      */
-    PageList<MeasurementOOBComposite> getHighestNOOBsForResource(Subject subject,  long end, int resourceId, int n);
+    PageList<MeasurementOOBComposite> getHighestNOOBsForResource(Subject subject, int resourceId, int n);
 }

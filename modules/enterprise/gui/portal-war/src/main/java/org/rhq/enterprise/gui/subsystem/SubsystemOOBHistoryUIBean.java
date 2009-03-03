@@ -41,6 +41,7 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
     private static final String FORM_PREFIX = "oobHistorySubsystemForm:";
 
     private int selectedSchedule;
+    private String metricFilter;
     private String resourceFilter;
     private String parentFilter;
 
@@ -75,6 +76,14 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
         this.parentFilter = parentFilter;
     }
 
+    public String getMetricFilter() {
+        return metricFilter;
+    }
+
+    public void setMetricFilter(String metricFilter) {
+        this.metricFilter = metricFilter;
+    }
+
     public DataModel getDataModel() {
         if (dataModel == null) {
             dataModel = new ResultsDataModel(PageControlView.SubsystemOOBHistory, MANAGED_BEAN_NAME);
@@ -90,21 +99,23 @@ public class SubsystemOOBHistoryUIBean extends PagedDataTableUIBean {
         }
 
         public PageList<MeasurementOOBComposite> fetchPage(PageControl pc) {
-            getDataFromRequest();;
+            getDataFromRequest();
+            String metricFilter = getMetricFilter();
             String resourceFilter = getResourceFilter();
             String parentFilter = getParentFilter();
 
             PageList<MeasurementOOBComposite> result;
 
-            result = manager.getSchedulesWithOOBs(getSubject(), System.currentTimeMillis(),pc, resourceFilter, parentFilter);
+            result = manager.getSchedulesWithOOBs(getSubject(), metricFilter, resourceFilter, parentFilter, pc);
 
             return result;
         }
 
-                private void getDataFromRequest() {
+        private void getDataFromRequest() {
             SubsystemOOBHistoryUIBean outer = SubsystemOOBHistoryUIBean.this;
+            outer.metricFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "metricFilter");
             outer.resourceFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "resourceFilter");
             outer.parentFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "parentFilter");
-                }
+        }
     }
 }

@@ -23,11 +23,17 @@
             <rich:simpleTogglePanel switchType="client" label="Search Results">
 
                 <h:panelGrid columns="3" cellspacing="3">
-                   <h:outputLabel for="resourceFilter" value="Resource Name Filter: " />
-                   <h:inputText id="resourceFilter" value="#{SubsystemOOBHistoryUIBean.resourceFilter}"
-                                onkeypress="return ignoreEnterKey(event);"
-                                style="width: 300px;" />
-                   <rich:spacer/>
+                    <h:outputLabel for="resourceFilter" value="Metric Name Filter: " />
+                    <h:inputText id="metricFilter" value="#{SubsystemOOBHistoryUIBean.metricFilter}"
+                                 onkeypress="return ignoreEnterKey(event);"
+                                 style="width: 300px;" />
+                    <rich:spacer/>
+
+                    <h:outputLabel for="resourceFilter" value="Resource Name Filter: " />
+                    <h:inputText id="resourceFilter" value="#{SubsystemOOBHistoryUIBean.resourceFilter}"
+                                 onkeypress="return ignoreEnterKey(event);"
+                                 style="width: 300px;" />
+                    <rich:spacer/>
 
                    <h:outputLabel for="parentFilter" value="Parent Name Filter: " />
                    <h:inputText id="parentFilter" value="#{SubsystemOOBHistoryUIBean.parentFilter}"
@@ -52,7 +58,7 @@
                             value="#{oobHistoryDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="20%, 16%, 16%, 8%, 6%, 8%, 6%, 6%, 6%, 6%, 6%"
+                            columnsWidth="22%, 22%, 22%, 14%, 10%, 10%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -67,7 +73,7 @@
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="def.displayName">
-                        <h:outputText styleClass="headerText" value="Schedule" />
+                        <h:outputText styleClass="headerText" value="Metric Schedule" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
@@ -125,69 +131,20 @@
                 <rich:column style="background-color: rgb(216,216,216);text-align:right">
                    <f:facet name="header">
                       <onc:sortableColumnHeader sort="max(o.oobFactor)">
-                         <h:outputText styleClass="headerText" value="Max 72h (%)" />
+                         <h:outputText styleClass="headerText" value="Out of range factor (%)" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                   <h:outputText value="#{item.factor72}" >
+                   <h:outputText value="#{item.factor}" >
                   </h:outputText>
                </rich:column>
 
 
-                <rich:column style="text-align:right">
-                   <f:facet name="header">
-                      <onc:sortableColumnHeader sort="avg(o.oobFactor)">
-                         <h:outputText styleClass="headerText" value="Avg 72h (%)" />
-                      </onc:sortableColumnHeader>
-                   </f:facet>
-
-                   <h:outputText value="#{item.avg72}" >
-                   </h:outputText>
-                </rich:column>
-
-                <rich:column style="background-color: rgb(216,216,216);text-align:right">
-                   <f:facet name="header">
-
-                         <h:outputText styleClass="headerText" value="Max 48h (%)" />
-                   </f:facet>
-
-                   <h:outputText value="#{item.factor48}" >
-                   </h:outputText>
-                </rich:column>
-
-                <rich:column style="text-align:right">
-                   <f:facet name="header">
-
-                         <h:outputText styleClass="headerText" value="Avg 48h (%)" />
-                   </f:facet>
-
-                   <h:outputText value="#{item.avg48}" >
-                   </h:outputText>
-                </rich:column>
-
-                <rich:column style="background-color: rgb(216,216,216);text-align:right">
-                   <f:facet name="header">
-                         <h:outputText styleClass="headerText" value="Max 24h (%)" />
-                   </f:facet>
-
-                   <h:outputText value="#{item.factor24}" >
-                   </h:outputText>
-                </rich:column>
-
-                <rich:column style="text-align:right">
-                   <f:facet name="header">
-
-                         <h:outputText styleClass="headerText" value="Avg 24h (%)" />
-                   </f:facet>
-
-                   <h:outputText value="#{item.avg24}" >
-                   </h:outputText>
-                </rich:column>
 
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="11" width="100%">
+                     <rich:column colspan="6" width="100%">
 
                         <ui:param name="paginationDataTableName" value="oobHistoryDataTable"/>
                         <ui:param name="paginationDataModel" value="#{oobHistoryDataModel}"/>

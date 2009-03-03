@@ -26,9 +26,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
 
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -56,6 +55,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 
 /**
  * Manager bean for Out-of-Bound measurements.
@@ -74,10 +74,22 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource rhqDs;
 
+    @EJB
+    AuthorizationManagerLocal authMangager;
+
     /**
      * Compute oobs from the values in the 1h measurement table that just got added.
      * For the total result, this is an incremental computation. The idea is that
-     * it gets run *directly* after the 1h compression (and the baseline recalculation too)
+     * it gets run *directly* after the 1h compression (and the baseline recalculation too).
+     *
+     * Algorithm is as follows:
+     * <ul>
+     * <li> insert new values in tmp table
+     * <li> update real table with max (tmp table, real table)
+     * <li> insert items from tmp table that were not in real table
+     * <li> tuncate tmp table
+     * </ul>
+     *
      * @param subject Subject of the caller
      * @param begin Start time of the 1h entries to look at
      */
@@ -86,26 +98,57 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
         Connection conn = null;
         PreparedStatement stmt = null;
+        List<Long> timings = new ArrayList<Long>();
 
         try {
-            log.info("Calculating OOBs for hour " + new Date(begin));
+            log.info("Calculating OOBs for hour starting at " + new Date(begin));
             conn = rhqDs.getConnection();
             DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
 
+            String theQuery;
+
+            // Compute the OOBs and put them in the tmp table
             if (dbType instanceof PostgresqlDatabaseType)
-                stmt = conn.prepareStatement(MeasurementOOB.INSERT_QUERY_POSTGRES);
+                theQuery = MeasurementOOB.INSERT_QUERY.replace("%TRUE%","true");
             else if (dbType instanceof OracleDatabaseType)
-                stmt = conn.prepareStatement(MeasurementOOB.INSERT_QUERY_ORACLE);
+                theQuery = MeasurementOOB.INSERT_QUERY.replace("%TRUE%", "1");
             else
                 throw new IllegalArgumentException("Unknown database type, can't continue: " + dbType);
+
+            stmt = conn.prepareStatement(theQuery);
 
             stmt.setLong(1, begin);
             stmt.setLong(2, begin);
             stmt.setLong(3, begin);
-            long t0 = System.currentTimeMillis();
+            long t0 =  System.currentTimeMillis();
+            long tstart = t0;
             int count = stmt.executeUpdate();
             long t1 = System.currentTimeMillis();
-            log.info("Done calculating OOBs. [" + count + "] new entries in [" + (t1 - t0) + "] ms");
+            timings.add((t1 - t0));
+            t0 = t1;
+
+            // Update the real table from the tmp table
+            stmt = conn.prepareStatement(MeasurementOOB.UPDATE_MASTER);
+            stmt.executeUpdate();
+            t1 = System.currentTimeMillis();
+            timings.add((t1 - t0));
+            t0 = t1;
+
+            // Insert missing ones
+            stmt = conn.prepareStatement(MeasurementOOB.INSERT_NEW_ONES);
+            stmt.executeUpdate();
+            t1 = System.currentTimeMillis();
+            timings.add((t1 - t0));
+            t0 = t1;
+
+            // truncate tmp table
+            stmt = conn.prepareStatement(MeasurementOOB.TRUNCATE_TMP_TABLE);
+            stmt.executeUpdate();
+            t1 = System.currentTimeMillis();
+            timings.add((t1 - t0));
+
+
+            log.info("Done calculating OOBs. [" + count + "] entries in [" + (t1 - tstart) + "] ms ("+timings + ")" );
         } catch (SQLException e) {
             log.error(e);
         } catch (Exception e) {
@@ -155,7 +198,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
         if (log.isDebugEnabled())
             log.debug("Removing OOBs older than " + new Date(end));
-        Query q = entityManager.createQuery("DELETE FROM MeasurementOOB mo WHERE mo.id.timestamp < :time");
+        Query q = entityManager.createQuery("DELETE FROM MeasurementOOB mo WHERE mo.timestamp < :time");
         q.setParameter("time", end);
         long t0 = System.currentTimeMillis();
         int count = q.executeUpdate();
@@ -181,12 +224,12 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     }
 
     /**
-     * Remove all OOB data for the passed schedule
+     * Resets the OOB data for the passed schedule
      * @param subject Caller
      * @param sched the schedule for which we want to clean out the data
      */
     public void removeOOBsForSchedule(Subject subject, MeasurementSchedule sched) {
-        Query q = entityManager.createQuery("DELETE FROM MeasurementOOB o WHERE o.id.scheduleId = :id");
+        Query q = entityManager.createNamedQuery(MeasurementOOB.DELETE_FOR_SCHEDULE);
         q.setParameter("id", sched.getId());
         q.executeUpdate();
     }
@@ -194,53 +237,55 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     /**
      * Return OOB Composites that contain all information about the OOBs in a given time as aggregates.
      * @param subject The caller
-     * @param end end time we are interested in
-     * @param pc PageControl to do pagination
+     * @param metricNameFilter a schedule name to filter for
      * @param resourceNameFilter a resource name to filter for
-     * @param parentNameFilter a parent resource name to filter for
-     * @return List of schedules with the corresponing oob aggregates
+     * @param parentNameFilter a parent resource name to filter for   @return List of schedules with the corresponing oob aggregates
+     * @param pc PageControl to do pagination
      */
-    public PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, long end, PageControl pc,
-                                                                  String resourceNameFilter, String parentNameFilter) {
+    public PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, String metricNameFilter,
+                                                                  String resourceNameFilter, String parentNameFilter,
+                                                                  PageControl pc
+    ) {
 
-        pc.initDefaultOrderingField("max(o.oobFactor)", PageOrdering.DESC);
+        pc.initDefaultOrderingField("o.oobFactor", PageOrdering.DESC);
 
-        long begin = end - (3L * 86400L * 1000L);
 
         Query queryCount = entityManager.createNamedQuery(MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT);
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
             MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE, pc);
-        queryCount.setParameter("begin", begin);
-        queryCount.setParameter("end", end);
-        query.setParameter("begin", begin);
-        query.setParameter("end", end);
-        query.setParameter("resourceName", resourceNameFilter);
-        queryCount.setParameter("resourceName", resourceNameFilter);
 
         // trim crap, toUpper it and put % around it for a LIKE query
+        metricNameFilter = PersistenceUtility.formatSearchParameter(metricNameFilter);
         resourceNameFilter = PersistenceUtility.formatSearchParameter(resourceNameFilter);
         parentNameFilter = PersistenceUtility.formatSearchParameter(parentNameFilter);
 
 
+        query.setParameter("metricName", metricNameFilter);
+        queryCount.setParameter("metricName", metricNameFilter);
         query.setParameter("resourceName", resourceNameFilter);
         queryCount.setParameter("resourceName", resourceNameFilter);
         query.setParameter("parentName", parentNameFilter);
         queryCount.setParameter("parentName", parentNameFilter);
 
+        if (authMangager.isOverlord(subject) || authMangager.isSystemSuperuser(subject)) {
+            query.setParameter("subjectId", -1);
+            queryCount.setParameter("subjectId", -1);
+        }
+        else {
+            query.setParameter("subjectId", subject.getId());
+            queryCount.setParameter("subjectId", subject.getId());
+        }
+
         List<MeasurementOOBComposite> results = query.getResultList();
         long totalCount = queryCount.getResultList().size();
 
         if (!results.isEmpty()) {
-            //  add 24h and 48h factors
-            Map<Integer, MeasurementOOBComposite> map = new HashMap<Integer, MeasurementOOBComposite>(results.size());
-            List<Integer> scheduleIds = new ArrayList<Integer>(results.size());
+
             List<MeasurementDataPK> pks = new ArrayList<MeasurementDataPK>(results.size());
-            Map<MeasurementDataPK, MeasurementOOBComposite> map2 = new HashMap<MeasurementDataPK, MeasurementOOBComposite>();
+            Map<MeasurementDataPK, MeasurementOOBComposite> map = new HashMap<MeasurementDataPK, MeasurementOOBComposite>();
             for (MeasurementOOBComposite comp : results) {
-                scheduleIds.add(comp.getScheduleId());
-                map.put(comp.getScheduleId(), comp);
                 MeasurementDataPK key = new MeasurementDataPK(comp.getTimestamp(), comp.getScheduleId());
-                map2.put(key, comp);
+                map.put(key, comp);
                 pks.add(key);
 
             }
@@ -249,89 +294,46 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             List<MeasurementDataNumeric1H> datas = getOneHourDataForPKs(pks);
             for (MeasurementDataNumeric1H data : datas) {
                 MeasurementDataPK pk = new MeasurementDataPK(data.getTimestamp(), data.getScheduleId());
-                MeasurementOOBComposite comp = map2.get(pk);
+                MeasurementOOBComposite comp = map.get(pk);
                 comp.setData(data);
                 comp.calculateOutlier();
             }
 
-            begin = end - (2L * 86400L * 1000L);
-
-            Query q = entityManager.createNamedQuery(MeasurementOOB.GET_FACTOR_FOR_SCHEDULES);
-            q.setParameter("schedules", scheduleIds);
-            q.setParameter("begin", begin);
-            q.setParameter("end", end);
-            List<Object[]> ret = q.getResultList();
-
-            for (Object[] objs : ret) {
-                Integer id = (Integer) objs[0];
-                Integer fac = (Integer) objs[1];
-                Double avg = (Double) objs[2];
-                map.get(id).setFactor48(fac.intValue());
-                map.get(id).setAvg48(avg.intValue());
-            }
-
-            begin = end - (2L * 86400L * 1000L);
-
-            q = entityManager.createNamedQuery(MeasurementOOB.GET_FACTOR_FOR_SCHEDULES);
-            q.setParameter("schedules", scheduleIds);
-            q.setParameter("begin", begin);
-            q.setParameter("end", end);
-            ret = q.getResultList();
-
-            for (Object[] objs : ret) {
-                Integer id = (Integer) objs[0];
-                Integer fac = (Integer) objs[1];
-                Double avg = (Double) objs[2];
-                map.get(id).setFactor24(fac.intValue());
-                map.get(id).setAvg24(avg.intValue());
-            }
         }
 
         return new PageList<MeasurementOOBComposite>(results, (int) totalCount, pc);
     }
 
     /**
-     * Returns the highest n OOBs for the passed resource id within the last 72h
+     * Returns the highest n OOBs for the passed resource id
      * @param subject caller
-     * @param end end time
      * @param resourceId the resource we are interested in
      * @param n max number of entries wanted
      * @return
      */
-    public PageList<MeasurementOOBComposite> getHighestNOOBsForResource(Subject subject, long end, int resourceId, int n) {
+    public PageList<MeasurementOOBComposite> getHighestNOOBsForResource(Subject subject, int resourceId, int n) {
+
+        if (!authMangager.canViewResource(subject, resourceId)) {
+            return new PageList<MeasurementOOBComposite>();
+        }
 
         PageControl pc = new PageControl(0, n);
         pc.initDefaultOrderingField("o.oobFactor", PageOrdering.DESC);
-        pc.addDefaultOrderingField("o.id.timestamp", PageOrdering.DESC);
-
-        long begin = end - (3L * 86400L * 1000L);
-        if (begin < 0)
-            begin = 0;
 
         Query query = entityManager.createNamedQuery(MeasurementOOB.GET_HIGHEST_FACTORS_FOR_RESOURCE);
-        query.setParameter("begin", begin);
-        query.setParameter("end", end);
         query.setParameter("resourceId", resourceId);
 
         List<MeasurementOOBComposite> results = query.getResultList();
 
-        /*
-         * We do now have a list of OOBs sorted by schedule ids, oobFactor desc
-         * We need to filter by schedule id now
-         */
-        Set<Integer> schedules = new HashSet<Integer>();
         if (!results.isEmpty()) {
             // we have the n OOBs, so lets fetch the MeasurementData for those
             List<MeasurementDataPK> pks = new ArrayList<MeasurementDataPK>(results.size());
             Map<MeasurementDataPK, MeasurementOOBComposite> map = new HashMap<MeasurementDataPK, MeasurementOOBComposite>();
             for (MeasurementOOBComposite comp : results) {
                 int schedule = comp.getScheduleId();
-                if (!schedules.contains(schedule)) {
-                    MeasurementDataPK key = new MeasurementDataPK(comp.getTimestamp(), schedule);
-                    pks.add(key);
-                    map.put(key, comp);
-                    schedules.add(schedule);
-                }
+                MeasurementDataPK key = new MeasurementDataPK(comp.getTimestamp(), schedule);
+                pks.add(key);
+                map.put(key, comp);
             }
             // compute and add the outlier data
             List<MeasurementDataNumeric1H> datas = getOneHourDataForPKs(pks);

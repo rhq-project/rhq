@@ -81,7 +81,7 @@ public class ResourceOverviewUIBean {
 
     private List<MeasurementOOBComposite> getRecentOObs(Subject subject, int resourceId, int n) {
         return LookupUtil.getOOBManager()
-            .getHighestNOOBsForResource(subject, System.currentTimeMillis(), resourceId, n);
+            .getHighestNOOBsForResource(subject, resourceId, n);
     }
 
     public List<Alert> getRecentAlerts() {

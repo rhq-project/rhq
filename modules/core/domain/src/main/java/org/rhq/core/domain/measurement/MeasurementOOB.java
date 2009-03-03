@@ -19,11 +19,8 @@
 package org.rhq.core.domain.measurement;
 
 import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
@@ -36,67 +33,68 @@ import javax.persistence.Table;
 @NamedQueries({
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE,
                 query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.displayName," +
-                        "           sched.id,max(o.id.timestamp),def.id,max(o.oobFactor),avg(o.oobFactor),bal.baselineMin , bal.baselineMax," +
+                        "           sched.id, o.timestamp,def.id,o.oobFactor,bal.baselineMin , bal.baselineMax," +
                         "           def.units, parent.name, parent.id) " +
-                        "FROM MeasurementOOB o "+
-                        "LEFT JOIN o.schedule sched " +
+                        "FROM MeasurementOOB o, MeasurementSchedule sched "+
                         "LEFT JOIN sched.definition def " +
                         "LEFT JOIN sched.resource res " +
                         "LEFT JOIN sched.baseline bal " +
                         "LEFT JOIN res.parentResource parent " +
-                        "WHERE (o.id.timestamp >= :begin AND o.id.timestamp <= :end )" +
-                        "  AND o.id.scheduleId = sched.id " +
+                        "WHERE o.id = sched.id " +
                         "  AND sched.definition = def " +
                         "  AND sched.resource = res " +
                         "  AND bal.schedule = sched " +
+                        "  AND (UPPER(def.displayName ) LIKE :metricName OR :metricName is null ) " +
                         "  AND (UPPER(res.name) LIKE :resourceName OR :resourceName is null ) " +
                         "  AND (UPPER(parent.name) LIKE :parentName OR :parentName is null ) " +
-                        "GROUP BY res.name, res.id, def.displayName, sched.id, def.id, bal.baselineMin , bal.baselineMax, def.units, parent.name, parent.id "
+                        "  AND (-1 = :subjectId) OR (res.id IN  ( SELECT rr.id FROM Resource rr " +
+                        "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " +
+                        "                        WHERE s.id = :subjectId )) "
                             ),
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT,
-                query = "  SELECT sched.id " +
-                        "  FROM MeasurementOOB o "+
-                        "  LEFT JOIN o.schedule sched " +
-                        "  LEFT JOIN sched.definition def " +
-                        "  LEFT JOIN sched.resource res " +
-                        "  LEFT JOIN res.parentResource parent " +
-                        "  WHERE (o.id.timestamp >= :begin AND o.id.timestamp <= :end )" +
-                        "    AND o.id.scheduleId = sched.id " +
-                        "    AND sched.definition = def " +
-                        "    AND sched.resource = res " +
+                query = "SELECT sched.id " +
+                        "FROM MeasurementOOB o , MeasurementSchedule sched "+
+                        "LEFT JOIN sched.definition def " +
+                        "LEFT JOIN sched.resource res " +
+                        "LEFT JOIN res.parentResource parent " +
+                        "WHERE o.id = sched.id " +
+                        "  AND sched.definition = def " +
+                        "  AND sched.resource = res " +
+                        "  AND (UPPER(def.displayName ) LIKE :metricName OR :metricName is null ) " +
                         "  AND (UPPER(res.name) LIKE :resourceName OR :resourceName is null ) " +
                         "  AND (UPPER(parent.name) LIKE :parentName OR :parentName is null ) " +
-                        "  GROUP BY sched.id "
+                        "  AND (-1 = :subjectId) OR (res.id IN  ( SELECT rr.id FROM Resource rr " +
+                        "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " +
+                        "                        WHERE s.id = :subjectId )) "
                         ),
-        @NamedQuery(name=MeasurementOOB.GET_FACTOR_FOR_SCHEDULES,
-                query= "SELECT o.id.scheduleId,max(o.oobFactor),avg(o.oobFactor)" +
-                        "FROM MeasurementOOB o "+
-                        "WHERE (o.id.timestamp >= :begin AND o.id.timestamp <= :end )" +
-                        "  AND o.id.scheduleId IN (:schedules)  " +
-                        "GROUP BY o.id.scheduleId"
-        ),
         @NamedQuery(name=MeasurementOOB.DELETE_OUTDATED,
                 query = "DELETE FROM MeasurementOOB o " +
-                        "WHERE o.id.scheduleId IN (" +
+                        "WHERE o.id IN (" +
                         "  SELECT b.schedule.id " +
                         "  FROM MeasurementBaseline b " +
                         "  WHERE b.computeTime > :cutOff" +
                         ")"
         ),
         @NamedQuery(name=MeasurementOOB.COUNT_FOR_DATE,
-                query = "SELECT COUNT(o.id.timestamp) FROM MeasurementOOB o " +
-                        "WHERE o.id.timestamp = :timestamp"
+                query = "SELECT COUNT(o.timestamp) FROM MeasurementOOB o " +
+                        "WHERE o.timestamp = :timestamp"
+        ),
+        @NamedQuery(name=MeasurementOOB.DELETE_FOR_SCHEDULE,
+                query = "DELETE FROM MeasurementOOB o WHERE o.id = :id"
+        ),
+        @NamedQuery(name=MeasurementOOB.DELETE_FOR_RESOURCES,
+                query = "DELETE FROM MeasurementOOB o " +
+                        "WHERE o.id IN " +
+                        "      ( SELECT ms.id FROM MeasurementSchedule ms WHERE ms.resource IN ( :resources ) )"
         ),
         @NamedQuery(name=MeasurementOOB.GET_HIGHEST_FACTORS_FOR_RESOURCE,
                 query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite(res.name,res.id,def.displayName," +
-                        "           sched.id,o.id.timestamp,def.id,o.oobFactor,bal.baselineMin , bal.baselineMax, def.units ) " +
-                        "FROM MeasurementOOB o "+
-                        "LEFT JOIN o.schedule sched " +
+                        "           sched.id,o.timestamp,def.id,o.oobFactor,bal.baselineMin , bal.baselineMax, def.units ) " +
+                        "FROM MeasurementOOB o, MeasurementSchedule sched "+
                         "LEFT JOIN sched.definition def " +
                         "LEFT JOIN sched.resource res " +
                         "LEFT JOIN sched.baseline bal " +
-                        "WHERE (o.id.timestamp >= :begin AND o.id.timestamp <= :end )" +
-                        "  AND o.id.scheduleId = sched.id " +
+                        "WHERE o.id = sched.id " +
                         "  AND sched.definition = def " +
                         "  AND sched.resource = res " +
                         "  AND bal.schedule = sched " +
@@ -109,19 +107,15 @@ import javax.persistence.Table;
 public class MeasurementOOB {
 
     public static final String GET_SCHEDULES_WITH_OOB_AGGREGATE = "GetSchedulesWithOObAggregate";
-
     public static final String GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT = "GetSchedulesWithOObAggregateCount";
-
-    public static final String GET_FACTOR_FOR_SCHEDULES = "GetFactorForSchedules";
-
     public static final String DELETE_OUTDATED = "DeleteOutdatedOOBs";
+    public static final String COUNT_FOR_DATE = "CountOOBForDate";
+    public static final String GET_HIGHEST_FACTORS_FOR_RESOURCE = "GetHighestOOBFactorForResource";
+    public static final String DELETE_FOR_SCHEDULE = "DeleteOOBForSchedule";
+    public static final String DELETE_FOR_RESOURCES = "DeleteOOBForResurces";
 
-    public static final String COUNT_FOR_DATE = "CountForDate";
-
-    public static final String GET_HIGHEST_FACTORS_FOR_RESOURCE = "GetHighestFactorForResource";
-
-    public static final String INSERT_QUERY_POSTGRES =
-            "insert into rhq_measurement_oob (oob_factor, schedule_id,  time_stamp )  \n" +
+    public static final String INSERT_QUERY =
+            "insert into rhq_measurement_oob_tmp (oob_factor, schedule_id,  time_stamp )  \n" +
                     "(SELECT max(mx*100) as mxdiff, id, ?\n" + //  ?1 = begin
                     " FROM\n" +
                     " (\n" +
@@ -133,7 +127,7 @@ public class MeasurementOOB {
                     "         AND d.time_stamp = ?\n" +   // ?2 = begin
                     "         AND (b.bl_max - b.bl_min) > 0.1 \n" + // TODO delta depending on max value ?
                     "         AND (d.maxvalue - b.bl_max) >0 \n " +
-                    "         AND sc.enabled = true\n" +
+                    "         AND sc.enabled = %TRUE%\n" +
                     "         AND sc.definition = def.id\n" +
                     "         AND def.numeric_type = 0\n" + // Only dynamic metrics
                     "    group by d.schedule_id\n" +
@@ -146,55 +140,46 @@ public class MeasurementOOB {
                     "         AND d.time_stamp = ?\n" + // ?3 = begin
                     "         AND (b.bl_max - b.bl_min) > 0.1\n" + // TODO delta depending on max value ?
                     "         AND (b.bl_min - d.minvalue) >0 \n" +
-                    "         AND sc.enabled = true\n" +
+                    "         AND sc.enabled = %TRUE%\n" +
                     "         AND sc.definition = def.id\n" +
                     "         AND def.numeric_type = 0\n" +
                     "    group by d.schedule_id \n" +
                     " ) data\n" +
                     " group by id, mx\n" +
-                    " having mx > 0.01 " +
+                    " having mx > 0.05 " +
                     ")";
 
-    public static final String INSERT_QUERY_ORACLE = "insert into rhq_measurement_oob (oob_factor, schedule_id,  time_stamp )  \n" +
-            "(\n" +
-            "SELECT max(mx*100) as mxdiff, id, ? \n" +
-            "FROM  (\n" +
-            "    SELECT max(((d.maxvalue - b.bl_max) / (b.bl_max - b.bl_min))) AS mx, d.schedule_id as id\n" +
-            "    FROM rhq_measurement_bline b, rhq_measurement_data_num_1h d, rhq_measurement_sched sc, rhq_measurement_def def\n" +
-            "    WHERE b.schedule_id = d.schedule_id\n" +
-            "         AND sc.id = b.schedule_id\n" +
-            "         AND d.value > b.bl_max\n" +
-            "         AND d.time_stamp = ?\n" +
-            "         AND ((b.bl_max - b.bl_min) > 0.1 )\n" +  // TODO delta depending on max value ?
-            "         AND (d.maxvalue - b.bl_max) >0 \n " +
-            "         AND sc.enabled = 1\n" +
-            "         AND sc.definition = def.id\n" +
-            "         AND def.numeric_type = 0\n" +
-            "   GROUP BY d.schedule_id\n" +
-            " UNION ALL \n" +
-            "        SELECT   max(((b.bl_min - d.minvalue) / (b.bl_max - b.bl_min))) AS mx, d.schedule_id as id\n" +
-            "       FROM rhq_measurement_bline b, rhq_measurement_data_num_1h d, rhq_measurement_sched sc, rhq_measurement_def def\n" +
-            "       WHERE b.schedule_id = d.schedule_id\n" +
-            "           AND sc.id = b.schedule_id\n" +
-            "           AND d.value < b.bl_max  \n" +
-            "           AND d.time_stamp = ?\n" +
-            "           AND ((b.bl_max - b.bl_min) > 0.1)\n" +   // TODO delta depending on max value ?
-            "           AND (b.bl_min - d.minvalue) >0 \n" +
-            "           AND sc.enabled = 1\n" +
-            "           AND sc.definition = def.id\n" +
-            "           AND def.numeric_type = 0\n" +
-            "       GROUP BY d.schedule_id \n" +
-            ")\n" +
-            "GROUP BY id, mx\n" +
-            "HAVING mx > 0.01" +
-            ") ";
+    public static final String UPDATE_MASTER =
+                    "update rhq_measurement_oob\n" +
+                    "set oob_factor = rhq_measurement_oob_tmp.oob_factor,  time_stamp=rhq_measurement_oob_tmp.time_stamp " +
+                    "from rhq_measurement_oob_tmp\n" +
+                    "where rhq_measurement_oob_tmp.oob_factor > rhq_measurement_oob.oob_factor\n" +
+                    "   and rhq_measurement_oob_tmp.schedule_id = rhq_measurement_oob.schedule_id ";
+
+    public static final String INSERT_NEW_ONES =
+                    "insert into rhq_measurement_oob (oob_factor, schedule_id,  time_stamp)  (\n" +
+                            "select oob_factor, schedule_id,  time_stamp \n" +
+                            "from  rhq_measurement_oob_tmp \n" +
+                            "where not exists ( \n" +
+                            "\n" +
+                            "    select rhq_measurement_oob.schedule_id " +
+                            "    from rhq_measurement_oob " +
+                            "    where rhq_measurement_oob.schedule_id = rhq_measurement_oob_tmp.schedule_id\n" +
+                            ")" +
+                            ")";
+
+    public static final String TRUNCATE_TMP_TABLE =
+                    "TRUNCATE rhq_measurement_oob_tmp";
+
+
     private static final long serialVersionUID = 1L;
 
-    @EmbeddedId
-    MeasurementDataPK id; // Same PK, so reuse of that class
-    @JoinColumn(name = "SCHEDULE_ID", insertable = false, updatable = false, nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
-    MeasurementSchedule schedule;
+    @Id
+    @Column(name="SCHEDULE_ID")
+    int id;
+
+    @Column(name="TIME_STAMP")
+    long timestamp;
     /**
      * The 'severity' of the violation. Original data is double, but we
      * don't need that precision here, so use an int to conserve space
@@ -207,11 +192,11 @@ public class MeasurementOOB {
     }
 
     public int getScheduleId() {
-        return id.scheduleId;
+        return id;
     }
 
     public long getTimestamp() {
-        return id.timestamp;
+        return timestamp;
     }
 
     public int getOobFactor() {
@@ -223,6 +208,7 @@ public class MeasurementOOB {
         final StringBuilder sb = new StringBuilder();
         sb.append("MeasurementOOB");
         sb.append("{id=").append(id);
+        sb.append(", timestamp=").append(timestamp);
         sb.append(", oobFactor=").append(oobFactor);
         sb.append('}');
         return sb.toString();

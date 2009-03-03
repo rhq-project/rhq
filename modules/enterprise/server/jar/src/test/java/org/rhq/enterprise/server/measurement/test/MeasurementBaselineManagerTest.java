@@ -348,20 +348,20 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             System.out.println("OOBs calculated: \n" + oobs);
             for (MeasurementOOB oob : oobs) {
                 if (oob.getScheduleId() == measSched.getId()) {
-                    assert oob.getOobFactor() == 50 : "Expected: 586, was " + oob.getOobFactor();
+                    assert oob.getOobFactor() == 50 : "Expected: 50, was " + oob.getOobFactor();
                 } else {
-                    assert oob.getOobFactor() == 200 : "Expected: 8, was " + oob.getOobFactor();
+                    assert oob.getOobFactor() == 200 : "Expected: 200, was " + oob.getOobFactor();
                 }
             }
 
             PageControl pc = PageControl.getUnlimitedInstance();
 
-            List<MeasurementOOBComposite> comps = oobManager.getSchedulesWithOOBs(overlord, System.currentTimeMillis(),
-                pc, null ,null );
+            List<MeasurementOOBComposite> comps = oobManager.getSchedulesWithOOBs(overlord,
+                    XXX, null, null, pc);
             //         System.out.println("Composites: " + comps);
             assert comps.size() == 2 : "Expected 2 composites, but got " + comps.size();
 
-            comps = oobManager.getHighestNOOBsForResource(overlord, System.currentTimeMillis(), platform.getId(), 2);
+            comps = oobManager.getHighestNOOBsForResource(overlord, platform.getId(), 2);
             assert comps.size() == 1 : "Expected 1 composite, but got " + comps.size();
 
             // Compute some more OOBs
@@ -370,7 +370,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             oobs = q.getResultList();
             //    System.out.println("OOBs calculated: \n" + oobs);
 
-            comps = oobManager.getSchedulesWithOOBs(overlord, elder, pc, null , null);
+            comps = oobManager.getSchedulesWithOOBs(overlord, XXX, null, null, pc);
             //     System.out.println("Composites: " + comps);
             assert comps.size() == 2 : "Expected 2, but was " + comps.size();
 
@@ -381,9 +381,9 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             begin();
 
             q = entityManager
-                .createQuery("DELETE FROM MeasurementOOB oo WHERE  oo.schedule = :sched1 OR oo.schedule = :sched2");
-            q.setParameter("sched1", measSched);
-            q.setParameter("sched2", measSched2);
+                .createQuery("DELETE FROM MeasurementOOB oo WHERE  oo.id = :sched1 OR oo.id = :sched2");
+            q.setParameter("sched1", measSched.getId());
+            q.setParameter("sched2", measSched2.getId());
             q.executeUpdate();
             commit();
 

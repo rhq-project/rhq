@@ -39,12 +39,7 @@ public class MeasurementOOBComposite implements Serializable {
     private int scheduleId;
     private long timestamp;
     private int definitionId;
-    private int factor72;
-    private int factor48;
-    private int factor24;
-    private int avg72;
-    private int avg48;
-    private int avg24;
+    private int factor;
     private double blMin;
     private double blMax;
     private double dataMin;
@@ -55,14 +50,13 @@ public class MeasurementOOBComposite implements Serializable {
     private Integer parentId;
 
     public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, long timestamp, int definitionId,
-                                   int factor72, double avg72, double blMin, double blMax, MeasurementUnits units, String parentName, Integer parentId) {
+                                   int factor, double blMin, double blMax, MeasurementUnits units, String parentName, Integer parentId) {
         this.resourceName = resourceName;
         this.resourceId = resourceId;
         this.scheduleName = scheduleName;
         this.scheduleId = scheduleId;
         this.definitionId = definitionId;
-        this.factor72 = factor72;
-        this.avg72 = (int)avg72;
+        this.factor = factor;
         this.blMin = blMin;
         this.blMax = blMax;
         this.timestamp = timestamp;
@@ -72,47 +66,28 @@ public class MeasurementOOBComposite implements Serializable {
     }
 
         public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, long timestamp, int definitionId,
-                                   int factor72, double blMax, double blMin, MeasurementUnits unit) {
+                                   int factor, double blMin, double blMax, MeasurementUnits unit) {
         this.resourceName = resourceName;
         this.resourceId = resourceId;
         this.scheduleName = scheduleName;
         this.scheduleId = scheduleId;
         this.definitionId = definitionId;
-        this.factor72 = factor72;
+        this.factor = factor;
         this.blMin = blMin;
         this.blMax = blMax;
         this.timestamp = timestamp;
         this.units = unit;
     }
-
-    public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, int definitionId,
-                                   long factor72, long factor48, long factor24) {
-        this.resourceName = resourceName;
-        this.resourceId = resourceId;
-        this.scheduleName = scheduleName;
-        this.scheduleId = scheduleId;
-        this.definitionId = definitionId;
-        this.factor72 = (int) factor72;
-        this.factor48 = (int) factor48;
-        this.factor24 = (int) factor24;
-    }
-
-
-    public int getFactor48() {
-        return factor48;
-    }
-
-    public void setFactor48(int factor48) {
-        this.factor48 = factor48;
-    }
-
-    public int getFactor24() {
-        return factor24;
-    }
-
-    public void setFactor24(int factor24) {
-        this.factor24 = factor24;
-    }
+//
+//    public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, int definitionId,
+//                                   long factor) {
+//        this.resourceName = resourceName;
+//        this.resourceId = resourceId;
+//        this.scheduleName = scheduleName;
+//        this.scheduleId = scheduleId;
+//        this.definitionId = definitionId;
+//        this.factor = (int) factor;
+//    }
 
     public String getResourceName() {
         return resourceName;
@@ -134,32 +109,8 @@ public class MeasurementOOBComposite implements Serializable {
         return definitionId;
     }
 
-    public int getFactor72() {
-        return factor72;
-    }
-
-    public int getAvg72() {
-        return avg72;
-    }
-
-    public void setAvg72(int avg72) {
-        this.avg72 = avg72;
-    }
-
-    public int getAvg48() {
-        return avg48;
-    }
-
-    public void setAvg48(int avg48) {
-        this.avg48 = avg48;
-    }
-
-    public int getAvg24() {
-        return avg24;
-    }
-
-    public void setAvg24(int avg24) {
-        this.avg24 = avg24;
+    public int getFactor() {
+        return factor;
     }
 
     public long getTimestamp() {
@@ -244,12 +195,7 @@ public class MeasurementOOBComposite implements Serializable {
         sb.append(", scheduleId=").append(scheduleId);
         sb.append(", timestamp=").append(timestamp);
         sb.append(", definitionId=").append(definitionId);
-        sb.append(", factor72=").append(factor72);
-        sb.append(", factor48=").append(factor48);
-        sb.append(", factor24=").append(factor24);
-        sb.append(", avg72=").append(avg72);
-        sb.append(", avg48=").append(avg48);
-        sb.append(", avg24=").append(avg24);
+        sb.append(", factor=").append(factor);
         sb.append(", blMin=").append(blMin);
         sb.append(", blMax=").append(blMax);
         sb.append(", dataMin=").append(dataMin);

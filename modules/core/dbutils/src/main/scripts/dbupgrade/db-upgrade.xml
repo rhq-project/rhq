@@ -1319,6 +1319,11 @@ DB Upgrade:
 
     <schemaSpec version="2.49">
         <schema-directSQL>
+            <statement desc="Remove old data from rhq_measurement_oob">
+                truncate rhq_measurement_oob
+            </statement>
+        </schema-directSQL>
+        <schema-directSQL>
             <statement desc="Remove the composite primary key">
                 ALTER TABLE rhq_measurement_oob DROP CONSTRAINT rhq_meas_oob_id_t_pk;
             </statement>
@@ -1336,16 +1341,11 @@ DB Upgrade:
        <schema-alterColumn table="RHQ_MEASUREMENT_OOB_TMP" column="TIME_STAMP" nullable="FALSE" />
        <schema-directSQL>
           <statement desc="Creating primary key for RHQ_MEASUREMENT_OOB_TMP">
-             ALTER TABLE RHQ_MEASUREMENT_OOB ADD PRIMARY KEY ( SCHEDULE_ID )
+             ALTER TABLE RHQ_MEASUREMENT_OOB_TMP ADD PRIMARY KEY ( SCHEDULE_ID )
           </statement>
        </schema-directSQL>
        <schema-addColumn   table="RHQ_MEASUREMENT_OOB_TMP" column="OOB_COUNT" columnType="INTEGER" />
        <schema-alterColumn table="RHQ_MEASUREMENT_OOB_TMP" column="OOB_COUNT" nullable="FALSE" />
-        <schema-directSQL>
-            <statement desc="Remove old data from rhq_measurement_oob">
-                truncate rhq_measurement_oob
-            </statement>
-        </schema-directSQL>
     </schemaSpec>
 
 </dbupgrade>

@@ -202,8 +202,8 @@ public enum PageControlView {
 
     /** */
     ResourceGroupMemberList(ListResourceGroupMembersUIBean.class),
-    
-    MiniResourceGroupMemberList(ListResourceGroupMembersUIBean.class,true),
+
+    MiniResourceGroupMemberList(ListResourceGroupMembersUIBean.class, true),
     /** */
     GroupConnectionPropertyUpdateHistory(ViewGroupConnectionPropertyHistoryUIBean.class),
     /** */
@@ -254,6 +254,8 @@ public enum PageControlView {
     // Monitor
 
     /** */
+    AutoGroupMeasurementScheduleList(ListResourceGroupMeasurementScheduleUIBean.class, true),
+    /** */
     ResourceMeasurementScheduleList(ListResourceMeasurementScheduleUIBean.class, true),
     /** */
     ResourceGroupMeasurementScheduleList(ListResourceGroupMeasurementScheduleUIBean.class, true),
@@ -303,7 +305,6 @@ public enum PageControlView {
     }
 
     public String toString() {
-        return PageControlView.class.getSimpleName() + "["
-            + (beanClass == null ? "unlimited" : beanClass.getSimpleName()) + "]";
+        return PageControlView.class.getSimpleName() + "[" + (beanClass == null ? "unlimited" : beanClass.getSimpleName()) + "]";
     }
 }

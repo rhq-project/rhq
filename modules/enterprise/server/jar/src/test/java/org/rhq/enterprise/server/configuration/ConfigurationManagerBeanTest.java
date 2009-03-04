@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 import javax.persistence.EntityManager;
 
@@ -473,8 +474,11 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                 propertySimple2.setOverride(Boolean.FALSE); // false is default, but setting explicitly for test clarity
             }
 
+            Map<Integer, Configuration> memberConfigs = new HashMap();
+            memberConfigs.put(resource1.getId(), configuration1);
+            memberConfigs.put(resource2.getId(), configuration2);
             int aggregateUpdateId = configurationManager.scheduleAggregatePluginConfigurationUpdate(overlord,
-                compatibleGroup.getId(), overrideAggregate);
+                compatibleGroup.getId(), memberConfigs);
 
             // instead of sleeping, let's directly execute what would normally be scheduled
             //configurationManager.completeAggregatePluginConfigurationUpdate(aggregateUpdateId);

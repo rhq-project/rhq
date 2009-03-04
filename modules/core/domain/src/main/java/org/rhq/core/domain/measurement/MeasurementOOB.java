@@ -149,12 +149,21 @@ public class MeasurementOOB {
                     " having mx > 0.05 " +
                     ")";
 
-    public static final String UPDATE_MASTER =
+    public static final String UPDATE_MASTER_POSTGRES =
                     "update rhq_measurement_oob\n" +
                     "set oob_factor = rhq_measurement_oob_tmp.oob_factor,  time_stamp=rhq_measurement_oob_tmp.time_stamp " +
                     "from rhq_measurement_oob_tmp\n" +
                     "where rhq_measurement_oob_tmp.oob_factor > rhq_measurement_oob.oob_factor\n" +
                     "   and rhq_measurement_oob_tmp.schedule_id = rhq_measurement_oob.schedule_id ";
+
+    public static final String UPDATE_MASTER_ORACLE =
+                    "update rhq_measurement_oob oob_ " +
+                    "set ( oob_factor, time_stamp )  =  ( " +
+                    "   select  oob_factor, time_stamp "+
+                    " from rhq_measurement_oob_tmp tmp_ "+
+                    " where tmp_.oob_factor > oob_.oob_factor " +
+                    "       and tmp_.schedule_id = oob_.schedule_id " +
+     " ) ";
 
     public static final String INSERT_NEW_ONES =
                     "insert into rhq_measurement_oob (oob_factor, schedule_id,  time_stamp)  (\n" +
@@ -169,7 +178,7 @@ public class MeasurementOOB {
                             ")";
 
     public static final String TRUNCATE_TMP_TABLE =
-                    "TRUNCATE rhq_measurement_oob_tmp";
+                    "TRUNCATE TABLE rhq_measurement_oob_tmp";
 
 
     private static final long serialVersionUID = 1L;

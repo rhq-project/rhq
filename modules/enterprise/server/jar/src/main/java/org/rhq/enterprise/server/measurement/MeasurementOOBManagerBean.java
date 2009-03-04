@@ -128,7 +128,14 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             t0 = t1;
 
             // Update the real table from the tmp table
-            stmt = conn.prepareStatement(MeasurementOOB.UPDATE_MASTER);
+            if (dbType instanceof PostgresqlDatabaseType)
+                theQuery = MeasurementOOB.UPDATE_MASTER_POSTGRES;
+            else if (dbType instanceof OracleDatabaseType)
+                theQuery = MeasurementOOB.UPDATE_MASTER_ORACLE;
+            else
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + dbType);
+
+            stmt = conn.prepareStatement(theQuery);
             stmt.executeUpdate();
             t1 = System.currentTimeMillis();
             timings.add((t1 - t0));

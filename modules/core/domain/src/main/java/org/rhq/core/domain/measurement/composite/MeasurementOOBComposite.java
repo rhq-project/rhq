@@ -78,16 +78,6 @@ public class MeasurementOOBComposite implements Serializable {
         this.timestamp = timestamp;
         this.units = unit;
     }
-//
-//    public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, int definitionId,
-//                                   long factor) {
-//        this.resourceName = resourceName;
-//        this.resourceId = resourceId;
-//        this.scheduleName = scheduleName;
-//        this.scheduleId = scheduleId;
-//        this.definitionId = definitionId;
-//        this.factor = (int) factor;
-//    }
 
     public String getResourceName() {
         return resourceName;

@@ -257,9 +257,25 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         pc.initDefaultOrderingField("o.oobFactor", PageOrdering.DESC);
 
 
-        Query queryCount = entityManager.createNamedQuery(MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE, pc);
+        Query queryCount;
+        Query query;
+
+        boolean isAdmin = authMangager.isOverlord(subject) || authMangager.isSystemSuperuser(subject);
+
+        if (isAdmin) {
+            queryCount = entityManager.createNamedQuery(MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT);
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE, pc);
+        }
+        else {
+            String tmp = PersistenceUtility.getQueryDefinitionFromNamedQuery(entityManager,MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE);
+            tmp += MeasurementOOB.SECURITY_ADDITION ;
+            query = PersistenceUtility.createNonNamedQueryWithOrderBy(entityManager,tmp,pc);
+
+            tmp = PersistenceUtility.getQueryDefinitionFromNamedQuery(entityManager,MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT);
+            tmp += MeasurementOOB.SECURITY_ADDITION ;
+            queryCount = PersistenceUtility.createNonNamedQueryWithOrderBy(entityManager,tmp,pc);
+        }
 
         // trim crap, toUpper it and put % around it for a LIKE query
         metricNameFilter = PersistenceUtility.formatSearchParameter(metricNameFilter);
@@ -274,11 +290,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         query.setParameter("parentName", parentNameFilter);
         queryCount.setParameter("parentName", parentNameFilter);
 
-        if (authMangager.isOverlord(subject) || authMangager.isSystemSuperuser(subject)) {
-            query.setParameter("subjectId", -1);
-            queryCount.setParameter("subjectId", -1);
-        }
-        else {
+        if (!isAdmin) {
             query.setParameter("subjectId", subject.getId());
             queryCount.setParameter("subjectId", subject.getId());
         }

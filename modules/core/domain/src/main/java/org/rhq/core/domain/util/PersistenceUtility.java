@@ -103,6 +103,33 @@ public class PersistenceUtility {
         return entityManager.createQuery(query.toString());
     }
 
+    public static Query createNonNamedQueryWithOrderBy(EntityManager entityManager, String queryText, PageControl pageControl) {
+         Query query;
+
+        if (pageControl.getPrimarySortColumn() != null) {
+            query = createNonNamedQueryWithOrderBy(entityManager, queryText, pageControl.getOrderingFieldsAsArray());
+        } else {
+            StackTraceElement caller = new Throwable().fillInStackTrace().getStackTrace()[1];
+            LOG.warn("Queries should really supply default sort columns. Caller did not: " + caller);
+
+            // Use the standard named query if no sorting is specified
+            query = entityManager.createQuery(queryText);
+        }
+
+        setDataPage(query, pageControl);
+
+        return query;
+    }
+
+
+    public static Query createNonNamedQueryWithOrderBy(EntityManager entityManager, String queryText,
+                                                       OrderingField... orderByFields) {
+
+        StringBuilder query = new StringBuilder(queryText);
+        buildOrderBy(query, orderByFields);
+        return entityManager.createQuery(query.toString());
+    }
+
     private static StringBuilder buildOrderBy(StringBuilder query, OrderingField... orderByFields) {
         boolean first = true;
         for (OrderingField orderingField : orderByFields) {
@@ -268,6 +295,12 @@ public class PersistenceUtility {
         } catch (Exception e) {
             LOG.warn("Couldn't register hibernate statistics mbean", e);
         }
+    }
+
+    public static String getQueryDefinitionFromNamedQuery(EntityManager entityManager, String queryName) {
+
+        NamedQueryDefinition ndc = getNamedQueryDefinition(entityManager,queryName);
+        return ndc.getQueryString();
     }
 
     private static NamedQueryDefinition getNamedQueryDefinition(EntityManager entityManager, String queryName) {

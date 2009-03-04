@@ -46,10 +46,7 @@ import javax.persistence.Table;
                         "  AND bal.schedule = sched " +
                         "  AND (UPPER(def.displayName ) LIKE :metricName OR :metricName is null ) " +
                         "  AND (UPPER(res.name) LIKE :resourceName OR :resourceName is null ) " +
-                        "  AND (UPPER(parent.name) LIKE :parentName OR :parentName is null ) " +
-                        "  AND (-1 = :subjectId) OR (res.id IN  ( SELECT rr.id FROM Resource rr " +
-                        "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " +
-                        "                        WHERE s.id = :subjectId )) "
+                        "  AND (UPPER(parent.name) LIKE :parentName OR :parentName is null ) "
                             ),
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT,
                 query = "SELECT sched.id " +
@@ -62,10 +59,7 @@ import javax.persistence.Table;
                         "  AND sched.resource = res " +
                         "  AND (UPPER(def.displayName ) LIKE :metricName OR :metricName is null ) " +
                         "  AND (UPPER(res.name) LIKE :resourceName OR :resourceName is null ) " +
-                        "  AND (UPPER(parent.name) LIKE :parentName OR :parentName is null ) " +
-                        "  AND (-1 = :subjectId) OR (res.id IN  ( SELECT rr.id FROM Resource rr " +
-                        "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " +
-                        "                        WHERE s.id = :subjectId )) "
+                        "  AND (UPPER(parent.name) LIKE :parentName OR :parentName is null ) " 
                         ),
         @NamedQuery(name=MeasurementOOB.DELETE_OUTDATED,
                 query = "DELETE FROM MeasurementOOB o " +
@@ -179,6 +173,11 @@ public class MeasurementOOB {
 
     public static final String TRUNCATE_TMP_TABLE =
                     "TRUNCATE TABLE rhq_measurement_oob_tmp";
+
+    public static final String SECURITY_ADDITION =
+                "  AND (res.id IN  ( SELECT rr.id FROM Resource rr " +
+                "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " +
+                "                        WHERE s.id = :subjectId )) ";
 
 
     private static final long serialVersionUID = 1L;

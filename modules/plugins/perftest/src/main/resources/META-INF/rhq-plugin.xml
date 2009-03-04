@@ -129,9 +129,87 @@
          <metric property="childMetric0" defaultOn="false"/>
          <metric property="childMetric1" defaultOn="true" displayType="detail"/>
          <metric property="childMetric2" defaultOn="true" displayType="summary"/>
-         
+
          <content name="childArtifact0" displayName="Child Artifact 0" category="configuration"/>
-         
+
+         <resource-configuration>
+
+              <!-- This group contains a sampling of all of the various types of properties. -->
+              <c:group name="group1" displayName="Group 1">
+                  <c:simple-property name="string" type="string"/>
+                  <c:simple-property name="longString" type="longString"/>
+                  <c:simple-property name="password" type="password"/>
+                  <c:simple-property name="boolean" type="boolean"/>
+                  <c:simple-property name="integer" type="integer"/>
+                  <c:simple-property name="long" type="long"/>
+                  <c:simple-property name="float" type="float"/>
+                  <c:simple-property name="double" type="double"/>
+                  <c:simple-property name="file" type="file"/>
+                  <c:simple-property name="directory" type="directory"/>
+
+                  <c:simple-property name="enum">
+                      <c:property-options>
+                          <c:option value="red" name="Red"/>
+                          <c:option value="blue" name="Blue" default="true"/>
+                          <c:option value="green" name="Green"/>
+                      </c:property-options>
+                  </c:simple-property>
+
+                  <c:simple-property name="optional" required="false"/>
+                  <c:simple-property name="readOnly" readOnly="true"/>
+
+                  <c:map-property name="openMap"/>
+
+                  <c:map-property name="map">
+                      <c:simple-property name="mapMember1"/>
+                      <c:simple-property name="mapMember2"/>
+                      <c:simple-property name="mapMember3"/>
+                  </c:map-property>
+
+                  <c:list-property name="listOfMaps">
+                      <c:map-property name="listMember">
+                          <c:simple-property name="mapInListMember1"/>
+                          <c:simple-property name="mapInListMember2"/>
+                          <c:simple-property name="mapInListMember3"/>
+                      </c:map-property>
+                  </c:list-property>
+              </c:group>
+
+              <!-- This group just contains a whole bunch of props to give this config some bulk. -->
+              <c:group name="group2" displayName="Group 2">
+                  <c:simple-property name="string1"/>
+                  <c:simple-property name="string2"/>
+                  <c:simple-property name="string3"/>
+                  <c:simple-property name="string4"/>
+                  <c:simple-property name="string5"/>
+                  <c:simple-property name="string6"/>
+                  <c:simple-property name="string7"/>
+                  <c:simple-property name="string8"/>
+                  <c:simple-property name="string9"/>
+                  <c:simple-property name="string10"/>
+                  <c:simple-property name="string11"/>
+                  <c:simple-property name="string12"/>
+                  <c:simple-property name="string13"/>
+                  <c:simple-property name="string14"/>
+                  <c:simple-property name="string15"/>
+                  <c:simple-property name="string16"/>
+                  <c:simple-property name="string17"/>
+                  <c:simple-property name="string18"/>
+                  <c:simple-property name="string19"/>
+                  <c:simple-property name="string20"/>
+              </c:group>
+
+              <!-- Throw in a couple templates too. -->
+              <c:template name="template1" description="Template 1">
+                  <c:simple-property name="string" default="template1Value"/>
+              </c:template>
+
+              <c:template name="template2" description="Template 2">
+                  <c:simple-property name="string" default="template2Value"/>
+              </c:template>
+
+         </resource-configuration>
+
          <service name="service-ab" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Nested Service A-B">
             <plugin-configuration>
                <c:simple-property name="grandchildProperty0"/>

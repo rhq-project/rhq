@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
@@ -46,6 +46,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.plugins.perftest.event.PerfTestEventPoller;
 import org.rhq.plugins.perftest.measurement.MeasurementFactory;
+import org.rhq.plugins.perftest.configuration.SimpleConfigurationFactory;
 
 /**
  * JON resource component for handling resources defined in the performance test scenario.
@@ -114,9 +115,6 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
         return;
     }
 
-    public void removePackages(Set<InstalledPackage> packages) {
-    }
-
     public InputStream retrievePackageBits(InstalledPackage pkg) {
         return null;
     }
@@ -166,19 +164,24 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
-        try {
-            ConfigurationDefinition def = this.resourceContext.getResourceType().getResourceConfigurationDefinition();
-            if (def != null) {
-                return def.getDefaultTemplate().createConfiguration();
-            } else {
-                return new Configuration();
-            }
-        } catch (Exception e) {
-            return new Configuration();
-        }
+        SimpleConfigurationFactory configurationFactory = new SimpleConfigurationFactory();
+        @SuppressWarnings({"UnnecessaryLocalVariable"})
+        Configuration configuration = configurationFactory.generateConfiguration(
+                this.resourceContext.getResourceType().getResourceConfigurationDefinition());
+        return configuration;
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        try
+        {
+            // Sleep for a bit to simulate the time it would take to parse and update an XML config file.
+            Thread.sleep(1000);
+        }
+        catch (InterruptedException e)
+        {
+            throw new RuntimeException(e);
+        }
+        report.setStatus(ConfigurationUpdateStatus.SUCCESS);
+        // TODO: Return FAILURE and INPROGRESS once in a while.
     }
-
 }

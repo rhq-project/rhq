@@ -457,10 +457,17 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         PropertyDefinition listMemberPropertyDefinition = listPropertyDefinition.getMemberDefinition();
         if (listMemberPropertyDefinition instanceof PropertyDefinitionMap) {
-            addListMemberMapProperties(parent, listProperty, (PropertyDefinitionMap) listMemberPropertyDefinition,
-                rowStyleClass);
+            if (!this.isAggregate) {
+                addListMemberMapProperties(parent, listProperty, (PropertyDefinitionMap) listMemberPropertyDefinition,
+                    rowStyleClass);
+            } else {
+                addErrorRow(parent, "Viewing/editing of lists of"
+                    + " properties is not yet supported for group Configurations."
+                    + " To view/edit this property for group members, please go to the Configure>Current tab for each member separately."
+                    , rowStyleClass);
+            }
         } else {
-            addErrorRow(parent, "Rendering of lists of " + listMemberPropertyDefinition.getClass().getSimpleName()
+            addErrorRow(parent, "Viewing/editing of lists of " + listMemberPropertyDefinition.getClass().getSimpleName()
                 + " properties is not yet supported. Here's the list's toString() value for now: "
                 + ((listProperty != null) ? listProperty.getList() : null), rowStyleClass);
         }

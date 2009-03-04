@@ -30,12 +30,14 @@ import org.rhq.core.gui.util.StringUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.common.Outcomes;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewGroupConnectionPropertyHistoryUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ViewGroupConnectionPropertyHistoryUIBean";
+    public static final String VIEW_ID = "/rhq/group/inventory/connectionHistory.xhtml";
 
     private ResourceGroup resourceGroup;
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
@@ -44,7 +46,7 @@ public class ViewGroupConnectionPropertyHistoryUIBean extends PagedDataTableUIBe
         return "viewHistory";
     }
 
-    public String deleteSelected() {
+    public String deleteSelectedUpdates() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         ResourceGroup resourceGroup = EnterpriseFacesContextUtility.getResourceGroup();
 
@@ -67,7 +69,7 @@ public class ViewGroupConnectionPropertyHistoryUIBean extends PagedDataTableUIBe
                 "Failed to delete selected group connection property updates.", e);
         }
 
-        return "success";
+        return Outcomes.SUCCESS;
     }
 
     @Override

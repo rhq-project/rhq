@@ -105,7 +105,7 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
     public static final String QUERY_FIND_ALL_IN_STATUS = "PluginConfigurationUpdate.findAllInStatus";
     public static final String QUERY_FIND_ALL_BY_RESOURCE_ID = "PluginConfigurationUpdate.findAllByResourceId";
     public static final String QUERY_FIND_CURRENTLY_ACTIVE_CONFIG = "PluginConfigurationUpdate.findCurrentlyActiveConfig";
-    public static final String QUERY_FIND_LATEST_BY_RESOURCE_ID = "PluginConfigurationUpdate.findByResource";
+    public static final String QUERY_FIND_LATEST_BY_RESOURCE_ID = "PluginConfigurationUpdate.findLatestByResourceId";
     public static final String QUERY_FIND_COMPOSITE_BY_PARENT_UPDATE_ID = "PluginConfigurationUpdate.findCompositeByParentUpdateId";
     public static final String QUERY_FIND_BY_PARENT_UPDATE_ID = "PluginConfigurationUpdate.findByParentUpdateId";
     public static final String QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID = "PluginConfigurationUpdate.findStatusByParentUpdateId";

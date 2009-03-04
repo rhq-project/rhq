@@ -64,7 +64,8 @@ public class AggregateResourceConfigurationUpdate extends AbstractAggregateConfi
     public AggregateResourceConfigurationUpdate(ResourceGroup group, String subjectName) {
         super(group, subjectName);
         // TODO (ips, 02/13/09): This is a temporary workaround - we don't really need to store a Configuration at all,
-        //      but the AbstractConfigurationUpdate base class requires the configuration field to be non-null.
+        //      since it can be recalculated from the member configs when needed, but the AbstractConfigurationUpdate
+        //      base class requires the configuration field to be non-null.
         this.configuration = new Configuration();
     }
 

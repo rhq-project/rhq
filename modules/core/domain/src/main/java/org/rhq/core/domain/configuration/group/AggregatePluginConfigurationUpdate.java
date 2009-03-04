@@ -48,10 +48,18 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 @NamedQueries( {
     @NamedQuery(name = AggregatePluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID, query = "SELECT apcu "
         + "FROM AggregatePluginConfigurationUpdate AS apcu " + "WHERE apcu.group.id = :groupId"),
+    @NamedQuery(name = AggregatePluginConfigurationUpdate.QUERY_FIND_LATEST_BY_GROUP_ID, query = "" //
+        + "SELECT cgu " //
+        + "  FROM AggregatePluginConfigurationUpdate cgu " //
+        + " WHERE cgu.group.id = :groupId " //
+        + "   AND cgu.modifiedTime = ( SELECT MAX(cgu2.modifiedTime) " //
+        + "                             FROM AggregatePluginConfigurationUpdate cgu2 " //
+        + "                            WHERE cgu2.group.id = :groupId ) "),
     @NamedQuery(name = AggregatePluginConfigurationUpdate.QUERY_DELETE_BY_ID, query = "DELETE "
         + "FROM AggregatePluginConfigurationUpdate AS apcu " + "WHERE apcu.id IN ( :ids ) ") })
 public class AggregatePluginConfigurationUpdate extends AbstractAggregateConfigurationUpdate {
     public static final String QUERY_FIND_BY_GROUP_ID = "AggregatePluginConfigurationUpdate.findByGroupId";
+    public static final String QUERY_FIND_LATEST_BY_GROUP_ID = "AggregatePluginConfigurationUpdate.findLatestByGroupId";
     public static final String QUERY_DELETE_BY_ID = "AggregatePluginConfigurationUpdate.deleteById";
 
     private static final long serialVersionUID = 1L;
@@ -62,10 +70,14 @@ public class AggregatePluginConfigurationUpdate extends AbstractAggregateConfigu
     protected AggregatePluginConfigurationUpdate() {
     } // JPA
 
-    public AggregatePluginConfigurationUpdate(ResourceGroup group, Configuration aggregateConfiguration,
-        String subjectName) {
+    public AggregatePluginConfigurationUpdate(ResourceGroup group,
+                                              String subjectName) {
         super(group, subjectName);
-        this.configuration = aggregateConfiguration.deepCopy(false);
+        //this.configuration = aggregateConfiguration.deepCopy(false);
+        // TODO (ips, 02/13/09): This is a temporary workaround - we don't really need to store a Configuration at all,
+        //      since it can be recalculated from the member configs when needed, but the AbstractConfigurationUpdate
+        //      base class requires the configuration field to be non-null.
+        this.configuration = new Configuration();
     }
 
     public void setConfigurationUpdates(List<PluginConfigurationUpdate> configurationUpdates) {

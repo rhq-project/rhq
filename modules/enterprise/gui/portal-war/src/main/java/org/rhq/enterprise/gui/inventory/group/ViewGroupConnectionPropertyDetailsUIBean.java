@@ -18,13 +18,18 @@
  */
 package org.rhq.enterprise.gui.inventory.group;
 
+import java.util.Map;
+
 import javax.faces.model.DataModel;
 
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.gui.configuration.propset.ConfigurationSet;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
@@ -34,8 +39,13 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ViewGroupConnectionPropertyDetailsUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ViewGroupConnectionPropertyDetailsUIBean";
+    public static final String VIEW_ID = "/rhq/group/inventory/view-plugin-configuration-update-details.xhtml";    
 
     private ResourceGroup resourceGroup;
+    private Map<Integer, Configuration> pluginConfigurations;
+    private ConfigurationSet configurationSet;
+
+    private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
     @Override
     public DataModel getDataModel() {
@@ -45,6 +55,24 @@ public class ViewGroupConnectionPropertyDetailsUIBean extends PagedDataTableUIBe
         }
 
         return dataModel;
+    }
+
+    public ConfigurationSet getConfigurationSet() {
+        if (this.configurationSet == null) {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            ResourceGroup group = EnterpriseFacesContextUtility.getResourceGroup();
+            int groupPluginConfigurationUpdateId = getPluginResourceConfigurationUpdateId();
+
+            this.pluginConfigurations = this.configurationManager
+                .getPluginConfigurationMapForAggregateUpdate(groupPluginConfigurationUpdateId);
+            this.configurationSet = GroupPluginConfigurationUtility.buildConfigurationSet(subject, group,
+                this.pluginConfigurations);
+        }
+        return configurationSet;
+    }
+
+    private int getPluginResourceConfigurationUpdateId() {
+        return FacesContextUtility.getRequiredRequestParameter("apcuId", Integer.class);
     }
 
     private class ListGroupConnectionPropertyUpdateDetailsDataModel extends

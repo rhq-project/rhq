@@ -15,7 +15,7 @@
       </navigation-case>
 
       <navigation-case>
-         <from-action>#{ViewGroupConnectionPropertyHistoryUIBean.deleteSelected}</from-action>
+         <from-action>#{ViewGroupConnectionPropertyHistoryUIBean.deleteSelectedUpdates}</from-action>
          <to-view-id>/rhq/group/inventory/view.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect />
       </navigation-case>
@@ -54,7 +54,7 @@
 
       <navigation-case>
          <from-action>#{ViewGroupConnectionPropertyHistoryUIBean.begin}</from-action>
-         <to-view-id>/rhq/group/inventory/list-plugin-configuration-update-history.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
+         <to-view-id>/rhq/group/inventory/connectionHistory.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
          <redirect />
       </navigation-case>
 
@@ -99,25 +99,11 @@
 
    <navigation-rule>
 
-      <from-view-id>/rhq/group/inventory/list-plugin-configuration-update-history.xhtml</from-view-id>
+      <from-view-id>/rhq/group/inventory/connectionHistory.xhtml</from-view-id>
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/group/inventory/list-plugin-configuration-update-history.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}</to-view-id>
-         <redirect />
-      </navigation-case>
-
-   </navigation-rule>
-
-   <navigation-rule>
-
-      <from-view-id>/rhq/group/inventory/view-plugin-configuration-update-details.xhtml</from-view-id>
-
-      <navigation-case>
-         <from-outcome>sort</from-outcome>
-         <to-view-id>
-            /rhq/group/inventory/view-plugin-configuration-update-details.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}&amp;apcuId=#{param.apcuId}
-         </to-view-id>
+         <to-view-id>/rhq/group/inventory/connectionHistory.xhtml?groupId=#{param.groupId}&amp;category=#{param.category}&amp;apcuId=#{param.apcuId}</to-view-id>
          <redirect />
       </navigation-case>
 

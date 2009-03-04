@@ -21,18 +21,6 @@
    </managed-bean>
 
    <managed-bean>
-      <managed-bean-name>ViewGroupConnectionPropertiesUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertiesUIBean</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
-   </managed-bean>
-
-   <managed-bean>
-      <managed-bean-name>ViewGroupConnectionPropertyDetailsHeaderUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyDetailsHeaderUIBean</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
-   </managed-bean>
-
-   <managed-bean>
       <managed-bean-name>ViewGroupConnectionPropertyHistoryUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyHistoryUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
@@ -54,14 +42,6 @@
    <managed-bean>
       <managed-bean-name>EditGroupGeneralPropertiesUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.inventory.group.EditGroupGeneralPropertiesUIBean</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
-   </managed-bean>
- 
-   <!-- /rhq/group/inventory/edit-connection.xhtml -->
-
-   <managed-bean>
-      <managed-bean-name>EditGroupConnectionPropertiesUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.inventory.group.EditGroupConnectionPropertiesUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 

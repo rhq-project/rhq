@@ -382,7 +382,7 @@ public interface ConfigurationManagerLocal {
     int createAggregateConfigurationUpdate(AbstractAggregateConfigurationUpdate update);
 
     int scheduleAggregatePluginConfigurationUpdate(Subject whoami, int compatibleGroupId,
-        Configuration pluginConfigurationUpdate) throws SchedulerException, ConfigurationUpdateException;
+        Map<Integer, Configuration> pluginConfigurationUpdate) throws SchedulerException, ConfigurationUpdateException;
 
     Configuration getAggregatePluginConfigurationForCompatibleGroup(ResourceGroup group);
 
@@ -392,7 +392,7 @@ public interface ConfigurationManagerLocal {
     PageList<AggregateResourceConfigurationUpdate> getAggregateResourceConfigurationUpdatesByGroupId(int groupId,
         PageControl pc);
 
-    ConfigurationUpdateStatus updateAggregateConfigurationUpdateStatus(int aggregatePluginConfigurationUpdateId,
+    ConfigurationUpdateStatus updateAggregatePluginConfigurationUpdateStatus(int aggregatePluginConfigurationUpdateId,
         String errorMessages);
 
     int deleteAggregatePluginConfigurationUpdates(Subject subject, Integer resourceGroupId,
@@ -429,11 +429,18 @@ public interface ConfigurationManagerLocal {
      * Returns the current Resource configurations for the members in the specified compatible group.
      *
      * @param whoami the current subject
-     * @param groupId
+     * @param groupId the id of the compatible group
      * @return
      * @throws Exception if 1) the group contains more than {@link #MAX_GROUP_RESOURCE_CONFIG_MEMBERS} members, 2)
      *         one or more of the group's members are DOWN, 3) config updates, for the group or any member, are
      *         in progress, or 4) we fail to retrieve one or more member live configs from the corresponding Agents
      */
     Map<Integer,Configuration> getResourceConfigurationsForCompatibleGroup(Subject whoami, int groupId) throws Exception;
+
+    Map<Integer, Configuration> getPluginConfigurationsForCompatibleGroup(Subject whoami, int groupId)
+        throws Exception;
+
+    @SuppressWarnings("unchecked")
+    Map<Integer, Configuration> getPluginConfigurationMapForAggregateUpdate(
+        Integer aggregatePluginConfigurationUpdateId);
 }

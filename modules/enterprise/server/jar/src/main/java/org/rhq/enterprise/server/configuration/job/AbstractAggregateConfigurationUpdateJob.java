@@ -97,9 +97,7 @@ public abstract class AbstractAggregateConfigurationUpdateJob implements Job
         } catch (Exception e) {
             errorMessages = ThrowableUtil.getAllMessages(e);
         } finally {
-            if (errorMessages != null)
-                handleSynchronousConfigurationUpdateErrors(configurationManager, aggregateConfigurationUpdateId,
-                        errorMessages);
+            completeAggregateConfigurationUpdate(configurationManager, aggregateConfigurationUpdateId, errorMessages);
         }
     }
 
@@ -124,7 +122,7 @@ public abstract class AbstractAggregateConfigurationUpdateJob implements Job
     protected abstract void executeConfigurationUpdate(ConfigurationManagerLocal configurationManager,
                                                        Integer childUpdateId, Subject subject);
 
-    protected abstract void handleSynchronousConfigurationUpdateErrors(ConfigurationManagerLocal configurationManager,
+    protected abstract void completeAggregateConfigurationUpdate(ConfigurationManagerLocal configurationManager,
                                                                        Integer aggregateConfigurationUpdateId,
                                                                        String errorMessages);
 }

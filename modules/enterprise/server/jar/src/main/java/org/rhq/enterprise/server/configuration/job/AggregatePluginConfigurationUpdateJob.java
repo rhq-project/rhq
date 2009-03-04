@@ -59,10 +59,10 @@ public class AggregatePluginConfigurationUpdateJob extends AbstractAggregateConf
         configurationManager.completePluginConfigurationUpdate(childUpdateId);
     }
 
-    protected void handleSynchronousConfigurationUpdateErrors(ConfigurationManagerLocal configurationManager,
+    protected void completeAggregateConfigurationUpdate(ConfigurationManagerLocal configurationManager,
                                                               Integer aggregateConfigurationUpdateId, String errorMessages)
     {
-        configurationManager.updateAggregateConfigurationUpdateStatus(aggregateConfigurationUpdateId,
+        configurationManager.updateAggregatePluginConfigurationUpdateStatus(aggregateConfigurationUpdateId,
                 errorMessages);
     }
 }

@@ -10,48 +10,59 @@
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-<ui:param name="pageTitle" value="#{ResourceGroupUIBean.groupCategoryName} '#{ResourceGroupUIBean.name}' - Inventory Data"/>
+<ui:param name="pageTitle" value="#{ResourceGroupUIBean.groupCategoryName} '#{ViewGroupPluginConfigurationUIBean.group.name}' - Inventory Data"/>
 <ui:param name="selectedTabName" value="Inventory.Connection"/>
 
 <ui:define name="content">
 
-<!-- ===================   SHARED PARAMS    =================== -->
-
-<ui:param name="resourceGroupMembersDataModel" value="#{ListResourceGroupMembersUIBean.dataModel}"/>
-
 <!-- =================== GROUP CONNECTION PROPERTIES =================== -->
-<rich:panel styleClass="BlockContent"
-            rendered="#{resourceGroupMembersDataModel.rowCount > 0 and
-                        ResourceGroupUIBean.groupCategoryName == 'COMPATIBLE' and
-                        !empty ViewGroupConnectionPropertiesUIBean.configurationDefinition.propertyDefinitions and
-                        !empty ViewGroupConnectionPropertiesUIBean.configuration.map}">
-
+<rich:panel styleClass="BlockContent">
 
    <f:facet name="header" styleClass="BlockTitle">
       Group Connection Properties
    </f:facet>
 
-   <h:form id="viewGroupConnectionPropertiesForm">
+   <h:form id="configSetForm" rendered="#{ViewGroupPluginConfigurationUIBean.configurationSet ne null}">
 
-      <input type="hidden" name="groupId" value="#{ResourceGroupUIBean.groupId}"/>
-      <input type="hidden" name="category" value="#{param.category}"/>
+           <input type="hidden" name="groupId" value="#{param.groupId}" />
 
-      <onc:config configurationDefinition="#{ViewGroupConnectionPropertiesUIBean.configurationDefinition}"
-                  configuration="#{ViewGroupConnectionPropertiesUIBean.configuration}"
-                  readOnly="true"
-                  nullConfigurationDefinitionMessage="#{ViewGroupConnectionPropertiesUIBean.nullConfigurationDefinitionMessage}"
-                  nullConfigurationMessage="#{ViewGroupConnectionPropertiesUIBean.nullConfigurationMessage}"
-                  prevalidate="true" />
+           <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
+               <h:commandButton value="EDIT" action="#{ViewGroupPluginConfigurationUIBean.edit}"
+                                title="Edit this Compatible Group Configuration"
+                                rendered="${ResourceGroupUIBean.permissions.configure}"
+                                styleClass="buttonmed"/>
+               <h:commandButton value="VIEW HISTORY" action="#{ViewGroupConnectionPropertyHistoryUIBean.begin}"
+                                title="View History for Group Connection Property Updates" styleClass="buttonmed"/>
+           </h:panelGrid>
 
-      <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
-                   rendered="#{ResourceGroupUIBean.permissions.inventory}">
-         <h:commandButton value="EDIT..." action="#{EditGroupConnectionPropertiesUIBean.begin}"
-                          title="Edit Connection Properties" styleClass="buttonmed"/>
-         <h:commandButton value="VIEW HISTORY" action="#{ViewGroupConnectionPropertyHistoryUIBean.begin}"
-                          title="View History for Group Connection Property Updates" styleClass="buttonmed"/>
-      </h:panelGrid>
+           <a4j:region selfRendered="false">
+               <a4j:outputPanel layout="block" ajaxRendered="true" keepTransient="true">
 
-   </h:form>
+                   <onc:configSet id="rhq_configSet"
+                                  configurationSet="#{ViewGroupPluginConfigurationUIBean.configurationSet}"
+                                  readOnly="true"/>
+
+               </a4j:outputPanel>
+           </a4j:region>
+
+           <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
+               <h:commandButton value="EDIT" action="#{ViewGroupPluginConfigurationUIBean.edit}"
+                                title="Edit this Compatible Group Configuration"
+                                rendered="${ResourceGroupUIBean.permissions.configure}"
+                                styleClass="buttonmed"/>
+               <h:commandButton value="VIEW HISTORY" action="#{ViewGroupConnectionPropertyHistoryUIBean.begin}"
+                                title="View History for Group Connection Property Updates" styleClass="buttonmed"/>
+           </h:panelGrid>
+
+       </h:form>
+
+        <h:outputLink value="/rhq/group/inventory/connectionHistory.xhtml"
+                      rendered="#{ViewGroupPluginConfigurationUIBean.configurationSet eq null}">
+           <f:param name="groupId" value="#{param.groupId}" />
+           <h:outputText value="View Connection Properties Update History" />
+        </h:outputLink>
+
+       <ui:remove><!--<a4j:log popup="false" level="ALL" style="width: 800px; height: 300px;"/>--></ui:remove>
 
 </rich:panel>
 

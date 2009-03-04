@@ -17,38 +17,66 @@
 <ui:composition template="/rhq/group/layout/main.xhtml">
 
    <ui:param name="pageTitle"
-             value="#{ResourceGroupUIBean.groupCategoryName} '#{ResourceGroupUIBean.name}' - Edit Connection Properties"/>
+             value="#{ResourceGroupUIBean.groupCategoryName} '#{EditGroupPluginConfigurationUIBean.group.name}' - Edit Connection Properties"/>
    <ui:param name="selectedTabName" value="Inventory.Connection"/>
    <ui:define name="content">
 
+      <!-- =================== GROUP CONNECTION PROPERTIES =================== -->
       <rich:panel styleClass="BlockContent">
 
          <f:facet name="header" styleClass="BlockTitle">
             Group Connection Properties
          </f:facet>
 
-         <h:form id="editGroupConnectionPropertiesForm" onsubmit="prepareInputsForSubmission(this)">
+         <h:form id="configSetForm" onsubmit="prepareInputsForSubmission(this)"
+                rendered="#{EditGroupPluginConfigurationUIBean.configurationSet ne null}">
 
-            <input type="hidden" name="groupId" value="#{ResourceGroupUIBean.groupId}"/>
-            <input type="hidden" name="category" value="#{param.category}"/>
+            <input type="hidden" name="groupId" value="#{param.groupId}"/>
 
-            <onc:config configurationDefinition="#{EditGroupConnectionPropertiesUIBean.configurationDefinition}"
-                        configuration="#{EditGroupConnectionPropertiesUIBean.configuration}"
-                        accessMapActionExpression="#{EditGroupConnectionPropertiesUIBean.accessMap}"
-                        addNewMapActionExpression="#{EditGroupConnectionPropertiesUIBean.addNewMap}"
-                        nullConfigurationDefinitionMessage="#{EditGroupConnectionPropertiesUIBean.nullConfigurationDefinitionMessage}"
-                        nullConfigurationMessage="#{EditGroupConnectionPropertiesUIBean.nullConfigurationMessage}"
-                        prevalidate="true" 
-                        aggregate="true" />
+            <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
+                <h:commandButton type="submit" action="#{EditGroupPluginConfigurationUIBean.updateConfigurations}"
+                                 value="SAVE" title="Click to Save Changes"
+                                 styleClass="buttonmed"/>
+                <h:commandButton type="reset"
+                                 value="RESET" title="Click to Reset All Properties to Their Original Values"
+                                 styleClass="buttonmed"/>
+                <h:commandButton type="submit" immediate="true"
+                                 action="#{EditGroupPluginConfigurationUIBean.cancel}"
+                                 value="CANCEL" title="Click to Cancel Edits and Return to View Page"
+                                 styleClass="buttonmed"/>
+            </h:panelGrid>
 
-            <h:panelGroup layout="block" styleClass="BlockContent">
-               <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
-                  <h:commandButton type="submit" action="#{EditGroupConnectionPropertiesUIBean.update}" value="OK" styleClass="buttonmed"/>
-                  <h:commandButton type="submit" action="#{EditGroupConnectionPropertiesUIBean.cancel}" immediate="true" value="CANCEL" styleClass="buttonmed"/>
-               </h:panelGrid>
-            </h:panelGroup>
-            
-         </h:form>
+            <a4j:region selfRendered="false">
+                <a4j:outputPanel layout="block" ajaxRendered="true" keepTransient="true">
+
+                    <onc:configSet id="rhq_configSet"
+                                   configurationSet="#{EditGroupPluginConfigurationUIBean.configurationSet}"/>
+
+                </a4j:outputPanel>
+            </a4j:region>
+
+            <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
+                <h:commandButton type="submit" action="#{EditGroupPluginConfigurationUIBean.updateConfigurations}"
+                                 value="SAVE" title="Click to Save Changes"
+                                 styleClass="buttonmed"/>
+                <h:commandButton type="reset"
+                                 value="RESET" title="Click to Reset All Properties to Their Original Values"
+                                 styleClass="buttonmed"/>
+                <h:commandButton type="submit" immediate="true"
+                                 action="#{EditGroupPluginConfigurationUIBean.cancel}"
+                                 value="CANCEL" title="Click to Cancel Edits and Return to View Page"
+                                 styleClass="buttonmed"/>
+            </h:panelGrid>
+
+        </h:form>
+
+          <h:outputLink value="/rhq/group/inventory/connectionHistory.xhtml"
+                        rendered="#{EditGroupPluginConfigurationUIBean.configurationSet eq null}">
+             <f:param name="groupId" value="#{param.groupId}" />
+             <h:outputText value="View Connection Properties Update History" />
+          </h:outputLink>
+
+        <ui:remove><!--<a4j:log popup="false" level="ALL" style="width: 800px; height: 300px;"/>--></ui:remove>
 
       </rich:panel>
 

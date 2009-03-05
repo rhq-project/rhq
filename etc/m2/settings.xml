@@ -68,60 +68,60 @@
             <!--<rhq.containerDir>C:/opt/rhq-server</rhq.containerDir>-->
          </properties>
 
-      <repositories>
+         <repositories>
 
-         <repository>
-            <id>jboss</id>
-            <name>JBoss Repository</name>
-            <url>http://repository.jboss.org/maven2/</url>
-            <snapshots>
-               <enabled>false</enabled>
-            </snapshots>
-         </repository>
+            <repository>
+               <id>jboss</id>
+               <name>JBoss Repository</name>
+               <url>http://repository.jboss.org/maven2/</url>
+               <snapshots>
+                  <enabled>false</enabled>
+               </snapshots>
+            </repository>
 
-         <repository>
-            <id>jboss-snapshots</id>
-            <name>JBoss Snapshot Repository</name>
-            <url>http://snapshots.jboss.org/maven2/</url>
-            <snapshots>
-               <enabled>true</enabled>
-            </snapshots>
-         </repository>
+            <repository>
+               <id>jboss-snapshots</id>
+               <name>JBoss Snapshot Repository</name>
+               <url>http://snapshots.jboss.org/maven2/</url>
+               <snapshots>
+                  <enabled>true</enabled>
+               </snapshots>
+            </repository>
 
-         <!-- Uncomment this and point it at a local repo that contains the Oracle JDBC jar. -->
-         <!--
-         <repository>
-            <id>internal</id>
-            <name>Internal Repository</name>
-            <url>http://foo.example.com/m2-repo/</url>
-         </repository>
-         -->
+            <!-- Uncomment this and point it at a local repo that contains the Oracle JDBC jar. -->
+            <!--
+            <repository>
+               <id>internal</id>
+               <name>Internal Repository</name>
+               <url>http://foo.example.com/m2-repo/</url>
+            </repository>
+            -->
 
-      </repositories>
+         </repositories>
 
-      <pluginRepositories>
+         <pluginRepositories>
 
-         <pluginRepository>
-            <id>jboss</id>
-            <name>JBoss Repository</name>
-            <url>http://repository.jboss.org/maven2/</url>
-            <snapshots>
-               <enabled>false</enabled>
-            </snapshots>
-         </pluginRepository>
+            <pluginRepository>
+               <id>jboss</id>
+               <name>JBoss Repository</name>
+               <url>http://repository.jboss.org/maven2/</url>
+               <snapshots>
+                  <enabled>false</enabled>
+               </snapshots>
+            </pluginRepository>
 
-         <pluginRepository>
-            <id>jboss-snapshots</id>
-            <name>JBoss Snapshot Repository</name>
-            <url>http://snapshots.jboss.org/maven2/</url>
-            <snapshots>
-               <enabled>true</enabled>
-            </snapshots>
-         </pluginRepository>
+            <pluginRepository>
+               <id>jboss-snapshots</id>
+               <name>JBoss Snapshot Repository</name>
+               <url>http://snapshots.jboss.org/maven2/</url>
+               <snapshots>
+                  <enabled>true</enabled>
+               </snapshots>
+            </pluginRepository>
 
-      </pluginRepositories>
+         </pluginRepositories>
 
-   </profile>
+      </profile>
 
       <profile>
          <id>postgres</id>

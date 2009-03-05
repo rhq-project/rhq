@@ -92,6 +92,8 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
 
     private static final String ERROR_LOG_ENTRY_EVENT_TYPE = "errorLogEntry";
 
+    private static final String[] CONTROL_SCRIPT_PATHS = {"bin/apachectl", "sbin/apachectl", "bin/apachectl2", "sbin/apachectl2" };
+
     private ResourceContext resourceContext;
     private EventContext eventContext;
     private SNMPClient snmpClient;
@@ -334,7 +336,7 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
 
     /**
      * Returns the httpd.conf file
-     * @return A File object that represents the httpd.conf file or null in case of error 
+     * @return A File object that represents the httpd.conf file or null in case of error
      */
     public File getHttpdConfFile() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
@@ -348,6 +350,9 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
      * Return the absolute path of this Apache server's control script (e.g. "C:\Program Files\Apache
      * Group\Apache2\bin\Apache.exe").
      *
+     * On Unix we need to try various locations, as some unixes have bin/ conf/ .. all within one root
+     * and on others those are separated.
+     *
      * @return the absolute path of this Apache server's control script (e.g. "C:\Program Files\Apache
      *         Group\Apache2\bin\Apache.exe")
      */
@@ -355,20 +360,42 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
     public File getControlScriptPath() {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String controlScriptPath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_CONTROL_SCRIPT_PATH, null);
-        File controlScriptFile;
+        File controlScriptFile = null;
         if (controlScriptPath != null) {
             controlScriptFile = resolvePathRelativeToServerRoot(controlScriptPath);
         } else {
             SystemInfo systemInfo = this.resourceContext.getSystemInformation();
             if (systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) // UNIX
             {
+                boolean found = false;
+                // First try server root as base
                 String serverRoot = getRequiredPropertyValue(pluginConfig, PLUGIN_CONFIG_PROP_SERVER_ROOT);
-                // Try different possibilities, as even on apache2 this is not always apache2ctl
-                controlScriptFile = new File(serverRoot, "bin/apachectl");
-                if (!controlScriptFile.exists()) {
-                    controlScriptFile = new File(serverRoot, "bin/apache2ctl");
+
+                for (String path : CONTROL_SCRIPT_PATHS) {
+                    controlScriptFile = new File(serverRoot, path);
+                    if (controlScriptFile.exists()) {
+                        found = true;
+                        break;
+                    }
                 }
-                if (!controlScriptFile.exists()) {
+                if (!found) {
+                    String executablePath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, null);
+                    if (executablePath!=null) {
+                        // this is now somethig like /usr/sbin/httpd .. trim off the last 2 parts
+                        int i = executablePath.lastIndexOf('/');
+                        executablePath = executablePath.substring(0,i);
+                        i = executablePath.lastIndexOf('/');
+                        executablePath = executablePath.substring(0,i);
+                        for (String path : CONTROL_SCRIPT_PATHS) {
+                            controlScriptFile = new File(executablePath, path);
+                            if (controlScriptFile.exists()) {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!found) {
                     controlScriptFile = getExecutablePath(); // fall back to the httpd binary
                 }
             } else // Windows

@@ -11,10 +11,10 @@
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
    <h3>Recent Alerts</h3>
-   <ui:repeat var="item" 
+   <ui:repeat var="item"
               value="#{ResourceOverviewUIBean.recentAlerts}">
       <div style="text-indent: 20px;">
-         <h:graphicImage value="#{onf:getAlertPriorityURL(item.alertDefinition.priority)}" />
+         <h:graphicImage value="#{onf:getAlertPriorityURL(item.alertDefinition.priority)}" title="${item.alertDefinition.priority}"/>
          <h:outputText value=" " />
          <h:outputLink value="/alerts/Alerts.do">
             <f:param name="mode" value="viewAlert" />
@@ -31,7 +31,7 @@
    </ui:repeat>
 
    <div style="text-indent: 20px;">
-      <h:outputText value="No recent alerts" 
+      <h:outputText value="No recent alerts"
                     rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentAlerts) eq 0}"/>
    </div>
 

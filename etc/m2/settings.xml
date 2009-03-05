@@ -4,9 +4,9 @@
 
 <!-- See: http://maven.apache.org/settings.html -->
 
-<settings xmlns="http://maven.apache.org/POM/4.0.0"
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
                               http://maven.apache.org/xsd/settings-1.0.0.xsd">
 
    <!-- The below line can be uncommented if you want your local repo to be in
@@ -30,7 +30,7 @@
 
       <!-- The 'dist' profile is for binary distribution builds and enables things such as JSP precompilation. -->
       <!--<activeProfile>dist</activeProfile>-->
-      
+
       <!--<activeProfile>oracle</activeProfile>-->
    </activeProfiles>
 
@@ -68,58 +68,58 @@
             <!--<rhq.containerDir>C:/opt/rhq-server</rhq.containerDir>-->
          </properties>
 
-       <repositories>
-      
-        <repository>
-          <id>jboss</id>
-          <name>JBoss Repository</name>
-          <url>http://repository.jboss.org/maven2/</url>
-          <snapshots>
-            <enabled>false</enabled>
-          </snapshots>
-        </repository>
-      
-        <repository>
-          <id>jboss-snapshots</id>
-          <name>JBoss Snapshot Repository</name>
-          <url>http://snapshots.jboss.org/maven2/</url>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-        </repository>     
+      <repositories>
 
-        <!-- Uncomment this and point it at a local repo that contains the Oracle JDBC jar. -->
-        <!--
-        <repository>
-          <id>internal</id>
-          <name>Internal Repository</name>
-          <url>http://foo.example.com/m2-repo/</url>
-        </repository>                            
-        -->
-        
-       </repositories>
+         <repository>
+            <id>jboss</id>
+            <name>JBoss Repository</name>
+            <url>http://repository.jboss.org/maven2/</url>
+            <snapshots>
+               <enabled>false</enabled>
+            </snapshots>
+         </repository>
 
-       <pluginRepositories>    
-      
-        <pluginRepository>
-          <id>jboss</id>
-          <name>JBoss Repository</name>
-          <url>http://repository.jboss.org/maven2/</url>
-          <snapshots>
-            <enabled>false</enabled>
-          </snapshots>
-        </pluginRepository>
+         <repository>
+            <id>jboss-snapshots</id>
+            <name>JBoss Snapshot Repository</name>
+            <url>http://snapshots.jboss.org/maven2/</url>
+            <snapshots>
+               <enabled>true</enabled>
+            </snapshots>
+         </repository>
 
-        <pluginRepository>
-          <id>jboss-snapshots</id>
-          <name>JBoss Snapshot Repository</name>
-          <url>http://snapshots.jboss.org/maven2/</url>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-        </pluginRepository>    
-        
-       </pluginRepositories>
+         <!-- Uncomment this and point it at a local repo that contains the Oracle JDBC jar. -->
+         <!--
+         <repository>
+            <id>internal</id>
+            <name>Internal Repository</name>
+            <url>http://foo.example.com/m2-repo/</url>
+         </repository>
+         -->
+
+      </repositories>
+
+      <pluginRepositories>
+
+         <pluginRepository>
+            <id>jboss</id>
+            <name>JBoss Repository</name>
+            <url>http://repository.jboss.org/maven2/</url>
+            <snapshots>
+               <enabled>false</enabled>
+            </snapshots>
+         </pluginRepository>
+
+         <pluginRepository>
+            <id>jboss-snapshots</id>
+            <name>JBoss Snapshot Repository</name>
+            <url>http://snapshots.jboss.org/maven2/</url>
+            <snapshots>
+               <enabled>true</enabled>
+            </snapshots>
+         </pluginRepository>
+
+      </pluginRepositories>
 
    </profile>
 
@@ -176,7 +176,6 @@
 
    </profiles>
 
-   
    <!--**************************** PLUGIN GROUPS ****************************-->
 
    <!-- See: http://maven.apache.org/guides/introduction/introduction-to-plugin-prefix-mapping.html -->

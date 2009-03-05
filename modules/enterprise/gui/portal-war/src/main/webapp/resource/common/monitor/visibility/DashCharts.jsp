@@ -31,6 +31,7 @@
 <script src="<html:rewrite page="/js/functions.js"/>" type="text/javascript"></script>
 <script src="<html:rewrite page="/js/prototype.js"/>" type="text/javascript"></script>
 <script src="<html:rewrite page="/js/effects.js"/>" type="text/javascript"></script>
+<!-- NOTE: rico.js is used for the AJAX stuff below (i.e. the ajaxEngine object). -->
 <script src="<html:rewrite page="/js/rico.js"/>" type="text/javascript"></script>
 
 <script language="JavaScript">

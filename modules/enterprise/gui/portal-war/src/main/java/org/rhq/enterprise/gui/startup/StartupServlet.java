@@ -300,7 +300,8 @@ public class StartupServlet extends HttpServlet {
             throw new ServletException("Cannot schedule check-for-timed-out-operations job", e);
         }
 
-        // Check for Timed Out Configuration Update Requests
+        // Check for Timed Out Resource Configuration Update Requests
+        // (NOTE: We don't need to check for timed out plugin Cofiguration updates, since those are executed synchronously.)
         try {
             scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutConfigUpdatesJob.class, true, false, 30000L, 60000L);
         } catch (Exception e) {

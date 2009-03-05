@@ -195,10 +195,11 @@ public abstract class AbstractConfigurationUpdate {
      */
     public long getDuration() {
         long start = this.createdTime;
-        long end = this.modifiedTime;
-
+        long end;
         if ((status == null) || (status == ConfigurationUpdateStatus.INPROGRESS)) {
             end = System.currentTimeMillis();
+        } else {
+            end = this.modifiedTime;
         }
 
         return end - start;

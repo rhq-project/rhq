@@ -685,7 +685,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @SuppressWarnings("unchecked")
     public void checkForTimedOutUpdateRequests() {
-        log.debug("Scanning configuration update requests to see if any in-progress executions have timed out");
+        log.debug("Scanning configuration update requests to see if any in-progress executions have timed out...");
 
         // the purpose of this method is really to clean up requests when we detect
         // they probably will never move out of the in progress status.  This will occur if the
@@ -699,18 +699,23 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             query.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
             List<ResourceConfigurationUpdate> requests = query.getResultList();
             for (ResourceConfigurationUpdate request : requests) {
-                long timeout = 1000 * 60 * 60; // TODO [mazz]: should we make this configurable?
+                // TODO [mazz]: should we make this configurable?
+                long timeout = 1000 * 60 * 15; // 15 minutes
 
-                if (request.getDuration() > timeout) {
-                    request.setErrorMessage("Timed out : did not complete after " + request.getDuration() + "ms"
-                        + " (the timeout period was [" + timeout + "] ms)");
-                    request.setStatus(ConfigurationUpdateStatus.FAILURE);
-
-                    log.debug("Configuration update request seems to have been orphaned - timing it out: " + request);
+                long duration = request.getDuration();
+                if (duration > timeout) {
+                    log.debug("Resource configuration update request seems to have been orphaned - timing it out: "
+                            + request);
+                    request.setErrorMessage("Timed out : did not complete after " + duration + " ms"
+                        + " (the timeout period was " + timeout + " ms)");
+                    request.setStatus(ConfigurationUpdateStatus.FAILURE);                    
+                    // If it's part of a group update, check if all member updates of the group update have completed,
+                    // and, if so, update the group update's status.
+                    checkForCompletedGroupResourceConfigurationUpdate(request);
                 }
             }
         } catch (Throwable t) {
-            log.warn("Failed to check for timed out configuration update requests. Cause: " + t);
+            log.warn("Failed to check for timed out Resource configuration update requests. Cause: " + t);
         }
     }
 

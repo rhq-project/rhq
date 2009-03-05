@@ -51,8 +51,6 @@ public class CachedConditionManagerBean implements CachedConditionManagerLocal {
 
     @EJB
     private AlertConditionLogManagerLocal alertConditionLogManager;
-    @EJB
-    private AlertDampeningManagerLocal alertDampeningManager;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void processCachedConditionMessage(AbstractAlertConditionMessage conditionMessage, AlertDefinition definition) {
@@ -60,6 +58,7 @@ public class CachedConditionManagerBean implements CachedConditionManagerLocal {
          * note that ctime is the time when the condition was known to be true, not the time we're persisting the
          * condition log message
          */
+        log.info(conditionMessage);
         if (conditionMessage instanceof ActiveAlertConditionMessage) {
             ActiveAlertConditionMessage activeConditionMessage = (ActiveAlertConditionMessage) conditionMessage;
 
@@ -68,11 +67,12 @@ public class CachedConditionManagerBean implements CachedConditionManagerLocal {
 
             alertConditionLogManager.checkForCompletedAlertConditionSet(activeConditionMessage.getAlertConditionId());
         } else if (conditionMessage instanceof InactiveAlertConditionMessage) {
+            // first do some bookkeeping by removing partially matched condition logs 
+            alertConditionLogManager.removeUnmatchedLogByAlertConditionId(conditionMessage.getAlertConditionId());
 
+            // then create a NEGATIVE dampening event, to breakup any contiguous POSITIVE events for correct processing
             AlertDampeningEvent event = new AlertDampeningEvent(definition, AlertDampeningEvent.Type.NEGATIVE);
             entityManager.persist(event);
-
-            alertDampeningManager.processEventType(definition.getId(), AlertDampeningEvent.Type.NEGATIVE);
         } else {
             log.error("Unsupported message type sent to consumer for processing: "
                 + conditionMessage.getClass().getSimpleName());

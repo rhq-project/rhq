@@ -23,14 +23,14 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ConfigurationServerServiceImpl implements ConfigurationServerService {
     private static final Log LOG = LogFactory.getLog(ConfigurationServerServiceImpl.class);
@@ -46,14 +46,14 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
         int configurationUpdateId = response.getConfigurationUpdateId();
 
         ResourceConfigurationUpdate update = configurationManager.getResourceConfigurationUpdate(subjectManager
-                .getOverlord(), configurationUpdateId);
+            .getOverlord(), configurationUpdateId);
 
         if (update != null) {
             Resource resource = update.getResource();
 
             if (resource != null) {
-                LOG.info("ConfigurationUpdateResponse status for Resource" + "[ " + "id = " + resource.getId()
-                        + ", " + "name = " + resource.getName() + "] " + "was " + response.getStatus());
+                LOG.info("ConfigurationUpdateResponse status for Resource" + "[ " + "id = " + resource.getId() + ", "
+                    + "name = " + resource.getName() + "] " + "was " + response.getStatus());
             }
         }
 
@@ -67,16 +67,14 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
 
         Subject overlord = subjectManager.getOverlord();
         ResourceConfigurationUpdate update = configurationManager.persistNewResourceConfigurationUpdateHistory(
-                overlord,
-                resourceId,
-                resourceConfiguration,
-                ConfigurationUpdateStatus.SUCCESS,
-                null, false);
+            overlord, resourceId, resourceConfiguration, ConfigurationUpdateStatus.SUCCESS, null, false);
 
-        if (update == null) {
-            LOG.warn("Not persisting Configuration " + resourceConfiguration
+        if (LOG.isDebugEnabled()) {
+            if (update == null) {
+                LOG.debug("Not persisting Configuration " + resourceConfiguration
                     + ", since it is identical to the current revision.");
-            return;
+                return;
+            }
         }
 
         Resource resource = update.getResource();

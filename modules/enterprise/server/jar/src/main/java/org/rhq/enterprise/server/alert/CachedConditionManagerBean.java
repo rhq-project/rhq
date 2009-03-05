@@ -58,7 +58,6 @@ public class CachedConditionManagerBean implements CachedConditionManagerLocal {
          * note that ctime is the time when the condition was known to be true, not the time we're persisting the
          * condition log message
          */
-        log.info(conditionMessage);
         if (conditionMessage instanceof ActiveAlertConditionMessage) {
             ActiveAlertConditionMessage activeConditionMessage = (ActiveAlertConditionMessage) conditionMessage;
 

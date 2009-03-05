@@ -111,11 +111,15 @@ public class MetricsMetadataParser {
             dataType), dataType, NumericType.valueOf(metricDescriptor.getMeasurementType().toUpperCase()),
             metricDescriptor.isDefaultOn(), collectionInterval, displayType);
 
-        definition.setDescription(metricDescriptor.getDescription());
         if (metricDescriptor.getDisplayName() != null) {
             definition.setDisplayName(metricDescriptor.getDisplayName());
         } else {
             definition.setDisplayName(StringUtils.deCamelCase(definition.getName()));
+        }
+        if (metricDescriptor.getDescription() != null) {
+            definition.setDescription(metricDescriptor.getDescription());
+        } else {
+            definition.setDescription(definition.getDisplayName()   );
         }
 
         definition.setDestinationType(metricDescriptor.getDestinationType());

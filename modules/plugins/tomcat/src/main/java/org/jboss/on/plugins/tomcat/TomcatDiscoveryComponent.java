@@ -41,6 +41,7 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.ProcessInfo;
@@ -79,8 +80,8 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
      * Patterns used to parse out the Tomcat server version from the version script output. For details on which of these
      * patterns will be used, check {@link #determineVersion(String, org.rhq.core.system.SystemInfo)}.
      */
-    private static final Pattern TOMCAT_6_VERSION_PATTERN = Pattern.compile(".*Server number:.*");
-    private static final Pattern TOMCAT_5_VERSION_PATTERN = Pattern.compile(".*Version:.*");
+    private static final Pattern TOMCAT_5_5_AND_LATER_VERSION_PATTERN = Pattern.compile(".*Server number:.*");
+    private static final Pattern TOMCAT_5_0_AND_EARLIER_VERSION_PATTERN = Pattern.compile(".*Version:.*");
 
     /** 
      * EWS Install path pattern used to distinguish from standalone Tomcat installs.
@@ -188,7 +189,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
      *
      * @return
      */
-    private boolean isEWS(String installationPath) {
+    private static boolean isEWS(String installationPath) {
         boolean isEws = EWS_PATTERN.matcher(installationPath).matches();
 
         // The match will succeed if EWS is installed and the installation directory is not renamed.
@@ -200,11 +201,11 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
         return isEws;
     }
 
-    private boolean isEWSTomcat5(String installationPath) {
+    private static boolean isEWSTomcat5(String installationPath) {
         return ((null != installationPath) && installationPath.endsWith(EWS_TOMCAT_5));
     }
 
-    private boolean isEWSTomcat6(String installationPath) {
+    private static boolean isEWSTomcat6(String installationPath) {
         return ((null != installationPath) && installationPath.endsWith(EWS_TOMCAT_6));
     }
 
@@ -283,18 +284,23 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
      * @return version of the tomcat instance; unknown version message if it cannot be determined
      */
     private String determineVersion(String installationPath, SystemInfo systemInfo) {
-        String version = UNKNOWN_VERSION;
         boolean isNix = File.separatorChar == '/';
-        String versionScriptFileName = null;
+        String versionScriptFileName;
 
-        if (this.isEWS(installationPath)) {
-            // Execute the appropriate EWS script with the 'version' parameter
-            versionScriptFileName = installationPath + File.separator + "bin" + File.separator + ((isEWSTomcat5(installationPath) ? EWS_TOMCAT_5 : EWS_TOMCAT_6) + " version");
+        if (isEWS(installationPath)) {
+            versionScriptFileName = installationPath + File.separator + "bin" + File.separator + ((isEWSTomcat5(installationPath) ? EWS_TOMCAT_5 : EWS_TOMCAT_6));
         } else {
             versionScriptFileName = installationPath + File.separator + "bin" + File.separator + "version." + (isNix ? "sh" : "bat");
         }
+        File versionScriptFile = new File(versionScriptFileName);
+        if (!versionScriptFile.exists()) {
+            log.warn("Version script file not found in expected location: " + versionScriptFile);
+            return UNKNOWN_VERSION;
+        }
 
-        ProcessExecution processExecution = new ProcessExecution(versionScriptFileName);
+        ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(versionScriptFile);
+        if (isEWS(installationPath))
+            processExecution.setArguments(new String[] {"version"});
 
         TomcatServerOperationsDelegate.setProcessExecutionEnvironment(processExecution, installationPath);
 
@@ -305,26 +311,34 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
         ProcessExecutionResults results = systemInfo.executeProcess(processExecution);
         String versionOutput = results.getCapturedOutput();
 
-        // try more recent Tomcat version string format first
-        Matcher matcher = TOMCAT_6_VERSION_PATTERN.matcher(versionOutput);
+        String version = getVersionFromVersionScriptOutput(versionOutput);
+
+        if (UNKNOWN_VERSION.equals(version)) {
+            log.warn("Failed to determine Tomcat Server Version Given:\nVersionInfo:" + versionOutput
+                    + "\ninstallationPath: " + installationPath + "\nScript:" + versionScriptFileName 
+                    + "\ntimeout=5000L");
+        }
+
+        return version;
+    }
+
+    private String getVersionFromVersionScriptOutput(String versionOutput)
+    {
+        String version = UNKNOWN_VERSION;
+        // Try more recent Tomcat version string format first.
+        Matcher matcher = TOMCAT_5_5_AND_LATER_VERSION_PATTERN.matcher(versionOutput);
         if (matcher.find()) {
             String serverNumberString = matcher.group();
             String[] serverNumberParts = serverNumberString.split(":");
             version = serverNumberParts[1].trim();
         } else {
-            matcher = TOMCAT_5_VERSION_PATTERN.matcher(versionOutput);
+            matcher = TOMCAT_5_0_AND_EARLIER_VERSION_PATTERN.matcher(versionOutput);
             if (matcher.find()) {
                 String serverNumberString = matcher.group();
                 String[] serverNumberParts = serverNumberString.split("/");
                 version = serverNumberParts[1].trim();
             }
         }
-
-        if (UNKNOWN_VERSION.equals(version)) {
-            log.warn("Failed to determine Tomcat Server Version Given:\nVersionInfo:" + versionOutput + "\ninstallationPath: " + installationPath + "\nScript:" + versionScriptFileName
-                + "\ntimeout=5000L");
-        }
-
         return version;
     }
 

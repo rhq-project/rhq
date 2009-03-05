@@ -476,7 +476,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         if (existingVersion != null) {
             newestVersion = (version.compareTo(existingVersion) >= 0);
             if (newestVersion)
-                log.debug("Newer version of [" + pluginName + "] plugin found (version " + version
+                log.info("Newer version of [" + pluginName + "] plugin found (version " + version
                     + ") - older version (" + existingVersion + ") will be ignored.");
         } else {
             newestVersion = false;

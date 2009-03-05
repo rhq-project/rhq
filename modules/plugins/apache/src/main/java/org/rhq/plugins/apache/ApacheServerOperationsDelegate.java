@@ -106,8 +106,8 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
         }
 
         case CONFIG_TEST: {
-            abortIfOsIsWindows(name);
-            processExecution.getArguments().add("configtest");
+            // abortIfOsIsWindows(name);
+            processExecution.getArguments().add("-t");
             break;
         }
         }

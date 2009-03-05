@@ -392,40 +392,34 @@ public class ResourceContainer implements Serializable {
             ExecutorService threadPool = this.daemonThread ? DAEMON_THREAD_POOL : NON_DAEMON_THREAD_POOL;
             Callable invocationThread = new ComponentInvocationThread(this.container, method, args, this.lock);
             Future<?> future = threadPool.submit(invocationThread);
-            String methodArgs = "[" + ((args != null) ? Arrays.asList(args) : "") + "]";
             try {
                 return future.get(this.timeout, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
-                LOG.error("Thread '" + Thread.currentThread().getName() + "' was interrupted.");
+                LOG.error("Thread [" + Thread.currentThread().getName() + "] was interrupted.");
                 if (this.daemonThread) {
                     future.cancel(true);
                 }
-                String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName()
-                    + "()";
-                throw new RuntimeException("Call to " + methodName + " with args " + methodArgs
-                    + " was rudely interrupted.", e);
+                throw new RuntimeException(invokedMethodString(method, args, "was rudely interrupted."), e);
             } catch (ExecutionException e) {
                 if (LOG.isDebugEnabled()) {
-                    String methodName = this.container.getResourceComponent().getClass().getName() + "."
-                        + method.getName() + "()";
-                    LOG.debug("Call to " + methodName + " with args " + methodArgs + " failed.", e);
+                    LOG.debug(invokedMethodString(method, args, "failed."), e);
                 }
                 throw e.getCause();
             } catch (java.util.concurrent.TimeoutException e) {
-                if (LOG.isDebugEnabled()) {
-                    String methodName = this.container.getResourceComponent().getClass().getName() + "."
-                        + method.getName() + "()";
-                    LOG.debug("Call to " + methodName + " with args " + methodArgs
-                        + " timed out. Interrupting the invocation thread...");
-                }
+                String msg = invokedMethodString(method, args, "timed out. Invocation thread will be interrupted");
+                LOG.debug(msg);
                 future.cancel(true);
                 if (LOG.isDebugEnabled()) {
                     LOG.debug(this.container.getFacetLockStatus());
                 }
-                String methodName = this.container.getResourceComponent().getClass().getName() + "." + method.getName()
-                    + "()";
-                throw new TimeoutException("Call to " + methodName + " with args " + methodArgs + " timed out.");
+                throw new TimeoutException(msg);
             }
+        }
+
+        private String invokedMethodString(Method method, Object[] methodArgs, String extraMsg) {
+            String name = this.container.getResourceComponent().getClass().getName() + '.' + method.getName() + "()";
+            String args = ((methodArgs != null) ? Arrays.asList(methodArgs).toString() : "");
+            return "Call to [" + name + "] with args [" + args + "] " + extraMsg;
         }
 
         private Object invokeInCurrentThreadWithoutLock(Method method, Object[] args) throws Throwable {

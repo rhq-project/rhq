@@ -1,0 +1,123 @@
+keystroke: 10
+    translated: 10: -6
+keystroke: 108
+    translated: 108: -99
+keystroke: 115
+    translated: 115: -99
+keystroke: 10
+    translated: 10: -6
+keystroke: 9
+    translated: 9: -58
+Completing (pos=0) with: [bar, baz, foo]: offset=0
+keystroke: 9
+    translated: 9: -58
+Completing (pos=0) with: [bar, baz, foo]: offset=0
+keystroke: 102
+    translated: 102: -99
+keystroke: 111
+    translated: 111: -99
+keystroke: 9
+    translated: 9: -58
+Completing fo(pos=2) with: [foo ]: offset=0
+keystroke: 9
+    translated: 9: -58
+Completing foo (pos=4) with: [bar, baz, foo]: offset=4
+keystroke: 8
+    translated: 8: -41
+keystroke: 8
+    translated: 8: -41
+keystroke: 8
+    translated: 8: -41
+keystroke: 8
+    translated: 8: -41
+keystroke: 102
+    translated: 102: -99
+keystroke: 111
+    translated: 111: -99
+keystroke: 9
+    translated: 9: -58
+Completing fo(pos=2) with: [foo ]: offset=0
+keystroke: 9
+    translated: 9: -58
+Completing foo (pos=4) with: [bar, baz, foo]: offset=4
+keystroke: 9
+    translated: 9: -58
+Completing foo (pos=4) with: [bar, baz, foo]: offset=4
+keystroke: 9
+    translated: 9: -58
+Completing foo (pos=4) with: [bar, baz, foo]: offset=4
+keystroke: 98
+    translated: 98: -99
+keystroke: 9
+    translated: 9: -58
+Completing foo b(pos=5) with: [bar, baz]: offset=4
+keystroke: 9
+    translated: 9: -58
+Completing foo ba(pos=6) with: [bar, baz]: offset=4
+keystroke: 9
+    translated: 9: -58
+Completing foo ba(pos=6) with: [bar, baz]: offset=4
+keystroke: 9
+    translated: 9: -58
+Completing foo ba(pos=6) with: [bar, baz]: offset=4
+keystroke: 9
+    translated: 9: -58
+Completing foo ba(pos=6) with: [bar, baz]: offset=4
+keystroke: 114
+    translated: 114: -99
+keystroke: 9
+    translated: 9: -58
+Completing foo bar(pos=7) with: [bar ]: offset=4
+keystroke: 9
+    translated: 9: -58
+Completing foo bar (pos=8) with: [bar, baz, foo]: offset=8
+keystroke: 8
+    translated: 8: -41
+keystroke: 8
+    translated: 8: -41
+keystroke: 8
+    translated: 8: -41
+keystroke: 8
+    translated: 8: -41
+keystroke: 8
+    translated: 8: -41
+keystroke: 8
+    translated: 8: -41
+keystroke: 8
+    translated: 8: -41
+keystroke: 8
+    translated: 8: -41
+keystroke: 8
+    translated: 8: -41
+keystroke: 8
+    translated: 8: -41
+keystroke: 8
+    translated: 8: -41
+keystroke: 104
+    translated: 104: -99
+keystroke: 101
+    translated: 101: -99
+keystroke: 108
+    translated: 108: -99
+keystroke: 112
+    translated: 112: -99
+keystroke: 10
+    translated: 10: -6
+keystroke: 108
+    translated: 108: -99
+keystroke: 115
+    translated: 115: -99
+keystroke: 10
+    translated: 10: -6
+keystroke: 101
+    translated: 101: -99
+keystroke: 120
+    translated: 120: -99
+keystroke: 105
+    translated: 105: -99
+keystroke: 116
+    translated: 116: -99
+keystroke: 10
+    translated: 10: -6
+keystroke: -1
+keystroke: -1

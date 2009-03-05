@@ -356,12 +356,12 @@ public abstract class DatabaseType {
      * @throws SQLException
      */
     public void executeSql(Connection conn, String sql) throws SQLException {
-        PreparedStatement ps = null;
+        Statement ps = null;
 
         try {
             LOG.debug(DbUtilsI18NResourceKeys.EXECUTING_SQL, sql);
-            ps = conn.prepareStatement(sql);
-            ps.execute();
+            ps = conn.createStatement();
+            ps.executeUpdate(sql);
         } finally {
             closeStatement(ps);
         }

@@ -11,10 +11,10 @@
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
    <h3>Recent Configuration Updates</h3>
-   <ui:repeat var="item" 
+   <ui:repeat var="item"
               value="#{ResourceOverviewUIBean.recentConfigChanges}">
       <div style="text-indent: 20px;">
-         <h:graphicImage value="#{onf:getResourceConfigStatusURL(item.status)}" />
+         <h:graphicImage value="#{onf:getResourceConfigStatusURL(item.status)}" title="#{item.status}" />
          <h:outputText value=" " />
          <h:outputLink value="/rhq/resource/configuration/history.xhtml">
             <f:param name="id" value="#{item.resource.id}" />
@@ -31,7 +31,7 @@
    </ui:repeat>
 
    <div style="text-indent: 20px;">
-      <h:outputText value="No configuration change history" 
+      <h:outputText value="No configuration change history"
                     rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentConfigChanges) eq 0}"/>
    </div>
 

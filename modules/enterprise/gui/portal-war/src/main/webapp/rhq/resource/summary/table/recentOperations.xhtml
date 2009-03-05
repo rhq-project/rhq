@@ -11,10 +11,10 @@
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
    <h3>Recent Operations</h3>
-   <ui:repeat var="item" 
+   <ui:repeat var="item"
               value="#{ResourceOverviewUIBean.recentOperations}">
       <div style="text-indent: 20px;">
-         <h:graphicImage value="#{onf:getOperationStatusURL(item.operationStatus)}" />
+         <h:graphicImage value="#{onf:getOperationStatusURL(item.operationStatus)}" title="#{item.operationStatus}"/>
          <h:outputText value=" " />
          <h:outputLink value="/rhq/resource/operation/resourceOperationHistoryDetails.xhtml">
             <f:param name="id" value="#{item.resourceId}" />
@@ -30,7 +30,7 @@
    </ui:repeat>
 
    <div style="text-indent: 20px;">
-      <h:outputText value="No recent operation history" 
+      <h:outputText value="No recent operation history"
                     rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentOperations) eq 0}"/>
    </div>
 

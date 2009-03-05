@@ -11,10 +11,10 @@
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
    <h3>Recent Event Counts</h3>
-   <ui:repeat var="item" 
+   <ui:repeat var="item"
               value="#{ResourceOverviewUIBean.recentEventCounts}">
       <div style="text-indent: 20px;">
-         <h:graphicImage value="#{onf:getEventSeverityURL(item.lefty, false)}" />
+         <h:graphicImage value="#{onf:getEventSeverityURL(item.lefty, false)}" title="#{item.lefty}" />
          <h:outputText value=" " />
          <h:outputText value="#{item.righty}" />
          <br />
@@ -22,7 +22,7 @@
    </ui:repeat>
 
    <div style="text-indent: 20px;">
-      <h:outputText value="No events in the last 24 hours" 
+      <h:outputText value="No events in the last 24 hours"
                     rendered="#{onf:sizeOf(ResourceOverviewUIBean.recentEventCounts) eq 0}"/>
    </div>
 

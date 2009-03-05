@@ -700,11 +700,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             List<ResourceConfigurationUpdate> requests = query.getResultList();
             for (ResourceConfigurationUpdate request : requests) {
                 // TODO [mazz]: should we make this configurable?
-                long timeout = 1000 * 60 * 15; // 15 minutes
+                long timeout = 1000 * 60 * 15; // 15 minutes - should be more than enough time
 
                 long duration = request.getDuration();
                 if (duration > timeout) {
-                    log.debug("Resource configuration update request seems to have been orphaned - timing it out: "
+                    log.info("Resource configuration update request seems to have been orphaned - timing it out: "
                             + request);
                     request.setErrorMessage("Timed out : did not complete after " + duration + " ms"
                         + " (the timeout period was " + timeout + " ms)");

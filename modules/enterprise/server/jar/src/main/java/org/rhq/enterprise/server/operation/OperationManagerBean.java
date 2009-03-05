@@ -1125,14 +1125,16 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             for (ResourceOperationHistory history : histories) {
                 long timeout = getOperationTimeout(history.getOperationDefinition(), history.getParameters());
 
-                if (history.getDuration() > timeout) {
-                    history.setErrorMessage("Timed out : did not complete after " + history.getDuration() + "ms"
+                long duration = history.getDuration();
+                if (duration > timeout) {
+                    LOG.info("Operation seems to have been orphaned - timing it out: " + history);
+                    history.setErrorMessage("Timed out : did not complete after " + duration + "ms"
                         + " (the timeout period was [" + timeout + "] ms)");
                     history.setStatus(OperationRequestStatus.FAILURE);
                     notifyAlertConditionCacheManager("checkForTimedOutOperations", history);
 
-                    LOG.info("Operation seems to have been orphaned - timing it out: " + history);
-
+                    // If it's part of a group update, check if all member updates of the group update have completed,
+                    // and, if so, update the group update's status.
                     checkForCompletedGroupOperation(history);
                 }
             }

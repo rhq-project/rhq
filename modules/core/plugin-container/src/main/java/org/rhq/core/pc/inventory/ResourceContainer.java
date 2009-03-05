@@ -337,7 +337,7 @@ public class ResourceContainer implements Serializable {
         private final long timeout;
         private final boolean daemonThread;
         private final Class facetInterface;
-        private static ThreadLocal<Boolean> asynchronous = new ThreadLocal<Boolean>() {
+        private static ThreadLocal<Boolean> reentrant = new ThreadLocal<Boolean>() {
             @Override
             protected Boolean initialValue() {
                 return false;
@@ -373,19 +373,18 @@ public class ResourceContainer implements Serializable {
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            boolean callIsAsync = asynchronous.get();
+            boolean isReentrant = reentrant.get();
             try {
-                // Make sure we don't make a thread call asynchronous when its already been pushed into another
-                // thread farther up the stack
-                if (method.getDeclaringClass().equals(this.facetInterface) && !callIsAsync) {
+                // Make sure we don't spawn another thread if we've already spawned one farther up the stack
+                if (method.getDeclaringClass().equals(this.facetInterface) && !isReentrant) {
+                    reentrant.set(true); // set our flag so any further invocations are considered reentrant
                     return invokeInNewThreadWithLock(method, args);
                 } else {
                     // toString(), etc.
                     return invokeInCurrentThreadWithoutLock(method, args);
                 }
             } finally {
-                if (!callIsAsync)
-                    asynchronous.set(false);
+                reentrant.set(isReentrant);
             }
         }
 

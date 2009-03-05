@@ -1103,7 +1103,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
     @SuppressWarnings("unchecked")
     public void checkForTimedOutOperations(Subject subject) {
-        LOG.debug("Scanning operation histories to see if any in-progress executions have timed out");
+        LOG.debug("Scanning operation histories to see if any in-progress executions have timed out...");
 
         if (!authorizationManager.isOverlord(subject)) {
             LOG.debug("Unauthorized user " + subject + " tried to execute checkForTimedOutOperations: "
@@ -1127,14 +1127,14 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
                 long duration = history.getDuration();
                 if (duration > timeout) {
-                    LOG.info("Operation seems to have been orphaned - timing it out: " + history);
-                    history.setErrorMessage("Timed out : did not complete after " + duration + "ms"
-                        + " (the timeout period was [" + timeout + "] ms)");
+                    LOG.info("Operation execution seems to have been orphaned - timing it out: " + history);
+                    history.setErrorMessage("Timed out : did not complete after " + duration + " ms"
+                        + " (the timeout period was " + timeout + " ms)");
                     history.setStatus(OperationRequestStatus.FAILURE);
                     notifyAlertConditionCacheManager("checkForTimedOutOperations", history);
 
-                    // If it's part of a group update, check if all member updates of the group update have completed,
-                    // and, if so, update the group update's status.
+                    // If it's part of a group request, check if all member requests of the group request have completed,
+                    // and, if so, update the group request's status.
                     checkForCompletedGroupOperation(history);
                 }
             }

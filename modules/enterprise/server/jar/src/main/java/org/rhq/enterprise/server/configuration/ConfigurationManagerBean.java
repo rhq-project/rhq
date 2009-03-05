@@ -685,7 +685,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @SuppressWarnings("unchecked")
     public void checkForTimedOutUpdateRequests() {
-        log.debug("Scanning configuration update requests to see if any in-progress executions have timed out...");
+        log.debug("Scanning configuration update requests to see if any in-progress requests have timed out...");
 
         // the purpose of this method is really to clean up requests when we detect
         // they probably will never move out of the in progress status.  This will occur if the

@@ -43,11 +43,17 @@ public class ResourceGroupComposite implements Serializable {
     private GroupCategory category;
     private ResourceFacets resourceFacets;
     private long memberCount;
+    private long upCount;
+    private long downCount;
 
     public ResourceGroupComposite(Double availability, ResourceGroup resourceGroup, long memberCount) {
         this.availability = availability;
         this.resourceGroup = resourceGroup;
         this.memberCount = memberCount;
+        if (this.availability != null) {
+            this.upCount = (long) (this.memberCount * this.availability);
+            this.downCount = this.memberCount - upCount;
+        }
 
         if (this.resourceGroup.getGroupCategory() == GroupCategory.COMPATIBLE) {
             this.category = GroupCategory.COMPATIBLE;
@@ -57,7 +63,7 @@ public class ResourceGroupComposite implements Serializable {
             this.category = GroupCategory.MIXED;
 
             // Mixed groups don't support any of the resource facets.
-            this.resourceFacets = new ResourceFacets(false, false, false, false, false, false);
+            this.resourceFacets = new ResourceFacets(false, false, false, false, false, false, false);
         } else {
             throw new IllegalArgumentException("Unknown category " + this.resourceGroup.getGroupCategory()
                 + " for ResourceGroup " + this.resourceGroup.getName());
@@ -78,6 +84,14 @@ public class ResourceGroupComposite implements Serializable {
 
     public long getMemberCount() {
         return this.memberCount;
+    }
+
+    public long getUpCount() {
+        return this.upCount;
+    }
+
+    public long getDownCount() {
+        return this.downCount;
     }
 
     public ResourceFacets getResourceFacets() {

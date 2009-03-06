@@ -119,7 +119,7 @@ public class TabDisplayCheckTag extends VarSetterBaseTag {
             ResourceGroup group = RequestUtils.getResourceGroup(request);
             if (group != null) {
                 // TODO: Add support for retrieving the ResourceFacts for a group.
-                resourceFacets = new ResourceFacets(true, true, true, true, true, true);
+                resourceFacets = new ResourceFacets(true, true, true, true, true, true, true);
             }
         }
 

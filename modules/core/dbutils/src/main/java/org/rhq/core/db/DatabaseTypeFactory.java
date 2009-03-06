@@ -66,7 +66,7 @@ public class DatabaseTypeFactory {
      * associated with (i.e. the URL may point to a different version of the same vendor's
      * database).  If you change the JDBC URL, you should call this method to clear the
      * cache, thus enabling the factory to re-check the connection metadata to associate
-     * a new database type with the connection class type.  
+     * a new database type with the connection class type.
      */
     public static void clearDatabaseTypeCache() {
         DATABASE_TYPES.clear();
@@ -154,6 +154,8 @@ public class DatabaseTypeFactory {
                     database_type_class = Oracle9DatabaseType.class;
                 } else if (db_version.startsWith("oracle database 10g")) {
                     database_type_class = Oracle10DatabaseType.class;
+                } else if (db_version.startsWith("oracle database 11g")) {
+                    database_type_class = Oracle11DatabaseType.class;
                 }
             }
 

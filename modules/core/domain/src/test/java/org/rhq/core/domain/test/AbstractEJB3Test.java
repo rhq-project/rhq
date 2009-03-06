@@ -26,18 +26,21 @@ import java.io.File;
 import java.net.URL;
 import java.util.Date;
 import java.util.Hashtable;
+
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.transaction.TransactionManager;
+
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
+
 import org.jboss.ejb3.embedded.EJB3StandaloneBootstrap;
 import org.jboss.ejb3.embedded.EJB3StandaloneDeployer;
 
-public abstract class AbstractEJB3Test extends AssertJUnit {
+ public abstract class AbstractEJB3Test extends AssertJUnit {
     @BeforeSuite(groups = "integration.ejb3")
     public static void startupEmbeddedJboss() {
         System.out.println("Starting ejb3...");
@@ -62,6 +65,9 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
 
             System.err.println("...... deploying MM ejb3.....");
             System.err.println("...... ejb3 deployed....");
+
+            // Set the hibernate dialect 
+//            System.setProperty("hibernate.dialect","org.hibernate.dialect.Oracle10gDialect"); // TODO
 
             // Deploy everything we got
             deployer.setKernel(EJB3StandaloneBootstrap.getKernel());

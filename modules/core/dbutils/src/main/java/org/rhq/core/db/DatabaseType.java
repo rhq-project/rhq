@@ -66,6 +66,14 @@ public abstract class DatabaseType {
     public abstract String getVersion();
 
     /**
+     * Return the hibernate dialect, that can be used in &lt;property name="hibernate.dialect" value="" /  >
+     * expressions within persistence.xml
+     *
+     * @return  classname of the hibernate dialect
+     */
+    public abstract String getHibernateDialect();
+
+    /**
      * @see java.lang.Object#toString()
      */
     @Override

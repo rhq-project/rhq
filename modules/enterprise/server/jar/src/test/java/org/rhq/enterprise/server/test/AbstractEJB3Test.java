@@ -94,10 +94,14 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
             System.err.println("...... deploying MM ejb3.....");
             System.err.println("...... ejb3 deployed....");
 
+
             // Deploy everything we got
             //deployer.setKernel(EJB3StandaloneBootstrap.getKernel());
             deployer.create();
             System.err.println("...... deployer created....");
+
+            // Set the hibernate dialect
+//            System.setProperty("hibernate.dialect","org.hibernate.dialect.Oracle10gDialect"); // TODO
 
             deployer.start();
             System.err.println("...... deployer started....");

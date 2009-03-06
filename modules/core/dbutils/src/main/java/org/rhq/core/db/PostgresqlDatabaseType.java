@@ -46,6 +46,10 @@ public abstract class PostgresqlDatabaseType extends DatabaseType {
         return VENDOR_NAME;
     }
 
+    public String getHibernateDialect() {
+        return "org.hibernate.dialect.PostgreSQLDialect";
+    }
+
     /**
      * @see DatabaseType#isTableNotFoundException(SQLException)
      */

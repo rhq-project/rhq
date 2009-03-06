@@ -38,4 +38,8 @@ public class Oracle8DatabaseType extends OracleDatabaseType {
     public String getVersion() {
         return "8";
     }
+
+    public String getHibernateDialect() {
+        return "org.hibernate.dialect.OracleDialect";
+    }
 }

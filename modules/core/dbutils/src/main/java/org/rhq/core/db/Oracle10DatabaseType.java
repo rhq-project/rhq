@@ -38,4 +38,8 @@ public class Oracle10DatabaseType extends Oracle9DatabaseType {
     public String getVersion() {
         return "10";
     }
+
+    public String getHibernateDialect() {
+        return "org.hibernate.dialect.Oracle10gDialect";
+    }
 }

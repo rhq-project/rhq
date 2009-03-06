@@ -21,16 +21,20 @@ package org.rhq.enterprise.gui.legacy.portlet.autodiscovery;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.legacy.Constants;
+import org.rhq.enterprise.gui.legacy.MessageConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
@@ -63,6 +67,24 @@ public class ProcessQueueAction extends BaseAction {
         // TODO: don't use unlimited, try to use getQueuedPlatforms to get only those we care about
         Map<Resource, List<Resource>> queuedResources = discovery.getQueuedPlatformsAndServers(user, PageControl
             .getUnlimitedInstance());
+
+        // perform some preprocessing, to make sure selections are valid
+        String errorKey = null;
+        for (Resource platform : queuedResources.keySet()) {
+            if (isIgnore) {
+                // March 05, 2009 - to date, it is illegal to ignore servers if the platform hasn't yet been committed
+                if (platform.getInventoryStatus() == InventoryStatus.NEW) {
+                    errorKey = MessageConstants.ERR_PLATFORM_NOT_COMMITTED;
+                    break; // don't process any more platforms
+                }
+            }
+        }
+        if (errorKey != null) {
+            // premature return, since we know subsequent inventory operations will fail
+            //RequestUtils.setError(request, errorKey);
+            SessionUtils.setError(request.getSession(), errorKey);
+            return returnSuccess(request, mapping);
+        }
 
         for (Resource platform : queuedResources.keySet()) {
             if (!selectedForProcessing(platform, platformIds)) {

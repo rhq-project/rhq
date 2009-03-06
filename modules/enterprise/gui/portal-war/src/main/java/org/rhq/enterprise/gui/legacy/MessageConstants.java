@@ -49,6 +49,8 @@ public interface MessageConstants {
 
     public static final String ERR_PLATFORM_NOT_FOUND = "resource.platform.error.PlatformNotFound";
 
+    public static final String ERR_PLATFORM_NOT_COMMITTED = "resource.platform.error.PlatformNotCommitted";
+
     public static final String ERR_URL_NOT_SPECIFIED = "resource.common.error.UrlNotFound";
 
     //---------------------------------------error attrs

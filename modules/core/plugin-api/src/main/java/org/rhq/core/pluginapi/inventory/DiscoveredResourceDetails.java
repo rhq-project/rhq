@@ -113,6 +113,7 @@ public class DiscoveredResourceDetails {
      *
      * @return new resource's type
      */
+    @NotNull
     public ResourceType getResourceType() {
         return resourceType;
     }
@@ -124,6 +125,7 @@ public class DiscoveredResourceDetails {
      *
      * @return resource's unique key (will not be <code>null</code>)
      */
+    @NotNull
     public String getResourceKey() {
         return resourceKey;
     }

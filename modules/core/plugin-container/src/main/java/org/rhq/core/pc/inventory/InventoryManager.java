@@ -32,6 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.IdentityHashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -1500,6 +1501,52 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     public void disableServiceScans(int serverResourceId) {
         throw new UnsupportedOperationException("not implemented yet"); // TODO: Implement this method.
+    }
+
+    @NotNull
+    Set<Resource> executeComponentDiscovery(ResourceType resourceType, ResourceDiscoveryComponent discoveryComponent,
+        ResourceComponent parentComponent, ResourceContext parentResourceContext,
+        List<ProcessScanResult> processScanResults) {
+        Set<Resource> newResources;
+        try {
+            ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, parentComponent,
+                parentResourceContext, SystemInfoFactory.createSystemInfo(), processScanResults,
+                Collections.EMPTY_LIST, this.configuration.getContainerName());
+            Set<DiscoveredResourceDetails> discoveredResources = discoveryComponent.discoverResources(context);
+            newResources = new HashSet<Resource>();
+            if ((discoveredResources != null) && (!discoveredResources.isEmpty())) {
+                IdentityHashMap<Configuration, DiscoveredResourceDetails> pluginConfigObjects = new IdentityHashMap<Configuration, DiscoveredResourceDetails>();
+                for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
+                    if (discoveredResource == null) {
+                        throw new IllegalStateException("Plugin error: Discovery class "
+                                + discoveryComponent.getClass().getName()
+                                + " returned a Set containing one or more null items.");
+                    }
+                    if (!discoveredResource.getResourceType().equals(resourceType)) {
+                        throw new IllegalStateException("Plugin error: Discovery class "
+                                + discoveryComponent.getClass().getName()
+                                + " returned a DiscoveredResourceDetails with an incorrect ResourceType (was "
+                                + discoveredResource.getResourceType().getName() + " but should have been "
+                                + resourceType.getName());
+                    }
+                    if (null != pluginConfigObjects.put(discoveredResource.getPluginConfiguration(), discoveredResource)) {
+                        throw new IllegalStateException("The plugin component " + discoveryComponent.getClass().getName() +
+                            " returned multiple resources that point to the same plugin configuration object on the " +
+                            "resource type [" + resourceType + "]. This is not allowed, please use " +
+                            "ResoureDiscoveryContext.getDefaultPluginConfiguration() " +
+                            "for each discovered resource.");
+                    }
+                    Resource newResource = InventoryManager.createNewResource(discoveredResource);
+                    newResources.add(newResource);
+                }
+            }
+        } catch (Throwable e) {
+            // TODO GH: Add server/parent - up/down semantics so this won't happen just because a server is not up
+            log.warn("Failed to execute discovery for Resources of type " + resourceType, e);
+            return Collections.EMPTY_SET;
+        }
+
+        return newResources;
     }
 
     @Nullable

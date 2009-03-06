@@ -36,18 +36,15 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.exception.ExceptionPackage;
+import org.rhq.core.util.exception.Severity;
 
-/**
+ /**
  * @author Greg Hinkle
  * @author Ian Springer
  */
@@ -131,6 +128,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             // Discover platform services here
             discoverForResource(platform, report, false);
 
+            // Next discover all other services and non-top-level servers
             Set<Resource> servers = platform.getChildResources();
             for (Resource server : servers) {
                 discoverForResource(server, report, false);
@@ -156,7 +154,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
         ResourceContainer parentContainer = this.inventoryManager.getResourceContainer(parent);
         if (parentContainer == null) {
-            log.debug("Parent ResourceComponent unavailable " + "to allow for runtime discovery " + parent);
+            log.debug("ResourceContainer for parent " + parent + " is null, so we can't execute runtime discovery on it.");
             return;
         }
 
@@ -199,72 +197,50 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
         // For each child resource type of the server, do a discovery for resources of that type
         for (ResourceType childResourceType : parent.getResourceType().getChildResourceTypes()) {
-            // Make sure we have a discovery component for that type, otherwise there is nothing to do
-            ResourceDiscoveryComponent discoveryComponent = null;
-            try {
-                discoveryComponent = factory.getDiscoveryComponent(childResourceType);
-            } catch (PluginContainerException pce) {
-                log.error("Unable to run component discovery for [" + childResourceType + "]", pce);
-            }
-
-            if (discoveryComponent == null) {
-                log.debug("Resource not discoverable, no component found " + childResourceType);
-                continue; // Assume its not discoverable
-            }
-
-            // For this resource type, discover all resources of that type on this parent resource
-            log.debug("Running Runtime discovery on parent resource: " + parent + " looking for children of type: "
-                + childResourceType);
-            Set<Resource> childResources = executeComponentDiscovery(childResourceType, discoveryComponent,
-                parentComponent, parentContainer.getResourceContext());
-
-            // For each discovered resource, update it in the inventory manager and recursively discover its child resources
-            Map<String, Resource> mergedResources = new HashMap<String, Resource>();
-
-            for (Resource childResource : childResources) {
-                Resource mergedResource = this.inventoryManager.mergeResourceFromDiscovery(childResource, parent);
-                mergedResources.put(mergedResource.getUuid(), mergedResource);
-                boolean thisInReport = false;
-                if ((mergedResource.getId() == 0) && !parentReported) {
-                    report.addAddedRoot(parent);
-                    thisInReport = true;
-                    parentReported = true;
+            try
+            {
+                // Make sure we have a discovery component for that type, otherwise there is nothing to do
+                ResourceDiscoveryComponent discoveryComponent = null;
+                try {
+                    discoveryComponent = factory.getDiscoveryComponent(childResourceType);
+                } catch (PluginContainerException pce) {
+                    log.error("Unable to obtain discovery component for [" + childResourceType + "]", pce);
                 }
 
-                discoverForResource(mergedResource, report, thisInReport);
-            }
-            removeStaleResources(parent, childResourceType, mergedResources);
-        }
-    }
+                if (discoveryComponent == null) {
+                    log.debug("Resource not discoverable, no component found " + childResourceType);
+                    continue; // Assume its not discoverable
+                }
 
-    private Set<Resource> executeComponentDiscovery(ResourceType resourceType, ResourceDiscoveryComponent component,
-        ResourceComponent parentComponent, ResourceContext parentResourceContext) {
-        try {
-            ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, parentComponent,
-                parentResourceContext, SystemInfoFactory.createSystemInfo(), Collections.EMPTY_LIST,
-                Collections.EMPTY_LIST, pluginContainerConfiguration.getContainerName());
-            Set<DiscoveredResourceDetails> discoveredResources = component.discoverResources(context);
-            Set<Resource> newResources = new HashSet<Resource>();
-            if ((discoveredResources != null) && (discoveredResources.size() > 0)) {
-                IdentityHashMap<Configuration, DiscoveredResourceDetails> pluginConfigObjects = new IdentityHashMap<Configuration, DiscoveredResourceDetails>();
-                for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
-                    if (null != pluginConfigObjects.put(discoveredResource.getPluginConfiguration(), discoveredResource)) {
-                        throw new IllegalStateException("The plugin component " + component.getClass().getName() +
-                            " returned multiple resources that point to the same plugin configuration object on the " +
-                            "resource type [" + resourceType + "]. This is not allowed, please use " +
-                            "ResoureDiscoveryContext.getDefaultPluginConfiguration() " +
-                            "for each discovered resource.");
+                // For this resource type, discover all resources of that type on this parent resource
+                log.debug("Running Runtime discovery on parent resource: " + parent + " looking for children of type: "
+                    + childResourceType);
+                Set<Resource> childResources = this.inventoryManager.executeComponentDiscovery(childResourceType,
+                        discoveryComponent, parentComponent, parentContainer.getResourceContext(), Collections.EMPTY_LIST);
+
+                // For each discovered resource, update it in the inventory manager and recursively discover its child resources
+                Map<String, Resource> mergedResources = new HashMap<String, Resource>();
+
+                for (Resource childResource : childResources) {
+                    boolean thisInReport = false;
+                    Resource mergedResource;
+                    mergedResource = this.inventoryManager.mergeResourceFromDiscovery(childResource, parent);
+                    mergedResources.put(mergedResource.getUuid(), mergedResource);
+                    if ((mergedResource.getId() == 0) && !parentReported) {
+                        report.addAddedRoot(parent);
+                        thisInReport = true;
+                        parentReported = true;
                     }
-                    newResources.add(InventoryManager.createNewResource(discoveredResource));
+                    discoverForResource(mergedResource, report, thisInReport);
                 }
+                removeStaleResources(parent, childResourceType, mergedResources);
             }
-            return newResources;
-        } catch (Throwable e) {
-            // TODO GH: Add server/parent - up/down semantics so this won't happen just because a server is not up
-            log.warn("Failed to execute runtime discovery for Resources of type " + resourceType, e);
+            catch (Throwable t)
+            {
+                report.getErrors().add(new ExceptionPackage(Severity.Severe, t));
+                log.error("Error in runtime discovery", t);
+            }
         }
-
-        return Collections.EMPTY_SET;
     }
 
     // TODO: Move this to InventoryManager, so it can be used by AutoDiscoveryExecutor too.

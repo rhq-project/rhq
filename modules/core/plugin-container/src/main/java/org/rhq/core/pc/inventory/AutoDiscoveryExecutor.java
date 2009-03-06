@@ -27,7 +27,6 @@ import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -48,11 +47,9 @@ import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.plugin.PluginManager;
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
@@ -67,6 +64,7 @@ import org.rhq.core.util.exception.Severity;
  *
  * @author Greg Hinkle
  * @author John Mazzitelli
+ * @author Ian Springer
  */
 public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport> {
     private Log log = LogFactory.getLog(AutoDiscoveryExecutor.class);
@@ -185,39 +183,27 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                         + ")");
                 }
 
-                ResourceDiscoveryContext context = new ResourceDiscoveryContext(serverType, platformComponent,
-                       platformContainer.getResourceContext(), systemInfo, scanResults, Collections.EMPTY_LIST, configuration.getContainerName());
+                Set<Resource> discoveredServers = this.inventoryManager.executeComponentDiscovery(serverType, component, 
+                        platformComponent, platformContainer.getResourceContext(), scanResults);
 
-                Set<DiscoveredResourceDetails> discoveredResources = null;
+                Resource platformResource = platformContainer.getResource();
+                for (Resource discoveredServer : discoveredServers) {
+                    log.debug("Detected server " + discoveredServer);
+                    Resource inventoriedResource = this.inventoryManager.mergeResourceFromDiscovery(discoveredServer,
+                        platformResource);
 
-                try {
-                    discoveredResources = component.discoverResources(context);
-                } catch (Throwable e) {
-                    log.warn("Plugin discovery failed - skipping", e);
-                }
-
-                if (discoveredResources != null) {
-                    Resource platformResource = platformContainer.getResource();
-
-                    for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
-                        Resource newResource = InventoryManager.createNewResource(discoveredResource);
-                        newResource.setResourceType(serverType);
-                        log.debug("Detected server resource " + newResource);
-                        Resource inventoriedResource = inventoryManager.mergeResourceFromDiscovery(newResource,
-                            platformResource);
-
-                        if (inventoriedResource.getInventoryStatus() == InventoryStatus.NEW) {
-                            // The resource is new to the Server inventory.
-                            if (platformContainer.getSynchronizationState() == ResourceContainer.SynchronizationState.SYNCHRONIZED) {
-                                // The Platform is already in Server inventory, so this'll be a report root. Otherwise, it'll get included in the report under the Platform.
-                                report.addAddedRoot(inventoriedResource);
-                            }
+                    if (inventoriedResource.getInventoryStatus() == InventoryStatus.NEW) {
+                        // The resource is new to the Server inventory.
+                        if (platformContainer.getSynchronizationState() == ResourceContainer.SynchronizationState.SYNCHRONIZED) {
+                            // The Platform is already in Server inventory, so this'll be a report root. Otherwise,
+                            // it'll get included in the report under the Platform.
+                            report.addAddedRoot(inventoriedResource);
                         }
                     }
                 }
             } catch (Throwable e) {
                 report.getErrors().add(new ExceptionPackage(Severity.Severe, e));
-                log.error("Error in discovery", e);
+                log.error("Error in auto discovery", e);
             }
         }
     }

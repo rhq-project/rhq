@@ -1448,10 +1448,12 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     @Override
     public String toString() {
-        String type = (resourceType != null) ? resourceType.getName() : "- type not set -";
+        String type = (resourceType != null) ? resourceType.getName() : "<null>";
+        String parent = (parentResource != null) ? parentResource.getName() : "<null>";
 
         return "Resource[id=" + this.id + ", type=" + type + ", key=" + this.resourceKey + ", name=" + this.name
-            + ((this.version != null && !this.version.equals("")) ? ", version=" + this.version : "") + "]";
+            + ", parent=" + parent + ((this.version != null && !this.version.equals(""))
+            ? ", version=" + this.version : "") + "]";
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

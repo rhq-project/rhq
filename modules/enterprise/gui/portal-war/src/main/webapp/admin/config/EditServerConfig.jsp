@@ -21,6 +21,9 @@
    <input type="hidden" name="debug" value="${param.debug}" />
 </c:if>
 
+<tiles:insert page="/admin/config/SystemInfoForm.jsp"/>
+<br>
+<br>
 <tiles:insert page="/admin/config/GeneralPropertiesConfigForm.jsp"/>
 <br>
 <br>
@@ -28,9 +31,6 @@
 <br>
 <br>
 <tiles:insert page="/admin/config/BaselineConfigForm.jsp"/>
-<br>
-<br>
-<tiles:insert page="/admin/config/SystemInfoForm.jsp"/>
 <br>
 <br>
 <tiles:insert page="/admin/config/LDAPForm.jsp"/>

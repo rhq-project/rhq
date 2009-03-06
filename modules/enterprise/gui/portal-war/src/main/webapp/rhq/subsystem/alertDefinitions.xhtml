@@ -15,7 +15,11 @@
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-<ui:composition>
+<ui:composition template="/rhq/subsystem/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="Subsystem View - Alert Definitions"/>
+   <ui:param name="selectedTabName" value="Alerts.Definitions"/>
+   <ui:define name="content">
 
       <h:form id="alertDefinitionSubsystemForm">
             <input type="hidden" name="tab" value="#{SubsystemViewsUIBean.tabPanel.selectedTab}" />
@@ -209,6 +213,8 @@
 
             </h:panelGrid>
       </h:form>
+
+   </ui:define>
 
 </ui:composition>
 

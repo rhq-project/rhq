@@ -4,23 +4,89 @@
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
 
-   <!-- ConfigurationUpdate History -->
+   <!-- ResourceConfigurationUpdate History -->
    <navigation-rule>
-
-      <from-view-id>/rhq/subsystem/layout/main.xhtml</from-view-id>
+      <from-view-id>/rhq/subsystem/configurationUpdate.xhtml</from-view-id>
 
       <navigation-case>
          <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/subsystem/layout/main.xhtml?tab=#{param.tab}</to-view-id>
+         <to-view-id>/rhq/subsystem/configurationUpdate.xhtml</to-view-id>
          <redirect/>
       </navigation-case>
       
       <navigation-case> 
          <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/subsystem/layout/main.xhtml?tab=#{param.tab}</to-view-id>
+         <to-view-id>/rhq/subsystem/configurationUpdate.xhtml</to-view-id>
          <redirect/>
       </navigation-case>
+   </navigation-rule>
+   
+   <!-- Problem Resources History -->
+   <navigation-rule>
+      <from-view-id>/rhq/subsystem/oobHistory.xhtml</from-view-id>
 
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/subsystem/oobHistory.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/subsystem/oobHistory.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+   
+   <!-- Operations History -->
+   <navigation-rule>
+      <from-view-id>/rhq/subsystem/operationHistory.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/subsystem/operationHistory.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/subsystem/operationHistory.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+   
+   <!-- Alert History -->
+   <navigation-rule>
+      <from-view-id>/rhq/subsystem/alertHistory.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/subsystem/alertHistory.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/subsystem/alertHistory.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+   
+   <!-- Alert Definition History -->
+   <navigation-rule>
+      <from-view-id>/rhq/subsystem/alertDefinitions.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/subsystem/alertDefinitions.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/subsystem/alertDefinitions.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
    </navigation-rule>
    
 </faces-config>

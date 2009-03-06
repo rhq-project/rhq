@@ -15,7 +15,11 @@
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-<ui:composition>
+<ui:composition template="/rhq/subsystem/layout/main.xhtml">
+
+   <ui:param name="pageTitle" value="Subsystem View - Operation History"/>
+   <ui:param name="selectedTabName" value="Operations"/>
+   <ui:define name="content">
 
       <h:form id="operationHistorySubsystemForm">
             <input type="hidden" name="tab" value="#{SubsystemViewsUIBean.tabPanel.selectedTab}" />
@@ -199,6 +203,8 @@
 
             </h:panelGrid>
       </h:form>
+      
+   </ui:define>
 
 </ui:composition>
 

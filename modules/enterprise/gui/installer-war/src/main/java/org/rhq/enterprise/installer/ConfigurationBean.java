@@ -40,7 +40,10 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.installer.i18n.InstallerI18NResourceKeys;
 
 /**
+ * Responisible for taking the settings the user selects in the installer window and saves them
+ * as the server's initial configuration.
  * 
+ * @author John Mazzitelli
  * @author Jay Shaughnessy
  */
 public class ConfigurationBean {
@@ -496,6 +499,29 @@ public class ConfigurationBean {
             }
         } catch (Exception e) {
             LOG.fatal("JDBC connection URL seems to be invalid", e);
+            lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.SAVE_ERROR, ThrowableUtil.getAllMessages(e));
+
+            return StartPageResults.ERROR;
+        }
+
+        try {
+            String db = getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_TYPE).getValue();
+            String dialect;
+
+            if (db.toLowerCase().indexOf("postgres") > -1) {
+                dialect = "org.hibernate.dialect.PostgreSQLDialect";
+            } else if (db.toLowerCase().indexOf("oracle") > -1) {
+                dialect = "org.hibernate.dialect.Oracle10gDialect";
+            } else if (db.toLowerCase().indexOf("mysql") > -1) {
+                dialect = "org.hibernate.dialect.MySQL5InnoDBDialect";
+            } else {
+                throw new Exception("Unknown db type: " + db);
+            }
+
+            getConfigurationProperty(configuration, ServerProperties.PROP_DATABASE_HIBERNATE_DIALECT).setValue(dialect);
+
+        } catch (Exception e) {
+            LOG.fatal("Invalid database type", e);
             lastError = I18NMSG.getMsg(InstallerI18NResourceKeys.SAVE_ERROR, ThrowableUtil.getAllMessages(e));
 
             return StartPageResults.ERROR;

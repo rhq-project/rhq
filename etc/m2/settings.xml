@@ -135,6 +135,7 @@
             <rhq.test.ds.server-name>127.0.0.1</rhq.test.ds.server-name>
             <rhq.test.ds.port>5432</rhq.test.ds.port>
             <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
+            <hibernate.dialect>org.hibernate.dialect.PostgreSQLDialect</hibernate.dialect>
          </properties>
       </profile>
 
@@ -147,9 +148,10 @@
             <rhq.test.ds.type-mapping>Oracle10g</rhq.test.ds.type-mapping>
             <rhq.test.ds.driver-class>oracle.jdbc.driver.OracleDriver</rhq.test.ds.driver-class>
             <rhq.test.ds.xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</rhq.test.ds.xa-datasource-class>
-            <rhq.test.ds.server-name>127.0.0.1</rhq.test.ds.server-name>
-            <rhq.test.ds.port>1521</rhq.test.ds.port>
-            <rhq.test.ds.db-name>xe</rhq.test.ds.db-name>
+            <rhq.test.ds.server-name></rhq.test.ds.server-name> <!-- can be left blank, oracle does not use this -->
+            <rhq.test.ds.port></rhq.test.ds.port> <!-- can be left blank, oracle does not use this -->
+            <rhq.test.ds.db-name></rhq.test.ds.db-name> <!-- can be left blank, oracle does not use this -->
+            <hibernate.dialect>org.hibernate.dialect.Oracle10gDialect</hibernate.dialect>
          </properties>
       </profile>
 

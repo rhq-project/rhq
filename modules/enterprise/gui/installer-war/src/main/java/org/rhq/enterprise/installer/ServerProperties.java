@@ -39,6 +39,7 @@ public class ServerProperties {
     public static final String PROP_DATABASE_SERVER_NAME = PREFIX_PROP_DATABASE + "server-name";
     public static final String PROP_DATABASE_PORT = PREFIX_PROP_DATABASE + "port";
     public static final String PROP_DATABASE_DB_NAME = PREFIX_PROP_DATABASE + "db-name";
+    public static final String PROP_DATABASE_HIBERNATE_DIALECT = "hibernate.dialect";
 
     public static final String PROP_SERVER_BIND_ADDRESS = "jboss.bind.address";
     public static final String PROP_HTTP_PORT = "rhq.server.startup.web.http.port";
@@ -181,6 +182,7 @@ public class ServerProperties {
         new PropertyItem(PROP_DATABASE_SERVER_NAME, String.class, "", "", false, true, false, true),
         new PropertyItem(PROP_DATABASE_PORT, String.class, "", "", false, true, false, true),
         new PropertyItem(PROP_DATABASE_DB_NAME, String.class, "", "", false, true, false, true),
+        new PropertyItem(PROP_DATABASE_HIBERNATE_DIALECT, String.class, "", "", false, true, false, true),
 
         new PropertyItem(PROP_SERVER_BIND_ADDRESS, String.class, InstallerI18NResourceKeys.PROP_SERVER_BIND_ADDRESS,
             InstallerI18NResourceKeys.PROP_SERVER_BIND_ADDRESS_HELP, true, false, false),

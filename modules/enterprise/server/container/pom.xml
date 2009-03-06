@@ -161,6 +161,7 @@
                   <property name="rhq.test.ds.server-name" value="${rhq.test.ds.server-name}" />
                   <property name="rhq.test.ds.port" value="${rhq.test.ds.port}" />
                   <property name="rhq.test.ds.db-name" value="${rhq.test.ds.db-name}" />
+                  <property name="hibernate.dialect" value="${hibernate.dialect}" />
 
                   <!-- default server settings used by installer -->
                   <property name="rhq.server.http.port" value="${rhq.server.http.port}" />

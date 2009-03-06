@@ -125,6 +125,10 @@
         <column name="ERROR_TYPE" type="VARCHAR2" required="true" size="32"/>
         <column name="SUMMARY" type="VARCHAR2" required="true" size="1000"/>
         <column name="DETAIL" type="LONGVARCHAR" required="false"/>
+
+        <index name="RHQ_RES_ERROR_IDX_RES_ID">
+            <field ref="RESOURCE_ID"/>
+        </index>
     </table>
 
     <table name="RHQ_GROUP_DEF">

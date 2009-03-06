@@ -1348,6 +1348,14 @@ DB Upgrade:
        <schema-alterColumn table="RHQ_MEASUREMENT_OOB_TMP" column="OOB_FACTOR" nullable="FALSE" />
     </schemaSpec>
 
+   <schemaSpec version="2.50">
+      <schema-directSQL>
+         <statement desc="Creating index on RHQ_RESOURCE_ERROR.RESOURCE_ID">
+            CREATE INDEX RHQ_RES_ERROR_IDX_RES_ID ON RHQ_RESOURCE_ERROR (RESOURCE_ID)
+         </statement>
+      </schema-directSQL>
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

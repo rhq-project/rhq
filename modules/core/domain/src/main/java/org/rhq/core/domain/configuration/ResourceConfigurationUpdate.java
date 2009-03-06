@@ -46,10 +46,13 @@ import org.rhq.core.domain.resource.Resource;
         + " WHERE ( res.id = :resourceId OR :resourceId IS NULL ) " //
         + "   AND ( cu.createdTime > :startTime OR :startTime IS NULL ) " //
         + "   AND ( cu.modifiedTime < :endTime OR :endTime IS NULL ) " //
-        + "   AND ( (:includeAll = 1) " //
-        + "         OR (cu.modifiedTime <> (SELECT MIN(icu.modifiedTime) " // 
-        + "                                   FROM ResourceConfigurationUpdate icu " //
-        + "                                  WHERE icu.resource.id = res.id))) " //
+        + "   AND ( :includeAll = 1 " //
+        + "         OR ( :includeAll <> 1 " //
+        + "              AND " //
+        + "              cu.modifiedTime <> (SELECT MIN(icu.modifiedTime) " // 
+        + "                                    FROM ResourceConfigurationUpdate icu " //
+        + "                                   WHERE icu.resource.id = res.id) " //
+        + "            ) " //
         + "       )"),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_CURRENTLY_ACTIVE_CONFIG, query = "" //
         + "SELECT cu " //

@@ -92,14 +92,6 @@ public class ResourceContainer implements Serializable {
     private static ExecutorService DAEMON_THREAD_POOL;
     private static ExecutorService NON_DAEMON_THREAD_POOL;
 
-    // Used to prohibit multiple calls to a component to happen over multiple threads
-    private static ThreadLocal<Boolean> reentrant = new ThreadLocal<Boolean>() {
-        @Override
-        protected Boolean initialValue() {
-            return false;
-        }
-    };
-
     /**
      * Initialize the ResourceContainer's internals, such as its thread pools.
      */
@@ -375,9 +367,7 @@ public class ResourceContainer implements Serializable {
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            // Make sure we don't spawn another thread if we've already spawned one farther up the stack
-            boolean isReentrant = ResourceContainer.reentrant.get().booleanValue();
-            if (method.getDeclaringClass().equals(this.facetInterface) && !isReentrant) {
+            if (method.getDeclaringClass().equals(this.facetInterface)) {
                 return invokeInNewThreadWithLock(method, args);
             } else {
                 // toString(), etc.
@@ -456,8 +446,6 @@ public class ResourceContainer implements Serializable {
 
             try {
                 // This is the actual call into the resource component's facet interface.
-                isReentrant = ResourceContainer.reentrant.get();
-                ResourceContainer.reentrant.set(Boolean.TRUE); // set our flag so any further invocations are considered reentrant
                 Object results = this.method.invoke(resourceComponent, this.args);
                 return results;
             } catch (InvocationTargetException e) {
@@ -468,9 +456,6 @@ public class ResourceContainer implements Serializable {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             } finally {
-                if (isReentrant != null) {
-                    ResourceContainer.reentrant.set(isReentrant);
-                }
                 if (this.lock != null) {
                     this.lock.unlock();
                 }

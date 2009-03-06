@@ -1320,7 +1320,7 @@ DB Upgrade:
     <schemaSpec version="2.49">
         <schema-directSQL>
             <statement desc="Remove old data from rhq_measurement_oob">
-                truncate rhq_measurement_oob
+                truncate table rhq_measurement_oob
             </statement>
         </schema-directSQL>
         <schema-directSQL>

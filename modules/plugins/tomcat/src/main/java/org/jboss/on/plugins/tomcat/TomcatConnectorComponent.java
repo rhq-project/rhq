@@ -32,6 +32,8 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
@@ -42,31 +44,36 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * @author Jason Dobies
  */
 public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServerComponent> {
-    // Constants  --------------------------------------------
-
     /**
      * Plugin property name for the address the connector is bound to.
      */
-    public static final String PROPERTY_ADDRESS = "address";
-
+    public static final String PLUGIN_CONFIG_ADDRESS = "address";
     /**
      * Plugin property name for the port the connector is listening on.
      */
-    public static final String PROPERTY_PORT = "port";
-
+    public static final String PLUGIN_CONFIG_PORT = "port";
     /**
      * Plugin property name for the schema the connector is processing. Possible values are http (also for https), jk
      */
-    public static final String PROPERTY_PROTOCOL = "protocol";
-
+    public static final String PLUGIN_CONFIG_PROTOCOL = "protocol";
     /**
      * Plugin property name for the schema the connector is processing. Possible values are http (also for https), jk
      */
-    public static final String PROPERTY_SCHEME = "scheme";
+    public static final String PLUGIN_CONFIG_SCHEME = "scheme";
+
+    public static final String UNKNOWN = "?";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    // MBeanResourceComponent Overridden Methods  --------------------------------------------
+    @Override
+    public void start(ResourceContext<TomcatServerComponent> context) {
+        if (UNKNOWN.equals(context.getPluginConfiguration().getSimple(PLUGIN_CONFIG_SCHEME).getStringValue())) {
+            throw new InvalidPluginConfigurationException(
+                "The connector is not listening for requests on the configured port. This is most likely due to the configured port being in use at Tomcat startup. In some cases (AJP connectors) Tomcat will assign an open port. This happens most often when there are multiple Tomcat servers running on the same platform. Check your Tomcat configurations for conflicts.");
+        }
+
+        super.start(context);
+    }
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
@@ -111,9 +118,9 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
         String theProperty = property;
 
         Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
-        String address = pluginConfiguration.getSimple(PROPERTY_ADDRESS).getStringValue();
-        String port = pluginConfiguration.getSimple(PROPERTY_PORT).getStringValue();
-        String scheme = pluginConfiguration.getSimple(PROPERTY_SCHEME).getStringValue();
+        String address = pluginConfiguration.getSimple(PLUGIN_CONFIG_ADDRESS).getStringValue();
+        String port = pluginConfiguration.getSimple(PLUGIN_CONFIG_PORT).getStringValue();
+        String scheme = pluginConfiguration.getSimple(PLUGIN_CONFIG_SCHEME).getStringValue();
 
         theProperty = theProperty.replace("%address%", address);
         theProperty = theProperty.replace("%port%", port);

@@ -50,7 +50,7 @@ import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 import org.rhq.plugins.platform.PlatformComponent;
 
 /**
- * Discovers JBoss EWS Tomcat5, Tomcat6 server instances.
+ * Discovers JBoss EWS and Apache Tomcat5, Tomcat6 server instances.
  *
  * @author Jay Shaughnessy
  */
@@ -67,7 +67,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
     /**
      * Formal name used to identify the server.
      */
-    private static final String PRODUCT_NAME_EWS = "JBoss EWS";
+    private static final String PRODUCT_NAME_EWS = "JBoss EWS Tomcat";
     private static final String PRODUCT_NAME_APACHE = "Apache Tomcat";
 
     /**
@@ -91,8 +91,8 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
     /**
      * EWS Install path substrings used to identify EWS and/or EWS tomcat version
      */
-    private static final String EWS_TOMCAT_6 = "tomcat6";
     private static final String EWS_TOMCAT_5 = "tomcat5";
+    private static final String EWS_TOMCAT_6 = "tomcat6";
 
     @SuppressWarnings("unchecked")
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
@@ -136,12 +136,16 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
     @SuppressWarnings("unchecked")
     private DiscoveredResourceDetails parseTomcatProcess(ResourceDiscoveryContext context, ProcessScanResult autoDiscoveryResult) {
         // Pull out data from the discovery call
-        ProcessInfo processInfo = autoDiscoveryResult.getProcessInfo();
         SystemInfo systemInfo = context.getSystemInformation();
+        ProcessInfo processInfo = autoDiscoveryResult.getProcessInfo();
         String[] commandLine = processInfo.getCommandLine();
 
+        if (null == processInfo.getExecutable()) {
+            log.debug("Ignoring Tomcat instance (agent may not be owner) with following command line: " + Arrays.toString(commandLine));
+            return null;
+        }
         if (!isStandalone(commandLine)) {
-            log.info("Ignoring embedded Tomcat instance with following command line, ignoring: " + Arrays.toString(commandLine));
+            log.debug("Ignoring embedded Tomcat instance with following command line: " + Arrays.toString(commandLine));
             return null;
         }
 
@@ -153,14 +157,16 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
         String hostname = systemInfo.getHostname();
         boolean isEWS = isEWS(installationPath);
         String productName = isEWS ? PRODUCT_NAME_EWS : PRODUCT_NAME_APACHE;
-        String productDescription = isEWS ? PRODUCT_DESCRIPTION_EWS : PRODUCT_DESCRIPTION_APACHE;
-        String resourceName = ((hostname == null) ? "" : (hostname + " ")) + productName + " (" + ((tomcatConfig.getAddress() == null) ? "" : (tomcatConfig.getAddress() + ":"))
+        String productDescription = (isEWS ? PRODUCT_DESCRIPTION_EWS : PRODUCT_DESCRIPTION_APACHE)
+            + ((hostname == null) ? "" : (" (" + hostname + ")"));
+        String resourceName = productName + " (" + ((tomcatConfig.getAddress() == null) ? "" : (tomcatConfig.getAddress() + ":"))
             + tomcatConfig.getPort() + ")";
         String resourceKey = installationPath;
 
         Configuration pluginConfiguration = populatePluginConfiguration(installationPath, commandLine);
 
-        DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), resourceKey, resourceName, resourceVersion, productDescription, pluginConfiguration, processInfo);
+        DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), resourceKey, resourceName, resourceVersion,
+            productDescription, pluginConfiguration, processInfo);
 
         return resource;
     }
@@ -194,7 +200,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
 
         // The match will succeed if EWS is installed and the installation directory is not renamed.
         if (!isEws) {
-            // still match in a weaker way if the install directory still ends with one of the EWS wrapper directories.
+            // still match in a weaker way if the install directory still contains with one of the EWS wrapper directories.
             isEws = (isEWSTomcat5(installationPath) || isEWSTomcat6(installationPath));
         }
 
@@ -207,6 +213,32 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
 
     private static boolean isEWSTomcat6(String installationPath) {
         return ((null != installationPath) && installationPath.endsWith(EWS_TOMCAT_6));
+    }
+
+    /**
+     * Looks for tomcat home on the assumption that the process working directory is home/bin.  This may or may not
+     * be a valid assumption, if cwd is not /bin will try {@link determineInstallationPath(String[])}.
+     * 
+     * @param ProcessInfo for the standalone tomcat process. Null if it can't be determined.
+     *
+     * @return
+     */
+    private String determineInstallationPath(ProcessInfo processInfo) {
+        String cwdPath = null;
+        String result = null;
+
+        if (null != processInfo.getExecutable()) {
+            cwdPath = processInfo.getCurrentWorkingDirectory();
+            if (cwdPath.endsWith("bin")) {
+                result = new File(cwdPath).getParent();
+            }
+        }
+
+        if (null == cwdPath) {
+            result = determineInstallationPath(processInfo.getCommandLine());
+        }
+
+        return result;
     }
 
     /**
@@ -247,21 +279,6 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
     }
 
     /**
-     * Looks for tomcat home on the assumption that the process working directory is home/bin.  This may or may not
-     * be a valid assumption, if possible, use {@link determineInstallationPath(String[])}.
-     * 
-     * @param ProcessInfo for the standalone tomcat process
-     *
-     * @return
-     */
-    private String determineInstallationPath(ProcessInfo processInfo) {
-        //determine the bin directory of the installation
-        String cwdPath = processInfo.getCurrentWorkingDirectory();
-        File cwd = new File(cwdPath);
-        return cwd.getParent();
-    }
-
-    /**
      * Parses the tomcat config file (server.xml) and returns a value object with access to its relevant contents.
      *
      * @param  installationPath installation path of the tomcat instance
@@ -285,23 +302,15 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
      */
     private String determineVersion(String installationPath, SystemInfo systemInfo) {
         boolean isNix = File.separatorChar == '/';
-        String versionScriptFileName;
-
-        if (isEWS(installationPath)) {
-            versionScriptFileName = installationPath + File.separator + "bin" + File.separator + ((isEWSTomcat5(installationPath) ? EWS_TOMCAT_5 : EWS_TOMCAT_6));
-        } else {
-            versionScriptFileName = installationPath + File.separator + "bin" + File.separator + "version." + (isNix ? "sh" : "bat");
-        }
+        String versionScriptFileName = installationPath + File.separator + "bin" + File.separator + "version." + (isNix ? "sh" : "bat");
         File versionScriptFile = new File(versionScriptFileName);
+
         if (!versionScriptFile.exists()) {
             log.warn("Version script file not found in expected location: " + versionScriptFile);
             return UNKNOWN_VERSION;
         }
 
         ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(versionScriptFile);
-        if (isEWS(installationPath))
-            processExecution.setArguments(new String[] {"version"});
-
         TomcatServerOperationsDelegate.setProcessExecutionEnvironment(processExecution, installationPath);
 
         processExecution.setCaptureOutput(true);
@@ -314,16 +323,14 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
         String version = getVersionFromVersionScriptOutput(versionOutput);
 
         if (UNKNOWN_VERSION.equals(version)) {
-            log.warn("Failed to determine Tomcat Server Version Given:\nVersionInfo:" + versionOutput
-                    + "\ninstallationPath: " + installationPath + "\nScript:" + versionScriptFileName 
-                    + "\ntimeout=5000L");
+            log.warn("Failed to determine Tomcat Server Version Given:\nVersionInfo:" + versionOutput + "\ninstallationPath: " + installationPath
+                + "\nScript:" + versionScriptFileName + "\ntimeout=5000L");
         }
 
         return version;
     }
 
-    private String getVersionFromVersionScriptOutput(String versionOutput)
-    {
+    private String getVersionFromVersionScriptOutput(String versionOutput) {
         String version = UNKNOWN_VERSION;
         // Try more recent Tomcat version string format first.
         Matcher matcher = TOMCAT_5_5_AND_LATER_VERSION_PATTERN.matcher(versionOutput);
@@ -348,17 +355,9 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
         configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH, installationPath));
 
         String binPath = installationPath + File.separator + "bin" + File.separator;
-        if (isEWS(installationPath)) {
-            String script = this.isEWSTomcat5(installationPath) ? EWS_TOMCAT_5 : EWS_TOMCAT_6;
-
-            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, binPath + script + " start"));
-            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, binPath + script + " stop"));
-        } else {
-            String scriptExtension = (File.separatorChar == '/') ? ".sh" : ".bat";
-
-            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, binPath + "startup" + scriptExtension));
-            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, binPath + "shutdown" + scriptExtension));
-        }
+        String scriptExtension = (File.separatorChar == '/') ? ".sh" : ".bat";
+        configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, binPath + "startup" + scriptExtension));
+        configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, binPath + "shutdown" + scriptExtension));
 
         populateJMXConfiguration(configuration, commandLine);
 
@@ -377,10 +376,12 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
             }
         }
 
-        configuration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE, "org.mc4j.ems.connection.support.metadata.Tomcat55ConnectionTypeDescriptor"));
+        configuration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
+            "org.mc4j.ems.connection.support.metadata.Tomcat55ConnectionTypeDescriptor"));
         // this should be set but just in case we'll use the default connection server url later on 
         if (null != port) {
-            configuration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, "service:jmx:rmi:///jndi/rmi://localhost:" + port + "/jmxrmi"));
+            configuration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, "service:jmx:rmi:///jndi/rmi://localhost:"
+                + port + "/jmxrmi"));
         }
     }
 

@@ -30,6 +30,9 @@ import java.util.StringTokenizer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jboss.on.plugins.tomcat.TomcatServerComponent.SupportedOperations;
+import org.mc4j.ems.connection.EmsConnection;
+import org.mc4j.ems.connection.bean.EmsBean;
+import org.mc4j.ems.connection.bean.operation.EmsOperation;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -46,6 +49,8 @@ import org.rhq.core.system.SystemInfo;
  * @author Jason Dobies
  */
 public class TomcatServerOperationsDelegate {
+
+    private static final String SERVER_MBEAN_NAME = "Catalina:type=Server";
 
     /** max amount of time to wait for server to show as unavailable after executing stop - in milliseconds */
     private static final long STOP_WAIT_MAX = 1000L * 150; // 2.5 minutes
@@ -103,6 +108,11 @@ public class TomcatServerOperationsDelegate {
 
         switch (operation) {
 
+        case RESTART: {
+            message = restart();
+            break;
+        }
+
         case SHUTDOWN: {
             message = shutdown();
             break;
@@ -112,9 +122,9 @@ public class TomcatServerOperationsDelegate {
             message = start();
             break;
         }
-        
-        case RESTART: {
-            message = restart();
+
+        case STORECONFIG: {
+            message = storeConfig();
             break;
         }
         }
@@ -176,8 +186,7 @@ public class TomcatServerOperationsDelegate {
         if (results.getError() == null) {
             avail = waitForServerToStart(start);
         } else {
-            log.error("Error from process execution while starting the EWS instance. Exit code ["
-                + results.getExitCode() + "]", results.getError());
+            log.error("Error from process execution while starting the EWS instance. Exit code [" + results.getExitCode() + "]", results.getError());
             avail = this.serverComponent.getAvailability();
         }
 
@@ -192,8 +201,7 @@ public class TomcatServerOperationsDelegate {
     static public void setProcessExecutionEnvironment(ProcessExecution processExecution, String installationPath) {
         String javaHomeDir = System.getProperty("java.home");
         if (null == javaHomeDir) {
-            throw new IllegalStateException(
-                "The JAVA_HOME environment variable must be set in order to run the EWS start or stop script.");
+            throw new IllegalStateException("The JAVA_HOME environment variable must be set in order to run the EWS start or stop script.");
         }
 
         // Strip off the jre since the version script requires a JDK
@@ -219,8 +227,8 @@ public class TomcatServerOperationsDelegate {
         processExecution.setWorkingDirectory(scriptFile.getParent());
 
         // Set necessary environment variables
-        String installationPath = this.serverComponent.getPluginConfiguration().getSimple(
-            TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH).getStringValue();
+        String installationPath = this.serverComponent.getPluginConfiguration().getSimple(TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH)
+            .getStringValue();
         setProcessExecutionEnvironment(processExecution, installationPath);
 
         processExecution.setCaptureOutput(true);
@@ -229,17 +237,6 @@ public class TomcatServerOperationsDelegate {
     }
 
     private String shutdown() throws InterruptedException {
-        // TODO: Is there an MBEAN shutdown mechanism for Tomcat?  I didn't see one but leave this here until
-        // I can confirm.
-        //        JBossASServerShutdownMethod shutdownMethod = Enum.valueOf(JBossASServerShutdownMethod.class, this.serverComponent.getPluginConfiguration().getSimple(
-        //            JBossASServerComponent.SHUTDOWN_METHOD_CONFIG_PROP).getStringValue());
-        //        String result = JBossASServerShutdownMethod.JMX.equals(shutdownMethod) ? shutdownViaJmx() : shutdownViaScript();
-        //        AvailabilityType avail = waitForServerToShutdown();
-        //        if (avail == AvailabilityType.UP) {
-        //            throw new RuntimeException("Server failed to shutdown");
-        //        } else {
-        //            return result;
-        //        }
         String result = shutdownViaScript();
         AvailabilityType avail = waitForServerToShutdown();
         if (avail == AvailabilityType.UP) {
@@ -276,8 +273,8 @@ public class TomcatServerOperationsDelegate {
         logExecutionResults(results);
 
         if (results.getError() != null) {
-            throw new RuntimeException("Error executing shutdown script while stopping AS instance. Exit code ["
-                + results.getExitCode() + "]", results.getError());
+            throw new RuntimeException("Error executing shutdown script while stopping AS instance. Exit code [" + results.getExitCode() + "]",
+                results.getError());
         }
 
         return "Server has been shut down.";
@@ -329,44 +326,9 @@ public class TomcatServerOperationsDelegate {
         return result.toString();
     }
 
-    /**
-     * Shuts down the AS server via a JMX call.
-     *
-     * @return success message if no errors are encountered
-     */
-    // TODO: Is there an MBEAN shutdown mechanism for Tomcat?  I didn't see one but leave this here until
-    // I can confirm.    
-    //    private String shutdownViaJmx() {
-    //        Configuration pluginConfiguration = this.serverComponent.getPluginConfiguration();
-    //        String mbeanName = pluginConfiguration.getSimple(JBossASServerComponent.SHUTDOWN_MBEAN_CONFIG_PROP).getStringValue();
-    //        String operationName = pluginConfiguration.getSimple(JBossASServerComponent.SHUTDOWN_MBEAN_OPERATION_CONFIG_PROP).getStringValue();
-    //
-    //        EmsConnection connection = this.serverComponent.getEmsConnection();
-    //        EmsBean bean = connection.getBean(mbeanName);
-    //        EmsOperation operation = bean.getOperation(operationName);
-    //        /*
-    //         *  Now see if we got the 'real' method (the one with no param) or the overloaded one.
-    //         *  This is a workaround for a bug in EMS that prevents finding operations with same name
-    //         *  and different signature.
-    //         *  http://sourceforge.net/tracker/index.php?func=detail&aid=2007692&group_id=60228&atid=493495
-    //         *  
-    //         *   In addition, as we offer the user to specify any MBean and any method, we'd need a
-    //         *   clever way for the user to specify parameters anyway.
-    //         */
-    //        List<EmsParameter> params = operation.getParameters();
-    //        int count = params.size();
-    //        if (count == 0)
-    //            operation.invoke(new Object[0]);
-    //        else { // overloaded operation
-    //            operation.invoke(new Object[] { 0 }); // return code of 0
-    //        }
-    //
-    //        return "Server has been shut down.";
-    //    }
     private void validateScriptFile(File scriptFile, String scriptPropertyName) {
         if (!scriptFile.exists()) {
-            throw new RuntimeException("Script (" + scriptFile + ") specified via '" + scriptPropertyName
-                + "' connection property does not exist.");
+            throw new RuntimeException("Script (" + scriptFile + ") specified via '" + scriptPropertyName + "' connection property does not exist.");
         }
 
         if (scriptFile.isDirectory()) {
@@ -377,8 +339,7 @@ public class TomcatServerOperationsDelegate {
 
     private AvailabilityType waitForServerToStart(long start) throws InterruptedException {
         AvailabilityType avail;
-        while (((avail = this.serverComponent.getAvailability()) == AvailabilityType.DOWN)
-            && (System.currentTimeMillis() < (start + START_WAIT_MAX))) {
+        while (((avail = this.serverComponent.getAvailability()) == AvailabilityType.DOWN) && (System.currentTimeMillis() < (start + START_WAIT_MAX))) {
             try {
                 Thread.sleep(START_WAIT_INTERVAL);
             } catch (InterruptedException e) {
@@ -407,4 +368,15 @@ public class TomcatServerOperationsDelegate {
         return this.serverComponent.getAvailability();
     }
 
+    private String storeConfig() {
+        EmsConnection connection = this.serverComponent.getEmsConnection();
+        if (connection == null) {
+            throw new RuntimeException("Can not connect to the server");
+        }
+        EmsBean bean = connection.getBean(SERVER_MBEAN_NAME);
+        EmsOperation operation = bean.getOperation("storeConfig");
+        operation.invoke(new Object[0]);
+
+        return ("Tomcat configuration updated.");
+    }
 }

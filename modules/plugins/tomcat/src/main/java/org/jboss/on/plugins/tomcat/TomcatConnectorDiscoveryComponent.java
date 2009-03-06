@@ -88,12 +88,23 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
         for (DiscoveredResourceDetails resource : resourceDetails) {
             Configuration pluginConfiguration = resource.getPluginConfiguration();
 
-            String port = pluginConfiguration.getSimple(TomcatConnectorComponent.PROPERTY_PORT).getStringValue();
+            String port = pluginConfiguration.getSimple(TomcatConnectorComponent.PLUGIN_CONFIG_PORT).getStringValue();
             ConfigInfo configInfo = configMap.get(port);
 
-            pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PROPERTY_SCHEME, configInfo.getScheme()));
-            pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PROPERTY_ADDRESS, configInfo.getAddress()));
-            resource.setResourceName(resource.getResourceName().replace("{scheme}", configInfo.getScheme()));
+            // It is unusual but possible that there is a GlobalRequestProcessor object representing a configured AJP
+            // connector but with a different port.  If the configured AJP connector port is in use, Tomcat increments
+            // the port number (up to maxPort) looking for a free port.  That actual listening port is used on the
+            // GlobalRequestProcessor object.  This behavior seems to be, after some research, considered a bug in
+            // Tomcat. So, until proven otherwise, we'll treat it as such. To bring this to the attention of the user
+            // we do still discover the connector, but we'll fail the component start and provide a useful message
+            // indicating that the Tomcat configuration should change. We'll use a special scheme property value
+            // to signal the problem.
+            String scheme = (null != configInfo) ? configInfo.getScheme() : TomcatConnectorComponent.UNKNOWN;
+            String address = (null != configInfo) ? configInfo.getAddress() : TomcatConnectorComponent.UNKNOWN;
+
+            pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PLUGIN_CONFIG_SCHEME, scheme));
+            pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PLUGIN_CONFIG_ADDRESS, address));
+            resource.setResourceName(resource.getResourceName().replace("{scheme}", scheme));
 
             queryUtility = new ObjectNameQueryUtility("Catalina:type=Connector,port=" + port);
             beans = connection.queryBeans(queryUtility.getTranslatedQuery());
@@ -101,12 +112,12 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
             if (!beans.isEmpty()) {
                 EmsAttribute protocol = beans.get(0).getAttribute("protocol");
                 if (null != protocol) {
-                    pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PROPERTY_PROTOCOL, (String) protocol.getValue()));
+                    pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PLUGIN_CONFIG_PROTOCOL, (String) protocol.getValue()));
                 }
             }
 
             if (log.isDebugEnabled()) {
-                log.debug("Found a connector: " + configInfo.getScheme() + "-" + configInfo.getAddress() + "-" + configInfo.getPort());
+                log.debug("Found a connector: " + scheme + "-" + address + "-" + port);
             }
         }
 

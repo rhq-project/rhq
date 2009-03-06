@@ -98,11 +98,15 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
                     // leave path as is
                     log.warn("Unexpected discovered web application path: " + filename);
                 }
+                if ("".equals(contextRoot)) {
+                    contextRoot = "/";
+                }
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_VHOST, host));
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_CONTEXT_ROOT, contextRoot));
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_FILENAME, filename));
-                pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_RESPONSE_TIME_LOG_FILE, getResponseTimeLogFile(parentComponent.getInstallationPath(), host, contextRoot)));
-                resource.setResourceName(resource.getResourceName().replace("{contextRoot}", (("".equals(contextRoot)) ? docBase : contextRoot)));
+                pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_RESPONSE_TIME_LOG_FILE, getResponseTimeLogFile(parentComponent
+                    .getInstallationPath(), host, contextRoot)));
+                resource.setResourceName(resource.getResourceName().replace("{contextRoot}", (("/".equals(contextRoot)) ? docBase : contextRoot)));
 
                 result.add(resource);
             } else {

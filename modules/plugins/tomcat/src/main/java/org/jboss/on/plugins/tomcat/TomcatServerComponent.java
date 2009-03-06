@@ -59,6 +59,11 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
 
     public enum SupportedOperations {
         /**
+         * Restarts a Tomcat instance by calling a configurable restart script.
+         */
+        RESTART,
+
+        /**
          * Shuts down a Tomcat instance via a shutdown script, depending on plug-in configuration
          */
         SHUTDOWN,
@@ -69,9 +74,9 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
         START,
 
         /**
-         * Restarts a Tomcat instance by calling a configurable restart script.
+         * Physically writes out the latest state to server.xml.
          */
-        RESTART
+        STORECONFIG
     }
 
     /**
@@ -171,8 +176,8 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
                 }
                 connectionSettings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR, tempDir.getAbsolutePath());
 
-                log.info("Loading connection [" + connectionSettings.getServerUrl() + "] with install path [" + connectionSettings.getLibraryURI() + "] and temp directory ["
-                    + tempDir.getAbsolutePath() + "]");
+                log.info("Loading connection [" + connectionSettings.getServerUrl() + "] with install path [" + connectionSettings.getLibraryURI()
+                    + "] and temp directory [" + tempDir.getAbsolutePath() + "]");
 
                 ConnectionProvider connectionProvider = connectionFactory.getConnectionProvider(connectionSettings);
                 this.connection = connectionProvider.connect();
@@ -199,7 +204,8 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
                 // Since the connection is attempted each time it's used, failure to connect could result in log
                 // file spamming. Log it once for every 10 consecutive times it's encountered. 
                 if (consecutiveConnectionErrors % 10 == 0) {
-                    log.warn("Could not establish connection to the Tomcat instance [" + (consecutiveConnectionErrors + 1) + "] times for resource [" + resourceContext.getResourceKey() + "]", e);
+                    log.warn("Could not establish connection to the Tomcat instance [" + (consecutiveConnectionErrors + 1) + "] times for resource ["
+                        + resourceContext.getResourceKey() + "]", e);
                 }
 
                 if (log.isDebugEnabled())
@@ -224,13 +230,13 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
         String principal = pluginConfig.getSimpleValue(TomcatServerComponent.PRINCIPAL_CONFIG_PROP, null);
         String credentials = pluginConfig.getSimpleValue(TomcatServerComponent.CREDENTIALS_CONFIG_PROP, null);
         if ((principal != null) && (credentials == null)) {
-            throw new InvalidPluginConfigurationException("If the '" + TomcatServerComponent.PRINCIPAL_CONFIG_PROP + "' connection property is set, the '"
-                + TomcatServerComponent.CREDENTIALS_CONFIG_PROP + "' connection property must also be set.");
+            throw new InvalidPluginConfigurationException("If the '" + TomcatServerComponent.PRINCIPAL_CONFIG_PROP
+                + "' connection property is set, the '" + TomcatServerComponent.CREDENTIALS_CONFIG_PROP + "' connection property must also be set.");
         }
 
         if ((credentials != null) && (principal == null)) {
-            throw new InvalidPluginConfigurationException("If the '" + TomcatServerComponent.CREDENTIALS_CONFIG_PROP + "' connection property is set, the '"
-                + TomcatServerComponent.PRINCIPAL_CONFIG_PROP + "' connection property must also be set.");
+            throw new InvalidPluginConfigurationException("If the '" + TomcatServerComponent.CREDENTIALS_CONFIG_PROP
+                + "' connection property is set, the '" + TomcatServerComponent.PRINCIPAL_CONFIG_PROP + "' connection property must also be set.");
         }
     }
 

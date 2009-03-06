@@ -15,7 +15,8 @@
       name="Tomcat Server"
       discovery="TomcatDiscoveryComponent"
       class="TomcatServerComponent"
-      description="Tomcat Server">
+      description="Tomcat Server"
+      supportsManualAdd="true">
 
       <plugin-configuration>
          <c:group
@@ -101,6 +102,12 @@
          displayName="Restart"
          description="Restart this Tomcat server. The script used is specified in Control Properties." />
 
+      <operation
+         name="storeConfig"
+         displayName="Store Configuration"
+         description="Save current state to the server.xml file.">
+      </operation>
+
       <metric
          displayName="Server Identifier"
          property="Catalina:type=Server:serverInfo"
@@ -166,7 +173,7 @@
                   name="aliases"
                   required="false"
                   type="longString"
-                  description="Aliases assigned to the Host. When editing, each alias must be on a new line. Aliases are automatically lowercased." />                  
+                  description="Aliases assigned to the Host. When editing, each alias must be on a new line. Aliases are automatically lowercased." />
             </c:group>
          </resource-configuration>
 
@@ -264,9 +271,9 @@
 
             <metric
                property="Servlet.NumErrors"
-               displayName="Errors while processing"
+               displayName="Processing Errors"
                units="none"
-               description="Number of errors while processing"
+               description="Number of errors while processing servlets"
                measurementType="trendsup"
                displayType="summary" />
 
@@ -439,7 +446,7 @@
                <c:simple-property
                   name="port"
                   type="string"
-                  description="Port on which this connector listens."
+                  description="Port on which this connector is configured to listen."
                   readOnly="true" />
                <c:simple-property
                   name="scheme"
@@ -526,7 +533,7 @@
             displayType="summary" />
 
          <metric
-            property="Catalina:type=ThreadPool,name=%name%:maxThreads"
+            property="Catalina:type=ThreadPool,name=%scheme%-%port%:maxThreads"
             displayName="Threadpool Max Threads"
             defaultOn="true"
             category="utilization"

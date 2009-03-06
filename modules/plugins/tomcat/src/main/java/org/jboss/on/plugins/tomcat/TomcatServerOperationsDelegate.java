@@ -183,10 +183,13 @@ public class TomcatServerOperationsDelegate {
         logExecutionResults(results);
 
         AvailabilityType avail;
-        if (results.getError() == null) {
+        if (results.getError() == null && results.getExitCode() == 0) {
             avail = waitForServerToStart(start);
         } else {
-            log.error("Error from process execution while starting the EWS instance. Exit code [" + results.getExitCode() + "]", results.getError());
+            if (results.getError() != null)
+                log.error("Error from process execution while starting the EWS instance. Exit code [" + results.getExitCode() + "]", results.getError());
+            else
+                log.error("Start script returned non-zero exit code while starting the EWS instance. Exit code [" + results.getExitCode() + "]");
             avail = this.serverComponent.getAvailability();
         }
 
@@ -260,20 +263,17 @@ public class TomcatServerOperationsDelegate {
 
         initProcessExecution(processExecution, shutdownScriptFile);
 
-        /* This tells shutdown.bat not to call the Windows PAUSE command, which
-         * would cause the script to hang indefinitely waiting for input.
-         * noinspection ConstantConditions
-         */
-        processExecution.getEnvironmentVariables().put("NOPAUSE", "1");
-
         if (log.isDebugEnabled()) {
             log.debug("About to execute the following process: [" + processExecution + "]");
         }
         ProcessExecutionResults results = this.systemInfo.executeProcess(processExecution);
         logExecutionResults(results);
 
+        if (results.getExitCode() != 0) {
+            throw new RuntimeException("Error executing shutdown script while stopping EWS instance. Exit code [" + results.getExitCode() + "]");
+        }
         if (results.getError() != null) {
-            throw new RuntimeException("Error executing shutdown script while stopping AS instance. Exit code [" + results.getExitCode() + "]",
+            throw new RuntimeException("Error executing shutdown script while stopping EWS instance. Exit code [" + results.getExitCode() + "]",
                 results.getError());
         }
 
@@ -377,6 +377,6 @@ public class TomcatServerOperationsDelegate {
         EmsOperation operation = bean.getOperation("storeConfig");
         operation.invoke(new Object[0]);
 
-        return ("Tomcat configuration updated.");
+        return ("EWS configuration updated.");
     }
 }

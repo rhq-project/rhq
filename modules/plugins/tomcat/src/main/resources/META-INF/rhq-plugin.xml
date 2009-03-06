@@ -521,6 +521,7 @@
          <metric
             property="Catalina:type=ThreadPool,name=%scheme%-%port%:currentThreadsBusy"
             displayName="Threadpool Threads Active"
+            description="Number of current busy threads."            
             defaultOn="true"
             category="utilization"
             displayType="summary" />
@@ -528,6 +529,7 @@
          <metric
             property="Catalina:type=ThreadPool,name=%scheme%-%port%:currentThreadCount"
             displayName="Threadpool Threads Allocated"
+            description="Number of current threads."            
             defaultOn="true"
             category="utilization"
             displayType="summary" />
@@ -535,6 +537,7 @@
          <metric
             property="Catalina:type=ThreadPool,name=%scheme%-%port%:maxThreads"
             displayName="Threadpool Max Threads"
+            description="Maximum number of threads that can be allocated for the ThreadPool."            
             defaultOn="true"
             category="utilization"
             displayType="detail" />

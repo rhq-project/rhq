@@ -166,16 +166,17 @@ public interface ConfigurationManagerLocal {
      * configuration version to later rollback to that version via
      * {@link #updateResourceConfiguration(Subject, int, Configuration)}.
      *
-     * @param  whoami     the user who wants to see the information
-     * @param  resourceId the resource whose update requests are to be returned, if null will not filter by resourceId
-     * @param  beginDate  filter used to show only results occurring after this epoch millis parameter, nullable
-     * @param  endDate    filter used to show only results occurring before this epoch millis parameter, nullable
-     * @param  pc         the pagination controls
+     * @param  whoami         the user who wants to see the information
+     * @param  resourceId     the resource whose update requests are to be returned, if null will not filter by resourceId
+     * @param  beginDate      filter used to show only results occurring after this epoch millis parameter, nullable
+     * @param  endDate        filter used to show only results occurring before this epoch millis parameter, nullable
+     * @param  suppressOldest if true, will not include the oldest element in the history (usually the initial update)
+     * @param  pc             the pagination controls
      *
      * @return the resource's complete list of updates (will be empty (not <code>null</code>) if none)
      */
     PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject whoami, Integer resourceId,
-        Long beginDate, Long endDate, PageControl pc);
+        Long beginDate, Long endDate, boolean suppressOldest, PageControl pc);
 
     PluginConfigurationUpdate getPluginConfigurationUpdate(Subject whoami, int configurationUpdateId);
 
@@ -435,12 +436,11 @@ public interface ConfigurationManagerLocal {
      *         one or more of the group's members are DOWN, 3) config updates, for the group or any member, are
      *         in progress, or 4) we fail to retrieve one or more member live configs from the corresponding Agents
      */
-    Map<Integer,Configuration> getResourceConfigurationsForCompatibleGroup(Subject whoami, int groupId) throws Exception;
-
-    Map<Integer, Configuration> getPluginConfigurationsForCompatibleGroup(Subject whoami, int groupId)
+    Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(Subject whoami, int groupId)
         throws Exception;
 
+    Map<Integer, Configuration> getPluginConfigurationsForCompatibleGroup(Subject whoami, int groupId) throws Exception;
+
     @SuppressWarnings("unchecked")
-    Map<Integer, Configuration> getPluginConfigurationMapForAggregateUpdate(
-        Integer aggregatePluginConfigurationUpdateId);
+    Map<Integer, Configuration> getPluginConfigurationMapForAggregateUpdate(Integer aggregatePluginConfigurationUpdateId);
 }

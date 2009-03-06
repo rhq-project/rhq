@@ -51,7 +51,7 @@ public class ResourceOverviewUIBean {
         PageControl lastFive = new PageControl(0, count);
         lastFive.initDefaultOrderingField("cu.createdTime", PageOrdering.DESC);
         return LookupUtil.getConfigurationManager().getResourceConfigurationUpdates(subject, resourceId, null, null,
-            lastFive);
+            true, lastFive);
     }
 
     private List<Tuple<EventSeverity, Integer>> getEventCounts(Subject subject, int resourceId) {
@@ -80,8 +80,7 @@ public class ResourceOverviewUIBean {
     }
 
     private List<MeasurementOOBComposite> getRecentOObs(Subject subject, int resourceId, int n) {
-        return LookupUtil.getOOBManager()
-            .getHighestNOOBsForResource(subject, resourceId, n);
+        return LookupUtil.getOOBManager().getHighestNOOBsForResource(subject, resourceId, n);
     }
 
     public List<Alert> getRecentAlerts() {

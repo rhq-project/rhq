@@ -152,7 +152,7 @@ public class ListConfigurationUpdateUIBean extends PagedDataTableUIBean {
             }
 
             PageList<ResourceConfigurationUpdate> result;
-            result = manager.getResourceConfigurationUpdates(subject, requestResource.getId(), null, null, pc);
+            result = manager.getResourceConfigurationUpdates(subject, requestResource.getId(), null, null, false, pc);
 
             return result;
         }

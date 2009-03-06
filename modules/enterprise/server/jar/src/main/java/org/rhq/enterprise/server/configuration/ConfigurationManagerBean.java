@@ -86,7 +86,6 @@ import org.rhq.enterprise.server.configuration.job.AbstractAggregateConfiguratio
 import org.rhq.enterprise.server.configuration.job.AggregatePluginConfigurationUpdateJob;
 import org.rhq.enterprise.server.configuration.job.AggregateResourceConfigurationUpdateJob;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
@@ -123,8 +122,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     private SchedulerLocal scheduler;
     @EJB
     private SubjectManagerLocal subjectManager;
-    @EJB
-    private AvailabilityManagerLocal availabilityManager;
 
     @Nullable
     public Configuration getCurrentPluginConfiguration(Subject whoami, int resourceId) {
@@ -444,13 +441,13 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public boolean isAggregateResourceConfigurationUpdateInProgress(Subject whoami, int groupId) {
-        boolean updateInProgress;         
+        boolean updateInProgress;
         try {
             Query query = entityManager
                 .createNamedQuery(AggregateResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_GROUP_ID);
             query.setParameter("groupId", groupId);
-            AggregateResourceConfigurationUpdate latestConfigGroupUpdate =
-                    (AggregateResourceConfigurationUpdate) query.getSingleResult();
+            AggregateResourceConfigurationUpdate latestConfigGroupUpdate = (AggregateResourceConfigurationUpdate) query
+                .getSingleResult();
             if (!authorizationManager.canViewGroup(whoami, latestConfigGroupUpdate.getGroup().getId())) {
                 throw new PermissionException("User [" + whoami.getName()
                     + "] does not have permission to view group Resource configuration for ["
@@ -472,8 +469,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Query query = entityManager
                 .createNamedQuery(AggregatePluginConfigurationUpdate.QUERY_FIND_LATEST_BY_GROUP_ID);
             query.setParameter("groupId", groupId);
-            AggregatePluginConfigurationUpdate latestConfigGroupUpdate =
-                    (AggregatePluginConfigurationUpdate) query.getSingleResult();
+            AggregatePluginConfigurationUpdate latestConfigGroupUpdate = (AggregatePluginConfigurationUpdate) query
+                .getSingleResult();
             if (!authorizationManager.canViewGroup(whoami, latestConfigGroupUpdate.getGroup().getId())) {
                 throw new PermissionException("User [" + whoami.getName()
                     + "] does not have permission to view group plugin configuration for ["
@@ -550,7 +547,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ensureNoPluginConfigurationUpdatesInProgress(group);
 
         // If we got this far, no updates are in progress, so go ahead and load the plugin configs from the DB.
-        @SuppressWarnings({"UnnecessaryLocalVariable"})
+        @SuppressWarnings( { "UnnecessaryLocalVariable" })
         Map<Integer, Configuration> currentPersistedConfigs = getPersistedPluginConfigurationsForCompatibleGroup(group);
 
         return currentPersistedConfigs;
@@ -628,8 +625,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return results;
     }
 
-    private Map<Integer, Configuration> getPersistedPluginConfigurationsForCompatibleGroup(
-        ResourceGroup compatibleGroup) {
+    private Map<Integer, Configuration> getPersistedPluginConfigurationsForCompatibleGroup(ResourceGroup compatibleGroup) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
             Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_ID);
         countQuery.setParameter("resourceGroupId", compatibleGroup.getId());
@@ -767,7 +763,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @SuppressWarnings("unchecked")
     public PageList<ResourceConfigurationUpdate> getResourceConfigurationUpdates(Subject whoami, Integer resourceId,
-        Long beginDate, Long endDate, PageControl pc) {
+        Long beginDate, Long endDate, boolean suppressOldest, PageControl pc) {
+
+        if (!authorizationManager.canViewResource(whoami, resourceId)) {
+            throw new PermissionException("User [" + whoami.getName()
+                + "] does not have permission to view resource[id=" + resourceId + "]");
+        }
 
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource.getResourceType().getResourceConfigurationDefinition() == null
@@ -790,21 +791,19 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         queryCount.setParameter("endTime", endDate);
         query.setParameter("endTime", endDate);
 
+        int includeAll = suppressOldest ? 0 : 1;
+        queryCount.setParameter("includeAll", includeAll);
+        query.setParameter("includeAll", includeAll);
+
         long totalCount = (Long) queryCount.getSingleResult();
         List<ResourceConfigurationUpdate> updates = query.getResultList();
 
-        if ((updates == null) || (updates.size() == 0)) {
+        if (suppressOldest == false && updates.size() == 0) {
             // there is no configuration yet - get the latest from the agent, if possible
             updates = new ArrayList<ResourceConfigurationUpdate>();
             ResourceConfigurationUpdate latest = getLatestResourceConfigurationUpdate(whoami, resourceId);
             if (latest != null) {
                 updates.add(latest);
-            }
-        } else if (updates.size() > 0) {
-            resource = updates.get(0).getResource();
-            if (!authorizationManager.canViewResource(whoami, resource.getId())) {
-                throw new PermissionException("User [" + whoami.getName()
-                    + "] does not have permission to view resource [" + resource + "]");
             }
         }
 
@@ -1183,6 +1182,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return configurationDefinition;
     }
 
+    public boolean hasPluginConfiguration(int resourceTypeId) {
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
+            ConfigurationDefinition.QUERY_FIND_PLUGIN_BY_RESOURCE_TYPE_ID);
+
+        countQuery.setParameter("resourceTypeId", resourceTypeId);
+        long count = (Long) countQuery.getSingleResult();
+
+        return (count != 0L);
+    }
+
     @Nullable
     public ConfigurationDefinition getPluginConfigurationDefinitionForResourceType(Subject whoami, int resourceTypeId) {
         Query query = entityManager.createNamedQuery(ConfigurationDefinition.QUERY_FIND_PLUGIN_BY_RESOURCE_TYPE_ID);
@@ -1310,16 +1319,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
          * actually exists); this is also why we need to retrieve the aggregate and overlord fresh in the loop
          * TODO (ips, 02/16/09): Oops, I removed the fresh retrieval in the loop - add it back if needed.
          */
-        AggregatePluginConfigurationUpdate aggregateUpdate = new AggregatePluginConfigurationUpdate(group,
-                whoami.getName());
+        AggregatePluginConfigurationUpdate aggregateUpdate = new AggregatePluginConfigurationUpdate(group, whoami
+            .getName());
         int updateId = configurationManager.createAggregateConfigurationUpdate(aggregateUpdate);
 
         // Create and persist updates for each of the members.
         for (Integer resourceId : memberPluginConfigurations.keySet()) {
             Configuration memberResourceConfiguration = memberPluginConfigurations.get(resourceId);
             Resource flyWeight = new Resource(resourceId);
-            PluginConfigurationUpdate memberUpdate = new PluginConfigurationUpdate(flyWeight, memberResourceConfiguration,
-                whoami.getName());
+            PluginConfigurationUpdate memberUpdate = new PluginConfigurationUpdate(flyWeight,
+                memberResourceConfiguration, whoami.getName());
             memberUpdate.setAggregateConfigurationUpdate(aggregateUpdate);
             entityManager.persist(memberUpdate);
         }
@@ -1373,8 +1382,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         for (Integer resourceId : memberResourceConfigurations.keySet()) {
             Configuration memberResourceConfiguration = memberResourceConfigurations.get(resourceId);
             Resource flyWeight = new Resource(resourceId);
-            ResourceConfigurationUpdate memberUpdate = new ResourceConfigurationUpdate(flyWeight, memberResourceConfiguration,
-                whoami.getName());
+            ResourceConfigurationUpdate memberUpdate = new ResourceConfigurationUpdate(flyWeight,
+                memberResourceConfiguration, whoami.getName());
             memberUpdate.setAggregateConfigurationUpdate(aggregateUpdate);
             entityManager.persist(memberUpdate);
         }

@@ -84,7 +84,9 @@ REQUEST PARAMETERS:
 
          <onc:tab name="Inventory" image="/images/icon_hub_i.gif">
             <onc:subtab name="Overview" url="/rhq/resource/inventory/view.xhtml" />
-            <onc:subtab name="Connection" url="/rhq/resource/inventory/view-connection.xhtml" />
+            <c:if test="#{ResourceUIBean.facets.pluginConfiguration}">
+               <onc:subtab name="Connection" url="/rhq/resource/inventory/view-connection.xhtml" />
+            </c:if>
             <onc:subtab name="Agent" url="/rhq/resource/inventory/view-agent.xhtml" />
          </onc:tab>
 

@@ -62,7 +62,7 @@ THIS TEXT WILL BE REMOVED AS WELL.
       
       <onc:tab name="Inventory" image="/images/icon_hub_i.gif">
          <onc:subtab name="Overview" url="/rhq/group/inventory/view.xhtml" />
-         <c:if test="#{ResourceGroupUIBean.compatible}">
+         <c:if test="#{ResourceGroupUIBean.compatible and ResourceGroupUIBean.facets.pluginConfiguration}">
             <onc:subtab name="Connection" url="/rhq/group/inventory/view-connection.xhtml" />
          </c:if>
       </onc:tab>

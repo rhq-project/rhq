@@ -39,15 +39,20 @@ public class ResourceFacets implements Serializable {
 
     private boolean measurement;
     private boolean event;
+    private boolean pluginConfiguration;
     private boolean configuration;
     private boolean operation;
     private boolean content;
     private boolean callTime;
 
     public ResourceFacets(ResourceType type) {
-        this(!type.getMetricDefinitions().isEmpty(), !type.getEventDefinitions().isEmpty(), type
-            .getResourceConfigurationDefinition() != null, !type.getOperationDefinitions().isEmpty(), !type
-            .getPackageTypes().isEmpty(), exposesCallTimeMetrics(type));
+        this(!type.getMetricDefinitions().isEmpty(), //
+            !type.getEventDefinitions().isEmpty(), //
+            type.getPluginConfigurationDefinition() != null, //
+            type.getResourceConfigurationDefinition() != null, //
+            !type.getOperationDefinitions().isEmpty(), //
+            !type.getPackageTypes().isEmpty(), //
+            exposesCallTimeMetrics(type));
     }
 
     private static boolean exposesCallTimeMetrics(ResourceType resourceType) {
@@ -61,10 +66,11 @@ public class ResourceFacets implements Serializable {
         return false;
     }
 
-    public ResourceFacets(boolean measurement, boolean event, boolean configuration, boolean operation,
-        boolean content, boolean callTime) {
+    public ResourceFacets(boolean measurement, boolean event, boolean pluginConfiguration, boolean configuration,
+        boolean operation, boolean content, boolean callTime) {
         this.measurement = measurement;
         this.event = event;
+        this.pluginConfiguration = pluginConfiguration;
         this.configuration = configuration;
         this.operation = operation;
         this.content = content;
@@ -88,6 +94,16 @@ public class ResourceFacets implements Serializable {
      */
     public boolean isEvent() {
         return event;
+    }
+
+    /**
+     * Does this resource have a plugin configuration? If so, the Inventory>Connection subtab will be displayed in the 
+     * GUI.
+     *
+     * @return true if the resource has a plugin configuration, false otherwise
+     */
+    public boolean isPluginConfiguration() {
+        return pluginConfiguration;
     }
 
     /**

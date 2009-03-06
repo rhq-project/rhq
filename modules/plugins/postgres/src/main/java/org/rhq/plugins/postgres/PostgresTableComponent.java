@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
@@ -50,16 +51,15 @@ import org.rhq.plugins.database.DatabaseQueryUtility;
  *
  * @author Greg Hinkle
  */
-public class PostgresTableComponent implements DatabaseComponent<PostgresDatabaseComponent>, MeasurementFacet,
-    ConfigurationFacet, DeleteResourceFacet {
-    private static final List<String> PG_STAT_USER_TABLE_STATS = Arrays.asList("seq_scan", "seq_tup_read", "idx_scan",
-        "idx_tup_fetch", "n_tup_ins", "n_tup_upd", "n_tup_del", "table_size", "total_size");
+public class PostgresTableComponent implements DatabaseComponent<PostgresDatabaseComponent>, MeasurementFacet, ConfigurationFacet,
+    DeleteResourceFacet {
+    private static final List<String> PG_STAT_USER_TABLE_STATS = Arrays.asList("seq_scan", "seq_tup_read", "idx_scan", "idx_tup_fetch", "n_tup_ins",
+        "n_tup_upd", "n_tup_del", "table_size", "total_size");
 
     public static final String PG_STAT_USER_TABLES_QUERY = "SELECT ts.*,  pg_relation_size(ts.relname) AS table_size, pg_total_relation_size(ts.relname) AS total_size, \n"
         + "  ios.heap_blks_read, ios.heap_blks_hit, ios.idx_blks_read, ios.idx_blks_hit, \n"
         + "  ios.toast_blks_read, ios.toast_blks_hit, ios.tidx_blks_read, ios.tidx_blks_hit \n"
-        + "FROM pg_stat_user_tables ts LEFT JOIN pg_statio_user_tables ios on ts.relid = ios.relid \n"
-        + "WHERE ts.relname = ?";
+        + "FROM pg_stat_user_tables ts LEFT JOIN pg_statio_user_tables ios on ts.relid = ios.relid \n" + "WHERE ts.relname = ?";
 
     // NOTE: You can't bind table names as parameters
     public static final String PG_COUNT_ROWS = "SELECT COUNT(*) FROM ";
@@ -86,8 +86,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
         this.resourceContext.getParentResourceComponent().getConnection();
 
-        Map<String, Double> results = DatabaseQueryUtility.getNumericQueryValues(this, PG_STAT_USER_TABLES_QUERY,
-            getTableName());
+        Map<String, Double> results = DatabaseQueryUtility.getNumericQueryValues(this, PG_STAT_USER_TABLES_QUERY, getTableName());
         for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
             double value;
@@ -110,8 +109,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
 
     public Configuration loadResourceConfiguration() throws Exception {
         Configuration config = new Configuration();
-        config.put(new PropertySimple("tableName", resourceContext.getPluginConfiguration().getSimple("tableName")
-            .getStringValue()));
+        config.put(new PropertySimple("tableName", resourceContext.getPluginConfiguration().getSimple("tableName").getStringValue()));
 
         Connection connection = this.resourceContext.getParentResourceComponent().getConnection();
 
@@ -127,7 +125,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
             col.put(new PropertySimple("columnType", rs.getString("TYPE_NAME")));
             col.put(new PropertySimple("columnLength", rs.getInt("COLUMN_SIZE")));
             col.put(new PropertySimple("columnPrecision", rs.getInt("DECIMAL_DIGITS")));
-            col.put(new PropertySimple("columnDefault", rs.getInt("COLUMN_DEF")));
+            col.put(new PropertySimple("columnDefault", rs.getString("COLUMN_DEF")));
             col.put(new PropertySimple("columnNullable", rs.getBoolean("IS_NULLABLE")));
 
             columnList.add(col);
@@ -168,8 +166,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
                 } else {
                     existingDefs.remove(existingDef.columnName);
                     if (!existingDef.columnType.equals(newDef.columnType)) {
-                        String sql = "ALTER TABLE " + getTableName() + " ALTER COLUMN " + newDef.columnName + " TYPE "
-                            + newDef.columnType;
+                        String sql = "ALTER TABLE " + getTableName() + " ALTER COLUMN " + newDef.columnName + " TYPE " + newDef.columnType;
                         if (newDef.columnLength != null) {
                             sql += " ( " + newDef.columnLength + " ) ";
                         }
@@ -193,8 +190,7 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
 
             // Cols left in existdef map have been removed and need to be dropped
             for (ColumnDefinition def : existingDefs.values()) {
-                DatabaseQueryUtility.executeUpdate(this, "ALTER TABLE " + getTableName() + " DROP COLUMN "
-                    + def.columnName);
+                DatabaseQueryUtility.executeUpdate(this, "ALTER TABLE " + getTableName() + " DROP COLUMN " + def.columnName);
             }
 
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
@@ -232,16 +228,12 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
         public ColumnDefinition(PropertyMap column) {
             columnName = column.getSimple("columnName").getStringValue();
             columnType = column.getSimple("columnType").getStringValue();
-            columnLength = (column.getSimple("columnLength") == null) ? null : column.getSimple("columnLength")
-                .getIntegerValue();
-            columnPrecision = (column.getSimple("columnPrecision") == null) ? null : column
-                .getSimple("columnPrecision").getIntegerValue();
-            columnDefault = (column.getSimple("columnDefault") == null) ? null : column.getSimple("columnDefault")
-                .getIntegerValue();
+            columnLength = (column.getSimple("columnLength") == null) ? null : column.getSimple("columnLength").getIntegerValue();
+            columnPrecision = (column.getSimple("columnPrecision") == null) ? null : column.getSimple("columnPrecision").getIntegerValue();
+            columnDefault = (column.getSimple("columnDefault") == null) ? null : column.getSimple("columnDefault").getIntegerValue();
 
             // TODO this is called collumnNullable in other places - that is meant here?
-            columnNullable = (column.getSimple("columnNotNull") == null) ? false : column.getSimple("columnNotNull")
-                .getBooleanValue();
+            columnNullable = (column.getSimple("columnNotNull") == null) ? false : column.getSimple("columnNotNull").getBooleanValue();
         }
 
         public String getColumnSql() {

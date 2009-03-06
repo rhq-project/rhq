@@ -453,6 +453,10 @@ Build-OS-Version=${os.version}
                        <name>deploymentDirectory</name>
                        <value>target/classes</value>
                     </property>
+                    <property>
+                       <name>hibernate.dialect</name>
+                       <value>${rhq.test.ds.hibernate-dialect}</value>
+                    </property>
                  </systemProperties>
                  <additionalClasspathElements>
                     <!-- The below is required for tests to run against Oracle. -->               

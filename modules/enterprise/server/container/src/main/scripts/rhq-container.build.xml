@@ -4,7 +4,7 @@
 
 <project name="rhq-container" basedir=".">
 
-  <property name="default.hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+  <property name="default.rhq.server.database.hibernate-dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
   <property name="default.rhq.server.database.connection-url" value="jdbc:postgresql://127.0.0.1:5432/rhq"/>
   <property name="default.rhq.server.database.driver-class" value="org.postgresql.Driver"/>
   <property name="default.rhq.server.database.xa-datasource-class" value="org.postgresql.xa.PGXADataSource"/>
@@ -27,7 +27,7 @@
 
   <target name="set-dev-server-props" if="predeploy">
      <echo>*** Using dev database settings in rhq-server.properties...</echo>
-     <property name="__hibernate.dialect" value="${hibernate.dialect}"/>
+     <property name="rhq.server.database.hibernate-dialect" value="${rhq.test.ds.hibernate-dialect}"/>
      <property name="rhq.server.database.connection-url" value="${rhq.test.ds.connection-url}"/>
      <property name="rhq.server.database.driver-class" value="${rhq.test.ds.driver-class}"/>
      <property name="rhq.server.database.xa-datasource-class" value="${rhq.test.ds.xa-datasource-class}"/>
@@ -41,7 +41,7 @@
 
   <target name="set-default-server-props" unless="predeploy">
      <echo>*** Using default database settings in rhq-server.properties...</echo>
-     <property name="__hibernate.dialect" value="${default.hibernate.dialect}"/>
+     <property name="rhq.server.database.hibernate-dialect" value="${default.rhq.server.database.hibernate-dialect}"/>
      <property name="rhq.server.database.connection-url" value="${default.rhq.server.database.connection-url}"/>
      <property name="rhq.server.database.driver-class" value="${default.rhq.server.database.driver-class}"/>
      <property name="rhq.server.database.xa-datasource-class" value="${default.rhq.server.database.xa-datasource-class}"/>
@@ -341,7 +341,7 @@ rhq.server.database.type-mapping=${rhq.server.database.type-mapping}
 rhq.server.database.server-name=${rhq.server.database.server-name}
 rhq.server.database.port=${rhq.server.database.port}
 rhq.server.database.db-name=${rhq.server.database.db-name}
-hibernate.dialect=${__hibernate.dialect}
+hibernate.dialect=${rhq.server.database.hibernate-dialect}
 
 # Container configuration
 # ********************************** NOTE ************************************

@@ -203,6 +203,10 @@
                   <name>ejbjarDirectory</name>
                   <value>target/classes</value>
                 </property>
+                <property>
+                  <name>hibernate.dialect</name>
+                  <value>${rhq.test.ds.hibernate-dialect}</value>
+                </property>
               </systemProperties>
               <!-- The below is required for tests to run against Oracle. -->
               <additionalClasspathElements>

@@ -135,7 +135,7 @@
             <rhq.test.ds.server-name>127.0.0.1</rhq.test.ds.server-name>
             <rhq.test.ds.port>5432</rhq.test.ds.port>
             <rhq.test.ds.db-name>rhq</rhq.test.ds.db-name>
-            <hibernate.dialect>org.hibernate.dialect.PostgreSQLDialect</hibernate.dialect>
+            <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.test.ds.hibernate-dialect>
          </properties>
       </profile>
 
@@ -151,7 +151,7 @@
             <rhq.test.ds.server-name></rhq.test.ds.server-name> <!-- can be left blank, oracle does not use this -->
             <rhq.test.ds.port></rhq.test.ds.port> <!-- can be left blank, oracle does not use this -->
             <rhq.test.ds.db-name></rhq.test.ds.db-name> <!-- can be left blank, oracle does not use this -->
-            <hibernate.dialect>org.hibernate.dialect.Oracle10gDialect</hibernate.dialect>
+            <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.Oracle10gDialect</rhq.test.ds.hibernate-dialect>
          </properties>
       </profile>
 

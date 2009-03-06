@@ -18,35 +18,25 @@
  */
 package org.rhq.enterprise.gui.navigation.group;
 
-
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.util.sort.HumaneStringComparator;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.cluster.ClusterKey;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.navigation.resource.ResourceTreeNode;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.Set;
 import java.util.List;
-import java.util.Collections;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.TreeSet;
-
-import javax.faces.context.ExternalContext;
-import javax.faces.context.FacesContext;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceGroupTreeNode implements Comparable {
+public class ResourceGroupTreeNode implements Comparable<ResourceGroupTreeNode> {
+    private final Log log = LogFactory.getLog(ResourceGroupTreeNode.class);
 
     private static ResourceGroupTreeNode[] CHILDREN_ABSENT = new ResourceGroupTreeNode[0];
 
@@ -111,16 +101,14 @@ public class ResourceGroupTreeNode implements Comparable {
         return level.toString();
     }
 
-    public int compareTo(Object o) {
+    public int compareTo(ResourceGroupTreeNode that) {
         try {
-        return HumaneStringComparator.DEFAULT.compare(toString(), ((ResourceGroupTreeNode) o).toString());
+            return HumaneStringComparator.DEFAULT.compare(toString(), that.toString());
         } catch (Exception e) {
-            System.out.println("Couldn't compare: " + toString() + " || " + ((ResourceGroupTreeNode) o).toString());
-            System.out.println(e.getMessage());
-            return toString().compareTo(((ResourceGroupTreeNode) o).toString());
+            log.warn("Couldn't compare: " + toString() + " || " + that + " - cause: " + e);
+            return toString().compareTo(that.toString());
         }
     }
-
 
     public void addChildren(Collection<ResourceGroupTreeNode> resourceGroupTreeNodes) {
         this.children.addAll(resourceGroupTreeNodes);

@@ -37,6 +37,8 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Backing bean for the left navigation tree for resources
@@ -44,6 +46,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Greg Hinkle
  */
 public class ResourceTreeModelUIBean {
+    private final Log log = LogFactory.getLog(ResourceTreeModelUIBean.class);
 
     private List<ResourceTreeNode> roots = new ArrayList<ResourceTreeNode>();
     private ResourceTreeNode rootNode = null;
@@ -241,7 +244,7 @@ public class ResourceTreeModelUIBean {
         if (rootNode == null) {
             long start = System.currentTimeMillis();
             loadTree();
-            System.out.println("Loaded tree in " + (System.currentTimeMillis() - start));
+            log.debug("Loaded tree in " + (System.currentTimeMillis() - start));
         }
 
         return rootNode;

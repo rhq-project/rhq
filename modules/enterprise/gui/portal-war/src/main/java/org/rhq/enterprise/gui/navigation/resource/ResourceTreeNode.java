@@ -18,25 +18,15 @@
  */
 package org.rhq.enterprise.gui.navigation.resource;
 
-
-
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.util.sort.HumaneStringComparator;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 
 import java.util.List;
-import java.util.Collections;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
-
-import javax.faces.context.FacesContext;
 
 /**
  * Just a basic node to hold resources, resource auto groups and subcategories
@@ -44,7 +34,7 @@ import javax.faces.context.FacesContext;
  *
  * @author Greg Hinkle
  */
-public class ResourceTreeNode implements Comparable {
+public class ResourceTreeNode implements Comparable<ResourceTreeNode> {
 
     private static ResourceTreeNode[] CHILDREN_ABSENT = new ResourceTreeNode[0];
 
@@ -89,8 +79,8 @@ public class ResourceTreeNode implements Comparable {
         return level.toString();
     }
 
-    public int compareTo(Object o) {
-        return HumaneStringComparator.DEFAULT.compare(toString(), ((ResourceTreeNode)o).toString());
+    public int compareTo(ResourceTreeNode that) {
+        return HumaneStringComparator.DEFAULT.compare(toString(), that.toString());
     }
 
     @Override

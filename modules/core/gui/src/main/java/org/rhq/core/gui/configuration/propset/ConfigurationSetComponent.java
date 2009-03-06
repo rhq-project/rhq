@@ -23,9 +23,6 @@
 package org.rhq.core.gui.configuration.propset;
 
 import javax.faces.component.UIForm;
-import javax.faces.component.UIViewRoot;
-import javax.faces.component.UIComponent;
-import javax.faces.context.FacesContext;
 
 import org.jetbrains.annotations.Nullable;
 import org.rhq.core.gui.configuration.AbstractConfigurationComponent;

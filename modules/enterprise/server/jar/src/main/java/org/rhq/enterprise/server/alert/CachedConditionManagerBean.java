@@ -53,7 +53,7 @@ public class CachedConditionManagerBean implements CachedConditionManagerLocal {
     private AlertConditionLogManagerLocal alertConditionLogManager;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void processCachedConditionMessage(AbstractAlertConditionMessage conditionMessage, AlertDefinition definition) {
+    public void processCachedConditionMessage(AbstractAlertConditionMessage conditionMessage, Integer definitionId) {
         /*
          * note that ctime is the time when the condition was known to be true, not the time we're persisting the
          * condition log message
@@ -70,7 +70,9 @@ public class CachedConditionManagerBean implements CachedConditionManagerLocal {
             alertConditionLogManager.removeUnmatchedLogByAlertConditionId(conditionMessage.getAlertConditionId());
 
             // then create a NEGATIVE dampening event, to breakup any contiguous POSITIVE events for correct processing
-            AlertDampeningEvent event = new AlertDampeningEvent(definition, AlertDampeningEvent.Type.NEGATIVE);
+            AlertDefinition flyWeightDefinition = new AlertDefinition();
+            flyWeightDefinition.setId(definitionId);
+            AlertDampeningEvent event = new AlertDampeningEvent(flyWeightDefinition, AlertDampeningEvent.Type.NEGATIVE);
             entityManager.persist(event);
         } else {
             log.error("Unsupported message type sent to consumer for processing: "

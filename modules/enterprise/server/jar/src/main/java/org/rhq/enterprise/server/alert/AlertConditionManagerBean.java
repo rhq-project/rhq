@@ -25,6 +25,7 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -59,14 +60,15 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
     private AuthorizationManagerLocal authorizationManager;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public AlertDefinition getAlertDefinitionByConditionIdInNewTransaction(int alertConditionId) {
-        AlertDefinition alertDefinition = null;
-        AlertCondition alertCondition = getAlertConditionById(alertConditionId);
-        if (alertCondition != null) {
-            alertDefinition = alertCondition.getAlertDefinition();
-            alertDefinition.getId(); // load in all eager loaded data, do not load lazy data
+    public Integer getAlertDefinitionByConditionIdInNewTransaction(int alertConditionId) {
+        try {
+            Query query = entityManager.createNamedQuery(AlertDefinition.QUERY_FIND_DEFINITION_ID_BY_CONDITION_ID);
+            query.setParameter("alertConditionId", alertConditionId);
+            Integer alertDefinitionId = (Integer) query.getSingleResult();
+            return alertDefinitionId;
+        } catch (NoResultException nre) {
+            return null; // we always want this method to return
         }
-        return alertDefinition;
     }
 
     public AlertCondition getAlertConditionById(int alertConditionId) {

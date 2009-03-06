@@ -34,6 +34,7 @@ import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDampeningEvent;
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
@@ -181,6 +182,14 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
                 throw new PermissionException("User [" + user.getName()
                     + "] does not have permission to create alert templates");
             }
+        }
+
+        /* 
+         * performance optimization for the common case of single-condition alerts; it's easier for the
+         * out-of-band process to check whether or not ANY conditions are true rather than ALL of them
+         */
+        if (alertDefinition.getConditions().size() == 1) {
+            alertDefinition.setConditionExpression(BooleanExpression.ANY);
         }
 
         entityManager.persist(alertDefinition);
@@ -362,6 +371,14 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
                 LOG.debug("OldAlertCondition[ id=" + nextCondition.getId() + " ]");
             }
             notifyAlertConditionCacheManager("updateAlertDefinition", oldAlertDefinition, AlertDefinitionEvent.DELETED);
+        }
+
+        /* 
+         * performance optimization for the common case of single-condition alerts; it's easier for the
+         * out-of-band process to check whether or not ANY conditions are true rather than ALL of them
+         */
+        if (alertDefinition.getConditions().size() == 1) {
+            alertDefinition.setConditionExpression(BooleanExpression.ANY);
         }
 
         oldAlertDefinition.update(alertDefinition);

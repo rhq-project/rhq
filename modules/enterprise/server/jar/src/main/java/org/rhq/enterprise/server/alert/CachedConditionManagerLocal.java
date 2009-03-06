@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.alert;
 import javax.ejb.Local;
 import javax.ejb.TransactionAttributeType;
 
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.enterprise.server.alert.engine.jms.model.AbstractAlertConditionMessage;
 
 /**
@@ -37,5 +36,5 @@ public interface CachedConditionManagerLocal {
      * will be visible to it as well as any other thread that is blocked, waiting for it
      * to complete.
      */
-    void processCachedConditionMessage(AbstractAlertConditionMessage conditionMessage, AlertDefinition definition);
+    void processCachedConditionMessage(AbstractAlertConditionMessage conditionMessage, Integer definitionId);
 }

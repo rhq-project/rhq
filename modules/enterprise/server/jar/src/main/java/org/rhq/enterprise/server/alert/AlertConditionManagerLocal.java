@@ -35,7 +35,7 @@ import org.rhq.core.domain.util.PageList;
 @Local
 public interface AlertConditionManagerLocal {
 
-    AlertDefinition getAlertDefinitionByConditionIdInNewTransaction(int alertConditionId);
+    Integer getAlertDefinitionByConditionIdInNewTransaction(int alertConditionId);
 
     AlertCondition getAlertConditionById(int alertConditionId);
 

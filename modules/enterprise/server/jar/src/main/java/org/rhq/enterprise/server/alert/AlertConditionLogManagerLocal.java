@@ -23,6 +23,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.BooleanExpression;
 
 /**
  * @author Joseph Marques
@@ -39,4 +40,20 @@ public interface AlertConditionLogManagerLocal {
     void removeUnmatchedLogByAlertConditionId(int alertConditionId);
 
     void checkForCompletedAlertConditionSet(int alertConditionId);
+
+    /**
+     * Used for internal processing, exposed here so the tiniest amount of data can be gotten in a new transaction
+     * 
+     * @param alertDefinitionId the definition whose conditionExpression will be looked up
+     * @return the BooleanException for the AlertDefinition represented by the id argument
+     */
+    BooleanExpression getConditionExpression(int alertDefinitionId);
+
+    /**
+     * Used for internal processing, exposed here so the tiniest amount of data can be gotten in a new transaction
+     * 
+     * @param alertDefinitionId the definition whose conditionExpression will be looked up
+     * @return the count of AlertConditions for the AlertDefinition represented by the id argument
+     */
+    int getConditionCount(int alertDefinitionId);
 }

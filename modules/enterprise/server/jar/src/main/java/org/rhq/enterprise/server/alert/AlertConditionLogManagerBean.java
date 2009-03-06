@@ -49,6 +49,8 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
     private final Log log = LogFactory.getLog(AlertConditionLogManagerBean.class);
 
     @EJB
+    private AlertConditionLogManagerLocal alertConditionLogManager;
+    @EJB
     private AlertConditionManagerLocal alertConditionManager;
     @EJB
     private AlertDampeningManagerLocal alertDampeningManager;
@@ -139,19 +141,18 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
     }
 
     public void checkForCompletedAlertConditionSet(int alertConditionId) {
-        AlertCondition alertCondition = alertConditionManager.getAlertConditionById(alertConditionId);
-        AlertDefinition alertDefinition = alertCondition.getAlertDefinition();
+        Integer alertDefinitionId = alertConditionManager
+            .getAlertDefinitionByConditionIdInNewTransaction(alertConditionId);
 
         // ok, so figure out whether all of the conditions have been met
-        boolean conditionSetResult = evaluateConditionSet(alertDefinition);
+        boolean conditionSetResult = evaluateConditionSet(alertDefinitionId);
 
         log.debug("Alert definition with conditionId=" + alertConditionId + " evaluated to " + conditionSetResult);
         /*
          * The AlertDampeningEvents keep a running log of when all conditions have become true, as well as when they
          * become untrue (if they were most recently known to be true)
          */
-        AlertDampeningEvent latestEvent = alertDampeningManager.getLatestEventByAlertDefinitionId(alertDefinition
-            .getId());
+        AlertDampeningEvent latestEvent = alertDampeningManager.getLatestEventByAlertDefinitionId(alertDefinitionId);
         AlertDampeningEvent.Type type = getNextEventType(latestEvent, conditionSetResult);
         log.debug("Latest event was " + latestEvent + ", " + "next AlertDampeningEvent.Type is " + type);
 
@@ -162,13 +163,15 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
             /*
              * But only if it represents a type of event we need to act on
              */
-            AlertDampeningEvent alertDampeningEvent = new AlertDampeningEvent(alertDefinition, type);
+            AlertDefinition flyWeightDefinition = new AlertDefinition();
+            flyWeightDefinition.setId(alertDefinitionId);
+            AlertDampeningEvent alertDampeningEvent = new AlertDampeningEvent(flyWeightDefinition, type);
             entityManager.persist(alertDampeningEvent);
 
             log.debug("Need to process AlertDampeningEvent.Type of " + type + " " + "for AlertDefinition[ id="
-                + alertDefinition.getId() + " ]");
+                + alertDefinitionId + " ]");
 
-            alertDampeningManager.processEventType(alertDefinition.getId(), type);
+            alertDampeningManager.processEventType(alertDefinitionId, type);
         }
     }
 
@@ -237,23 +240,53 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
         }
     }
 
-    private boolean evaluateConditionSet(AlertDefinition alertDefinition) {
-        List<AlertConditionLog> unmatchedLogs = this.getUnmatchedLogsByAlertDefinitionId(alertDefinition.getId());
+    private boolean evaluateConditionSet(Integer alertDefinitionId) {
+        List<AlertConditionLog> unmatchedLogs = this.getUnmatchedLogsByAlertDefinitionId(alertDefinitionId);
 
-        BooleanExpression expression = alertDefinition.getConditionExpression();
+        BooleanExpression expression = alertConditionLogManager.getConditionExpression(alertDefinitionId);
 
-        int conditionSetSize = alertDefinition.getConditions().size();
         if (expression == BooleanExpression.ANY) {
-            log.debug("Need only 1 of " + conditionSetSize + " conditions to be true, " + "found "
-                + unmatchedLogs.size() + " for " + alertDefinition);
+            if (log.isDebugEnabled()) {
+                int conditionSetSize = alertConditionLogManager.getConditionCount(alertDefinitionId);
+                log.debug("Need only 1 of " + conditionSetSize + " conditions to be true, " + "found "
+                    + unmatchedLogs.size() + " for AlertDefinition[id=" + alertDefinitionId + "]");
+            }
             return (unmatchedLogs.size() > 0);
         } else if (expression == BooleanExpression.ALL) {
-            log.debug("Need all " + conditionSetSize + " conditions to be true, " + "found " + unmatchedLogs.size()
-                + " for " + alertDefinition);
+            int conditionSetSize = alertConditionLogManager.getConditionCount(alertDefinitionId);
+            if (log.isDebugEnabled()) {
+                log.debug("Need all " + conditionSetSize + " conditions to be true, " + "found " + unmatchedLogs.size()
+                    + " for AlertDefinition[id=" + alertDefinitionId + "]");
+            }
             return (unmatchedLogs.size() == conditionSetSize);
         } else {
-            log.error("AlertConditionLogManager does not support " + expression + " boolean expression yet");
+            if (log.isDebugEnabled()) {
+                log.error("AlertConditionLogManager does not support " + expression + " boolean expression yet");
+            }
             return false;
         }
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public BooleanExpression getConditionExpression(int alertDefinitionId) {
+        Query query = entityManager.createQuery("" //
+            + "SELECT ad.conditionExpression " //
+            + "  FROM AlertDefinition ad " //
+            + " WHERE ad.id = :alertDefinitionId");
+        query.setParameter("alertDefinitionId", alertDefinitionId);
+        BooleanExpression expression = (BooleanExpression) query.getSingleResult();
+        return expression;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public int getConditionCount(int alertDefinitionId) {
+        Query query = entityManager.createQuery("" //
+            + "SELECT COUNT(ac) " //
+            + "  FROM AlertDefinition ad " //
+            + "  JOIN ad.conditions ac " //
+            + " WHERE ad.id = :alertDefinitionId");
+        query.setParameter("alertDefinitionId", alertDefinitionId);
+        long conditionCount = (Long) query.getSingleResult();
+        return (int) conditionCount;
     }
 }

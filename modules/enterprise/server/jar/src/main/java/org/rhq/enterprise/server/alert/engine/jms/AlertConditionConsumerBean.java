@@ -28,7 +28,6 @@ import javax.jms.ObjectMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.CachedConditionManagerLocal;
 import org.rhq.enterprise.server.alert.engine.jms.model.AbstractAlertConditionMessage;
@@ -64,32 +63,32 @@ public class AlertConditionConsumerBean implements MessageListener {
             return;
         }
 
-        AlertDefinition definition = null;
+        Integer definitionId = null;
         try {
             if (log.isDebugEnabled())
                 log.debug("Received message: " + conditionMessage);
 
             int alertConditionId = conditionMessage.getAlertConditionId();
-            definition = alertConditionManager.getAlertDefinitionByConditionIdInNewTransaction(alertConditionId);
-            if (definition == null) {
+            definitionId = alertConditionManager.getAlertDefinitionByConditionIdInNewTransaction(alertConditionId);
+            if (definitionId == null) {
                 log.info("AlertCondition[id=" + alertConditionId
                     + "] has been removed after it was triggered; this message will be discarded");
                 return;
             }
 
-            AlertSerializer.getSingleton().lock(definition.getId());
+            AlertSerializer.getSingleton().lock(definitionId);
 
             /*
              * must be executed in a new, nested transaction so that by it
              * completes and unlocks, the next thread will see all of its results
              */
-            cachedConditionManager.processCachedConditionMessage(conditionMessage, definition);
+            cachedConditionManager.processCachedConditionMessage(conditionMessage, definitionId);
         } catch (Throwable t) {
             log.error("Error handling " + conditionMessage + " - " + t.toString());
         } finally {
             try {
-                if (definition != null) {
-                    AlertSerializer.getSingleton().unlock(definition.getId());
+                if (definitionId != null) {
+                    AlertSerializer.getSingleton().unlock(definitionId);
                 }
             } catch (Throwable t) {
             }

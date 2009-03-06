@@ -1325,10 +1325,10 @@ DB Upgrade:
         </schema-directSQL>
         <schema-directSQL>
             <statement desc="Remove the composite primary key">
-                ALTER TABLE rhq_measurement_oob DROP CONSTRAINT rhq_meas_oob_id_t_pk;
+                ALTER TABLE rhq_measurement_oob DROP CONSTRAINT rhq_meas_oob_id_t_pk
             </statement>
             <statement desc="Introduce a primary key on schedule_id only">
-                ALTER TABLE rhq_measurement_oob ADD CONSTRAINT RHQ_MEAS_OOB_ID_PK PRIMARY KEY (schedule_id);
+                ALTER TABLE rhq_measurement_oob ADD CONSTRAINT RHQ_MEAS_OOB_ID_PK PRIMARY KEY (schedule_id)
             </statement>
         </schema-directSQL>
                <schema-directSQL>

@@ -22,21 +22,21 @@
   */
 package org.rhq.plugins.jbossas5;
 
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.plugins.jbossas5.util.ConversionUtils;
-import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
-
-import java.util.Set;
-import java.util.HashSet;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
+import org.rhq.plugins.jbossas5.util.ConversionUtils;
 
 /**
  * Discovery class for discovering deployable resources like ear/war/jar/sar
@@ -80,7 +80,7 @@ public class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryCom
             {
                 try
                 {
-                    ManagedDeployment managedDeployment = managementView.getDeployment(deploymentName, ManagedDeployment.DeploymentPhase.APPLICATION);
+                    ManagedDeployment managedDeployment = managementView.getDeployment(deploymentName);
                     String resourceName = managedDeployment.getSimpleName();
                     // @TODO remove this when AS5 actually implements this for sars, and some other DeploymentTypes that haven't implemented getSimpleName()
                     if (resourceName.equals("%Generated%"))

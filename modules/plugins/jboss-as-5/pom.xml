@@ -48,7 +48,7 @@
         <dependency>
           <groupId>org.jboss.integration</groupId>
           <artifactId>jboss-profileservice-spi</artifactId>          
-          <version>5.0.3.GA</version>
+          <version>5.1.0.CR1</version>
           <scope>provided</scope>
         </dependency>
         

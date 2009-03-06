@@ -22,13 +22,18 @@
   */
 package org.rhq.plugins.jbossas5;
 
+import java.io.File;
+import java.util.Collection;
+import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jboss.deployers.spi.management.ManagementView;
-import org.jboss.deployers.spi.management.deploy.*;
+import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
+import org.jboss.deployers.spi.management.deploy.ProgressEvent;
+import org.jboss.deployers.spi.management.deploy.ProgressListener;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.DeploymentTemplateInfo;
-import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
 import org.rhq.core.domain.configuration.Configuration;
@@ -37,12 +42,12 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.CreateResourceStatus;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
-import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
@@ -55,10 +60,6 @@ import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
-
-import java.util.Collection;
-import java.util.Map;
-import java.io.*;
 
  /**
  * ResourceComponent for a JBossAS 5.x Server.
@@ -213,7 +214,7 @@ public class ApplicationServerComponent
             handleMiscManagedProperties(managedPropertyGroup, managedProperties, defaultPluginConfig);
             try
             {
-                managementView.applyTemplate(ManagedDeployment.DeploymentPhase.APPLICATION, resourceName, template);
+                managementView.applyTemplate(resourceName, template);
                 managementView.process();
                 createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
             }

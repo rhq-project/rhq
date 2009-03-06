@@ -110,7 +110,7 @@ public class PluginDescriptorGenerator {
             for (String deploymentName : deploymentNames) {
                 try {
                     // Use the first one we successfully retrieve as a representative sample of the type.
-                    deployment = managementView.getDeployment(deploymentName, null);
+                    deployment = managementView.getDeployment(deploymentName);
                     break;
                 }
                 catch (NoSuchDeploymentException e) {

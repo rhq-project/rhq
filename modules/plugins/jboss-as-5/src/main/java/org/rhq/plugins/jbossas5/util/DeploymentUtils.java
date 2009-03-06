@@ -20,11 +20,9 @@ package org.rhq.plugins.jbossas5.util;
 
 import java.io.File;
 
-import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
-import org.jboss.managed.api.ManagedDeployment;
-
+import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 
@@ -57,18 +55,19 @@ public abstract class DeploymentUtils {
         DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
         String archiveName = tempFile.getName();
         boolean copyContent = true;
-        DeploymentProgress progress = deploymentManager.distribute(archiveName, ManagedDeployment.DeploymentPhase.APPLICATION,
-                tempFile.toURL(), copyContent);
+        DeploymentProgress progress = deploymentManager.distribute(archiveName, tempFile.toURL(), copyContent);
         //progress.addProgressListener(this);
         progress.run();
 
+        // Get the repository name of the distributed deployment
+        String[] repositoryNames = progress.getDeploymentID().getRepositoryNames();
+        
         DeploymentStatus status = progress.getDeploymentStatus();
         DeploymentStatus.StateType state = status.getState();
         if (state == DeploymentStatus.StateType.FAILED || state == DeploymentStatus.StateType.CANCELLED)
             return status;
 
-        String[] names = {archiveName};
-        progress = deploymentManager.start(ManagedDeployment.DeploymentPhase.APPLICATION, names);
+        progress = deploymentManager.start(repositoryNames);
         //progress.addProgressListener(this);
         progress.run();
 

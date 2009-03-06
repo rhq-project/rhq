@@ -161,8 +161,7 @@ public class ManagedDeploymentComponent
         String deploymentName = pluginConfig.getSimple(DEPLOYMENT_NAME_PROPERTY).getStringValue();
         log.debug("Undeploying deployment [" + deploymentName + "]...");
         DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
-        DeploymentProgress deploymentProgress = deploymentManager.undeploy(
-                ManagedDeployment.DeploymentPhase.APPLICATION, deploymentName);
+        DeploymentProgress deploymentProgress = deploymentManager.remove(deploymentName);
         deploymentProgress.run();
 
         //if (!this.deploymentFile.exists())
@@ -335,7 +334,7 @@ public class ManagedDeploymentComponent
         ProfileServiceFactory.refreshCurrentProfileView();
         ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
         String resourceKey = getResourceContext().getResourceKey();
-        return managementView.getDeployment(resourceKey, ManagedDeployment.DeploymentPhase.APPLICATION);
+        return managementView.getDeployment(resourceKey);
     }
 
     /**

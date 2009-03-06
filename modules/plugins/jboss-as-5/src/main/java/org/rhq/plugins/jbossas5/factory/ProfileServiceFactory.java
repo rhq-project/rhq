@@ -22,6 +22,11 @@
   */
 package org.rhq.plugins.jbossas5.factory;
 
+import java.util.Set;
+
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jboss.deployers.spi.management.ManagementView;
@@ -30,11 +35,6 @@ import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.profileservice.spi.ProfileKey;
 import org.jboss.profileservice.spi.ProfileService;
-import org.jboss.profileservice.spi.Profile;
-
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import java.util.Set;
 
 /**
  * Factory class to get the ProfileService and Profile Service related objects directly from the
@@ -51,6 +51,8 @@ public class ProfileServiceFactory
     private static ProfileService profileService;
 
     private static ManagementView currentProfileView;
+    
+    private static final ProfileKey defaultKey = new ProfileKey(ProfileKey.DEFAULT);
 
     /**
      * Returns the profile service from the JBoss server through JNDI
@@ -108,9 +110,7 @@ public class ProfileServiceFactory
     {
         try
         {
-            Profile activeProfile = getProfileService().getActiveProfile();
-            ProfileKey activeKey = activeProfile.getKey();
-            getCurrentProfileView().loadProfile(activeKey);
+            getCurrentProfileView().load();
         }
         catch (Exception e)
         {
@@ -127,10 +127,9 @@ public class ProfileServiceFactory
     public static ManagementView getCurrentProfileView(String domainName)
     {
         ManagementView currentProfileView = getProfileService().getViewManager();
-        ProfileKey defaultKey = new ProfileKey(domainName);
         try
         {
-            currentProfileView.loadProfile(defaultKey);
+            currentProfileView.load();
         }
         catch (Exception e)
         {
@@ -141,11 +140,9 @@ public class ProfileServiceFactory
 
     public static DeploymentManager getDeploymentManager() throws Exception {
         DeploymentManager deploymentManager = getProfileService().getDeploymentManager();
-        Profile activeProfile = getProfileService().getActiveProfile();
-        ProfileKey activeKey = activeProfile.getKey();
         // Load and associate the given profile with the DeploymentManager for future operations. This is mandatory
         // in order for us to be able to successfully invoke the various DeploymentManager methods.
-        deploymentManager.loadProfile(activeKey, true);
+        deploymentManager.loadProfile(defaultKey);
         return deploymentManager;
     }
 

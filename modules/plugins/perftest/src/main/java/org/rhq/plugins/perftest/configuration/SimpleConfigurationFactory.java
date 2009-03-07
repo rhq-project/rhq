@@ -36,7 +36,6 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 /**
  * Basic implementation of the configuration factory that fills in a valid value for each defined property.
  *
- * @author Jason Dobies
  * @author Ian Springer
  */
 public class SimpleConfigurationFactory implements ConfigurationFactory {
@@ -44,18 +43,9 @@ public class SimpleConfigurationFactory implements ConfigurationFactory {
 
     public Configuration generateConfiguration(ConfigurationDefinition definition) {
         Collection<PropertyDefinition> allDefinitions = definition.getPropertyDefinitions().values();
-
         Configuration configuration = new Configuration();
-
-        for (PropertyDefinition propertyDefinition : allDefinitions) {
-            if (propertyDefinition instanceof PropertyDefinitionSimple) {
-                PropertyDefinitionSimple simple = (PropertyDefinitionSimple) propertyDefinition;
-                String name = simple.getName();
-                PropertySimple property = new PropertySimple(name, "value");
-                configuration.put(property);
-            }
-        }
-
+        for (PropertyDefinition propertyDefinition : allDefinitions)
+            generateProperty(propertyDefinition, configuration);
         return configuration;
     }
 

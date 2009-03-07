@@ -1471,7 +1471,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             ResourceConfigurationUpdate.QUERY_FIND_COMPOSITE_BY_PARENT_UPDATE_ID, pageControl);
         query.setParameter("aggregateConfigurationUpdateId", configurationUpdateId);
 
-        long count = getPluginConfigurationUpdateCountByParentId(configurationUpdateId);
+        long count = getResourceConfigurationUpdateCountByParentId(configurationUpdateId);
 
         List<ConfigurationUpdateComposite> results = query.getResultList();
 

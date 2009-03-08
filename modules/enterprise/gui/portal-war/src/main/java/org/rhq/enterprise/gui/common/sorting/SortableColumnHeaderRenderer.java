@@ -80,11 +80,16 @@ public class SortableColumnHeaderRenderer extends CommandLinkRenderer {
         for (int i = children.size() - 1; i >= 0; i--) {
             // should only be one, but let's loop-remove just in case
             if (children.get(i) instanceof UIGraphic) {
+                UIGraphic outputGraphic = (UIGraphic) children.get(i);
+                if (!outputGraphic.getUrl().startsWith("/images/tb_sort")) {
+                    continue; // only remove sort images, to allow images to exist in the sortable column
+                }
                 children.remove(i);
             }
 
             if (children.size() > i && children.get(i) instanceof UIOutput) {
-                String value = ((UIOutput) children.get(i)).getValue().toString();
+                UIOutput output = (UIOutput) children.get(i);
+                String value = output.getValue().toString();
                 if (value.length() > 0) {
                     if (Character.isDigit(value.charAt(0))) {
                         // also remove sort index labels, they will be reconstructed below

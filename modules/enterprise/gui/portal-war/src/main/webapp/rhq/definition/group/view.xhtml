@@ -163,7 +163,7 @@
                
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="rg.groupCategory">
+                     <onc:sortableColumnHeader sort="rg.category">
                         <h:outputText styleClass="headerText" value="Category" />
                      </onc:sortableColumnHeader>
                   </f:facet>
@@ -173,12 +173,30 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="rg.groupByClause">
+                     <onc:sortableColumnHeader sort="rg.group_by">
                         <h:outputText styleClass="headerText" value="Grouped By" />
                      </onc:sortableColumnHeader>
                   </f:facet>
 
                   <h:outputText value="#{item.resourceGroup.groupByClause}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:panelGroup>
+                        <onc:sortableColumnHeader sort="upAvail">
+                           <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up" />
+                        </onc:sortableColumnHeader>
+                        <h:outputText value=" / " />
+                        <onc:sortableColumnHeader sort="downAvail">
+                           <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down" />
+                        </onc:sortableColumnHeader>
+                     </h:panelGroup>
+                  </f:facet>
+
+                  <h:outputText value="#{item.upCount}" />
+                  <h:outputText value=" / " />
+                  <h:outputText value="#{item.downCount}" />
                </rich:column>
 
                <rich:column>
@@ -193,7 +211,7 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="AVG(a.availabilityType)">
+                     <onc:sortableColumnHeader sort="AVG(resAvail.availability_type)">
                         <h:outputText styleClass="headerText" value="Availability" />
                      </onc:sortableColumnHeader>
                   </f:facet>
@@ -208,7 +226,7 @@
                
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="5" width="100%">
+                     <rich:column colspan="6" width="100%">
                         <ui:include src="/rhq/resource/include/pagination.xhtml">
                            <ui:param name="paginationDataTableName" value="groupDefinitionMembersDataTable"/>
                            <ui:param name="paginationDataModel" value="#{groupDefinitionMembersDataModel}"/>

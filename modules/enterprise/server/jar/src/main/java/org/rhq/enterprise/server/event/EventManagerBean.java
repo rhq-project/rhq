@@ -509,57 +509,16 @@ public class EventManagerBean implements EventManagerLocal {
         if (isFilled(source))
             query += " AND upper(evs.location) LIKE ? ";
         if (!isCountQuery) {
-            // add paging first as simple AND conditionals instead of using the nested query style
+            pc.initDefaultOrderingField("ev.timestamp", PageOrdering.DESC);
             if (this.dbType instanceof PostgresqlDatabaseType) {
-                query = addSortingToQuery(query, pc);
-                query = addPagingToQuery(query, pc);
+                query = PersistenceUtility.addPostgresNativePagingSortingToQuery(query, pc);
             } else if (this.dbType instanceof OracleDatabaseType) {
-                query = addPagingToQuery(query, pc);
-                query = addSortingToQuery(query, pc);
+                query = PersistenceUtility.addOracleNativePagingSortingToQuery(query, pc);
+            } else {
+                throw new RuntimeException("Unknown database type : " + this.dbType);
             }
-
         }
         return query;
-    }
-
-    private String addSortingToQuery(String query, PageControl pageControl) {
-        StringBuilder queryWithSorting = new StringBuilder(query);
-        if (!isFilled(pageControl.getPrimarySortColumn()) || "null".equals(pageControl.getPrimarySortColumn())) {
-            // display newest events first if this is the first time visiting the page
-            pageControl.setPrimarySort("ev.timestamp", PageOrdering.DESC);
-        }
-        queryWithSorting.append(" ORDER BY ").append(pageControl.getPrimarySortColumn());
-        if (pageControl.getPrimarySortOrder() != null) {
-            queryWithSorting.append(" ").append(pageControl.getPrimarySortOrder());
-        }
-        if (!pageControl.getPrimarySortColumn().equalsIgnoreCase("ev.id")) {
-            queryWithSorting.append(", ev.id");
-        }
-        return queryWithSorting.toString();
-    }
-
-    private String addPagingToQuery(String query, PageControl pageControl) {
-        StringBuilder queryWithPaging = new StringBuilder();
-        if (this.dbType instanceof PostgresqlDatabaseType) {
-            queryWithPaging.append(query);
-            queryWithPaging.append(" LIMIT ").append(pageControl.getPageSize());
-            queryWithPaging.append(" OFFSET ").append(pageControl.getStartRow());
-        } else if (this.dbType instanceof OracleDatabaseType) {
-            int minRowNum = pageControl.getStartRow() + 1;
-            int maxRowNum = minRowNum + pageControl.getPageSize() - 1;
-
-            queryWithPaging.append(query);
-            queryWithPaging.append(" AND rownum <= ").append(maxRowNum);
-            queryWithPaging.append(" AND rownum >= ").append(minRowNum);
-
-            //            queryWithPaging.append("SELECT * FROM (SELECT /*+ FIRST_ROWS(n) */ allResults.*, rownum rnum FROM (");
-            //            queryWithPaging.append(query);
-            //            queryWithPaging.append(") allResults WHERE rownum <= ").append(maxRowNum).append(") WHERE rnum >= ")
-            //                .append(minRowNum);
-        } else {
-            throw new RuntimeException("Unknown database type : " + this.dbType);
-        }
-        return queryWithPaging.toString();
     }
 
     @SuppressWarnings("unchecked")

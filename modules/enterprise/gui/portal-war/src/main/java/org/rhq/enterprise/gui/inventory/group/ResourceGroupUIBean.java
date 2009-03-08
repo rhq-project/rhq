@@ -27,22 +27,20 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
-import org.rhq.enterprise.gui.legacy.action.resource.common.QuickFavoritesUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ResourceGroupUIBean {
     public static final String MANAGED_BEAN_NAME = "ResourceGroupUIBean";
@@ -52,6 +50,8 @@ public class ResourceGroupUIBean {
     private ResourceGroup resourceGroup;
     private Double availability;
     private long count;
+    private long upCount;
+    private long downCount;
     private ResourcePermission permissions;
     private ResourceFacets facets; // this will only be non-null for compat groups
     private Boolean isFavorite; // true if this resource has been added to the favorites dashboard portlet
@@ -69,6 +69,8 @@ public class ResourceGroupUIBean {
     public ResourceGroupUIBean(ResourceGroupComposite resourceGroupComposite, Subject subject) {
         this.resourceGroup = resourceGroupComposite.getResourceGroup();
         this.count = resourceGroupComposite.getMemberCount();
+        this.upCount = resourceGroupComposite.getUpCount();
+        this.downCount = resourceGroupComposite.getDownCount();
         this.availability = resourceGroupComposite.getAvailability();
         this.subject = subject;
         Set<Permission> permissions = LookupUtil.getAuthorizationManager().getImplicitGroupPermissions(subject,
@@ -76,8 +78,8 @@ public class ResourceGroupUIBean {
         this.permissions = new ResourcePermission(permissions);
         if (this.resourceGroup.getGroupCategory() == GroupCategory.COMPATIBLE) {
             try {
-                this.facets = this.resourceTypeManager.getResourceFacets(subject,
-                        this.resourceGroup.getResourceType().getId());
+                this.facets = this.resourceTypeManager.getResourceFacets(subject, this.resourceGroup.getResourceType()
+                    .getId());
             } catch (ResourceTypeNotFoundException e) {
                 throw new RuntimeException(e);
             }
@@ -134,8 +136,7 @@ public class ResourceGroupUIBean {
         return this.permissions;
     }
 
-    public ResourceFacets getFacets()
-    {
+    public ResourceFacets getFacets() {
         return this.facets;
     }
 
@@ -156,6 +157,14 @@ public class ResourceGroupUIBean {
         return this.count;
     }
 
+    public long getUpCount() {
+        return this.upCount;
+    }
+
+    public long getDownCount() {
+        return this.downCount;
+    }
+
     public Subject getOwner() {
         // @Todo add owner to the RHQ_resource_group_table
         //return this.resourceGroup.getOwner();
@@ -169,7 +178,7 @@ public class ResourceGroupUIBean {
             WebUser user = EnterpriseFacesContextUtility.getWebUser();
             WebUserPreferences preferences = user.getWebPreferences();
             WebUserPreferences.FavoriteGroupPortletPreferences favorites = preferences
-                        .getFavoriteGroupPortletPreferences();
+                .getFavoriteGroupPortletPreferences();
 
             this.isFavorite = favorites.isFavorite(getGroupId());
         }
@@ -177,21 +186,19 @@ public class ResourceGroupUIBean {
         return this.isFavorite;
     }
 
-
-     public String toggleFavorite() {
-//        log.debug("toggleFavorite for " + resourceGroup);
+    public String toggleFavorite() {
+        //        log.debug("toggleFavorite for " + resourceGroup);
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
         WebUserPreferences preferences = user.getWebPreferences();
-        WebUserPreferences.FavoriteGroupPortletPreferences favorites = preferences
-            .getFavoriteGroupPortletPreferences();
+        WebUserPreferences.FavoriteGroupPortletPreferences favorites = preferences.getFavoriteGroupPortletPreferences();
 
         boolean isFav = favorites.isFavorite(getGroupId());
         if (isFav) {
             favorites.removeFavorite(getGroupId());
-//            log.debug("Removing favorite: " + resourceId);
+            //            log.debug("Removing favorite: " + resourceId);
         } else {
             favorites.addFavorite(getGroupId());
-//            log.debug("Adding favorite: " + resourceId);
+            //            log.debug("Adding favorite: " + resourceId);
         }
 
         preferences.setFavoriteGroupPortletPreferences(favorites);

@@ -103,8 +103,9 @@ public class PersistenceUtility {
         return entityManager.createQuery(query.toString());
     }
 
-    public static Query createNonNamedQueryWithOrderBy(EntityManager entityManager, String queryText, PageControl pageControl) {
-         Query query;
+    public static Query createNonNamedQueryWithOrderBy(EntityManager entityManager, String queryText,
+        PageControl pageControl) {
+        Query query;
 
         if (pageControl.getPrimarySortColumn() != null) {
             query = createNonNamedQueryWithOrderBy(entityManager, queryText, pageControl.getOrderingFieldsAsArray());
@@ -121,9 +122,8 @@ public class PersistenceUtility {
         return query;
     }
 
-
     public static Query createNonNamedQueryWithOrderBy(EntityManager entityManager, String queryText,
-                                                       OrderingField... orderByFields) {
+        OrderingField... orderByFields) {
 
         StringBuilder query = new StringBuilder(queryText);
         buildOrderBy(query, orderByFields);
@@ -275,7 +275,6 @@ public class PersistenceUtility {
      * @param server        the MBeanServer where the statistics MBean should be registered; if <code>null</code>, the
      *                      first one in the list returned by MBeanServerFactory.findMBeanServer(null) is used
      */
-    @SuppressWarnings("unchecked")
     public static void enableHibernateStatistics(EntityManager entityManager, MBeanServer server) {
         try {
             SessionFactory sessionFactory = PersistenceUtility.getHibernateSession(entityManager).getSessionFactory();
@@ -299,7 +298,7 @@ public class PersistenceUtility {
 
     public static String getQueryDefinitionFromNamedQuery(EntityManager entityManager, String queryName) {
 
-        NamedQueryDefinition ndc = getNamedQueryDefinition(entityManager,queryName);
+        NamedQueryDefinition ndc = getNamedQueryDefinition(entityManager, queryName);
         return ndc.getQueryString();
     }
 
@@ -317,5 +316,38 @@ public class PersistenceUtility {
         Session session = getHibernateSession(entityManager);
         SessionFactoryImplementor sessionFactory = (SessionFactoryImplementor) session.getSessionFactory();
         return sessionFactory;
+    }
+
+    // wanted to combine postgres and oracle methods, but org.rhq.core.db.DatabaseType objects are not visible to domain
+    public static String addPostgresNativePagingSortingToQuery(String query, PageControl pageControl) {
+        StringBuilder queryWithPagingSorting = new StringBuilder(query.length() + 50);
+        queryWithPagingSorting.append(query);
+
+        // for postgres, first order by
+        buildOrderBy(queryWithPagingSorting, pageControl.getOrderingFieldsAsArray());
+
+        // for postgres, then paginate
+        queryWithPagingSorting.append(" LIMIT ").append(pageControl.getPageSize());
+        queryWithPagingSorting.append(" OFFSET ").append(pageControl.getStartRow());
+
+        return queryWithPagingSorting.toString();
+    }
+
+    // wanted to combine postgres and oracle methods, but org.rhq.core.db.DatabaseType objects are not visible to domain
+    public static String addOracleNativePagingSortingToQuery(String query, PageControl pageControl) {
+        StringBuilder queryWithPagingSorting = new StringBuilder(query.length() + 50);
+        queryWithPagingSorting.append(query);
+
+        int minRowNum = pageControl.getStartRow() + 1;
+        int maxRowNum = minRowNum + pageControl.getPageSize() - 1;
+
+        // for oracle, first paginate
+        queryWithPagingSorting.append(" AND rownum <= ").append(maxRowNum);
+        queryWithPagingSorting.append(" AND rownum >= ").append(minRowNum);
+
+        // for oracle, then order by
+        buildOrderBy(queryWithPagingSorting, pageControl.getOrderingFieldsAsArray());
+
+        return queryWithPagingSorting.toString();
     }
 }

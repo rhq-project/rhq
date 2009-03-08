@@ -46,14 +46,23 @@ public class ResourceGroupComposite implements Serializable {
     private long upCount;
     private long downCount;
 
-    public ResourceGroupComposite(Double availability, ResourceGroup resourceGroup, long memberCount) {
+    private class GroupDefinitionMember extends ResourceGroup {
+        public void setGroupCategory(GroupCategory category) {
+            super.setGroupCategory(category);
+        }
+    }
+
+    private void init(Long upCount, Long downCount, Double availability, ResourceGroup resourceGroup, long memberCount) {
+        if (upCount != null) {
+            this.upCount = upCount;
+        }
+        if (downCount != null) {
+            this.downCount = downCount;
+        }
+
         this.availability = availability;
         this.resourceGroup = resourceGroup;
         this.memberCount = memberCount;
-        if (this.availability != null) {
-            this.upCount = (long) (this.memberCount * this.availability);
-            this.downCount = this.memberCount - upCount;
-        }
 
         if (this.resourceGroup.getGroupCategory() == GroupCategory.COMPATIBLE) {
             this.category = GroupCategory.COMPATIBLE;
@@ -68,6 +77,40 @@ public class ResourceGroupComposite implements Serializable {
             throw new IllegalArgumentException("Unknown category " + this.resourceGroup.getGroupCategory()
                 + " for ResourceGroup " + this.resourceGroup.getName());
         }
+    }
+
+    public ResourceGroupComposite(Long upCount, Long downCount, ResourceGroup group) {
+        Double availability = null;
+        Long memberCount = null;
+        if (upCount != null && downCount != null) {
+            availability = upCount / (double) (upCount + downCount);
+            memberCount = upCount + downCount;
+        }
+        init(upCount, downCount, availability, group, memberCount);
+    }
+
+    public ResourceGroupComposite(Long upCount, Long downCount, long memberCount, Number groupId, String groupName,
+        GroupCategory groupCategory, String groupByClause) {
+        Double availability = null;
+        if (upCount != null && downCount != null) {
+            availability = upCount / (double) downCount;
+        }
+        GroupDefinitionMember group = new GroupDefinitionMember();
+        group.setId(groupId.intValue());
+        group.setName(groupName);
+        group.setGroupCategory(groupCategory);
+        group.setGroupByClause(groupByClause);
+        init(upCount, downCount, availability, group, memberCount);
+    }
+
+    public ResourceGroupComposite(Double availability, ResourceGroup resourceGroup, long memberCount) {
+        Long up = null;
+        Long down = null;
+        if (availability != null) {
+            up = (long) (memberCount * availability);
+            down = memberCount - up;
+        }
+        init(up, down, availability, resourceGroup, memberCount);
     }
 
     public Double getAvailability() {
@@ -100,7 +143,8 @@ public class ResourceGroupComposite implements Serializable {
 
     @Override
     public String toString() {
-        return "ResourceGroupComposite[" + "name=" + this.resourceGroup.getName() + ", members=" + this.memberCount
-            + ", availability=" + this.availability + ", permission=" + "]";
+        return "ResourceGroupComposite[" + "name=" + this.resourceGroup.getName() + ", up=," + this.upCount + " down=,"
+            + this.downCount + " members=" + this.memberCount + ", availability=" + this.availability + ", permission="
+            + "]";
     }
 }

@@ -68,13 +68,11 @@ import org.rhq.core.domain.resource.ResourceType;
         + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s "
         + "LEFT JOIN g.implicitResources res LEFT JOIN res.currentAvailability a "
         + "LEFT JOIN g.resourceType type "
-        + "WHERE s = :subject "
-        + " AND g.visible = true "
+        + "WHERE s = :subject " + " AND g.visible = true "
         + " AND g.groupCategory = :groupCategory "
-        + " AND (UPPER(g.name) LIKE :search "
-        + " OR UPPER(g.description) LIKE :search " + "OR :search is null) "
-        + " AND ( type is null OR ( "
-        + "      (type = :resourceType AND :resourceType is not null) "
+        + " AND (UPPER(g.name) LIKE :search " + " OR UPPER(g.description) LIKE :search "
+        + "OR :search is null) "
+        + " AND ( type is null OR ( " + "      (type = :resourceType AND :resourceType is not null) "
         + "    OR "
         + "      (type.category = :category AND :category is not null) "
         + "    OR "
@@ -83,14 +81,9 @@ import org.rhq.core.domain.resource.ResourceType;
         + "GROUP BY g,g.name,g.resourceType.name,g.description "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT, query = "SELECT count(DISTINCT g) "
         + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s " + "LEFT JOIN g.resourceType type "
-        + "WHERE s = :subject "
-        + " AND g.visible = true "
-        + " AND g.groupCategory = :groupCategory "
-        + " AND (UPPER(g.name) LIKE :search "
-        + " OR UPPER(g.description) LIKE :search "
-        + "OR :search is null) "
-        + "AND ( type is null OR ( "
-        + "      (type = :resourceType AND :resourceType is not null) "
+        + "WHERE s = :subject " + " AND g.visible = true " + " AND g.groupCategory = :groupCategory "
+        + " AND (UPPER(g.name) LIKE :search " + " OR UPPER(g.description) LIKE :search " + "OR :search is null) "
+        + "AND ( type is null OR ( " + "      (type = :resourceType AND :resourceType is not null) "
         + "    OR (type.category = :category AND :category is not null) "
         + "    OR (:resourceType is null AND :category is null )     ) ) "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_ADMIN, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(res)) "
@@ -120,23 +113,16 @@ import org.rhq.core.domain.resource.ResourceType;
         + "    OR (:resourceType is null AND :category is null)    ) ) "),
 
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_COUNT, query = "SELECT COUNT(DISTINCT rg) "
-        + "  FROM ResourceGroup AS rg JOIN rg.roles r JOIN r.subjects s "
-        + " WHERE s = :subject "
-        + " AND rg.visible = true "
-        + "   AND rg.groupCategory = :category "),
+        + "  FROM ResourceGroup AS rg JOIN rg.roles r JOIN r.subjects s " + " WHERE s = :subject "
+        + " AND rg.visible = true " + "   AND rg.groupCategory = :category "),
 
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_COUNT_admin, query = "SELECT COUNT(rg) "
-        + "  FROM ResourceGroup AS rg "
-        + " WHERE rg.groupCategory = :category "
-        + " AND rg.visible = true "),
+        + "  FROM ResourceGroup AS rg " + " WHERE rg.groupCategory = :category " + " AND rg.visible = true "),
 
     // finds all the groups that the given resource belongs to
     @NamedQuery(name = ResourceGroup.QUERY_FIND_GROUP_IDS_BY_RESOURCE_ID, query = "SELECT DISTINCT g.id "
-        + "  FROM ResourceGroup g "
-        + "       LEFT JOIN g.explicitResources er "
-        + "       LEFT JOIN g.implicitResources ir "
-        + " WHERE er.id = :id "
-            + "    OR ir.id = :id "),
+        + "  FROM ResourceGroup g " + "       LEFT JOIN g.explicitResources er "
+        + "       LEFT JOIN g.implicitResources ir " + " WHERE er.id = :id " + "    OR ir.id = :id "),
 
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_NAME, query = "SELECT rg FROM ResourceGroup AS rg WHERE LOWER(rg.name) = LOWER(:name)"),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY, query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.clusterKey = :clusterKey"),
@@ -152,11 +138,9 @@ import org.rhq.core.domain.resource.ResourceType;
         + "AND rg.id NOT IN ( :excludeIds )"),
     @NamedQuery(name = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE, query = "SELECT rg FROM ResourceGroup AS rg JOIN rg.roles AS r WHERE r.id = :id"),
 
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_IDS_admin,
-            query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.id IN ( :ids )"),
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_IDS_admin, query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.id IN ( :ids )"),
 
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_IDS, 
-            query = "SELECT rg FROM ResourceGroup AS rg JOIN rg.roles roles JOIN roles.subjects s WHERE rg.id IN ( :ids ) and s = :subject"),
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_IDS, query = "SELECT rg FROM ResourceGroup AS rg JOIN rg.roles roles JOIN roles.subjects s WHERE rg.id IN ( :ids ) and s = :subject"),
 
     /*
     * For recursive group stuff, we want dups in the results
@@ -169,17 +153,13 @@ import org.rhq.core.domain.resource.ResourceType;
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT rg FROM Resource AS res JOIN res.implicitGroups rg WHERE res.id = :id "),
 
     // TODO: Add authz checks to the following two queries (i.e. only return groups that are viewable by the specified subject).
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_RESOURCE_ID_COMPOSITE,
-    query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), rg, COUNT(memberRes)) "
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_RESOURCE_ID_COMPOSITE, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), rg, COUNT(memberRes)) "
         + "FROM Resource AS res JOIN res.implicitGroups rg "
         + "LEFT JOIN rg.implicitResources memberRes JOIN memberRes.currentAvailability a "
-        + "WHERE res.id = :resourceId "
-        + " AND rg.visible = true "
-        + "GROUP BY rg, rg.name, rg.description "),
+        + "WHERE res.id = :resourceId " + " AND rg.visible = true " + "GROUP BY rg, rg.name, rg.description "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_RESOURCE_ID_COMPOSITE_COUNT, query = "SELECT COUNT(rg) "
-        + "FROM Resource AS res JOIN res.implicitGroups rg "
-            + "WHERE res.id = :resourceId "
-            + " AND rg.visible = true "),
+        + "FROM Resource AS res JOIN res.implicitGroups rg " + "WHERE res.id = :resourceId "
+        + " AND rg.visible = true "),
 
     /* the following two are for auto-groups summary */
     @NamedQuery(name = ResourceGroup.QUERY_FIND_AUTOGROUP_BY_ID, query = "SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(AVG(a.availabilityType), res.parentResource, res.resourceType, COUNT(res)) "
@@ -277,7 +257,6 @@ public class ResourceGroup extends Group {
     @ManyToOne
     private ResourceType resourceType; // if non-null, it implies a compatible group
 
-
     @Column(name = "CLUSTER_KEY", nullable = true)
     private String clusterKey;
 
@@ -297,14 +276,12 @@ public class ResourceGroup extends Group {
     protected ResourceGroup() {
     }
 
-    public ResourceGroup(@NotNull
-    String name) {
+    public ResourceGroup(@NotNull String name) {
         super(name);
         setResourceType(null);
     }
 
-    public ResourceGroup(@NotNull
-    String name, ResourceType type) {
+    public ResourceGroup(@NotNull String name, ResourceType type) {
         super(name);
         setResourceType(type);
     }
@@ -317,8 +294,7 @@ public class ResourceGroup extends Group {
         this.id = id;
     }
 
-    public void addExplicitResource(@NotNull
-    Resource resource) {
+    public void addExplicitResource(@NotNull Resource resource) {
         getExplicitResources().add(resource);
         resource.addExplicitGroup(this);
     }
@@ -336,15 +312,13 @@ public class ResourceGroup extends Group {
         return this.explicitResources;
     }
 
-    public boolean removeExplicitResource(@NotNull
-    Resource resource) {
+    public boolean removeExplicitResource(@NotNull Resource resource) {
         boolean removed = getExplicitResources().remove(resource);
         resource.removeExplicitGroup(this);
         return removed;
     }
 
-    public void addImplicitResource(@NotNull
-    Resource resource) {
+    public void addImplicitResource(@NotNull Resource resource) {
         getImplicitResources().add(resource);
         resource.addImplicitGroup(this);
     }
@@ -357,7 +331,7 @@ public class ResourceGroup extends Group {
         return groupCategory;
     }
 
-    private void setGroupCategory(GroupCategory groupCategory) {
+    protected void setGroupCategory(GroupCategory groupCategory) {
         this.groupCategory = groupCategory;
     }
 
@@ -370,8 +344,7 @@ public class ResourceGroup extends Group {
         return this.implicitResources;
     }
 
-    public boolean removeImplicitResource(@NotNull
-    Resource resource) {
+    public boolean removeImplicitResource(@NotNull Resource resource) {
         boolean removed = getImplicitResources().remove(resource);
         resource.removeImplicitGroup(this);
         return removed;
@@ -394,8 +367,7 @@ public class ResourceGroup extends Group {
         return operationHistories;
     }
 
-    public void setOperationHistories(@NotNull
-    List<GroupOperationHistory> operationHistories) {
+    public void setOperationHistories(@NotNull List<GroupOperationHistory> operationHistories) {
         this.operationHistories = operationHistories;
     }
 
@@ -404,8 +376,7 @@ public class ResourceGroup extends Group {
         return configurationUpdates;
     }
 
-    public void setConfigurationUpdates(@NotNull
-    List<AbstractAggregateConfigurationUpdate> configurationUpdates) {
+    public void setConfigurationUpdates(@NotNull List<AbstractAggregateConfigurationUpdate> configurationUpdates) {
         this.configurationUpdates = configurationUpdates;
     }
 

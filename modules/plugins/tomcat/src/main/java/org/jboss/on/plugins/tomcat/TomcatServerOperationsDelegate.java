@@ -42,7 +42,7 @@ import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 
 /**
- * Handles performing operations on an EWS instance.
+ * Handles performing operations on a Tomcat Server
  *
  * @author Jay Shaughnessy
  * @author Ian Springer
@@ -136,7 +136,7 @@ public class TomcatServerOperationsDelegate {
     // Private  --------------------------------------------
 
     /**
-     * Starts the underlying EWS server.
+     * Starts the underlying server.
      *
      * @return success message if no errors are encountered
      * @throws InterruptedException if the plugin container stops this operation while its executing
@@ -186,10 +186,14 @@ public class TomcatServerOperationsDelegate {
         if (results.getError() == null && results.getExitCode() == 0) {
             avail = waitForServerToStart(start);
         } else {
-            if (results.getError() != null)
-                log.error("Error from process execution while starting the EWS instance. Exit code [" + results.getExitCode() + "]", results.getError());
-            else
-                log.error("Start script returned non-zero exit code while starting the EWS instance. Exit code [" + results.getExitCode() + "]");
+            log.error("Error from process execution while starting the Tomcat instance. Exit code [" + results.getExitCode() + "]", results
+                .getError());
+            if (results.getError() != null) {
+                log.error("Error from process execution while starting the Tomcat instance. Exit code [" + results.getExitCode() + "]", results.getError());
+                }
+            else {
+                log.error("Start script returned non-zero exit code while starting the Tomcat instance. Exit code [" + results.getExitCode() + "]");
+                }
             avail = this.serverComponent.getAvailability();
         }
 
@@ -204,7 +208,7 @@ public class TomcatServerOperationsDelegate {
     static public void setProcessExecutionEnvironment(ProcessExecution processExecution, String installationPath) {
         String javaHomeDir = System.getProperty("java.home");
         if (null == javaHomeDir) {
-            throw new IllegalStateException("The JAVA_HOME environment variable must be set in order to run the EWS start or stop script.");
+            throw new IllegalStateException("The JAVA_HOME environment variable must be set in order to run the Tomcat start or stop script.");
         }
 
         // Strip off the jre since the version script requires a JDK
@@ -270,10 +274,10 @@ public class TomcatServerOperationsDelegate {
         logExecutionResults(results);
 
         if (results.getExitCode() != 0) {
-            throw new RuntimeException("Error executing shutdown script while stopping EWS instance. Exit code [" + results.getExitCode() + "]");
+            throw new RuntimeException("Error executing shutdown script while stopping Tomcat instance. Exit code [" + results.getExitCode() + "]");
         }
         if (results.getError() != null) {
-            throw new RuntimeException("Error executing shutdown script while stopping EWS instance. Exit code [" + results.getExitCode() + "]",
+            throw new RuntimeException("Error executing shutdown script while stopping Tomcat instance. Exit code [" + results.getExitCode() + "]",
                 results.getError());
         }
 
@@ -377,6 +381,6 @@ public class TomcatServerOperationsDelegate {
         EmsOperation operation = bean.getOperation("storeConfig");
         operation.invoke(new Object[0]);
 
-        return ("EWS configuration updated.");
+        return ("Tomcat configuration updated.");
     }
 }

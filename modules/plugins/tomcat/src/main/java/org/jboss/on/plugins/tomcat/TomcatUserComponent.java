@@ -138,6 +138,15 @@ public class TomcatUserComponent extends MBeanResourceComponent<TomcatUserDataba
             newRoles.setErrorMessageFromThrowable(e);
             report.setErrorMessage("Failed setting resource configuration - see property error messages for details");
             log.info("Failure setting Tomcat User Roles configuration value", e);
+            return;
+        }
+
+        // If all went well, persist the changes to the Tomcat user Database
+        try {
+            this.getResourceContext().getParentResourceComponent().save();
+        } catch (Exception e) {
+            report
+                .setErrorMessage("Failed to persist configuration change.  Changes will not survive Tomcat restart unless a successful Save operation is performed.");
         }
     }
 

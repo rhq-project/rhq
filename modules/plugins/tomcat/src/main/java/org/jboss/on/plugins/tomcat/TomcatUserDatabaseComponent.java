@@ -24,6 +24,7 @@
 package org.jboss.on.plugins.tomcat;
 
 import org.jboss.on.plugins.tomcat.helper.CreateResourceHelper;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
@@ -64,6 +65,9 @@ public class TomcatUserDatabaseComponent extends MBeanResourceComponent<TomcatSe
             CreateResourceHelper.setResourceName(report, name);
             this.invokeOperation(operation, report.getResourceConfiguration());
 
+            // If all went well, persist the changes to the Tomcat user Database
+            save();
+
             report.setStatus(CreateResourceStatus.SUCCESS);
 
         } catch (Exception e) {
@@ -73,4 +77,8 @@ public class TomcatUserDatabaseComponent extends MBeanResourceComponent<TomcatSe
         return report;
     }
 
+    /** Persist local changes to the user database */
+    void save() throws Exception {
+        invokeOperation("save", new Configuration());
+    }
 }

@@ -355,6 +355,11 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
         return propValue;
     }
 
+    /** Persist local changes to the server.xml */
+    void storeConfig() throws Exception {
+        invokeOperation(SupportedOperations.STORECONFIG.name(), new Configuration());
+    }
+
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException, Exception {
         SupportedOperations operation = Enum.valueOf(SupportedOperations.class, name.toUpperCase());
 

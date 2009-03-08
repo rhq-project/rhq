@@ -60,6 +60,7 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.content.version.PackageVersions;
@@ -773,4 +774,23 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
         return backupFile;
     }
+
+    @Override
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        super.updateResourceConfiguration(report);
+
+        // If all went well, persist the changes to the Tomcat user Database
+        try {
+            storeConfig();
+        } catch (Exception e) {
+            report
+                .setErrorMessage("Failed to persist configuration change.  Changes will not survive Tomcat restart unless a successful Save operation is performed.");
+        }
+    }
+
+    /** Persist local changes to the server.xml */
+    void storeConfig() throws Exception {
+        this.getResourceContext().getParentResourceComponent().storeConfig();
+    }
+
 }

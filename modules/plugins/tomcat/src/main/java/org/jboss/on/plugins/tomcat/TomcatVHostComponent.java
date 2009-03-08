@@ -136,6 +136,19 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
             report.setErrorMessage("Failed setting resource configuration - see property error messages for details");
             log.info("Failure setting Tomcat VHost aliases configuration value", e);
         }
+
+        // If all went well, persist the changes to the Tomcat server.xml
+        try {
+            storeConfig();
+        } catch (Exception e) {
+            report
+                .setErrorMessage("Failed to persist configuration change.  Changes will not survive Tomcat restart unless a successful Store Configuration operation is performed.");
+        }
+    }
+
+    /** Persist local changes to the server.xml */
+    void storeConfig() throws Exception {
+        this.getResourceContext().getParentResourceComponent().storeConfig();
     }
 
     private void consolidateSettings(PropertySimple newVals, PropertySimple currentVals, String addOp, String removeOp, String arg) throws Exception {

@@ -25,6 +25,7 @@ package org.jboss.on.plugins.tomcat;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
@@ -49,6 +50,19 @@ public class TomcatRoleComponent extends MBeanResourceComponent<TomcatUserDataba
         nameProperty = new PropertySimple(CONFIG_ROLE_NAME, name);
         opConfig.put(nameProperty);
         resourceContext.getParentResourceComponent().invokeOperation("removeRole", opConfig);
+    }
+
+    @Override
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        super.updateResourceConfiguration(report);
+
+        // If all went well, persist the changes to the Tomcat user Database
+        try {
+            this.getResourceContext().getParentResourceComponent().save();
+        } catch (Exception e) {
+            report
+                .setErrorMessage("Failed to persist configuration change.  Changes will not survive Tomcat restart unless a successful Save operation is performed.");
+        }
     }
 
 }

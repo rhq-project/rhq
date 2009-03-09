@@ -197,13 +197,19 @@
               <tasks>
                 <!-- generate the I18N resource bundles -->
                 <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
-                  <!--<i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">-->
-                      <i18n outputdir="${basedir}/target/resources/WEB-INF/classes" defaultlocale="en" verbose="false" append="false" verify="true">
-                    <classpath refid="maven.runtime.classpath" />
-                    <classfileset dir="${project.build.outputDirectory}">
-                       <include name="**/*I18NResourceKeys.class" />
-                    </classfileset>
+                <!--<i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">-->
+                <i18n outputdir="${basedir}/target/resources/WEB-INF/classes" defaultlocale="en" verbose="false" append="false" verify="true">
+                  <classpath refid="maven.runtime.classpath" />
+                  <classfileset dir="${project.build.outputDirectory}">
+                    <include name="**/*I18NResourceKeys.class" />
+                  </classfileset>
                 </i18n>
+                <copy todir="${project.build.outputDirectory}" encoding="UTF-8" outputencoding="UTF-8">
+                  <fileset dir="${basedir}/target/resources/WEB-INF/classes">
+                    <include name="InstallerMessages*.properties"/>
+                  </fileset>
+                  <mapper type="glob" from="*" to="*.unfiltered"/>
+                </copy>
               </tasks>
             </configuration>
             <goals>

@@ -453,6 +453,23 @@
                      <goal>run</goal>
                   </goals>
                </execution>
+               <execution>
+                  <id>Maintain an unfiltered copy of i18n properties files</id>
+                  <phase>process-classes</phase>
+                  <configuration>
+                     <tasks>
+                        <copy todir="${project.build.outputDirectory}">
+                           <fileset dir="src/main/webapp-filtered/WEB-INF/classes">
+                              <include name="ApplicationResources.properties"/>
+                           </fileset>
+                           <mapper type="glob" from="*" to="*.unfiltered"/>
+                        </copy>
+                     </tasks>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
             </executions>
          </plugin>
 

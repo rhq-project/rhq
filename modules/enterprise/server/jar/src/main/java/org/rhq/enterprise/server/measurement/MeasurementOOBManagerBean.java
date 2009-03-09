@@ -93,7 +93,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * @param subject Subject of the caller
      * @param begin Start time of the 1h entries to look at
      */
-    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+    //@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     public void computeOOBsFromHourBeginingAt(Subject subject, long begin) {
 
         Connection conn = null;
@@ -104,6 +104,19 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             log.info("Calculating OOBs for hour starting at " + new Date(begin));
             conn = rhqDs.getConnection();
             DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+
+            long t0 =  System.currentTimeMillis();
+            long tstart = t0;
+
+
+            // first truncate tmp table
+            log.debug("Truncating tmp table");
+//            stmt = conn.prepareStatement(MeasurementOOB.TRUNCATE_TMP_TABLE);
+            stmt = conn.prepareStatement("DELETE FROM RHQ_MEASUREMENT_OOB_TMP");
+            stmt.executeUpdate();
+            long t1 = System.currentTimeMillis();
+            timings.add((t1 - t0));
+            log.debug("Truncating the tmp table done");
 
             String theQuery;
 
@@ -120,39 +133,40 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             stmt.setLong(1, begin);
             stmt.setLong(2, begin);
             stmt.setLong(3, begin);
-            long t0 =  System.currentTimeMillis();
-            long tstart = t0;
             int count = stmt.executeUpdate();
-            long t1 = System.currentTimeMillis();
+            t1 = System.currentTimeMillis();
+            log.debug("Calculation of OOBs done");
             timings.add((t1 - t0));
             t0 = t1;
 
             // Update the real table from the tmp table
-            if (dbType instanceof PostgresqlDatabaseType)
+            if (dbType instanceof PostgresqlDatabaseType) {
                 theQuery = MeasurementOOB.UPDATE_MASTER_POSTGRES;
-            else if (dbType instanceof OracleDatabaseType)
-                theQuery = MeasurementOOB.UPDATE_MASTER_ORACLE;
+
+                stmt = conn.prepareStatement(theQuery);
+                stmt.executeUpdate();
+                t1 = System.currentTimeMillis();
+                timings.add((t1 - t0));
+                log.debug("Update of master table done");
+                t0 = t1;
+
+                // Insert missing ones
+                stmt = conn.prepareStatement(MeasurementOOB.INSERT_NEW_ONES);
+                stmt.executeUpdate();
+                t1 = System.currentTimeMillis();
+                timings.add((t1 - t0));
+                log.debug("Insert of new oobs done");
+            }
+            else if (dbType instanceof OracleDatabaseType) {
+                theQuery = MeasurementOOB.MERGE_TABLES_ORACLE;
+                stmt = conn.prepareStatement(theQuery);
+                stmt.executeUpdate();
+                t1 = System.currentTimeMillis();
+                timings.add((t1 - t0));
+                log.debug("Merge of master table done");
+            }
             else
                 throw new IllegalArgumentException("Unknown database type, can't continue: " + dbType);
-
-            stmt = conn.prepareStatement(theQuery);
-            stmt.executeUpdate();
-            t1 = System.currentTimeMillis();
-            timings.add((t1 - t0));
-            t0 = t1;
-
-            // Insert missing ones
-            stmt = conn.prepareStatement(MeasurementOOB.INSERT_NEW_ONES);
-            stmt.executeUpdate();
-            t1 = System.currentTimeMillis();
-            timings.add((t1 - t0));
-            t0 = t1;
-
-            // truncate tmp table
-            stmt = conn.prepareStatement(MeasurementOOB.TRUNCATE_TMP_TABLE);
-            stmt.executeUpdate();
-            t1 = System.currentTimeMillis();
-            timings.add((t1 - t0));
 
 
             log.info("Done calculating OOBs. [" + count + "] entries in [" + (t1 - tstart) + "] ms ("+timings + ")" );
@@ -171,7 +185,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * #computeOOBsFromHourBeginingAt
      * @param subject Caller
      */
-    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+//    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     public void computeOOBsFromLastHour(Subject subject) {
 
         Query q = entityManager.createNamedQuery(MeasurementDataNumeric1H.GET_MAX_TIMESTAMP);

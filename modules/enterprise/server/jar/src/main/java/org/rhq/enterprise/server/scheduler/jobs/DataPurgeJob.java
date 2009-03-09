@@ -119,7 +119,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeOrphanedAlertNotifications(LookupUtil.getAlertNotificationManager());
         purgeMeasurementTraitData(LookupUtil.getMeasurementDataManager(), systemConfig);
         purgeAvailabilityData(LookupUtil.getAvailabilityManager(), systemConfig);
-        purgeOOBData(LookupUtil.getOOBManager());
+        //purgeOOBData(LookupUtil.getOOBManager());
     }
 
     private void purgeMeasurementTraitData(MeasurementDataManagerLocal measurementDataManager, Properties systemConfig) {

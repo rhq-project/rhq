@@ -59,7 +59,7 @@ import javax.persistence.Table;
                         "  AND sched.resource = res " +
                         "  AND (UPPER(def.displayName ) LIKE :metricName OR :metricName is null ) " +
                         "  AND (UPPER(res.name) LIKE :resourceName OR :resourceName is null ) " +
-                        "  AND (UPPER(parent.name) LIKE :parentName OR :parentName is null ) " 
+                        "  AND (UPPER(parent.name) LIKE :parentName OR :parentName is null ) "
                         ),
         @NamedQuery(name=MeasurementOOB.DELETE_OUTDATED,
                 query = "DELETE FROM MeasurementOOB o " +
@@ -150,14 +150,13 @@ public class MeasurementOOB {
                     "where rhq_measurement_oob_tmp.oob_factor > rhq_measurement_oob.oob_factor\n" +
                     "   and rhq_measurement_oob_tmp.schedule_id = rhq_measurement_oob.schedule_id ";
 
-    public static final String UPDATE_MASTER_ORACLE =
-                    "update rhq_measurement_oob oob_ " +
-                    "set ( oob_factor, time_stamp )  =  ( " +
-                    "   select  oob_factor, time_stamp "+
-                    " from rhq_measurement_oob_tmp tmp_ "+
-                    " where tmp_.oob_factor > oob_.oob_factor " +
-                    "       and tmp_.schedule_id = oob_.schedule_id " +
-     " ) ";
+    public static final String MERGE_TABLES_ORACLE =
+                   "merge into rhq_measurement_oob oob_\n" +
+                           "using rhq_measurement_oob_tmp tmp_\n" +
+                           "ON ( tmp_.schedule_id = oob_.schedule_id )                \n" +
+                           "WHEN MATCHED THEN UPDATE SET oob_factor = tmp_.oob_factor, time_stamp = tmp_.time_stamp    \n" +
+                           "WHEN NOT MATCHED THEN INSERT (oob_.schedule_id, oob_.time_stamp, oob_.oob_factor) \n" +
+                           "    VALUES (tmp_.schedule_id, tmp_.time_stamp, tmp_.oob_factor)";
 
     public static final String INSERT_NEW_ONES =
                     "insert into rhq_measurement_oob (oob_factor, schedule_id,  time_stamp)  (\n" +

@@ -7,6 +7,7 @@
   <target name="init">
     <property name="jboss.home" location="${project.build.outputDirectory}/jbossas" />
     <property name="jboss.deploy.dir" location="${jboss.home}/server/default/deploy" />
+    <property name="resources-filtered.dir" location="${basedir}/target/resources-filtered" />
   </target>
 
   <target name="run"
@@ -17,6 +18,14 @@
     <echo>Unzipping the RHQ Server distro zipfile...</echo>
     <antcall target="unzip-rhq-server" />
 
+    <copy todir="${resources-filtered.dir}" encoding="UTF-8" outputencoding="UTF-8">
+       <fileset dir="${project.build.outputDirectory}">
+          <include name="jbossas/server/default/deploy/rhq.ear.rej/rhq-portal.war/WEB-INF/classes/ApplicationResources.properties.unfiltered"/>
+          <include name="jbossas/server/default/deploy/rhq-installer.war/WEB-INF/classes/InstallerMessages*.properties.unfiltered"/>
+       </fileset>
+       <mapper type="glob" from="*.unfiltered" to="*"/>
+    </copy>
+
     <!-- NOTE: We copy the binary resources ourselves, because the Maven resources-plugin will
                not overwrite existing files unless filtering is enabled, and enabling filtering
                on binary files would cause the files to get corrupted. See
@@ -26,9 +35,8 @@
       <fileset dir="${basedir}/src/main/resources-binary"/>
     </copy>
   	
-    <echo>Temporarily deleting the YUM and DISK content source server plugins...</echo>
+    <echo>Temporarily deleting the unused content source server plugins...</echo>
     <delete>
-      <fileset dir="${jboss.deploy.dir}" includes="**/rhq-serverplugin-disk*"/>
       <fileset dir="${jboss.deploy.dir}" includes="**/rhq-serverplugin-yum*"/>
     </delete>
   	

@@ -68,6 +68,11 @@
         <filtering>true</filtering>
       </resource>
 
+      <resource>
+        <directory>target/resources-filtered</directory>
+        <filtering>true</filtering>
+      </resource>
+
     </resources>
 
     <plugins>

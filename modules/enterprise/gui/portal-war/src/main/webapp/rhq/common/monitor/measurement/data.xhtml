@@ -10,11 +10,15 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function">
 
 <ui:composition>
+
+<!-- NOTE: rico.js is used for the AJAX stuff below (i.e. the ajaxEngine object). -->
+<a4j:loadScript src="/js/rico.js"/>
 
 <script language="JavaScript">
 
@@ -68,6 +72,8 @@
   }
 
 </script>
+
+<form id="metricViewsForm">
 
 <ul id="root" class="boxy">
 
@@ -170,6 +176,8 @@
 </c:forEach>
 
 </ul>
+
+</form>
 
 </ui:composition>
 

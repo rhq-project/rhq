@@ -3,6 +3,8 @@ package org.rhq.enterprise.server.auth.prefs;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -79,8 +81,16 @@ public class SubjectPreferencesCache {
     public synchronized void unsetUserProperty(int subjectId, String propertyName) {
         load(subjectId);
         Property property = subjectPreferences.get(subjectId).remove(propertyName);
-        if (property.getId() != 0) {
-            entityManagerFacade.remove(property);
+        // it's possible property was already removed, and thus this operation becomes a no-op to the backing store
+        if (property != null && property.getId() != 0) {
+            try {
+                // no need to delete this through the entity manager, which first requires reloading if detached
+                Query query = entityManagerFacade.createQuery("DELETE FROM Property p WHERE p.id = :propertyId");
+                query.setParameter("propertyId", property.getId());
+                query.executeUpdate();
+            } catch (Throwable t) {
+                log.error("Could not remove " + property, t);
+            }
         }
     }
 

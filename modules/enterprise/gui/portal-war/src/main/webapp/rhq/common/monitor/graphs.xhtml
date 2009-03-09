@@ -57,10 +57,18 @@
 <tr class="BlockContent">
     <td>
         <h:form id="MetricComponentForm">
-            <input type="hidden" name="id" value="#{IndicatorChartsUIBean.context.resourceId}" />
-            <input type="hidden" name="groupId" value="#{IndicatorChartsUIBean.context.groupId}" />
-            <input type="hidden" name="parent" value="#{IndicatorChartsUIBean.context.parentResourceId}" />
-            <input type="hidden" name="type" value="#{IndicatorChartsUIBean.context.resourceTypeId}" />
+            <c:if test="#{IndicatorChartsUIBean.context.resourceId != -1}">
+               <input type="hidden" name="id" value="#{IndicatorChartsUIBean.context.resourceId}" />
+            </c:if>
+            <c:if test="#{IndicatorChartsUIBean.context.groupId != -1}">
+               <input type="hidden" name="groupId" value="#{IndicatorChartsUIBean.context.groupId}" />
+            </c:if>
+            <c:if test="#{IndicatorChartsUIBean.context.parentResourceId != -1}">
+               <input type="hidden" name="parent" value="#{IndicatorChartsUIBean.context.parentResourceId}" />
+            </c:if>
+            <c:if test="#{IndicatorChartsUIBean.context.resourceTypeId != -1}">
+               <input type="hidden" name="type" value="#{IndicatorChartsUIBean.context.resourceTypeId}" />
+            </c:if>
             <table>
                 <tr>
                     <td><onc:metric optionList="m,h,d" /></td>

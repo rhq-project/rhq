@@ -78,11 +78,10 @@ public class IndicatorChartsUIBean {
         Subject subject = user.getSubject();
 
         try {
-            context = WebUtility.getEntityContext();
-
             HttpServletRequest request = FacesContextUtility.getRequest();
-            view = WebUtility.getOptionalRequestParameter(request, "metricView",
-                MeasurementPreferences.PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME);
+
+            context = WebUtility.getEntityContext(request);
+            view = viewManager.getSelectedView(subject, context);
             views = viewManager.getViewNames(subject, context);
 
             if (context.category == EntityContext.Category.Resource) {
@@ -663,5 +662,43 @@ public class IndicatorChartsUIBean {
             log.debug("Mode could not be determined for " + summary);
             return MetricsDisplayMode.UNSET;
         }
+    }
+
+    public String processAction() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        HttpServletRequest request = FacesContextUtility.getRequest();
+        EntityContext context = WebUtility.getEntityContext(request);
+        String action = WebUtility.getOptionalRequestParameter(request, "action", null);
+        String viewName = WebUtility.getOptionalRequestParameter(request, "view", null);
+        if (action == null) {
+            // do nothing
+        } else if (action.equals("create")) {
+            try {
+                // Make sure that we're not duplicating names
+                if (viewName != null && !viewName.equals("")) {
+                    // only create names if the user specified one
+                    viewManager.createView(subject, context, viewName);
+                    viewManager.setSelectedView(subject, context, viewName);
+                }
+            } catch (MeasurementViewException mve) {
+                //RequestUtils.setError(request, "resource.common.monitor.visibility.view.error.exists");
+                //return mapping.findForward(KeyConstants.MODE_MON_CUR);
+            }
+        } else if (action.equals("delete")) {
+            // delete action is special, the 'view' param is blanked out because 
+            // you can currently only delete the element you're currently viewing
+            try {
+                viewManager.deleteView(subject, context, this.view);
+            } catch (Exception e) {
+                log.error("Error deleting view " + this.view + " for " + context.toShortString(), e);
+            }
+            List<String> remainingViews = viewManager.getViewNames(subject, context);
+            String newSelectedView = remainingViews.get(0);
+            viewManager.setSelectedView(subject, context, newSelectedView);
+            this.view = newSelectedView;
+        } else if (action.equals("go")) {
+            viewManager.setSelectedView(subject, context, viewName);
+        }
+        return "success";
     }
 }

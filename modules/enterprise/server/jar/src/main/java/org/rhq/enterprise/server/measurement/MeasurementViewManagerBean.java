@@ -61,6 +61,19 @@ public class MeasurementViewManagerBean implements MeasurementViewManagerLocal {
         measurementPreferences.deleteMetricViewData(key, viewName);
     }
 
+    public String getSelectedView(Subject user, EntityContext context) {
+        String key = context.getLegacyKey();
+        MeasurementPreferences measurementPreferences = new MeasurementPreferences(user);
+        String selectedView = measurementPreferences.getSelectedView(key);
+        return selectedView;
+    }
+
+    public void setSelectedView(Subject user, EntityContext context, String viewName) {
+        String key = context.getLegacyKey();
+        MeasurementPreferences measurementPreferences = new MeasurementPreferences(user);
+        measurementPreferences.setSelectedView(key, viewName);
+    }
+
     public List<String> getCharts(Subject user, EntityContext context, String viewName) throws MeasurementViewException {
         try {
             String key = context.getLegacyKey();

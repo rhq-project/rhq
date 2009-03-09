@@ -18,27 +18,46 @@
 
 <script type="text/javascript">
 function reviewAction(option) {
-    var form = document.metricViewsForm;
+    var form = document.metricViewControlsForm;
     if (option.value == 'go') {
-        form.view.disabled = false;
+        setInputDisabled(form.view, false, true);
         form.view.value = option.text;
-        form.submit();
+        
+        // click the button instead of submitting the form, so JSF handling action handler kicks in
+        getElementCrossBrowser('metricViewControlsForm:processAction').click();
     }
     else if (option.value == 'delete') {
+        setInputDisabled(form.view, true, true);
         form.view.value = "";
+        
+        // click the button instead of submitting the form, so JSF handling action handler kicks in
+        getElementCrossBrowser('metricViewControlsForm:processAction').click();
     }
     else if (option.value == 'create') {
-        form.view.disabled = false;
+        setInputDisabled(form.view, false, true);
         return;
     }
-    else if (option.value == 'update') {
+    else if (option.value == 'refresh') {
+        setInputDisabled(form.view, true, true);
         form.view.value = "#{IndicatorChartsUIBean.view}";
     }
-    form.view.disabled = true;
 }
 </script>
 
-<form id="metricViewsForm">
+<h:form id="metricViewControlsForm">
+
+<c:if test="#{IndicatorChartsUIBean.context.resourceId != -1}">
+   <input type="hidden" name="id" value="#{IndicatorChartsUIBean.context.resourceId}" />
+</c:if>
+<c:if test="#{IndicatorChartsUIBean.context.groupId != -1}">
+   <input type="hidden" name="groupId" value="#{IndicatorChartsUIBean.context.groupId}" />
+</c:if>
+<c:if test="#{IndicatorChartsUIBean.context.parentResourceId != -1}">
+   <input type="hidden" name="parent" value="#{IndicatorChartsUIBean.context.parentResourceId}" />
+</c:if>
+<c:if test="#{IndicatorChartsUIBean.context.resourceTypeId != -1}">
+   <input type="hidden" name="type" value="#{IndicatorChartsUIBean.context.resourceTypeId}" />
+</c:if>
 
 <table align="left" width="750" cellpadding="0" cellspacing="0" border="0">
    <tr>
@@ -46,16 +65,16 @@ function reviewAction(option) {
       <table cellpadding="0" cellspacing="1" border="0">
       <tr>
       <td>
-         <h:outputFormat value="#{msg['Filter.ViewLabel']}" />
+         <h:outputFormat value="#{msg['Filter.ActionLabel']}" />
          <select name="action" onchange="reviewAction(this.options[this.selectedIndex]);">
             <option value="update">
-               <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Update']}" />
+               <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Refresh']}" />
                <h:outputText value=" #{IndicatorChartsUIBean.view}" />
             </option>
             <option value="create">
                <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.New']}" />
             </option>
-            <c:if test="#{onf:sizeOf(IndicatorViewsForm.views) > 1}">
+            <c:if test="#{onf:sizeOf(IndicatorChartsUIBean.views) > 1}">
                <option value="delete">
                   <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Delete']}" />
                   <h:outputText value=" #{IndicatorChartsUIBean.view}" />
@@ -66,22 +85,24 @@ function reviewAction(option) {
                <option disabled="disabled">
                   <h:outputFormat value="#{msg['resource.common.monitor.visibility.view.Goto']}" />
                </option>
-               <c:forEach var="viewname" items="#{IndicatorViewsForm.views}">
+               <ui:repeat var="viewname" value="#{IndicatorChartsUIBean.views}">
                   <option value="go">
                      <h:outputText value="#{viewname}" />
                   </option>
-               </c:forEach>
+               </ui:repeat>
             </c:if>
          </select>
       </td>
       <td>
-         <h:outputFormat value="#{msg['common.label.Name']}" />
-         <input type="text" value="#{IndicatorChartsUIBean.view}" readonly="readonly" />
+         <h:outputFormat value="#{msg['Filter.ViewLabel']}" />
+         <input type="text" 
+                id="view" name="view" 
+                value="#{IndicatorChartsUIBean.view}"
+                disabled="disabled" />
       </td>
       <td>
-         <!-- Use hidden input because IE doesn't pass value of of image -->
-         <input type="hidden" name="update" value="#{IndicatorChartsUIBean.view}" />
-         <input type="image" name="submit" src="/images/dash-button_go-arrow.gif" alt="Save View" />
+         <h:commandButton id="processAction" action="#{IndicatorChartsUIBean.processAction}"
+                          value="OK" styleClass="on-pager-button buttonsmall" />
       </td>
       </tr>
       </table>
@@ -89,7 +110,7 @@ function reviewAction(option) {
    </tr>
 </table>
 
-</form>
+</h:form>
 
 </ui:composition>
 

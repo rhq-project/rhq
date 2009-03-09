@@ -146,6 +146,16 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
         setPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + key, builder.toString());
     }
 
+    public String getSelectedView(String key) {
+        String value = getPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + "selected." + key,
+            PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME);
+        return value;
+    }
+
+    public void setSelectedView(String key, String viewName) {
+        setPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + "selected." + key, viewName);
+    }
+
     public static class MetricViewData {
         public List<String> charts;
     }

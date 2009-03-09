@@ -38,8 +38,11 @@ public interface MeasurementViewManagerLocal {
 
     void deleteView(Subject user, EntityContext context, String viewName);
 
-    List<String> getCharts(Subject user, EntityContext context, String viewName)
-        throws MeasurementViewException;
+    String getSelectedView(Subject user, EntityContext context);
+
+    void setSelectedView(Subject user, EntityContext context, String viewName);
+
+    List<String> getCharts(Subject user, EntityContext context, String viewName) throws MeasurementViewException;
 
     void saveCharts(Subject user, EntityContext context, String viewName, List<String> charts);
 

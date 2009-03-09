@@ -42,6 +42,29 @@ public abstract class PagedDataTableUIBean extends EnterpriseFacesContextUIBean 
             pageControl = user.getWebPreferences().getPageControl(view, getMinimumPageSize());
         }
 
+        /*
+         * if an invalid value was already persisted to the database, this needs to be fixed; 
+         * this can occur when the value was valid at some point in the past, but new overrides
+         * changes the valid list of page sizes; generally, the user can correct this themselves
+         * at the user interface by selecting a different pageSize (which would cause the new
+         * value to be persisted), unless there is only one allowable value in which case it's
+         * not possible for the user to correct the issue themselves; to handle both of these
+         * cases, let's just pessimistically determine whether we need to "fix" the PageControl
+         * and, if so, repersist the adjusted values
+         */
+        String pageSize = String.valueOf(pageControl.getPageSize());
+        boolean hasValidSize = false;
+        for (SelectItem validPageSize : getPageSizes()) {
+            if (validPageSize.equals(pageSize)) {
+                hasValidSize = true;
+                break;
+            }
+        }
+        if (hasValidSize == false) {
+            pageControl.setPageSize(getMinimumPageSize());
+            setPageControl(user, view, pageControl);
+        }
+
         return pageControl;
     }
 

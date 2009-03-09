@@ -11,7 +11,7 @@ ANT Script that provides ways to package the agent.
    <!-- in case these weren't passed in (i.e. not invoked via maven), assume some defaults -->
    <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
    <property name="project.version" value="2.0.0-SNAPSHOT"/>
-   <property name="sigar.version" value="1.5.0.1"/>
+   <property name="sigar.version" value="1.6.0"/>
    <property name="getopt.version" value="1.0.13"/>
    <property name="jaxb-api.version" value="2.1"/>
    <property name="jaxb-impl.version" value="2.1"/>

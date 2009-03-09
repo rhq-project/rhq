@@ -110,7 +110,7 @@ public class ProfileServiceFactory
     {
         try
         {
-            getCurrentProfileView().load();
+        	loadProfile(getCurrentProfileView());
         }
         catch (Exception e)
         {
@@ -118,34 +118,46 @@ public class ProfileServiceFactory
         }
     }
 
-    /**
-     * Returns the ManagementView of the profile views with the domain name provided
-     *
-     * @param domainName String of the domain name to find in the Profile Service
-     * @return ManagementView the management view of the domain
-     */
-    public static ManagementView getCurrentProfileView(String domainName)
-    {
-        ManagementView currentProfileView = getProfileService().getViewManager();
-        try
-        {
-            currentProfileView.load();
-        }
-        catch (Exception e)
-        {
-            LOG.error("Could not find " + domainName + " Profile from the Profile Service in JBoss AS 5", e);
-        }
-        return currentProfileView;
-    }
-
     public static DeploymentManager getDeploymentManager() throws Exception {
         DeploymentManager deploymentManager = getProfileService().getDeploymentManager();
         // Load and associate the given profile with the DeploymentManager for future operations. This is mandatory
         // in order for us to be able to successfully invoke the various DeploymentManager methods.
-        deploymentManager.loadProfile(defaultKey);
+        loadProfile(deploymentManager);
         return deploymentManager;
     }
 
+    private static void loadProfile(ManagementView managementView)
+    {
+    	try
+    	{
+    		LOG.info("About to load profile");
+    		long startTime = System.currentTimeMillis();
+    		managementView.load();
+    	    long estimatedTime = System.currentTimeMillis() - startTime;
+    		LOG.info("Loaded profile in " + estimatedTime + " milliseconds");
+    	}
+    	catch (Exception e)
+    	{
+    		LOG.error("Could not find Profile from the Profile Service in JBoss AS 5", e);
+    	}    	
+    }    
+    
+    private static void loadProfile(DeploymentManager deploymentManager)
+    {
+    	try
+    	{
+    		LOG.info("About to load profile via Deployment Manager");
+    		long startTime = System.currentTimeMillis();
+    		deploymentManager.loadProfile(defaultKey);
+    	    long estimatedTime = System.currentTimeMillis() - startTime;
+    		LOG.info("Loaded profile via Deployment Manager in " + estimatedTime + " milliseconds");
+    	}
+    	catch (Exception e)
+    	{
+    		LOG.error("Could not find Profile from the Profile Service in JBoss AS 5", e);
+    	}    	
+    }    
+    
     /**
      * Locate the given ComponentType with the given component name.
      *

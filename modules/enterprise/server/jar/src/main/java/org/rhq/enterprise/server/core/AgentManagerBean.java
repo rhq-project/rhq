@@ -72,11 +72,13 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
 
 /**
- * Manages the access to {@link Agent} objects.
+ * Manages the access to {@link Agent} objects.<br>
+ * <br>
+ * Some of these methods need to execute as fast as possible. So, @ExcludeDefaultInterceptors has been added
+ * to all methods that don't explicitly need a permission check (those without Subject as the first parameter).
  *
  * @author John Mazzitelli
  */
-@ExcludeDefaultInterceptors
 @Stateless
 public class AgentManagerBean implements AgentManagerLocal {
     private final Log log = LogFactory.getLog(AgentManagerBean.class);
@@ -102,12 +104,14 @@ public class AgentManagerBean implements AgentManagerLocal {
     private static final String RHQ_AGENT_LATEST_BUILD_NUMBER = "rhq-agent.latest.build-number";
     private static final String RHQ_AGENT_LATEST_MD5 = "rhq-agent.latest.md5";
 
+    @ExcludeDefaultInterceptors
     public void createAgent(Agent agent) {
         entityManager.persist(agent);
 
         log.debug("Persisted new agent: " + agent);
     }
 
+    @ExcludeDefaultInterceptors
     public void deleteAgent(Agent agent) {
         agent = entityManager.find(Agent.class, agent.getId());
         failoverListManager.deleteServerListsForAgent(agent);
@@ -119,12 +123,14 @@ public class AgentManagerBean implements AgentManagerLocal {
         log.info("Removed agent: " + agent);
     }
 
+    @ExcludeDefaultInterceptors
     public Agent updateAgent(Agent agent) {
         agent = entityManager.merge(agent);
         log.debug("Updated agent: " + agent);
         return agent;
     }
 
+    @ExcludeDefaultInterceptors
     public AgentClient getAgentClient(Agent agent) {
         AgentClient client = null;
 
@@ -142,6 +148,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         return client;
     }
 
+    @ExcludeDefaultInterceptors
     public AgentClient getAgentClient(int resourceId) {
         Agent agent = getAgentByResourceId(resourceId);
 
@@ -152,6 +159,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         return getAgentClient(agent);
     }
 
+    @ExcludeDefaultInterceptors
     public void agentIsShuttingDown(String agentName) {
         Agent downedAgent = getAgentByName(agentName);
 
@@ -162,6 +170,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         return;
     }
 
+    @ExcludeDefaultInterceptors
     public void agentIsAlive(Agent agent) {
         // This method needs to be very fast.  It is currently designed to be called from
         // the security token command authenticator.  It calls this method every time
@@ -185,6 +194,7 @@ public class AgentManagerBean implements AgentManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
+    @ExcludeDefaultInterceptors
     public void checkForSuspectAgents() {
         log.debug("Checking to see if there are agents that we suspect are down...");
 
@@ -219,8 +229,7 @@ public class AgentManagerBean implements AgentManagerLocal {
             // Note that in here we also make sure the agent client is shutdown. We do it here because, even if the agent
             // was already backfilled, we still want to do this in case somehow the client was started again.
             if ((timeSinceLastReport % 21600000L) < (maximumQuietTimeAllowed * 2L)) {
-                log.warn("Have not heard from agent [" + record.getAgentName() + "] since ["
-                    + new Date(record.getLastAvailabilityReport())
+                log.warn("Have not heard from agent [" + record.getAgentName() + "] since [" + new Date(record.getLastAvailabilityReport())
                     + "]. Will be backfilled since we suspect it is down");
 
                 if (serverComm == null) {
@@ -252,10 +261,12 @@ public class AgentManagerBean implements AgentManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
+    @ExcludeDefaultInterceptors
     public List<Agent> getAllAgents() {
         return entityManager.createNamedQuery(Agent.QUERY_FIND_ALL).getResultList();
     }
 
+    /** Methods with page control are typically accessed by the GUI, as such apply permission check. */
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<Agent> getAgentsByServer(Subject subject, Integer serverId, PageControl pageControl) {
@@ -273,10 +284,12 @@ public class AgentManagerBean implements AgentManagerLocal {
         return new PageList<Agent>(results, (int) count, pageControl);
     }
 
+    @ExcludeDefaultInterceptors
     public int getAgentCount() {
         return ((Number) entityManager.createNamedQuery(Agent.QUERY_COUNT_ALL).getSingleResult()).intValue();
     }
 
+    @ExcludeDefaultInterceptors
     public Agent getAgentByAgentToken(String token) {
         Agent agent;
 
@@ -292,6 +305,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         return agent;
     }
 
+    @ExcludeDefaultInterceptors
     public Agent getAgentByName(String agentName) {
         Agent agent;
 
@@ -307,11 +321,13 @@ public class AgentManagerBean implements AgentManagerLocal {
         return agent;
     }
 
+    @ExcludeDefaultInterceptors
     public Agent getAgentByID(int agentId) {
         Agent agent = entityManager.find(Agent.class, agentId);
         return agent;
     }
 
+    @ExcludeDefaultInterceptors
     public Agent getAgentByAddressAndPort(String address, int port) {
         Agent agent;
         try {
@@ -327,6 +343,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         return agent;
     }
 
+    @ExcludeDefaultInterceptors
     public Agent getAgentByResourceId(int resourceId) {
         Agent agent;
 
@@ -342,6 +359,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         return agent;
     }
 
+    @ExcludeDefaultInterceptors
     public Integer getAgentIdByResourceId(int resourceId) {
         Integer agentId;
 
@@ -357,6 +375,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         return agentId;
     }
 
+    @ExcludeDefaultInterceptors
     public Integer getAgentIdByScheduleId(int scheduleId) {
         Integer agentId;
 
@@ -372,6 +391,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         return agentId;
     }
 
+    @ExcludeDefaultInterceptors
     public boolean isAgentVersionSupported(AgentVersion agentVersionInfo) {
         try {
             Properties properties = getAgentUpdateVersionFileContent();
@@ -397,6 +417,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         }
     }
 
+    @ExcludeDefaultInterceptors
     public File getAgentUpdateVersionFile() throws Exception {
         File agentDownloadDir = getAgentDownloadDir();
         File versionFile = new File(agentDownloadDir, "rhq-server-agent-versions.properties");
@@ -439,6 +460,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         return versionFile;
     }
 
+    @ExcludeDefaultInterceptors
     public Properties getAgentUpdateVersionFileContent() throws Exception {
         FileInputStream stream = new FileInputStream(getAgentUpdateVersionFile());
         try {
@@ -453,6 +475,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         }
     }
 
+    @ExcludeDefaultInterceptors
     public File getAgentUpdateBinaryFile() throws Exception {
         File agentDownloadDir = getAgentDownloadDir();
         for (File file : agentDownloadDir.listFiles()) {
@@ -464,6 +487,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         throw new FileNotFoundException("Missing agent update binary in [" + agentDownloadDir + "]");
     }
 
+    @ExcludeDefaultInterceptors
     public File getAgentDownloadDir() throws Exception {
         MBeanServer mbs = MBeanServerLocator.locateJBoss();
         ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");

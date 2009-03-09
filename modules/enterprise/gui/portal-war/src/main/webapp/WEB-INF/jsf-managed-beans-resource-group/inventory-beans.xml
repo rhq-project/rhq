@@ -21,6 +21,12 @@
    </managed-bean>
 
    <managed-bean>
+      <managed-bean-name>ResourceGroupSummaryUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ResourceGroupSummaryUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
       <managed-bean-name>ViewGroupConnectionPropertyHistoryUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyHistoryUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>

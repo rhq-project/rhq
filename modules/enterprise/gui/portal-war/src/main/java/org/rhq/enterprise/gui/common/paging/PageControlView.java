@@ -67,6 +67,7 @@ import org.rhq.enterprise.gui.ha.ViewAgentUIBean;
 import org.rhq.enterprise.gui.ha.ViewPartitionEventUIBean;
 import org.rhq.enterprise.gui.ha.ViewServerUIBean;
 import org.rhq.enterprise.gui.inventory.group.ListResourceGroupMembersUIBean;
+import org.rhq.enterprise.gui.inventory.group.ResourceGroupSummaryUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyDetailsUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyHistoryUIBean;
 import org.rhq.enterprise.gui.inventory.resource.ListChildResourcesUIBean;
@@ -203,7 +204,7 @@ public enum PageControlView {
     /** */
     ResourceGroupMemberList(ListResourceGroupMembersUIBean.class),
 
-    MiniResourceGroupMemberList(ListResourceGroupMembersUIBean.class, true),
+    MiniResourceGroupMemberList(ResourceGroupSummaryUIBean.class),
     /** */
     GroupConnectionPropertyUpdateHistory(ViewGroupConnectionPropertyHistoryUIBean.class),
     /** */
@@ -305,6 +306,7 @@ public enum PageControlView {
     }
 
     public String toString() {
-        return PageControlView.class.getSimpleName() + "[" + (beanClass == null ? "unlimited" : beanClass.getSimpleName()) + "]";
+        return PageControlView.class.getSimpleName() + "["
+            + (beanClass == null ? "unlimited" : beanClass.getSimpleName()) + "]";
     }
 }

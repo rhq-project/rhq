@@ -128,20 +128,19 @@ groupId - the group id of the Group being accessed
 
             </h:panelGrid>
 
-            <ui:param name="resourceGroupMembersDataModel" value="#{ListResourceGroupMembersUIBean.smallDataModel}"/>
-
+            <ui:param name="resourceGroupMembersDataModel" value="#{ResourceGroupSummaryUIBean.dataModel}"/>
 
             <rich:dataTable id="resourceGroupMembersDataTable"
+                            rows="#{PageControl.MiniResourceGroupMemberList.pageSize}"
                             style="width: 80%; margin-left: auto; margin-right: auto;"
                             rendered="#{ResourceGroupUIBean.compatible}"
-                            rows="5"
                             value="#{resourceGroupMembersDataModel}"
                             var="resourceWithAvailability"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer">
 
                 <f:facet name="PageControlView">
-                    <onc:paginationControl id="ResourceGroupMemberList"/>
+                    <onc:paginationControl id="MiniResourceGroupMemberList"/>
                 </f:facet>
 
 
@@ -193,7 +192,8 @@ groupId - the group id of the Group being accessed
 
                             <ui:param name="paginationDataTableName" value="resourceGroupMembersDataTable"/>
                             <ui:param name="paginationDataModel" value="#{resourceGroupMembersDataModel}"/>
-                            <ui:param name="paginationPageControl" value="#{PageControl.ResourceGroupMemberList}"/>
+                            <ui:param name="paginationPageControl" value="#{PageControl.MiniResourceGroupMemberList}"/>
+                            <ui:param name="paginationUIBean" value="#{ResourceGroupSummaryUIBean}" />
                             <ui:include src="/rhq/resource/include/pagination.xhtml"/>
 
                         </rich:column>

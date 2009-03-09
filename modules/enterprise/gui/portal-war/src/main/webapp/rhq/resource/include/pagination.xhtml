@@ -5,6 +5,7 @@
 <html
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:c="http://java.sun.com/jstl/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich"
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax">
@@ -18,15 +19,17 @@
          paginationDataTableName - Name of the data table to be controlled
          paginationDataModel - Data model of the underlying table being controlled (used for total row count)
          paginationPageControl - Page control value to set when changing the number of rows per page
-         
-         
-                                  rendered="#{paginationDataModel.rowCount > PageControlSettingsUIBean.minimumPageSize
-                                              and not paginationPageControl.unlimited}"
 
          <ui:composition>
 
             <h:panelGroup layout="block" style="float: right; margin-right: 20px">
                <ui:param name="paginationDataScrollerName" value="#{paginationDataTableName}Scroller"/>
+               <c:if test="#{empty paginationUIBean}">
+                  <ui:param name="paginationSettingUIBean" value="#{PageControlSettingsUIBean}" />
+               </c:if>
+               <c:if test="#{not empty paginationUIBean}">
+                  <ui:param name="paginationSettingUIBean" value="#{paginationUIBean}" />
+               </c:if>
 
                 <table>
                     <tr>
@@ -37,18 +40,18 @@
                              style="margin-right: 1em; font-weight: bold; "/>
                <h:outputText value="Items Per Page:" 
                              style="margin-right: 2em; font-weight: bold; "
-                             rendered="#{paginationDataModel.rowCount > PageControlSettingsUIBean.minimumPageSize
+                             rendered="#{paginationDataModel.rowCount > paginationSettingUIBean.minimumPageSize
                                          and not paginationPageControl.unlimited
-                                         and paginationPageControl.pageSize > PageControlSettingsUIBean.minimumPageSize}"/>
+                                         and paginationPageControl.pageSize > paginationSettingUIBean.minimumPageSize}"/>
                <h:selectOneListbox id="currentPageSize" 
                                    size="1"
                                    value="#{paginationPageControl.pageSize}"
-                                   rendered="#{paginationDataModel.rowCount > PageControlSettingsUIBean.minimumPageSize
+                                   rendered="#{paginationDataModel.rowCount > paginationSettingUIBean.minimumPageSize
                                                and not paginationPageControl.unlimited}">
                   <a4j:support event="onchange" 
                                status="commonStatus"
                                reRender="#{paginationDataTableName}, #{paginationDataScrollerName}"/>
-                  <f:selectItems value="#{PageControlSettingsUIBean.pageSizes}" />
+                  <f:selectItems value="#{paginationSettingUIBean.pageSizes}" />
                </h:selectOneListbox>
 
                             </td>

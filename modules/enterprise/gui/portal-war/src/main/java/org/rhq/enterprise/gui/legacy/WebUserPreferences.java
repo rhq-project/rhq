@@ -4,10 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.StringTokenizer;
-import java.util.LinkedHashSet;
-import java.util.Iterator;
 import java.util.ListIterator;
+import java.util.StringTokenizer;
 
 import org.rhq.core.clientapi.util.StringUtil;
 import org.rhq.core.domain.auth.Subject;
@@ -79,7 +77,6 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
     public static final String PREF_RECENT_RESOURCES = ".recent.resources";
 
-
     public WebUserPreferences(Subject subject) {
         super(subject);
     }
@@ -91,7 +88,6 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     public void setPageRefreshPeriod(int period) {
         setPreference(PREF_PAGE_REFRESH_PERIOD, Integer.valueOf(period));
     }
-
 
     public String getLastVisitedURL(int previousOffset) {
         List<String> urls = getPreferenceAsList(PREF_LAST_URL);
@@ -330,7 +326,6 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         }
     }
 
-
     public static class FavoriteGroupPortletPreferences {
         public boolean showAvailability;
         private List<Integer> groupIds;
@@ -378,7 +373,6 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         setPreference(PREF_DASH_FAVORITE_RESOURCES, prefs.resourceIds, PREF_ITEM_DELIM);
     }
 
-
     public FavoriteGroupPortletPreferences getFavoriteGroupPortletPreferences() {
         FavoriteGroupPortletPreferences prefs = new FavoriteGroupPortletPreferences();
         prefs.groupIds = getPreferenceAsIntegerList(PREF_DASH_FAVORITE_GROUPS, PREF_ITEM_DELIM);
@@ -388,7 +382,6 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     public void setFavoriteGroupPortletPreferences(FavoriteGroupPortletPreferences prefs) {
         setPreference(PREF_DASH_FAVORITE_GROUPS, prefs.groupIds, PREF_ITEM_DELIM);
     }
-
 
     public static class DashboardPreferences {
         public String leftColumnPortletNames;
@@ -678,13 +671,17 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     }
 
     public PageControl getPageControl(PageControlView view) {
+        return getPageControl(view, 15);
+    }
+
+    public PageControl getPageControl(PageControlView view, int defaultPageSize) {
         if (view == PageControlView.NONE) {
             return PageControl.getUnlimitedInstance();
         }
 
         List<String> pageControlProperties = getPreferenceAsList(view.toString());
         if (pageControlProperties.size() == 0) {
-            PageControl defaultControl = getDefaultPageControl(view);
+            PageControl defaultControl = getDefaultPageControl(view, defaultPageSize);
             return defaultControl;
         } else {
             PageControl pageControl = null;
@@ -720,18 +717,18 @@ public class WebUserPreferences extends SubjectPreferencesBase {
                  * persist and load just fine because the logic in this method and its counterpart
                  * setPageControl are kept in sync
                  */
-                pageControl = getDefaultPageControl(view);
+                pageControl = getDefaultPageControl(view, defaultPageSize);
             }
             return pageControl;
         }
     }
 
-    private PageControl getDefaultPageControl(PageControlView view) {
+    private PageControl getDefaultPageControl(PageControlView view, int defaultPageSize) {
         PageControl defaultPageControl = null;
         if (view.isUnlimited()) {
             defaultPageControl = PageControl.getUnlimitedInstance();
         } else {
-            defaultPageControl = new PageControl(0, 15);
+            defaultPageControl = new PageControl(0, defaultPageSize);
         }
         setPageControl(view, defaultPageControl);
         return defaultPageControl;
@@ -754,8 +751,6 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
         setPreference(view.toString(), pageControlProperties);
     }
-
-
 
     public void addRecentResource(ResourceVisit visit) {
         List<ResourceVisit> visits = getRecentResourceVisits();
@@ -781,16 +776,17 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         for (String string : stringList) {
             String[] data = string.split("\\|");
             if (data.length == 3)
-                visits.add(new ResourceVisit(Integer.parseInt(data[0]),data[2],ResourceVisit.Kind.valueOf(data[1])));
+                visits.add(new ResourceVisit(Integer.parseInt(data[0]), data[2], ResourceVisit.Kind.valueOf(data[1])));
         }
         return visits;
     }
 
-
     public static class ResourceVisit {
         public enum Kind {
-            @Deprecated resource("Resource"), @Deprecated group("Group"),
-            PLATFORM("Platform"), SERVER("Server"), SERVICE("Service"), COMPATIBLE_GROUP("Cluster"), MIXED_GROUP("Group");
+            @Deprecated
+            resource("Resource"), @Deprecated
+            group("Group"), PLATFORM("Platform"), SERVER("Server"), SERVICE("Service"), COMPATIBLE_GROUP("Cluster"), MIXED_GROUP(
+                "Group");
 
             private String displayName;
 
@@ -817,7 +813,6 @@ public class WebUserPreferences extends SubjectPreferencesBase {
             return kind;
         }
 
-
         public int getId() {
             return id;
         }
@@ -832,13 +827,17 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
 
             ResourceVisit that = (ResourceVisit) o;
 
-            if (id != that.id) return false;
-            if (kind != that.kind) return false;
+            if (id != that.id)
+                return false;
+            if (kind != that.kind)
+                return false;
 
             return true;
         }

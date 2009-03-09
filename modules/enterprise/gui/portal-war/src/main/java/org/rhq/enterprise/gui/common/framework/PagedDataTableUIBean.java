@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.common.framework;
 
 import javax.faces.model.DataModel;
+import javax.faces.model.SelectItem;
 
 import org.richfaces.component.UIDataTable;
 import org.richfaces.component.UIDatascroller;
@@ -33,10 +34,12 @@ public abstract class PagedDataTableUIBean extends EnterpriseFacesContextUIBean 
     protected DataModel dataModel;
     private UIDataTable dataTable;
     private UIDatascroller datascroller;
+    private SelectItem[] pageSizes = new SelectItem[] { new SelectItem("15", "15"), new SelectItem("30", "30"),
+        new SelectItem("45", "45") };
 
     public PageControl getPageControl(WebUser user, PageControlView view) {
         if (pageControl == null) {
-            pageControl = user.getWebPreferences().getPageControl(view);
+            pageControl = user.getWebPreferences().getPageControl(view, getMinimumPageSize());
         }
 
         return pageControl;
@@ -73,5 +76,13 @@ public abstract class PagedDataTableUIBean extends EnterpriseFacesContextUIBean 
          * all PagedDataTableUIBeans will be consistent now
          */
         this.datascroller.setMaxPages(5);
+    }
+
+    public SelectItem[] getPageSizes() {
+        return pageSizes;
+    }
+
+    public int getMinimumPageSize() {
+        return 15;
     }
 }

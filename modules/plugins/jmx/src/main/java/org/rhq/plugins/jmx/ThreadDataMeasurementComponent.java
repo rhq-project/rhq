@@ -24,13 +24,21 @@ package org.rhq.plugins.jmx;
 
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.util.Set;
+
+import org.mc4j.ems.connection.bean.EmsBean;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.operation.OperationResult;
 
 public class ThreadDataMeasurementComponent extends MBeanResourceComponent {
+    @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
         if ("threadDump".equals(name)) {
@@ -58,6 +66,27 @@ public class ThreadDataMeasurementComponent extends MBeanResourceComponent {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    protected void getValues(MeasurementReport report, Set requests, EmsBean bean) {
+        super.getValues(report, requests, bean);
+        for (MeasurementScheduleRequest request : (Set<MeasurementScheduleRequest>) requests) {
+            try {
+                if (request.getName().equals("SuspendedThreadCount")) {
+                    log.debug("Getting suspended threads count value...");
+                    report.addData(new MeasurementDataNumeric(request, getSuspendedThreadsCount(bean)));
+                } else if (request.getName().equals("DeadLockedThreadCount")) {
+                    log.debug("Getting deadlocked threads count value...");
+                    report.addData(new MeasurementDataNumeric(request, getDeadLockedThreadsCount(bean)));
+                }
+            } catch (Exception e) {
+                log.error("Failed to obtain measurement [" + request.getName() + "]. Cause: " + e.getMessage());
+            }
+        }
+
+        return;
+    }
+
     private String getStringStackTrace(StackTraceElement[] st) {
         StringBuilder buf = new StringBuilder(2000);
         for (StackTraceElement e : st) {
@@ -77,4 +106,27 @@ public class ThreadDataMeasurementComponent extends MBeanResourceComponent {
             return buf.toString();
         }
     }
+
+    private Double getSuspendedThreadsCount(EmsBean bean) {
+        Double res = 0.0;
+        ThreadMXBean threadBean = bean.getProxy(ThreadMXBean.class);
+        long[] tids = threadBean.getAllThreadIds();
+        ThreadInfo[] tinfos = threadBean.getThreadInfo(tids, Integer.MAX_VALUE);
+        for (ThreadInfo ti : tinfos) {
+            if ((ti != null) && (ti.isSuspended()))
+                res++;
+        }
+        return res;
+    }
+
+    private Double getDeadLockedThreadsCount(EmsBean bean) {
+        ThreadMXBean threadBean = bean.getProxy(ThreadMXBean.class);
+        long[] tids = threadBean.findMonitorDeadlockedThreads();
+        if (tids == null) {
+            return 0.0;
+        } else {
+            return new Double(tids.length);
+        }
+    }
+
 }

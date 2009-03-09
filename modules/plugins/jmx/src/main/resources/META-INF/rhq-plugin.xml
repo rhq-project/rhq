@@ -177,7 +177,16 @@
                  category="performance"
                  property="DaemonThreadCount"
                  description="Count of threads marked as daemons in the system"/>
-
+         <metric property="SuspendedThreadCount"
+                 displayName="Suspended Thread Count"
+                 description="Count of suspended threads"
+                 defaultOn="false"
+                 category="performance" />
+		   <metric property="DeadLockedThreadCount"
+                 displayName="Deadlocked Thread Count"
+                 description="Count of threads that are deadlocked waiting to acquire object monitors. This is a CPU-time consuming metric."
+                 defaultOn="false"
+                 category="performance" />		
          <resource-configuration>
             <c:simple-property name="ThreadContentionMonitoringEnabled" type="boolean"/>
             <c:simple-property name="ThreadCpuTimeEnabled" type="boolean"/>

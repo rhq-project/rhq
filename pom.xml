@@ -60,7 +60,7 @@
     <ems.version>1.2.6</ems.version>
     <postgresql.version>8.3-604.jdbc3</postgresql.version>
     <richfaces.version>3.3.0.GA</richfaces.version>
-    <sigar.version>1.5.0.3</sigar.version>
+    <sigar.version>1.6.0</sigar.version>
 
     <!-- misc properties -->
     <server.quartzDelegate>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</server.quartzDelegate>

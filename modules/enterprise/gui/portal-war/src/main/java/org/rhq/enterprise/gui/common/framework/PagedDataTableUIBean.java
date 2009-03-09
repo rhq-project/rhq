@@ -55,7 +55,7 @@ public abstract class PagedDataTableUIBean extends EnterpriseFacesContextUIBean 
         String pageSize = String.valueOf(pageControl.getPageSize());
         boolean hasValidSize = false;
         for (SelectItem validPageSize : getPageSizes()) {
-            if (validPageSize.equals(pageSize)) {
+            if (validPageSize.getValue().toString().equals(pageSize)) {
                 hasValidSize = true;
                 break;
             }

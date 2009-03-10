@@ -7,8 +7,16 @@ rem    RHQ_AGENT_DEBUG - If this is defined, the script will emit debug
 rem                      messages. It will also enable debug
 rem                      messages to be emitted from the agent itself.
 rem                      If not set or set to "false", debug is turned off.
+rem                      This does not implicitly enable Sigar native system
+rem                      debug mode.  You must explicitly enable
+rem                      RHQ_AGENT_SIGAR_DEBUG in addition to enabling
+rem                      RHQ_AGENT_DEBUG for Sigar logging to be enabled.
 rem
 rem set RHQ_AGENT_DEBUG=true
+
+rem    RHQ_AGENT_SIGAR_DEBUG - Enables Sigar debug mode but only if agent debug
+rem                            is also enabled. See RHQ_AGENT_DEBUG for more.
+rem set RHQ_AGENT_SIGAR_DEBUG=false
 
 rem    RHQ_AGENT_HOME - Defines where the agent's home install directory is.
 rem                     If not defined, it will be assumed to be the parent

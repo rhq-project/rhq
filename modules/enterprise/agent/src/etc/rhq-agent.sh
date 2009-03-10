@@ -180,7 +180,14 @@ _LOG_CONFIG=-Dlog4j.configuration=log4j.xml
 # if debug is enabled, the log configuration is different
 if [ "x$RHQ_AGENT_DEBUG" != "x" ]; then
    if [ "$RHQ_AGENT_DEBUG" != "false" ]; then
-      _LOG_CONFIG="-Dlog4j.configuration=log4j-debug.xml -Dsigar.nativeLogging=true -Di18nlog.dump-stack-traces=true"
+      _LOG_CONFIG="-Dlog4j.configuration=log4j-debug.xml -Di18nlog.dump-stack-traces=true"
+   fi
+fi
+
+# if sigar debug is enabled, the log configuration is different - sigar debugging is noisy, so its got its own debug var
+if [ "x$RHQ_AGENT_SIGAR_DEBUG" != "x" ]; then
+   if [ "$RHQ_AGENT_SIGAR_DEBUG" != "false" ]; then
+      _LOG_CONFIG="$_LOG_CONFIG -Dsigar.nativeLogging=true"
    fi
 fi
 

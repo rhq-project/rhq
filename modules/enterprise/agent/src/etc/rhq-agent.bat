@@ -53,6 +53,11 @@ if "%RHQ_AGENT_DEBUG%" == "false" (
    set RHQ_AGENT_DEBUG=
 )
 
+rem if sigar debug variable is set, it is assumed to be on, unless its value is false
+if "%RHQ_AGENT_SIGAR_DEBUG%" == "false" (
+   set RHQ_AGENT_SIGAR_DEBUG=
+)
+
 if not defined RHQ_AGENT_HOME (
    cd "%RHQ_AGENT_BIN_DIR_PATH%\.."
 ) else (
@@ -142,9 +147,14 @@ rem Execute the VM which starts the agent
 rem ----------------------------------------------------------------------
 
 if defined RHQ_AGENT_DEBUG (
-   set _LOG_CONFIG=-Dlog4j.configuration=log4j-debug.xml -Dsigar.nativeLogging=true -Di18nlog.dump-stack-traces=true
+   set _LOG_CONFIG=-Dlog4j.configuration=log4j-debug.xml -Di18nlog.dump-stack-traces=true
 ) else (
    set _LOG_CONFIG=-Dlog4j.configuration=log4j.xml
+)
+
+rem if sigar debug is enabled, the log configuration is different - sigar debugging is noisy, so its got its own debug var
+if defined RHQ_AGENT_SIGAR_DEBUG (
+   set _LOG_CONFIG=%_LOG_CONFIG% -Dsigar.nativeLogging=true
 )
 
 set CMD="%RHQ_AGENT_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" org.rhq.enterprise.agent.AgentMain %RHQ_AGENT_CMDLINE_OPTS%

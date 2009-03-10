@@ -7,8 +7,16 @@
 #                      messages. It will also enable debug
 #                      messages to be emitted from the agent itself.
 #                      If not set or set to "false", debug is turned off.
+#                      This does not implicitly enable Sigar native system
+#                      debug mode.  You must explicitly enable
+#                      RHQ_AGENT_SIGAR_DEBUG in addition to enabling
+#                      RHQ_AGENT_DEBUG for Sigar logging to be enabled.
 #
 #RHQ_AGENT_DEBUG=true
+
+#    RHQ_AGENT_SIGAR_DEBUG - Enables Sigar debug mode but only if agent debug
+#                            is also enabled. See RHQ_AGENT_DEBUG for more.
+#RHQ_AGENT_SIGAR_DEBUG=false
 
 #    RHQ_AGENT_HOME - Defines where the agent's home install directory is.
 #                     If not defined, it will be assumed to be the parent

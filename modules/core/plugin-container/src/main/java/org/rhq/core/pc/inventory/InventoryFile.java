@@ -101,6 +101,8 @@ public class InventoryFile {
             this.platform = (Resource) ois.readObject();
             connectTypes(this.platform);
             this.resourceContainers = (Map<String, ResourceContainer>) ois.readObject();
+            for (ResourceContainer resourceContainer : this.resourceContainers.values())
+                connectTypes(resourceContainer.getResource());
         } catch (Exception e) {
             throw new PluginContainerException("Cannot load inventory file: " + inventoryFile, e);
         }

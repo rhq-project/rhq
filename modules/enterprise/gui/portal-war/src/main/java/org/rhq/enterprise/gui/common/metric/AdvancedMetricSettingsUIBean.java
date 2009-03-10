@@ -115,21 +115,26 @@ public class AdvancedMetricSettingsUIBean {
             facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Preferences updated",
                 "Your preferences have been successfully updated"));
         } else if (metricType.equalsIgnoreCase(AdvancedMetricSettingsUIBean.INTERVAL_TYPE)) {
-            Long fromTime = this.getFromTime().getTime();
-            Long toTime = this.getToTime().getTime();
-            if ((toTime == null) || (fromTime == null)) {
-                facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Timing error",
-                    "Please fill in the required fields"));
-            } else if (toTime < fromTime) {
-                facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Timing error",
-                    "To time cannot be earlier than before time"));
+            if ((this.getFromTime() == null) || (this.getToTime() == null)) {
+                facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Range select error",
+                    "Please make sure to fill in the from and to dates"));
             } else {
-                rangePreferences.readOnly = true;
-                rangePreferences.begin = fromTime;
-                rangePreferences.end = toTime;
+                Long fromTime = this.getFromTime().getTime();
+                Long toTime = this.getToTime().getTime();
+                if ((toTime == null) || (fromTime == null)) {
+                    facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Timing error",
+                        "Please fill in the required fields"));
+                } else if (toTime < fromTime) {
+                    facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Timing error",
+                        "To time cannot be earlier than before time"));
+                } else {
+                    rangePreferences.readOnly = true;
+                    rangePreferences.begin = fromTime;
+                    rangePreferences.end = toTime;
+                }
+                facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Preferences updated",
+                    "Your preferences have been successfully updated"));
             }
-            facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Preferences updated",
-                "Your preferences have been successfully updated"));
         }
         preferences.setMetricRangePreferences(rangePreferences);
     }

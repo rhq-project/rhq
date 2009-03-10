@@ -526,7 +526,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 // If the live config is different than the persisted config, persist it as the new current config.
                 ResourceConfigurationUpdate update = persistNewAgentReportedResourceConfiguration(memberResource,
                     liveConfig);
-                currentPersistedConfigs.put(memberResource.getId(), update.getConfiguration());
+                if (update != null)
+                    currentPersistedConfigs.put(memberResource.getId(), update.getConfiguration());
+                else
+                    log.error("Current Configuration for " + memberResource
+                            + " does not match latest associated ResourceConfigurationUpdate with SUCCESS status.");
             }
         }
         return currentPersistedConfigs;

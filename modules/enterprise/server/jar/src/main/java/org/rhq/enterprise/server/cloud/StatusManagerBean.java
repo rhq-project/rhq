@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.cloud;
 
-import java.util.EnumSet;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -34,16 +33,12 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.annotation.IgnoreDependency;
 
-import org.rhq.core.domain.alert.AlertCondition;
-import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
-import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator.Cache.Type;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerBean;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -101,29 +96,28 @@ public class StatusManagerBean implements StatusManagerLocal {
         boolean isAlertTemplate = (null != definition.getResourceType());
 
         // protect against template update, it has no resource and/or agent
-        if (isAlertTemplate)
+        if (isAlertTemplate) {
             return;
-
-        // figure out what the conditions on this updated definition are, only only reload the caches that need it
-        EnumSet<AlertConditionCacheCoordinator.Cache.Type> types = getCacheTypes(definition);
-        if (types.contains(Type.Global)) {
-            Server server = serverManager.getServer();
-            server.addStatus(Server.Status.ALERT_DEFINITION);
-
-            if (log.isDebugEnabled()) {
-                log.debug("Marking status, server[id=" + server.getId() + ", status=" + server.getStatus()
-                    + "] for alertDefinition[id=" + alertDefinitionId + "]");
-            }
         }
-        if (types.contains(Type.Agent)) {
-            Agent agent = definition.getResource().getAgent();
 
-            agent.addStatus(Agent.Status.ALERT_DEFINITION);
+        /* 
+         * the old alert definition is needed to know which caches to remove stale entries from; the updated / new
+         * alert definition is needed to know which caches need to be reloaded to get the new conditions; by the time
+         * this method is called, we only have the updated alert definition, thus it's not possible to intelligently
+         * know which of the two caches to reload; so, we need to reload them both to be sure the system is consistent
+         */
+        Server server = serverManager.getServer();
+        server.addStatus(Server.Status.ALERT_DEFINITION);
+        if (log.isDebugEnabled()) {
+            log.debug("Marking status, server[id=" + server.getId() + ", status=" + server.getStatus()
+                + "] for alertDefinition[id=" + alertDefinitionId + "]");
+        }
 
-            if (log.isDebugEnabled()) {
-                log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
-                    + "] for alertDefinition[id=" + alertDefinitionId + "]");
-            }
+        Agent agent = definition.getResource().getAgent();
+        agent.addStatus(Agent.Status.ALERT_DEFINITION);
+        if (log.isDebugEnabled()) {
+            log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
+                + "] for alertDefinition[id=" + alertDefinitionId + "]");
         }
     }
 
@@ -179,21 +173,4 @@ public class StatusManagerBean implements StatusManagerLocal {
         }
     }
 
-    private EnumSet<AlertConditionCacheCoordinator.Cache.Type> getCacheTypes(AlertDefinition definition) {
-        EnumSet<AlertConditionCacheCoordinator.Cache.Type> results = EnumSet.noneOf(Type.class);
-        for (AlertCondition condition : definition.getConditions()) {
-            AlertConditionCategory category = condition.getCategory();
-            if (category == AlertConditionCategory.AVAILABILITY || category == AlertConditionCategory.CONTROL
-                || category == AlertConditionCategory.RESOURCE_CONFIG) {
-                results.add(Type.Global);
-            } else if (category == AlertConditionCategory.BASELINE || category == AlertConditionCategory.CHANGE
-                || category == AlertConditionCategory.EVENT || category == AlertConditionCategory.THRESHOLD
-                || category == AlertConditionCategory.TRAIT) {
-                results.add(Type.Agent);
-            } else {
-                log.warn("No support for setting system status for alert conditions of type " + category);
-            }
-        }
-        return results;
-    }
 }

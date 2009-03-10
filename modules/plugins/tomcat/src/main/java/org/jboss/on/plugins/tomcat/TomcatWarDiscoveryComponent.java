@@ -198,8 +198,12 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
      */
     private String getResponseTimeLogFile(File installPath, String vHost, String contextRoot) {
         File logsDir = new File(installPath, "logs/rt");
-        String rtLogFileName = (isLocalhost(vHost) ? "" : vHost) + (isRoot(contextRoot) ? "/ROOT" : contextRoot) + RT_LOG_FILE_NAME_SUFFIX;
-        rtLogFileName = rtLogFileName.substring(1);
+        String rtLogFileName = null;
+        if (isLocalhost(vHost)) {
+            rtLogFileName = (isRoot(contextRoot) ? "ROOT" : contextRoot.substring(1)) + RT_LOG_FILE_NAME_SUFFIX;
+        } else {
+            rtLogFileName = vHost + (isRoot(contextRoot) ? "/ROOT" : contextRoot) + RT_LOG_FILE_NAME_SUFFIX;
+        }
         rtLogFileName = rtLogFileName.replace('/', '_');
         File rtLogFile = new File(logsDir, rtLogFileName);
         String result;

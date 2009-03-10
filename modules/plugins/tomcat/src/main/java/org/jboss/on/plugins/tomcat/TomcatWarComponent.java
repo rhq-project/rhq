@@ -119,8 +119,6 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private static final String BACKUP_FILE_EXTENSION = ".rej";
-
     /**
      * Name of the backing package type that will be used when discovering packages. This corresponds to the name
      * of the package type defined in the plugin descriptor. For simplicity, the package type for both EARs and

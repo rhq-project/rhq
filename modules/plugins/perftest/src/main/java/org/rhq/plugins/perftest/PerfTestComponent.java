@@ -47,6 +47,8 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.plugins.perftest.event.PerfTestEventPoller;
 import org.rhq.plugins.perftest.measurement.MeasurementFactory;
 import org.rhq.plugins.perftest.configuration.SimpleConfigurationFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * JON resource component for handling resources defined in the performance test scenario.
@@ -55,15 +57,21 @@ import org.rhq.plugins.perftest.configuration.SimpleConfigurationFactory;
  */
 public class PerfTestComponent implements ResourceComponent, MeasurementFacet, ContentFacet, ConfigurationFacet {
     // Attributes  --------------------------------------------
+    private Log log = LogFactory.getLog(PerfTestComponent.class);
 
     private ResourceContext resourceContext;
     private EventPoller eventPoller;
+    private Configuration resourceConfiguration;
 
     // ResourceComponent Implementation  --------------------------------------------
 
     public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = context;
         startEventPollers();
+        ScenarioManager scenarioManager = ScenarioManager.getInstance();
+        if (!scenarioManager.isEnabled())
+            log.warn("[" + this.resourceContext.getResourceType().getName()
+                    + "] perftest Resources exist in inventory, but no Perf test scenario is enabled.");
     }
 
     public void stop() {
@@ -72,21 +80,23 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
 
     public AvailabilityType getAvailability() {
         return AvailabilityType.UP;
+        // TODO: Return DOWN once in a while?
     }
 
     // MeasurementFacet Implementation  --------------------------------------------
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+        ScenarioManager scenarioManager = ScenarioManager.getInstance();
+        if (!scenarioManager.isEnabled())
+            return;
+
+        String resourceTypeName = resourceContext.getResourceType().getName();
         /* Currently this will use the same value generator for each metric defined for the resource type.
          * In other words, you either get values for every metric defined for the resource type or for none. There may
          * be an eventual need for finer grained control.
          *
          * jdobies, Jun 25, 2007
          */
-
-        String resourceTypeName = resourceContext.getResourceType().getName();
-
-        ScenarioManager scenarioManager = ScenarioManager.getInstance();
         MeasurementFactory measurementFactory = scenarioManager.getMeasurementFactory(resourceTypeName);
 
         for (MeasurementScheduleRequest metric : metrics) {
@@ -164,11 +174,12 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
-        SimpleConfigurationFactory configurationFactory = new SimpleConfigurationFactory();
-        @SuppressWarnings({"UnnecessaryLocalVariable"})
-        Configuration configuration = configurationFactory.generateConfiguration(
-                this.resourceContext.getResourceType().getResourceConfigurationDefinition());
-        return configuration;
+        if (this.resourceConfiguration == null) {
+            SimpleConfigurationFactory configurationFactory = new SimpleConfigurationFactory();
+            this.resourceConfiguration = configurationFactory.generateConfiguration(
+                    this.resourceContext.getResourceType().getResourceConfigurationDefinition());
+        }
+        return this.resourceConfiguration;
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
@@ -181,7 +192,8 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
         {
             throw new RuntimeException(e);
         }
+        this.resourceConfiguration = report.getConfiguration();
         report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-        // TODO: Return FAILURE and INPROGRESS once in a while.
+        // TODO: Perhaps return FAILURE and INPROGRESS once in a while.
     }
 }

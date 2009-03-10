@@ -179,19 +179,25 @@ public class NativeSystemInfo implements SystemInfo {
     public List<ProcessInfo> getAllProcesses() {
         ArrayList<ProcessInfo> processes = new ArrayList<ProcessInfo>();
         long[] pids = null;
-        Sigar sigar = new Sigar();
+        final int timeout = 2 * 60 * 1000; // 2 minutes
+        Sigar sigarImpl = new Sigar();
+        SigarProxy sigar = SigarProxyCache.newInstance(sigarImpl, timeout);
 
+        log.debug("Retrieving PIDs of all running processes..." );
+        long startTime = System.currentTimeMillis();
         try {
             pids = sigar.getProcList();
+            long elapsedTime = System.currentTimeMillis() - startTime;
+            log.debug("Retrieval of " + pids.length + " PIDs took " + elapsedTime + " ms." );
+            // NOTE: Do not close sigarImpl on success, as the ProcessInfos created below will reuse it.
         } catch (Exception e) {
-            log.warn("Failed to get list of all processes", e);
-        } finally {
-            sigar.close();
+            log.warn("Failed to retrieve PIDs of all running processes.", e);
+            sigarImpl.close();
         }
 
         if (pids != null) {
             for (long pid : pids) {
-                ProcessInfo info = new ProcessInfo(pid);
+                ProcessInfo info = new ProcessInfo(pid, sigar);
                 processes.add(info);
             }
         }
@@ -224,7 +230,6 @@ public class NativeSystemInfo implements SystemInfo {
     }
 
     public int getNumberOfCpus() {
-
         try {
             // NOTE: This will return the number of cores, not the number of sockets.
             return sigar.getCpuPercList().length;

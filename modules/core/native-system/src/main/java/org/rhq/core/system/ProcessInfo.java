@@ -24,6 +24,9 @@ package org.rhq.core.system;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Collections;
+import java.io.File;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.ProcCpu;
@@ -37,6 +40,7 @@ import org.hyperic.sigar.ProcTime;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarNotImplementedException;
 import org.hyperic.sigar.SigarPermissionDeniedException;
+import org.hyperic.sigar.SigarProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,9 +48,12 @@ import org.jetbrains.annotations.Nullable;
  * Encapsulates information about a known process.
  *
  * @author John Mazzitelli
+ * @author Ian Springer
  */
 public class ProcessInfo {
     private final Log log = LogFactory.getLog(ProcessInfo.class.getName());
+
+    protected boolean initialized;
 
     // these are static - values remain for the life of this object
     protected long pid;
@@ -54,6 +61,7 @@ public class ProcessInfo {
     protected String baseName;
     protected String[] commandLine;
     protected Map<String, String> environmentVariables;
+    protected SigarProxy sigar;
 
     // these are refreshed and may change during the life of the process
     protected ProcState procState;
@@ -64,15 +72,22 @@ public class ProcessInfo {
     protected ProcFd procFd;
     protected ProcCred procCred;
     protected ProcCredName procCredName;
+    protected Map<String, String> procEnv;
 
     private boolean loggedPermissionsError = false;
     private static final String UNKNOWN = "?";
 
+    // useful for mocking this object, this is purposely not public
     protected ProcessInfo() {
-        // useful for mocking this object, this is purposefully not public
     }
 
     public ProcessInfo(long pid) throws SystemInfoException {
+        this(pid, new Sigar());
+    }
+
+    public ProcessInfo(long pid, SigarProxy sigar) throws SystemInfoException {
+        this.pid = pid;
+        this.sigar = sigar;
         update(pid);
     }
 
@@ -81,130 +96,141 @@ public class ProcessInfo {
     }
 
     private void update(long pid) throws SystemInfoException {
-        Sigar sigar = new Sigar();
-
+        long startTime = System.currentTimeMillis();
         try {
             ProcState procState = null;
             try {
                 procState = sigar.getProcState(pid);
             } catch (Exception e) {
-                handleSigarCallException(e);
+                handleSigarCallException(e, "getProcState");
             }
 
             ProcExe procExe = null;
             try {
                 procExe = sigar.getProcExe(pid);
             } catch (Exception e) {
-                handleSigarCallException(e);
-            }
-
-            ProcTime procTime = null;
-            try {
-                procTime = sigar.getProcTime(pid);
-            } catch (Exception e) {
-                handleSigarCallException(e);
+                handleSigarCallException(e, "getProcExe");
             }
 
             // If this is the first time we are refreshing this object, initialize the static data.
-            // We only have to do these once, since this data never changes during the life of the process.
-            if (this.pid == 0) {
+            // We only have to do this once, since this data never changes during the life of the process.
+            if (!this.initialized) {
                 String[] procArgs = null;
                 try {
                     procArgs = sigar.getProcArgs(pid);
                 } catch (Exception e) {
-                    handleSigarCallException(e);
+                    handleSigarCallException(e, "getProcArgs");
                 }
 
-                Map<String, String> procEnv = null;
-                try {
-                    procEnv = sigar.getProcEnv(pid);
-                } catch (Exception e) {
-                    handleSigarCallException(e);
-                }
-
-                this.pid = pid;
                 this.name = (procExe != null) ? procExe.getName() : UNKNOWN;
                 this.baseName = determineBaseName(procExe, procState);
                 this.commandLine = (procArgs != null) ? procArgs : new String[0];
-                this.environmentVariables = new HashMap<String, String>();
 
-                if (procEnv == null) {
-                    log.debug("SIGAR returned a null environment for [" + this.baseName + "] process with pid ["
-                        + this.pid + "]");
-                } else {
-                    SystemInfo systemInfo = SystemInfoFactory.createJavaSystemInfo();
-                    boolean isWindows = systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS;
-                    if (isWindows) {
-                        // Windows environment is case-insensitive so convert variable names to all-caps,
-                        // this way we will be able to do case-insensitive lookups from the map later
-                        for (Map.Entry<String, String> env : procEnv.entrySet()) {
-                            this.environmentVariables.put(env.getKey().toUpperCase(), env.getValue());
-                        }
-                    } else {
-                        this.environmentVariables.putAll(procEnv);
+                this.procEnv = null;
+                try {
+                    this.procEnv = sigar.getProcEnv(pid);
+                    if (this.procEnv == null) {
+                        log.debug("SIGAR returned a null environment for [" + this.baseName + "] process with pid ["
+                            + this.pid + "].");
                     }
+                } catch (Exception e) {
+                    handleSigarCallException(e, "getProcEnv");
                 }
+
+                this.initialized = true;
             }
 
             // now refresh the process data
             this.procState = procState;
             this.procExe = procExe;
-            this.procTime = procTime;
+
+            try {
+                this.procTime = sigar.getProcTime(pid);
+            } catch (Exception e) {
+                handleSigarCallException(e, "getProcTime");
+            }
 
             try {
                 this.procMem = sigar.getProcMem(pid);
             } catch (Exception e) {
-                handleSigarCallException(e);
+                handleSigarCallException(e, "getProcMem");
             }
 
             try {
                 this.procCpu = sigar.getProcCpu(pid);
             } catch (Exception e) {
-                handleSigarCallException(e);
+                handleSigarCallException(e, "getProcCpu");
             }
 
             try {
                 this.procFd = sigar.getProcFd(pid);
             } catch (Exception e) {
-                handleSigarCallException(e);
+                handleSigarCallException(e, "getProcFd");
             }
 
             try {
                 this.procCred = sigar.getProcCred(pid);
             } catch (Exception e) {
-                handleSigarCallException(e);
+                handleSigarCallException(e, "getProcCred");
             }
 
             try {
                 this.procCredName = sigar.getProcCredName(pid);
             } catch (Exception e) {
-                handleSigarCallException(e);
-            }
+                handleSigarCallException(e, "getProcCredName");
+            }            
         } catch (Exception e) {
             throw new SystemInfoException(e);
-        } finally {
-            sigar.close();
+        }
+        if (log.isDebugEnabled()) {
+            long elapsedTime = System.currentTimeMillis() - startTime;
+            log.debug("Retrieval of process info for pid " + pid + " took " + elapsedTime + " ms." );
         }
     }
 
-    private void handleSigarCallException(Exception e) {
+    public void destroy() throws SystemInfoException {
+        if (this.sigar instanceof Sigar) {
+            try
+            {
+                ((Sigar)this.sigar).close();
+            }
+            catch (RuntimeException e)
+            {
+                throw new SystemInfoException(e);
+            }
+        }
+    }
+
+    private void handleSigarCallException(Exception e, String methodName) {
+        if (isWindows() && (this.pid == 0 || this.pid == 4))
+            // On Windows, Pid 0 and Pid 4 are special Kernel processes (Pid 0 is the "System Idle Process" and Pid 4 is
+            // the "System" process). For these processes, it's normal for many of the Sigar.getProc calls to fail, so
+            // there's no need to log anything.
+            return;
+        String procName = (this.baseName != null) ? this.baseName : "<unknown>";
         if (e instanceof SigarPermissionDeniedException) {
             if (!this.loggedPermissionsError) {
                 // Only log permissions errors once per process.
                 String currentUserName = System.getProperty("user.name");
                 log
-                    .debug("Unable to obtain all process info for process with pid ["
-                        + this.pid
-                        + "]. The process is most likely owned by a user other than the user that owns the RHQ plugin container's process ("
-                        + currentUserName + ").");
+                    .trace("Unable to obtain all info for [" + procName + "] process with pid [" + this.pid
+                            + "] - call to " + methodName + "failed. "
+                            + "The process is most likely owned by a user other than the user that owns the RHQ plugin container's process ("
+                            + currentUserName + ").");
                 this.loggedPermissionsError = true;
             }
         } else if (e instanceof SigarNotImplementedException) {
-            log.debug("Unable to obtain all process info for process with pid [" + this.pid + "]. Cause: " + e);
+            log.trace("Unable to obtain all info for [" + procName + "] process with pid [" + this.pid + "] - call to "
+                    + methodName + "failed. Cause: " + e);
         } else {
-            log.debug("Unexpected error occurred while looking up process info for process with pid [" + this.pid
-                + "]. Did the process die? Cause: " + e);
+            log.debug("Unexpected error occurred while looking up info for [" + procName + "] process with pid ["
+                    + this.pid + "] - call to " + methodName + " failed. Did the process die? Cause: " + e);
         }
+    }
+
+    private static boolean isWindows()
+    {
+        return File.separatorChar == '\\';
     }
 
     private String determineBaseName(ProcExe exe, ProcState state) {
@@ -267,7 +293,24 @@ public class ProcessInfo {
     }
 
     public Map<String, String> getEnvironmentVariables() {
-        return environmentVariables;
+        if (this.procEnv == null) {
+            return Collections.emptyMap();
+        }
+        if (this.environmentVariables == null) {
+            this.environmentVariables = new HashMap(this.procEnv.size());
+            SystemInfo systemInfo = SystemInfoFactory.createJavaSystemInfo();
+            boolean isWindows = systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS;
+            if (isWindows) {
+                // Windows environment is case-insensitive so convert variable names to all-caps,
+                // this way we will be able to do case-insensitive lookups from the map later
+                for (Map.Entry<String, String> env : this.procEnv.entrySet()) {
+                    this.environmentVariables.put(env.getKey().toUpperCase(), env.getValue());
+                }
+            } else {
+                this.environmentVariables.putAll(procEnv);
+            }
+        }
+        return this.environmentVariables;
     }
 
     /**
@@ -280,15 +323,14 @@ public class ProcessInfo {
     @Nullable
     public String getEnvironmentVariable(@NotNull
     String name) {
-        SystemInfo systemInfo = SystemInfoFactory.createJavaSystemInfo();
-        boolean isWindows = systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS;
-
-        // Windows env names are case insensitive, so convert the specified name to all-caps before doing the lookup
-        if (this.environmentVariables == null) {
+        if (this.procEnv == null) {
             return null;
         }
 
-        return this.environmentVariables.get((isWindows) ? name.toUpperCase() : name);
+        SystemInfo systemInfo = SystemInfoFactory.createJavaSystemInfo();
+        boolean isWindows = systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS;
+        // Windows env names are case insensitive, so convert the specified name to all-caps before doing the lookup.
+        return getEnvironmentVariables().get((isWindows) ? name.toUpperCase() : name);
     }
 
     public long getParentPid() throws SystemInfoException {

@@ -29,6 +29,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.Collections;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.logging.Log;
@@ -99,7 +100,8 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
             report.setStartTime(System.currentTimeMillis());
             if ((autoDiscoveryRequest == null)
                 || autoDiscoveryRequest.getScanTypes().contains(AutoDiscoveryScanType.Plugin)) {
-                pluginDiscovery(report);
+                List<ProcessInfo> processInfos = getProcessInfos();
+                pluginDiscovery(report, processInfos);
             }
             report.setEndTime(System.currentTimeMillis());
             log.debug(String.format("Server discovery scan took %d ms.", (report.getEndTime() - report.getStartTime())));
@@ -123,13 +125,30 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
         return report;
     }
 
+    private List<ProcessInfo> getProcessInfos()
+    {
+        SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
+        log.debug("Retrieving process table...");
+        long startTime = System.currentTimeMillis();
+        List<ProcessInfo> processInfos = null;
+        try {
+            processInfos = systemInfo.getAllProcesses();
+        } catch (UnsupportedOperationException uoe) {
+            log.debug("Cannot perform process scan - not supported on this platform. (" + systemInfo.getClass() + ")");
+        }        
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        log.debug("Retrieval of process table took " + elapsedTime + " ms." );
+        return processInfos;
+    }
+
     /**
      * Goes through server plugins running auto discovery
      *
      * @param report the inventory report to which to add the discovered servers
+     * @param processInfos
      */
     @SuppressWarnings("unchecked")
-    private void pluginDiscovery(InventoryReport report) {
+    private void pluginDiscovery(InventoryReport report, List<ProcessInfo> processInfos) {
         inventoryManager.executePlatformScan();
 
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
@@ -159,29 +178,9 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                     report.addAddedRoot(platformContainer.getResource());
                 }
 
-                // perform auto-discovery PIQL queries now to see if we can auto-detect resources that are running now
-                List<ProcessScanResult> scanResults = new ArrayList<ProcessScanResult>();
-                SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
-
-                try {
-                    Set<ProcessScan> processScans = serverType.getProcessScans();
-                    if (processScans != null && !processScans.isEmpty()) {
-                        ProcessInfoQuery piq = new ProcessInfoQuery(systemInfo.getAllProcesses());
-                        for (ProcessScan processScan : processScans) {
-                            List<ProcessInfo> queryResults = piq.query(processScan.getQuery());
-                            if ((queryResults != null) && (queryResults.size() > 0)) {
-                                for (ProcessInfo autoDiscoveredProcess : queryResults) {
-                                    scanResults.add(new ProcessScanResult(processScan, autoDiscoveredProcess));
-                                    log.info("Process scan auto-detected new server resource: scan=[" + processScan
-                                        + "], discovered-process=[" + autoDiscoveredProcess + "]");
-                                }
-                            }
-                        }
-                    }
-                } catch (UnsupportedOperationException uoe) {
-                    log.debug("Cannot perform process scan - not supported on this platform. (" + systemInfo.getClass()
-                        + ")");
-                }
+                // Perform auto-discovery PIQL queries now to see if we can auto-detect servers that are currently
+                // running.
+                List<ProcessScanResult> scanResults = performProcessScans(processInfos, serverType);
 
                 Set<Resource> discoveredServers = this.inventoryManager.executeComponentDiscovery(serverType, component, 
                         platformComponent, platformContainer.getResourceContext(), scanResults);
@@ -206,6 +205,29 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                 log.error("Error in auto discovery", e);
             }
         }
+    }
+
+    private List<ProcessScanResult> performProcessScans(List<ProcessInfo> processInfos, ResourceType serverType)
+    {
+        if (processInfos == null || processInfos.isEmpty())
+            return Collections.emptyList();
+        List<ProcessScanResult> scanResults = new ArrayList<ProcessScanResult>();
+        Set<ProcessScan> processScans = serverType.getProcessScans();
+        if (processScans != null && !processScans.isEmpty()) {
+            log.debug("Executing process scans for server type " + serverType + "...");
+            ProcessInfoQuery piq = new ProcessInfoQuery(processInfos);
+            for (ProcessScan processScan : processScans) {
+                List<ProcessInfo> queryResults = piq.query(processScan.getQuery());
+                if ((queryResults != null) && (queryResults.size() > 0)) {
+                    for (ProcessInfo autoDiscoveredProcess : queryResults) {
+                        scanResults.add(new ProcessScanResult(processScan, autoDiscoveredProcess));
+                        log.info("Process scan auto-detected new server resource: scan=[" + processScan
+                            + "], discovered-process=[" + autoDiscoveredProcess + "]");
+                    }
+                }
+            }
+        }
+        return scanResults;
     }
 
     private boolean verifyComponentCompatibility(ResourceDiscoveryComponent component,

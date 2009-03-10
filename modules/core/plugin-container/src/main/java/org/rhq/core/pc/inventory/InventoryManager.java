@@ -1090,11 +1090,20 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return null;
     }
 
-    private static boolean matches(Resource newResource, Resource existingResource) {
-        return ((existingResource.getId() != 0) && (existingResource.getId() == newResource.getId()))
-            || (existingResource.getUuid().equals(newResource.getUuid()))
-            || (existingResource.getResourceType().equals(newResource.getResourceType()) && existingResource
-                .getResourceKey().equals(newResource.getResourceKey()));
+    private boolean matches(Resource newResource, Resource existingResource) {
+        try
+        {
+            return ((existingResource.getId() != 0) && (existingResource.getId() == newResource.getId()))
+                || (existingResource.getUuid().equals(newResource.getUuid()))
+                || (existingResource.getResourceType().equals(newResource.getResourceType()) && existingResource
+                    .getResourceKey().equals(newResource.getResourceKey()));
+        }
+        catch (RuntimeException e)
+        {
+            log.error("Runtime error while attempting to compare existing Resource " + existingResource
+                    + " to new Resource " + newResource);
+            throw e;
+        }
     }
 
     /**
@@ -1507,6 +1516,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     Set<Resource> executeComponentDiscovery(ResourceType resourceType, ResourceDiscoveryComponent discoveryComponent,
         ResourceComponent parentComponent, ResourceContext parentResourceContext,
         List<ProcessScanResult> processScanResults) {
+        long startTime = System.currentTimeMillis();
+        log.debug("Executing discovery for [" + resourceType.getName() + "] Resources...");
         Set<Resource> newResources;
         try {
             ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, parentComponent,
@@ -1542,10 +1553,17 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
         } catch (Throwable e) {
             // TODO GH: Add server/parent - up/down semantics so this won't happen just because a server is not up
-            log.warn("Failed to execute discovery for Resources of type " + resourceType, e);
+            long elapsedTime = System.currentTimeMillis() - startTime;
+            log.warn("Failure during discovery for [" + resourceType.getName() + "] Resources - failed after "
+                    + elapsedTime + " ms.", e);
             return Collections.EMPTY_SET;
         }
 
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        if (elapsedTime > 1000)
+            log.warn("***PERF*** discovery for [" + resourceType.getName() + "] Resources took " + elapsedTime + " ms.");
+        else
+            log.debug("Discovery for [" + resourceType.getName() + "] Resources completed in " + elapsedTime + " ms.");
         return newResources;
     }
 

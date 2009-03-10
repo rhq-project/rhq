@@ -52,17 +52,19 @@ public abstract class PagedDataTableUIBean extends EnterpriseFacesContextUIBean 
          * cases, let's just pessimistically determine whether we need to "fix" the PageControl
          * and, if so, repersist the adjusted values
          */
-        String pageSize = String.valueOf(pageControl.getPageSize());
-        boolean hasValidSize = false;
-        for (SelectItem validPageSize : getPageSizes()) {
-            if (validPageSize.getValue().toString().equals(pageSize)) {
-                hasValidSize = true;
-                break;
+        if (view.isUnlimited() == false) {
+            String pageSize = String.valueOf(pageControl.getPageSize());
+            boolean hasValidSize = false;
+            for (SelectItem validPageSize : getPageSizes()) {
+                if (validPageSize.getValue().toString().equals(pageSize)) {
+                    hasValidSize = true;
+                    break;
+                }
             }
-        }
-        if (hasValidSize == false) {
-            pageControl.setPageSize(getMinimumPageSize());
-            setPageControl(user, view, pageControl);
+            if (hasValidSize == false) {
+                pageControl.setPageSize(getMinimumPageSize());
+                setPageControl(user, view, pageControl);
+            }
         }
 
         return pageControl;

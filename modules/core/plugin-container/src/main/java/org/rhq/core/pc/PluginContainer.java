@@ -341,7 +341,7 @@ public class PluginContainer implements ContainerService {
         // so we do not do it. We'll just log a warning and let the thread keep going.
         Lock readLock = rwLock.readLock();
         try {
-            if (!readLock.tryLock(60, TimeUnit.SECONDS)) {
+            if (!readLock.tryLock(60L, TimeUnit.SECONDS)) {
                 String msg = "There may be a deadlock in the plugin container.";
                 log.warn(msg, new Throwable(msg));
                 readLock = null;
@@ -360,7 +360,7 @@ public class PluginContainer implements ContainerService {
         // so we do not do it. We'll just log a warning and let the thread keep going.
         Lock writeLock = rwLock.writeLock();
         try {
-            if (!writeLock.tryLock(60, TimeUnit.SECONDS)) {
+            if (!writeLock.tryLock(60L, TimeUnit.SECONDS)) {
                 String msg = "There may be a deadlock in the plugin container.";
                 log.warn(msg, new Throwable(msg));
                 writeLock = null;

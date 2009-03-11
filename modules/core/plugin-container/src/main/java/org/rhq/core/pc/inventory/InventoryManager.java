@@ -28,11 +28,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.IdentityHashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -641,26 +641,36 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Set<Integer> deletedResourceIds = new LinkedHashSet<Integer>();
         Set<Resource> newlyCommittedResources = new LinkedHashSet<Resource>();
         Set<String> allUuids = new HashSet<String>();
-        processSyncInfo(syncInfo, syncedResources, unknownResourceIds, modifiedResourceIds, deletedResourceIds,
-            newlyCommittedResources, allUuids);
-        mergeUnknownResources(unknownResourceIds);
-        mergeModifiedResources(modifiedResourceIds);
-        purgeObsoleteResources(allUuids);
-        syncSchedulesAndTemplatesForNewlyImportedResources(newlyCommittedResources);
-        if (log.isDebugEnabled()) {
-            if (!deletedResourceIds.isEmpty()) {
-                log.debug("Ignored " + deletedResourceIds.size() + " DELETED resources.");
+
+        // rhq-980 Adding agent-side logging to report any unexpected synch failure. 
+        try {
+            processSyncInfo(syncInfo, syncedResources, unknownResourceIds, modifiedResourceIds, deletedResourceIds,
+                newlyCommittedResources, allUuids);
+            mergeUnknownResources(unknownResourceIds);
+            mergeModifiedResources(modifiedResourceIds);
+            purgeObsoleteResources(allUuids);
+            syncSchedulesAndTemplatesForNewlyImportedResources(newlyCommittedResources);
+            if (log.isDebugEnabled()) {
+                if (!deletedResourceIds.isEmpty()) {
+                    log.debug("Ignored " + deletedResourceIds.size() + " DELETED resources.");
+                }
+                log.debug(String.format("DONE syncing local inventory (%d)ms.",
+                    (System.currentTimeMillis() - startTime)));
             }
-            log.debug(String.format("DONE syncing local inventory (%d)ms.", (System.currentTimeMillis() - startTime)));
-        }
-        // If we synced any Resources, one or more Resource components were probably started,
-        // so run an avail check to report on their availabilities immediately. Also kick off
-        // a service scan to scan those Resources for new child Resources. Kick both tasks off
-        // asynchronously.
-        if (!syncedResources.isEmpty() || !unknownResourceIds.isEmpty() || !modifiedResourceIds.isEmpty()) {
-            performAvailabilityChecks(true);
-            this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor, 5,
-                TimeUnit.SECONDS);
+            // If we synced any Resources, one or more Resource components were probably started,
+            // so run an avail check to report on their availabilities immediately. Also kick off
+            // a service scan to scan those Resources for new child Resources. Kick both tasks off
+            // asynchronously.
+            if (!syncedResources.isEmpty() || !unknownResourceIds.isEmpty() || !modifiedResourceIds.isEmpty()) {
+                performAvailabilityChecks(true);
+                this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor, 5,
+                    TimeUnit.SECONDS);
+            }
+        } catch (Throwable t) {
+            log.warn("Failed to synchronize local inventory with Server inventory for Resource " + syncInfo.getId()
+                + " and its descendants: " + t.getMessage());
+            // convert to runtime exception so as not to change the api
+            throw new RuntimeException(t);
         }
     }
 
@@ -692,9 +702,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     public void performServiceScan(int resourceId) {
         ResourceContainer resourceContainer = getResourceContainer(resourceId);
-        if (resourceContainer==null) {
+        if (resourceContainer == null) {
             if (log.isDebugEnabled())
-                log.debug("No resource container for resource with id " + resourceId + " found, not performing a serviceScan");
+                log.debug("No resource container for resource with id " + resourceId
+                    + " found, not performing a serviceScan");
             return;
         }
         Resource resource = resourceContainer.getResource();
@@ -929,8 +940,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @throws PluginContainerException            for all other errors
      */
     @SuppressWarnings("unchecked")
-    public void activateResource(Resource resource, @NotNull ResourceContainer container, boolean updatedPluginConfig)
-        throws InvalidPluginConfigurationException, PluginContainerException {
+    public void activateResource(Resource resource, @NotNull
+    ResourceContainer container, boolean updatedPluginConfig) throws InvalidPluginConfigurationException,
+        PluginContainerException {
         ResourceComponent component = container.getResourceComponent();
 
         // if the component already exists and is started, and the resource's plugin config has not changed, there is
@@ -1091,17 +1103,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private boolean matches(Resource newResource, Resource existingResource) {
-        try
-        {
+        try {
             return ((existingResource.getId() != 0) && (existingResource.getId() == newResource.getId()))
                 || (existingResource.getUuid().equals(newResource.getUuid()))
                 || (existingResource.getResourceType().equals(newResource.getResourceType()) && existingResource
                     .getResourceKey().equals(newResource.getResourceKey()));
-        }
-        catch (RuntimeException e)
-        {
+        } catch (RuntimeException e) {
             log.error("Runtime error while attempting to compare existing Resource " + existingResource
-                    + " to new Resource " + newResource);
+                + " to new Resource " + newResource);
             throw e;
         }
     }
@@ -1143,7 +1152,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         resource.setAgent(this.agent);
         ResourceContainer container = getResourceContainer(resource.getId());
-        if (container==null) {
+        if (container == null) {
             if (log.isDebugEnabled())
                 log.debug("Could not find a container for resource " + resource);
             return;
@@ -1392,8 +1401,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (PluginContainer.getInstance().getMeasurementManager() != null) {
             PluginContainer.getInstance().getMeasurementManager().scheduleCollection(scheduleRequests);
         } else {
-            // MeasurementManager hasn't been started yet
+            // MeasurementManager hasn't yet been started (or is unavailable due to locking)
+            // rhq-980 Adding defensive logging to report any issues installing schedules.            
+            log.info("MeasurementManager not available, persisting but not yet scheduling schedule requests.");
             for (ResourceMeasurementScheduleRequest resourceRequest : scheduleRequests) {
+                if (log.isDebugEnabled()) {
+                    log
+                        .debug("MeasurementManager not available, persisting but not yet scheduling schedule requests for resource id: "
+                            + resourceRequest.getResourceId());
+                }
                 ResourceContainer resourceContainer = getResourceContainer(resourceRequest.getResourceId());
                 resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
             }
@@ -1530,22 +1546,24 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
                     if (discoveredResource == null) {
                         throw new IllegalStateException("Plugin error: Discovery class "
-                                + discoveryComponent.getClass().getName()
-                                + " returned a Set containing one or more null items.");
+                            + discoveryComponent.getClass().getName()
+                            + " returned a Set containing one or more null items.");
                     }
                     if (!discoveredResource.getResourceType().equals(resourceType)) {
                         throw new IllegalStateException("Plugin error: Discovery class "
-                                + discoveryComponent.getClass().getName()
-                                + " returned a DiscoveredResourceDetails with an incorrect ResourceType (was "
-                                + discoveredResource.getResourceType().getName() + " but should have been "
-                                + resourceType.getName());
+                            + discoveryComponent.getClass().getName()
+                            + " returned a DiscoveredResourceDetails with an incorrect ResourceType (was "
+                            + discoveredResource.getResourceType().getName() + " but should have been "
+                            + resourceType.getName());
                     }
-                    if (null != pluginConfigObjects.put(discoveredResource.getPluginConfiguration(), discoveredResource)) {
-                        throw new IllegalStateException("The plugin component " + discoveryComponent.getClass().getName() +
-                            " returned multiple resources that point to the same plugin configuration object on the " +
-                            "resource type [" + resourceType + "]. This is not allowed, please use " +
-                            "ResoureDiscoveryContext.getDefaultPluginConfiguration() " +
-                            "for each discovered resource.");
+                    if (null != pluginConfigObjects
+                        .put(discoveredResource.getPluginConfiguration(), discoveredResource)) {
+                        throw new IllegalStateException("The plugin component "
+                            + discoveryComponent.getClass().getName()
+                            + " returned multiple resources that point to the same plugin configuration object on the "
+                            + "resource type [" + resourceType + "]. This is not allowed, please use "
+                            + "ResoureDiscoveryContext.getDefaultPluginConfiguration() "
+                            + "for each discovered resource.");
                     }
                     Resource newResource = InventoryManager.createNewResource(discoveredResource);
                     newResources.add(newResource);
@@ -1555,13 +1573,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // TODO GH: Add server/parent - up/down semantics so this won't happen just because a server is not up
             long elapsedTime = System.currentTimeMillis() - startTime;
             log.warn("Failure during discovery for [" + resourceType.getName() + "] Resources - failed after "
-                    + elapsedTime + " ms.", e);
+                + elapsedTime + " ms.", e);
             return Collections.EMPTY_SET;
         }
 
         long elapsedTime = System.currentTimeMillis() - startTime;
         if (elapsedTime > 1000)
-            log.warn("***PERF*** discovery for [" + resourceType.getName() + "] Resources took " + elapsedTime + " ms.");
+            log
+                .warn("***PERF*** discovery for [" + resourceType.getName() + "] Resources took " + elapsedTime
+                    + " ms.");
         else
             log.debug("Discovery for [" + resourceType.getName() + "] Resources completed in " + elapsedTime + " ms.");
         return newResources;
@@ -1895,8 +1915,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                             removeResource(resource.getId());
                             removedResources++;
                         }
-                    }
-                    else {
+                    } else {
                         log.debug("No container found for uuid: " + uuid);
                     }
                 }

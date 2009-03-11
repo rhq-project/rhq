@@ -348,7 +348,7 @@ public class PersistenceUtility {
             queryGroupBy = matcher.group(2);
         } else {
             queryBase = query;
-            queryGroupBy = query;
+            queryGroupBy = "";
         }
 
         queryWithPagingSorting.append(queryBase);

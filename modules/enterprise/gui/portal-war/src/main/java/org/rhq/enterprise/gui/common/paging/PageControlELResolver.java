@@ -167,11 +167,16 @@ public class PageControlELResolver extends ELResolver {
                     // update it
                     PageControl pc = preferences.getPageControl(view);
                     int pageSize = (Integer) value;
-                    pc.setPageSize(pageSize);
-                    pc.setPageNumber(0); // reset the page number too
+                    if (pc.getPageSize() == pageSize) {
+                        // nothing to do
+                        log.debug("PageControlView[" + view + "] needs no changes " + pc);
+                    } else {
+                        pc.setPageSize(pageSize);
+                        pc.setPageNumber(0); // reset the page number too
 
-                    log.debug("Setting PageControlView[" + view + "] to " + pc);
-                    preferences.setPageControl(view, pc);
+                        log.debug("Setting PageControlView[" + view + "] to " + pc);
+                        preferences.setPageControl(view, pc);
+                    }
                 }
 
                 // don't let other resolvers touch this

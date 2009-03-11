@@ -125,8 +125,6 @@
                </h:selectOneListbox>
             </h:panelGrid>
 
-            <h:panelGrid columns="1" width="90%" style="min-width: 800px;">
-
                <ui:param name="autoDiscoveryQueueDataModel" value="#{AutoDiscoveryQueueUIBean.dataModel}"/>
                <rich:dataTable id="autoDiscoveryQueueDataTable"
                                rows="#{PageControl.AutoDiscoveryPlatformList.pageSize}"
@@ -294,8 +292,6 @@
                   </f:facet>
 
                </rich:dataTable>
-
-            </h:panelGrid>
 
             <!-- use a hidden button trick (which sends the same action a column click would) so request params aren't lost -->
             <h:commandButton id="hiddenQueueButton" style="visibility: hidden;" action="#{AutoDiscoveryQueueUIBean.rebuildTable}" />

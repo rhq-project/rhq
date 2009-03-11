@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.common.metric;
 
+import java.util.Calendar;
 import java.util.Date;
 
 import javax.faces.application.FacesMessage;
@@ -121,12 +122,16 @@ public class AdvancedMetricSettingsUIBean {
             } else {
                 Long fromTime = this.getFromTime().getTime();
                 Long toTime = this.getToTime().getTime();
+                Long now = Calendar.getInstance().getTime().getTime();
                 if ((toTime == null) || (fromTime == null)) {
                     facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Timing error",
                         "Please fill in the required fields"));
                 } else if (toTime < fromTime) {
                     facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Timing error",
                         "To time cannot be earlier than before time"));
+                } else if (toTime > now || fromTime > now) {
+                    facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Timing error",
+                        "Cannot set time interval in the future"));
                 } else {
                     rangePreferences.readOnly = true;
                     rangePreferences.begin = fromTime;

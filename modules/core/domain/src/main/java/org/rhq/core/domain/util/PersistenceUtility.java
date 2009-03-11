@@ -340,14 +340,14 @@ public class PersistenceUtility {
         // pagination calculations and ordering are based off of a projection of the results, which may be grouped
         queryWithPagingSorting.append("SELECT * FROM ( ");
         queryWithPagingSorting.append(query);
-        // for oracle, then order by
+        // for oracle, first order by and project the results
         buildOrderBy(queryWithPagingSorting, pageControl.getOrderingFieldsAsArray());
         queryWithPagingSorting.append(" )");
 
         int minRowNum = pageControl.getStartRow() + 1;
         int maxRowNum = minRowNum + pageControl.getPageSize() - 1;
 
-        // for oracle, first paginate
+        // for oracle, then paginate off of the projection
         queryWithPagingSorting.append(" WHERE rownum <= ").append(maxRowNum);
         queryWithPagingSorting.append("   AND rownum >= ").append(minRowNum);
 

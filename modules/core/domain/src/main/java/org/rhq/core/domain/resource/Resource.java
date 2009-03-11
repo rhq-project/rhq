@@ -1450,8 +1450,8 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @Override
     public String toString() {
         StringBuilder buffer = new StringBuilder();
-        buffer.append(getClass().getSimpleName());
-        buffer.append("[id=").append(this.id);
+        buffer.append(Resource.class.getSimpleName()).append("[");
+        buffer.append("id=").append(this.id);
         String typeName = (this.resourceType != null) ? this.resourceType.getName() : "<null>";
         buffer.append(", type=").append(typeName);
         buffer.append(", key=").append(this.resourceKey);

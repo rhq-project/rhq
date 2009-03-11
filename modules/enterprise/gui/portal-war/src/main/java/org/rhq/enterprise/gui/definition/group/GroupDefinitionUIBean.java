@@ -97,10 +97,7 @@ public class GroupDefinitionUIBean extends PagedDataTableUIBean {
     public static GroupDefinition lookupGroupDefinition() throws GroupDefinitionException {
         int groupDefinitionId = FacesContextUtility.getRequiredRequestParameter(
             ParamConstants.GROUP_DEFINITION_ID_PARAM, Integer.class);
-        GroupDefinition groupDefinition = LookupUtil.getGroupDefinitionManager().getById(groupDefinitionId);
-        if (groupDefinition == null)
-            throw new IllegalArgumentException("No group definition exists with id [" + groupDefinitionId + "].");
-        return groupDefinition;
+        return LookupUtil.getGroupDefinitionManager().getById(groupDefinitionId);
     }
 
     @Override

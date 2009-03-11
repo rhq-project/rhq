@@ -80,6 +80,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.hibernate.LazyInitializationException;
 
 /**
  * Represents a JON managed resource (i.e. a platform, server, or service).
@@ -1448,12 +1449,30 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     @Override
     public String toString() {
-        String type = (resourceType != null) ? resourceType.getName() : "<null>";
-        String parent = (parentResource != null) ? parentResource.getName() : "<null>";
-
-        return "Resource[id=" + this.id + ", type=" + type + ", key=" + this.resourceKey + ", name=" + this.name
-            + ", parent=" + parent + ((this.version != null && !this.version.equals(""))
-            ? ", version=" + this.version : "") + "]";
+        StringBuilder buffer = new StringBuilder();
+        buffer.append(getClass().getSimpleName());
+        buffer.append("[id=").append(this.id);
+        String typeName = (this.resourceType != null) ? this.resourceType.getName() : "<null>";
+        buffer.append(", type=").append(typeName);
+        buffer.append(", key=").append(this.resourceKey);
+        buffer.append(", name=").append(this.name);
+        String parentName;
+        try
+        {
+            parentName = (this.parentResource != null) ? this.parentResource.getName() : "<null>";
+        }
+        catch (LazyInitializationException lie)
+        {
+            // It may not be possible to get the parent name if this is a detached Entity on the Server side,
+            // since this.parentResource is lazily fetched.
+            parentName = null;
+        }
+        if (parentName != null)
+            buffer.append(", parent=").append(parentName);
+        if (this.version != null && !this.version.equals(""))
+            buffer.append(", version=").append(this.version);
+        buffer.append("]");
+        return buffer.toString();
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

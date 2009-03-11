@@ -224,7 +224,11 @@ public abstract class PagedListDataModel<T> extends DataModel {
     private PagedDataTableUIBean getPagedDataTableUIBean() {
         FacesContext facesContext = FacesContextUtility.getFacesContext();
         ExternalContext externalContext = facesContext.getExternalContext();
-        return (PagedDataTableUIBean) externalContext.getRequestMap().get(beanName);
+        PagedDataTableUIBean result = (PagedDataTableUIBean) externalContext.getRequestMap().get(beanName);
+        if (result == null) {
+            result = (PagedDataTableUIBean) externalContext.getSessionMap().get(beanName);
+        }
+        return result;
     }
 
     public PageControl getPageControl() {

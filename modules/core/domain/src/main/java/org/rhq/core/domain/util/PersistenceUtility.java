@@ -340,6 +340,8 @@ public class PersistenceUtility {
         // pagination calculations and ordering are based off of a projection of the results, which may be grouped
         queryWithPagingSorting.append("SELECT * FROM ( ");
         queryWithPagingSorting.append(query);
+        // for oracle, then order by
+        buildOrderBy(queryWithPagingSorting, pageControl.getOrderingFieldsAsArray());
         queryWithPagingSorting.append(" )");
 
         int minRowNum = pageControl.getStartRow() + 1;
@@ -348,9 +350,6 @@ public class PersistenceUtility {
         // for oracle, first paginate
         queryWithPagingSorting.append(" WHERE rownum <= ").append(maxRowNum);
         queryWithPagingSorting.append("   AND rownum >= ").append(minRowNum);
-
-        // for oracle, then order by
-        buildOrderBy(queryWithPagingSorting, pageControl.getOrderingFieldsAsArray());
 
         return queryWithPagingSorting.toString();
     }

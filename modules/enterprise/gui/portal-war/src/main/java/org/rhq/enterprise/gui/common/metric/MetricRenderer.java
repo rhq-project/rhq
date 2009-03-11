@@ -65,8 +65,8 @@ public class MetricRenderer extends Renderer {
 
         MetricComponent metric = (MetricComponent) component;
         MetricRangePreferences rangePreferences = metric.getMetricRangePreferences();
-        TimeUnit preferencesUnit = TimeUnit.getUnitByMetricOrdinal(rangePreferences.unit);
-        int lastN = rangePreferences.lastN;
+        TimeUnit preferencesUnit = null;
+        int lastN = 0;
 
         writer.startElement("b", null);
         writer.write("Metric Display Range:");
@@ -76,6 +76,8 @@ public class MetricRenderer extends Renderer {
             writer.write(new Date(rangePreferences.begin) + " to " + new Date(rangePreferences.end));
             writer.write(" ");
         } else {
+            preferencesUnit = TimeUnit.getUnitByMetricOrdinal(rangePreferences.unit);
+            lastN = rangePreferences.lastN;
             writer.write("Last :");
 
             writer.write(" ");
@@ -141,8 +143,12 @@ public class MetricRenderer extends Renderer {
 
         writer.startElement("script", null);
         writer.writeAttribute("type", "text/javascript", null);
-        writer.write("changeComboBox('" + MetricComponent.VALUE + "','" + lastN + "');");
-        writer.write("changeComboBox('" + MetricComponent.UNIT + "','" + preferencesUnit.name() + "');");
+        if (rangePreferences.readOnly) {
+            writer.write("changeComboBox('" + MetricComponent.VALUE + "','" + lastN + "');");
+        } else {
+            writer.write("changeComboBox('" + MetricComponent.UNIT + "','" + preferencesUnit.name() + "');");
+        }
+
         writer.endElement("script");
     }
 

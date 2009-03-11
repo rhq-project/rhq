@@ -181,20 +181,21 @@ public class TomcatServerOperationsDelegate {
         }
         ProcessExecutionResults results = this.systemInfo.executeProcess(processExecution);
         logExecutionResults(results);
-
+        Throwable error = results.getError();
+        Integer exitCode = results.getExitCode();
         AvailabilityType avail;
-        if (results.getError() == null && results.getExitCode() == 0) {
-            avail = waitForServerToStart(start);
-        } else {
-            log.error("Error from process execution while starting the Tomcat instance. Exit code [" + results.getExitCode() + "]", results
-                .getError());
-            if (results.getError() != null) {
-                log.error("Error from process execution while starting the Tomcat instance. Exit code [" + results.getExitCode() + "]", results.getError());
-                }
-            else {
-                log.error("Start script returned non-zero exit code while starting the Tomcat instance. Exit code [" + results.getExitCode() + "]");
-                }
+
+        if ((null != error) || ((null != exitCode) && (0 != exitCode))) {
+            String message = "Script returned error or non-zero exit code while starting the Tomcat instance. Exit code [" + exitCode + "]";
+            if (null == error) {
+                log.error(message);
+            } else {
+                log.error(message, error);
+            }
             avail = this.serverComponent.getAvailability();
+
+        } else {
+            avail = waitForServerToStart(start);
         }
 
         // If, after the loop, the Server is still down, consider the start to be a failure.
@@ -272,13 +273,16 @@ public class TomcatServerOperationsDelegate {
         }
         ProcessExecutionResults results = this.systemInfo.executeProcess(processExecution);
         logExecutionResults(results);
+        Throwable error = results.getError();
+        Integer exitCode = results.getExitCode();
 
-        if (results.getExitCode() != 0) {
-            throw new RuntimeException("Error executing shutdown script while stopping Tomcat instance. Exit code [" + results.getExitCode() + "]");
-        }
-        if (results.getError() != null) {
-            throw new RuntimeException("Error executing shutdown script while stopping Tomcat instance. Exit code [" + results.getExitCode() + "]",
-                results.getError());
+        if ((null != error) || ((null != exitCode) && (0 != exitCode))) {
+            String message = "Script returned error or non-zero exit code while shutting down the Tomcat instance. Exit code [" + exitCode + "]";
+            if (null == error) {
+                throw new RuntimeException(message);
+            } else {
+                throw new RuntimeException(message, error);
+            }
         }
 
         return "Server has been shut down.";

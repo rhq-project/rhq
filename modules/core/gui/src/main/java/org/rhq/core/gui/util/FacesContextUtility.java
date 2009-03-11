@@ -162,7 +162,13 @@ public abstract class FacesContextUtility {
         String fqn = type.getName();
         String clazz = fqn.substring(fqn.lastIndexOf('.') + 1);
 
+        // first try to look in the request for the bean
         T result = (T) getRequest().getAttribute(clazz);
+
+        if (result == null) {
+            // look in the session, if the bean wasn't found in the request
+            result = (T) getRequest().getSession().getAttribute(clazz);
+        }
 
         if (result == null) {
             try {

@@ -90,22 +90,45 @@
       <operation
          name="start"
          displayName="Start"
-         description="Start this Tomcat server. The script used is specified in Control Properties." />
+         description="Start this Tomcat server. The script used is specified in Control Properties.">
+         <results>
+            <c:simple-property
+               name="operationResult"
+               description="Server Start results." />
+         </results>
+      </operation>
 
       <operation
          name="shutdown"
          displayName="Shutdown"
-         description="Shutdown this Tomcat server. The script used is specified in Control Properties." />
+         description="Shutdown this Tomcat server. The script used is specified in Control Properties.">
+         <results>
+            <c:simple-property
+               name="operationResult"
+               description="Server Shutdown results." />
+         </results>
+      </operation>
 
       <operation
          name="restart"
          displayName="Restart"
-         description="Restart this Tomcat server. The script used is specified in Control Properties." />
+         description="Restart this Tomcat server. The scripts used are specified in Control Properties.">
+         <results>
+            <c:simple-property
+               name="operationResult"
+               description="Server Restart results." />
+         </results>
+      </operation>
 
       <operation
          name="storeConfig"
          displayName="Store Configuration"
          description="Save current state to the server.xml file.">
+         <results>
+            <c:simple-property
+               name="operationResult"
+               description="Server Store Configuration results." />
+         </results>         
       </operation>
 
       <metric
@@ -521,7 +544,7 @@
          <metric
             property="Catalina:type=ThreadPool,name=%scheme%-%port%:currentThreadsBusy"
             displayName="Threadpool Threads Active"
-            description="Number of current busy threads."            
+            description="Number of current busy threads."
             defaultOn="true"
             category="utilization"
             displayType="summary" />
@@ -529,7 +552,7 @@
          <metric
             property="Catalina:type=ThreadPool,name=%scheme%-%port%:currentThreadCount"
             displayName="Threadpool Threads Allocated"
-            description="Number of current threads."            
+            description="Number of current threads."
             defaultOn="true"
             category="utilization"
             displayType="summary" />
@@ -537,7 +560,7 @@
          <metric
             property="Catalina:type=ThreadPool,name=%scheme%-%port%:maxThreads"
             displayName="Threadpool Max Threads"
-            description="Maximum number of threads that can be allocated for the ThreadPool."            
+            description="Maximum number of threads that can be allocated for the ThreadPool."
             defaultOn="true"
             category="utilization"
             displayType="detail" />

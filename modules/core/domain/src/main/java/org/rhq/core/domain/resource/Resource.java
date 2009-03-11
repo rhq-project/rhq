@@ -80,7 +80,6 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.hibernate.LazyInitializationException;
 
 /**
  * Represents a JON managed resource (i.e. a platform, server, or service).
@@ -1461,10 +1460,11 @@ public class Resource implements Comparable<Resource>, Externalizable {
         {
             parentName = (this.parentResource != null) ? this.parentResource.getName() : "<null>";
         }
-        catch (LazyInitializationException lie)
+        catch (RuntimeException e)
         {
-            // It may not be possible to get the parent name if this is a detached Entity on the Server side,
-            // since this.parentResource is lazily fetched.
+            // It may not be possible to get the parent name if this is a detached Entity on the Server side, since
+            // this.parentResource is lazily fetched. NOTE: We can't specifically catch LazyInitializationException
+            // here, since Hibernate classes do not exist on the Agent side.
             parentName = null;
         }
         if (parentName != null)

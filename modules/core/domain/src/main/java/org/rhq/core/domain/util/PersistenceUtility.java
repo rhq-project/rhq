@@ -55,6 +55,8 @@ public class PersistenceUtility {
 
     private static final Pattern COUNT_QUERY_PATTERN = Pattern.compile("^(\\s*SELECT\\s+)(.*?)(\\s+FROM.*)",
         Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
+    private static final Pattern GROUP_BY_PATTERN = Pattern.compile("^(.*?)(\\s+GROUP\\s+BY.*)",
+        Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
 
     public static final String HIBERNATE_STATISTICS_MBEAN_OBJECTNAME = "Hibernate:type=statistics,application=RHQ";
 
@@ -336,7 +338,20 @@ public class PersistenceUtility {
     // wanted to combine postgres and oracle methods, but org.rhq.core.db.DatabaseType objects are not visible to domain
     public static String addOracleNativePagingSortingToQuery(String query, PageControl pageControl) {
         StringBuilder queryWithPagingSorting = new StringBuilder(query.length() + 50);
-        queryWithPagingSorting.append(query);
+
+        // note, this does not work if you have groupby in nested queries
+        Matcher matcher = GROUP_BY_PATTERN.matcher(query);
+        String queryBase = null;
+        String queryGroupBy = null;
+        if (matcher.find()) {
+            queryBase = matcher.group(1);
+            queryGroupBy = matcher.group(2);
+        } else {
+            queryBase = query;
+            queryGroupBy = query;
+        }
+
+        queryWithPagingSorting.append(queryBase);
 
         int minRowNum = pageControl.getStartRow() + 1;
         int maxRowNum = minRowNum + pageControl.getPageSize() - 1;
@@ -344,6 +359,8 @@ public class PersistenceUtility {
         // for oracle, first paginate
         queryWithPagingSorting.append(" AND rownum <= ").append(maxRowNum);
         queryWithPagingSorting.append(" AND rownum >= ").append(minRowNum);
+
+        queryWithPagingSorting.append(queryGroupBy);
 
         // for oracle, then order by
         buildOrderBy(queryWithPagingSorting, pageControl.getOrderingFieldsAsArray());

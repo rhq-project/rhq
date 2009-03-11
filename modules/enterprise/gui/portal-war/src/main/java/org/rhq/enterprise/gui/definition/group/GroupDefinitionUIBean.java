@@ -21,6 +21,8 @@ package org.rhq.enterprise.gui.definition.group;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.auth.Subject;
@@ -39,6 +41,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class GroupDefinitionUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "GroupDefinitionUIBean";
+
+    private static final Log log = LogFactory.getLog(GroupDefinitionUIBean.class);
 
     private GroupDefinition groupDefinition;
 
@@ -122,7 +126,14 @@ public class GroupDefinitionUIBean extends PagedDataTableUIBean {
 
             GroupDefinitionManagerLocal groupDefinitionManager = LookupUtil.getGroupDefinitionManager();
 
-            return groupDefinitionManager.getManagedResourceGroups(user, groupDefinitionId, pc);
+            try {
+                return groupDefinitionManager.getManagedResourceGroups(user, groupDefinitionId, pc);
+            } catch (GroupDefinitionException gde) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to retrieve managed groups: "
+                    + gde.getMessage());
+                log.error("Failed to retrieve managed groups", gde);
+                return new PageList<ResourceGroupComposite>();
+            }
         }
     }
 }

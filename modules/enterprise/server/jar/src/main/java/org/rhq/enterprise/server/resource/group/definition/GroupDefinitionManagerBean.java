@@ -433,7 +433,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<ResourceGroupComposite> getManagedResourceGroups(Subject subject, int groupDefinitionId,
-        PageControl pc) {
+        PageControl pc) throws GroupDefinitionException {
         pc.initDefaultOrderingField("rg.name");
 
         Connection conn = null;
@@ -464,6 +464,8 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
                 Object[] next = new Object[] { upCount, downCount, groupId };
                 rawResults.add(next);
             }
+        } catch (Throwable t) {
+            throw new GroupDefinitionException(t);
         } finally {
             JDBCUtil.safeClose(conn, stmt, null);
         }

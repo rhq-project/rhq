@@ -22,19 +22,23 @@
  */
 package org.jboss.on.plugins.tomcat;
 
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
+import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
 /**
  * Plugin component for representing Tomcat connectors. Much of the functionality is left to the super class,
@@ -66,6 +70,21 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
     private final Log log = LogFactory.getLog(this.getClass());
 
     @Override
+    public AvailabilityType getAvailability() {
+        // When the connector is stopped its associated GlobalRequestProcessor will not exist. We test
+        // for availability by checking the existence of objectName Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%.
+        Configuration config = this.getResourceContext().getPluginConfiguration();
+        String scheme = config.getSimpleValue(PLUGIN_CONFIG_SCHEME, "");
+        String port = config.getSimpleValue(PLUGIN_CONFIG_PORT, "");
+        String objectName = "Catalina:type=GlobalRequestProcessor,name=" + scheme + "-" + port;
+        EmsConnection connection = getEmsConnection();
+        ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(objectName);
+        List<EmsBean> beans = connection.queryBeans(queryUtility.getTranslatedQuery());
+
+        return (beans.isEmpty()) ? AvailabilityType.DOWN : AvailabilityType.UP;
+    }
+
+    @Override
     public void start(ResourceContext<TomcatServerComponent> context) {
         if (UNKNOWN.equals(context.getPluginConfiguration().getSimple(PLUGIN_CONFIG_SCHEME).getStringValue())) {
             throw new InvalidPluginConfigurationException(
@@ -77,8 +96,7 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
-        TomcatServerComponent parentComponent = getResourceContext().getParentResourceComponent();
-        parentComponent.getEmsConnection(); // reload the EMS connection
+        getEmsConnection(); // reload the EMS connection
 
         for (MeasurementScheduleRequest request : requests) {
             String name = request.getName();

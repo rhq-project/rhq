@@ -26,6 +26,7 @@ import java.util.Map;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+import javax.faces.model.SelectItem;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -61,6 +62,17 @@ public class AutoDiscoveryQueueUIBean extends PagedDataTableUIBean {
         }
 
         return dataModel;
+    }
+
+    @Override
+    public SelectItem[] getPageSizes() {
+        return new SelectItem[] { new SelectItem("10", "10"), new SelectItem("25", "25"), new SelectItem("50", "50"),
+            new SelectItem("75", "75"), new SelectItem("100", "100") };
+    }
+
+    @Override
+    public int getMinimumPageSize() {
+        return 10;
     }
 
     public Map<Resource, List<Resource>> getPlatformsAndServers() {

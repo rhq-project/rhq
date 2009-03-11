@@ -723,7 +723,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
         }
     }
 
-    private PageControl getDefaultPageControl(PageControlView view, int defaultPageSize) {
+    public PageControl getDefaultPageControl(PageControlView view, int defaultPageSize) {
         PageControl defaultPageControl = null;
         if (view.isUnlimited()) {
             defaultPageControl = PageControl.getUnlimitedInstance();

@@ -188,7 +188,25 @@ public abstract class PagedListDataModel<T> extends DataModel {
             startRow = pageControl.getStartRow();
         }
 
-        return pageList.get(currentRowIndex - startRow);
+        /* 
+         * March 11, 2009 - the only currently known way this can fail is if the countQuery returned 0 but the
+         * actual data query returned nothing; generally, this is a programming error, but it's possible that
+         * the facelet changed (new columns shown, other columns removed) or the query itself changed (and perhaps
+         * the sortable columns are different); in either case, let's be paranoid and try it all over again with
+         * a default PageControl object for this PageControlView
+         */
+        int getIndex = currentRowIndex - startRow;
+        if (getIndex < 0 || getIndex >= pageList.size()) {
+            // getting the default will repersist the new PageControl too
+            pageControl = getDefaultPageControl();
+            pageList = getDataPage(pageControl);
+
+            // pageControl startRow should now be zero
+            this.currentRowIndex = 0; // and tell the framework to start back at 0
+            getIndex = 0; // now the getIndex should be 0
+        }
+
+        return pageList.get(getIndex);
     }
 
     @Override
@@ -234,6 +252,11 @@ public abstract class PagedListDataModel<T> extends DataModel {
     public PageControl getPageControl() {
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
         return getPagedDataTableUIBean().getPageControl(user, pageControlView);
+    }
+
+    public PageControl getDefaultPageControl() {
+        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        return getPagedDataTableUIBean().getDefaultPageControl(user, pageControlView);
     }
 
     public void setPageControl(PageControl pageControl) {

@@ -70,6 +70,10 @@ public abstract class PagedDataTableUIBean extends EnterpriseFacesContextUIBean 
         return pageControl;
     }
 
+    public PageControl getDefaultPageControl(WebUser user, PageControlView view) {
+        return user.getWebPreferences().getDefaultPageControl(view, getMinimumPageSize());
+    }
+
     public void setPageControl(WebUser user, PageControlView view, PageControl pageControl) {
         WebUserPreferences preferences = user.getWebPreferences();
         preferences.setPageControl(view, pageControl);

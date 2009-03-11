@@ -491,12 +491,6 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             Long upCount = (Long) row[0];
             Long downCount = (Long) row[1];
             ResourceGroup group = groupMap.get(groupIds.get(i++));
-            /*            Number groupId = (Number) row[3];
-                        String groupName = (String) row[4];
-                        GroupCategory groupCategory = (GroupCategory) row[5];
-                        String groupByClause = (String) row[6];
-                        ResourceGroupComposite composite = new ResourceGroupComposite(upCount, downCount, memberCount, groupId,
-                            groupName, groupCategory, groupByClause);*/
             ResourceGroupComposite composite = new ResourceGroupComposite(upCount, downCount, group);
             results.add(composite);
         }

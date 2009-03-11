@@ -18,8 +18,8 @@
  */
 package org.rhq.enterprise.gui.definition.group;
 
-import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+import javax.faces.application.FacesMessage;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,13 +46,9 @@ public class GroupDefinitionUIBean extends PagedDataTableUIBean {
 
     private GroupDefinition groupDefinition;
 
-    public GroupDefinitionUIBean() {
-        try {
-            this.groupDefinition = lookupGroupDefinition();
-        } catch (GroupDefinitionException gde) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Problem looking up group definition: "
-                + gde.getMessage());
-        }
+    public GroupDefinitionUIBean() throws GroupDefinitionException
+    {
+        this.groupDefinition = lookupGroupDefinition();
     }
 
     public int getGroupDefinitionId() {
@@ -101,7 +97,10 @@ public class GroupDefinitionUIBean extends PagedDataTableUIBean {
     public static GroupDefinition lookupGroupDefinition() throws GroupDefinitionException {
         int groupDefinitionId = FacesContextUtility.getRequiredRequestParameter(
             ParamConstants.GROUP_DEFINITION_ID_PARAM, Integer.class);
-        return LookupUtil.getGroupDefinitionManager().getById(groupDefinitionId);
+        GroupDefinition groupDefinition = LookupUtil.getGroupDefinitionManager().getById(groupDefinitionId);
+        if (groupDefinition == null)
+            throw new IllegalArgumentException("No group definition exists with id [" + groupDefinitionId + "].");
+        return groupDefinition;
     }
 
     @Override

@@ -234,7 +234,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
             }
         }
 
-        if (null == cwdPath) {
+        if (null == result) {
             result = determineInstallationPath(processInfo.getCommandLine());
         }
 

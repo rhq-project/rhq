@@ -55,8 +55,6 @@ public class PersistenceUtility {
 
     private static final Pattern COUNT_QUERY_PATTERN = Pattern.compile("^(\\s*SELECT\\s+)(.*?)(\\s+FROM.*)",
         Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
-    private static final Pattern GROUP_BY_PATTERN = Pattern.compile("^(.*?)(\\s+GROUP\\s+BY.*)",
-        Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
 
     public static final String HIBERNATE_STATISTICS_MBEAN_OBJECTNAME = "Hibernate:type=statistics,application=RHQ";
 
@@ -339,28 +337,17 @@ public class PersistenceUtility {
     public static String addOracleNativePagingSortingToQuery(String query, PageControl pageControl) {
         StringBuilder queryWithPagingSorting = new StringBuilder(query.length() + 50);
 
-        // note, this does not work if you have groupby in nested queries
-        Matcher matcher = GROUP_BY_PATTERN.matcher(query);
-        String queryBase = null;
-        String queryGroupBy = null;
-        if (matcher.find()) {
-            queryBase = matcher.group(1);
-            queryGroupBy = matcher.group(2);
-        } else {
-            queryBase = query;
-            queryGroupBy = "";
-        }
-
-        queryWithPagingSorting.append(queryBase);
+        // pagination calculations and ordering are based off of a projection of the results, which may be grouped
+        queryWithPagingSorting.append("SELECT * FROM ( ");
+        queryWithPagingSorting.append(query);
+        queryWithPagingSorting.append(" )");
 
         int minRowNum = pageControl.getStartRow() + 1;
         int maxRowNum = minRowNum + pageControl.getPageSize() - 1;
 
         // for oracle, first paginate
-        queryWithPagingSorting.append(" AND rownum <= ").append(maxRowNum);
-        queryWithPagingSorting.append(" AND rownum >= ").append(minRowNum);
-
-        queryWithPagingSorting.append(queryGroupBy);
+        queryWithPagingSorting.append(" WHERE rownum <= ").append(maxRowNum);
+        queryWithPagingSorting.append("   AND rownum >= ").append(minRowNum);
 
         // for oracle, then order by
         buildOrderBy(queryWithPagingSorting, pageControl.getOrderingFieldsAsArray());

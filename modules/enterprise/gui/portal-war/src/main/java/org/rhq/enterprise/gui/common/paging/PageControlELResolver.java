@@ -116,7 +116,9 @@ public class PageControlELResolver extends ELResolver {
                 WebUserPreferences preferences = user.getWebPreferences();
                 // get it
                 PageControl pc = preferences.getPageControl(view);
-                log.debug("Getting PageControlView[" + view + "] to " + pc);
+                if (log.isDebugEnabled()) {
+                    log.debug("Getting PageControlView[" + view + "] to " + pc);
+                }
                 result = pc.getPageSize();
             } else if ("pagenumber".equals(lowerCaseMethodName)) {
                 // find the user for this session-based operation
@@ -124,7 +126,9 @@ public class PageControlELResolver extends ELResolver {
                 WebUserPreferences preferences = user.getWebPreferences();
                 // get it
                 PageControl pc = preferences.getPageControl(view);
-                log.debug("Getting PageControlView[" + view + "] to " + pc);
+                if (log.isDebugEnabled()) {
+                    log.debug("Getting PageControlView[" + view + "] to " + pc);
+                }
                 result = pc.getPageNumber() + 1; // RF data table is 1-based, our PageControl is 0-based
             } else if ("unlimited".equals(lowerCaseMethodName)) {
                 result = view.isUnlimited();
@@ -169,12 +173,16 @@ public class PageControlELResolver extends ELResolver {
                     int pageSize = (Integer) value;
                     if (pc.getPageSize() == pageSize) {
                         // nothing to do
-                        log.debug("PageControlView[" + view + "] needs no changes " + pc);
+                        if (log.isDebugEnabled()) {
+                            log.debug("PageControlView[" + view + "] needs no changes " + pc);
+                        }
                     } else {
                         pc.setPageSize(pageSize);
                         pc.setPageNumber(0); // reset the page number too
 
-                        log.debug("Setting PageControlView[" + view + "] to " + pc);
+                        if (log.isDebugEnabled()) {
+                            log.debug("Setting PageControlView[" + view + "] to " + pc);
+                        }
                         preferences.setPageControl(view, pc);
                     }
                 }
@@ -192,7 +200,9 @@ public class PageControlELResolver extends ELResolver {
                     int pageNumber = (Integer) value;
                     pc.setPageNumber(pageNumber - 1); // RF data table is 1-based, our PageControl is 0-based
 
-                    log.debug("Setting PageControlView[" + view + "] to " + pc);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Setting PageControlView[" + view + "] to " + pc);
+                    }
                     preferences.setPageControl(view, pc);
                 }
 

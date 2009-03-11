@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.resource.group.definition;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -465,10 +464,6 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
                 Object[] next = new Object[] { upCount, downCount, groupId };
                 rawResults.add(next);
             }
-        } catch (SQLException e) {
-            log.error(e);
-        } catch (Exception e) {
-            log.error(e);
         } finally {
             JDBCUtil.safeClose(conn, stmt, null);
         }

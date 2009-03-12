@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.configuration.group;
 
+import org.rhq.enterprise.gui.legacy.ParamConstants;
+
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.faces.Redirect;
 import org.jboss.seam.annotations.Create;
@@ -32,7 +34,7 @@ import org.jboss.seam.annotations.In;
  * @author Ian Springer
  */
 @Name("ViewGroupResourceConfigurationUIBean")
-@Scope(ScopeType.EVENT)
+@Scope(ScopeType.PAGE)
 public class ViewGroupResourceConfigurationUIBean extends AbstractGroupResourceConfigurationUIBean {
     public static final String VIEW_ID = "/rhq/group/configuration/viewCurrent.xhtml";
 
@@ -50,6 +52,7 @@ public class ViewGroupResourceConfigurationUIBean extends AbstractGroupResourceC
      */
     @End
     public void edit() {
+        this.redirect.setParameter(ParamConstants.GROUP_ID_PARAM, getGroup().getId());
         this.redirect.setViewId(EditGroupResourceConfigurationUIBean.VIEW_ID);
         this.redirect.execute();
         return;

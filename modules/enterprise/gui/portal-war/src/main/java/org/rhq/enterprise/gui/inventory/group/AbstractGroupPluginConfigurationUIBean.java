@@ -71,8 +71,7 @@ public abstract class AbstractGroupPluginConfigurationUIBean
             return;
         }
         this.configurationSet = GroupPluginConfigurationUtility.buildConfigurationSet(
-                EnterpriseFacesContextUtility.getSubject(), this.group, this.pluginConfigurations);
-        Redirect.instance().setParameter(ParamConstants.GROUP_ID_PARAM, this.group.getId());
+                EnterpriseFacesContextUtility.getSubject(), this.group, this.pluginConfigurations);        
         return;
     }
 

@@ -23,6 +23,8 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -560,9 +562,26 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     private void ensureNoResourceConfigurationUpdatesInProgress(ResourceGroup compatibleGroup) throws Exception {
         if (isAggregateResourceConfigurationUpdateInProgress(this.subjectManager.getOverlord(), compatibleGroup.getId())) {
             throw new Exception("Current group Resource configuration for " + compatibleGroup
-                + " cannot be calculated, because a group Resource configuration update is currently in progress.");
+                + " cannot be calculated, because a group Resource configuration update is currently in progress "
+                + " (please wait for this update to complete or delete it from the history).");
         }
-        List<Resource> resourcesWithResourceConfigUpdatesInProgress = new ArrayList();
+
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
+                ResourceConfigurationUpdate.QUERY_FIND_INPROGRESS_BY_GROUP_ID);
+        countQuery.setParameter("groupId", compatibleGroup.getId());
+        long count = (Long) countQuery.getSingleResult();
+        if (count != 0) {
+            Query query = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_FIND_INPROGRESS_BY_GROUP_ID);
+            List<Resource> resources = query.getResultList();
+            throw new Exception(
+                "Current group Resource configuration for "
+                    + compatibleGroup
+                    + " cannot be calculated, because Resource configuration updates are currently in progress for the"
+                    + " following Resources (please wait for these updates to complete or delete them from the history): "
+                    + resources);
+        }
+        
+        /*List<Resource> resourcesWithResourceConfigUpdatesInProgress = new ArrayList();
         for (Resource memberResource : compatibleGroup.getImplicitResources()) {
             if (isResourceConfigurationUpdateInProgress(this.subjectManager.getOverlord(), memberResource.getId()))
                 resourcesWithResourceConfigUpdatesInProgress.add(memberResource);
@@ -572,7 +591,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 "Current group Resource configuration for "
                     + compatibleGroup
                     + " cannot be calculated, because Resource configuration updates are currently in progress for the following Resources: "
-                    + resourcesWithResourceConfigUpdatesInProgress);
+                    + resourcesWithResourceConfigUpdatesInProgress);*/
     }
 
     private void ensureNoPluginConfigurationUpdatesInProgress(ResourceGroup compatibleGroup) throws Exception {
@@ -611,6 +630,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Map<Integer, Configuration> results = new HashMap((int) count);
         int rowsProcessed = 0;
         while (true) {
+            PersistenceUtility.setDataPage(query, pageControl); // retrieve one page at a time
             List<Object[]> pagedResults = query.getResultList();
 
             if (pagedResults.size() <= 0)
@@ -624,7 +644,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 break;
 
             pageControl.setPageNumber(pageControl.getPageNumber() + 1); // advance the page
-            PersistenceUtility.setDataPage(query, pageControl); // and update the query to retrieve the new page
         }
         return results;
     }

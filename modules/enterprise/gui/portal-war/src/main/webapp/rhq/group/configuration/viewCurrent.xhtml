@@ -22,7 +22,7 @@
 
        <h:form id="configSetForm" rendered="#{ViewGroupResourceConfigurationUIBean.configurationSet ne null}">
 
-           <input type="hidden" name="groupId" value="#{param.groupId}" />
+           <input type="hidden" name="groupId" value="#{ViewGroupResourceConfigurationUIBean.group.id}" />
 
            <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
                <h:commandButton value="EDIT" action="#{ViewGroupResourceConfigurationUIBean.edit}"

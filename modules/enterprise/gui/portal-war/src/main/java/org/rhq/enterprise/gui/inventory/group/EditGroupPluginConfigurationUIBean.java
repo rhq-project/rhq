@@ -22,6 +22,7 @@ import javax.faces.application.FacesMessage;
 
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
 
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Begin;
@@ -50,6 +51,8 @@ public class EditGroupPluginConfigurationUIBean extends AbstractGroupPluginConfi
     @Begin
     public void init() {
         loadConfigurations();
+        // We can set this once here, since this.redirect is scoped to the same CONVERSATION as this managed bean instance.
+        this.redirect.setParameter(ParamConstants.GROUP_ID_PARAM, getGroup().getId());
         return;
     }
 

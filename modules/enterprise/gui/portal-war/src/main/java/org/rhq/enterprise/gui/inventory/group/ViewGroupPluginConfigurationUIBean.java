@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.inventory.group;
 
+import org.rhq.enterprise.gui.legacy.ParamConstants;
+
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.faces.Redirect;
 import org.jboss.seam.annotations.Create;
@@ -32,7 +34,7 @@ import org.jboss.seam.annotations.In;
  * @author Ian Springer
  */
 @Name("ViewGroupPluginConfigurationUIBean")
-@Scope(ScopeType.EVENT)
+@Scope(ScopeType.PAGE)
 public class ViewGroupPluginConfigurationUIBean extends AbstractGroupPluginConfigurationUIBean
 {
     public static final String VIEW_ID = "/rhq/group/inventory/view-connection.xhtml";
@@ -51,6 +53,7 @@ public class ViewGroupPluginConfigurationUIBean extends AbstractGroupPluginConfi
      */
     @End
     public void edit() {
+        this.redirect.setParameter(ParamConstants.GROUP_ID_PARAM, getGroup().getId());
         this.redirect.setViewId(EditGroupPluginConfigurationUIBean.VIEW_ID);
         this.redirect.execute();
         return;

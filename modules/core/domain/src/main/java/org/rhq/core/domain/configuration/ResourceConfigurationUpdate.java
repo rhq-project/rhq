@@ -70,6 +70,11 @@ import org.rhq.core.domain.resource.Resource;
         + "   AND cu.modifiedTime = ( SELECT MAX(cu2.modifiedTime) " // 
         + "                             FROM ResourceConfigurationUpdate cu2 " //
         + "                            WHERE cu2.resource.id = :resourceId ) "),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_INPROGRESS_BY_GROUP_ID, query = "" //
+        + "SELECT cu.resource " //
+        + "  FROM ResourceConfigurationUpdate cu JOIN cu.resource.implicitGroups rg " //
+        + " WHERE rg.id = :groupId " //
+        + "   AND cu.status = 'INPROGRESS'"),        
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_COMPOSITE_BY_PARENT_UPDATE_ID, query = "" //
         + "SELECT new org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite" //
         + "       ( cu.id, cu.status, cu.errorMessage, cu.subjectName, cu.createdTime, cu.modifiedTime, " // update w/o config
@@ -141,7 +146,8 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
     public static final String QUERY_FIND_ALL_IN_STATUS = "ResourceConfigurationUpdate.findAllInStatus";
     public static final String QUERY_FIND_ALL_BY_RESOURCE_ID = "ResourceConfigurationUpdate.findAllByResourceId";
     public static final String QUERY_FIND_CURRENTLY_ACTIVE_CONFIG = "ResourceConfigurationUpdate.findCurrentlyActiveConfig";
-    public static final String QUERY_FIND_LATEST_BY_RESOURCE_ID = "ResourceConfigurationUpdate.findByResource";
+    public static final String QUERY_FIND_LATEST_BY_RESOURCE_ID = "ResourceConfigurationUpdate.findByLatestByResourceId";
+    public static final String QUERY_FIND_INPROGRESS_BY_GROUP_ID = "ResourceConfigurationUpdate.findInProgressByGroupId";
     public static final String QUERY_FIND_COMPOSITE_BY_PARENT_UPDATE_ID = "ResourceConfigurationUpdate.findCompositeByParentUpdateId";
     public static final String QUERY_FIND_BY_PARENT_UPDATE_ID = "ResourceConfigurationUpdate.findByParentUpdateId";
 
@@ -162,6 +168,7 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
     @JoinColumn(name = "AGG_RES_UPDATE_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
     private AggregateResourceConfigurationUpdate aggregateConfigurationUpdate;
+
 
     protected ResourceConfigurationUpdate() {
     } // JPA

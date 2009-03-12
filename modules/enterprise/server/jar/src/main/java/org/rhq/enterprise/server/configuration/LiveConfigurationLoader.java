@@ -30,6 +30,8 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * @author Ian Springer
@@ -37,6 +39,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class LiveConfigurationLoader
 {
     private static LiveConfigurationLoader ourInstance = new LiveConfigurationLoader();
+
+    private final Log log = LogFactory.getLog(LiveConfigurationLoader.class);
 
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
@@ -79,6 +83,8 @@ public class LiveConfigurationLoader
 
     private Map<Integer, Configuration> loadLiveResourceConfigurations(Set<Resource> resources) throws Exception
     {
+        log.info("Loading live configs for " + resources.size() + " Resources...");
+        long startTime = System.currentTimeMillis();
         Map<Integer, Configuration> liveConfigs = new HashMap();
         for (Resource resource : resources)
         {
@@ -88,6 +94,8 @@ public class LiveConfigurationLoader
                 throw new Exception("Failed to obtain live Resource configuration for " + resource + ".");
             liveConfigs.put(resource.getId(), liveConfig);
         }
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        log.info("Loaded live configs for " + resources.size() + " Resources in " + elapsedTime + " ms.");
         return liveConfigs;
     }
 

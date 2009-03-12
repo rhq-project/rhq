@@ -27,13 +27,10 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.gui.configuration.propset.ConfigurationSet;
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import org.jboss.seam.faces.Redirect;
 
 /**
  * An abstract base class for the Seam components for viewing and editing group Configurations. Requires the 'groupId'
@@ -71,8 +68,7 @@ public abstract class AbstractGroupResourceConfigurationUIBean
             return;
         }
         this.configurationSet = GroupResourceConfigurationUtility.buildConfigurationSet(
-                EnterpriseFacesContextUtility.getSubject(), this.group, this.resourceConfigurations);
-        Redirect.instance().setParameter(ParamConstants.GROUP_ID_PARAM, this.group.getId());
+                EnterpriseFacesContextUtility.getSubject(), this.group, this.resourceConfigurations);           
         return;
     }
 

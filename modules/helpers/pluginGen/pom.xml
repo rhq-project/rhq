@@ -16,7 +16,7 @@
 
     <name>RHQ plugin generator</name>
     <description>Helper to generate plugin skeletons</description>
-    <version>1.1</version>
+    <version>1.2</version>
 
     <scm>
       <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/helpers/pluginGen/</connection>

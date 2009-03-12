@@ -169,14 +169,14 @@
       <metric property="jboss.system:type=ServerInfo:TotalMemory" displayName="JVM Total Memory" displayType="summary"
               defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
 
-      <metric property="jboss:service=TransactionManager:TransactionCount" displayName="Transactions Active"
-              defaultInterval="300000" defaultOn="true" category="utilization"/>
+      <metric property="jboss:service=TransactionManager:TransactionCount" displayName="Total Transactions" measurementType="trendsup"
+              defaultInterval="300000" defaultOn="true" category="utilization" description="Total number of transactions since last restart"/>
 
       <metric property="jboss:service=TransactionManager:CommitCount" displayName="Transactions Committed" displayType="summary" measurementType="trendsup"
-              defaultInterval="600000" defaultOn="true" category="utilization"/>
+              defaultInterval="600000" defaultOn="true" category="utilization" description="Number of transactions commited since last restart"/>
 
       <metric property="jboss:service=TransactionManager:RollbackCount" displayName="Transactions Rolledback" measurementType="trendsup"
-              defaultInterval="600000" defaultOn="true" category="utilization"/>
+              defaultInterval="600000" defaultOn="true" category="utilization" description="Number of transactions commited since last restart"/>
 
       <event name="logEntry" description="an entry in a log file"/>
 

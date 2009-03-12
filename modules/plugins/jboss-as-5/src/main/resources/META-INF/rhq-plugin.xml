@@ -778,6 +778,7 @@
                         <c:description>Whether the connection should be locked into the transaction.</c:description>
                     </c:simple-property>
 
+ 			<!--     
                     <c:list-property required="false" name="config-property" displayName="Connection Factory Properties"
                                      description="The managed connection factory configuration properties">
                         <c:map-property name="org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData"
@@ -787,7 +788,7 @@
                             <c:simple-property name="value"/>
                         </c:map-property>
                     </c:list-property>
-            <!--                    
+                          
                     <c:map-property required="false" name="config-property" displayName="Connection Factory Properties"
                                     description="The managed connection factory configuration properties"/>
             -->
@@ -863,6 +864,7 @@
                         <c:description>Whether the connection should be locked into the transaction.</c:description>
                     </c:simple-property>
                     
+                <!--     
                     <c:list-property required="false" name="config-property" displayName="Connection Factory Properties"
                                      description="The managed connection factory configuration properties">
                         <c:map-property name="org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData"
@@ -872,6 +874,7 @@
                             <c:simple-property name="value"/>
                         </c:map-property>
                     </c:list-property>
+                 -->
                 </c:group>
 
                 <c:template name="Oracle Local TX" description="Local Transaction Template for Oracle">
@@ -978,6 +981,7 @@
                         <c:description>Whether the connection should be locked into the transaction.</c:description>
                     </c:simple-property>
 
+			<!--
                     <c:list-property required="false" name="config-property" displayName="Connection Factory Properties"
                                      description="The managed connection factory configuration properties">
                         <c:map-property name="org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData"
@@ -987,7 +991,7 @@
                             <c:simple-property name="value"/>
                         </c:map-property>
                     </c:list-property>
-            <!--
+            
                     <c:map-property required="false" name="config-property" displayName="Connection Factory Properties"
                                     description="The managed connection factory configuration properties"/>
             -->

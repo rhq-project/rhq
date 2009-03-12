@@ -47,8 +47,6 @@ import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 <#if props.deleteChildren>
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 </#if>
-
-
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 <#if props.monitoring>
@@ -61,6 +59,10 @@ import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+</#if>
+<#if props.useOverseerApi>
+import org.rhq.core.pluginapi.plugin.PluginContext;
+import org.rhq.core.pluginapi.plugin.PluginOverseer;
 </#if>
 
 
@@ -80,6 +82,9 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
 <#if props.deleteChildren>
 , DeleteResourceFacet
 </#if>
+<#if props.useOverseerApi>
+, PluginOverseer
+</#if>
 {
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -92,6 +97,23 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
     EventContext eventContext;
     </#if>
 
+    <#if props.useOverseerApi>
+    /**
+     * Callback when the plugin is created
+     * @see org.rhq.core.pluginapi.plugin.PluginOverseer#initialize(PluginContext)
+     */
+    public void initialize(PluginContext context) throws Exception
+    {
+    }
+
+    /**
+     * Callback when the plugin is unloaded
+     * @see org.rhq.core.pluginapi.plugin.PluginOverseer#shutdown()
+     */
+    public void shutdown()
+    {
+    }
+    </#if>
 
     /**
      * Return availability of this resource

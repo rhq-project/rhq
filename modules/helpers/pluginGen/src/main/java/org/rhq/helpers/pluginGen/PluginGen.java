@@ -165,6 +165,8 @@ public class PluginGen {
                 props.setParentType(caps(parentProps.getComponentClass()));
             } else if (name.equals("UsesExternalJarsInPlugin") && parentProps.getName() != null) {
                 // Skip this one on children
+            } else if (name.equals("UseOverseerApi") && parentProps.getName() != null) {
+                // Skip this one on children
             } else if (name.equals("Pkg")) {
                 // Always skip this - we postprocess it
             } else {

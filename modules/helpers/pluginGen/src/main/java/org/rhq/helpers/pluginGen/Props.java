@@ -64,6 +64,8 @@ public class Props {
     private boolean usesExternalJarsInPlugin;
     /** Does it support manuall add of children ? */
     private boolean manualAddOfChildren;
+    /** Does it use the overseer api ? */
+    private boolean useOverseerApi;
 
     /** Embedded children */
     private Set<Props> children = new HashSet<Props>();
@@ -220,6 +222,14 @@ public class Props {
         return this.pkg;
     }
 
+    public boolean isUseOverseerApi() {
+        return useOverseerApi;
+    }
+
+    public void setUseOverseerApi(boolean useOverseerApi) {
+        this.useOverseerApi = useOverseerApi;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -242,6 +252,7 @@ public class Props {
         sb.append(", deleteChildren=").append(deleteChildren);
         sb.append(", usesExternalJarsInPlugin=").append(usesExternalJarsInPlugin);
         sb.append(", manualAddOfChildren=").append(manualAddOfChildren);
+        sb.append(", useOverseerApi=").append(useOverseerApi);
         sb.append(", children=").append(children);
         sb.append('}');
         return sb.toString();

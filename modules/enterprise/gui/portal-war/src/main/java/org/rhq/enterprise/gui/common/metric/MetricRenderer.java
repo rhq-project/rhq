@@ -146,6 +146,7 @@ public class MetricRenderer extends Renderer {
         if (rangePreferences.readOnly) {
             // both dropdowns needs to be updated when in readOnly mode
             writer.write("changeComboBox('" + MetricComponent.VALUE + "','" + lastN + "');");
+        } else {
             writer.write("changeComboBox('" + MetricComponent.UNIT + "','" + preferencesUnit.name() + "');");
         }
 

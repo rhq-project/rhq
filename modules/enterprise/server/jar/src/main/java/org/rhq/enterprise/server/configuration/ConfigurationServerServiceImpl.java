@@ -50,11 +50,8 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
 
         if (update != null) {
             Resource resource = update.getResource();
-
-            if (resource != null) {
-                LOG.info("ConfigurationUpdateResponse status for Resource" + "[ " + "id = " + resource.getId() + ", "
-                    + "name = " + resource.getName() + "] " + "was " + response.getStatus());
-            }
+            if (resource != null)
+                LOG.debug("ConfigurationUpdateResponse status for " +  resource + " was " + response.getStatus() + ".");
         }
 
         configurationManager.completeResourceConfigurationUpdate(response);

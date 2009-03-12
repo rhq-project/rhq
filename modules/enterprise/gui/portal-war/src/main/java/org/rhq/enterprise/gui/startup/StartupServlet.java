@@ -303,7 +303,9 @@ public class StartupServlet extends HttpServlet {
         // Check for Timed Out Resource Configuration Update Requests
         // (NOTE: We don't need to check for timed out plugin Cofiguration updates, since those are executed synchronously.)
         try {
-            scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutConfigUpdatesJob.class, true, false, 30000L, 60000L);
+            final long initialDelay = 1000L * 30; // 30 secs
+            final long interval = 1000L * 60 * 15; // 15 mins
+            scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutConfigUpdatesJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
             throw new ServletException("Cannot schedule check-for-timed-out-configuration-update-requests job", e);
         }

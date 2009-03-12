@@ -98,4 +98,15 @@ public class EditGroupPluginConfigurationUIBean extends AbstractGroupPluginConfi
         this.redirect.execute();
         return;
     }
+
+    /**
+     * End the convo and reload the current page (edit-connection.xhtml). This gets called when user clicks the RESET button.
+     */
+    @End
+    public void reset() {
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "All properties reset to original values.");
+        this.redirect.setViewId(VIEW_ID);
+        this.redirect.execute();
+        return;
+    }
 }

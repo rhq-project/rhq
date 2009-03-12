@@ -52,7 +52,8 @@
                 <h:commandButton type="submit" action="#{EditGroupResourceConfigurationUIBean.updateConfigurations}"
                                  value="SAVE" title="Click to Save Changes"
                                  styleClass="buttonmed"/>
-                <h:commandButton type="reset"
+                <h:commandButton type="submit" immediate="true"
+                                 action="#{EditGroupResourceConfigurationUIBean.reset}"
                                  value="RESET" title="Click to Reset All Properties to Their Original Values"
                                  styleClass="buttonmed"/>
                 <h:commandButton type="submit" immediate="true"

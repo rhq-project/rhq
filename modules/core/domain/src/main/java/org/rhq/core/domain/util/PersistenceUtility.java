@@ -337,19 +337,24 @@ public class PersistenceUtility {
     public static String addOracleNativePagingSortingToQuery(String query, PageControl pageControl) {
         StringBuilder queryWithPagingSorting = new StringBuilder(query.length() + 50);
 
-        // pagination calculations and ordering are based off of a projection of the results, which may be grouped
-        queryWithPagingSorting.append("SELECT * FROM ( ");
-        queryWithPagingSorting.append(query);
-        // for oracle, first order by and project the results
-        buildOrderBy(queryWithPagingSorting, pageControl.getOrderingFieldsAsArray());
-        queryWithPagingSorting.append(" )");
-
         int minRowNum = pageControl.getStartRow() + 1;
         int maxRowNum = minRowNum + pageControl.getPageSize() - 1;
 
-        // for oracle, then paginate off of the projection
-        queryWithPagingSorting.append(" WHERE rownum <= ").append(maxRowNum);
-        queryWithPagingSorting.append("   AND rownum >= ").append(minRowNum);
+        // pagination calculations based off of double-projection of the results
+        queryWithPagingSorting.append("SELECT outerResults.* FROM ( ");
+
+        queryWithPagingSorting.append("SELECT innerResults.*, ROWNUM rnum FROM ( ");
+        queryWithPagingSorting.append(query);
+        // for oracle, order by occurs at the end of the original query, whether grouped or not
+        buildOrderBy(queryWithPagingSorting, pageControl.getOrderingFieldsAsArray());
+        queryWithPagingSorting.append(" ) innerResults ");
+
+        // for oracle, paginate high off of the inner projection
+        queryWithPagingSorting.append(" WHERE ROWNUM <= ").append(maxRowNum);
+
+        // for oracle, paginate low off of the outer projection
+        queryWithPagingSorting.append(" ) outerResults ");
+        queryWithPagingSorting.append(" WHERE rnum >= ").append(minRowNum);
 
         return queryWithPagingSorting.toString();
     }

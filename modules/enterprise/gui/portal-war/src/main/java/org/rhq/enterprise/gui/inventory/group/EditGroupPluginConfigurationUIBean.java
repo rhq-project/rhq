@@ -23,6 +23,8 @@ import javax.faces.application.FacesMessage;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
+import org.rhq.enterprise.gui.configuration.group.ViewGroupResourceConfigurationUIBean;
+import org.rhq.enterprise.server.authz.PermissionException;
 
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Begin;
@@ -68,9 +70,14 @@ public class EditGroupPluginConfigurationUIBean extends AbstractGroupPluginConfi
             getConfigurationManager().scheduleAggregatePluginConfigurationUpdate(EnterpriseFacesContextUtility
                 .getSubject(), getGroup().getId(), getPluginConfigurations());
         } catch (Exception e) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                "Failed to schedule group Resource Configuration update - cause: " + e);
-            this.redirect.setViewId(VIEW_ID);
+            if (e instanceof PermissionException) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, e.getLocalizedMessage());
+                this.redirect.setViewId(ViewGroupPluginConfigurationUIBean.VIEW_ID);
+            } else {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Failed to schedule group plugin Configuration update - cause: " + e);
+                this.redirect.setViewId(VIEW_ID);
+            }
             this.redirect.execute();
             return;
         }

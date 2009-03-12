@@ -1129,6 +1129,8 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         PageList<ResourceOperationHistory> results;
         results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null, PageControl
             .getUnlimitedInstance());
+        assert results != null;
+        assert results.size() == 1;
 
         ResourceOperationHistory history = results.get(0);
         assert history.getErrorMessage() != null : history;

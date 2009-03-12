@@ -54,6 +54,7 @@
                 </configuration>
             </plugin>
 
+<#if props.usesExternalJarsInPlugin>
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>2.0</version>
@@ -66,10 +67,9 @@
                         </goals>
                         <configuration>
                             <artifactItems>
-                                <!-- TODO include needed external jars
-                                     that should go into your jar file
 
-                                     If you don't need this, you can remove the whole execution
+                                <!-- TODO include needed external jars
+                                     that should go into your jar file                                     
 
                                 The next one is an example:
                                 -->
@@ -85,7 +85,7 @@
                     </execution>
                 </executions>
             </plugin>
-
+</#if>
 
         </plugins>
     </build>

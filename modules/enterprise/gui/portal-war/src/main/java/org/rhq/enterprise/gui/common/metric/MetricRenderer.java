@@ -143,10 +143,9 @@ public class MetricRenderer extends Renderer {
 
         writer.startElement("script", null);
         writer.writeAttribute("type", "text/javascript", null);
-        if (rangePreferences.readOnly) {
-            // both dropdowns needs to be updated when in readOnly mode
+        if (rangePreferences.readOnly == false) {
+            // both dropdowns needs to be updated when we're NOT in readOnly mode
             writer.write("changeComboBox('" + MetricComponent.VALUE + "','" + lastN + "');");
-        } else {
             writer.write("changeComboBox('" + MetricComponent.UNIT + "','" + preferencesUnit.name() + "');");
         }
 

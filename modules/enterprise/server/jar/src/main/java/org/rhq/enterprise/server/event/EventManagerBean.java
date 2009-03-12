@@ -431,7 +431,7 @@ public class EventManagerBean implements EventManagerLocal {
             log.error("query is [" + query + "].");
             // these values should be useful in working out how we built the query in setupEventsQuery()
             log.error("resourceIds[] has [" + resourceIds.length + "] members.");
-            log.error("severities are [" + Arrays.asList(severities) + "].");
+            log.error("severities are [" + ((null == severities) ? severities : Arrays.asList(severities)) + "].");
             log.error("source is [" + source + "].");
             log.error("searchString is [" + searchString + "].");
             log.error("PageControl is [" + pc + "].");

@@ -160,7 +160,7 @@ public class PropertySetRenderer extends Renderer {
         // NOTE: Don't add the input to the component tree yet - we'll add it a bit later.
 
         HtmlPanelGrid panelGrid = FacesComponentUtility.createComponent(HtmlPanelGrid.class);
-        panelGrid.setColumns(isOptional(propertyDefinitionSimple) ? 4 : 3);
+        panelGrid.setColumns(isOptional(propertyDefinitionSimple) ? 5 : 3);
         setAllToSameValueControlPanel.getChildren().add(panelGrid);
 
         FacesComponentUtility.addOutputText(panelGrid, null, "Set All Values To: ", null);
@@ -171,6 +171,7 @@ public class PropertySetRenderer extends Renderer {
         // the unset checkbox (if property is optional)
         HtmlSelectBooleanCheckbox unsetCheckbox = null;
         if (isOptional(propertyDefinitionSimple)) {
+            FacesComponentUtility.addOutputText(panelGrid, null, "Unset All: ", null);
             unsetCheckbox = PropertyRenderingUtility.addUnsetControl(panelGrid,
                     propertyDefinitionSimple, null, propertySetComponent.getListIndex(), input, false,
                     propertySetComponent.getReadOnly(), false);

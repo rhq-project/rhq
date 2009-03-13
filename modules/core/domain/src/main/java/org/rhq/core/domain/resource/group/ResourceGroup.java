@@ -449,4 +449,20 @@ public class ResourceGroup extends Group {
         this.clusterBackingGroups = clusterBackingGroups;
     }
 
+    @Override
+    public String toString()
+    {
+        StringBuilder buffer = new StringBuilder();
+        buffer.append(ResourceGroup.class.getSimpleName()).append("[");
+        buffer.append("id=").append(this.id);
+        String typeName = (this.resourceType != null) ? this.resourceType.getName() : "<mixed>";
+        buffer.append(", type=").append(typeName);
+        buffer.append(", name=").append(this.getName());
+        boolean isDynaGroup = (this.groupDefinition != null);
+        buffer.append(", isDynaGroup=").append(isDynaGroup);
+        boolean isClusterGroup = (this.clusterKey != null);
+        buffer.append(", isClusterGroup=").append(isClusterGroup);
+        buffer.append("]");
+        return buffer.toString();
+    }
 }

@@ -91,20 +91,6 @@ public class ClientCommandSenderMetrics {
     }
 
     /**
-     * The largest number of commands that were ever concurrently processed. This will never
-     * be larger than the number of maximum threads configured in the thread pool.
-     * 
-     * @return largest number of commands that were processed by multiple threads at the same time
-     */
-    public long getLargestConcurrencyCount() {
-        long num = 0L;
-        if (threadPool != null) {
-            num = threadPool.getLargestPoolSize();
-        }
-        return num;
-    }
-
-    /**
      * Returns the number of commands that were successfully sent.
      *
      * @return number of commands sent

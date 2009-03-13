@@ -343,10 +343,6 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         return getClientSideMetrics().getNumberCommandsActive();
     }
 
-    public long getLargestCommandsConcurrentlySent() {
-        return getClientSideMetrics().getLargestConcurrencyCount();
-    }
-
     public long getNumberCommandsInQueue() {
         return getClientSideMetrics().getNumberCommandsInQueue();
     }

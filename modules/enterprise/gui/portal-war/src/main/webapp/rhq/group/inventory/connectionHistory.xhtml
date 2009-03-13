@@ -118,16 +118,17 @@
                   <h:outputLink value="/rhq/group/inventory/connectionHistory.xhtml">
                      <f:param name="groupId" value="#{param.groupId}" />
                      <f:param name="apcuId" value="#{item.id}" />
-                     <f:param name="mode" value="details" />
-                     <h:outputText value="View Resource Records" />
+                     <f:param name="mode" value="aggregate" />
+                     <h:outputText value="View Group Update" />
                   </h:outputLink>
                   <br />
                   <h:outputLink value="/rhq/group/inventory/connectionHistory.xhtml">
                      <f:param name="groupId" value="#{param.groupId}" />
                      <f:param name="apcuId" value="#{item.id}" />
-                     <f:param name="mode" value="aggregate" />
-                     <h:outputText value="View Group Update" />
+                     <f:param name="mode" value="details" />
+                     <h:outputText value="View Member Updates" />
                   </h:outputLink>
+
                </rich:column>
 
                <f:facet name="footer">

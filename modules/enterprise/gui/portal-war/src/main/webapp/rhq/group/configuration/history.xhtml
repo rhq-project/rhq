@@ -112,20 +112,21 @@
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Action" />
                   </f:facet>
-               
-                  <h:outputLink value="/rhq/group/configuration/history.xhtml">
-                     <f:param name="groupId" value="#{param.groupId}" />
-                     <f:param name="arcuId" value="#{item.id}" />
-                     <f:param name="mode" value="details" />
-                     <h:outputText value="View Resource Records" />
-                  </h:outputLink>
-                  <br />
+
                   <h:outputLink value="/rhq/group/configuration/history.xhtml">
                      <f:param name="groupId" value="#{param.groupId}" />
                      <f:param name="arcuId" value="#{item.id}" />
                      <f:param name="mode" value="aggregate" />
                      <h:outputText value="View Group Update" />
                   </h:outputLink>
+                  <br />
+                  <h:outputLink value="/rhq/group/configuration/history.xhtml">
+                     <f:param name="groupId" value="#{param.groupId}" />
+                     <f:param name="arcuId" value="#{item.id}" />
+                     <f:param name="mode" value="details" />
+                     <h:outputText value="View Member Updates" />
+                  </h:outputLink>
+
                </rich:column>
 
                <f:facet name="footer">
@@ -156,7 +157,8 @@
             <a4j:region selfRendered="false">
                <a4j:outputPanel layout="block" ajaxRendered="true" keepTransient="true">
                   <onc:configSet id="rhq_configSet"
-                                 configurationSet="#{GroupResourceConfigurationHistoryDetailsUIBean.configurationSet}"/>
+                                 configurationSet="#{GroupResourceConfigurationHistoryDetailsUIBean.configurationSet}"
+                                 readOnly="true"/>
                </a4j:outputPanel>
             </a4j:region>
          </h:form>

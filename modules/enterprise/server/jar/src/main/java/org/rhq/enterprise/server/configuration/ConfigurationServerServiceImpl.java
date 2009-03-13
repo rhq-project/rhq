@@ -43,15 +43,15 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
         ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
 
-        int configurationUpdateId = response.getConfigurationUpdateId();
+        int configUpdateId = response.getConfigurationUpdateId();
+        ResourceConfigurationUpdate configUpdate = configurationManager.getResourceConfigurationUpdate(subjectManager
+            .getOverlord(), configUpdateId);
 
-        ResourceConfigurationUpdate update = configurationManager.getResourceConfigurationUpdate(subjectManager
-            .getOverlord(), configurationUpdateId);
-
-        if (update != null) {
-            Resource resource = update.getResource();
+        if (configUpdate != null) {
+            Resource resource = configUpdate.getResource();
             if (resource != null)
-                LOG.debug("ConfigurationUpdateResponse status for " +  resource + " was " + response.getStatus() + ".");
+                LOG.debug("Resource configuration update [" + configUpdate.getId() + "] for " + resource
+                        + " completed with status [" + response.getStatus() + "].");
         }
 
         configurationManager.completeResourceConfigurationUpdate(response);

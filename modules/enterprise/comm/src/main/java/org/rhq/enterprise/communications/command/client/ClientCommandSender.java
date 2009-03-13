@@ -281,7 +281,8 @@ public class ClientCommandSender {
 
         // prepare the object that will house all the metrics collected by this sender
         // and let this new metric object know what our initial throttling settings are
-        m_metrics = new ClientCommandSenderMetrics(m_queue, m_commandStore);
+        // (yes, I know the executor is always null here, we'll set it later when its created)
+        m_metrics = new ClientCommandSenderMetrics(m_queue, m_commandStore, m_executor);
 
         if (config.enableSendThrottling) {
             m_metrics.sendThrottleMaxCommands.set(config.sendThrottleMaxCommands);
@@ -796,6 +797,7 @@ public class ClientCommandSender {
                         return new Thread(r, "ClientCommandSenderTask Thread #" + (m_executorIndex++));
                     }
                 });
+                m_metrics.setThreadPool(m_executor);
 
                 // create and configure our timer thread pool
                 m_timerThreadPool = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60000L, TimeUnit.MILLISECONDS,
@@ -918,6 +920,7 @@ public class ClientCommandSender {
                 }
 
                 m_metrics.sendingMode.set(false);
+                m_metrics.setThreadPool(null);
             } finally {
                 // before we release the changing mode lock (and thus allow someone to call startSending again)
                 // we need to flip our shutting down tasks flag to false to indicate we are done shutting down all tasks

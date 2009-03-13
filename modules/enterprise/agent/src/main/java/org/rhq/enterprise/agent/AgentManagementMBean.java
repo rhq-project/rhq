@@ -303,6 +303,16 @@ public interface AgentManagementMBean {
     long getNumberTotalCommandsSent();
 
     /**
+     * @see ClientCommandSenderMetrics#getNumberCommandsActive()
+     */
+    long getNumberCommandsActiveSent();
+
+    /**
+     * @see ClientCommandSenderMetrics#getLargestConcurrencyCount()
+     */
+    long getLargestCommandsConcurrentlySent();
+
+    /**
      * @see ClientCommandSenderMetrics#getNumberCommandsInQueue()
      */
     long getNumberCommandsInQueue();

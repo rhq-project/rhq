@@ -232,6 +232,22 @@
               category="throughput"
               measurementType="trendsup" />
 
+      <metric property="NumberCommandsActiveSent"
+              displayName="Number Of Active Commands Being Sent"
+              description="The number of messages this agent is currently sending"
+              defaultOn="true"
+              displayType="summary"
+              category="throughput"
+              measurementType="dynamic" />
+
+      <metric property="LargestCommandsConcurrentlySent"
+              displayName="Largest Number Of Commands Sent Concurrently"
+              description="The largest number of messages this agent sent at the same time"
+              defaultOn="false"
+              displayType="detail"
+              category="throughput"
+              measurementType="dynamic" />
+
       <metric property="NumberCommandsInQueue"
               displayName="Number of Commands In Queue"
               description="Number of messages currently queued waiting to be sent to the RHQ Server"

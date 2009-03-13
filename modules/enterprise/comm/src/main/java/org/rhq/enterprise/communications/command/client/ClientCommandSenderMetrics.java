@@ -19,6 +19,7 @@
 package org.rhq.enterprise.communications.command.client;
 
 import java.io.IOException;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -31,8 +32,9 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author John Mazzitelli
  */
 public class ClientCommandSenderMetrics {
-    private CommandQueue queue;
-    private PersistentFifo commandStore;
+    private final CommandQueue queue;
+    private final PersistentFifo commandStore;
+    private ThreadPoolExecutor threadPool;
 
     // these member variables are package-protected to allow the sender to directly set their values
     AtomicBoolean sendingMode = new AtomicBoolean(false);
@@ -48,12 +50,14 @@ public class ClientCommandSenderMetrics {
      * Creates a new {@link ClientCommandSenderMetrics} object given the queue and store used by the sender object whose
      * metrics this object contains.
      *
-     * @param queue         the sender's queue (may be <code>null</code>)
-     * @param command_store the place where guaranteed commands are persisted (may be <code>null</code>)
+     * @param queue        the sender's queue (may be <code>null</code>)
+     * @param commandStore the place where guaranteed commands are persisted (may be <code>null</code>)
+     * @param threadPool   contains the threads that execute the queued tasks (may be <code>null</code>)
      */
-    public ClientCommandSenderMetrics(CommandQueue queue, PersistentFifo command_store) {
+    public ClientCommandSenderMetrics(CommandQueue queue, PersistentFifo commandStore, ThreadPoolExecutor threadPool) {
         this.queue = queue; // if null, just consider it always empty
-        this.commandStore = command_store; // if null, just consider its size to always be 0
+        this.commandStore = commandStore; // if null, just consider its size to always be 0
+        setThreadPool(threadPool); // if null, just assume everything about it is 0
     }
 
     /**
@@ -62,7 +66,42 @@ public class ClientCommandSenderMetrics {
      * metrics for a sender that has been shutdown.
      */
     public ClientCommandSenderMetrics() {
-        this(null, null);
+        this(null, null, null);
+    }
+
+    /**
+     * Sets the thread pool whose metrics are to be collected by this object.
+     * Package-scoped because only the sender object is able to set this.
+     * @param threadPool the new thread pool whose metrics are to be collected (may be <code>null</code>)
+     */
+    void setThreadPool(ThreadPoolExecutor threadPool) {
+        this.threadPool = threadPool;
+    }
+
+    /**
+     * Returns the number of commands that are currently being processed.
+     * @return commands that are actively in progress
+     */
+    public long getNumberCommandsActive() {
+        long num = 0L;
+        if (threadPool != null) {
+            num = threadPool.getActiveCount();
+        }
+        return num;
+    }
+
+    /**
+     * The largest number of commands that were ever concurrently processed. This will never
+     * be larger than the number of maximum threads configured in the thread pool.
+     * 
+     * @return largest number of commands that were processed by multiple threads at the same time
+     */
+    public long getLargestConcurrencyCount() {
+        long num = 0L;
+        if (threadPool != null) {
+            num = threadPool.getLargestPoolSize();
+        }
+        return num;
     }
 
     /**

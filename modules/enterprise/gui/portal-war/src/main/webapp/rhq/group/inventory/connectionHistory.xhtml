@@ -159,7 +159,8 @@
             <a4j:region selfRendered="false">
                <a4j:outputPanel layout="block" ajaxRendered="true" keepTransient="true">
                   <onc:configSet id="rhq_configSet"
-                                 configurationSet="#{ViewGroupConnectionPropertyDetailsUIBean.configurationSet}"/>
+                                 configurationSet="#{ViewGroupConnectionPropertyDetailsUIBean.configurationSet}"
+                                 readOnly="true"/>
                </a4j:outputPanel>
             </a4j:region>
          </h:form>

@@ -789,8 +789,8 @@ public class ClientCommandSender {
                 }
 
                 // create and configure our thread pool with our now empty queue
-                m_executor = new ThreadPoolExecutor(1, m_configuration.maxConcurrent, 60000L, TimeUnit.MILLISECONDS,
-                    m_queue);
+                m_executor = new ThreadPoolExecutor(m_configuration.maxConcurrent, m_configuration.maxConcurrent,
+                    60000L, TimeUnit.MILLISECONDS, m_queue);
                 m_executor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
                 m_executor.setThreadFactory(new ThreadFactory() {
                     public Thread newThread(Runnable r) {

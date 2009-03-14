@@ -68,11 +68,15 @@ import org.rhq.core.domain.resource.ResourceType;
         + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s "
         + "LEFT JOIN g.implicitResources res LEFT JOIN res.currentAvailability a "
         + "LEFT JOIN g.resourceType type "
-        + "WHERE s = :subject " + " AND g.visible = true "
-        + " AND g.groupCategory = :groupCategory "
-        + " AND (UPPER(g.name) LIKE :search " + " OR UPPER(g.description) LIKE :search "
-        + "OR :search is null) "
-        + " AND ( type is null OR ( " + "      (type = :resourceType AND :resourceType is not null) "
+        + "WHERE s = :subject "
+        + " AND g.visible = true "
+        + " AND ( res.id = :resourceId OR :resourceId is null ) "
+        + " AND ( g.groupCategory = :groupCategory OR :groupCategory is null ) "
+        + " AND (UPPER(g.name) LIKE :search " //
+        + " OR UPPER(g.description) LIKE :search " //
+        + "OR :search is null) " //
+        + " AND ( type is null OR ( " //
+        + "      (type = :resourceType AND :resourceType is not null) "
         + "    OR "
         + "      (type.category = :category AND :category is not null) "
         + "    OR "
@@ -80,18 +84,27 @@ import org.rhq.core.domain.resource.ResourceType;
         + "     ) ) "
         + "GROUP BY g,g.name,g.resourceType.name,g.description "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT, query = "SELECT count(DISTINCT g) "
-        + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s " + "LEFT JOIN g.resourceType type "
-        + "WHERE s = :subject " + " AND g.visible = true " + " AND g.groupCategory = :groupCategory "
-        + " AND (UPPER(g.name) LIKE :search " + " OR UPPER(g.description) LIKE :search " + "OR :search is null) "
-        + "AND ( type is null OR ( " + "      (type = :resourceType AND :resourceType is not null) "
+        + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s " //
+        + "LEFT JOIN g.resourceType type " //
+        + "LEFT JOIN g.implicitResources res " //
+        + "WHERE s = :subject " //
+        + " AND g.visible = true "
+        + " AND ( res.id = :resourceId OR :resourceId is null ) "
+        + " AND ( g.groupCategory = :groupCategory OR :groupCategory is null ) " //
+        + " AND (UPPER(g.name) LIKE :search " //
+        + " OR UPPER(g.description) LIKE :search " //
+        + "OR :search is null) " //
+        + "AND ( type is null OR ( " //
+        + "      (type = :resourceType AND :resourceType is not null) "
         + "    OR (type.category = :category AND :category is not null) "
         + "    OR (:resourceType is null AND :category is null )     ) ) "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_ADMIN, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(res)) "
         + "FROM ResourceGroup g "
         + "LEFT JOIN g.implicitResources res LEFT JOIN res.currentAvailability a "
         + "LEFT JOIN g.resourceType type "
-        + "WHERE g.groupCategory = :groupCategory "
+        + "WHERE ( g.groupCategory = :groupCategory OR :groupCategory is null ) "
         + " AND g.visible = true "
+        + " AND ( res.id = :resourceId OR :resourceId is null ) "
         + " AND (UPPER(g.name) LIKE :search "
         + " OR UPPER(g.description) LIKE :search "
         + " OR :search is null) "
@@ -100,10 +113,12 @@ import org.rhq.core.domain.resource.ResourceType;
         + "    OR (type.category = :category AND :category is not null) "
         + "    OR (:resourceType is null AND :category is null )  ) ) "
         + "GROUP BY g,g.name,g.resourceType.name,g.description "),
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT_ADMIN, query = "SELECT count(g) FROM ResourceGroup g "
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT_ADMIN, query = "SELECT count(DISTINCT g) FROM ResourceGroup g "
         + "LEFT JOIN g.resourceType type "
-        + "WHERE g.groupCategory = :groupCategory "
+        + "LEFT JOIN g.implicitResources res "
+        + "WHERE ( g.groupCategory = :groupCategory OR :groupCategory is null ) "
         + " AND g.visible = true "
+        + " AND ( res.id = :resourceId OR :resourceId is null ) "
         + " AND (UPPER(g.name) LIKE :search "
         + " OR UPPER(g.description) LIKE :search "
         + " OR :search is null) "
@@ -211,6 +226,60 @@ public class ResourceGroup extends Group {
     public static final String QUERY_FIND_BY_GROUP_DEFINITION_AND_EXPRESSION = "ResourceGroup.findByGroupDefinitionAndExpression";
     public static final String QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS = "DELETE FROM RHQ_RESOURCE_GROUP_RES_EXP_MAP WHERE RESOURCE_ID IN ( :resourceIds )";
     public static final String QUERY_DELETE_IMPLICIT_BY_RESOURCE_IDS = "DELETE FROM RHQ_RESOURCE_GROUP_RES_IMP_MAP WHERE RESOURCE_ID IN ( :resourceIds )";
+
+    public static final String QUERY_NATIVE_FIND_FILTERED_MEMBER = "" //
+        + "         SELECT "
+        + "              (     SELECT COUNT(iresAvail.ID) "
+        + "                      FROM rhq_resource_avail iresAvail "
+        + "                INNER JOIN rhq_resource ires "
+        + "                        ON iresAvail.resource_id = ires.id "
+        + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
+        + "                        ON ires.id = impMap.resource_id "
+        + "                     WHERE impMap.resource_group_id = rg.id "
+        + "                       AND iresAvail.availability_type = 1 "
+        + "              ) as upAvail, "
+        + "              (     SELECT COUNT(iresAvail.ID) "
+        + "                      FROM rhq_resource_avail iresAvail "
+        + "                INNER JOIN rhq_resource ires "
+        + "                        ON iresAvail.resource_id = ires.id "
+        + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
+        + "                        ON ires.id = impMap.resource_id "
+        + "                     WHERE impMap.resource_group_id = rg.id "
+        + "                       AND iresAvail.availability_type = 0 "
+        + "              ) as downAvail, "
+        + "                rg.id as groupId, "
+        + "                COUNT(res.id) as groupSize "
+        + "           FROM rhq_resource_group rg "
+        + "LEFT OUTER JOIN rhq_resource_type resType "
+        + "             ON rg.resource_type_id = resType.id "
+        + "LEFT OUTER JOIN rhq_resource_group_res_imp_map memberMap "
+        + "             ON rg.id = memberMap.resource_group_id "
+        + "LEFT OUTER JOIN rhq_resource res "
+        + "             ON memberMap.resource_id = res.id "
+        + "                %SECURITY_FRAGMENT_JOIN%"
+        + "     INNER JOIN rhq_resource_avail resAvail "
+        + "             ON res.id = resAvail.resource_id "
+        + "          WHERE ( res.id = ? OR ? IS NULL ) " // resourceId x2
+        + "            AND ( rg.visible = %IS_VISIBLE% ) " // postgres uses true/false, oracle uses 1/0
+        + "            AND ( ? IS NULL " // :search
+        + "                  OR UPPER(rg.name) LIKE ? " // :search
+        + "                  OR UPPER(rg.description) LIKE ? ) " // :search
+        + "            AND ( rg.resource_type_id IS NULL " //
+        + "                  OR ( rg.resource_type_id = ? AND ? IS NOT NULL ) " // :resourceTypeId x2
+        + "                  OR ( resType.category = ? AND ? IS NOT NULL ) " // :resourceCategory x2
+        + "                  OR ( ? IS NULL AND ? IS NULL ) ) " // :resourceTypeId, :resourceCategory
+        + "            AND ( rg.category = ? OR ? IS NULL ) " // :groupCategory x2
+        + "                %SECURITY_FRAGMENT_WHERE%" //
+        + "       GROUP BY rg.id, rg.category, rg.name, rg.group_by, rg.description, resType.name ";
+
+    public static final String QUERY_NATIVE_FIND_FILTERED_MEMBER_SECURITY_FRAGMENT_JOIN = ""
+        + " INNER JOIN rhq_role_resource_group_map roleMap " //
+        + "         ON roleMap.resource_group_id = rg.id " //
+        + " INNER JOIN rhq_subject_role_map subjectMap " //
+        + "         ON subjectMap.role_id = roleMap.role_id ";
+
+    public static final String QUERY_NATIVE_FIND_FILTERED_MEMBER_SECURITY_FRAGMENT_WHERE = ""
+        + " AND ( subjectMap.subject_id = ? ) "; // :subjectId
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")

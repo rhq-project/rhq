@@ -689,7 +689,9 @@
 
          <rich:column>
             <f:facet name="header">
-               <h:outputText styleClass="headerText" value="Description"/>
+               <onc:sortableColumnHeader sort="rg.description">
+                  <h:outputText styleClass="headerText" value="Description"/>
+               </onc:sortableColumnHeader>
             </f:facet>
 
             <h:outputText value="#{resourceGroupComposite.resourceGroup.description}"/>
@@ -697,7 +699,25 @@
 
          <rich:column>
             <f:facet name="header">
-               <onc:sortableColumnHeader sort="COUNT(memberRes)">
+               <h:panelGroup>
+                  <onc:sortableColumnHeader sort="upAvail">
+                     <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up" />
+                  </onc:sortableColumnHeader>
+                  <h:outputText value=" / " />
+                  <onc:sortableColumnHeader sort="downAvail">
+                     <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down" />
+                  </onc:sortableColumnHeader>
+               </h:panelGroup>
+            </f:facet>
+
+            <h:outputText value="#{resourceGroupComposite.upCount}" />
+            <h:outputText value=" / " />
+            <h:outputText value="#{resourceGroupComposite.downCount}" />
+         </rich:column>
+
+         <rich:column>
+            <f:facet name="header">
+               <onc:sortableColumnHeader sort="groupSize">
                   <h:outputText styleClass="headerText" value="Members"/>
                </onc:sortableColumnHeader>
             </f:facet>
@@ -707,7 +727,7 @@
 
          <rich:column>
             <f:facet name="header">
-               <onc:sortableColumnHeader sort="AVG(a.availabilityType)">
+               <onc:sortableColumnHeader sort="AVG(resAvail.availability_type)">
                   <h:outputText styleClass="headerText" value="Availability"/>
                </onc:sortableColumnHeader>
             </f:facet>
@@ -716,7 +736,7 @@
                             rendered="#{resourceGroupComposite.availability == 1}"/>
             <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down"
                             rendered="#{resourceGroupComposite.availability == 0}"/>
-            <h:graphicImage value="/images/icon_available_grey.png" alt="Mixed" title="Mixed"
+            <h:graphicImage value="/images/icon_available_yellow.png" alt="Mixed" title="Mixed"
                             rendered="#{resourceGroupComposite.availability gt 0 and resourceGroupComposite.availability lt 1}"/>
             <h:graphicImage value="/images/icon_available_grey.png" alt="Unknown" title="Unknown"
                             rendered="#{resourceGroupComposite.availability == null}"/>
@@ -724,7 +744,7 @@
 
          <f:facet name="footer">
             <rich:columnGroup>
-               <rich:column colspan="6">
+               <rich:column colspan="7">
                   <ui:param name="paginationDataTableName" value="containingGroupsDataTable"/>
                   <ui:param name="paginationDataModel" value="#{containingGroupsDataModel}"/>
                   <ui:param name="paginationPageControl" value="#{PageControl.ContainingGroupsList}"/>

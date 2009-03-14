@@ -120,4 +120,8 @@ public interface ResourceGroupManagerLocal {
     void setResourceType(int resourceGroupId) throws ResourceTypeNotFoundException;
 
     int getImplicitGroupMemberCount(int resourceGroupId);
+
+    PageList<ResourceGroupComposite> getResourceGroupMembers(Subject subject, GroupCategory groupCategory,
+        ResourceCategory resourceCategory, ResourceType resourceType, String nameFilter, Integer resourceId,
+        PageControl pc);
 }

@@ -26,7 +26,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -60,9 +59,9 @@ public class ListContainingGroupsUIBean extends PagedDataTableUIBean {
 
         @Override
         public PageList<ResourceGroupComposite> fetchPage(PageControl pageControl) {
-            int resourceId = EnterpriseFacesContextUtility.getResource().getId();
             PageList<ResourceGroupComposite> resourceGroupComposites = this.resourceGroupManager
-                .getResourceGroupsForResource(EnterpriseFacesContextUtility.getSubject(), resourceId, pageControl);
+                .getResourceGroupMembers(getSubject(), null, null, null, null, getResource().getId(), pageControl);
+            //.getResourceGroupsForResource(EnterpriseFacesContextUtility.getSubject(), resourceId, pageControl);
             return resourceGroupComposites;
         }
     }

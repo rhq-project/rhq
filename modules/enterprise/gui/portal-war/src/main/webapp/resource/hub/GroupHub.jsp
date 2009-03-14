@@ -251,31 +251,39 @@
          <c:choose>
             <c:when test="${GroupHubForm.groupCategory == 'COMPATIBLE'}">
                <display:column width="25%" property="resourceGroup.name" title="common.header.Group"
-                               isLocalizedTitle="true" sortAttr="g.name"
+                               isLocalizedTitle="true" sortAttr="rg.name"
                                href="/rhq/group/monitor/graphs.xhtml?category=${GroupHubForm.groupCategory}&groupId=${groupComposite.resourceGroup.id}"/>
             </c:when>
             <c:otherwise>
                <display:column width="25%" property="resourceGroup.name" title="common.header.Group"
-                               isLocalizedTitle="true" sortAttr="g.name"
+                               isLocalizedTitle="true" sortAttr="rg.name"
                                href="/rhq/group/inventory/view.xhtml?category=${GroupHubForm.groupCategory}&groupId=${groupComposite.resourceGroup.id}"/>
             </c:otherwise>
          </c:choose>
          <c:if test="${not empty resourceTypeTH}">
             <display:column width="25%" property="resourceGroup.resourceType.name" title="${resourceTypeTH}"
-                            isLocalizedTitle="false" sortAttr="g.resourceType.name">
+                            isLocalizedTitle="false" sortAttr="resType.name">
             </display:column>
          </c:if>
 
          <display:column width="30%" property="resourceGroup.description"
-                         title="common.header.Description" sortAttr="g.description"/>
+                         title="common.header.Description" sortAttr="rg.description"/>
 
-         <display:column width="10%" property="memberCount" title="common.header.Members" isLocalizedTitle="true"
+         <display:column width="5%" property="upCount" title="common.header.UpCount" isLocalizedTitle="true"
                          styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" valign="middle"
-                         sortAttr="count(res)"/>
+                         sortAttr="upAvail"/>
 
-         <display:column width="10%" property="availability" title="resource.common.monitor.visibility.AvailabilityTH"
+         <display:column width="5%" property="downCount" title="common.header.DownCount" isLocalizedTitle="true"
                          styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" valign="middle"
-                         sortAttr="avg(a)">
+                         sortAttr="downAvail"/>
+
+         <display:column width="5%" property="memberCount" title="common.header.Members" isLocalizedTitle="true"
+                         styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" valign="middle"
+                         sortAttr="groupSize"/>
+
+         <display:column width="5%" property="availability" title="resource.common.monitor.visibility.AvailabilityTH"
+                         styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" valign="middle"
+                         sortAttr="AVG(resAvail.availability_type)">
             <display:availabilitydecorator />
          </display:column>
 

@@ -52,9 +52,6 @@ public interface ResourceGroupManagerLocal {
     ResourceGroup getResourceGroupById(Subject user, int id, GroupCategory category)
         throws ResourceGroupNotFoundException;
 
-    PageList<ResourceGroupComposite> getAllResourceGroups(Subject subject, GroupCategory groupCategory,
-        ResourceCategory resourceCategory, ResourceType resourceType, String nameFilter, PageControl pageControl);
-
     int getResourceGroupCountByCategory(Subject subject, GroupCategory category);
 
     ResourceGroup addResourcesToGroup(Subject subject, Integer groupId, Integer[] resourceIds)
@@ -71,9 +68,6 @@ public interface ResourceGroupManagerLocal {
     PageList<ResourceGroup> getResourceGroupByIds(Subject subject, Integer[] resourceGroupIds, PageControl pageControl);
 
     void updateImplicitGroupMembership(Subject subject, Resource resource);
-
-    PageList<ResourceGroupComposite> getResourceGroupsForResource(Subject subject, int resourceId,
-        PageControl pageControl);
 
     List<Resource> getResourcesForAutoGroup(Subject subject, int autoGroupParentResourceId,
         int autoGroupChildResourceTypeId);
@@ -121,7 +115,7 @@ public interface ResourceGroupManagerLocal {
 
     int getImplicitGroupMemberCount(int resourceGroupId);
 
-    PageList<ResourceGroupComposite> getResourceGroupMembers(Subject subject, GroupCategory groupCategory,
+    PageList<ResourceGroupComposite> getResourceGroupsFiltered(Subject subject, GroupCategory groupCategory,
         ResourceCategory resourceCategory, ResourceType resourceType, String nameFilter, Integer resourceId,
         PageControl pc);
 }

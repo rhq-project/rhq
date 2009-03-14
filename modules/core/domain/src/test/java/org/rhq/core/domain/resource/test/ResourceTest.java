@@ -43,9 +43,6 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.group.GroupCategory;
-import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 
 public class ResourceTest extends AbstractEJB3Test {
@@ -249,32 +246,6 @@ public class ResourceTest extends AbstractEJB3Test {
         }
 
         //getEntityManager().persist(p);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test(groups = "integration.ejb3")
-    public void testGroupAccess() throws Exception {
-        getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-        try {
-            Query query = em.createNamedQuery(ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_ADMIN);
-            query.setParameter("search", null);
-            query.setParameter("groupCategory", GroupCategory.MIXED);
-            query.setParameter("category", null);
-            query.setParameter("resourceType", null);
-            query.setParameter("resourceId", null);
-            List<ResourceGroupComposite> groups = query.getResultList();
-            System.out.println("\n\n\n************************************");
-            for (ResourceGroupComposite group : groups) {
-                System.out.println(group);
-            }
-
-            //         query = PersistenceUtility.createCountQuery(em, MixedGroup.QUERY_FIND_ALL_COMPOSITE_ADMIN);
-            //         System.out.println("Count: " + query.getSingleResult());
-
-        } finally {
-            getTransactionManager().rollback();
-        }
     }
 
     @SuppressWarnings("unchecked")

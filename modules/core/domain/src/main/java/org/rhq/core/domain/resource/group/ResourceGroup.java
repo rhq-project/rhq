@@ -60,30 +60,9 @@ import org.rhq.core.domain.resource.ResourceType;
  * @author Greg Hinkle
  * @author Joseph Marques
  */
-
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY, query = "" //
-        + "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(DISTINCT res)) "
-        + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s "
-        + "LEFT JOIN g.implicitResources res LEFT JOIN res.currentAvailability a "
-        + "LEFT JOIN g.resourceType type "
-        + "WHERE s = :subject "
-        + " AND g.visible = true "
-        + " AND ( res.id = :resourceId OR :resourceId is null ) "
-        + " AND ( g.groupCategory = :groupCategory OR :groupCategory is null ) "
-        + " AND (UPPER(g.name) LIKE :search " //
-        + " OR UPPER(g.description) LIKE :search " //
-        + "OR :search is null) " //
-        + " AND ( type is null OR ( " //
-        + "      (type = :resourceType AND :resourceType is not null) "
-        + "    OR "
-        + "      (type.category = :category AND :category is not null) "
-        + "    OR "
-        + "      (:resourceType is null AND :category is null ) "
-        + "     ) ) "
-        + "GROUP BY g,g.name,g.resourceType.name,g.description "),
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT, query = "SELECT count(DISTINCT g) "
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_FILTERED_COUNT, query = "SELECT count(DISTINCT g) "
         + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s " //
         + "LEFT JOIN g.resourceType type " //
         + "LEFT JOIN g.implicitResources res " //
@@ -98,22 +77,7 @@ import org.rhq.core.domain.resource.ResourceType;
         + "      (type = :resourceType AND :resourceType is not null) "
         + "    OR (type.category = :category AND :category is not null) "
         + "    OR (:resourceType is null AND :category is null )     ) ) "),
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_ADMIN, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(res)) "
-        + "FROM ResourceGroup g "
-        + "LEFT JOIN g.implicitResources res LEFT JOIN res.currentAvailability a "
-        + "LEFT JOIN g.resourceType type "
-        + "WHERE ( g.groupCategory = :groupCategory OR :groupCategory is null ) "
-        + " AND g.visible = true "
-        + " AND ( res.id = :resourceId OR :resourceId is null ) "
-        + " AND (UPPER(g.name) LIKE :search "
-        + " OR UPPER(g.description) LIKE :search "
-        + " OR :search is null) "
-        + " AND ( type is null OR ( "
-        + "      (type = :resourceType AND :resourceType is not null) "
-        + "    OR (type.category = :category AND :category is not null) "
-        + "    OR (:resourceType is null AND :category is null )  ) ) "
-        + "GROUP BY g,g.name,g.resourceType.name,g.description "),
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT_ADMIN, query = "SELECT count(DISTINCT g) FROM ResourceGroup g "
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_FILTERED_COUNT_ADMIN, query = "SELECT count(DISTINCT g) FROM ResourceGroup g "
         + "LEFT JOIN g.resourceType type "
         + "LEFT JOIN g.implicitResources res "
         + "WHERE ( g.groupCategory = :groupCategory OR :groupCategory is null ) "
@@ -167,15 +131,6 @@ import org.rhq.core.domain.resource.ResourceType;
     */
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT rg FROM Resource AS res JOIN res.implicitGroups rg WHERE res.id = :id "),
 
-    // TODO: Add authz checks to the following two queries (i.e. only return groups that are viewable by the specified subject).
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_RESOURCE_ID_COMPOSITE, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), rg, COUNT(memberRes)) "
-        + "FROM Resource AS res JOIN res.implicitGroups rg "
-        + "LEFT JOIN rg.implicitResources memberRes JOIN memberRes.currentAvailability a "
-        + "WHERE res.id = :resourceId " + " AND rg.visible = true " + "GROUP BY rg, rg.name, rg.description "),
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_RESOURCE_ID_COMPOSITE_COUNT, query = "SELECT COUNT(rg) "
-        + "FROM Resource AS res JOIN res.implicitGroups rg " + "WHERE res.id = :resourceId "
-        + " AND rg.visible = true "),
-
     /* the following two are for auto-groups summary */
     @NamedQuery(name = ResourceGroup.QUERY_FIND_AUTOGROUP_BY_ID, query = "SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(AVG(a.availabilityType), res.parentResource, res.resourceType, COUNT(res)) "
         + "FROM Resource res JOIN res.implicitGroups irg JOIN irg.roles r JOIN r.subjects s JOIN res.currentAvailability a "
@@ -197,11 +152,6 @@ import org.rhq.core.domain.resource.ResourceType;
 public class ResourceGroup extends Group {
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY = "ResourceGroup.findAllCompositeByCategory";
-    public static final String QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT = "ResourceGroup.findAllCompositeByCategory_Count";
-    public static final String QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_ADMIN = "ResourceGroup.findAllCompositeByCategory_Admin";
-    public static final String QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT_ADMIN = "ResourceGroup.findAllCompositeByCategory_Count_Admin";
-
     public static final String QUERY_FIND_ALL_BY_CATEGORY_COUNT = "ResourceGroup.findAllByCategory_Count";
     public static final String QUERY_FIND_ALL_BY_CATEGORY_COUNT_admin = "ResourceGroup.findAllByCategory_Count_admin";
 
@@ -214,8 +164,6 @@ public class ResourceGroup extends Group {
     public static final String QUERY_FIND_BY_IDS_admin = "ResourceGroup.findByIds_admin";
     public static final String QUERY_FIND_BY_IDS = "ResourceGroup.findByIds";
     public static final String QUERY_FIND_BY_RESOURCE_ID = "ResourceGroup.findByResourceId";
-    public static final String QUERY_FIND_BY_RESOURCE_ID_COMPOSITE = "ResourceGroup.findByResourceIdComposite";
-    public static final String QUERY_FIND_BY_RESOURCE_ID_COMPOSITE_COUNT = "ResourceGroup.findByResourceIdCompositeCount";
 
     public static final String QUERY_FIND_AUTOGROUP_BY_ID = "ResourceGroup.findAutoGroupById";
     public static final String QUERY_FIND_AUTOGROUP_BY_ID_ADMIN = "ResourceGroup.findAutoGroupById_admin";
@@ -227,6 +175,8 @@ public class ResourceGroup extends Group {
     public static final String QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS = "DELETE FROM RHQ_RESOURCE_GROUP_RES_EXP_MAP WHERE RESOURCE_ID IN ( :resourceIds )";
     public static final String QUERY_DELETE_IMPLICIT_BY_RESOURCE_IDS = "DELETE FROM RHQ_RESOURCE_GROUP_RES_IMP_MAP WHERE RESOURCE_ID IN ( :resourceIds )";
 
+    public static final String QUERY_FIND_ALL_FILTERED_COUNT = "ResourceGroup.findAllFiltered_Count";
+    public static final String QUERY_FIND_ALL_FILTERED_COUNT_ADMIN = "ResourceGroup.findAllFiltered_Count_Admin";
     public static final String QUERY_NATIVE_FIND_FILTERED_MEMBER = "" //
         + "         SELECT "
         + "              (     SELECT COUNT(iresAvail.ID) "
@@ -519,8 +469,7 @@ public class ResourceGroup extends Group {
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder buffer = new StringBuilder();
         buffer.append(ResourceGroup.class.getSimpleName()).append("[");
         buffer.append("id=").append(this.id);

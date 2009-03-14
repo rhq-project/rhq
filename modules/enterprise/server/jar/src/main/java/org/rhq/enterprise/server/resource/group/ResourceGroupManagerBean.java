@@ -282,50 +282,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public PageList<ResourceGroupComposite> getAllResourceGroups(Subject subject, GroupCategory groupCategory,
-        ResourceCategory resourceCategory, ResourceType resourceType, String nameFilter, PageControl pageControl) {
-        pageControl.initDefaultOrderingField("g.name");
-
-        Query queryCount;
-        Query query;
-
-        if (authorizationManager.isInventoryManager(subject)) {
-            queryCount = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT_ADMIN);
-            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_ADMIN, pageControl);
-        } else {
-            queryCount = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT);
-            queryCount.setParameter("subject", subject);
-            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY, pageControl);
-            query.setParameter("subject", subject);
-        }
-
-        queryCount.setParameter("groupCategory", groupCategory);
-        query.setParameter("groupCategory", groupCategory);
-
-        queryCount.setParameter("category", resourceCategory);
-        query.setParameter("category", resourceCategory);
-
-        queryCount.setParameter("resourceType", resourceType);
-        query.setParameter("resourceType", resourceType);
-
-        queryCount.setParameter("resourceId", null);
-        query.setParameter("resourceId", null);
-
-        nameFilter = PersistenceUtility.formatSearchParameter(nameFilter);
-
-        queryCount.setParameter("search", nameFilter);
-        query.setParameter("search", nameFilter);
-
-        long count = (Long) queryCount.getSingleResult();
-
-        List<ResourceGroupComposite> groups = query.getResultList();
-
-        return new PageList(groups, (int) count, pageControl);
-    }
-
     public int getResourceGroupCountByCategory(Subject subject, GroupCategory category) {
         Query queryCount;
 
@@ -535,28 +491,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         List<ResourceGroup> groups = query.getResultList();
 
         return new PageList<ResourceGroup>(groups, (int) count, pageControl);
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<ResourceGroupComposite> getResourceGroupsForResource(Subject subject, int resourceId,
-        PageControl pageControl) {
-        pageControl.initDefaultOrderingField("rg.name");
-
-        // TODO: Only return groups that are viewable by the specified subject (both named queries need to be updated).
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            ResourceGroup.QUERY_FIND_BY_RESOURCE_ID_COMPOSITE, pageControl);
-        query.setParameter("resourceId", resourceId);
-
-        //query.setParameter("subject", subject);
-        List<ResourceGroupComposite> groups = query.getResultList();
-
-        Query countQuery = this.entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_RESOURCE_ID_COMPOSITE_COUNT);
-        countQuery.setParameter("resourceId", resourceId);
-
-        //countQuery.setParameter("subject", subject);
-        long count = (Long) countQuery.getSingleResult();
-
-        return new PageList<ResourceGroupComposite>(groups, (int) count, pageControl);
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -899,7 +833,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         }
     }
 
-    public PageList<ResourceGroupComposite> getResourceGroupMembers(Subject subject, GroupCategory groupCategory,
+    public PageList<ResourceGroupComposite> getResourceGroupsFiltered(Subject subject, GroupCategory groupCategory,
         ResourceCategory resourceCategory, ResourceType resourceType, String nameFilter, Integer resourceId,
         PageControl pc) {
 
@@ -991,9 +925,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
         Query queryCount = null;
         if (authorizationManager.isInventoryManager(subject)) {
-            queryCount = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT_ADMIN);
+            queryCount = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_ALL_FILTERED_COUNT_ADMIN);
         } else {
-            queryCount = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_ALL_COMPOSITE_BY_CATEGORY_COUNT);
+            queryCount = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_ALL_FILTERED_COUNT);
             queryCount.setParameter("subject", subject);
         }
 

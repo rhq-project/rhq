@@ -51,9 +51,6 @@
      	}
    </style>
 <script language="JavaScript" type="text/javascript">var aboutWindowTitle = '<fmt:message key="about.Title"/>';</script>
-<!--[if lt IE 7]>
-<script defer type="text/javascript" src="/js/ie6pngfix.js"></script>
-<![endif]-->
 </head>
 
 <body>

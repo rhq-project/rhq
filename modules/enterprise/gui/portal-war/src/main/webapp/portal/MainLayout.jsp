@@ -26,10 +26,6 @@
       <link href="/css/theme/debug.css" rel="stylesheet" type="text/css"/>
       <link rel="stylesheet" type="text/css" media="screen" href="/css/menu.css"/>
 
-      <!--[if lt IE 7]>
-      <script defer type="text/javascript" src="/js/ie6pngfix.js"></script>
-      <![endif]-->
-
       <tiles:insert attribute="head"/>
       <title>
          <fmt:message key="${portal.name}">

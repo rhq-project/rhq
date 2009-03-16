@@ -156,9 +156,6 @@
       <c:if test="${not empty param.sc}">
          <c:param name="sc" value="${param.sc}"/>
       </c:if>
-      <c:if test="${not empty param.resourceType}">
-         <c:param name="resourceType" value="${param.resourceType}"/>
-      </c:if>
       <c:param name="groupCategory" value="${GroupHubForm.groupCategory}"/>
    </c:url>
 

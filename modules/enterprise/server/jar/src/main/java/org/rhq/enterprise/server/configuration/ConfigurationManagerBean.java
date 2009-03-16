@@ -557,9 +557,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return currentPersistedConfigs;
     }
 
-    private void ensureNoResourceConfigurationUpdatesInProgress(ResourceGroup compatibleGroup) throws Exception {
+    private void ensureNoResourceConfigurationUpdatesInProgress(ResourceGroup compatibleGroup)
+            throws UpdateStillInProgressException {
         if (isAggregateResourceConfigurationUpdateInProgress(this.subjectManager.getOverlord(), compatibleGroup.getId())) {
-            throw new Exception("Current group Resource configuration for " + compatibleGroup
+            throw new UpdateStillInProgressException("Current group Resource configuration for " + compatibleGroup
                 + " cannot be calculated, because a group Resource configuration update is currently in progress "
                 + " (please wait for this update to complete or delete it from the history).");
         }
@@ -574,7 +575,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             query.setParameter("groupId", compatibleGroup.getId());
             query.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
             List<Resource> resources = query.getResultList();
-            throw new Exception(
+            throw new UpdateStillInProgressException(
                 "Current group Resource configuration for "
                     + compatibleGroup
                     + " cannot be calculated, because Resource configuration updates are currently in progress for the"

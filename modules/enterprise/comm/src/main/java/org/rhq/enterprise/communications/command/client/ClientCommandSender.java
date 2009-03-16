@@ -879,6 +879,11 @@ public class ClientCommandSender {
         // Note that we have to do this prior to obtaining the m_changingModeLock.
         m_shuttingDownTasksLock.writeLock().lock();
         try {
+            // we are already shutting down, immediately abort. Someone else is taking care of our shutdown.
+            // If we continue, a deadlock is likely to occur.
+            if (m_shuttingDownTasks == true) {
+                return false;
+            }
             m_shuttingDownTasks = true;
         } finally {
             m_shuttingDownTasksLock.writeLock().unlock();

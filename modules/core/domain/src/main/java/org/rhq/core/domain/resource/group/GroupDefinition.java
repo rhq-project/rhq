@@ -134,7 +134,7 @@ public class GroupDefinition implements Serializable {
         + "             ON rg.id = memberMap.resource_group_id "
         + "LEFT OUTER JOIN rhq_resource res "
         + "             ON memberMap.resource_id = res.id "
-        + "     INNER JOIN rhq_resource_avail resAvail "
+        + "LEFT OUTER JOIN rhq_resource_avail resAvail "
         + "             ON res.id = resAvail.resource_id "
         + "          WHERE rg.group_definition_id = ? "
         + "       GROUP BY rg.id, rg.category, rg.name, rg.group_by ";

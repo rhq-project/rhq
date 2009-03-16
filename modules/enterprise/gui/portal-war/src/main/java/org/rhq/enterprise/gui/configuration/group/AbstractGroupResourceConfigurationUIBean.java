@@ -31,6 +31,8 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * An abstract base class for the Seam components for viewing and editing group Configurations. Requires the 'groupId'
@@ -40,6 +42,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public abstract class AbstractGroupResourceConfigurationUIBean
 {
+    private final Log log = LogFactory.getLog(AbstractGroupResourceConfigurationUIBean.class);
+
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
@@ -58,13 +62,20 @@ public abstract class AbstractGroupResourceConfigurationUIBean
             this.resourceConfigurations = this.configurationManager.getResourceConfigurationsForCompatibleGroup(
                     EnterpriseFacesContextUtility.getSubject(), this.group.getId());
         }
+        catch (RuntimeException e)
+        {
+            // NOTE: In order for this message to be displayed, an EL expression referencing the managed bean must
+            //       be on the page somewhere above the h:messages tag.
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_FATAL, "Failed to load group Resource configuration.",
+                    e);
+            log.error("Failed to load group Resource configuration.", e);
+            return;
+        }
         catch (Exception e)
         {
             // NOTE: In order for this message to be displayed, an EL expression referencing the managed bean must
             //       be on the page somewhere above the h:messages tag.
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to load group Resource configuration.",
-                    e);
-            e.printStackTrace();
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Cannot load group Resource configuration.", e);
             return;
         }
         this.configurationSet = GroupResourceConfigurationUtility.buildConfigurationSet(

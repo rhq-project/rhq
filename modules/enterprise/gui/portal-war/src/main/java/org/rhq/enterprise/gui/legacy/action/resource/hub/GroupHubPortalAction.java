@@ -205,7 +205,7 @@ public class GroupHubPortalAction extends BaseAction {
     private PageList<ResourceGroupComposite> getGroups(Subject subject, ResourceGroupManagerLocal groupManager,
         GroupCategory groupCategory, ResourceCategory resourceCategory, ResourceType resourceType, String nameFilter,
         PageControl pageControl) throws Exception {
-        log.debug("Finding all " + groupCategory + "s with " + "resource category [" + resourceType + "] and "
+        log.debug("Finding all " + groupCategory + "s with " + "resource category [" + resourceCategory + "] and "
             + "resource type [" + resourceType + "] and " + "resource name [" + nameFilter + "]...");
 
         PageList<ResourceGroupComposite> groups;

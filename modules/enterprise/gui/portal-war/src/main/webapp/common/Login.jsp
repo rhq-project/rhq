@@ -32,7 +32,7 @@
     top.location.href = self.document.location;
 
   var path = "<html:rewrite page="/images/"/>";
-  
+
   // takes care of jsession garbage, because sometimes jsession gets tacked on, like this:
   // var path = "/images/;jsessionid=2FA16379595FE7804C33FEDB13FAB8D0";
   var semiIndex = path.indexOf(";");
@@ -51,6 +51,9 @@
      	}
    </style>
 <script language="JavaScript" type="text/javascript">var aboutWindowTitle = '<fmt:message key="about.Title"/>';</script>
+<!--[if lt IE 7]>
+<script defer type="text/javascript" src="/js/ie6pngfix.js"></script>
+<![endif]-->
 </head>
 
 <body>
@@ -87,23 +90,23 @@
 <div id="LoginSupport">
 
 	<h1><fmt:message key="login.message"/></h1>
-	
+
 	<html:form action="/j_security_check">
-	
+
 	<p><fmt:message key="login.login"/></p>
-	
-	
+
+
 	<div style="margin-bottom: 5px">
 		<div style="width: 100px; float: left; text-align:right; margin-right: 10px;"><fmt:message key="login.username"/></div>
 		<div><html:text property="j_username" size="25" tabindex="1" /><html:submit value="Login" styleClass="button_submit" tabindex="3"/></div>
 	</div>
-	
-	
+
+
 	<div style="margin-bottom: 5px">
 		<div style="width: 100px; float: left; text-align:right; margin-right: 10px;"><fmt:message key="common.label.Password"/></div>
 		<div><input type="Password" name="j_password" size="25" value="" tabindex="2"></div>
 	</div>
-		
+
 	<c:if test='${loginStatus ne null}'>
 	<div style="margin-top: 25px; width: 300px; color: maroon" class="box">
 		<div class="smalltext" style="line-height: 1.5">
@@ -121,7 +124,7 @@
 		</div>
 	</div>
 	</logic:messagesPresent>
-	
+
 	</html:form>
 
 </div>

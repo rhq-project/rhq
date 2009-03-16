@@ -60,14 +60,14 @@
                displayName="Start Script"
                type="file"
                required="false"
-               description="The path to the script used by the 'Start' operation to start this Tomcat server;                                            
+               description="The path to the script used by the 'Start' operation to start this Tomcat server;
                                             if the path is not absolute it will be resolved relative to {installationPath}." />
             <c:simple-property
                name="shutdownScript"
                displayName="Shutdown Script"
                type="file"
                required="false"
-               description="The path to the script used by the 'Shutdown' operation to shutdown this Tomcat server;                                            
+               description="The path to the script used by the 'Shutdown' operation to shutdown this Tomcat server;
                                             if the path is not absolute it will be resolved relative to {installationPath}." />
          </c:group>
 
@@ -128,7 +128,7 @@
             <c:simple-property
                name="operationResult"
                description="Server Store Configuration results." />
-         </results>         
+         </results>
       </operation>
 
       <metric
@@ -190,6 +190,7 @@
                   description="Does this host deploy applications in appBase at startup?" />
                <c:simple-property
                   name="unpackWARs"
+                  displayName="Unpack WARs"
                   type="boolean"
                   description="Does this Host automatically unpack deployed WAR files?" />
                <c:simple-property

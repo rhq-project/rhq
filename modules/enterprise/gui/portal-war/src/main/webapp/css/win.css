@@ -1,4 +1,8 @@
 /* GLOBAL RULES */
+html {
+    overflow: auto;
+}
+
 BODY,FORM {
     margin: 0;
 }
@@ -8,8 +12,6 @@ BODY,P,TD,TH,OPTION,INPUT,TEXTAREA,SELECT {
     color: #000;
     font-family: tahoma, verdana, sans-serif;
 }
-
-a
 
 IMG {
     border-style: none;
@@ -28,7 +30,7 @@ HR {
 
 A:link {
     color: #003399;
-    text-decoration: none;
+    zz text-decoration: none;
     font-weight: bold;
 }
 
@@ -1348,7 +1350,7 @@ div.overlay {
     border: 0;
     z-index: 200;
     opacity: 0.3;
-    filter: alpha(opacity =   30);
+    filter: alpha(opacity =         30);
     -moz-opacity: 0.3;
 }
 
@@ -1810,7 +1812,7 @@ P.compact {
 
 .member-property-value-cell {
     /* don't specify a width - this will take up any remaining horizontal space in the table */
-    
+
 }
 
 .list-property-display-name-cell,.list-property-value-cell,.list-property-description-cell,.list-property-enabled-cell,.list-property-error-cell
@@ -1942,7 +1944,7 @@ ul.radio-group .unspecified {
 }
 
 .aggregate-property-members-icon-cell {
-    
+
 }
 
 .EvenRow {
@@ -2037,7 +2039,7 @@ ul.radio-group .unspecified {
 
 /*--- Content ---------------------*/
 .revision-data-table {
-    
+
 }
 
 .revision-data-table-header {
@@ -2050,11 +2052,11 @@ ul.radio-group .unspecified {
 }
 
 .revision-data-table-odd-row {
-    
+
 }
 
 .instructions-data-table {
-    
+
 }
 
 .instructions-data-table-header {
@@ -2267,7 +2269,7 @@ ul.radio-group .unspecified {
     background: #4A5B81;
     opacity: .5;
     z-index: 2;
-    filter: alpha(opacity =   50);
+    filter: alpha(opacity =         50);
     background-image: url("/images/horizontal_gradient.png");
     background-repeat: repeat-y;
 }

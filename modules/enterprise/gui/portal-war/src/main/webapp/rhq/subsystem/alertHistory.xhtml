@@ -74,7 +74,7 @@
                             value="#{alertHistoryDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 15%, 15%, 15%, 15%, 15%, 15%, 9%"
+                            columnsWidth="15%, 15%, 15%, 15%, 15%, 15%, 10%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -83,15 +83,6 @@
                <f:facet name="PageControlView">
                   <onc:paginationControl id="SubsystemAlertHistory" />
                </f:facet>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:allSelect target="selectedItems" />
-                  </f:facet>
-
-                  <onc:select name="selectedItems"
-                              value="#{item.alert.id}" />
-               </rich:column>
 
                <rich:column>
                   <f:facet name="header">
@@ -113,7 +104,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}" 
+                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}"
                                 rendered="#{not empty item.parentResourceName}">
                      <f:param name="id" value="#{item.parentResourceId}" />
                      <h:outputText value="#{item.parentResourceName}" />
@@ -149,7 +140,7 @@
                      <f:param name="id" value="#{item.alert.alertDefinition.resource.id}" />
                      <f:param name="ad" value="#{item.alert.alertDefinition.id}" />
 
-                      
+
                       <h:graphicImage rendered="#{item.alert.alertDefinition.priority == 'LOW'}" value="/images/icn_flag_blue.png"/>
                       <h:graphicImage rendered="#{item.alert.alertDefinition.priority == 'MEDIUM'}" value="/images/icn_flag_yellow.png"/>
                       <h:graphicImage rendered="#{item.alert.alertDefinition.priority == 'HIGH'}" value="/images/icn_flag_red.png"/>
@@ -190,7 +181,7 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="8" width="100%">
+                     <rich:column colspan="7" width="100%">
                         <onc:selectCommandButton action="#{SubsystemAlertHistoryUIBean.deleteSelected}"
                                                  value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{GlobalPermissionsUIBean.superuser}" />

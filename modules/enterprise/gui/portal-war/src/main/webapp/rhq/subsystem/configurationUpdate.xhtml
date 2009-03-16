@@ -74,7 +74,7 @@
                             value="#{configurationUpdateDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 22%, 22%, 15%, 15%, 15%,20%"
+                            columnsWidth="23%, 22%, 15%, 15%, 15%,20%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -83,15 +83,6 @@
                <f:facet name="PageControlView">
                   <onc:paginationControl id="SubsystemConfigurationHistory" />
                </f:facet>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:allSelect target="selectedItems" />
-                  </f:facet>
-
-                  <onc:select name="selectedItems"
-                              value="#{item.id}" />
-               </rich:column>
 
                <rich:column>
                   <f:facet name="header">
@@ -113,7 +104,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}" 
+                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}"
                                 rendered="#{not empty item.parentResourceId}">
                      <f:param name="id" value="#{item.parentResourceId}" />
                      <h:outputText value="#{item.parentResourceName}" />
@@ -179,7 +170,7 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="7" width="100%">
+                     <rich:column colspan="6" width="100%">
 
                         <ui:param name="paginationDataTableName" value="configurationUpdateDataTable"/>
                         <ui:param name="paginationDataModel" value="#{configurationUpdateDataModel}"/>

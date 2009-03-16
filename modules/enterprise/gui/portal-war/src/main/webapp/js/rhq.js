@@ -223,6 +223,8 @@ function prepareInputsForSubmission(form)
          }
       }
    }
+   // Return true in case an onclick handler called us.
+   return true;
 }
 
 /**

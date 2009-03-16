@@ -3,7 +3,24 @@
 <faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
-   
+
+   <navigation-rule>
+      <from-view-id>/rhq/group/configuration/editCurrent.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.addNewOpenMapMemberProperty}</from-action>
+         <to-view-id>/rhq/group/configuration/addSimple.xhtml</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/group/configuration/addSimple.xhtml</from-view-id>
+
+      <navigation-case>
+         <to-view-id>/rhq/group/configuration/editCurrent.xhtml?refresh=rhq_prop</to-view-id>
+      </navigation-case>
+   </navigation-rule>
+
    <navigation-rule>
 
       <from-view-id>/rhq/group/configuration/history.xhtml</from-view-id>
@@ -21,6 +38,8 @@
       </navigation-case>
       
    </navigation-rule>
+
+
 
 </faces-config>
       

@@ -70,6 +70,8 @@ public abstract class AbstractAddNewOpenMapMemberPropertyUIBean {
         }
 
         PropertySimple propertySimple = new PropertySimple(propertyName, this.propertyValue);
+        // It is essential to set override to true in case this is an aggregate config.
+        propertySimple.setOverride(true);
         propertyMap.put(propertySimple);
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Property '" + propertySimple.getName()
             + "' added to map '" + mapName + "'.");

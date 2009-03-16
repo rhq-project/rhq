@@ -46,7 +46,6 @@ import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.configuration.ConfigRenderer;
-import org.ajax4jsf.context.AjaxContext;
 
  /**
  * A JSF validator that validates a String, which represents the value of a JON simple property (i.e.
@@ -79,10 +78,13 @@ public class PropertySimpleValueValidator implements Validator, StateHolder {
         if (refresh != null && refresh.equals(ConfigRenderer.PROPERTY_SET_COMPONENT_ID))
             return;                    
 
-        if (!FacesComponentUtility.isOverride(component)) {
-            // don't validate if it's not being updated
+        // An optional property with a null value is always valid.
+        if (!this.propertyDefinition.isRequired() && value == null)
             return;
-        }
+
+        // Don't validate if it's not being updated.
+        if (!FacesComponentUtility.isOverride(component))
+            return;
 
         List<Validator> subValidators = createSubValidators();
 

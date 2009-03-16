@@ -29,6 +29,7 @@ package org.rhq.core.gui.configuration;
  import javax.faces.component.UIComponent;
  import javax.faces.component.UIInput;
  import javax.faces.component.UIParameter;
+ import javax.faces.component.UIForm;
  import javax.faces.component.html.HtmlCommandLink;
  import javax.faces.component.html.HtmlPanelGrid;
  import javax.faces.component.html.HtmlPanelGroup;
@@ -56,6 +57,7 @@ package org.rhq.core.gui.configuration;
  import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
  import org.richfaces.component.html.HtmlModalPanel;
  import org.ajax4jsf.component.html.HtmlAjaxCommandLink;
+ import org.ajax4jsf.taglib.html.jsp.AjaxCommandLink;
 
  /**
  * A factory that generates a tree of JSF components that depicts a given collection of JON {@link Property}s.
@@ -406,9 +408,13 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             // add Actions column w/ delete button
             FacesComponentUtility.addVerbatimText(wrapper, "<td class='" + OPENMAP_PROPERTY_ACTIONS_CELL_STYLE_CLASS
                 + "'>");
-            HtmlCommandLink deleteLink = FacesComponentUtility.addCommandLink(wrapper, this.config);
+            HtmlAjaxCommandLink deleteLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
+            wrapper.getChildren().add(deleteLink);
+
+            //deleteLink.setOnclick("prepareInputsForSubmission(this.form)");
+
             deleteLink.setTitle(DELETE_MAP_BUTTON_TITLE);
-            //deleteLink.setImmediate(true); // skip validation (we only want to validate upon Save)
+            deleteLink.setImmediate(true); // skip validation (we only want to validate upon Save)
 
             FacesComponentUtility.addParameter(deleteLink, this.config, RequestParameterNameConstants.FUNCTION_PARAM,
                 DELETE_OPEN_MAP_MEMBER_PROPERTY_FUNCTION);

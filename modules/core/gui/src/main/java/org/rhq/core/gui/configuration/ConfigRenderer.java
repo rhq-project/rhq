@@ -255,18 +255,25 @@ public class ConfigRenderer extends Renderer {
             .isFullyEditable(), false);
     }
 
-    private void addListMemberProperty(AbstractConfigurationComponent config) {
+    private void addListMemberProperty(AbstractConfigurationComponent configurationComponent) {
+        // Update member Configurations if this is a group config.
+        if (configurationComponent instanceof ConfigurationSetComponent) {
+            ConfigurationSetComponent configurationSetComponent = ((ConfigurationSetComponent) configurationComponent);
+            configurationSetComponent.getConfigurationSet().applyAggregateConfiguration();
+        }
+
+        // Now add a new component to the JSF component tree.
         AbstractPropertyBagUIComponentTreeFactory propertyListUIComponentTreeFactory = new MapInListUIComponentTreeFactory(
-            config, config.getListName(), config.getListIndex());
-        HtmlPanelGroup propertiesPanel = FacesComponentUtility.addBlockPanel(config, config,
+            configurationComponent, configurationComponent.getListName(), configurationComponent.getListIndex());
+        HtmlPanelGroup propertiesPanel = FacesComponentUtility.addBlockPanel(configurationComponent, configurationComponent,
             UNGROUPED_PROPERTIES_STYLE_CLASS);
         propertiesPanel.getChildren().add(propertyListUIComponentTreeFactory.createUIComponentTree(null));
     }
 
-    private void deleteListMemberProperty(AbstractConfigurationComponent config) {
+    private void deleteListMemberProperty(AbstractConfigurationComponent configurationComponent) {
         String listName = FacesContextUtility
             .getRequiredRequestParameter(RequestParameterNameConstants.LIST_NAME_PARAM);
-        PropertyList propertyList = config.getConfiguration().getList(listName);
+        PropertyList propertyList = configurationComponent.getConfiguration().getList(listName);
         if (propertyList == null) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration does not contain a list named '"
                 + listName + "'.");
@@ -281,18 +288,27 @@ public class ConfigRenderer extends Renderer {
             return;
         }
 
+        // First remove the corresponding JSF component from the component tree.
         Property memberProperty = propertyList.getList().get(listIndex);
         String memberComponentId = PropertyIdGeneratorUtility.getIdentifier(memberProperty, listIndex,
             AbstractPropertyBagUIComponentTreeFactory.PANEL_ID_SUFFIX);
-        UIComponent listMemberComponent = config.findComponent(memberComponentId);
+        UIComponent listMemberComponent = configurationComponent.findComponent(memberComponentId);
         if (listMemberComponent == null) {
             throw new IllegalStateException("JSF component with id '" + memberComponentId + "' not found for list '"
                 + listName + "' item " + listIndex + ".");
         }
-
         FacesComponentUtility.detachComponent(listMemberComponent);
-        correctListIndexesInSiblingMembers(config, propertyList, listIndex);
+        correctListIndexesInSiblingMembers(configurationComponent, propertyList, listIndex);
+
+        // Now delete the property from the actual Configuration.
         propertyList.getList().remove(listIndex);
+
+        // ...and from member Configurations if this is a group config.
+        if (configurationComponent instanceof ConfigurationSetComponent) {
+            ConfigurationSetComponent configurationSetComponent = ((ConfigurationSetComponent) configurationComponent);
+            configurationSetComponent.getConfigurationSet().applyAggregateConfiguration();
+        }
+
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Property at index " + listIndex
             + " deleted from list '" + listName + "'.");
     }
@@ -317,9 +333,9 @@ public class ConfigRenderer extends Renderer {
         }
     }
 
-    private void deleteOpenMapMemberProperty(AbstractConfigurationComponent config) {
+    private void deleteOpenMapMemberProperty(AbstractConfigurationComponent configurationComponent) {
         String mapName = FacesContextUtility.getRequiredRequestParameter(RequestParameterNameConstants.MAP_NAME_PARAM);
-        PropertyMap propertyMap = config.getConfiguration().getMap(mapName);
+        PropertyMap propertyMap = configurationComponent.getConfiguration().getMap(mapName);
         if (propertyMap == null) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration does not contain a map named '"
                 + mapName + "'.");
@@ -337,14 +353,22 @@ public class ConfigRenderer extends Renderer {
         Property memberProperty = propertyMap.getMap().get(memberName);
         String memberComponentId = PropertyIdGeneratorUtility.getIdentifier(memberProperty, null,
             AbstractPropertyBagUIComponentTreeFactory.PANEL_ID_SUFFIX);
-        UIComponent mapMemberComponent = config.findComponent(memberComponentId);
+        UIComponent mapMemberComponent = configurationComponent.findComponent(memberComponentId);
         if (mapMemberComponent == null) {
             throw new IllegalStateException("JSF component with id '" + memberComponentId + "' not found for map '"
                 + mapName + "' member property '" + memberName + "'.");
         }
-
         FacesComponentUtility.detachComponent(mapMemberComponent);
+
+        // Now delete the property from the actual Configuration.
         propertyMap.getMap().remove(memberName);
+
+        // ...and from member Configurations if this is a group config.
+        if (configurationComponent instanceof ConfigurationSetComponent) {
+            ConfigurationSetComponent configurationSetComponent = ((ConfigurationSetComponent) configurationComponent);
+            configurationSetComponent.getConfigurationSet().applyAggregateConfiguration();
+        }
+
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Property '" + memberName + "' deleted from map '"
             + mapName + "'.");
     }

@@ -207,7 +207,7 @@ public class ResourceGroup extends Group {
         + "LEFT OUTER JOIN rhq_resource res "
         + "             ON memberMap.resource_id = res.id "
         + "                %SECURITY_FRAGMENT_JOIN%"
-        + "     INNER JOIN rhq_resource_avail resAvail "
+        + "LEFT OUTER JOIN rhq_resource_avail resAvail "
         + "             ON res.id = resAvail.resource_id "
         + "          WHERE ( res.id = ? OR ? IS NULL ) " // resourceId x2
         + "            AND ( rg.visible = %IS_VISIBLE% ) " // postgres uses true/false, oracle uses 1/0

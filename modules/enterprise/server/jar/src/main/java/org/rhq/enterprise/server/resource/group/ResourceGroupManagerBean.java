@@ -871,7 +871,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
             String search = nameFilter;
             Integer resourceTypeId = resourceType == null ? null : resourceType.getId();
-            String resourceCategoryName = resourceType == null ? null : resourceType.getCategory().name();
+            String resourceCategoryName = resourceCategory == null ? null : resourceCategory.name();
             String groupCategoryName = groupCategory == null ? null : groupCategory.name();
 
             int i = 0;

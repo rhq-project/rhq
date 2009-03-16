@@ -34,7 +34,7 @@ public class DeleteResourcesFromGroupUIBean {
 
         int i = 0;
         if ((selectedResources == null) || (selectedResources.length == 0)) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "Nothing deleted as resource was selected");
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "Nothing deleted, as no group members were selected");
             return "successOrFailure";
         }
 
@@ -46,7 +46,7 @@ public class DeleteResourcesFromGroupUIBean {
         try {
             LookupUtil.getResourceGroupManager().removeResourcesFromGroup(subject, group.getId(), selectedResourceInts);
 
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Removed the selected resources");
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Removed the selected group members");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, ThrowableUtil.getAllMessages(e));
         }

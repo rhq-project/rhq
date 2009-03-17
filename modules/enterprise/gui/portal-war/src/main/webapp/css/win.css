@@ -5,6 +5,9 @@ html {
 
 BODY,FORM {
     margin: 0;
+    background-color: #ffffff;
+    margin: 0px;
+    padding: 0px;
 }
 
 BODY,P,TD,TH,OPTION,INPUT,TEXTAREA,SELECT {

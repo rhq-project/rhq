@@ -40,6 +40,7 @@
 
       <script type="text/javascript" src="/js/ajax.js"></script>
 
+      <!--
       <script type="text/javascript">
          var onloads = new Array();
          function bodyOnLoad()
@@ -48,21 +49,21 @@
                onloads[i]();
          }
       </script>
+      -->
    </head>
-   <body bgcolor="#FFFFFF" onload="bodyOnLoad()" style="margin: 0px; padding: 0px;">
-   <tiles:insert attribute="header">
-      <tiles:put name="breadcrumb" beanName="breadcrumb"/>
-      <tiles:put name="location" beanName="location"/>
-   </tiles:insert>
+   <body>
+      <tiles:insert attribute="header">
+         <tiles:put name="breadcrumb" beanName="breadcrumb"/>
+         <tiles:put name="location" beanName="location"/>
+      </tiles:insert>
 
-   <div id="content-full">
-	   <div id="Breadcrumb">
-	      <tiles:insert attribute="breadcrumb">
-	         <tiles:put name="location" beanName="location"/>
-	      </tiles:insert>
-	   </div>
-	   <tiles:insert attribute='body'/>
-   </div>
-
+      <div id="content-full">
+	     <div id="Breadcrumb">
+	        <tiles:insert attribute="breadcrumb">
+	           <tiles:put name="location" beanName="location"/>
+	        </tiles:insert>
+	     </div>
+	     <tiles:insert attribute='body'/>
+      </div>
    </body>
 </html:html>

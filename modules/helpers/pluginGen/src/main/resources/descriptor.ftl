@@ -22,6 +22,9 @@
 <?xml version="1.0"?>
 <plugin name="${props.name}"
         displayName="${props.name}Plugin"
+<#if props.useOverseerApi>
+        overseer="${props.componentClass}"
+</#if>
         package="${props.pkg}"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"

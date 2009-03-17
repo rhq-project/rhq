@@ -66,6 +66,11 @@
             <!-- Alternatively, if you don't want to use the default location of {rhq.rootDir}/{rhq.defaultDevContainerPath}/
                  for your dev server container, then set the below prop to the desired location. -->
             <!--<rhq.containerDir>C:/opt/rhq-server</rhq.containerDir>-->
+            
+            <!-- The full path to a checkout of the JBoss Maven repo 
+                 (svn co https://svn.jboss.org/repos/repository.jboss.org/maven2/ jboss-m2-repo) - 
+                 this is where 'mvn release' will publish distribution artifacts to. --> 
+            <jboss.repository.root>C:/Projects/jboss-m2-repo</jboss.repository.root>
          </properties>
 
          <repositories>

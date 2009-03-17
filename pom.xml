@@ -472,6 +472,13 @@
   </pluginRepositories>
 
   <distributionManagement>
+    <repository>
+      <!-- Copy the distribution jar file to a local checkout of the JBoss repository. 
+           This variable can be set in ~/.m2/settings.xml or $M2_HOME/conf/settings.xml. -->
+      <id>repository.jboss.org</id>
+      <url>file://${maven.repository.root}</url>
+    </repository>
+
     <snapshotRepository>
       <id>jboss-snapshots</id>
       <name>JBoss Snapshot Repository</name>

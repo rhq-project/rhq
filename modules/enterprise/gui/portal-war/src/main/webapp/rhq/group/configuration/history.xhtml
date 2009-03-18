@@ -153,7 +153,11 @@
          <f:facet name="header">
             <h:outputText value="Group Configuration Update Request"/>
          </f:facet>
-         <h:form id="configSetForm" onsubmit="prepareInputsForSubmission(this)">
+         <h:form id="configSetForm">
+            <input type="hidden" name="groupId" value="#{param.groupId}"/>
+            <input type="hidden" name="arcuId" value="#{param.arcuId}"/>
+            <input type="hidden" name="mode" value="#{param.mode}"/>
+
             <a4j:region selfRendered="false">
                <a4j:outputPanel layout="block" ajaxRendered="true" keepTransient="true">
                   <onc:configSet id="rhq_configSet"

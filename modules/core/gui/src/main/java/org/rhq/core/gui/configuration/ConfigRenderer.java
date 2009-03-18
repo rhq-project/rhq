@@ -529,14 +529,12 @@ public class ConfigRenderer extends Renderer {
         modalPanel.setOnbeforeshow("sizeAppropriately('configSetForm:" + modalPanelId + "')");
         modalPanel.setOnresize("keepCentered('configSetForm:" + modalPanelId + "')");
 
-        // Add the *id request params that need to be forwarded when the propSet form is submitted.
-        Map<String, String> requestParamMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
-        String id = requestParamMap.get("id");
-        if (id != null)
-            FacesComponentUtility.addVerbatimText(modalPanel, "<input type='hidden' name='id' value='" + id + "'/>");
-        String groupId = requestParamMap.get("groupId");
-        if (groupId != null)
-            FacesComponentUtility.addVerbatimText(modalPanel, "<input type='hidden' name='groupId' value='" + groupId + "'/>");
+        // Add inputs for the request params that need to be forwarded when the propSet form is submitted.
+        forwardParameter(modalPanel, "id");
+        forwardParameter(modalPanel, "groupId");
+        forwardParameter(modalPanel, "arcuId");
+        forwardParameter(modalPanel, "apcuId");
+        forwardParameter(modalPanel, "mode");
 
         addPropSetButtons(configurationSetComponent, modalPanel);
 
@@ -569,6 +567,15 @@ public class ConfigRenderer extends Renderer {
         addPropSetButtons(configurationSetComponent, modalPanel);
 
         return;
+    }
+
+    private void forwardParameter(HtmlModalPanel modalPanel, String paramName)
+    {
+        Map<String, String> requestParamMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+        String paramValue = requestParamMap.get(paramName);
+        if (paramValue != null)
+            FacesComponentUtility.addVerbatimText(modalPanel,
+                    "<input type='hidden' name='" + paramName + "' value='" + paramValue + "'/>");
     }
 
     private void addPropSetButtons(ConfigurationSetComponent configurationSetComponent, HtmlModalPanel modalPanel)

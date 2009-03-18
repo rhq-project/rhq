@@ -24,6 +24,7 @@ import org.quartz.JobExecutionException;
 import org.quartz.StatefulJob;
 
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 
 /**
  * This is a Quartz scheduler job whose job is to look at all current INPROGRESS configuration update request jobs and
@@ -33,10 +34,13 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * concurrently. That is, we don't need multiple instances of this job running at the same time.</p>
  *
  * @author John Mazzitelli
+ * @author Ian Springer
  */
 public class CheckForTimedOutConfigUpdatesJob extends AbstractStatefulJob {
+    private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
+
     @Override
     public void executeJobCode(JobExecutionContext context) throws JobExecutionException {
-        LookupUtil.getConfigurationManager().checkForTimedOutUpdateRequests();
+        this.configurationManager.checkForTimedOutConfigurationUpdateRequests();
     }
 }

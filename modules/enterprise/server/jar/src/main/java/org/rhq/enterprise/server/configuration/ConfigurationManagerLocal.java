@@ -148,12 +148,6 @@ public interface ConfigurationManagerLocal {
      */
     Configuration getLiveResourceConfiguration(Subject whoami, int resourceId, boolean pingAgentFirst) throws Exception;
 
-    /**
-     * This will see if there are any update requests that have not been completed in a long time. Those that timed out
-     * will be flagged as FAILED.
-     */
-    void checkForTimedOutUpdateRequests();
-
     PageList<PluginConfigurationUpdate> getPluginConfigurationUpdates(Subject whoami, int resourceId, Long beginDate,
         Long endDate, PageControl pc);
 
@@ -440,4 +434,16 @@ public interface ConfigurationManagerLocal {
 
     @SuppressWarnings("unchecked")
     Map<Integer, Configuration> getPluginConfigurationMapForAggregateUpdate(Integer aggregatePluginConfigurationUpdateId);
+
+    /**
+     * The purpose of this method is really to clean up requests when we detect
+     * they probably will never move out of the in-progress status.  This will occur if the
+     * Agent dies before it has a chance to report success/failure.  In that case, we'll never
+     * get an Agent completion message and the update request will remain in progress status forever.
+     * This method just tries to detect this scenario - if it finds an update request that has been
+     * in progress for a very long time, we assume we'll never hear from the Agent and time out
+     * that request (that is, set its status to FAILURE and set an error string that says the request
+     * timed out).
+     */
+    void checkForTimedOutConfigurationUpdateRequests();
 }

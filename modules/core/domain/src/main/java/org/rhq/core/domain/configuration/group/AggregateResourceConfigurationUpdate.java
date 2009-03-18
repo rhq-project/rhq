@@ -39,6 +39,10 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 @DiscriminatorValue("resource")
 @Entity
 @NamedQueries( {
+    @NamedQuery(name = AggregateResourceConfigurationUpdate.QUERY_FIND_ALL_IN_STATUS, query = "" //
+        + "SELECT arcu " //
+        + "  FROM AggregateResourceConfigurationUpdate arcu " //
+        + " WHERE arcu.status = :status"),
     @NamedQuery(name = AggregateResourceConfigurationUpdate.QUERY_FIND_BY_GROUP_ID, query = "SELECT arcu "
         + "  FROM AggregateResourceConfigurationUpdate AS arcu " // 
         + " WHERE arcu.group.id = :groupId"),
@@ -52,6 +56,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 public class AggregateResourceConfigurationUpdate extends AbstractAggregateConfigurationUpdate {
     private static final long serialVersionUID = 1L;
 
+    public static final String QUERY_FIND_ALL_IN_STATUS = "AggregateResourceConfigurationUpdate.findAllInStatus";
     public static final String QUERY_FIND_BY_GROUP_ID = "AggregateResourceConfigurationUpdate.findByGroupId";
     public static final String QUERY_FIND_LATEST_BY_GROUP_ID = "AggregateResourceConfigurationUpdate.findLatestByGroupId";
 

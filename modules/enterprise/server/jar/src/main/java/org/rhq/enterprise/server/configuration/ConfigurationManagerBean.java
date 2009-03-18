@@ -684,24 +684,22 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return liveConfig;
     }
 
-    @SuppressWarnings("unchecked")
-    public void checkForTimedOutUpdateRequests() {
+    public void checkForTimedOutConfigurationUpdateRequests() {
         log.debug("Scanning configuration update requests to see if any in-progress requests have timed out...");
+        checkForTimedOutResourceConfigurationUpdateRequests();
+        checkForTimedOutAggregateResourceConfigurationUpdateRequests();
+    }
 
-        // the purpose of this method is really to clean up requests when we detect
-        // they probably will never move out of the in progress status.  This will occur if the
-        // agent dies before it has a chance to report success/failure.  In that case, we'll never
-        // get an agent completion message and the update request will remain in progress status forever.
-        // This method just tries to detect this scenario - if it finds an update request that has been
-        // in progress for a very long time, we assume we'll never hear from the agent and time out
-        // that request (that is, set its status to FAILURE and set an error string).
+    private void checkForTimedOutResourceConfigurationUpdateRequests() {
         try {
+            // TODO (ips): Optimize this so the query actually does the timeout check too,
+            //             i.e. "WHERE cu.createdtime > :maxCreatedTime".
             Query query = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_FIND_ALL_IN_STATUS);
             query.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
             List<ResourceConfigurationUpdate> requests = query.getResultList();
             for (ResourceConfigurationUpdate request : requests) {
                 // TODO [mazz]: should we make this configurable?
-                long timeout = 1000 * 60 * 10; // 10 minutes - should be more than enough time
+                long timeout = 1000L * 60 * 10; // 10 minutes - should be more than enough time
 
                 long duration = request.getDuration();
                 if (duration > timeout) {
@@ -716,8 +714,36 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 }
             }
         } catch (Throwable t) {
-            log.warn("Failed to check for timed out Resource configuration update requests. Cause: " + t);
+            log.error("Failed to check for timed out Resource configuration update requests. Cause: " + t);
         }
+    }
+
+    private void checkForTimedOutAggregateResourceConfigurationUpdateRequests()
+    {
+        try {
+            // TODO (ips): Optimize this so the query actually does the timeout check too,
+            //             i.e. "WHERE cu.createdtime > :maxCreatedTime".
+            Query query = entityManager.createNamedQuery(AggregateResourceConfigurationUpdate.QUERY_FIND_ALL_IN_STATUS);
+            query.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
+            List<AggregateResourceConfigurationUpdate> requests = query.getResultList();
+            for (AggregateResourceConfigurationUpdate request : requests) {
+                // Note: Make this a little longer than the timeout used for individual Resource config updates
+                //       (see checkForTimedOutResourceConfigurationUpdateRequests()), to ensure a group update never
+                //       gets timed out before one or more of its member updates.
+                long timeout = 1000L * 60 * 11; // 11 minutes
+
+                long duration = request.getDuration();
+                if (duration > timeout) {
+                    log.info("Group Resource configuration update request seems to have been orphaned - timing it out: "
+                            + request);
+                    request.setErrorMessage("Timed out - did not complete after " + duration + " ms"
+                        + " (the timeout period was " + timeout + " ms)");
+                    request.setStatus(ConfigurationUpdateStatus.FAILURE);
+                }
+            }
+         } catch (Throwable t) {
+            log.error("Failed to check for timed out group Resource configuration update requests. Cause: " + t);
+         }
     }
 
     @SuppressWarnings("unchecked")

@@ -51,6 +51,9 @@
      	}
    </style>
 <script language="JavaScript" type="text/javascript">var aboutWindowTitle = '<fmt:message key="about.Title"/>';</script>
+
+    <link rel="icon" type="image/png" href="/images/favicon.png"/>
+    
 </head>
 
 <body>

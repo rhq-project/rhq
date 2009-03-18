@@ -26,6 +26,8 @@
       <link href="/css/theme/debug.css" rel="stylesheet" type="text/css"/>
       <link rel="stylesheet" type="text/css" media="screen" href="/css/menu.css"/>
 
+      <link rel="icon" type="image/png" href="/images/favicon.png"/>
+
       <tiles:insert attribute="head"/>
       <title>
          <fmt:message key="${portal.name}">

@@ -1972,8 +1972,54 @@
                     defaultOn="false" defaultInterval="600000" destinationType="Method Name"
                     description="the minimum, maximum, and average invocation times for each of the methods exposed by this EJB"/>
 
-         </service>
+      </service>
 
+      <service name="Stateful Session EJB"
+               subCategory="Applications"
+               class="EJB2BeanComponent"
+               discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+               description="An EJB 1.x or 2.x Stateful Session Bean">
+               
+         <plugin-configuration>
+            <c:simple-property name="objectName" readOnly="true"
+                               default="jboss.management.local:name=%name%,J2EEServer=Local,J2EEApplication=%j2eeApplication%,EJBModule=%ejbJar%,j2eeType=StatefulSessionBean"/>
+            <c:simple-property name="nameTemplate" default="{name}"/>
+            <c:simple-property name="descriptionTemplate" default="An EJB 1.x or 2.x Stateful Session Bean"/>
+
+            <c:simple-property name="name" description="The name of this EJB"/>
+            <c:simple-property name="j2eeApplication"/>
+            <c:simple-property name="ejbJar"/>
+         </plugin-configuration>
+
+           <metric displayName="Create Calls"
+                   description="Number of creates executed since the last time this EJB's stats were reset"
+                   property="{stats.createCount.count}"
+                   displayType="summary"
+                   measurementType="trendsup"/>
+
+           <metric displayName="Remove Calls"
+                   description="Number of removes since the last time this EJB's stats were reset"
+                   property="{stats.removeCount.count}"
+                   displayType="summary"
+                   measurementType="trendsup"/>
+
+           <metric displayName="Method-Ready Beans"
+                   description="The count of beans in the method-ready state"
+                   property="{stats.methodReadyCount.current}"
+                   displayType="summary"/>
+
+           <metric displayName="Passive Beans"
+                   description="The count of beans in the passivated state"
+                   property="{stats.passiveCount.current}"
+                   displayType="summary"/>
+                   
+           <!-- default interval == 600000 ms == 10 min -->
+           <metric property="MethodInvocationTime" dataType="calltime" units="milliseconds"
+                   defaultOn="false" defaultInterval="600000" destinationType="Method Name"
+                   description="the minimum, maximum, and average invocation times for each of the methods exposed by this EJB"/>
+
+      </service>
+         
       <service name="Entity EJB"
                subCategory="Applications"
                class="org.rhq.plugins.jmx.MBeanResourceComponent"
@@ -2469,3 +2515,4 @@
    </server>
 
 </plugin>
+        

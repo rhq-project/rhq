@@ -477,18 +477,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             throw new IllegalStateException("Subcategory " + mySubCategory.getName() + " defined on resource type " +
             resourceType.getName() + " in plugin " + resourceType.getPlugin() + " is not defined in a parent type");
 
-//        Set<ResourceType> parents = resourceType.getParentResourceTypes();
-//        // TODO don't forget the grand parents
-//        for (ResourceType parent : parents) {
-//            List<ResourceSubCategory> subCats = parent.getChildSubCategories();
-//            for (ResourceSubCategory sc : subCats) {
-//                if (sc.compareTo(mySubCategory)==0) {
-//                    // found it
-//                    resourceType.setSubCategory(sc);
-//                }
-//            }
-//        }
-
     }
 
     private void updateParentResourceTypes(ResourceType resourceType, ResourceType existingType) {

@@ -1,13 +1,12 @@
 /* GLOBAL RULES */
-html {
+HTML {
     overflow: auto;
 }
 
-BODY,FORM {
+BODY {
+    background-color: #FFF;
     margin: 0;
-    background-color: #ffffff;
-    margin: 0px;
-    padding: 0px;
+    padding: 0;
 }
 
 BODY,P,TD,TH,OPTION,INPUT,TEXTAREA,SELECT {

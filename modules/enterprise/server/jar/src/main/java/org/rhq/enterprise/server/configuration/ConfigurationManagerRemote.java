@@ -46,7 +46,7 @@ import org.rhq.core.domain.resource.Resource;
 public interface ConfigurationManagerRemote {
 
     /**
-     * Get the active plugin configuration.
+     * Get the current Resource configuration.
      * @param  user             The logged in user's subject.
      * @param resourceId        A resource id.
      * @return The specified configuration.

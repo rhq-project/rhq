@@ -492,10 +492,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ResourceGroupComposite groupComposite = this.resourceGroupManager.getResourceGroupWithAvailabilityById(whoami,
             groupId);
 
-        if (groupComposite.getMemberCount() > MAX_GROUP_RESOURCE_CONFIG_MEMBERS)
-            throw new Exception("Resource configurations for groups containing more than "
-                + MAX_GROUP_RESOURCE_CONFIG_MEMBERS + " member Resources cannot be viewed or edited.");
-
         AvailabilityType availability = (groupComposite.getAvailability() == 1) ? AvailabilityType.UP
             : AvailabilityType.DOWN;
         if (availability == AvailabilityType.DOWN)
@@ -510,7 +506,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // If we got this far, no updates are in progress. Now try to obtain the live configs from the Agents.
         // If any of the requests for live configs fail (e.g. because an Agent is down) or if all of the live
         // configs can't be obtained within the specified timeout, this call will throw an exception.
-        final long TIMEOUT_IN_SECONDS = 20;
+        final long TIMEOUT_IN_SECONDS = 30;
         Map<Integer, Configuration> liveConfigs = LiveConfigurationLoader.getInstance().loadLiveResourceConfigurations(
             group.getImplicitResources(), TIMEOUT_IN_SECONDS);
 
@@ -541,10 +537,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // The below call will also handle the check to see if the subject has perms to view the group.
         ResourceGroupComposite groupComposite = this.resourceGroupManager.getResourceGroupWithAvailabilityById(whoami,
             groupId);
-
-        if (groupComposite.getMemberCount() > MAX_GROUP_RESOURCE_CONFIG_MEMBERS)
-            throw new Exception("Plugin configurations for groups containing more than "
-                + MAX_GROUP_RESOURCE_CONFIG_MEMBERS + " member Resources cannot be viewed or edited.");
 
         // Check to make sure no config updates, aggregate or individual, are in progress.
         ResourceGroup group = groupComposite.getResourceGroup();

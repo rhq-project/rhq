@@ -54,9 +54,6 @@ import org.rhq.enterprise.server.configuration.job.AggregatePluginConfigurationU
  */
 @Local
 public interface ConfigurationManagerLocal {
-
-    int MAX_GROUP_RESOURCE_CONFIG_MEMBERS = 100;
-
     /**
      * Get the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
      * resource's plugin configuration is not yet initialized.
@@ -102,7 +99,7 @@ public interface ConfigurationManagerLocal {
     Configuration getActivePluginConfiguration(int resourceId);
 
     /** This does not perform permission checks and should be used internally only. In general, use
-     * {@link #getCurrentResourceConfiguration(Subject, int)}.
+     * {@link #getCurrentResourceConfiguration}.
      */
     Configuration getActiveResourceConfiguration(int resourceId);
 
@@ -196,7 +193,7 @@ public interface ConfigurationManagerLocal {
      *
      * <p>This will not wait for the agent to finish the configuration update. This will return after the request is
      * sent. Once the agent finishes with the request, it will send the completed request information to
-     * {@link #completedResourceConfigurationUpdate(AbstractResourceConfigurationUpdate)}.</p>
+     * {@link #completeResourceConfigurationUpdate}.</p>
      *
      * @param  whoami           the user who is requesting the update
      * @param  resourceId       identifies the resource to be updated
@@ -216,7 +213,7 @@ public interface ConfigurationManagerLocal {
      *
      * <p>This will not wait for the agent to finish the configuration update. This will return after the request is
      * sent. Once the agent finishes with the request, it will send the completed request information to
-     * {@link #completedResourceConfigurationUpdate(AbstractResourceConfigurationUpdate)}.</p>
+     * {@link #completeResourceConfigurationUpdate}.</p>
      *
      * @param  whoami          the user who is requesting the update
      * @param  resourceId      identifies the resource to be updated
@@ -432,9 +429,9 @@ public interface ConfigurationManagerLocal {
      * @param whoami the current subject
      * @param groupId the id of the compatible group
      * @return
-     * @throws Exception if 1) the group contains more than {@link #MAX_GROUP_RESOURCE_CONFIG_MEMBERS} members, 2)
-     *         one or more of the group's members are DOWN, 3) config updates, for the group or any member, are
-     *         in progress, or 4) we fail to retrieve one or more member live configs from the corresponding Agents
+     * @throws Exception if 1) one or more of the group's members are DOWN, 3) config updates, for the group or any
+     *         member, are in progress, or 3) we fail to retrieve one or more member live configs from the corresponding
+     *         Agents
      */
     Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(Subject whoami, int groupId)
         throws Exception;

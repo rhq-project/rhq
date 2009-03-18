@@ -200,10 +200,10 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
      * This will write the contents of the given plugin file to the database.
      * This will assume the MD5 in the database is already correct, so this
      * method will not take the time to calculate the MD5 again.
-     * 
+     *
      * @param name the name of the plugin whose content is being updated
      * @param file the plugin file whose content will be streamed to the database
-     * 
+     *
      * @throws Exception
      */
     private void streamPluginFileContentToDatabase(String name, File file) throws Exception {
@@ -377,6 +377,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             for (ResourceType childType : resourceType.getChildResourceTypes()) {
                 updateType(childType);
             }
+            entityManager.flush();
 
             // even though we've updated our child types to use new subcategory references, its still
             // not safe to delete the old sub categories yet, because we haven't yet deleted all of the old
@@ -408,13 +409,13 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             /*
              * We need to be careful updating the subcategory. If it is not null and the same ("equals")
              * to the new one, we need to copy over the attributes, as the existing will be kept and
-             * the new one not persisted. Otherwise, we can just use the new one. 
+             * the new one not persisted. Otherwise, we can just use the new one.
              */
             ResourceSubCategory oldSubCat = existingType.getSubCategory();
             ResourceSubCategory newSubCat = resourceType.getSubCategory();
             if (oldSubCat != null && oldSubCat.equals(newSubCat)) {
                 // Subcategory hasn't changed - nothing to do (call to addAndUpdateChildSubCategories()
-                // above already took care of any modifications to the ResourceSubCategorys themselves).                
+                // above already took care of any modifications to the ResourceSubCategorys themselves).
             } else if (newSubCat == null) {
                 if (oldSubCat != null) {
                     log.debug("Metadata update: Subcategory of ResourceType [" + resourceType.getName()
@@ -441,12 +442,17 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
              * If the type didn't exist then we'll persist here which will cascade through
              * all child types as well as plugin and resource configs and their delegate types and
              * metric and operation definitions and their dependent types
-             * 
+             *
              * But first do some validity checking
              */
 
             // Check if the subcategories as children of resourceType are valid
+            // Those are the subtacegories we offer for children of us
             checkForValidSubcategories(resourceType.getChildSubCategories());
+
+            // Check if we have a subcategory attached that needs to be linked to one of the parents
+            // This is a subcategory of our parent where we are supposed to be grouped in.
+            linkSubCategoryToParents(resourceType);
 
             if (log.isDebugEnabled())
                 log.debug("Persisting new ResourceType: " + resourceType);
@@ -455,6 +461,34 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             log.debug("Found more than one existing ResourceType for " + resourceType);
             throw new IllegalStateException(nure);
         }
+    }
+
+    private void linkSubCategoryToParents(ResourceType resourceType) {
+
+        if (resourceType.getSubCategory()==null)
+            return; // Nothing to do
+
+        ResourceSubCategory mySubCategory = resourceType.getSubCategory();
+        ResourceSubCategory existingCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
+                resourceType, mySubCategory.getName());
+        if (existingCat!=null)
+            resourceType.setSubCategory(existingCat);
+        else
+            throw new IllegalStateException("Subcategory " + mySubCategory.getName() + " defined on resource type " +
+            resourceType.getName() + " in plugin " + resourceType.getPlugin() + " is not defined in a parent type");
+
+//        Set<ResourceType> parents = resourceType.getParentResourceTypes();
+//        // TODO don't forget the grand parents
+//        for (ResourceType parent : parents) {
+//            List<ResourceSubCategory> subCats = parent.getChildSubCategories();
+//            for (ResourceSubCategory sc : subCats) {
+//                if (sc.compareTo(mySubCategory)==0) {
+//                    // found it
+//                    resourceType.setSubCategory(sc);
+//                }
+//            }
+//        }
+
     }
 
     private void updateParentResourceTypes(ResourceType resourceType, ResourceType existingType) {

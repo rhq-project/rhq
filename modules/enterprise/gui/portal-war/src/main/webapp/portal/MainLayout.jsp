@@ -27,6 +27,7 @@
       <link rel="stylesheet" type="text/css" media="screen" href="/css/menu.css"/>
 
       <link rel="icon" type="image/png" href="/images/favicon.png"/>
+      <link rel="apple-touch-icon" href="/images/favicon.png"/>
 
       <tiles:insert attribute="head"/>
       <title>

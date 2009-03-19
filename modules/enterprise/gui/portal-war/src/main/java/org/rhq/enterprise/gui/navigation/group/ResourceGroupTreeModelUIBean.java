@@ -124,7 +124,7 @@ public class ResourceGroupTreeModelUIBean {
         Set<ResourceTreeNode> memberNodes = new HashSet<ResourceTreeNode>();
 
         for (Resource member : members) {
-            memberNodes.add(ResourceTreeModelUIBean.load(member.getId(), resources));
+            memberNodes.add(ResourceTreeModelUIBean.load(member.getId(), resources, true));
         }
 
         ResourceGroupTreeNode root = new ResourceGroupTreeNode(group);

@@ -120,6 +120,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                 } else if (node.getData() instanceof AutoGroupComposite) {
                     AutoGroupComposite ag = (AutoGroupComposite) node.getData();
                     if (ag.getSubcategory() != null) {
+                        state.setSelected(e.getOldSelection());                        
                         // this is a subcategory or subsubcategory, no page to display right now
                         FacesContextUtility.getManagedBean(ResourceUIBean.class).setMessage(
                             "No pages exist for subcategory types");

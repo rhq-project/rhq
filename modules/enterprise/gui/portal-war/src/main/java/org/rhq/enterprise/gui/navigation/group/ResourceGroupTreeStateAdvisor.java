@@ -140,17 +140,7 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
                     response.sendRedirect(path + "?groupId=" + group.getId() + "&parentGroupId=" + ((ClusterKey) node.getData()).getClusterGroupId());
 
                 } else if (node.getData() instanceof AutoGroupComposite) {
-                    AutoGroupComposite ag = (AutoGroupComposite) node.getData();
-                    if (ag.getSubcategory() != null) {
-                        // this is a subcategory or subsubcategory, no page to display right now
-                        FacesContextUtility.getManagedBean(ResourceUIBean.class).setMessage(
-                                "No pages exist for subcategory types");
-                        return;
-                    } else {
-                        String path = "/rhq/autogroup/monitor/graphs.xhtml?parent=" + ag.getParentResource().getId()
-                                + "&type=" + ag.getResourceType().getId();
-                        response.sendRedirect(path);
-                    }
+                    state.setSelected(e.getOldSelection());
                 } else if (node.getData() instanceof ResourceGroup) {
                     String path = "/rhq/group/inventory/view.xhtml";
                     response.sendRedirect(path + "?groupId=" + ((ResourceGroup)node.getData()).getId());

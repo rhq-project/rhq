@@ -71,10 +71,10 @@ public class ResourceTreeModelUIBean {
         List<Resource> resources = resourceManager.getResourcesByAgent(user, agent.getId(), PageControl
             .getUnlimitedInstance());
 
-        rootNode = load(rootResource.getId(), resources);
+        rootNode = load(rootResource.getId(), resources, false);
     }
 
-    public static ResourceTreeNode load(int rootId, List<Resource> resources) {
+    public static ResourceTreeNode  load(int rootId, List<Resource> resources, boolean alwaysGroup) {
         Resource found = null;
         for (Resource res : resources) {
             if (res.getId() == rootId) {
@@ -82,11 +82,11 @@ public class ResourceTreeModelUIBean {
             }
         }
         ResourceTreeNode root = new ResourceTreeNode(found);
-        load(root, resources);
+        load(root, resources, alwaysGroup);
         return root;
     }
 
-    public static void load(ResourceTreeNode parentNode, List<Resource> resources) {
+    public static void load(ResourceTreeNode parentNode, List<Resource> resources, boolean alwaysGroup) {
 
         if (parentNode.getData() instanceof Resource) {
             Resource parentResource = (Resource) parentNode.getData();
@@ -129,7 +129,7 @@ public class ResourceTreeModelUIBean {
             }
 
             for (Object rsc : children.keySet()) {
-                if (rsc != null && (rsc instanceof ResourceSubCategory || children.get(rsc).size() > 1)) {
+                if (rsc != null && (rsc instanceof ResourceSubCategory || children.get(rsc).size() > 1 || (alwaysGroup && children.get(rsc).size() == 1))) {
                     double avail = 0;
                     List<Resource> entries = children.get(rsc);
                     for (Resource res : entries) {
@@ -144,7 +144,7 @@ public class ResourceTreeModelUIBean {
                         agc = new AutoGroupComposite(avail, parentResource, (ResourceType) rsc, entries.size());
                     }
                     ResourceTreeNode node = new ResourceTreeNode(agc);
-                    load(node, resources);
+                    load(node, resources, alwaysGroup);
                     if (!(node.getData() instanceof LockedResource && node.getChildren().isEmpty())) {
                         parentNode.getChildren().add(node);
                     }
@@ -153,7 +153,7 @@ public class ResourceTreeModelUIBean {
                     for (Resource res : entries) {
                         ResourceTreeNode node = new ResourceTreeNode(res);
                         parentNode.getChildren().add(node);
-                        load(node, resources);
+                        load(node, resources, alwaysGroup);
                     }
                 }
 
@@ -207,8 +207,9 @@ public class ResourceTreeModelUIBean {
 
             for (Object rsc : children.keySet()) {
                 if (rsc != null
-                    && (rsc instanceof ResourceSubCategory || (children.get(rsc).size() > 1 && ((AutoGroupComposite) parentNode
-                        .getData()).getSubcategory() != null))) {
+                    && (rsc instanceof ResourceSubCategory
+                        || ((children.get(rsc).size() > 1 || (alwaysGroup && children.get(rsc).size() == 1))
+                            && ((AutoGroupComposite) parentNode.getData()).getSubcategory() != null))) {
                     double avail = 0;
                     List<Resource> entries = children.get(rsc);
                     for (Resource res : entries) {
@@ -226,13 +227,13 @@ public class ResourceTreeModelUIBean {
                     }
                     ResourceTreeNode node = new ResourceTreeNode(agc);
                     parentNode.getChildren().add(node);
-                    load(node, resources);
+                    load(node, resources, alwaysGroup);
                 } else {
                     List<Resource> entries = children.get(rsc);
                     for (Resource res : entries) {
                         ResourceTreeNode node = new ResourceTreeNode(res);
                         parentNode.getChildren().add(node);
-                        load(node, resources);
+                        load(node, resources, alwaysGroup);
                     }
                 }
             }

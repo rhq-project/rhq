@@ -37,6 +37,7 @@ package org.rhq.plugins.jbossas5;
  import org.jboss.metatype.api.values.CompositeValue;
  import org.jboss.metatype.api.values.MetaValue;
  import org.jboss.metatype.api.values.SimpleValue;
+ import org.jboss.metatype.api.types.SimpleMetaType;
 
  import org.rhq.core.domain.configuration.Configuration;
  import org.rhq.core.domain.measurement.AvailabilityType;
@@ -71,6 +72,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
 
     private String componentName;
     private ComponentType componentType;
+    private static final MetaValue[] EMPTY_META_VALUE_ARRAY = new MetaValue[0];
 
     // ResourceComponent Implementation  --------------------------------------------
 
@@ -114,25 +116,25 @@ public class ManagedComponentComponent extends AbstractManagedComponent
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception
     {
-        OperationResult results = new OperationResult();
-        ManagedComponent managedComponent = getManagedComponent();
-        Set<ManagedOperation> operations = managedComponent.getOperations();
-        for (ManagedOperation operation : operations)
-        {
-            String operationName = operation.getName();
-            if (operationName.equals(name))
-            {
-                // Convert parameters into MetaValue array.
-                MetaValue[] params = ConversionUtils.convertOperationsParametersToMetaValues(operation, parameters,
-                        getResourceContext().getResourceType());
-                if (params == null)
-                    params = new MetaValue[0];
-                Object result = operation.invoke(params);
-                //Convert result to Correct Property type
-                Configuration complexResults = results.getComplexResults();
-                ConversionUtils.convertManagedOperationResults(operation, (MetaValue) result, complexResults,
-                        getResourceContext().getResourceType());
-            }
+        ManagedOperation operation = getManagedOperation(name);
+        if (operation == null)
+            throw new IllegalStateException("ManagedOperation named [" + name + "] not found on ManagedComponent ["
+                    + getManagedComponent() + "].");
+        // Convert parameters into MetaValue array.
+        MetaValue[] parameterMetaValues = ConversionUtils.convertOperationsParametersToMetaValues(operation, parameters,
+                getResourceContext().getResourceType());
+        // invoke() takes a varargs, so we must pass an empty array, rather than null.
+        if (parameterMetaValues == null)
+            parameterMetaValues = EMPTY_META_VALUE_ARRAY;
+        MetaValue resultMetaValue = operation.invoke(parameterMetaValues);
+        // Convert result to Correct Property type.
+        OperationResult results;
+        if (resultMetaValue == null && operation.getReturnType().equals(SimpleMetaType.VOID))
+            results = null;
+        else {
+            results = new OperationResult();
+            ConversionUtils.convertManagedOperationResults(operation, resultMetaValue, results.getComplexResults(),
+                getResourceContext().getResourceType());
         }
         return results;
     }
@@ -227,5 +229,18 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         catch (Exception e) {
             throw new RuntimeException("Failed to load ManagedComponent [" + this.componentName + "].", e);
         }
+    }
+
+    private ManagedOperation getManagedOperation(String name)
+    {
+        ManagedComponent managedComponent = getManagedComponent();
+        Set<ManagedOperation> operations = managedComponent.getOperations();
+        for (ManagedOperation operation : operations)
+        {
+            String operationName = operation.getName();
+            if (operationName.equals(name))
+                return operation;
+        }
+        return null;
     }
 }

@@ -31,11 +31,14 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.PluginDescriptorGenerator;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.io.File;
 
 import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.profileservice.spi.ProfileKey;
+import org.jboss.profileservice.spi.ProfileService;
 
 /**
  * Discovery component for JBossAS 5.x Servers.
@@ -53,23 +56,28 @@ public class ApplicationServerDiscoveryComponent
 
         Set<DiscoveredResourceDetails> servers = new HashSet<DiscoveredResourceDetails>();
         // Not just the one that it finds when in the embedded console
-        //ProfileService profileService = ProfileServiceFactory.getProfileService();
+        ProfileService profileService = ProfileServiceFactory.getProfileService();
 
-        /*try
-     {
-        Profile activeProfile = profileService.getActiveProfile();
-        Collection<ProfileKey> profileKeys = profileService.getProfileKeys();
-        for (ProfileKey key: profileKeys)
-        {
+        Collection<ProfileKey> profileKeys = profileService.getActiveProfileKeys();
+        if (profileKeys == null || profileKeys.isEmpty()) {
+        	log.error("No active profile found");
+        } else {
+        	for (ProfileKey key: profileKeys) {           
+                log.info("Found active profile [" + key.getName() + "].");
+            }        	             
+        }
+        
+        // this should really come from the install directory attribute on the JBAS managed component itself
+        String configurationName = "default";
 
-           Profile currentProfile = profileService.getProfile(key);
-           if (currentProfile.equals(activeProfile))
-           {
-              resourceKey = "Jboss AS 5:" + key.getName();
-           }
-
-        }*/
-        String resourceKey = "JBoss App Server:default";
+        // we may need to get the JBAS part from the managed component too, in order to generate EAP at the appropriate times
+        String resourceName = "JBAS (" + configurationName + ")";
+       
+        // this should really come from the install directory attribute on the JBAS managed component itself
+        String resourceKey = "/usr/bin/jboss";
+               
+        // this should really come from the version attribute on the JBAS managed component itself
+        String version = "5.0 CR1";
 
         ProfileServiceFactory.refreshCurrentProfileView();
 
@@ -77,8 +85,8 @@ public class ApplicationServerDiscoveryComponent
                 new DiscoveredResourceDetails(
                         resourceDiscoveryContext.getResourceType(),
                         resourceKey,
-                        resourceKey,
-                        "5.0 CR1", //activeProfile.getVersion(),
+                        resourceName,
+                        version, 
                         "JBoss App Server",
                         resourceDiscoveryContext.getDefaultPluginConfiguration(),
                         null);

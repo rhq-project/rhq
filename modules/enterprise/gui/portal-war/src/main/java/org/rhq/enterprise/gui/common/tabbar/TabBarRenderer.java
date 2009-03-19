@@ -97,7 +97,15 @@ public class TabBarRenderer extends Renderer {
 
         // <td colspan="x">
         writer.startElement("td", tabBar);
-        writer.writeAttribute("colspan", tabBar.getTabs().size() * 2, null);
+
+        int tabs = 1; // the spacer
+        for (TabComponent tab : tabBar.getTabs()) {
+            if (tab.isRendered()) {
+                tabs++;
+            }
+        }
+
+        writer.writeAttribute("colspan", tabs * 2, null);
 
         // <table width="100%" border="0" cellspacing="0" cellpadding="0">
         writer.startElement("table", tabBar);

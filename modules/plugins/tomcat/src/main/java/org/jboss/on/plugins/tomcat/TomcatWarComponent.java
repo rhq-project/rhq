@@ -83,7 +83,8 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * @author Ian Springer
  * @author Heiko W. Rupp
  */
-public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostComponent> implements ContentFacet, DeleteResourceFacet {
+public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostComponent> implements ContentFacet,
+    DeleteResourceFacet {
 
     private static final String METRIC_PREFIX_APPLICATION = "Application.";
     private static final String METRIC_PREFIX_SERVLET = "Servlet.";
@@ -200,8 +201,9 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
                             log.error("Failed to retrieve HTTP call-time data.", e);
                         }
                     } else {
-                        log.error("The '" + METRIC_RESPONSE_TIME + "' metric is enabled for WAR resource '" + getApplicationName()
-                            + "', but no value is defined for the '" + PROPERTY_RESPONSE_TIME_LOG_FILE + "' connection property.");
+                        log.error("The '" + METRIC_RESPONSE_TIME + "' metric is enabled for WAR resource '"
+                            + getApplicationName() + "', but no value is defined for the '"
+                            + PROPERTY_RESPONSE_TIME_LOG_FILE + "' connection property.");
                         // TODO: Communicate this error back to the server for display in the GUI.
                     }
                 } else if (metricName.startsWith(METRIC_PREFIX_SERVLET)) {
@@ -350,7 +352,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
         EmsOperation mbeanOperation = this.webModuleMBean.getOperation(name);
         if (mbeanOperation == null) {
-            throw new IllegalStateException("Operation [" + name + "] not found on bean [" + this.webModuleMBean.getBeanName() + "]");
+            throw new IllegalStateException("Operation [" + name + "] not found on bean ["
+                + this.webModuleMBean.getBeanName() + "]");
         }
 
         // NOTE: None of the supported operations have any parameters or return values, which makes our job easier.
@@ -359,8 +362,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         int state = (Integer) this.webModuleMBean.getAttribute("state").refresh();
         int expectedState = getExpectedPostExecutionState(operation);
         if (state != expectedState) {
-            throw new Exception("Failed to " + name + " webapp (value of the 'state' attribute of MBean '" + this.webModuleMBean.getBeanName()
-                + "' is " + state + ", not " + expectedState + ").");
+            throw new Exception("Failed to " + name + " webapp (value of the 'state' attribute of MBean '"
+                + this.webModuleMBean.getBeanName() + "' is " + state + ", not " + expectedState + ").");
         }
 
         return new OperationResult();
@@ -444,7 +447,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     private List<EmsBean> getVHosts() {
         EmsConnection emsConnection = getEmsConnection();
         String query = QUERY_TEMPLATE_HOST;
-        query = query.replace("%PATH%", getResourceContext().getPluginConfiguration().getSimpleValue(PROPERTY_CONTEXT_ROOT, ""));
+        query = query.replace("%PATH%", getResourceContext().getPluginConfiguration().getSimpleValue(
+            PROPERTY_CONTEXT_ROOT, ""));
         ObjectNameQueryUtility queryUtil = new ObjectNameQueryUtility(query);
         List<EmsBean> mBeans = emsConnection.queryBeans(queryUtil.getTranslatedQuery());
         return mBeans;
@@ -474,7 +478,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         File appFile = new File(pluginConfig.getSimple(PROPERTY_FILENAME).getStringValue());
         if (!appFile.exists()) {
-            return failApplicationDeployment("Could not find application to update at location: " + appFile, packageDetails);
+            return failApplicationDeployment("Could not find application to update at location: " + appFile,
+                packageDetails);
         }
         boolean isExploded = appFile.isDirectory();
 
@@ -483,7 +488,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         try {
             tempFile = writeAppBitsToTempFile(appFile, contentServices, packageDetails);
         } catch (Exception e) {
-            return failApplicationDeployment("Error writing new application bits to temporary file - cause: " + e, packageDetails);
+            return failApplicationDeployment("Error writing new application bits to temporary file - cause: " + e,
+                packageDetails);
         }
 
         // Undeploy (delete) the current app.  Back up the bits in case we need to restore if the new app fails to deploy
@@ -509,7 +515,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
                 moveTempFileToDeployLocation(backupFile, appFile, isExploded);
                 errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
             } catch (Exception e1) {
-                errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: " + ThrowableUtil.getAllMessages(e1);
+                errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
+                    + ThrowableUtil.getAllMessages(e1);
             }
             return failApplicationDeployment(errorMessage, packageDetails);
         }
@@ -520,7 +527,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         persistApplicationVersion(packageDetails, appFile);
 
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
-        DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(), ContentResponseResult.SUCCESS);
+        DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),
+            ContentResponseResult.SUCCESS);
         response.addPackageResponse(packageResponse);
 
         return response;
@@ -565,7 +573,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         return tempFile;
     }
 
-    private File writeAppBitsToTempFile(File file, ContentServices contentServices, ResourcePackageDetails packageDetails) throws Exception {
+    private File writeAppBitsToTempFile(File file, ContentServices contentServices,
+        ResourcePackageDetails packageDetails) throws Exception {
         File tempDir = getResourceContext().getTemporaryDirectory();
         File tempFile = new File(tempDir.getAbsolutePath(), file.getName() + System.currentTimeMillis());
 
@@ -577,7 +586,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         OutputStream tempOutputStream = null;
         try {
             tempOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
-            contentServices.downloadPackageBits(getResourceContext().getContentContext(), packageDetails.getKey(), tempOutputStream, true);
+            contentServices.downloadPackageBits(getResourceContext().getContentContext(), packageDetails.getKey(),
+                tempOutputStream, true);
         } finally {
             if (tempOutputStream != null) {
                 try {
@@ -661,7 +671,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     private DeployPackagesResponse failApplicationDeployment(String errorMessage, ResourcePackageDetails packageDetails) {
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
 
-        DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(), ContentResponseResult.FAILURE);
+        DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),
+            ContentResponseResult.FAILURE);
         packageResponse.setErrorMessage(errorMessage);
 
         response.addPackageResponse(packageResponse);
@@ -701,7 +712,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
             String dataDirectory = dataDirectoryFile.getAbsolutePath();
 
-            log.debug("Creating application versions store with plugin name [" + pluginName + "] and data directory [" + dataDirectory + "]");
+            log.debug("Creating application versions store with plugin name [" + pluginName + "] and data directory ["
+                + dataDirectory + "]");
 
             versions = new PackageVersions(pluginName, dataDirectory);
             versions.loadFromDisk();
@@ -715,19 +727,24 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         String fullFileName = pluginConfiguration.getSimple(PROPERTY_FILENAME).getStringValue();
         File file = new File(fullFileName);
         if (!file.exists()) {
-            log.warn("Could not delete web application files (perhaps removed manually?). Proceeding with resource removal for: " + fullFileName);
+            log
+                .warn("Could not delete web application files (perhaps removed manually?). Proceeding with resource removal for: "
+                    + fullFileName);
         } else {
             deleteApp(pluginConfiguration, file, false);
         }
     }
 
     private File deleteApp(Configuration pluginConfiguration, File appFile, boolean keepBackup) throws Exception {
-        File backupFile = null;
         String contextRoot = pluginConfiguration.getSimple(PROPERTY_CONTEXT_ROOT).getStringValue();
+        File backupFile = null;
+        boolean doPhysicalDelete = true;
 
         try {
             // this will release locked files. In particular, the .war when deployed as an archive (this may be a windows issue only)
+            // this also serves to ensure the user has control permissions 
             invokeOperation("stop", null);
+
             getParentResourceComponent().undeployWar(contextRoot);
 
             if (keepBackup) {
@@ -738,35 +755,40 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
                 }
             }
         } catch (TomcatApplicationDeployer.DeployerException e) {
-            log.warn("Failed to undeploy WAR (may have been undeployed manually). Proceeding with resource delete for  [" + contextRoot + "].", e);
+            log.warn(
+                "Failed to undeploy WAR (may have been undeployed manually). Proceeding with resource delete for  ["
+                    + contextRoot + "].", e);
         } catch (Exception e) {
+            doPhysicalDelete = false;
             log.error("Failed to undeploy WAR [" + contextRoot + "].", e);
             throw e;
         } finally {
-            File associatedWarFile = null;
-            if (appFile.isDirectory()) {
-                associatedWarFile = new File(appFile.getAbsolutePath() + ".war");
-            }
-
-            try {
-                if ((null != associatedWarFile) && associatedWarFile.exists()) {
-                    FileUtils.purge(associatedWarFile, true);
+            if (doPhysicalDelete) {
+                File associatedWarFile = null;
+                if (appFile.isDirectory()) {
+                    associatedWarFile = new File(appFile.getAbsolutePath() + ".war");
                 }
-            } catch (IOException e) {
-                // don't fail on this but warn, since the app may get redeployed on the next Tomcat startup
-                log.warn("Failed to delete file [" + associatedWarFile + "].", e);
-            }
 
-            try {
-                FileUtils.purge(appFile, true);
-            } catch (IOException e) {
-                log.error("Failed to delete file [" + appFile + "].", e);
-                // if the undeploy also failed that exception will be lost
-                // and this one will be seen by the caller instead.
-                // arguably both these conditions indicate failure, since
-                // not being able to delete the file will mean that it will
-                // likely get picked up again by the deployment scanner
-                throw e;
+                try {
+                    if ((null != associatedWarFile) && associatedWarFile.exists()) {
+                        FileUtils.purge(associatedWarFile, true);
+                    }
+                } catch (IOException e) {
+                    // don't fail on this but warn, since the app may get redeployed on the next Tomcat startup
+                    log.warn("Failed to delete file [" + associatedWarFile + "].", e);
+                }
+
+                try {
+                    FileUtils.purge(appFile, true);
+                } catch (IOException e) {
+                    log.error("Failed to delete file [" + appFile + "].", e);
+                    // if the undeploy also failed that exception will be lost
+                    // and this one will be seen by the caller instead.
+                    // arguably both these conditions indicate failure, since
+                    // not being able to delete the file will mean that it will
+                    // likely get picked up again by the deployment scanner
+                    throw e;
+                }
             }
         }
 

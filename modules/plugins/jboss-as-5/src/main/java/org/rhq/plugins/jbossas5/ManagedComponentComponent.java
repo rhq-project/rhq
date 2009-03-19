@@ -220,7 +220,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
     private ManagedComponent getManagedComponent()
     {
         try {
-            ProfileServiceFactory.refreshCurrentProfileView();
+            //ProfileServiceFactory.refreshCurrentProfileView();
             ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
             return ProfileServiceFactory.getManagedComponent(managementView, this.componentType, this.componentName);
         }

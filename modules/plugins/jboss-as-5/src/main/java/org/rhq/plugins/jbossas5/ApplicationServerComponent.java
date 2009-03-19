@@ -123,7 +123,7 @@ public class ApplicationServerComponent
 
     public CreateResourceReport createResource(CreateResourceReport createResourceReport)
     {
-        ProfileServiceFactory.refreshCurrentProfileView();
+        //ProfileServiceFactory.refreshCurrentProfileView();
         ResourceType resourceType = createResourceReport.getResourceType();
         if (resourceType.getCreationDataType() == ResourceCreationDataType.CONTENT)
             createContentBasedResource(createResourceReport, resourceType);

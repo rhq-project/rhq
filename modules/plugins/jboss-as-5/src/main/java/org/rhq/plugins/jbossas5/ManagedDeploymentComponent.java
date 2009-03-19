@@ -331,7 +331,7 @@ public class ManagedDeploymentComponent
     // -------------------------------------------------------------
 
     private ManagedDeployment getManagedDeployment() throws Exception {
-        ProfileServiceFactory.refreshCurrentProfileView();
+        //ProfileServiceFactory.refreshCurrentProfileView();
         ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
         String resourceKey = getResourceContext().getResourceKey();
         return managementView.getDeployment(resourceKey);

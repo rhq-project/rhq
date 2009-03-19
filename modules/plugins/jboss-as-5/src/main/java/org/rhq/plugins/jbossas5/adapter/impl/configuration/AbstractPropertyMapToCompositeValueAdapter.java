@@ -28,6 +28,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.jboss.metatype.api.types.MetaType;
+import org.jboss.metatype.api.types.SimpleMetaType;
 import org.jboss.metatype.api.values.CompositeValue;
 import org.jboss.metatype.api.values.MetaValue;
 
@@ -58,6 +59,11 @@ public abstract class AbstractPropertyMapToCompositeValueAdapter extends Abstrac
             Property mapMemberProp = propMap.get(mapMemberPropName);
             PropertyDefinition mapMemberPropDef = propDefMap.get(mapMemberPropName);
             MetaType mapMemberMetaType = compositeValue.getMetaType().getType(mapMemberPropName);
+            if (mapMemberMetaType == null) {
+            	// this will occur when new map properties are added since they are not present
+            	// in the original metaValue which we are using
+            	mapMemberMetaType = SimpleMetaType.STRING;
+            }           
             PropertyAdapter adapter = PropertyAdapterFactory.getPropertyAdapter(mapMemberMetaType);
             MetaValue mapMemberMetaValue = adapter.convertToMetaValue(mapMemberProp, mapMemberPropDef, mapMemberMetaType);
             putValue(compositeValue, mapMemberPropName, mapMemberMetaValue);

@@ -366,6 +366,8 @@
             the use of background validation.
         </c:description>
     </c:simple-property>
+    
+    <c:map-property name="connection-properties" required="false"/>
 '>
 
 <!ENTITY nonXaDatasourceConnectionResourceConfigProps '

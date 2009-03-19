@@ -4,6 +4,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://struts-menu.sf.net/tag" prefix="menu" %>
+<%@ taglib uri="http://richfaces.org/a4j" prefix="a4j" %>
 <html:html>
    <head>
       <meta http-equiv="EXPIRES" content="-1">

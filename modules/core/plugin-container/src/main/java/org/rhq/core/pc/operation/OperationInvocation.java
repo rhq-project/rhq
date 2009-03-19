@@ -225,7 +225,7 @@ public class OperationInvocation implements Runnable {
                             ConfigurationUtility.normalizeConfiguration(result, operationDefinition
                                 .getResultsConfigurationDefinition());
                             // TODO: Validate the result Configuration?
-                        } else {
+                        } else if (!result.getProperties().isEmpty()) {
                             log.error("Plugin error: Operation [" + this.operationDefinition.getName()
                                 + "] is defined as returning no results, but it returned non-null results: "
                                 + result.toString(true));

@@ -378,7 +378,7 @@
                         type="boolean"
                         default="true"
                         required="true"
-                        description="If yes then explode the WAR file into the Tomcat deploy directory. If no leave as a .war file (for no, unpackWARs=false is required on this virtual host)." />
+                        description="If yes, then explode the WAR file into the Tomcat deploy directory. If no, leave as a .war file (for no, unpackWARs=false is required on this virtual host)." />
                   </c:group>
                </configuration>
             </content>
@@ -475,7 +475,7 @@
                <c:simple-property
                   name="scheme"
                   type="string"
-                  description="Protocol scheme. (jk, ajp, http)."
+                  description="Protocol scheme (jk, ajp, http)."
                   readOnly="true"
                   default="http" />
                <c:simple-property
@@ -521,7 +521,7 @@
          <metric
             property="Catalina:type=GlobalRequestProcessor,name=%scheme%-%port%:maxTime"
             displayName="Maximum Request Time"
-            description="Maximum time it took to process a request"
+            description="Maximum time it took to process a request."
             units="milliseconds"
             defaultOn="true"
             category="performance" />
@@ -754,7 +754,7 @@
                   <c:simple-property
                      name="fullName"
                      required="false"
-                     description="The full name of User" />
+                     description="The full name of the User" />
                   <c:simple-property
                      name="groups"
                      type="longString"

@@ -259,9 +259,9 @@ public class ConversionUtils
                     propertyAdapter.populateMetaValueFromProperty(property, metaValue, propertyDefinition);
 
                     // TODO: This is a workaround for https://jira.jboss.org/jira/browse/JBAS-6188.
-                    if ((metaValue instanceof SimpleValueSupport && ((SimpleValue)metaValue).getValue() == null) ||
-                        (metaValue instanceof EnumValueSupport && ((EnumValue)metaValue).getValue() == null))
-                        managedProperty.setValue(null);
+                    //if ((metaValue instanceof SimpleValueSupport && ((SimpleValue)metaValue).getValue() == null) ||
+                    //    (metaValue instanceof EnumValueSupport && ((EnumValue)metaValue).getValue() == null))
+                    //    managedProperty.setValue(null);
 
                 }
                 else

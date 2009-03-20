@@ -65,7 +65,11 @@ public abstract class DebugUtils {
         List<ManagedProperty> props = new ArrayList<ManagedProperty>(managedProps.values());
         Collections.sort(props, new ManagedPropertyComparator()); // sort by name
         for (ManagedProperty managedProperty : props) {
-            buf.append("  name=").append(managedProperty.getName());
+            if (managedProperty.isMandatory())
+                buf.append("* ");
+            else
+                buf.append("  ");
+            buf.append("name=").append(managedProperty.getName());
             if (!managedProperty.getName().equals(managedProperty.getMappedName()))
                 buf.append(", mappedName=").append(managedProperty.getMappedName());
             String viewUse = "NONE";
@@ -87,7 +91,8 @@ public abstract class DebugUtils {
 
     private static void convertMetaValueToString(MetaValue metaValue, StringBuilder buffer, boolean indentFirstLine,
                                                  int indentLevel) {
-        if (indentFirstLine) for (int i = 0; i < indentLevel; i++) buffer.append("  ");
+        if (indentFirstLine)
+            for (int i = 0; i < indentLevel; i++) buffer.append("  ");
         if (metaValue == null) {
             buffer.append("<<<null>>>\n"); // make it stand out a bit
         } else if (metaValue.getMetaType().isCollection()) {

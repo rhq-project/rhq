@@ -50,6 +50,7 @@ import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceIdWithAvailabilityComposite;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -66,6 +67,7 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 
 /**
  * Manager for availability related tasks.
@@ -91,6 +93,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
     private AuthorizationManagerLocal authorizationManager;
     @EJB
     private ResourceManagerLocal resourceManager;
+    @EJB
+    private ResourceGroupManagerLocal resourceGroupManager;
     @EJB
     private ResourceAvailabilityManagerLocal resourceAvailabilityManager;
     @EJB
@@ -203,9 +207,12 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
             } else if (context.category == EntityContext.Category.ResourceGroup) {
                 availabilities = findResourceGroupAvailabilityWithinInterval(context.groupId, fullRangeBeginDate,
                     fullRangeEndDate);
-            } else {
+            } else if (context.category == EntityContext.Category.AutoGroup) {
                 availabilities = findAutoGroupAvailabilityWithinInterval(context.parentResourceId,
                     context.resourceTypeId, fullRangeBeginDate, fullRangeEndDate);
+            } else {
+                throw new IllegalArgumentException("Do not yet support retrieving availability history for Context["
+                    + context.toShortString() + "]");
             }
         } catch (Exception e) {
             log.warn("Can't obtain Availability for " + context.toShortString(), e);
@@ -334,6 +341,24 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
                 currentTime = availabilityStartBarrier;
             }
         }
+
+        // RHQ-1631, always make the latest availability dot match the current availability - NO MATTER WHAT
+        AvailabilityPoint oldFirstAvailabilityPoint = availabilityPoints.remove(availabilityPoints.size() - 1);
+        AvailabilityType newFirstAvailabilityType = oldFirstAvailabilityPoint.getAvailabilityType();
+        if (context.category == EntityContext.Category.Resource) {
+            newFirstAvailabilityType = getCurrentAvailabilityTypeForResource(whoami, context.resourceId);
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            ResourceGroupComposite composite = resourceGroupManager.getResourceGroupWithAvailabilityById(whoami,
+                context.groupId);
+            Double firstAvailability = composite.getAvailability();
+            newFirstAvailabilityType = firstAvailability == null ? null
+                : (firstAvailability == 1.0 ? AvailabilityType.UP : AvailabilityType.DOWN);
+        } else {
+            // March 20, 2009: we only support the "summary area" for resources and resourceGroups to date
+            // as a result, newFirstAvailabilityType will be a pass-through of the type in oldFirstAvailabilityPoint
+        }
+        availabilityPoints
+            .add(new AvailabilityPoint(newFirstAvailabilityType, oldFirstAvailabilityPoint.getTimestamp()));
 
         // remember we went backwards in time, but we want the returned data to be ascending, so reverse the order
         Collections.reverse(availabilityPoints);

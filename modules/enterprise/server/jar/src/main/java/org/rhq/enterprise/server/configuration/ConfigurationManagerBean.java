@@ -492,6 +492,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ResourceGroupComposite groupComposite = this.resourceGroupManager.getResourceGroupWithAvailabilityById(whoami,
             groupId);
 
+        // if the group is empty (has no members) the availability will be null
+        if (groupComposite.getAvailability() == null) {
+            return new HashMap<Integer, Configuration>();
+        }
+
         AvailabilityType availability = (groupComposite.getAvailability() == 1) ? AvailabilityType.UP
             : AvailabilityType.DOWN;
         if (availability == AvailabilityType.DOWN)
@@ -526,7 +531,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     currentPersistedConfigs.put(memberResource.getId(), update.getConfiguration());
                 else
                     log.error("Current Configuration for " + memberResource
-                            + " does not match latest associated ResourceConfigurationUpdate with SUCCESS status.");
+                        + " does not match latest associated ResourceConfigurationUpdate with SUCCESS status.");
             }
         }
         return currentPersistedConfigs;
@@ -550,7 +555,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     private void ensureNoResourceConfigurationUpdatesInProgress(ResourceGroup compatibleGroup)
-            throws UpdateStillInProgressException {
+        throws UpdateStillInProgressException {
         if (isAggregateResourceConfigurationUpdateInProgress(this.subjectManager.getOverlord(), compatibleGroup.getId())) {
             throw new UpdateStillInProgressException("Current group Resource configuration for " + compatibleGroup
                 + " cannot be calculated, because a group Resource configuration update is currently in progress "
@@ -558,7 +563,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-                ResourceConfigurationUpdate.QUERY_FIND_BY_GROUP_ID_AND_STATUS);
+            ResourceConfigurationUpdate.QUERY_FIND_BY_GROUP_ID_AND_STATUS);
         countQuery.setParameter("groupId", compatibleGroup.getId());
         countQuery.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
         long count = (Long) countQuery.getSingleResult();
@@ -567,13 +572,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             query.setParameter("groupId", compatibleGroup.getId());
             query.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
             List<Resource> resources = query.getResultList();
-            throw new UpdateStillInProgressException(
-                "Current group Resource configuration for "
-                    + compatibleGroup
-                    + " cannot be calculated, because Resource configuration updates are currently in progress for the"
-                    + " following Resources (please wait for these updates to complete or delete them from the history): "
-                    + resources);
-        }        
+            throw new UpdateStillInProgressException("Current group Resource configuration for " + compatibleGroup
+                + " cannot be calculated, because Resource configuration updates are currently in progress for the"
+                + " following Resources (please wait for these updates to complete or delete them from the history): "
+                + resources);
+        }
     }
 
     private void ensureNoPluginConfigurationUpdatesInProgress(ResourceGroup compatibleGroup) throws Exception {
@@ -704,10 +707,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 long duration = request.getDuration();
                 if (duration > timeout) {
                     log.info("Resource configuration update request seems to have been orphaned - timing it out: "
-                            + request);
+                        + request);
                     request.setErrorMessage("Timed out - did not complete after " + duration + " ms"
                         + " (the timeout period was " + timeout + " ms)");
-                    request.setStatus(ConfigurationUpdateStatus.FAILURE);                    
+                    request.setStatus(ConfigurationUpdateStatus.FAILURE);
                     // If it's part of a group update, check if all member updates of the group update have completed,
                     // and, if so, update the group update's status.
                     checkForCompletedGroupResourceConfigurationUpdate(request);
@@ -718,8 +721,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
     }
 
-    private void checkForTimedOutAggregateResourceConfigurationUpdateRequests()
-    {
+    private void checkForTimedOutAggregateResourceConfigurationUpdateRequests() {
         try {
             // TODO (ips): Optimize this so the query actually does the timeout check too,
             //             i.e. "WHERE cu.createdtime > :maxCreatedTime".
@@ -734,16 +736,17 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
                 long duration = request.getDuration();
                 if (duration > timeout) {
-                    log.info("Group Resource configuration update request seems to have been orphaned - timing it out: "
+                    log
+                        .info("Group Resource configuration update request seems to have been orphaned - timing it out: "
                             + request);
                     request.setErrorMessage("Timed out - did not complete after " + duration + " ms"
                         + " (the timeout period was " + timeout + " ms)");
                     request.setStatus(ConfigurationUpdateStatus.FAILURE);
                 }
             }
-         } catch (Throwable t) {
+        } catch (Throwable t) {
             log.error("Failed to check for timed out group Resource configuration update requests. Cause: " + t);
-         }
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -1129,27 +1132,25 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return;
     }
 
-    private void checkForCompletedGroupResourceConfigurationUpdate(
-        ResourceConfigurationUpdate resourceConfigUpdate) {
+    private void checkForCompletedGroupResourceConfigurationUpdate(ResourceConfigurationUpdate resourceConfigUpdate) {
         if (resourceConfigUpdate.getStatus() == ConfigurationUpdateStatus.INPROGRESS)
             // If this update isn't done, then, by definition, the group update isn't done either.
             return;
 
-        AggregateResourceConfigurationUpdate groupConfigUpdate = resourceConfigUpdate
-            .getAggregateConfigurationUpdate();
+        AggregateResourceConfigurationUpdate groupConfigUpdate = resourceConfigUpdate.getAggregateConfigurationUpdate();
         if (groupConfigUpdate == null)
             // The update's not part of a group update - nothing we need to do.
             return;
 
         Query inProgressResourcesCountQuery = PersistenceUtility.createCountQuery(this.entityManager,
-                ResourceConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID_AND_STATUS);
+            ResourceConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID_AND_STATUS);
         inProgressResourcesCountQuery.setParameter("parentUpdateId", groupConfigUpdate.getId());
         inProgressResourcesCountQuery.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
         long inProgressResourcesCount = (Long) inProgressResourcesCountQuery.getSingleResult();
         if (inProgressResourcesCount == 0) {
             // No more member updates in progress - the group update is complete.
-            Query failedResourcesQuery = this.entityManager.createNamedQuery(
-                    ResourceConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID_AND_STATUS);
+            Query failedResourcesQuery = this.entityManager
+                .createNamedQuery(ResourceConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID_AND_STATUS);
             failedResourcesQuery.setParameter("parentUpdateId", groupConfigUpdate.getId());
             failedResourcesQuery.setParameter("status", ConfigurationUpdateStatus.FAILURE);
             List<Resource> failedResources = failedResourcesQuery.getResultList();
@@ -1159,17 +1160,17 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             } else {
                 groupStatus = ConfigurationUpdateStatus.FAILURE;
                 groupConfigUpdate.setErrorMessage("The following Resources failed to update their Configurations: "
-                        + failedResources);
+                    + failedResources);
             }
             groupConfigUpdate.setStatus(groupStatus);
             log.info("Group Resource configuration update [" + groupConfigUpdate.getId() + "] for "
-                    + groupConfigUpdate.getGroup() + " has completed with status [" + groupStatus + "].");
+                + groupConfigUpdate.getGroup() + " has completed with status [" + groupStatus + "].");
             // TODO: Add support for alerting on completion of group resource config updates.
             //notifyAlertConditionCacheManager("checkForCompletedGroupResourceConfigurationUpdate", groupUpdate);
         } else {
             log.debug("Group Resource configuration update [" + groupConfigUpdate.getId() + "] for "
-                    + groupConfigUpdate.getGroup() + " has " + inProgressResourcesCount
-                    + " member updates still in progress.");
+                + groupConfigUpdate.getGroup() + " has " + inProgressResourcesCount
+                + " member updates still in progress.");
         }
         return;
     }

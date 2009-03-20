@@ -19,6 +19,7 @@
 package org.rhq.plugins.jbossas5.util;
 
 import java.io.File;
+import java.net.URL;
 
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
@@ -50,27 +51,26 @@ public abstract class DeploymentUtils {
         return (lastPeriod == -1 || !expectedExtension.equals(extension));
     }
 
-    public static DeploymentStatus deployArchive(File tempFile) throws Exception
+    public static DeploymentStatus deployArchive(File archiveFile) throws Exception
     {
         DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
-        String archiveName = tempFile.getName();
-        boolean copyContent = true;
-        DeploymentProgress progress = deploymentManager.distribute(archiveName, tempFile.toURL(), copyContent);
+        String deploymentName = archiveFile.getName();
+        URL contentURL = archiveFile.toURI().toURL();
+        final boolean copyContent = false;
+
+        DeploymentProgress progress = deploymentManager.distribute(deploymentName, contentURL, copyContent);
         //progress.addProgressListener(this);
         progress.run();
-
-        // Get the repository name of the distributed deployment
-        String[] repositoryNames = progress.getDeploymentID().getRepositoryNames();
-        
         DeploymentStatus status = progress.getDeploymentStatus();
         DeploymentStatus.StateType state = status.getState();
         if (state == DeploymentStatus.StateType.FAILED || state == DeploymentStatus.StateType.CANCELLED)
             return status;
 
+        // Get the repository names for the distributed deployment.
+        String[] repositoryNames = progress.getDeploymentID().getRepositoryNames();
         progress = deploymentManager.start(repositoryNames);
         //progress.addProgressListener(this);
         progress.run();
-
         status = progress.getDeploymentStatus();
         return status;
     }

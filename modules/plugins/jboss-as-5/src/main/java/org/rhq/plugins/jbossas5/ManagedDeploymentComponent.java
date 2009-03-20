@@ -275,7 +275,7 @@ public class ManagedDeploymentComponent
 
         // The file has been written successfully to the deploy dir. Now try to actually deploy it.
         try {
-            DeploymentUtils.deployArchive(tempFile);
+            DeploymentUtils.deployArchive(this.deploymentFile);
         }
         catch (Exception e) {
             // Deploy failed - rollback to the original app file...

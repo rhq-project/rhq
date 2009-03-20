@@ -389,7 +389,7 @@
          <metric displayName="Connections Destroyed" property="ConnectionDestroyedCount"
                  category="utilization" defaultOn="true" displayType="summary"
                  measurementType="trendsup"
-                 description=""/>
+                 description="Number of Connections destroyed since the Connection Pool was created."/>
 
 
          <resource-configuration>

@@ -342,7 +342,13 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
             }
         }
 
-        // RHQ-1631, always make the latest availability dot match the current availability - NO MATTER WHAT
+        // remember we went backwards in time, but we want the returned data to be ascending, so reverse the order
+        Collections.reverse(availabilityPoints);
+
+        /* 
+         * RHQ-1631, always make the latest availability dot match the current availability - NO MATTER WHAT
+         * note: this must occur AFTER reversing the collection so the last dot refers to the most recent time slice
+         */
         AvailabilityPoint oldFirstAvailabilityPoint = availabilityPoints.remove(availabilityPoints.size() - 1);
         AvailabilityType newFirstAvailabilityType = oldFirstAvailabilityPoint.getAvailabilityType();
         if (context.category == EntityContext.Category.Resource) {
@@ -359,9 +365,6 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         }
         availabilityPoints
             .add(new AvailabilityPoint(newFirstAvailabilityType, oldFirstAvailabilityPoint.getTimestamp()));
-
-        // remember we went backwards in time, but we want the returned data to be ascending, so reverse the order
-        Collections.reverse(availabilityPoints);
 
         // This should never happen, but add a check just to be safe.
         if (availabilityPoints.size() != numberOfPoints) {

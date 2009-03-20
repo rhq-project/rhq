@@ -397,7 +397,6 @@ public interface ConfigurationManagerLocal {
 
     void deleteConfigurations(List<Integer> configurationIds);
 
-    @SuppressWarnings("unchecked")
     PageList<Integer> getResourceConfigurationUpdatesByParentId(int aggregateConfigurationUpdateId,
         PageControl pageControl);
 
@@ -423,16 +422,16 @@ public interface ConfigurationManagerLocal {
      * @param whoami the current subject
      * @param groupId the id of the compatible group
      * @return
-     * @throws Exception if 1) one or more of the group's members are DOWN, 3) config updates, for the group or any
-     *         member, are in progress, or 3) we fail to retrieve one or more member live configs from the corresponding
-     *         Agents
+     * @throws ConfigurationUpdateInProgressException if config updates, for the group or any member, are in progress, 
+     * @throws Exception if 1) one or more of the group's members are DOWN, or 2) we fail to retrieve one or more member
+     *         live configs from the corresponding Agents
      */
     Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(Subject whoami, int groupId)
-        throws Exception;
+        throws ConfigurationUpdateStillInProgressException, Exception;
 
-    Map<Integer, Configuration> getPluginConfigurationsForCompatibleGroup(Subject whoami, int groupId) throws Exception;
+    Map<Integer, Configuration> getPluginConfigurationsForCompatibleGroup(Subject whoami, int groupId)
+        throws ConfigurationUpdateStillInProgressException, Exception;
 
-    @SuppressWarnings("unchecked")
     Map<Integer, Configuration> getPluginConfigurationMapForAggregateUpdate(Integer aggregatePluginConfigurationUpdateId);
 
     /**

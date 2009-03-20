@@ -32,6 +32,7 @@ import org.rhq.core.gui.configuration.propset.ConfigurationSet;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -59,6 +60,10 @@ public abstract class AbstractGroupResourceConfigurationUIBean {
             this.group = loadGroup();
             this.resourceConfigurations = this.configurationManager.getResourceConfigurationsForCompatibleGroup(
                 EnterpriseFacesContextUtility.getSubject(), this.group.getId());
+        } catch (ConfigurationUpdateStillInProgressException updateException) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
+                "Configuration update is currently in progress. Please wait a few moments and refresh the page.");
+            return;
         } catch (RuntimeException e) {
             // NOTE: In order for this message to be displayed, an EL expression referencing the managed bean must
             //       be on the page somewhere above the h:messages tag.

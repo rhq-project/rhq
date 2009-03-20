@@ -28,10 +28,10 @@ import javax.ejb.ApplicationException;
  * @author John Mazzitelli
  */
 @ApplicationException(rollback = true)
-public class UpdateStillInProgressException extends RuntimeException {
+public class ConfigurationUpdateStillInProgressException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
-    public UpdateStillInProgressException(String message) {
+    public ConfigurationUpdateStillInProgressException(String message) {
         super(message);
     }
 }

@@ -27,13 +27,11 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.gui.configuration.propset.ConfigurationSet;
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import org.jboss.seam.faces.Redirect;
 
 /**
  * An abstract base class for the Seam components for viewing and editing group plugin Configurations. Requires the
@@ -41,8 +39,7 @@ import org.jboss.seam.faces.Redirect;
  *
  * @author Ian Springer
  */
-public abstract class AbstractGroupPluginConfigurationUIBean
-{
+public abstract class AbstractGroupPluginConfigurationUIBean {
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
@@ -53,68 +50,58 @@ public abstract class AbstractGroupPluginConfigurationUIBean
     /**
      * Load the ConfigurationDefinition and member Configurations for the current compatible group.
      */
-    protected void loadConfigurations()
-    {
-        try
-        {
+    protected void loadConfigurations() {
+        try {
             this.group = loadGroup();
             this.pluginConfigurations = this.configurationManager.getPluginConfigurationsForCompatibleGroup(
-                    EnterpriseFacesContextUtility.getSubject(), this.group.getId());
-        }
-        catch (Exception e)
-        {
+                EnterpriseFacesContextUtility.getSubject(), this.group.getId());
+        } catch (ConfigurationUpdateStillInProgressException updateException) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
+                "Configuration update is currently in progress. Please wait a few moments and refresh the page.");
+            return;
+        } catch (Exception e) {
             // NOTE: In order for this message to be displayed, an EL expression referencing the managed bean must
             //       be on the page somewhere above the h:messages tag.
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to load group plugin configuration.",
-                    e);
+            FacesContextUtility
+                .addMessage(FacesMessage.SEVERITY_ERROR, "Failed to load group plugin configuration.", e);
             e.printStackTrace();
             return;
         }
-        this.configurationSet = GroupPluginConfigurationUtility.buildConfigurationSet(
-                EnterpriseFacesContextUtility.getSubject(), this.group, this.pluginConfigurations);        
+        this.configurationSet = GroupPluginConfigurationUtility.buildConfigurationSet(EnterpriseFacesContextUtility
+            .getSubject(), this.group, this.pluginConfigurations);
         return;
     }
 
-    private ResourceGroup loadGroup() throws Exception
-    {
+    private ResourceGroup loadGroup() throws Exception {
         ResourceGroup group;
-        try
-        {
+        try {
             group = EnterpriseFacesContextUtility.getResourceGroup();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new Exception("No group is associated with this request ('groupId' request parameter is not set).");
         }
-        if (group.getGroupCategory() != GroupCategory.COMPATIBLE)
-        {
+        if (group.getGroupCategory() != GroupCategory.COMPATIBLE) {
             throw new Exception("Group with id " + group.getId() + " is not a compatible group.");
         }
         return group;
     }
 
-    public ConfigurationManagerLocal getConfigurationManager()
-    {
+    public ConfigurationManagerLocal getConfigurationManager() {
         return configurationManager;
     }
 
-    public ResourceManagerLocal getResourceManager()
-    {
+    public ResourceManagerLocal getResourceManager() {
         return resourceManager;
     }
 
-    public ResourceGroup getGroup()
-    {
+    public ResourceGroup getGroup() {
         return group;
     }
 
-    public Map<Integer, Configuration> getPluginConfigurations()
-    {
+    public Map<Integer, Configuration> getPluginConfigurations() {
         return pluginConfigurations;
     }
 
-    public ConfigurationSet getConfigurationSet()
-    {
+    public ConfigurationSet getConfigurationSet() {
         return configurationSet;
     }
 }

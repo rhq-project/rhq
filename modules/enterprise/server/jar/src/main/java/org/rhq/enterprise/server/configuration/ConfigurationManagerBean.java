@@ -337,7 +337,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             if (!theSame) {
                 try {
                     current = persistNewAgentReportedResourceConfiguration(resource, liveConfig);
-                } catch (UpdateStillInProgressException e) {
+                } catch (ConfigurationUpdateStillInProgressException e) {
                     // This means a config update is INPROGRESS.
                     // Return the current in this case since it is our latest committed active config.
                     // Note that even though this application exception specifies "rollback=true", it will
@@ -487,7 +487,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(Subject whoami, int groupId)
-        throws Exception {
+        throws ConfigurationUpdateStillInProgressException, Exception {
         // The below call will also handle the check to see if the subject has perms to view the group.
         ResourceGroupComposite groupComposite = this.resourceGroupManager.getResourceGroupWithAvailabilityById(whoami,
             groupId);
@@ -538,7 +538,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public Map<Integer, Configuration> getPluginConfigurationsForCompatibleGroup(Subject whoami, int groupId)
-        throws Exception {
+        throws ConfigurationUpdateStillInProgressException, Exception {
         // The below call will also handle the check to see if the subject has perms to view the group.
         ResourceGroupComposite groupComposite = this.resourceGroupManager.getResourceGroupWithAvailabilityById(whoami,
             groupId);
@@ -548,16 +548,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ensureNoPluginConfigurationUpdatesInProgress(group);
 
         // If we got this far, no updates are in progress, so go ahead and load the plugin configs from the DB.
-        @SuppressWarnings( { "UnnecessaryLocalVariable" })
         Map<Integer, Configuration> currentPersistedConfigs = getPersistedPluginConfigurationsForCompatibleGroup(group);
 
         return currentPersistedConfigs;
     }
 
+    @SuppressWarnings("unchecked")
     private void ensureNoResourceConfigurationUpdatesInProgress(ResourceGroup compatibleGroup)
-        throws UpdateStillInProgressException {
+        throws ConfigurationUpdateStillInProgressException {
         if (isAggregateResourceConfigurationUpdateInProgress(this.subjectManager.getOverlord(), compatibleGroup.getId())) {
-            throw new UpdateStillInProgressException("Current group Resource configuration for " + compatibleGroup
+            throw new ConfigurationUpdateStillInProgressException("Current group Resource configuration for " + compatibleGroup
                 + " cannot be calculated, because a group Resource configuration update is currently in progress "
                 + " (please wait for this update to complete or delete it from the history).");
         }
@@ -572,7 +572,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             query.setParameter("groupId", compatibleGroup.getId());
             query.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
             List<Resource> resources = query.getResultList();
-            throw new UpdateStillInProgressException("Current group Resource configuration for " + compatibleGroup
+            throw new ConfigurationUpdateStillInProgressException("Current group Resource configuration for " + compatibleGroup
                 + " cannot be calculated, because Resource configuration updates are currently in progress for the"
                 + " following Resources (please wait for these updates to complete or delete them from the history): "
                 + resources);
@@ -584,7 +584,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             throw new Exception("Current group plugin configuration for " + compatibleGroup
                 + " cannot be calculated, because a group plugin configuration update is currently in progress.");
         }
-        List<Resource> resourcesWithPluginConfigUpdatesInProgress = new ArrayList();
+        List<Resource> resourcesWithPluginConfigUpdatesInProgress = new ArrayList<Resource>();
         for (Resource memberResource : compatibleGroup.getImplicitResources()) {
             if (isPluginConfigurationUpdateInProgress(this.subjectManager.getOverlord(), memberResource.getId()))
                 resourcesWithPluginConfigUpdatesInProgress.add(memberResource);
@@ -597,6 +597,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     + resourcesWithPluginConfigUpdatesInProgress);
     }
 
+    @SuppressWarnings("unchecked")
     private Map<Integer, Configuration> getPersistedResourceConfigurationsForCompatibleGroup(
         ResourceGroup compatibleGroup) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
@@ -612,7 +613,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Query query = entityManager.createNamedQuery(Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID);
         query.setParameter("resourceGroupId", compatibleGroup.getId());
 
-        Map<Integer, Configuration> results = new HashMap((int) count);
+        Map<Integer, Configuration> results = new HashMap<Integer, Configuration>((int) count);
         int rowsProcessed = 0;
         while (true) {
             PersistenceUtility.setDataPage(query, pageControl); // retrieve one page at a time
@@ -633,6 +634,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return results;
     }
 
+    @SuppressWarnings("unchecked")
     private Map<Integer, Configuration> getPersistedPluginConfigurationsForCompatibleGroup(ResourceGroup compatibleGroup) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
             Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_ID);
@@ -647,7 +649,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Query query = entityManager.createNamedQuery(Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_ID);
         query.setParameter("resourceGroupId", compatibleGroup.getId());
 
-        Map<Integer, Configuration> results = new HashMap((int) count);
+        Map<Integer, Configuration> results = new HashMap<Integer, Configuration>((int) count);
         int rowsProcessed = 0;
         while (true) {
             List<Object[]> pagedResults = query.getResultList();
@@ -693,6 +695,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         checkForTimedOutAggregateResourceConfigurationUpdateRequests();
     }
 
+    @SuppressWarnings("unchecked")
     private void checkForTimedOutResourceConfigurationUpdateRequests() {
         try {
             // TODO (ips): Optimize this so the query actually does the timeout check too,
@@ -721,6 +724,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void checkForTimedOutAggregateResourceConfigurationUpdateRequests() {
         try {
             // TODO (ips): Optimize this so the query actually does the timeout check too,
@@ -1006,7 +1010,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject whoami, int resourceId,
         Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject,
-        boolean isPartofAggregateUpdate) throws UpdateStillInProgressException {
+        boolean isPartofAggregateUpdate) throws ConfigurationUpdateStillInProgressException {
         // get the resource that we will be updating
         Resource resource = entityManager.find(Resource.class, resourceId);
 
@@ -1031,7 +1035,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                         errorMessage = "Resource configuration Update was aborted because an update request for the Resource was already in progress.";
                     } else {
                         // NOTE: If you change this to another exception, make sure you change getLatestResourceConfigurationUpdate().
-                        throw new UpdateStillInProgressException(
+                        throw new ConfigurationUpdateStillInProgressException(
                             "Resource ["
                                 + resource
                                 + "] has a resource configuration update request already in progress - please wait for it to finish: "
@@ -1132,6 +1136,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return;
     }
 
+    @SuppressWarnings("unchecked")
     private void checkForCompletedGroupResourceConfigurationUpdate(ResourceConfigurationUpdate resourceConfigUpdate) {
         if (resourceConfigUpdate.getStatus() == ConfigurationUpdateStatus.INPROGRESS)
             // If this update isn't done, then, by definition, the group update isn't done either.

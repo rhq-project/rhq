@@ -48,6 +48,9 @@ import org.jboss.profileservice.spi.ProfileService;
 public class ApplicationServerDiscoveryComponent
         implements ResourceDiscoveryComponent
 {
+    private static final String DEFAULT_RESOURCE_DESCRIPTION = "JBoss Application Server";
+    private static final String JBMANCON_DEBUG_SYSPROP = "jbmancon.debug";
+
     private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
@@ -86,8 +89,8 @@ public class ApplicationServerDiscoveryComponent
                         resourceDiscoveryContext.getResourceType(),
                         resourceKey,
                         resourceName,
-                        version, 
-                        "JBoss App Server",
+                        version,
+                        DEFAULT_RESOURCE_DESCRIPTION,
                         resourceDiscoveryContext.getDefaultPluginConfiguration(),
                         null);
         servers.add(server);
@@ -120,7 +123,10 @@ public class ApplicationServerDiscoveryComponent
         ResourceType resourceType = resourceDiscoveryContext.getResourceType();
         log.info("Discovered " + servers.size() + " " + resourceType.getName() + " Resources." );
 
-        generatePluginDescriptor(resourceDiscoveryContext);
+        boolean debug = Boolean.getBoolean(JBMANCON_DEBUG_SYSPROP);
+        if (debug)
+            generatePluginDescriptor(resourceDiscoveryContext);
+
         return servers;
     }
 

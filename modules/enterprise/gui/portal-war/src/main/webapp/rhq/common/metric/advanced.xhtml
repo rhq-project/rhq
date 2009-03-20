@@ -4,19 +4,19 @@
       PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml" 
-      xmlns:h="http://java.sun.com/jsf/html" 
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:ui="http://java.sun.com/jsf/facelets" 
+      xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
-      xmlns:onc="http://jboss.org/on/component" 
+      xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
-      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax" 
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
     <ui:composition template="/rhq/layout/popup.xhtml">
         <ui:param name="pageTitle" value="Advanced Metrics Settings"/>
-        
+
         <ui:define name="body-area">
             <a4j:loadScript src="/js/advanced-metrics.js"/>
             <a4j:form id="advancedMetricsValuesForm">
@@ -24,7 +24,7 @@
                     <f:facet name="header">
                         <h:outputText value="#{msg['resource.common.monitor.visibility.MetricDisplayRangeTab']}" />
                     </f:facet>
-    
+
                     <h:messages showSummary="true"
                                  showDetail="true"
                                   infoClass="InfoBlock"
@@ -41,68 +41,68 @@
                                 <table>
                                     <tr>
                                         <td>
-                                            <h:selectOneRadio id="durationMetricType" 
-                                                           value="#{AdvancedMetricSettingsUIBean.durationType}" 
-                                                          layout="pageDirection" 
+                                            <h:selectOneRadio id="durationMetricType"
+                                                           value="#{AdvancedMetricSettingsUIBean.durationType}"
+                                                          layout="pageDirection"
                                                          onclick="uncheckRadio('advancedMetricsValuesForm:intervalMetricType');">
                                                 <f:selectItem id="durationMetricTypeItem" itemValue="duration" itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Last']}" />
-                                            </h:selectOneRadio>            
+                                            </h:selectOneRadio>
                                         </td>
                                         <td>
-                                            <h:inputText id="duration" size="2" 
-                                                         value="#{AdvancedMetricSettingsUIBean.duration}" 
+                                            <h:inputText id="duration" size="2"
+                                                         value="#{AdvancedMetricSettingsUIBean.duration}"
                                                          onchange="checkUncheckRadio('advancedMetricsValuesForm:durationMetricType','advancedMetricsValuesForm:intervalMetricType');"/>
                                         </td>
                                         <td>
-                                            <h:selectOneMenu id="unit" 
-                                                             value="#{AdvancedMetricSettingsUIBean.unit}" 
+                                            <h:selectOneMenu id="unit"
+                                                             value="#{AdvancedMetricSettingsUIBean.unit}"
                                                              onchange="checkUncheckRadio('advancedMetricsValuesForm:durationMetricType','advancedMetricsValuesForm:intervalMetricType');">
-                                                <f:selectItem id="mu" 
+                                                <f:selectItem id="mu"
                                                               itemValue="2"
                                                               itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Minutes']}" />
-                                                <f:selectItem id="hu" 
+                                                <f:selectItem id="hu"
                                                               itemValue="3"
                                                               itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Hours']}" />
-                                                <f:selectItem id="du" 
+                                                <f:selectItem id="du"
                                                               itemValue="4"
                                                               itemLabel="#{msg['resource.common.monitor.visibility.metricsToolbar.Days']}" />
-                                            </h:selectOneMenu> 
+                                            </h:selectOneMenu>
                                         </td>
                                     </tr>
-                                    
+
                                     <tr>
                                         <td colspan="3">
-                                            <h:selectOneRadio id="intervalMetricType" 
-                                                           value="#{AdvancedMetricSettingsUIBean.intervalType}" 
-                                                          layout="pageDirection" 
-                                                        onchange="uncheckRadio('advancedMetricsValuesForm:durationMetricType');"> 
+                                            <h:selectOneRadio id="intervalMetricType"
+                                                           value="#{AdvancedMetricSettingsUIBean.intervalType}"
+                                                          layout="pageDirection"
+                                                        onchange="uncheckRadio('advancedMetricsValuesForm:durationMetricType');">
                                                 <f:selectItem id="intervalMetricTypeItem" itemValue="interval" itemLabel="Within a date range" />
                                             </h:selectOneRadio>
                                         </td>
                                     </tr>
                                 </table>
                             </td>
-                        </tr>                      
+                        </tr>
                         <tr>
                             <td>
                                 <table id="intervalTable">
                                     <tr>
                                         <td>From:</td>
                                         <td>
-                                            <rich:calendar id="fromDate" datePattern="dd/MMM/yyyy HH:mm" 
-                                                           value="#{AdvancedMetricSettingsUIBean.fromTime}" 
+                                            <rich:calendar id="fromDate" datePattern="dd/MMM/yyyy HH:mm"
+                                                           value="#{AdvancedMetricSettingsUIBean.fromTime}"
                                                            showApplyButton="true"
                                                            onchange="checkUncheckRadio('advancedMetricsValuesForm:intervalMetricType', 'advancedMetricsValuesForm:durationMetricType');"/>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td> 
+                                        <td>
                                             To:
                                         </td>
                                         <td>
-                                            <rich:calendar id="toDate" datePattern="dd/MMM/yyyy HH:mm" 
+                                            <rich:calendar id="toDate" datePattern="dd/MMM/yyyy HH:mm"
                                                            value="#{AdvancedMetricSettingsUIBean.toTime}"
-                                                           showApplyButton="true" 
+                                                           showApplyButton="true"
                                                            onchange="checkUncheckRadio('advancedMetricsValuesForm:intervalMetricType', 'advancedMetricsValuesForm:durationMetricType');"/>
                                         </td>
                                     </tr>
@@ -114,13 +114,13 @@
                                 <table>
                                     <tr>
                                         <td>
-                                            <a4j:commandButton action="#{AdvancedMetricSettingsUIBean.execute}" 
+                                            <a4j:commandButton action="#{AdvancedMetricSettingsUIBean.execute}"
                                                                value="Ok" styleClass="on-pager-button buttonsmall"
-                                                               oncomplete="closePopupAndReloadParent();" />
+                                                               onclick="validateFields();" />
                                         </td>
                                         <td>
-                                            <input type="button" id="cancelBtn" 
-                                                   value="Cancel" class="on-pager-button buttonsmall" 
+                                            <input type="button" id="cancelBtn"
+                                                   value="Cancel" class="on-pager-button buttonsmall"
                                                    onclick="closePopupAndReloadParent();" />
                                         </td>
                                     </tr>

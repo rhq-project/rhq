@@ -50,7 +50,7 @@ public class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryCom
     {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
         ResourceType resourceType = resourceDiscoveryContext.getResourceType();
-        log.info("Discovering " + resourceType.getName() + " Resources..." );
+        log.debug("Discovering " + resourceType.getName() + " Resources..." );
         String deploymentTypeString = ConversionUtils.getDeploymentTypeString(resourceType);
 
         // TODO (ips): Only refresh the ManagementView *once* per runtime discovery scan, rather than every time this
@@ -114,7 +114,7 @@ public class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryCom
             }
         }
 
-        log.info("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources." );
+        log.debug("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources." );
         return discoveredResources;
     }
 

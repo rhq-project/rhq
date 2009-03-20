@@ -63,11 +63,9 @@ public class ApplicationServerDiscoveryComponent
 
         Collection<ProfileKey> profileKeys = profileService.getActiveProfileKeys();
         if (profileKeys == null || profileKeys.isEmpty()) {
-        	log.error("No active profile found");
+        	log.error("No active profiles found.");
         } else {
-        	for (ProfileKey key: profileKeys) {           
-                log.info("Found active profile [" + key.getName() + "].");
-            }        	             
+            log.debug("Found the following active profiles: " + profileKeys);
         }
         
         // this should really come from the install directory attribute on the JBAS managed component itself

@@ -70,7 +70,7 @@ public class ProfileServiceFactory
             }
             catch (NamingException e)
             {
-                LOG.error("Unable to get an InitialContext to JBoss AS 5", e);
+                LOG.error("Unable to get an InitialContext to JBossAS 5.", e);
                 return null;
             }
 
@@ -114,7 +114,7 @@ public class ProfileServiceFactory
         }
         catch (Exception e)
         {
-            LOG.error("Could not find default Profile in Current Profile View", e);
+            LOG.error("Could not load default profile from current management view.", e);
         }
     }
 
@@ -130,15 +130,15 @@ public class ProfileServiceFactory
     {
     	try
     	{
-    		LOG.info("About to load profile");
+    		LOG.debug("About to load profile via Management View...");
     		long startTime = System.currentTimeMillis();
     		managementView.load();
-    	    long estimatedTime = System.currentTimeMillis() - startTime;
-    		LOG.info("Loaded profile in " + estimatedTime + " milliseconds");
+    	    long elapsedTime = System.currentTimeMillis() - startTime;
+    		LOG.debug("Loaded profile via Management View in " + elapsedTime + " milliseconds.");
     	}
     	catch (Exception e)
     	{
-    		LOG.error("Could not find Profile from the Profile Service in JBoss AS 5", e);
+    		LOG.error("Could not load profile via Management View.", e);
     	}    	
     }    
     
@@ -146,15 +146,15 @@ public class ProfileServiceFactory
     {
     	try
     	{
-    		LOG.info("About to load profile via Deployment Manager");
+    		LOG.debug("Loading profile via Deployment Manager...");
     		long startTime = System.currentTimeMillis();
     		deploymentManager.loadProfile(defaultKey);
-    	    long estimatedTime = System.currentTimeMillis() - startTime;
-    		LOG.info("Loaded profile via Deployment Manager in " + estimatedTime + " milliseconds");
+    	    long elapsedTime = System.currentTimeMillis() - startTime;
+    		LOG.debug("Loaded profile via Deployment Manager in " + elapsedTime + " milliseconds.");
     	}
     	catch (Exception e)
     	{
-    		LOG.error("Could not find Profile from the Profile Service in JBoss AS 5", e);
+    		LOG.error("Could not find profile via Deployment Manager.", e);
     	}    	
     }    
     

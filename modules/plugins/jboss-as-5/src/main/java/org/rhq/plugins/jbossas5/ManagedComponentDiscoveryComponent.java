@@ -53,7 +53,7 @@ public class ManagedComponentDiscoveryComponent
     {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
         ResourceType resourceType = resourceDiscoveryContext.getResourceType();
-        log.info("Discovering " + resourceType.getName() + " Resources..." );
+        log.debug("Discovering " + resourceType.getName() + " Resources..." );
         ComponentType componentType = ConversionUtils.getComponentType(resourceType);
 
         // TODO (ips): Only refresh the ManagementView *once* per runtime discovery scan, rather than every time this
@@ -74,7 +74,6 @@ public class ManagedComponentDiscoveryComponent
 
         if (components != null)
         {
-
             discoveredResources = new HashSet<DiscoveredResourceDetails>(components.size());
             /* Create a resource for each managed component found. We know all managed components will be of a
                type we're interested in, so we can just add them all. There may be need for multiple iterations
@@ -104,7 +103,7 @@ public class ManagedComponentDiscoveryComponent
             }
         }
 
-        log.info("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources." );
+        log.debug("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources." );
         return discoveredResources;
     }
 }

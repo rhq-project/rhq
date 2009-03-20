@@ -149,6 +149,6 @@ input.button_submit {
     document.forms["LoginForm"].elements["j_username"].focus();
   // -->
 </script>
-<jsp:include page="/rhq/common/ie6/ie6fix.xhtml" />
+<jsp:include page="/rhq/common/ie6/ie6loginfix.xhtml" />
 </body>
 </html>

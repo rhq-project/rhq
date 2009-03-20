@@ -2698,10 +2698,10 @@
          <forward name="cancel" path="/rhq/resource/alert/listAlertHistory.xhtml?mode=list" redirect="true"/>
          <!-- for viewing an alert for a deleted resource -->
          <forward name="noresource" path="/Dashboard.do" redirect="true"/>
-         <forward name="success" path="/rhq/resource/alert/listAlertHistory.xhtml?mode=list"/>
+         <forward name="success" path="/rhq/resource/alert/listAlertHistory.xhtml?mode=list" redirect="true"/>
          <!-- we need this here in case we're coming from the alerts list page -->
-         <forward name="remove" path="/rhq/resource/alert/listAlertHistory.xhtml?mode=list"/>
-         <forward name="failure" path="/rhq/resource/alert/listAlertHistory.xhtml?mode=list"/>
+         <forward name="remove" path="/rhq/resource/alert/listAlertHistory.xhtml?mode=list" redirect="true"/>
+         <forward name="failure" path="/rhq/resource/alert/listAlertHistory.xhtml?mode=list" redirect="true"/>
       </action>
 
       <action path="/alerts/NewFormPrepare"

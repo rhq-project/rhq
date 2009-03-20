@@ -37,7 +37,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class GroupQuicknavDecorator extends QuicknavDecorator {
     private static final String MONITOR_URL = "/rhq/group/monitor/graphs.xhtml";
-    private static final String EVENTS_URL = "/rhq/group/inventory/view.xhtml";
+    private static final String EVENTS_URL = "/rhq/group/events/history.xhtml";
     private static final String INVENTORY_URL = "/rhq/group/inventory/view.xhtml";
     private static final String CONFIGURE_URL = "/rhq/group/configuration/viewCurrent.xhtml";
     private static final String OPERATIONS_URL = "/rhq/group/operation/groupOperationScheduleNew.xhtml";

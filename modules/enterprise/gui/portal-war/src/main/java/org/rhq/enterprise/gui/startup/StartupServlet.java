@@ -40,6 +40,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 import org.rhq.enterprise.communications.util.SecurityUtil;
+import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
@@ -74,6 +75,9 @@ public class StartupServlet extends HttpServlet {
 
         // As a security measure, make sure the installer has been undeployed
         LookupUtil.getSystemManager().undeployInstaller();
+
+        // get this singleton right now so we load the classes immediately into our classloader 
+        AlertConditionCacheCoordinator.getInstance();
 
         // Before starting determine the operating mode of this server and
         // take any necessary initialization action. Must happen before comm startup since listeners

@@ -35,20 +35,11 @@ import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedOperation;
 import org.jboss.managed.api.ManagedParameter;
 import org.jboss.managed.api.ManagedProperty;
-import org.jboss.managed.api.ManagedObject;
 import org.jboss.metatype.api.types.MetaType;
-import org.jboss.metatype.api.types.GenericMetaType;
-import org.jboss.metatype.api.types.CollectionMetaType;
 import org.jboss.metatype.api.types.MapCompositeMetaType;
 import org.jboss.metatype.api.types.SimpleMetaType;
 import org.jboss.metatype.api.types.CompositeMetaType;
 import org.jboss.metatype.api.values.MetaValue;
-import org.jboss.metatype.api.values.CompositeValue;
-import org.jboss.metatype.api.values.SimpleValue;
-import org.jboss.metatype.api.values.EnumValue;
-import org.jboss.metatype.api.values.SimpleValueSupport;
-import org.jboss.metatype.api.values.EnumValueSupport;
-import org.jboss.metatype.plugins.types.MutableCompositeMetaType;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -237,7 +228,9 @@ public class ConversionUtils
         }
     }
 
-    public static void convertConfigurationToManagedProperties(Map<String, ManagedProperty> managedProperties, Configuration configuration, ResourceType resourceType, Map<String, PropertySimple> customProps)
+    public static void convertConfigurationToManagedProperties(Map<String, ManagedProperty> managedProperties,
+                                                               Configuration configuration, ResourceType resourceType,
+                                                               Map<String, PropertySimple> customProps)
     {
         // Deal with the custom properties first, then hold on to the names of these properties so the processing
         // loop can skip over them.
@@ -245,45 +238,48 @@ public class ConversionUtils
         ConfigurationDefinition configDefinition = resourceType.getResourceConfigurationDefinition();
         for (Property property : configuration.getProperties())
         {
-            String propName = property.getName();
-            if (customProps.containsKey(propName))
+            String propertyName = property.getName();
+            if (customProps.containsKey(propertyName))
                 continue;
-            ManagedProperty managedProperty = managedProperties.get(propName);
-            if (managedProperty != null)
-            {
-                MetaValue metaValue = getValue(managedProperty);
-                PropertyDefinition propertyDefinition = configDefinition.get(propName);
-                if (metaValue != null)
-                {
-                    PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaValue);
-                    propertyAdapter.populateMetaValueFromProperty(property, metaValue, propertyDefinition);
-
-                    // TODO: This is a workaround for https://jira.jboss.org/jira/browse/JBAS-6188.
-                    //if ((metaValue instanceof SimpleValueSupport && ((SimpleValue)metaValue).getValue() == null) ||
-                    //    (metaValue instanceof EnumValueSupport && ((EnumValue)metaValue).getValue() == null))
-                    //    managedProperty.setValue(null);
-
-                }
-                else
-                {
-                    MetaType metaType = managedProperty.getMetaType();
-                    // TODO (ips, 11/18/08): The below if-blocks are hacks to workaround the template returning the
-                    //                       wrong MetaTypes.
-                    if (propName.equals("security-domain")) metaType = new GenericMetaType(ManagedObject.class.getName(),
-                            ManagedObject.class.getName());
-                    if (propName.equals("config-property")) metaType = new CollectionMetaType(CompositeValue.class.getName(),
-                            new MutableCompositeMetaType(
-                                    "org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData",
-                                    "org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData"));
-                    PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaType);
-                    LOG.debug("Converting property " + property + " with definition " + propertyDefinition
-                            + " to MetaValue with type " + metaType + "...");
-                    metaValue = propertyAdapter.convertToMetaValue(property, propertyDefinition, metaType);
-                    managedProperty.setValue(metaValue);
-                }
+            ManagedProperty managedProperty = managedProperties.get(propertyName);
+            if (managedProperty == null)
+                LOG.error("ManagedProperty named '" + propertyName + "' not found.");
+            else {
+                PropertyDefinition propertyDefinition = configDefinition.get(propertyName);
+                convertPropertyToManagedProperty(property, propertyDefinition, managedProperty);
             }
         }
         return;
+    }
+
+    private static void convertPropertyToManagedProperty(Property property, PropertyDefinition propertyDefinition,
+                                                         ManagedProperty managedProperty)
+    {
+        if (managedProperty != null)
+        {
+            MetaValue metaValue = getValue(managedProperty);
+            if (metaValue != null)
+            {
+                LOG.debug("Populating existing MetaValue of type " + metaValue.getMetaType()
+                        + " from RHQ property " + property + " with definition " + propertyDefinition + "...");
+                PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaValue);
+                propertyAdapter.populateMetaValueFromProperty(property, metaValue, propertyDefinition);
+
+                // TODO: This is a workaround for https://jira.jboss.org/jira/browse/JBAS-6188.
+                //if ((metaValue instanceof SimpleValueSupport && ((SimpleValue)metaValue).getValue() == null) ||
+                //    (metaValue instanceof EnumValueSupport && ((EnumValue)metaValue).getValue() == null))
+                //    managedProperty.setValue(null);
+            }
+            else
+            {
+                MetaType metaType = managedProperty.getMetaType();
+                PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaType);
+                LOG.debug("Converting property " + property + " with definition " + propertyDefinition
+                        + " to MetaValue of type " + metaType + "...");
+                metaValue = propertyAdapter.convertToMetaValue(property, propertyDefinition, metaType);
+                managedProperty.setValue(metaValue);
+            }
+        }
     }
 
     public static MetaType convertPropertyDefinitionToMetaType(PropertyDefinition propDef) {

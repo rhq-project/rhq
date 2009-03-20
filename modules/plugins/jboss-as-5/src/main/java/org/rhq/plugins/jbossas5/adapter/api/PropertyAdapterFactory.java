@@ -27,6 +27,7 @@ package org.rhq.plugins.jbossas5.adapter.api;
 
  import org.jboss.metatype.api.types.MetaType;
  import org.jboss.metatype.api.types.MapCompositeMetaType;
+ import org.jboss.metatype.api.types.PropertiesMetaType;
  import org.jboss.metatype.api.values.MetaValue;
 
  import org.rhq.core.domain.configuration.PropertySimple;
@@ -38,6 +39,7 @@ package org.rhq.plugins.jbossas5.adapter.api;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToGenericValueAdapter;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToEnumValueAdapter;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToCompositeValueSupportAdapter;
+ import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToPropertiesValueAdapter;
 
  /**
  * @author Mark Spritzler
@@ -91,6 +93,10 @@ public class PropertyAdapterFactory
         {
             propertyAdapter = new PropertySimpleToEnumValueAdapter();
         }
+        else if (metaType instanceof PropertiesMetaType)
+        {
+            propertyAdapter = new PropertyMapToPropertiesValueAdapter();
+        }
         else
         {
             LOG.warn("Unsupported MetaType: " + metaType);
@@ -110,7 +116,7 @@ public class PropertyAdapterFactory
         }
         catch (Exception e)
         {
-            LOG.error("Unable to create custom adapter class for property [" + propertyName + "].", e);
+            LOG.error("Unable to create custom adapter class for " + customProp + ".", e);
         }
         return propertyAdapter;
     }

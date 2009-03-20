@@ -40,6 +40,7 @@ import org.jboss.metatype.api.types.CollectionMetaType;
 import org.jboss.metatype.api.types.ArrayMetaType;
 import org.jboss.metatype.api.types.MapCompositeMetaType;
 import org.jboss.metatype.api.types.TableMetaType;
+import org.jboss.metatype.api.types.PropertiesMetaType;
 import org.jboss.metatype.api.values.CompositeValue;
 import org.jboss.metatype.api.values.MetaValue;
 
@@ -181,14 +182,17 @@ public class MetadataConversionUtils {
                             compositeMetaType.getDescription(itemName) : null;
                     itemPropDef.setDescription(desc);
                 }
-            } else if (metaType.isTable()) {
-                TableMetaType tableMetaType = (TableMetaType)metaType;
-                CompositeMetaType itemMetaType = tableMetaType.getRowType();
-                for (String itemName : tableMetaType.getIndexNames()) {
-                    PropertyDefinition itemPropDef = convertMetaTypeToPropertyDefinition(itemMetaType, itemName);
-                    propDefMap.put(itemPropDef);
-                }
             }
+        } else if (metaType.isTable()) {
+            TableMetaType tableMetaType = (TableMetaType)metaType;
+            CompositeMetaType itemMetaType = tableMetaType.getRowType();
+            for (String itemName : tableMetaType.getIndexNames()) {
+                PropertyDefinition itemPropDef = convertMetaTypeToPropertyDefinition(itemMetaType, itemName);
+                propDefMap.put(itemPropDef);
+            }
+        } else if (metaType instanceof PropertiesMetaType) {
+            @SuppressWarnings({"UnusedDeclaration"})
+            PropertiesMetaType propertiesMetaType = (PropertiesMetaType)metaType;
         }
         return propDefMap;
     }
@@ -300,7 +304,8 @@ public class MetadataConversionUtils {
             propDef = new PropertyDefinitionSimple(propName, null, false, propType);
         } else if (metaType.isCollection() || metaType.isArray()) {
             propDef = convertMetaTypeToPropertyDefinitionList(metaType, propName);
-        } else if (metaType.isComposite() || metaType.isGeneric() || metaType.isTable()) {
+        } else if (metaType.isComposite() || metaType.isGeneric() || metaType.isTable() ||
+                   metaType instanceof PropertiesMetaType) {
             propDef = convertMetaTypeToPropertyDefinitionMap(metaType, propName);
         } else {
             throw new IllegalStateException("Unsupported MetaType: " + metaType);

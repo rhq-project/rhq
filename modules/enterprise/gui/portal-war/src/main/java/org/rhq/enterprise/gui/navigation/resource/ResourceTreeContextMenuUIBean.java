@@ -78,8 +78,8 @@ public class ResourceTreeContextMenuUIBean {
             Resource res = resourceManager.getResourceById(subject, resourceId);
 
             // basic information
-            addMenuItem(res.getName());
-            addMenuItem(res.getResourceType().getName());
+            addMenuItem(res.getName(), true);
+            addMenuItem(res.getResourceType().getName(), true);
 
             // quick links
             ResourceFacets facets = this.resourceTypeManager.getResourceFacets(subject, resourceTypeId);
@@ -101,9 +101,11 @@ public class ResourceTreeContextMenuUIBean {
         }
     }
 
-    private void addMenuItem(String value) {
+    private void addMenuItem(String value, boolean disabled) {
         HtmlMenuItem nameItem = new HtmlMenuItem();
         nameItem.setValue(value);
+        nameItem.setDisabled(disabled);
+        nameItem.setStyle("color: black;");
         this.resourceContextMenu.getChildren().add(nameItem);
     }
 

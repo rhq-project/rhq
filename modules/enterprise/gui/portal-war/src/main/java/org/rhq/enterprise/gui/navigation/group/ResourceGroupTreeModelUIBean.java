@@ -258,6 +258,8 @@ public class ResourceGroupTreeModelUIBean {
                 HtmlMenuItem nameItem = new HtmlMenuItem();
                 nameItem.setValue(group.getName());
                 nameItem.setId("menu_group_" + group.getId());
+                nameItem.setDisabled(true);
+                nameItem.setStyle("color: black;");
                 MethodBinding mb = app.createMethodBinding("#{otherBean.action}", null);
                 nameItem.setAction(mb);
 
@@ -297,6 +299,8 @@ public class ResourceGroupTreeModelUIBean {
         HtmlMenuGroup membersMenuItem = new HtmlMenuGroup();
         membersMenuItem.setValue("Members");
         membersMenuItem.setId("menu_groupMembers_" + group.getId());
+        membersMenuItem.setDisabled(true);
+        membersMenuItem.setStyle("color: black;");
 
         for (Resource res : resources) {
             HtmlMenuItem menuItem = new HtmlMenuItem();

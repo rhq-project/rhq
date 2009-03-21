@@ -17,7 +17,7 @@
                 measurementType="trendsup"
                 units="bytes"/>
         <metric displayName="Total Files Sent"
-                description="TShows the total number of files sent by the Web service (counted since service startup)."
+                description="Shows the total number of files sent by the Web service (counted since service startup)."
                 property="Total Files Sent"
                 defaultOn="true"
                 measurementType="trendsup"

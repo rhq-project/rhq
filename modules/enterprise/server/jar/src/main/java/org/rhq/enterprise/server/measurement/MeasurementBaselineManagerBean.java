@@ -122,7 +122,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
             log.info("Calculating auto baselines");
             log.info("Deleting baselines computations older than " + new Date(baselinesOlderThanTime));
             log.info("Inserting new baselines using last " + (amountOfData / (24 * 60 * 60 * 1000L))
-                + " days of 1H data)");
+                + " days of 1H data");
             long now = System.currentTimeMillis();
             long computeTime = now;
 
@@ -237,7 +237,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
     public MeasurementBaseline calculateAutoBaseline(Subject subject, Integer measurementScheduleId, long startDate,
         long endDate, boolean save) throws BaselineCreationException, MeasurementNotFoundException {
-        
+
         MeasurementBaseline baseline;
         MeasurementSchedule sched = entityManager.find(MeasurementSchedule.class, measurementScheduleId);
 

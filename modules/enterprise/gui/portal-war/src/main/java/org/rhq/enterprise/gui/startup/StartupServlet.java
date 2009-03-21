@@ -41,6 +41,7 @@ import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
+import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
@@ -78,6 +79,7 @@ public class StartupServlet extends HttpServlet {
 
         // get this singleton right now so we load the classes immediately into our classloader 
         AlertConditionCacheCoordinator.getInstance();
+        SessionManager.getInstance();
 
         // Before starting determine the operating mode of this server and
         // take any necessary initialization action. Must happen before comm startup since listeners
@@ -280,7 +282,7 @@ public class StartupServlet extends HttpServlet {
         try {
             // Wait long enough to allow the Server instance jobs to start executing first.
             final long initialDelay = 1000L * 60 * 2; // 2 mins
-            final long interval = 1000L * 30;         // 30 secs
+            final long interval = 1000L * 30; // 30 secs
             scheduler.scheduleSimpleRepeatingJob(CloudManagerJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
             throw new ServletException("Cannot schedule cloud management job", e);
@@ -290,7 +292,7 @@ public class StartupServlet extends HttpServlet {
         try {
             // Do not check until we are up at least 10 mins, but check every 30 secs thereafter.
             final long initialDelay = 1000L * 60 * 10; // 10 mins
-            final long interval = 1000L * 30;          // 30 secs
+            final long interval = 1000L * 30; // 30 secs
             scheduler.scheduleSimpleRepeatingJob(CheckForSuspectedAgentsJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
             throw new ServletException("Cannot schedule suspected Agents job", e);
@@ -299,8 +301,9 @@ public class StartupServlet extends HttpServlet {
         // Timed Out Operations Job
         try {
             final long initialDelay = 1000L * 60 * 3; // 3 min
-            final long interval = 1000L * 60 * 10;    // 10 mins
-            scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutOperationsJob.class, true, false, initialDelay, interval);
+            final long interval = 1000L * 60 * 10; // 10 mins
+            scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutOperationsJob.class, true, false, initialDelay,
+                interval);
         } catch (Exception e) {
             throw new ServletException("Cannot schedule check-for-timed-out-operations job", e);
         }
@@ -309,8 +312,9 @@ public class StartupServlet extends HttpServlet {
         // (NOTE: We don't need to check for timed out plugin Cofiguration updates, since those are executed synchronously.)
         try {
             final long initialDelay = 1000L * 60 * 4; // 4 mins
-            final long interval = 1000L * 60 * 10;    // 10 mins
-            scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutConfigUpdatesJob.class, true, false, initialDelay, interval);
+            final long interval = 1000L * 60 * 10; // 10 mins
+            scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutConfigUpdatesJob.class, true, false, initialDelay,
+                interval);
         } catch (Exception e) {
             throw new ServletException("Cannot schedule check-for-timed-out-configuration-update-requests job", e);
         }
@@ -318,7 +322,7 @@ public class StartupServlet extends HttpServlet {
         // Timed Out Content Requests Job
         try {
             final long initialDelay = 1000L * 60 * 5; // 5 mins
-            final long interval = 1000L * 60 * 15;    // 15 mins
+            final long interval = 1000L * 60 * 15; // 15 mins
             scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutContentRequestsJob.class, true, false, 40000L, 60000L);
         } catch (Exception e) {
             throw new ServletException("Cannot schedule check-for-timed-out-artifact-requests job", e);

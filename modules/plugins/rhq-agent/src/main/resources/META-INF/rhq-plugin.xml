@@ -194,7 +194,7 @@
 
       <metric property="AverageExecutionTimeReceived"
               displayName="Avg Execution Time Commands Received Successfully"
-              description="Average time it took (in milliseconds) to process incoming commands that are ultimately successful"
+              description="Average time it took to process incoming commands that are ultimately successful"
               defaultOn="true"
               displayType="summary"
               category="performance"
@@ -203,7 +203,7 @@
 
       <metric property="AverageExecutionTimeSent"
               displayName="Avg Execution Time Commands Sent Successfully"
-              description="Average time it took (in milliseconds) to send commands that are ultimately successful"
+              description="Average time it took to send commands that are ultimately successful"
               defaultOn="true"
               displayType="summary"
               category="performance"
@@ -592,10 +592,14 @@
             <c:simple-property name="descriptionTemplate" default="information about this agent's measurement subsystem"/>
          </plugin-configuration>
 
-         <metric property="CurrentlyScheduleMeasurements" displayType="summary"/>
-         <metric property="MeasurementsCollected" measurementType="trendsup" displayType="summary"/>
-         <metric property="TotalTimeCollectingMeasurements" displayType="summary" units="milliseconds" measurementType="trendsup"/>
-         <metric property="FailedCollections" displayType="summary" measurementType="trendsup"/>
+         <metric property="CurrentlyScheduleMeasurements" displayType="summary"
+                 description="The total number of active measurement schedules currently being collected by this RHQ Agent"/>
+         <metric property="MeasurementsCollected" measurementType="trendsup" displayType="summary"
+                 description="The total number of measurements collected since this RHQ Agent was started"/>
+         <metric property="TotalTimeCollectingMeasurements" displayType="summary" units="milliseconds" measurementType="trendsup"
+                 description="The amount of time this RHQ Agent has spent collecting measurements since it was started"/>
+         <metric property="FailedCollections" displayType="summary" measurementType="trendsup"
+                 description="The number of individual measurement collections that have failed since this RHQ Agent was started"/>
 
       </service>
 

@@ -62,34 +62,40 @@
               property="Native.MemoryInfo.free"
               defaultOn="true"
               displayType="summary"
-              units="bytes"/>
+              units="bytes"
+              description="The total free system memory"/>
               
       <metric displayName="Used Memory"
               property="Native.MemoryInfo.used"
               defaultOn="true"
               displayType="summary"
-              units="bytes"/>
+              units="bytes"
+              description="The total used system memory"/>
               
       <metric displayName="Total Memory"
               property="Native.MemoryInfo.total"
               defaultOn="true"
-              units="bytes"/>
+              units="bytes"
+              description="The total system memory"/>
               
       <metric displayName="Free Swap Space"
               property="Native.SwapInfo.free"
               defaultOn="true"
-              units="bytes"/>
+              units="bytes"
+              description="The total free system swap"/>
               
       <metric displayName="Used Swap Space"
               property="Native.SwapInfo.used"
               defaultOn="true"
               displayType="summary"
-              units="bytes"/>
+              units="bytes"
+              description="The total used system swap"/>
               
       <metric displayName="Total Swap Space"
               property="Native.SwapInfo.total"
               defaultOn="true"
-              units="bytes"/>
+              units="bytes"
+              description="The total system swap"/>
 '>
 
  <!ENTITY platformCpu '
@@ -349,27 +355,38 @@
               property="Trait.net4.address" dataType="trait" displayType="summary"
               description="IP address of the network adaptor"/>
 
-      <metric property="Trait.interfaceFlags" displayName="Interface Flags" dataType="trait" displayType="summary"/>
-
+      <metric property="Trait.interfaceFlags" displayName="Interface Flags" dataType="trait" displayType="summary"
+              description="Flag constants for network related ops"/>
       
-      <metric property="rxBytes" displayName="Bytes Received" units="bytes" measurementType="trendsup" displayType="summary"/>
-      <metric property="rxPackets" displayName="Packets Received" measurementType="trendsup" displayType="summary"/>
+      <metric property="rxBytes" displayName="Bytes Received" units="bytes" measurementType="trendsup" displayType="summary"
+              description="The total number of bytes received across this network interface since it started"/>
+      <metric property="rxPackets" displayName="Packets Received" measurementType="trendsup" displayType="summary"
+              description="The total number of packets received across this network interface since it started"/>
 
-      <metric property="txBytes" displayName="Bytes Transmitted" units="bytes" measurementType="trendsup" displayType="summary"/>
-      <metric property="txPackets" displayName="Packets Transmitted" measurementType="trendsup" displayType="summary"/>
+      <metric property="txBytes" displayName="Bytes Transmitted" units="bytes" measurementType="trendsup" displayType="summary"
+              description="The total number of bytes transmitted across this network interface since it started"/>
+      <metric property="txPackets" displayName="Packets Transmitted" measurementType="trendsup" displayType="summary"
+              description="The total number of packets transmitted across this network interface since it started"/>
 
+      <metric property="rxErrors" displayName="Receive Errors" measurementType="trendsup"
+              description="'errors' statistic for received packets across this network interface since it started"/>
+      <metric property="rxDropped" displayName="Receive Packets Dropped" measurementType="trendsup"
+              description="'dropped' statistic for received packets across this network interface since it started"/>
+      <metric property="rxOverruns" displayName="Receive Overrurns" measurementType="trendsup"
+              description="'overruns' statistic for received packets across this network interface since it started"/>
+      <metric property="rxFrame" displayName="Receive Frame" measurementType="trendsup"
+              description="'frame' statistic for received packets across this network interface since it started"/>
 
-      <metric property="rxErrors" displayName="Receive Errors" measurementType="trendsup"/>
-      <metric property="rxDropped" displayName="Receive Packets Dropped" measurementType="trendsup"/>
-      <metric property="rxOverruns" displayName="Receive Overrurns" measurementType="trendsup"/>
-      <metric property="rxFrame" displayName="Receive Frame" measurementType="trendsup"/>
-
-
-      <metric property="txErrors" displayName="Transmit Errors" measurementType="trendsup"/>
-      <metric property="TxDropped" displayName="Transmit Packets Dropped" measurementType="trendsup"/>
-      <metric property="txOverruns" displayName="Transmit Overrurns" measurementType="trendsup"/>
-      <metric property="txCollisions" displayName="Transmit Collisions" measurementType="trendsup"/>
-      <metric property="txCarrier" displayName="Transmit Carrier" measurementType="trendsup"/>
+      <metric property="txErrors" displayName="Transmit Errors" measurementType="trendsup"
+              description="'errors' statistic for transmitted packets across this network interface since it started"/>
+      <metric property="TxDropped" displayName="Transmit Packets Dropped" measurementType="trendsup"
+              description="'dropped' statistic for transmitted packets across this network interface since it started"/>
+      <metric property="txOverruns" displayName="Transmit Overrurns" measurementType="trendsup"
+              description="'overruns' statistic for transmitted packets across this network interface since it started"/>
+      <metric property="txCollisions" displayName="Transmit Collisions" measurementType="trendsup"
+              description="'collisions' statistic for transmitted packets across this network interface since it started"/>
+      <metric property="txCarrier" displayName="Transmit Carrier" measurementType="trendsup"
+              description="'carrier' statistic for transmitted packets across this network interface since it started"/>
 
    </service>
 
@@ -385,20 +402,34 @@
          <parent-resource-type name="Mac OS X" plugin="Platforms"/>
       </runs-inside>
 
-      <metric property="fileSystemUsage.free" displayName="Free Space" units="kilobytes" displayType="summary"/>
-      <metric property="fileSystemUsage.usePercent" displayName="Used Percentage" units="percentage" displayType="summary"/>
-      <metric property="fileSystemUsage.total" displayName="Capacity" units="kilobytes" dataType="trait" defaultOn="true"/>
-      <metric property="fileSystem.typeName" displayName="Volume Type" dataType="trait" displayType="summary"/>
-      <metric property="fileSystem.sysTypeName" displayName="Drive Type" dataType="trait" displayType="summary"/>
-      <metric property="fileSystem.devName" displayName="name" dataType="trait" defaultOn="true"/>
-      <metric property="fileSystemUsage.freeFiles" displayName="Free Files"/>
-      <metric property="fileSystem.flags" displayName="Flags" dataType="trait" defaultOn="true"/>
-      <metric property="fileSystemUsage.used" displayName="Used" units="kilobytes" defaultOn="true"/>
-      <metric property="fileSystemUsage.diskReads" displayName="Disk Reads" measurementType="trendsup" displayType="summary"/>
-      <metric property="fileSystemUsage.diskWrites" displayName="Disk Writes" measurementType="trendsup" displayType="summary"/>
-      <metric property="fileSystemUsage.diskReadBytes" displayName="Disk Read Bytes" measurementType="trendsup" units="bytes" defaultOn="true"/>
-      <metric property="fileSystemUsage.diskWriteBytes" displayName="Disk Write Bytes" measurementType="trendsup" units="bytes" defaultOn="true"/>
-      <metric property="fileSystemUsage.diskQueue" displayName="Disk Queue" defaultOn="true"/>
+      <metric property="fileSystemUsage.free" displayName="Free Space" units="kilobytes" displayType="summary"
+              description="The total free bytes on filesystem"/>
+      <metric property="fileSystemUsage.usePercent" displayName="Used Percentage" units="percentage" displayType="summary"
+              description="The percentage of disk used"/>
+      <metric property="fileSystemUsage.total" displayName="Capacity" units="kilobytes" dataType="trait" defaultOn="true"
+              description="The total size of the filesystem"/>
+      <metric property="fileSystem.typeName" displayName="Volume Type" dataType="trait" displayType="summary"
+              description="The filesystem's generic type name"/>
+      <metric property="fileSystem.sysTypeName" displayName="Drive Type" dataType="trait" displayType="summary"
+              description="The filesystem's operating system-specific type name"/>
+      <metric property="fileSystem.devName" displayName="name" dataType="trait" defaultOn="true"
+              description="The name of this device"/>
+      <metric property="fileSystemUsage.freeFiles" displayName="Free Files"
+              description="The number of free file nodes on the filesystem"/>
+      <metric property="fileSystem.flags" displayName="Flags" dataType="trait" defaultOn="true"
+              description="The filesystem's flags"/>
+      <metric property="fileSystemUsage.used" displayName="Used" units="kilobytes" defaultOn="true"
+              description="The total bytes used on the filesystem"/>
+      <metric property="fileSystemUsage.diskReads" displayName="Disk Reads" measurementType="trendsup" displayType="summary"
+              description="The number of physical disk reads"/>
+      <metric property="fileSystemUsage.diskWrites" displayName="Disk Writes" measurementType="trendsup" displayType="summary"
+              description="The number of physical disk writes"/>
+      <metric property="fileSystemUsage.diskReadBytes" displayName="Disk Read Bytes" measurementType="trendsup" units="bytes" defaultOn="true"
+              description="The number of physical disk bytes read"/>
+      <metric property="fileSystemUsage.diskWriteBytes" displayName="Disk Write Bytes" measurementType="trendsup" units="bytes" defaultOn="true"
+              description="The number of physical disk bytes written"/>
+      <metric property="fileSystemUsage.diskQueue" displayName="Disk Queue" defaultOn="true"
+              description="The number of I/Os currently in progress"/>
 
    </service>
 
@@ -420,11 +451,16 @@
       <metric displayName="User Load" property="CpuPerc.user" displayType="summary" units="percentage" description="Percentage of this CPU running in user mode"/>
       <metric displayName="Wait Load" property="CpuPerc.wait" displayType="summary" units="percentage" description="Percentage of this CPU waiting on I/O"/>
 
-      <metric displayName="User Time" property="Cpu.user" units="milliseconds" measurementType="trendsup" description="Time spent executing in user mode"/>
-      <metric displayName="Niced Time" property="Cpu.nice" units="milliseconds" measurementType="trendsup" description="Time spent executing niced processes"/>
-      <metric displayName="System Time" property="Cpu.sys" units="milliseconds" measurementType="trendsup" description="Time spent executing in system mode"/>
-      <metric displayName="Idle Time" property="Cpu.idle" units="milliseconds" measurementType="trendsup" description="Time spent idle"/>
-      <metric displayName="Wait Time" property="Cpu.wait" units="milliseconds" measurementType="trendsup" description="Time spent waiting on I/O"/>
+      <metric displayName="User Time" property="Cpu.user" units="milliseconds" measurementType="trendsup" 
+              description="The total system CPU user time"/>
+      <metric displayName="Niced Time" property="Cpu.nice" units="milliseconds" measurementType="trendsup" 
+              description="The total system CPU nice time"/>
+      <metric displayName="System Time" property="Cpu.sys" units="milliseconds" measurementType="trendsup" 
+              description="The total system CPU kernel time"/>
+      <metric displayName="Idle Time" property="Cpu.idle" units="milliseconds" measurementType="trendsup" 
+              description="The total system CPU idle time"/>
+      <metric displayName="Wait Time" property="Cpu.wait" units="milliseconds" measurementType="trendsup" 
+              description="The total system CPU I/O wait time"/>
 
       &cpuDetail;
 

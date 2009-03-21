@@ -60,15 +60,19 @@
             </c:list-property>
          </results>
       </operation>
-
-
-      
-      <metric displayName="User Time" property="Process.aggregateCpu.user" measurementType="trendsup" units="milliseconds" displayType="summary"/>
-      <metric displayName="Kernel Time" property="Process.aggregateCpu.sys" measurementType="trendsup" units="milliseconds" displayType="summary"/>
-      <metric displayName="CPU Percentage" property="Process.aggregateCpu.percent" measurementType="dynamic" units="percentage" displayType="summary"/>
-      <metric displayName="Physical Memory" property="Process.aggregateMemory.resident" measurementType="dynamic" units="bytes" displayType="summary"/>
-      <metric displayName="Virtual Memory" property="Process.aggregateMemory.size" measurementType="dynamic" units="bytes" displayType="summary"/>
-      <metric displayName="Open File Descriptors" property="Process.aggregateFileDescriptor.total" measurementType="dynamic" displayType="summary"/>
+ 
+      <metric displayName="User Time" property="Process.aggregateCpu.user" measurementType="trendsup" units="milliseconds" displayType="summary"
+              description="The aggregate amount of CPU user time spent by all postgres processes"/>
+      <metric displayName="Kernel Time" property="Process.aggregateCpu.sys" measurementType="trendsup" units="milliseconds" displayType="summary"
+              description="The aggregate amount of CPU kernel time spent by all postgres processes"/>
+      <metric displayName="CPU Percentage" property="Process.aggregateCpu.percent" measurementType="dynamic" units="percentage" displayType="summary"
+              description="The percentage of CPU currently being used by all postgres processes"/>
+      <metric displayName="Physical Memory" property="Process.aggregateMemory.resident" measurementType="dynamic" units="bytes" displayType="summary"
+              description="The aggregate amount of resident memory used by all postgres processes"/>
+      <metric displayName="Virtual Memory" property="Process.aggregateMemory.size" measurementType="dynamic" units="bytes" displayType="summary"
+              description="The aggregate amount of virtual memory used by all postgres processes"/>
+      <metric displayName="Open File Descriptors" property="Process.aggregateFileDescriptor.total" measurementType="dynamic" displayType="summary"
+              description="The aggregate number of file descriptors open by all postgres processes"/>
 
       <resource-configuration>
 
@@ -321,14 +325,18 @@
           </operation>
          
 
-         <metric displayName="Backends" property="numbackends" displayType="summary"/>
-         <metric displayName="Transactions Committed" property="xact_commit" measurementType="trendsup" displayType="summary"/>
-         <metric displayName="Transactions Rolled Back" property="xact_rollback" measurementType="trendsup" displayType="summary"/>
-         <metric displayName="Blocks Read" property="blks_read" measurementType="trendsup"/>
-         <metric displayName="Blocks Hit" property="blks_hit" measurementType="trendsup"/>
-         <metric displayName="Size" property="size" description="Size of the database" units="bytes" displayType="summary"/>
-
-
+         <metric displayName="Backends" property="numbackends" displayType="summary"
+                 description="Number of active server processes for database"/>
+         <metric displayName="Transactions Committed" property="xact_commit" measurementType="trendsup" displayType="summary"
+                 description="Transactions committed in database"/>
+         <metric displayName="Transactions Rolled Back" property="xact_rollback" measurementType="trendsup" displayType="summary"
+                 description="Transactions rolled back in database"/>
+         <metric displayName="Blocks Read" property="blks_read" measurementType="trendsup"
+                 description="Number of disk block fetch requests for database"/>
+         <metric displayName="Blocks Hit" property="blks_hit" measurementType="trendsup"
+                 description="Number of disk block fetch requests found in cache for database "/>
+         <metric displayName="Size" property="size" units="bytes" displayType="summary"
+                 description="Disk space used by the database"/>
 
          <service name="Table" class="PostgresTableComponent" discovery="PostgresTableDiscoveryComponent"
                   description="Database table" createDeletePolicy="both" creationDataType="configuration">
@@ -337,28 +345,43 @@
                <c:simple-property name="tableName" readOnly="true" />
             </plugin-configuration>
 
-            <metric displayName="Sequential Scans" property="seq_scan" measurementType="trendsup"/>
-            <metric displayName="Sequential Rows Read" property="seq_tup_read" measurementType="trendsup"/>
-            <metric displayName="Index Scans" property="idx_scan" measurementType="trendsup"/>
-            <metric displayName="Index Scan Rows Read" property="idx_tup_fetch" measurementType="trendsup"/>
+            <metric displayName="Sequential Scans" property="seq_scan" measurementType="trendsup"
+                    description="Number of sequential scans done against this table (when an index scan was not possible)"/>
+            <metric displayName="Sequential Rows Read" property="seq_tup_read" measurementType="trendsup"
+                    description="Number of rows read by sequential scans"/>
+            <metric displayName="Index Scans" property="idx_scan" measurementType="trendsup"
+                    description="Number of index scans done against this table"/>
+            <metric displayName="Index Scan Rows Read" property="idx_tup_fetch" measurementType="trendsup"
+                    description="Number of index entries returned by index scans"/>
 
-            <metric displayName="Heap Block Read" property="heap_blks_read" measurementType="trendsup" displayType="summary"/>
-            <metric displayName="Heap Blocks Hit" property="heap_blks_hit" measurementType="trendsup"/>
-            <metric displayName="Index Blocks Read" property="idx_blks_read" measurementType="trendsup" displayType="summary"/>
-            <metric displayName="Index Blocks Hit" property="idx_blks_hit" measurementType="trendsup"/>
-            <metric displayName="Toast Block Read" property="toast_blks_read" measurementType="trendsup"/>
-            <metric displayName="Toast Blocks Hit" property="toast_blks_hit" measurementType="trendsup"/>
-            <metric displayName="Toast Index Blocks Read" property="tidx_blks_read" measurementType="trendsup"/>
-            <metric displayName="Toast Index Blocks Hit" property="tidx_blks_hit" measurementType="trendsup"/>
+            <metric displayName="Heap Blocks Read" property="heap_blks_read" measurementType="trendsup" displayType="summary"
+                    description="The number of heap blocks read that were not a buffer cache hit"/>
+            <metric displayName="Heap Blocks Hit" property="heap_blks_hit" measurementType="trendsup"
+                    description="The number of heap block requests that were found in the buffer cache"/>
+            <metric displayName="Index Blocks Read" property="idx_blks_read" measurementType="trendsup" displayType="summary"
+                    description="The number of index blocks fetched that were not a buffer cache hit"/>
+            <metric displayName="Index Blocks Hit" property="idx_blks_hit" measurementType="trendsup"
+                    description="The number of index block requests that were found in the buffer cache"/>
+            <metric displayName="Toast Blocks Reads" property="toast_blks_read" measurementType="trendsup"
+                    description="The number of toast blocks fetched that were not a buffer cache hit"/>
+            <metric displayName="Toast Blocks Hit" property="toast_blks_hit" measurementType="trendsup"
+                    description="The number of toast block requests that were found in the buffer cache"/>
+            <metric displayName="Toast Index Blocks Read" property="tidx_blks_read" measurementType="trendsup"
+                    description="The number of toast index blocks fetched that were not a buffer cache hit"/>
+            <metric displayName="Toast Index Blocks Hit" property="tidx_blks_hit" measurementType="trendsup"
+                    description="The number of toast index block requests that were found in the buffer cache"/>
 
+            <metric displayName="Row Inserts" property="n_tup_ins" measurementType="trendsup"
+                    description="The number of rows ever inserted into this table"/>
+            <metric displayName="Row Updates" property="n_tup_upd" measurementType="trendsup"
+                    description="The number of rows ever updated on this table"/>
+            <metric displayName="Row Deletes" property="n_tup_del" measurementType="trendsup"
+                    description="The number of rows ever deleted from this table"/>
 
-            <metric displayName="Row Inserts" property="n_tup_ins" measurementType="trendsup"/>
-            <metric displayName="Row Updates" property="n_tup_upd" measurementType="trendsup"/>
-            <metric displayName="Row Deletes" property="n_tup_del" measurementType="trendsup"/>
             <metric displayName="Table Size" property="table_size" measurementType="dynamic" displayType="summary" units="bytes"
-               description="The size in bytes of the data in the table"/>
+                    description="The size in bytes of the data in the table"/>
             <metric displayName="Total Size" property="total_size" measurementType="dynamic" displayType="summary" units="bytes"
-               description="The size in bytes of the data and all associated indexes and toast tables"/>
+                    description="The size in bytes of the data and all associated indexes and toast tables"/>
             <metric displayName="Rows" property="rows" measurementType="dynamic"
                     defaultOn="false" defaultInterval="600000"
                     description="The count of rows in the table. Warning: This may be an expensive operation"/>
@@ -520,8 +543,10 @@
             <c:simple-property name="userName" required="true"/>
          </plugin-configuration>
 
-         <metric property="total" displayName="Total User Connections" displayType="summary"/>
-         <metric property="active" displayName="Active User Connections" displayType="summary"/>
+         <metric property="total" displayName="Total User Connections" displayType="summary"
+                 description="The total number of user connections in the system, whether actively querying or idle"/>
+         <metric property="active" displayName="Active User Connections" displayType="summary"
+                 description="The number of user connections in the system actively querying"/>
 
          <!-- NOTE: The below is commented, because PostgresUserComponent does not yet implement ConfigurationFacet. -->
          <resource-configuration>

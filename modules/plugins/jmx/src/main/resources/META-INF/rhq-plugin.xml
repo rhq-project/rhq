@@ -182,7 +182,7 @@
                  description="Count of suspended threads"
                  defaultOn="false"
                  category="performance" />
-		   <metric property="DeadLockedThreadCount"
+         <metric property="DeadLockedThreadCount"
                  displayName="Deadlocked Thread Count"
                  description="Count of threads that are deadlocked waiting to acquire object monitors. This is a CPU-time consuming metric."
                  defaultOn="false"
@@ -252,7 +252,6 @@
                  dataType="trait"
                  description="Maximum amount of non-heap memory that can be used for memory management.  This amount of memory is not guaranteed to be available if it is greater than the amount of committed memory.  The Java virtual machine may fail to allocate memory even if the amount of used memory does not exceed this maximum size."
                  units="bytes"/>
-         
 
          <resource-configuration>
             <c:simple-property name="Verbose" type="boolean" description="Output verbose information to the output stream to regarding Memory. Typically, a Java virtual machine implementation prints a message when it frees memory through garbage collection."/>
@@ -318,9 +317,10 @@
             <metric property="CollectionTime"
                     measurementType="trendsup"
                     displayType="summary"
-                    description="Time spent in collection"
+                    description="The amount of time spent in collection"
                     units="milliseconds"/>
             <metric property="MemoryPoolNames"
+                    description="The names of the memory pools used by this type of garbage collector"
                     displayType="summary"
                     dataType="trait"/>
          </service>

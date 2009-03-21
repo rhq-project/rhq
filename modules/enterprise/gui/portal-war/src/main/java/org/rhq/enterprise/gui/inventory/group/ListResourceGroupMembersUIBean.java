@@ -26,16 +26,12 @@ import java.util.Map;
 
 import javax.faces.model.DataModel;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.alert.engine.internal.Tuple;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -45,7 +41,7 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ListResourceGroupMembersUIBean";
 
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
-    private Boolean suppressRecursiveResults;
+    private boolean suppressRecursiveResults = false;
 
     public ListResourceGroupMembersUIBean() {
     }
@@ -66,23 +62,18 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
 
     public void setSuppressRecursiveResults(boolean suppressRecursiveResults) {
         this.suppressRecursiveResults = suppressRecursiveResults;
+        dataModel = null; // this will force getDataModel to query next time it's called
     }
 
     public boolean getSuppressRecursiveResults() {
-        if (suppressRecursiveResults == null) {
-            suppressRecursiveResults = FacesContextUtility.getOptionalRequestParameter(
-                "groupMembersForm:suppressRecursiveResults", Boolean.class);
-        }
-        return (this.suppressRecursiveResults == null ? false : true);
+        return this.suppressRecursiveResults;
     }
 
     public List<Tuple<String, Integer>> getResourceTypeCounts() {
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-        ResourceGroup resourceGroup = EnterpriseFacesContextUtility.getResourceGroup();
+        Map<String, Integer> typeMap = resourceTypeManager.getResourceTypeCountsByGroup(getSubject(),
+            getResourceGroup());
 
-        Map<String, Integer> typeMap = resourceTypeManager.getResourceTypeCountsByGroup(subject, resourceGroup);
-
-        String[] typeNames = typeMap.keySet().toArray(new String[0]);
+        String[] typeNames = typeMap.keySet().toArray(new String[typeMap.keySet().size()]);
         Arrays.sort(typeNames, new Comparator<String>() {
             // case-insensitive sort
             public int compare(String o1, String o2) {
@@ -123,16 +114,13 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
 
         @Override
         public PageList<ResourceWithAvailability> fetchPage(PageControl pageControl) {
-            Subject subject = EnterpriseFacesContextUtility.getSubject();
-            ResourceGroup resourceGroup = EnterpriseFacesContextUtility.getResourceGroup();
-
             PageList<ResourceWithAvailability> results = null;
             if (getSuppressRecursiveResults()) {
-                results = resourceManager.getExplicitResourceWithAvailabilityByResourceGroup(subject, resourceGroup,
-                    pageControl);
+                results = resourceManager.getExplicitResourceWithAvailabilityByResourceGroup(getSubject(),
+                    getResourceGroup(), pageControl);
             } else {
-                results = resourceManager.getImplicitResourceWithAvailabilityByResourceGroup(subject, resourceGroup,
-                    pageControl);
+                results = resourceManager.getImplicitResourceWithAvailabilityByResourceGroup(getSubject(),
+                    getResourceGroup(), pageControl);
             }
 
             return results;

@@ -102,7 +102,7 @@
 <!-- =================== RESOURCE TYPE COUNTS =================== -->
 
 <rich:panel styleClass="BlockContent"
-            rendered="#{resourceGroupMembersDataModel.rowCount > 0}">
+            rendered="#{resourceGroupMembersDataModel.rowCount > 0 and param.category eq 'MIXED'}">
 
 <f:facet name="header" styleClass="BlockTitle">
    <a name="ResourceTypeCounts"/>
@@ -113,7 +113,7 @@
 
     <a4j:keepAlive beanName="ListResourceGroupMembersUIBean"/>
 
-<rich:dataGrid columns="3"
+<rich:dataGrid columns="2"
                value="#{ListResourceGroupMembersUIBean.resourceTypeCounts}" 
                var="resourceTypeCountTuple">
 

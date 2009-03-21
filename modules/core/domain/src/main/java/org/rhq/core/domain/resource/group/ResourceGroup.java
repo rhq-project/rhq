@@ -209,8 +209,8 @@ public class ResourceGroup extends Group {
         + "                %SECURITY_FRAGMENT_JOIN%"
         + "LEFT OUTER JOIN rhq_resource_avail resAvail "
         + "             ON res.id = resAvail.resource_id "
-        + "          WHERE ( res.id = ? OR ? IS NULL ) " // resourceId x2
-        + "            AND ( rg.visible = %IS_VISIBLE% ) " // postgres uses true/false, oracle uses 1/0
+        + "          WHERE ( rg.visible = %IS_VISIBLE% ) " // postgres uses true/false, oracle uses 1/0
+        + "                %RESOURCE_FRAGMENT_WHERE% " //
         + "            AND ( ? IS NULL " // :search
         + "                  OR UPPER(rg.name) LIKE ? " // :search
         + "                  OR UPPER(rg.description) LIKE ? ) " // :search
@@ -230,6 +230,9 @@ public class ResourceGroup extends Group {
 
     public static final String QUERY_NATIVE_FIND_FILTERED_MEMBER_SECURITY_FRAGMENT_WHERE = ""
         + " AND ( subjectMap.subject_id = ? ) "; // :subjectId
+
+    public static final String QUERY_NATIVE_FIND_FILTERED_MEMBER_RESOURCE_FRAGMENT_WHERE = "" //
+        + " AND ( res.id = ? ) "; // resourceId 
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
@@ -473,9 +476,10 @@ public class ResourceGroup extends Group {
         StringBuilder buffer = new StringBuilder();
         buffer.append(ResourceGroup.class.getSimpleName()).append("[");
         buffer.append("id=").append(this.id);
+        buffer.append(", name=").append(this.getName());
+        buffer.append(", category=").append(groupCategory.name());
         String typeName = (this.resourceType != null) ? this.resourceType.getName() : "<mixed>";
         buffer.append(", type=").append(typeName);
-        buffer.append(", name=").append(this.getName());
         boolean isDynaGroup = (this.groupDefinition != null);
         buffer.append(", isDynaGroup=").append(isDynaGroup);
         boolean isClusterGroup = (this.clusterKey != null);

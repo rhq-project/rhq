@@ -849,6 +849,13 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
                 ResourceGroup.QUERY_NATIVE_FIND_FILTERED_MEMBER_SECURITY_FRAGMENT_WHERE);
         }
 
+        if (resourceId != null) {
+            query = query.replace("%RESOURCE_FRAGMENT_WHERE%",
+                ResourceGroup.QUERY_NATIVE_FIND_FILTERED_MEMBER_RESOURCE_FRAGMENT_WHERE);
+        } else {
+            query = query.replace("%RESOURCE_FRAGMENT_WHERE%", "");
+        }
+
         pc.initDefaultOrderingField("rg.name");
         nameFilter = PersistenceUtility.formatSearchParameter(nameFilter);
 
@@ -867,6 +874,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             } else {
                 throw new RuntimeException("Unknown database type: " + this.dbType);
             }
+
             stmt = conn.prepareStatement(query);
 
             String search = nameFilter;
@@ -875,11 +883,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             String groupCategoryName = groupCategory == null ? null : groupCategory.name();
 
             int i = 0;
-            if (resourceId == null) {
-                stmt.setNull(++i, Types.INTEGER);
-                stmt.setNull(++i, Types.INTEGER);
-            } else {
-                stmt.setInt(++i, resourceId);
+            if (resourceId != null) {
                 stmt.setInt(++i, resourceId);
             }
             stmt.setString(++i, search);

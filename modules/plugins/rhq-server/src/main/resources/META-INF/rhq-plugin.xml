@@ -39,25 +39,42 @@
          </results>
       </operation>
 
-      <metric property="AvailabilityCacheElementCount" category="throughput" displayType="summary" />
-      <metric property="MeasurementCacheElementCount" category="throughput" displayType="summary" />
-      <metric property="EventCacheElementCount" category="throughput" displayType="summary" />
-      <metric property="OperationCacheElementCount" category="throughput" displayType="summary" />
-      <metric property="ResourceConfigurationCacheElementCount" category="throughput" displayType="summary" />
+      <metric property="AvailabilityCacheElementCount" category="throughput" displayType="summary"
+              description="The number of elements in the alerts cache that check conditions against availability data"/>
+      <metric property="MeasurementCacheElementCount" category="throughput" displayType="summary"
+              description="The number of elements in the alerts cache that check conditions against measurement numeric or trait data"/>
+      <metric property="EventCacheElementCount" category="throughput" displayType="summary"
+              description="The number of elements in the alerts cache that check conditions against event history data"/>
+      <metric property="OperationCacheElementCount" category="throughput" displayType="summary"
+              description="The number of elements in the alerts cache that check conditions against operation history data"/>
+      <metric property="ResourceConfigurationCacheElementCount" category="throughput" displayType="summary"
+              description="The number of elements in the alerts cache that check conditions against resource configuration data"/>
 
-      <metric property="TotalCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
-      <metric property="AvailabilityCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
-      <metric property="MeasurementCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
-      <metric property="EventCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
-      <metric property="ResourceConfigurationCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
-      <metric property="OperationCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup" />
+      <metric property="TotalCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup"
+              description="The total number of times ANY cache element has triggered against incoming data since this RHQ Server instance was started"/>
+      <metric property="AvailabilityCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup"
+              description="The total number of times availability-based conditions have triggered against incoming data since this RHQ Server instance was started"/>
+      <metric property="MeasurementCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup"
+              description="The total number of times measurement-based conditions have triggered against incoming data since this RHQ Server instance was started"/>
+      <metric property="EventCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup"
+              description="The total number of times events-based conditions have triggered against incoming data since this RHQ Server instance was started"/>
+      <metric property="ResourceConfigurationCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup"
+              description="The total number of times resource configuration-based conditions have triggered against incoming data since this RHQ Server instance was started"/>
+      <metric property="OperationCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup"
+              description="The total number of times operation-based conditions have triggered against incoming data since this RHQ Server instance was started"/>
 
-      <metric property="TotalProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
-      <metric property="AvailabilityProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
-      <metric property="MeasurementProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
-      <metric property="EventProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
-      <metric property="ResourceConfigurationProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
-      <metric property="OperationProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup" />
+      <metric property="TotalProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup"
+              description="The total amount of time spent by the alerts cache processing ALL types of data"/>
+      <metric property="AvailabilityProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup"
+              description="The total amount of time spent by the alerts cache processing availability data"/>
+      <metric property="MeasurementProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup"
+              description="The total amount of time spent by the alerts cache processing measurement numeric or trait data"/>
+      <metric property="EventProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup"
+              description="The total amount of time spent by the alerts cache processing event history data"/>
+      <metric property="ResourceConfigurationProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup"
+              description="The total amount of time spent by the alerts cache processing resource configuration data"/>
+      <metric property="OperationProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup"
+              description="The total amount of time spent by the alerts cache processing operation history data"/>
       
    </service>
 
@@ -76,23 +93,38 @@
          <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Measurement Subsystem."/>
       </plugin-configuration>
 
-      <metric property="MeasurementsInserted" category="throughput" displayType="summary" measurementType="trendsup"/>
-      <metric property="ScheduledMeasurementsPerMinute"/>
-      <metric property="MeasurementInsertTime" units="milliseconds" displayType="summary" measurementType="trendsup"/>
-      <metric property="BaselineCalculationTime" units="milliseconds" measurementType="trendsup"/>
-      <metric property="MeasurementCompressionTime" units="milliseconds" displayType="summary" measurementType="trendsup"/>
-      <metric property="PurgeTime" displayType="summary" units="milliseconds" measurementType="trendsup"/>
+      <metric property="MeasurementsInserted" category="throughput" displayType="summary" measurementType="trendsup"
+              description="The total number of measurement records inserted into the database by this RHQ Server instance since it was started"/>
+      <metric property="ScheduledMeasurementsPerMinute"
+              description="The average number of measurements expected to be collected per minute"/>
+      <metric property="MeasurementInsertTime" units="milliseconds" displayType="summary" measurementType="trendsup"
+              description="The total amount of time taken to insert measurement data into the database by this RHQ Server instance since it was started"/>
+      <metric property="BaselineCalculationTime" units="milliseconds" measurementType="trendsup"
+              description="The total amount of time taken to calculate and insert measurement baseline data into the database by this RHQ Server instance since it was started"/>
+      <metric property="MeasurementCompressionTime" units="milliseconds" displayType="summary" measurementType="trendsup"
+              description="The total amount of time taken by this RHQ Server instance to compress measurement data since it was started"/>
+      <metric property="PurgeTime" displayType="summary" units="milliseconds" measurementType="trendsup"
+              description="The total amount of time taken by this RHQ Server instance to purge old measurement data since it was started"/>
 
-      <metric property="AvailabilityInsertTime" displayType="summary" units="milliseconds" measurementType="trendsup"/>
-      <metric property="AvailabilitiesInserted" displayType="summary" measurementType="trendsup"/>
+      <metric property="AvailabilityInsertTime" displayType="summary" units="milliseconds" measurementType="trendsup"
+              description="The total amount of time taken to insert availability data into the database by this RHQ Server instance since it was started"/>
+      <metric property="AvailabilitiesInserted" displayType="summary" measurementType="trendsup"
+              description="The total number of availability records inserted into the database by this RHQ Server instance since it was started"/>
 
-      <metric property="PurgedAlerts" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of alerts purged by the last purge job"/>
-      <metric property="PurgedAlertConditions" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of alert conditions purged by the last purge job"/>
-      <metric property="PurgedAlertNotifications" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of alert notifications purged by the last purge job"/>
-      <metric property="PurgedAvailabilities" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of availabilities purged by the last purge job"/>
-      <metric property="PurgedCallTimeData" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of call time data purged by the last purge job"/>
-      <metric property="PurgedEvents" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of events purged by the last purge job"/>
-      <metric property="PurgedMeasurementTraits" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" description="Number of traits purged by the last purge job"/>
+      <metric property="PurgedAlerts" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" 
+              description="Number of alerts purged by the last purge job"/>
+      <metric property="PurgedAlertConditions" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" 
+              description="Number of alert conditions purged by the last purge job"/>
+      <metric property="PurgedAlertNotifications" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" 
+              description="Number of alert notifications purged by the last purge job"/>
+      <metric property="PurgedAvailabilities" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" 
+              description="Number of availabilities purged by the last purge job"/>
+      <metric property="PurgedCallTimeData" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" 
+              description="Number of call time data purged by the last purge job"/>
+      <metric property="PurgedEvents" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" 
+              description="Number of events purged by the last purge job"/>
+      <metric property="PurgedMeasurementTraits" displayType="summary" measurementType="dynamic" category="utilization" defaultInterval="900000" 
+              description="Number of traits purged by the last purge job"/>
       
    </service>
    
@@ -131,13 +163,13 @@
       </operation>
 
       <metric property="GroupDefinitionCount" category="throughput" displayType="summary" measurementType="dynamic"
-        description="Total number of group definitions in the system"/>
+              description="Total number of group definitions in the system"/>
       <metric property="AutoRecalculatingGroupDefinitionCount" category="throughput" displayType="summary" measurementType="dynamic"
-        description="The number of auto-recalculating group definitions in the system"/>
+              description="The number of auto-recalculating group definitions in the system"/>
       <metric property="DynaGroupCount" category="throughput" displayType="summary" measurementType="dynamic"
-        description="Total number of resource groups managed by some group definition"/>
+              description="Total number of resource groups managed by some group definition"/>
       <metric property="AutoRecalculationThreadTime" category="performance" displayType="summary" measurementType="dynamic" units="milliseconds"
-              description="Average time it took (in milliseconds) to recalculate DynaGroup members for those GroupDefinition's whose timeout expired"/>
+              description="Average time it took to recalculate DynaGroup members for those GroupDefinition's whose timeout expired"/>
 
    </service>
 
@@ -187,7 +219,7 @@
       <metric property="NumberNotProcessedCommandsReceived" category="throughput" displayType="summary" measurementType="trendsup"
               description="Total number of commands that were received but were not processed usually due to the suspension of global command processing."/>
       <metric property="AverageExecutionTimeReceived" category="performance" displayType="summary" measurementType="dynamic" units="milliseconds"
-              description="Average time it took (in milliseconds) to process incoming commands that are ultimately successful"/>
+              description="Average time it took to process incoming commands that are ultimately successful"/>
 
       <resource-configuration>
          <c:group name="concurrencylimits" displayName="Concurrency Limits" hiddenByDefault="false">

@@ -49,75 +49,99 @@
       </operation>
 
       <metric displayName="Entity Insert Count" property="EntityInsertCount"
+              description="The global number of entity inserts since the statistics were reset"
               category="throughput" displayType="summary" measurementType="trendsup"/>
 
       <metric displayName="Query Execution Max Time" property="QueryExecutionMaxTime"
+              description="The amount of time taken by the slowest recorded query since the statistics were reset"
               category="performance" displayType="summary"/>
 
       <metric displayName="Entity Update Count" property="EntityUpdateCount"
+              description="The global number of entity updates since the statistics were reset"
               category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Collection Update Count" property="CollectionUpdateCount"
+              description="The global number of collections updated since the statistics were reset"
               category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Entity Load Count" property="EntityLoadCount"
+              description="The global number of entity loads since the statistics were reset"
               category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Entity Fetch Count" property="EntityFetchCount" category="throughput"
+              description="The global number of entity fetches since the statistics were reset"
               displayType="summary" measurementType="trendsup"/>
 
       <metric displayName="Entity Delete Count" property="EntityDeleteCount"
+              description="The global number of entity deletes since the statistics were reset"
               category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Collection Recreate Count" property="CollectionRecreateCount"
+              description="The global number of collections recreated since the statistics were reset"
               category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Query Execution Count" property="QueryExecutionCount"
+              description="The global number of queries executed since the statistics were reset"
               category="throughput" displayType="summary" measurementType="trendsup"/>
 
       <metric displayName="Flush Count" property="FlushCount"
+              description="The global number of flushes executed by sessions (either implicit or explicit) since the statistics were reset"
               category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Collection Load Count" property="CollectionLoadCount"
+              description="The global number of collections loaded since the statistics were reset"
               category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Successful Transaction Count" property="SuccessfulTransactionCount"
+              description="The global number of transactions known to have been successful since the statistics were reset"
               category="throughput" defaultOn="true" measurementType="trendsup"/>
 
       <metric displayName="Query Cache Hit Count" property="QueryCacheHitCount"
+              description="The global number of cached queries successfully retrieved from cache since the statistics were reset"
               category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Collection Remove Count" property="CollectionRemoveCount"
+              description="The global number of collections removed since the statistics were reset"
               category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Connect Count" property="ConnectCount"
+              description="The global number of connections asked by the sessions (the actual number of connections used may be much smaller depending whether you use a connection pool or not) since the statistics were reset"
               category="throughput" defaultOn="true" measurementType="trendsup"/>
 
       <metric displayName="Start Time" property="StartTime" dataType="trait"
+              description="The time when the statistics collection started or were last reset"
               category="availability" defaultOn="true" units="epoch_milliseconds" measurementType="dynamic"/>
 
       <metric displayName="Second Level Cache Put Count" property="SecondLevelCachePutCount"
+              description="The global number of cacheable entities/collections put in the cache since the statistics were reset"
               category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Query Cache Put Count" property="QueryCachePutCount"
+              description="The global number of cacheable queries put in cache since the statistics were reset"
               category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Session Open Count" property="SessionOpenCount"
+              description="The global number of sessions closed since the statistics were reset"
               category="throughput" defaultOn="true" measurementType="trendsup"/>
 
       <metric displayName="Transaction Count" property="TransactionCount"
+              description="The global number of transactions known to have completed since the statistics were reset"
               category="throughput" defaultOn="true" measurementType="trendsup"/>
 
       <metric displayName="Collection Fetch Count" property="CollectionFetchCount"
+              description="The global number of collections fetched since the statistics were reset"
               category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Session Close Count" property="SessionCloseCount"
+              description="The global number of sessions closed since the statistics were reset"
               category="throughput" defaultOn="true" measurementType="trendsup"/>
 
       <metric displayName="Query Cache Miss Count" property="QueryCacheMissCount"
+              description="The global number of cached queries *not* found in cache since the statistics were reset"
               category="throughput" defaultOn="true" measurementType="trendsup"/>
 
       <metric displayName="Second Level Cache Miss Count" property="SecondLevelCacheMissCount"
+              description="The global number of cacheable entities/collections not found in the cache and loaded from the database since the statistics were reset"
               category="throughput" measurementType="trendsup"/>
 
       <help>
@@ -185,12 +209,18 @@
          class="EntityComponent"
          description="A Hibernate persistent entity">
 
-         <metric displayName="Load Count" property="loadCount" displayType="summary"/>
-         <metric displayName="Update Count" property="updateCount" displayType="summary"/>
-         <metric displayName="Insert Count" property="insertCount" displayType="summary"/>
-         <metric displayName="Delete Count" property="deleteCount" displayType="summary"/>
-         <metric displayName="Fetch Count" property="fetchCount"/>
-         <metric displayName="Optimistic Lock Failure Count" property="optimisticFailureCount"/>
+         <metric displayName="Load Count" property="loadCount" displayType="summary"
+                 description="The number of times this entity was loaded since the statistics were reset" />
+         <metric displayName="Update Count" property="updateCount" displayType="summary"
+                 description="The number of times this entity was updated since the statistics were reset" />
+         <metric displayName="Insert Count" property="insertCount" displayType="summary"
+                 description="The number of times this entity was inserted since the statistics were reset" />
+         <metric displayName="Delete Count" property="deleteCount" displayType="summary"
+                 description="The number of times this entity was deleted since the statistics were reset" />
+         <metric displayName="Fetch Count" property="fetchCount"
+                 description="The number of times this entity was fetched since the statistics were reset" />
+         <metric displayName="Optimistic Lock Failure Count" property="optimisticFailureCount"
+                 description="The number of StaleObjectStateExceptions for this entity that occurred since the statistics were reset"/>
 
       </service>
 

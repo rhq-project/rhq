@@ -155,28 +155,36 @@
               description="the date and time this app server instance was started"/>
 
       <metric property="jboss.system:type=ServerInfo:ActiveThreadCount" displayName="Active Thread Count"
+              description="The current number of active threads for this app server instance"
               defaultInterval="300000" displayType="summary" category="throughput"/>
 
       <metric property="jboss.system:type=ServerInfo:ActiveThreadGroupCount" displayName="Active Thread Group Count"
+              description="The current number of active thread groups for this app server instance"
               defaultInterval="300000" defaultOn="true" category="throughput"/>
 
       <metric property="jboss.system:type=ServerInfo:FreeMemory" displayName="JVM Free Memory" displayType="summary"
+              description="The amount of free memory for the JVM this app server instance is running on"
               defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
 
       <metric property="jboss.system:type=ServerInfo:MaxMemory" displayName="JVM Max Memory"
+              description="The amount of max memory for the JVM this app server instance is running on"
               defaultInterval="1800000" defaultOn="true" category="utilization" units="bytes"/>
 
       <metric property="jboss.system:type=ServerInfo:TotalMemory" displayName="JVM Total Memory" displayType="summary"
+              description="The amount of total memory for the JVM this app server instance is running on"
               defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
 
       <metric property="jboss:service=TransactionManager:TransactionCount" displayName="Total Transactions" measurementType="trendsup"
-              defaultInterval="300000" defaultOn="true" category="utilization" description="Total number of transactions since last restart"/>
+              defaultInterval="300000" defaultOn="true" category="utilization" 
+              description="Total number of transactions since last restart"/>
 
       <metric property="jboss:service=TransactionManager:CommitCount" displayName="Transactions Committed" displayType="summary" measurementType="trendsup"
-              defaultInterval="600000" defaultOn="true" category="utilization" description="Number of transactions commited since last restart"/>
+              defaultInterval="600000" defaultOn="true" category="utilization" 
+              description="Number of transactions commited since last restart"/>
 
       <metric property="jboss:service=TransactionManager:RollbackCount" displayName="Transactions Rolledback" measurementType="trendsup"
-              defaultInterval="600000" defaultOn="true" category="utilization" description="Number of transactions commited since last restart"/>
+              defaultInterval="600000" defaultOn="true" category="utilization" 
+              description="Number of transactions commited since last restart"/>
 
       <event name="logEntry" description="an entry in a log file"/>
 
@@ -341,8 +349,9 @@
             </plugin-configuration>
 
             <metric property="jboss.web:type=Host,host=%name%:aliases"
-               displayName="Aliases"
-               defaultOn="true" dataType="trait" />
+                    description="The aliases for this virtual host"
+                    displayName="Aliases"
+                    defaultOn="true" dataType="trait" />
          </service>
       </server>
 
@@ -852,27 +861,29 @@
                   default="JBossMQ"/>
           </plugin-configuration>
 
-
           <metric property="jboss.mq:service=MessageCache:CacheHits" displayName="JMS Message Cache Hits"
+                  description="The number of cache hits to the JMS Message Cache"
                   defaultInterval="300000" defaultOn="false" category="throughput" measurementType="trendsup"/>
 
           <metric property="jboss.mq:service=MessageCache:CacheMisses" displayName="JMS Message Cache Misses"
+                  description="The number of cache misses to the JMS Message Cache"
                   defaultInterval="300000" defaultOn="false" category="throughput" measurementType="trendsup"/>
 
           <metric property="jboss.mq:service=MessageCache:CurrentMemoryUsage" displayName="JMS Message Cache Current Memory Usage"
+                  description="The total memory currently in use by the JMS Message Cache"
                   defaultInterval="300000" defaultOn="false" category="utilization" units="bytes"/>
 
           <metric property="jboss.mq:service=MessageCache:HighMemoryMark" displayName="JMS Message Cache High Memory Mark"
+                  description="The peak amount of memory the JMS Message Cache has actively used since server start"
                   defaultInterval="300000" defaultOn="false" category="utilization" units="bytes"/>
 
           <metric property="jboss.mq:service=MessageCache:MaxMemoryMark" displayName="JMS Message Cache Max Memory Mark"
+                  description="The maximum amount of memory the JMS Message Cache is allowed to use"
                   defaultInterval="300000" defaultOn="false" category="utilization" units="bytes"/>
 
           <metric property="jboss.mq:service=MessageCache:TotalCacheSize" displayName="JMS Message Cache Size"
-                  defaultInterval="300000" defaultOn="false" category="utilization" units="bytes"/>
-
-
-
+                  description="The number of messages currently in the JMS Message Cache"
+                  defaultInterval="300000" defaultOn="false" category="utilization"/>
 
           <service name="JMQ JMS Queue" class="JMSComponent"
                    discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
@@ -1431,6 +1442,7 @@
          </plugin-configuration>
 
          <metric property="jboss.messaging:service=ServerPeer:ProviderVersion"
+                 description="The version of JBoss Messaging in use"
                  displayName="Version of the Provider"
                  dataType="trait"
                  displayType="summary" />
@@ -1914,18 +1926,21 @@
          </operation>
 
 
-         <metric displayName="Current Count" property="CurrentSize"/>
+         <metric displayName="Current Count" property="CurrentSize"
+                 description="The total number of currently pooled instances of this EJB3 Session Bean"/>
          <metric displayName="Create Count" property="CreateCount" displayType="summary" measurementType="trendsup"
-                 description="the number of instances of this EJB that have been created"/>
+                 description="The number of instances of this EJB3 Session Bean that have been created since server start"/>
          <metric displayName="Remove Count" property="RemoveCount" displayType="summary" measurementType="trendsup"
-                 description="the number of instances of this EJB that have been removed"/>
-         <metric displayName="Available Count" property="AvailableCount"/>
-         <metric displayName="Max Size" property="MaxSize"/>
+                 description="The number of instances of this EJB3 Session Bean that have been removed since server start"/>
+         <metric displayName="Available Count" property="AvailableCount"
+                 description="The number of pooled instances of this EJB3 Session Bean in the method-ready state"/>
+         <metric displayName="Max Size" property="MaxSize"
+                 description="The maximum number of instances that are allowed to be pooled"/>
 
          <!-- default interval == 600000 ms == 10 min -->
          <metric property="MethodInvocationTime" dataType="calltime" units="milliseconds"
                  defaultOn="false" defaultInterval="600000" destinationType="Method Name"
-                 description="the minimum, maximum, and average invocation times for each of the methods exposed by this EJB;
+                 description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB;
                               NOTE: this metric is only available if JBoss EJB3 RC9 Patch 1 or later is being used
                               (a capable version of EJB3 is included with JBossAS 4.2.0.GA or later)"/>
 
@@ -1948,23 +1963,28 @@
          </plugin-configuration>
 
            <metric displayName="Create Calls"
+                   description="The number of instances of this EJB 1.x or 2.x Stateless Session Bean that have been created since server start"
                    property="{stats.createCount.count}"
                    displayType="summary"
                    measurementType="trendsup"/>
 
            <metric displayName="Remove Calls"
+                   description="The number of instances of this EJB 1.x or 2.x Stateless Session Bean that have been removed since server start"
                    property="{stats.removeCount.count}"
                    displayType="summary"
                    measurementType="trendsup"/>
 
            <metric displayName="Method-Ready Beans"
+                   description="The number of pooled instances of this EJB 1.x or 2.x Stateless Session Bean in the method-ready state"
                    property="{stats.methodReadyCount.current}"
                    displayType="summary"/>
 
            <metric displayName="Pool Size"
+                   description="The total number of currently pooled instances of this EJB 1.x or 2.x Stateless Session Bean"
                    property="{{jboss.j2ee:jndiName=%name%,plugin=pool,service=EJB}CurrentSize}"/>
 
            <metric displayName="Max Pool Size"
+                   description="The maximum number of instances that are allowed to be pooled"
                    property="{{jboss.j2ee:jndiName=%name%,plugin=pool,service=EJB}MaxSize}"/>
 
             <!-- default interval == 600000 ms == 10 min -->
@@ -1992,24 +2012,24 @@
          </plugin-configuration>
 
            <metric displayName="Create Calls"
-                   description="Number of creates executed since the last time this EJB's stats were reset"
+                   description="The number of instances of this EJB 1.x or 2.x Stateful Session Bean that have been created since server start"
                    property="{stats.createCount.count}"
                    displayType="summary"
                    measurementType="trendsup"/>
 
            <metric displayName="Remove Calls"
-                   description="Number of removes since the last time this EJB's stats were reset"
+                   description="The number of instances of this EJB 1.x or 2.x Stateful Session Bean that have been removed since server start"
                    property="{stats.removeCount.count}"
                    displayType="summary"
                    measurementType="trendsup"/>
 
            <metric displayName="Method-Ready Beans"
-                   description="The count of beans in the method-ready state"
+                   description="The number of pooled instances of this EJB 1.x or 2.x Stateful Session Bean in the method-ready state"
                    property="{stats.methodReadyCount.current}"
                    displayType="summary"/>
 
            <metric displayName="Passive Beans"
-                   description="The count of beans in the passivated state"
+                   description="The number of pooled instances of this EJB 1.x or 2.x Stateful Session Bean in the passivated state"
                    property="{stats.passiveCount.current}"
                    displayType="summary"/>
                    
@@ -2038,43 +2058,47 @@
 
 
       <metric displayName="Create Calls"
+              description="The number of instances of this EJB 1.x or 2.x Entity Bean that have been created since server start"
               property="{stats.createCount.count}"
               displayType="summary"
               measurementType="trendsup"/>
 
       <metric displayName="Remove Calls"
+              description="The number of instances of this EJB 1.x or 2.x Entity Bean that have been removed since server start"
               property="{stats.removeCount.count}"
               displayType="summary"
               measurementType="trendsup"/>
 
       <metric displayName="Method-Ready Beans"
+              description="The number of pooled instances of this EJB 1.x or 2.x Entity Bean in the method-ready state"
               property="{stats.methodReadyCount.current}"
               displayType="summary"/>
 
       <metric displayName="Pooled Beans"
+              description="The total number of currently pooled instances of this EJB 1.x or 2.x Entity Bean"
               property="{stats.pooledCount.current}"
               displayType="summary"/>
 
+      <metric property="{{jboss.j2ee:jndiName=%name%,plugin=cache,service=EJB}CacheSize}"
+              description="The total number of currently cached instances of this EJB 1.x or 2.x Entity Bean"
+              displayName="Cache Size"
+              defaultOn="true"/>
 
-       <metric property="{{jboss.j2ee:jndiName=%name%,plugin=cache,service=EJB}CacheSize}"
-               displayName="Cache Size"
-               defaultOn="true"/>
+      <metric property="{{jboss.j2ee:jndiName=%name%,plugin=cache,service=EJB}PassivatedCount}"
+              description="The number of pooled instances of this EJB 1.x or 2.x Entity Bean in the passivated state"
+              displayName="Passivated Count"
+              defaultOn="true"
+              measurementType="trendsup"/>
 
+      <metric property="{{jboss.j2ee:jndiName=%name%,plugin=pool,service=EJB}PoolSize}"
+              description="The total number of currently pooled instances of this EJB 1.x or 2.x Entity Bean"
+              displayName="Current Size"
+              defaultOn="true"/>
 
-       <metric property="{{jboss.j2ee:jndiName=%name%,plugin=cache,service=EJB}PassivatedCount}"
-               displayName="Passivated Count"
-               defaultOn="true"
-               measurementType="trendsup"/>
-
-       <metric property="{{jboss.j2ee:jndiName=%name%,plugin=pool,service=EJB}PoolSize}"
-               displayName="Current Size"
-               defaultOn="true"/>
-
-
-       <metric property="{{jboss.j2ee:jndiName=%name%,plugin=pool,service=EJB}MaxPoolSize}"
-               displayName="Max Size"
-               defaultOn="true"/>
-
+      <metric property="{{jboss.j2ee:jndiName=%name%,plugin=pool,service=EJB}MaxPoolSize}"
+              description="The maximum number of instances that are allowed to be pooled"
+              displayName="Max Size"
+              defaultOn="true"/>
 
       </service>
 
@@ -2096,16 +2120,19 @@
 
 
       <metric displayName="Create Calls"
+              description="The number of instances of this EJB 1.x or 2.x Message Driven Bean that have been created since server start"
               property="{stats.createCount.count}"
               displayType="summary"
               measurementType="trendsup"/>
 
       <metric displayName="Remove Calls"
+              description="The number of instances of this EJB 1.x or 2.x Message Driven Bean that have been removed since server start"
               property="{stats.removeCount.count}"
               displayType="summary"
               measurementType="trendsup"/>
 
       <metric displayName="Method-Ready Beans"
+              description="The number of pooled instances of this EJB 1.x or 2.x Message Driven Bean in the method-ready state"
               property="{stats.messageCount.count}"
               displayType="summary"
               measurementType="trendsup"/>
@@ -2143,11 +2170,11 @@
          <!-- The two traits below are collected by the ApplicationComponent class. -->
          <metric property="Application.path" displayName="Path"
                  dataType="trait" displayType="summary"
-                 description="the absolute path of this EAR file or directory"/>
+                 description="The absolute path of this EAR file or directory"/>
 
          <metric property="Application.exploded" displayName="Exploded?"
                  dataType="trait" displayType="summary"
-                 description="whether this EAR is deployed exploded (i.e. as a directory)"/>
+                 description="Whether this EAR is deployed exploded (i.e. as a directory)"/>
 
          <content name="file" displayName="EAR File" category="deployable" isCreationType="true">
             <configuration>
@@ -2433,10 +2460,10 @@
             <c:simple-property name="nameTemplate" default="EJB3 Entity Tree Cache"/>
          </plugin-configuration>
 
-
-         <metric property="NumberOfLocksHeld" displayType="summary"/>
-         <metric property="NumberOfNodes" displayType="summary"/>
-
+         <metric property="NumberOfLocksHeld" displayType="summary"
+                 description="The number of entities locked for update / replication across the (clustered) tree cache"/>
+         <metric property="NumberOfNodes" displayType="summary"
+                 description="The total number of entities currently cached across the (clustered) tree cache"/>
 
          <service name="EJB3 Entity Tree Cache Interceptor"
                   class="org.rhq.plugins.jmx.MBeanResourceComponent"
@@ -2449,27 +2476,32 @@
                <c:simple-property name="nameTemplate" default="EJB3 Entity Tree Cache Interceptor"/>
             </plugin-configuration>
 
-
             <metric property="HitMissRatio" displayType="summary" units="percentage"
                     description="Returns the hit/miss ratio for the cache. This ratio is defined as hits/(hits + misses)."/>
             <metric property="ReadWriteRatio" displayType="summary" units="percentage"
                     description="Returns the read/write ratio for the cache. This ratio is defined as (hits + misses)/stores."/>
-            <metric property="Hits" displayType="summary"/>
-            <metric property="Misses" displayType="summary"/>
-            <metric property="Evictions" displayType="summary"/>
-
-            <metric property="NumberOfLocksHeld"/>
-            <metric property="NumberOfNodes"/>
-            <metric property="AverageWriteTime" units="milliseconds"/>
-
-            <metric property="TimeSinceReset" units="seconds"/>
-
-            <metric property="AverageReadTime" units="milliseconds"/>
-            <metric property="NumberOfNodes"/>
-            <metric property="Stores"/>
-            <metric property="NumberOfAttributes"/>
-
-            <metric property="ElapsedTime" units="milliseconds"/>
+            <metric property="Hits" displayType="summary"
+                    description="Returns the number of requests made to this cache which it could answer without interrogating the underlying data store"/>
+            <metric property="Misses" displayType="summary"
+                    description="Returns the number of requests made to this cache which required interrogating the underlying data store"/>
+            <metric property="Evictions" displayType="summary"
+                    description="Returns the number of elements purged from this cache in accordance with its specific eviction policy"/>
+            <metric property="NumberOfLocksHeld"
+                    description="The number of elements locked by this interceptor for update / replication across the (clustered) tree cache"/>
+            <metric property="NumberOfNodes"
+                    description="The total number of entities currently cached across the (clustered) tree cache"/>
+            <metric property="AverageWriteTime" units="milliseconds"
+                    description="The average time it takes to insert or update elements for the cache"/>
+            <metric property="TimeSinceReset" units="seconds"
+                    description="The amount of time since this cache was reset / cleared"/>
+            <metric property="AverageReadTime" units="milliseconds"
+                    description="The average time it takes to read elements for the cache, includes "/>
+            <metric property="Stores"
+                    description="Number of store / writes into this cache made by this interceptor"/>
+            <metric property="NumberOfAttributes"
+                    description="The total number of attributes (properties of an entity) currently cached across the (clustered) tree cache"/>
+            <metric property="ElapsedTime" units="milliseconds"
+                    description="The amount of time since this cache was created"/>
 
          </service>
       </service>

@@ -47,7 +47,8 @@
                                    size="1"
                                    value="#{paginationPageControl.pageSize}"
                                    rendered="#{paginationDataModel.rowCount > paginationSettingUIBean.minimumPageSize
-                                               and not paginationPageControl.unlimited}">
+                                               and not paginationPageControl.unlimited
+                                               and onf:length(paginationSettingUIBean.pageSizes) gt 1}">
                   <a4j:support event="onchange" 
                                status="commonStatus"
                                reRender="#{paginationDataTableName}, #{paginationDataScrollerName}"/>

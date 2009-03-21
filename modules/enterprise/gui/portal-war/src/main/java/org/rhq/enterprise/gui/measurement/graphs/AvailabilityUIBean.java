@@ -51,15 +51,15 @@ public class AvailabilityUIBean {
             if (context.category == EntityContext.Category.Resource) {
                 data = availabilityManager.getAvailabilitiesForResource(user.getSubject(), context.resourceId,
                     rangePreferences.begin - adjust, rangePreferences.end - adjust,
-                    DefaultConstants.DEFAULT_CHART_POINTS);
+                    DefaultConstants.DEFAULT_CHART_POINTS, !rangePreferences.readOnly);
             } else if (context.category == EntityContext.Category.ResourceGroup) {
                 data = availabilityManager.getAvailabilitiesForResourceGroup(user.getSubject(), context.groupId,
                     rangePreferences.begin - adjust, rangePreferences.end - adjust,
-                    DefaultConstants.DEFAULT_CHART_POINTS);
+                    DefaultConstants.DEFAULT_CHART_POINTS, !rangePreferences.readOnly);
             } else if (context.category == EntityContext.Category.AutoGroup) {
                 data = availabilityManager.getAvailabilitiesForAutoGroup(user.getSubject(), context.parentResourceId,
                     context.resourceTypeId, rangePreferences.begin - adjust, rangePreferences.end - adjust,
-                    DefaultConstants.DEFAULT_CHART_POINTS);
+                    DefaultConstants.DEFAULT_CHART_POINTS, !rangePreferences.readOnly);
             }
 
             if (data != null) {

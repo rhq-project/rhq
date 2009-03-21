@@ -67,7 +67,8 @@ public class AvailabilityAction extends TilesAction {
             MetricRangePreferences rangePreferences = preferences.getMetricRangePreferences();
 
             List<AvailabilityPoint> data = availabilityManager.getAvailabilitiesForResource(user.getSubject(),
-                resourceId, rangePreferences.begin, rangePreferences.end, DefaultConstants.DEFAULT_CHART_POINTS);
+                resourceId, rangePreferences.begin, rangePreferences.end, DefaultConstants.DEFAULT_CHART_POINTS,
+                !rangePreferences.readOnly);
 
             request.setAttribute(AttrConstants.AVAILABILITY_METRICS_ATTR, data);
             request.setAttribute(AttrConstants.AVAIL_METRICS_ATTR, getFormattedAvailability(data));

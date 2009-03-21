@@ -81,44 +81,50 @@ public interface AvailabilityManagerLocal {
      * Get the individual availability data points for the given resource.
      *
      * @param  whoami
-     * @param  resourceId PK of the resource wanted
-     * @param  begin      start time for data we are interested in
-     * @param  end        end time for data we are interested in
-     * @param  points     number of data points to return
+     * @param  resourceId              PK of the resource wanted
+     * @param  begin                   start time for data we are interested in
+     * @param  end                     end time for data we are interested in
+     * @param  points                  number of data points to return
+     * @param  withCurrentAvailability if true, the last data point in the range will match the resource's current
+     *                                 availability no matter what
      *
      * @return the availabilities over the given time span in a list
      */
     List<AvailabilityPoint> getAvailabilitiesForResource(Subject whoami, int resourceId, long begin, long end,
-        int points);
+        int points, boolean withCurrentAvailability);
 
     /**
      * Get the individual availability data points for the given resource group.
      *
      * @param  whoami
-     * @param  groupId PK of the resource group wanted
-     * @param  begin   start time for data we are interested in
-     * @param  end     end time for data we are interested in
-     * @param  points  number of data points to return
+     * @param  groupId                 PK of the resource group wanted
+     * @param  begin                   start time for data we are interested in
+     * @param  end                     end time for data we are interested in
+     * @param  points                  number of data points to return
+     * @param  withCurrentAvailability if true, the last data point in the range will match the resource group's current
+     *                                 availability no matter what
      *
      * @return the availabilities over the given time span in a list
      */
     List<AvailabilityPoint> getAvailabilitiesForResourceGroup(Subject whoami, int groupId, long begin, long end,
-        int points);
+        int points, boolean withCurrentAvailability);
 
     /**
      * Get the individual availability data points for the given auto group.
      *
      * @param  whoami
-     * @param  parentResourceId PK of the parent resource of the auto group wanted
-     * @param  resourceTypeId   PK of the resource type of the auto group wanted
-     * @param  begin            start time for data we are interested in
-     * @param  end              end time for data we are interested in
-     * @param  points           number of data points to return
+     * @param  parentResourceId        PK of the parent resource of the auto group wanted
+     * @param  resourceTypeId          PK of the resource type of the auto group wanted
+     * @param  begin                   start time for data we are interested in
+     * @param  end                     end time for data we are interested in
+     * @param  points                  number of data points to return
+     * @param  withCurrentAvailability if true, the last data point in the range will match the autogroup's current 
+     *                                 availability no matter what
      *
      * @return the availabilities over the given time span in a list
      */
     List<AvailabilityPoint> getAvailabilitiesForAutoGroup(Subject whoami, int parentResourceId, int resourceTypeId,
-        long begin, long end, int points);
+        long begin, long end, int points, boolean withCurrentAvailability);
 
     /**
      * Merge an {@link AvailabilityReport} that has been received from an agent. A report will only contain those

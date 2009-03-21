@@ -158,25 +158,29 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
     }
 
     public List<AvailabilityPoint> getAvailabilitiesForResource(Subject whoami, int resourceId,
-        long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints) {
+        long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints, boolean withCurrentAvailability) {
         EntityContext context = new EntityContext(resourceId, -1, -1, -1);
-        return getAvailabilitiesForContext(whoami, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints);
+        return getAvailabilitiesForContext(whoami, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints,
+            withCurrentAvailability);
     }
 
     public List<AvailabilityPoint> getAvailabilitiesForResourceGroup(Subject whoami, int groupId,
-        long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints) {
+        long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints, boolean withCurrentAvailability) {
         EntityContext context = new EntityContext(-1, groupId, -1, -1);
-        return getAvailabilitiesForContext(whoami, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints);
+        return getAvailabilitiesForContext(whoami, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints,
+            withCurrentAvailability);
     }
 
     public List<AvailabilityPoint> getAvailabilitiesForAutoGroup(Subject whoami, int parentResourceId,
-        int resourceTypeId, long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints) {
+        int resourceTypeId, long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints,
+        boolean withCurrentAvailability) {
         EntityContext context = new EntityContext(-1, -1, parentResourceId, resourceTypeId);
-        return getAvailabilitiesForContext(whoami, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints);
+        return getAvailabilitiesForContext(whoami, context, fullRangeBeginTime, fullRangeEndTime, numberOfPoints,
+            withCurrentAvailability);
     }
 
     private List<AvailabilityPoint> getAvailabilitiesForContext(Subject whoami, EntityContext context,
-        long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints) {
+        long fullRangeBeginTime, long fullRangeEndTime, int numberOfPoints, boolean withCurrentAvailability) {
 
         if (context.category == EntityContext.Category.Resource) {
             if (!authorizationManager.canViewResource(whoami, context.resourceId)) {
@@ -346,25 +350,27 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
         Collections.reverse(availabilityPoints);
 
         /* 
-         * RHQ-1631, always make the latest availability dot match the current availability - NO MATTER WHAT
+         * RHQ-1631, make the latest availability dot match the current availability IF desired by the user
          * note: this must occur AFTER reversing the collection so the last dot refers to the most recent time slice
          */
-        AvailabilityPoint oldFirstAvailabilityPoint = availabilityPoints.remove(availabilityPoints.size() - 1);
-        AvailabilityType newFirstAvailabilityType = oldFirstAvailabilityPoint.getAvailabilityType();
-        if (context.category == EntityContext.Category.Resource) {
-            newFirstAvailabilityType = getCurrentAvailabilityTypeForResource(whoami, context.resourceId);
-        } else if (context.category == EntityContext.Category.ResourceGroup) {
-            ResourceGroupComposite composite = resourceGroupManager.getResourceGroupWithAvailabilityById(whoami,
-                context.groupId);
-            Double firstAvailability = composite.getAvailability();
-            newFirstAvailabilityType = firstAvailability == null ? null
-                : (firstAvailability == 1.0 ? AvailabilityType.UP : AvailabilityType.DOWN);
-        } else {
-            // March 20, 2009: we only support the "summary area" for resources and resourceGroups to date
-            // as a result, newFirstAvailabilityType will be a pass-through of the type in oldFirstAvailabilityPoint
+        if (withCurrentAvailability) {
+            AvailabilityPoint oldFirstAvailabilityPoint = availabilityPoints.remove(availabilityPoints.size() - 1);
+            AvailabilityType newFirstAvailabilityType = oldFirstAvailabilityPoint.getAvailabilityType();
+            if (context.category == EntityContext.Category.Resource) {
+                newFirstAvailabilityType = getCurrentAvailabilityTypeForResource(whoami, context.resourceId);
+            } else if (context.category == EntityContext.Category.ResourceGroup) {
+                ResourceGroupComposite composite = resourceGroupManager.getResourceGroupWithAvailabilityById(whoami,
+                    context.groupId);
+                Double firstAvailability = composite.getAvailability();
+                newFirstAvailabilityType = firstAvailability == null ? null
+                    : (firstAvailability == 1.0 ? AvailabilityType.UP : AvailabilityType.DOWN);
+            } else {
+                // March 20, 2009: we only support the "summary area" for resources and resourceGroups to date
+                // as a result, newFirstAvailabilityType will be a pass-through of the type in oldFirstAvailabilityPoint
+            }
+            availabilityPoints.add(new AvailabilityPoint(newFirstAvailabilityType, oldFirstAvailabilityPoint
+                .getTimestamp()));
         }
-        availabilityPoints
-            .add(new AvailabilityPoint(newFirstAvailabilityType, oldFirstAvailabilityPoint.getTimestamp()));
 
         // This should never happen, but add a check just to be safe.
         if (availabilityPoints.size() != numberOfPoints) {

@@ -498,7 +498,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
 
             if (displayAvailability) {
                 List<AvailabilityPoint> availabilityPoints = availabilityManager.getAvailabilitiesForResource(subject,
-                    resource.getId(), startDate, endDate, NUMBER_OF_DATA_POINTS);
+                    resource.getId(), startDate, endDate, NUMBER_OF_DATA_POINTS, false);
                 List<NumericMetricDataPoint> chartDataPoints = new ArrayList<NumericMetricDataPoint>(availabilityPoints
                     .size());
                 for (AvailabilityPoint availabilityPoint : availabilityPoints) {

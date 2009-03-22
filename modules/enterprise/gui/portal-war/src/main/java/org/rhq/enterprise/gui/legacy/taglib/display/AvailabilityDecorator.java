@@ -24,6 +24,7 @@ import javax.servlet.jsp.JspTagException;
 import javax.servlet.jsp.PageContext;
 import javax.servlet.jsp.tagext.Tag;
 import javax.servlet.jsp.tagext.TagSupport;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 
 /**
@@ -82,9 +83,12 @@ public class AvailabilityDecorator extends ColumnDecorator implements Tag {
             } else if (a == 0) {
                 iconURL.append(ICON_DOWN);
                 availabilityMessage = "Down";
-            } else {
+            } else if (a > 0 && a < 1) {
                 iconURL.append(ICON_WARN);
                 availabilityMessage = "Mixed";
+            } else {
+                iconURL.append(ICON_ERR);
+                availabilityMessage = "Unknown";
             }
         } else if (availability == null) {
             iconURL.append(ICON_ERR);

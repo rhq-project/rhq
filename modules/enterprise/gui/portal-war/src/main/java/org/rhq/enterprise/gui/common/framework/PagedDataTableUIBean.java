@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.common.framework;
 
+import javax.faces.event.ActionEvent;
 import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
 
@@ -113,5 +114,9 @@ public abstract class PagedDataTableUIBean extends EnterpriseFacesContextUIBean 
 
     public int getMinimumPageSize() {
         return 15;
+    }
+
+    public void clearDataModel(ActionEvent event) {
+        dataModel = null;
     }
 }

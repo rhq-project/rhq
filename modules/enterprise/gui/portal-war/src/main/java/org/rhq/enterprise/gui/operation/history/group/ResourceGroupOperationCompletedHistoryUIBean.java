@@ -22,8 +22,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.group.ResourceGroup;

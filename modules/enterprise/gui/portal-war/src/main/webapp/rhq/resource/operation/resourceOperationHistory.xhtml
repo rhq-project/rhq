@@ -44,6 +44,8 @@
                       oncomplete="disableConditionalButtons();"
                       interval="60000"
                       ignoreDupResponses="true"
+                      status="commonStatus"
+                      actionListener="#{ResourceOperationPendingHistoryUIBean.clearDataModel}"
                       reRender="resourceOperationPendingHistoryDataTable" />
             <rich:dataTable id="resourceOperationPendingHistoryDataTable" 
                             rows="#{PageControl.ResourceOperationPendingHistory.pageSize}"
@@ -175,6 +177,8 @@
                       oncomplete="disableConditionalButtons();"
                       interval="60000"
                       ignoreDupResponses="true"
+                      status="commonStatus"
+                      actionListener="#{ResourceOperationCompletedHistoryUIBean.clearDataModel}"
                       reRender="resourceOperationCompletedHistoryDataTable" />
             <rich:dataTable id="resourceOperationCompletedHistoryDataTable" 
                             rows="#{PageControl.ResourceOperationCompletedHistory.pageSize}"

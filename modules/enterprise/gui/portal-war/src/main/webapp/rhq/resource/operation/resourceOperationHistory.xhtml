@@ -71,21 +71,11 @@
                   <onc:select name="pendingSelectedItems" value="#{pendingItem.id}" />
                </rich:column>
                
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="h.id">
-                        <h:outputText styleClass="headerText" value="ID" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  
-                  <h:outputText value="#{pendingItem.id}"/>
-               </rich:column>
-               
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="h.createdTime">
                         <h:outputText styleClass="headerText" value="Date Submitted" />
-                     </onc:sortableColumnHeader>                     
+                     </onc:sortableColumnHeader>
                   </f:facet>
                   
                   <h:outputText value="#{pendingItem.createdTime}">
@@ -203,16 +193,6 @@
                   </f:facet>
                   
                   <onc:select name="completedSelectedItems" value="#{historyItem.id}" />
-               </rich:column>
-               
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="h.id">
-                        <h:outputText styleClass="headerText" value="ID" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  
-                  <h:outputText value="#{historyItem.id}"/>
                </rich:column>
                
                <rich:column>

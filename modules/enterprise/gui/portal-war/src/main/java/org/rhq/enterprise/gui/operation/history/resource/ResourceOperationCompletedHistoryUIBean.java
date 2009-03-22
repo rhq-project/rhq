@@ -103,7 +103,7 @@ public class ResourceOperationCompletedHistoryUIBean extends PagedDataTableUIBea
             }
         }
         long end = System.currentTimeMillis();
-        log.info("Performance: took [" + (end - start) + "]ms to delete " + selectedItems.length
+        log.debug("Performance: took [" + (end - start) + "]ms to delete " + selectedItems.length
             + " Resource OperationHistory elements");
 
         if (success.size() > 0) {
@@ -131,7 +131,8 @@ public class ResourceOperationCompletedHistoryUIBean extends PagedDataTableUIBea
             OperationManagerLocal manager = LookupUtil.getOperationManager();
 
             PageList<ResourceOperationHistory> results;
-            results = manager.getCompletedResourceOperationHistories(getSubject(), getResource().getId(), null, null, pc);
+            results = manager.getCompletedResourceOperationHistories(getSubject(), getResource().getId(), null, null,
+                pc);
             return results;
         }
     }

@@ -107,7 +107,10 @@
 
    <b>Filter By: </b>
    <h:selectOneMenu id="childTypeFilter" value="#{ListChildResourcesUIBean.childTypeFilter}">
-      <a4j:support event="onchange" reRender="childResourcesDataTable, childResourcesDataTableScroller" status="commonStatus"/>
+      <a4j:support event="onchange" 
+                   reRender="childResourcesDataTable, childResourcesDataTableScroller"
+                   oncomplete="disableConditionalButtons();" 
+                   status="commonStatus"/>
 
       <f:selectItem itemLabel="All Resources" itemValue="ALL"/>
       <f:selectItems value="#{ListChildResourcesUIBean.utilizedChildServerTypes}"/>

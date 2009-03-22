@@ -22,7 +22,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.faces.application.FacesMessage;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.StringUtility;
@@ -54,6 +56,11 @@ public class DeleteResourcesUIBean {
         Map<String, String> failures = new HashMap<String, String>();
 
         // Attempt delete for each selected resource
+        if (selectedResources == null) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "No resources selected for deletion");
+            return "successOrFailure";
+        }
+
         for (String resourceIdString : selectedResources) {
             try {
                 int resourceId = Integer.parseInt(resourceIdString);

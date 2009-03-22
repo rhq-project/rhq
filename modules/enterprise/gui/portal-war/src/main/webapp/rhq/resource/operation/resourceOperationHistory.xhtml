@@ -36,7 +36,7 @@
 
             <h:panelGrid columns="1" styleClass="data-table">
 
-                <a4j:keepAlive beanName="ResourceOperationCompletedHistoryUIBean"/>
+                <a4j:keepAlive beanName="ResourceOperationPendingHistoryUIBean"/>
 
             <ui:param name="resourceOperationPendingHistoryDataModel" value="#{ResourceOperationPendingHistoryUIBean.dataModel}"/>
 
@@ -166,6 +166,8 @@
             <f:facet name="header">Completed Operations</f:facet>
             
             <h:panelGrid columns="1" width="100%" styleClass="data-table">
+            
+                <a4j:keepAlive beanName="ResourceOperationCompletedHistoryUIBean"/>
 
             <ui:param name="resourceOperationCompletedHistoryDataModel" value="#{ResourceOperationCompletedHistoryUIBean.dataModel}"/>
 

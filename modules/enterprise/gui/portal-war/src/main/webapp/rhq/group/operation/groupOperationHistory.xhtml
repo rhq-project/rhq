@@ -169,6 +169,8 @@
             
             <h:panelGrid columns="1" styleClass="data-table">
 
+                <a4j:keepAlive beanName="ResourceGroupOperationCompletedHistoryUIBean"/>
+
             <ui:param name="resourceGroupOperationCompletedHistoryDataModel" value="#{ResourceGroupOperationCompletedHistoryUIBean.dataModel}"/>
             
             <h:outputText value="There are no completed operations" rendered="#{resourceGroupOperationCompletedHistoryDataModel.rowCount eq 0}"/>

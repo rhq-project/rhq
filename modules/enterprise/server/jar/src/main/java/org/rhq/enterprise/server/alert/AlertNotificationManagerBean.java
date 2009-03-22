@@ -99,7 +99,10 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         int added = 0;
         for (String emailAddress : emails) {
-            emailAddress = emailAddress.toLowerCase();
+            emailAddress = emailAddress.toLowerCase().trim();
+            if (emailAddress.equals("")) {
+                continue; // don't add empty addresses
+            }
             EmailNotification notification = new EmailNotification(alertDefinition, emailAddress);
 
             // only increment for non-duplicate additions

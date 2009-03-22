@@ -20,10 +20,8 @@ package org.rhq.enterprise.gui.legacy;
 
 import java.io.Serializable;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.auth.prefs.SubjectPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 
 /**
@@ -34,7 +32,7 @@ import org.rhq.enterprise.server.measurement.MeasurementPreferences;
  */
 public class WebUser implements Serializable {
 
-    private final Log log = LogFactory.getLog(WebUser.class);
+    private static final long serialVersionUID = -1111946433791221895L;
 
     private Subject subject;
     private boolean hasPrincipal;
@@ -180,6 +178,10 @@ public class WebUser implements Serializable {
 
     public MeasurementPreferences getMeasurementPreferences() {
         return new MeasurementPreferences(subject);
+    }
+
+    public SubjectPreferences getSubjectPreferences() {
+        return new SubjectPreferences(subject);
     }
 
     public boolean isHasPrincipal() {

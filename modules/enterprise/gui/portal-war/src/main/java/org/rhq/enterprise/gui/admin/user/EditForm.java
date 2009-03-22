@@ -19,9 +19,11 @@
 package org.rhq.enterprise.gui.admin.user;
 
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessage;
+
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
 
 /**
@@ -72,6 +74,11 @@ public class EditForm extends BaseValidatorForm {
      * Period to use for refreshing dashboard/charts
      */
     private String pageRefreshPeriod;
+
+    /**
+     * Period for canceling the calculation of the groupConfiguration
+     */
+    private String groupConfigurationTimeout;
 
     /**
      * Are we editing the currently logged in user
@@ -242,6 +249,7 @@ public class EditForm extends BaseValidatorForm {
         s.append("enableLogin=" + enableLogin + " ");
         s.append("smsAddress=" + smsAddress + " ");
         s.append("pageRefreshPeriod=" + pageRefreshPeriod + " ");
+        s.append("groupConfigurationTimeout=" + groupConfigurationTimeout + " ");
         return s.toString();
     }
 
@@ -261,6 +269,24 @@ public class EditForm extends BaseValidatorForm {
      */
     public void setPageRefreshPeriod(String pageRefreshPeriod) {
         this.pageRefreshPeriod = pageRefreshPeriod;
+    }
+
+    /**
+     * Get the groupConfigurationTimeout.
+     *
+     * @return the groupConfigurationTimeout.
+     */
+    public String getGroupConfigurationTimeout() {
+        return groupConfigurationTimeout;
+    }
+
+    /**
+     * Set the groupConfigurationTimeout.
+     *
+     * @param groupConfigurationTimeout The groupConfigurationTimeout to set.
+     */
+    public void setGroupConfigurationTimeout(String groupConfigurationTimeout) {
+        this.groupConfigurationTimeout = groupConfigurationTimeout;
     }
 
     /**
@@ -288,18 +314,15 @@ public class EditForm extends BaseValidatorForm {
     public ActionErrors validate(ActionMapping mapping, HttpServletRequest request) {
         ActionErrors errors = super.validate(mapping, request);
         if (shouldValidateMyPreferences(mapping, request)) {
-            Integer refreshPeriod = new Integer(0);
+            int refreshPeriod = -1;
             ActionMessage errorMessage = null;
             try {
                 refreshPeriod = Integer.valueOf(getPageRefreshPeriod());
-            } catch (NumberFormatException e) {
-                errorMessage = new ActionMessage("admin.user.error.mypreferences.pageRefreshPeriod");
-            }
-
-            if (errorMessage == null) {
-                if ((refreshPeriod.intValue() < 0) || (refreshPeriod.intValue() > 86400)) {
+                if (refreshPeriod < 0 || refreshPeriod > 86400) {
                     errorMessage = new ActionMessage("admin.user.error.mypreferences.pageRefreshPeriod.range");
                 }
+            } catch (NumberFormatException e) {
+                errorMessage = new ActionMessage("admin.user.error.mypreferences.pageRefreshPeriod");
             }
 
             if (errorMessage != null) {
@@ -308,6 +331,25 @@ public class EditForm extends BaseValidatorForm {
                 }
 
                 errors.add("pageRefreshPeriod", errorMessage);
+            }
+
+            int groupConfigTimeout = -1;
+            errorMessage = null;
+            try {
+                groupConfigTimeout = Integer.valueOf(getGroupConfigurationTimeout());
+                if (groupConfigTimeout < 30 || groupConfigTimeout > 300) {
+                    errorMessage = new ActionMessage("admin.user.error.mypreferences.groupConfigurationTimeout.range");
+                }
+            } catch (NumberFormatException e) {
+                errorMessage = new ActionMessage("admin.user.error.mypreferences.groupConfigurationTimeout");
+            }
+
+            if (errorMessage != null) {
+                if (errors == null) {
+                    errors = new ActionErrors();
+                }
+
+                errors.add("groupConfigurationTimeout", errorMessage);
             }
         }
 

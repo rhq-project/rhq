@@ -198,7 +198,7 @@
 	</tiles:insert>
 	<html:hidden property="editingCurrentUser"/>
 	<!-- CONTENTS -->
-	<table width="100%" cellpadding="0" cellspacing="0" border="0">
+	<table width="100%" cellpadding="0" cellspacing="0" border="1">
 	 
 	  
 	    <tr>
@@ -220,6 +220,22 @@
 	    <tr>
 	    <td colspan="4" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
 	    </tr>
+        <tr>
+           <td width="20%" class="BlockLabel"><fmt:message key="admin.user.mypreferences.groupConfigurationTimeout"/></td>
+           <logic:messagesPresent property="groupConfigurationTimeout">
+            <td width="10%" class="ErrorField">
+             <html:text size="31" property="groupConfigurationTimeout" tabindex="11"/><br>
+             <span class="ErrorFieldContent">- <html:errors property="groupConfigurationTimeout"/></span>
+            </td>
+           </logic:messagesPresent>
+           <logic:messagesNotPresent property="groupConfigurationTimeout">
+            <td width="10%" class="BlockContent"><html:text size="31" property="groupConfigurationTimeout" tabindex="11"/></td>
+           </logic:messagesNotPresent>
+           <td width="60%" class="BlockLeftAlignLabel">
+            <fmt:message key="admin.user.mypreferences.groupConfigurationTimeout.descr"/>
+           </td>
+           <td width="10%" class="BlockContent">&nbsp;</td>
+        </tr>  
 	
 	   <tr>
 	    <td colspan="4" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>

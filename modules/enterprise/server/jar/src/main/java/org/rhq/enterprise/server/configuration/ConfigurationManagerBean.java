@@ -80,6 +80,7 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.alert.engine.internal.Tuple;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.auth.prefs.SubjectPreferences;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.configuration.job.AbstractAggregateConfigurationUpdateJob;
@@ -511,9 +512,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // If we got this far, no updates are in progress. Now try to obtain the live configs from the Agents.
         // If any of the requests for live configs fail (e.g. because an Agent is down) or if all of the live
         // configs can't be obtained within the specified timeout, this call will throw an exception.
-        final long TIMEOUT_IN_SECONDS = 30;
+        int userPreferencesTimeout = new SubjectPreferences(whoami).getGroupConfigurationTimeoutPeriod();
         Map<Integer, Configuration> liveConfigs = LiveConfigurationLoader.getInstance().loadLiveResourceConfigurations(
-            group.getImplicitResources(), TIMEOUT_IN_SECONDS);
+            group.getImplicitResources(), userPreferencesTimeout);
 
         // If we got this far, we were able to retrieve all of the live configs from the Agents. Now load the current
         // persisted configs from the DB and compare them to the corresponding live configs. For any that are not equal,
@@ -557,7 +558,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     private void ensureNoResourceConfigurationUpdatesInProgress(ResourceGroup compatibleGroup)
         throws ConfigurationUpdateStillInProgressException {
         if (isAggregateResourceConfigurationUpdateInProgress(this.subjectManager.getOverlord(), compatibleGroup.getId())) {
-            throw new ConfigurationUpdateStillInProgressException("Current group Resource configuration for " + compatibleGroup
+            throw new ConfigurationUpdateStillInProgressException("Current group Resource configuration for "
+                + compatibleGroup
                 + " cannot be calculated, because a group Resource configuration update is currently in progress "
                 + " (please wait for this update to complete or delete it from the history).");
         }
@@ -572,7 +574,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             query.setParameter("groupId", compatibleGroup.getId());
             query.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
             List<Resource> resources = query.getResultList();
-            throw new ConfigurationUpdateStillInProgressException("Current group Resource configuration for " + compatibleGroup
+            throw new ConfigurationUpdateStillInProgressException("Current group Resource configuration for "
+                + compatibleGroup
                 + " cannot be calculated, because Resource configuration updates are currently in progress for the"
                 + " following Resources (please wait for these updates to complete or delete them from the history): "
                 + resources);

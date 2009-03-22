@@ -34,6 +34,7 @@ import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.action.BaseAction;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.auth.prefs.SubjectPreferences;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -71,12 +72,21 @@ public class EditAction extends BaseAction {
         if (currentUser.getId().equals(userForm.getId())) {
             // update the in-memory preferences of the webuser so it takes effect for this session
             try {
-                Integer pageRefreshPeriod = Integer.valueOf(userForm.getPageRefreshPeriod());
-                WebUserPreferences preferences = currentUser.getWebPreferences();
-                preferences.setPageRefreshPeriod(pageRefreshPeriod);
+                WebUserPreferences webPreferences = currentUser.getWebPreferences();
+                int pageRefreshPeriod = Integer.valueOf(userForm.getPageRefreshPeriod());
+                webPreferences.setPageRefreshPeriod(pageRefreshPeriod);
             } catch (NumberFormatException e) {
                 throw new RuntimeException(
                     "pageRefreshPeriod is not an integer, this should have been caught earlier by the form validation.");
+            }
+
+            try {
+                SubjectPreferences corePreferences = currentUser.getSubjectPreferences();
+                int timeoutPeriod = Integer.valueOf(userForm.getGroupConfigurationTimeout());
+                corePreferences.setGroupConfigurationTimeoutPeriod(timeoutPeriod);
+            } catch (NumberFormatException e) {
+                throw new RuntimeException(
+                    "groupConfigurationTimeout is not an integer, this should have been caught earlier by the form validation.");
             }
         }
 

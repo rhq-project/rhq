@@ -101,16 +101,19 @@ public class EditUserFormPrepareAction extends TilesAction {
         Integer currentUserId = currentUser.getId();
         Integer idOfUserBeingEdited = userBeingEdited.getId();
 
-        // if the user being edited is the person who is logged in then setup these
-        // preferences for display
+        // if the user being edited is the person who is logged in then setup these preferences for display
         if ((currentUserId != null) && currentUserId.equals(idOfUserBeingEdited)) {
             userForm.setEditingCurrentUser(true);
 
-            // if we've already got sthg set here, don't overwrite it
+            // if we're already set, don't overwrite us
             if (userForm.getPageRefreshPeriod() == null) {
                 int pageRefreshPeriod = currentUser.getWebPreferences().getPageRefreshPeriod();
-
                 userForm.setPageRefreshPeriod(String.valueOf(pageRefreshPeriod));
+            }
+
+            if (userForm.getGroupConfigurationTimeout() == null) {
+                int timeoutPeriod = currentUser.getSubjectPreferences().getGroupConfigurationTimeoutPeriod();
+                userForm.setGroupConfigurationTimeout(String.valueOf(timeoutPeriod));
             }
         }
     }

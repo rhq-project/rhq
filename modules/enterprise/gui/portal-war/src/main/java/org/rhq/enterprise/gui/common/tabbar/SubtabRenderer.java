@@ -59,13 +59,14 @@ public class SubtabRenderer extends Renderer {
 
         StringWriter stringWriter = new StringWriter();
 
-        ResponseWriter writer = facesContext.getResponseWriter().cloneWithWriter(stringWriter);        
+        ResponseWriter writer = facesContext.getResponseWriter().cloneWithWriter(stringWriter);
         writer.startElement("td", subtab);
-        if (!subtab.isSelected()) {
-            writer.startElement("a", subtab);
-            writer.writeAttribute("style", "text-decoration: none;", null);
-            writer.writeAttribute("href", buildURL(subtab), "url");
-        }
+
+        // for ease of refresh, allow all subtabs to be clickable, even the current one 
+        writer.startElement("a", subtab);
+        writer.writeAttribute("style", "text-decoration: none;", null);
+        writer.writeAttribute("href", buildURL(subtab), "url");
+
         writer.startElement("div", subtab);
 
         if (!subtab.isSelected()) {
@@ -88,9 +89,7 @@ public class SubtabRenderer extends Renderer {
         }
 
         writer.endElement("div");
-        if (!subtab.isSelected()) {
-            writer.endElement("a");
-        }
+        writer.endElement("a");
 
         writer.endElement("td");
         subtab.setRendererOutput(stringWriter.toString());

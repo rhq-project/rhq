@@ -113,7 +113,7 @@
 
     <a4j:keepAlive beanName="ListResourceGroupMembersUIBean"/>
 
-<rich:dataGrid columns="2"
+<rich:dataGrid columns="#{ListResourceGroupMembersUIBean.numberOfColumns}"
                value="#{ListResourceGroupMembersUIBean.resourceTypeCounts}" 
                var="resourceTypeCountTuple">
 

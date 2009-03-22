@@ -69,6 +69,10 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
         return this.suppressRecursiveResults;
     }
 
+    public int getNumberOfColumns() {
+        return 4;
+    }
+
     public List<Tuple<String, Integer>> getResourceTypeCounts() {
         Map<String, Integer> typeMap = resourceTypeManager.getResourceTypeCountsByGroup(getSubject(),
             getResourceGroup());
@@ -81,7 +85,7 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
             }
         });
 
-        typeNames = evenlyShuffle(typeNames);
+        typeNames = evenlyShuffle(typeNames, getNumberOfColumns());
 
         List<Tuple<String, Integer>> tupleResults = new ArrayList<Tuple<String, Integer>>(typeMap.size());
         for (String typeName : typeNames) {
@@ -91,18 +95,24 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
         return tupleResults;
     }
 
-    private String[] evenlyShuffle(String[] input) {
-        String[] output = new String[input.length];
-        for (int i = 0, j = (output.length + 1) / 2, k = 0; j < output.length; i++, j++, k += 2) {
-            output[k] = input[i];
-            output[k + 1] = input[j];
+    private String[] evenlyShuffle(String[] input, int columns) {
+        int pieces = (input.length / columns) + (input.length % columns);
+
+        List<List<String>> outputPieces = new ArrayList<List<String>>();
+        for (int i = 0; i < pieces; i++) {
+            outputPieces.add(new ArrayList<String>());
+        }
+        for (int i = 0; i < input.length; i++) {
+            outputPieces.get(i % pieces).add(input[i]);
         }
 
-        if ((output.length % 2) == 1) {
-            output[output.length - 1] = input[output.length / 2];
+        List<String> totalOutput = new ArrayList<String>();
+        for (int i = 0; i < pieces; i++) {
+            totalOutput.addAll(outputPieces.get(i));
         }
 
-        return output;
+        String[] results = totalOutput.toArray(new String[totalOutput.size()]);
+        return results;
     }
 
     protected class ListResourceGroupMembersDataModel extends PagedListDataModel<ResourceWithAvailability> {

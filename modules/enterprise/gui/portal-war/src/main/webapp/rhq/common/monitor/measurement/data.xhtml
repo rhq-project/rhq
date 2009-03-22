@@ -107,8 +107,19 @@
                 <h:outputText value="#{metric.label} " />
           </h:outputLink>
           &nbsp;&nbsp;
-          <h:outputLink target="_top" value="#{onf:getDefaultResourceTabURL()}">
-             <f:param name="id" value="#{metric.metricSourceId}" />
+          <h:outputLink target="_top" value="#{onf:getDefaultContextTabURL(context)}">
+             <c:choose>
+                <c:when test="#{context.resourceTypeId > 0}">
+                   <f:param name="type" value="#{metric.childTypeId}"/>
+                   <f:param name="parent" value="#{metric.parentId}"/>
+                </c:when>
+                <c:when test="#{context.groupId > 0}">
+                   <f:param name="groupId" value="#{metric.groupId}"/>
+                </c:when>
+                <c:otherwise>
+                   <f:param name="id" value="#{metric.metricSourceId}"/>
+                   </c:otherwise>
+             </c:choose>
              <h:outputFormat value="#{msg['common.value.parenthesis']}">
                 <f:param value="#{metric.metricSource}" />
              </h:outputFormat>

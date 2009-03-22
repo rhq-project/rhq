@@ -286,6 +286,19 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         return (valueStr == null ? "" : valueStr);
     }
 
+    public static String getDefaultContextTabURL(EntityContext context) {
+        if (context.category == EntityContext.Category.Resource) {
+            return getDefaultResourceTabURL();
+        } else if (context.category == EntityContext.Category.ResourceGroup) {
+            return "/rhq/group/monitor/graphs.xhtml";
+        } else if (context.category == EntityContext.Category.AutoGroup) {
+            return "/rhq/autogroup/monitor/graphs.xhtml";
+        } else {
+            throw new IllegalArgumentException("Do not support getting defaultTabURL for " + context);
+        }
+    }
+
+    // needs to exist separately from getDefaultContextTabURL because only some facelets understand EntityContext
     public static String getDefaultResourceTabURL() {
         return "/rhq/resource/summary/overview.xhtml";
     }

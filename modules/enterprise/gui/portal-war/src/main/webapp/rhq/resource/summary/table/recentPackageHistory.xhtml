@@ -24,7 +24,7 @@
             <h:outputText value="#{item.packageVersion.generalPackage.name}" 
                           rendered="#{empty item.packageVersion.displayName}"/>
          </h:outputLink>
-         <h:outputText value=" @ " />
+         <h:outputText value=": " />
          <h:outputText value="#{item.timestamp}">
             <f:converter converterId="RelativeDurationConverter" />
          </h:outputText>

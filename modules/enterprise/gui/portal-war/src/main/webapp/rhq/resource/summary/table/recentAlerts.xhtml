@@ -22,7 +22,7 @@
             <f:param name="a" value="#{item.id}" />
             <h:outputText value="#{item.alertDefinition.name}" />
          </h:outputLink>
-         <h:outputText value=" @ " />
+         <h:outputText value=": " />
          <h:outputText value="#{item.ctime}">
             <f:converter converterId="RelativeDurationConverter" />
          </h:outputText>

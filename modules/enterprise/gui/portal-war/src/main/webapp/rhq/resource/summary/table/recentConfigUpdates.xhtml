@@ -22,7 +22,7 @@
             <h:outputText value="Changed by #{item.subjectName}" rendered="#{not empty item.subjectName}" />
             <h:outputText value="Change auto-detected" rendered="#{empty item.subjectName}" />
          </h:outputLink>
-         <h:outputText value=" @ " />
+         <h:outputText value=": " />
          <h:outputText value="#{item.createdTime}">
             <f:converter converterId="RelativeDurationConverter" />
          </h:outputText>

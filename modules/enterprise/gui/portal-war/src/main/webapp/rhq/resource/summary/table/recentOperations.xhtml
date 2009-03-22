@@ -21,7 +21,7 @@
             <f:param name="opId" value="#{item.operationHistoryId}" />
             <h:outputText value="#{item.operationName}" />
          </h:outputLink>
-         <h:outputText value=" @ " />
+         <h:outputText value=": " />
          <h:outputText value="#{item.operationStartTime}">
             <f:converter converterId="RelativeDurationConverter" />
          </h:outputText>

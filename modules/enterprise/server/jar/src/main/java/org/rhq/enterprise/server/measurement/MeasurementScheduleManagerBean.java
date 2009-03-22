@@ -411,7 +411,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
         String queryString;
         if (type instanceof PostgresqlDatabaseType) {
-            queryString = "select defi.id, defi.display_name, defi.description,defi.category ,foo.coMin, foo.coMax, foo.coAny, foo.coAll "
+            queryString = "select defi.id, defi.display_name, defi.description,defi.category,defi.data_type, foo.coMin, foo.coMax, foo.coAny, foo.coAll "
                 + " from RHQ_measurement_def defi, "
                 + " ( "
                 + "   select d.id as did, min(s.coll_interval) as coMin, max(s.coll_interval) as coMax, bool_or(s.enabled) as coAny, bool_and(s.enabled) as coAll "
@@ -421,7 +421,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 + "     and s.resource_id IN (@@RESOURCES@@) "
                 + "   group by d.id " + " ) as foo " + " where defi.id = foo.did order by defi.display_name";
         } else if (type instanceof OracleDatabaseType) {
-            queryString = "select defi.id, defi.display_name, defi.description, defi.category, coMin, coMax, coAny, coAll "
+            queryString = "select defi.id, defi.display_name, defi.description, defi.category, defi.data_type, coMin, coMax, coAny, coAll "
                 + " from RHQ_measurement_def defi, "
                 + " ( "
                 + "   select d.id as did,  min(s.coll_interval) as coMin, max(s.coll_interval) as coMax, min(s.enabled) as coAny, max(s.enabled) as coAll "
@@ -469,21 +469,22 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 String defDisName = resultSet.getString(2);
                 String defDescr = resultSet.getString(3);
                 int category = resultSet.getInt(4);
-                int maxInterval = resultSet.getInt(5);
-                int minInterval = resultSet.getInt(6);
+                int dataType = resultSet.getInt(5);
+                int maxInterval = resultSet.getInt(6);
+                int minInterval = resultSet.getInt(7);
                 int collectionInterval = (maxInterval == minInterval) ? maxInterval : 0; // 0 will be flagged as "DIFFERENT"
                 Boolean collectionEnabled = null;
                 if (type instanceof PostgresqlDatabaseType) {
-                    boolean bOr = resultSet.getBoolean(7);
-                    boolean bAnd = resultSet.getBoolean(8);
+                    boolean bOr = resultSet.getBoolean(8);
+                    boolean bAnd = resultSet.getBoolean(9);
                     if (bOr == bAnd) {
                         collectionEnabled = (bOr) ? true : false;
                     } else {
                         collectionInterval = 0; // will be flagged as "DIFFERENT"
                     }
                 } else if (type instanceof OracleDatabaseType) {
-                    int boAny = resultSet.getInt(7);
-                    int boAll = resultSet.getInt(8);
+                    int boAny = resultSet.getInt(8);
+                    int boAll = resultSet.getInt(9);
                     if (boAny == boAll) {
                         collectionEnabled = (boAny == 1) ? true : false;
                     } else {
@@ -498,6 +499,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 dummy.setDescription(defDescr);
                 dummy.setDisplayName(defDisName);
                 dummy.setCategory(MeasurementCategory.values()[category]);
+                dummy.setDataType(DataType.values()[dataType]);
                 MeasurementScheduleComposite comp = new MeasurementScheduleComposite(dummy, collectionEnabled,
                     collectionInterval);
                 compList.add(comp);

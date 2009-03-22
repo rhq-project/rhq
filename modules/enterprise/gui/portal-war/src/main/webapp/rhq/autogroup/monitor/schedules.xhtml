@@ -89,7 +89,8 @@
                      <h:outputText styleClass="headerText" value="Category" />
                   </f:facet>
 
-                  <h:outputText value="#{item.measurementDefinition.category}"/>
+                  <h:outputText value="trait" rendered="#{item.measurementDefinition.dataType eq 'TRAIT'}" />
+                  <h:outputText value="#{item.measurementDefinition.category}" rendered="#{item.measurementDefinition.dataType ne 'TRAIT'}" />
                </rich:column>
 
                <rich:column>

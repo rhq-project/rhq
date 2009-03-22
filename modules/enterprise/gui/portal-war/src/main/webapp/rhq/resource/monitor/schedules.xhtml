@@ -91,7 +91,8 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                
-                  <h:outputText value="#{item.definition.category}"/>
+                  <h:outputText value="trait" rendered="#{item.definition.dataType eq 'TRAIT'}" />
+                  <h:outputText value="#{item.definition.category}" rendered="#{item.definition.dataType ne 'TRAIT'}" />
                </rich:column>
                
                <rich:column>

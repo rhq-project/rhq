@@ -34,7 +34,9 @@
                <h:outputLabel for="alertDefinitionFilter" value="Alert Definition Filter: " />
                <h:selectOneMenu id="alertDefinitionFilter" value="#{ListAlertHistoryUIBean.alertDefinitionFilter}"
                                 style="width: 300px;">
-                   <a4j:support event="onchange" reRender="alertHistoryDataTable, alertHistoryDataTableScroller"/>
+                   <a4j:support event="onchange" 
+                                reRender="alertHistoryDataTable, alertHistoryDataTableScroller"
+                                status="commonStatus" />
 
                    <f:selectItems value="#{ListAlertHistoryUIBean.alertDefinitionSelectItems}"/>
                </h:selectOneMenu>
@@ -44,7 +46,9 @@
                <h:outputLabel for="alertPriorityFilter" value="Alert Priority Filter: " />
                <h:selectOneMenu id="alertPriorityFilter" value="#{ListAlertHistoryUIBean.alertPriorityFilter}"
                                 style="width: 300px;">
-                   <a4j:support event="onchange" reRender="alertHistoryDataTable, alertHistoryDataTableScroller"/>
+                   <a4j:support event="onchange" 
+                                reRender="alertHistoryDataTable, alertHistoryDataTableScroller"
+                                status="commonStatus" />
 
                    <f:selectItems value="#{ListAlertHistoryUIBean.alertPrioritySelectItems}"/>
                </h:selectOneMenu>
@@ -55,7 +59,9 @@
                <h:inputText id="dateFilter" value="#{ListAlertHistoryUIBean.dateFilter}"
                             onkeypress="return ignoreEnterKey(event);"
                             style="width: 300px;" />
-               <a4j:commandButton value="GO" reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
+               <a4j:commandButton value="GO" 
+                                  reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
+                                  status="commonStatus" 
                                   styleClass="buttonmed">
                   <s:defaultAction />
                </a4j:commandButton>

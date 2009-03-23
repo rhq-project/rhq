@@ -29,12 +29,11 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.deployers.spi.management.KnownComponentTypes;
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
-import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedOperation;
 import org.jboss.managed.api.ManagedParameter;
 import org.jboss.managed.api.ManagedProperty;
+import org.jboss.managed.api.ComponentType;
 import org.jboss.metatype.api.types.MetaType;
 import org.jboss.metatype.api.types.MapCompositeMetaType;
 import org.jboss.metatype.api.types.SimpleMetaType;
@@ -50,6 +49,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -59,6 +59,8 @@ import org.rhq.plugins.jbossas5.adapter.api.MeasurementAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.MeasurementAdapterFactory;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
+import org.rhq.plugins.jbossas5.ManagedComponentComponent;
+import org.jetbrains.annotations.NotNull;
 
  /**
  * Utility class to convert some basic Profile Service objects to JON objects, and some basic
@@ -73,19 +75,6 @@ import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 public class ConversionUtils
 {
     private static final Log LOG = LogFactory.getLog(ConversionUtils.class);
-
-    // Key is the RHQ plugin ResourceType name. Make sure if the ResourceType name changes that this map changes too.
-    private static final Map<String, ComponentType> KNOWN_COMPONENT_TYPES = new HashMap<String, ComponentType>();
-
-    static {
-        KNOWN_COMPONENT_TYPES.put("No TX Datasource", KnownComponentTypes.DataSourceTypes.NoTx.getType());
-        KNOWN_COMPONENT_TYPES.put("Local TX Datasource", KnownComponentTypes.DataSourceTypes.LocalTx.getType());
-        KNOWN_COMPONENT_TYPES.put("XA Datasource", KnownComponentTypes.DataSourceTypes.XA.getType());
-        KNOWN_COMPONENT_TYPES.put("No TX ConnectionFactory", KnownComponentTypes.ConnectionFactoryTypes.NoTx.getType());
-        KNOWN_COMPONENT_TYPES.put("XA ConnectionFactory", KnownComponentTypes.ConnectionFactoryTypes.XA.getType());
-        KNOWN_COMPONENT_TYPES.put("Queue", KnownComponentTypes.JMSDestination.Queue.getType());
-        KNOWN_COMPONENT_TYPES.put("Topic", KnownComponentTypes.JMSDestination.Topic.getType());
-    }
 
     // Key is the RHQ plugin ResourceType name. Make sure if the ResourceType name changes that this map changes too.
     private static final Map<String, String> KNOWN_DEPLOYMENT_TYPES = new HashMap<String, String>();
@@ -104,25 +93,46 @@ public class ConversionUtils
         KNOWN_DEPLOYMENT_TYPES.put("Spring Application", KnownDeploymentTypes.SpringApplication.getType());
     }
 
+    private static final Map<String, ComponentType> COMPONENT_TYPE_CACHE = new HashMap<String, ComponentType>();
+    private static final Map<String, Configuration> DEFAULT_PLUGIN_CONFIG_CACHE = new HashMap<String, Configuration>();
+
     protected static final String PLUGIN = "ProfileService";
 
-    public static final String COMPONENT_SUB_TYPE_PROPERTY = "componentSubType";
-    public static final String COMPONENT_PARENT_TYPE_PROPERTY = "componentParentType";
+    public static ComponentType getComponentType(@NotNull ResourceType resourceType) {
+        String resourceTypeName = resourceType.getName();
+        if (COMPONENT_TYPE_CACHE.containsKey(resourceTypeName))
+            return COMPONENT_TYPE_CACHE.get(resourceTypeName);
 
-    /**
-     * Converts the ResourceType into a ComponentType
-     *
-     * @param resourceType resourceType to convert
-     * @return ComponentType the componentType object
-     */
-    public static ComponentType getComponentType(ResourceType resourceType)
-    {
-        return getComponentType(resourceType.getName());
+        Configuration defaultPluginConfig;
+        if (DEFAULT_PLUGIN_CONFIG_CACHE.containsKey(resourceTypeName))
+            defaultPluginConfig = DEFAULT_PLUGIN_CONFIG_CACHE.get(resourceTypeName);
+        else {
+            defaultPluginConfig = getDefaultPluginConfiguration(resourceType);
+            DEFAULT_PLUGIN_CONFIG_CACHE.put(resourceTypeName, defaultPluginConfig);
+        }
+
+        String type = defaultPluginConfig.getSimpleValue(ManagedComponentComponent.COMPONENT_TYPE_PROPERTY, null);
+        if (type == null || type.equals(""))
+            throw new IllegalStateException("Required plugin configuration property '"
+                    + ManagedComponentComponent.COMPONENT_TYPE_PROPERTY + "' is not defined in default template.");
+        String subtype = defaultPluginConfig.getSimpleValue(ManagedComponentComponent.COMPONENT_SUBTYPE_PROPERTY, null);
+        if (subtype == null || subtype.equals(""))
+            throw new IllegalStateException("Required plugin configuration property '"
+                    + ManagedComponentComponent.COMPONENT_SUBTYPE_PROPERTY + "' is not defined in default template.");
+        ComponentType componentType = new ComponentType(type, subtype);
+        COMPONENT_TYPE_CACHE.put(resourceTypeName, componentType);
+        return componentType;
     }
 
-    public static ComponentType getComponentType(String resourceType)
-    {
-        return KNOWN_COMPONENT_TYPES.get(resourceType);
+    private static Configuration getDefaultPluginConfiguration(ResourceType resourceType) {
+        ConfigurationDefinition definition = resourceType.getPluginConfigurationDefinition();
+        if (definition != null) {
+            ConfigurationTemplate template = definition.getDefaultTemplate();
+            if (template != null) {
+                return template.getConfiguration().deepCopy();
+            }
+        }
+        return new Configuration(); // there is no default plugin config defined - return an empty one
     }
 
     public static String getDeploymentTypeString(ResourceType resourceType)
@@ -273,6 +283,10 @@ public class ConversionUtils
             else
             {
                 MetaType metaType = managedProperty.getMetaType();
+                if (managedProperty.getName().equals("config-property")) {
+                    LOG.debug("Applying workaround for missing XAConnectionFactory template (https://jira.jboss.org/jira/browse/JBAS-6647)...");
+                    metaType = new MapCompositeMetaType(SimpleMetaType.STRING);
+                }
                 PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaType);
                 LOG.debug("Converting property " + property + " with definition " + propertyDefinition
                         + " to MetaValue of type " + metaType + "...");

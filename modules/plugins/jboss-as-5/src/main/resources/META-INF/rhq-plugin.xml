@@ -726,7 +726,7 @@
             </configuration>
         </content>-->
 
-        <service name="No TX Datasource"
+        <service name="No Tx Datasource"
                  class="ManagedComponentComponent"
                  discovery="ManagedComponentDiscoveryComponent"
                  createDeletePolicy="both"
@@ -734,8 +734,8 @@
                  description="No Transaction Datasources deployed in the instance of JBoss AS">
 
             <plugin-configuration>
-                <c:simple-property name="componentParentType" default="DataSource" readOnly="true"/>
-                <c:simple-property name="componentSubType" default="NoTX" readOnly="true"/>
+                <c:simple-property name="componentType" default="DataSource" readOnly="true"/>
+                <c:simple-property name="componentSubtype" default="NoTx" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="NoTxDataSourceTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="jndi-name">
@@ -804,7 +804,7 @@
 
         </service>
 
-        <service name="Local TX Datasource"
+        <service name="Local Tx Datasource"
                  class="ManagedComponentComponent"
                  discovery="ManagedComponentDiscoveryComponent"
                  createDeletePolicy="both"
@@ -812,8 +812,8 @@
                  description="Local Transaction Datasources deployed in the instance of JBoss AS">
 
             <plugin-configuration>
-                <c:simple-property name="componentParentType" default="DataSource" readOnly="true"/>
-                <c:simple-property name="componentSubType" default="LocalTx" readOnly="true"/>
+                <c:simple-property name="componentType" default="DataSource" readOnly="true"/>
+                <c:simple-property name="componentSubtype" default="LocalTx" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="LocalTxDataSourceTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="jndi-name">
@@ -897,8 +897,8 @@
                  description="XA Datasources deployed in the instance of JBoss AS">
 
             <plugin-configuration>
-                <c:simple-property name="componentParentType" default="DataSource" readOnly="true"/>
-                <c:simple-property name="componentSubType" default="XA" readOnly="true"/>
+                <c:simple-property name="componentType" default="DataSource" readOnly="true"/>
+                <c:simple-property name="componentSubtype" default="XA" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="XADataSourceTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="jndi-name">
@@ -1019,15 +1019,15 @@
 
         </service>
 
-        <service name="No TX ConnectionFactory"
+        <service name="No Tx ConnectionFactory"
                  class="ManagedComponentComponent"
                  createDeletePolicy="both"
                  subCategory="Connection Factories"
                  discovery="ManagedComponentDiscoveryComponent">
 
             <plugin-configuration>
-                <c:simple-property name="componentParentType" default="ConnectionFactory" readOnly="true"/>
-                <c:simple-property name="componentSubType" default="NoTX" readOnly="true"/>
+                <c:simple-property name="componentType" default="ConnectionFactory" readOnly="true"/>
+                <c:simple-property name="componentSubtype" default="NoTx" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="NoTxConnectionFactoryTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="jndi-name">
@@ -1055,28 +1055,28 @@
 
                 <c:group name="connection" displayName="Connection Information">
 
-                    &datasourceConnectionResourceConfigProps;
+                    &connectionFactoryConnectionResourceConfigProps;
 
                 </c:group>
 
                 <c:group name="advanced" displayName="Advanced">
 
-                    &datasourceAdvancedResourceConfigProps;
+                    &connectionFactoryAdvancedResourceConfigProps;
 
                 </c:group>
             </resource-configuration>
 
         </service>
 
-        <service name="XA ConnectionFactory"
+        <service name="Tx ConnectionFactory"
                  class="ManagedComponentComponent"
                  createDeletePolicy="both"
                  subCategory="Connection Factories"
                  discovery="ManagedComponentDiscoveryComponent">
 
             <plugin-configuration>
-                <c:simple-property name="componentParentType" default="ConnectionFactory" readOnly="true"/>
-                <c:simple-property name="componentSubType" default="XA" readOnly="true"/>
+                <c:simple-property name="componentType" default="ConnectionFactory" readOnly="true"/>
+                <c:simple-property name="componentSubtype" default="XA" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="TxConnectionFactoryTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="jndi-name">
@@ -1186,8 +1186,8 @@
                  discovery="ManagedComponentDiscoveryComponent">
 
             <plugin-configuration>
-                <c:simple-property name="componentParentType" default="JMSDestination" readOnly="true"/>
-                <c:simple-property name="componentSubType" default="Queue" readOnly="true"/>
+                <c:simple-property name="componentType" default="JMSDestination" readOnly="true"/>
+                <c:simple-property name="componentSubtype" default="Queue" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="QueueTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="JNDIName">
@@ -1356,8 +1356,8 @@
                  discovery="ManagedComponentDiscoveryComponent">
 
             <plugin-configuration>
-                <c:simple-property name="componentParentType" default="JMSDestination" readOnly="true"/>
-                <c:simple-property name="componentSubType" default="Topic" readOnly="true"/>
+                <c:simple-property name="componentType" default="JMSDestination" readOnly="true"/>
+                <c:simple-property name="componentSubtype" default="Topic" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="TopicTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="JNDIName">
@@ -2021,16 +2021,16 @@
                  subCategory="teaser" description="Log4J Setting of Appenders, Root, and Categories">
 
             <plugin-configuration>
-                <c:simple-property name="componentParentType" default="Log4j" readOnly="true"/>
-                <c:simple-property name="componentSubType" default="Logger" readOnly="true"/>
+                <c:simple-property name="componentType" default="Log4j" readOnly="true"/>
+                <c:simple-property name="componentSubtype" default="Logger" readOnly="true"/>
                 <c:simple-property name="deploymentName" readOnly="true"/>
                 <c:simple-property name="templateName" readOnly="true"/>
             </plugin-configuration>
 
             <service name="FileAppender" class="ProfileDatasourceComponent">
                 <plugin-configuration>
-                    <c:simple-property name="componentParentType" default="Log4j" readOnly="true"/>
-                    <c:simple-property name="componentSubType" default="Appender" readOnly="true"/>
+                    <c:simple-property name="componentType" default="Log4j" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="Appender" readOnly="true"/>
                     <c:simple-property name="deploymentName" readOnly="true"/>
                     <c:simple-property name="templateName" readOnly="true"/>
                 </plugin-configuration>
@@ -2046,8 +2046,8 @@
             </service>
             <service name="ConsoleAppender" class="ProfileDatasourceComponent">
                 <plugin-configuration>
-                    <c:simple-property name="componentParentType" default="Log4j" readOnly="true"/>
-                    <c:simple-property name="componentSubType" default="Appender" readOnly="true"/>
+                    <c:simple-property name="componentType" default="Log4j" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="Appender" readOnly="true"/>
                     <c:simple-property name="deploymentName" readOnly="true"/>
                     <c:simple-property name="templateName" readOnly="true"/>
                 </plugin-configuration>
@@ -2062,8 +2062,8 @@
             </service>
             <service name="Root" class="ProfileDatasourceComponent">
                 <plugin-configuration>
-                    <c:simple-property name="componentParentType" default="Log4j" readOnly="true"/>
-                    <c:simple-property name="componentSubType" default="Root" readOnly="true"/>
+                    <c:simple-property name="componentType" default="Log4j" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="Root" readOnly="true"/>
                     <c:simple-property name="deploymentName" readOnly="true"/>
                     <c:simple-property name="templateName" readOnly="true"/>
                 </plugin-configuration>
@@ -2075,8 +2075,8 @@
             </service>
             <service name="Category" class="ProfileDatasourceComponent">
                 <plugin-configuration>
-                    <c:simple-property name="componentParentType" default="Log4j" readOnly="true"/>
-                    <c:simple-property name="componentSubType" default="Category" readOnly="true"/>
+                    <c:simple-property name="componentType" default="Log4j" readOnly="true"/>
+                    <c:simple-property name="componentSubtype" default="Category" readOnly="true"/>
                     <c:simple-property name="deploymentName" readOnly="true"/>
                     <c:simple-property name="templateName" readOnly="true"/>
                 </plugin-configuration>

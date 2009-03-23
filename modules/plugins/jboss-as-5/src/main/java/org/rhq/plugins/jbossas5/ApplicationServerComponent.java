@@ -183,7 +183,8 @@ public class ApplicationServerComponent
         Configuration defaultPluginConfig = getDefaultPluginConfiguration(resourceType);
         Configuration resourceConfig = createResourceReport.getResourceConfiguration();
         String resourceName = getResourceName(defaultPluginConfig, resourceConfig);
-        if (ProfileServiceFactory.isManagedComponent(resourceName, ConversionUtils.getComponentType(resourceType))) {
+        ComponentType componentType = ConversionUtils.getComponentType(resourceType);
+        if (ProfileServiceFactory.isManagedComponent(resourceName, componentType)) {
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
             createResourceReport.setErrorMessage("A " + resourceType.getName() + " named '" + resourceName
                     + "' already exists.");

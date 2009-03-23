@@ -66,7 +66,9 @@ package org.rhq.plugins.jbossas5;
 public class ManagedComponentComponent extends AbstractManagedComponent
         implements ResourceComponent, ConfigurationFacet, DeleteResourceFacet, OperationFacet, MeasurementFacet
 {
-    static final String COMPONENT_NAME_PROPERTY = "componentName";
+    public static final String COMPONENT_TYPE_PROPERTY = "componentType";
+    public static final String COMPONENT_SUBTYPE_PROPERTY = "componentSubtype";
+    public static final String COMPONENT_NAME_PROPERTY = "componentName";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -89,10 +91,10 @@ public class ManagedComponentComponent extends AbstractManagedComponent
 
     public void start(ResourceContext resourceContext) throws Exception {
         super.start(resourceContext);
-        // Convert the resource type into the component type
-        Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
-        this.componentName = pluginConfiguration.getSimple(COMPONENT_NAME_PROPERTY).getStringValue();
         this.componentType = ConversionUtils.getComponentType(getResourceContext().getResourceType());
+        Configuration pluginConfig = resourceContext.getPluginConfiguration();
+        this.componentName = pluginConfig.getSimple(COMPONENT_NAME_PROPERTY).getStringValue();
+        return;
     }
 
     public void stop()

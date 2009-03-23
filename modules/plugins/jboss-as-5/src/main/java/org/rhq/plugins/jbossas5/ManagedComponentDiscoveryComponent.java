@@ -39,7 +39,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Discovery component for all services/resource in JBoss AS Profile Service
+ * Discovery component for all ManagedComponents exposed by the JBoss AS 5.x Profile Service.
  *
  * @author Jason Dobies
  * @author Mark Spritzer
@@ -49,12 +49,11 @@ public class ManagedComponentDiscoveryComponent
 {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApplicationServerComponent> resourceDiscoveryContext)
+    public Set<DiscoveredResourceDetails> discoverResources(
+            ResourceDiscoveryContext<ApplicationServerComponent> discoveryContext)
     {
-        Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
-        ResourceType resourceType = resourceDiscoveryContext.getResourceType();
+        ResourceType resourceType = discoveryContext.getResourceType();
         log.debug("Discovering " + resourceType.getName() + " Resources..." );
-        ComponentType componentType = ConversionUtils.getComponentType(resourceType);
 
         // TODO (ips): Only refresh the ManagementView *once* per runtime discovery scan, rather than every time this
         //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.
@@ -62,45 +61,43 @@ public class ManagedComponentDiscoveryComponent
 
         ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
 
-        Set<ManagedComponent> components = null;
+        ComponentType componentType = ConversionUtils.getComponentType(resourceType);
+        Set<ManagedComponent> components;
         try
         {
             components = managementView.getComponentsForType(componentType);
         }
         catch (Exception e)
         {
-            log.error("Unable to get components for type " + componentType, e);
+            throw new IllegalStateException("Failed to get component types for " + resourceType + ".", e);
         }
 
-        if (components != null)
+        Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>(components.size());
+        /* Create a resource for each managed component found. We know all managed components will be of a
+           type we're interested in, so we can just add them all. There may be need for multiple iterations
+           over lists retrieved from different component types, but that is possible through the current API.
+        */
+        for (ManagedComponent component : components)
         {
-            discoveredResources = new HashSet<DiscoveredResourceDetails>(components.size());
-            /* Create a resource for each managed component found. We know all managed components will be of a
-               type we're interested in, so we can just add them all. There may be need for multiple iterations
-               over lists retrieved from different component types, but that is possible through the current API.
-            */
-            for (ManagedComponent component : components)
-            {
-                String resourceName = component.getName();
+            String resourceName = component.getName();
 
-                String resourceKey = componentType.getType() + ":" +
-                        componentType.getSubtype() + ":" + resourceName;
+            String resourceKey = componentType.getType() + ":" +
+                    componentType.getSubtype() + ":" + resourceName;
 
-                String version = "?"; // TODO                
-                DiscoveredResourceDetails resource =
-                        new DiscoveredResourceDetails(resourceType,
-                                resourceKey,
-                                resourceName,
-                                version,
-                                resourceType.getDescription(),
-                                resourceDiscoveryContext.getDefaultPluginConfiguration(),
-                                null);
+            String version = "?"; // TODO
+            DiscoveredResourceDetails resource =
+                    new DiscoveredResourceDetails(resourceType,
+                            resourceKey,
+                            resourceName,
+                            version,
+                            resourceType.getDescription(),
+                            discoveryContext.getDefaultPluginConfiguration(),
+                            null);
 
-                resource.getPluginConfiguration().put(new PropertySimple(ManagedComponentComponent.COMPONENT_NAME_PROPERTY,
-                        component.getName()));
+            resource.getPluginConfiguration().put(new PropertySimple(ManagedComponentComponent.COMPONENT_NAME_PROPERTY,
+                    component.getName()));
 
-                discoveredResources.add(resource);
-            }
+            discoveredResources.add(resource);
         }
 
         log.debug("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources." );

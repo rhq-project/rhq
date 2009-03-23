@@ -180,32 +180,32 @@
       <onc:quickNav>
          <f:param name="id" value="#{resourceWithAvailability.resource.id}"/>
 
-         <onc:icon name="m" 
+         <onc:icon name="Monitor"
                    url="/rhq/resource/monitor/graphs.xhtml" 
                    alt="Monitor"
                    visible="#{monitorEnabled}">
          </onc:icon>
 
-         <onc:icon name="i" 
+         <onc:icon name="Inventory"
                    url="/rhq/resource/inventory/view.xhtml" 
                    alt="Inventory"/>
 
-         <onc:icon name="a" 
+         <onc:icon name="Alert"
                    url="/rhq/resource/alert/listAlertDefinitions.xhtml" 
                    alt="Alerts" 
                    visible="#{monitorEnabled}"/>
 
-         <onc:icon name="c" 
+         <onc:icon name="Configure"
                    url="/rhq/resource/configuration/view.xhtml" 
                    alt="Configure" 
                    visible="#{resourceWithAvailability.resourceFacets.configuration}"/>
 
-         <onc:icon name="o" 
+         <onc:icon name="Operation"
                    url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml" 
                    alt="Operations" 
                    visible="#{resourceWithAvailability.resourceFacets.operation}"/>
 
-         <onc:icon name="p" 
+         <onc:icon name="Content" 
                    url="/rhq/resource/content/view.xhtml" 
                    alt="Content"
                    visible="#{resourceWithAvailability.resourceFacets.content}"/>

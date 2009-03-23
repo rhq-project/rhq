@@ -64,8 +64,8 @@ public class IconRenderer extends Renderer {
             writer.startElement("a", icon);
             writer.writeAttribute("href", buildURL(icon), "url");
             writer.startElement("img", icon);
-            String imageBasePath = IMAGES_PATH + "/icon_hub_" + icon.getName().toLowerCase();
-            String imageURL = imageBasePath + ".gif";
+            String imageBasePath = IMAGES_PATH + "/icons/" + icon.getName();
+            String imageURL = imageBasePath + "_grey_16.png";
             writer.writeAttribute("src", imageURL, null);
             writer.writeAttribute("alt", icon.getAlt(), "alt");
             writer.writeAttribute("title", icon.getAlt(), "alt");

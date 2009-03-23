@@ -67,6 +67,9 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
+ * Generates an RHQ plugin descriptor based on the ManagedComponent types represented in a Profile Service
+ * ManagementView. 
+ *
  * @author Ian Springer
  */
 public class PluginDescriptorGenerator {
@@ -138,13 +141,23 @@ public class PluginDescriptorGenerator {
                 LOG.warn("No components of type [" + componentType + "] found.");
                 continue;
             }
-            // Use the first one as a representative sample of the type.
-            ManagedComponent component = components.iterator().next();
-            // First convert ManagedComponent to ResourceType...
-            ResourceType resourceType = MetadataConversionUtils.convertComponentToResourceType(component);
-            // Then convert ResourceType to JAXB ServiceDescriptor object.
-            convertAndMergeResourceType(pluginDescriptor, resourceType);
+            if (componentType.getSubtype().equals("*")) {
+                for (ManagedComponent component : components)
+                    addComponentToDescriptor(pluginDescriptor, component);
+            } else {
+                // Use the first one as a representative sample of the type.
+                ManagedComponent component = components.iterator().next();
+                addComponentToDescriptor(pluginDescriptor, component);
+            }
         }
+    }
+
+    private static void addComponentToDescriptor(PluginDescriptor pluginDescriptor, ManagedComponent component)
+    {
+        // First convert ManagedComponent to ResourceType...
+        ResourceType resourceType = MetadataConversionUtils.convertComponentToResourceType(component);
+        // Then convert ResourceType to JAXB ServiceDescriptor object.
+        convertAndMergeResourceType(pluginDescriptor, resourceType);
     }
 
     private static void convertAndMergeResourceType(PluginDescriptor pluginDescriptor, ResourceType resourceType) {
@@ -293,18 +306,32 @@ public class PluginDescriptorGenerator {
 
     private static Set<ComponentType> getKnownComponentTypes() {
         Set<ComponentType> knownComponentTypes = new LinkedHashSet<ComponentType>();
-        for (KnownComponentTypes.ConnectionFactoryTypes type : KnownComponentTypes.ConnectionFactoryTypes.values()) {
-            knownComponentTypes.add(type.getType());
+        for (KnownComponentTypes.DataSourceTypes componentType : KnownComponentTypes.DataSourceTypes.values()) {
+            knownComponentTypes.add(componentType.getType());
         }
-        for (KnownComponentTypes.DataSourceTypes type : KnownComponentTypes.DataSourceTypes.values()) {
-            knownComponentTypes.add(type.getType());
+        for (KnownComponentTypes.ConnectionFactoryTypes componentType : KnownComponentTypes.ConnectionFactoryTypes.values()) {
+            knownComponentTypes.add(componentType.getType());
         }
-        for (KnownComponentTypes.EJB type : KnownComponentTypes.EJB.values()) {
-            knownComponentTypes.add(type.getType());
+
+        for (KnownComponentTypes.JMSDestination componentType : KnownComponentTypes.JMSDestination.values()) {
+            knownComponentTypes.add(componentType.getType());
         }
-        for (KnownComponentTypes.JMSDestination type : KnownComponentTypes.JMSDestination.values()) {
-            knownComponentTypes.add(type.getType());
+        for (KnownComponentTypes.EJB componentType : KnownComponentTypes.EJB.values()) {
+            knownComponentTypes.add(componentType.getType());
         }
+        for (KnownComponentTypes.MBean componentType : KnownComponentTypes.MBean.values()) {
+            knownComponentTypes.add(componentType.getType());
+        }
+        knownComponentTypes.add(new ComponentType("MBean", "Platform"));
+        knownComponentTypes.add(new ComponentType("MBean", "Web"));
+        for (KnownComponentTypes.MCBean componentType : KnownComponentTypes.MCBean.values()) {
+            knownComponentTypes.add(componentType.getType());
+        }
+        knownComponentTypes.add(new ComponentType("MCBean", "JTA"));
+        knownComponentTypes.add(new ComponentType("MCBean", "Security"));
+        knownComponentTypes.add(new ComponentType("MCBean", "ServicebindingManager"));
+        knownComponentTypes.add(new ComponentType("MCBean", "ServiceBindingSet"));
+        knownComponentTypes.add(new ComponentType("MCBean", "ServicebindingStore"));
         return knownComponentTypes;
     }
 

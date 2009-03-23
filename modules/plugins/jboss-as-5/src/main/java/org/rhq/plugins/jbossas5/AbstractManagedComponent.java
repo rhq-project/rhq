@@ -59,7 +59,7 @@ public abstract class AbstractManagedComponent implements ConfigurationFacet {
         }
         Map<String, PropertySimple> customProps =
                 ResourceComponentUtils.getCustomProperties(this.resourceContext.getPluginConfiguration());
-        if (getLog().isDebugEnabled()) getLog().debug("*** BEFORE LOAD:\n"
+        if (getLog().isDebugEnabled()) getLog().debug("*** AFTER LOAD:\n"
                 + DebugUtils.convertPropertiesToString(managedProperties));
         @SuppressWarnings({"UnnecessaryLocalVariable"})
         Configuration resourceConfig = ConversionUtils.convertManagedObjectToConfiguration(managedProperties,

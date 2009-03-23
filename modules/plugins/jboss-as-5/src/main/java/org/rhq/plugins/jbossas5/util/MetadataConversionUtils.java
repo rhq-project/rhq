@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.io.Serializable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,6 +34,7 @@ import org.jboss.managed.api.ManagedOperation;
 import org.jboss.managed.api.ManagedParameter;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.managed.api.ManagedObject;
 import org.jboss.managed.api.annotation.ViewUse;
 import org.jboss.metatype.api.types.CompositeMetaType;
 import org.jboss.metatype.api.types.MetaType;
@@ -43,6 +45,9 @@ import org.jboss.metatype.api.types.TableMetaType;
 import org.jboss.metatype.api.types.PropertiesMetaType;
 import org.jboss.metatype.api.values.CompositeValue;
 import org.jboss.metatype.api.values.MetaValue;
+import org.jboss.metatype.api.values.GenericValue;
+import org.jboss.metatype.api.values.CollectionValue;
+import org.jboss.metatype.api.values.ArrayValue;
 
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
@@ -96,7 +101,11 @@ public class MetadataConversionUtils {
     {
         LOG.debug("Creating ResourceType for ManagedComponent type [" + component.getType() + "]...");
         ComponentType componentType = component.getType();
-        String name = componentType.getSubtype() + " " + componentType.getType();
+        String name;
+        if (componentType.getSubtype().equals("*")) 
+            name = componentType.getSubtype() + " " + componentType.getType();
+        else
+            name = component.getName() + " " + componentType.getType();
         ResourceType resourceType = new ResourceType(name, PLUGIN_NAME, ResourceCategory.SERVICE, null);
         Set<OperationDefinition> opDefs = convertManagedOperationsToOperationDefinitions(component);
         for (OperationDefinition opDef : opDefs)
@@ -141,7 +150,8 @@ public class MetadataConversionUtils {
     }
 
     private static PropertyDefinition convertParameterToPropertyDefinition(ManagedParameter parameter) {
-        PropertyDefinition propDef = convertMetaTypeToPropertyDefinition(parameter.getMetaType(), parameter.getName());
+        PropertyDefinition propDef = convertMetaTypeToPropertyDefinition(parameter.getMetaType(), parameter.getName(),
+                parameter.getValue());
         String desc = (!parameter.getName().equals(parameter.getDescription())) ? parameter.getDescription() : null;
         propDef.setDescription(desc);
         // TODO: Convert parameter.getLegalValues() to enum defs.
@@ -152,42 +162,68 @@ public class MetadataConversionUtils {
         return propDef;
     }
 
-    private static PropertyDefinitionList convertMetaTypeToPropertyDefinitionList(MetaType metaType, String name) {
+    private static PropertyDefinitionList convertMetaTypeToPropertyDefinitionList(MetaType metaType, String name,
+                                                                                  MetaValue metaValue) {
         MetaType elementType;
+        MetaValue elementValue = null;
         if (metaType.isCollection()) {
             CollectionMetaType collectionMetaType = (CollectionMetaType)metaType;
             elementType = collectionMetaType.getElementType();
+            if (metaValue != null) {
+                CollectionValue collectionValue = (CollectionValue)metaValue;
+                MetaValue[] elements = collectionValue.getElements();
+                if (elements != null && elements.length != 0)
+                    elementValue = elements[0];
+            }
         } else if (metaType.isArray()) {
             ArrayMetaType arrayMetaType = (ArrayMetaType)metaType;
             elementType = arrayMetaType.getElementType();
+            if (metaValue != null) {
+                ArrayValue arrayValue = (ArrayValue)metaValue;
+                if (arrayValue.getLength() != 0 && arrayValue.getValue(0) instanceof MetaValue)
+                    elementValue = (MetaValue)arrayValue.getValue(0);
+            }
         } else {
             throw new IllegalStateException("Unsupported MetaType: " + metaType);
         }
-        PropertyDefinition elementPropDef = convertMetaTypeToPropertyDefinition(elementType, "element");
+        PropertyDefinition elementPropDef = convertMetaTypeToPropertyDefinition(elementType, "element", elementValue);
         @SuppressWarnings({"UnnecessaryLocalVariable"})
         PropertyDefinitionList propDefList = new PropertyDefinitionList(name, null, true, elementPropDef);
         return propDefList;
     }
 
-    private static PropertyDefinitionMap convertMetaTypeToPropertyDefinitionMap(MetaType metaType, String name) {
+    private static PropertyDefinitionMap convertMetaTypeToPropertyDefinitionMap(MetaType metaType, String name,
+                                                                                MetaValue metaValue) {
         PropertyDefinitionMap propDefMap = new PropertyDefinitionMap(name, null, false);
         if (metaType.isComposite()) {
             if (!(metaType instanceof MapCompositeMetaType)) {
                 CompositeMetaType compositeMetaType = (CompositeMetaType)metaType;
                 for (String itemName : compositeMetaType.itemSet()) {
                     MetaType itemMetaType = compositeMetaType.getType(itemName);
-                    PropertyDefinition itemPropDef = convertMetaTypeToPropertyDefinition(itemMetaType, itemName);
+                    PropertyDefinition itemPropDef = convertMetaTypeToPropertyDefinition(itemMetaType, itemName, null);
                     propDefMap.put(itemPropDef);
                     String desc = (!itemName.equals(compositeMetaType.getDescription(itemName))) ?
                             compositeMetaType.getDescription(itemName) : null;
                     itemPropDef.setDescription(desc);
                 }
             }
+        } else if (metaType.isGeneric()) {
+            if (metaValue != null) {
+                GenericValue genericValue = (GenericValue)metaValue;
+                Serializable value = genericValue.getValue();
+                if (value != null && value instanceof ManagedObject) {
+                    ManagedObject managedObject = (ManagedObject)value;
+                    for (ManagedProperty managedProp : managedObject.getProperties().values()) {
+                        PropertyDefinition itemPropDef = convertManagedPropertyToPropertyDefinition(managedProp);
+                        propDefMap.put(itemPropDef);
+                    }
+                }
+            }
         } else if (metaType.isTable()) {
             TableMetaType tableMetaType = (TableMetaType)metaType;
             CompositeMetaType itemMetaType = tableMetaType.getRowType();
             for (String itemName : tableMetaType.getIndexNames()) {
-                PropertyDefinition itemPropDef = convertMetaTypeToPropertyDefinition(itemMetaType, itemName);
+                PropertyDefinition itemPropDef = convertMetaTypeToPropertyDefinition(itemMetaType, itemName, null);
                 propDefMap.put(itemPropDef);
             }
         } else if (metaType instanceof PropertiesMetaType) {
@@ -202,7 +238,7 @@ public class MetadataConversionUtils {
         MetaType returnType = operation.getReturnType();
         if (returnType.getClassName().equals(Void.class.getName()))
             return null;        
-        PropertyDefinition propDef = convertMetaTypeToPropertyDefinition(returnType, "result");
+        PropertyDefinition propDef = convertMetaTypeToPropertyDefinition(returnType, "result", null);
         ConfigurationDefinition configDef = new ConfigurationDefinition(operation.getName(), operation.getDescription());
         configDef.put(propDef);
         return configDef;
@@ -285,7 +321,7 @@ public class MetadataConversionUtils {
 
     private static PropertyDefinition convertManagedPropertyToPropertyDefinition(ManagedProperty prop) {
         PropertyDefinition propDef;
-        propDef = convertMetaTypeToPropertyDefinition(prop.getMetaType(), prop.getName());
+        propDef = convertMetaTypeToPropertyDefinition(prop.getMetaType(), prop.getName(), prop.getValue());
         String desc = (!prop.getName().equals(prop.getDescription())) ? prop.getDescription() : null;
         propDef.setDescription(desc);
         propDef.setRequired(prop.isMandatory());
@@ -297,16 +333,17 @@ public class MetadataConversionUtils {
         return propDef;
     }
 
-    private static PropertyDefinition convertMetaTypeToPropertyDefinition(MetaType metaType, String propName) {
+    private static PropertyDefinition convertMetaTypeToPropertyDefinition(MetaType metaType, String propName,
+                                                                          MetaValue metaValue) {
         PropertyDefinition propDef;
         if (metaType.isSimple() || metaType.isEnum()) {
             PropertySimpleType propType = convertClassToPropertySimpleType(metaType.getClassName());
             propDef = new PropertyDefinitionSimple(propName, null, false, propType);
         } else if (metaType.isCollection() || metaType.isArray()) {
-            propDef = convertMetaTypeToPropertyDefinitionList(metaType, propName);
+            propDef = convertMetaTypeToPropertyDefinitionList(metaType, propName, metaValue);
         } else if (metaType.isComposite() || metaType.isGeneric() || metaType.isTable() ||
                    metaType instanceof PropertiesMetaType) {
-            propDef = convertMetaTypeToPropertyDefinitionMap(metaType, propName);
+            propDef = convertMetaTypeToPropertyDefinitionMap(metaType, propName, metaValue);
         } else {
             throw new IllegalStateException("Unsupported MetaType: " + metaType);
         }

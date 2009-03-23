@@ -142,42 +142,63 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
         if (this.connection == null) {
             try {
                 Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-                String installationPath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_INSTALLATION_PATH, null);
 
                 ConnectionSettings connectionSettings = new ConnectionSettings();
 
-                String connectionTypeDescriptorClass = pluginConfig.getSimple(JMXDiscoveryComponent.CONNECTION_TYPE).getStringValue();
-                PropertySimple serverUrl = pluginConfig.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY);
+                String connectionTypeDescriptorClass = pluginConfig.getSimple(JMXDiscoveryComponent.CONNECTION_TYPE)
+                    .getStringValue();
+                PropertySimple serverUrl = pluginConfig
+                    .getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY);
 
-                connectionSettings.initializeConnectionType((ConnectionTypeDescriptor) Class.forName(connectionTypeDescriptorClass).newInstance());
+                connectionSettings.initializeConnectionType((ConnectionTypeDescriptor) Class.forName(
+                    connectionTypeDescriptorClass).newInstance());
                 // if not provided use the default serverUrl
                 if (null != serverUrl) {
                     connectionSettings.setServerUrl(serverUrl.getStringValue());
                 }
+
                 connectionSettings.setPrincipal(pluginConfig.getSimpleValue(PRINCIPAL_CONFIG_PROP, null));
                 connectionSettings.setCredentials(pluginConfig.getSimpleValue(CREDENTIALS_CONFIG_PROP, null));
-                connectionSettings.setLibraryURI(installationPath);
-
-                ConnectionFactory connectionFactory = new ConnectionFactory();
-                connectionFactory.discoverServerClasses(connectionSettings);
 
                 if (connectionSettings.getAdvancedProperties() == null) {
                     connectionSettings.setAdvancedProperties(new Properties());
                 }
 
-                // Tell EMS to make copies of jar files so that the ems classloader doesn't lock
-                // application files (making us unable to update them)  Bug: JBNADM-670
-                connectionSettings.getControlProperties().setProperty(ConnectionFactory.COPY_JARS_TO_TEMP, String.valueOf(Boolean.TRUE));
+                ConnectionFactory connectionFactory = new ConnectionFactory();
 
-                // But tell it to put them in a place that we clean up when shutting down the agent (make sure tmp dir exists)
-                File tempDir = resourceContext.getTemporaryDirectory();
-                if (!tempDir.exists()) {
-                    tempDir.mkdirs();
+                // EMS can connect to a Tomcat Server without using version-compatible jars from a local TC install. So,
+                // If we are connecting to a remote TC Server and the install path is not valid on the local host, don't
+                // configure to use the local jars. But, to be safe, if for some overlooked or future reason we require
+                // the jars then use them if they are available. Note, for a remote TC Server that would mean you'd have
+                // to have a version compatible local install and set the install path to the local path, even though
+                // the server url was remote. 
+                String installationPath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_INSTALLATION_PATH, null);
+                boolean hasLocalJars = new File(installationPath).isDirectory();
+
+                if (hasLocalJars) {
+                    connectionSettings.setLibraryURI(installationPath);
+                    connectionFactory.discoverServerClasses(connectionSettings);
+
+                    // Tell EMS to make copies of jar files so that the ems classloader doesn't lock
+                    // application files (making us unable to update them)  Bug: JBNADM-670
+                    connectionSettings.getControlProperties().setProperty(ConnectionFactory.COPY_JARS_TO_TEMP,
+                        String.valueOf(Boolean.TRUE));
+
+                    // But tell it to put them in a place that we clean up when shutting down the agent (make sure tmp dir exists)
+                    File tempDir = resourceContext.getTemporaryDirectory();
+                    if (!tempDir.exists()) {
+                        tempDir.mkdirs();
+                    }
+                    connectionSettings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR,
+                        tempDir.getAbsolutePath());
+
+                    log.info("Loading connection [" + connectionSettings.getServerUrl() + "] with install path ["
+                        + connectionSettings.getLibraryURI() + "] and temp directory [" + tempDir.getAbsolutePath()
+                        + "]");
+                } else {
+                    log.info("Loading connection [" + connectionSettings.getServerUrl()
+                        + "] ignoring remote install path [" + installationPath + "]");
                 }
-                connectionSettings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR, tempDir.getAbsolutePath());
-
-                log.info("Loading connection [" + connectionSettings.getServerUrl() + "] with install path [" + connectionSettings.getLibraryURI()
-                    + "] and temp directory [" + tempDir.getAbsolutePath() + "]");
 
                 ConnectionProvider connectionProvider = connectionFactory.getConnectionProvider(connectionSettings);
                 this.connection = connectionProvider.connect();
@@ -187,7 +208,8 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
                 this.consecutiveConnectionErrors = 0;
 
                 if (log.isDebugEnabled())
-                    log.debug("Successfully made connection to the AS instance for resource [" + this.resourceContext.getResourceKey() + "]");
+                    log.debug("Successfully made connection to the AS instance for resource ["
+                        + this.resourceContext.getResourceKey() + "]");
             } catch (Exception e) {
 
                 // The connection will be established even in the case that the principal cannot be authenticated,
@@ -204,12 +226,14 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
                 // Since the connection is attempted each time it's used, failure to connect could result in log
                 // file spamming. Log it once for every 10 consecutive times it's encountered. 
                 if (consecutiveConnectionErrors % 10 == 0) {
-                    log.warn("Could not establish connection to the Tomcat instance [" + (consecutiveConnectionErrors + 1) + "] times for resource ["
+                    log.warn("Could not establish connection to the Tomcat instance ["
+                        + (consecutiveConnectionErrors + 1) + "] times for resource ["
                         + resourceContext.getResourceKey() + "]", e);
                 }
 
                 if (log.isDebugEnabled())
-                    log.debug("Could not connect to the Tomcat instance for resource [" + resourceContext.getResourceKey() + "]", e);
+                    log.debug("Could not connect to the Tomcat instance for resource ["
+                        + resourceContext.getResourceKey() + "]", e);
 
                 consecutiveConnectionErrors++;
 
@@ -231,12 +255,14 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
         String credentials = pluginConfig.getSimpleValue(TomcatServerComponent.CREDENTIALS_CONFIG_PROP, null);
         if ((principal != null) && (credentials == null)) {
             throw new InvalidPluginConfigurationException("If the '" + TomcatServerComponent.PRINCIPAL_CONFIG_PROP
-                + "' connection property is set, the '" + TomcatServerComponent.CREDENTIALS_CONFIG_PROP + "' connection property must also be set.");
+                + "' connection property is set, the '" + TomcatServerComponent.CREDENTIALS_CONFIG_PROP
+                + "' connection property must also be set.");
         }
 
         if ((credentials != null) && (principal == null)) {
             throw new InvalidPluginConfigurationException("If the '" + TomcatServerComponent.CREDENTIALS_CONFIG_PROP
-                + "' connection property is set, the '" + TomcatServerComponent.PRINCIPAL_CONFIG_PROP + "' connection property must also be set.");
+                + "' connection property is set, the '" + TomcatServerComponent.PRINCIPAL_CONFIG_PROP
+                + "' connection property must also be set.");
         }
     }
 
@@ -259,7 +285,8 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
                 Throwable cause = e.getCause();
 
                 if (cause instanceof SecurityException) {
-                    throw new InvalidPluginConfigurationException("Invalid JMX credentials specified for connecting to this server.", e);
+                    throw new InvalidPluginConfigurationException(
+                        "Invalid JMX credentials specified for connecting to this server.", e);
                 }
             }
         }
@@ -338,7 +365,8 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
     static File resolvePathRelativeToHomeDir(Configuration pluginConfig, String path) {
         File configDir = new File(path);
         if (!configDir.isAbsolute()) {
-            String jbossHomeDir = getRequiredPropertyValue(pluginConfig, TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH);
+            String jbossHomeDir = getRequiredPropertyValue(pluginConfig,
+                TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH);
             configDir = new File(jbossHomeDir, path);
         }
 
@@ -360,7 +388,8 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
         invokeOperation(SupportedOperations.STORECONFIG.name(), new Configuration());
     }
 
-    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException, Exception {
+    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
+        Exception {
         SupportedOperations operation = Enum.valueOf(SupportedOperations.class, name.toUpperCase());
 
         return operationsDelegate.invoke(operation, parameters);

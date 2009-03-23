@@ -60,7 +60,9 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
     /**
      * Indicates the version information could not be determined.
      */
+    public static final String UNKNOWN_PORT = "Unknown Port";
     public static final String UNKNOWN_VERSION = "Unknown Version";
+
     public static final String PROPERTY_CATALINA_BASE = "-Dcatalina.base=";
     public static final String PROPERTY_CATALINA_HOME = "-Dcatalina.home=";
 
@@ -83,13 +85,17 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
     private static final Pattern TOMCAT_5_5_AND_LATER_VERSION_PATTERN = Pattern.compile(".*Server number:.*");
     private static final Pattern TOMCAT_5_0_AND_EARLIER_VERSION_PATTERN = Pattern.compile(".*Version:.*");
 
+    /**
+     * Pattern to parse out host/port for manual add of remote server 
+     */
+    private static final Pattern TOMCAT_MANAGER_URL_PATTERN = Pattern.compile(".*//(.*):(\\d+)/.*");
+
     /** 
      * EWS Install path pattern used to distinguish from standalone Apache Tomcat installs. Good up through a TC V9
      */
     private static final Pattern EWS_PATTERN = Pattern.compile(".*ews.*tomcat[5-9]");
 
-    @SuppressWarnings("unchecked")
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> context) {
         log.debug("Discovering Tomcat servers...");
 
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
@@ -115,6 +121,19 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
             }
         }
 
+        // Process any manually-added resources.
+        List<Configuration> contextPluginConfigurations = context.getPluginConfigurations();
+        for (Configuration pluginConfiguration : contextPluginConfigurations) {
+            ProcessInfo processInfo = null;
+            DiscoveredResourceDetails resource = parsePluginConfig(context, pluginConfiguration);
+            if (resource != null)
+                if (log.isDebugEnabled()) {
+                    log.debug("Verified Tomcat configuration: " + pluginConfiguration);
+                }
+
+            resources.add(resource);
+        }
+
         return resources;
     }
 
@@ -127,11 +146,9 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
      *
      * @return resource object describing the Tomcat server running in the specified process
      */
-    @SuppressWarnings("unchecked")
-    private DiscoveredResourceDetails parseTomcatProcess(ResourceDiscoveryContext context,
+    private DiscoveredResourceDetails parseTomcatProcess(ResourceDiscoveryContext<PlatformComponent> context,
         ProcessScanResult autoDiscoveryResult) {
-        // Pull out data from the discovery call
-        SystemInfo systemInfo = context.getSystemInformation();
+
         ProcessInfo processInfo = autoDiscoveryResult.getProcessInfo();
         String[] commandLine = processInfo.getCommandLine();
 
@@ -146,11 +163,14 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
         }
 
         String installationPath = determineInstallationPath(processInfo);
+
+        // Pull out data from the discovery call
+        SystemInfo systemInfo = context.getSystemInformation();
+        String hostname = systemInfo.getHostname();
         TomcatConfig tomcatConfig = parseTomcatConfig(installationPath);
 
         // Create pieces necessary for the resource creation
         String resourceVersion = determineVersion(installationPath, systemInfo);
-        String hostname = systemInfo.getHostname();
         boolean isEWS = isEWS(installationPath);
         String productName = isEWS ? PRODUCT_NAME_EWS : PRODUCT_NAME_APACHE;
         String productDescription = (isEWS ? PRODUCT_DESCRIPTION_EWS : PRODUCT_DESCRIPTION_APACHE)
@@ -160,10 +180,68 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
             + ")";
         String resourceKey = installationPath;
 
-        Configuration pluginConfiguration = populatePluginConfiguration(installationPath, commandLine);
+        Configuration pluginConfiguration = new Configuration();
+        populatePluginConfiguration(pluginConfiguration, installationPath, commandLine);
 
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
             resourceName, resourceVersion, productDescription, pluginConfiguration, processInfo);
+
+        return resource;
+    }
+
+    /**
+     * Processes a manually specified plugin configuration. If a standalone Apache or EWS Tomcat instance
+     * return a resource ready to be returned as part of the discovery report.
+     *
+     * @param  context             discovery context making this call
+     * @param  pluginConfiguration The manually specified plugin config
+     *
+     * @return resource object describing the Tomcat server running in the specified process
+     */
+    private DiscoveredResourceDetails parsePluginConfig(ResourceDiscoveryContext<PlatformComponent> context,
+        Configuration pluginConfiguration) {
+
+        String installationPath = pluginConfiguration.getSimpleValue(
+            TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH, "invalid");
+        File installDir = new File(installationPath);
+        SystemInfo systemInfo = context.getSystemInformation();
+        String hostname = systemInfo.getHostname();
+        String version = UNKNOWN_VERSION;
+        String port = UNKNOWN_PORT;
+        String address = null;
+
+        // if the specified install dir does not exist locally assume this is a remote Tomcat server
+        // We can't determine version. Try to get the hostname from the connect url
+        if (!installDir.isDirectory()) {
+            log.info("Manually added Tomcat Server directory does not exist locally. Assuming remote Tomcat Server: "
+                + installationPath);
+
+            Matcher matcher = TOMCAT_MANAGER_URL_PATTERN.matcher(pluginConfiguration.getSimpleValue(
+                JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, null));
+            if (matcher.find()) {
+                hostname = matcher.group(1);
+                address = hostname;
+                port = matcher.group(2);
+            }
+        } else {
+            TomcatConfig tomcatConfig = parseTomcatConfig(installationPath);
+            version = determineVersion(installationPath, systemInfo);
+            address = tomcatConfig.getAddress();
+            hostname = systemInfo.getHostname();
+            port = tomcatConfig.getPort();
+        }
+
+        boolean isEWS = isEWS(installationPath);
+        String productName = isEWS ? PRODUCT_NAME_EWS : PRODUCT_NAME_APACHE;
+        String productDescription = (isEWS ? PRODUCT_DESCRIPTION_EWS : PRODUCT_DESCRIPTION_APACHE)
+            + ((hostname == null) ? "" : (" (" + hostname + ")"));
+        String resourceName = productName + " (" + ((address == null) ? "" : (address + ":")) + port + ")";
+        String resourceKey = installationPath;
+
+        populatePluginConfiguration(pluginConfiguration, installationPath, null);
+
+        DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
+            resourceName, version, productDescription, pluginConfiguration, null);
 
         return resource;
     }
@@ -333,24 +411,34 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
         return version;
     }
 
-    private Configuration populatePluginConfiguration(String installationPath, String[] commandLine) {
-        Configuration configuration = new Configuration();
+    private void populatePluginConfiguration(Configuration configuration, String installationPath, String[] commandLine) {
 
-        configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH, installationPath));
+        if (null == configuration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH, null)) {
+            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH,
+                installationPath));
+        }
 
         String binPath = installationPath + File.separator + "bin" + File.separator;
         String scriptExtension = (File.separatorChar == '/') ? ".sh" : ".bat";
-        configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, binPath + "startup"
-            + scriptExtension));
-        configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, binPath + "shutdown"
-            + scriptExtension));
+
+        if (null == configuration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, null)) {
+            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, binPath + "startup"
+                + scriptExtension));
+        }
+        if (null == configuration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, null)) {
+            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, binPath
+                + "shutdown" + scriptExtension));
+        }
 
         populateJMXConfiguration(configuration, commandLine);
-
-        return configuration;
     }
 
     private void populateJMXConfiguration(Configuration configuration, String[] commandLine) {
+        // null for manual add, properties will already be set
+        if (null == commandLine) {
+            return;
+        }
+
         String portProp = "com.sun.management.jmxremote.port";
 
         String port = null;

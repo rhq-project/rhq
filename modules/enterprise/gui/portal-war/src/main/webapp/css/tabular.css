@@ -84,7 +84,7 @@ div.subtab-hover {
 
 div.subtab-common {
    padding: 3px 1px 3px 1px;
-   background-color: #D9D9D9;
+    background-color:#E3DED5;
    border-width: 0px 0px 0px 0px;
    border-style: line;
    width: 100px;
@@ -95,9 +95,14 @@ div.subtab-common {
    font-variant: small-caps;
 }
 
+.subtab-bar {
+    background-color: #E3DED5;
+}
+
 div.subtab-spacer {
    width: 100%;
-   color: #D9D9D9;
+   background-color: #E3DED5;
+   color: #E3DED5;
    padding-left: 0px;
    padding-right: 0px;
 }

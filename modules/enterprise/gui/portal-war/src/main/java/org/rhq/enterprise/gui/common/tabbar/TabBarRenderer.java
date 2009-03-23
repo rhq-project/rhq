@@ -109,13 +109,13 @@ public class TabBarRenderer extends Renderer {
 
         // <table width="100%" border="0" cellspacing="0" cellpadding="0">
         writer.startElement("table", tabBar);
+        writer.writeAttribute("class", "subtab-bar", null);
         writer.writeAttribute("width", "100%", null);
         writer.writeAttribute("border", "0", null);
         writer.writeAttribute("cellspacing", "0", null);
         writer.writeAttribute("cellpadding", "0", null);
 
         writer.startElement("tr", tabBar);
-        writer.writeAttribute("style", "background-color: #D9D9D9;", null);
         writeCSSEdgeSpacerCell(writer, tabBar, true, true);
 
         // Write out the actual subtabs, which already rendered themselves earlier.

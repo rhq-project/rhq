@@ -51,10 +51,16 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
             Resource resource = configUpdate.getResource();
             if (resource != null)
                 LOG.debug("Resource configuration update [" + configUpdate.getId() + "] for " + resource
-                        + " completed with status [" + response.getStatus() + "].");
+                    + " completed with status [" + response.getStatus() + "].");
         }
 
+        /*
+         * perform the check for completed group updates AFTER completing the individual resource configuration update;
+         * this will perform the work in two separate transactions, thus ensuring that multiple updates from the same
+         * group update see each others' results (RHQ-1810)
+         */
         configurationManager.completeResourceConfigurationUpdate(response);
+        configurationManager.checkForCompletedGroupResourceConfigurationUpdate(configUpdateId);
     }
 
     public void persistUpdatedResourceConfiguration(int resourceId, Configuration resourceConfiguration) {

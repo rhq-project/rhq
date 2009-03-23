@@ -162,6 +162,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         configurationManager.completePluginConfigurationUpdate(update);
     }
 
+    /* 
+     * this method will not fire off the update asynchronously (like the completeResourceConfigurationUpdate method
+     * does); instead, it will block until an update response is retrieved from the agent-side resource 
+     */
     public void completePluginConfigurationUpdate(PluginConfigurationUpdate update) {
         // use EJB3 reference to ourself so that transaction semantics are correct
         ConfigurationUpdateResponse response = configurationManager.executePluginConfigurationUpdate(update);
@@ -719,7 +723,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     request.setStatus(ConfigurationUpdateStatus.FAILURE);
                     // If it's part of a group update, check if all member updates of the group update have completed,
                     // and, if so, update the group update's status.
-                    checkForCompletedGroupResourceConfigurationUpdate(request);
+                    checkForCompletedGroupResourceConfigurationUpdate(request.getId());
                 }
             }
         } catch (Throwable t) {
@@ -1135,12 +1139,17 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         update.setStatus(response.getStatus());
         update.setErrorMessage(response.getErrorMessage());
 
-        checkForCompletedGroupResourceConfigurationUpdate(update);
+        /* 
+         * instead of checking for completed group resource configuration updates here, let our caller (the
+         * ConfigurationServerService) do it so that this transaction completes before the check begins
+         */
         return;
     }
 
     @SuppressWarnings("unchecked")
-    private void checkForCompletedGroupResourceConfigurationUpdate(ResourceConfigurationUpdate resourceConfigUpdate) {
+    public void checkForCompletedGroupResourceConfigurationUpdate(int resourceConfigUpdateId) {
+        ResourceConfigurationUpdate resourceConfigUpdate = entityManager.find(ResourceConfigurationUpdate.class,
+            resourceConfigUpdateId);
         if (resourceConfigUpdate.getStatus() == ConfigurationUpdateStatus.INPROGRESS)
             // If this update isn't done, then, by definition, the group update isn't done either.
             return;

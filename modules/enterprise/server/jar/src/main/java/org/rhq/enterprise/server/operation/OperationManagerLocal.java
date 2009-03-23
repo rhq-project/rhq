@@ -329,6 +329,24 @@ public interface OperationManagerLocal {
     OperationHistory updateOperationHistory(Subject whoami, OperationHistory history);
 
     /**
+     * This is, for all intents and purposes, and internal method.  It should be called just after updating any
+     * OperationHistory element.  To date, this includes two places:
+     * 
+     * a) post-processing hook to updateOperationHistory(Subject whoami, OperationHistory history)
+     * b) embedded inside the logic for checkForTimedOutOperations(Subject)
+     * 
+     * This method will perform the following logic:
+     * 
+     * 1) checks whether the entity corresponding to the passed id is part of a larger GroupOperationHistory
+     * 2) if #1 is true, it will further check whether that entity was the last element from the group to complete
+     * 3) if #2 is true, it will perform the necessary logic to moving the associated GroupOperationHistory entity
+     *    to the appropriate termination state
+     * 
+     * @param historyId the integer id of the OperationHistory entity that needs to be checked
+     */
+    void checkForCompletedGroupOperation(int historyId);
+
+    /**
      * Cancels a currently in-progress operation. Doing this will attempt to stop the invocation if it is currently
      * running on the agent.
      *

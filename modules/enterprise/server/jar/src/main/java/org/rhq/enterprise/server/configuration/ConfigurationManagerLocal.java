@@ -251,6 +251,8 @@ public interface ConfigurationManagerLocal {
      */
     void completeResourceConfigurationUpdate(ConfigurationUpdateResponse response);
 
+    void checkForCompletedGroupResourceConfigurationUpdate(int resourceConfigUpdateId);
+
     ConfigurationUpdateResponse executePluginConfigurationUpdate(PluginConfigurationUpdate update);
 
     public void purgePluginConfigurationUpdate(Subject whoami, int configurationUpdateId, boolean purgeInProgress);

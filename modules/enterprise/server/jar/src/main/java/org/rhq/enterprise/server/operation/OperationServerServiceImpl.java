@@ -81,6 +81,7 @@ public class OperationServerServiceImpl implements OperationServerService {
             history.setStatus(OperationRequestStatus.FAILURE);
 
             operationManager.updateOperationHistory(superuser, history);
+            operationManager.checkForCompletedGroupOperation(history.getId());
         } catch (Exception e) {
             LOG.error("Failed to update history from failed operation, jobId=[" + jobId + "]. Cause: " + e, e);
             LOG.error("The failed operation [" + jobId + "] had an error of: "
@@ -113,6 +114,7 @@ public class OperationServerServiceImpl implements OperationServerService {
             history.setResults(result);
             history.setStatus(OperationRequestStatus.SUCCESS);
             operationManager.updateOperationHistory(superuser, history);
+            operationManager.checkForCompletedGroupOperation(history.getId());
         } catch (Exception e) {
             LOG.error("Failed to update history from successful operation, jobId=[" + jobId + "]. Cause: " + e, e);
             LOG.error("The successful operation [" + jobId + "] had results of: " + result);
@@ -132,6 +134,7 @@ public class OperationServerServiceImpl implements OperationServerService {
                 history.setErrorMessage("Timed out");
                 history.setStatus(OperationRequestStatus.FAILURE);
                 operationManager.updateOperationHistory(superuser, history);
+                operationManager.checkForCompletedGroupOperation(history.getId());
             } else {
                 // if the operation was not in progress, the server side probably already timed it out
                 LOG.warn("Was told to timeout an operation history but it was not in progress: " + "job-id=[" + jobId

@@ -725,7 +725,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
 
         notifyAlertConditionCacheManager("updateOperationHistory", history);
-        checkForCompletedGroupOperation(history);
         return history;
     }
 
@@ -1135,7 +1134,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
                     // If it's part of a group request, check if all member requests of the group request have completed,
                     // and, if so, update the group request's status.
-                    checkForCompletedGroupOperation(history);
+                    checkForCompletedGroupOperation(history.getId());
                 }
             }
         } catch (Throwable t) {
@@ -1449,7 +1448,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
      *
      * @param history an EJB3 managed (aka attached) history object
      */
-    private void checkForCompletedGroupOperation(OperationHistory history) {
+    public void checkForCompletedGroupOperation(int historyId) {
+        OperationHistory history = entityManager.find(OperationHistory.class, historyId);
         if (!(history instanceof ResourceOperationHistory)) {
             // if the history isn't even a resource history, then we have nothing to do
             return;

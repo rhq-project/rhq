@@ -121,6 +121,7 @@ public class ResourceOperationJob extends OperationJob {
             // failed to even send to the agent, immediately mark the job as failed
             resourceHistory.setErrorMessageFromThrowable(e);
             operationManager.updateOperationHistory(getUserWithSession(schedule.getSubject(), true), resourceHistory);
+            operationManager.checkForCompletedGroupOperation(resourceHistory.getId());
             throw e;
         }
 

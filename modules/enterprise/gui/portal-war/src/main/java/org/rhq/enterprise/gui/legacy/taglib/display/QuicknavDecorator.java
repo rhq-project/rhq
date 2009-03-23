@@ -39,19 +39,19 @@ public abstract class QuicknavDecorator extends ColumnDecorator implements Tag {
     protected static final String QUICKNAV_CELL_STYLE_CLASS = "quicknav-cell";
     protected static final String QUICKNAV_BLOCK_STYLE_CLASS = "quicknav-block";
 
-    private static final IconInfo MONITOR_ICON_INFO = new IconInfo("/images/icon_hub_m.gif", "Monitor");
+    private static final IconInfo MONITOR_ICON_INFO = new IconInfo("/images/icons/Monitor_grey_16.png", "Monitor");
 
-    private static final IconInfo EVENT_ICON_INFO = new IconInfo("/images/icon_hub_e.gif", "Events");
+    private static final IconInfo EVENT_ICON_INFO = new IconInfo("/images/icons/Events_grey_16.png", "Events");
 
-    private static final IconInfo INVENTORY_ICON_INFO = new IconInfo("/images/icon_hub_i.gif", "Inventory");
+    private static final IconInfo INVENTORY_ICON_INFO = new IconInfo("/images/icons/Inventory_grey_16.png", "Inventory");
 
-    private static final IconInfo CONFIGURE_ICON_INFO = new IconInfo("/images/icon_hub_c.gif", "Configure");
+    private static final IconInfo CONFIGURE_ICON_INFO = new IconInfo("/images/icons/Configure_grey_16.png", "Configure");
 
-    private static final IconInfo OPERATIONS_ICON_INFO = new IconInfo("/images/icon_hub_o.gif", "Operations");
+    private static final IconInfo OPERATIONS_ICON_INFO = new IconInfo("/images/icons/Operation_grey_16.png", "Operations");
 
-    private static final IconInfo ALERT_ICON_INFO = new IconInfo("/images/icon_hub_a.gif", "Alerts");
+    private static final IconInfo ALERT_ICON_INFO = new IconInfo("/images/icons/Alert_grey_16.png", "Alerts");
 
-    private static final IconInfo CONTENT_ICON_INFO = new IconInfo("/images/icon_hub_p.gif", "Content"); // aka Packages
+    private static final IconInfo CONTENT_ICON_INFO = new IconInfo("/images/icons/Content_grey_16.png", "Content"); // aka Packages
 
     private static final String ICON_SRC_LOCKED = "/images/icon_hub_locked.gif";
 

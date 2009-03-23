@@ -121,47 +121,47 @@ public class ResourceTreeContextMenuUIBean {
         if (LookupUtil.getSystemManager().isMonitoringEnabled()) {
             url = "/rhq/resource/monitor/graphs.xhtml?id=" + resourceId;
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_m.gif", "Monitor");
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Monitor_grey_16.png", "Monitor");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 
         url = "/rhq/resource/inventory/view.xhtml?id=" + resourceId;
         link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-        image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_i.gif", "Inventory");
+        image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Inventory_grey_16.png", "Inventory");
         image.setStyle(STYLE_QUICK_LINKS_ICON);
 
         if (LookupUtil.getSystemManager().isMonitoringEnabled()) {
             url = "/rhq/resource/alert/listAlertDefinitions.xhtml?id=" + resourceId;
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_a.gif", "Alerts");
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Alert_grey_16.png", "Alerts");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 
         if (facets.isConfiguration()) {
             url = "/rhq/resource/configuration/view.xhtml?id=" + resourceId;
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_c.gif", "Configuration");
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Configure_grey_16.png", "Configuration");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 
         if (facets.isOperation()) {
             url = "/rhq/resource/operation/resourceOperationScheduleNew.xhtml?id=" + resourceId;
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_o.gif", "Operations");
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Operation_grey_16.png", "Operations");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 
         if (facets.isEvent()) {
             url = "/rhq/resource/events/history.xhtml?id=" + resourceId;
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_e.gif", "Events");
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Events_grey_16.png", "Events");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 
         if (facets.isContent()) {
             url = "/rhq/resource/content/view.xhtml?id=" + resourceId;
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_p.gif", "Content");
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Content_grey_16.png", "Content");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 

@@ -117,19 +117,19 @@
          <td class="ListCellCheckbox">
             <c:choose>
                <c:when test="${summary.composite.availability == 0}">
-                  <html:img page="/images/icon_available_red.png" border="0"
+                  <html:img page="/images/icons/availability_red_16.png" border="0"
                             width="15" height="15"/>
                </c:when>
                <c:when test="${summary.composite.availability == 1}">
-                  <html:img page="/images/icon_available_green.png" border="0"
+                  <html:img page="/images/icons/availability_green_16.png" border="0"
                             width="15" height="15"/>
                </c:when>
                <c:when test="${summary.composite.availability < 1 && summary.composite.availability > 0}">
-                  <html:img page="/images/icon_available_yellow.png" border="0"
+                  <html:img page="/images/icons/availability_yellow_16.png" border="0"
                             width="15" height="15"/>
                </c:when>
                <c:otherwise>
-                  <html:img page="/images/icon_available_grey.png" border="0"
+                  <html:img page="/images/icons/availability_grey_16.png" border="0"
                             width="15" height="15"/>
                </c:otherwise>
             </c:choose>
@@ -199,15 +199,15 @@
          <td class="ListCellCheckbox">
             <c:choose>
                <c:when test="${empty res.availability}">
-                  <html:img page="/images/icon_available_grey.png" border="0"
+                  <html:img page="/images/icons/availability_grey_16.png" border="0"
                             width="15" height="15"/>                  
                </c:when>
                <c:when test="${res.availability == 'DOWN'}">
-                  <html:img page="/images/icon_available_red.png" border="0"
+                  <html:img page="/images/icons/availability_red_16.png" border="0"
                             width="15" height="15"/>
                </c:when>
                <c:when test="${res.availability == 'UP'}">
-                  <html:img page="/images/icon_available_green.png" border="0"
+                  <html:img page="/images/icons/availability_green_16.png" border="0"
                             width="15" height="15"/>
                </c:when>
             </c:choose>

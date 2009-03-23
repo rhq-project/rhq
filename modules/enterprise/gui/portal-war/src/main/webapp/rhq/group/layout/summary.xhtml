@@ -56,18 +56,18 @@ groupId - the group id of the Group being accessed
                 <tr>
                     <td>
 
-                        <h:graphicImage value="/images/icn_tree_Cluster_on_24.png"/>
+                        <h:graphicImage value="/images/icons/${ResourceGroupUIBean.compatible ? 'Cluster' : 'Group' }_up_24.png"/>
                         <h:outputText style="font-size: large;" value="#{ResourceGroupUIBean.name}"/>
 
                     </td>
                     <td width="30">
-                        <h:graphicImage value="/images/icon_available_green_24.png" alt="Up" title="Up"
+                        <h:graphicImage value="/images/icons/availability_green_24.png" alt="Up" title="Up"
                                         rendered="#{ResourceGroupUIBean.availability == 1}"/>
-                        <h:graphicImage value="/images/icon_available_red_24.png" alt="Down" title="Down"
+                        <h:graphicImage value="/images/icons/availability_red_24.png" alt="Down" title="Down"
                                         rendered="#{ResourceGroupUIBean.availability == 0}"/>
-                        <h:graphicImage value="/images/icon_available_yellow_24.png" alt="Mixed" title="Mixed"
+                        <h:graphicImage value="/images/icons/availability_yellow_24.png" alt="Mixed" title="Mixed"
                                         rendered="#{ResourceGroupUIBean.availability gt 0 and ResourceGroupUIBean.availability lt 1}"/>
-                        <h:graphicImage value="/images/icon_available_grey_24.png" alt="Unknown" title="Unknown"
+                        <h:graphicImage value="/images/icons/availability_grey_24.png" alt="Unknown" title="Unknown"
                                         rendered="#{ResourceGroupUIBean.availability == null}"/>
                     </td>
 
@@ -203,11 +203,11 @@ groupId - the group id of the Group being accessed
                         </onc:sortableColumnHeader>
                     </f:facet>
 
-                    <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up"
+                    <h:graphicImage value="/images/icons/availability_green_16.png" alt="Up" title="Up"
                                     rendered="#{resourceWithAvailability.availability == 'UP'}"/>
-                    <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down"
+                    <h:graphicImage value="/images/icons/availability_red_16.png" alt="Down" title="Down"
                                     rendered="#{resourceWithAvailability.availability == 'DOWN'}"/>
-                    <h:graphicImage value="/images/icon_available_grey.png" alt="Unknown" title="Unknown"
+                    <h:graphicImage value="/images/icons/availability_grey_16.png" alt="Unknown" title="Unknown"
                                     rendered="#{resourceWithAvailability.availability == null}"/>
                 </rich:column>
 

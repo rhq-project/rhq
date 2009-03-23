@@ -158,11 +158,11 @@
 
                   <h:outputLink rendered="#{item.history.status eq 'FAILURE'}"
                                 value="javascript:displayMessageModal('Stack Trace','#{item.history.errorMessage}')">
-                      <h:graphicImage value="/images/icn_operation_failed.png"/>
+                      <h:graphicImage value="/images/icons/Operation_failed_16.png"/>
                      <h:outputText value="#{item.history.status}"/>
                   </h:outputLink>
 
-                   <h:graphicImage value="/images/icn_operation_success.png" rendered="#{item.history.status ne 'FAILURE'}"/>
+                   <h:graphicImage value="/images/icons/Operation_ok_16.png" rendered="#{item.history.status ne 'FAILURE'}"/>
                   <h:outputText rendered="#{item.history.status ne 'FAILURE'}" value="#{item.history.status}"/>
                </rich:column>
 

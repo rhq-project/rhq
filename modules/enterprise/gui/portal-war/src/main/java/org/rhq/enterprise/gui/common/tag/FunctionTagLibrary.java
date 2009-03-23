@@ -306,11 +306,11 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     public static String getAlertPriorityURL(AlertPriority priority) {
         switch (priority) {
         case HIGH:
-            return "/images/icn_flag_red.png";
+            return "/images/icons/Flag_red_16.png";
         case MEDIUM:
-            return "/images/icn_flag_yellow.png";
+            return "/images/icons/Flag_yellow_16.png";
         case LOW:
-            return "/images/icn_flag_blue.png";
+            return "/images/icons/Flag_blue_16.png";
         default:
             throw new IllegalArgumentException("No icon for AlertPriority[" + priority + "]");
         }
@@ -319,11 +319,11 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     public static String getResourceConfigStatusURL(ConfigurationUpdateStatus status) {
         switch (status) {
         case SUCCESS:
-            return "/images/icn_config_success.png";
+            return "/images/icons/Configure_ok_16.png";
         case FAILURE:
-            return "/images/icn_config_error.png";
+            return "/images/icons/Configure_failed_16.png";
         case INPROGRESS:
-            return "/images/icn_config.png";
+            return "/images/icons/Configure_16.png";
         default:
             throw new IllegalArgumentException("No icon for ConfigurationUpdateStatus[" + status + "]");
         }
@@ -332,13 +332,13 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     public static String getOperationStatusURL(OperationRequestStatus status) {
         switch (status) {
         case SUCCESS:
-            return "/images/icn_operation_success.png";
+            return "/images/icons/Operation_ok_16.png";
         case FAILURE:
-            return "/images/icn_operation_failed.png";
+            return "/images/icons/Operation_failed_16.png";
         case INPROGRESS:
-            return "/images/icn_operation_inprogress.png";
+            return "/images/icons/Operation_16.png";
         case CANCELED:
-            return "/images/icn_operation_canceled.png";
+            return "/images/icons/Operation_cancel_16.png";
         default:
             throw new IllegalArgumentException("No icon for OperationRequestStatus[" + status + "]");
         }
@@ -348,25 +348,25 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         String color = null;
         switch (severity) {
         case DEBUG:
-            color = "green";
+            color = "bug";
             break;
         case INFO:
-            color = "blue";
+            color = "info";
             break;
         case WARN:
-            color = "yellow";
+            color = "warning";
             break;
         case ERROR:
-            color = "orange";
+            color = "error";
             break;
         case FATAL:
-            color = "red";
+            color = "fatal";
             break;
         default:
             throw new IllegalArgumentException("No icon for EventSeverity[" + severity + "]");
         }
 
         String additional = (grouped ? "_multi" : "");
-        return "/images/icn_info_" + color + additional + ".png";
+        return "/images/icons/Events_" + color + additional + "_16.png";
     }
 }

@@ -335,33 +335,33 @@ public class ResourceGroupTreeModelUIBean {
         if (LookupUtil.getSystemManager().isMonitoringEnabled()) {
             url = "/rhq/group/monitor/graphs.xhtml?" + attributes;
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_m.gif", "Monitor");
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Monitor_grey_16.png", "Monitor");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 
         url = "/rhq/group/inventory/view.xhtml?" + attributes;
         link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-        image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_i.gif", "Inventory");
+        image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Inventory_grey_16.png", "Inventory");
         image.setStyle(STYLE_QUICK_LINKS_ICON);
 
         if (facets.isConfiguration()) {
             url = "/rhq/group/configuration/viewCurrent.xhtml?" + attributes;
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_c.gif", "Configuration");
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Configure_grey_16.png", "Configuration");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 
         if (facets.isOperation()) {
             url = "/rhq/group/operation/groupOperationScheduleNew.xhtml?" + attributes;
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_o.gif", "Operations");
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Operation_grey_16.png", "Operations");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 
         if (facets.isEvent()) {
             url = "/rhq/group/events/history.xhtml?" + attributes;
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icon_hub_e.gif", "Events");
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Events_grey_16.png", "Events");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 

@@ -40,7 +40,7 @@
                                adviseNodeSelected="#{ResourceGroupTreeStateAdvisor.adviseNodeSelected}"
                                ajaxSubmitSelection="true"
                                status="commonStatus"
-                               icon="/images/icn_tree_Platform.gif"
+                               icon="/images/icons/Platform_16.png"
                                nodeFace="#{treeNode.data.class.simpleName}">
 
                         <rich:recursiveTreeNodesAdaptor roots="#{ResourceGroupTreeModelUIBean.roots}"
@@ -52,8 +52,8 @@
 
 
                         <rich:treeNode type="ResourceGroup"
-                                       icon="/images/icn_tree_Cluster_on.png"
-                                       iconLeaf="/images/icn_tree_Cluster_on.png">
+                                       icon="/images/icons/Cluster_up_16.png"
+                                       iconLeaf="/images/icons/Cluster_up_16.png">
 
 
                             <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000"
@@ -75,7 +75,7 @@
                         </rich:treeNode>
 
                         <rich:treeNode type="AutoGroupComposite"
-                                       iconLeaf="/images/icn_tree_folder.gif" icon="/images/icn_tree_folder.gif">
+                                       iconLeaf="/images/icons/Folder_16.png" icon="/images/icons/Folder_16.png">
 
                             <h:outputText
                                     value="#{groupTreeItem.data.subcategory == null ? groupTreeItem.data.resourceType.name : groupTreeItem.data.subcategory.name}"/>
@@ -85,8 +85,8 @@
 
                         <!-- Tree Node supporting context menu -->
                         <rich:treeNode type="ClusterKey"
-                                       icon="/images/icn_tree_group_on.png"
-                                       iconLeaf="/images/icn_tree_group_on.png">
+                                       icon="/images/icons/Cluster_up_16.png"
+                                       iconLeaf="/images/icons/Cluster_up_16.png">
 
 
                             <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000"
@@ -112,8 +112,8 @@
 
 
                         <rich:treeNode type="Resource"
-                                       icon="/images/icn_tree_#{groupTreeItem.data.resourceType.category}_#{groupTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'off' : 'on'}.png"
-                                       iconLeaf="/images/icn_tree_#{groupTreeItem.data.resourceType.category}_#{groupTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'off' : 'on'}.png">
+                                       icon="/images/icons/#{groupTreeItem.data.resourceType.category}_#{groupTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up'}_16.png"
+                                       iconLeaf="/images/icons/#{groupTreeItem.data.resourceType.category}_#{groupTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up'}_16.png">
 
 
                             <h:outputText value="#{groupTreeItem}"/>

@@ -251,11 +251,11 @@
          </onc:sortableColumnHeader>
       </f:facet>
 
-      <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up"
+      <h:graphicImage value="/images/icons/availability_green_16.png" alt="Up" title="Up"
                       rendered="#{resourceComposite.availability == 'UP'}"/>
-      <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down"
+      <h:graphicImage value="/images/icons/availability_red_16.png" alt="Down" title="Down"
                       rendered="#{resourceComposite.availability == 'DOWN'}"/>
-      <h:graphicImage value="/images/icon_available_grey.png" alt="Unknown" title="Unknown"
+      <h:graphicImage value="/images/icons/availability_grey_16.png" alt="Unknown" title="Unknown"
                       rendered="#{resourceComposite.availability == null}"/>
    </rich:column>
 
@@ -704,11 +704,11 @@
             <f:facet name="header">
                <h:panelGroup>
                   <onc:sortableColumnHeader sort="upAvail">
-                     <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up" />
+                     <h:graphicImage value="/images/icons/availability_green_16.png" alt="Up" title="Up" />
                   </onc:sortableColumnHeader>
                   <h:outputText value=" / " />
                   <onc:sortableColumnHeader sort="downAvail">
-                     <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down" />
+                     <h:graphicImage value="/images/icons/availability_red_16.png" alt="Down" title="Down" />
                   </onc:sortableColumnHeader>
                </h:panelGroup>
             </f:facet>
@@ -735,13 +735,13 @@
                </onc:sortableColumnHeader>
             </f:facet>
 
-            <h:graphicImage value="/images/icon_available_green.png" alt="Up" title="Up"
+            <h:graphicImage value="/images/icons/availability_green_16.png" alt="Up" title="Up"
                             rendered="#{resourceGroupComposite.availability == 1}"/>
-            <h:graphicImage value="/images/icon_available_red.png" alt="Down" title="Down"
+            <h:graphicImage value="/images/icons/availability_red_16.png" alt="Down" title="Down"
                             rendered="#{resourceGroupComposite.availability == 0}"/>
-            <h:graphicImage value="/images/icon_available_yellow.png" alt="Mixed" title="Mixed"
+            <h:graphicImage value="/images/icons/availability_yellow_16.png" alt="Mixed" title="Mixed"
                             rendered="#{resourceGroupComposite.availability gt 0 and resourceGroupComposite.availability lt 1}"/>
-            <h:graphicImage value="/images/icon_available_grey.png" alt="Unknown" title="Unknown"
+            <h:graphicImage value="/images/icons/availability_grey_16.png" alt="Unknown" title="Unknown"
                             rendered="#{resourceGroupComposite.availability == null}"/>
          </rich:column>
 

@@ -45,7 +45,7 @@ id - the id of the Resource being accessed
     <table width="100%">
         <tr>
             <td width="30">
-                <h:graphicImage value="/images/icn_tree_#{ResourceUIBean.resourceType.category}_on_24.png"/>
+                <h:graphicImage value="/images/icons/#{ResourceUIBean.resourceType.category}_up_24.png"/>
             </td>
             <td nowrap="nowrap">
                 <h:outputText value="#{ResourceUIBean.name}" style="font-size: large;"/><br/>
@@ -55,13 +55,13 @@ id - the id of the Resource being accessed
             <td width="30">
                 <h:outputLink value="/rhq/resource/monitor/availabilityHistory.xhtml" id="availDisplay">
                     <f:param name="id" value="#{ResourceUIBean.id}"/>
-                    <h:graphicImage value="/images/icon_available_green_24.png" alt="Resource is Up"
+                    <h:graphicImage value="/images/icons/availability_green_24.png" alt="Resource is Up"
                                     title="Up"
                                     rendered="#{ResourceUIBean.availabilityType == 'UP'}"/>
-                    <h:graphicImage value="/images/icon_available_red_24.png" alt="Resource is Down"
+                    <h:graphicImage value="/images/icons/availability_red_24.png" alt="Resource is Down"
                                     title="Down"
                                     rendered="#{ResourceUIBean.availabilityType == 'DOWN'}"/>
-                    <h:graphicImage value="/images/icon_available_grey_24.png"
+                    <h:graphicImage value="/images/icons/availability_grey_24.png"
                                     alt="Resource availability is Unknown"
                                     title="Unknown"
                                     rendered="#{ResourceUIBean.availabilityType == null}"/>

@@ -61,16 +61,16 @@
                      <html:link page="/rhq/resource/operation/resourceOperationHistoryDetails.xhtml?id=${obj.resourceId}&opId=${obj.operationHistoryId}">
                      <c:choose>
                         <c:when test="${obj.operationStatus == 'SUCCESS'}">
-                           <html:img page="/images/icon_available_green.png" alt="${obj.operationStatus}" title="${obj.operationStatus}" />
+                           <html:img page="/images/icons/availability_green_16.png" alt="${obj.operationStatus}" title="${obj.operationStatus}" />
                         </c:when>    
                         <c:when test="${obj.operationStatus == 'FAILURE'}">
-                           <html:img page="/images/icon_available_red.png" alt="${obj.operationStatus}" title="${obj.operationStatus}" />
+                           <html:img page="/images/icons/availability_red_16.png" alt="${obj.operationStatus}" title="${obj.operationStatus}" />
                         </c:when>    
                         <c:when test="${obj.operationStatus == 'CANCELED'}">
-                           <html:img page="/images/icon_available_yellow.png" alt="${obj.operationStatus}" title="${obj.operationStatus}" />
+                           <html:img page="/images/icons/availability_yellow_16.png" alt="${obj.operationStatus}" title="${obj.operationStatus}" />
                         </c:when>    
                         <c:otherwise>
-                           <html:img page="/images/icon_available_grey.png" alt="${obj.operationStatus}" title="${obj.operationStatus}"/>
+                           <html:img page="/images/icons/availability_grey_16.png" alt="${obj.operationStatus}" title="${obj.operationStatus}"/>
                         </c:otherwise>
                      </c:choose>
                      </html:link>
@@ -96,16 +96,16 @@
                      <html:link page="/groupScheduleNotImplementedYet?id=${obj.groupId}&opId=${obj.operationHistoryId}">
                      <c:choose>
                         <c:when test="${obj.operationStatus == 'SUCCESS'}">
-                           <html:img page="/images/icon_available_green.png" alt="${obj.operationStatus}" title="${obj.operationStatus}" />
+                           <html:img page="/images/icons/availability_green_16.png" alt="${obj.operationStatus}" title="${obj.operationStatus}" />
                         </c:when>    
                         <c:when test="${obj.operationStatus == 'FAILURE'}">
-                           <html:img page="/images/icon_available_red.png" alt="${obj.operationStatus}" title="${obj.operationStatus}" />
+                           <html:img page="/images/icons/availability_red_16.png" alt="${obj.operationStatus}" title="${obj.operationStatus}" />
                         </c:when>    
                         <c:when test="${obj.operationStatus == 'CANCELED'}">
-                           <html:img page="/images/icon_available_yellow.png" alt="${obj.operationStatus}" title="${obj.operationStatus}" />
+                           <html:img page="/images/icons/availability_yellow_16.png" alt="${obj.operationStatus}" title="${obj.operationStatus}" />
                         </c:when>    
                         <c:otherwise>
-                           <html:img page="/images/icon_available_grey.png" alt="${obj.operationStatus}" title="${obj.operationStatus}"/>
+                           <html:img page="/images/icons/availability_grey_16.png" alt="${obj.operationStatus}" title="${obj.operationStatus}"/>
                         </c:otherwise>
                      </c:choose>
                      </html:link>

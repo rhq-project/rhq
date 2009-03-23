@@ -43,8 +43,8 @@
                                                     nodes="#{resourceTreeItem.children}" />
 
                     <rich:treeNode type="AutoGroupComposite"
-                                   iconLeaf="/images/icn_tree_#{resourceTreeItem.data.resourceType == null? 'Category' : 'group'}_on.png"
-                                   icon="/images/icn_tree_#{resourceTreeItem.data.resourceType == null? 'Category' : 'group'}_on.png">
+                                   iconLeaf="/images/icons/#{resourceTreeItem.data.resourceType == null? 'Folder' : 'Cluster_up'}_16.png"
+                                   icon="/images/icons/#{resourceTreeItem.data.resourceType == null? 'Folder' : 'Cluster_up'}_16.png">
 
                         <h:outputText value="#{resourceTreeItem}"
                                       styleClass="availLink#{resourceTreeItem.data.availability == 0 ? 'Down' : resourceTreeItem.data.availability == 1 ? 'Up' : 'Mixed'}"/>
@@ -58,8 +58,8 @@
                     </rich:treeNode>
 <!-- Tree Node supporting context menu -->
                     <rich:treeNode type="Resource"
-                                   icon="/images/icn_tree_#{resourceTreeItem.data.resourceType.category}_#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'off' : 'on'}.png"
-                                   iconLeaf="/images/icn_tree_#{resourceTreeItem.data.resourceType.category}_#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'off' : 'on'}.png">
+                                   icon="/images/icons/#{resourceTreeItem.data.resourceType.category}_#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up'}_16.png"
+                                   iconLeaf="/images/icons/#{resourceTreeItem.data.resourceType.category}_#{resourceTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up'}_16.png">
                         <a4j:support event="oncontextmenu"  reRender="resourceMenu" timeout="5000"
                                      disableDefault="true" status="commonStatus" limitToList="true"
                                      ajaxSingle="true">

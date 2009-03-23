@@ -39,10 +39,10 @@ public class AvailabilityDecorator extends ColumnDecorator implements Tag {
     private static final String ICON_HEIGHT = "15";
     private static final String ICON_BORDER = "0";
 
-    private static final String ICON_UP = "/images/icon_available_green.png";
-    private static final String ICON_DOWN = "/images/icon_available_red.png";
-    private static final String ICON_WARN = "/images/icon_available_yellow.png";
-    private static final String ICON_ERR = "/images/icon_available_grey.png";
+    private static final String ICON_UP = "/images/icons/availability_green_16.png";
+    private static final String ICON_DOWN = "/images/icons/availability_red_16.png";
+    private static final String ICON_WARN = "/images/icons/availability_yellow_16.png";
+    private static final String ICON_ERR = "/images/icons/availability_grey_16.png";
 
     private PageContext context;
     private Tag parent;

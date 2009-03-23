@@ -46,6 +46,22 @@ THIS TEXT WILL BE REMOVED AS WELL.
                  AutoGroups have no obvious summary information past what is in the breadcrumbs -->
       </ui:remove>
 
+
+    <h:panelGroup layout="block" style="width: 100%; background-color: #E5E5E5;">
+
+
+        <table width="100%" style="padding-right: 20px; padding-top: 5px;" cellpadding="0" cellspacing="0">
+
+                <tr>
+                    <td width="30">
+                        
+                        <h:graphicImage value="/images/icons/Cluster_up_24.png"/>
+                        </td>
+                    <td nowrap="nowrap">
+                        
+                        <h:outputText value="#{AutoGroupUIBean.childResourceTypeName} AutoGroup" style="font-size: large;" /><br/>
+
+
       <onc:resourceLineage
          resourceId="#{AutoGroupUIBean.parentResourceId}" />
       <h:outputText value=" &gt; " />
@@ -57,11 +73,13 @@ THIS TEXT WILL BE REMOVED AS WELL.
          <h:outputText value="#{AutoGroupUIBean.childResourceTypeName}" />
       </h:outputLink>
 
-      <p />
+      </td>
+       </tr>
+       </table>
 
+</h:panelGroup>
 
-
-      <p />
+       <rich:spacer height="10px"/>
 
    </ui:define>
 
@@ -72,7 +90,7 @@ THIS TEXT WILL BE REMOVED AS WELL.
          <f:param name="parent" value="#{param.parent}" />
          <f:param name="type" value="#{param.type}" />
 
-         <onc:tab name="Monitor" image="/images/icon_hub_m.gif">
+         <onc:tab name="Monitor" image="/images/icons/Monitor_grey_16.png">
             <onc:subtab name="Graphs"
                url="/rhq/autogroup/monitor/graphs.xhtml" />
             <onc:subtab name="Tables"
@@ -80,7 +98,7 @@ THIS TEXT WILL BE REMOVED AS WELL.
             <onc:subtab name="Schedules"
                url="/rhq/autogroup/monitor/schedules.xhtml" />               
          </onc:tab>
-         <onc:tab name="Events" image="/images/icon_hub_e.gif">
+         <onc:tab name="Events" image="/images/icons/Events_grey_16.png">
             <onc:subtab name="History"
                url="/rhq/autogroup/events/history.xhtml" />
          </onc:tab>

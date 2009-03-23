@@ -11,6 +11,7 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:a4j="http://richfaces.org/a4j"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:fn="http://java.sun.com/jsp/jstl/functions"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function">
 
@@ -27,15 +28,30 @@ id - the id of the Resource being accessed
 <input type="hidden" name="id" value="#{param.id}"/>
 
 <style type="text/css">
-    .dr-stglpanel-marker {
+    \##{fn:replace(rich:clientId('summary-toggle-panel'),"\\:","\\\\:")}_header {
+        background-color: white;
+        border: none;
+    }
+
+    \##{fn:replace(rich:clientId('summary-toggle-panel'),"\\:","\\\\:")}_header > .dr-stglpanel-marker {
         float: left;
-        padding-top: 6px;
+        padding-left: 10px;
     }
 </style>
 
-<div style="position: absolute; top: 0; right: 0; z-index:20;">
-    <table width="100%" style="padding-right: 20px; padding-top: 5px;" cellpadding="0" cellspacing="0">
+
+<h:panelGroup layout="block" style="width: 100%; background-color: #E5E5E5;">
+
+    <table width="100%">
         <tr>
+            <td width="30">
+                <h:graphicImage value="/images/icn_tree_#{ResourceUIBean.resourceType.category}_on_24.png"/>
+            </td>
+            <td nowrap="nowrap">
+                <h:outputText value="#{ResourceUIBean.name}" style="font-size: large;"/><br/>
+                <onc:resourceLineage resourceId="#{ResourceUIBean.id}"/>
+            </td>
+
             <td width="30">
                 <h:outputLink value="/rhq/resource/monitor/availabilityHistory.xhtml" id="availDisplay">
                     <f:param name="id" value="#{ResourceUIBean.id}"/>
@@ -124,11 +140,13 @@ id - the id of the Resource being accessed
                     </rich:toolTip>
                 </a4j:outputPanel>
 
+
             </td>
+
         </tr>
     </table>
 
-</div>
+</h:panelGroup>
 
 
 <rich:simpleTogglePanel switchType="ajax" id="summary-toggle-panel" headerClass="summaryHeader"
@@ -138,25 +156,8 @@ id - the id of the Resource being accessed
     <f:facet name="openMarker"><h:graphicImage value="/images/summaryHidden.png"/> </f:facet>
     <f:facet name="closeMarker"><h:graphicImage value="/images/summaryShown.png"/> </f:facet>
 
-    <f:facet name="header">
+    <f:facet name="header">Summary</f:facet>
 
-        <h:panelGroup layout="block" style="width: 100%;">
-
-            <table>
-                <tr>
-                    <td>
-                        <h:graphicImage value="/images/icn_tree_#{ResourceUIBean.resourceType.category}_on_24.png"/>
-                    </td>
-                    <td nowrap="nowrap">
-                        <h:outputText value="#{ResourceUIBean.name}" style="font-size: large;"/><br/>
-                        <onc:resourceLineage resourceId="#{ResourceUIBean.id}"/>
-                    </td>
-                </tr>
-            </table>
-
-        </h:panelGroup>
-
-    </f:facet>
 
     <h:panelGrid columns="2" width="100%" style="padding: 3px">
 

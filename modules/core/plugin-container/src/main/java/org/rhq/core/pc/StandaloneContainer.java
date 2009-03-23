@@ -1,0 +1,533 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2009 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.core.pc;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.domain.discovery.InventoryReport;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.pc.measurement.MeasurementManager;
+import org.rhq.core.pc.operation.OperationContextImpl;
+import org.rhq.core.pc.operation.OperationManager;
+import org.rhq.core.pc.operation.OperationServicesAdapter;
+import org.rhq.core.pc.plugin.FileSystemPluginFinder;
+import org.rhq.core.pluginapi.operation.OperationContext;
+import org.rhq.core.pluginapi.operation.OperationServices;
+import org.rhq.core.pluginapi.operation.OperationServicesResult;
+
+/**
+ * Starter class to start a standalone PC to help
+ * in PluginDevelopment
+ *
+ * @author Heiko W. Rupp
+ */
+public class StandaloneContainer {
+
+    private PluginContainer pc;
+    private int resourceId;
+    private Resource platform;
+    InventoryManager inventoryManager;
+    Integer opId = 0;
+    List<String> history = new ArrayList<String>(10);
+    private static final String HISTORY_HELP = "!! : repeat the last action\n" +
+            "!? : show the history of commands issued\n" +
+            "!h : show this help\n" +
+            "!nn : repeat history item with number nn\n" +
+            "!w fileName : write history to file with name fileName\n" +
+            "!dnn : delete history item with number nn" ;
+
+    public static void main(String[] argv) {
+        StandaloneContainer sc = new StandaloneContainer();
+        BufferedReader br = null;
+
+        if (argv.length==0)
+             br = new BufferedReader(new InputStreamReader(System.in));
+        else {
+            try {
+                br = new BufferedReader(new InputStreamReader(new FileInputStream(argv[0])));
+            }
+            catch (FileNotFoundException fnfe) {
+                System.err.println("File " + argv[0] + " not found");
+                System.exit(1);
+            }
+        }
+
+        sc.run(br);
+    }
+
+    private void run(BufferedReader br) {
+
+        boolean shouldQuit = false;
+
+        // load the PC
+        System.out.println("\nStarting the plugin container.");
+        pc = PluginContainer.getInstance();
+        File pluginDir = new File("plugins");
+        PluginContainerConfiguration pcConfig = new PluginContainerConfiguration();
+        pcConfig.setPluginFinder(new FileSystemPluginFinder(pluginDir));
+        pcConfig.setPluginDirectory(pluginDir);
+
+        pcConfig.setInsideAgent(false);
+        pc.setConfiguration(pcConfig);
+        System.out.println("Loading plugins");
+        pc.initialize();
+        for (String plugin : pc.getPluginManager().getMetadataManager().getPluginNames()) {
+             System.out.println("...Loaded plugin: " + plugin);
+        }
+
+        inventoryManager = pc.getInventoryManager();
+
+        platform = inventoryManager.getPlatform();
+
+        System.out.println("\nReady.");
+
+        // Run the main loop
+        try {
+            while (!shouldQuit) {
+
+                System.out.print("[" + history.size() +"]:" + resourceId + " > ");
+                String answer = br.readLine();
+                if (answer==null) {
+                    break;
+                }
+
+                // Check for history commands
+                answer = handleHistory(answer);
+
+                // If we have a 'real' command, dispatch it
+                if (!answer.startsWith("!")) {
+                    String[] tokens = answer.split(" ");
+                    if (tokens.length>0) {
+                        shouldQuit = dispatchCommand(tokens);
+                    }
+                }
+            }
+
+            // unload
+            pc.shutdown();
+        }
+        catch (Throwable throwable) {
+            System.err.println("Exception happened: " + throwable + "\n");
+        }
+
+    }
+
+    /**
+     * Handle processing of the command history. This gives some csh like commands
+     * and records the commands given. Nice side effect is the possibility to write the
+     * history to disk and to use this later as input so that testing can be scripted.
+     * Commands are:
+     * <ul>
+     * <li>!! : repeat the last action</li>
+     * <li>!? : show the history</li>
+     * <li>!h : show history help</li>
+     * <li>!<i>nnn</i> : repeat history item with number <i>nnn</i></li>
+     * <li>!w <i>file</i> : write the history to the file <i>file</i></li>
+     * <li>!d<i>nnn</i> : delete the history item with number <i>nnn</i>
+     * </ul>
+     * @param answer the input given on the command line
+     * @return a command or '!' if no command substitution from the history was possible.
+     */
+    private String handleHistory(String answer) {
+
+        // Normal command - just return it
+        if (!answer.startsWith("!")) {
+            history.add(answer);
+            return answer;
+        }
+
+        // History commands
+        if (answer.startsWith("!?")) {
+            for (int i = 0; i < history.size() ; i++)
+                System.out.println("[" + i + "]: " + history.get(i));
+        } else if (answer.startsWith("!h")) {
+            System.out.println(HISTORY_HELP);
+            return "!";
+        } else if (answer.startsWith("!!")) {
+            String text = history.get(history.size()-1);
+            System.out.println(text);
+            history.add(text);
+            return text;
+        } else if (answer.matches("![0-9]+")) {
+            String id = answer.substring(1);
+            Integer i;
+            try {
+                i = Integer.valueOf(id);
+            }
+            catch (NumberFormatException nfe) {
+                System.err.println(id + " is no valid history position");
+                return "!";
+            }
+            if (i > history.size()) {
+                System.err.println(i + " is no valid history position");
+                return "!";
+            }
+            else {
+                String text = history.get(i);
+                System.out.println(text);
+                history.add(text);
+                return text;
+            }
+        } else if (answer.startsWith("!w")) {
+            String[] tokens = answer.split(" ");
+            if (tokens.length<2) {
+                System.err.println("Not enough parameters. You need to give a file name");
+            }
+            File file = new File(tokens[1]);
+            try {
+                file.createNewFile();
+                if (file.canWrite()) {
+                    Writer writer = new FileWriter(file);
+                    for (String item : history) {
+                        writer.write(item);
+                        writer.write("\n");
+                    }
+                    writer.flush();
+                    writer.close();
+                }
+                else {
+                    System.err.println("Can not write to file " + file);
+                }
+            }
+            catch (IOException ioe) {
+                System.err.println("Saving the history to file " + file + " failed: " + ioe.getMessage());
+            }
+            return "!";
+        } else if (answer.matches("!d[0-9]+")) {
+            String id = answer.substring(2);
+            Integer i;
+            try {
+                i = Integer.valueOf(id);
+            }
+            catch (NumberFormatException nfe) {
+                System.err.println(id + " is no valid history position");
+                return "!";
+            }
+            if (i > history.size()) {
+                System.err.println(i + " is no valid history position");
+                return "!";
+            }
+            history.remove(i.intValue());
+            return "!";
+        } else {
+            System.err.println(answer + " is no valid history command");
+            return "!";
+        }
+        return "!";
+    }
+
+    /**
+     * Dispatches the input to various commands that do the actual work.
+     * @param tokens The tokens from the command line including the command itself
+     * @return true the quit command was given, false otherwise.
+     * @throws Exception If anything goes wrong
+     */
+    private boolean dispatchCommand(String[] tokens) throws Exception {
+
+        if (tokens.length==0)
+            return false;
+
+        if (tokens[0].startsWith("#"))
+            return false;
+
+        Command com = Command.get(tokens[0]);
+        if (com==null) {
+            System.err.println("Command " + tokens[0] + " is unknown");
+            return false;
+        }
+        int minArgs = com.getMinArgs();
+        if (tokens.length < minArgs +1) {
+            System.err.println("Command " + com + " needs " + minArgs + " parameter(s): " + com.getArgs());
+            return false;
+        }
+
+        switch (com) {
+            case AVAIL:
+                avail();
+                break;
+            case ASCAN:
+                AvailabilityReport aReport = pc.getDiscoveryAgentService().executeAvailabilityScanImmediately(false);
+
+                System.out.println(aReport);
+                break;
+            case DISCOVER:
+                discover(tokens);
+                break;
+//            case EVENT:
+//                event(tokens);
+//                break;
+            case HELP:
+                for (Command comm: EnumSet.allOf(Command.class)) {
+                    System.out.println(comm + " ( " + comm.getAbbrev() + " ), " + comm.getArgs() + " : " + comm.getHelp());
+                }
+                break;
+            case MEASURE:
+                measure(tokens);
+                break;
+            case INVOKE:
+                invokeOps(tokens);
+                break;
+            case RESOURCES:
+                resources();
+                break;
+            case SET:
+                set(tokens);
+                break;
+            case QUIT:
+                System.out.println("Terminating ..");
+                return true;
+            case WAIT:
+                Thread.sleep(Integer.valueOf(tokens[1]));
+                break;
+
+        }
+
+        return false;
+    }
+
+    /**
+     * Invokes an operation
+     * @param tokens tokenized command line tokens[0] is the command itself
+     * @throws Exception if anything goes wrong
+     */
+    private void invokeOps(String[] tokens) throws Exception {
+        if (resourceId==0)
+            return;
+
+        OperationManager opMan = pc.getOperationManager();
+        OperationServices operationServices = new OperationServicesAdapter(opMan);
+        OperationContext operationContext = new OperationContextImpl(resourceId, operationServices);
+        opId++;
+
+        // TODO fix config -- use some property editor to pass in the remaining fields
+        OperationServicesResult res = operationServices.invokeOperation(operationContext, tokens[1],null, 2000);
+        Configuration result = res.getComplexResults();
+        System.out.println(result.getProperties());
+
+
+    }
+
+    /**
+     * Poll events
+     * @param tokens tokenized command line tokens[0] is the command itself
+     */
+    private void event(String[] tokens) {
+        if (resourceId == 0)
+            return;
+
+        // TODO
+        System.err.println("Not yet implemented");
+    }
+
+    /**
+     * Shows the list of resources known so far
+     */
+    private void resources() {
+        Set<Resource> resources = getResources();
+        for (Resource res: resources)
+            System.out.println(res);
+    }
+
+    /**
+     * Shows the list of availabilities known so far
+     * for resources that have been discovered
+     */
+    private void avail() {
+        Set<Resource> resources = getResources();
+        for (Resource res: resources) {
+            System.out.println(inventoryManager.getAvailability(res));
+        }
+    }
+
+    /**
+     * Helper to obtain the list of known resources
+     * @return Set of resources including the platform
+     */
+    private Set<Resource> getResources() {
+
+        Set<Resource> res = new HashSet<Resource>();
+        res.add(platform);
+        res.addAll(platform.getChildResources());
+
+        return res;
+    }
+
+    /**
+     * Sets working parameters
+     * @param tokens tokenized command line tokens[0] is the command itself
+     */
+    private void set(String[] tokens) {
+
+        String comm = tokens[1].toLowerCase();
+        String arg = tokens[2];
+
+        if (comm.startsWith("plu")) {
+            //pluginName = arg;
+        }
+        else if (comm.startsWith("r")) {
+            try {
+                resourceId = Integer.valueOf(arg);
+            }
+            catch (NumberFormatException nfe) {
+                System.err.println("Sorry, but [" + arg + "] is no valid number");
+            }
+        }
+        else
+            System.err.println("Bad command " + tokens[1]);
+
+    }
+
+    /**
+     * Perform a discovery scan and return the results.
+     * @param tokens tokenized command line tokens[0] is the command itself
+     */
+    private void discover(String[] tokens) {
+
+        InventoryReport report;
+        String what = tokens[1];
+        if (what.startsWith("s"))
+            report = pc.getInventoryManager().executeServerScanImmediately();
+        else if (what.startsWith("i"))
+            report = pc.getInventoryManager().executeServiceScanImmediately();
+        else {
+            System.err.println("Unknown option. Only 's' and 'i' are applicable");
+            return;
+        }
+
+        System.out.println("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
+        System.out.println(report.getAddedRoots());
+        System.out.println(platform.getChildResources());
+    }
+
+    private void measure(String[] tokens) {
+        if (resourceId == 0) {
+            System.err.println("No resource set");
+            return;
+        }
+
+        DataType dataType = getDataType(tokens[1]);
+        if (dataType==null) {
+            System.err.println("Unknown DataType " + tokens[1]);
+            System.err.println("Valid ones are measurement, trait, calltime, complex");
+        }
+
+        String[] metricNames = new String[tokens.length-2];
+        System.arraycopy(tokens,2,metricNames,0,tokens.length-2);
+
+        MeasurementManager mm = pc.getMeasurementManager();
+        Set<MeasurementData> dataset = mm.getRealTimeMeasurementValue(resourceId,dataType, metricNames);
+        if (dataset==null) {
+            System.err.println("No data returned");
+            return;
+        }
+        for (MeasurementData data : dataset) {
+            System.out.println(data);
+        }
+
+    }
+
+    private DataType getDataType(String token) {
+        String c = token.toLowerCase();
+        if (c.startsWith("m"))
+            return DataType.MEASUREMENT;
+        else if (c.startsWith("t"))
+            return DataType.TRAIT;
+        else if (c.startsWith("ca"))
+            return DataType.CALLTIME;
+        else if (c.startsWith("co"))
+            return DataType.COMPLEX;
+        else
+            return null;
+    }
+
+    /**
+     * List of possible commands
+     */
+    private enum Command {
+
+        AVAIL("a","", 0,"Shows an availability report"),
+        ASCAN("as","", 0, "Triggers an availability scan"),
+        DISCOVER("disc", " s | i", 1, "Triggers a discovery scan"),
+  //      EVENT("e", "", 0,  "Pull events"), // TODO needs to be defined
+        HELP("h", "", 0, "Shows this help"),
+        MEASURE("m", "datatype property+", 2, "Triggers getting metric values. All need to be of the same data type"),
+        INVOKE("i", "operation [params]",1, "Triggers running an operation"),
+        RESOURCES("res", "", 0, "Shows the discovere resources"),
+        SET("set","resourceId n", 2,"Sets the resource id to work with"),
+        QUIT("quit", "", 0, "Terminates the application"),
+        WAIT("w", "milliseconds", 1, "Waits the given amount of time");
+
+
+        private String abbrev;
+        private String args;
+        private String help;
+        private int minArgs; // minimum number of args needed
+
+        public String getArgs() {
+            return args;
+        }
+
+        public String getHelp() {
+            return help;
+        }
+
+        public int getMinArgs() {
+            return minArgs;
+        }
+
+        private Command(String abbrev, String args, int minArgs, String help) {
+            this.abbrev= abbrev;
+            this.args =  args;
+            this.minArgs = minArgs;
+            this.help = help;
+        }
+
+        public String getAbbrev() {
+            return abbrev;
+        }
+
+        public static Command get(String s) {
+
+            String upper = s.toUpperCase();
+
+            for (Command c : EnumSet.allOf(Command.class)) {
+                if (c.name().equals(upper) || c.getAbbrev().equals(s.toLowerCase()))
+                    return c;
+            }
+            return null;
+        }
+    }
+}

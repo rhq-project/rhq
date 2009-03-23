@@ -77,12 +77,27 @@
                 <tr>
                    <td align="right">Status:</td>
                    <td align="left">
-                      <h:outputLink rendered="#{item.status ne 'SUCCESS' and item.status ne 'INPROGRESS'}"
-                                    value="javascript:displayMessageModal('Error Message','#{item.errorMessage}')">
-                         <h:outputText value="#{item.status}"/>
-                      </h:outputLink>
                       <h:outputText rendered="#{item.status eq 'SUCCESS' or item.status eq 'INPROGRESS'}"
                                     value="#{item.status}"/>
+                      <h:outputLink rendered="#{item.status ne 'SUCCESS' and item.status ne 'INPROGRESS'}"
+                                    value="#" id="resultsLink">
+                         <h:outputText value="#{item.status}"/>
+                         <rich:componentControl for="resultsModalPanel" attachTo="resultsLink" operation="show" event="onclick"/>
+                      </h:outputLink>
+                      <rich:modalPanel id="resultsModalPanel" width="350" height="300">
+                         <f:facet name="header">
+                            <h:panelGroup>
+                               <h:outputText value="Results" />
+                            </h:panelGroup>
+                         </f:facet>
+                         <f:facet name="controls">
+                            <h:panelGroup>
+                               <h:graphicImage value="/images/close.png" style="cursor:pointer" id="resultsModelPanelHideLink"/>
+                               <rich:componentControl for="resultsModalPanel" attachTo="resultsModelPanelHideLink" operation="hide" event="onclick"/>
+                            </h:panelGroup>
+                         </f:facet>
+                         <PRE><h:outputText value="#{item.errorMessage}" /></PRE>
+                      </rich:modalPanel> 
                    </td>
                 </tr>
              </table>

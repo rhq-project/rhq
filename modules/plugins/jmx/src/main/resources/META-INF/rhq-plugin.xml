@@ -121,7 +121,11 @@
                     description="Reset the peak number of threads"/>
 
          <operation name="findMonitorDeadlockedThreads"
-                    description="Finds cycles of threads that are in deadlock waiting to acquire object monitors"/>
+                    description="Finds cycles of threads that are in deadlock waiting to acquire object monitors">
+            <results>
+               <c:simple-property name="operationResult" description="IDs of threads that look to be deadlocked"/>
+            </results>
+         </operation>
 
          <operation name="threadDump"
                     description="Returns a summary of all live threads, including both daemon and non-daemon threads">

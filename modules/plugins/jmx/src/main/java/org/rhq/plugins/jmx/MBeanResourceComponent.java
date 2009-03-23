@@ -24,6 +24,7 @@ package org.rhq.plugins.jmx;
 
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -505,14 +506,30 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
         }
 
         Object resultObject = operation.invoke(parameterValues);
-        // TODO: Figure out what EMS actually returns to represent a void return type, so we can avoid doing
-        //       unnecessary extra checks. (ips, 08/21/08)
+
         boolean hasVoidReturnType = (operation.getReturnType() == null
             || Void.class.getName().equals(operation.getReturnType()) || void.class.getName().equals(
             operation.getReturnType()));
 
-        OperationResult result = (resultObject == null && hasVoidReturnType) ? null : new OperationResult(String
-            .valueOf(resultObject));
-        return result;
+        OperationResult resultToReturn;
+
+        if (resultObject == null && hasVoidReturnType) {
+            resultToReturn = null;
+        } else {
+            // if the returned object is an array, put the elements in a list so we can stringify it later
+            if (resultObject != null && resultObject.getClass().isArray()) {
+                int len = Array.getLength(resultObject);
+                ArrayList<Object> list = new ArrayList<Object>(len);
+                for (int index = 0; index < len; index++) {
+                    list.add(Array.get(resultObject, index));
+                }
+                resultObject = list;
+            }
+
+            // put the results object in an operation result
+            resultToReturn = new OperationResult(String.valueOf(resultObject));
+        }
+
+        return resultToReturn;
     }
 }

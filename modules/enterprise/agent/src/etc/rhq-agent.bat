@@ -157,7 +157,12 @@ if defined RHQ_AGENT_SIGAR_DEBUG (
    set _LOG_CONFIG=%_LOG_CONFIG% -Dsigar.nativeLogging=true
 )
 
-set CMD="%RHQ_AGENT_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" org.rhq.enterprise.agent.AgentMain %RHQ_AGENT_CMDLINE_OPTS%
+rem to support other agents/plugin containers, allow the caller to override the main classname
+if not defined RHQ_AGENT_MAINCLASS (
+   set RHQ_AGENT_MAINCLASS=org.rhq.enterprise.agent.AgentMain
+)
+
+set CMD="%RHQ_AGENT_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" %RHQ_AGENT_MAINCLASS% %RHQ_AGENT_CMDLINE_OPTS%
 
 if not defined _SETENV_ONLY (
    rem log4j 1.2.8 does not create the directory for us (later versions do)

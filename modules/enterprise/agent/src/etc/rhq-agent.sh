@@ -201,10 +201,15 @@ if [ "x$_CYGWIN" != "x" ]; then
    CLASSPATH=`cygpath --windows --path "$CLASSPATH"`
 fi
 
+# to support other agents/plugin containers, allow the caller to override the main classname
+if [ "x$RHQ_AGENT_MAINCLASS" == "x" ]; then
+   RHQ_AGENT_MAINCLASS="org.rhq.enterprise.agent.AgentMain"
+fi
+
 # Build the command line that starts the VM
 # This is ony used if we need to emit debug message - but make sure
 # this is kept in sync with the real command executed below.
-CMD="\"${RHQ_AGENT_JAVA_EXE_FILE_PATH}\" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp \"${CLASSPATH}\" org.rhq.enterprise.agent.AgentMain ${RHQ_AGENT_CMDLINE_OPTS}"
+CMD="\"${RHQ_AGENT_JAVA_EXE_FILE_PATH}\" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp \"${CLASSPATH}\" $RHQ_AGENT_MAINCLASS ${RHQ_AGENT_CMDLINE_OPTS}"
 
 debug_msg "Executing the agent with this command line:"
 debug_msg "$CMD"

@@ -56,7 +56,7 @@ import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 public class DatasourceConfigurationEditor {
     public static final String NO_TX_TYPE = "no-tx-datasource";
     public static final String LOCAL_TX_TYPE = "local-tx-datasource";
-    public static final String XA_TX_TYPE = "xa-tx-datasource";
+    public static final String XA_TX_TYPE = "xa-datasource";
 
     // These lists don't include the one multi-valued prop for each type "connection-property" / "xa-datasource-property"
     public static final String[] COMMON_PROPS = { "jndi-name", "connection-url", "user-name", "password",

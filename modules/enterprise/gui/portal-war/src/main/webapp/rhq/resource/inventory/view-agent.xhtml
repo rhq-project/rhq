@@ -15,58 +15,42 @@
 
 <ui:define name="content">
 
-<!-- =================== AGENT MANAGING THIS RESOURCE =================== -->
+<ui:remove>=================== AGENT MANAGING THIS RESOURCE ===================</ui:remove>
 <rich:panel styleClass="BlockContent">
    <f:facet name="header" styleClass="BlockTitle">
       Agent Managing this Resource
    </f:facet>
 
    <h:form id="managingAgentForm">
-
-       <input type="hidden" name="id" value="#{param.id}"/>
-
-      <h:panelGrid columns="2" styleClass="general-props-table" columnClasses="general-prop-cell">
-
-         <h:panelGroup layout="block">
+      <input type="hidden" name="id" value="#{param.id}"/>
+      <h:panelGrid columns="1" styleClass="general-props-table" columnClasses="general-prop-cell">
+         <h:panelGroup>
             <b>Name: </b> <h:outputText value="#{PingAgentUIBean.agent.name}"/>
          </h:panelGroup>
-
-         <h:panelGroup layout="block">
+         <h:panelGroup>
+            <b>Address: </b> <h:outputText value="#{PingAgentUIBean.agent.address}"/>
+         </h:panelGroup>
+         <h:panelGroup>
+            <b>Port: </b> <h:outputText value="#{PingAgentUIBean.agent.port}"/>
+         </h:panelGroup>
+         <h:panelGroup>
             <b>Agent Communications Status: </b>
             <h:graphicImage value="/images/icons/availability_green_16.png" alt="Up" title="Up"
                             rendered="#{PingAgentUIBean.pingResults}"/>
             <h:graphicImage value="/images/icons/availability_red_16.png" alt="Down" title="Down"
                             rendered="#{!PingAgentUIBean.pingResults}"/>
          </h:panelGroup>
-
-         <h:panelGroup layout="block">
-            <b>Address: </b> <h:outputText value="#{PingAgentUIBean.agent.address}"/>
-         </h:panelGroup>
-
-         <h:panelGroup layout="block">
+         <h:panelGroup>
             <b>Last Received Availability Report: </b>
             <h:outputText value="#{PingAgentUIBean.agent.lastAvailabilityReport}">
                <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
             </h:outputText>
          </h:panelGroup>
-
-         <h:panelGroup layout="block">
-            <b>Port: </b> <h:outputText value="#{PingAgentUIBean.agent.port}"/>
-         </h:panelGroup>
-
-      </h:panelGrid>
-
-      <h:panelGrid columns="1" styleClass="general-props-table" columnClasses="general-prop-cell">
-         <h:panelGroup layout="block">
-            <table><tr>
-            <td><b>Full Endpoint: </b></td>
-            <td style="WORD-BREAK:BREAK-ALL"><h:outputText value="#{PingAgentUIBean.remoteEndpointWrapped}"/></td>
-            </tr></table>
+         <h:panelGroup>
+            <b>Full Endpoint: </b> <h:outputText style="WORD-BREAK:BREAK-ALL" value="#{PingAgentUIBean.remoteEndpointWrapped}"/>
          </h:panelGroup>
       </h:panelGrid>
-
    </h:form>
-
 </rich:panel>
 
 </ui:define>

@@ -64,12 +64,10 @@ id - the id of the Resource being accessed
             </a4j:form>
         </a4j:region>
 
+<ui:remove>
         <script language="JavaScript" type="text/JavaScript">
             <!--
                function handleSplitPaneResize(splitPane, event) {
-
-
-
                    //#{rich:element('leftResourceNavStateField')}.value = navSplitPane.getWidthPercent(navSplitPane.div1);
                    //#{rich:element('leftResourceNavStateField')}.focus();
                    //#{rich:element('leftResourceNavStateField')}.blur();
@@ -78,14 +76,11 @@ id - the id of the Resource being accessed
                    //alert(#{rich:element('leftResourceNavStateField')});
                    saveSplitPaneState(navSplitPane.getWidthPercent(navSplitPane.div1));
                    //alert("Saved: " + navSplitPane.getWidthPercent(navSplitPane.div1));
-
                }
-
                var navSplitPane = new SplitPane("leftContent", "#{UserPreferencesUIBean.leftResourceNavState}", "centerContent", { onEnd: handleSplitPaneResize, active: true });
-
-
            // -->
         </script> 
+</ui:remove>
 
     </ui:define>
 

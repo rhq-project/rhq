@@ -1959,7 +1959,7 @@ ul.radio-group .unspecified {
 
 /*--- Inventory ---------------------*/
 .general-props-table {
-    width: 100%;
+    width: 99%; /* 100% makes this look bad on IE */
     border-style: none;
     border-collapse: collapse;
     margin: 0 2px 0 0;

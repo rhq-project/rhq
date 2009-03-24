@@ -44,6 +44,11 @@ public class ConnectionPropertiesUIBean extends AbstractConfigurationUIBean {
 
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
+    public ConnectionPropertiesUIBean() {
+        removeSessionScopedBeanIfInView("/rhq/resource/inventory/view-connection.xhtml",
+            ConnectionPropertiesUIBean.class);
+    }
+
     @Nullable
     protected ConfigurationDefinition lookupConfigurationDefinition() {
         int resourceTypeId = EnterpriseFacesContextUtility.getResource().getResourceType().getId();

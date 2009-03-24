@@ -20,10 +20,15 @@ package org.rhq.enterprise.gui.configuration;
 
 import java.util.Hashtable;
 import java.util.Map;
+
+import javax.faces.context.FacesContext;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -48,13 +53,26 @@ public abstract class AbstractConfigurationUIBean {
         this.configurationMap = new Hashtable<Integer, Configuration>();
     }
 
+    protected <T> void removeSessionScopedBeanIfInView(String targetViewId, Class<T> clazz) {
+        try {
+            String viewId = FacesContext.getCurrentInstance().getViewRoot().getViewId();
+            if (viewId != null && viewId.equals(targetViewId)) {
+                FacesContextUtility.removeSessionScopedBean(clazz);
+            }
+        } catch (Throwable t) {
+            /* 
+             * catch all possible issues so as to always let the page keep loading; 
+             * if our trick (RHQ-1841) didn't work fall back to existing functionality
+             */
+        }
+    }
+
     @Nullable
     protected abstract ConfigurationDefinition lookupConfigurationDefinition();
 
     protected abstract int getConfigurationDefinitionKey();
 
-    public void setConfigurationDefinition(@NotNull
-    ConfigurationDefinition configurationDefinition) {
+    public void setConfigurationDefinition(@NotNull ConfigurationDefinition configurationDefinition) {
         this.configurationDefinitionMap.put(getConfigurationDefinitionKey(), configurationDefinition);
     }
 
@@ -75,8 +93,7 @@ public abstract class AbstractConfigurationUIBean {
 
     protected abstract int getConfigurationKey();
 
-    public void setConfiguration(@NotNull
-    Configuration configuration) {
+    public void setConfiguration(@NotNull Configuration configuration) {
         this.configurationMap.put(getConfigurationKey(), configuration);
     }
 

@@ -183,6 +183,12 @@ public abstract class FacesContextUtility {
         return result;
     }
 
+    public static <T> void removeSessionScopedBean(Class<T> type) {
+        String fqn = type.getName();
+        String clazz = fqn.substring(fqn.lastIndexOf('.') + 1);
+        getRequest().getSession().removeAttribute(clazz);
+    }
+
     public static <T> T getManagedBean(Class<T> type) {
         ValueExpression managedBeanValueExpression = getValueExpressionForManagedBean(type);
         T managedBean = FacesExpressionUtility.getValue(managedBeanValueExpression, type);

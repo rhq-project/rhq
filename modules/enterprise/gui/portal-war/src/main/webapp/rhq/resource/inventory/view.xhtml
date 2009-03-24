@@ -67,7 +67,12 @@
          <h:outputText value="none" style="font-style: italic" rendered="#{empty ResourceUIBean.description}"/>
       </h:panelGroup>
 
-      <rich:spacer/>
+       <h:panelGroup layout="block">
+         <h:outputText value="Resource Key: " styleClass="BoldText"/>
+         <h:outputText value="#{ResourceUIBean.resourceKey}" rendered="#{!empty ResourceUIBean.resourceKey}"/>
+         <h:outputText value="none" style="font-style: italic" rendered="#{empty ResourceUIBean.resourceKey}"/>
+      </h:panelGroup>
+
 
       <h:panelGroup layout="block" rendered="#{ResourceUIBean.resourceType.category == 'PLATFORM'}">
          <h:outputText value="Location: " styleClass="BoldText"/>

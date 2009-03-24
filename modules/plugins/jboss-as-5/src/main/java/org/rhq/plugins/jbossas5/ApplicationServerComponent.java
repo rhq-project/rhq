@@ -213,6 +213,8 @@ public class ApplicationServerComponent
             ConfigurationDefinition pluginConfigDef = resourceType.getPluginConfigurationDefinition();
             Collection<PropertyDefinition> managedPropertyGroup = pluginConfigDef.getPropertiesInGroup(MANAGED_PROPERTY_GROUP);
             handleMiscManagedProperties(managedPropertyGroup, managedProperties, defaultPluginConfig);
+            log.debug("Applying template [" + templateName + "] to create ManagedComponent of type [" + componentType
+                    + "]...");
             try
             {
                 managementView.applyTemplate(resourceName, template);
@@ -221,7 +223,8 @@ public class ApplicationServerComponent
             }
             catch (Exception e)
             {
-                log.error("Unable to apply template [" + templateName + "].", e);
+                log.error("Unable to apply template [" + templateName + "] to create ManagedComponent of type "
+                        + componentType + ".", e);
                 createResourceReport.setStatus(CreateResourceStatus.FAILURE);
                 createResourceReport.setException(e);
             }

@@ -43,7 +43,6 @@ import org.jboss.metatype.api.types.ArrayMetaType;
 import org.jboss.metatype.api.types.MapCompositeMetaType;
 import org.jboss.metatype.api.types.TableMetaType;
 import org.jboss.metatype.api.types.PropertiesMetaType;
-import org.jboss.metatype.api.values.CompositeValue;
 import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.values.GenericValue;
 import org.jboss.metatype.api.values.CollectionValue;
@@ -200,6 +199,18 @@ public class MetadataConversionUtils {
                 CompositeMetaType compositeMetaType = (CompositeMetaType)metaType;
                 for (String itemName : compositeMetaType.itemSet()) {
                     MetaType itemMetaType = compositeMetaType.getType(itemName);
+                    if (itemMetaType.isComposite()) {
+                        // Avoid StackOverflowErrors caused by recursive CompositeMetaType metadata.
+                        if (itemMetaType == compositeMetaType)
+                            LOG.error("CompositeMetaType " + compositeMetaType
+                                    + " contains an item whose type is a reference to the CompositeMetaType itself!");
+                        else
+                            LOG.error("CompositeMetaType " + compositeMetaType
+                                    + " contains an item whose type is another CompositeMetaType: " + itemMetaType);
+                        continue;
+                    }
+                    LOG.debug("Converting item with type [" + itemMetaType + "@" + System.identityHashCode(itemMetaType)
+                            + "] and name [" + itemName + "]...");
                     PropertyDefinition itemPropDef = convertMetaTypeToPropertyDefinition(itemMetaType, itemName, null);
                     propDefMap.put(itemPropDef);
                     String desc = (!itemName.equals(compositeMetaType.getDescription(itemName))) ?
@@ -279,9 +290,9 @@ public class MetadataConversionUtils {
        return convertMetricPropertiesToMeasurementDefinitions(component.getProperties());
     }
 
-    private static void addMeasurementDefinitionsForCompositeManagedProperty(ManagedProperty property, Set<MeasurementDefinition> measurementDefs) {
-        CompositeValue compositeValue = (CompositeValue)property.getValue();
-        CompositeMetaType compositeMetaType = compositeValue.getMetaType();
+    private static void addMeasurementDefinitionsForCompositeManagedProperty(ManagedProperty property,
+                                                                             Set<MeasurementDefinition> measurementDefs) {
+        CompositeMetaType compositeMetaType = (CompositeMetaType)property.getMetaType();
         Set<String> itemNames = compositeMetaType.keySet();
         for (String itemName : itemNames) {
             MetaType itemType = compositeMetaType.getType(itemName);
@@ -295,9 +306,8 @@ public class MetadataConversionUtils {
                 measurementDefs.add(measurementDef);
                 measurementDef.setDisplayName(StringUtils.deCamelCase(itemName));
             } else {
-                MetaValue itemValue = compositeValue.get(itemName);
-                LOG.warn("Composite stat property [" + compositeValue + "] contains non-simple item [" + itemValue +
-                        "] - skipping..." );
+                LOG.warn("Composite stat property [" + property.getName() + "] contains non-simple item with type ["
+                        + itemType + "] - skipping..." );
             }
          }
     }
@@ -343,6 +353,8 @@ public class MetadataConversionUtils {
             propDef = convertMetaTypeToPropertyDefinitionList(metaType, propName, metaValue);
         } else if (metaType.isComposite() || metaType.isGeneric() || metaType.isTable() ||
                    metaType instanceof PropertiesMetaType) {
+            LOG.debug("Converting map with type [" + metaType + "@" + System.identityHashCode(metaType) + "], name ["
+                    + propName + "], and value [" + metaValue + "]...");
             propDef = convertMetaTypeToPropertyDefinitionMap(metaType, propName, metaValue);
         } else {
             throw new IllegalStateException("Unsupported MetaType: " + metaType);

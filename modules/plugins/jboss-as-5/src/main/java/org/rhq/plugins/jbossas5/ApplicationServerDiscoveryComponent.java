@@ -30,6 +30,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.PluginDescriptorGenerator;
+import org.rhq.plugins.jbossas5.test.UnitTestRunner;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -122,8 +123,10 @@ public class ApplicationServerDiscoveryComponent
         log.info("Discovered " + servers.size() + " " + resourceType.getName() + " Resources." );
 
         boolean debug = Boolean.getBoolean(JBMANCON_DEBUG_SYSPROP);
-        if (debug)
+        if (debug) {
+            new UnitTestRunner().runUnitTests();
             generatePluginDescriptor(resourceDiscoveryContext);
+        }
 
         return servers;
     }

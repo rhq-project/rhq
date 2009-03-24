@@ -41,7 +41,7 @@
      Descriptions of datasource config props can also be culled from:
      https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/resources/dtd/jboss-ds_5_0.dtd
      and:
-     http://www.jboss.org/file-access/default/members/jbossas/freezone/docs/Server_Configuration_Guide/beta500/html/ch13s13.html
+     http://www.jboss.org/file-access/default/members/jbossas/freezone/docs/Administration_And_Configuration_Guide/5/html/Configuring_JDBC_DataSources.html
   -->
 
 <!ENTITY datasourceConnectionResourceConfigProps '
@@ -261,14 +261,6 @@
         </c:defaultValueDescription>
     </c:simple-property>
 
-    <!-- TODO -->
-    <!--<c:map-property name="connection-properties" displayName="Connection Properties" required="false">
-       <c:description>
-          Properties used to configure the DataSource. Each property should be on a separate
-          line, with the name separated from the value by an equals sign.
-       </c:description>
-    </c:map-property>-->
-
     <c:simple-property name="noTxSeparatePools" type="boolean" activationPolicy="immediate"
                        displayName="No Tx Separate Pools" required="false">
         <c:description>Whether or not to use separate pools.</c:description>
@@ -308,7 +300,7 @@
     <c:simple-property required="false" name="jmx-invoker-name"/>
 
     <c:map-property required="false" name="metadata">
-        <c:simple-property required="true" name="typeMapping"
+        <c:simple-property required="false" name="typeMapping"
                            description="The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml">
             <c:property-options>
                 <c:option name="FirstSQL/J" value="FirstSQL/J"/>
@@ -367,7 +359,11 @@
         </c:description>
     </c:simple-property>
     
-    <c:map-property name="connection-properties" required="false"/>
+    <c:map-property name="connection-properties" required="false"
+                    description="Arbitrary connection properties that should be passed to the java.sql.Driver.connect(url, props) method."/>
+
+    <c:map-property required="false" name="config-property" displayName="Connection Factory Properties"
+                    description="The managed connection factory configuration properties"/>
 '>
 
 <!ENTITY nonXaDatasourceConnectionResourceConfigProps '
@@ -405,12 +401,26 @@
     <c:simple-property required="true" name="jndi-name"
                        description="The global JNDI name to bind the connection factory under."/>
 
+    <c:simple-property required="true" name="rar-name" displayName="RAR Name">
+        <c:description>
+            The name of the RAR file that contains the definition for the resource we want to provide. For nested RAR
+            files, the name would look like myapplication.ear#my.rar.
+        </c:description>
+    </c:simple-property>
+
+    <c:simple-property required="true" name="connection-definition">
+        <c:description>
+            The connection factory interface class. It should match the connectionfactory-interface in the ra.xml file.
+        </c:description>
+    </c:simple-property>
+
     <c:simple-property name="min-pool-size"
                        displayName="Minimum Pool Size"
                        description="Indicates the minimum number of connections the pool should hold - default is 0."
                        type="integer"
                        activationPolicy="immediate"
-                       required="false">
+                       required="false"
+                       default="0">
         <c:constraint>
             <c:integer-constraint minimum="0"/>
         </c:constraint>
@@ -421,7 +431,8 @@
                        description="Indicates the maximum number of connections the pool should hold - default is 20."
                        activationPolicy="immediate"
                        type="integer"
-                       required="false">
+                       required="false"
+                       default="10">
         <c:constraint>
             <c:integer-constraint minimum="0"/>
         </c:constraint>
@@ -429,15 +440,16 @@
 '>
 
 <!ENTITY connectionFactoryAdvancedResourceConfigProps '
-    <c:simple-property type="integer" required="false" name="allocation-retry"/>
+    <c:simple-property type="integer" required="false" name="allocation-retry" default="0"/>
 
-    <c:simple-property type="long" required="false" name="allocation-retry-wait-millis"/>
+    <c:simple-property type="long" required="false" name="allocation-retry-wait-millis" default="5000"/>
 
     <c:simple-property name="background-validation"
                        type="boolean"
                        activationPolicy="immediate"
                        displayName="Use Strict Minimum"
-                       required="false">
+                       required="true"
+                       default="false">
         <c:description>Whether on not to perform background validation.</c:description>
     </c:simple-property>
 
@@ -446,7 +458,8 @@
                        units="milliseconds"
                        activationPolicy="immediate"
                        type="integer"
-                       required="false">
+                       required="false"
+                       default="0">
         <c:description>
             Indicates the maximum time in minutes to validate the Connection in the background.
         </c:description>
@@ -460,7 +473,8 @@
                        units="milliseconds"
                        activationPolicy="immediate"
                        type="integer"
-                       required="false">
+                       required="false"
+                       default="30000">
         <c:description>
             Indicates the maximum time in milliseconds to block while waiting for a connection before throwing
             an exception. Note that this blocks only while waiting for a permit for a connection, and will never
@@ -472,17 +486,21 @@
         </c:constraint>
     </c:simple-property>
 
-    <c:map-property required="false" name="config-property"/>
-
-    <c:simple-property required="false" name="connection-definition"/>
+    <c:map-property required="false" name="config-property">
+        <c:description>
+            Properties to supply to the ManagedConnectionFactory (MCF) MBean service configuration.
+        </c:description>
+    </c:map-property>
 
     <c:simple-property name="idle-timeout-minutes"
                        type="integer"
                        activationPolicy="immediate"
                        displayName="Idle Timeout"
                        units="minutes"
-                       required="false">
-        <c:description>Maximum time in minutes a connection can be idle before it is closed.
+                       required="false"
+                       default="30">
+        <c:description>
+            Maximum time in minutes a connection can be idle before it is closed.
         </c:description>
         <c:constraint>
             <c:integer-constraint minimum="0"/>
@@ -502,7 +520,7 @@
     <c:simple-property required="false" name="jmx-invoker-name"/>
 
     <c:map-property required="false" name="metadata">
-        <c:simple-property required="true" name="typeMapping"
+        <c:simple-property required="false" name="typeMapping"
                            description="The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml">
             <c:property-options>
                 <c:option name="FirstSQL/J" value="FirstSQL/J"/>
@@ -551,8 +569,6 @@
         <c:description>Whether or not to use prefill.</c:description>
     </c:simple-property>
 
-    <c:simple-property required="false" name="rar-name" displayName="RAR Name"/>
-
     <c:map-property name="security-domain" displayName="Security Settings" required="false">
         <c:description>
             Security settings
@@ -587,20 +603,13 @@
 
     <c:simple-property required="false" name="statistics-formatter"/>
 
-    <c:simple-property name="track-connection-by-tx"
-                       type="boolean"
-                       activationPolicy="immediate"
-                       displayName="Track Connection By Transaction"
-                       required="false">
-        <c:description>Whether the connection should be locked into the transaction.</c:description>
-    </c:simple-property>
-
     <c:simple-property required="false" name="type-mapping"/>
 
     <c:simple-property name="use-java-context"
                        description="Indicates if the JNDI name should be prefixed with java: - default is true."
                        type="boolean"
-                       required="false">
+                       required="false"
+                       default="true">
     </c:simple-property>
 
     <c:simple-property name="use-strict-min"
@@ -614,7 +623,8 @@
     <c:simple-property name="validate-on-match"
                        type="boolean"
                        activationPolicy="immediate"
-                       required="false">
+                       required="false"
+                       default="true">
         <c:description>Whether on not to validate on match - default is false.</c:description>
     </c:simple-property>
 '>        
@@ -779,21 +789,6 @@
                                        displayName="Track Connection By Transaction" required="false">
                         <c:description>Whether the connection should be locked into the transaction.</c:description>
                     </c:simple-property>
-
- 			<!--     
-                    <c:list-property required="false" name="config-property" displayName="Connection Factory Properties"
-                                     description="The managed connection factory configuration properties">
-                        <c:map-property name="org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData"
-                                        description="Map&lt;String,MetaValue&gt;">
-                            <c:simple-property name="type"/>
-                            <c:simple-property name="name"/>
-                            <c:simple-property name="value"/>
-                        </c:map-property>
-                    </c:list-property>
-                          
-                    <c:map-property required="false" name="config-property" displayName="Connection Factory Properties"
-                                    description="The managed connection factory configuration properties"/>
-            -->
                 </c:group>
 
                 <c:template name="Oracle No TX" description="No Transaction Template for Oracle">
@@ -865,18 +860,7 @@
                                        default="true" readOnly="true">
                         <c:description>Whether the connection should be locked into the transaction.</c:description>
                     </c:simple-property>
-                    
-                <!--     
-                    <c:list-property required="false" name="config-property" displayName="Connection Factory Properties"
-                                     description="The managed connection factory configuration properties">
-                        <c:map-property name="org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData"
-                                        description="Map&lt;String,MetaValue&gt;">
-                            <c:simple-property name="type"/>
-                            <c:simple-property name="name"/>
-                            <c:simple-property name="value"/>
-                        </c:map-property>
-                    </c:list-property>
-                 -->
+
                 </c:group>
 
                 <c:template name="Oracle Local TX" description="Local Transaction Template for Oracle">
@@ -982,21 +966,6 @@
                                        displayName="Track Connection By Transaction" required="false">
                         <c:description>Whether the connection should be locked into the transaction.</c:description>
                     </c:simple-property>
-
-			<!--
-                    <c:list-property required="false" name="config-property" displayName="Connection Factory Properties"
-                                     description="The managed connection factory configuration properties">
-                        <c:map-property name="org.jboss.resource.metadata.mcf.ManagedConnectionFactoryPropertyMetaData"
-                                        description="Map&lt;String,MetaValue&gt;">
-                            <c:simple-property name="type"/>
-                            <c:simple-property name="name"/>
-                            <c:simple-property name="value"/>
-                        </c:map-property>
-                    </c:list-property>
-            
-                    <c:map-property required="false" name="config-property" displayName="Connection Factory Properties"
-                                    description="The managed connection factory configuration properties"/>
-            -->
                 </c:group>
 
                 <c:template name="Oracle XA" description="XA Transaction Template for Oracle">
@@ -1020,6 +989,7 @@
         </service>
 
         <service name="No Tx ConnectionFactory"
+                 description="A ConnectionFactory that does not take part in JTA transactions."
                  class="ManagedComponentComponent"
                  createDeletePolicy="both"
                  subCategory="Connection Factories"
@@ -1063,12 +1033,23 @@
 
                     &connectionFactoryAdvancedResourceConfigProps;
 
+                    <c:simple-property name="track-connection-by-tx"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="Track Connection By Transaction"
+                                       required="false"
+                                       default="false"
+                                       readOnly="true">
+                        <c:description>Whether the connection should be locked into the transaction.</c:description>
+                    </c:simple-property>
+
                 </c:group>
             </resource-configuration>
 
         </service>
 
         <service name="Tx ConnectionFactory"
+                 description="A ConnectionFactory that takes part in JTA transactions."
                  class="ManagedComponentComponent"
                  createDeletePolicy="both"
                  subCategory="Connection Factories"
@@ -1080,8 +1061,9 @@
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="TxConnectionFactoryTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="jndi-name">
-                    <c:defaultValueDescription>This holds the property in the configuration to use
-                        to define the filename that the profile service should use in the creation of a file
+                    <c:defaultValueDescription>
+                        The name of the resource-configuration property to use to define the ManagedComponent name that
+                        the profile service should use when creating a new ManagedComponent.
                     </c:defaultValueDescription>
                 </c:simple-property>
                 <c:group name="managedPropertyGroup"
@@ -1145,6 +1127,23 @@
 
                     &connectionFactoryAdvancedResourceConfigProps;
 
+                    <c:simple-property name="local-transaction"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="Local Transaction"
+                                       required="false">
+                        <c:description>Whether on not to use local transactions - default is false.</c:description>
+                    </c:simple-property>
+                    
+                    <c:simple-property name="track-connection-by-tx"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="Track Connection By Transaction"
+                                       required="false"
+                                       default="true">
+                        <c:description>Whether the connection should be locked into the transaction.</c:description>
+                    </c:simple-property>
+
                     <c:simple-property name="xa-transaction"
                                        type="boolean"
                                        activationPolicy="immediate"
@@ -1164,14 +1163,6 @@
                         <c:constraint>
                             <c:integer-constraint minimum="0"/>
                         </c:constraint>
-                    </c:simple-property>
-
-                    <c:simple-property name="local-transaction"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Local Transaction"
-                                       required="false">
-                        <c:description>Whether on not to use local transactions - default is false.</c:description>
                     </c:simple-property>
 
                 </c:group>

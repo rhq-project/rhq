@@ -42,8 +42,7 @@
                <h:outputText value="Items Per Page:" 
                              style="margin-right: 2em; font-weight: bold; "
                              rendered="#{paginationDataModel.rowCount > paginationSettingUIBean.minimumPageSize
-                                         and not paginationPageControl.unlimited
-                                         and paginationPageControl.pageSize > paginationSettingUIBean.minimumPageSize}"/>
+                                         and not paginationPageControl.unlimited}"/>
                <h:selectOneListbox id="currentPageSize" 
                                    size="1"
                                    value="#{paginationPageControl.pageSize}"

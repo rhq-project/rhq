@@ -20,6 +20,7 @@ package org.rhq.plugins.jbossas5.test;
 
 import java.util.Set;
 import java.util.Map;
+import java.util.UUID;
 
 import org.testng.annotations.Test;
 
@@ -43,44 +44,43 @@ public class TxConnectionFactoryTest extends AbstractManagedComponentTest
 
     @Test
     public void testCreateValid() throws Exception {
-        final String componentName = "foobar";
+        final String componentName = UUID.randomUUID().toString();
         DeploymentTemplateInfo template = this.managementView.getTemplate(TEMPLATE_NAME);
         Map<String,ManagedProperty> properties = template.getProperties();
-        properties.get("jndi-name").setValue(new SimpleValueSupport(SimpleMetaType.STRING, componentName));
-        properties.get("rar-name").setValue(new SimpleValueSupport(SimpleMetaType.STRING, "jms-ra.rar"));
-        properties.get("connection-definition").setValue(new SimpleValueSupport(SimpleMetaType.STRING,
-                "org.jboss.resource.adapter.jms.JmsConnectionFactory"));
-        this.managementView.applyTemplate(componentName, template);
-        this.managementView.process();
-        ManagedComponent component = this.managementView.getComponent(componentName, COMPONENT_TYPE);
-        assert component != null;
-        assert component.getName().equals(componentName);
+        setKnownRequiredProperties(componentName, properties);
+        ManagedComponent component = createComponent(COMPONENT_TYPE, componentName, template);
         assert component.getProperty("jndi-name").getValue().equals(new SimpleValueSupport(SimpleMetaType.STRING,
                 componentName));
+        this.managementView.removeComponent(component);
     }
 
-    //@Test
-    public void testCreateNonMandatoryPropertyPropertyNull() throws Exception {
+    @Test
+    public void testCreateNonMandatoryPropertiesNull() throws Exception {
+        final String componentName = UUID.randomUUID().toString();
         DeploymentTemplateInfo template = this.managementView.getTemplate(TEMPLATE_NAME);
         Set<ManagedProperty> nonMandatoryProperties = getNonMandatoryProperties(template);
         for (ManagedProperty nonMandatoryProperty : nonMandatoryProperties)
             template.getProperties().remove(nonMandatoryProperty.getName());
-        this.managementView.applyTemplate("foobar", template);
-        this.managementView.process();
+        setKnownRequiredProperties(componentName, template.getProperties());
+        ManagedComponent component = createComponent(COMPONENT_TYPE, componentName, template);
+        this.managementView.removeComponent(component);
     }
 
-    //@Test
-    public void testCreateNonMandatoryPropertyValueNull() throws Exception {
+    @Test
+    public void testCreateNonMandatoryPropertyValuesNull() throws Exception {
+        final String componentName = UUID.randomUUID().toString();
         DeploymentTemplateInfo template = this.managementView.getTemplate(TEMPLATE_NAME);
         Set<ManagedProperty> nonMandatoryProperties = getNonMandatoryProperties(template);
         for (ManagedProperty nonMandatoryProperty : nonMandatoryProperties)
-            nonMandatoryProperty.setValue(null);        
-        this.managementView.applyTemplate("foobar", template);
-        this.managementView.process();
+            nonMandatoryProperty.setValue(null);
+        setKnownRequiredProperties(componentName, template.getProperties());
+        ManagedComponent component = createComponent(COMPONENT_TYPE, componentName, template);
+        this.managementView.removeComponent(component);
     }
 
-    //@Test
-    public void testCreateNonMandatoryPropertyInnerValueNull() throws Exception {
+    @Test
+    public void testCreateNonMandatoryPropertyInnerValuesNull() throws Exception {
+        final String componentName = UUID.randomUUID().toString();
         DeploymentTemplateInfo template = this.managementView.getTemplate(TEMPLATE_NAME);
         Set<ManagedProperty> nonMandatoryProperties = getNonMandatoryProperties(template);
         for (ManagedProperty nonMandatoryProperty : nonMandatoryProperties) {
@@ -93,7 +93,57 @@ public class TxConnectionFactoryTest extends AbstractManagedComponentTest
                 enumValueSupport.setValue(null);
             }
         }
-        this.managementView.applyTemplate("foobar", template);
-        this.managementView.process();
+        setKnownRequiredProperties(componentName, template.getProperties());
+        ManagedComponent component = createComponent(COMPONENT_TYPE, componentName, template);
+        this.managementView.removeComponent(component);
     }
+
+    @Test
+    public void testCreateMandatoryPropertiesNull() throws Exception {
+        final String componentName = UUID.randomUUID().toString();
+        DeploymentTemplateInfo template = this.managementView.getTemplate(TEMPLATE_NAME);
+        Set<ManagedProperty> mandatoryProperties = getMandatoryProperties(template);
+        for (ManagedProperty mandatoryProperty : mandatoryProperties)
+            template.getProperties().remove(mandatoryProperty.getName());
+        setKnownRequiredProperties(componentName, template.getProperties());
+        createComponentWithFailureExpected(COMPONENT_TYPE, componentName, template);        
+    }
+
+    @Test
+    public void testCreateMandatoryPropertyValuesNull() throws Exception {
+        final String componentName = UUID.randomUUID().toString();
+        DeploymentTemplateInfo template = this.managementView.getTemplate(TEMPLATE_NAME);
+        Set<ManagedProperty> mandatoryProperties = getMandatoryProperties(template);
+        for (ManagedProperty mandatoryProperty : mandatoryProperties)
+            mandatoryProperty.setValue(null);
+        setKnownRequiredProperties(componentName, template.getProperties());
+        createComponentWithFailureExpected(COMPONENT_TYPE, componentName, template);
+    }
+
+    @Test
+    public void testCreateMandatoryPropertyInnerValuesNull() throws Exception {
+        final String componentName = UUID.randomUUID().toString();
+        DeploymentTemplateInfo template = this.managementView.getTemplate(TEMPLATE_NAME);
+        Set<ManagedProperty> mandatoryProperties = getMandatoryProperties(template);
+        for (ManagedProperty mandatoryProperty : mandatoryProperties) {
+            MetaValue value = mandatoryProperty.getValue();
+            if (value instanceof SimpleValueSupport) {
+                SimpleValueSupport simpleValueSupport = (SimpleValueSupport)value;
+                simpleValueSupport.setValue(null);
+            } else if (value instanceof EnumValueSupport) {
+                EnumValueSupport enumValueSupport = (EnumValueSupport)value;
+                enumValueSupport.setValue(null);
+            }
+        }
+        setKnownRequiredProperties(componentName, template.getProperties());
+        createComponentWithFailureExpected(COMPONENT_TYPE, componentName, template);
+    }
+
+    private void setKnownRequiredProperties(String componentName, Map<String, ManagedProperty> properties)
+    {
+        setSimpleStringProperty(properties, "jndi-name", componentName);
+        setSimpleStringProperty(properties, "rar-name", "jms-ra.rar");
+        setSimpleStringProperty(properties, "connection-definition", "org.jboss.resource.adapter.jms.JmsConnectionFactory");
+    }
+
 }

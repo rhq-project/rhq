@@ -40,7 +40,6 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 import org.rhq.core.clientapi.util.TimeUtil;
 import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -372,9 +371,9 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         if (tableName.equals(MeasurementDataManagerUtility.getDeadTable(System.currentTimeMillis()))) {
             Connection conn = null;
             Statement stmt = null;
+            StopWatch watch = new StopWatch();
             try {
                 conn = ((DataSource) ctx.lookup(DATASOURCE_NAME)).getConnection();
-                log.info("Truncating table: " + tableName);
                 stmt = conn.createStatement();
                 long startTime = System.currentTimeMillis();
                 stmt.executeUpdate("TRUNCATE TABLE " + tableName);
@@ -382,6 +381,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
             } finally {
                 close(stmt);
                 close(conn);
+                log.info("Truncated table: " + tableName + " in (" + (watch.getElapsed() / SECOND) + " seconds)");
             }
         }
     }

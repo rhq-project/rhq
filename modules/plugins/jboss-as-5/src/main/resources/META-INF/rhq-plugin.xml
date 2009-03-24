@@ -362,7 +362,7 @@
     <c:map-property name="connection-properties" required="false"
                     description="Arbitrary connection properties that should be passed to the java.sql.Driver.connect(url, props) method."/>
 
-    <c:map-property required="false" name="config-property" displayName="Connection Factory Properties"
+    <c:map-property required="false" name="config-property" displayName="Connection Factory Properties" readOnly="true"
                     description="The managed connection factory configuration properties"/>
 '>
 

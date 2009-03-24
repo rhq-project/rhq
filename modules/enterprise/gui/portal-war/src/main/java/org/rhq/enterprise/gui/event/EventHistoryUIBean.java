@@ -125,6 +125,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
     public void populateEventId(Integer eventId) {
         this.eventId = eventId;
+        this.selectedEvent = null;
     }
 
     public EventComposite getSelectedEvent() {

@@ -128,6 +128,7 @@
                     
                     <a4j:commandLink action="#{EventHistoryUIBean.populateEventId(item.eventId)}"
                                      reRender="eventDetailsModalPanel" ajaxSingle="true"
+                                     limitToList="true"
                                      oncomplete="Richfaces.showModalPanel('modalPanelForm:eventDetailsModalPanel')">
                        <h:outputText value="#{onf:trimString(item.eventDetail,160)}" />
                     </a4j:commandLink>
@@ -185,7 +186,7 @@
     </h:form>
     
     <h:form id="modalPanelForm">
-       <rich:modalPanel id="eventDetailsModalPanel" width="450" height="450">
+       <rich:modalPanel id="eventDetailsModalPanel" width="600" height="450" onmaskclick="#{rich:component('eventDetailsModalPanel')}.hide()">
           <f:facet name="header">
              <h:outputText value="Event Details"/>
           </f:facet>

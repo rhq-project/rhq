@@ -73,7 +73,7 @@ groupId - the group id of the Group being accessed
 
                     <td width="30">
                         <a4j:outputPanel id="favoritesPanel" ajaxRendered="true">
-                            <a4j:support event="onclick" onsubmit="event.stopPropagation();"
+                            <a4j:support event="onclick"
                                          action="#{ResourceGroupUIBean.toggleFavorite}" reRender="favoritesPanel"
                                          disableDefault="true"/>
 

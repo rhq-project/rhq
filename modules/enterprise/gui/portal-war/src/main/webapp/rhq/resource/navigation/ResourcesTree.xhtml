@@ -47,7 +47,7 @@
                                    icon="/images/icons/#{resourceTreeItem.data.resourceType == null? 'Subcategory' : 'Auto_group'}_16.png">
 
                         <h:outputText value="#{resourceTreeItem}"
-                                      styleClass="availLink#{resourceTreeItem.data.availability == 0 ? 'Down' : resourceTreeItem.data.availability == 1 ? 'Up' : 'Mixed'}"/>
+                                      styleClass="availLink#{resourceTreeItem.data.availability == 0 ? 'Down' : (resourceTreeItem.data.availability == 1 ? 'Up' : 'Mixed')}"/>
                     </rich:treeNode>
 
                     <rich:treeNode type="LockedResource"

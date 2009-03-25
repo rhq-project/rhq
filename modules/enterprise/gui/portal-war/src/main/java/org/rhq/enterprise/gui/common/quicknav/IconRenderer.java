@@ -37,10 +37,10 @@ public class IconRenderer extends Renderer {
     private static final String QUICKNAV_CELL_STYLE_CLASS = "quicknav-cell";
     private static final String QUICKNAV_BLOCK_STYLE_CLASS = "quicknav-block";
 
-    static final String IMAGES_PATH = "/images";
+    private static final String IMAGES_PATH = "/images";
 
-    static final String ICON_IMAGE_WIDTH = "13";
-    static final String ICON_IMAGE_HEIGHT = "13";
+    private static final String ICON_IMAGE_WIDTH = "16";
+    private static final String ICON_IMAGE_HEIGHT = "16";
 
     /**
      * Encode this component.

@@ -55,8 +55,8 @@ public abstract class QuicknavDecorator extends ColumnDecorator implements Tag {
 
     private static final String ICON_SRC_LOCKED = "/images/icon_hub_locked.gif";
 
-    private static final String ICON_WIDTH = "13";
-    private static final String ICON_HEIGHT = "13";
+    private static final String ICON_WIDTH = "16";
+    private static final String ICON_HEIGHT = "16";
 
     protected static final Log LOG = LogFactory.getLog(QuicknavDecorator.class.getName());
 

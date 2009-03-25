@@ -75,15 +75,16 @@
                         </rich:treeNode>
 
                         <rich:treeNode type="AutoGroupComposite"
-                                       iconLeaf="/images/icons/Folder_16.png" icon="/images/icons/Folder_16.png">
+                                       iconLeaf="/images/icons/#{groupTreeItem.data.subcategory != null ? 'Subcategory' : 'Auto_group'}_16.png"
+                                       icon="/images/icons/#{groupTreeItem.data.subcategory != null ? 'Subcategory' : 'Auto_group'}_16.png" >
 
                             <h:outputText
                                     value="#{groupTreeItem.data.subcategory == null ? groupTreeItem.data.resourceType.name : groupTreeItem.data.subcategory.name}"/>
 
 
-                        </rich:treeNode>
 
-                        <!-- Tree Node supporting context menu -->
+                            <!-- Tree Node supporting context menu -->
+                        </rich:treeNode>
                         <rich:treeNode type="ClusterKey"
                                        icon="/images/icons/Cluster_up_16.png"
                                        iconLeaf="/images/icons/Cluster_up_16.png">

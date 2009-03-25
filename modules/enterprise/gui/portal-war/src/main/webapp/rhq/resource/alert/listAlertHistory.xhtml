@@ -115,8 +115,12 @@
                         <h:outputText styleClass="headerText" value="Priority" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                 
-                  <h:outputText value="#{item.alert.alertDefinition.priority}"/>
+
+                   <h:graphicImage value="/images/icons/Flag_blue_16.png" rendered="#{item.alert.alertDefinition.priority.name == 'LOW'}"/>
+                   <h:graphicImage value="/images/icons/Flag_yellow_16.png" rendered="#{item.alert.alertDefinition.priority.name == 'MEDIUM'}"/>
+                   <h:graphicImage value="/images/icons/Flag_red_16.png" rendered="#{item.alert.alertDefinition.priority.name == 'HIGH'}"/>
+
+                  <h:outputText value="#{item.alert.alertDefinition.priority.name}"/>
                </rich:column>
                
                <rich:column>

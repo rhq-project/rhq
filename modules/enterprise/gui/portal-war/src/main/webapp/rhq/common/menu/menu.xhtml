@@ -107,7 +107,7 @@
             <c:forEach var="group" items="#{UserPreferencesUIBean.groupFavorites}">
 
                 <rich:menuItem submitMode="none"
-                               icon="/images/icons/Cluster_up_16.png"
+                               icon="/images/icons/#{group.groupCategory == 'MIXED' ? 'Group' : 'Cluster'}_up_16.png"
                                onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{group.id}'">
                     <h:outputText value="#{group.name}"/>
                 </rich:menuItem>

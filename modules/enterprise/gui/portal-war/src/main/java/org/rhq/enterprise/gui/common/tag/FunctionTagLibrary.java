@@ -348,7 +348,7 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         String color = null;
         switch (severity) {
         case DEBUG:
-            color = "bug";
+            color = "debug";
             break;
         case INFO:
             color = "info";

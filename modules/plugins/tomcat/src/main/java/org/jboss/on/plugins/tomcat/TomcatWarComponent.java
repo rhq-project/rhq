@@ -342,7 +342,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     @Override
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
         WarOperation operation = getOperation(name);
-        if (name.equalsIgnoreCase("start")) {
+        if (WarOperation.START.equals(operation)) {
             this.webModuleMBean = getWebModuleMBean();
         }
 
@@ -359,11 +359,14 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         // NOTE: None of the supported operations have any parameters or return values, which makes our job easier.
         Object[] paramValues = new Object[0];
         mbeanOperation.invoke(paramValues);
-        int state = (Integer) this.webModuleMBean.getAttribute("state").refresh();
-        int expectedState = getExpectedPostExecutionState(operation);
-        if (state != expectedState) {
-            throw new Exception("Failed to " + name + " webapp (value of the 'state' attribute of MBean '"
-                + this.webModuleMBean.getBeanName() + "' is " + state + ", not " + expectedState + ").");
+
+        if (!WarOperation.DESTROY.equals(operation)) {
+            int state = (Integer) this.webModuleMBean.getAttribute("state").refresh();
+            int expectedState = getExpectedPostExecutionState(operation);
+            if (state != expectedState) {
+                throw new Exception("Failed to " + name + " webapp (value of the 'state' attribute of MBean '"
+                    + this.webModuleMBean.getBeanName() + "' is " + state + ", not " + expectedState + ").");
+            }
         }
 
         return new OperationResult();
@@ -436,7 +439,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     }
 
     private enum WarOperation {
-        START, STOP, RELOAD
+        DESTROY, RELOAD, START, STOP
     }
 
     private interface WarMBeanState {
@@ -743,7 +746,13 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         try {
             // this will release locked files. In particular, the .war when deployed as an archive (this may be a windows issue only)
             // this also serves to ensure the user has control permissions 
-            invokeOperation("stop", null);
+            try {
+                invokeOperation("stop", null);
+            } catch (IllegalStateException e) {
+                // thrown if the mbean does not exist or the app is already stopped. This is probably ok.
+                log.warn("Failed to stop WAR (may not be deployed or started). Proceeding with resource delete for  ["
+                    + contextRoot + "].", e);
+            }
 
             getParentResourceComponent().undeployWar(contextRoot);
 
@@ -751,7 +760,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
                 try {
                     backupFile = this.backupAppBitsToTempFile(appFile);
                 } catch (Exception e) {
-                    log.warn("Failed to create backup while deleting app " + appFile.getPath());
+                    log.warn("Failed to create backup while deleting WAR " + appFile.getPath());
                 }
             }
         } catch (TomcatApplicationDeployer.DeployerException e) {
@@ -788,6 +797,16 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
                     // not being able to delete the file will mean that it will
                     // likely get picked up again by the deployment scanner
                     throw e;
+                }
+
+                // Finally, try a destroy of the app.  This is typically not necessary if the vhost
+                // is monitoring the docbase dir (i.e. autodeploy is true) but should ensure the
+                // mbean is destroyed.
+                try {
+                    invokeOperation("destroy", null);
+                } catch (Exception e) {
+                    log.debug("Failed to destroy WAR. This is often ok, the vhost may have taken care of it already ["
+                        + contextRoot + "].", e);
                 }
             }
         }

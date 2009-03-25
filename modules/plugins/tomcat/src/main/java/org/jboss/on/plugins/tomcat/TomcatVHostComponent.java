@@ -61,8 +61,8 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * @author Heiko W. Rupp
  *
  */
-public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerComponent> implements ApplicationServerComponent,
-    CreateChildResourceFacet {
+public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerComponent> implements
+    ApplicationServerComponent, CreateChildResourceFacet {
 
     public static final String CONFIG_ALIASES = "aliases";
     public static final String CONFIG_APP_BASE = "appBase";
@@ -151,7 +151,8 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
         this.getResourceContext().getParentResourceComponent().storeConfig();
     }
 
-    private void consolidateSettings(PropertySimple newVals, PropertySimple currentVals, String addOp, String removeOp, String arg) throws Exception {
+    private void consolidateSettings(PropertySimple newVals, PropertySimple currentVals, String addOp, String removeOp,
+        String arg) throws Exception {
 
         // add new values not in the current settings
         String currentValsLongString = currentVals.getStringValue();
@@ -169,7 +170,8 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
                     try {
                         invokeOperation(addOp, opConfig);
                     } catch (Exception e) {
-                        throw new IllegalArgumentException("Could not add " + arg + "=" + newVal + ". Please check spelling/existence.");
+                        throw new IllegalArgumentException("Could not add " + arg + "=" + newVal
+                            + ". Please check spelling/existence.");
                     }
                 }
             }
@@ -184,7 +186,8 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
                     try {
                         invokeOperation(removeOp, opConfig);
                     } catch (Exception e) {
-                        throw new IllegalArgumentException("Could not remove " + arg + "=" + currentVal + ". Please check spelling/existence.");
+                        throw new IllegalArgumentException("Could not remove " + arg + "=" + currentVal
+                            + ". Please check spelling/existence.");
                     }
                 }
             }
@@ -262,8 +265,8 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
 
         File path = new File(deployDir, archiveName);
         if (path.exists()) {
-            CreateResourceHelper.setErrorOnReport(report, "A web application named " + path.getName() + " is already deployed with path " + path
-                + ".");
+            CreateResourceHelper.setErrorOnReport(report, "A web application named " + path.getName()
+                + " is already deployed with path " + path + ".");
             return;
         }
 
@@ -275,7 +278,8 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
 
         try {
             osForTempDir = new BufferedOutputStream(new FileOutputStream(tempFile));
-            contentServices.downloadPackageBitsForChildResource(contentContext, TomcatWarComponent.RESOURCE_TYPE_NAME, key, osForTempDir);
+            contentServices.downloadPackageBitsForChildResource(contentContext, TomcatWarComponent.RESOURCE_TYPE_NAME,
+                key, osForTempDir);
         } finally {
             if (null != osForTempDir) {
                 try {
@@ -302,31 +306,40 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
         // Resource key is a canonical objectName similar to :        
         // Catalina:j2eeType=WebModule,name=//<vHost>/<path>,J2EEApplication=none,J2EEServer=none        
 
-        String objectName = "Catalina:j2eeType=WebModule,J2EEApplication=none,J2EEServer=none,name=//" + getName() + "/" + contextRoot;
+        String objectName = "Catalina:j2eeType=WebModule,J2EEApplication=none,J2EEServer=none,name=//" + getName()
+            + "/" + contextRoot;
 
         report.setResourceName(archiveName);
         report.setResourceKey(CreateResourceHelper.getCanonicalName(objectName));
         report.setStatus(CreateResourceStatus.SUCCESS);
     }
 
-    private boolean isWebApplication(File file) {
-        JarFile jfile = null;
-        try {
-            jfile = new JarFile(file);
-            JarEntry entry = jfile.getJarEntry("WEB-INF/web.xml");
+    public boolean isWebApplication(File file) {
+        String testFile = "WEB-INF/web.xml";
+        boolean result = false;
 
-            return (null != entry);
-        } catch (Exception e) {
-            log.info(e.getMessage());
-            return false;
-        } finally {
-            if (jfile != null)
-                try {
-                    jfile.close();
-                } catch (IOException e) {
-                    log.info("Exception when trying to close the war file: " + e.getMessage());
-                }
+        if (file.isDirectory()) {
+            result = new File(file, testFile).exists();
+        } else {
+            JarFile jfile = null;
+            try {
+                jfile = new JarFile(file);
+                JarEntry entry = jfile.getJarEntry(testFile);
+
+                result = (null != entry);
+            } catch (Exception e) {
+                log.info(e.getMessage());
+                result = false;
+            } finally {
+                if (jfile != null)
+                    try {
+                        jfile.close();
+                    } catch (IOException e) {
+                        log.info("Exception when trying to close the war file: " + e.getMessage());
+                    }
+            }
         }
+        return result;
     }
 
     public TomcatApplicationDeployer getDeployer() {

@@ -22,7 +22,7 @@
 package org.jboss.on.plugins.tomcat;
 
 import java.io.File;
-import java.io.FilenameFilter;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.on.plugins.tomcat.helper.CreateResourceHelper;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.rhq.core.domain.configuration.Configuration;
@@ -73,6 +74,7 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
         Matcher m = PATTERN_NAME.matcher("");
 
         for (DiscoveredResourceDetails resource : resources) {
+            resource.setResourceKey(CreateResourceHelper.getCanonicalName(resource.getResourceKey()));
             Configuration pluginConfiguration = resource.getPluginConfiguration();
             String name = pluginConfiguration.getSimpleValue(PLUGIN_CONFIG_NAME, "");
             m.reset(name);
@@ -91,7 +93,8 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
                 String contextRoot = (String) warBean.refreshAttributes(EMS_ATTRIBUTE_PATH).get(0).getValue();
                 String docBase = (String) warBean.refreshAttributes(EMS_ATTRIBUTE_DOC_BASE).get(0).getValue();
                 File docBaseFile = new File(docBase);
-                String filename = (docBaseFile.isAbsolute()) ? docBase : (deployDirectoryPath + File.separator + docBase);
+                String filename = (docBaseFile.isAbsolute()) ? docBase
+                    : (deployDirectoryPath + File.separator + docBase);
                 try {
                     filename = new File(filename).getCanonicalPath();
                 } catch (IOException e) {
@@ -104,9 +107,10 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_VHOST, host));
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_CONTEXT_ROOT, contextRoot));
                 pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_FILENAME, filename));
-                pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_RESPONSE_TIME_LOG_FILE, getResponseTimeLogFile(parentComponent
-                    .getInstallationPath(), host, contextRoot)));
-                resource.setResourceName(resource.getResourceName().replace("{contextRoot}", (("/".equals(contextRoot)) ? docBase : contextRoot)));
+                pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_RESPONSE_TIME_LOG_FILE,
+                    getResponseTimeLogFile(parentComponent.getInstallationPath(), host, contextRoot)));
+                resource.setResourceName(resource.getResourceName().replace("{contextRoot}",
+                    (("/".equals(contextRoot)) ? docBase : contextRoot)));
 
                 result.add(resource);
             } else {
@@ -114,56 +118,91 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
             }
         }
 
-        // Find all deployed but unstarted applications IS THIS NECESSARY?
-        // Set<DiscoveredResourceDetails> fileSystemResources = discoverFileSystem(context);
+        // Find apps in the deploy directory that have not been deployed. This can happen if the vhost is
+        // not autodeploying
+        Set<DiscoveredResourceDetails> undeployedWarResources = discoverUndeployed(context, result);
 
         // Merge. The addAll operation will only add items that are not already present, so resources discovered
         // by JMX will be used instead of those found by the file system scan.
-        //jmxResources.addAll(fileSystemResources);
+        result.addAll(undeployedWarResources);
 
         return result;
     }
 
     /**
-     * THIS IS NOT FULLY COOKED.  IT MAY NOT BE NECESSARY FOR TOMCAT AND WILL NEED TO BE FIXED UP IF USED.
-     * 
-     * Discovers applications that are deployed but did not start and are thus not discoverable through JMX.
+     * Discovers applications that are present in the docbase directory but are not deployed and
+     * are thus not discoverable through JMX since they have no mbean.
      *
-     * @param  context discovery context, will be used to determine what type of application (EAR, WAR) is being found
+     * @param  context discovery context
+     * @param  deployed the set of already deployed (discovered via JMX) apps,  used for filtering 
      *
      * @return set of all applications discovered on the file system; this should include at least some of the
      *         applications discovered through JMX as well
      */
-    private Set<DiscoveredResourceDetails> discoverFileSystem(ResourceDiscoveryContext<TomcatVHostComponent> context) {
+    private Set<DiscoveredResourceDetails> discoverUndeployed(ResourceDiscoveryContext<TomcatVHostComponent> context,
+        Set<DiscoveredResourceDetails> deployed) {
         Configuration defaultConfiguration = context.getDefaultPluginConfiguration();
 
         // Find the location of the deploy directory
-        TomcatVHostComponent parentComponent = context.getParentResourceComponent();
-        ApplicationServerComponent applicationServerComponent = (ApplicationServerComponent) parentComponent;
-
-        String deployDirectoryPath = applicationServerComponent.getConfigurationPath().getPath();
-        File deployDirectory = new File(deployDirectoryPath);
+        TomcatVHostComponent vhost = context.getParentResourceComponent();
+        File deployDirectory = vhost.getConfigurationPath();
 
         // Set up filter for application type
-        String extension = defaultConfiguration.getSimple("extension").getStringValue();
-        FilenameFilter filter = new ApplicationFileFilter(extension);
+        FileFilter filter = new WebAppFileFilter();
         File[] files = deployDirectory.listFiles(filter);
+
+        // can be null if we have a remote install dir specified for a remote server
+        if ((null == files) || (0 == files.length)) {
+            return new HashSet<DiscoveredResourceDetails>(0);
+        }
 
         // For each file found, create a resource details instance for it
         ResourceType resourceType = context.getResourceType();
+        String vhostName = vhost.getName();
 
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>(files.length);
         for (File file : files) {
-            String resourceKey = determineResourceKey(defaultConfiguration, file.getName());
-            String objectName = resourceKey;
-            String resourceName = file.getName();
-            String description = defaultConfiguration.getSimple(MBeanResourceDiscoveryComponent.PROPERTY_DESCRIPTION_TEMPLATE).getStringValue();
+            // skip over anything in this directory that is not an actual web app
+            if (!vhost.isWebApplication(file)) {
+                continue;
+            }
 
-            DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, "", description, null, null);
-            Configuration resourcePluginConfiguration = resource.getPluginConfiguration();
-            resourcePluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_NAME, resourceName));
-            resourcePluginConfiguration.put(new PropertySimple(MBeanResourceDiscoveryComponent.PROPERTY_OBJECT_NAME, objectName));
-            resourcePluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_FILENAME, file.getAbsolutePath()));
+            String resourceName = defaultConfiguration
+                .getSimple(MBeanResourceDiscoveryComponent.PROPERTY_NAME_TEMPLATE).getStringValue();
+            String description = defaultConfiguration.getSimple(
+                MBeanResourceDiscoveryComponent.PROPERTY_DESCRIPTION_TEMPLATE).getStringValue();
+            String fileName = file.getName();
+            String contextRoot = ((file.isDirectory() ? fileName : fileName.substring(0, fileName.length() - 4)));
+            contextRoot = "ROOT".equals(contextRoot) ? "/" : "/" + contextRoot;
+            resourceName = resourceName.replace("{contextRoot}", contextRoot);
+            String name = "//" + vhostName + contextRoot;
+            String resourceKey = determineResourceKey(defaultConfiguration, name);
+            String objectName = resourceKey;
+
+            DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey, resourceName,
+                "", description, null, null);
+
+            // If this app has been deployed skip it
+            if (deployed.contains(resource)) {
+                continue;
+            }
+
+            Configuration pluginConfiguration = resource.getPluginConfiguration();
+
+            pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_NAME, name));
+            pluginConfiguration
+                .put(new PropertySimple(MBeanResourceDiscoveryComponent.PROPERTY_OBJECT_NAME, objectName));
+            pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_VHOST, vhost.getName()));
+            pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_CONTEXT_ROOT, contextRoot));
+            try {
+                pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_FILENAME, file
+                    .getCanonicalPath()));
+            } catch (IOException e) {
+                pluginConfiguration
+                    .put(new PropertySimple(TomcatWarComponent.PROPERTY_FILENAME, file.getAbsolutePath()));
+            }
+            pluginConfiguration.put(new PropertySimple(TomcatWarComponent.PROPERTY_RESPONSE_TIME_LOG_FILE,
+                getResponseTimeLogFile(vhost.getInstallationPath(), vhost.getName(), contextRoot)));
 
             resources.add(resource);
         }
@@ -178,14 +217,15 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
      * JMX discovered applications.
      *
      * @param  defaultConfiguration default plugin configuration for the application's resource type
-     * @param  fileName             file name of the application found (e.g. rhq.ear)
+     * @param  contextRoot contextRoot of the web app
      *
      * @return resource key to use for the indicated application file
      */
-    private String determineResourceKey(Configuration defaultConfiguration, String fileName) {
-        String template = defaultConfiguration.getSimple(MBeanResourceDiscoveryComponent.PROPERTY_OBJECT_NAME).getStringValue();
-        String resourceKey = template.replaceAll("%name%", fileName);
-        return resourceKey;
+    private String determineResourceKey(Configuration defaultConfiguration, String name) {
+        String template = defaultConfiguration.getSimple(MBeanResourceDiscoveryComponent.PROPERTY_OBJECT_NAME)
+            .getStringValue();
+        String resourceKey = template.replaceAll("%name%", name);
+        return CreateResourceHelper.getCanonicalName(resourceKey);
     }
 
     /**
@@ -230,23 +270,14 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
     /**
      * Filter used to find applications.
      */
-    private static class ApplicationFileFilter implements FilenameFilter {
+    private static class WebAppFileFilter implements FileFilter {
         // Attributes  --------------------------------------------
 
-        private String applicationExtension;
-
-        // Constructors  --------------------------------------------
-
-        private ApplicationFileFilter(String applicationExtension) {
-            this.applicationExtension = applicationExtension;
+        public WebAppFileFilter() {
         }
 
-        // FilenameFilter Implementation  --------------------------------------------
-
-        public boolean accept(File dir, String name) {
-            // TODO: If on Windows, this check should be case-insensitive.
-            boolean result = name.endsWith(applicationExtension);
-            return result;
+        public boolean accept(File pathname) {
+            return pathname.isDirectory() || pathname.getPath().toLowerCase().endsWith(".war");
         }
     }
 }

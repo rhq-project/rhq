@@ -257,10 +257,12 @@
                      description="The name of this Web Module (WAR)" />
                   <c:simple-property
                      name="nameTemplate"
-                     default="Tomcat WAR ({contextRoot})" />
+                     default="Tomcat WAR ({contextRoot})"
+                     description="Resource name template" />
                   <c:simple-property
                      name="descriptionTemplate"
                      default="Tomcat Web Application"
+                     description="Resource description template"
                      readOnly="true" />
                </c:group>
             </plugin-configuration>

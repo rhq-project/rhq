@@ -95,8 +95,8 @@ public class PluginDescriptorGenerator {
 
     public static void generatePluginDescriptor(ManagementView managementView, File tempDir) throws Exception {
         PluginDescriptor pluginDescriptor = new PluginDescriptor();
-        addDeploymentsToDescriptor(managementView, pluginDescriptor);
         addComponentsToDescriptor(managementView, pluginDescriptor);
+        //addDeploymentsToDescriptor(managementView, pluginDescriptor);        
         File tempFile = File.createTempFile("rhq-plugin", ".xml", tempDir);
         writeToFile(pluginDescriptor, tempFile);
     }
@@ -312,7 +312,8 @@ public class PluginDescriptorGenerator {
         for (KnownComponentTypes.ConnectionFactoryTypes componentType : KnownComponentTypes.ConnectionFactoryTypes.values()) {
             knownComponentTypes.add(componentType.getType());
         }
-
+        // TODO: Remove the below line once we upgrade to profileservice-spi 5.1.0.CR2.
+        knownComponentTypes.add(new ComponentType("ConnectionFactory", "Tx"));
         for (KnownComponentTypes.JMSDestination componentType : KnownComponentTypes.JMSDestination.values()) {
             knownComponentTypes.add(componentType.getType());
         }

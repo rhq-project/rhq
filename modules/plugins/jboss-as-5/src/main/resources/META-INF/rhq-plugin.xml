@@ -212,7 +212,7 @@
 
         <c:simple-property name="securityDeploymentType" type="string"
                            description="the type of security deployment"
-                           required="false">
+                           required="false" readOnly="true">
             <c:description>
                 Indicates whether Subject (from security domain), application-supplied parameters
                 (such as from getConnection(user, pw)), both Subject and app-supplied parameters,
@@ -1057,7 +1057,7 @@
 
             <plugin-configuration>
                 <c:simple-property name="componentType" default="ConnectionFactory" readOnly="true"/>
-                <c:simple-property name="componentSubtype" default="XA" readOnly="true"/>
+                <c:simple-property name="componentSubtype" default="Tx" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="TxConnectionFactoryTemplate" readOnly="true"/>
                 <c:simple-property name="resourceName" default="jndi-name">

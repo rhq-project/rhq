@@ -30,7 +30,6 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.PluginDescriptorGenerator;
-import org.rhq.plugins.jbossas5.test.UnitTestRunner;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -124,7 +123,7 @@ public class ApplicationServerDiscoveryComponent
 
         boolean debug = Boolean.getBoolean(JBMANCON_DEBUG_SYSPROP);
         if (debug) {
-            new UnitTestRunner().runUnitTests();
+            //new UnitTestRunner().runUnitTests();
             generatePluginDescriptor(resourceDiscoveryContext);
         }
 
@@ -132,13 +131,14 @@ public class ApplicationServerDiscoveryComponent
     }
 
     private void generatePluginDescriptor(ResourceDiscoveryContext resourceDiscoveryContext) {
+        log.info("Generating RHQ plugin descriptor...");
         try {
             ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
             File tempDir = resourceDiscoveryContext.getParentResourceContext().getTemporaryDirectory();
             PluginDescriptorGenerator.generatePluginDescriptor(managementView, tempDir);
         }
         catch (Exception e) {
-            log.error("Failed to generate plugin descriptor.", e);
+            log.error("Failed to generate RHQ plugin descriptor.", e);
         }
     }
 }

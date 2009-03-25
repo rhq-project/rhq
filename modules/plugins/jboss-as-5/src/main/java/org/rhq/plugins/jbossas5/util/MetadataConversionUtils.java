@@ -102,9 +102,9 @@ public class MetadataConversionUtils {
         ComponentType componentType = component.getType();
         String name;
         if (componentType.getSubtype().equals("*")) 
-            name = componentType.getSubtype() + " " + componentType.getType();
+            name = component.getName() + " " + componentType.getType();            
         else
-            name = component.getName() + " " + componentType.getType();
+            name = componentType.getSubtype() + " " + componentType.getType();
         ResourceType resourceType = new ResourceType(name, PLUGIN_NAME, ResourceCategory.SERVICE, null);
         Set<OperationDefinition> opDefs = convertManagedOperationsToOperationDefinitions(component);
         for (OperationDefinition opDef : opDefs)
@@ -335,6 +335,7 @@ public class MetadataConversionUtils {
         String desc = (!prop.getName().equals(prop.getDescription())) ? prop.getDescription() : null;
         propDef.setDescription(desc);
         propDef.setRequired(prop.isMandatory());
+        propDef.setReadOnly(prop.isReadOnly());
         // TODO: Convert prop.getLegalValues() to enum defs.
         if (propDef instanceof PropertyDefinitionSimple) {
             PropertyDefinitionSimple propDefSimple = (PropertyDefinitionSimple)propDef;

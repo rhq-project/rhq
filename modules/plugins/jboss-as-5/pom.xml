@@ -52,14 +52,14 @@
         </dependency>
 
         <!-- NOTE: Uncomment the below dep if you want to pull down the jboss-profileservice 
-                   sources jar for debugging purposes. -->
+                   sources jar for debugging purposes. -->        
         <!--
         <dependency>
           <groupId>org.jboss</groupId>
           <artifactId>jboss-profileservice</artifactId>                    
           <version>5.1.0.CR1</version>
           <scope>provided</scope>
-        </dependency>
+        </dependency>        
         -->
         
         <dependency>
@@ -92,6 +92,13 @@
           <scope>provided</scope>
         </dependency>    
         
+        <dependency>
+          <groupId>org.testng</groupId>
+          <artifactId>testng</artifactId>
+          <version>5.7</version>
+          <classifier>jdk15</classifier>
+        </dependency>
+        
     </dependencies>
 
     <build>
@@ -103,6 +110,31 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.0</version>
+                <executions>
+                   <execution>
+                      <id>copy-dependencies</id>
+                      <phase>process-resources</phase>
+                      <goals>
+                         <goal>copy</goal>
+                      </goals>
+                      <configuration>
+                         <artifactItems>
+                            <artifactItem>
+                               <groupId>org.testng</groupId>
+                               <artifactId>testng</artifactId>
+                               <version>5.7</version>
+                               <classifier>jdk15</classifier>
+                            </artifactItem>
+                         </artifactItems>
+                         <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                      </configuration>
+                   </execution>
+                </executions>
+            </plugin>
+         
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>

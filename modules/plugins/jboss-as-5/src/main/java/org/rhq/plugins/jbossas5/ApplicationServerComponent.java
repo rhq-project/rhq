@@ -254,23 +254,23 @@ public class ApplicationServerComponent
     {
         ResourcePackageDetails details = createResourceReport.getPackageDetails();
         PackageDetailsKey key = details.getKey();
-        String archiveName = key.getName();
+        String archivePath = key.getName();
 
         try {
-            if (DeploymentUtils.isCorrectExtension(resourceType, archiveName)) {
+            if (DeploymentUtils.isCorrectExtension(resourceType, archivePath)) {
                 createResourceReport.setStatus(CreateResourceStatus.FAILURE);
-                createResourceReport.setErrorMessage("Incorrect extension specified on filename [" + archiveName +
+                createResourceReport.setErrorMessage("Incorrect extension specified on filename [" + archivePath +
                     "]");
                 return;
             }
 
-            File tempFile = new File(archiveName);
+            File archiveFile = new File(archivePath);
 
-            DeploymentStatus status = DeploymentUtils.deployArchive(tempFile);
+            DeploymentStatus status = DeploymentUtils.deployArchive(archiveFile, true);
 
             if (status.getState() == DeploymentStatus.StateType.COMPLETED) {
-                createResourceReport.setResourceName(archiveName);
-                createResourceReport.setResourceKey(archiveName);
+                createResourceReport.setResourceName(archivePath);
+                createResourceReport.setResourceKey(archivePath);
                 createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
             } else {
                 createResourceReport.setStatus(CreateResourceStatus.FAILURE);

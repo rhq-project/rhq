@@ -51,14 +51,14 @@ public abstract class DeploymentUtils {
         return (lastPeriod == -1 || !expectedExtension.equals(extension));
     }
 
-    public static DeploymentStatus deployArchive(File archiveFile) throws Exception
+    public static DeploymentStatus deployArchive(File archiveFile, boolean copyArchive) throws Exception
     {
         DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
         String deploymentName = archiveFile.getName();
         URL contentURL = archiveFile.toURI().toURL();
-        final boolean copyContent = false;
+        final boolean copyContent = true;
 
-        DeploymentProgress progress = deploymentManager.distribute(deploymentName, contentURL, copyContent);
+        DeploymentProgress progress = deploymentManager.distribute(deploymentName, contentURL, copyArchive);
         //progress.addProgressListener(this);
         progress.run();
         DeploymentStatus status = progress.getDeploymentStatus();

@@ -275,7 +275,7 @@ public class ManagedDeploymentComponent
 
         // The file has been written successfully to the deploy dir. Now try to actually deploy it.
         try {
-            DeploymentUtils.deployArchive(this.deploymentFile);
+            DeploymentUtils.deployArchive(this.deploymentFile, false);
         }
         catch (Exception e) {
             // Deploy failed - rollback to the original app file...
@@ -284,7 +284,7 @@ public class ManagedDeploymentComponent
                 FileUtils.purge(this.deploymentFile, true);
                 backupOfOriginalFile.renameTo(this.deploymentFile);
                 // Need to redeploy the original file - this generally should succeed.
-                DeploymentUtils.deployArchive(this.deploymentFile);
+                DeploymentUtils.deployArchive(this.deploymentFile, false);
                 errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
             }
             catch (Exception e1) {

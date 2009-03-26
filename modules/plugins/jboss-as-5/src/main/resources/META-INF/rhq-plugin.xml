@@ -1190,9 +1190,15 @@
                     <c:simple-property name="jms-type" default="queue"/>
                     <c:map-property name="customProperties"
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
+                        <c:simple-property name="DLQ"
+                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.PropertySimpleToObjectNameCompositeValueAdapter"/>
+                        <c:simple-property name="expiryQueue"
+                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.PropertySimpleToObjectNameCompositeValueAdapter"/>
+                        <c:simple-property name="serverPeer"
+                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.PropertySimpleToObjectNameCompositeValueAdapter"/>
                         <!--
                         <c:simple-property name="securityConfig"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
+                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
                          -->
                     </c:map-property>
                     <c:map-property name="customMetrics"
@@ -1299,13 +1305,13 @@
                 <c:simple-property type="long" required="true" name="redeliveryDelay" units="milliseconds"
                                    description="The delay in milliseconds before a rolled back or recovered message is redelivered."/>
 
+                <c:simple-property required="false" name="DLQ"
+                                   description="The JMX ObjectName of the DLQ for this queue, overrides the default DLQ on the server peer"/>
+                <c:simple-property required="false" name="expiryQueue"
+                                   description="The JMX ObjectName of the expiry queue for this queue, overrides the default expiry queue on the server peer"/>
+                <c:simple-property required="false" name="serverPeer"
+                                   description="The JMX ObjectName of the server peer this queue was deployed on"/>
                 <!--
-                <c:map-property required="false" name="DLQ"
-                                description="The ObjectName of the DLQ for this queue, overrides the default DLQ on the server peer"/>
-                <c:map-property required="false" name="expiryQueue"
-                                description="The ObjectName of the expiry queue for this queue, overrides the default expiry queue on the server peer"/>
-                <c:map-property required="false" name="serverPeer"
-                                description="The ObjectName of the server peer this queue was deployed on"/>                                
                 <c:map-property required="false" name="securityConfig"
                                 description="The queue's security configuration"/>
                 -->
@@ -1366,9 +1372,15 @@
                     <c:simple-property name="jms-type" default="topic"/>
                     <c:map-property name="customProperties"
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
+                        <c:simple-property name="DLQ"
+                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.PropertySimpleToObjectNameCompositeValueAdapter"/>
+                        <c:simple-property name="expiryQueue"
+                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.PropertySimpleToObjectNameCompositeValueAdapter"/>
+                        <c:simple-property name="serverPeer"
+                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.PropertySimpleToObjectNameCompositeValueAdapter"/>
                         <!--
                         <c:simple-property name="securityConfig"
-                                           defaultValue="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
+                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
                         -->
                     </c:map-property>
                     <c:map-property name="customMetrics"
@@ -1500,13 +1512,13 @@
                 <c:simple-property type="long" required="false" name="redeliveryDelay" units="milliseconds"
                                    description="The delay in milliseconds before a rolled back or recovered message is redelivered."/>
 
+                <c:simple-property required="false" name="DLQ"
+                                   description="The JMX ObjectName of the DLQ for this topic, overrides the default DLQ on the server peer"/>
+                <c:simple-property required="false" name="expiryQueue"
+                                   description="The JMX ObjectName of the expiry queue for this topic, overrides the default expiry queue on the server peer"/>
+                <c:simple-property required="false" name="serverPeer"
+                                   description="The JMX ObjectName of the server peer this topic was deployed on"/>
                 <!--
-                <c:map-property required="false" name="DLQ"
-                                description="The ObjectName of the DLQ for this topic, overrides the default DLQ on the server peer"/>
-                <c:map-property required="false" name="expiryQueue"
-                                description="The ObjectName of the expiry queue for this topic, overrides the default expiry queue on the server peer"/>
-                <c:map-property required="false" name="serverPeer"
-                                description="The ObjectName of the server peer this topic was deployed on"/>
                 <c:map-property required="false" name="securityConfig"
                                 description="The topic's security configuration"/>
                 -->

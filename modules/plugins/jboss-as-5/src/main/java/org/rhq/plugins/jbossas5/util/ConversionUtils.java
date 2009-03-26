@@ -226,10 +226,11 @@ public class ConversionUtils
                                                                Configuration configuration, ResourceType resourceType,
                                                                Map<String, PropertySimple> customProps)
     {
+        ConfigurationDefinition configDefinition = resourceType.getResourceConfigurationDefinition();
         // Deal with the custom properties first, then hold on to the names of these properties so the processing
         // loop can skip over them.
-        handleCustomProperties(managedProperties, configuration, customProps);
-        ConfigurationDefinition configDefinition = resourceType.getResourceConfigurationDefinition();
+        handleCustomProperties(managedProperties, configuration, configDefinition, customProps);
+
         for (Property property : configuration.getProperties())
         {
             String propertyName = property.getName();
@@ -266,7 +267,7 @@ public class ConversionUtils
     {
         if (managedProperty != null)
         {
-            MetaValue metaValue = getValue(managedProperty);
+            MetaValue metaValue = managedProperty.getValue();
             if (metaValue != null)
             {
                 LOG.debug("Populating existing MetaValue of type " + metaValue.getMetaType()
@@ -334,38 +335,36 @@ public class ConversionUtils
         return memberMetaType;
     }
 
-    private static MetaValue getValue(ManagedProperty managedProperty) {
-        MetaValue metaValue = null;
-        if (managedProperty.getValue() != null)
-        {
-            LOG.debug("convertConfigurationToManagedProperties: ManagedProperty.getValue() returned: " + managedProperty.getValue().getClass().getSimpleName()
-                    + " for property: " + managedProperty.getName());
-        }
-        try
-        {
-            // Temporary check to see which properties are returning MetaValue object and which aren't
-            metaValue = managedProperty.getValue();
-        }
-        catch (ClassCastException e)
-        {
-            LOG.error("convertConfigurationToManagedProperties: ManagedProperty.getValue() did not return a MetaValue; it returned: "
-                    + managedProperty.getValue().getClass().getName()
-                    + " for property: " + managedProperty.getName(), e);
-        }
-        return metaValue;
-    }
-
-    private static void handleCustomProperties(Map<String, ManagedProperty> managedProperties, Configuration resourceConfig, Map<String, PropertySimple> customProps)
+    private static void handleCustomProperties(Map<String, ManagedProperty> managedProperties,
+                                               Configuration resourceConfig, ConfigurationDefinition resourceConfigDef,
+                                               Map<String, PropertySimple> customProps)
     {
         for (PropertySimple customProp : customProps.values())
         {
-            ManagedProperty managedProperty = managedProperties.get(customProp.getName());
-            // NOTE: For now, we assume that the custom property name refers to a top-level property.
-            Property property = resourceConfig.get(customProp.getName());
+            String propName = customProp.getName();
+            ManagedProperty managedProperty = managedProperties.get(propName);
+            // NOTE: We assume that the custom property name refers to a top-level property.
+            Property property = resourceConfig.get(propName);
+            PropertyDefinition propertyDefinition = resourceConfigDef.get(propName);
+            // TODO (ips): Should we handle when the property is null?
             if (managedProperty != null && property != null)
             {
                 PropertyAdapter propertyAdapter = PropertyAdapterFactory.getCustomPropertyAdapter(customProp);
-                propertyAdapter.populateMetaValueFromProperty(property, managedProperty.getValue(), null);
+                MetaValue metaValue = managedProperty.getValue();
+                if (metaValue != null)
+                {
+                    LOG.debug("Populating existing MetaValue of type " + metaValue.getMetaType()
+                            + " from RHQ property " + property + " with definition " + propertyDefinition + "...");
+                    propertyAdapter.populateMetaValueFromProperty(property, metaValue, propertyDefinition);
+                }
+                else
+                {
+                    MetaType metaType = managedProperty.getMetaType();
+                    LOG.debug("Converting property " + property + " with definition " + propertyDefinition
+                            + " to MetaValue of type " + metaType + "...");
+                    metaValue = propertyAdapter.convertToMetaValue(property, propertyDefinition, metaType);
+                    managedProperty.setValue(metaValue);
+                }
             }
         }
     }

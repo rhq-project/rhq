@@ -231,6 +231,10 @@
     <copy file="${settings.localRepository}/org/jboss/jboss-faces/${jboss-faces.version}/jboss-faces-${jboss-faces.version}.jar"
           tofile="${jsf-libs.dir}/jboss-faces.jar" overwrite="true" verbose="true" />
 
+    <echo>Upgrading quartz.jar to v1.6.5 ...</echo>
+    <copy file="${settings.localRepository}/org/opensymphony/quartz/quartz/1.6.5/quartz-1.6.5.jar"
+          tofile="${jboss.home}/server/default/lib/quartz.jar" overwrite="true" verbose="true" />
+
     <echo>Preparing JMS backend ...</echo>
     <mkdir dir="${jboss.deploy.dir}/jms"/>
     <copy todir="${jboss.deploy.dir}/${jms.oracle.dir}">

@@ -80,6 +80,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.opensymphony.quartz</groupId>
+      <artifactId>quartz</artifactId>
+      <version>1.6.5</version>
+    </dependency>
+
+    <dependency>
       <groupId>postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->

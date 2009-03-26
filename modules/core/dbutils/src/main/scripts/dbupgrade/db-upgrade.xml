@@ -1356,6 +1356,11 @@ DB Upgrade:
       </schema-directSQL>
    </schemaSpec>
 
+   <schemaSpec version="2.51">
+      <schema-addColumn table="RHQ_QRTZ_TRIGGERS" column="PRIORITY" columnType="INTEGER" />
+      <schema-addColumn table="RHQ_QRTZ_FIRED_TRIGGERS" column="PRIORITY" columnType="INTEGER" />
+   </schemaSpec>
+
 </dbupgrade>
 
 </target>

@@ -49,6 +49,7 @@
         <column name="DESCRIPTION" type="VARCHAR2" required="false" size="120"/>
         <column name="NEXT_FIRE_TIME" type="LONG" required="false"/>
         <column name="PREV_FIRE_TIME" type="LONG" required="false"/>
+        <column name="PRIORITY" type="INTEGER" required="false"/>
         <column name="TRIGGER_STATE" type="VARCHAR" required="true" size="16"/>
         <column name="TRIGGER_TYPE" type="VARCHAR" required="true" size="8"/>
         <column name="START_TIME" type="LONG" required="true"/>
@@ -212,6 +213,7 @@
         <column name="TRIGGER_GROUP" type="VARCHAR2" size="80" required="true"/>
         <column name="INSTANCE_NAME" type="VARCHAR2" size="80" required="true"/>
         <column name="FIRED_TIME" type="LONG" required="true"/>
+        <column name="PRIORITY" type="INTEGER" required="false"/>
         <column name="STATE" type="VARCHAR2" size="16" required="true"/>
         <column name="IS_VOLATILE" type="BOOLEAN" required="true"/>
         <column name="JOB_NAME" type="VARCHAR2" size="80" required="false"/>

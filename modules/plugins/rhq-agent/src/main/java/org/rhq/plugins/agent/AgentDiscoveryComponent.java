@@ -34,6 +34,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
@@ -105,6 +106,8 @@ public class AgentDiscoveryComponent implements ResourceDiscoveryComponent {
                 agentLogFile));
             agentLogEventSource.put(new PropertySimple(AgentServerComponent.LogEventSourcePropertyNames.ENABLED,
                 Boolean.FALSE));
+            agentLogEventSource.put(new PropertySimple(
+                AgentServerComponent.LogEventSourcePropertyNames.MINIMUM_SEVERITY, EventSeverity.ERROR.name()));
             logEventSources.add(agentLogEventSource);
         }
 

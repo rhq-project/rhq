@@ -40,11 +40,11 @@
                                                   source. If not specified, there is no minimum severity (i.e. all
                                                   log messages will be collected).">
                      <c:property-options>
-                        <c:option name="debug" value="debug"/>
-                        <c:option name="info"  value="info"/>
-                        <c:option name="warn"  value="warn"/>
-                        <c:option name="error" value="error" default="true"/>
-                        <c:option name="fatal" value="fatal"/>
+                        <c:option name="debug" value="DEBUG"/>
+                        <c:option name="info"  value="INFO"/>
+                        <c:option name="warn"  value="WARN"/>
+                        <c:option name="error" value="ERROR" default="true"/>
+                        <c:option name="fatal" value="FATAL"/>
                      </c:property-options>
                   </c:simple-property>
                </c:map-property>

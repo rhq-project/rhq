@@ -1,5 +1,3 @@
-var yOffset = 28;
-
 var overlay = {
     curTime : null,
     times: new Array(),
@@ -32,13 +30,14 @@ var overlay = {
             return curtop;
     },
 
-    moveOverlay: function (anchor) {
-        var ovl = $('overlay');
+    moveOverlay: function (anchor) {        
+        var ovl = this.initOverlay($('overlay'));
         var anchorY = this.findPosY(anchor);
         
         var left = this.findPosX(anchor);
-        var top = this.findPosY($('charttop')) - yOffset;
-        var bottom = this.findPosY($('timetop')) - yOffset;
+        var top = this.findPosY($('charttop'));
+
+        var bottom = this.findPosY($('timetop'));
         if (detailsShowing) {
            bottom -= 230;
         }
@@ -56,10 +55,10 @@ var overlay = {
         var anchor = $('timePopup_' + index);
 
         var left = this.findPosX(anchor) - 50;
-        var top = this.findPosY(anchor) - yOffset + 10;
+        var top = this.findPosY(anchor) + 10;
         
-        this.curPopup = $('timePopup');
-        this.curPopup.innerHTML = time; 
+        this.curPopup = this.initOverlay($('timePopup'));
+        this.curPopup.innerHTML = time;
         this.curPopup.style.left = left + 'px';
         this.curPopup.style.top = top + 'px';
         this.curPopup.style.height = '35px';
@@ -82,6 +81,22 @@ var overlay = {
     showCurrentTimePopup: function (time, index) {
       if (this.curTime == time)
         this.showTimePopup(index,time);
+    },
+
+    /**
+     * Check that the overlay is a direct child of document.body.
+     * This is to ensure that IE6 computes the offsetParent
+     * relatively to the document body in the same way as the rest
+     * of the browsers.
+     */
+    initOverlay: function (overlay) {
+        var parent = overlay.parentNode;
+
+        if (parent && parent != document.body) {
+            parent.removeChild(overlay);
+            document.body.appendChild(overlay);                
+        }
+        return overlay;
     }
 }
 

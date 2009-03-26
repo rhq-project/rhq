@@ -87,6 +87,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
     public void setSeverityFilter(String[] severityFilter) {
         this.severityFilter = severityFilter;
+        this.dataModel = null;
     }
 
     public SelectItem[] getSeverityFilterSelectItems() {
@@ -99,6 +100,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
     public void setSeverityFilterSelectItems(SelectItem[] sevFilterSelectItems) {
         this.severityFilterSelectItems = sevFilterSelectItems;
+        this.dataModel = null;
     }
 
     public String getSourceFilter() {
@@ -110,6 +112,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
     public void setSourceFilter(String sourceFilter) {
         this.sourceFilter = sourceFilter;
+        this.dataModel = null;
     }
 
     public String getSearchFilter() {
@@ -121,6 +124,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
     public void setSearchFilter(String searchFilter) {
         this.searchFilter = searchFilter;
+        this.dataModel = null;
     }
 
     public void populateEventId(Integer eventId) {
@@ -148,6 +152,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
         try {
             int numDeleted = eventManager.deleteEvents(getSubject(), Arrays.asList(eventIds));
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + numDeleted + " events.");
+            this.dataModel = null;
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete selected events.", e);
         }
@@ -167,6 +172,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
                 log.error(context.getUnknownContextMessage());
             }
 
+            this.dataModel = null;
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted " + numDeleted + " events");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete events", e);

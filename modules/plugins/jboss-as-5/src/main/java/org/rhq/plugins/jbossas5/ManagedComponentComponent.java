@@ -130,14 +130,10 @@ public class ManagedComponentComponent extends AbstractManagedComponent
             parameterMetaValues = EMPTY_META_VALUE_ARRAY;
         MetaValue resultMetaValue = operation.invoke(parameterMetaValues);
         // Convert result to Correct Property type.
-        OperationResult results;
-        if (resultMetaValue == null && operation.getReturnType().equals(SimpleMetaType.VOID))
-            results = null;
-        else {
-            results = new OperationResult();
-            ConversionUtils.convertManagedOperationResults(operation, resultMetaValue, results.getComplexResults(),
+        OperationResult results = new OperationResult();
+        ConversionUtils.convertManagedOperationResults(operation, resultMetaValue, results.getComplexResults(),
                 getResourceContext().getResourceType());
-        }
+        
         return results;
     }
 

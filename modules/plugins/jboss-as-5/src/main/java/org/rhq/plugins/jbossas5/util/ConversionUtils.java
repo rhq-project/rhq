@@ -424,24 +424,43 @@ public class ConversionUtils
             LOG.warn("ConversionUtils was not able to find the operation " + operation.getName()
                     + ", so no results can be reported.");
             return;
-        }
+        }       
+        
         ConfigurationDefinition resultConfigDef = operationDefinition.getResultsConfigurationDefinition();
-        if (resultConfigDef != null)
-        {
-            Map<String, PropertyDefinition> resultPropDefs = resultConfigDef.getPropertyDefinitions();
-            if (resultPropDefs.isEmpty())
-                return;
+        // Don't return any results if we have no definition with which to display them
+        if (resultConfigDef == null || resultConfigDef.getPropertyDefinitions().isEmpty()) {
+        	if (resultMetaValue != null) {
+        		LOG.error("Plugin error: Operation [" + operationDefinition.getName()
+        				+ "] is defined as returning no results, but it returned non-null results: "
+        				+ resultMetaValue.toString());        		
+        	}
+        	return; 
+        } else {
+            Map<String, PropertyDefinition> resultPropDefs = resultConfigDef.getPropertyDefinitions();            
             // There should and must be only one property definition to map to the results from the Profile Service,
             // otherwise there will be a huge mismatch.
             if (resultPropDefs.size() > 1)
                 LOG.error("Operation [" + operationDefinition.getName()
                         + "] is defined with multiple result properties: " + resultPropDefs.values());
-            PropertyDefinition resultPropDef = resultPropDefs.values().iterator().next();
+            
+            PropertyDefinition resultPropDef = resultPropDefs.values().iterator().next();                        
+                     
+            // Don't return any results, if the actual result object is null
+            if (resultMetaValue == null) {
+            	// lets check if result is required or not, if it is log an error   
+            	if (resultPropDef.isRequired()) {
+	            	LOG.error("Plugin error: Operation [" + operationDefinition.getName()
+	        				+ "] is defined as returning a required result, but it returned null.");
+            	}
+            	return; 
+        	}
+            
             MetaType resultMetaType = operation.getReturnType();
             if (!instanceOf(resultMetaValue, resultMetaType))
                 LOG.debug("Profile Service Error: Result type (" + resultMetaType + ") of [" + operation.getName()
                         + "] ManagedOperation does not match the type of the value returned by invoke() (" 
                         + resultMetaValue + ").");
+            
             PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(resultMetaValue);
             Property resultProp = propertyAdapter.convertToProperty(resultMetaValue, resultPropDef);
             complexResults.put(resultProp);

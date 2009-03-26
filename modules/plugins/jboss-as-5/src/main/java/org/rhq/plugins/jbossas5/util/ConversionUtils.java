@@ -236,10 +236,25 @@ public class ConversionUtils
             if (customProps.containsKey(propertyName))
                 continue;
             ManagedProperty managedProperty = managedProperties.get(propertyName);
-            if (managedProperty == null)
-                LOG.error("ManagedProperty named '" + propertyName + "' not found.");
+            PropertyDefinition propertyDefinition = configDefinition.get(propertyName);
+            if (managedProperty == null) {
+                // TODO: Do we want to attempt to build a ManagedProperty from scratch based on the PropertyDefinition?
+                //       I don't think so - it's too difficult, since a propDef could map to multiple different types
+                //       of ManagedProperties. The safest thing is for the profile service to always return templates
+                //       that contain *all* ManagedProperties that are defined for the ComponentType.
+                /*ManagedPropertyImpl managedPropertyImpl = new ManagedPropertyImpl(propertyName);
+                managedProperty = managedPropertyImpl;
+                managedProperty.setManagedObject(null);
+                if (propertyDefinition instanceof PropertyDefinitionSimple) {
+                    PropertyDefinitionSimple propertyDefinitionSimple = (PropertyDefinitionSimple)propertyDefinition;
+                    switch (propertyDefinitionSimple.getType()) {
+                        case INTEGER:
+                    }
+                }
+                managedPropertyImpl.setMetaType(null);*/
+                LOG.error("***** ManagedProperty named '" + propertyName + "' not found.");
+            }
             else {
-                PropertyDefinition propertyDefinition = configDefinition.get(propertyName);
                 convertPropertyToManagedProperty(property, propertyDefinition, managedProperty);
             }
         }

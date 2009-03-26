@@ -17,7 +17,7 @@
 
       <plugin-configuration>
          <c:group name="event" displayName="Log Tracking">
-            <c:list-property name="logEventSources">
+            <c:list-property name="logEventSources" description="The list of log files that can be tracked">
                <c:map-property name="logEventSource">
                   <c:simple-property name="logFilePath" type="file" summary="true"
                                      description="The absolute path to the source log file."/>

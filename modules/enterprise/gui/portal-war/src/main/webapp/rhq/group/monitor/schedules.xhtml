@@ -23,7 +23,7 @@
 <ui:define name="content">
 
       <h:form id="resourceGroupSchedulesForm">
-         <!-- hack to override the default button on the page, make this button pseudo-first in the form, 
+         <!-- hack to override the default button on the page, make this button pseudo-first in the form,
               but take it out of the document flow and position it off the screen -->
          <div style="position:absolute; top:-100px; ">
             <onc:selectCommandButton id="enableAndSetSelectedSchedules"
@@ -34,7 +34,7 @@
                                      rendered="#{ResourceGroupUIBean.permissions.measure}" />
          </div>
          <input type="hidden" name="groupId" value="${param.groupId}"/>
-         
+
          <rich:panel styleClass="BlockContent">
             <f:facet name="header">
                <h:outputText value="Configure Metric Collection Schedules"/>
@@ -58,23 +58,23 @@
                <f:facet name="PageControlView">
                   <onc:paginationControl id="ResourceGroupMeasurementScheduleList" />
                </f:facet>
-      
+
                <rich:column>
                   <f:facet name="header">
                      <onc:allSelect target="selectedResourceGroupSchedules" />
                   </f:facet>
-                  
+
                   <onc:select name="selectedResourceGroupSchedules" value="#{item.measurementDefinition.id}" />
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Metric" />
                   </f:facet>
-                 
+
                   <h:outputText value="#{item.measurementDefinition.displayName}"/>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Description" />
@@ -82,28 +82,28 @@
 
                   <h:outputText value="#{item.measurementDefinition.description}"/>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Category" />
                   </f:facet>
-               
+
                   <h:outputText value="trait" rendered="#{item.measurementDefinition.dataType eq 'TRAIT'}" />
                   <h:outputText value="#{item.measurementDefinition.category}" rendered="#{item.measurementDefinition.dataType ne 'TRAIT'}" />
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Enabled" />
                   </f:facet>
                   <h:outputText value="#{(empty item.collectionEnabled) ? 'SOME' : (item.collectionEnabled ? 'Yes' : 'No')}" />
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Collection Interval" />
                   </f:facet>
-                  
+
                   <h:outputText value="#{item.collectionInterval}" rendered="#{item.collectionInterval ne 0}">
                      <f:converter converterId="DurationConverter" />
                   </h:outputText>
@@ -112,12 +112,12 @@
 
                <f:facet name="footer" rendered="false">
                   <rich:columnGroup>
-                     <rich:column colspan="#{resourceGroupSchedulesDataTable.columns}">
+                     <rich:column colspan="6">
                         <h:panelGrid columns="4">
                            <onc:selectCommandButton id="disableSelectedSchedules"
                                                     name="disableSelectedSchedules"
                                                     action="#{ListResourceGroupMeasurementScheduleUIBean.disableSelected}"
-                                                    value="DISABLE" target="selectedResourceGroupSchedules" 
+                                                    value="DISABLE" target="selectedResourceGroupSchedules"
                                                     styleClass="on-pager-button buttonsmall"
                                                     rendered="#{ResourceGroupUIBean.permissions.measure}" />
                            <h:outputText value="&nbsp;&nbsp;&nbsp;Collection Interval: " />
@@ -139,7 +139,7 @@
                </f:facet>
 
             </rich:dataTable>
- 
+
             </h:panelGrid>
 
          </rich:panel>

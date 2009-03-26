@@ -21,6 +21,7 @@ package org.rhq.plugins.jbossas5;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.jboss.managed.api.ManagedProperty;
 
@@ -37,6 +38,8 @@ import org.rhq.plugins.jbossas5.util.DebugUtils;
  * @author Ian Springer
  */
 public abstract class AbstractManagedComponent implements ConfigurationFacet {
+    private final Log log = LogFactory.getLog(this.getClass());
+
     private ResourceContext resourceContext;
 
     public void start(ResourceContext resourceContext) throws Exception {
@@ -86,6 +89,8 @@ public abstract class AbstractManagedComponent implements ConfigurationFacet {
         }
         catch (Exception e)
         {
+            log.error("Failed to update configuration for " + this.resourceContext.getResourceType()
+                    + " Resource with key [" + this.resourceContext.getResourceKey() + "].");
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
             configurationUpdateReport.setErrorMessageFromThrowable(e);
         }

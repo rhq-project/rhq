@@ -1253,10 +1253,10 @@
                 <c:simple-property required="true" name="JNDIName"
                                    description="The queue's JNDI name; default is '/queue/{queueName}'."/>
 
-                <c:simple-property type="boolean" required="false" name="clustered"
+                <c:simple-property type="boolean" required="true" name="clustered" default="true"
                                    description="Is this queue clustered?"/>
 
-                <c:simple-property type="integer" required="false" name="downCacheSize">
+                <c:simple-property type="integer" required="true" name="downCacheSize" default="2000">
                     <c:description>
                         When paging messages to storage from a subscription, they first go into a &quot;Down Cache&quot; before
                         being written to storage. This enables the write to occur as a single operation, thus aiding
@@ -1265,7 +1265,7 @@
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="fullSize">
+                <c:simple-property type="integer" required="true" name="fullSize" default="75000">
                     <c:description>
                         The maximum number of messages held by the queue in memory at any one time.
                         The actual subscription can hold many more messages than this, but these are paged to and from
@@ -1274,23 +1274,23 @@
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="maxDeliveryAttempts"
+                <c:simple-property type="integer" required="true" name="maxDeliveryAttempts"
                                    description="The number of delivery attempts before a message to this queue is moved to the DLQ."/>
 
-                <c:simple-property type="integer" required="false" name="maxSize"
+                <c:simple-property type="integer" required="true" name="maxSize"
                                    description="The maximum number of messages this queue can hold before they are dropped."/>
 
-                <c:simple-property type="integer" required="false" name="messageCounterHistoryDayLimit"
+                <c:simple-property type="integer" required="true" name="messageCounterHistoryDayLimit"
                                    description="This queue's message counter history day limit - &lt;0: unlimited, =0: disabled, &gt;0: maximum day count."/>
 
-                <c:simple-property type="integer" required="false" name="pageSize">
+                <c:simple-property type="integer" required="true" name="pageSize">
                     <c:description>
                         When loading messages from a subscription, this is the maximum number of messages to
                         pre-load in one operation. Can only be set when the topic is stopped. The default value is 2000.
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="long" required="false" name="redeliveryDelay" units="milliseconds"
+                <c:simple-property type="long" required="true" name="redeliveryDelay" units="milliseconds"
                                    description="The delay in milliseconds before a rolled back or recovered message is redelivered."/>
 
                 <!--
@@ -1448,10 +1448,10 @@
                 <c:simple-property required="true" name="JNDIName"
                                    description="The topic's JNDI name; default is '/topic/{topicName}'."/>
 
-                <c:simple-property type="boolean" required="false" name="clustered"
+                <c:simple-property type="boolean" required="true" name="clustered" default="false"
                                    description="Is this topic clustered?"/>
 
-                <c:simple-property type="integer" required="false" name="downCacheSize">
+                <c:simple-property type="integer" required="true" name="downCacheSize" default="2000">
                     <c:description>
                         When paging messages to storage from a subscription, they first go into a &quot;Down Cache&quot; before
                         being written to storage. This enables the write to occur as a single operation, thus aiding
@@ -1460,7 +1460,7 @@
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="fullSize">
+                <c:simple-property type="integer" required="true" name="fullSize" default="75000">
                     <c:description>
                         The maximum number of messages held by the topic subscriptions in memory at any one time.
                         The actual subscription can hold many more messages than this, but these are paged to and from
@@ -1469,16 +1469,16 @@
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="maxDeliveryAttempts"
+                <c:simple-property type="integer" required="true" name="maxDeliveryAttempts"
                                    description="The number of delivery attempts before a message to a subscriber of this topic is moved to the DLQ."/>
 
-                <c:simple-property type="integer" required="false" name="maxSize"
+                <c:simple-property type="integer" required="true" name="maxSize"
                                    description="The maximum number of messages this topic can hold before they are dropped."/>
 
-                <c:simple-property type="integer" required="false" name="messageCounterHistoryDayLimit"
+                <c:simple-property type="integer" required="true" name="messageCounterHistoryDayLimit"
                                    description="This topic's message counter history day limit - &lt;0: unlimited, =0: disabled, &gt;0: maximum day count."/>
 
-                <c:simple-property type="integer" required="false" name="pageSize">
+                <c:simple-property type="integer" required="true" name="pageSize">
                     <c:description>
                         When loading messages from a subscription, this is the maximum number of messages to
                         pre-load in one operation. Can only be set when the topic is stopped. The default value is 2000.

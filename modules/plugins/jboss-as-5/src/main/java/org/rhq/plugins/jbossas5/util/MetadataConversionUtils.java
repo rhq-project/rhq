@@ -79,10 +79,15 @@ public class MetadataConversionUtils {
 
     private static Map<String, PropertySimpleType> TYPE_MAP = new HashMap();
     static {
+        TYPE_MAP.put(boolean.class.getName(), PropertySimpleType.BOOLEAN);
         TYPE_MAP.put(Boolean.class.getName(), PropertySimpleType.BOOLEAN);
+        TYPE_MAP.put(int.class.getName(), PropertySimpleType.INTEGER);
         TYPE_MAP.put(Integer.class.getName(), PropertySimpleType.INTEGER);
+        TYPE_MAP.put(long.class.getName(), PropertySimpleType.LONG);
         TYPE_MAP.put(Long.class.getName(), PropertySimpleType.LONG);
+        TYPE_MAP.put(float.class.getName(), PropertySimpleType.FLOAT);
         TYPE_MAP.put(Float.class.getName(), PropertySimpleType.FLOAT);
+        TYPE_MAP.put(double.class.getName(), PropertySimpleType.DOUBLE);
         TYPE_MAP.put(Double.class.getName(), PropertySimpleType.DOUBLE);
     }
 

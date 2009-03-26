@@ -67,6 +67,9 @@ public class JMXServerComponent implements JMXComponent {
     private EmsConnection connection;
     private ConnectionProvider connectionProvider;
 
+    /**
+     * Access to this is deprecated, use #getResourceContext() instead.
+     */
     ResourceContext context;
 
     public void start(ResourceContext context) throws Exception {
@@ -207,6 +210,10 @@ public class JMXServerComponent implements JMXComponent {
 
         return ((connectionProvider != null) && connectionProvider.isConnected()) ? AvailabilityType.UP
             : AvailabilityType.DOWN;
+    }
+
+    protected ResourceContext getResourceContext() {
+        return this.context;
     }
 
     public List<Resource> discoverServices(ResourceType type, Configuration defaultPluginConfiguration) {

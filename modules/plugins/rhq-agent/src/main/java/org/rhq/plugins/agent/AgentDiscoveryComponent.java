@@ -18,15 +18,21 @@
  */
 package org.rhq.plugins.agent;
 
+import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.HashSet;
 import java.util.Set;
+
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
+
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
@@ -65,11 +71,14 @@ public class AgentDiscoveryComponent implements ResourceDiscoveryComponent {
 
             DiscoveredResourceDetails localVM = new DiscoveredResourceDetails(context.getResourceType(), key, name,
                 version, description, null, null);
-            Configuration configuration = localVM.getPluginConfiguration();
-            configuration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,
+
+            Configuration pluginConfiguration = localVM.getPluginConfiguration();
+            pluginConfiguration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,
                 "Local Connection"));
-            configuration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE, InternalVMTypeDescriptor.class
-                .getName()));
+            pluginConfiguration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
+                InternalVMTypeDescriptor.class.getName()));
+
+            initLogEventSourcesConfigProp(mbean, pluginConfiguration);
 
             set.add(localVM);
         } catch (Exception e) {
@@ -77,6 +86,40 @@ public class AgentDiscoveryComponent implements ResourceDiscoveryComponent {
         }
 
         return set;
+    }
+
+    private void initLogEventSourcesConfigProp(AgentManagementMBean agent, Configuration pluginConfiguration) {
+        File logsDir = new File(agent.getAgentHomeDirectory(), "logs");
+
+        PropertyList logEventSources = pluginConfiguration.getList(AgentServerComponent.LOG_EVENT_SOURCES_CONFIG_PROP);
+        if (logEventSources == null) {
+            logEventSources = new PropertyList(AgentServerComponent.LOG_EVENT_SOURCES_CONFIG_PROP);
+            pluginConfiguration.put(logEventSources);
+        }
+
+        // agent.log
+        File agentLogFile = new File(logsDir, "agent.log");
+        if (agentLogFile.exists() && !agentLogFile.isDirectory()) {
+            PropertyMap agentLogEventSource = new PropertyMap(AgentServerComponent.LOG_EVENT_SOURCE_CONFIG_PROP);
+            agentLogEventSource.put(new PropertySimple(AgentServerComponent.LogEventSourcePropertyNames.LOG_FILE_PATH,
+                agentLogFile));
+            agentLogEventSource.put(new PropertySimple(AgentServerComponent.LogEventSourcePropertyNames.ENABLED,
+                Boolean.FALSE));
+            logEventSources.add(agentLogEventSource);
+        }
+
+        // command-trace.log
+        File commandTraceLogFile = new File(logsDir, "command-trace.log");
+        if (commandTraceLogFile.exists() && !commandTraceLogFile.isDirectory()) {
+            PropertyMap commandTraceLogEventSource = new PropertyMap(AgentServerComponent.LOG_EVENT_SOURCE_CONFIG_PROP);
+            commandTraceLogEventSource.put(new PropertySimple(
+                AgentServerComponent.LogEventSourcePropertyNames.LOG_FILE_PATH, commandTraceLogFile));
+            commandTraceLogEventSource.put(new PropertySimple(AgentServerComponent.LogEventSourcePropertyNames.ENABLED,
+                Boolean.FALSE));
+            logEventSources.add(commandTraceLogEventSource);
+        }
+
+        return;
     }
 
     /**

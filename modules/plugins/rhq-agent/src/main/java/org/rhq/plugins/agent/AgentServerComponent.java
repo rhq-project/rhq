@@ -19,7 +19,10 @@
 package org.rhq.plugins.agent;
 
 import java.io.CharArrayWriter;
+import java.io.File;
 import java.io.PrintWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -27,6 +30,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import javax.management.MBeanException;
 
@@ -37,7 +42,11 @@ import org.mc4j.ems.connection.bean.EmsBean;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
@@ -45,6 +54,10 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.event.EventContext;
+import org.rhq.core.pluginapi.event.EventPoller;
+import org.rhq.core.pluginapi.event.log.Log4JLogEntryProcessor;
+import org.rhq.core.pluginapi.event.log.LogFileEventPoller;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -77,10 +90,32 @@ public class AgentServerComponent extends JMXServerComponent implements JMXCompo
 
     private String sigarVersion;
 
+    // stuff needed for log tracking
+
+    public static final String LOG_EVENT_SOURCES_CONFIG_PROP = "logEventSources";
+    public static final String LOG_EVENT_SOURCE_CONFIG_PROP = "logEventSource";
+
+    public abstract static class LogEventSourcePropertyNames {
+        public static final String LOG_FILE_PATH = "logFilePath";
+        public static final String ENABLED = "enabled";
+        public static final String DATE_FORMAT = "dateFormat";
+        public static final String INCLUDES_PATTERN = "includesPattern";
+        public static final String MINIMUM_SEVERITY = "minimumSeverity";
+    }
+
+    private static final String LOG_ENTRY_EVENT_TYPE = "logEntry";
+
     @Override
     public void start(ResourceContext resourceContext) throws Exception {
         super.start(resourceContext);
         this.sigarVersion = SystemInfoFactory.getNativeSystemInfoVersion();
+        startLogFileEventPollers();
+    }
+
+    @Override
+    public void stop() {
+        stopLogFileEventPollers();
+        super.stop();
     }
 
     @Override
@@ -222,5 +257,94 @@ public class AgentServerComponent extends JMXServerComponent implements JMXCompo
         }
 
         return;
+    }
+
+    private void startLogFileEventPollers() {
+        try {
+            Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+            PropertyList logEventSources = pluginConfig.getList(AgentServerComponent.LOG_EVENT_SOURCES_CONFIG_PROP);
+            if (logEventSources == null) {
+                return;
+            }
+
+            for (Property prop : logEventSources.getList()) {
+                PropertyMap logEventSource = (PropertyMap) prop;
+                Boolean enabled = Boolean.valueOf(logEventSource.getSimpleValue(LogEventSourcePropertyNames.ENABLED,
+                    null));
+                if (enabled) {
+                    String logFilePathname = logEventSource.getSimpleValue(LogEventSourcePropertyNames.LOG_FILE_PATH,
+                        null);
+                    if (logFilePathname == null) {
+                        log.error("No path given. Agent plugin cannot watch log.");
+                        continue; // skip this log, but go to the next in case we have to watch more log files
+                    }
+                    File logFile = new File(logFilePathname);
+                    if (!logFile.exists() || !logFile.canRead()) {
+                        log.error("Log file at location [" + logFilePathname
+                            + "] does not exist or is not readable. Agent plugin cannot watch log.");
+                        continue; // skip this log, but go to the next in case we have to watch more log files
+                    }
+
+                    Log4JLogEntryProcessor processor = new Log4JLogEntryProcessor(LOG_ENTRY_EVENT_TYPE, logFile);
+                    String dateFormatString = logEventSource.getSimpleValue(LogEventSourcePropertyNames.DATE_FORMAT,
+                        null);
+                    if (dateFormatString != null) {
+                        try {
+                            DateFormat dateFormat = new SimpleDateFormat(dateFormatString); // TODO locale specific ?
+                            processor.setDateFormat(dateFormat);
+                        } catch (IllegalArgumentException e) {
+                            log.error("Date format [" + dateFormatString
+                                + "] is not a valid simple date format. Agent plugin cannot watch log: "
+                                + logFilePathname);
+                            continue; // skip this log, but go to the next in case we have to watch more log files
+                        }
+                    }
+                    String includesPatternString = logEventSource.getSimpleValue(
+                        LogEventSourcePropertyNames.INCLUDES_PATTERN, null);
+                    if (includesPatternString != null) {
+                        try {
+                            Pattern includesPattern = Pattern.compile(includesPatternString);
+                            processor.setIncludesPattern(includesPattern);
+                        } catch (PatternSyntaxException e) {
+                            log.error("[" + includesPatternString
+                                + "] is not a valid regular expression. Agent plugin cannot watch log: "
+                                + logFilePathname);
+                            continue; // skip this log, but go to the next in case we have to watch more log files
+                        }
+                    }
+                    String minimumSeverityString = logEventSource.getSimpleValue(
+                        LogEventSourcePropertyNames.MINIMUM_SEVERITY, null);
+                    if (minimumSeverityString != null) {
+                        EventSeverity minimumSeverity = EventSeverity.valueOf(minimumSeverityString.toUpperCase());
+                        processor.setMinimumSeverity(minimumSeverity);
+                    }
+
+                    EventContext eventContext = getResourceContext().getEventContext();
+                    EventPoller poller = new LogFileEventPoller(eventContext, LOG_ENTRY_EVENT_TYPE, logFile, processor);
+                    eventContext.registerEventPoller(poller, 60, logFile.getPath());
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to start log file event pollers", e);
+        }
+
+        return;
+    }
+
+    private void stopLogFileEventPollers() {
+        try {
+            ResourceContext resourceContext = getResourceContext();
+            Configuration pluginConfig = resourceContext.getPluginConfiguration();
+            PropertyList logEventSources = pluginConfig.getList(AgentServerComponent.LOG_EVENT_SOURCES_CONFIG_PROP);
+            if (logEventSources != null) {
+                for (Property prop : logEventSources.getList()) {
+                    PropertyMap logEventSource = (PropertyMap) prop;
+                    String logFilePath = logEventSource.getSimpleValue(LogEventSourcePropertyNames.LOG_FILE_PATH, null);
+                    resourceContext.getEventContext().unregisterEventPoller(LOG_ENTRY_EVENT_TYPE, logFilePath);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to stop log file event pollers", e);
+        }
     }
 }

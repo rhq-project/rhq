@@ -75,6 +75,7 @@ groupId - the group id of the Group being accessed
                         <a4j:outputPanel id="favoritesPanel" ajaxRendered="true">
                             <a4j:support event="onclick"
                                          action="#{ResourceGroupUIBean.toggleFavorite}" reRender="favoritesPanel"
+                                         status="commonStatus"
                                          disableDefault="true"/>
 
                             <h:graphicImage style="z-index: 10;" id="favoritesStar"

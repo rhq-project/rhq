@@ -94,13 +94,20 @@
                   <onc:select name="selectedEvents" value="#{item.eventId}" />
                </rich:column>
 
-                <rich:column>
+                <rich:column style="white-space: nowrap;">
                     <f:facet name="header">
                         <onc:sortableColumnHeader sort="ev.severity">
                             <h:outputText styleClass="headerText" value="Severity" />
                         </onc:sortableColumnHeader>
                     </f:facet>
-                    <h:outputText value="#{item.severity}" />
+
+                    <h:graphicImage value="/images/icons/Events_fatal_16.png" rendered="#{item.severity == 'FATAL'}"/>
+                    <h:graphicImage value="/images/icons/Events_error_16.png" rendered="#{item.severity == 'ERROR'}"/>
+                    <h:graphicImage value="/images/icons/Events_warning_16.png" rendered="#{item.severity == 'WARN'}"/>
+                    <h:graphicImage value="/images/icons/Events_info_16.png" rendered="#{item.severity == 'INFO'}"/>
+                    <h:graphicImage value="/images/icons/Events_bug_16.png" rendered="#{item.severity == 'DEBUG'}"/>
+
+                    <h:outputText value=" #{item.severity}" />
                 </rich:column>
 
                 <rich:column rendered="#{EventHistoryUIBean.context.resourceId == -1}">
@@ -140,7 +147,10 @@
                             <h:outputText styleClass="headerText" value="Time occurred" />
                         </onc:sortableColumnHeader>
                     </f:facet>
-                    <h:outputText value="#{item.timestamp}" />
+                    
+                    <h:outputText value="#{item.timestamp}" >
+                        <f:converter converterId="RelativeDurationConverter" />
+                    </h:outputText>
                 </rich:column>
 
                 <f:facet name="footer">
@@ -206,7 +216,14 @@
                   </tr>
                   <tr>
                       <td style="font-weight: bold;">Severity: </td>
-                      <td><h:outputText value="#{event.severity}" /></td>
+                      <td style="white-space: nowrap;">
+                          <h:graphicImage value="/images/icons/Events_fatal_16.png" rendered="#{event.severity == 'FATAL'}"/>
+                          <h:graphicImage value="/images/icons/Events_error_16.png" rendered="#{event.severity == 'ERROR'}"/>
+                          <h:graphicImage value="/images/icons/Events_warning_16.png" rendered="#{event.severity == 'WARN'}"/>
+                          <h:graphicImage value="/images/icons/Events_info_16.png" rendered="#{event.severity == 'INFO'}"/>
+                          <h:graphicImage value="/images/icons/Events_bug_16.png" rendered="#{event.severity == 'DEBUG'}"/>
+
+                          <h:outputText value="#{event.severity}" /></td>
                   </tr>
                   <tr>
                       <td style="font-weight: bold; vertical-align: top;">Details: </td>

@@ -47,20 +47,18 @@
         <dependency>
           <groupId>org.jboss.integration</groupId>
           <artifactId>jboss-profileservice-spi</artifactId>                    
-          <version>5.1.0.CR1</version>
+          <version>5.1.0.CR2</version>
           <scope>provided</scope>
         </dependency>
 
         <!-- NOTE: Uncomment the below dep if you want to pull down the jboss-profileservice 
-                   sources jar for debugging purposes. -->        
-        <!--
+                   sources jar for debugging purposes. -->                
         <dependency>
           <groupId>org.jboss</groupId>
           <artifactId>jboss-profileservice</artifactId>                    
           <version>5.1.0.CR1</version>
           <scope>provided</scope>
-        </dependency>        
-        -->
+        </dependency>                
         
         <dependency>
           <groupId>org.jboss.man</groupId>

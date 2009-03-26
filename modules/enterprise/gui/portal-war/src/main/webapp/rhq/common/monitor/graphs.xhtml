@@ -102,7 +102,8 @@
         var eventsDiv = getElementCrossBrowser("eventsDiv");
         var footerDiv = getElementCrossBrowser("footerDiv");
         
-        var browserHeight = document.documentElement.clientHeight;
+        //IE6 returns 0 for document.documentElement.clientHeight
+        var browserHeight = document.documentElement.clientHeight || document.body.clientHeight;
         var indicatorTopPos = getElementTopPos(indicatorDiv);
         var eventsTopPos = getElementTopPos(eventsDiv);
         var footerTopPos = getElementTopPos(footerDiv) ;

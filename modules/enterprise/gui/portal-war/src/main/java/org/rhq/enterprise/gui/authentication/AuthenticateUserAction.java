@@ -124,6 +124,7 @@ public class AuthenticateUserAction extends TilesAction {
             if ((msg.indexOf("username") >= 0) || (msg.indexOf("password") >= 0)) {
                 request.setAttribute(Constants.LOGON_STATUS, "login.info.bad");
             } else {
+                log.error("Could not log into the web application", e);
                 request.setAttribute(Constants.LOGON_STATUS, "login.bad.backend");
             }
 

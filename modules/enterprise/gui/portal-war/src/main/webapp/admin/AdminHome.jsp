@@ -25,12 +25,14 @@
     <td width="20%" class="BlockLabel"><fmt:message key="admin.home.Roles"/></td>
     <td width="30%" class="BlockContent"><html:link page="/admin/role/RoleAdmin.do?mode=list"><fmt:message key="admin.home.ListRoles"/></html:link></td>
   </tr>
+  <hq:authorization permission="MANAGE_SECURITY">
   <tr>
     <td width="20%" class="BlockLabel">&nbsp;</td>
     <td width="30%" class="BlockContent"><html:link page="/admin/user/UserAdmin.do?mode=new"><fmt:message key="admin.home.NewUser"/></html:link></td>
     <td width="20%" class="BlockLabel">&nbsp;</td>
     <td width="30%" class="BlockContent"><html:link page="/admin/role/RoleAdmin.do?mode=new"><fmt:message key="admin.home.NewRole"/></html:link></td>
   </tr>
+  </hq:authorization>
 </table>
 <!--  /  -->
 

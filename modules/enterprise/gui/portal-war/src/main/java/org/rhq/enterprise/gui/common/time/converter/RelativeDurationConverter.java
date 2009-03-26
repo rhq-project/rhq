@@ -53,6 +53,8 @@ public class RelativeDurationConverter implements Converter {
             millis = (Long) value;
         } else if (value instanceof Double) {
             millis = ((Double) value).longValue();
+        } else if (value instanceof  Date) {
+            millis = ((Date)value).getTime();
         } else {
             throw new IllegalArgumentException("The " + RelativeDurationConverter.class.getSimpleName()
                 + " converter does not support rendering objects of type " + value.getClass().getSimpleName());

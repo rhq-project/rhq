@@ -1250,8 +1250,11 @@
 
                 <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/QueueServiceMO.java -->
 
+                <c:simple-property required="true" name="name"
+                                   description="The name of this queue."/>
+
                 <c:simple-property required="true" name="JNDIName"
-                                   description="The queue's JNDI name; default is '/queue/{queueName}'."/>
+                                   description="This queue's JNDI name; default is '/queue/{queueName}'."/>
 
                 <c:simple-property type="boolean" required="true" name="clustered" default="true"
                                    description="Is this queue clustered?"/>
@@ -1445,8 +1448,11 @@
 
                 <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/TopicServiceMO.java -->
 
+                <c:simple-property required="true" name="name"
+                                   description="The name of this topic."/>
+
                 <c:simple-property required="true" name="JNDIName"
-                                   description="The topic's JNDI name; default is '/topic/{topicName}'."/>
+                                   description="This topic's JNDI name; default is '/topic/{topicName}'."/>
 
                 <c:simple-property type="boolean" required="true" name="clustered" default="false"
                                    description="Is this topic clustered?"/>

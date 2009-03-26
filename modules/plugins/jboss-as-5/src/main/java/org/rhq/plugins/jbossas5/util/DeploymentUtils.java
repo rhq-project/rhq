@@ -34,6 +34,8 @@ public abstract class DeploymentUtils {
     private static final String RESOURCE_TYPE_EAR = "Enterprise Application (EAR)";
     private static final String RESOURCE_TYPE_WAR = "Web Application (WAR)";
 
+    // TODO the return value from this method is counter intuitive,
+    // it returns true when the extension is incorrect
     public static boolean isCorrectExtension(ResourceType resourceType, String archiveName)
     {
         String resourceTypeName = resourceType.getName();

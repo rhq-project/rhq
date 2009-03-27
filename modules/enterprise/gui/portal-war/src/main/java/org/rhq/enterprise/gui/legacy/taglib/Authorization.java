@@ -24,7 +24,7 @@ import javax.servlet.jsp.jstl.core.ConditionalTagSupport;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.legacy.util.RequestUtils;
+import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -35,9 +35,7 @@ public class Authorization extends ConditionalTagSupport {
     private String permission;
 
     private enum Context {
-        Resource, //
-        ResourceGroup, // 
-        None;
+        Resource, Global;
     }
 
     @Override
@@ -45,36 +43,27 @@ public class Authorization extends ConditionalTagSupport {
         try {
             HttpServletRequest request = (HttpServletRequest) pageContext.getRequest();
 
-            Subject user = RequestUtils.getSubject(request);
-            Permission permission = getPermissionEnum(request);
+            Permission permission = getPermissionEnum();
 
-            int objectId = 0;
-            Context context = Context.None;
-            try {
-                objectId = getResourceId(request);
-                context = Context.Resource;
-            } catch (Exception e) {
-                // might be OK, if this is some other context
+            Subject user = WebUtility.getSubject(request);
+            if (user == null) {
+                return false; // cannot authorize a non-authenticated user
             }
 
-            try {
-                objectId = getResourceGroupId(request);
-                context = Context.ResourceGroup;
-            } catch (Exception e) {
-                // might be OK, if this is some other context
+            Context context = Context.Global;
+            int objectId = getResourceId(request);
+            if (objectId != 0) {
+                context = Context.Resource;
             }
 
             AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
             if (context == Context.Resource) {
                 return authorizationManager.hasResourcePermission(user, permission, objectId);
-            } else if (context == Context.ResourceGroup) {
-                return authorizationManager.hasResourcePermission(user, permission, objectId);
-            } else if (context == Context.None) {
-                throw new JspTagException("Trying to determine permissions in an unknown context");
+            } else if (context == Context.Global) {
+                return authorizationManager.hasGlobalPermission(user, permission);
             } else {
                 throw new JspTagException("Authorization tag does not yet support the context[" + context + "]");
             }
-
         } catch (JspTagException jte) {
             throw jte; // pass-through
         } catch (Exception e) {
@@ -83,23 +72,14 @@ public class Authorization extends ConditionalTagSupport {
     }
 
     private int getResourceId(HttpServletRequest request) throws JspTagException {
-        try {
-            return RequestUtils.getResourceId(request);
-        } catch (Exception innerE) {
-            throw new JspTagException("Trying to evaluate resource-level permissions in a non-resource context");
+        Integer id = WebUtility.getResourceId(request);
+        if (id == null) {
+            return 0;
         }
+        return id.intValue();
     }
 
-    private int getResourceGroupId(HttpServletRequest request) throws JspTagException {
-        try {
-            return RequestUtils.getGroupId(request);
-        } catch (Exception innerE) {
-            throw new JspTagException(
-                "Trying to evaluate resource group-level permissions in a non-resource group context");
-        }
-    }
-
-    private Permission getPermissionEnum(HttpServletRequest request) throws JspTagException {
+    private Permission getPermissionEnum() throws JspTagException {
         String permissionName = getPermission();
 
         try {

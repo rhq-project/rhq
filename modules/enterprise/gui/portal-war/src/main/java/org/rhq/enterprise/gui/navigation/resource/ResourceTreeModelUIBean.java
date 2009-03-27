@@ -145,15 +145,19 @@ public class ResourceTreeModelUIBean {
                     }
                     ResourceTreeNode node = new ResourceTreeNode(agc);
                     load(node, resources, alwaysGroup);
-                    if (!(node.getData() instanceof LockedResource && node.getChildren().isEmpty())) {
+
+                    if (!recursivelyLocked(node)) {
                         parentNode.getChildren().add(node);
                     }
                 } else {
                     List<Resource> entries = children.get(rsc);
                     for (Resource res : entries) {
                         ResourceTreeNode node = new ResourceTreeNode(res);
-                        parentNode.getChildren().add(node);
+
                         load(node, resources, alwaysGroup);
+                        if (!recursivelyLocked(node)) {
+                            parentNode.getChildren().add(node);
+                        }
                     }
                 }
 
@@ -226,19 +230,40 @@ public class ResourceTreeModelUIBean {
                             entries.size());
                     }
                     ResourceTreeNode node = new ResourceTreeNode(agc);
-                    parentNode.getChildren().add(node);
                     load(node, resources, alwaysGroup);
+                    if (!recursivelyLocked(node)) {
+                        parentNode.getChildren().add(node);
+                    }
                 } else {
                     List<Resource> entries = children.get(rsc);
                     for (Resource res : entries) {
                         ResourceTreeNode node = new ResourceTreeNode(res);
-                        parentNode.getChildren().add(node);
                         load(node, resources, alwaysGroup);
+                        if (!recursivelyLocked(node)) {
+                            parentNode.getChildren().add(node);
+                        }
                     }
                 }
             }
         }
 
+    }
+
+    public static boolean recursivelyLocked(ResourceTreeNode node) {
+        if (node.getData() instanceof LockedResource) {
+
+        } else if (node.getData() instanceof Resource) {
+            return false;
+        } else if (node.getData() instanceof AutoGroupComposite) {
+
+        }
+
+        boolean allLocked = true;
+        for (ResourceTreeNode child : node.getChildren()) {
+            if (!recursivelyLocked(child))
+                allLocked = false;
+        }
+        return allLocked;
     }
 
     public ResourceTreeNode getTreeNode() {

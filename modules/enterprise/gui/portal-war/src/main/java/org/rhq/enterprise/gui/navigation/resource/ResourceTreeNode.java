@@ -67,9 +67,9 @@ public class ResourceTreeNode implements Comparable<ResourceTreeNode> {
             AutoGroupComposite composite = ((AutoGroupComposite) level) ;
             ResourceType type = composite.getResourceType();
             if (type != null) {
-                return type.getName() + " (" + composite.getMemberCount() + ")";
+                return type.getName();
             } else {
-                return composite.getSubcategory().getName() + " (" + composite.getMemberCount() + ")";
+                return composite.getSubcategory().getName();
             }
         } else if (level instanceof ResourceWithAvailability) {
             return ((ResourceWithAvailability) level).getResource().getName();
@@ -80,7 +80,11 @@ public class ResourceTreeNode implements Comparable<ResourceTreeNode> {
     }
 
     public int compareTo(ResourceTreeNode that) {
-        return HumaneStringComparator.DEFAULT.compare(toString(), that.toString());
+        int i = HumaneStringComparator.DEFAULT.compare(toString(), that.toString());
+        if (i == 0) {
+            i = new Integer(level.hashCode()).compareTo(that.level.hashCode());
+        }
+        return i;
     }
 
     @Override

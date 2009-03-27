@@ -55,7 +55,6 @@
                                        icon="/images/icons/Cluster_up_16.png"
                                        iconLeaf="/images/icons/Cluster_up_16.png">
 
-
                             <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000"
                                          disableDefault="true" status="commonStatus" limitToList="true"
                                          ajaxSingle="true">
@@ -81,14 +80,12 @@
                             <h:outputText
                                     value="#{groupTreeItem.data.subcategory == null ? groupTreeItem.data.resourceType.name : groupTreeItem.data.subcategory.name}"/>
 
-
-
                             <!-- Tree Node supporting context menu -->
                         </rich:treeNode>
+
                         <rich:treeNode type="ClusterKey"
                                        icon="/images/icons/Cluster_up_16.png"
                                        iconLeaf="/images/icons/Cluster_up_16.png">
-
 
                             <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000"
                                          disableDefault="true" status="commonStatus" limitToList="true"
@@ -103,7 +100,6 @@
                                 </rich:componentControl>
                             </a4j:support>
 
-
                             <h:outputText value="#{groupTreeItem.members[0]}"/>
                             <h:outputText value=" (#{groupTreeItem.members.size} / #{clusterSize})"
                                           rendered="#{groupTreeItem.members.size lt clusterSize}"
@@ -116,10 +112,8 @@
                                        icon="/images/icons/#{groupTreeItem.data.resourceType.category}_#{groupTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up'}_16.png"
                                        iconLeaf="/images/icons/#{groupTreeItem.data.resourceType.category}_#{groupTreeItem.data.currentAvailability.availabilityType == 'DOWN' ? 'down' : 'up'}_16.png">
 
-
                             <h:outputText value="#{groupTreeItem}"/>
                         </rich:treeNode>
-
 
                     </rich:tree>
 

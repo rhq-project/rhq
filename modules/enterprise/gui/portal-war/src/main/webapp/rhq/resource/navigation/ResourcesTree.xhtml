@@ -24,7 +24,11 @@
         <input type="hidden" name="parent" value="#{param.parent}"/>
         <input type="hidden" name="type" value="#{param.type}"/>
 
+
         <a4j:region renderRegionOnly="true">
+            <a4j:outputPanel id="messagePanel" layout="block" ajaxRendered="true" style="width: 100%; background-color: yellow;">
+                <h:messages globalOnly="false" layout="table" />
+            </a4j:outputPanel>
 
                 <rich:tree style="width: 100%; height: 100%; min-width: 100%; min-height: 100%" switchType="ajax"
                            stateAdvisor="#{ResourceTreeStateAdvisor}"
@@ -46,7 +50,10 @@
                                    iconLeaf="/images/icons/#{resourceTreeItem.data.resourceType == null? 'Subcategory' : 'Auto_group'}_16.png"
                                    icon="/images/icons/#{resourceTreeItem.data.resourceType == null? 'Subcategory' : 'Auto_group'}_16.png">
 
-                        <h:outputText value="#{resourceTreeItem}"
+                        <h:outputText value="#{resourceTreeItem} "
+                                      styleClass="availLink#{resourceTreeItem.data.availability == 0 ? 'Down' : (resourceTreeItem.data.availability == 1 ? 'Up' : 'Mixed')}"/>
+                        <h:outputText value="(#{resourceTreeItem.children.size})"
+                                      rendered="#{resourceTreeItem.data.subcategory == null}"
                                       styleClass="availLink#{resourceTreeItem.data.availability == 0 ? 'Down' : (resourceTreeItem.data.availability == 1 ? 'Up' : 'Mixed')}"/>
                     </rich:treeNode>
 
@@ -97,6 +104,8 @@
                     </h:panelGroup>
 
                 </a4j:outputPanel>
+
+
 
 
         </a4j:region>

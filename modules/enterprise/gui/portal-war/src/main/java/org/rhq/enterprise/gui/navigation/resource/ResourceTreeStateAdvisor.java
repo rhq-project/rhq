@@ -22,6 +22,8 @@ import java.io.IOException;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
 
 import org.richfaces.component.UITree;
 import org.richfaces.component.html.HtmlTree;
@@ -33,8 +35,10 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
+import org.rhq.core.domain.resource.composite.LockedResource;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.exception.Severity;
 import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
 import org.rhq.enterprise.gui.inventory.resource.ResourceUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -85,7 +89,14 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
 
                 Subject subject = EnterpriseFacesContextUtility.getSubject();
 
-                if (node.getData() instanceof Resource) {
+                if (node.getData() instanceof LockedResource) {
+                    state.setSelected(e.getOldSelection());
+
+                    FacesContext.getCurrentInstance().addMessage("leftNavTree",
+                        new FacesMessage(FacesMessage.SEVERITY_WARN, "You have not been granted view access to this resource", null));
+                    return;
+
+                } else if (node.getData() instanceof Resource) {
                     String path = FacesContextUtility.getRequest().getRequestURI();
 
                     Resource resource = this.resourceManager.getResourceById(subject, ((Resource) node.getData())
@@ -121,16 +132,27 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                     response.sendRedirect(path + "?id=" + ((Resource) node.getData()).getId());
                 } else if (node.getData() instanceof AutoGroupComposite) {
                     AutoGroupComposite ag = (AutoGroupComposite) node.getData();
-                    if (ag.getSubcategory() != null) {
-                        state.setSelected(e.getOldSelection());                        
-                        // this is a subcategory or subsubcategory, no page to display right now
-                        FacesContextUtility.getManagedBean(ResourceUIBean.class).setMessage(
-                            "No pages exist for subcategory types");
+
+                    if (ag.getMemberCount() != node.getChildren().size()) {
+                        // you don't have access to every autogroup resource
+                        state.setSelected(e.getOldSelection());
+                        FacesContext.getCurrentInstance().addMessage("leftNavTree",
+                                new FacesMessage(FacesMessage.SEVERITY_WARN, "You must have view access to all resources in an autogroup to view it", null));
                         return;
+
                     } else {
-                        String path = "/rhq/autogroup/monitor/graphs.xhtml?parent=" + ag.getParentResource().getId()
-                            + "&type=" + ag.getResourceType().getId();
-                        response.sendRedirect(path);
+
+                        if (ag.getSubcategory() != null) {
+                            state.setSelected(e.getOldSelection());
+                            // this is a subcategory or subsubcategory, no page to display right now
+                            FacesContext.getCurrentInstance().addMessage("leftNavTree",
+                                    new FacesMessage(FacesMessage.SEVERITY_WARN, "No subcategory pages exist", null));
+                            return;
+                        } else {
+                            String path = "/rhq/autogroup/monitor/graphs.xhtml?parent=" + ag.getParentResource().getId()
+                                + "&type=" + ag.getResourceType().getId();
+                            response.sendRedirect(path);
+                        }
                     }
                 }
             }
@@ -160,13 +182,13 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
 
                 if (typeId != null) {
                     String id = FacesContextUtility.getOptionalRequestParameter("parent");
-                    if (id != null) {
+                    if (id != null && id.length() != 0) {
                         this.selectedId = Integer.parseInt(id);
                     }
 
                 } else {
                     String id = FacesContextUtility.getOptionalRequestParameter("id");
-                    if (id != null) {
+                    if (id != null && id.length() != 0) {
                         this.selectedId = Integer.parseInt(id);
                     }
                 }

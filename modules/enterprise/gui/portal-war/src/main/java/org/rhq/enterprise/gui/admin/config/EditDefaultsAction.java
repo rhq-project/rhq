@@ -41,7 +41,6 @@ import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.Portal;
 import org.rhq.enterprise.gui.legacy.action.BaseDispatchAction;
-import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -54,11 +53,10 @@ public class EditDefaultsAction extends BaseDispatchAction {
     ResourceTypeManagerLocal typeMgr = LookupUtil.getResourceTypeManager();
     Map<Integer, ResourceTypeTemplateCountComposite> compositeMap;
 
-    @SuppressWarnings("deprecation")
     public ActionForward getMonitorDefaults(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse resp) throws Exception {
 
-        Subject subject = RequestUtils.getSubject(request);
+        Subject subject = WebUtility.getSubject(request);
 
         String viewMode = WebUtility.getOptionalRequestParameter(request, "viewMode", null);
 
@@ -80,7 +78,14 @@ public class EditDefaultsAction extends BaseDispatchAction {
          */
         Map<Integer, SortedSet<ResourceType>> platformServices = new HashMap<Integer, SortedSet<ResourceType>>();
         if (platformTypes.size() > 0) {
-            platformServices = typeMgr.getChildResourceTypesForResourceTypes(Arrays.asList(platformTypes.get(0)));
+            // if you deployed the perfplugin, the list of services will be 0 - if we see 0 services come back,
+            // just ask for the next platform as a courtesy to developers who have perfplugin platform deployed
+            for (ResourceType platformTypeEntry : platformTypes) {
+                platformServices = typeMgr.getChildResourceTypesForResourceTypes(Arrays.asList(platformTypeEntry));
+                if (platformServices.size() > 0) {
+                    break; // we got them, no need to keep going
+                }
+            }
         }
 
         /*

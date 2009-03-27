@@ -17,14 +17,19 @@
 <rich:toolBar styleClass="topMenu">
 <rich:toolBarGroup location="left">
 
+    <ui:remove>===== LOGO TO HOME PAGE =====</ui:remove>
+
     <h:outputLink value="/">
         <h:graphicImage value="/images/logo_icon.png"/>
     </h:outputLink>
 
+    <ui:remove>===== DASHBOARD =====</ui:remove>
 
     <h:outputLink value="/Dashboard.do">
         <h:outputText value="#{msg['dash.home.PageTitle']}"/>
     </h:outputLink>
+
+    <ui:remove>===== RESOURCES =====</ui:remove>
 
     <rich:dropDownMenu>
         <f:facet name="label">
@@ -35,42 +40,46 @@
             </h:panelGroup>
         </f:facet>
 
+        <ui:remove>***** Resources > PLAFORMS *****</ui:remove>
         <rich:menuItem submitMode="none" icon="/images/icons/Platform_up_16.png"
                        onclick="window.location = '/ResourceHub.do?resourceCategory=PLATFORM'">
             <h:outputText value="#{msg['resource.hub.filter.platform']}"/>
         </rich:menuItem>
 
+        <ui:remove>***** Resources > SERVERS *****</ui:remove>
         <rich:menuItem submitMode="none" icon="/images/icons/Server_up_16.png"
                        onclick="window.location = '/ResourceHub.do?resourceCategory=SERVER'">
             <h:outputText value="#{msg['resource.hub.filter.server']}"/>
         </rich:menuItem>
 
+        <ui:remove>***** Resources > SERVICES *****</ui:remove>
         <rich:menuItem submitMode="none" icon="/images/icons/Service_up_16.png"
                        onclick="window.location = '/ResourceHub.do?resourceCategory=SERVICE'">
             <h:outputText value="#{msg['resource.hub.filter.service']}"/>
         </rich:menuItem>
 
-             <rich:menuItem submitMode="none" icon="/images/icons/Cluster_up_16.png"
-                           onclick="window.location = '/GroupHub.do?groupCategory=COMPATIBLE'">
-                <h:outputText value="#{msg['resource.hub.filter.compatibleGroups']}"/>
-            </rich:menuItem>
+        <ui:remove>***** Resources > COMPATIBLE GROUPS *****</ui:remove>
+        <rich:menuItem submitMode="none" icon="/images/icons/Cluster_up_16.png"
+                       onclick="window.location = '/GroupHub.do?groupCategory=COMPATIBLE'">
+            <h:outputText value="#{msg['resource.hub.filter.compatibleGroups']}"/>
+        </rich:menuItem>
 
-            <rich:menuItem submitMode="none" icon="/images/icons/Group_up_16.png"
-                           onclick="window.location = '/GroupHub.do?groupCategory=MIXED'">
-                <h:outputText value="#{msg['resource.hub.filter.mixedGroups']}"/>
-            </rich:menuItem>
+        <ui:remove>***** Resources > MIXED GROUPS *****</ui:remove>
+        <rich:menuItem submitMode="none" icon="/images/icons/Group_up_16.png"
+                       onclick="window.location = '/GroupHub.do?groupCategory=MIXED'">
+            <h:outputText value="#{msg['resource.hub.filter.mixedGroups']}"/>
+        </rich:menuItem>
 
-            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/definition/group/list.xhtml'">
-                <h:outputText value="#{msg['resource.hub.filter.groupDefinitions']}"/>
-            </rich:menuItem>
+        <ui:remove>***** Resources > GROUP DEFINITIONS *****</ui:remove>
+        <rich:menuItem submitMode="none" onclick="window.location = '/rhq/definition/group/list.xhtml'">
+            <h:outputText value="#{msg['resource.hub.filter.groupDefinitions']}"/>
+        </rich:menuItem>
 
-
+        <ui:remove>***** Resources > SYSTEM VIEWS *****</ui:remove>
         <rich:menuGroup value="Subsystem Views">
-
             <rich:menuItem submitMode="none" icon="/images/icons/Configure_16.png"
                            onclick="window.location = '/rhq/subsystem/configurationUpdate.xhtml'">Configuration Changes
             </rich:menuItem>
-
             <rich:menuItem submitMode="none" icon="/images/icons/Monitor_failed_16.png"
                            onclick="window.location = '/rhq/subsystem/oobHistory.xhtml'">Problem Resources
             </rich:menuItem>
@@ -83,43 +92,35 @@
             <rich:menuItem submitMode="none" icon="/images/icons/Flag_grey_16.png"
                            onclick="window.location = '/rhq/subsystem/alertDefinitions.xhtml'">Alert Definitions
             </rich:menuItem>
-
         </rich:menuGroup>
 
         <rich:menuSeparator/>
 
+        <ui:remove>***** Resources > FAVORITE RESOURCES *****</ui:remove>
         <rich:menuGroup value="Favorite Resources" icon="/images/star_on_24.png">
-
             <c:forEach var="resource" items="#{UserPreferencesUIBean.resourceFavorites}">
-
                 <rich:menuItem submitMode="none"
                                icon="/images/icons/#{resource.resourceType.category}_up_16.png"
                                onclick="window.location = '#{onf:getDefaultResourceTabURL()}?id=#{resource.id}'">
                     <h:outputText value="#{resource.name}"/>
                 </rich:menuItem>
             </c:forEach>
-
         </rich:menuGroup>
 
-
+        <ui:remove>***** Resources > FAVORITE GROUPS *****</ui:remove>
         <rich:menuGroup value="Favorite Groups" icon="/images/star_on_24.png">
-
             <c:forEach var="group" items="#{UserPreferencesUIBean.groupFavorites}">
-
                 <rich:menuItem submitMode="none"
                                icon="/images/icons/#{group.groupCategory == 'MIXED' ? 'Group' : 'Cluster'}_up_16.png"
                                onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{group.id}'">
                     <h:outputText value="#{group.name}"/>
                 </rich:menuItem>
             </c:forEach>
-
         </rich:menuGroup>
 
-
+        <ui:remove>***** Resources > RECENTLY VIEWED *****</ui:remove>
         <rich:menuGroup value="Recently Viewed" icon="/images/bookmark.png">
-
             <c:forEach var="visit" items="#{UserPreferencesUIBean.recentVisits}">
-
                 <c:if test="#{visit.kind == 'PLATFORM' or visit.kind == 'SERVER' or visit.kind == 'SERVICE'}">
                 <rich:menuItem submitMode="none"
                                icon="/images/icons/#{visit.kind.displayName}_up_16.png"
@@ -134,24 +135,17 @@
                     <h:outputText value="#{visit.name}"/>
                 </rich:menuItem>
                 </c:if>
-
             </c:forEach>
-
         </rich:menuGroup>
-
-
 
         <rich:menuSeparator/>
 
+        <ui:remove>***** Resources > SEARCH *****</ui:remove>
         <rich:menuItem submitMode="none" disabled="true" icon="/images/icons/Search_16.png">
             <h:outputText value="Search: " style="color: black;"/>
-
-
             <h:panelGroup>
-
                 <h:inputText id="selectedResource" style="width: 250px;" immediate="true"
                              onkeypress="return ignoreEnterKey(event);" />
-
                 <rich:suggestionbox id="resourceSelectBox" for="selectedResource" tokens=",[]"
                                     ajaxSingle="true" immediate="true"
                                     suggestionAction="#{ResourceSelectUIBean.autocomplete}"
@@ -160,8 +154,6 @@
                                     style="background-color: #cccccc;"
                                     onselect="document.location.href='#{onf:getDefaultResourceTabURL()}?id=' + #{rich:element('selectedResource')}.value"
                                     usingSuggestObjects="false" width="700" height="400">
-
-
                     <h:column>
                         <f:facet name="header">Avail</f:facet>
                         <h:graphicImage
@@ -175,45 +167,94 @@
                         <f:facet name="header">Parent</f:facet>
                         <h:outputText value="#{result.parent.name}"/>
                     </h:column>
-
                 </rich:suggestionbox>
-
             </h:panelGroup>
-
-
         </rich:menuItem>
 
     </rich:dropDownMenu>
 
+    <ui:remove>===== ADMINISTRATION =====</ui:remove>
+
     <rich:dropDownMenu>
         <f:facet name="label">
             <h:panelGroup>
-                <h:outputLink value="/Admin.do">
-                    <h:outputText value="#{msg['admin.admin.AdministrationTitle']}"/>
-                </h:outputLink>
+                <h:outputText value="#{msg['admin.admin.AdministrationTitle']}"/>
             </h:panelGroup>
         </f:facet>
-        <rich:menuGroup value="Tools">
-            <rich:menuItem submitMode="none"
-                           onclick="window.location = '/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all'">
-                <h:outputText value="Monitoring Defaults"/>
-            </rich:menuItem>
-
-            <rich:menuItem submitMode="none"
-                           onclick="window.location = '/admin/license/LicenseAdmin.do?mode=view'">
-                <h:outputText value="#{msg['header.license']}"/>
-            </rich:menuItem>
-        </rich:menuGroup>
-
+        
+        <ui:remove>***** Administration > SECURITY *****</ui:remove>
         <rich:menuGroup value="Security">
             <rich:menuItem submitMode="none" onclick="window.location = '/admin/user/UserAdmin.do?mode=list'">
-                <h:outputText value="Manage Users"/>
+                <h:outputText value="Users"/>
             </rich:menuItem>
             <rich:menuItem submitMode="none" onclick="window.location = '/admin/role/RoleAdmin.do?mode=list'">
-                <h:outputText value="Manage Roles"/>
+                <h:outputText value="Roles"/>
             </rich:menuItem>
         </rich:menuGroup>
+
+        <ui:remove>***** Administration > SYSTEM CONFIGURATION *****</ui:remove>
+        <rich:menuGroup value="System Configuration" rendered="#{GlobalPermissionsUIBean.settings || GlobalPermissionsUIBean.inventory}">
+            <rich:menuItem submitMode="none" onclick="window.location = '/admin/config/Config.do?mode=edit'"
+                           rendered="#{GlobalPermissionsUIBean.settings}">
+                <h:outputText value="Settings"/>
+            </rich:menuItem>
+            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/admin/plugin/plugin-list.xhtml'"
+                           rendered="#{GlobalPermissionsUIBean.settings}">
+                <h:outputText value="Plugins"/>
+            </rich:menuItem>
+            <rich:menuItem submitMode="none" onclick="window.location = '/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all'"
+                           rendered="#{GlobalPermissionsUIBean.inventory}">
+                <h:outputText value="Templates"/>
+            </rich:menuItem>
+        </rich:menuGroup>
+
+        <ui:remove>***** Administration > CONTENT *****</ui:remove>
+        <rich:menuGroup value="Content" rendered="#{GlobalPermissionsUIBean.inventory}">
+            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/content/listContentSources.xhtml'">
+                <h:outputText value="Content Sources"/>
+            </rich:menuItem>
+            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/content/listChannels.xhtml'">
+                <h:outputText value="Channels"/>
+            </rich:menuItem>
+        </rich:menuGroup>
+
+        <ui:remove>***** Administration > HIGH AVAILABILITY *****</ui:remove>
+        <rich:menuGroup value="High Availability" rendered="#{GlobalPermissionsUIBean.inventory}">
+            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/ha/listServers.xhtml'">
+                <h:outputText value="Servers"/>
+            </rich:menuItem>
+            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/ha/listAgents.xhtml'">
+                <h:outputText value="Agents"/>
+            </rich:menuItem>
+            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/ha/listAffinityGroups.xhtml'">
+                <h:outputText value="Affinity Groups"/>
+            </rich:menuItem>
+            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/ha/listPartitionEvents.xhtml'">
+                <h:outputText value="Partition Events"/>
+            </rich:menuItem>
+        </rich:menuGroup>
+
+        <ui:remove>***** Administration > AGENT DISTRIBUTION *****</ui:remove>
+        <rich:menuGroup value="Agent Distribution">
+            <rich:menuItem submitMode="none" onclick="window.location = '/agentupdate/version'">
+                <h:outputText value="Agent Update Binary Version Info"/>
+            </rich:menuItem>
+            <rich:menuItem submitMode="none" onclick="window.location = '/agentupdate/download'">
+                <h:outputText value="Download Agent Update Binary"/>
+            </rich:menuItem>
+            <rich:menuItem submitMode="none" onclick="window.location = '/downloads'">
+                <h:outputText value="Agent Connectors"/>
+            </rich:menuItem>
+        </rich:menuGroup>
+
+        <rich:menuItem submitMode="none"
+                       onclick="window.location = '/admin/license/LicenseAdmin.do?mode=view'"
+                       rendered="#{GlobalPermissionsUIBean.settings}">
+            <h:outputText value="License"/>
+        </rich:menuItem>
     </rich:dropDownMenu>
+
+    <ui:remove>===== HELP =====</ui:remove>
 
     <rich:dropDownMenu>
         <f:facet name="label">
@@ -222,12 +263,14 @@
             </h:panelGroup>
         </f:facet>
 
+        <ui:remove>***** Help > DOCUMENTATION *****</ui:remove>
         <rich:menuItem submitMode="none"
                        onclick="window.location = 'http://www.redhat.com/docs/en-US/JBoss_ON/'"
                        target="blank_">
             <h:outputText value="Online Documentation"/>
         </rich:menuItem>
 
+        <ui:remove>***** Help > SUPPORT CASE *****</ui:remove>
         <rich:menuItem submitMode="none"
                        onclick="window.location = 'https://support.redhat.com/jbossnetwork/restricted/addCase.html'"
                        target="blank_">
@@ -236,13 +279,12 @@
 
         <rich:menuSeparator/>
 
+        <ui:remove>***** Help > ABOUT *****</ui:remove>
         <rich:menuItem submitMode="none" id="aboutLink" icon="/images/icons/availability_grey_16.png">
                 <h:outputText value="#{msg['header.about.link']}"/>
                 <rich:componentControl for="aboutPanel" attachTo="aboutLink" operation="show" event="onclick"/>
         </rich:menuItem>
     </rich:dropDownMenu>
-
-
 </rich:toolBarGroup>
 
 
@@ -256,6 +298,7 @@
         </f:facet>
     </a4j:status>
 
+    <ui:remove>===== LOGGED IN AS =====</ui:remove>
 
     <rich:dropDownMenu>
         <f:facet name="label">
@@ -263,21 +306,24 @@
                 <h:outputText value="Logged in as #{UserPreferencesUIBean.subject.name}"/>
             </h:panelGroup>
         </f:facet>
+        
+        <ui:remove>***** Logged in as > EDIT DETAILS *****</ui:remove>
         <rich:menuItem submitMode="none" onclick="window.location = '/admin/user/UserAdmin.do?mode=edit&amp;u=#{UserPreferencesUIBean.subject.id}'">
             <h:outputText value="Edit Details"/>
         </rich:menuItem>
 
+        <ui:remove>***** Logged in as > CHANGE PASSWORD *****</ui:remove>
         <rich:menuItem submitMode="none" onclick="window.location = '/admin/user/UserAdmin.do?mode=editPass&amp;u=#{UserPreferencesUIBean.subject.id}'">
             <h:outputText value="Change Password"/>
         </rich:menuItem>
 
         <rich:menuSeparator/>
 
+        <ui:remove>***** Logged in as > LOGOUT *****</ui:remove>
         <rich:menuItem submitMode="none" onclick="window.location = '/Logout.do'">
             <h:outputText value="Logout"/>
         </rich:menuItem>
     </rich:dropDownMenu>
-
 
 </rich:toolBarGroup>
 </rich:toolBar>
@@ -298,43 +344,42 @@
     <p>
         <span class="DisplaySubhead"><h:outputText value="#{msg['footer.aboutLink']}"/></span><br/>
         <span class="DisplayLabel"><h:outputText
-                value="#{msg['footer.version']}: #{msg['product.version']}"/></span><br/>
-    <span class="DisplayLabel"><h:outputText
-            value="#{msg['footer.buildNumber']}: #{msg['product.buildNumber']}"/></span>
+              value="#{msg['footer.version']}: #{msg['product.version']}"/></span><br/>
+        <span class="DisplayLabel"><h:outputText
+              value="#{msg['footer.buildNumber']}: #{msg['product.buildNumber']}"/></span>
     </p>
 
     <p>
         <map id="redhat-jboss-logo-map" name="redhat-jboss-logo-map">
           <area href="http://www.redhat.com/" target="_top" alt="Red Hat Homepage" title="Red Hat" shape="rect" coords="0,0,100,42" />
           <area href="http://www.jboss.org/" target="_top" alt="JBoss Homepage" title="JBoss" shape="rect" coords="100,0,200,42" />
-       </map>
+        </map>
 
-         <h:graphicImage value="/images/redhat-jboss-logo.gif" usemap="#redhat-jboss-logo-map" style="border: none;"/>
+        <h:graphicImage value="/images/redhat-jboss-logo.gif" usemap="#redhat-jboss-logo-map" style="border: none;"/>
     </p>
 
     <p>
-        <f:verbatim><h:outputText value="#{msg['footer.copyright']}"/></f:verbatim> <h:outputText
-            value="#{msg['about.Copyright.Content']}"/>
+        <f:verbatim><h:outputText value="#{msg['footer.copyright']}"/></f:verbatim>
+        <h:outputText value="#{msg['about.Copyright.Content']}"/>
     </p>
 
     <p>
-
         <a href="http://jboss.org/jopr">
             <h:graphicImage value="/images/logo_icon.png"/>
             Jopr Project
         </a>
 
-
+        <ui:remove>
         <!--<h:outputText value="#{msg['about.MoreInfo.Label']}"/><br/>-->
         <!--
                 <a href='mailto:<h:outputText value="#{msg['about.MoreInfo.LinkSales']}"/>'><h:outputText value="#{msg['about.MoreInfo.LinkSales']}"/></a><br/>
                 <a href='mailto:<h:outputText value="#{msg['about.MoreInfo.LinkSupport']}"/>'><h:outputText value="#{msg['about.MoreInfo.LinkSupport']}"/></a>
         -->
+        </ui:remove>
     </p>
 
-    <input type="button" value="Ok" onclick="Richfaces.hideModalPanel('aboutPanel');"/>
+    <input type="button" value="OK" onclick="Richfaces.hideModalPanel('aboutPanel');"/>
 </rich:modalPanel>
-
 
 </h:form>
 

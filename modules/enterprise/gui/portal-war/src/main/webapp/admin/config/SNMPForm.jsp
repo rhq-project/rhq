@@ -13,13 +13,6 @@
 <!--  /  -->
 
 <script>
-  function initSNMPForm() {
-	var form = document.forms['SystemConfigForm'];
-    snmpVersionChange(form.snmpVersion);
-  }
-
-  onloads.push( initSNMPForm );
-
   function snmpVersionChange(e) {
     showSnmpDiv(e.value);
   }
@@ -57,6 +50,10 @@
     }
   }
 
+  function initSNMPForm() {
+   var form = document.forms['SystemConfigForm'];
+   snmpVersionChange(form.snmpVersion);
+  }
 </script>
 
 <!--  SNMP CONFIG PROPERTIES CONTENTS -->
@@ -165,4 +162,10 @@
     <td class="BlockBottomLine"><div style="width: 1px; height: 1px;"/></td>
   </tr>
 </table>
+
+<script>
+initSNMPForm();
+</script>
+
+
 <!--  /  -->

@@ -20,6 +20,8 @@ package org.rhq.enterprise.gui.ha;
 
 import javax.faces.model.DataModel;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
@@ -28,6 +30,8 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -49,6 +53,7 @@ public class ViewAgentUIBean extends PagedDataTableUIBean {
 
     public Agent getAgent() {
         if (agent == null) {
+            hasPermission();
             int agentId = FacesContextUtility.getRequiredRequestParameter("agentId", Integer.class);
             agent = agentManager.getAgentByID(agentId);
         }
@@ -76,6 +81,17 @@ public class ViewAgentUIBean extends PagedDataTableUIBean {
             PageList<FailoverListDetails> pageList = cloudManager.getFailoverListDetailsByAgentId(agentId, pc);
 
             return pageList;
+        }
+    }
+
+    /**
+     * Throws a permission exception if the user is not allowed to access this functionality. 
+     */
+    private void hasPermission() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        if (!LookupUtil.getAuthorizationManager().hasGlobalPermission(subject, Permission.MANAGE_INVENTORY)) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have the proper permissions to view or manage agents");
         }
     }
 }

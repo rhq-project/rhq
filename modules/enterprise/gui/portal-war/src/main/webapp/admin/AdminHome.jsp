@@ -6,6 +6,12 @@
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-tiles" prefix="tiles" %>
 <%@ taglib uri="/WEB-INF/tld/hq.tld" prefix="hq" %>
 
+<!-- This page is not used anymore and will be DELETED eventually - use the menu bar instead -->
+<!-- I'm afraid to delete this jsp because I don't know where else its accessed -->
+<!-- but only let the users with MANAGE_SECURITY see it. More fine-grained -->
+<!-- auth controls are placed over the menu bar. -->
+<hq:authorization permission="MANAGE_SECURITY">
+
 <!--  PAGE TITLE -->
 <tiles:insert definition=".page.title.admin.admin">
   <tiles:put name="titleKey" value="admin.admin.AdministrationTitle"/>
@@ -13,10 +19,11 @@
 </tiles:insert>
 <!--  /  -->
 
+<tiles:insert definition=".portlet.confirm"/>
+
 <tiles:insert definition=".header.tab">
   <tiles:put name="tabKey" value="admin.home.AuthAuthZTab"/>
 </tiles:insert>
-<tiles:insert definition=".portlet.confirm"/>
 <!-- AUTH -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr>
@@ -25,18 +32,15 @@
     <td width="20%" class="BlockLabel"><fmt:message key="admin.home.Roles"/></td>
     <td width="30%" class="BlockContent"><html:link page="/admin/role/RoleAdmin.do?mode=list"><fmt:message key="admin.home.ListRoles"/></html:link></td>
   </tr>
-  <hq:authorization permission="MANAGE_SECURITY">
   <tr>
     <td width="20%" class="BlockLabel">&nbsp;</td>
     <td width="30%" class="BlockContent"><html:link page="/admin/user/UserAdmin.do?mode=new"><fmt:message key="admin.home.NewUser"/></html:link></td>
     <td width="20%" class="BlockLabel">&nbsp;</td>
     <td width="30%" class="BlockContent"><html:link page="/admin/role/RoleAdmin.do?mode=new"><fmt:message key="admin.home.NewRole"/></html:link></td>
   </tr>
-  </hq:authorization>
 </table>
 <!--  /  -->
 
-<hq:authorization permission="MANAGE_SETTINGS">
 <!--  some empty space -->
 <br>
 <br>
@@ -77,11 +81,9 @@
    </tr>
 --%>   
 </table>
-</hq:authorization>
 <!--  /  -->
 
 
-<hq:authorization permission="MANAGE_SETTINGS">
 <!--  some empty space -->
 <br>
 <br>
@@ -102,10 +104,8 @@
       <td width="30%" class="BlockContent"><html:link page="/rhq/content/listChannels.xhtml"><fmt:message key="admin.home.Content.ListChannels"/></html:link></td>
    </tr>
 </table>
-</hq:authorization>
 <!--  /  -->
 
-<hq:authorization permission="MANAGE_SETTINGS">
 <!--  some empty space -->
 <br>
 <br>
@@ -134,7 +134,6 @@
       <td width="30%" class="BlockContent"><html:link page="/rhq/ha/listPartitionEvents.xhtml"><fmt:message key="admin.home.Ha.ListPartitionEvents"/></html:link></td>
    </tr>
 </table>
-</hq:authorization>
 <!--  /  -->
 
 <!--  some empty space -->
@@ -162,5 +161,7 @@
    </tr>
 </table>
 <!--  /  -->
+
+</hq:authorization>
 
 <tiles:insert definition=".page.footer"/>

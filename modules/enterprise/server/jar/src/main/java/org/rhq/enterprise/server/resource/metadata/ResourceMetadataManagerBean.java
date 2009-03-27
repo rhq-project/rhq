@@ -48,6 +48,7 @@ import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.agent.metadata.SubCategoriesMetadataParser;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
@@ -61,6 +62,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
@@ -122,7 +124,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         return q.getResultList();
     }
 
-    public void registerPlugin(Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile) throws Exception {
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void registerPlugin(Subject whoami, Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile)
+        throws Exception {
         // TODO GH: Consider how to remove features from plugins in updates without breaking everything
         Plugin existingPlugin = null;
         boolean newOrUpdated = false;
@@ -465,17 +469,18 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     private void linkSubCategoryToParents(ResourceType resourceType) {
 
-        if (resourceType.getSubCategory()==null)
+        if (resourceType.getSubCategory() == null)
             return; // Nothing to do
 
         ResourceSubCategory mySubCategory = resourceType.getSubCategory();
         ResourceSubCategory existingCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
-                resourceType, mySubCategory.getName());
-        if (existingCat!=null)
+            resourceType, mySubCategory.getName());
+        if (existingCat != null)
             resourceType.setSubCategory(existingCat);
         else
-            throw new IllegalStateException("Subcategory " + mySubCategory.getName() + " defined on resource type " +
-            resourceType.getName() + " in plugin " + resourceType.getPlugin() + " is not defined in a parent type");
+            throw new IllegalStateException("Subcategory " + mySubCategory.getName() + " defined on resource type "
+                + resourceType.getName() + " in plugin " + resourceType.getPlugin()
+                + " is not defined in a parent type");
 
     }
 

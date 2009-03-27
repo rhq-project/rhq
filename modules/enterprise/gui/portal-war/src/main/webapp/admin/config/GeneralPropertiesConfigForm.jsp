@@ -21,15 +21,6 @@
     classname="org.rhq.enterprise.gui.legacy.Constants"
     symbol="DAYS_LABEL" var="CONST_DAYS" />
 
-<logic:messagesPresent>
-<table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr>
-    <td class="ErrorField"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
-    <td align="left" class="ErrorField"><html:errors/></td>
-  </tr>
-</table>
-</logic:messagesPresent>
-
 <!--  BASE SERVER CONFIG TITLE -->
 <tiles:insert definition=".header.tab">
   <tiles:put name="tabKey" value="admin.settings.BaseConfigTab"/>

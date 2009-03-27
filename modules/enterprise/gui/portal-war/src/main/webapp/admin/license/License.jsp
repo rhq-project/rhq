@@ -1,6 +1,5 @@
 <%@ page import="org.rhq.enterprise.server.license.License" %>
 <%@ page import="java.util.Date" %>
-</html>
 <%@ page language="java" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-html-el" prefix="html" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-tiles" prefix="tiles" %>

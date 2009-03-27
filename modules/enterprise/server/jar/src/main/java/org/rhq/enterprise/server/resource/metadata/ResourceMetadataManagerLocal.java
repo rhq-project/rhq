@@ -25,6 +25,7 @@ import javax.ejb.Local;
 import javax.persistence.NoResultException;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
 
 /**
@@ -44,7 +45,7 @@ public interface ResourceMetadataManagerLocal {
      * @param metadata The plugin descriptor file
      * @param pluginFile the actual plugin file whose content will be stored in the database (will be ignored if null)
      */
-    void registerPlugin(Plugin plugin, PluginDescriptor metadata, File pluginFile) throws Exception;
+    void registerPlugin(Subject whoami, Plugin plugin, PluginDescriptor metadata, File pluginFile) throws Exception;
 
     /**
      * Returns the list of all plugins deployed in the server.

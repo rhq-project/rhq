@@ -32,9 +32,13 @@ import org.richfaces.event.UploadEvent;
 
 import org.jboss.deployment.scanner.URLDeploymentScannerMBean;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
@@ -53,10 +57,14 @@ public class InstalledPluginsUIBean {
     }
 
     public Collection<Plugin> getInstalledPlugins() {
+        hasPermission();
+
         return resourceMetadataManagerBean.getPlugins();
     }
 
     public void scan() {
+        hasPermission();
+
         try {
             URLDeploymentScannerMBean scanner = LookupUtil.getAgentPluginURLDeploymentScanner();
             scanner.scan();
@@ -69,9 +77,17 @@ public class InstalledPluginsUIBean {
     }
 
     public void fileUploadListener(UploadEvent event) {
+        hasPermission();
+
         try {
             File uploadedPlugin = event.getUploadItem().getFile();
             String newPluginFilename = event.getUploadItem().getFileName();
+
+            // some browsers (IE in particular) passes an absolute filename, we just want the name of the file, no paths
+            if (newPluginFilename != null) {
+                newPluginFilename = new File(newPluginFilename).getName();
+            }
+
             log.info("A new plugin [" + newPluginFilename + "] has been uploaded to [" + uploadedPlugin + "]");
 
             if (uploadedPlugin == null || !uploadedPlugin.exists()) {
@@ -97,5 +113,16 @@ public class InstalledPluginsUIBean {
         }
 
         return;
+    }
+
+    /**
+     * Throws a permission exception if the user is not allowed to access this functionality. 
+     */
+    private void hasPermission() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        if (!LookupUtil.getAuthorizationManager().hasGlobalPermission(subject, Permission.MANAGE_SETTINGS)) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have the proper permissions to view or manage plugins");
+        }
     }
 }

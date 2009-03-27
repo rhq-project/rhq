@@ -33,7 +33,7 @@
         <tr>
 <logic:messagesPresent property="maintIntervalVal">
           <td class="ErrorField">
-            <html:text size="2" property="maintIntervalVal" />
+            <html:text size="3" property="maintIntervalVal" />
           </td>
           <td class="ErrorField" width="100%">
             <html:select property="maintInterval">
@@ -43,7 +43,7 @@
 </logic:messagesPresent>
 <logic:messagesNotPresent property="maintIntervalVal">
           <td class="BlockContent">
-            <html:text size="2" property="maintIntervalVal" />
+            <html:text size="3" property="maintIntervalVal" />
           </td>
           <td class="BlockContent" width="100%">
             <html:select property="maintInterval">
@@ -76,7 +76,7 @@
         <tr>
 <logic:messagesPresent property="rtPurgeVal">
           <td class="ErrorField">
-            <html:text size="2" property="rtPurgeVal" />
+            <html:text size="3" property="rtPurgeVal" />
           </td>
           <td class="ErrorField" width="100%">
             <html:select property="rtPurge">
@@ -86,7 +86,7 @@
 </logic:messagesPresent>
 <logic:messagesNotPresent property="rtPurgeVal">
           <td class="BlockContent">
-            <html:text size="2" property="rtPurgeVal" />
+            <html:text size="3" property="rtPurgeVal" />
           </td>
           <td class="BlockContent" width="100%">
             <html:select property="rtPurge">
@@ -119,7 +119,7 @@
         <tr>
 <logic:messagesPresent property="alertPurgeVal">
           <td class="ErrorField">
-            <html:text size="2" property="alertPurgeVal" />
+            <html:text size="3" property="alertPurgeVal" />
           </td>
           <td class="ErrorField" width="100%">
             <html:select property="alertPurge">
@@ -129,7 +129,7 @@
 </logic:messagesPresent>
 <logic:messagesNotPresent property="alertPurgeVal">
           <td class="BlockContent">
-            <html:text size="2" property="alertPurgeVal" />
+            <html:text size="3" property="alertPurgeVal" />
           </td>
           <td class="BlockContent" width="100%">
             <html:select property="alertPurge">
@@ -162,7 +162,7 @@
         <tr>
 <logic:messagesPresent property="eventPurgeVal">
           <td class="ErrorField">
-            <html:text size="2" property="eventPurgeVal" />
+            <html:text size="3" property="eventPurgeVal" />
           </td>
           <td class="ErrorField" width="100%">
             <html:select property="eventPurge">
@@ -172,7 +172,7 @@
 </logic:messagesPresent>
 <logic:messagesNotPresent property="eventPurgeVal">
           <td class="BlockContent">
-            <html:text size="2" property="eventPurgeVal" />
+            <html:text size="3" property="eventPurgeVal" />
           </td>
           <td class="BlockContent" width="100%">
             <html:select property="eventPurge">
@@ -205,7 +205,7 @@
         <tr>
 <logic:messagesPresent property="traitPurgeVal">
           <td class="ErrorField">
-            <html:text size="2" property="traitPurgeVal" />
+            <html:text size="3" property="traitPurgeVal" />
           </td>
           <td class="ErrorField" width="100%">
             <html:select property="traitPurge">
@@ -215,7 +215,7 @@
 </logic:messagesPresent>
 <logic:messagesNotPresent property="traitPurgeVal">
           <td class="BlockContent">
-            <html:text size="2" property="traitPurgeVal" />
+            <html:text size="3" property="traitPurgeVal" />
           </td>
           <td class="BlockContent" width="100%">
             <html:select property="traitPurge">
@@ -248,7 +248,7 @@
         <tr>
 <logic:messagesPresent property="availPurgeVal">
           <td class="ErrorField">
-            <html:text size="2" property="availPurgeVal" />
+            <html:text size="3" property="availPurgeVal" />
           </td>
           <td class="ErrorField" width="100%">
             <html:select property="availPurge">
@@ -258,7 +258,7 @@
 </logic:messagesPresent>
 <logic:messagesNotPresent property="availPurgeVal">
           <td class="BlockContent">
-            <html:text size="2" property="availPurgeVal" />
+            <html:text size="3" property="availPurgeVal" />
           </td>
           <td class="BlockContent" width="100%">
             <html:select property="availPurge">

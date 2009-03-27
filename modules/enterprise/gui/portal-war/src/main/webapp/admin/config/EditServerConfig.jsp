@@ -20,6 +20,16 @@
 
 <html:form action="/admin/config/EditConfig">
 
+<tiles:insert definition=".portlet.confirm"/>
+<logic:messagesPresent>
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="ErrorBlock"><html:img page="/images/tt_error.gif" width="10" height="11" alt="" border="0"/></td>
+    <td class="ErrorBlock" width="100%"><html:errors/></td>
+  </tr>
+</table>
+</logic:messagesPresent>
+
 <c:if test="${not empty param.debug}">
    <input type="hidden" name="debug" value="${param.debug}" />
 </c:if>
@@ -44,7 +54,9 @@
 <%--<tiles:insert page="/admin/config/MiscForm.jsp"/>--%>
 
 <!-- FORM BUTTONS -->
-<tiles:insert definition=".form.buttons"/>
+<tiles:insert definition=".form.buttons">
+   <tiles:put name="noCancel" value="true" />
+</tiles:insert>
 
 </html:form>
 

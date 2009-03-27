@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.inventory.resource;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -145,6 +146,11 @@ public class CreateNewPackageChildResourceUIBean {
             Configuration deployTimeConfiguration = getConfiguration();
             ConfigurationMaskingUtility.unmaskConfiguration(deployTimeConfiguration, getConfigurationDefinition());
             String packageName = fileItem.getFileName();
+
+            // some browsers (IE in particular) passes an absolute filename, we just want the name of the file, no paths
+            if (packageName != null) {
+                packageName = new File(packageName).getName();
+            }
 
             // For JON 2.0 RC3, no longer request the package version on a package-backed create, simply
             // use the timestamp. The timestamp will also be used when creating new packages of this type, so

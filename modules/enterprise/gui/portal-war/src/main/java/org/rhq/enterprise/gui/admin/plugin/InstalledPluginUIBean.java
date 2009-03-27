@@ -22,9 +22,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -49,8 +51,8 @@ public class InstalledPluginUIBean {
     }
 
     private Plugin lookupPlugin() {
+        hasPermission();
         String pluginName = FacesContextUtility.getRequiredRequestParameter("plugin", String.class);
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
         return resourceMetadataManagerBean.getPlugin(pluginName);
     }
 
@@ -58,5 +60,16 @@ public class InstalledPluginUIBean {
     }
 
     public void undeploy() {
+    }
+
+    /**
+     * Throws a permission exception if the user is not allowed to access this functionality. 
+     */
+    private void hasPermission() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        if (!LookupUtil.getAuthorizationManager().hasGlobalPermission(subject, Permission.MANAGE_SETTINGS)) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have the proper permissions to view or manage plugins");
+        }
     }
 }

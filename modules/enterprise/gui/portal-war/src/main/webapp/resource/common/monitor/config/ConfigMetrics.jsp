@@ -107,30 +107,6 @@
    <c:set var="nocontrol" value=".defaults"/>
 </c:if>
 
-<!-- TAB BAR -->
-<c:choose>
-   <c:when test="${not empty groupId}">
-      <c:set var="tmpTabs" value=".tabs.resource.group.monitor.configVisibility"/>
-      <tiles:insert beanName="tmpTabs">
-         <tiles:put name="groupId" value="${groupId}"/>
-      </tiles:insert>
-   </c:when>
-   <c:when test="${not empty param.type && param.parent >0 }">
-   <%-- autogroup  --%>
-      <c:set var="tmpTabs" value=".tabs.resource.autogroup.monitor.configVisibility"/>
-      <tiles:insert beanName="tmpTabs">
-         <tiles:put name="ctype" value="${param.type}"/>
-         <tiles:put name="type" value="${param.type}"/>
-         <tiles:put name="parent" value="${param.parent}"/>
-      </tiles:insert>
-   </c:when>
-   <c:otherwise>
-      <c:set var="tmpTabs" value=".tabs.resource.${section}.monitor.configVisibility${nocontrol}"/>
-      <tiles:insert beanName="tmpTabs">
-         <tiles:put name="id" beanName="Resource" beanProperty="id"/>
-      </tiles:insert>
-   </c:otherwise>
-</c:choose>
 
 <tiles:insert definition=".portlet.error"/>
 <tiles:insert definition=".portlet.confirm"/>

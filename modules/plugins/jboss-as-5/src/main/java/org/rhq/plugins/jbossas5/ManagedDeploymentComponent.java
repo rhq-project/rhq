@@ -243,20 +243,22 @@ public class ManagedDeploymentComponent
         // You can only update the one application file referenced by this resource, so punch out if multiple are
         // specified.
         if (packages.size() != 1) {
-            log.warn("Request to update an EAR/WAR file contained multiple packages.");
+            log.warn("Request to update an EAR/WAR file contained multiple packages: " + packages);
             DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
-            response.setOverallRequestErrorMessage("When deploying an EAR/WAR, only one EAR/WAR can be updated at a time.");
+            response.setOverallRequestErrorMessage("When updating an EAR/WAR, only one EAR/WAR can be updated at a time.");
             return response;
         }
 
         ResourcePackageDetails packageDetails = packages.iterator().next();
 
+        log.debug("Updating EAR/WAR file '" + this.deploymentFile + "' using [" + packageDetails + "]...");
         // Find location of existing application.
         if (!this.deploymentFile.exists()) {
             return failApplicationDeployment("Could not find application to update at location: " + this.deploymentFile,
                     packageDetails);
         }
 
+        log.debug("Writing new EAR/WAR bits to temporary file...");
         File tempFile;
         try {
             tempFile = writeNewAppBitsToTempFile(this.deploymentFile, contentServices, packageDetails);
@@ -265,15 +267,19 @@ public class ManagedDeploymentComponent
             return failApplicationDeployment("Error writing new application bits to temporary file - cause: " + e,
                     packageDetails);
         }
+        log.debug("Wrote new EAR/WAR bits to temporary file '" + tempFile + "'.");
 
         // Backup the existing app file/dir to <filename>.rej.
         File backupOfOriginalFile = new File(this.deploymentFile.getPath() + BACKUP_FILE_EXTENSION);
+        log.debug("Backing up existing EAR/WAR to '" + backupOfOriginalFile + "'...");
         this.deploymentFile.renameTo(backupOfOriginalFile);
 
         // Write the new bits for the application
+        log.debug("Moving temp file '" + tempFile + "' to '" + this.deploymentFile + "'...");
         moveTempFileToDeployLocation(tempFile, this.deploymentFile);
 
         // The file has been written successfully to the deploy dir. Now try to actually deploy it.
+        log.debug("Moving temp file '" + tempFile + "' to '" + this.deploymentFile + "'...");
         try {
             DeploymentUtils.deployArchive(this.deploymentFile, false);
         }
@@ -291,6 +297,7 @@ public class ManagedDeploymentComponent
                 errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
                         + ThrowableUtil.getAllMessages(e1);
             }
+            log.info("Failed to update EAR/WAR file '" + this.deploymentFile + "' using [" + packageDetails + "]." );
             return failApplicationDeployment(errorMessage, packageDetails);
         }
 
@@ -303,6 +310,9 @@ public class ManagedDeploymentComponent
         DeployIndividualPackageResponse packageResponse =
                 new DeployIndividualPackageResponse(packageDetails.getKey(), ContentResponseResult.SUCCESS);
         response.addPackageResponse(packageResponse);
+
+        log.debug("Updated EAR/WAR file '" + this.deploymentFile + "' successfully - returning response [" + response
+                + "]...");
 
         return response;
     }
@@ -380,11 +390,14 @@ public class ManagedDeploymentComponent
 
     private void persistApplicationVersion(ResourcePackageDetails packageDetails, File appFile) {
         String packageName = appFile.getName();
+        log.debug("Persisting application version '" + packageDetails.getVersion() + "' for package '" + packageName
+                + "'");
         PackageVersions versions = loadApplicationVersions();
         versions.putVersion(packageName, packageDetails.getVersion());
     }
 
     private void deleteBackupOfOriginalFile(File backupOfOriginalFile) {
+        log.debug("Deleting backup of original file '" + backupOfOriginalFile + "'...");
         try {
             FileUtils.purge(backupOfOriginalFile, true);
         }

@@ -62,7 +62,7 @@ import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
  /**
- * ResourceComponent for a JBossAS 5.x Server.
+ * ResourceComponent for a JBossAS, 5.1.0.CR1 or later, Server.
  *
  * @author Jason Dobies
  * @author Mark Spritzler

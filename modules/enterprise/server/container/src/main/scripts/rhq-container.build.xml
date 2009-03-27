@@ -324,6 +324,9 @@
       <zipfileset dir="${settings.localRepository}/org/rhq/rhq-rtfilter/${project.version}">
          <include name="rhq-rtfilter-${project.version}.jar"/>
       </zipfileset>
+      <zipfileset dir="${settings.localRepository}/commons-logging/commons-logging/1.1.1">
+         <include name="commons-logging-1.1.1.jar"/>
+      </zipfileset>    	
    </zip>
   </target>
 

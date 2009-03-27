@@ -35,6 +35,15 @@
          <scope>provided</scope> <!-- by servlet container -->
       </dependency>
 
+      <!--  This is the version supplied with TC5.5 and seems compatible for our needs with TC6  -->
+      <!--  This ensures it's pulled down into the repo for copying later during packaging -->
+      <dependency>
+         <groupId>commons-logging</groupId>
+         <artifactId>commons-logging</artifactId>
+         <version>1.1.1</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
   </dependencies>
 
   <build>

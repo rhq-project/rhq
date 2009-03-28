@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedInputStream;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -119,6 +120,19 @@ public abstract class ZipUtil {
         }
 
         zipContent.close();
+    }
+
+    public static void unzipFile(File tempFile, File destDir) throws IOException
+    {
+        InputStream tempIs = null;
+        try {
+            tempIs = new BufferedInputStream(new FileInputStream(tempFile));
+            destDir.mkdirs();
+            ZipUtil.unzipFile(tempIs, destDir);
+        } finally {
+            if (tempIs != null)
+                tempIs.close();
+        }
     }
 
     // prevent instantiation

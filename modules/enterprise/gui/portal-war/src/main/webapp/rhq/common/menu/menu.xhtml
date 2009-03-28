@@ -97,7 +97,7 @@
         <rich:menuSeparator/>
 
         <ui:remove>***** Resources > FAVORITE RESOURCES *****</ui:remove>
-        <rich:menuGroup value="Favorite Resources" icon="/images/star_on_24.png">
+        <rich:menuGroup value="Favorite Resources" icon="/images/icons/Favorite_16.png">
             <c:forEach var="resource" items="#{UserPreferencesUIBean.resourceFavorites}">
                 <rich:menuItem submitMode="none"
                                icon="/images/icons/#{resource.resourceType.category}_up_16.png"
@@ -108,7 +108,7 @@
         </rich:menuGroup>
 
         <ui:remove>***** Resources > FAVORITE GROUPS *****</ui:remove>
-        <rich:menuGroup value="Favorite Groups" icon="/images/star_on_24.png">
+        <rich:menuGroup value="Favorite Groups" icon="/images/icons/Favorite_16.png">
             <c:forEach var="group" items="#{UserPreferencesUIBean.groupFavorites}">
                 <rich:menuItem submitMode="none"
                                icon="/images/icons/#{group.groupCategory == 'MIXED' ? 'Group' : 'Cluster'}_up_16.png"
@@ -119,7 +119,7 @@
         </rich:menuGroup>
 
         <ui:remove>***** Resources > RECENTLY VIEWED *****</ui:remove>
-        <rich:menuGroup value="Recently Viewed" icon="/images/bookmark.png">
+        <rich:menuGroup value="Recently Viewed" icon="/images/icons/History_16.png">
             <c:forEach var="visit" items="#{UserPreferencesUIBean.recentVisits}">
                 <c:if test="#{visit.kind == 'PLATFORM' or visit.kind == 'SERVER' or visit.kind == 'SERVICE'}">
                 <rich:menuItem submitMode="none"

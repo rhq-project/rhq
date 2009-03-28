@@ -286,7 +286,7 @@
 
   <tr>
     <td class="BlockLabel"><fmt:message key="admin.settings.Reindex"/></td>
-    <td class="BlockLabel">
+    <td class="BlockContent">
       <table cellpadding="0" cellspacing="4" border="0">
         <tr>
           <td align="left"><html:radio property="reindex" value="true"/><fmt:message key="yesno.true"/></td>

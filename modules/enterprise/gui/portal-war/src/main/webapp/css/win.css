@@ -589,6 +589,11 @@ A.GuideLink:hover {
     font-style: italic;
 }
 
+.ErrorModalBody {
+    white-space: pre-wrap;
+    font-family: Courier New, monospace;
+}
+
 .InfoBlock,.ConfirmationBlock,.WarnBlock,.ErrorBlock,.FatalBlock {
     padding: 4px;
     border-width: 1px;
@@ -2248,7 +2253,6 @@ ul.radio-group .unspecified {
     width: 100%;
     height: 100%;
     background-color: #ffffff;
-    overflow: auto;
 }
 
 .content-right {

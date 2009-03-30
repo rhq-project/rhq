@@ -84,7 +84,8 @@
                          <h:outputText value="#{item.status}"/>
                          <rich:componentControl for="resultsModalPanel" attachTo="resultsLink" operation="show" event="onclick"/>
                       </h:outputLink>
-                      <rich:modalPanel id="resultsModalPanel" width="600" height="400">
+                      <rich:modalPanel id="resultsModalPanel" width="600" height="400"
+                                       style="overflow: auto;">
                          <f:facet name="header">
                             <h:panelGroup>
                                <h:outputText value="Results" />
@@ -96,7 +97,9 @@
                                <rich:componentControl for="resultsModalPanel" attachTo="resultsModelPanelHideLink" operation="hide" event="onclick"/>
                             </h:panelGroup>
                          </f:facet>
-                         <PRE><h:outputText value="#{item.errorMessage}" /></PRE>
+                         <div class="ErrorModalBody">
+                         <h:outputText value="#{item.errorMessage}" />
+                         </div>
                       </rich:modalPanel> 
                    </td>
                 </tr>

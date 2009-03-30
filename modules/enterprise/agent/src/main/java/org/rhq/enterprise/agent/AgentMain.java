@@ -124,6 +124,7 @@ import org.rhq.enterprise.agent.promptcmd.SenderPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.SetConfigPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.SetupPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.ShutdownPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.SleepPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.StartPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.UpdatePromptCommand;
 import org.rhq.enterprise.agent.promptcmd.VersionPromptCommand;
@@ -2863,7 +2864,7 @@ public class AgentMain {
             new AvailabilityPromptCommand(), new PiqlPromptCommand(), new IdentifyPromptCommand(),
             new LogPromptCommand(), new TimerPromptCommand(), new PingPromptCommand(), new DownloadPromptCommand(),
             new DumpSpoolPromptCommand(), new SenderPromptCommand(), new FailoverPromptCommand(),
-            new UpdatePromptCommand(), new DebugPromptCommand() };
+            new UpdatePromptCommand(), new DebugPromptCommand(), new SleepPromptCommand() };
 
         // hold the conflicts
         StringBuilder conflicts = new StringBuilder();

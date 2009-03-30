@@ -1121,6 +1121,29 @@ public interface AgentI18NResourceKeys {
         + "the agent cannot send communications out or receive communications in.")
     String SHUTDOWN_DETAILED_HELP = "PromptCommand.shutdown.detailed-help";
 
+    @I18NMessage("sleep")
+    String SLEEP = "PromptCommand.sleep";
+
+    @I18NMessage("sleep <seconds>")
+    String SLEEP_SYNTAX = "PromptCommand.sleep.syntax";
+
+    @I18NMessage("Sleeping...")
+    String SLEEP_SLEEPING = "PromptCommand.sleep.sleeping";
+
+    @I18NMessage("Sleeping error: {0}")
+    String SLEEP_SLEEPING_ERROR = "PromptCommand.sleep.sleeping-error";
+
+    @I18NMessage("Sleeping done.")
+    String SLEEP_SLEEPING_DONE = "PromptCommand.sleep.sleeping-done";
+
+    @I18NMessage("Puts the agent prompt to sleep for a given amount of seconds.")
+    String SLEEP_HELP = "PromptCommand.sleep.help";
+
+    @I18NMessage("Puts the agent prompt to sleep for a given amount of seconds.\\n\\\n"
+        + "This does not put the entire agent to sleep, only the prompt.\\n\\\n"
+        + "This is normally useful when testing the agent.")
+    String SLEEP_DETAILED_HELP = "PromptCommand.sleep.detailed-help";
+
     @I18NMessage("setup")
     String SETUP = "PromptCommand.setup";
 

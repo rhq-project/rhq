@@ -92,7 +92,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                 if (node.getData() instanceof LockedResource) {
                     state.setSelected(e.getOldSelection());
 
-                    FacesContext.getCurrentInstance().addMessage("leftNavTree",
+                    FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree",
                         new FacesMessage(FacesMessage.SEVERITY_WARN, "You have not been granted view access to this resource", null));
                     return;
 
@@ -133,27 +133,28 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                 } else if (node.getData() instanceof AutoGroupComposite) {
                     AutoGroupComposite ag = (AutoGroupComposite) node.getData();
 
-                    if (ag.getMemberCount() != node.getChildren().size()) {
-                        // you don't have access to every autogroup resource
-                        state.setSelected(e.getOldSelection());
-                        FacesContext.getCurrentInstance().addMessage("leftNavTree",
-                                new FacesMessage(FacesMessage.SEVERITY_WARN, "You must have view access to all resources in an autogroup to view it", null));
-                        return;
 
-                    } else {
 
                         if (ag.getSubcategory() != null) {
                             state.setSelected(e.getOldSelection());
                             // this is a subcategory or subsubcategory, no page to display right now
-                            FacesContext.getCurrentInstance().addMessage("leftNavTree",
+                            FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree",
                                     new FacesMessage(FacesMessage.SEVERITY_WARN, "No subcategory pages exist", null));
                             return;
                         } else {
-                            String path = "/rhq/autogroup/monitor/graphs.xhtml?parent=" + ag.getParentResource().getId()
-                                + "&type=" + ag.getResourceType().getId();
-                            response.sendRedirect(path);
+                            if (ag.getMemberCount() != node.getChildren().size()) {
+                                // you don't have access to every autogroup resource
+                                state.setSelected(e.getOldSelection());
+                                FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree",
+                                        new FacesMessage(FacesMessage.SEVERITY_WARN, "You must have view access to all resources in an autogroup to view it", null));
+                                return;
+                            } else {
+                                String path = "/rhq/autogroup/monitor/graphs.xhtml?parent=" + ag.getParentResource().getId()
+                                    + "&type=" + ag.getResourceType().getId();
+                                response.sendRedirect(path);
+                            }
                         }
-                    }
+
                 }
             }
         } catch (IOException e1) {

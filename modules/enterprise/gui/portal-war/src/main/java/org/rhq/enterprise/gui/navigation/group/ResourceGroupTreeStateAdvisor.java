@@ -22,6 +22,8 @@ import java.io.IOException;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
+import javax.faces.context.FacesContext;
+import javax.faces.application.FacesMessage;
 
 import org.richfaces.component.state.TreeStateAdvisor;
 import org.richfaces.component.state.TreeState;
@@ -141,6 +143,9 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
 
                 } else if (node.getData() instanceof AutoGroupComposite) {
                     state.setSelected(e.getOldSelection());
+                    FacesContext.getCurrentInstance().addMessage("leftNavGroupTreeForm:leftNavGroupTree",
+                        new FacesMessage(FacesMessage.SEVERITY_WARN, "No cluster autogroup views available", null));
+
                 } else if (node.getData() instanceof ResourceGroup) {
                     String path = "/rhq/group/inventory/view.xhtml";
                     response.sendRedirect(path + "?groupId=" + ((ResourceGroup)node.getData()).getId());

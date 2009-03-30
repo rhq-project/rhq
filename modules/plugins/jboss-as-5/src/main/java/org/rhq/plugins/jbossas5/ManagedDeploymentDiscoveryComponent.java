@@ -28,6 +28,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -42,6 +43,7 @@ import org.rhq.plugins.jbossas5.util.ConversionUtils;
  * Discovery class for discovering deployable resources like ear/war/jar/sar
  *
  * @author Mark Spritzler
+ * @author Ian Springer
  */
 public class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryComponent<ApplicationServerComponent> {
     private final Log log = LogFactory.getLog(this.getClass());    
@@ -51,7 +53,8 @@ public class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryCom
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
         ResourceType resourceType = resourceDiscoveryContext.getResourceType();
         log.debug("Discovering " + resourceType.getName() + " Resources..." );
-        String deploymentTypeString = ConversionUtils.getDeploymentTypeString(resourceType);
+        KnownDeploymentTypes deploymentType = ConversionUtils.getDeploymentType(resourceType);
+        String deploymentTypeString = deploymentType.getType();
 
         // TODO (ips): Only refresh the ManagementView *once* per runtime discovery scan, rather than every time this
         //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.

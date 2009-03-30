@@ -19,49 +19,69 @@
 package org.rhq.plugins.jbossas5.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.util.ZipUtil;
+import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
+import org.rhq.plugins.jbossas5.ManagedComponentComponent;
 
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
 import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 
 /**
  * @author Ian Springer
  */
 public abstract class DeploymentUtils {
-    private static final String RESOURCE_TYPE_EAR = "Enterprise Application (EAR)";
-    private static final String RESOURCE_TYPE_WAR = "Web Application (WAR)";
+    private static final Log LOG = LogFactory.getLog(DeploymentUtils.class);
 
-    // TODO the return value from this method is counter intuitive,
-    // it returns true when the extension is incorrect
-    public static boolean isCorrectExtension(ResourceType resourceType, String archiveName)
+    public static boolean hasCorrectExtension(File archiveFile, ResourceType resourceType)
     {
         String resourceTypeName = resourceType.getName();
         String expectedExtension;
-        if (resourceTypeName.equals(RESOURCE_TYPE_EAR)) {
+        if (resourceTypeName.equals(ManagedComponentComponent.RESOURCE_TYPE_EAR)) {
             expectedExtension = "ear";
-        } else if (resourceTypeName.equals(RESOURCE_TYPE_WAR)){
+        } else if (resourceTypeName.equals(ManagedComponentComponent.RESOURCE_TYPE_WAR)){
             expectedExtension = "war";
         } else {
             expectedExtension = "jar";
         }
-
+        String archiveName = archiveFile.getName();
         int lastPeriod = archiveName.lastIndexOf(".");
         String extension = archiveName.substring(lastPeriod + 1);
-        return (lastPeriod == -1 || !expectedExtension.equals(extension));
+        // TODO: String compare should be case-insensitive if on Windows.
+        return (lastPeriod != -1 && expectedExtension.equals(extension));
     }
 
-    public static DeploymentStatus deployArchive(File archiveFile, boolean copyArchive) throws Exception
+    public static DeploymentStatus deployArchive(File archiveFile, File deployDirectory, boolean deployExploded)
+            throws Exception
     {
+        if (deployDirectory == null)
+            throw new IllegalArgumentException("Deploy directory is null.");
         DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
-        String deploymentName = archiveFile.getName();
-        URL contentURL = archiveFile.toURI().toURL();
-        final boolean copyContent = true;
+        String archiveFileName = archiveFile.getName();
+        DeploymentProgress progress;
+        if (deployExploded) {
+            LOG.debug("Deploying '" + archiveFileName + "' in exploded form...");
+            File tempDir = new File(deployDirectory, archiveFile.getName() + ".rej");
+            ZipUtil.unzipFile(archiveFile, tempDir);
+            File archiveDir = new File(deployDirectory, archiveFileName);
+            URL contentURL = archiveDir.toURI().toURL();
+            if (!tempDir.renameTo(archiveDir))
+                throw new IOException("Failed to rename '" + tempDir + "' to '" + archiveDir + "'.");
+            progress = deploymentManager.distribute(archiveFileName, contentURL, false);
+        } else {
+            LOG.debug("Deploying '" + archiveFileName + "' in non-exploded form...");
+            URL contentURL = archiveFile.toURI().toURL();
+            File deployLocation = new File(deployDirectory, archiveFileName);
+            boolean copyContent = !deployLocation.equals(archiveFile);
+            progress = deploymentManager.distribute(archiveFileName, contentURL, copyContent);
+        }
 
-        DeploymentProgress progress = deploymentManager.distribute(deploymentName, contentURL, copyArchive);
-        //progress.addProgressListener(this);
         progress.run();
         DeploymentStatus status = progress.getDeploymentStatus();
         DeploymentStatus.StateType state = status.getState();
@@ -71,7 +91,6 @@ public abstract class DeploymentUtils {
         // Get the repository names for the distributed deployment.
         String[] repositoryNames = progress.getDeploymentID().getRepositoryNames();
         progress = deploymentManager.start(repositoryNames);
-        //progress.addProgressListener(this);
         progress.run();
         status = progress.getDeploymentStatus();
         return status;

@@ -34,10 +34,10 @@ package org.rhq.plugins.jbossas5;
  import org.jboss.managed.api.ManagedDeployment;
  import org.jboss.managed.api.ManagedOperation;
  import org.jboss.managed.api.ManagedProperty;
+ import org.jboss.managed.api.RunState;
  import org.jboss.metatype.api.values.CompositeValue;
  import org.jboss.metatype.api.values.MetaValue;
  import org.jboss.metatype.api.values.SimpleValue;
- import org.jboss.metatype.api.types.SimpleMetaType;
 
  import org.rhq.core.domain.configuration.Configuration;
  import org.rhq.core.domain.measurement.AvailabilityType;
@@ -66,6 +66,9 @@ package org.rhq.plugins.jbossas5;
 public class ManagedComponentComponent extends AbstractManagedComponent
         implements ResourceComponent, ConfigurationFacet, DeleteResourceFacet, OperationFacet, MeasurementFacet
 {
+    public static final String RESOURCE_TYPE_EAR = "Enterprise Application (EAR)";
+    public static final String RESOURCE_TYPE_WAR = "Web Application (WAR)";
+
     public static final String COMPONENT_TYPE_PROPERTY = "componentType";
     public static final String COMPONENT_SUBTYPE_PROPERTY = "componentSubtype";
     public static final String COMPONENT_NAME_PROPERTY = "componentName";
@@ -80,13 +83,9 @@ public class ManagedComponentComponent extends AbstractManagedComponent
 
     public AvailabilityType getAvailability()
     {
-        // TODO (ips, 11/10/08): Verify this is the correct way to check availablity.
-        try {
-            return (getManagedComponent() != null) ? AvailabilityType.UP : AvailabilityType.DOWN;
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        RunState runState = getManagedComponent().getRunState();
+        return (runState == RunState.RUNNING) ? AvailabilityType.UP :
+                AvailabilityType.DOWN;
     }
 
     public void start(ResourceContext resourceContext) throws Exception {
@@ -145,11 +144,15 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         for (MeasurementScheduleRequest request : metrics)
         {
             try {
-                SimpleValue simpleValue = getSimpleValue(managedComponent, request);
-                if (simpleValue != null)
-                    addSimpleValueToMeasurementReport(report, request, simpleValue);
-            }
-            catch (Exception e) {
+                if (request.getName().equals("runState")) {
+                    String runState = managedComponent.getRunState().name();
+                    report.addData(new MeasurementDataTrait(request, runState));
+                } else {
+                    SimpleValue simpleValue = getSimpleValue(managedComponent, request);
+                    if (simpleValue != null)
+                        addSimpleValueToMeasurementReport(report, request, simpleValue);
+                }
+            } catch (Exception e) {
                 log.error("Failed to collect metric for " + request, e);
             }
         }

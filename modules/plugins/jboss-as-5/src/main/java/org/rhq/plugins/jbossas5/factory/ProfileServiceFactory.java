@@ -52,7 +52,7 @@ public class ProfileServiceFactory
 
     private static ManagementView currentProfileView;
     
-    private static final ProfileKey defaultKey = new ProfileKey(ProfileKey.DEFAULT);
+    private static final ProfileKey DEFAULT_PROFILE_KEY = new ProfileKey(ProfileKey.DEFAULT);
 
     /**
      * Returns the profile service from the JBoss server through JNDI
@@ -148,7 +148,7 @@ public class ProfileServiceFactory
     	{
     		LOG.debug("Loading profile via Deployment Manager...");
     		long startTime = System.currentTimeMillis();
-    		deploymentManager.loadProfile(defaultKey);
+    		deploymentManager.loadProfile(DEFAULT_PROFILE_KEY);
     	    long elapsedTime = System.currentTimeMillis() - startTime;
     		LOG.debug("Loaded profile via Deployment Manager in " + elapsedTime + " milliseconds.");
     	}

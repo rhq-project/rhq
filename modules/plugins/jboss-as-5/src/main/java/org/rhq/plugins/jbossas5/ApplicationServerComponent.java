@@ -25,16 +25,21 @@ package org.rhq.plugins.jbossas5;
 import java.io.File;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
+import java.net.URL;
+import java.net.MalformedURLException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 import org.jboss.deployers.spi.management.deploy.ProgressEvent;
 import org.jboss.deployers.spi.management.deploy.ProgressListener;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.DeploymentTemplateInfo;
 import org.jboss.managed.api.ManagedProperty;
+import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -80,6 +85,8 @@ public class ApplicationServerComponent
     private static final String MANAGED_PROPERTY_GROUP = "managedPropertyGroup";
 
     private ResourceContext resourceContext;
+    private File deployDirectory;
+
     //private ContentContext contentContext;
     //private OperationContext operationContext;
     //private EventContext eventContext;
@@ -93,6 +100,7 @@ public class ApplicationServerComponent
     public void start(ResourceContext resourceContext)
     {
         this.resourceContext = resourceContext;
+
         //this.eventContext = resourceContext.getEventContext();
         //this.contentContext = resourceContext.getContentContext();
         //this.operationContext = resourceContext.getOperationContext();
@@ -130,6 +138,13 @@ public class ApplicationServerComponent
         else
             createConfigurationBasedResource(createResourceReport, resourceType);
         return createResourceReport;
+    }
+
+    public File getDeployDirectory()
+    {
+        if (this.deployDirectory == null)
+            this.deployDirectory = computeDeployDirectory();
+        return this.deployDirectory;
     }
 
     // ProgressListener  --------------------------------------------
@@ -243,30 +258,29 @@ public class ApplicationServerComponent
         }
     }
 
-    private static Configuration getDefaultPluginConfiguration(ResourceType resourceType) {
-        ConfigurationTemplate pluginConfigDefaultTemplate =
-                resourceType.getPluginConfigurationDefinition().getDefaultTemplate();
-        return (pluginConfigDefaultTemplate != null) ?
-                pluginConfigDefaultTemplate.createConfiguration() : new Configuration();
-    }
-
     private void createContentBasedResource(CreateResourceReport createResourceReport, ResourceType resourceType)
     {
         ResourcePackageDetails details = createResourceReport.getPackageDetails();
         PackageDetailsKey key = details.getKey();
+        // This is the full path to a temporary file which was written by the UI layer.
         String archivePath = key.getName();
 
         try {
-            if (DeploymentUtils.isCorrectExtension(resourceType, archivePath)) {
+            File archiveFile = new File(archivePath);
+
+            if (!DeploymentUtils.hasCorrectExtension(archiveFile, resourceType)) {
                 createResourceReport.setStatus(CreateResourceStatus.FAILURE);
-                createResourceReport.setErrorMessage("Incorrect extension specified on filename [" + archivePath +
-                    "]");
+                createResourceReport.setErrorMessage("Incorrect extension specified on filename [" + archivePath + "]");
                 return;
             }
 
-            File archiveFile = new File(archivePath);
+            abortIfApplicationAlreadyDeployed(resourceType, archiveFile);
 
-            DeploymentStatus status = DeploymentUtils.deployArchive(archiveFile, true);
+            Configuration deployTimeConfig = details.getDeploymentTimeConfiguration();
+            @SuppressWarnings({"ConstantConditions"})
+            boolean deployExploded = deployTimeConfig.getSimple("deployExploded").getBooleanValue();
+
+            DeploymentStatus status = DeploymentUtils.deployArchive(archiveFile, getDeployDirectory(), deployExploded);
 
             if (status.getState() == DeploymentStatus.StateType.COMPLETED) {
                 createResourceReport.setResourceName(archivePath);
@@ -283,6 +297,69 @@ public class ApplicationServerComponent
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
             createResourceReport.setException(t);            
         }
+    }
+
+    private static Configuration getDefaultPluginConfiguration(ResourceType resourceType) {
+        ConfigurationTemplate pluginConfigDefaultTemplate =
+                resourceType.getPluginConfigurationDefinition().getDefaultTemplate();
+        return (pluginConfigDefaultTemplate != null) ?
+                pluginConfigDefaultTemplate.createConfiguration() : new Configuration();
+    }
+    
+    private void abortIfApplicationAlreadyDeployed(ResourceType resourceType, File archiveFile)
+            throws Exception
+    {        
+        String archiveFileName = archiveFile.getName();
+        KnownDeploymentTypes deploymentType = ConversionUtils.getDeploymentType(resourceType);
+        String deploymentTypeString = deploymentType.getType();
+        ProfileServiceFactory.refreshCurrentProfileView();
+        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        Set<ManagedDeployment> managedDeployments = managementView.getDeploymentsForType(deploymentTypeString);
+        for (ManagedDeployment managedDeployment : managedDeployments)
+        {
+            if (managedDeployment.getSimpleName().equals(archiveFileName))
+                throw new IllegalArgumentException("An application named '" + archiveFileName + "' is already deployed.");
+        }
+    }
+
+    private File computeDeployDirectory()
+    {
+        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        Set<ManagedDeployment> warDeployments;
+        try
+        {
+            warDeployments = managementView.getDeploymentsForType(
+                KnownDeploymentTypes.JavaEEWebApplication.getType());
+        }
+        catch (Exception e)
+        {
+            throw new IllegalStateException(e);
+        }
+        ManagedDeployment standaloneWarDeployment = null;
+        for (ManagedDeployment warDeployment : warDeployments)
+        {
+            if (warDeployment.getParent() == null) {
+                standaloneWarDeployment = warDeployment;
+                break;
+            }
+        }
+        if (standaloneWarDeployment == null)
+            // This could happen if no standalone WARs, including the admin console WAR, have been fully deployed yet.
+            return null;
+        log.debug("Standalone WAR deployment: " + standaloneWarDeployment.getName());
+        URL warUrl;
+        try
+        {
+            warUrl = new URL(standaloneWarDeployment.getName());
+        }
+        catch (MalformedURLException e)
+        {
+            throw new IllegalStateException(e);
+        }
+        File warFile = new File(warUrl.getPath());
+        File deployDir = warFile.getParentFile();
+        log.debug(">>>>> Deploy directory: " + deployDir);
+        return deployDir;
     }
 }
 

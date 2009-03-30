@@ -39,12 +39,15 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.io.FileUtils;
 
 import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
 import org.jboss.deployers.spi.management.deploy.ProgressEvent;
 import org.jboss.deployers.spi.management.deploy.ProgressListener;
+import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.managed.api.ManagedProperty;
 
@@ -69,14 +72,13 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
 /**
- * Component class for deployable resources like ear/war/jar/sar.
+ * ResourceComponent for managing ManagedDeployments (EARs, WARs, SARs, etc.).
  *
  * @author Mark Spritzler
  * @author Ian Springer
@@ -84,7 +86,8 @@ import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 public class ManagedDeploymentComponent
         extends AbstractManagedComponent
         implements ResourceComponent, MeasurementFacet, ContentFacet, DeleteResourceFacet, ProgressListener {
-    static final String DEPLOYMENT_NAME_PROPERTY = "deploymentName";
+    public static final String DEPLOYMENT_NAME_PROPERTY = "deploymentName";
+    public static final String DEPLOYMENT_TYPE_NAME_PROPERTY = "deploymentTypeName";
 
     private static final String CUSTOM_PATH_TRAIT = "custom.path";
     private static final String CUSTOM_EXPLODED_TRAIT = "custom.exploded";
@@ -112,11 +115,18 @@ public class ManagedDeploymentComponent
     private String deploymentName;
 
     /**
+     * The type of the ManagedDeloyment.
+     */
+    private KnownDeploymentTypes deploymentType;
+
+    /**
      * The absolute path of the deployment file (e.g.: C:/opt/jboss-5.0.0.GA/server/default/deploy/foo.war).
      */
     private File deploymentFile;
 
     private PackageVersions versions;
+
+
 
     // ----------- ResourceComponent Implementation ------------
 
@@ -125,6 +135,8 @@ public class ManagedDeploymentComponent
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         this.deploymentName = pluginConfig.getSimple(DEPLOYMENT_NAME_PROPERTY).getStringValue();
         this.deploymentFile = getDeploymentFile();
+        String deploymentTypeName = pluginConfig.getSimple(DEPLOYMENT_TYPE_NAME_PROPERTY).getStringValue();
+        this.deploymentType = KnownDeploymentTypes.valueOf(deploymentTypeName);
     }
 
     public AvailabilityType getAvailability() {
@@ -161,13 +173,11 @@ public class ManagedDeploymentComponent
         String deploymentName = pluginConfig.getSimple(DEPLOYMENT_NAME_PROPERTY).getStringValue();
         log.debug("Undeploying deployment [" + deploymentName + "]...");
         DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
-        DeploymentProgress deploymentProgress = deploymentManager.remove(deploymentName);
-        deploymentProgress.run();
-
-        //if (!this.deploymentFile.exists())
-        //    throw new Exception("Cannot find deployment file [" + this.deploymentFile + "] to delete.");
-        //log.debug("Deleting deployment file [" + this.deploymentFile + "]...");
-        //FileUtils.purge(this.deploymentFile, true);
+        DeploymentProgress progress = deploymentManager.remove(deploymentName);
+        progress.run();
+        DeploymentStatus status = progress.getDeploymentStatus();
+        if (status.isFailed())
+            throw new Exception(status.getMessage(), status.getFailure());
     }
 
     private File getDeploymentFile() throws MalformedURLException {
@@ -198,7 +208,6 @@ public class ManagedDeploymentComponent
     }
 
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
-
         Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
 
         // If the parent EAR/WAR resource was found, this file should exist
@@ -261,7 +270,7 @@ public class ManagedDeploymentComponent
         log.debug("Writing new EAR/WAR bits to temporary file...");
         File tempFile;
         try {
-            tempFile = writeNewAppBitsToTempFile(this.deploymentFile, contentServices, packageDetails);
+            tempFile = writeNewAppBitsToTempFile(contentServices, packageDetails);
         }
         catch (Exception e) {
             return failApplicationDeployment("Error writing new application bits to temporary file - cause: " + e,
@@ -269,31 +278,61 @@ public class ManagedDeploymentComponent
         }
         log.debug("Wrote new EAR/WAR bits to temporary file '" + tempFile + "'.");
 
-        // Backup the existing app file/dir to <filename>.rej.
+        boolean deployExploded = this.deploymentFile.isDirectory();
+
+        // Backup the original app file/dir to <filename>.rej.
         File backupOfOriginalFile = new File(this.deploymentFile.getPath() + BACKUP_FILE_EXTENSION);
-        log.debug("Backing up existing EAR/WAR to '" + backupOfOriginalFile + "'...");
-        this.deploymentFile.renameTo(backupOfOriginalFile);
+        log.debug("Backing up existing EAR/WAR '" + this.deploymentFile + "' to '" + backupOfOriginalFile + "'...");
+        try
+        {
+            if (backupOfOriginalFile.exists())
+               FileUtils.forceDelete(backupOfOriginalFile);
+            if (this.deploymentFile.isDirectory())
+               FileUtils.copyDirectory(this.deploymentFile, backupOfOriginalFile, true);
+            else
+               FileUtils.copyFile(this.deploymentFile, backupOfOriginalFile, true);
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException("Failed to backup existing EAR/WAR '" + this.deploymentFile + "' to '"
+                    + backupOfOriginalFile + "'.");
+        }
 
-        // Write the new bits for the application
-        log.debug("Moving temp file '" + tempFile + "' to '" + this.deploymentFile + "'...");
-        moveTempFileToDeployLocation(tempFile, this.deploymentFile);
+        // Now remove/undeploy the original app.
+        DeploymentProgress progress;
+        try
+        {
+            DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
+            progress = deploymentManager.remove(this.deploymentName);
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException("Failed to remove deployment [" + this.deploymentName + "].", e);
+        }
+        progress.run();
+        DeploymentStatus status = progress.getDeploymentStatus();
+        if (status.isFailed())
+            throw new RuntimeException(status.getMessage(), status.getFailure());
 
-        // The file has been written successfully to the deploy dir. Now try to actually deploy it.
-        log.debug("Moving temp file '" + tempFile + "' to '" + this.deploymentFile + "'...");
+        // Deploy away!
+        log.debug("Deploying '" + tempFile + "'...");
+        File deployDir = this.deploymentFile.getParentFile();
         try {
-            DeploymentUtils.deployArchive(this.deploymentFile, false);
+            DeploymentUtils.deployArchive(tempFile, deployDir, deployExploded);
         }
         catch (Exception e) {
             // Deploy failed - rollback to the original app file...
+            log.debug("Redeploy failed - rolling back to original archive...", e);
             String errorMessage = ThrowableUtil.getAllMessages(e);
             try {
-                FileUtils.purge(this.deploymentFile, true);
-                backupOfOriginalFile.renameTo(this.deploymentFile);
+                // Delete the new app, which failed to deploy.
+                FileUtils.forceDelete(this.deploymentFile);
                 // Need to redeploy the original file - this generally should succeed.
-                DeploymentUtils.deployArchive(this.deploymentFile, false);
+                DeploymentUtils.deployArchive(backupOfOriginalFile, deployDir, deployExploded);
                 errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
             }
             catch (Exception e1) {
+                log.debug("Rollback failed!", e1);
                 errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
                         + ThrowableUtil.getAllMessages(e1);
             }
@@ -399,7 +438,7 @@ public class ManagedDeploymentComponent
     private void deleteBackupOfOriginalFile(File backupOfOriginalFile) {
         log.debug("Deleting backup of original file '" + backupOfOriginalFile + "'...");
         try {
-            FileUtils.purge(backupOfOriginalFile, true);
+            FileUtils.forceDelete(backupOfOriginalFile);
         }
         catch (Exception e) {
             // not critical.
@@ -407,36 +446,10 @@ public class ManagedDeploymentComponent
         }
     }
 
-    private void moveTempFileToDeployLocation(File tempFile, File appFile) {
-        InputStream tempIs = null;
-        try {
-            if (appFile.isDirectory()) {
-                tempIs = new BufferedInputStream(new FileInputStream(tempFile));
-                appFile.mkdir();
-                ZipUtil.unzipFile(tempIs, appFile);
-            } else {
-                tempFile.renameTo(appFile);
-            }
-        } catch (IOException e) {
-            log.error("Error writing updated package bits to the existing application location: " + appFile, e);
-            //return failApplicationDeployment("Error writing updated package bits to the existing application location: " +
-            //    appFile, packageDetails);
-        } finally {
-            if (tempIs != null) {
-                try {
-                    tempIs.close();
-                } catch (IOException e) {
-                    log.error("Error closing temporary input stream", e);
-                }
-            }
-        }
-    }
-
-    private File writeNewAppBitsToTempFile(File file, ContentServices contentServices,
-                                           ResourcePackageDetails packageDetails
+    private File writeNewAppBitsToTempFile(ContentServices contentServices, ResourcePackageDetails packageDetails
     ) throws Exception {
         File tempDir = getResourceContext().getTemporaryDirectory();
-        File tempFile = new File(tempDir.getAbsolutePath(), file.getName() + System.currentTimeMillis());
+        File tempFile = new File(tempDir, this.deploymentFile.getName());
 
         // The temp file shouldn't be there, but check and delete it if it is
         if (tempFile.exists()) {

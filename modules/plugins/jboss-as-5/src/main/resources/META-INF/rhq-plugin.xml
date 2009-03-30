@@ -2,6 +2,11 @@
 
 <!DOCTYPE plugin [
 
+<!ENTITY managedObjectMetrics '
+    <metric property="runState" displayType="summary"
+            defaultOn="true" defaultInterval="30000" dataType="trait" category="performance"/>
+'>
+
 <!ENTITY datasourceAndConnectionFactoryOperations '
     <operation name="flush" displayName="Flush"
                description="Flush the connections in the pool"/>
@@ -445,7 +450,7 @@
                        type="boolean"
                        activationPolicy="immediate"
                        displayName="Use Strict Minimum"
-                       required="true"
+                       required="false"
                        default="false">
         <c:description>Whether on not to perform background validation.</c:description>
     </c:simple-property>
@@ -624,7 +629,44 @@
                        default="true">
         <c:description>Whether on not to validate on match - default is false.</c:description>
     </c:simple-property>
-'>        
+'>
+
+<!ENTITY connectionFactoryMetrics '
+    <!-- Traits -->
+    <metric property="poolJndiName" displayType="summary" displayName="Pool Jndi Name" defaultOn="true"
+            defaultInterval="600000" dataType="trait" category="performance"/>
+
+    <!-- Numerics -->
+    <metric property="availableConnectionCount" measurementType="dynamic" displayType="detail"
+            displayName="Available Connection Count" description="Mumber of available connections."
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+    <metric property="connectionCount" measurementType="dynamic" displayType="detail"
+            displayName="Connection Count" defaultOn="true" defaultInterval="60000" dataType="measurement"
+            category="performance"/>
+
+    <metric property="connectionCreatedCount" measurementType="dynamic" displayType="detail"
+            displayName="Connection Created Count" defaultOn="true" defaultInterval="60000"
+            dataType="measurement" category="performance"/>
+
+    <metric property="connectionDestroyedCount" measurementType="dynamic" displayType="detail"
+            displayName="Connection Destroyed Count" defaultOn="true" defaultInterval="60000"
+            dataType="measurement" category="performance"/>
+
+    <metric property="inUseConnectionCount" measurementType="dynamic" displayType="detail"
+            displayName="In Use Connection Count" description="Mumber of connections currently in use."
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+    <metric property="maxConnectionsInUseCount" measurementType="dynamic" displayType="detail"
+            displayName="Max Connections In Use Count" description="Maximum number of maximum connections that have been in use."
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+    <metric property="maxSize" measurementType="dynamic" displayType="detail" displayName="Max Size"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+
+    <metric property="minSize" measurementType="dynamic" displayType="detail" displayName="Min Size"
+            defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+'>
 
 <!-- These are the operations that Topics and Queues both have. -->
 <!ENTITY destinationOperations '
@@ -693,6 +735,7 @@
 '>
 
 ]>
+
 
 <plugin name="JBossAS5" displayName="JBoss Application Server 5.x" package="org.rhq.plugins.jbossas5"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -767,6 +810,7 @@
 
             &datasourceAndConnectionFactoryOperations;
 
+            &managedObjectMetrics;
             &datasourceMetrics;
 
             <resource-configuration>
@@ -830,6 +874,7 @@
 
             &datasourceAndConnectionFactoryOperations;
 
+            &managedObjectMetrics;
             &datasourceMetrics;
 
             <metric displayName="Connection Count" property="connectionCount" displayType="summary"/>
@@ -904,6 +949,7 @@
 
             &datasourceAndConnectionFactoryOperations;
 
+            &managedObjectMetrics;
             &datasourceMetrics;
 
             <metric displayName="Connection Count" property="connectionCount" displayType="summary"/>
@@ -1014,9 +1060,9 @@
                 </c:group>
             </plugin-configuration>
 
-            <!-- Traits -->
-            <metric property="local-transaction" displayType="summary"
-                    displayName="Local Transaction" defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
+            &managedObjectMetrics;
+
+            &connectionFactoryMetrics;
 
             <resource-configuration>
 
@@ -1076,41 +1122,10 @@
             </plugin-configuration>
 
             &datasourceAndConnectionFactoryOperations;
-            
-            <!-- Traits -->
-            <metric property="poolJndiName" displayType="summary" displayName="Pool Jndi Name" defaultOn="true"
-                    defaultInterval="600000" dataType="trait" category="performance"/>
 
-            <!-- Numerics -->
-            <metric property="availableConnectionCount" measurementType="dynamic" displayType="detail"
-                    displayName="Available Connection Count" description="Mumber of available connections."
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+            &managedObjectMetrics;
 
-            <metric property="connectionCount" measurementType="dynamic" displayType="detail"
-                    displayName="Connection Count" defaultOn="true" defaultInterval="60000" dataType="measurement"
-                    category="performance"/>
-
-            <metric property="connectionCreatedCount" measurementType="dynamic" displayType="detail"
-                    displayName="Connection Created Count" defaultOn="true" defaultInterval="60000"
-                    dataType="measurement" category="performance"/>
-
-            <metric property="connectionDestroyedCount" measurementType="dynamic" displayType="detail"
-                    displayName="Connection Destroyed Count" defaultOn="true" defaultInterval="60000"
-                    dataType="measurement" category="performance"/>
-
-            <metric property="inUseConnectionCount" measurementType="dynamic" displayType="detail"
-                    displayName="In Use Connection Count" description="Mumber of connections currently in use."
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-
-            <metric property="maxConnectionsInUseCount" measurementType="dynamic" displayType="detail"
-                    displayName="Max Connections In Use Count" description="Maximum number of maximum connections that have been in use."
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-
-            <metric property="maxSize" measurementType="dynamic" displayType="detail" displayName="Max Size"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
-
-            <metric property="minSize" measurementType="dynamic" displayType="detail" displayName="Min Size"
-                    defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+            &connectionFactoryMetrics;
 
             <resource-configuration>
 
@@ -1163,6 +1178,16 @@
                     </c:simple-property>
 
                 </c:group>
+
+                <c:template name="Local Transaction" description="a connection factory that uses local transactions">
+                    <c:simple-property name="local-transaction" default="true"/>
+                    <c:simple-property name="xa-transaction" default="false"/>
+                </c:template>
+
+                <c:template name="XA Transaction" description="a connection factory that uses XA transactions">
+                    <c:simple-property name="local-transaction" default="false"/>
+                    <c:simple-property name="xa-transaction" default="true"/>
+                </c:template>
             </resource-configuration>
 
         </service>
@@ -1221,6 +1246,8 @@
             <operation name="resetMessageCounter" displayName="Reset Message Counter" description="Reset the message counter"/>
 
             <operation name="resetMessageCounterHistory" displayName="Reset Message Counter History" description="Reset the message counter history"/>
+
+            &managedObjectMetrics;
 
             <!-- Traits -->
             <metric property="name" displayType="detail" displayName="Name"
@@ -1436,6 +1463,8 @@
                 </results>
             </operation>
 
+            &managedObjectMetrics;
+
             <!-- Traits -->
             <metric property="name" displayType="summary" displayName="Name"
                     description="The destination name" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
@@ -1574,6 +1603,12 @@
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="ear" readOnly="true"/>
                     <c:simple-property name="descriptionTemplate" default="Enterprise Application" readOnly="true"/>
+                    <c:simple-property name="deploymentTypeName" default="JavaEEApplication" readOnly="true">
+                        <c:description>
+                            The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
+                            corresponding to this deployment's type.
+                        </c:description>
+                    </c:simple-property>
                 </c:group>
             </plugin-configuration>
 
@@ -1585,7 +1620,15 @@
                     dataType="trait" displayType="summary"
                     description="whether this EAR is deployed exploded (i.e. as a directory)"/>
 
-            <content name="file" displayName="Ear File" category="deployable" isCreationType="true">
+            <content name="file" displayName="EAR File" category="deployable" isCreationType="true">
+                <configuration>
+                    <c:group name="deployment" displayName="Deployment Options">
+                       <!--<c:simple-property name="deployDirectory" type="string" required="true" default="deploy"
+                                          description="Path of the directory where the EAR should be deployed (e.g. 'deploy' or 'farm') - relative to the AS configuration set directory (e.g. /opt/jboss-5.1.0.CR1/server/default)."/>-->
+                       <c:simple-property name="deployExploded" type="boolean" required="true" default="false"
+                                          description="Should the EAR be deployed in exploded form (i.e. as a directory)?"/>
+                    </c:group>
+                </configuration>
             </content>
 
             <resource-configuration>
@@ -1610,6 +1653,12 @@
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="war" readOnly="true"/>
                     <c:simple-property name="descriptionTemplate" default="Web Application" readOnly="true"/>
+                    <c:simple-property name="deploymentTypeName" default="JavaEEWebApplication" readOnly="true">
+                        <c:description>
+                            The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
+                            corresponding to this deployment's type.
+                        </c:description>
+                    </c:simple-property>
                 </c:group>
             </plugin-configuration>
 
@@ -1621,7 +1670,15 @@
                     dataType="trait" displayType="summary"
                     description="whether this WAR is deployed exploded (i.e. as a directory)"/>
 
-            <content name="file" displayName="War File" category="deployable" isCreationType="true">
+            <content name="file" displayName="WAR File" category="deployable" isCreationType="true">
+                <configuration>
+                   <c:group name="deployment" displayName="Deployment Options">
+                      <!--<c:simple-property name="deployDirectory" type="string" required="true" default="deploy"
+                                         description="Path of the directory where the WAR should be deployed (e.g. 'deploy' or 'farm') - relative to the AS configuration set directory (e.g. /opt/jboss-5.1.0.CR1/server/default)."/>-->
+                      <c:simple-property name="deployExploded" type="boolean" required="true" default="false"
+                                         description="Should the WAR be deployed in exploded form (i.e. as a directory)?"/>
+                   </c:group>
+                </configuration>
             </content>
 
             <resource-configuration>
@@ -1630,7 +1687,7 @@
 
         </service>
 
-        <service name="EJB Application (EJB JAR)"
+        <service name="EJB 2.x Application (EJB JAR)"
                  subCategory="Applications"
                  class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
                  discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
@@ -1646,6 +1703,54 @@
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="jar" readOnly="true"/>
                     <c:simple-property name="descriptionTemplate" default="EJB Application" readOnly="true"/>
+                    <c:simple-property name="deploymentTypeName" default="JavaEEEnterpriseBeans2x" readOnly="true">
+                        <c:description>
+                            The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
+                            corresponding to this deployment's type.
+                        </c:description>
+                    </c:simple-property>
+                </c:group>
+            </plugin-configuration>
+
+            <metric property="custom.path" displayName="Path"
+                    dataType="trait" displayType="summary"
+                    description="the absolute path of this EJB JAR file or directory"/>
+
+            <metric property="custom.exploded" displayName="Exploded?"
+                    dataType="trait" displayType="summary"
+                    description="whether this EJB JAR is deployed exploded (i.e. as a directory)"/>
+
+            <content name="file" displayName="Jar File" category="deployable" isCreationType="true">
+            </content>
+
+            <resource-configuration>
+                &deploymentResourceConfigProps;
+            </resource-configuration>
+
+        </service>
+
+        <service name="EJB 3.x Application (EJB JAR)"
+                 subCategory="Applications"
+                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
+                 description="EJB 3.x Applications"
+                 createDeletePolicy="both"
+                 creationDataType="content">
+
+            <plugin-configuration>
+                <c:group name="general" displayName="General">
+                    <c:simple-property name="deploymentName" description="The name of this JAR" readOnly="true"/>
+                    <c:simple-property name="filename" readOnly="true"/>
+                </c:group>
+                <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
+                    <c:simple-property name="extension" default="jar" readOnly="true"/>
+                    <c:simple-property name="descriptionTemplate" default="EJB Application" readOnly="true"/>
+                    <c:simple-property name="deploymentTypeName" default="JavaEEEnterpriseBeans3x" readOnly="true">
+                        <c:description>
+                            The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
+                            corresponding to this deployment's type.
+                        </c:description>
+                    </c:simple-property>
                 </c:group>
             </plugin-configuration>
 
@@ -1682,6 +1787,12 @@
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="sar" readOnly="true"/>
                     <c:simple-property name="descriptionTemplate" default="JBoss Services" readOnly="true"/>
+                    <c:simple-property name="deploymentTypeName" default="JBossServices" readOnly="true">
+                        <c:description>
+                            The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
+                            corresponding to this deployment's type.
+                        </c:description>
+                    </c:simple-property>
                 </c:group>
             </plugin-configuration>
 
@@ -1718,6 +1829,12 @@
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="beans" readOnly="true"/>
                     <c:simple-property name="descriptionTemplate" default="Resource Adaptor" readOnly="true"/>
+                    <c:simple-property name="deploymentTypeName" default="JavaEEResourceAdaptor" readOnly="true">
+                        <c:description>
+                            The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
+                            corresponding to this deployment's type.
+                        </c:description>
+                    </c:simple-property>
                 </c:group>
             </plugin-configuration>
 
@@ -1738,42 +1855,6 @@
 
         </service>
 
-        <service name="Persistence Unit (PAR)"
-                 subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
-                 description="JPA Persistence Units"
-                 createDeletePolicy="both"
-                 creationDataType="content">
-
-            <plugin-configuration>
-                <c:group name="general" displayName="General">
-                    <c:simple-property name="deploymentName" description="The name of this PAR" readOnly="true"/>
-                    <c:simple-property name="filename" readOnly="true"/>
-                </c:group>
-                <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
-                    <c:simple-property name="extension" default="par" readOnly="true"/>
-                    <c:simple-property name="descriptionTemplate" default="Peristence Unit" readOnly="true"/>
-                </c:group>
-            </plugin-configuration>
-
-            <metric property="custom.path" displayName="Path"
-                    dataType="trait" displayType="summary"
-                    description="the absolute path of this PAR file or directory"/>
-
-            <metric property="custom.exploded" displayName="Exploded?"
-                    dataType="trait" displayType="summary"
-                    description="whether this PAR is deployed exploded (i.e. as a directory)"/>
-
-            <content name="file" displayName="Par File" category="deployable" isCreationType="true">
-            </content>
-
-            <resource-configuration>
-                &deploymentResourceConfigProps;
-            </resource-configuration>
-
-        </service>
-
         <service name="Microcontainer Beans (MC Beans)"
                  subCategory="Applications"
                  class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
@@ -1784,12 +1865,18 @@
 
             <plugin-configuration>
                 <c:group name="general" displayName="General">
-                    <c:simple-property name="deploymentName" description="The name of this .beans" readOnly="true"/>
+                    <c:simple-property name="deploymentName" description="The name of this MC Beans Archive" readOnly="true"/>
                     <c:simple-property name="filename" readOnly="true"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="war" readOnly="true"/>
                     <c:simple-property name="descriptionTemplate" default="MC Beans" readOnly="true"/>
+                    <c:simple-property name="deploymentTypeName" default="MCBeans" readOnly="true">
+                        <c:description>
+                            The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
+                            corresponding to this deployment's type.
+                        </c:description>
+                    </c:simple-property>
                 </c:group>
             </plugin-configuration>
 
@@ -1810,301 +1897,6 @@
 
         </service>
 
-
- <!--
-            <service name="Web Application (WAR)"
-                     subCategory="Applications"
-                     class="org.rhq.plugins.jbossas.WarComponent"
-                     discovery="org.rhq.plugins.jbossas.EmbeddedWarDiscoveryComponent"
-                     description="Web Application embedded inside of an Enterprise Application"
-                     createDeletePolicy="neither">
-
-     -->
-<!-- jboss.management.local:J2EEApplication=rhq.ear,J2EEServer=Local,j2eeType=WebModule,name=rhq-portal.war -->
-<!--
-
-                <plugin-configuration>
-                    <c:group name="General">
-                        <c:simple-property name="name" description="The name of this WAR" readOnly="true"/>
-                        <c:simple-property name="filename" readOnly="true"/>
-                        <c:simple-property name="objectName" readOnly="true"
-                                           default=" Generated by discovery component "/>
-                        <c:simple-property name="contextRoot" readOnly="true" required="false"
-                                           description="this WAR's context root - used as a unique path prefix for URLs corresponding to this WAR"/>
-                    </c:group>
-                    <c:group name="ResponseTime">
-                        <c:simple-property name="responseTimeLogFile" required="false"
-                                           description="the full path to the log file containing response-time stats for this webapp"/>
-                        <c:simple-property name="responseTimeUrlExcludes" required="false"
-                                           description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
-                        <c:simple-property name="responseTimeUrlTransforms" required="false"
-                                           description="a space-delimited list of Perl-style substitution expressions that should be applied to all URLs for which response-time stats are collected (e.g. |^/dept/finance/.*|/dept/finance/*|)"/>
-                    </c:group>
-                    <c:group name="Advanced" hiddenByDefault="true">
-                        <c:simple-property name="nameTemplate" default="{name}"/>
-                        <c:simple-property name="extension" default="war" readOnly="true"/>
-                        <c:simple-property name="descriptionTemplate" default="Embedded Web Application" readOnly="true"/>
-                    </c:group>
-                </plugin-configuration>
-
-                <operation name="start"
-                           description="starts this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)"/>
-                <operation name="stop"
-                           description="stops this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)"/>
-                <operation name="reload"
-                           description="reloads this webapp; NOTE: if the webapp is not in the started state, this operation will fail"/>
-
-                <metric property="ContextRoot" displayName="Context Root"
-                        dataType="trait" displayType="summary"
-                        description="this WAR's context root - used as a unique path prefix for URLs corresponding to this WAR"/>
-
-                <metric property="ResponseTime" displayName="HTTP Response Time"
-                        dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
-                        description="the minimum, maximum, and average response times for HTTP requests serviced by this webapp"/>
-
-                <metric property="Servlet.MinResponseTime" displayName="Min. Servlet Resp. Time"
-                        units="milliseconds"
-                        description="Minimum response time of a servlet"/>
-
-                <metric property="Servlet.AvgResponseTime" displayName="Avg. Servlet Resp. Time"
-                        units="milliseconds"
-                        description="Average response time of a servlet"/>
-
-                <metric property="Servlet.MaxResponseTime" displayName="Max. Servlet Resp. Time"
-                        units="milliseconds"
-                        description="Maximum response time of a servlet"/>
-
-                <metric property="Servlet.TotalTime" displayName="Total processing time"
-                        units="milliseconds"
-                        description="Total processing time of the webapp" measurementType="trendsup"/>
-
-                <metric property="Servlet.NumRequests" displayName="Requests served"
-                        units="none" description="Number of requests served by servlets"
-                        measurementType="trendsup" displayType="summary"/>
-
-                <metric property="Servlet.NumErrors" displayName="Errors while processing"
-                        units="none" description="Number of errors while processing"
-                        measurementType="trendsup" displayType="summary"/>
-
-                <metric property="Session.activeSessions" displayName="Currently Active Sessions"
-                        units="none" description="Number active sessions for the webapp right now" />
-
-                <metric property="Session.maxActive" displayName="Maximum number of Active Sessions"
-                        units="none" description="Maximum number of active sessions for the webapp" />
-
-                <metric property="Session.sessionCounter" displayName="Sessions created"
-                        units="none" description="Number of sessions created for the webapp"
-                        measurementType="trendsup" />
-
-                <metric property="Session.expiredSessions" displayName="Expired Sessions"
-                        units="none" description="Number of expired sessions for the webapp"
-                        measurementType="trendsup" />
-
-                <metric property="Session.rejectedSessions" displayName="Rejected Sessions"
-                        units="none" description="Number of sessions rejected for the webapp"
-                        measurementType="trendsup" />
-
-                <metric property="Session.sessionAverageAliveTime" displayName="Session Average alive time"
-                        units="seconds" description="Average alive time of a Sessions" />
-
-                <metric property="Session.sessionMaxAliveTime" displayName="Max Session alive time"
-                        units="seconds" description="Maximum alive time of a Sessions" />
-
-            </service>
-
-        </service>
--->
-
-        <!--<service name="Web Application (WAR)"
-                 subCategory="Applications"
-                 class="org.rhq.plugins.jbossas.WarComponent"
-                 discovery="org.rhq.plugins.jbossas.WarDiscoveryComponent"
-                 description="Web Application"
-                 createDeletePolicy="both"
-                 creationDataType="content">
-
-            --><!-- jboss.management.local:j2eeType=WebModule,J2EEServer=Local,J2EEApplication=null,name=jay-web.war  --><!--
-
-            <plugin-configuration>
-                <c:group name="General">
-                    <c:simple-property name="name" description="The name of this WAR" readOnly="true"/>
-                    <c:simple-property name="filename" readOnly="true"/>
-                    <c:simple-property name="objectName" readOnly="true"
-                                       default="jboss.management.local:j2eeType=WebModule,J2EEServer=Local,J2EEApplication=null,name=%name%"/>
-                    <c:simple-property name="contextRoot" readOnly="true" required="false"
-                                       description="this WAR's context root - used as a unique path prefix for URLs corresponding to this WAR"/>
-                </c:group>
-                <c:group name="ResponseTime">
-                    <c:simple-property name="responseTimeLogFile" required="false"
-                                       description="the full path to the log file containing response-time stats for this webapp"/>
-                    <c:simple-property name="responseTimeUrlExcludes" required="false"
-                                       description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
-                    <c:simple-property name="responseTimeUrlTransforms" required="false"
-                                       description="a space-delimited list of Perl-style substitution expressions that should be applied to all URLs for which response-time stats are collected (e.g. |^/dept/finance/.*|/dept/finance/*|)"/>
-                </c:group>
-                <c:group name="Advanced" hiddenByDefault="true">
-                    <c:simple-property name="nameTemplate" default="{name}"/>
-                    <c:simple-property name="extension" default="war" readOnly="true"/>
-                    <c:simple-property name="descriptionTemplate" default="Web Application" readOnly="true"/>
-                </c:group>
-            </plugin-configuration>
-
-            <operation name="start"
-                       description="starts this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)"/>
-            <operation name="stop"
-                       description="stops this webapp; NOTE: this operation is *not* supported for JBossAS versions prior to 4.0.4.GA (see http://jira.jboss.org/jira/browse/JBAS-3006)"/>
-            <operation name="reload"
-                       description="reloads this webapp; NOTE: if the webapp is not in the started state, this operation will fail"/>
-
-            <metric property="ContextRoot" displayName="Context Root"
-                    dataType="trait" displayType="summary"
-                    description="this WAR's context root - used as a unique path prefix for URLs corresponding to this WAR"/>
-
-            <metric property="ResponseTime" displayName="HTTP Response Time"
-                    dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
-                    description="the minimum, maximum, and average response times for HTTP requests serviced by this webapp"/>
-
-            <metric property="Servlet.MinResponseTime" displayName="Min. Servlet Resp. Time"
-                    units="milliseconds"
-                    description="Minimum response time of a servlet"/>
-
-            <metric property="Servlet.AvgResponseTime" displayName="Avg. Servlet Resp. Time"
-                    units="milliseconds"
-                    description="Average response time of a servlet"/>
-
-            <metric property="Servlet.MaxResponseTime" displayName="Max. Servlet Resp. Time"
-                    units="milliseconds"
-                    description="Maximum response time of a servlet"/>
-
-            <metric property="Servlet.TotalTime" displayName="Total processing time"
-                    units="milliseconds"
-                    description="Total processing time of the webapp" measurementType="trendsup"/>
-
-            <metric property="Servlet.NumRequests" displayName="Requests served"
-                    units="none" description="Number of requests served by servlets"
-                    measurementType="trendsup" displayType="summary"/>
-
-            <metric property="Servlet.NumErrors" displayName="Errors while processing"
-                    units="none" description="Number of errors while processing"
-                    measurementType="trendsup" displayType="summary"/>
-
-            <metric property="Session.activeSessions" displayName="Currently Active Sessions"
-                    units="none" description="Number active sessions for the webapp right now" />
-
-            <metric property="Session.maxActive" displayName="Maximum number of Active Sessions"
-                    units="none" description="Maximum number of active sessions for the webapp" />
-
-            <metric property="Session.sessionCounter" displayName="Sessions created"
-                    units="none" description="Number of sessions created for the webapp"
-                    measurementType="trendsup" />
-
-            <metric property="Session.expiredSessions" displayName="Expired Sessions"
-                    units="none" description="Number of expired sessions for the webapp"
-                    measurementType="trendsup" />
-
-            <metric property="Session.rejectedSessions" displayName="Rejected Sessions"
-                    units="none" description="Number of sessions rejected for the webapp"
-                    measurementType="trendsup" />
-
-            <metric property="Session.sessionAverageAliveTime" displayName="Session Average alive time"
-                    units="seconds" description="Average alive time of a Sessions" />
-
-            <metric property="Session.sessionMaxAliveTime" displayName="Max Session alive time"
-                    units="seconds" description="Maximum alive time of a Sessions" />
-
-            <content name="file" displayName="WAR File" category="deployable" isCreationType="true">
-                <configuration>
-                    <c:group name="deployment" displayName="Deployment Options">
-                        <c:simple-property name="deployZipped" displayName="Deploy Zipped" type="boolean" default="false"
-                                           description="Indicates if the WAR is deployed either zipped or exploded."/>
-                    </c:group>
-                </configuration>
-            </content>
-
-        </service>
--->
-        <!--
-        <service name="webApplication" class="JBossWebAppComponent" discovery="JBossWebAppDiscoveryComponent"
-                 description="Web applications deployed in the server.">
-        </service>
-        -->
-        <!-- Not sure now if this nested service is needed with the Profile Service-->
-        <!--service name="log4j" class="ManagedComponentComponent" discovery="ManagedComponentDiscoveryComponent"
-                 subCategory="teaser" description="Log4J Setting of Appenders, Root, and Categories">
-
-            <plugin-configuration>
-                <c:simple-property name="componentType" default="Log4j" readOnly="true"/>
-                <c:simple-property name="componentSubtype" default="Logger" readOnly="true"/>
-                <c:simple-property name="deploymentName" readOnly="true"/>
-                <c:simple-property name="templateName" readOnly="true"/>
-            </plugin-configuration>
-
-            <service name="FileAppender" class="ProfileDatasourceComponent">
-                <plugin-configuration>
-                    <c:simple-property name="componentType" default="Log4j" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="Appender" readOnly="true"/>
-                    <c:simple-property name="deploymentName" readOnly="true"/>
-                    <c:simple-property name="templateName" readOnly="true"/>
-                </plugin-configuration>
-                <resource-configuration>
-                    <c:simple-property name="appenderName"/>
-                    <c:simple-property name="appenderClass"/>
-                    <c:simple-property name="errorHandler"/>
-                    <c:map-property name="params" displayName="Parameters">
-                        <c:simple-property name="param-name"/>
-                        <c:simple-property name="param-value"/>
-                    </c:map-property>
-                </resource-configuration>
-            </service>
-            <service name="ConsoleAppender" class="ProfileDatasourceComponent">
-                <plugin-configuration>
-                    <c:simple-property name="componentType" default="Log4j" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="Appender" readOnly="true"/>
-                    <c:simple-property name="deploymentName" readOnly="true"/>
-                    <c:simple-property name="templateName" readOnly="true"/>
-                </plugin-configuration>
-                <resource-configuration>
-                    <c:simple-property name="appenderName"/>
-                    <c:simple-property name="errorHandler"/>
-                    <c:map-property name="params" displayName="Parameters">
-                        <c:simple-property name="param-name"/>
-                        <c:simple-property name="param-value"/>
-                    </c:map-property>
-                </resource-configuration>
-            </service>
-            <service name="Root" class="ProfileDatasourceComponent">
-                <plugin-configuration>
-                    <c:simple-property name="componentType" default="Log4j" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="Root" readOnly="true"/>
-                    <c:simple-property name="deploymentName" readOnly="true"/>
-                    <c:simple-property name="templateName" readOnly="true"/>
-                </plugin-configuration>
-                <resource-configuration>
-                    <c:list-property name="root" displayName="Root Appenders" required="true">
-                        <c:simple-property name="appenderRef" displayName="Appender" required="true" type="string"/>
-                    </c:list-property>
-                </resource-configuration>
-            </service>
-            <service name="Category" class="ProfileDatasourceComponent">
-                <plugin-configuration>
-                    <c:simple-property name="componentType" default="Log4j" readOnly="true"/>
-                    <c:simple-property name="componentSubtype" default="Category" readOnly="true"/>
-                    <c:simple-property name="deploymentName" readOnly="true"/>
-                    <c:simple-property name="templateName" readOnly="true"/>
-                </plugin-configuration>
-                <resource-configuration>
-                    <c:map-property name="category" displayName="Category">
-                        <c:simple-property name="class" displayName="Class" activationPolicy="immediate" required="true"
-                                           type="string">
-                            <c:description>Package for the category of logging</c:description>
-                        </c:simple-property>
-                        <c:list-property name="appenderRefs" displayName="Appender Refs">
-                            <c:simple-property name="value" displayName="Value"/>
-                        </c:list-property>
-                    </c:map-property>
-                </resource-configuration>
-            </service>
-        </service>-->
     </server>
 
 </plugin>

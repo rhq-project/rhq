@@ -96,7 +96,7 @@ public class PluginDescriptorGenerator {
     public static void generatePluginDescriptor(ManagementView managementView, File tempDir) throws Exception {
         PluginDescriptor pluginDescriptor = new PluginDescriptor();
         addComponentsToDescriptor(managementView, pluginDescriptor);
-        //addDeploymentsToDescriptor(managementView, pluginDescriptor);        
+        addDeploymentsToDescriptor(managementView, pluginDescriptor);
         File tempFile = File.createTempFile("rhq-plugin", ".xml", tempDir);
         writeToFile(pluginDescriptor, tempFile);
     }

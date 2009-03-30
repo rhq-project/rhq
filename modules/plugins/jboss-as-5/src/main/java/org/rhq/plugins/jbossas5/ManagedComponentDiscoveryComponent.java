@@ -53,7 +53,7 @@ public class ManagedComponentDiscoveryComponent
             ResourceDiscoveryContext<ApplicationServerComponent> discoveryContext)
     {
         ResourceType resourceType = discoveryContext.getResourceType();
-        log.debug("Discovering " + resourceType.getName() + " Resources..." );
+        log.trace("Discovering " + resourceType.getName() + " Resources..." );
 
         // TODO (ips): Only refresh the ManagementView *once* per runtime discovery scan, rather than every time this
         //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.
@@ -100,7 +100,7 @@ public class ManagedComponentDiscoveryComponent
             discoveredResources.add(resource);
         }
 
-        log.debug("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources." );
+        log.trace("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources." );
         return discoveredResources;
     }
 }

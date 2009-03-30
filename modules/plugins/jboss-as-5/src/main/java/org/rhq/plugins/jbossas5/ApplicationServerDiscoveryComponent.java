@@ -55,7 +55,7 @@ public class ApplicationServerDiscoveryComponent
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
     {
-        log.info("Discovering " + resourceDiscoveryContext.getResourceType().getName() + " Resources..." );
+        log.trace("Discovering " + resourceDiscoveryContext.getResourceType().getName() + " Resources..." );
 
         Set<DiscoveredResourceDetails> servers = new HashSet<DiscoveredResourceDetails>();
         // Not just the one that it finds when in the embedded console
@@ -119,7 +119,7 @@ public class ApplicationServerDiscoveryComponent
         }
         */
         ResourceType resourceType = resourceDiscoveryContext.getResourceType();
-        log.info("Discovered " + servers.size() + " " + resourceType.getName() + " Resources." );
+        log.trace("Discovered " + servers.size() + " " + resourceType.getName() + " Resources." );
 
         boolean debug = Boolean.getBoolean(JBMANCON_DEBUG_SYSPROP);
         if (debug) {

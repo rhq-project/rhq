@@ -2,6 +2,10 @@ var overlay = {
     curTime : null,
     times: new Array(),
 
+    _lastAnchor : null,
+    _lastIndex : -1,
+    _lastTime : null,
+    
     findPosX: function (obj) {
         var curleft = 0;
         if (obj.offsetParent) {
@@ -46,6 +50,8 @@ var overlay = {
         ovl.style.left = left + 'px';
         ovl.style.top = top + 'px';
         ovl.style.height = (bottom - top) + 'px';
+        
+        this._lastAnchor = anchor;
     },
 
     showTimePopup: function (index,time) {
@@ -64,6 +70,9 @@ var overlay = {
         this.curPopup.style.height = '35px';
         this.curPopup.style.visibility ='visible';
         new Effect.Appear(this.curPopup);
+        
+        this._lastIndex = index;
+        this._lastTime = time;
     },
 
     hideTimePopup: function () {
@@ -97,8 +106,23 @@ var overlay = {
             document.body.appendChild(overlay);                
         }
         return overlay;
-    }
+    },
+
+    refresh : function() {
+        var ovl = $('overlay');
+        if (this._lastAnchor && ovl.style.visibility != 'hidden') {
+            this.moveOverlay(this._lastAnchor);    
+        }
+        
+        if (this._lastTime != null && this.curPopup && this.curPopup.visibility != 'hidden') {
+            this.showTimePopup(this._lastIndex, this._lastTime);    
+        }
+    }    
 }
+
+WindowResizeTracker.addListener(function() {
+    overlay.refresh();
+});
 
 /*************************************************************************
   This code is from Dynamic Web Coding at http://www.dyn-web.com/

@@ -35,7 +35,13 @@ id - the id of the Resource being accessed
 
         <script type="text/javascript" src="/js/splitpane.js"/>
 
+        <!-- work around for IE and its broken box model. Without the concrete height value, the nav pane will shrink on hover. -->
+        <!--[if IE]>
+        <div id="contentParent" style="height: 100%">
+        <![endif]-->
+        <!--[if !IE]><!-->
         <div id="contentParent">
+        <!--<![endif]-->
             <div id="leftContent" class="column" style="width: #{UserPreferencesUIBean.leftResourceNavState}%;">
                 <div class="content-left">
                     <ui:insert name="nav"><p>Default Entity Navigation</p></ui:insert>
@@ -66,6 +72,20 @@ id - the id of the Resource being accessed
 
         <script language="JavaScript" type="text/JavaScript">
             <!--
+            
+               WindowResizeTracker.addListener(function() {        
+		           var parent = $('contentParent');
+		           var body = $('PageBody');
+		           var left = $('leftContent');
+		           var right = $('centerContent');
+		           
+		           parent.style.height = body.style.height;
+		           parent.style.width = body.style.width;
+		           left.style.height = body.style.height;
+		           right.style.height = body.style.height;
+		           right.style.width = (body.getDimensions().width - left.getDimensions().width) + "px"; 
+               });
+               
                function handleSplitPaneResize(splitPane, event) {
                    //#{rich:element('leftResourceNavStateField')}.value = navSplitPane.getWidthPercent(navSplitPane.div1);
                    //#{rich:element('leftResourceNavStateField')}.focus();
@@ -76,7 +96,19 @@ id - the id of the Resource being accessed
                    saveSplitPaneState(navSplitPane.getWidthPercent(navSplitPane.div1));
                    //alert("Saved: " + navSplitPane.getWidthPercent(navSplitPane.div1));
                }
-               var navSplitPane = new SplitPane("leftContent", "#{UserPreferencesUIBean.leftResourceNavState}", "centerContent", { onEnd: handleSplitPaneResize, active: true });
+               var navSplitPane = new SplitPane("leftContent", "#{UserPreferencesUIBean.leftResourceNavState}", "centerContent", 
+                   { onEnd: handleSplitPaneResize, 
+                     active: true,
+                     onDrag: function() {
+                        overlay.refresh();
+                     } });
+               
+               //resize the split pane divider on window resize
+               WindowResizeTracker.addListener(function() {
+                    if (navSplitPane.divider) {
+                       navSplitPane.move(0);
+                   };
+               });
            // -->
         </script> 
 

@@ -47,6 +47,7 @@
             padding-top: 3px;
             padding-bottom: 3px;
         }
+        HTML, BODY { overflow: hidden; }
     </style>
 
     <link rel="stylesheet" type="text/css" media="screen" href="/css/tabular.css"/>
@@ -73,11 +74,46 @@ Firefox and other Gecko-based browsers to render the page in "Almost Standards" 
 
     <!-- =================== PAGE HEADER =================== -->
 
+    <script language="javascript" type="text/javascript">
+	    //this has to be defined before the resize trackers inside
+	    //the PageBody element because they depend on the values
+	    //computed inside this tracker function.
+	    WindowResizeTracker.addListener(function() {
+	        var header = $('PageHeader');
+	        var borderHeight = 2; //set in the inline style of div PageHeader
+	        
+	        if (Prototype.Browser.IE) {
+	           header.style.height = WindowResizeTracker.currentSizes.windowHeight + "px";
+	        } else {
+	           header.style.height = (WindowResizeTracker.currentSizes.windowHeight - borderHeight) + "px";
+	        }
+	        header.style.width = WindowResizeTracker.currentSizes.windowWidth + "px";
+	        
+	        var body = $('PageBody');
+	        //27 = menu height (and the top position of PageBody)
+	        body.style.height = (WindowResizeTracker.currentSizes.windowHeight - 27 - borderHeight) + "px";
+	        body.style.width = header.style.width;
+	        
+	        document.body.style.height = WindowResizeTracker.currentSizes.windowHeight + "px"; 
+	    });    
+    </script>
+    <!-- work around for IE and its broken box model. Without the concrete height value, the nav pane will shrink on hover. -->
+    <!--[if IE]>
+    <div id="PageHeader" style="border-bottom: 2px solid #999; position: absolute; top: 0; bottom: 0; left: 0; right: 0; height: 100%">
+    <![endif]-->
+    <!--[if !IE]><!-->
     <div id="PageHeader" style="border-bottom: 2px solid #999; position: absolute; top: 0; bottom: 0; left: 0; right: 0;">
+    <!--<![endif]-->
 
         <ui:include src="/rhq/common/menu/menu.xhtml"/>
 
-        <div style="width: 100%; position: absolute; top: 27px; bottom: 0;">
+        <!-- work around for IE and its broken box model. Without the concrete height value, the nav pane will shrink on hover. -->
+        <!--[if IE]>
+        <div id="PageBody" style="width: 100%; position: absolute; top: 27px; bottom: 0; height: 100%;">
+        <![endif]-->
+        <!--[if !IE]><!-->
+        <div id="PageBody" style="width: 100%; position: absolute; top: 27px; bottom: 0;">
+        <!--<![endif]-->
             <ui:insert name="body-area">Default Page Body</ui:insert>
         </div>
 
@@ -119,7 +155,7 @@ without this, the page will throw a javascript error "{blah} is not defined" or
 </f:view>
 
 <script type="text/javascript">
-    addWindowOnLoadEvent(disableConditionalButtons);
+    addWindowOnLoadEvent(disableConditionalButtons);    
 </script>
 
 </body>

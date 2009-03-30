@@ -655,3 +655,54 @@ function changeComboBox(selectElementId, value){
       }
    }
 }
+
+/**
+ * WindowResizeTracker can be used by scripts that need to keep track
+ * of the current window/page sizes and their changes.
+ * This variable is a "singleton", don't create new instances of it using "new", 
+ * but rather use directly this variable and its properties and methods. 
+ */  
+var WindowResizeTracker = {
+    
+    /** The current window and page sizes */                
+    currentSizes : { pageWidth : 0, pageHeight : 0, windowWidth : 0, windowHeight : 0 },
+    
+    /** How the window/page size changed since last window resize event. */
+    currentDeltas : { pageWidth : 0, pageHeight : 0, windowWidth : 0, windowHeight : 0 },
+
+    /** The function passed to this method will be invoked on every window resize and load event. */
+    addListener : function (method) {
+        if (!WindowResizeTracker.listeners) {
+            WindowResizeTracker.listeners = [];
+        }
+
+        WindowResizeTracker.listeners.push(method);
+   },
+
+    init : function () {
+        WindowResizeTracker.currentSizes = WindowUtilities.getPageSize(); 
+        if (WindowResizeTracker.listeners) {
+            WindowResizeTracker.listeners.each(function (listener) {
+                listener();
+            });
+        }
+        Event.observe(window, "resize", WindowResizeTracker._fire);
+    },
+
+    _fire : function () {
+        var newSizes = WindowUtilities.getPageSize();
+        for (var i in newSizes) {
+            WindowResizeTracker.currentDeltas[i] = newSizes[i] - WindowResizeTracker.currentSizes[i];                
+        }
+        WindowResizeTracker.currentSizes = newSizes;
+
+        if (WindowResizeTracker.listeners) {
+            WindowResizeTracker.listeners.each(function (listener) {
+                listener();
+            });
+        }
+    }
+};
+
+//initalize the resize tracker
+Event.observe(window, "load", WindowResizeTracker.init);

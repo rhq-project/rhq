@@ -187,41 +187,59 @@ SplitPane.prototype = {
         if (this.active) {
             var pointer  = [Event.pointerX(event), Event.pointerY(event)];
             var delta = pointer[0] - this.start_pointer[0];
-            var delta_percent = delta * 100.0 / this.containerWidth;
 
-            // Calculate new div1 width
-            var new_div1_width = this.start_div1_width + delta;
-
-            // Limit width of div1
-            if (new_div1_width < 0.0) {
-                new_div1_width = 0.0;
-                delta = -this.start_div1_width;
-            }
-
-            // Calculate new div2 width (in %)
-            var new_div2_width = this.start_div2_width - delta;
-
-            // Limit width of div2
-            if (new_div2_width < 0.0) {
-                new_div2_width = 0.0;
-                delta = this.start_div2_width;
-                new_div1_width = this.start_div1_width + delta;
-            }
-
-            // resize/position the divs
-            this.div1.style.width = ((new_div1_width) * 100.0 / this.containerWidth) + "%";
-            this.div2.style.left  = ((this.start_div2_left + delta) * 100.0 / this.containerWidth) + "%";
-            this.div2.style.width = ((new_div2_width) * 100.0 / this.containerWidth) + "%";
-
-            // Set absolute position of divider - fix it up to be a % in endDrag().
-            this.divider.style.left = (this.start_divider_x + delta) + "px";
-
+            this._move(delta);
+            
             Event.stop(event);
 
             this.options.onDrag(this, event);
         }
     },
 
+    _move: function(delta) {
+        var delta_percent = delta * 100.0 / this.containerWidth;
+
+        // Calculate new div1 width
+        var new_div1_width = this.start_div1_width + delta;
+
+        // Limit width of div1
+        if (new_div1_width < 0.0) {
+            new_div1_width = 0.0;
+            delta = -this.start_div1_width;
+        }
+
+        // Calculate new div2 width (in %)
+        var new_div2_width = this.start_div2_width - delta;
+
+        // Limit width of div2
+        if (new_div2_width < 0.0) {
+            new_div2_width = 0.0;
+            delta = this.start_div2_width;
+            new_div1_width = this.start_div1_width + delta;
+        }
+
+        // resize/position the divs
+        this.div1.style.width = ((new_div1_width) * 100.0 / this.containerWidth) + "%";
+        this.div2.style.left  = ((this.start_div2_left + delta) * 100.0 / this.containerWidth) + "%";
+        this.div2.style.width = ((new_div2_width) * 100.0 / this.containerWidth) + "%";
+
+        // Set absolute position of divider - fix it up to be a % in endDrag().
+        this.divider.style.left = (this.start_divider_x + delta) + "px";
+    },
+
+    move: function(delta) {
+        this.containerWidth = this.getWidth(this.container);
+        this.start_div1_width = this.getWidth(this.div1);
+        this.start_div2_left = this.getX(this.div2);
+        this.start_div2_width = this.getWidth(this.div2);
+        this.start_divider_x = this.getX(this.divider);
+
+        this._move(delta);
+
+        this.setDividerX();
+        this.setDividerHeight();
+    },
+    
     setDividerX: function() {
         // Place the center of 'divider' half way between div1 and div2
         var div1_right = this.getX(this.div1) + this.getWidth(this.div1);

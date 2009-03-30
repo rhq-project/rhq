@@ -46,6 +46,7 @@ package org.rhq.plugins.jbossas5;
  import org.rhq.core.domain.measurement.MeasurementDataTrait;
  import org.rhq.core.domain.measurement.MeasurementReport;
  import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+ import org.rhq.core.domain.operation.OperationDefinition;
  import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
  import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
  import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -117,7 +118,10 @@ public class ManagedComponentComponent extends AbstractManagedComponent
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception
     {
-        ManagedOperation operation = getManagedOperation(name);
+        OperationDefinition operationDefinition = ConversionUtils.getOperationDefinition(
+                getResourceContext().getResourceType(), name);
+
+        ManagedOperation operation = getManagedOperation(operationDefinition);
         if (operation == null)
             throw new IllegalStateException("ManagedOperation named [" + name + "] not found on ManagedComponent ["
                     + getManagedComponent() + "].");
@@ -232,14 +236,15 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         }
     }
 
-    private ManagedOperation getManagedOperation(String name)
+    private ManagedOperation getManagedOperation(OperationDefinition operationDefinition)
     {
         ManagedComponent managedComponent = getManagedComponent();
         Set<ManagedOperation> operations = managedComponent.getOperations();
         for (ManagedOperation operation : operations)
         {
-            String operationName = operation.getName();
-            if (operationName.equals(name))
+            if (operation.getName().equals(operationDefinition.getName()) &&
+                operation.getParameters().length ==
+                    operationDefinition.getParametersConfigurationDefinition().getPropertyDefinitions().size())
                 return operation;
         }
         return null;

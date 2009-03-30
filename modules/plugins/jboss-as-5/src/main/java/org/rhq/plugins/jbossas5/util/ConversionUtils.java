@@ -474,7 +474,7 @@ public class ConversionUtils
             return false;
     }
 
-    private static OperationDefinition getOperationDefinition(ResourceType resourceType, String operationName) {
+    public static OperationDefinition getOperationDefinition(ResourceType resourceType, String operationName) {
         Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
         OperationDefinition operationDefinition = null;
         for (OperationDefinition definition : operationDefinitions)

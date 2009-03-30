@@ -169,7 +169,7 @@ public abstract class AbstractMessagingComponent extends MBeanResourceComponent<
         }
 
         if ((deploymentFile == null) || !deploymentFile.exists()) {
-            deploymentFile = new File(getResourceContext().getParentResourceComponent().getConfigurationPath(), name
+            deploymentFile = new File(jasco.getConfigurationPath(), name
                 + ".xml");
         }
 

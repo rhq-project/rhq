@@ -60,6 +60,7 @@ import org.rhq.plugins.jbossas5.adapter.api.MeasurementAdapterFactory;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.ManagedComponentComponent;
+import org.rhq.plugins.jbossas5.ManagedDeploymentComponent;
 import org.jetbrains.annotations.NotNull;
 
  /**
@@ -76,24 +77,8 @@ public class ConversionUtils
 {
     private static final Log LOG = LogFactory.getLog(ConversionUtils.class);
 
-    // Key is the RHQ plugin ResourceType name. Make sure if the ResourceType name changes that this map changes too.
-    private static final Map<String, String> KNOWN_DEPLOYMENT_TYPES = new HashMap<String, String>();
-
-    static {
-        KNOWN_DEPLOYMENT_TYPES.put("Enterprise Application (EAR)", KnownDeploymentTypes.JavaEEApplication.getType());
-        KNOWN_DEPLOYMENT_TYPES.put("Client Enterprise Application", KnownDeploymentTypes.JavaEEClientApplication.getType());
-        KNOWN_DEPLOYMENT_TYPES.put("EJB 2.x Application", KnownDeploymentTypes.JavaEEEnterpriseBeans2x.getType());
-        KNOWN_DEPLOYMENT_TYPES.put("EJB Application (EJB-JAR)", KnownDeploymentTypes.JavaEEEnterpriseBeans3x.getType());
-        KNOWN_DEPLOYMENT_TYPES.put("Perisistence XML (PAR)", KnownDeploymentTypes.JavaEEPersistenceUnit.getType());
-        KNOWN_DEPLOYMENT_TYPES.put("Resource Adaptor (RAR)", KnownDeploymentTypes.JavaEEResourceAdaptor.getType());
-        KNOWN_DEPLOYMENT_TYPES.put("Web Application (WAR)", KnownDeploymentTypes.JavaEEWebApplication.getType());
-        KNOWN_DEPLOYMENT_TYPES.put("JBoss Service (SAR)", KnownDeploymentTypes.JBossServices.getType());
-        KNOWN_DEPLOYMENT_TYPES.put("Microcontainter Beans (.beans)", KnownDeploymentTypes.MCBeans.getType());
-        KNOWN_DEPLOYMENT_TYPES.put("OSGI Bundle", KnownDeploymentTypes.OSGIBundle.getType());
-        KNOWN_DEPLOYMENT_TYPES.put("Spring Application", KnownDeploymentTypes.SpringApplication.getType());
-    }
-
     private static final Map<String, ComponentType> COMPONENT_TYPE_CACHE = new HashMap<String, ComponentType>();
+    private static final Map<String, KnownDeploymentTypes> DEPLOYMENT_TYPE_CACHE = new HashMap<String, KnownDeploymentTypes>();
     private static final Map<String, Configuration> DEFAULT_PLUGIN_CONFIG_CACHE = new HashMap<String, Configuration>();
 
     protected static final String PLUGIN = "ProfileService";
@@ -124,6 +109,28 @@ public class ConversionUtils
         return componentType;
     }
 
+    public static KnownDeploymentTypes getDeploymentType(@NotNull ResourceType resourceType) {
+        String resourceTypeName = resourceType.getName();
+        if (DEPLOYMENT_TYPE_CACHE.containsKey(resourceTypeName))
+            return DEPLOYMENT_TYPE_CACHE.get(resourceTypeName);
+
+        Configuration defaultPluginConfig;
+        if (DEFAULT_PLUGIN_CONFIG_CACHE.containsKey(resourceTypeName))
+            defaultPluginConfig = DEFAULT_PLUGIN_CONFIG_CACHE.get(resourceTypeName);
+        else {
+            defaultPluginConfig = getDefaultPluginConfiguration(resourceType);
+            DEFAULT_PLUGIN_CONFIG_CACHE.put(resourceTypeName, defaultPluginConfig);
+        }
+
+        String typeName = defaultPluginConfig.getSimpleValue(ManagedDeploymentComponent.DEPLOYMENT_TYPE_NAME_PROPERTY, null);
+        if (typeName == null || typeName.equals(""))
+            throw new IllegalStateException("Required plugin configuration property '"
+                    + ManagedComponentComponent.COMPONENT_TYPE_PROPERTY + "' is not defined in default template.");
+        KnownDeploymentTypes deploymentType = KnownDeploymentTypes.valueOf(typeName);
+        DEPLOYMENT_TYPE_CACHE.put(resourceTypeName, deploymentType);
+        return deploymentType;
+    }
+
     private static Configuration getDefaultPluginConfiguration(ResourceType resourceType) {
         ConfigurationDefinition definition = resourceType.getPluginConfigurationDefinition();
         if (definition != null) {
@@ -133,16 +140,6 @@ public class ConversionUtils
             }
         }
         return new Configuration(); // there is no default plugin config defined - return an empty one
-    }
-
-    public static String getDeploymentTypeString(ResourceType resourceType)
-    {
-        return getDeploymentTypeString(resourceType.getName());
-    }
-
-    public static String getDeploymentTypeString(String resourceType)
-    {
-        return KNOWN_DEPLOYMENT_TYPES.get(resourceType);
     }
 
     public static Configuration convertManagedObjectToConfiguration(Map<String, ManagedProperty> managedProperties, Map<String, PropertySimple> customProps, ResourceType resourceType)
@@ -278,16 +275,6 @@ public class ConversionUtils
             else
             {
                 MetaType metaType = managedProperty.getMetaType();
-                // TODO: The below block is a temporary workaround for https://jira.jboss.org/jira/browse/JBAS-6664.
-                if (managedProperty.getName().equals("config-property")) {
-                    if (!(metaType instanceof MapCompositeMetaType)) {
-                        MetaType correctMetaType = new MapCompositeMetaType(SimpleMetaType.STRING);
-                        LOG.error("\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"
-                                + "MetaType for 'config-property' is " + metaType + " but should be " + correctMetaType + " - fixing...\n"
-                                + "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-                        metaType = correctMetaType;                        
-                    }
-                }
                 PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaType);
                 LOG.debug("Converting property " + property + " with definition " + propertyDefinition
                         + " to MetaValue of type " + metaType + "...");

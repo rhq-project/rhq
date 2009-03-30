@@ -89,7 +89,8 @@
                                orderControlsVisible="false"
                                fastOrderControlsVisible="false"
                                value="#{ResourceGroupOperationScheduleDetailsUIBean.resourceNameItems}" 
-                               var="resourceNameItem" listHeight="150" listWidth="200">
+                               var="resourceNameItem" listHeight="150" listWidth="200"
+                               converter="IntegerOptionItemConverter">
                <rich:column>
                   <h:outputText value="#{resourceNameItem.displayName}"></h:outputText>
                </rich:column>

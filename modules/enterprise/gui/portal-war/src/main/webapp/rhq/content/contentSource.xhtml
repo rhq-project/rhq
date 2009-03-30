@@ -120,7 +120,8 @@
                         <rich:componentControl for="lastDownloadErrorModalPanel" attachTo="lastDownloadErrorLink" operation="show" event="onclick"/>
                      </h:outputLink>
                      <h:outputText rendered="#{ContentSourceDetailsUIBean.contentSource.loadErrorMessage eq null}" value="None"/>
-                     <rich:modalPanel id="lastDownloadErrorModalPanel" width="350" height="300">
+                     <rich:modalPanel id="lastDownloadErrorModalPanel" width="350" height="300"
+                                      style="overflow: auto;">
                         <f:facet name="header">
                            <h:panelGroup>
                               <h:outputText value="Last Download Error" />
@@ -132,7 +133,9 @@
                               <rich:componentControl for="lastDownloadErrorModalPanel" attachTo="lastDownloadErrorModalPanelHideLink" operation="hide" event="onclick"/>
                            </h:panelGroup>
                         </f:facet>
-                        <PRE><h:outputText value="#{ContentSourceDetailsUIBean.contentSource.loadErrorMessage}" /></PRE>
+                        <div class="ErrorModalBody">
+                        <h:outputText value="#{ContentSourceDetailsUIBean.contentSource.loadErrorMessage}" />
+                        </div>
                      </rich:modalPanel>                     
                   </td>
                </tr>
@@ -383,7 +386,7 @@
                      <rich:componentControl for="resultsModalPanel" attachTo="resultsLink" operation="show" event="onclick"/>
                   </h:outputLink>
                   <h:outputText rendered="#{syncitem.results eq null}" value=""/>
-                  <rich:modalPanel id="resultsModalPanel" width="350" height="300">
+                  <rich:modalPanel id="resultsModalPanel" width="350" height="300" style="overflow: auto;">
                      <f:facet name="header">
                         <h:panelGroup>
                            <h:outputText value="Results" />

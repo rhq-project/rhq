@@ -87,6 +87,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public void setDateFilter(String dateFilter) {
         this.dateFilter = dateFilter;
+        this.dataModel = null;
     }
 
     public String getDateErrors() {
@@ -95,6 +96,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public void setDateErrors(String dateErrors) {
         this.dateErrors = dateErrors;
+        this.dataModel = null;
     }
 
     /*
@@ -109,6 +111,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public void setAlertDefinitionFilter(String alertDefinitionFilter) {
         this.alertDefinitionFilter = alertDefinitionFilter;
+        this.dataModel = null;
     }
 
     public SelectItem[] getAlertDefinitionSelectItems() {
@@ -123,6 +126,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public void setAlertDefinitionSelectItems(SelectItem[] alertDefinitionSelectItems) {
         this.alertDefinitionSelectItems = alertDefinitionSelectItems;
+        this.dataModel = null;
     }
 
     /*
@@ -131,13 +135,13 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
     public String getAlertPriorityFilter() {
         if (alertPriorityFilter == null) {
             alertPriorityFilter = SelectItemUtils.getSelectItemFilter("alertHistoryForm:alertPriorityFilter");
-            alertPriorityFilter = SelectItemUtils.cleanse(alertPriorityFilter);
         }
-        return alertPriorityFilter;
+        return SelectItemUtils.cleanse(alertPriorityFilter);
     }
 
     public void setAlertPriorityFilter(String alertPriorityFilter) {
         this.alertPriorityFilter = alertPriorityFilter;
+        this.dataModel = null;
     }
 
     public SelectItem[] getAlertPrioritySelectItems() {
@@ -150,6 +154,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public void setAlertPrioritySelectItems(SelectItem[] alertPrioritySelectItems) {
         this.alertPrioritySelectItems = alertPrioritySelectItems;
+        this.dataModel = null;
     }
 
     public String deleteSelectedAlerts() {
@@ -167,6 +172,8 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete selected alerts.", e);
         }
 
+        this.dataModel = null;
+
         return "success";
     }
 
@@ -183,6 +190,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
                 + resource.getId() + " ]", e);
             log.error("failed to delete alerts for resource[ " + resource.getId() + " ]", e);
         }
+        this.dataModel = null;
 
         return "success";
     }

@@ -18,42 +18,21 @@
  */
 package org.rhq.plugins.jbossas5.util;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.io.Serializable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.jboss.managed.api.ComponentType;
-import org.jboss.managed.api.ManagedComponent;
-import org.jboss.managed.api.ManagedOperation;
-import org.jboss.managed.api.ManagedParameter;
-import org.jboss.managed.api.ManagedProperty;
-import org.jboss.managed.api.ManagedDeployment;
-import org.jboss.managed.api.ManagedObject;
-import org.jboss.managed.api.annotation.ViewUse;
-import org.jboss.metatype.api.types.CompositeMetaType;
-import org.jboss.metatype.api.types.MetaType;
-import org.jboss.metatype.api.types.CollectionMetaType;
-import org.jboss.metatype.api.types.ArrayMetaType;
-import org.jboss.metatype.api.types.MapCompositeMetaType;
-import org.jboss.metatype.api.types.TableMetaType;
-import org.jboss.metatype.api.types.PropertiesMetaType;
-import org.jboss.metatype.api.values.MetaValue;
-import org.jboss.metatype.api.values.GenericValue;
-import org.jboss.metatype.api.values.CollectionValue;
-import org.jboss.metatype.api.values.ArrayValue;
-
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.constraint.FloatRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
 import org.rhq.core.domain.measurement.DataType;
@@ -65,6 +44,26 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.StringUtils;
+
+import org.jboss.managed.api.ComponentType;
+import org.jboss.managed.api.ManagedComponent;
+import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.managed.api.ManagedObject;
+import org.jboss.managed.api.ManagedOperation;
+import org.jboss.managed.api.ManagedParameter;
+import org.jboss.managed.api.ManagedProperty;
+import org.jboss.managed.api.annotation.ViewUse;
+import org.jboss.metatype.api.types.ArrayMetaType;
+import org.jboss.metatype.api.types.CollectionMetaType;
+import org.jboss.metatype.api.types.CompositeMetaType;
+import org.jboss.metatype.api.types.MapCompositeMetaType;
+import org.jboss.metatype.api.types.MetaType;
+import org.jboss.metatype.api.types.PropertiesMetaType;
+import org.jboss.metatype.api.types.TableMetaType;
+import org.jboss.metatype.api.values.ArrayValue;
+import org.jboss.metatype.api.values.CollectionValue;
+import org.jboss.metatype.api.values.GenericValue;
+import org.jboss.metatype.api.values.MetaValue;
 
 /**
  * Utility class for converting JBAS5 Profile Service {@link ManagedComponent}s and {@link ManagedDeployment}s to RHQ
@@ -123,7 +122,18 @@ public class MetadataConversionUtils {
 
     private static Set<OperationDefinition> convertManagedOperationsToOperationDefinitions(ManagedComponent component) {
         Set<OperationDefinition> opDefs = new TreeSet(new OperationDefinitionComparator());
+        Map<String,ManagedOperation> managedOperations = new HashMap();
         for (ManagedOperation operation : component.getOperations()) {
+            ManagedOperation operationWithSameName = managedOperations.get(operation.getName());
+            if (operationWithSameName == null ||
+                    operationWithSameName.getParameters().length < operation.getParameters().length) {
+                if (operationWithSameName != null)
+                    LOG.info("Found more than one ManagedOperation named '" + operation.getName()
+                            + "' - converting only the one with the most parameters.");
+                managedOperations.put(operation.getName(), operation);
+            }
+        }
+        for (ManagedOperation operation : managedOperations.values()) {
             OperationDefinition opDef = convertOperationToOperationDefinition(operation);
             opDefs.add(opDef);
         }
@@ -214,7 +224,7 @@ public class MetadataConversionUtils {
                                     + " contains an item whose type is another CompositeMetaType: " + itemMetaType);
                         continue;
                     }
-                    LOG.debug("Converting item with type [" + itemMetaType + "@" + System.identityHashCode(itemMetaType)
+                    LOG.trace("Converting item with type [" + itemMetaType + "@" + System.identityHashCode(itemMetaType)
                             + "] and name [" + itemName + "]...");
                     PropertyDefinition itemPropDef = convertMetaTypeToPropertyDefinition(itemMetaType, itemName, null);
                     propDefMap.put(itemPropDef);
@@ -359,7 +369,7 @@ public class MetadataConversionUtils {
             propDef = convertMetaTypeToPropertyDefinitionList(metaType, propName, metaValue);
         } else if (metaType.isComposite() || metaType.isGeneric() || metaType.isTable() ||
                    metaType instanceof PropertiesMetaType) {
-            LOG.debug("Converting map with type [" + metaType + "@" + System.identityHashCode(metaType) + "], name ["
+            LOG.trace("Converting map with type [" + metaType + "@" + System.identityHashCode(metaType) + "], name ["
                     + propName + "], and value [" + metaValue + "]...");
             propDef = convertMetaTypeToPropertyDefinitionMap(metaType, propName, metaValue);
         } else {

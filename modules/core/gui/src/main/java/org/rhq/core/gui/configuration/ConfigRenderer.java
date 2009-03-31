@@ -32,17 +32,17 @@ import javax.faces.component.UIComponent;
 import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
 import javax.faces.component.UIParameter;
-import javax.faces.component.html.HtmlOutputLink;
-import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.component.html.HtmlForm;
+import javax.faces.component.html.HtmlOutputLink;
 import javax.faces.component.html.HtmlPanelGrid;
+import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.render.Renderer;
 
 import org.ajax4jsf.component.html.HtmlAjaxCommandLink;
-import org.ajax4jsf.component.html.HtmlAjaxRegion;
 import org.ajax4jsf.component.html.HtmlAjaxOutputPanel;
+import org.ajax4jsf.component.html.HtmlAjaxRegion;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.richfaces.component.html.HtmlModalPanel;
@@ -81,8 +81,6 @@ public class ConfigRenderer extends Renderer {
     protected static final String REQUIRED_MARKER_TEXT_STYLE_CLASS = "required-marker-text";
     protected static final String GROUP_DESCRIPTION_PANEL_STYLE_CLASS = "group-description-panel";
     protected static final String GROUP_DESCRIPTION_TEXT_PANEL_STYLE_CLASS = "group-description-text-panel";
-
-    private static final String JAVASCRIPT_INCLUDES = "\n<script type='text/javascript' src='/js/rhq.js'></script>\n\n";
 
     private final Log LOG = LogFactory.getLog(ConfigRenderer.class);
     private static final String INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID_SUFFIX = "-initInputsJavaScript";
@@ -158,14 +156,12 @@ public class ConfigRenderer extends Renderer {
             addChildComponents(configurationComponent);
     }
 
-    private boolean isAjaxRefresh(AbstractConfigurationComponent configurationComponent)
-    {
+    private boolean isAjaxRefresh(AbstractConfigurationComponent configurationComponent) {
         String refresh = FacesContextUtility.getOptionalRequestParameter("refresh");
         return refresh != null && refresh.equals(configurationComponent.getId());
     }
 
-    private static boolean propertySetComponentContainsInvalidInputs(
-        ConfigurationSetComponent configurationSetComponent) {
+    private static boolean propertySetComponentContainsInvalidInputs(ConfigurationSetComponent configurationSetComponent) {
         HtmlModalPanel propSetModalPanel = configurationSetComponent.getPropSetModalPanel();
         boolean containsInvalidInputs = false;
         List<PropertySetComponent> propertySetComponents = FacesComponentUtility.getDescendantsOfType(
@@ -210,7 +206,8 @@ public class ConfigRenderer extends Renderer {
             if (configurationComponent.getNullConfigurationMessage() != null) {
                 HtmlPanelGroup messagePanel = FacesComponentUtility.addBlockPanel(configurationComponent,
                     configurationComponent, "WarnBlock");
-                FacesComponentUtility.addVerbatimText(messagePanel, configurationComponent.getNullConfigurationMessage());
+                FacesComponentUtility.addVerbatimText(messagePanel, configurationComponent
+                    .getNullConfigurationMessage());
             }
             return;
         }
@@ -225,16 +222,14 @@ public class ConfigRenderer extends Renderer {
                 addPropSetModalPanel(configurationSetComponent);
             // Otherwise, if the propSet was just submitted and it doesn't contain any validation errors,
             // close the propSet modal.
-            else if (isAjaxRefresh(configurationSetComponent) &&
-                     !propertySetComponentContainsInvalidInputs(configurationSetComponent)) {
+            else if (isAjaxRefresh(configurationSetComponent)
+                && !propertySetComponentContainsInvalidInputs(configurationSetComponent)) {
                 HtmlModalPanel propSetModalPanel = configurationSetComponent.getPropSetModalPanel();
                 String script = "Richfaces.hideModalPanel('"
-                        + propSetModalPanel.getClientId(FacesContext.getCurrentInstance()) + "');";
+                    + propSetModalPanel.getClientId(FacesContext.getCurrentInstance()) + "');";
                 FacesComponentUtility.addJavaScript(configurationSetComponent, null, null, script);
             }
         }
-
-        FacesComponentUtility.addVerbatimText(configurationComponent, JAVASCRIPT_INCLUDES);
 
         if (!configurationComponent.isReadOnly())
             addRequiredNotationsKey(configurationComponent);
@@ -265,8 +260,8 @@ public class ConfigRenderer extends Renderer {
         // Now add a new component to the JSF component tree.
         AbstractPropertyBagUIComponentTreeFactory propertyListUIComponentTreeFactory = new MapInListUIComponentTreeFactory(
             configurationComponent, configurationComponent.getListName(), configurationComponent.getListIndex());
-        HtmlPanelGroup propertiesPanel = FacesComponentUtility.addBlockPanel(configurationComponent, configurationComponent,
-            UNGROUPED_PROPERTIES_STYLE_CLASS);
+        HtmlPanelGroup propertiesPanel = FacesComponentUtility.addBlockPanel(configurationComponent,
+            configurationComponent, UNGROUPED_PROPERTIES_STYLE_CLASS);
         propertiesPanel.getChildren().add(propertyListUIComponentTreeFactory.createUIComponentTree(null));
     }
 
@@ -569,20 +564,20 @@ public class ConfigRenderer extends Renderer {
         return;
     }
 
-    private void forwardParameter(HtmlModalPanel modalPanel, String paramName)
-    {
-        Map<String, String> requestParamMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+    private void forwardParameter(HtmlModalPanel modalPanel, String paramName) {
+        Map<String, String> requestParamMap = FacesContext.getCurrentInstance().getExternalContext()
+            .getRequestParameterMap();
         String paramValue = requestParamMap.get(paramName);
         if (paramValue != null)
-            FacesComponentUtility.addVerbatimText(modalPanel,
-                    "<input type='hidden' name='" + paramName + "' value='" + paramValue + "'/>");
+            FacesComponentUtility.addVerbatimText(modalPanel, "<input type='hidden' name='" + paramName + "' value='"
+                + paramValue + "'/>");
     }
 
-    private void addPropSetButtons(ConfigurationSetComponent configurationSetComponent, HtmlModalPanel modalPanel)
-    {
+    private void addPropSetButtons(ConfigurationSetComponent configurationSetComponent, HtmlModalPanel modalPanel) {
         String modalPanelClientId = modalPanel.getClientId(FacesContext.getCurrentInstance());
 
-        HtmlPanelGrid panelGrid = FacesComponentUtility.addPanelGrid(modalPanel, null, 2, CssStyleClasses.BUTTONS_TABLE);
+        HtmlPanelGrid panelGrid = FacesComponentUtility
+            .addPanelGrid(modalPanel, null, 2, CssStyleClasses.BUTTONS_TABLE);
 
         // OK button
         HtmlAjaxCommandLink okLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);

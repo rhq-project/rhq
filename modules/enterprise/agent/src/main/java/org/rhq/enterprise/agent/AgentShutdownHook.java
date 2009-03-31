@@ -141,23 +141,32 @@ public class AgentShutdownHook extends Thread {
      */
     public List<Thread> interruptAllThreads() {
         List<Thread> nonDaemonThreads = new ArrayList<Thread>();
-        int threadCount = Thread.activeCount();
-        Thread[] threads = new Thread[threadCount + 50]; // give a little more in case more threads were added quickly
-        Thread.enumerate(threads);
-        for (Thread thread : threads) {
-            // do not interrupt or count:
-            // - threads with 0 stack elements (these are system threads that won't hold up the VM exit)
-            // - our current thread
-            // interrupt but do not count:
-            // - daemon threads
-            // - the agent input thread
-            if (thread != null && thread.getStackTrace().length > 0
-                && !thread.getName().equals(Thread.currentThread().getName())) {
-                if (!thread.getName().equals(AgentMain.PROMPT_INPUT_THREAD_NAME) && !thread.isDaemon()) {
-                    nonDaemonThreads.add(thread);
+        try {
+            String currentThreadName = Thread.currentThread().getName();
+            int threadCount = Thread.activeCount();
+            Thread[] threads = new Thread[threadCount + 50]; // give a little more in case more threads were added quickly
+            Thread.enumerate(threads);
+            for (Thread thread : threads) {
+                // do not interrupt or count:
+                // - threads with 0 stack elements (these are system threads that won't hold up the VM exit)
+                // - our current thread
+                // interrupt but do not count:
+                // - daemon threads
+                // - the agent input thread
+                if (thread != null) {
+                    StackTraceElement[] threadStackTrace = thread.getStackTrace();
+                    String threadName = thread.getName();
+                    if (threadStackTrace != null && threadStackTrace.length > 0
+                        && !currentThreadName.equals(threadName)) {
+                        if (!AgentMain.PROMPT_INPUT_THREAD_NAME.equals(threadName) && !thread.isDaemon()) {
+                            nonDaemonThreads.add(thread);
+                        }
+                        thread.interrupt();
+                    }
                 }
-                thread.interrupt();
             }
+        } catch (Exception e) {
+            showMessage(AgentI18NResourceKeys.SHUTDOWNHOOK_THREAD_CANNOT_INT, ThrowableUtil.getAllMessages(e));
         }
         return nonDaemonThreads;
     }

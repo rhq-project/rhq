@@ -48,7 +48,10 @@ public interface AgentI18NResourceKeys {
     String SHUTDOWNHOOK_THREAD_IS_STILL_ACTIVE = "AgentShutdownHook.thread-is-still-active";
 
     @I18NMessage("The agent failed waiting for threads to die: {0}")
-    String SHUTDOWNHOOK_THREAD_CANNOT_WAIT = "AgentUpdateThread.cannot-wait";
+    String SHUTDOWNHOOK_THREAD_CANNOT_WAIT = "AgentShutdownHook.cannot-wait";
+
+    @I18NMessage("The agent failed to interrupt threads: {0}")
+    String SHUTDOWNHOOK_THREAD_CANNOT_INT = "AgentShutdownHook.cannot-int";
 
     @I18NMessage("[{0}] threads are not dying - agent will not wait anymore")
     String SHUTDOWNHOOK_THREAD_NO_MORE_WAIT = "AgentShutdownHook.no-more-wait";

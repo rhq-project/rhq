@@ -24,9 +24,11 @@ package org.rhq.plugins.jmx;
 
 import java.util.HashSet;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -40,8 +42,8 @@ public class InternalJMXServerDiscoveryComponent implements ResourceDiscoveryCom
         Set<DiscoveredResourceDetails> found = new HashSet<DiscoveredResourceDetails>();
 
         DiscoveredResourceDetails localVM = new DiscoveredResourceDetails(context.getResourceType(), "InternalVM",
-            context.getResourceType().getName(), System.getProperty("java.version"), "VM of plugin container", null,
-            null);
+            context.getResourceType().getName(), System.getProperty("java.version"), context.getResourceType()
+                .getDescription(), null, null);
         Configuration configuration = localVM.getPluginConfiguration();
         configuration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,
             "Local Connection"));

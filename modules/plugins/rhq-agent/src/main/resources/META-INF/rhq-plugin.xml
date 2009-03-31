@@ -601,7 +601,7 @@
       </resource-configuration>
 
       <server name="RHQ Agent JVM"
-              description="The JVM that the RHQ Agent is running on"
+              description="JVM of the RHQ Agent"
               sourcePlugin="JMX"
               sourceType="JMX Server"
               discovery="org.rhq.plugins.jmx.InternalJMXServerDiscoveryComponent"

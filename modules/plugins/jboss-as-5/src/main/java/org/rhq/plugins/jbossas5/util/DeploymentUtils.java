@@ -83,16 +83,22 @@ public abstract class DeploymentUtils {
         }
 
         progress.run();
-        DeploymentStatus status = progress.getDeploymentStatus();
-        DeploymentStatus.StateType state = status.getState();
-        if (state == DeploymentStatus.StateType.FAILED || state == DeploymentStatus.StateType.CANCELLED)
-            return status;
+        run(progress);
 
         // Get the repository names for the distributed deployment.
         String[] repositoryNames = progress.getDeploymentID().getRepositoryNames();
         progress = deploymentManager.start(repositoryNames);
+        return run(progress);
+    }
+
+    public static DeploymentStatus run(DeploymentProgress progress)
+            throws Exception
+    {
         progress.run();
-        status = progress.getDeploymentStatus();
+        DeploymentStatus status = progress.getDeploymentStatus();
+        if (status.isFailed())
+            //noinspection ThrowableResultOfMethodCallIgnored
+            throw new Exception(status.getMessage(), status.getFailure());
         return status;
     }
 }

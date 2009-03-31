@@ -181,25 +181,15 @@ public class ManagedDeploymentComponent
             progress = deploymentManager.stop(this.deploymentName);
         } else if (name.equals("restart")) {
             progress = deploymentManager.stop(this.deploymentName);
-            run(progress);
+            DeploymentUtils.run(progress);
             progress = deploymentManager.start(this.deploymentName);
         } else {
             throw new UnsupportedOperationException(name);
         }
-        DeploymentStatus status = run(progress);
+        DeploymentStatus status = DeploymentUtils.run(progress);
         log.debug("Operation '" + name + "' on " + getResourceDescription() + " completed with status [" + status
                 + "].");
         return new OperationResult();
-    }
-
-    private DeploymentStatus run(DeploymentProgress progress)
-            throws Exception
-    {
-        progress.run();
-        DeploymentStatus status = progress.getDeploymentStatus();
-        if (status.isFailed())
-            throw new Exception(status.getMessage(), status.getFailure());
-        return status;
     }
 
     // ------------ DeleteResourceFacet implementation -------------
@@ -210,7 +200,7 @@ public class ManagedDeploymentComponent
         log.debug("Undeploying deployment [" + deploymentName + "]...");
         DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
         DeploymentProgress progress = deploymentManager.remove(deploymentName);
-        run(progress);
+        DeploymentUtils.run(progress);
     }
 
     private File getDeploymentFile() throws MalformedURLException {
@@ -484,16 +474,12 @@ public class ManagedDeploymentComponent
         File tempDir = getResourceContext().getTemporaryDirectory();
         File tempFile = new File(tempDir, this.deploymentFile.getName());
 
-        // The temp file shouldn't be there, but check and delete it if it is
-        if (tempFile.exists()) {
-            log.warn("Existing temporary file found and will be deleted at: " + tempFile);
-            tempFile.delete();
-        }
         OutputStream tempOutputStream = null;
         try {
             tempOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
-            contentServices.downloadPackageBits(getResourceContext().getContentContext(), packageDetails.getKey(),
+            long bytesWritten = contentServices.downloadPackageBits(getResourceContext().getContentContext(), packageDetails.getKey(),
                     tempOutputStream, true);
+            log.debug("Wrote " + bytesWritten + " bytes to '" + tempFile + "'.");
         } catch (IOException e) {
             log.error("Error writing updated application bits to temporary location: " + tempFile, e);
             throw e;

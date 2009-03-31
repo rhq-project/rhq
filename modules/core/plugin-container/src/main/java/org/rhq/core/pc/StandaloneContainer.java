@@ -47,6 +47,7 @@ import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationServices;
 import org.rhq.core.pluginapi.operation.OperationServicesResult;
+import org.rhq.core.system.SystemInfoFactory;
 
 /**
  * Starter class to start a standalone PC to help
@@ -62,24 +63,23 @@ public class StandaloneContainer {
     InventoryManager inventoryManager;
     Integer opId = 0;
     List<String> history = new ArrayList<String>(10);
-    private static final String HISTORY_HELP = "!! : repeat the last action\n" +
-            "!? : show the history of commands issued\n" +
-            "!h : show this help\n" +
-            "!nn : repeat history item with number nn\n" +
-            "!w fileName : write history to file with name fileName\n" +
-            "!dnn : delete history item with number nn" ;
+    private static final String HISTORY_HELP = "!! : repeat the last action\n" + //
+        "!? : show the history of commands issued\n" + //
+        "!h : show this help\n" + //
+        "!nn : repeat history item with number nn\n" + //
+        "!w fileName : write history to file with name fileName\n" + //
+        "!dnn : delete history item with number nn";
 
     public static void main(String[] argv) {
         StandaloneContainer sc = new StandaloneContainer();
         BufferedReader br = null;
 
-        if (argv.length==0)
-             br = new BufferedReader(new InputStreamReader(System.in));
+        if (argv.length == 0)
+            br = new BufferedReader(new InputStreamReader(System.in));
         else {
             try {
                 br = new BufferedReader(new InputStreamReader(new FileInputStream(argv[0])));
-            }
-            catch (FileNotFoundException fnfe) {
+            } catch (FileNotFoundException fnfe) {
                 System.err.println("File " + argv[0] + " not found");
                 System.exit(1);
             }
@@ -105,7 +105,7 @@ public class StandaloneContainer {
         System.out.println("Loading plugins");
         pc.initialize();
         for (String plugin : pc.getPluginManager().getMetadataManager().getPluginNames()) {
-             System.out.println("...Loaded plugin: " + plugin);
+            System.out.println("...Loaded plugin: " + plugin);
         }
 
         inventoryManager = pc.getInventoryManager();
@@ -118,9 +118,9 @@ public class StandaloneContainer {
         try {
             while (!shouldQuit) {
 
-                System.out.print("[" + history.size() +"]:" + resourceId + " > ");
+                System.out.print("[" + history.size() + "]:" + resourceId + " > ");
                 String answer = br.readLine();
-                if (answer==null) {
+                if (answer == null) {
                     break;
                 }
 
@@ -130,7 +130,7 @@ public class StandaloneContainer {
                 // If we have a 'real' command, dispatch it
                 if (!answer.startsWith("!")) {
                     String[] tokens = answer.split(" ");
-                    if (tokens.length>0) {
+                    if (tokens.length > 0) {
                         shouldQuit = dispatchCommand(tokens);
                     }
                 }
@@ -138,8 +138,7 @@ public class StandaloneContainer {
 
             // unload
             pc.shutdown();
-        }
-        catch (Throwable throwable) {
+        } catch (Throwable throwable) {
             System.err.println("Exception happened: " + throwable + "\n");
         }
 
@@ -171,13 +170,13 @@ public class StandaloneContainer {
 
         // History commands
         if (answer.startsWith("!?")) {
-            for (int i = 0; i < history.size() ; i++)
+            for (int i = 0; i < history.size(); i++)
                 System.out.println("[" + i + "]: " + history.get(i));
         } else if (answer.startsWith("!h")) {
             System.out.println(HISTORY_HELP);
             return "!";
         } else if (answer.startsWith("!!")) {
-            String text = history.get(history.size()-1);
+            String text = history.get(history.size() - 1);
             System.out.println(text);
             history.add(text);
             return text;
@@ -186,16 +185,14 @@ public class StandaloneContainer {
             Integer i;
             try {
                 i = Integer.valueOf(id);
-            }
-            catch (NumberFormatException nfe) {
+            } catch (NumberFormatException nfe) {
                 System.err.println(id + " is no valid history position");
                 return "!";
             }
             if (i > history.size()) {
                 System.err.println(i + " is no valid history position");
                 return "!";
-            }
-            else {
+            } else {
                 String text = history.get(i);
                 System.out.println(text);
                 history.add(text);
@@ -203,7 +200,7 @@ public class StandaloneContainer {
             }
         } else if (answer.startsWith("!w")) {
             String[] tokens = answer.split(" ");
-            if (tokens.length<2) {
+            if (tokens.length < 2) {
                 System.err.println("Not enough parameters. You need to give a file name");
             }
             File file = new File(tokens[1]);
@@ -217,12 +214,10 @@ public class StandaloneContainer {
                     }
                     writer.flush();
                     writer.close();
-                }
-                else {
+                } else {
                     System.err.println("Can not write to file " + file);
                 }
-            }
-            catch (IOException ioe) {
+            } catch (IOException ioe) {
                 System.err.println("Saving the history to file " + file + " failed: " + ioe.getMessage());
             }
             return "!";
@@ -231,8 +226,7 @@ public class StandaloneContainer {
             Integer i;
             try {
                 i = Integer.valueOf(id);
-            }
-            catch (NumberFormatException nfe) {
+            } catch (NumberFormatException nfe) {
                 System.err.println(id + " is no valid history position");
                 return "!";
             }
@@ -257,61 +251,64 @@ public class StandaloneContainer {
      */
     private boolean dispatchCommand(String[] tokens) throws Exception {
 
-        if (tokens.length==0)
+        if (tokens.length == 0)
             return false;
 
         if (tokens[0].startsWith("#"))
             return false;
 
         Command com = Command.get(tokens[0]);
-        if (com==null) {
+        if (com == null) {
             System.err.println("Command " + tokens[0] + " is unknown");
             return false;
         }
         int minArgs = com.getMinArgs();
-        if (tokens.length < minArgs +1) {
+        if (tokens.length < minArgs + 1) {
             System.err.println("Command " + com + " needs " + minArgs + " parameter(s): " + com.getArgs());
             return false;
         }
 
         switch (com) {
-            case AVAIL:
-                avail();
-                break;
-            case ASCAN:
-                AvailabilityReport aReport = pc.getDiscoveryAgentService().executeAvailabilityScanImmediately(false);
+        case NATIVE:
+            doNative(tokens);
+            break;
+        case AVAIL:
+            avail();
+            break;
+        case ASCAN:
+            AvailabilityReport aReport = pc.getDiscoveryAgentService().executeAvailabilityScanImmediately(false);
 
-                System.out.println(aReport);
-                break;
-            case DISCOVER:
-                discover(tokens);
-                break;
-//            case EVENT:
-//                event(tokens);
-//                break;
-            case HELP:
-                for (Command comm: EnumSet.allOf(Command.class)) {
-                    System.out.println(comm + " ( " + comm.getAbbrev() + " ), " + comm.getArgs() + " : " + comm.getHelp());
-                }
-                break;
-            case MEASURE:
-                measure(tokens);
-                break;
-            case INVOKE:
-                invokeOps(tokens);
-                break;
-            case RESOURCES:
-                resources();
-                break;
-            case SET:
-                set(tokens);
-                break;
-            case QUIT:
-                System.out.println("Terminating ..");
-                return true;
-            case WAIT:
-                Thread.sleep(Integer.valueOf(tokens[1]));
-                break;
+            System.out.println(aReport);
+            break;
+        case DISCOVER:
+            discover(tokens);
+            break;
+        //            case EVENT:
+        //                event(tokens);
+        //                break;
+        case HELP:
+            for (Command comm : EnumSet.allOf(Command.class)) {
+                System.out.println(comm + " ( " + comm.getAbbrev() + " ), " + comm.getArgs() + " : " + comm.getHelp());
+            }
+            break;
+        case MEASURE:
+            measure(tokens);
+            break;
+        case INVOKE:
+            invokeOps(tokens);
+            break;
+        case RESOURCES:
+            resources();
+            break;
+        case SET:
+            set(tokens);
+            break;
+        case QUIT:
+            System.out.println("Terminating ..");
+            return true;
+        case WAIT:
+            Thread.sleep(Integer.valueOf(tokens[1]));
+            break;
 
         }
 
@@ -324,7 +321,7 @@ public class StandaloneContainer {
      * @throws Exception if anything goes wrong
      */
     private void invokeOps(String[] tokens) throws Exception {
-        if (resourceId==0)
+        if (resourceId == 0)
             return;
 
         OperationManager opMan = pc.getOperationManager();
@@ -333,10 +330,32 @@ public class StandaloneContainer {
         opId++;
 
         // TODO fix config -- use some property editor to pass in the remaining fields
-        OperationServicesResult res = operationServices.invokeOperation(operationContext, tokens[1],null, 2000);
+        OperationServicesResult res = operationServices.invokeOperation(operationContext, tokens[1], null, 2000);
         Configuration result = res.getComplexResults();
         System.out.println(result.getProperties());
 
+    }
+
+    /**
+     * Enables or disables the native layer.
+     * @param tokens tokenized command line tokens[0] is the command itself
+     */
+    private void doNative(String[] tokens) {
+        String what = tokens[1];
+        if (what.startsWith("e")) {
+            SystemInfoFactory.enableNativeSystemInfo();
+            System.out.println("Native layer enabled.");
+        } else if (what.startsWith("d")) {
+            SystemInfoFactory.disableNativeSystemInfo();
+            System.out.println("Native layer disabled.");
+        } else if (what.startsWith("s")) {
+            System.out.println(SystemInfoFactory.isNativeSystemInfoAvailable() ? "Available" : "Not Available");
+            System.out.println(SystemInfoFactory.isNativeSystemInfoDisabled() ? "Disabled" : "Enabled");
+            System.out.println(SystemInfoFactory.isNativeSystemInfoInitialized() ? "Initialized" : "Not initialized");
+        } else {
+            System.err.println("Unknown option. Only 'e', 'd' and 's' are applicable (enable/disable/status)");
+            return;
+        }
 
     }
 
@@ -357,7 +376,7 @@ public class StandaloneContainer {
      */
     private void resources() {
         Set<Resource> resources = getResources();
-        for (Resource res: resources)
+        for (Resource res : resources)
             System.out.println(res);
     }
 
@@ -367,7 +386,7 @@ public class StandaloneContainer {
      */
     private void avail() {
         Set<Resource> resources = getResources();
-        for (Resource res: resources) {
+        for (Resource res : resources) {
             System.out.println(inventoryManager.getAvailability(res));
         }
     }
@@ -396,16 +415,13 @@ public class StandaloneContainer {
 
         if (comm.startsWith("plu")) {
             //pluginName = arg;
-        }
-        else if (comm.startsWith("r")) {
+        } else if (comm.startsWith("r")) {
             try {
                 resourceId = Integer.valueOf(arg);
-            }
-            catch (NumberFormatException nfe) {
+            } catch (NumberFormatException nfe) {
                 System.err.println("Sorry, but [" + arg + "] is no valid number");
             }
-        }
-        else
+        } else
             System.err.println("Bad command " + tokens[1]);
 
     }
@@ -439,17 +455,17 @@ public class StandaloneContainer {
         }
 
         DataType dataType = getDataType(tokens[1]);
-        if (dataType==null) {
+        if (dataType == null) {
             System.err.println("Unknown DataType " + tokens[1]);
             System.err.println("Valid ones are measurement, trait, calltime, complex");
         }
 
-        String[] metricNames = new String[tokens.length-2];
-        System.arraycopy(tokens,2,metricNames,0,tokens.length-2);
+        String[] metricNames = new String[tokens.length - 2];
+        System.arraycopy(tokens, 2, metricNames, 0, tokens.length - 2);
 
         MeasurementManager mm = pc.getMeasurementManager();
-        Set<MeasurementData> dataset = mm.getRealTimeMeasurementValue(resourceId,dataType, metricNames);
-        if (dataset==null) {
+        Set<MeasurementData> dataset = mm.getRealTimeMeasurementValue(resourceId, dataType, metricNames);
+        if (dataset == null) {
             System.err.println("No data returned");
             return;
         }
@@ -477,19 +493,18 @@ public class StandaloneContainer {
      * List of possible commands
      */
     private enum Command {
-
-        AVAIL("a","", 0,"Shows an availability report"),
-        ASCAN("as","", 0, "Triggers an availability scan"),
-        DISCOVER("disc", " s | i", 1, "Triggers a discovery scan"),
-  //      EVENT("e", "", 0,  "Pull events"), // TODO needs to be defined
-        HELP("h", "", 0, "Shows this help"),
-        MEASURE("m", "datatype property+", 2, "Triggers getting metric values. All need to be of the same data type"),
-        INVOKE("i", "operation [params]",1, "Triggers running an operation"),
-        RESOURCES("res", "", 0, "Shows the discovere resources"),
-        SET("set","resourceId n", 2,"Sets the resource id to work with"),
-        QUIT("quit", "", 0, "Terminates the application"),
+        NATIVE("n", "e | d | s", 1, "Enables/disables native system or shows native status"), //
+        AVAIL("a", "", 0, "Shows an availability report"), //
+        ASCAN("as", "", 0, "Triggers an availability scan"), //
+        DISCOVER("disc", " s | i", 1, "Triggers a discovery scan"), //
+        //      EVENT("e", "", 0,  "Pull events"), // TODO needs to be defined
+        HELP("h", "", 0, "Shows this help"), //
+        MEASURE("m", "datatype property+", 2, "Triggers getting metric values. All need to be of the same data type"), //
+        INVOKE("i", "operation [params]", 1, "Triggers running an operation"), // 
+        RESOURCES("res", "", 0, "Shows the discovere resources"), //
+        SET("set", "resourceId n", 2, "Sets the resource id to work with"), //
+        QUIT("quit", "", 0, "Terminates the application"), //
         WAIT("w", "milliseconds", 1, "Waits the given amount of time");
-
 
         private String abbrev;
         private String args;
@@ -509,8 +524,8 @@ public class StandaloneContainer {
         }
 
         private Command(String abbrev, String args, int minArgs, String help) {
-            this.abbrev= abbrev;
-            this.args =  args;
+            this.abbrev = abbrev;
+            this.args = args;
             this.minArgs = minArgs;
             this.help = help;
         }

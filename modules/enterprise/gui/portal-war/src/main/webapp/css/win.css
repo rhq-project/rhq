@@ -2255,6 +2255,7 @@ ul.radio-group .unspecified {
     width: 100%;
     height: 100%;
     background-color: #ffffff;
+    overflow: auto;
 }
 
 .content-right {

@@ -68,8 +68,6 @@ Firefox and other Gecko-based browsers to render the page in "Almost Standards" 
 <f:view contentType="text/html">
 
 
-
-
     <f:loadBundle basename="ApplicationResources" var="msg"/>
 
     <!-- =================== PAGE HEADER =================== -->
@@ -83,18 +81,18 @@ Firefox and other Gecko-based browsers to render the page in "Almost Standards" 
 	        var borderHeight = 2; //set in the inline style of div PageHeader
 	        
 	        if (Prototype.Browser.IE) {
-	           header.style.height = WindowResizeTracker.currentSizes.windowHeight + "px";
+	           header.style.height = WindowResizeTracker.currentSizes.windowHeight + 'px';
 	        } else {
-	           header.style.height = (WindowResizeTracker.currentSizes.windowHeight - borderHeight) + "px";
+	           header.style.height = (WindowResizeTracker.currentSizes.windowHeight - borderHeight) + 'px';
 	        }
-	        header.style.width = WindowResizeTracker.currentSizes.windowWidth + "px";
+	        header.style.width = WindowResizeTracker.currentSizes.windowWidth + 'px';
 	        
 	        var body = $('PageBody');
 	        //27 = menu height (and the top position of PageBody)
-	        body.style.height = (WindowResizeTracker.currentSizes.windowHeight - 27 - borderHeight) + "px";
+	        body.style.height = (WindowResizeTracker.currentSizes.windowHeight - 27 - borderHeight) + 'px';
 	        body.style.width = header.style.width;
-	        
-	        document.body.style.height = WindowResizeTracker.currentSizes.windowHeight + "px"; 
+
+	        document.body.style.height = WindowResizeTracker.currentSizes.windowHeight + 'px'; 
 	    });    
     </script>
     <!-- work around for IE and its broken box model. Without the concrete height value, the nav pane will shrink on hover. -->

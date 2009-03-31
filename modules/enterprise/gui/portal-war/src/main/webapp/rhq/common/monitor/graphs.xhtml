@@ -109,8 +109,17 @@
         var footerTopPos = getElementTopPos(footerDiv) ;
         var eventsDivHeight = footerTopPos - eventsTopPos;
         
-        var newIndicatorDivHeight = browserHeight - indicatorTopPos - eventsDivHeight - 2; 
-        indicatorDiv.style.height = newIndicatorDivHeight + "px"; 
+        var newIndicatorDivHeight = browserHeight - indicatorTopPos - eventsDivHeight - 2;
+
+        //accomodating for the IE measurement difficulties
+        if (Prototype.Browser.IE) {
+            newIndicatorDivHeight -= 4;
+        }
+
+        //if the inidicator div would be too small, let the whole content pane scroll instead
+        if (newIndicatorDivHeight > 50) {
+            indicatorDiv.style.height = newIndicatorDivHeight + "px";
+        } 
     }
     
     addWindowOnLoadEvent(maxIndicatorDivHeight);

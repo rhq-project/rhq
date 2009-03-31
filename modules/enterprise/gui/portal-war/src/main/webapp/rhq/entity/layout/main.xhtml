@@ -42,8 +42,8 @@ id - the id of the Resource being accessed
         <!--[if !IE]><!-->
         <div id="contentParent">
         <!--<![endif]-->
-            <div id="leftContent" class="column" style="width: #{UserPreferencesUIBean.leftResourceNavState}%;">
-                <div class="content-left">
+            <div id="leftContent" class="column" style="width: #{UserPreferencesUIBean.leftResourceNavState}%">
+                <div id="leftContentWrapper" class="content-left">
                     <ui:insert name="nav"><p>Default Entity Navigation</p></ui:insert>
 
                 </div>
@@ -73,18 +73,23 @@ id - the id of the Resource being accessed
         <script language="JavaScript" type="text/JavaScript">
             <!--
             
-               WindowResizeTracker.addListener(function() {        
+               function recalcContentSizes() {
 		           var parent = $('contentParent');
 		           var body = $('PageBody');
 		           var left = $('leftContent');
 		           var right = $('centerContent');
-		           
+		           var rightWrapper = $('centerContentWrapper');
+
+                   var rightWidth = body.getDimensions().width - left.getDimensions().width;
+                   
 		           parent.style.height = body.style.height;
 		           parent.style.width = body.style.width;
 		           left.style.height = body.style.height;
 		           right.style.height = body.style.height;
-		           right.style.width = (body.getDimensions().width - left.getDimensions().width) + "px"; 
-               });
+		           right.style.width = rightWidth + 'px';
+                   rightWrapper.style.width = (rightWidth - 6) + 'px'; //6 - the margin defined by the content-right css class 
+               }
+
                
                function handleSplitPaneResize(splitPane, event) {
                    //#{rich:element('leftResourceNavStateField')}.value = navSplitPane.getWidthPercent(navSplitPane.div1);
@@ -101,10 +106,12 @@ id - the id of the Resource being accessed
                      active: true,
                      onDrag: function() {
                         overlay.refresh();
+                        recalcContentSizes();
                      } });
                
-               //resize the split pane divider on window resize
+               //resize the contents and the split pane on window resize
                WindowResizeTracker.addListener(function() {
+                    recalcContentSizes();
                     if (navSplitPane.divider) {
                        navSplitPane.move(0);
                    };

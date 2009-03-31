@@ -106,4 +106,8 @@ public abstract class AbstractManagedComponent implements ConfigurationFacet {
     protected ResourceContext getResourceContext() {
         return resourceContext;
     }
+
+    public String getResourceDescription() {
+        return resourceDescription;
+    }
 }

@@ -1648,6 +1648,15 @@
                 </c:group>
             </plugin-configuration>
 
+            <operation name="start"
+                       description="starts this EAR"/>
+
+            <operation name="stop"
+                       description="stops this EAR"/>
+
+            <operation name="restart"
+                       description="stops and then restarts this EAR"/>
+
             <metric property="custom.path" displayName="Path"
                     dataType="trait" displayType="summary"
                     description="the absolute path of this EAR file or directory"/>
@@ -1697,6 +1706,15 @@
                     </c:simple-property>
                 </c:group>
             </plugin-configuration>
+
+            <operation name="start"
+                       description="starts this WAR"/>
+
+            <operation name="stop"
+                       description="stops this WAR"/>
+
+            <operation name="restart"
+                       description="stops and then restarts this WAR"/>
 
             <metric property="custom.path" displayName="Path"
                     dataType="trait" displayType="summary"

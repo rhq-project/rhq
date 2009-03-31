@@ -72,6 +72,8 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
@@ -85,7 +87,8 @@ import org.rhq.plugins.jbossas5.util.DeploymentUtils;
  */
 public class ManagedDeploymentComponent
         extends AbstractManagedComponent
-        implements ResourceComponent, MeasurementFacet, ContentFacet, DeleteResourceFacet, ProgressListener {
+        implements ResourceComponent, MeasurementFacet, OperationFacet, ContentFacet, DeleteResourceFacet,
+        ProgressListener {
     public static final String DEPLOYMENT_NAME_PROPERTY = "deploymentName";
     public static final String DEPLOYMENT_TYPE_NAME_PROPERTY = "deploymentTypeName";
 
@@ -166,6 +169,39 @@ public class ManagedDeploymentComponent
         }
     }
 
+    // ------------ OperationFacet Implementation ------------
+
+    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException, Exception
+    {
+        DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
+        DeploymentProgress progress;
+        if (name.equals("start")) {
+            progress = deploymentManager.start(this.deploymentName);
+        } else if (name.equals("stop")) {
+            progress = deploymentManager.stop(this.deploymentName);
+        } else if (name.equals("restart")) {
+            progress = deploymentManager.stop(this.deploymentName);
+            run(progress);
+            progress = deploymentManager.start(this.deploymentName);
+        } else {
+            throw new UnsupportedOperationException(name);
+        }
+        DeploymentStatus status = run(progress);
+        log.debug("Operation '" + name + "' on " + getResourceDescription() + " completed with status [" + status
+                + "].");
+        return new OperationResult();
+    }
+
+    private DeploymentStatus run(DeploymentProgress progress)
+            throws Exception
+    {
+        progress.run();
+        DeploymentStatus status = progress.getDeploymentStatus();
+        if (status.isFailed())
+            throw new Exception(status.getMessage(), status.getFailure());
+        return status;
+    }
+
     // ------------ DeleteResourceFacet implementation -------------
 
     public void deleteResource() throws Exception {
@@ -174,10 +210,7 @@ public class ManagedDeploymentComponent
         log.debug("Undeploying deployment [" + deploymentName + "]...");
         DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
         DeploymentProgress progress = deploymentManager.remove(deploymentName);
-        progress.run();
-        DeploymentStatus status = progress.getDeploymentStatus();
-        if (status.isFailed())
-            throw new Exception(status.getMessage(), status.getFailure());
+        run(progress);
     }
 
     private File getDeploymentFile() throws MalformedURLException {

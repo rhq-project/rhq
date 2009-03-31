@@ -613,7 +613,7 @@
                       rendered="#{ListContainingGroupsUIBean.dataModel.rowCount > 0}"
                       var="resourceGroupComposite"
                       styleClass="resources-table"
-                      columnClasses="resource-quicknav-cell, group-category-cell, resource-name-cell, resource-description-cell, count-cell, resource-availability-cell"
+                      columnClasses="resource-quicknav-cell, group-category-cell, resource-name-cell, resource-description-cell, resource-availability-cell, resource-availability-cell"
                       headerClass="tableRowHeader"
                       footerClass="on-pager-footer"
                       onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -715,51 +715,50 @@
          <rich:column>
             <f:facet name="header">
                <h:panelGroup>
-                  <onc:sortableColumnHeader sort="upAvail">
-                     <h:graphicImage value="/images/icons/availability_green_16.png" alt="Up" title="Up" />
-                  </onc:sortableColumnHeader>
-                  <h:outputText value=" / " />
-                  <onc:sortableColumnHeader sort="downAvail">
-                     <h:graphicImage value="/images/icons/availability_red_16.png" alt="Down" title="Down" />
+                  <onc:sortableColumnHeader sort="explicitAvail">
+                     <h:outputText value="Children" />
                   </onc:sortableColumnHeader>
                </h:panelGroup>
             </f:facet>
 
-            <h:outputText value="#{resourceGroupComposite.upCount}" />
-            <h:outputText value=" / " />
-            <h:outputText value="#{resourceGroupComposite.downCount}" />
+            <h:panelGroup rendered="#{resourceGroupComposite.explicitUp gt 0}">
+               <h:outputText value="#{resourceGroupComposite.explicitUp}" />
+               <h:graphicImage value="/images/icons/availability_green_16.png" alt="Up" title="Up" />
+            </h:panelGroup>
+            <h:outputText value=" / " 
+                          rendered="#{resourceGroupComposite.explicitUp gt 0 and 
+                                      resourceGroupComposite.explicitDown gt 0}"/>
+            <h:panelGroup rendered="#{resourceGroupComposite.explicitDown gt 0}">
+               <h:outputText value="#{resourceGroupComposite.explicitDown}" />
+               <h:graphicImage value="/images/icons/availability_red_16.png" alt="Down" title="Down" />
+            </h:panelGroup>
          </rich:column>
 
          <rich:column>
             <f:facet name="header">
-               <onc:sortableColumnHeader sort="groupSize">
-                  <h:outputText styleClass="headerText" value="Members"/>
-               </onc:sortableColumnHeader>
+               <h:panelGroup>
+                  <onc:sortableColumnHeader sort="implicitAvail">
+                     <h:outputText value="Descendents" />
+                  </onc:sortableColumnHeader>
+               </h:panelGroup>
             </f:facet>
 
-            <h:outputText value="#{resourceGroupComposite.memberCount}"/>
-         </rich:column>
-
-         <rich:column>
-            <f:facet name="header">
-               <onc:sortableColumnHeader sort="AVG(resAvail.availability_type)">
-                  <h:outputText styleClass="headerText" value="Availability"/>
-               </onc:sortableColumnHeader>
-            </f:facet>
-
-            <h:graphicImage value="/images/icons/availability_green_16.png" alt="Up" title="Up"
-                            rendered="#{resourceGroupComposite.availability == 1}"/>
-            <h:graphicImage value="/images/icons/availability_red_16.png" alt="Down" title="Down"
-                            rendered="#{resourceGroupComposite.availability == 0}"/>
-            <h:graphicImage value="/images/icons/availability_yellow_16.png" alt="Mixed" title="Mixed"
-                            rendered="#{resourceGroupComposite.availability gt 0 and resourceGroupComposite.availability lt 1}"/>
-            <h:graphicImage value="/images/icons/availability_grey_16.png" alt="Unknown" title="Unknown"
-                            rendered="#{resourceGroupComposite.availability == null}"/>
+            <h:panelGroup rendered="#{resourceGroupComposite.implicitUp gt 0}">
+               <h:outputText value="#{resourceGroupComposite.implicitUp}" />
+               <h:graphicImage value="/images/icons/availability_green_16.png" alt="Up" title="Up" />
+            </h:panelGroup>
+            <h:outputText value=" / " 
+                          rendered="#{resourceGroupComposite.implicitUp gt 0 and 
+                                      resourceGroupComposite.implicitDown gt 0}"/>
+            <h:panelGroup rendered="#{resourceGroupComposite.implicitDown gt 0}">
+               <h:outputText value="#{resourceGroupComposite.implicitDown}" />
+               <h:graphicImage value="/images/icons/availability_red_16.png" alt="Down" title="Down" />
+            </h:panelGroup>
          </rich:column>
 
          <f:facet name="footer">
             <rich:columnGroup>
-               <rich:column colspan="7">
+               <rich:column colspan="6">
                   <ui:param name="paginationDataTableName" value="containingGroupsDataTable"/>
                   <ui:param name="paginationDataModel" value="#{containingGroupsDataModel}"/>
                   <ui:param name="paginationPageControl" value="#{PageControl.ContainingGroupsList}"/>

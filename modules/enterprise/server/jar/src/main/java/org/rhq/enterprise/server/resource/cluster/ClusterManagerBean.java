@@ -60,7 +60,6 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY);
         query.setParameter("clusterKey", clusterKey.toString());
 
-
         ResourceType resourceType = entityManager.find(ResourceType.class, ClusterKey.getResourceType(clusterKey));
         ResourceGroup resourceGroup = entityManager.find(ResourceGroup.class, clusterKey.getClusterGroupId());
 
@@ -68,31 +67,31 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         try {
             autoClusterBackingGroup = (ResourceGroup) query.getSingleResult();
         } catch (NoResultException nre) {
-             try {
-                 resources = getAutoClusterResources(subject, clusterKey);
-                 String name = null;
-                 if (resources.isEmpty()) {
-                     name = "Group of " + resourceType.getName();
-                 } else {
+            try {
+                resources = getAutoClusterResources(subject, clusterKey);
+                String name = null;
+                if (resources.isEmpty()) {
+                    name = "Group of " + resourceType.getName();
+                } else {
                     for (Resource res : resources) {
                         if (name == null) {
-                             name = res.getName();
+                            name = res.getName();
                         } else {
                             if (!name.equals(res.getName())) {
                                 name = "Group of " + resourceType.getName();
                             }
                         }
                     }
-                 }
+                }
 
-                 // For AutoClusters the group name is the unique cluster key
-                 autoClusterBackingGroup = new ResourceGroup(name, resourceType);
-                 autoClusterBackingGroup.setClusterKey(clusterKey.toString());
-                 autoClusterBackingGroup.setClusterResourceGroup(resourceGroup);
-                 autoClusterBackingGroup.setVisible(false);
+                // For AutoClusters the group name is the unique cluster key
+                autoClusterBackingGroup = new ResourceGroup(name, resourceType);
+                autoClusterBackingGroup.setClusterKey(clusterKey.toString());
+                autoClusterBackingGroup.setClusterResourceGroup(resourceGroup);
+                autoClusterBackingGroup.setVisible(false);
 
                 int id = resourceGroupManager.createResourceGroup(subject, autoClusterBackingGroup);
-                 autoClusterBackingGroup = entityManager.find(ResourceGroup.class, id);
+                autoClusterBackingGroup = entityManager.find(ResourceGroup.class, id);
 
             } catch (ResourceGroupAlreadyExistsException e) {
                 // This should not happen since the group name is actually generated
@@ -100,9 +99,6 @@ public class ClusterManagerBean implements ClusterManagerLocal {
                 return null;
             }
         }
-
-
-
 
         if (addResources) {
             if (resources == null) {
@@ -187,6 +183,7 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         query.append(alias + ".resourceType = " + node.getResourceTypeId() + " AND ");
         query.append(alias + ".parentResource IN ( ");
 
+        // this is an authorization-related query, so use implicitResource (not explicitResources)
         if (1 == size) {
             query.append("SELECT rgir FROM ResourceGroup rg JOIN rg.implicitResources rgir WHERE rg = "
                 + clusterKey.getClusterGroupId());

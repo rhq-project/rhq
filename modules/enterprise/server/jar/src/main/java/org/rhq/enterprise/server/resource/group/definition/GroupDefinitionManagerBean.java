@@ -52,6 +52,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
@@ -379,7 +380,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         }
 
         /*
-         * group additions/deletions are actions made to the explicit group, the implicit group is populate (based on
+         * group additions/deletions are actions made to the explicit group, the implicit group is modified (based on
          * the recursive bit) by the existing code in the resourceGroupManager
          *
          * use resourceManager.getExplicitResourceIdsByResourceGroup instead of resourceGroup.getExplicitResources to keep
@@ -434,7 +435,19 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<ResourceGroupComposite> getManagedResourceGroups(Subject subject, int groupDefinitionId,
         PageControl pc) throws GroupDefinitionException {
+
         pc.initDefaultOrderingField("rg.name");
+        pc.truncateOrderingFields(1); // remove all but the primary sort
+        OrderingField primary = pc.getOrderingFields().get(0);
+        String field = primary.getField();
+        if (field.endsWith("Avail")) {
+            String prefix = field.substring(0, field.length() - 5);
+            String secondaryField = prefix + "Count";
+            pc.addDefaultOrderingField(secondaryField, primary.getOrdering());
+        }
+        if (field.equals("rg.name") == false) {
+            pc.addDefaultOrderingField("rg.name");
+        }
 
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -458,10 +471,12 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                long upCount = rs.getLong(1);
-                long downCount = rs.getLong(2);
-                int groupId = rs.getInt(3);
-                Object[] next = new Object[] { upCount, downCount, groupId };
+                long explicitCount = rs.getLong(1);
+                double explicitAvail = rs.getDouble(2);
+                long implicitCount = rs.getLong(3);
+                double implicitAvail = rs.getDouble(4);
+                int groupId = rs.getInt(5);
+                Object[] next = new Object[] { explicitCount, explicitAvail, implicitCount, implicitAvail, groupId };
                 rawResults.add(next);
             }
         } catch (Throwable t) {
@@ -481,17 +496,21 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
         List<Integer> groupIds = new ArrayList<Integer>();
         for (Object[] row : rawResults) {
-            groupIds.add(((Number) row[2]).intValue());
+            groupIds.add(((Number) row[4]).intValue());
         }
         Map<Integer, ResourceGroup> groupMap = getIdGroupMap(groupIds);
 
         List<ResourceGroupComposite> results = new ArrayList<ResourceGroupComposite>(rawResults.size());
         int i = 0;
         for (Object[] row : rawResults) {
-            Long upCount = (Long) row[0];
-            Long downCount = (Long) row[1];
+            long explicitCount = (Long) row[0];
+            double explicitAvail = (Double) row[1];
+            long implicitCount = (Long) row[2];
+            double implicitAvail = (Double) row[3];
+
             ResourceGroup group = groupMap.get(groupIds.get(i++));
-            ResourceGroupComposite composite = new ResourceGroupComposite(upCount, downCount, group);
+            ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitAvail, implicitCount,
+                implicitAvail, group);
             results.add(composite);
         }
 
@@ -544,9 +563,9 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void removeGroupDefinition(Subject subject, Integer groupDefinitionId)
         throws GroupDefinitionNotFoundException, GroupDefinitionDeleteException {
-        Collection<Integer> managedResourceIds = getManagedResourceGroupIdsForGroupDefinition(groupDefinitionId);
+        Collection<Integer> managedGroupIds = getManagedResourceGroupIdsForGroupDefinition(groupDefinitionId);
         Subject overlord = subjectManager.getOverlord();
-        for (Integer managedGroupId : managedResourceIds) {
+        for (Integer managedGroupId : managedGroupIds) {
             removeManagedResource_helper(overlord, groupDefinitionId, managedGroupId);
         }
 

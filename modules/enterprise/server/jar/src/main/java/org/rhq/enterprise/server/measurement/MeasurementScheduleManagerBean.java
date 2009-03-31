@@ -386,7 +386,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         // pageControl.initDefaultOrderingField(); // this is ignored, as this method eventually uses native queries
 
         ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, groupId, GroupCategory.COMPATIBLE);
-        Set<Resource> resources = group.getImplicitResources();
+        Set<Resource> resources = group.getExplicitResources();
         ResourceType resType = group.getResourceType();
         Set<MeasurementDefinition> definitions = resType.getMetricDefinitions();
 

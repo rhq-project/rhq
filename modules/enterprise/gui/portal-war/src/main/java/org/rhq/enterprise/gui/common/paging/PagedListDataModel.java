@@ -273,7 +273,7 @@ public abstract class PagedListDataModel<T> extends DataModel {
             long time = end - start;
             log.debug("Fetch time was [" + time + "]ms for " + pageControlView);
             if (time > 2000L) {
-                log.debug("Slow loading page");
+                log.debug("Slow loading page " + pageControlView);
             }
         } else {
             results = fetchPageGuarded(pc);
@@ -282,7 +282,8 @@ public abstract class PagedListDataModel<T> extends DataModel {
     }
 
     private PageList<T> fetchPageGuarded(PageControl pc) {
-        PageList<T> results;
+        PageList<T> results = null;
+        boolean tryQueryAgain = false;
         try {
             if (pc.getPageSize() == PageControl.SIZE_UNLIMITED && pc.getPageNumber() != 0) {
                 /* 
@@ -298,6 +299,10 @@ public abstract class PagedListDataModel<T> extends DataModel {
             // try the data fetch with the potentially changed (and persisted) PageControl object
             results = fetchPage(pc);
 
+            // the fetch itself might change the page control (e.g., adding default sort)
+            // the persist will be a no-op if there have been no changes to the page control
+            setPageControl(pc);
+
             /*
              * do the results make sense?  there are certain times when no exception will be thrown but the
              * user interface won't be properly updated because of the multi-user environment.  if one user
@@ -308,15 +313,15 @@ public abstract class PagedListDataModel<T> extends DataModel {
              * update the page control to get the view consistent with the backend once again.
              */
             if (results.getTotalSize() <= pc.getStartRow() || (results.isEmpty() && pc.getPageNumber() != 0)) {
-                resetToDefaults(pc, true);
-                results = fetchPage(pc);
+                resetToDefaults(pc);
+                tryQueryAgain = true;
             }
         } catch (Throwable t) {
             /*
              * known issues during pagination:
              * 
              * 1) IndexOutOfBoundsException - trying to access a non-existent page
-             * 2) QuerySyntaxException - when the token passed by the SortableColumnHeaderListen does not
+             * 2) QuerySyntaxException - when the token passed by the SortableColumnHeaderListener does not
              *                           match some alias on the underlying query that fetches the results
              *
              * but let's be extra careful and catch Throwable so as to handle any other exceptional case 
@@ -324,17 +329,32 @@ public abstract class PagedListDataModel<T> extends DataModel {
              * try the query once again; this time, we want the first page and will not specify any explicit
              * ordering (though the underlying SLSB may add a default ordering downstream). 
              */
-            resetToDefaults(pc, false);
+            resetToDefaults(pc);
+            tryQueryAgain = true;
+        }
 
-            // round 2 should be guaranteed because of use of defaultPageControl 
-            results = fetchPage(pc);
+        // round 2 should be guaranteed because of use of defaultPageControl
+        if (tryQueryAgain) {
+            try {
+                results = fetchPage(pc);
+
+                // the fetch itself might change the page control (e.g., adding default sort)
+                // the persist will be a no-op if there have been no changes to the page control
+                setPageControl(pc);
+            } catch (Throwable t) {
+                log.error("Could not retrieve collection for " + pageControlView);
+            }
+        }
+
+        if (results == null) {
+            results = new PageList<T>();
         }
 
         return results;
     }
 
-    private void resetToDefaults(PageControl pc, boolean keepOrderingFields) {
-        pc.reset(keepOrderingFields);
+    private void resetToDefaults(PageControl pc) {
+        pc.reset();
         setPageControl(pc);
     }
 

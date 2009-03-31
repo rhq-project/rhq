@@ -37,14 +37,16 @@ public class ResourceGroupComposite implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Double availability;
+    private Double implicitAvail;
+    private Double explicitAvail;
     private ResourceGroup resourceGroup;
 
     private GroupCategory category;
     private ResourceFacets resourceFacets;
-    private long memberCount;
-    private long upCount;
-    private long downCount;
+    private long implicitUp;
+    private long implicitDown;
+    private long explicitUp;
+    private long explicitDown;
 
     private class GroupDefinitionMember extends ResourceGroup {
         public void setGroupCategory(GroupCategory category) {
@@ -52,17 +54,18 @@ public class ResourceGroupComposite implements Serializable {
         }
     }
 
-    private void init(Long upCount, Long downCount, Double availability, ResourceGroup resourceGroup, long memberCount) {
-        if (upCount != null) {
-            this.upCount = upCount;
-        }
-        if (downCount != null) {
-            this.downCount = downCount;
-        }
+    public ResourceGroupComposite(long explicitCount, double explicitAvailability, long implicitCount,
+        double implicitAvailability, ResourceGroup resourceGroup) {
 
-        this.availability = availability;
+        explicitUp = Math.round(explicitCount * explicitAvailability);
+        explicitDown = explicitCount - explicitUp;
+        explicitAvail = explicitAvailability;
+
+        implicitUp = Math.round(implicitCount * implicitAvailability);
+        implicitDown = implicitCount - implicitUp;
+        implicitAvail = implicitAvailability;
+
         this.resourceGroup = resourceGroup;
-        this.memberCount = memberCount;
 
         if (this.resourceGroup.getGroupCategory() == GroupCategory.COMPATIBLE) {
             this.category = GroupCategory.COMPATIBLE;
@@ -79,42 +82,12 @@ public class ResourceGroupComposite implements Serializable {
         }
     }
 
-    public ResourceGroupComposite(Long upCount, Long downCount, ResourceGroup group) {
-        Double availability = null;
-        Long memberCount = null;
-        if (upCount != null && downCount != null) {
-            availability = upCount / (double) (upCount + downCount);
-            memberCount = upCount + downCount;
-        }
-        init(upCount, downCount, availability, group, memberCount);
+    public Double getImplicitAvail() {
+        return this.implicitAvail;
     }
 
-    public ResourceGroupComposite(Long upCount, Long downCount, long memberCount, Number groupId, String groupName,
-        GroupCategory groupCategory, String groupByClause) {
-        Double availability = null;
-        if (upCount != null && downCount != null) {
-            availability = upCount / (double) downCount;
-        }
-        GroupDefinitionMember group = new GroupDefinitionMember();
-        group.setId(groupId.intValue());
-        group.setName(groupName);
-        group.setGroupCategory(groupCategory);
-        group.setGroupByClause(groupByClause);
-        init(upCount, downCount, availability, group, memberCount);
-    }
-
-    public ResourceGroupComposite(Double availability, ResourceGroup resourceGroup, long memberCount) {
-        Long up = null;
-        Long down = null;
-        if (availability != null) {
-            up = (long) (memberCount * availability);
-            down = memberCount - up;
-        }
-        init(up, down, availability, resourceGroup, memberCount);
-    }
-
-    public Double getAvailability() {
-        return this.availability;
+    public Double getExplicitAvail() {
+        return this.explicitAvail;
     }
 
     public ResourceGroup getResourceGroup() {
@@ -125,16 +98,52 @@ public class ResourceGroupComposite implements Serializable {
         return this.category;
     }
 
-    public long getMemberCount() {
-        return this.memberCount;
+    public long getImplicitUp() {
+        return this.implicitUp;
     }
 
-    public long getUpCount() {
-        return this.upCount;
+    public long getImplicitDown() {
+        return this.implicitDown;
     }
 
-    public long getDownCount() {
-        return this.downCount;
+    public long getExplicitUp() {
+        return this.explicitUp;
+    }
+
+    public long getExplicitDown() {
+        return this.explicitDown;
+    }
+
+    public String getExplicitFormatted() {
+        StringBuilder results = new StringBuilder();
+        if (getExplicitUp() > 0) {
+            results.append(getExplicitUp());
+            results.append("<img src=\"/images/icons/availability_green_16.png\" />");
+        }
+        if (getExplicitUp() > 0 && getExplicitDown() > 0) {
+            results.append(" / ");
+        }
+        if (getExplicitDown() > 0) {
+            results.append(getExplicitDown());
+            results.append("<img src=\"/images/icons/availability_red_16.png\" />");
+        }
+        return results.toString();
+    }
+
+    public String getImplicitFormatted() {
+        StringBuilder results = new StringBuilder();
+        if (getImplicitUp() > 0) {
+            results.append(getImplicitUp());
+            results.append("<img src=\"/images/icons/availability_green_16.png\" />");
+        }
+        if (getImplicitUp() > 0 && getImplicitDown() > 0) {
+            results.append(" / ");
+        }
+        if (getImplicitDown() > 0) {
+            results.append(getImplicitDown());
+            results.append("<img src=\"/images/icons/availability_red_16.png\" />");
+        }
+        return results.toString();
     }
 
     public ResourceFacets getResourceFacets() {
@@ -143,8 +152,10 @@ public class ResourceGroupComposite implements Serializable {
 
     @Override
     public String toString() {
-        return "ResourceGroupComposite[" + "name=" + this.resourceGroup.getName() + ", up=," + this.upCount + " down=,"
-            + this.downCount + " members=" + this.memberCount + ", availability=" + this.availability + ", permission="
-            + "]";
+        return "ResourceGroupComposite[name="
+            + this.resourceGroup.getName() //
+            + ", implicit[up/down/avail=," + this.implicitUp + "/" + this.implicitDown + "/" + this.implicitAvail + "]"
+            + ", explicit[up/down/avail=," + this.explicitUp + "/" + this.explicitDown + "/" + this.explicitAvail + "]"
+            + ", permission=" + "]";
     }
 }

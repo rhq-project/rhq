@@ -44,24 +44,13 @@ import javax.persistence.Table;
 import org.rhq.core.domain.util.StringUtils;
 
 @Entity
-@NamedQueries( {
-    @NamedQuery(name = GroupDefinition.QUERY_FIND_ALL, query = "" //
-        + "SELECT gd " //
-        + "  FROM GroupDefinition AS gd "), //
+@NamedQueries( { @NamedQuery(name = GroupDefinition.QUERY_FIND_ALL, query = "" //
+    + "SELECT gd " //
+    + "  FROM GroupDefinition AS gd "), //
     @NamedQuery(name = GroupDefinition.QUERY_FIND_BY_NAME, query = "" //
         + "SELECT gd " //
         + "  FROM GroupDefinition AS gd " //
         + " WHERE LOWER(gd.name) = LOWER(:name)"), //
-    @NamedQuery(name = GroupDefinition.QUERY_FIND_MEMBERS, query = "" //
-        + "   SELECT " //
-        + "          (SELECT COUNT(ra) FROM ResourceAvailability ra JOIN ra.resource ires JOIN ires.implicitGroups ig WHERE ig.id = rg.id AND ra.availabilityType = 1) AS upAvail, " //
-        + "          (SELECT COUNT(ra) FROM ResourceAvailability ra JOIN ra.resource ires JOIN ires.implicitGroups ig WHERE ig.id = rg.id AND ra.availabilityType = 0) AS downAvail, " //
-        + "          COUNT(res), " //
-        + "          rg.id " + "     FROM ResourceGroup rg " //
-        + "LEFT JOIN rg.implicitResources res " //
-        + "     JOIN res.currentAvailability a " //
-        + "    WHERE rg.groupDefinition.id = :groupDefinitionId " //
-        + " GROUP BY rg.id "), //
     @NamedQuery(name = GroupDefinition.QUERY_FIND_MEMBERS_count, query = "" //
         + "SELECT COUNT(rg) " //
         + "  FROM ResourceGroup rg " //
@@ -109,6 +98,24 @@ public class GroupDefinition implements Serializable {
 
     public static final String QUERY_NATIVE_FIND_MEMBERS = "" //
         + "         SELECT "
+        + "              (     SELECT COUNT(eresAvail.ID) "
+        + "                      FROM rhq_resource_avail eresAvail "
+        + "                INNER JOIN rhq_resource eres "
+        + "                        ON eresAvail.resource_id = eres.id "
+        + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
+        + "                        ON eres.id = expMap.resource_id "
+        + "                     WHERE expMap.resource_group_id = rg.id "
+        + "              ) as explicitCount, "
+        + "" //
+        + "              (     SELECT AVG(eresAvail.availability_type) "
+        + "                      FROM rhq_resource_avail eresAvail "
+        + "                INNER JOIN rhq_resource eres "
+        + "                        ON eresAvail.resource_id = eres.id "
+        + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
+        + "                        ON eres.id = expMap.resource_id "
+        + "                     WHERE expMap.resource_group_id = rg.id "
+        + "              ) as explicitAvail, "
+        + "" //
         + "              (     SELECT COUNT(iresAvail.ID) "
         + "                      FROM rhq_resource_avail iresAvail "
         + "                INNER JOIN rhq_resource ires "
@@ -116,19 +123,18 @@ public class GroupDefinition implements Serializable {
         + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
         + "                        ON ires.id = impMap.resource_id "
         + "                     WHERE impMap.resource_group_id = rg.id "
-        + "                       AND iresAvail.availability_type = 1 "
-        + "              ) as upAvail, "
-        + "              (     SELECT COUNT(iresAvail.ID) "
+        + "              ) as implicitCount, "
+        + "" //
+        + "              (     SELECT AVG(iresAvail.availability_type) "
         + "                      FROM rhq_resource_avail iresAvail "
         + "                INNER JOIN rhq_resource ires "
         + "                        ON iresAvail.resource_id = ires.id "
         + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
         + "                        ON ires.id = impMap.resource_id "
         + "                     WHERE impMap.resource_group_id = rg.id "
-        + "                       AND iresAvail.availability_type = 0 "
-        + "              ) as downAvail, "
-        + "                rg.id as groupId, "
-        + "                COUNT(res.id) as groupSize "
+        + "              ) as implicitAvail, "
+        + "" //
+        + "                rg.id as groupId "
         + "           FROM rhq_resource_group rg "
         + "LEFT OUTER JOIN rhq_resource_group_res_imp_map memberMap "
         + "             ON rg.id = memberMap.resource_group_id "

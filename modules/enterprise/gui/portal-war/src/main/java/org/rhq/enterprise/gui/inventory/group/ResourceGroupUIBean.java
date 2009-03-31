@@ -68,10 +68,10 @@ public class ResourceGroupUIBean {
 
     public ResourceGroupUIBean(ResourceGroupComposite resourceGroupComposite, Subject subject) {
         this.resourceGroup = resourceGroupComposite.getResourceGroup();
-        this.count = resourceGroupComposite.getMemberCount();
-        this.upCount = resourceGroupComposite.getUpCount();
-        this.downCount = resourceGroupComposite.getDownCount();
-        this.availability = resourceGroupComposite.getAvailability();
+        this.upCount = resourceGroupComposite.getExplicitUp();
+        this.downCount = resourceGroupComposite.getExplicitDown();
+        this.count = upCount + downCount;
+        this.availability = resourceGroupComposite.getExplicitAvail();
         this.subject = subject;
         Set<Permission> permissions = LookupUtil.getAuthorizationManager().getImplicitGroupPermissions(subject,
             this.resourceGroup.getId());
@@ -212,6 +212,6 @@ public class ResourceGroupUIBean {
         int resourceGroupId = FacesContextUtility.getRequiredRequestParameter(ParamConstants.GROUP_ID_PARAM,
             Integer.class);
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        return LookupUtil.getResourceGroupManager().getResourceGroupWithAvailabilityById(subject, resourceGroupId);
+        return LookupUtil.getResourceGroupManager().getResourceGroupComposite(subject, resourceGroupId);
     }
 }

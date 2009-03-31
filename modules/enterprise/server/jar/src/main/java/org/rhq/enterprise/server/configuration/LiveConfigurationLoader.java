@@ -26,18 +26,18 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  * @author Ian Springer
  */
-public class LiveConfigurationLoader
-{
+public class LiveConfigurationLoader {
     private static LiveConfigurationLoader ourInstance = new LiveConfigurationLoader();
 
     private final Log log = LogFactory.getLog(LiveConfigurationLoader.class);
@@ -45,8 +45,7 @@ public class LiveConfigurationLoader
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
 
-    public static LiveConfigurationLoader getInstance()
-    {
+    public static LiveConfigurationLoader getInstance() {
         return ourInstance;
     }
 
@@ -57,39 +56,31 @@ public class LiveConfigurationLoader
      * @return
      * @throws Exception
      */
-    public Map<Integer, Configuration> loadLiveResourceConfigurations(final Set<Resource> resources, long timeout)
-    {
-        try
-        {
-            FutureTask<Map<Integer, Configuration>> task = new FutureTask(new Callable<Map<Integer, Configuration>>()
-            {
-                public Map<Integer, Configuration> call() throws Exception
-                {
-                    return loadLiveResourceConfigurations(resources);
-                }
-            });
+    public Map<Integer, Configuration> loadLiveResourceConfigurations(final Set<Resource> resources, long timeout) {
+        try {
+            FutureTask<Map<Integer, Configuration>> task = new FutureTask<Map<Integer, Configuration>>(
+                new Callable<Map<Integer, Configuration>>() {
+                    public Map<Integer, Configuration> call() throws Exception {
+                        return loadLiveResourceConfigurations(resources);
+                    }
+                });
             new Thread(task).start();
             return task.get(timeout, TimeUnit.SECONDS);
-        }
-        catch (TimeoutException e)
-        {
-            throw new RuntimeException("Timed out after " + timeout + " seconds while retrieving live Resource configurations.");
-        }
-        catch (Exception e)
-        {
+        } catch (TimeoutException e) {
+            throw new RuntimeException("Timed out after " + timeout
+                + " seconds while retrieving live Resource configurations.");
+        } catch (Exception e) {
             throw new RuntimeException("Failed to retrieve live Resource configurations.", e);
         }
     }
 
-    private Map<Integer, Configuration> loadLiveResourceConfigurations(Set<Resource> resources) throws Exception
-    {
+    private Map<Integer, Configuration> loadLiveResourceConfigurations(Set<Resource> resources) throws Exception {
         log.info("Loading live configs for " + resources.size() + " Resources...");
         long startTime = System.currentTimeMillis();
-        Map<Integer, Configuration> liveConfigs = new HashMap();
-        for (Resource resource : resources)
-        {
-            Configuration liveConfig = this.configurationManager.getLiveResourceConfiguration(
-                this.subjectManager.getOverlord(), resource.getId(), false);
+        Map<Integer, Configuration> liveConfigs = new HashMap<Integer, Configuration>();
+        for (Resource resource : resources) {
+            Configuration liveConfig = this.configurationManager.getLiveResourceConfiguration(this.subjectManager
+                .getOverlord(), resource.getId(), false);
             if (liveConfig == null)
                 throw new Exception("Failed to obtain live Resource configuration for " + resource + ".");
             liveConfigs.put(resource.getId(), liveConfig);
@@ -99,7 +90,6 @@ public class LiveConfigurationLoader
         return liveConfigs;
     }
 
-    private LiveConfigurationLoader()
-    {
+    private LiveConfigurationLoader() {
     }
 }

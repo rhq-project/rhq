@@ -41,7 +41,7 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ListResourceGroupMembersUIBean";
 
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
-    private boolean suppressRecursiveResults = false;
+    private boolean showRecursiveMembers = false;
 
     public ListResourceGroupMembersUIBean() {
     }
@@ -60,13 +60,13 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
-    public void setSuppressRecursiveResults(boolean suppressRecursiveResults) {
-        this.suppressRecursiveResults = suppressRecursiveResults;
+    public void setShowRecursiveMembers(boolean showRecursiveMembers) {
+        this.showRecursiveMembers = showRecursiveMembers;
         dataModel = null; // this will force getDataModel to query next time it's called
     }
 
-    public boolean getSuppressRecursiveResults() {
-        return this.suppressRecursiveResults;
+    public boolean getShowRecursiveMembers() {
+        return this.showRecursiveMembers;
     }
 
     public int getNumberOfColumns() {
@@ -125,11 +125,11 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
         @Override
         public PageList<ResourceWithAvailability> fetchPage(PageControl pageControl) {
             PageList<ResourceWithAvailability> results = null;
-            if (getSuppressRecursiveResults()) {
-                results = resourceManager.getExplicitResourceWithAvailabilityByResourceGroup(getSubject(),
+            if (getShowRecursiveMembers()) {
+                results = resourceManager.getImplicitResourceWithAvailabilityByResourceGroup(getSubject(),
                     getResourceGroup(), pageControl);
             } else {
-                results = resourceManager.getImplicitResourceWithAvailabilityByResourceGroup(getSubject(),
+                results = resourceManager.getExplicitResourceWithAvailabilityByResourceGroup(getSubject(),
                     getResourceGroup(), pageControl);
             }
 

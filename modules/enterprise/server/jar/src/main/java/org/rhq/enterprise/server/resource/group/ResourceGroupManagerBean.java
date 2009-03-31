@@ -70,6 +70,7 @@ import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
@@ -200,7 +201,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
         // for compatible groups, first recursively remove any referring backing groups for auto-clusters
         if (group.getGroupCategory() == GroupCategory.COMPATIBLE) {
-            for (ResourceGroup referringGroup : group.getclusterBackingGroups()) {
+            for (ResourceGroup referringGroup : group.getClusterBackingGroups()) {
                 deleteResourceGroup(user, referringGroup.getId());
             }
         }
@@ -229,8 +230,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             group.removeRole(doomedRoleRelationship);
             entityManager.merge(doomedRoleRelationship);
         }
-
-        group = entityManager.merge(group);
 
         // remove all resources in the group
         resourceGroupManager.removeAllResourcesFromGroup(user, groupId);
@@ -500,7 +499,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
          * Get all the groups the parent of this resource is implicitly in. This will tell us which we need to update
          * (because we added new descendants).
          */
-        Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_RESOURCE_ID);
+        Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_IMPLICIT_BY_RESOURCE_ID);
         query.setParameter("id", resource.getParentResource().getId());
         List<ResourceGroup> groups = query.getResultList();
 
@@ -644,20 +643,19 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         return ret;
     }
 
-    @SuppressWarnings("unchecked")
-    public ResourceGroupComposite getResourceGroupWithAvailabilityById(Subject subject, int groupId) {
-        Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_GROUP_COMPOSITE_BY_ID);
-        query.setParameter("groupId", groupId);
-        ResourceGroupComposite group = null;
-        List<ResourceGroupComposite> groups = query.getResultList();
+    public ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId) {
+        PageList<ResourceGroupComposite> results = getResourceGroupsFiltered(subject, null, null, null, null, null,
+            groupId, PageControl.getSingleRowInstance());
 
-        //There should only be one record returned
-        if ((groups != null) && (groups.size() == 1)) {
-            group = groups.get(0);
-            group.getResourceGroup().getModifiedBy().getFirstName();
+        if (results.size() != 1) {
+            throw new IllegalStateException("Found incorrect number of results (" + results.size()
+                + " when looking up ResourceGroupComposite for group[id=" + groupId + "]");
         }
 
-        return group;
+        ResourceGroupComposite composite = results.get(0);
+        composite.getResourceGroup().getModifiedBy().getFirstName();
+
+        return composite;
     }
 
     @SuppressWarnings("unchecked")
@@ -711,7 +709,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         if (groups.size() == 1) {
             // fyi, database constraints prevent dups on these two attributes
             ResourceGroup group = groups.get(0);
-            group.getImplicitResources().size(); // initialize lazy set
             return group;
         } else // if ( groups.size() == 0 )
         {
@@ -835,7 +832,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
     public PageList<ResourceGroupComposite> getResourceGroupsFiltered(Subject subject, GroupCategory groupCategory,
         ResourceCategory resourceCategory, ResourceType resourceType, String nameFilter, Integer resourceId,
-        PageControl pc) {
+        Integer groupId, PageControl pc) {
 
         String query = ResourceGroup.QUERY_NATIVE_FIND_FILTERED_MEMBER;
         if (authorizationManager.isInventoryManager(subject)) {
@@ -857,6 +854,17 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         }
 
         pc.initDefaultOrderingField("rg.name");
+        pc.truncateOrderingFields(1); // remove all but the primary sort
+        OrderingField primary = pc.getOrderingFields().get(0);
+        String field = primary.getField();
+        if (field.endsWith("Avail")) {
+            String prefix = field.substring(0, field.length() - 5);
+            String secondaryField = prefix + "Count";
+            pc.addDefaultOrderingField(secondaryField, primary.getOrdering());
+        }
+        if (field.equals("rg.name") == false) {
+            pc.addDefaultOrderingField("rg.name");
+        }
         nameFilter = PersistenceUtility.formatSearchParameter(nameFilter);
 
         Connection conn = null;
@@ -865,11 +873,24 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         List<Object[]> rawResults = new ArrayList<Object[]>();
         try {
             conn = rhqDs.getConnection();
+
+            if (groupId == null) {
+                // only filter by visibility if the user isn't selecting a group directly
+                if (this.dbType instanceof PostgresqlDatabaseType) {
+                    query = query.replace("%GROUP_AND_VISIBILITY_FRAGMENT_WHERE%", "rg.visible = TRUE");
+                } else if (this.dbType instanceof OracleDatabaseType) {
+                    query = query.replace("%GROUP_AND_VISIBILITY_FRAGMENT_WHERE%", "rg.visible = 1");
+                } else {
+                    throw new RuntimeException("Unknown database type: " + this.dbType);
+                }
+            } else {
+                // otherwise filter by the passed groupId
+                query = query.replace("%GROUP_AND_VISIBILITY_FRAGMENT_WHERE%", "rg.id = ?");
+            }
+
             if (this.dbType instanceof PostgresqlDatabaseType) {
-                query = query.replace("%IS_VISIBLE%", "TRUE");
                 query = PersistenceUtility.addPostgresNativePagingSortingToQuery(query, pc);
             } else if (this.dbType instanceof OracleDatabaseType) {
-                query = query.replace("%IS_VISIBLE%", "1");
                 query = PersistenceUtility.addOracleNativePagingSortingToQuery(query, pc);
             } else {
                 throw new RuntimeException("Unknown database type: " + this.dbType);
@@ -886,6 +907,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             if (resourceId != null) {
                 stmt.setInt(++i, resourceId);
             }
+            if (groupId != null) {
+                stmt.setInt(++i, groupId);
+            }
             stmt.setString(++i, search);
             stmt.setString(++i, search);
             stmt.setString(++i, search);
@@ -907,17 +931,18 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             stmt.setString(++i, groupCategoryName);
             stmt.setString(++i, groupCategoryName);
 
-            // set the 
             if (authorizationManager.isInventoryManager(subject) == false) {
                 stmt.setInt(++i, subject.getId());
             }
 
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                long upCount = rs.getLong(1);
-                long downCount = rs.getLong(2);
-                int groupId = rs.getInt(3);
-                Object[] next = new Object[] { upCount, downCount, groupId };
+                long explicitCount = rs.getLong(1);
+                double explicitAvail = rs.getDouble(2);
+                long implicitCount = rs.getLong(3);
+                double implicitAvail = rs.getDouble(4);
+                int groupKey = rs.getInt(5);
+                Object[] next = new Object[] { explicitCount, explicitAvail, implicitCount, implicitAvail, groupKey };
                 rawResults.add(next);
             }
         } catch (Throwable t) {
@@ -940,22 +965,26 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         queryCount.setParameter("resourceType", resourceType);
         queryCount.setParameter("search", nameFilter);
         queryCount.setParameter("resourceId", resourceId);
+        queryCount.setParameter("groupId", groupId);
 
         long count = (Long) queryCount.getSingleResult();
 
         List<Integer> groupIds = new ArrayList<Integer>();
         for (Object[] row : rawResults) {
-            groupIds.add(((Number) row[2]).intValue());
+            groupIds.add(((Number) row[4]).intValue());
         }
         Map<Integer, ResourceGroup> groupMap = getIdGroupMap(groupIds);
 
         List<ResourceGroupComposite> results = new ArrayList<ResourceGroupComposite>(rawResults.size());
         int i = 0;
         for (Object[] row : rawResults) {
-            Long upCount = (Long) row[0];
-            Long downCount = (Long) row[1];
+            long explicitCount = (Long) row[0];
+            double explicitAvail = (Double) row[1];
+            long implicitCount = (Long) row[2];
+            double implicitAvail = (Double) row[3];
             ResourceGroup group = groupMap.get(groupIds.get(i++));
-            ResourceGroupComposite composite = new ResourceGroupComposite(upCount, downCount, group);
+            ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitAvail, implicitCount,
+                implicitAvail, group);
             results.add(composite);
         }
 

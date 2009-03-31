@@ -139,8 +139,8 @@
 <input type="hidden" name="category" value="#{param.category}"/>
 
 <h:panelGrid columns="2" cellspacing="3" rendered="#{ResourceGroupUIBean.recursive}">
-   <h:outputLabel for="suppressRecursiveResults" value="Suppress Recursive Results: " />
-   <h:selectBooleanCheckbox id="suppressRecursiveResults" value="#{ListResourceGroupMembersUIBean.suppressRecursiveResults}" >
+   <h:outputLabel for="showRecursiveMembers" value="Show Recursive Members: " />
+   <h:selectBooleanCheckbox id="showRecursiveMembers" value="#{ListResourceGroupMembersUIBean.showRecursiveMembers}" >
        <a4j:support event="onchange" reRender="resourceGroupMembersDataTable, resourceGroupMembersDataTableScroller"/>
    </h:selectBooleanCheckbox>
 </h:panelGrid>

@@ -87,7 +87,7 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + " WHERE condition.measurementDefinition.id = :measurementDefinitionId " //
         + "   AND definition.resource IN ( SELECT res " //
         + "                                  FROM ResourceGroup rg " //
-        + "                                  JOIN rg.implicitResources res " //
+        + "                                  JOIN rg.explicitResources res " //
         + "                                 WHERE rg.id = :groupId ) " //
         + "   AND ( a.ctime BETWEEN :startDate AND :endDate )"),
     @NamedQuery(name = Alert.QUERY_FIND_BY_MEAS_DEF_ID_AND_AUTOGROUP, query = "" //

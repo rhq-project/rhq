@@ -107,7 +107,7 @@ public class ResourceStorageTest extends AbstractEJB3Test {
             Subject subject = subjectManager.getOverlord();
             createSession(subject);
             List<ResourceGroupComposite> groups = groupManager.getResourceGroupsFiltered(subject, GroupCategory.MIXED,
-                null, null, null, null, pc);
+                null, null, null, null, null, pc);
             System.out.println("Found mixed groups: " + groups.size());
             for (ResourceGroupComposite group : groups) {
                 System.out.println("\t" + group);
@@ -124,8 +124,8 @@ public class ResourceStorageTest extends AbstractEJB3Test {
             ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
             PageControl pc = new PageControl(1, 5, new OrderingField("g.name", PageOrdering.ASC));
-            PageList<ResourceGroupComposite> groups = groupManager.getResourceGroupsFiltered(
-                subjectManager.getOverlord(), GroupCategory.COMPATIBLE, null, null, null, null, pc);
+            PageList<ResourceGroupComposite> groups = groupManager.getResourceGroupsFiltered(subjectManager
+                .getOverlord(), GroupCategory.COMPATIBLE, null, null, null, null, null, pc);
             System.out.println("Found compatible groups: " + groups.getTotalSize());
             for (ResourceGroupComposite group : groups) {
                 System.out.println("\t" + group);

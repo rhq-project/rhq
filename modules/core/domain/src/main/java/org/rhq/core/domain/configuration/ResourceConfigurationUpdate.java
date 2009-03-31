@@ -72,7 +72,7 @@ import org.rhq.core.domain.resource.Resource;
         + "                            WHERE cu2.resource.id = :resourceId ) "),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_BY_GROUP_ID_AND_STATUS, query = "" //
         + "SELECT cu.resource " //
-        + "  FROM ResourceConfigurationUpdate cu JOIN cu.resource.implicitGroups rg " //
+        + "  FROM ResourceConfigurationUpdate cu JOIN cu.resource.explicitGroups rg " //
         + " WHERE rg.id = :groupId " //
         + "   AND cu.status = :status"),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID_AND_STATUS, query = "" //
@@ -174,7 +174,6 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
     @JoinColumn(name = "AGG_RES_UPDATE_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne
     private AggregateResourceConfigurationUpdate aggregateConfigurationUpdate;
-
 
     protected ResourceConfigurationUpdate() {
     } // JPA

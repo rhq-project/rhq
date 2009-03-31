@@ -23,10 +23,7 @@
 package org.rhq.core.domain.resource.composite;
 
 import java.io.Serializable;
-import java.util.Set;
 
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 
@@ -85,17 +82,6 @@ public class ResourceMembershipComposite implements Serializable {
 
     public void setImplicit(boolean isImplicit) {
         this.implicit = isImplicit;
-    }
-
-    private static boolean exposesCallTimeMetrics(ResourceType resourceType) {
-        Set<MeasurementDefinition> measurementDefs = resourceType.getMetricDefinitions();
-        for (MeasurementDefinition measurementDef : measurementDefs) {
-            if (measurementDef.getDataType() == DataType.CALLTIME) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     @Override

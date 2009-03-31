@@ -64,7 +64,7 @@ import org.rhq.core.domain.resource.Resource;
         + " WHERE e.source.id IN ( SELECT es.id " //
         + "                          FROM EventSource es " //
         + "                          JOIN es.resource res " //
-        + "                          JOIN res.implicitGroups ig " //
+        + "                          JOIN res.explicitGroups ig " // use explicit here, this is not an authz check
         + "                         WHERE ig.id = :groupId )"),
     @NamedQuery(name = Event.FIND_EVENTS_FOR_RESOURCES_AND_TIME, query = "SELECT ev FROM Event ev "
         + " JOIN ev.source.resource res WHERE res IN (:resources) AND ev.timestamp BETWEEN :start AND :end "),

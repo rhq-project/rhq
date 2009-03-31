@@ -359,9 +359,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal {
             if (context.category == EntityContext.Category.Resource) {
                 newFirstAvailabilityType = getCurrentAvailabilityTypeForResource(whoami, context.resourceId);
             } else if (context.category == EntityContext.Category.ResourceGroup) {
-                ResourceGroupComposite composite = resourceGroupManager.getResourceGroupWithAvailabilityById(whoami,
+                ResourceGroupComposite composite = resourceGroupManager.getResourceGroupComposite(whoami,
                     context.groupId);
-                Double firstAvailability = composite.getAvailability();
+                Double firstAvailability = composite.getExplicitAvail();
                 newFirstAvailabilityType = firstAvailability == null ? null
                     : (firstAvailability == 1.0 ? AvailabilityType.UP : AvailabilityType.DOWN);
             } else {

@@ -23,6 +23,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -52,11 +53,9 @@ import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.group.AbstractAggregateConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.AggregatePluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.AggregateResourceConfigurationUpdate;
@@ -494,15 +493,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(Subject whoami, int groupId)
         throws ConfigurationUpdateStillInProgressException, Exception {
         // The below call will also handle the check to see if the subject has perms to view the group.
-        ResourceGroupComposite groupComposite = this.resourceGroupManager.getResourceGroupWithAvailabilityById(whoami,
-            groupId);
+        ResourceGroupComposite groupComposite = this.resourceGroupManager.getResourceGroupComposite(whoami, groupId);
 
         // if the group is empty (has no members) the availability will be null
-        if (groupComposite.getAvailability() == null) {
+        if (groupComposite.getExplicitAvail() == null) {
             return new HashMap<Integer, Configuration>();
         }
 
-        AvailabilityType availability = (groupComposite.getAvailability() == 1) ? AvailabilityType.UP
+        AvailabilityType availability = (groupComposite.getExplicitAvail() == 1) ? AvailabilityType.UP
             : AvailabilityType.DOWN;
         if (availability == AvailabilityType.DOWN)
             throw new Exception("Current group Resource configuration for " + groupId
@@ -517,14 +515,15 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // If any of the requests for live configs fail (e.g. because an Agent is down) or if all of the live
         // configs can't be obtained within the specified timeout, this call will throw an exception.
         int userPreferencesTimeout = new SubjectPreferences(whoami).getGroupConfigurationTimeoutPeriod();
+        Set<Resource> groupMembers = group.getExplicitResources();
         Map<Integer, Configuration> liveConfigs = LiveConfigurationLoader.getInstance().loadLiveResourceConfigurations(
-            group.getImplicitResources(), userPreferencesTimeout);
+            groupMembers, userPreferencesTimeout);
 
         // If we got this far, we were able to retrieve all of the live configs from the Agents. Now load the current
         // persisted configs from the DB and compare them to the corresponding live configs. For any that are not equal,
         // persist the live config to the DB as the new current config.
         Map<Integer, Configuration> currentPersistedConfigs = getPersistedResourceConfigurationsForCompatibleGroup(group);
-        for (Resource memberResource : group.getImplicitResources()) {
+        for (Resource memberResource : groupMembers) {
             Configuration liveConfig = liveConfigs.get(memberResource.getId());
             // NOTE: The persisted config may be null if no config has been persisted yet.
             Configuration currentPersistedConfig = currentPersistedConfigs.get(memberResource.getId());
@@ -545,11 +544,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public Map<Integer, Configuration> getPluginConfigurationsForCompatibleGroup(Subject whoami, int groupId)
         throws ConfigurationUpdateStillInProgressException, Exception {
         // The below call will also handle the check to see if the subject has perms to view the group.
-        ResourceGroupComposite groupComposite = this.resourceGroupManager.getResourceGroupWithAvailabilityById(whoami,
-            groupId);
+        ResourceGroup group = this.resourceGroupManager.getResourceGroupById(whoami, groupId, GroupCategory.COMPATIBLE);
 
         // Check to make sure no config updates, aggregate or individual, are in progress.
-        ResourceGroup group = groupComposite.getResourceGroup();
         ensureNoPluginConfigurationUpdatesInProgress(group);
 
         // If we got this far, no updates are in progress, so go ahead and load the plugin configs from the DB.
@@ -592,7 +589,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 + " cannot be calculated, because a group plugin configuration update is currently in progress.");
         }
         List<Resource> resourcesWithPluginConfigUpdatesInProgress = new ArrayList<Resource>();
-        for (Resource memberResource : compatibleGroup.getImplicitResources()) {
+        for (Resource memberResource : compatibleGroup.getExplicitResources()) {
             if (isPluginConfigurationUpdateInProgress(this.subjectManager.getOverlord(), memberResource.getId()))
                 resourcesWithPluginConfigUpdatesInProgress.add(memberResource);
         }
@@ -611,9 +608,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID);
         countQuery.setParameter("resourceGroupId", compatibleGroup.getId());
         long count = (Long) countQuery.getSingleResult();
-        if (count != compatibleGroup.getImplicitResources().size())
+        if (count != compatibleGroup.getExplicitResources().size())
             throw new IllegalStateException("Size of group changed from "
-                + compatibleGroup.getImplicitResources().size() + " to " + count + " - please retry the operation.");
+                + compatibleGroup.getExplicitResources().size() + " to " + count + " - please retry the operation.");
 
         // Configurations are very expensive to load, so load 'em in chunks to ease the strain on the DB.
         PageControl pageControl = new PageControl(0, 10);
@@ -647,9 +644,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_ID);
         countQuery.setParameter("resourceGroupId", compatibleGroup.getId());
         long count = (Long) countQuery.getSingleResult();
-        if (count != compatibleGroup.getImplicitResources().size())
+        if (count != compatibleGroup.getExplicitResources().size())
             throw new IllegalStateException("Size of group changed from "
-                + compatibleGroup.getImplicitResources().size() + " to " + count + " - please retry the operation.");
+                + compatibleGroup.getExplicitResources().size() + " to " + count + " - please retry the operation.");
 
         // Configurations are very expensive to load, so load 'em in chunks to ease the strain on the DB.
         PageControl pageControl = new PageControl(0, 20);
@@ -1628,51 +1625,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             results.put((Integer) result[0], (Configuration) result[1]);
         }
         return results;
-    }
-
-    public Configuration getAggregatePluginConfigurationForCompatibleGroup(ResourceGroup group) {
-        ResourceGroup compatibleGroup = entityManager.find(ResourceGroup.class, group.getId());
-
-        ConfigurationDefinition pluginConfigurationDefinition = compatibleGroup.getResourceType()
-            .getPluginConfigurationDefinition();
-        Configuration aggregatePluginConfiguration = calculateAggregateConfiguration(pluginConfigurationDefinition,
-            compatibleGroup);
-
-        return aggregatePluginConfiguration;
-    }
-
-    @SuppressWarnings("unchecked")
-    private Configuration calculateAggregateConfiguration(ConfigurationDefinition configurationDefinition,
-        ResourceGroup compatibleGroup) {
-        Configuration resultConfiguration = new Configuration();
-
-        Query query = entityManager
-            .createNamedQuery(Configuration.QUERY_GET_PLUGIN_CONFIG_UNIQUE_COUNT_BY_GROUP_AND_PROP_NAME);
-        query.setParameter("resourceGroupId", compatibleGroup.getId());
-        int groupSize = resourceGroupManager.getImplicitGroupMemberCount(compatibleGroup.getId());
-
-        for (String propertyName : configurationDefinition.getPropertyDefinitions().keySet()) {
-            // Skip properties that are not simples.
-            if (!(configurationDefinition.get(propertyName) instanceof PropertyDefinitionSimple))
-                continue;
-            query.setParameter("propertyName", propertyName);
-            List<Object[]> results = query.getResultList();
-            Object propertyValue;
-            if (results.size() == 1) {
-                Object[] identicalPropertyValueTuple = results.get(0);
-                if (((Long) identicalPropertyValueTuple[1]).intValue() == groupSize) {
-                    propertyValue = identicalPropertyValueTuple[0];
-                } else {
-                    propertyValue = AbstractAggregateConfigurationUpdate.MIXED_VALUES_MARKER;
-                }
-            } else {
-                propertyValue = AbstractAggregateConfigurationUpdate.MIXED_VALUES_MARKER;
-            }
-            PropertySimple property = new PropertySimple(propertyName, propertyValue);
-            resultConfiguration.put(property);
-        }
-
-        return resultConfiguration;
     }
 
     @SuppressWarnings("unchecked")

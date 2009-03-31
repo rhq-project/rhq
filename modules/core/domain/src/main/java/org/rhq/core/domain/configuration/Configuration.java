@@ -92,29 +92,19 @@ import org.jetbrains.annotations.NotNull;
  */
 @Entity(name = "Configuration")
 @NamedQueries( { //
-    @NamedQuery(name = Configuration.QUERY_GET_PLUGIN_CONFIG_UNIQUE_COUNT_BY_GROUP_AND_PROP_NAME, query = "" //
-        + "  SELECT ps.stringValue, count(ps) "//
-        + "    FROM ResourceGroup rg " //
-        + "    JOIN rg.implicitResources res " //
-        + "    JOIN res.pluginConfiguration rpc, PropertySimple ps " //
-        + "         WHERE ps.configuration = rpc " //
-        + "           AND ps.name = :propertyName " //
-        + "           AND rg.id = :resourceGroupId " //
-        + "           AND ps.stringValue IS NOT NULL " //
-        + "GROUP BY ps.stringValue"), //
-    @NamedQuery(name = Configuration.QUERY_GET_PLUGIN_CONFIG_BY_RESOURCE_ID, query = "" //
-        + "select r.pluginConfiguration from Resource r where r.id = :resourceId"),
+@NamedQuery(name = Configuration.QUERY_GET_PLUGIN_CONFIG_BY_RESOURCE_ID, query = "" //
+    + "select r.pluginConfiguration from Resource r where r.id = :resourceId"),
     @NamedQuery(name = Configuration.QUERY_GET_RESOURCE_CONFIG_BY_RESOURCE_ID, query = "" //
         + "select r.resourceConfiguration from Resource r where r.id = :resourceId"),
     @NamedQuery(name = Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID, query = "" //
         + "SELECT r.id, r.resourceConfiguration " //
         + "  FROM ResourceGroup rg " //
-        + "  JOIN rg.implicitResources r " //
+        + "  JOIN rg.explicitResources r " //
         + " WHERE rg.id = :resourceGroupId"),
     @NamedQuery(name = Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_ID, query = "" //
         + "SELECT r.id, r.pluginConfiguration " //
         + "  FROM ResourceGroup rg " //
-        + "  JOIN rg.implicitResources r " //
+        + "  JOIN rg.explicitResources r " //
         + " WHERE rg.id = :resourceGroupId"),
     @NamedQuery(name = Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_AGGREGATE_ID, query = "" //
         + "SELECT res.id, cu.configuration " //
@@ -137,7 +127,6 @@ import org.jetbrains.annotations.NotNull;
 public class Configuration implements Externalizable, Cloneable, AbstractPropertyMap {
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_GET_PLUGIN_CONFIG_UNIQUE_COUNT_BY_GROUP_AND_PROP_NAME = "Configuration.getPluginConfigUniqueCountByGroupAndPropertyName";
     public static final String QUERY_GET_PLUGIN_CONFIG_BY_RESOURCE_ID = "Configuration.getPluginConfigByResourceId";
     public static final String QUERY_GET_RESOURCE_CONFIG_BY_RESOURCE_ID = "Configuration.getResourceConfigByResourceId";
     public static final String QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID = "Configuration.getResourceConfigMapByGroupId";

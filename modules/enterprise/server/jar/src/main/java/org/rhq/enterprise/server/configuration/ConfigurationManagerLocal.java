@@ -378,8 +378,6 @@ public interface ConfigurationManagerLocal {
     int scheduleAggregatePluginConfigurationUpdate(Subject whoami, int compatibleGroupId,
         Map<Integer, Configuration> pluginConfigurationUpdate) throws SchedulerException, ConfigurationUpdateException;
 
-    Configuration getAggregatePluginConfigurationForCompatibleGroup(ResourceGroup group);
-
     PageList<AggregatePluginConfigurationUpdate> getAggregatePluginConfigurationUpdatesByGroupId(int groupId,
         PageControl pc);
 

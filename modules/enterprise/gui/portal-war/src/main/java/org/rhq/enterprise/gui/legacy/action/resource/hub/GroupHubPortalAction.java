@@ -213,7 +213,7 @@ public class GroupHubPortalAction extends BaseAction {
         if ((groupCategory == GroupCategory.COMPATIBLE) || (groupCategory == GroupCategory.MIXED)) {
             log.debug("getting compatible group list");
             groups = groupManager.getResourceGroupsFiltered(subject, groupCategory, resourceCategory, resourceType,
-                nameFilter, null, pageControl);
+                nameFilter, null, null, pageControl);
         } else {
             throw new RuntimeException("ResourceHub doesn't currently support " + groupCategory.toString()
                 + " groupCategory");

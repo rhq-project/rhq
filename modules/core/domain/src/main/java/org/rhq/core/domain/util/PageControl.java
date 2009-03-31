@@ -31,6 +31,7 @@ import java.util.List;
  * conditions to queries.
  *
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class PageControl implements Serializable, Cloneable {
     private static final long serialVersionUID = 1L;
@@ -179,6 +180,13 @@ public class PageControl implements Serializable, Cloneable {
         return orderingFields;
     }
 
+    public void truncateOrderingFields(int keepFieldCount) {
+        int removeCount = orderingFields.size() - keepFieldCount;
+        for (int i = 0; i < removeCount; i++) {
+            orderingFields.removeLast();
+        }
+    }
+
     public void sortBy(String sortField) {
         boolean wasAlreadySortedOn = false;
 
@@ -221,12 +229,10 @@ public class PageControl implements Serializable, Cloneable {
         return pageNumber * pageSize;
     }
 
-    public void reset(boolean keepOrderingFields) {
+    public void reset() {
         setPageNumber(0);
         setPageSize(15);
-        if (keepOrderingFields == false) {
-            this.orderingFields = new LinkedList<OrderingField>();
-        }
+        this.orderingFields = new LinkedList<OrderingField>();
     }
 
     @Override

@@ -324,6 +324,7 @@ A.ListHeaderLink:hover {
     border-width: 1px;
     text-align: center;
     vertical-align: middle;
+    white-space: nowrap;
 }
 
 .ListCellCheckboxSelected {
@@ -2024,8 +2025,9 @@ ul.radio-group .unspecified {
 }
 
 .resource-availability-cell {
-    width: 65px;
+    width: 100px;
     text-align: center;
+    white-space: nowrap;
 }
 
 .resources-control-cell {

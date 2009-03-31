@@ -55,6 +55,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Heiko W. Rupp
  */
+@Deprecated
+/*
+ * NOTE: this class was only used on group graph pages, which has been replaced by JSF implementation;
+ *       if this file is ever resurrected, logic below needs to be consistent with the latest UI functionality
+ */
 public class ListChildrenAction extends TilesAction {
     private Log log = LogFactory.getLog(ListChildrenAction.class);
 

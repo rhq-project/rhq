@@ -65,10 +65,11 @@ import org.rhq.core.domain.resource.ResourceType;
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_FILTERED_COUNT, query = "SELECT count(DISTINCT g) "
         + "FROM ResourceGroup g JOIN g.roles r JOIN r.subjects s " //
         + "LEFT JOIN g.resourceType type " //
-        + "LEFT JOIN g.implicitResources res " //
+        + "LEFT JOIN g.implicitResources res " // used for inventory>overview "member in groups" section, authz-related
         + "WHERE s = :subject " //
         + " AND g.visible = true "
         + " AND ( res.id = :resourceId OR :resourceId is null ) "
+        + " AND ( g.id = :groupId OR :groupId is null ) "
         + " AND ( g.groupCategory = :groupCategory OR :groupCategory is null ) " //
         + " AND (UPPER(g.name) LIKE :search " //
         + " OR UPPER(g.description) LIKE :search " //
@@ -79,10 +80,11 @@ import org.rhq.core.domain.resource.ResourceType;
         + "    OR (:resourceType is null AND :category is null )     ) ) "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_FILTERED_COUNT_ADMIN, query = "SELECT count(DISTINCT g) FROM ResourceGroup g "
         + "LEFT JOIN g.resourceType type "
-        + "LEFT JOIN g.implicitResources res "
+        + "LEFT JOIN g.implicitResources res " // used for inventory>overview "member in groups" section, authz-related
         + "WHERE ( g.groupCategory = :groupCategory OR :groupCategory is null ) "
         + " AND g.visible = true "
         + " AND ( res.id = :resourceId OR :resourceId is null ) "
+        + " AND ( g.id = :groupId OR :groupId is null ) "
         + " AND (UPPER(g.name) LIKE :search "
         + " OR UPPER(g.description) LIKE :search "
         + " OR :search is null) "
@@ -97,11 +99,6 @@ import org.rhq.core.domain.resource.ResourceType;
 
     @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_COUNT_admin, query = "SELECT COUNT(rg) "
         + "  FROM ResourceGroup AS rg " + " WHERE rg.groupCategory = :category " + " AND rg.visible = true "),
-
-    // finds all the groups that the given resource belongs to
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_GROUP_IDS_BY_RESOURCE_ID, query = "SELECT DISTINCT g.id "
-        + "  FROM ResourceGroup g " + "       LEFT JOIN g.explicitResources er "
-        + "       LEFT JOIN g.implicitResources ir " + " WHERE er.id = :id " + "    OR ir.id = :id "),
 
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_NAME, query = "SELECT rg FROM ResourceGroup AS rg WHERE LOWER(rg.name) = LOWER(:name)"),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY, query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.clusterKey = :clusterKey"),
@@ -129,7 +126,7 @@ import org.rhq.core.domain.resource.ResourceType;
     *
     * We need all dups here
     */
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT rg FROM Resource AS res JOIN res.implicitGroups rg WHERE res.id = :id "),
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_IMPLICIT_BY_RESOURCE_ID, query = "SELECT rg FROM Resource AS res JOIN res.implicitGroups rg WHERE res.id = :id "),
 
     /* the following two are for auto-groups summary */
     @NamedQuery(name = ResourceGroup.QUERY_FIND_AUTOGROUP_BY_ID, query = "SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(AVG(a.availabilityType), res.parentResource, res.resourceType, COUNT(res)) "
@@ -139,11 +136,8 @@ import org.rhq.core.domain.resource.ResourceType;
         + "FROM Resource res JOIN res.currentAvailability a "
         + "WHERE res.id = :resourceId "
         + "GROUP BY res.resourceType "),
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_GROUP_COMPOSITE_BY_ID, query = "SELECT new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite(AVG(a.availabilityType), g, COUNT(res)) "
-        + "FROM ResourceGroup g LEFT JOIN g.implicitResources res LEFT JOIN res.currentAvailability a "
-        + "WHERE g.id = :groupId " + "GROUP BY g "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_RESOURCE_NAMES_BY_GROUP_ID, query = "SELECT new org.rhq.core.domain.common.composite.IntegerOptionItem(res.id, res.name) "
-        + "  FROM ResourceGroup g " + "  JOIN g.implicitResources res " + " WHERE g.id = :groupId "),
+        + "  FROM ResourceGroup g " + "  JOIN g.explicitResources res " + " WHERE g.id = :groupId "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_GROUP_DEFINITION_AND_EXPRESSION, query = "SELECT g "
         + "  FROM ResourceGroup g " + " WHERE (g.groupByClause = :groupByClause OR :groupByClause IS NULL) "
         + "   AND g.groupDefinition.id = :groupDefinitionId ") })
@@ -155,7 +149,6 @@ public class ResourceGroup extends Group {
     public static final String QUERY_FIND_ALL_BY_CATEGORY_COUNT = "ResourceGroup.findAllByCategory_Count";
     public static final String QUERY_FIND_ALL_BY_CATEGORY_COUNT_admin = "ResourceGroup.findAllByCategory_Count_admin";
 
-    public static final String QUERY_FIND_GROUP_IDS_BY_RESOURCE_ID = "ResourceGroup.findGroupIdsByResourceId";
     public static final String QUERY_FIND_BY_NAME = "ResourceGroup.findByName";
     public static final String QUERY_FIND_BY_CLUSTER_KEY = "ResourceGroup.findByClusterKey";
     public static final String QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE_WITH_EXCLUDES = "ResourceGroup.getAvailableResourceGroupsForRoleWithExcludes";
@@ -163,12 +156,10 @@ public class ResourceGroup extends Group {
     public static final String QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE = "ResourceGroup.getResourceGroupsAssignedToRole";
     public static final String QUERY_FIND_BY_IDS_admin = "ResourceGroup.findByIds_admin";
     public static final String QUERY_FIND_BY_IDS = "ResourceGroup.findByIds";
-    public static final String QUERY_FIND_BY_RESOURCE_ID = "ResourceGroup.findByResourceId";
+    public static final String QUERY_FIND_IMPLICIT_BY_RESOURCE_ID = "ResourceGroup.findImplicitByResourceId";
 
     public static final String QUERY_FIND_AUTOGROUP_BY_ID = "ResourceGroup.findAutoGroupById";
     public static final String QUERY_FIND_AUTOGROUP_BY_ID_ADMIN = "ResourceGroup.findAutoGroupById_admin";
-
-    public static final String QUERY_FIND_GROUP_COMPOSITE_BY_ID = "ResourceGroup.findGroupCompositeById";
 
     public static final String QUERY_FIND_RESOURCE_NAMES_BY_GROUP_ID = "ResourceGroup.findResourceNamesByGroupId";
     public static final String QUERY_FIND_BY_GROUP_DEFINITION_AND_EXPRESSION = "ResourceGroup.findByGroupDefinitionAndExpression";
@@ -179,6 +170,24 @@ public class ResourceGroup extends Group {
     public static final String QUERY_FIND_ALL_FILTERED_COUNT_ADMIN = "ResourceGroup.findAllFiltered_Count_Admin";
     public static final String QUERY_NATIVE_FIND_FILTERED_MEMBER = "" //
         + "         SELECT "
+        + "              (     SELECT COUNT(eresAvail.ID) "
+        + "                      FROM rhq_resource_avail eresAvail "
+        + "                INNER JOIN rhq_resource eres "
+        + "                        ON eresAvail.resource_id = eres.id "
+        + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
+        + "                        ON eres.id = expMap.resource_id "
+        + "                     WHERE expMap.resource_group_id = rg.id "
+        + "              ) as explicitCount, "
+        + "" //
+        + "              (     SELECT AVG(eresAvail.availability_type) "
+        + "                      FROM rhq_resource_avail eresAvail "
+        + "                INNER JOIN rhq_resource eres "
+        + "                        ON eresAvail.resource_id = eres.id "
+        + "                INNER JOIN rhq_resource_group_res_exp_map expMap "
+        + "                        ON eres.id = expMap.resource_id "
+        + "                     WHERE expMap.resource_group_id = rg.id "
+        + "              ) as explicitAvail, "
+        + "" //
         + "              (     SELECT COUNT(iresAvail.ID) "
         + "                      FROM rhq_resource_avail iresAvail "
         + "                INNER JOIN rhq_resource ires "
@@ -186,19 +195,18 @@ public class ResourceGroup extends Group {
         + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
         + "                        ON ires.id = impMap.resource_id "
         + "                     WHERE impMap.resource_group_id = rg.id "
-        + "                       AND iresAvail.availability_type = 1 "
-        + "              ) as upAvail, "
-        + "              (     SELECT COUNT(iresAvail.ID) "
+        + "              ) as implicitCount, "
+        + "" //
+        + "              (     SELECT AVG(iresAvail.availability_type) "
         + "                      FROM rhq_resource_avail iresAvail "
         + "                INNER JOIN rhq_resource ires "
         + "                        ON iresAvail.resource_id = ires.id "
         + "                INNER JOIN rhq_resource_group_res_imp_map impMap "
         + "                        ON ires.id = impMap.resource_id "
         + "                     WHERE impMap.resource_group_id = rg.id "
-        + "                       AND iresAvail.availability_type = 0 "
-        + "              ) as downAvail, "
-        + "                rg.id as groupId, "
-        + "                COUNT(res.id) as groupSize "
+        + "              ) as implicitAvail, "
+        + "" //
+        + "                rg.id as groupId "
         + "           FROM rhq_resource_group rg "
         + "LEFT OUTER JOIN rhq_resource_type resType "
         + "             ON rg.resource_type_id = resType.id "
@@ -209,7 +217,7 @@ public class ResourceGroup extends Group {
         + "                %SECURITY_FRAGMENT_JOIN%"
         + "LEFT OUTER JOIN rhq_resource_avail resAvail "
         + "             ON res.id = resAvail.resource_id "
-        + "          WHERE ( rg.visible = %IS_VISIBLE% ) " // postgres uses true/false, oracle uses 1/0
+        + "          WHERE %GROUP_AND_VISIBILITY_FRAGMENT_WHERE% " // postgres uses true/false, oracle uses 1/0
         + "                %RESOURCE_FRAGMENT_WHERE% " //
         + "            AND ( ? IS NULL " // :search
         + "                  OR UPPER(rg.name) LIKE ? " // :search
@@ -232,7 +240,7 @@ public class ResourceGroup extends Group {
         + " AND ( subjectMap.subject_id = ? ) "; // :subjectId
 
     public static final String QUERY_NATIVE_FIND_FILTERED_MEMBER_RESOURCE_FRAGMENT_WHERE = "" //
-        + " AND ( res.id = ? ) "; // resourceId 
+        + " AND ( res.id = ? ) "; // resourceId
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
@@ -463,11 +471,11 @@ public class ResourceGroup extends Group {
         this.visible = visible;
     }
 
-    public List<ResourceGroup> getclusterBackingGroups() {
+    public List<ResourceGroup> getClusterBackingGroups() {
         return clusterBackingGroups;
     }
 
-    public void setclusterBackingGroups(List<ResourceGroup> clusterBackingGroups) {
+    public void setClusterBackingGroups(List<ResourceGroup> clusterBackingGroups) {
         this.clusterBackingGroups = clusterBackingGroups;
     }
 

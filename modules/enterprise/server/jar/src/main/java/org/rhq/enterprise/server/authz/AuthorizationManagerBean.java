@@ -22,11 +22,13 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+
 import javax.ejb.Stateless;
 import javax.interceptor.ExcludeDefaultInterceptors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Permission.Target;
@@ -98,7 +100,6 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return permissions;
     }
 
-    @SuppressWarnings("unchecked")
     public boolean hasGlobalPermission(Subject subject, Permission permission) {
         if (isOverlord(subject)) {
             return true;
@@ -111,7 +112,6 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return (count != 0);
     }
 
-    @SuppressWarnings("unchecked")
     public boolean hasGroupPermission(Subject subject, Permission permission, int groupId) {
         if (isInventoryManager(subject)) {
             return true;
@@ -125,7 +125,6 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return (count != 0);
     }
 
-    @SuppressWarnings("unchecked")
     public boolean hasResourcePermission(Subject subject, Permission permission, int resourceId) {
         if (isInventoryManager(subject)) {
             return true;

@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.resource;
 
 import java.io.Externalizable;
@@ -145,7 +145,7 @@ import org.rhq.core.domain.operation.OperationDefinition;
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_RESOURCE_GROUP + "_admin", query = "SELECT DISTINCT rg.resourceType "
         + "FROM ResourceGroup AS rg "),
     @NamedQuery(name = ResourceType.QUERY_GET_RESOURCE_TYPE_COUNTS_BY_GROUP, query = "SELECT type.id, type.name, COUNT(type.id) "
-        + "FROM ResourceGroup rg JOIN rg.implicitResources res JOIN res.resourceType type "
+        + "FROM ResourceGroup rg JOIN rg.explicitResources res JOIN res.resourceType type "
         + "WHERE rg.id = :groupId "
         + "GROUP BY type.id, type.name "),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_SUBCATEGORY, query = "SELECT rt " + "FROM ResourceType rt "
@@ -336,9 +336,8 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         // Intentionally left blank
     }
 
-    public ResourceType(@NotNull
-    String name, @NotNull
-    String plugin, ResourceCategory category, ResourceType parentResourceType) {
+    public ResourceType(@NotNull String name, @NotNull String plugin, ResourceCategory category,
+        ResourceType parentResourceType) {
         // Do not mark category NotNull. we create just key versions of ResourceTypes to do equals comparisons without a category
 
         assert name != null;
@@ -376,8 +375,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return this.name;
     }
 
-    public void setName(@NotNull
-    String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 
@@ -386,8 +384,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return this.category;
     }
 
-    public void setCategory(@NotNull
-    ResourceCategory category) {
+    public void setCategory(@NotNull ResourceCategory category) {
         this.category = category;
     }
 
@@ -396,8 +393,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return creationDataType;
     }
 
-    public void setCreationDataType(@NotNull
-    ResourceCreationDataType creationDataType) {
+    public void setCreationDataType(@NotNull ResourceCreationDataType creationDataType) {
         if (creationDataType == null)
             throw new IllegalArgumentException("creationDataType cannot be null");
 
@@ -409,8 +405,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return createDeletePolicy;
     }
 
-    public void setCreateDeletePolicy(@NotNull
-    CreateDeletePolicy createDeletePolicy) {
+    public void setCreateDeletePolicy(@NotNull CreateDeletePolicy createDeletePolicy) {
         if (createDeletePolicy == null)
             throw new IllegalArgumentException("createDeletePolicy cannot be null");
 
@@ -478,8 +473,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return this.plugin;
     }
 
-    public void setPlugin(@NotNull
-    String plugin) {
+    public void setPlugin(@NotNull String plugin) {
         this.plugin = plugin;
     }
 
@@ -688,8 +682,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         return helpText;
     }
 
-    public void setHelpText(@Nullable
-    String helpText) {
+    public void setHelpText(@Nullable String helpText) {
         this.helpText = helpText;
     }
 

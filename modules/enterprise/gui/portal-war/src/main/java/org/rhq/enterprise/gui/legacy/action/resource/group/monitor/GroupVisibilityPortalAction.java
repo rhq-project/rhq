@@ -47,6 +47,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * A <code>BaseDispatchAction</code> that sets up compatible group monitor portals.
  */
+@Deprecated
+/*
+ * NOTE: this class was only used on group graph pages, which has been replaced by JSF implementation;
+ *       if this file is ever resurrected, logic below needs to be consistent with the latest UI functionality
+ */
 public class GroupVisibilityPortalAction extends GroupController {
     private static final String TITLE_CURRENT_HEALTH = "resource.group.monitor.visibility.CurrentHealthTitle";
 

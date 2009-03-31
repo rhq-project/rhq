@@ -266,23 +266,13 @@
          <display:column width="30%" property="resourceGroup.description"
                          title="common.header.Description" sortAttr="rg.description"/>
 
-         <display:column width="5%" property="upCount" title="common.header.UpCount" isLocalizedTitle="true"
+         <display:column width="10%" property="explicitFormatted" title="resource.common.monitor.visibility.ChildAvailabilityTH"
                          styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" valign="middle"
-                         sortAttr="upAvail"/>
+                         sortAttr="explicitAvail"/>
 
-         <display:column width="5%" property="downCount" title="common.header.DownCount" isLocalizedTitle="true"
+         <display:column width="10%" property="implicitFormatted" title="resource.common.monitor.visibility.DescendentAvailabilityTH"
                          styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" valign="middle"
-                         sortAttr="downAvail"/>
-
-         <display:column width="5%" property="memberCount" title="common.header.Members" isLocalizedTitle="true"
-                         styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" valign="middle"
-                         sortAttr="groupSize"/>
-
-         <display:column width="5%" property="availability" title="resource.common.monitor.visibility.AvailabilityTH"
-                         styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" valign="middle"
-                         sortAttr="AVG(resAvail.availability_type)">
-            <display:availabilitydecorator />
-         </display:column>
+                         sortAttr="implicitAvail"/>
 
       </display:table>
    <!-- / -->

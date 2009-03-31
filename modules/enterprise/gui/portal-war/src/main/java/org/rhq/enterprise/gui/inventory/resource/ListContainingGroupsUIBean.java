@@ -60,8 +60,8 @@ public class ListContainingGroupsUIBean extends PagedDataTableUIBean {
         @Override
         public PageList<ResourceGroupComposite> fetchPage(PageControl pageControl) {
             PageList<ResourceGroupComposite> resourceGroupComposites = this.resourceGroupManager
-                .getResourceGroupsFiltered(getSubject(), null, null, null, null, getResource().getId(), pageControl);
-            //.getResourceGroupsForResource(EnterpriseFacesContextUtility.getSubject(), resourceId, pageControl);
+                .getResourceGroupsFiltered(getSubject(), null, null, null, null, getResource().getId(), null,
+                    pageControl);
             return resourceGroupComposites;
         }
     }

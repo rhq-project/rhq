@@ -102,9 +102,8 @@ function changeDropDown (masterSelName, selName, selectVal){
     	
   if(typeIndex == 1) 
   {
-    // "Compatible Resources" has recursive disabled with nested options
-    document.getElementsByName("recursive")[0].disabled = true;
-    document.getElementsByName("recursive")[0].checked = false;
+    // "Compatible Resources" has recursive enabled with nested options
+    document.getElementsByName("recursive")[0].disabled = false;
     sel.style.display = "block";
   }
   

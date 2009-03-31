@@ -107,7 +107,7 @@ public interface ResourceGroupManagerLocal {
      * @return ResourceGroupComposite composite object with the ResourceGroup and availability, as well as the count of
      *         resources in the group
      */
-    ResourceGroupComposite getResourceGroupWithAvailabilityById(Subject subject, int groupId);
+    ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId);
 
     ResourceGroup findByGroupDefinitionAndGroupByClause(int groupDefinitionId, String groupByClause);
 
@@ -117,5 +117,5 @@ public interface ResourceGroupManagerLocal {
 
     PageList<ResourceGroupComposite> getResourceGroupsFiltered(Subject subject, GroupCategory groupCategory,
         ResourceCategory resourceCategory, ResourceType resourceType, String nameFilter, Integer resourceId,
-        PageControl pc);
+        Integer groupId, PageControl pc);
 }

@@ -226,14 +226,21 @@ public class ManagedComponentComponent extends AbstractManagedComponent
 
     private ManagedComponent getManagedComponent()
     {
+        ManagedComponent managedComponent;
         try {
             //ProfileServiceFactory.refreshCurrentProfileView();
             ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
-            return ProfileServiceFactory.getManagedComponent(managementView, this.componentType, this.componentName);
+            managedComponent = ProfileServiceFactory.getManagedComponent(managementView, this.componentType,
+                    this.componentName);
         }
         catch (Exception e) {
-            throw new RuntimeException("Failed to load ManagedComponent [" + this.componentName + "].", e);
+            throw new RuntimeException("Failed to load [" + this.componentType + "] ManagedComponent ["
+                    + this.componentName + "].", e);
         }
+        if (managedComponent == null)
+            throw new IllegalStateException("Failed to find [" + this.componentType + "] ManagedComponent named ["
+                    + this.componentName + "].");
+        return managedComponent;
     }
 
     private ManagedOperation getManagedOperation(OperationDefinition operationDefinition)

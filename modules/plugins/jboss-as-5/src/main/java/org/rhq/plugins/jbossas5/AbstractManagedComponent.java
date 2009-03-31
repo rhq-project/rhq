@@ -21,7 +21,6 @@ package org.rhq.plugins.jbossas5;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import org.jboss.managed.api.ManagedProperty;
 
@@ -38,12 +37,13 @@ import org.rhq.plugins.jbossas5.util.DebugUtils;
  * @author Ian Springer
  */
 public abstract class AbstractManagedComponent implements ConfigurationFacet {
-    private final Log log = LogFactory.getLog(this.getClass());
-
     private ResourceContext resourceContext;
+    private String resourceDescription;
 
     public void start(ResourceContext resourceContext) throws Exception {
         this.resourceContext = resourceContext;
+        this.resourceDescription = this.resourceContext.getResourceType()
+                    + " Resource with key [" + this.resourceContext.getResourceKey() + "]";
     }
 
     public void stop() {
@@ -58,7 +58,8 @@ public abstract class AbstractManagedComponent implements ConfigurationFacet {
             managedProperties = getManagedProperties();
         }
         catch (Exception e) {
-            throw new RuntimeException("Failed to load ManagedProperties.", e);
+            getLog().error("Failed to load underlying ManagedProperties for " + this.resourceDescription + ".", e);
+            throw new RuntimeException("Failed to load underlying ManagedProperties for" + this.resourceDescription + ".", e);
         }
         Map<String, PropertySimple> customProps =
                 ResourceComponentUtils.getCustomProperties(this.resourceContext.getPluginConfiguration());
@@ -89,8 +90,8 @@ public abstract class AbstractManagedComponent implements ConfigurationFacet {
         }
         catch (Exception e)
         {
-            log.error("Failed to update configuration for " + this.resourceContext.getResourceType()
-                    + " Resource with key [" + this.resourceContext.getResourceKey() + "].");
+
+            getLog().error("Failed to update configuration for " + this.resourceDescription + ".");
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
             configurationUpdateReport.setErrorMessageFromThrowable(e);
         }

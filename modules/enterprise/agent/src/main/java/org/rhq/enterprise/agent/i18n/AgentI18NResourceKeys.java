@@ -867,10 +867,10 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("version")
     String VERSION = "PromptCommand.version";
 
-    @I18NMessage("version [--sysprops[=name]] [--env[=name]]")
+    @I18NMessage("version [--sysprops[=name]] [--env[=name]] [--host]")
     String VERSION_SYNTAX = "PromptCommand.version.syntax";
 
-    @I18NMessage("Shows agent version information")
+    @I18NMessage("Shows information on agent version and agent environment")
     String VERSION_HELP = "PromptCommand.version.help";
 
     @I18NMessage("System Properties:")
@@ -878,6 +878,9 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("Environment Variables:")
     String VERSION_ENV_LABEL = "PromptCommand.version.env-label";
+
+    @I18NMessage("Host Information:")
+    String VERSION_HOST_LABEL = "PromptCommand.version.host-label";
 
     @I18NMessage("identify")
     String IDENTIFY = "PromptCommand.identify";

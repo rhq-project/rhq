@@ -18,15 +18,18 @@
  */
 package org.rhq.enterprise.agent.promptcmd;
 
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
+
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
 import mazz.i18n.Msg;
 
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.Version;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
@@ -59,9 +62,12 @@ public class VersionPromptCommand implements AgentPromptCommand {
             return true;
         }
 
-        String sopts = "s::e::";
+        String sopts = "hs::e::";
         LongOpt[] lopts = { new LongOpt("sysprops", LongOpt.OPTIONAL_ARGUMENT, null, 's'),
-            new LongOpt("env", LongOpt.OPTIONAL_ARGUMENT, null, 'e') };
+            new LongOpt("env", LongOpt.OPTIONAL_ARGUMENT, null, 'e'),
+            new LongOpt("host", LongOpt.NO_ARGUMENT, null, 'h') };
+
+        out.println(versionString);
 
         Getopt getopt = new Getopt(getPromptCommandString(), args, sopts, lopts);
         int code;
@@ -75,10 +81,24 @@ public class VersionPromptCommand implements AgentPromptCommand {
                 break;
             }
 
-            case 's': {
-                out.println(versionString);
-                out.println(MSG.getMsg(AgentI18NResourceKeys.VERSION_SYSPROPS_LABEL));
+            case 'h': {
                 out.println();
+                out.println(MSG.getMsg(AgentI18NResourceKeys.VERSION_HOST_LABEL));
+
+                try {
+                    InetAddress localhost = InetAddress.getLocalHost();
+                    String name = localhost.getCanonicalHostName();
+                    String ip = localhost.getHostAddress();
+                    out.println(name + '(' + ip + ')');
+                } catch (Exception e) {
+                    out.println(ThrowableUtil.getAllMessages(e));
+                }
+                break;
+            }
+
+            case 's': {
+                out.println();
+                out.println(MSG.getMsg(AgentI18NResourceKeys.VERSION_SYSPROPS_LABEL));
 
                 String opt = getopt.getOptarg();
 
@@ -92,9 +112,8 @@ public class VersionPromptCommand implements AgentPromptCommand {
             }
 
             case 'e': {
-                out.println(versionString);
-                out.println(MSG.getMsg(AgentI18NResourceKeys.VERSION_ENV_LABEL));
                 out.println();
+                out.println(MSG.getMsg(AgentI18NResourceKeys.VERSION_ENV_LABEL));
 
                 String opt = getopt.getOptarg();
 

@@ -30,7 +30,7 @@ package org.rhq.core.pluginapi.plugin;
  *
  * @author John Mazzitelli
  */
-public interface PluginOverseer {
+public interface PluginLifecycleListener {
     /**
      * When a plugin is being loaded, this method will be called.
      * When this is called, no plugin resource or discovery components have been instantiated

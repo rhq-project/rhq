@@ -135,7 +135,7 @@
                </xs:documentation>
             </xs:annotation>
          </xs:attribute>
-         <xs:attribute name="overseer" type="rhq:classNameType" use="optional">
+         <xs:attribute name="pluginLifecycleListener" type="rhq:classNameType" use="optional">
             <xs:annotation>
                <xs:documentation>
                   A class that performs global initialization and shutdown of the plugin. If specified,

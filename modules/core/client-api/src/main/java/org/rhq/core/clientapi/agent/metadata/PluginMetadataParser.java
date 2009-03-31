@@ -89,9 +89,9 @@ public class PluginMetadataParser {
         parseDescriptor();
     }
 
-    public String getPluginOverseerClass() {
+    public String getPluginLifecycleListenerClass() {
         String pkg = this.pluginDescriptor.getPackage();
-        String clazz = this.pluginDescriptor.getOverseer();
+        String clazz = this.pluginDescriptor.getPluginLifecycleListener();
         return getFullyQualifiedComponentClassName(pkg, clazz);
     }
 

@@ -3,7 +3,7 @@
 <plugin name="MySql"
         displayName="MySql Database"
         package="org.rhq.plugins.mysql"
-        overseer="MySqlPluginOverseer"
+        pluginLifecycleListener="MySqlPluginLifecycleListener"
         description="Management and monitoring of MySql versions 8.2 and higher"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"

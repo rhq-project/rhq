@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.plugins.oracle;
+package org.rhq.plugins.mysql;
 
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -26,11 +26,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.pluginapi.plugin.PluginContext;
-import org.rhq.core.pluginapi.plugin.PluginOverseer;
+import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
 import org.rhq.core.util.exception.ThrowableUtil;
 
-public class OraclePluginOverseer implements PluginOverseer {
-    private final Log log = LogFactory.getLog(OraclePluginOverseer.class);
+public class MySqlPluginLifecycleListener implements PluginLifecycleListener {
+    private final Log log = LogFactory.getLog(MySqlPluginLifecycleListener.class);
 
     public void initialize(PluginContext context) throws Exception {
         // no-op

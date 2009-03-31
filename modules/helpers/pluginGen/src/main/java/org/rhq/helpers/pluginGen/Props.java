@@ -64,8 +64,8 @@ public class Props {
     private boolean usesExternalJarsInPlugin;
     /** Does it support manuall add of children ? */
     private boolean manualAddOfChildren;
-    /** Does it use the overseer api ? */
-    private boolean useOverseerApi;
+    /** Does it use the PluginLifecycleListener api ? */
+    private boolean usePluginLifecycleListenerApi;
 
     /** Embedded children */
     private Set<Props> children = new HashSet<Props>();
@@ -222,12 +222,12 @@ public class Props {
         return this.pkg;
     }
 
-    public boolean isUseOverseerApi() {
-        return useOverseerApi;
+    public boolean isUsePluginLifecycleListenerApi() {
+        return usePluginLifecycleListenerApi;
     }
 
-    public void setUseOverseerApi(boolean useOverseerApi) {
-        this.useOverseerApi = useOverseerApi;
+    public void setUsePluginLifecycleListenerApi(boolean usePluginLifecycleListenerApi) {
+        this.usePluginLifecycleListenerApi = usePluginLifecycleListenerApi;
     }
 
     @Override
@@ -252,7 +252,7 @@ public class Props {
         sb.append(", deleteChildren=").append(deleteChildren);
         sb.append(", usesExternalJarsInPlugin=").append(usesExternalJarsInPlugin);
         sb.append(", manualAddOfChildren=").append(manualAddOfChildren);
-        sb.append(", useOverseerApi=").append(useOverseerApi);
+        sb.append(", usePluginLifecycleListenerApi=").append(usePluginLifecycleListenerApi);
         sb.append(", children=").append(children);
         sb.append('}');
         return sb.toString();

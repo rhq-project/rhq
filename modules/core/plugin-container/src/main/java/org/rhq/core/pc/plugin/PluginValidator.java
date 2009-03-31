@@ -42,7 +42,7 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
-import org.rhq.core.pluginapi.plugin.PluginOverseer;
+import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
 
 /**
  * A utility to test a set of plugins are valid.
@@ -211,23 +211,23 @@ public class PluginValidator {
                     }
                 }
 
-                String overseerClass = mm.getPluginOverseerClass(resourceType.getPlugin());
+                String overseerClass = mm.getPluginLifecycleListenerClass(resourceType.getPlugin());
                 if (overseerClass != null) {
                     try {
                         Class overseerClazz = Class.forName(overseerClass, false, pluginEnvironment
                             .getPluginClassLoader());
 
                         if (overseerClazz != null) {
-                            if (!PluginOverseer.class.isAssignableFrom(overseerClazz)) {
+                            if (!PluginLifecycleListener.class.isAssignableFrom(overseerClazz)) {
                                 success = false;
-                                LOG.error("Overseer class [" + overseerClass + "] for plugin ["
+                                LOG.error("Plugin Lifecycle Listener class [" + overseerClass + "] for plugin ["
                                     + resourceType.getPlugin() + "] does not implement "
-                                    + PluginOverseer.class.toString());
+                                    + PluginLifecycleListener.class.toString());
                             }
                         }
                     } catch (Exception e) {
                         success = false;
-                        LOG.error("Cannot find overseer class [" + overseerClass + "] for plugin ["
+                        LOG.error("Cannot find Plugin Lifecycle Listener class [" + overseerClass + "] for plugin ["
                             + resourceType.getPlugin() + "]");
                     }
                 }

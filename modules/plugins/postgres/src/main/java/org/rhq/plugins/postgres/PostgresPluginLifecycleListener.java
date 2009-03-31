@@ -26,11 +26,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.pluginapi.plugin.PluginContext;
-import org.rhq.core.pluginapi.plugin.PluginOverseer;
+import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
 import org.rhq.core.util.exception.ThrowableUtil;
 
-public class PostgresPluginOverseer implements PluginOverseer {
-    private final Log log = LogFactory.getLog(PostgresPluginOverseer.class);
+public class PostgresPluginLifecycleListener implements PluginLifecycleListener {
+    private final Log log = LogFactory.getLog(PostgresPluginLifecycleListener.class);
 
     public void initialize(PluginContext context) throws Exception {
         // no-op

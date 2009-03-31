@@ -44,7 +44,7 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pluginapi.plugin.PluginContext;
-import org.rhq.core.pluginapi.plugin.PluginOverseer;
+import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -74,9 +74,9 @@ public class PluginManager implements ContainerService {
 
     /**
      * Cached instances of objects used to initialize and shutdown individual plugins.
-     * Only plugins that declare their own overseers will have objects in this cache.
+     * Only plugins that declare their own lifecycle listener will have objects in this cache.
      */
-    private Map<String, PluginOverseer> pluginOverseerCache;
+    private Map<String, PluginLifecycleListener> pluginLifecycleListenerCache;
 
     private PluginMetadataManager metadataManager;
     private PluginContainerConfiguration configuration;
@@ -91,7 +91,7 @@ public class PluginManager implements ContainerService {
     public void initialize() {
         loadedPluginEnvironments = new HashMap<String, PluginEnvironment>();
         loadedPlugins = new ArrayList<String>();
-        pluginOverseerCache = new HashMap<String, PluginOverseer>();
+        pluginLifecycleListenerCache = new HashMap<String, PluginLifecycleListener>();
         metadataManager = new PluginMetadataManager();
 
         PluginFinder finder = configuration.getPluginFinder();
@@ -195,19 +195,19 @@ public class PluginManager implements ContainerService {
         // We want to shut them down in the reverse order that we initialized them.
         Collections.reverse(this.loadedPlugins);
         for (String pluginName : this.loadedPlugins) {
-            PluginOverseer overseer = this.pluginOverseerCache.get(pluginName);
-            if (overseer != null) {
+            PluginLifecycleListener listener = this.pluginLifecycleListenerCache.get(pluginName);
+            if (listener != null) {
                 try {
                     ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
                     Thread.currentThread().setContextClassLoader(
                         this.loadedPluginEnvironments.get(pluginName).getPluginClassLoader());
                     try {
-                        overseer.shutdown();
+                        listener.shutdown();
                     } finally {
                         Thread.currentThread().setContextClassLoader(originalCL);
                     }
                 } catch (Throwable t) {
-                    log.warn("Failed to get overseer to shutdown [" + pluginName + "]. Cause: "
+                    log.warn("Failed to get lifecycle listener to shutdown [" + pluginName + "]. Cause: "
                         + ThrowableUtil.getAllMessages(t));
                 }
             }
@@ -224,8 +224,8 @@ public class PluginManager implements ContainerService {
         this.loadedPlugins.clear();
         this.loadedPlugins = null;
 
-        this.pluginOverseerCache.clear();
-        this.pluginOverseerCache = null;
+        this.pluginLifecycleListenerCache.clear();
+        this.pluginLifecycleListenerCache = null;
 
         this.metadataManager = null;
     }
@@ -292,7 +292,7 @@ public class PluginManager implements ContainerService {
         String pluginName = pluginEnvironment.getPluginName();
 
         // tell the plugin we have loaded it
-        PluginOverseer overseer = getPluginOverseer(pluginName, pluginEnvironment, pluginDescriptor);
+        PluginLifecycleListener overseer = getPluginLifecycleListener(pluginName, pluginEnvironment, pluginDescriptor);
         if (overseer != null) {
             PluginContext context = createPluginContext(pluginName);
             ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
@@ -300,11 +300,11 @@ public class PluginManager implements ContainerService {
             try {
                 overseer.initialize(context);
             } catch (Throwable t) {
-                throw new PluginContainerException("Overseer failed to initialize plugin", t);
+                throw new PluginContainerException("Plugin Lifecycle Listener failed to initialize plugin", t);
             } finally {
                 Thread.currentThread().setContextClassLoader(originalCL);
             }
-            this.pluginOverseerCache.put(pluginName, overseer);
+            this.pluginLifecycleListenerCache.put(pluginName, overseer);
         }
 
         // everything is loaded and initialized
@@ -316,41 +316,41 @@ public class PluginManager implements ContainerService {
     }
 
     /**
-     * This will create a new {@link PluginOverseer} instance for that is used to
-     * initialize and shutdown a particular plugin. If there is no plugin overseer
+     * This will create a new {@link PluginLifecycleListener} instance for that is used to
+     * initialize and shutdown a particular plugin. If there is no plugin lifecycle listener
      * configured for the given plugin, <code>null</code> is returned.
      *
      * The new object will be loaded in the plugin's specific classloader.
      *
-     * @param pluginName the name of the plugin whose {@link PluginOverseer} is to be retrieved
+     * @param pluginName the name of the plugin whose {@link PluginLifecycleListener} is to be retrieved
      * @param pluginEnvironment the environment in which the plugin will execute
      * @param pluginDescriptor the plugin's descriptor
      *
      * @return a new object loaded in the proper plugin classloader that can initialize/shutdown the plugin,
-     *         or <code>null</code> if there is no plugin overseer to be associated with the given plugin
+     *         or <code>null</code> if there is no plugin lifecycle listener to be associated with the given plugin
      *
      * @throws PluginContainerException if failed to create the instance
      */
-    private PluginOverseer getPluginOverseer(String pluginName, PluginEnvironment pluginEnvironment,
+    private PluginLifecycleListener getPluginLifecycleListener(String pluginName, PluginEnvironment pluginEnvironment,
         PluginDescriptor pluginDescriptor) throws PluginContainerException {
 
-        PluginOverseer instance = pluginOverseerCache.get(pluginName);
+        PluginLifecycleListener instance = pluginLifecycleListenerCache.get(pluginName);
 
         if (instance == null) {
-            String className = getPluginOverseerClass(pluginDescriptor);
+            String className = getPluginLifecycleListenerClass(pluginDescriptor);
 
             if (className != null) {
-                log.debug("Creating plugin overseer [" + className + "] for plugin [" + pluginName + "]");
-                instance = (PluginOverseer) instantiateClass(pluginEnvironment, className);
-                log.debug("Created plugin overseer [" + className + "] for plugin [" + pluginName + "]");
+                log.debug("Creating plugin lifecycle listener [" + className + "] for plugin [" + pluginName + "]");
+                instance = (PluginLifecycleListener) instantiateClass(pluginEnvironment, className);
+                log.debug("Created plugin lifecycle listener [" + className + "] for plugin [" + pluginName + "]");
             }
         }
 
         return instance;
     }
 
-    private String getPluginOverseerClass(PluginDescriptor pluginDescriptor) {
-        String className = pluginDescriptor.getOverseer();
+    private String getPluginLifecycleListenerClass(PluginDescriptor pluginDescriptor) {
+        String className = pluginDescriptor.getPluginLifecycleListener();
         if (className != null) {
             String pkg = pluginDescriptor.getPackage();
             if ((className.indexOf('.') == -1) && (pkg != null)) {

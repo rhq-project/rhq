@@ -64,7 +64,7 @@ public class PluginGen {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
         Props props = askQuestions(br, new Props());
-        if (props==null) {
+        if (props == null) {
             // abort by user
             return;
         }
@@ -80,7 +80,7 @@ public class PluginGen {
                 done = true;
             else {
                 Props child = askQuestions(br, props);
-                if (child==null) {
+                if (child == null) {
                     // abort by user
                     return;
                 }
@@ -165,7 +165,7 @@ public class PluginGen {
                 props.setParentType(caps(parentProps.getComponentClass()));
             } else if (name.equals("UsesExternalJarsInPlugin") && parentProps.getName() != null) {
                 // Skip this one on children
-            } else if (name.equals("UseOverseerApi") && parentProps.getName() != null) {
+            } else if (name.equals("UsePluginLifecycleListenerApi") && parentProps.getName() != null) {
                 // Skip this one on children
             } else if (name.equals("Pkg")) {
                 // Always skip this - we postprocess it
@@ -181,7 +181,7 @@ public class PluginGen {
                 }
 
                 answer = br.readLine();
-                if (answer==null) {
+                if (answer == null) {
                     System.out.println("EOL .. aborting");
                     return null;
                 }
@@ -194,7 +194,8 @@ public class PluginGen {
                     setter = Props.class.getMethod(setterName, String.class);
 
                 if (isBool) {
-                    if (answer.toLowerCase(Locale.getDefault()).startsWith("y") || answer.toLowerCase(Locale.getDefault()).startsWith("j")) {
+                    if (answer.toLowerCase(Locale.getDefault()).startsWith("y")
+                        || answer.toLowerCase(Locale.getDefault()).startsWith("j")) {
                         setter.invoke(props, true);
                     }
                 } else {

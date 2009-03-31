@@ -4,7 +4,7 @@
         displayName="Abstract Database"
         description="Abstract plugin supporting concrete database plugins"
         package="org.rhq.plugins.database"
-        overseer="DatabasePluginOverseer"
+        pluginLifecycleListener="DatabasePluginLifecycleListener"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin">
 </plugin>

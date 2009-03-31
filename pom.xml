@@ -40,7 +40,7 @@
     <scm.module.path />
 
     <doUpdate>false</doUpdate>
-    
+
     <java5.home>${java.home}</java5.home>
 
     <!-- dependency versions -->
@@ -65,7 +65,7 @@
     <!-- misc properties -->
     <server.quartzDelegate>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</server.quartzDelegate>
 
-    <!-- defaults for datasource used by dbsetup, unit+integration tests, and dev container build - 
+    <!-- defaults for datasource used by dbsetup, unit+integration tests, and dev container build -
          these may be overridden in ~/.m2/settings.xml -->
     <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhq</rhq.test.ds.connection-url>
     <rhq.test.ds.driver-class>org.postgresql.Driver</rhq.test.ds.driver-class>
@@ -81,7 +81,7 @@
      <!-- default port numbers for RHQ server -->
     <rhq.server.http.port>7080</rhq.server.http.port>
     <rhq.server.https.port>7443</rhq.server.https.port>
-    
+
     <rhq.server.enable.ws>false</rhq.server.enable.ws>
 
     <!-- NOTE: The below line is a workaround for a Maven bug, where it does not expand settings.* properties
@@ -90,15 +90,15 @@
   </properties>
 
   <dependencyManagement>
-  
+
     <dependencies>
 
       <dependency>
         <groupId>commons-logging</groupId>
         <artifactId>commons-logging</artifactId>
-        <version>${commons-logging.version}</version>      
+        <version>${commons-logging.version}</version>
       </dependency>
-    
+
       <!-- GNU GetOpt (any modules that need to do command-line argument parsing should use this) -->
       <dependency>
         <groupId>gnu-getopt</groupId>
@@ -214,7 +214,7 @@
 
     <dependency>
       <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>      
+      <artifactId>commons-logging</artifactId>
       <scope>provided</scope>
     </dependency>
 
@@ -230,7 +230,7 @@
        <artifactId>jaxb-api</artifactId>
        <scope>provided</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
@@ -265,7 +265,7 @@
          <plugin>
            <artifactId>maven-antrun-plugin</artifactId>
            <version>1.3</version>
-         </plugin>       
+         </plugin>
          <plugin>
            <artifactId>maven-assembly-plugin</artifactId>
            <version>2.2-beta-2</version>
@@ -318,13 +318,13 @@
            <artifactId>maven-rar-plugin</artifactId>
            <version>2.2</version>
          </plugin>
-         <plugin>                
+         <plugin>
            <artifactId>maven-release-plugin</artifactId>
-           <!-- NOTE: If http://jira.codehaus.org/browse/MRELEASE-300 resurfaces, 
+           <!-- NOTE: If http://jira.codehaus.org/browse/MRELEASE-300 resurfaces,
                       it may be necessary to rollback to 2.0-beta-6. -->
            <version>2.0-beta-8</version>
          </plugin>
-         <plugin>                
+         <plugin>
            <artifactId>maven-resources-plugin</artifactId>
            <version>2.2</version>
          </plugin>
@@ -335,7 +335,7 @@
          <plugin>
            <artifactId>maven-source-plugin</artifactId>
            <version>2.0.4</version>
-         </plugin>         
+         </plugin>
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <version>2.4.2</version>
@@ -344,14 +344,14 @@
            <artifactId>maven-war-plugin</artifactId>
            <version>2.1-alpha-1</version>
          </plugin>
-         <plugin>         
+         <plugin>
            <groupId>org.codehaus.mojo</groupId>
            <artifactId>buildnumber-maven-plugin</artifactId>
-           <version>1.0-beta-1</version>
+           <version>1.0-beta-2</version>
          </plugin>
        </plugins>
      </pluginManagement>
-     
+
     <plugins>
 
       <plugin>
@@ -369,7 +369,7 @@
           <archive>
             <manifest>
                <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>              
+               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
             </manifest>
             <manifestEntries>
                <Build-Number>${buildNumber}</Build-Number>
@@ -377,7 +377,7 @@
           </archive>
         </configuration>
       </plugin>
-        
+
       <plugin>
         <artifactId>maven-enforcer-plugin</artifactId>
         <executions>
@@ -394,7 +394,7 @@
                   <version>2.0</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>[1.5,1.8)</version> <!-- 1.5.x, 1.6.x, 1.7.x -->                  
+                  <version>[1.5,1.8)</version> <!-- 1.5.x, 1.6.x, 1.7.x -->
                 </requireJavaVersion>
               </rules>
             </configuration>
@@ -403,7 +403,7 @@
       </plugin>
 
       <plugin>
-        <artifactId>maven-release-plugin</artifactId>        
+        <artifactId>maven-release-plugin</artifactId>
         <configuration>
           <autoVersionSubmodules>true</autoVersionSubmodules>
           <updateDependencies>false</updateDependencies>
@@ -411,12 +411,12 @@
       </plugin>
 
       <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>        
+        <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <trimStackTrace>false</trimStackTrace>
         </configuration>
       </plugin>
-                    
+
       <plugin>
         <artifactId>maven-idea-plugin</artifactId>
         <version>2.1</version>
@@ -426,7 +426,7 @@
           <downloadSources>true</downloadSources>
         </configuration>
       </plugin>
-                  
+
     </plugins>
 
     <extensions>
@@ -437,14 +437,14 @@
         <artifactId>wagon-scm</artifactId>
         <version>1.0-beta-4</version>
       </extension>
-      
+
       <!-- Add support for dav URLs in the distributionManagement section. -->
       <extension>
         <groupId>org.apache.maven.wagon</groupId>
         <artifactId>wagon-webdav</artifactId>
         <version>1.0-beta-2</version>
-      </extension>    
-      
+      </extension>
+
     </extensions>
 
   </build>
@@ -473,7 +473,7 @@
 
   <distributionManagement>
     <repository>
-      <!-- Copy the distribution jar file to a local checkout of the JBoss repository. 
+      <!-- Copy the distribution jar file to a local checkout of the JBoss repository.
            This variable can be set in ~/.m2/settings.xml or $M2_HOME/conf/settings.xml. -->
       <id>repository.jboss.org</id>
       <url>file://${maven.repository.root}</url>
@@ -492,29 +492,29 @@
 
   <profiles>
 
-    <profile>      
+    <profile>
         <id>ojdbc-driver</id>
-         
+
         <dependencies>
             <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle.
                  Add a top level dependency if this profile is active to allow for db-required tests in any module.
                  The driver can not be packaged for OpenSource distributions due to licensing issues, and as such,
-                 this profile should not be active by default. -->            
+                 this profile should not be active by default. -->
             <dependency>
                 <groupId>ojdbc14</groupId>
                 <artifactId>ojdbc14</artifactId>
-                <version>${ojdbc14.version}</version>                  
+                <version>${ojdbc14.version}</version>
                 <scope>provided</scope>
-            </dependency>        
-            
+            </dependency>
+
             <dependency>
                 <groupId>com.oracle</groupId>
                 <artifactId>ojdbc5</artifactId>
-                <version>${ojdbc5.version}</version>                  
+                <version>${ojdbc5.version}</version>
                 <scope>provided</scope>
-            </dependency>                    
+            </dependency>
         </dependencies>
-    </profile>     
+    </profile>
 
     <profile>
      <id>dev</id>
@@ -528,7 +528,7 @@
       <plugins>
 
        <plugin>
-        <artifactId>maven-antrun-plugin</artifactId>        
+        <artifactId>maven-antrun-plugin</artifactId>
         <executions>
           <execution>
             <phase>validate</phase>
@@ -564,7 +564,7 @@
                <name>test.debug</name>
             </property>
          </activation>
-         
+
          <properties>
             <!-- See: http://maven.apache.org/plugins/maven-surefire-plugin/test-mojo.html#debugForkedProcess -->
             <maven.surefire.debug>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8797,server=y,suspend=y</maven.surefire.debug>
@@ -574,7 +574,7 @@
       <!-- Set the java5.home prop to a Java5 JRE dir to enforce that only Java5 APIs are used. -->
       <profile>
          <id>check-java-api</id>
-         
+
          <activation>
             <property>
                <name>java5.home</name>
@@ -582,19 +582,19 @@
          </activation>
 
          <build>
-           <plugins>         
+           <plugins>
               <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                   <compilerArguments>
                     <bootclasspath>${java5.home}/lib/rt.jar${path.separator}${java5.home}/lib/jsse.jar${path.separator}${java5.home}/lib/jce.jar</bootclasspath>
-                  </compilerArguments>          
+                  </compilerArguments>
                 </configuration>
               </plugin>
-            </plugins>  
-          </build>             
+            </plugins>
+          </build>
       </profile>
-            
+
       <!--  use buildnumber plugin only if SVN metadata is present -->
       <profile>
          <id>build-number-generation</id>
@@ -610,16 +610,14 @@
                   <artifactId>buildnumber-maven-plugin</artifactId>
                   <executions>
                      <execution>
-                        <phase>validate</phase>        
+                        <phase>validate</phase>
                         <goals>
                            <goal>create</goal>
                         </goals>
                      </execution>
                      </executions>
                      <configuration>
-                     <!--  use this when it becomes available      
                      <revisionOnScmFailure>0</revisionOnScmFailure>
-                     -->   
                      <doCheck>false</doCheck>
                      <doUpdate>false</doUpdate>
                   </configuration>
@@ -628,7 +626,10 @@
          </build>
       </profile>
 
-      <!-- If SVN meta data is not configured, set buildNumber to 0 -->      
+      <!-- If SVN meta data is not configured, set buildNumber to 0 -->
+      <!-- I think this can get removed - before buildnumber-maven-plugin 1.0-beta-2 -->
+      <!-- there was no <revisionOnScmFailure> option, so this was our custom solution. -->
+      <!--
       <profile>
          <id>build-number-provided</id>
          <activation>
@@ -636,12 +637,12 @@
                <missing>.svn</missing>
             </file>
          </activation>
-         
+
          <properties>
-            <buildNumber>0</buildNumber>         
+            <buildNumber>0</buildNumber>
          </properties>
       </profile>
-      
+      -->
   </profiles>
 
 </project>

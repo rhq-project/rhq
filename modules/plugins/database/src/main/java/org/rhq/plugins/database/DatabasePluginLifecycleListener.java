@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.plugins.mysql;
+package org.rhq.plugins.database;
 
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -26,11 +26,26 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.pluginapi.plugin.PluginContext;
-import org.rhq.core.pluginapi.plugin.PluginOverseer;
+import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
 import org.rhq.core.util.exception.ThrowableUtil;
 
-public class MySqlPluginOverseer implements PluginOverseer {
-    private final Log log = LogFactory.getLog(MySqlPluginOverseer.class);
+/**
+ * This is a plugin lifecycle listener object for database plugins. It is used to
+ * deregister any JDBC drivers that happened to have been
+ * cached by the plugin. This is needed to avoid leaking perm gen
+ * memory when a plugin's classloader is destroyed because
+ * java.sql.DriverManager will maintain references that prevent the
+ * plugin's classloader and its resources from being garbaged collected.
+ * 
+ * All database plugins should have their own class that does this but
+ * due to the odd way java.sql.DriverManager caches drivers, plugins that
+ * extend the database plugin cannot simply reuse or subclass this object.
+ *
+ * @author John Mazzitelli
+ */
+public class DatabasePluginLifecycleListener implements PluginLifecycleListener {
+
+    private final Log log = LogFactory.getLog(DatabasePluginLifecycleListener.class);
 
     public void initialize(PluginContext context) throws Exception {
         // no-op

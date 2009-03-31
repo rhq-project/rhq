@@ -60,9 +60,9 @@ import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 </#if>
-<#if props.useOverseerApi>
+<#if props.usePluginLifecycleListenerApi>
 import org.rhq.core.pluginapi.plugin.PluginContext;
-import org.rhq.core.pluginapi.plugin.PluginOverseer;
+import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
 </#if>
 
 
@@ -82,8 +82,8 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
 <#if props.deleteChildren>
 , DeleteResourceFacet
 </#if>
-<#if props.useOverseerApi>
-, PluginOverseer
+<#if props.usePluginLifecycleListenerApi>
+, PluginLifecycleListener
 </#if>
 {
     private final Log log = LogFactory.getLog(this.getClass());
@@ -97,10 +97,10 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
     EventContext eventContext;
     </#if>
 
-    <#if props.useOverseerApi>
+    <#if props.usePluginLifecycleListenerApi>
     /**
      * Callback when the plugin is created
-     * @see org.rhq.core.pluginapi.plugin.PluginOverseer#initialize(PluginContext)
+     * @see org.rhq.core.pluginapi.plugin.PluginLifecycleListener#initialize(PluginContext)
      */
     public void initialize(PluginContext context) throws Exception
     {
@@ -108,7 +108,7 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
 
     /**
      * Callback when the plugin is unloaded
-     * @see org.rhq.core.pluginapi.plugin.PluginOverseer#shutdown()
+     * @see org.rhq.core.pluginapi.plugin.PluginLifecycleListener#shutdown()
      */
     public void shutdown()
     {

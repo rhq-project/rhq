@@ -67,16 +67,16 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
     public static final String PROPERTY_CATALINA_HOME = "-Dcatalina.home=";
 
     /**
-     * Formal name used to identify the server.
+     * Formal name used to identify the server. Today we name all servers the same. 
      */
-    private static final String PRODUCT_NAME_EWS = "JBoss EWS Tomcat";
-    private static final String PRODUCT_NAME_APACHE = "Apache Tomcat";
+    private static final String PRODUCT_NAME_EWS = "Tomcat";
+    private static final String PRODUCT_NAME_APACHE = "Tomcat";
 
     /**
-     * Formal description of the product passed into discovered resources.
+     * Formal description of the product passed into discovered resources. Today we do not distinguish between EWS and Apache installs.
      */
-    private static final String PRODUCT_DESCRIPTION_EWS = "JBoss Enterprise Web Application Server";
-    private static final String PRODUCT_DESCRIPTION_APACHE = "Apache Tomcat Web Application Server";
+    private static final String PRODUCT_DESCRIPTION_EWS = "Tomcat Web Application Server";
+    private static final String PRODUCT_DESCRIPTION_APACHE = "Tomcat Web Application Server";
 
     /**
      * Patterns used to parse out the Tomcat server version from the version script output. For details on which of these
@@ -91,9 +91,19 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
     private static final Pattern TOMCAT_MANAGER_URL_PATTERN = Pattern.compile(".*//(.*):(\\d+)/.*");
 
     /** 
-     * EWS Install path pattern used to distinguish from standalone Apache Tomcat installs. Good up through a TC V9
+     * There is no real good way to distinguish an EWS install from an Apache install.  The default unzip
+     * directory structure for EWS will contain "ews" in the path.  But this can be changed.  For rpms the
+     * rpm itself has a slightly different format than the non-ews rpm. Since these mechanisms are weak
+     * we don't currently fork any behavior based on EWS vs Apache.
      */
-    private static final Pattern EWS_PATTERN = Pattern.compile(".*ews.*tomcat[5-9]");
+    private static final Pattern EWS_RPM_INSTALL_PATTERN = Pattern.compile("tomcat[5\\-5|6\\-6].*\\.ep5\\.*"); // untested
+    private static final Pattern EWS_ZIP_INSTALL_PATTERN = Pattern.compile(".*ews.*tomcat[5-9]");
+
+    /**
+     * EWS RPM Install path substrings used to identify EWS tomcat version
+     */
+    public static final String EWS_TOMCAT_6 = "tomcat6";
+    public static final String EWS_TOMCAT_5 = "tomcat5";
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> context) {
         log.debug("Discovering Tomcat servers...");
@@ -142,7 +152,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
      * Apache or EWS Tomcat instance return a resource ready to be returned as part of the discovery report.
      *
      * @param  context             discovery context making this call
-     * @param  autoDiscoveryResult process scan being parsed for an EWS resource
+     * @param  autoDiscoveryResult process scan being parsed for an tomcat resource
      *
      * @return resource object describing the Tomcat server running in the specified process
      */
@@ -271,9 +281,23 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
      * @return
      */
     private static boolean isEWS(String installationPath) {
-        boolean isEws = ((null != installationPath) && EWS_PATTERN.matcher(installationPath.toLowerCase()).matches());
+        boolean isEws = ((null != installationPath) && EWS_ZIP_INSTALL_PATTERN.matcher(installationPath.toLowerCase())
+            .matches());
+
+        if (!isEws) {
+            // TODO Check for rpm name to distinguish EWS rpm from standard apache rpm.  Note - this isn't necessary until
+            // (if) we ever do anything differently based on whether this is an EWS or Apache install.
+        }
 
         return isEws;
+    }
+
+    public static boolean isEWSTomcat5(String installationPath) {
+        return ((null != installationPath) && installationPath.endsWith(EWS_TOMCAT_5));
+    }
+
+    public static boolean isEWSTomcat6(String installationPath) {
+        return ((null != installationPath) && installationPath.endsWith(EWS_TOMCAT_6));
     }
 
     /**
@@ -422,12 +446,27 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent<Plat
         String scriptExtension = (File.separatorChar == '/') ? ".sh" : ".bat";
 
         if (null == configuration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, null)) {
-            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, binPath + "startup"
-                + scriptExtension));
+            String script = binPath + "startup" + scriptExtension;
+            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, script));
         }
         if (null == configuration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, null)) {
-            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, binPath
-                + "shutdown" + scriptExtension));
+            String script = binPath + "shutdown" + scriptExtension;
+            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT, script));
+        }
+        if (null == configuration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_CONTROL_METHOD, null)) {
+            // if the specified startup script does not exist and the installation path looks indicative, assume an RPM install.
+            TomcatServerComponent.ControlMethod controlMethod = TomcatServerComponent.ControlMethod.SCRIPT;
+
+            // The script should exist unless this is an rpm install, which uses System V init.
+            if (!new File(configuration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT, null))
+                .exists()) {
+                if (isEWSTomcat5(installationPath) || isEWSTomcat6(installationPath)) {
+                    controlMethod = TomcatServerComponent.ControlMethod.RPM;
+                }
+            }
+
+            configuration.put(new PropertySimple(TomcatServerComponent.PLUGIN_CONFIG_CONTROL_METHOD, controlMethod
+                .name()));
         }
 
         populateJMXConfiguration(configuration, commandLine);

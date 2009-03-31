@@ -29,6 +29,7 @@ import java.util.StringTokenizer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.on.plugins.tomcat.TomcatServerComponent.ControlMethod;
 import org.jboss.on.plugins.tomcat.TomcatServerComponent.SupportedOperations;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
@@ -143,10 +144,50 @@ public class TomcatServerOperationsDelegate {
      */
     private String start() throws InterruptedException {
         Configuration pluginConfiguration = this.serverComponent.getPluginConfiguration();
+        String controlMethod = pluginConfiguration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_CONTROL_METHOD,
+            ControlMethod.SCRIPT.name());
+        ProcessExecution processExecution = (ControlMethod.SCRIPT.name().equals(controlMethod)) ? getScriptStart(pluginConfiguration)
+            : getRpmStart(pluginConfiguration);
+
+        long start = System.currentTimeMillis();
+        if (log.isDebugEnabled()) {
+            log.debug("About to execute the following process: [" + processExecution + "]");
+        }
+        ProcessExecutionResults results = this.systemInfo.executeProcess(processExecution);
+        logExecutionResults(results);
+        Throwable error = results.getError();
+        Integer exitCode = results.getExitCode();
+        AvailabilityType avail;
+
+        if ((null != error) || ((null != exitCode) && (0 != exitCode))) {
+            String message = "Script returned error or non-zero exit code while starting the Tomcat instance. Exit code ["
+                + exitCode + "]";
+            if (null == error) {
+                log.error(message);
+            } else {
+                log.error(message, error);
+            }
+            avail = this.serverComponent.getAvailability();
+
+        } else {
+            avail = waitForServerToStart(start);
+        }
+
+        // If, after the loop, the Server is still down, consider the start to be a failure.
+        if (avail == AvailabilityType.DOWN) {
+            throw new RuntimeException("Server failed to start: " + results.getCapturedOutput());
+        } else {
+            return "Server has been started.";
+        }
+
+    }
+
+    private ProcessExecution getScriptStart(Configuration pluginConfiguration) {
         File startScriptFile = this.serverComponent.getStartScriptPath();
         validateScriptFile(startScriptFile, TomcatServerComponent.PLUGIN_CONFIG_START_SCRIPT);
 
-        String prefix = pluginConfiguration.getSimple(TomcatServerComponent.PLUGIN_CONFIG_SCRIPT_PREFIX).getStringValue();
+        String prefix = pluginConfiguration.getSimple(TomcatServerComponent.PLUGIN_CONFIG_SCRIPT_PREFIX)
+            .getStringValue();
 
         ProcessExecution processExecution;
 
@@ -173,9 +214,48 @@ public class TomcatServerOperationsDelegate {
             processExecution.getArguments().add(startScriptArgument);
         }
 
-        initProcessExecution(processExecution, startScriptFile);
+        initScriptProcessExecution(processExecution, startScriptFile);
 
-        long start = System.currentTimeMillis();
+        return processExecution;
+    }
+
+    private ProcessExecution getRpmStart(Configuration pluginConfiguration) {
+        ProcessExecution processExecution;
+        String installationPath = this.serverComponent.getInstallationPath().getPath();
+        String rpm = TomcatDiscoveryComponent.isEWSTomcat5(installationPath) ? TomcatDiscoveryComponent.EWS_TOMCAT_5
+            : TomcatDiscoveryComponent.EWS_TOMCAT_6;
+
+        processExecution = new ProcessExecution("service");
+        processExecution.getArguments().add(rpm);
+        processExecution.getArguments().add("start");
+
+        initProcessExecution(processExecution);
+
+        return processExecution;
+    }
+
+    private String shutdown() throws InterruptedException {
+        String result = doShutdown();
+        AvailabilityType avail = waitForServerToShutdown();
+        if (avail == AvailabilityType.UP) {
+            throw new RuntimeException("Server failed to shutdown");
+        } else {
+            return result;
+        }
+    }
+
+    /**
+     * Shuts down the AS server using a shutdown script.
+     *
+     * @return success message if no errors are encountered
+     */
+    private String doShutdown() {
+        Configuration pluginConfiguration = this.serverComponent.getPluginConfiguration();
+        String controlMethod = pluginConfiguration.getSimpleValue(TomcatServerComponent.PLUGIN_CONFIG_CONTROL_METHOD,
+            ControlMethod.SCRIPT.name());
+        ProcessExecution processExecution = (ControlMethod.SCRIPT.name().equals(controlMethod)) ? getScriptShutdown(pluginConfiguration)
+            : getRpmShutdown(pluginConfiguration);
+
         if (log.isDebugEnabled()) {
             log.debug("About to execute the following process: [" + processExecution + "]");
         }
@@ -183,33 +263,52 @@ public class TomcatServerOperationsDelegate {
         logExecutionResults(results);
         Throwable error = results.getError();
         Integer exitCode = results.getExitCode();
-        AvailabilityType avail;
 
         if ((null != error) || ((null != exitCode) && (0 != exitCode))) {
-            String message = "Script returned error or non-zero exit code while starting the Tomcat instance. Exit code [" + exitCode + "]";
+            String message = "Script returned error or non-zero exit code while shutting down the Tomcat instance. Exit code ["
+                + exitCode + "]";
             if (null == error) {
-                log.error(message);
+                throw new RuntimeException(message);
             } else {
-                log.error(message, error);
+                throw new RuntimeException(message, error);
             }
-            avail = this.serverComponent.getAvailability();
-
-        } else {
-            avail = waitForServerToStart(start);
         }
 
-        // If, after the loop, the Server is still down, consider the start to be a failure.
-        if (avail == AvailabilityType.DOWN) {
-            throw new RuntimeException("Server failed to start: " + results.getCapturedOutput());
-        } else {
-            return "Server has been started.";
-        }
+        return "Server has been shut down.";
+    }
+
+    private ProcessExecution getScriptShutdown(Configuration pluginConfiguration) {
+        File shutdownScriptFile = this.serverComponent.getShutdownScriptPath();
+        validateScriptFile(shutdownScriptFile, TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT);
+        String prefix = pluginConfiguration.getSimple(TomcatServerComponent.PLUGIN_CONFIG_SCRIPT_PREFIX)
+            .getStringValue();
+        ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(prefix, shutdownScriptFile);
+
+        initScriptProcessExecution(processExecution, shutdownScriptFile);
+
+        return processExecution;
+    }
+
+    private ProcessExecution getRpmShutdown(Configuration pluginConfiguration) {
+        ProcessExecution processExecution;
+        String installationPath = this.serverComponent.getInstallationPath().getPath();
+        String rpm = TomcatDiscoveryComponent.isEWSTomcat5(installationPath) ? TomcatDiscoveryComponent.EWS_TOMCAT_5
+            : TomcatDiscoveryComponent.EWS_TOMCAT_6;
+
+        processExecution = new ProcessExecution("service");
+        processExecution.getArguments().add(rpm);
+        processExecution.getArguments().add("stop");
+
+        initProcessExecution(processExecution);
+
+        return processExecution;
     }
 
     static public void setProcessExecutionEnvironment(ProcessExecution processExecution, String installationPath) {
         String javaHomeDir = System.getProperty("java.home");
         if (null == javaHomeDir) {
-            throw new IllegalStateException("The JAVA_HOME environment variable must be set in order to run the Tomcat start or stop script.");
+            throw new IllegalStateException(
+                "The JAVA_HOME environment variable must be set in order to run the Tomcat start or stop script.");
         }
 
         // Strip off the jre since the version script requires a JDK
@@ -230,62 +329,22 @@ public class TomcatServerOperationsDelegate {
 
     }
 
-    private void initProcessExecution(ProcessExecution processExecution, File scriptFile) {
+    private void initScriptProcessExecution(ProcessExecution processExecution, File scriptFile) {
         // For the script to work the current working dir must be set to the script's parent dir
         processExecution.setWorkingDirectory(scriptFile.getParent());
 
         // Set necessary environment variables
-        String installationPath = this.serverComponent.getPluginConfiguration().getSimple(TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH)
-            .getStringValue();
+        String installationPath = this.serverComponent.getPluginConfiguration().getSimple(
+            TomcatServerComponent.PLUGIN_CONFIG_INSTALLATION_PATH).getStringValue();
         setProcessExecutionEnvironment(processExecution, installationPath);
 
+        initProcessExecution(processExecution);
+    }
+
+    private void initProcessExecution(ProcessExecution processExecution) {
         processExecution.setCaptureOutput(true);
         processExecution.setWaitForCompletion(1000L); // 1 second // TODO: Should we wait longer than one second?
         processExecution.setKillOnTimeout(false);
-    }
-
-    private String shutdown() throws InterruptedException {
-        String result = shutdownViaScript();
-        AvailabilityType avail = waitForServerToShutdown();
-        if (avail == AvailabilityType.UP) {
-            throw new RuntimeException("Server failed to shutdown");
-        } else {
-            return result;
-        }
-    }
-
-    /**
-     * Shuts down the AS server using a shutdown script.
-     *
-     * @return success message if no errors are encountered
-     */
-    private String shutdownViaScript() {
-        Configuration pluginConfiguration = this.serverComponent.getPluginConfiguration();
-        File shutdownScriptFile = this.serverComponent.getShutdownScriptPath();
-        validateScriptFile(shutdownScriptFile, TomcatServerComponent.PLUGIN_CONFIG_SHUTDOWN_SCRIPT);
-        String prefix = pluginConfiguration.getSimple(TomcatServerComponent.PLUGIN_CONFIG_SCRIPT_PREFIX).getStringValue();
-        ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(prefix, shutdownScriptFile);
-
-        initProcessExecution(processExecution, shutdownScriptFile);
-
-        if (log.isDebugEnabled()) {
-            log.debug("About to execute the following process: [" + processExecution + "]");
-        }
-        ProcessExecutionResults results = this.systemInfo.executeProcess(processExecution);
-        logExecutionResults(results);
-        Throwable error = results.getError();
-        Integer exitCode = results.getExitCode();
-
-        if ((null != error) || ((null != exitCode) && (0 != exitCode))) {
-            String message = "Script returned error or non-zero exit code while shutting down the Tomcat instance. Exit code [" + exitCode + "]";
-            if (null == error) {
-                throw new RuntimeException(message);
-            } else {
-                throw new RuntimeException(message, error);
-            }
-        }
-
-        return "Server has been shut down.";
     }
 
     private void logExecutionResults(ProcessExecutionResults results) {
@@ -336,7 +395,8 @@ public class TomcatServerOperationsDelegate {
 
     private void validateScriptFile(File scriptFile, String scriptPropertyName) {
         if (!scriptFile.exists()) {
-            throw new RuntimeException("Script (" + scriptFile + ") specified via '" + scriptPropertyName + "' connection property does not exist.");
+            throw new RuntimeException("Script (" + scriptFile + ") specified via '" + scriptPropertyName
+                + "' connection property does not exist.");
         }
 
         if (scriptFile.isDirectory()) {
@@ -347,7 +407,8 @@ public class TomcatServerOperationsDelegate {
 
     private AvailabilityType waitForServerToStart(long start) throws InterruptedException {
         AvailabilityType avail;
-        while (((avail = this.serverComponent.getAvailability()) == AvailabilityType.DOWN) && (System.currentTimeMillis() < (start + START_WAIT_MAX))) {
+        while (((avail = this.serverComponent.getAvailability()) == AvailabilityType.DOWN)
+            && (System.currentTimeMillis() < (start + START_WAIT_MAX))) {
             try {
                 Thread.sleep(START_WAIT_INTERVAL);
             } catch (InterruptedException e) {

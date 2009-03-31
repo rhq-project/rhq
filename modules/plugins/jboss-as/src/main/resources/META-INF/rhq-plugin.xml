@@ -356,7 +356,7 @@
       </server>
 
       <server name="JBoss AS JVM"
-              description="The JVM that JBossAS is running on"
+              description="JVM of the JBossAS"
               sourcePlugin="JMX"
               sourceType="JMX Server"
               discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"

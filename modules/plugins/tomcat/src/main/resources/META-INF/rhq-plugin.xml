@@ -48,6 +48,26 @@
             name="control"
             displayName="Operations">
             <c:simple-property
+               name="controlMethod"
+               displayName="Control Method"
+               type="string"
+               required="false"
+               default="SCRIPT"
+               description="The method used to execute the control operations. When set to RPM the 
+                                            system will use a System V init script via the 'service' command. The
+                                            script properties will be ignored.">
+               <c:property-options>
+                  <c:option
+                     value="RPM"
+                     name="RPM System V init script"/>
+                  <c:option
+                     value="SCRIPT"
+                     name="shutdown script"
+                     default="true" />
+               </c:property-options>
+            </c:simple-property>
+
+            <c:simple-property
                name="scriptPrefix"
                displayName="Script Prefix"
                type="string"
@@ -137,6 +157,15 @@
          dataType="trait"
          displayType="summary"
          description="Tomcat server release identifier" />
+
+      <server
+         name="Tomcat Server JVM"
+         description="JVM of the Tomcat Server"
+         sourcePlugin="JMX"
+         sourceType="JMX Server"
+         discovery="org.rhq.plugins.jmx.InternalJMXServerDiscoveryComponent"
+         class="org.rhq.plugins.jmx.JMXServerComponent" >
+      </server>
 
       <service
          name="Tomcat Virtual Host"

@@ -79,9 +79,19 @@ public class TomcatServerComponent implements JMXComponent<PlatformComponent>, M
         STORECONFIG
     }
 
+    public enum ControlMethod {
+
+        /** Control operations should be performed via System V init script. */
+        RPM,
+
+        /** Control operations should be performed via the scripts set in the plugin configuration. */
+        SCRIPT
+    }
+
     /**
      * Plugin configuration properties.
      */
+    public static final String PLUGIN_CONFIG_CONTROL_METHOD = "controlMethod";
     public static final String PLUGIN_CONFIG_INSTALLATION_PATH = "installationPath";
     public static final String PLUGIN_CONFIG_SCRIPT_PREFIX = "scriptPrefix";
     public static final String PLUGIN_CONFIG_SHUTDOWN_SCRIPT = "shutdownScript";

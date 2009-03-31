@@ -703,6 +703,7 @@
 
 ]>
 
+<!--############################################# END OF XML ENTITIES ###############################################-->
 
 <plugin name="JBossAS5" displayName="JBoss Application Server 5.x" package="org.rhq.plugins.jbossas5"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -1028,7 +1029,6 @@
             </plugin-configuration>
 
             &managedObjectMetrics;
-
             &connectionFactoryMetrics;
 
             <resource-configuration>
@@ -1091,7 +1091,6 @@
             &datasourceAndConnectionFactoryOperations;
 
             &managedObjectMetrics;
-
             &connectionFactoryMetrics;
 
             <resource-configuration>
@@ -1322,7 +1321,7 @@
                 <c:simple-property type="integer" required="false" name="pageSize" readOnly="true">
                     <c:description>
                         When loading messages from a subscription, this is the maximum number of messages to
-                        pre-load in one operation. Can only be set when the topic is stopped. The default value is 2000.
+                        pre-load in one operation. Can only be set when the queue is stopped. The default value is 2000.
                     </c:description>
                 </c:simple-property>
 

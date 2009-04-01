@@ -144,8 +144,12 @@ import org.rhq.core.domain.operation.OperationDefinition;
         + "FROM ResourceGroup AS rg, IN (rg.roles) r, IN (r.subjects) s " + "WHERE s = :subject "),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_RESOURCE_GROUP + "_admin", query = "SELECT DISTINCT rg.resourceType "
         + "FROM ResourceGroup AS rg "),
-    @NamedQuery(name = ResourceType.QUERY_GET_RESOURCE_TYPE_COUNTS_BY_GROUP, query = "SELECT type.id, type.name, COUNT(type.id) "
+    @NamedQuery(name = ResourceType.QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP, query = "SELECT type.id, type.name, COUNT(type.id) "
         + "FROM ResourceGroup rg JOIN rg.explicitResources res JOIN res.resourceType type "
+        + "WHERE rg.id = :groupId "
+        + "GROUP BY type.id, type.name "),
+    @NamedQuery(name = ResourceType.QUERY_GET_IMPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP, query = "SELECT type.id, type.name, COUNT(type.id) "
+        + "FROM ResourceGroup rg JOIN rg.implicitResources res JOIN res.resourceType type "
         + "WHERE rg.id = :groupId "
         + "GROUP BY type.id, type.name "),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_SUBCATEGORY, query = "SELECT rt " + "FROM ResourceType rt "
@@ -210,7 +214,8 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     public static final ResourceType ANY_PLATFORM_TYPE = null;
 
     public static final String QUERY_FIND_BY_NAME = "ResourceType.findByName";
-    public static final String QUERY_GET_RESOURCE_TYPE_COUNTS_BY_GROUP = "ResourceType.getResourceTypeCountsByGroup";
+    public static final String QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP = "ResourceType.getExplicitResourceTypeCountsByGroup";
+    public static final String QUERY_GET_IMPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP = "ResourceType.getImplicitResourceTypeCountsByGroup";
     public static final String QUERY_FIND_BY_NAME_AND_PLUGIN = "ResourceType.findByNameAndPlugin";
     public static final String QUERY_FIND_BY_PLUGIN = "ResourceType.findByPlugin";
     public static final String QUERY_FIND_BY_PARENT_AND_NAME = "ResourceType.findByParentAndName";

@@ -718,7 +718,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
     @SuppressWarnings("unchecked")
     public void setResourceType(int resourceGroupId) throws ResourceTypeNotFoundException {
-        Query query = entityManager.createNamedQuery(ResourceType.QUERY_GET_RESOURCE_TYPE_COUNTS_BY_GROUP);
+        Query query = entityManager.createNamedQuery(ResourceType.QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP);
         query.setParameter("groupId", resourceGroupId);
 
         Subject overlord = subjectManager.getOverlord();

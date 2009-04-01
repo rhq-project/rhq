@@ -75,7 +75,7 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
 
     public List<Tuple<String, Integer>> getResourceTypeCounts() {
         Map<String, Integer> typeMap = resourceTypeManager.getResourceTypeCountsByGroup(getSubject(),
-            getResourceGroup());
+            getResourceGroup(), getShowRecursiveMembers());
 
         String[] typeNames = typeMap.keySet().toArray(new String[typeMap.keySet().size()]);
         Arrays.sort(typeNames, new Comparator<String>() {

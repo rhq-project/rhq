@@ -43,8 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -357,8 +355,9 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public Map<String, Integer> getResourceTypeCountsByGroup(Subject subject, ResourceGroup group) {
-        final String queryName = ResourceType.QUERY_GET_RESOURCE_TYPE_COUNTS_BY_GROUP;
+    public Map<String, Integer> getResourceTypeCountsByGroup(Subject subject, ResourceGroup group, boolean recursive) {
+        final String queryName = recursive ? ResourceType.QUERY_GET_IMPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP
+            : ResourceType.QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP;
         Query query = entityManager.createNamedQuery(queryName);
         query.setParameter("groupId", group.getId());
         List results = query.getResultList();
@@ -391,17 +390,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
         ResourceType resourceType = this.getResourceTypeById(subject, resourceTypeId);
         ResourceFacets resourceFacets = new ResourceFacets(resourceType);
         return resourceFacets;
-    }
-
-    private static boolean exposesCallTimeMetrics(ResourceType resourceType) {
-        Set<MeasurementDefinition> measurementDefs = resourceType.getMetricDefinitions();
-        for (MeasurementDefinition measurementDef : measurementDefs) {
-            if (measurementDef.getDataType() == DataType.CALLTIME) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     @SuppressWarnings("unchecked")

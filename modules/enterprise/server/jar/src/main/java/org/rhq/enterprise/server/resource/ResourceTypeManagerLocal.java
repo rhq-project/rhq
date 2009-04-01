@@ -21,7 +21,9 @@ package org.rhq.enterprise.server.resource;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
+
 import javax.ejb.Local;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -83,7 +85,7 @@ public interface ResourceTypeManagerLocal {
 
     List<ResourceType> getResourceTypesForCompatibleGroups(Subject subject);
 
-    Map<String, Integer> getResourceTypeCountsByGroup(Subject subject, ResourceGroup group);
+    Map<String, Integer> getResourceTypeCountsByGroup(Subject subject, ResourceGroup group, boolean recursive);
 
     boolean ensureResourceType(Subject subject, Integer resourceTypeId, Integer[] resourceIds)
         throws ResourceTypeNotFoundException;

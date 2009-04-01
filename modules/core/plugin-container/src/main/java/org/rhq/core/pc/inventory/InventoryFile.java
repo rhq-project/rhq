@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.inventory;
 
 import java.io.File;
@@ -29,6 +29,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.resource.Resource;
@@ -41,6 +46,8 @@ import org.rhq.core.pc.PluginContainer;
  * @author John Mazzitelli
  */
 public class InventoryFile {
+    private Log log = LogFactory.getLog(InventoryFile.class);
+
     private final File inventoryFile;
     private Resource platform;
     private Map<String, ResourceContainer> resourceContainers;
@@ -110,10 +117,21 @@ public class InventoryFile {
 
     private void connectTypes(Resource resource) {
         PluginMetadataManager metadataManager = PluginContainer.getInstance().getPluginManager().getMetadataManager();
-        ResourceType fullResourceType = metadataManager.getType(resource.getResourceType());
-        resource.setResourceType(fullResourceType);
-        for (Resource child : resource.getChildResources()) {
-            connectTypes(child);
+        ResourceType resourceType = resource.getResourceType();
+
+        if (resourceType != null) {
+            ResourceType fullResourceType = metadataManager.getType(resourceType);
+            resource.setResourceType(fullResourceType);
+        } else {
+            log.error("Resource [" + resource + "] has a null resource type - cannot reconnect the type");
+            // I guess keep going, reconnect the children's types - but we are probably no good now
+        }
+
+        Set<Resource> children = resource.getChildResources();
+        if (children != null) {
+            for (Resource child : children) {
+                connectTypes(child);
+            }
         }
     }
 

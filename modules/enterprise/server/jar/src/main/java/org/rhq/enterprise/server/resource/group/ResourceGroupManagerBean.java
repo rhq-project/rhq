@@ -157,13 +157,16 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         return group.getId();
     }
 
-    enum ResourceGroupChangeType {
-        None, AddedRecursion, RemovedRecursion;
-    }
-
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ResourceGroup updateResourceGroup(Subject user, ResourceGroup group)
         throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException {
+        return updateResourceGroup(user, group, null);
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public ResourceGroup updateResourceGroup(Subject user, ResourceGroup group, RecursivityChangeType changeType)
+        throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException {
+
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME);
         query.setParameter("name", group.getName());
 
@@ -181,16 +184,18 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             // user is changing the name of the group, this is OK
         }
 
-        ResourceGroupChangeType changeType = ResourceGroupChangeType.None;
-        ResourceGroup attachedGroup = entityManager.find(ResourceGroup.class, group.getId());
-        if (attachedGroup.isRecursive() == true && group.isRecursive() == false) {
-            // making a recursive group into a "normal" group 
-            changeType = ResourceGroupChangeType.RemovedRecursion;
-        } else if (attachedGroup.isRecursive() == false && group.isRecursive() == true) {
-            // making a "normal" group into a recursive group
-            changeType = ResourceGroupChangeType.AddedRecursion;
-        } else {
-            // recursive bit didn't change
+        if (changeType == null) {
+            ResourceGroup attachedGroup = entityManager.find(ResourceGroup.class, groupId);
+            changeType = RecursivityChangeType.None;
+            if (attachedGroup.isRecursive() == true && group.isRecursive() == false) {
+                // making a recursive group into a "normal" group 
+                changeType = RecursivityChangeType.RemovedRecursion;
+            } else if (attachedGroup.isRecursive() == false && group.isRecursive() == true) {
+                // making a "normal" group into a recursive group
+                changeType = RecursivityChangeType.AddedRecursion;
+            } else {
+                // recursive bit didn't change
+            }
         }
 
         long time = System.currentTimeMillis();
@@ -198,9 +203,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         group.setModifiedBy(user);
 
         ResourceGroup newlyAttachedGroup = entityManager.merge(group);
-        if (changeType == ResourceGroupChangeType.AddedRecursion) {
+        if (changeType == RecursivityChangeType.AddedRecursion) {
+            newlyAttachedGroup.setRecursive(true);
             enableRecursivityForGroup(user, groupId);
-        } else if (changeType == ResourceGroupChangeType.RemovedRecursion) {
+        } else if (changeType == RecursivityChangeType.RemovedRecursion) {
+            newlyAttachedGroup.setRecursive(false);
             resourceGroupManager.clearImplicitResources(groupId);
             makeImplicitMirrorExplicit(groupId);
         }
@@ -829,7 +836,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
      */
     private void addResourcesToGroupHelper(ResourceGroup group, ResourceIdFlyWeight fly, boolean alreadyInExplicit) {
         // both groups get the resource added to the explicit list
-        if (alreadyInExplicit) {
+        if (alreadyInExplicit == false) {
             // but if we know we're already in the explicit list, skip this and continue processing
             group.addExplicitResource(fly);
         }

@@ -63,6 +63,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.resource.group.RecursivityChangeType;
 import org.rhq.enterprise.server.resource.group.ResourceGroupAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
@@ -192,14 +193,6 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
     public GroupDefinition updateGroupDefinition(Subject subject, GroupDefinition groupDefinition)
         throws GroupDefinitionAlreadyExistsException, GroupDefinitionUpdateException, InvalidExpressionException,
         ResourceGroupUpdateException {
-        try {
-            if (getById(groupDefinition.getId()).isRecursive() != groupDefinition.isRecursive()) {
-                throw new GroupDefinitionUpdateException("Can not change the "
-                    + (groupDefinition.isRecursive() ? "" : "non-") + "recursive nature of this group definition");
-            }
-        } catch (GroupDefinitionNotFoundException gdnfe) {
-            throw new GroupDefinitionUpdateException(gdnfe.getMessage());
-        }
 
         boolean nameChanged = false;
         try {
@@ -213,23 +206,35 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             evaluator.addExpression(expression);
         }
 
-        if (nameChanged) {
-            String oldGroupDefinitionName = null;
-            GroupDefinition attachedGroupDefinition = null;
-            try {
-                attachedGroupDefinition = getById(groupDefinition.getId());
-                oldGroupDefinitionName = attachedGroupDefinition.getName();
-            } catch (GroupDefinitionNotFoundException gdnfe) {
-                throw new GroupDefinitionUpdateException(gdnfe.getMessage());
-            }
+        RecursivityChangeType changeType = RecursivityChangeType.None;
+        GroupDefinition attachedGroupDefinition = null;
+        try {
+            attachedGroupDefinition = getById(groupDefinition.getId());
+        } catch (GroupDefinitionNotFoundException gdnfe) {
+            throw new GroupDefinitionUpdateException(gdnfe.getMessage());
+        }
+        if (groupDefinition.isRecursive() == true && attachedGroupDefinition.isRecursive() == false) {
+            // making a recursive group into a "normal" group 
+            changeType = RecursivityChangeType.AddedRecursion;
+        } else if (groupDefinition.isRecursive() == false && attachedGroupDefinition.isRecursive() == true) {
+            // making a "normal" group into a recursive group
+            changeType = RecursivityChangeType.RemovedRecursion;
+        } else {
+            // recursive bit didn't change
+        }
 
+        if (nameChanged || changeType != RecursivityChangeType.None) {
+            String oldGroupDefinitionName = attachedGroupDefinition.getName();
             Subject overlord = subjectManager.getOverlord();
             for (ResourceGroup dynaGroup : attachedGroupDefinition.getManagedResourceGroups()) {
                 String dynaGroupName = dynaGroup.getName();
                 String newDynaGroupName = updateDynaGroupName(oldGroupDefinitionName, groupDefinition.getName(),
                     dynaGroupName);
                 dynaGroup.setName(newDynaGroupName);
-                resourceGroupManager.updateResourceGroup(overlord, dynaGroup);
+                // do not set recursive bit here
+                // the update method will figure out whether to flip it by inspecting its managing GroupDefinition
+                //dynaGroup.setRecursive(groupDefinition.isRecursive());
+                resourceGroupManager.updateResourceGroup(overlord, dynaGroup, changeType);
             }
         }
 
@@ -238,7 +243,6 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         } catch (Exception e) {
             throw new GroupDefinitionUpdateException(e);
         }
-
     }
 
     // return boolean indicating whether the name of this group definition is changing

@@ -66,6 +66,7 @@ public class EditGroupGeneralPropertiesUIBean {
         resourceGroup.setRecursive(this.recursive);
 
         try {
+            // pass null to let the method try to figure out the change
             this.resourceGroupManager.updateResourceGroup(subject, resourceGroup);
         } catch (ResourceGroupUpdateException rgue) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Problem updating group: " + rgue.getMessage());

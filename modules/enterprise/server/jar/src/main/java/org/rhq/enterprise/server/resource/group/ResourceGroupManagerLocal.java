@@ -43,6 +43,9 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 public interface ResourceGroupManagerLocal {
     int createResourceGroup(Subject user, ResourceGroup group) throws ResourceGroupAlreadyExistsException;
 
+    ResourceGroup updateResourceGroup(Subject user, ResourceGroup group, RecursivityChangeType changeType)
+        throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException;
+
     ResourceGroup updateResourceGroup(Subject user, ResourceGroup group) throws ResourceGroupAlreadyExistsException,
         ResourceGroupUpdateException;
 

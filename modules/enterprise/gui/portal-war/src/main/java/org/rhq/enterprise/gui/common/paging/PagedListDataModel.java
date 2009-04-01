@@ -285,6 +285,9 @@ public abstract class PagedListDataModel<T> extends DataModel {
         PageList<T> results = null;
         boolean tryQueryAgain = false;
         try {
+            if (log.isDebugEnabled()) {
+                log.debug(pageControlView + ": " + pc);
+            }
             if (pc.getPageSize() == PageControl.SIZE_UNLIMITED && pc.getPageNumber() != 0) {
                 /* 
                  * user is trying to get all of the results (SIZE_UNLIMITED), but not starting
@@ -292,16 +295,18 @@ public abstract class PagedListDataModel<T> extends DataModel {
                  * make all that much sense and was most likely due to a mistake upstream in the
                  * usage of the pagination / sorting framework.
                  */
+                if (log.isDebugEnabled()) {
+                    log.debug(pageControlView + ": Forcing UNLIMITED PageControl's pageNumber to 0");
+                }
                 pc.setPageNumber(0);
                 setPageControl(pc);
             }
 
             // try the data fetch with the potentially changed (and persisted) PageControl object
             results = fetchPage(pc);
-
-            // the fetch itself might change the page control (e.g., adding default sort)
-            // the persist will be a no-op if there have been no changes to the page control
-            setPageControl(pc);
+            if (log.isDebugEnabled()) {
+                log.debug(pageControlView + ": Successfully fetched page (first time)");
+            }
 
             /*
              * do the results make sense?  there are certain times when no exception will be thrown but the
@@ -313,7 +318,18 @@ public abstract class PagedListDataModel<T> extends DataModel {
              * update the page control to get the view consistent with the backend once again.
              */
             if (results.getTotalSize() <= pc.getStartRow() || (results.isEmpty() && pc.getPageNumber() != 0)) {
+                if (log.isDebugEnabled()) {
+                    if (results.getTotalSize() <= pc.getStartRow()) {
+                        log.debug(pageControlView + ": Results size[" + results.getTotalSize()
+                            + "] was less than PageControl startRow[" + pc.getStartRow() + "]");
+                    } else {
+                        log.debug(pageControlView + ": Results were empty, but pageNumber was non-zero");
+                    }
+                }
                 resetToDefaults(pc);
+                if (log.isDebugEnabled()) {
+                    log.debug(pageControlView + ": resetting to " + pc);
+                }
                 tryQueryAgain = true;
             }
         } catch (Throwable t) {
@@ -330,17 +346,22 @@ public abstract class PagedListDataModel<T> extends DataModel {
              * ordering (though the underlying SLSB may add a default ordering downstream). 
              */
             resetToDefaults(pc);
+            if (log.isDebugEnabled()) {
+                log.debug(pageControlView + ": Received error[" + t.getMessage() + "], resetting to " + pc);
+            }
             tryQueryAgain = true;
         }
 
         // round 2 should be guaranteed because of use of defaultPageControl
         if (tryQueryAgain) {
+            if (log.isDebugEnabled()) {
+                log.debug(pageControlView + ": Trying query again");
+            }
             try {
                 results = fetchPage(pc);
-
-                // the fetch itself might change the page control (e.g., adding default sort)
-                // the persist will be a no-op if there have been no changes to the page control
-                setPageControl(pc);
+                if (log.isDebugEnabled()) {
+                    log.debug(pageControlView + ": Successfully fetched page (second time)");
+                }
             } catch (Throwable t) {
                 log.error("Could not retrieve collection for " + pageControlView);
             }

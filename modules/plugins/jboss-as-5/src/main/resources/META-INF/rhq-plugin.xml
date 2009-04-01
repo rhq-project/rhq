@@ -1249,10 +1249,19 @@
             &managedObjectMetrics;
 
             <!-- Traits -->
-            <metric property="name" displayType="detail" displayName="Name"
-                    description="The queue name" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
-            <metric property="createdProgrammatically" displayType="detail" displayName="Created Programmatically"
-                    description="True if this queue was created programmatically" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
+            <!-- TODO: Remove this once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
+            <metric property="name" displayType="summary"
+                    description="This queue's name"
+                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
+
+            <metric property="createdProgrammatically" displayType="summary"
+                    description="True if this queue was created programmatically"
+                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
+
+            <!-- TODO: Remove this once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
+            <metric property="messageCounterHistoryDayLimit"
+                    description="This queue's message counter history day limit - &lt;0: unlimited, =0: disabled, &gt;0: maximum day count" 
+                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
 
             <!-- Numerics -->
             <metric property="consumerCount" measurementType="dynamic" displayType="detail" displayName="Consumer Count"
@@ -1279,8 +1288,11 @@
 
                 <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/QueueServiceMO.java -->
 
+                <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
+                <!--
                 <c:simple-property required="true" name="name" readOnly="true"
                                    description="The name of this queue."/>
+                -->
 
                 <c:simple-property required="true" name="JNDIName" readOnly="true"
                                    description="This queue's JNDI name; default is '/queue/{queueName}'."/>
@@ -1315,8 +1327,11 @@
                 <c:simple-property type="integer" required="false" name="maxSize"
                                    description="The maximum number of messages this queue can hold before they are dropped."/>
 
+                <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
+                <!--
                 <c:simple-property type="integer" required="false" name="messageCounterHistoryDayLimit"
                                    description="This queue's message counter history day limit - &lt;0: unlimited, =0: disabled, &gt;0: maximum day count."/>
+                -->
 
                 <c:simple-property type="integer" required="false" name="pageSize" readOnly="true">
                     <c:description>
@@ -1334,6 +1349,8 @@
                                    description="The JMX ObjectName of the expiry queue for this queue, overrides the default expiry queue on the server peer"/>
                 <c:simple-property required="false" name="serverPeer"
                                    description="The JMX ObjectName of the server peer this queue was deployed on"/>
+
+                <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6716 is fixed. -->
                 <!--
                 <c:map-property required="false" name="securityConfig"
                                 description="The queue's security configuration"/>
@@ -1501,10 +1518,17 @@
             &managedObjectMetrics;
 
             <!-- Traits -->
-            <metric property="name" displayType="summary" displayName="Name"
-                    description="The destination name" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
-            <metric property="createdProgrammatically" displayType="summary" displayName="Created Programmatically"
-                    description="True if this destination was created programmatically" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
+            <metric property="name" displayType="summary"
+                    description="This topic's name"
+                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
+            <metric property="createdProgrammatically" displayType="summary"
+                    description="True if this topic was created programmatically"
+                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
+
+            <!-- TODO: Remove this once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
+            <metric property="messageCounterHistoryDayLimit"
+                    description="This topic's message counter history day limit - &lt;0: unlimited, =0: disabled, &gt;0: maximum day count"
+                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
 
             <!-- Numerics -->
             <metric property="allMessageCount" measurementType="dynamic" displayType="detail" displayName="All Message Count"
@@ -1524,8 +1548,11 @@
 
                 <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/TopicServiceMO.java -->
 
+                <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
+                <!--
                 <c:simple-property required="true" name="name" readOnly="true"
                                    description="The name of this topic."/>
+                -->
 
                 <c:simple-property required="true" name="JNDIName" readOnly="true"
                                    description="This topic's JNDI name; default is '/topic/{topicName}'."/>
@@ -1560,8 +1587,11 @@
                 <c:simple-property type="integer" required="false" name="maxSize"
                                    description="The maximum number of messages this topic can hold before they are dropped."/>
 
+                <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
+                <!--
                 <c:simple-property type="integer" required="false" name="messageCounterHistoryDayLimit"
                                    description="This topic's message counter history day limit - &lt;0: unlimited, =0: disabled, &gt;0: maximum day count."/>
+                -->
 
                 <c:simple-property type="integer" required="false" name="pageSize" readOnly="true">
                     <c:description>
@@ -1579,6 +1609,8 @@
                                    description="The JMX ObjectName of the expiry queue for this topic, overrides the default expiry queue on the server peer"/>
                 <c:simple-property required="false" name="serverPeer"
                                    description="The JMX ObjectName of the server peer this topic was deployed on"/>
+
+                <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6716 is fixed. -->
                 <!--
                 <c:map-property required="false" name="securityConfig"
                                 description="The topic's security configuration"/>

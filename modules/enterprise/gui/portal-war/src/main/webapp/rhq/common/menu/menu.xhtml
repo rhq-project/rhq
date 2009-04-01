@@ -181,7 +181,7 @@
                 <h:outputText value="#{msg['admin.admin.AdministrationTitle']}"/>
             </h:panelGroup>
         </f:facet>
-        
+
         <ui:remove>***** Administration > SECURITY *****</ui:remove>
         <rich:menuGroup value="Security">
             <rich:menuItem submitMode="none" onclick="window.location = '/admin/user/UserAdmin.do?mode=list'">
@@ -306,7 +306,7 @@
                 <h:outputText value="Logged in as #{UserPreferencesUIBean.subject.name}"/>
             </h:panelGroup>
         </f:facet>
-        
+
         <ui:remove>***** Logged in as > EDIT DETAILS *****</ui:remove>
         <rich:menuItem submitMode="none" onclick="window.location = '/admin/user/UserAdmin.do?mode=edit&amp;u=#{UserPreferencesUIBean.subject.id}'">
             <h:outputText value="Edit Details"/>
@@ -378,7 +378,7 @@
         </ui:remove>
     </p>
 
-    <input type="button" value="OK" onclick="Richfaces.hideModalPanel('aboutPanel');"/>
+    <input type="button" value="Close" onclick="Richfaces.hideModalPanel('aboutPanel');"/>
 </rich:modalPanel>
 
 </h:form>

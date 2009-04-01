@@ -180,6 +180,16 @@
             <jbas5.configDir>SET_ME</jbas5.configDir>
          </properties>
       </profile>
+      
+      <profile>
+         <id>publish</id>
+         <properties>           
+            <confluenceUrl>http://docs.example.com/confluence/</confluenceUrl>
+            <confluenceSpace>DOCS</confluenceSpace>
+            <confluenceUserName>SET_ME</confluenceUserName>
+            <confluencePassword>SET_ME</confluencePassword>            
+         </properties>                 
+      </profile>      
 
    </profiles>
 

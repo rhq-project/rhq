@@ -115,8 +115,8 @@ public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryCom
         if (emsConnection.getBean("java.lang:type=OperatingSystem") != null) {
             // Only inventory a VM that has the platform mbean's exposed and available
             DiscoveredResourceDetails s = new DiscoveredResourceDetails(context.getResourceType(), "JVM", context
-                .getResourceType().getName(), System.getProperty("java.version"), "VM that jboss runs on",
-                configuration, null);
+                .getResourceType().getName(), System.getProperty("java.version"), context.getResourceType()
+                .getDescription(), configuration, null);
 
             found.add(s);
         }

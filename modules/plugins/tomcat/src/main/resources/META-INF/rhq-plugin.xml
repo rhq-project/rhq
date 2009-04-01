@@ -163,8 +163,9 @@
          description="JVM of the Tomcat Server"
          sourcePlugin="JMX"
          sourceType="JMX Server"
-         discovery="org.rhq.plugins.jmx.InternalJMXServerDiscoveryComponent"
-         class="org.rhq.plugins.jmx.JMXServerComponent" >
+         discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
+         class="org.rhq.plugins.jmx.JMXServerComponent" 
+         singleton="true" >
       </server>
 
       <service

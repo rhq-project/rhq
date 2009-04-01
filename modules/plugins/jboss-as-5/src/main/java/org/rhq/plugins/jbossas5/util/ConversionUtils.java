@@ -62,6 +62,7 @@ import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.ManagedComponentComponent;
 import org.rhq.plugins.jbossas5.ManagedDeploymentComponent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
  /**
  * Utility class to convert some basic Profile Service objects to JON objects, and some basic
@@ -365,23 +366,14 @@ public class ConversionUtils
      * @param resourceType     resourceType to get the Operation definitions from
      * @return MetaValue[] array of MetaValues representing the parameters
      */
-    public static MetaValue[] convertOperationsParametersToMetaValues(ManagedOperation managedOperation, Configuration parameters, ResourceType resourceType)
+    public static MetaValue[] convertOperationsParametersToMetaValues(ManagedOperation managedOperation,
+                                                                      Configuration parameters,
+                                                                      OperationDefinition operationDefinition)
     {
         ManagedParameter[] managedParameters = managedOperation.getParameters();
-        OperationDefinition operation = null;
-        String operationName = managedOperation.getName();
-
-        for (OperationDefinition operationDefinition : resourceType.getOperationDefinitions())
+        if (operationDefinition != null)
         {
-            if (operationDefinition.getName().equals(operationName))
-            {
-                operation = operationDefinition;
-                break;
-            }
-        }
-        if (operation != null)
-        {
-            ConfigurationDefinition configurationDefinition = operation.getParametersConfigurationDefinition();
+            ConfigurationDefinition configurationDefinition = operationDefinition.getParametersConfigurationDefinition();
             if (configurationDefinition != null)
             {
                 Map<String, PropertyDefinition> resultPropertyDefinitions = configurationDefinition.getPropertyDefinitions();
@@ -403,15 +395,9 @@ public class ConversionUtils
     }
 
     public static void convertManagedOperationResults(ManagedOperation operation, MetaValue resultMetaValue,
-                                                      Configuration complexResults, ResourceType resourceType)
-    {
-        OperationDefinition operationDefinition = getOperationDefinition(resourceType, operation.getName());
-        if (operationDefinition == null) {
-            LOG.warn("ConversionUtils was not able to find the operation " + operation.getName()
-                    + ", so no results can be reported.");
-            return;
-        }       
-        
+                                                      Configuration complexResults,
+                                                      OperationDefinition operationDefinition)
+    {                               
         ConfigurationDefinition resultConfigDef = operationDefinition.getResultsConfigurationDefinition();
         // Don't return any results if we have no definition with which to display them
         if (resultConfigDef == null || resultConfigDef.getPropertyDefinitions().isEmpty()) {
@@ -472,20 +458,6 @@ public class ConversionUtils
             return true;
         else
             return false;
-    }
-
-    public static OperationDefinition getOperationDefinition(ResourceType resourceType, String operationName) {
-        Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
-        OperationDefinition operationDefinition = null;
-        for (OperationDefinition definition : operationDefinitions)
-        {
-            if (definition.getName().equals(operationName))
-            {
-                operationDefinition = definition;
-                break;
-            }
-        }
-        return operationDefinition;
     }
 
     public static void convertMetricValuesToMeasurement(MeasurementReport report, ManagedProperty metricProperty, MeasurementScheduleRequest request, ResourceType resourceType, String deploymentName)

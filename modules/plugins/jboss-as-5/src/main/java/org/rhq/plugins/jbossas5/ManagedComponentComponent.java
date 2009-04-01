@@ -40,6 +40,7 @@ package org.rhq.plugins.jbossas5;
  import org.jboss.metatype.api.values.SimpleValue;
 
  import org.rhq.core.domain.configuration.Configuration;
+ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
  import org.rhq.core.domain.measurement.AvailabilityType;
  import org.rhq.core.domain.measurement.DataType;
  import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -47,6 +48,7 @@ package org.rhq.plugins.jbossas5;
  import org.rhq.core.domain.measurement.MeasurementReport;
  import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
  import org.rhq.core.domain.operation.OperationDefinition;
+ import org.rhq.core.domain.resource.ResourceType;
  import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
  import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
  import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -57,12 +59,12 @@ package org.rhq.plugins.jbossas5;
  import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
  import org.rhq.plugins.jbossas5.util.ConversionUtils;
 
- /**
+/**
  * Service ResourceComponent for all {@link ManagedComponent}s in a Profile.
  *
+ * @author Ian Springer
  * @author Jason Dobies
  * @author Mark Spritzler
- * @author Ian Springer
  */
 public class ManagedComponentComponent extends AbstractManagedComponent
         implements ResourceComponent, ConfigurationFacet, DeleteResourceFacet, OperationFacet, MeasurementFacet
@@ -118,26 +120,19 @@ public class ManagedComponentComponent extends AbstractManagedComponent
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception
     {
-        OperationDefinition operationDefinition = ConversionUtils.getOperationDefinition(
-                getResourceContext().getResourceType(), name);
-
-        ManagedOperation operation = getManagedOperation(operationDefinition);
-        if (operation == null)
-            throw new IllegalStateException("ManagedOperation named [" + name + "] not found on ManagedComponent ["
-                    + getManagedComponent() + "].");
+        OperationDefinition operationDefinition = getOperationDefinition(name);
+        ManagedOperation managedOperation = getManagedOperation(operationDefinition);
         // Convert parameters into MetaValue array.
-        MetaValue[] parameterMetaValues = ConversionUtils.convertOperationsParametersToMetaValues(operation, parameters,
-                getResourceContext().getResourceType());
-        // invoke() takes a varargs, so we must pass an empty array, rather than null.
-        if (parameterMetaValues == null)
-            parameterMetaValues = EMPTY_META_VALUE_ARRAY;
-        MetaValue resultMetaValue = operation.invoke(parameterMetaValues);
-        // Convert result to Correct Property type.
-        OperationResult results = new OperationResult();
-        ConversionUtils.convertManagedOperationResults(operation, resultMetaValue, results.getComplexResults(),
-                getResourceContext().getResourceType());
-        
-        return results;
+        MetaValue[] parameterMetaValues = ConversionUtils.convertOperationsParametersToMetaValues(managedOperation, parameters,
+                operationDefinition);
+        // invoke() takes a varargs, so we need to pass an empty array, rather than null.
+        MetaValue resultMetaValue = managedOperation.invoke((parameterMetaValues != null) ? parameterMetaValues :
+                EMPTY_META_VALUE_ARRAY);
+        OperationResult result = new OperationResult();
+        // Convert result MetaValue to corresponding Property type.
+        ConversionUtils.convertManagedOperationResults(managedOperation, resultMetaValue, result.getComplexResults(),
+                operationDefinition);
+        return result;
     }
 
     // MeasurementFacet Implementation  --------------------------------------------
@@ -243,17 +238,31 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         return managedComponent;
     }
 
+    private OperationDefinition getOperationDefinition(String operationName) {
+        ResourceType resourceType = getResourceContext().getResourceType();
+        Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
+        for (OperationDefinition operationDefinition : operationDefinitions)
+        {
+            if (operationDefinition.getName().equals(operationName))
+                return operationDefinition;
+        }
+        throw new IllegalStateException("Operation named '" + operationName + "' is not defined for Resource type '"
+                + resourceType.getName() + "' in the '" + resourceType.getPlugin() + "' plugin's descriptor.");
+    }
+
     private ManagedOperation getManagedOperation(OperationDefinition operationDefinition)
     {
         ManagedComponent managedComponent = getManagedComponent();
         Set<ManagedOperation> operations = managedComponent.getOperations();
         for (ManagedOperation operation : operations)
         {
+            ConfigurationDefinition paramsConfigDef = operationDefinition.getParametersConfigurationDefinition();
+            int paramCount = (paramsConfigDef != null) ? paramsConfigDef.getPropertyDefinitions().size() : 0;
             if (operation.getName().equals(operationDefinition.getName()) &&
-                operation.getParameters().length ==
-                    operationDefinition.getParametersConfigurationDefinition().getPropertyDefinitions().size())
+               (operation.getParameters().length == paramCount))
                 return operation;
         }
-        return null;
+        throw new IllegalStateException("ManagedOperation named '" + operationDefinition.getName()
+                + "' not found on ManagedComponent [" + getManagedComponent() + "].");
     }
 }

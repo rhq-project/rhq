@@ -141,6 +141,30 @@ public class CoreServerServiceImpl implements CoreServerService {
 
         Server registeringServer = getServerManager().getServer();
 
+        // if the agent is registering with a loopback address, log a warning since you probably do not want this in production
+        try {
+            String address = request.getAddress();
+            String fullEndpoint = request.getRemoteEndpoint();
+            boolean loopbackRegistration = false;
+            if (address.equals("127.0.0.1") || address.equalsIgnoreCase("localhost")) {
+                loopbackRegistration = true;
+            } else {
+                // jboss/remoting transport params might be telling us to have our client connect to a different address
+                if (fullEndpoint != null) {
+                    if (fullEndpoint.contains("127.0.0.1") || fullEndpoint.contains("localhost")) {
+                        loopbackRegistration = true;
+                    }
+                }
+            }
+
+            if (loopbackRegistration) {
+                log.warn("An agent [" + request.getName()
+                    + "] has registered with a loopback address. This should only be done "
+                    + "for testing or demo purposes - this agent can only ever interact with this server. " + request);
+            }
+        } catch (Exception ignore) {
+        }
+
         if (agentByName != null) {
             log.info("Got agent registration request for existing agent: " + agentByName.getName() + "["
                 + agentByName.getAddress() + ":" + agentByName.getPort() + "][" + request.getAgentVersion()

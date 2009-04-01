@@ -28,6 +28,10 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
+    @I18NMessage("This agent is registering under the loopback address [{0}] - this should only be done for testing "
+        + "or demo purposes - this agent will only be able to interact with a server running on the same host as this agent")
+    String REGISTERING_WITH_LOOPBACK = "AgentMain.registering-with-loopback";
+
     @I18NMessage("There are still [{0}] threads left - the kill thread will\\n\\\n"
         + "exit the VM shortly if these threads do not die ")
     String SHUTDOWNHOOK_THREADS_STILL_ALIVE = "AgentShutdownHook.threads-still-alive";

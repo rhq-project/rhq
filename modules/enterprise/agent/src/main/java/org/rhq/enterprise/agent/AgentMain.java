@@ -1298,6 +1298,10 @@ public class AgentMain {
                             if (sender.isSending()) {
                                 LOG.debug(AgentI18NResourceKeys.AGENT_REGISTRATION_ATTEMPT, request);
 
+                                if (remote_endpoint.contains("127.0.0.1") || remote_endpoint.contains("localhost")) {
+                                    LOG.warn(AgentI18NResourceKeys.REGISTERING_WITH_LOOPBACK, remote_endpoint);
+                                }
+
                                 // delete any old token so request is unauthenticated to get server to accept it
                                 agent_config.setAgentSecurityToken(null);
 

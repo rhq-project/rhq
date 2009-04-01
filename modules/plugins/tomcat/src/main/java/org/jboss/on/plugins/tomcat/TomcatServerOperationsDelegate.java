@@ -23,6 +23,7 @@
 package org.jboss.on.plugins.tomcat;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -226,6 +227,7 @@ public class TomcatServerOperationsDelegate {
             : TomcatDiscoveryComponent.EWS_TOMCAT_6;
 
         processExecution = new ProcessExecution("service");
+        processExecution.setArguments(new ArrayList<String>());
         processExecution.getArguments().add(rpm);
         processExecution.getArguments().add("start");
 
@@ -296,6 +298,7 @@ public class TomcatServerOperationsDelegate {
             : TomcatDiscoveryComponent.EWS_TOMCAT_6;
 
         processExecution = new ProcessExecution("service");
+        processExecution.setArguments(new ArrayList<String>());
         processExecution.getArguments().add(rpm);
         processExecution.getArguments().add("stop");
 

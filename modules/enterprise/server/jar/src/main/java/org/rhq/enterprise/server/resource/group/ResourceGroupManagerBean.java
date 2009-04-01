@@ -157,16 +157,20 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         return group.getId();
     }
 
+    enum ResourceGroupChangeType {
+        None, AddedRecursion, RemovedRecursion;
+    }
+
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    @SuppressWarnings("unchecked")
     public ResourceGroup updateResourceGroup(Subject user, ResourceGroup group)
         throws ResourceGroupAlreadyExistsException, ResourceGroupUpdateException {
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME);
         query.setParameter("name", group.getName());
 
+        int groupId = group.getId();
         try {
             ResourceGroup foundGroup = (ResourceGroup) query.getSingleResult();
-            if (foundGroup.getId() == group.getId()) {
+            if (foundGroup.getId() == groupId) {
                 // user is updating the same group and hasn't changed the name, this is OK
             } else {
                 //  user is updating the group name to the name of an existing group - this is bad
@@ -177,21 +181,72 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             // user is changing the name of the group, this is OK
         }
 
-        /*
-         * The UI doesn't show the "recursive" checkbox, but this check prevents people from hitting the URL directly to
-         * mess with the group
-         */
+        ResourceGroupChangeType changeType = ResourceGroupChangeType.None;
         ResourceGroup attachedGroup = entityManager.find(ResourceGroup.class, group.getId());
-        if (attachedGroup.isRecursive() != group.isRecursive()) {
-            throw new ResourceGroupUpdateException("Can not change the " + (attachedGroup.isRecursive() ? "" : "non-")
-                + "recursive nature of this group");
+        if (attachedGroup.isRecursive() == true && group.isRecursive() == false) {
+            // making a recursive group into a "normal" group 
+            changeType = ResourceGroupChangeType.RemovedRecursion;
+        } else if (attachedGroup.isRecursive() == false && group.isRecursive() == true) {
+            // making a "normal" group into a recursive group
+            changeType = ResourceGroupChangeType.AddedRecursion;
+        } else {
+            // recursive bit didn't change
         }
 
         long time = System.currentTimeMillis();
         group.setMtime(time);
         group.setModifiedBy(user);
 
-        return entityManager.merge(group);
+        ResourceGroup newlyAttachedGroup = entityManager.merge(group);
+        if (changeType == ResourceGroupChangeType.AddedRecursion) {
+            enableRecursivityForGroup(user, groupId);
+        } else if (changeType == ResourceGroupChangeType.RemovedRecursion) {
+            resourceGroupManager.clearImplicitResources(groupId);
+            makeImplicitMirrorExplicit(groupId);
+        }
+        return newlyAttachedGroup;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void clearImplicitResources(int resourceGroupId) throws ResourceGroupUpdateException {
+        Connection conn = null;
+        PreparedStatement removeImplicitStatement = null;
+        try {
+            conn = rhqDs.getConnection();
+
+            removeImplicitStatement = conn.prepareStatement(ResourceGroup.QUERY_UPDATE_REMOVE_IMPLICIT);
+            removeImplicitStatement.setInt(1, resourceGroupId);
+            removeImplicitStatement.executeUpdate();
+        } catch (SQLException sqle) {
+            log.error("Error removing implicit resources from group[id=" + resourceGroupId + "]: ", sqle);
+            throw new ResourceGroupUpdateException("Error removing implicit resources from group[id=" + resourceGroupId
+                + "]: " + sqle.getMessage());
+        } finally {
+            JDBCUtil.safeClose(removeImplicitStatement);
+            JDBCUtil.safeClose(conn);
+        }
+    }
+
+    private void makeImplicitMirrorExplicit(int resourceGroupId) throws ResourceGroupUpdateException {
+        Connection conn = null;
+        PreparedStatement updateImplicitMirrorExplicitStatement = null;
+        try {
+            conn = rhqDs.getConnection();
+
+            updateImplicitMirrorExplicitStatement = conn
+                .prepareStatement(ResourceGroup.QUERY_UPDATE_IMPLICIT_MIRROR_EXPLICIT);
+            updateImplicitMirrorExplicitStatement.setInt(1, resourceGroupId);
+            updateImplicitMirrorExplicitStatement.executeUpdate();
+        } catch (SQLException sqle) {
+            log.error("Error making implicit resources mirror explicit resources for group[id=" + resourceGroupId
+                + "]: ", sqle);
+            throw new ResourceGroupUpdateException(
+                "Error making implicit resources mirror explicit resources for group[id=" + resourceGroupId + "]: "
+                    + sqle.getMessage());
+        } finally {
+            JDBCUtil.safeClose(updateImplicitMirrorExplicitStatement);
+            JDBCUtil.safeClose(conn);
+        }
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -236,15 +291,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
         // break resource and plugin configuration update links in order to preserve individual change history
         Query q = null;
-        int numRows = -1;
 
         q = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP);
         q.setParameter("groupId", groupId);
-        numRows = q.executeUpdate();
+        q.executeUpdate();
 
         q = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_DELETE_UPDATE_AGGREGATE_BY_GROUP);
         q.setParameter("groupId", groupId);
-        numRows = q.executeUpdate();
+        q.executeUpdate();
 
         entityManager.remove(group);
     }
@@ -299,6 +353,26 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void enableRecursivityForGroup(Subject subject, Integer groupId) throws ResourceGroupNotFoundException,
+        ResourceGroupUpdateException {
+
+        // step 1: clear the implicit and preparation for adding a different set of resources to it
+        resourceGroupManager.clearImplicitResources(groupId);
+
+        // step 2: prepare the list of resources to be used to pass to the method that does the recursive logic
+        List<Integer> explicitResourceIdList = resourceManager.getExplicitResourceIdsByResourceGroup(groupId);
+        Integer[] explicitResourceIds = explicitResourceIdList.toArray(new Integer[explicitResourceIdList.size()]);
+        List<ResourceIdFlyWeight> explicitFlyWeights = resourceManager.getFlyWeights(explicitResourceIds);
+
+        // step 3: loop over the explicit resources and re-add them to the group with the recursive bit on
+        ResourceGroup attachedGroup = getResourceGroupById(subject, groupId, null);
+        for (ResourceIdFlyWeight explicitFly : explicitFlyWeights) {
+            addResourcesToGroupHelper(attachedGroup, explicitFly, true);
+        }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ResourceGroup addResourcesToGroup(Subject subject, Integer groupId, Integer[] resourceIds)
         throws ResourceGroupNotFoundException, ResourceGroupUpdateException {
         long startTime = System.currentTimeMillis();
@@ -329,7 +403,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             }
 
             // updates explicit and implicit stuff
-            addResourcesToGroupHelper(attachedGroup, fly);
+            addResourcesToGroupHelper(attachedGroup, fly, false);
         }
 
         ResourceGroup mergedResult = entityManager.merge(attachedGroup);
@@ -753,9 +827,12 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
      * This helper method simultaneously manages the explicit lists as well, so it is crucial to not make changes to the
      * explicit groups for a resource OR or explicit resources for a group outside of this method.
      */
-    private void addResourcesToGroupHelper(ResourceGroup group, ResourceIdFlyWeight fly) {
+    private void addResourcesToGroupHelper(ResourceGroup group, ResourceIdFlyWeight fly, boolean alreadyInExplicit) {
         // both groups get the resource added to the explicit list
-        group.addExplicitResource(fly);
+        if (alreadyInExplicit) {
+            // but if we know we're already in the explicit list, skip this and continue processing
+            group.addExplicitResource(fly);
+        }
 
         // implicit list mirrors explicit, if the group is not recursive
         if (!group.isRecursive()) {

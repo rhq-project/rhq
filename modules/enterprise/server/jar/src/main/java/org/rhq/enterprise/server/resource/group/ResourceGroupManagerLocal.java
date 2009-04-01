@@ -54,13 +54,18 @@ public interface ResourceGroupManagerLocal {
 
     int getResourceGroupCountByCategory(Subject subject, GroupCategory category);
 
+    void enableRecursivityForGroup(Subject subject, Integer groupId) throws ResourceGroupNotFoundException,
+        ResourceGroupUpdateException;
+
     ResourceGroup addResourcesToGroup(Subject subject, Integer groupId, Integer[] resourceIds)
-        throws ResourceGroupUpdateException;
+        throws ResourceGroupNotFoundException, ResourceGroupUpdateException;
 
     ResourceGroup removeResourcesFromGroup(Subject subject, Integer groupId, Integer[] resourceIds)
         throws ResourceGroupUpdateException;
 
     void removeAllResourcesFromGroup(Subject subject, Integer groupId) throws ResourceGroupDeleteException;
+
+    void clearImplicitResources(int resourceGroupId) throws ResourceGroupUpdateException;
 
     PageList<ResourceGroup> getAvailableResourceGroupsForRole(Subject subject, Integer roleId, Integer[] excludeIds,
         PageControl pageControl);

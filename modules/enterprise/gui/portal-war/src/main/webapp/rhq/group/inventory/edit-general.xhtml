@@ -33,31 +33,42 @@
             <input type="hidden" name="category" value="#{param.category}"/>
 
             <h:panelGrid columns="2" styleClass="general-props-table" columnClasses="general-prop-cell">
-            
+
                <h:panelGroup layout="block">
                   <h:panelGroup styleClass="BlockLabel">Name
                      <h:panelGroup styleClass="required-marker-text"> *</h:panelGroup>:
                   </h:panelGroup>
-                  <h:inputText id="name" value="#{EditGroupGeneralPropertiesUIBean.name}" required="true" size="60" maxlength="100">
-                     <f:validateLength maximum="100"/>
-                  </h:inputText>
-               </h:panelGroup>
-               
-               <h:panelGroup layout="block">
-                  <h:panelGroup styleClass="BlockLabel">Description:</h:panelGroup>
-                  <h:inputText id="description" value="#{EditGroupGeneralPropertiesUIBean.description}" size="60" maxlength="1000">
-                     <f:validateLength maximum="1000"/>
-                  </h:inputText>
                </h:panelGroup>
 
                <h:panelGroup layout="block">
+                  <h:inputText id="name" value="#{EditGroupGeneralPropertiesUIBean.name}" required="true" size="60" maxlength="100">
+                     <f:validateLength maximum="100"/>
+                  </h:inputText>
                   <h:message for="name" showDetail="true" errorClass="WarnBlock"/>
                </h:panelGroup>
-               
+
                <h:panelGroup layout="block">
+                  <h:panelGroup styleClass="BlockLabel">Description:</h:panelGroup>
+               </h:panelGroup>
+
+               <h:panelGroup layout="block">
+                  <h:inputText id="description" value="#{EditGroupGeneralPropertiesUIBean.description}" size="60" maxlength="1000">
+                     <f:validateLength maximum="1000"/>
+                  </h:inputText>
                   <h:message for="description" showDetail="true" errorClass="WarnBlock"/>
                </h:panelGroup>
+
+               <h:panelGroup layout="block">
+                  <h:panelGroup styleClass="BlockLabel">Recursive:</h:panelGroup>
+               </h:panelGroup>
+
+               <h:panelGroup layout="block">
+                  <h:selectBooleanCheckbox id="recursive" value="#{EditGroupGeneralPropertiesUIBean.recursive}" />
+                  <h:outputText value=" Warning: changing the recursivity of a group can be an expensive operation" />
+               </h:panelGroup>
                
+               <rich:spacer />
+
             </h:panelGrid>
 
             <h:panelGroup layout="block" styleClass="BlockContent">

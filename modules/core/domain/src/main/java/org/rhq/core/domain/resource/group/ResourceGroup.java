@@ -166,6 +166,15 @@ public class ResourceGroup extends Group {
     public static final String QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS = "DELETE FROM RHQ_RESOURCE_GROUP_RES_EXP_MAP WHERE RESOURCE_ID IN ( :resourceIds )";
     public static final String QUERY_DELETE_IMPLICIT_BY_RESOURCE_IDS = "DELETE FROM RHQ_RESOURCE_GROUP_RES_IMP_MAP WHERE RESOURCE_ID IN ( :resourceIds )";
 
+    public static final String QUERY_UPDATE_REMOVE_IMPLICIT = "" //
+        + "DELETE FROM rhq_resource_group_res_imp_map implicitMap " //
+        + "      WHERE implicitMap.resource_group_id = ?";
+    public static final String QUERY_UPDATE_IMPLICIT_MIRROR_EXPLICIT = "" //
+        + "INSERT INTO rhq_resource_group_res_imp_map (resource_id, resource_group_id) " //
+        + "     SELECT explicitMap.resource_id, explicitMap.resource_group_id " //
+        + "       FROM rhq_resource_group_res_exp_map explicitMap " //
+        + "      WHERE explicitMap.resource_group_id = ?";
+
     public static final String QUERY_FIND_ALL_FILTERED_COUNT = "ResourceGroup.findAllFiltered_Count";
     public static final String QUERY_FIND_ALL_FILTERED_COUNT_ADMIN = "ResourceGroup.findAllFiltered_Count_Admin";
     public static final String QUERY_NATIVE_FIND_FILTERED_MEMBER = "" //

@@ -59,11 +59,17 @@ public class ResourceGroupComposite implements Serializable {
 
         explicitUp = Math.round(explicitCount * explicitAvailability);
         explicitDown = explicitCount - explicitUp;
-        explicitAvail = explicitAvailability;
+        if (explicitUp + explicitDown > 0) {
+            // keep explicitAvail null if there are no explicit resources in the group
+            explicitAvail = explicitAvailability;
+        }
 
         implicitUp = Math.round(implicitCount * implicitAvailability);
         implicitDown = implicitCount - implicitUp;
-        implicitAvail = implicitAvailability;
+        if (implicitUp + implicitDown > 0) {
+            // keep implicitAvail null if there are no implicit resources in the group
+            implicitAvail = implicitAvailability;
+        }
 
         this.resourceGroup = resourceGroup;
 

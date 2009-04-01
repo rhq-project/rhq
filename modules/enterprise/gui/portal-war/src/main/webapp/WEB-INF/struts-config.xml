@@ -3,7 +3,7 @@
 <!DOCTYPE struts-config PUBLIC
       "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN"
       "http://struts.apache.org/dtds/struts-config_1_2.dtd">
-      
+
 <struts-config>
    <data-sources/>
    <form-beans>
@@ -223,7 +223,7 @@
 
       <form-bean name="PerformanceForm"
                  type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.PerformanceForm"/>
-                 
+
       <form-bean name="CompareMetricsForm"
                  type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.CompareMetricsForm"/>
 
@@ -376,7 +376,7 @@
               forward="/common/Login.jsp">
          <set-property property="title" value="Dashboard"/>
       </action>
-      
+
       <!--======================================================= -->
       <!-- Admin -->
       <!-- ======================================================= -->
@@ -1324,7 +1324,7 @@
                   redirect="true"/>
          <forward name="failure" path="/resource/server/Inventory.do?mode=edit"/>
       </action>
- 
+
       <action path="/resource/server/inventory/EditTypeHostFormPrepare"
               name="ServerHostTypeForm"
               scope="request"
@@ -1451,7 +1451,7 @@
                   redirect="true"/>
          <forward name="failure" path="/resource/service/Inventory.do?mode=edit"/>
       </action>
- 
+
       <action path="/resource/service/inventory/RemoveGroups"
               type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.RemoveResourceGroupsAction"
               name="RemoveResourceGroupsForm"
@@ -3015,7 +3015,7 @@
         <forward name="redraw" path="/resource/common/monitor/Visibility.do"
                  redirect="true"/>
       </action>
-      
+
       <action path="/resource/common/monitor/visibility/CurrentHealth"
               name="IndicatorViewsForm"
               scope="request"
@@ -3164,11 +3164,11 @@
       <action path="/resource/common/monitor/config/ConfigMetrics"
               name="MonitoringConfigForm"
               scope="request"
-              input="/resource/common/monitor/Config.do?mode=configure"
+              input="/admin/platform/monitor/Config.do?mode=configure"
               type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.config.ConfigMetricsAction">
-         <forward name="remove" path="/resource/common/monitor/Config.do?mode=configure"/>
-         <forward name="failure" path="/resource/common/monitor/Config.do?mode=configure"/>
-         <forward name="success" path="/resource/common/monitor/Config.do?mode=configure"/>
+         <forward name="remove" path="/admin/platform/monitor/Config.do?mode=configure"/>
+         <forward name="failure" path="/admin/platform/monitor/Config.do?mode=configure"/>
+         <forward name="success" path="/admin/platform/monitor/Config.do?mode=configure"/>
       </action>
 
       <!--  === Resource Monitor>Events Tab === -->
@@ -3194,7 +3194,7 @@
               name="EventsForm"
               scope="request"
               input="/resource/common/Events.do?mode=events">
-         <set-property property="workflow" value="monitor/events"/>              
+         <set-property property="workflow" value="monitor/events"/>
          <forward name="success" path="/resource/common/Events.do?mode=events"/>
          <forward name="editRange" path="/resource/common/monitor/Visibility.do?mode=editRange" />
       </action>

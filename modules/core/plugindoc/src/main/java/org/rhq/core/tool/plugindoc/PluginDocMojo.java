@@ -51,7 +51,7 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
- * Generates Confluence-Wiki-format documentation for a RHQ plugin based on the plugin's descriptor (i.e.
+ * Generates both Confluence and Docbook format documentation for an RHQ plugin based on the plugin's descriptor (i.e.
  * rhq-plugin.xml). Invoke from a RHQ plugin module directory as follows:
  * <code>mvn org.rhq:rhq-core-plugindoc:plugindoc</code>
  *
@@ -95,6 +95,13 @@ public class PluginDocMojo extends AbstractMojo {
     private String confluenceSpace;
 
     /**
+     * The Confluence parent page name (e.g. "Managed Resources").
+     *
+     * @parameter expression="${confluenceParentPageTitle}"
+     */
+    private String confluenceParentPageTitle;
+
+    /**
      * @parameter expression="${confluenceUserName}"
      */
     private String confluenceUserName;
@@ -135,15 +142,17 @@ public class PluginDocMojo extends AbstractMojo {
         for (ResourceType resourceType : resourceTypes) {
             log.info("Generating plugin doc for '" + resourceType.getName() + "' Resource type...");            
 
-            confluenceTemplateProcessor.getContext().put("resourceType", resourceType);            
-            File confluenceOutputFile = new File(outputDir, resourceType.getName() + ".wiki");
+            confluenceTemplateProcessor.getContext().put("resourceType", resourceType);
+            String confluenceOutputFileName = escapeFileName(resourceType.getName() + ".wiki");
+            File confluenceOutputFile = new File(outputDir, confluenceOutputFileName);
             confluenceTemplateProcessor.processTemplate(confluenceOutputFile);
             if (this.endpoint != null) {
                 publishPage(confluenceOutputFile, resourceType);
             }
 
             docbookTemplateProcessor.getContext().put("resourceType", resourceType);
-            File docbookOutputFile = new File(outputDir, resourceType.getName() + ".xml");
+            String docbookOutputFileName = escapeFileName(resourceType.getName() + ".xml");
+            File docbookOutputFile = new File(outputDir, docbookOutputFileName);
             docbookTemplateProcessor.processTemplate(docbookOutputFile);
         }
     }
@@ -205,10 +214,18 @@ public class PluginDocMojo extends AbstractMojo {
             Page page;
             try {
                 page = confluence.getPage(this.confluenceSpace, title);
+                log.warn("Page with title '" + title + "' already exists - overwriting it...");
             }
             catch (SwizzleException e) {
                 page = new Page(new HashMap());
                 page.setSpace(this.confluenceSpace);
+                if (this.confluenceParentPageTitle != null) {
+                    Page parentPage = confluence.getPage(this.confluenceSpace, this.confluenceParentPageTitle);
+                    if (parentPage != null)
+                        page.setParentId(parentPage.getId());
+                    else
+                        log.error("Specified parent page ('" + this.confluenceParentPageTitle + "') does not exist.");
+                }
                 page.setTitle(title);
             }
             page.setContent(getContentAsString(contentFile));
@@ -225,7 +242,7 @@ public class PluginDocMojo extends AbstractMojo {
         if (!resourceType.getName().endsWith(resourceType.getCategory().toString())) {
            title += " " + resourceType.getCategory();
         }
-        return title;
+        return escapePageTitle(title);
     }
 
     private static String getContentAsString(File contentFile) throws IOException {
@@ -237,5 +254,15 @@ public class PluginDocMojo extends AbstractMojo {
         }
         bufferedReader.close();
         return content.toString();
+    }
+
+    private static String escapeFileName(String fileName)
+    {
+        return fileName.replace('/', '-').replace('\\', '-');
+    }
+
+    private static String escapePageTitle(String fileName)
+    {
+        return fileName.replace('/', '-');
     }
 }

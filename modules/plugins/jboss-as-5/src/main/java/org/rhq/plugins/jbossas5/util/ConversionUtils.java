@@ -25,6 +25,7 @@ package org.rhq.plugins.jbossas5.util;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -228,6 +229,7 @@ public class ConversionUtils
         // loop can skip over them.
         handleCustomProperties(managedProperties, configuration, configDefinition, customProps);
 
+        Set<String> missingManagedPropertyNames = new HashSet();
         for (Property property : configuration.getProperties())
         {
             String propertyName = property.getName();
@@ -240,12 +242,14 @@ public class ConversionUtils
                 //       I don't think so - it's too difficult, since a propDef could map to multiple different types
                 //       of ManagedProperties. The safest thing is for the profile service to always return templates
                 //       that contain *all* ManagedProperties that are defined for the ComponentType.
-                throw new IllegalStateException("***** A property named '" + propertyName
-                        + "' is defined in this plugin's descriptor, but no ManagedProperty is defined with that name.");
+                missingManagedPropertyNames.add(propertyName);
             }
             else {
                 populateManagedPropertyFromProperty(property, propertyDefinition, managedProperty);
             }
+            if (!missingManagedPropertyNames.isEmpty())
+                throw new IllegalStateException("***** The following properties are defined in this plugin's "
+                        + "descriptor but have no coresponding ManagedProperties: " + missingManagedPropertyNames);
         }
         return;
     }

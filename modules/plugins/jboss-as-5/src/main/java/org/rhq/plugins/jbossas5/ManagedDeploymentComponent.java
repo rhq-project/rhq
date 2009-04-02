@@ -421,7 +421,7 @@ public class ManagedDeploymentComponent
             File dataDirectoryFile = getResourceContext().getDataDirectory();
             dataDirectoryFile.mkdirs();
             String dataDirectory = dataDirectoryFile.getAbsolutePath();
-            log.debug("Creating application versions store with plugin name [" + pluginName +
+            log.trace("Creating application versions store with plugin name [" + pluginName +
                 "] and data directory [" + dataDirectory + "]");
             this.versions = new PackageVersions(pluginName, dataDirectory);
             this.versions.loadFromDisk();

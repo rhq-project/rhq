@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Collections;
 import java.util.Comparator;
 
+import org.jetbrains.annotations.Nullable;
+
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.managed.api.DeploymentTemplateInfo;
@@ -121,8 +123,35 @@ public abstract class DebugUtils {
     }
 
     private static class ManagedPropertyComparator implements Comparator<ManagedProperty> {
+        /**
+         * Use viewUse as primary sort field and name as secondary sort field.
+         */
         public int compare(ManagedProperty prop1, ManagedProperty prop2) {
-            return prop1.getName().compareTo(prop2.getName());
+            ViewUse prop1ViewUse = getViewUse(prop1);
+            ViewUse prop2ViewUse = getViewUse(prop2);
+            if (prop1ViewUse == null)
+               return (prop2ViewUse == null) ? 0 : -1;
+            if (prop2ViewUse == null)
+               return 1;
+            int result = prop1ViewUse.name().compareTo(prop2ViewUse.name());
+            if (result == 0)
+               result = prop1.getName().compareTo(prop2.getName()); // break the tie
+            return result;
+        }
+
+        @Nullable
+        private static ViewUse getViewUse(ManagedProperty managedProperty)
+        {
+            ViewUse viewUse;
+            if (managedProperty.hasViewUse(ViewUse.CONFIGURATION))
+               viewUse = ViewUse.CONFIGURATION;
+            else if (managedProperty.hasViewUse(ViewUse.RUNTIME))
+               viewUse = ViewUse.RUNTIME;
+            else if (managedProperty.hasViewUse(ViewUse.STATISTIC))
+               viewUse = ViewUse.STATISTIC;
+            else
+               viewUse = null;
+            return viewUse;
         }
     }
 

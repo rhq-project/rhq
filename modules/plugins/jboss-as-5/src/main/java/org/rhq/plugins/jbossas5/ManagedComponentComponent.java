@@ -58,8 +58,9 @@ package org.rhq.plugins.jbossas5;
  import org.rhq.core.pluginapi.operation.OperationResult;
  import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
  import org.rhq.plugins.jbossas5.util.ConversionUtils;
+ import org.jetbrains.annotations.NotNull;
 
-/**
+ /**
  * Service ResourceComponent for all {@link ManagedComponent}s in a Profile.
  *
  * @author Ian Springer
@@ -123,11 +124,10 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         OperationDefinition operationDefinition = getOperationDefinition(name);
         ManagedOperation managedOperation = getManagedOperation(operationDefinition);
         // Convert parameters into MetaValue array.
-        MetaValue[] parameterMetaValues = ConversionUtils.convertOperationsParametersToMetaValues(managedOperation, parameters,
-                operationDefinition);
+        MetaValue[] parameterMetaValues = ConversionUtils.convertOperationsParametersToMetaValues(managedOperation, 
+                parameters, operationDefinition);
         // invoke() takes a varargs, so we need to pass an empty array, rather than null.
-        MetaValue resultMetaValue = managedOperation.invoke((parameterMetaValues != null) ? parameterMetaValues :
-                EMPTY_META_VALUE_ARRAY);
+        MetaValue resultMetaValue = managedOperation.invoke(parameterMetaValues);
         OperationResult result = new OperationResult();
         // Convert result MetaValue to corresponding Property type.
         ConversionUtils.convertManagedOperationResults(managedOperation, resultMetaValue, result.getComplexResults(),
@@ -238,6 +238,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         return managedComponent;
     }
 
+    @NotNull
     private OperationDefinition getOperationDefinition(String operationName) {
         ResourceType resourceType = getResourceContext().getResourceType();
         Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
@@ -250,6 +251,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
                 + resourceType.getName() + "' in the '" + resourceType.getPlugin() + "' plugin's descriptor.");
     }
 
+    @NotNull
     private ManagedOperation getManagedOperation(OperationDefinition operationDefinition)
     {
         ManagedComponent managedComponent = getManagedComponent();

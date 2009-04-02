@@ -62,7 +62,6 @@ import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.ManagedComponentComponent;
 import org.rhq.plugins.jbossas5.ManagedDeploymentComponent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
  /**
  * Utility class to convert some basic Profile Service objects to JON objects, and some basic
@@ -174,7 +173,7 @@ public class ConversionUtils
                                 + metaValue.getMetaType().getTypeName() + " for ResourceType: " + resourceType.getName());
                         continue;
                     }
-                    LOG.debug("Converting MetaValue [" + metaValue + "] to property of type [" + propertyDefinition
+                    LOG.trace("Converting MetaValue [" + metaValue + "] to property of type [" + propertyDefinition
                             + "] using adapter [" + propertyAdapter.getClass().getSimpleName() + "]...");
                     Property customProp = customProps.get(propName);
                     if (customProp != null)
@@ -241,34 +240,25 @@ public class ConversionUtils
                 //       I don't think so - it's too difficult, since a propDef could map to multiple different types
                 //       of ManagedProperties. The safest thing is for the profile service to always return templates
                 //       that contain *all* ManagedProperties that are defined for the ComponentType.
-                /*ManagedPropertyImpl managedPropertyImpl = new ManagedPropertyImpl(propertyName);
-                managedProperty = managedPropertyImpl;
-                managedProperty.setManagedObject(null);
-                if (propertyDefinition instanceof PropertyDefinitionSimple) {
-                    PropertyDefinitionSimple propertyDefinitionSimple = (PropertyDefinitionSimple)propertyDefinition;
-                    switch (propertyDefinitionSimple.getType()) {
-                        case INTEGER:
-                    }
-                }
-                managedPropertyImpl.setMetaType(null);*/
-                LOG.error("***** ManagedProperty named '" + propertyName + "' not found.");
+                throw new IllegalStateException("***** A property named '" + propertyName
+                        + "' is defined in this plugin's descriptor, but no ManagedProperty is defined with that name.");
             }
             else {
-                convertPropertyToManagedProperty(property, propertyDefinition, managedProperty);
+                populateManagedPropertyFromProperty(property, propertyDefinition, managedProperty);
             }
         }
         return;
     }
 
-    private static void convertPropertyToManagedProperty(Property property, PropertyDefinition propertyDefinition,
-                                                         ManagedProperty managedProperty)
+    private static void populateManagedPropertyFromProperty(Property property, PropertyDefinition propertyDefinition,
+                                                            ManagedProperty managedProperty)
     {
         if (managedProperty != null)
         {
             MetaValue metaValue = managedProperty.getValue();
             if (metaValue != null)
             {
-                LOG.debug("Populating existing MetaValue of type " + metaValue.getMetaType()
+                LOG.trace("Populating existing MetaValue of type " + metaValue.getMetaType()
                         + " from RHQ property " + property + " with definition " + propertyDefinition + "...");
                 PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaValue);
                 propertyAdapter.populateMetaValueFromProperty(property, metaValue, propertyDefinition);
@@ -277,7 +267,7 @@ public class ConversionUtils
             {
                 MetaType metaType = managedProperty.getMetaType();
                 PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaType);
-                LOG.debug("Converting property " + property + " with definition " + propertyDefinition
+                LOG.trace("Converting property " + property + " with definition " + propertyDefinition
                         + " to MetaValue of type " + metaType + "...");
                 metaValue = propertyAdapter.convertToMetaValue(property, propertyDefinition, metaType);
                 managedProperty.setValue(metaValue);
@@ -363,35 +353,37 @@ public class ConversionUtils
      *
      * @param managedOperation Operation that will be fired and stores the parameter types for the operation
      * @param parameters       set of Parameter Values that the OperationFacet sent to the Component
-     * @param resourceType     resourceType to get the Operation definitions from
-     * @return MetaValue[] array of MetaValues representing the parameters
+     * @param operationDefinition the RHQ operation definition
+     * @return MetaValue[] array of MetaValues representing the parameters; if there are no parameters, an empty array
+     *                     will be returned
      */
-    public static MetaValue[] convertOperationsParametersToMetaValues(ManagedOperation managedOperation,
-                                                                      Configuration parameters,
-                                                                      OperationDefinition operationDefinition)
+    @NotNull
+    public static MetaValue[] convertOperationsParametersToMetaValues(@NotNull ManagedOperation managedOperation,
+                                                                      @NotNull Configuration parameters,
+                                                                      @NotNull OperationDefinition operationDefinition)
     {
-        ManagedParameter[] managedParameters = managedOperation.getParameters();
-        if (operationDefinition != null)
+        ConfigurationDefinition paramsConfigDef = operationDefinition.getParametersConfigurationDefinition();
+        if (paramsConfigDef == null)
+            return new MetaValue[0];
+        ManagedParameter[] managedParams = managedOperation.getParameters(); // this is guaranteed to be non-null
+        Map<String, PropertyDefinition> paramPropDefs = paramsConfigDef.getPropertyDefinitions();
+        MetaValue[] paramMetaValues = new MetaValue[managedParams.length];
+        for (int i = 0; i < managedParams.length; i++)
         {
-            ConfigurationDefinition configurationDefinition = operationDefinition.getParametersConfigurationDefinition();
-            if (configurationDefinition != null)
-            {
-                Map<String, PropertyDefinition> resultPropertyDefinitions = configurationDefinition.getPropertyDefinitions();
-
-                for (ManagedParameter managedParameter : managedParameters)
-                {
-                    String name = managedParameter.getName();
-
-                    PropertyDefinition parameterPropertyDefinition = resultPropertyDefinitions.get(name);
-                    Property parameter = parameters.get(name);
-                    MetaType type = managedParameter.getMetaType();
-                    //ManagedParameter should have a MetaValue object returned
-                    PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(type);
-                    propertyAdapter.populateMetaValueFromProperty(parameter, managedParameter.getValue(), parameterPropertyDefinition);
-                }
-            }
+            ManagedParameter managedParam = managedParams[i];
+            String paramName = managedParam.getName();
+            Property paramProp = parameters.get(paramName);
+            PropertyDefinition paramPropDef = paramPropDefs.get(paramName);
+            MetaType metaType = managedParam.getMetaType();
+            PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaType);
+            LOG.trace("Converting RHQ operation param property " + paramProp + " with definition " + paramPropDef
+                    + " to MetaValue of type " + metaType + "...");
+            MetaValue paramMetaValue = propertyAdapter.convertToMetaValue(paramProp, paramPropDef, metaType);
+            // NOTE: There's no need to set the value on the ManagedParameter, since the invoke() API takes an array of
+            //       MetaValues.
+            paramMetaValues[i] = paramMetaValue;
         }
-        return null;
+        return paramMetaValues;
     }
 
     public static void convertManagedOperationResults(ManagedOperation operation, MetaValue resultMetaValue,

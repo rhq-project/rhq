@@ -1301,7 +1301,7 @@
                 <c:simple-property type="boolean" required="false" name="clustered" default="true" readOnly="true"
                                    description="Is this queue clustered?"/>
 
-                <c:simple-property type="integer" required="false" name="DownCacheSize" default="2000" readOnly="true">
+                <c:simple-property type="integer" required="false" name="downCacheSize" default="2000" readOnly="true">
                     <c:description>
                         When paging messages to storage from a subscription, they first go into a &quot;Down Cache&quot; before
                         being written to storage. This enables the write to occur as a single operation, thus aiding

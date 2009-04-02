@@ -187,7 +187,7 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
         return;
     }
 
-    public Availability getAvailability(Resource resource) {
+    public Availability getCurrentAvailability(Resource resource) {
         return null;
     }
 

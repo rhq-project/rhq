@@ -105,15 +105,15 @@ public interface DiscoveryAgentService {
     AvailabilityReport executeAvailabilityScanImmediately(boolean changedOnlyReport);
 
     /**
-     * Returns the plugin container's idea of the availability state of the resource. If the availability is not known,
-     * "unknown" will be returned (that is, the {@link AvailabilityType} in the returned object will be set to <code>
-     * null</code>).
+     * Returns the current availability state of the specified Resource (that is, the "live" availablity is requested
+     * from the plugin). If the availability is not known, "unknown" will be returned (that is, the
+     * {@link AvailabilityType} in the returned Availablity will be set to <code>null</code>).
      *
      * @param  resource a resource
      *
      * @return the state of availability for the resource
      */
-    Availability getAvailability(Resource resource);
+    Availability getCurrentAvailability(Resource resource);
 
     /**
      * Manually discover the resource of the specified type using the specified plugin configuration (i.e. connection

@@ -1026,7 +1026,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             return;
         }
 
-        public Availability getAvailability(Resource resource) {
+        public Availability getCurrentAvailability(Resource resource) {
             return null;
         }
 

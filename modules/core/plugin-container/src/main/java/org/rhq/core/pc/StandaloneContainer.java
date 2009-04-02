@@ -387,7 +387,7 @@ public class StandaloneContainer {
     private void avail() {
         Set<Resource> resources = getResources();
         for (Resource res : resources) {
-            System.out.println(inventoryManager.getAvailability(res));
+            System.out.println(inventoryManager.getCurrentAvailability(res));
         }
     }
 

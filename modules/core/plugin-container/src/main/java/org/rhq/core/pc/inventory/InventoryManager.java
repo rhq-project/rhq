@@ -350,13 +350,33 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    public Availability getAvailability(Resource resource) {
-        Availability avail = getAvailabilityIfKnown(resource);
-        if (avail == null) {
-            avail = new Availability(resource, new Date(), null);
+    // TODO (ips): Refactor this so that it shares the code from AvailablityExecutor.checkInventory().
+    public Availability getCurrentAvailability(Resource resource) {
+        AvailabilityType availType = null; // i.e. UNKNOWN;
+        ResourceContainer resourceContainer = getResourceContainer(resource);
+        if (resourceContainer != null) {
+            if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
+                ResourceComponent resourceComponent = null;
+                try
+                {
+                    resourceComponent = resourceContainer.createResourceComponentProxy(ResourceComponent.class,
+                            FacetLockType.READ, 5000, true, true);
+                    availType = resourceComponent.getAvailability();
+                }
+                catch (RuntimeException e)
+                {
+                    log.error("Call to getAvailablity() on ResourceComponent for " + resource + " failed.", e);
+                    availType = AvailabilityType.DOWN;
+                }
+                catch (PluginContainerException e)
+                {
+                    log.error("Failed to retrieve ResourceComponent for " + resource + ".", e);
+                }
+            }
+        } else {
+            log.error("No ResourceContainer exists for " + resource + ".");
         }
-
-        return avail;
+        return new Availability(resource, new Date(), availType);
     }
 
     @SuppressWarnings("unchecked")

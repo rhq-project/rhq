@@ -266,7 +266,7 @@
         </c:defaultValueDescription>
     </c:simple-property>
 
-    <c:simple-property name="noTxSeparatePools" type="boolean" activationPolicy="immediate"
+    <c:simple-property name="no-tx-separate-pools" type="boolean" activationPolicy="immediate"
                        displayName="No Tx Separate Pools" required="false">
         <c:description>Whether or not to use separate pools.</c:description>
         <c:property-options>
@@ -363,9 +363,6 @@
             the use of background validation.
         </c:description>
     </c:simple-property>
-    
-    <c:map-property name="connection-properties" required="false"
-                    description="Arbitrary connection properties that should be passed to the java.sql.Driver.connect(url, props) method."/>
 '>
 
 <!ENTITY nonXaDatasourceConnectionResourceConfigProps '
@@ -380,10 +377,12 @@
                        description="The JDBC driver URL string."
                        type="string"
                        activationPolicy="immediate"/>
+
+    <c:map-property name="connection-properties" required="false"
+                    description="Arbitrary connection properties that should be passed to the java.sql.Driver.connect(url, props) method."/>
 '>
 
 <!ENTITY nonXaDatasourceOracleTemplateProps '
-    <c:simple-property name="type" default="local-tx-datasource"/>
     <c:simple-property name="jndi-name" default="OracleDS"/>
     <c:simple-property name="driver-class" default="oracle.jdbc.driver.OracleDriver"/>
     <c:simple-property name="connection-url" default="jdbc:oracle:oci:@youroracle-tns-name"/>
@@ -980,7 +979,6 @@
                 </c:group>
 
                 <c:template name="Oracle XA" description="XA Transaction Template for Oracle">
-                    <c:simple-property name="type" default="xa-datasource"/>
                     <c:simple-property name="jndi-name" default="XAOracleDS"/>
                     <c:simple-property name="track-connection-by-tx" default="true"/>
                     <c:simple-property name="isSameRM-override-value" default="false"/>

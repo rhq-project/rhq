@@ -574,7 +574,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
         existingInstalledPackagesSet.retainAll(updatedPackageSet);
         int removedPackagesCount = originalPackageCount - existingInstalledPackagesSet.size();
         if (removedPackagesCount > 0)
-           log.info("Removed " + removedPackagesCount + " obsolete packages for Resource with id ["
+           log.debug("Removed " + removedPackagesCount + " obsolete packages for Resource with id ["
                     + resourceId + "].");
 
         // Strip from updated list content that are already known for the resource, we don't need to do anything
@@ -582,7 +582,7 @@ public class ContentManager extends AgentService implements ContainerService, Co
 
         // Remaining content in updated list are "new" content
         if (!updatedPackageSet.isEmpty())
-            log.info("Discovered " + updatedPackageSet.size() + " new packages for Resource with id ["
+            log.debug("Discovered " + updatedPackageSet.size() + " new packages for Resource with id ["
                     + resourceId + "].");
 
         // Add new content

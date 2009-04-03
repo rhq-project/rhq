@@ -399,7 +399,7 @@
 <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/main/org/jboss/resource/metadata/mcf/ManagedConnectionFactoryDeploymentMetaData.java -->
 
 <!ENTITY connectionFactoryConnectionResourceConfigProps '
-    <c:simple-property required="true" name="jndi-name"
+    <c:simple-property required="true" name="jndi-name" displayName="JNDI Name"
                        description="The global JNDI name to bind the connection factory under."/>
 
     <c:simple-property required="true" name="rar-name" displayName="RAR Name">
@@ -1058,7 +1058,7 @@
 
         <service name="Tx ConnectionFactory"
                  description="A ConnectionFactory that takes part in JTA transactions."
-                 class="ManagedComponentComponent"
+                 class="TxConnectionFactoryComponent"
                  createDeletePolicy="both"
                  subCategory="Connection Factories"
                  discovery="ManagedComponentDiscoveryComponent">
@@ -1088,6 +1088,10 @@
 
             &datasourceAndConnectionFactoryOperations;
 
+            <metric property="custom.transactionType" displayName="Transaction Type" displayType="summary"
+                    description="The type of transactions used by this connection factory - Local or XA"
+                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
+
             &managedObjectMetrics;
             &connectionFactoryMetrics;
 
@@ -1097,20 +1101,20 @@
 
                     &connectionFactoryConnectionResourceConfigProps;
 
+                    <c:simple-property name="xa-transaction"
+                                       type="boolean"
+                                       activationPolicy="immediate"
+                                       displayName="XA Transaction"
+                                       required="false" readOnly="true">
+                        <c:description>Whether on not to use XA transactions - default is false.</c:description>
+                    </c:simple-property>
+
                 </c:group>
 
                 <c:group name="advanced" displayName="Advanced">
 
                     &connectionFactoryAdvancedResourceConfigProps;
 
-                    <c:simple-property name="local-transaction"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="Local Transaction"
-                                       required="false">
-                        <c:description>Whether on not to use local transactions - default is false.</c:description>
-                    </c:simple-property>
-                    
                     <c:simple-property name="track-connection-by-tx"
                                        type="boolean"
                                        activationPolicy="immediate"
@@ -1118,14 +1122,6 @@
                                        required="false"
                                        default="true">
                         <c:description>Whether the connection should be locked into the transaction.</c:description>
-                    </c:simple-property>
-
-                    <c:simple-property name="xa-transaction"
-                                       type="boolean"
-                                       activationPolicy="immediate"
-                                       displayName="XA Transaction"
-                                       required="false">
-                        <c:description>Whether on not to use XA transactions - default is false.</c:description>
                     </c:simple-property>
 
                     <c:simple-property name="xa-resource-timeout"
@@ -1144,12 +1140,10 @@
                 </c:group>
 
                 <c:template name="Local Transaction" description="a connection factory that uses local transactions">
-                    <c:simple-property name="local-transaction" default="true"/>
                     <c:simple-property name="xa-transaction" default="false"/>
                 </c:template>
 
-                <c:template name="XA Transaction" description="a connection factory that uses XA transactions">
-                    <c:simple-property name="local-transaction" default="false"/>
+                <c:template name="XA Transaction" description="a connection factory that uses XA transactions">                    
                     <c:simple-property name="xa-transaction" default="true"/>
                 </c:template>
             </resource-configuration>

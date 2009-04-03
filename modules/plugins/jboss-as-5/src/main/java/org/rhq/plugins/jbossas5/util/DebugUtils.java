@@ -79,7 +79,9 @@ public abstract class DebugUtils {
                 if (managedProperty.hasViewUse(value))
                     viewUse = value.name();
             buf.append(", viewUse=").append(viewUse);
+            buf.append(", readOnly=").append(managedProperty.isReadOnly());
             buf.append(", mandatory=").append(managedProperty.isMandatory());
+            buf.append(", removed=").append(managedProperty.isRemoved());
             Object value = managedProperty.getValue();
             if (value != null && !(value instanceof MetaValue))
                 throw new IllegalStateException("Value of ManagedProperty [" + managedProperty.getName()

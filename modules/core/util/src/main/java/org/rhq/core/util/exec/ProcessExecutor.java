@@ -364,13 +364,20 @@ public class ProcessExecutor {
      */
     protected String getFullProgramExecutablePath(ProcessToStart process) throws FileNotFoundException {
         File progFile = new File(process.getProgramDirectory(), process.getProgramExecutable());
+        String result = progFile.getPath();
 
-        if (Boolean.TRUE.equals(process.isCheckExecutableExists()) && !progFile.exists()) {
-            throw new FileNotFoundException(UtilI18NResourceKeys.MSG.getMsg(
-                UtilI18NResourceKeys.PROCESS_EXEC_PROGRAM_DOES_NOT_EXIST, progFile));
+        // If executable verification has been turned off then assume the caller wants his executable "as-is".
+        // Otherwise, validate and ensure a full path. 
+        if (Boolean.TRUE.equals(process.isCheckExecutableExists())) {
+            if (Boolean.TRUE.equals(process.isCheckExecutableExists()) && !progFile.exists()) {
+                throw new FileNotFoundException(UtilI18NResourceKeys.MSG.getMsg(
+                    UtilI18NResourceKeys.PROCESS_EXEC_PROGRAM_DOES_NOT_EXIST, progFile));
+            }
+
+            result = progFile.getAbsolutePath();
         }
 
-        return progFile.getAbsolutePath();
+        return result;
     }
 
     /**

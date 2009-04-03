@@ -242,8 +242,11 @@
 
     <hr>
 
+    <%
+       out.println("<b>Executed " + executedSQL.size() + " statements.<b/><br />");
+    %>
 
-    <b>Executed Sql: </b>
+    <b>Executed SQL was: </b>
     <table border="1">
 
         <%

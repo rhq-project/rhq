@@ -67,16 +67,6 @@
                   
                   <onc:select name="selectedAgents" value="#{item.id}" />
                </rich:column>
-      
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="a.id">
-                        <h:outputText styleClass="headerText" value="ID" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  
-                  <h:outputText value="#{item.id}"/>
-               </rich:column>
 
                <rich:column>
                   <f:facet name="header">
@@ -126,16 +116,6 @@
                
                   <h:outputText value="#{item.port}"/>
                </rich:column>
-               
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="a.agentToken">
-                        <h:outputText styleClass="headerText" value="Agent Token" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-               
-                  <h:outputText value="#{item.agentToken}"/>
-               </rich:column>
                 
                <rich:column>
                   <f:facet name="header">
@@ -163,20 +143,10 @@
                   </h:outputLink>
                </rich:column>
 
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="a.status">
-                        <h:outputText styleClass="headerText" value="Status" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-               
-                  <h:outputText value="#{item.status}"/>
-               </rich:column>
-
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 9:6 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 9 : 6}" width="100%">
+                     <rich:column colspan="6" width="100%">
                         <ui:param name="paginationDataTableName" value="agentsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{agentsDataModel}"/>
                         <ui:param name="paginationPageControl" value="#{PageControl.AgentsList}"/>

@@ -20,22 +20,31 @@ package org.rhq.enterprise.gui.measurement.tables.resource;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.measurement.tables.MetricsTableUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Greg Hinkle
+ * @author Joseph Marques
  */
 public class ResourceMetricsTableUIBean extends MetricsTableUIBean {
 
     private List<MetricDisplaySummary> traitSummaries;
+    private List<MeasurementDataTrait> traitHistory;
 
     public ResourceMetricsTableUIBean() {
 
@@ -50,8 +59,6 @@ public class ResourceMetricsTableUIBean extends MetricsTableUIBean {
         List<MeasurementSchedule> traitSchedules = scheduleManager.getMeasurementSchedulesForResourceAndType(subject,
             resource.getId(), DataType.TRAIT, null, true); //null -> don't filter, we want everything, false -> not only enabled
 
-        // System.out.println("trait scheds: " + traitSchedules.size());
-
         int[] traitScheduleIds = new int[traitSchedules.size()];
         int i = 0;
         for (MeasurementSchedule sched : traitSchedules) {
@@ -63,9 +70,20 @@ public class ResourceMetricsTableUIBean extends MetricsTableUIBean {
                 traitScheduleIds, range.begin, range.end);
         }
 
+        HttpServletRequest request = FacesContextUtility.getRequest();
+        int definitionId = WebUtility.getOptionalIntRequestParameter(request, "traitDefinitionId", -1);
+
+        if (definitionId != -1) {
+            MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+            traitHistory = dataManager.getAllTraitDataForResourceAndDefinition(resource.getId(), definitionId);
+        }
     }
 
     public List<MetricDisplaySummary> getTraitSummaries() {
         return traitSummaries;
+    }
+
+    public List<MeasurementDataTrait> getTraitHistory() {
+        return traitHistory;
     }
 }

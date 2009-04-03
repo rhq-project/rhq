@@ -21,53 +21,7 @@
 
 <ui:define name="content">
 
-<ui:include src="/rhq/common/monitor/tables.xhtml"/>
-
-        <rich:panel styleClass="BlockContent">
-
-            <f:facet name="header" styleClass="BlockTitle">
-                <a name="Traits"/>
-                Traits
-            </f:facet>
-
-
-            <rich:dataTable value="#{ResourceMetricsTableUIBean.traitSummaries}" 
-                            width="100%"
-                            var="metric"
-                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
-                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
-
-                <rich:column>
-                    <f:facet name="header">
-                        <h:outputText value="Name"/>
-                    </f:facet>
-                    <h:outputText value="#{metric.label}"/>
-                </rich:column>
-
-                <rich:column>
-                    <f:facet name="header">
-                        <h:outputText value="Alerts"/>
-                    </f:facet>
-                    <h:outputText value="#{metric.alertCount}"/>
-                </rich:column>
-                
-                <rich:column>
-                    <f:facet name="header">
-                        <h:outputText value="Value"/>
-                    </f:facet>
-                    <h:outputText value="#{metric.value}"/>
-                </rich:column>
-                
-                <rich:column>
-                    <f:facet name="header">
-                        <h:outputText value="Last Changed"/>
-                    </f:facet>
-                    <h:outputText value="#{metric.changedDate}"/>
-                </rich:column>
-
-            </rich:dataTable>
-
-        </rich:panel>
+    <ui:include src="/rhq/common/monitor/tables.xhtml"/>
 
 </ui:define>
 

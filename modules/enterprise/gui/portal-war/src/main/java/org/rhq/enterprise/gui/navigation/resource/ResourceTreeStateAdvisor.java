@@ -20,10 +20,10 @@ package org.rhq.enterprise.gui.navigation.resource;
 
 import java.io.IOException;
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletResponse;
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletResponse;
 
 import org.richfaces.component.UITree;
 import org.richfaces.component.html.HtmlTree;
@@ -34,13 +34,11 @@ import org.richfaces.model.TreeRowKey;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.LockedResource;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.core.util.exception.Severity;
 import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
-import org.rhq.enterprise.gui.inventory.resource.ResourceUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -92,8 +90,10 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                 if (node.getData() instanceof LockedResource) {
                     state.setSelected(e.getOldSelection());
 
-                    FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree",
-                        new FacesMessage(FacesMessage.SEVERITY_WARN, "You have not been granted view access to this resource", null));
+                    FacesContext.getCurrentInstance().addMessage(
+                        "leftNavTreeForm:leftNavTree",
+                        new FacesMessage(FacesMessage.SEVERITY_WARN,
+                            "You have not been granted view access to this resource", null));
                     return;
 
                 } else if (node.getData() instanceof Resource) {
@@ -113,8 +113,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                         if ((path.startsWith("/rhq/resource/configuration/") && !facets.isConfiguration())
                             || (path.startsWith("/rhq/resource/content/") && !facets.isContent())
                             || (path.startsWith("/rhq/resource/operation") && !facets.isOperation())
-                            || (path.startsWith("/rhq/resource/events") && !facets.isEvent())
-                                ) {
+                            || (path.startsWith("/rhq/resource/events") && !facets.isEvent())) {
                             // This resource doesn't support those facets
                             path = fallbackPath;
                         } else if (path.startsWith("/rhq/resource/configuration/edit.xhtml")
@@ -123,9 +122,18 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                         } else if (!path.startsWith("/rhq/resource/content/view.xhtml")
                             && path.startsWith("/rhq/resource/content/") && facets.isContent()) {
                             path = "/rhq/resource/content/view.xhtml";
-                        } else if (!path.startsWith("/rhq/resource/inventory/view.xhtml")
-                            && path.startsWith("/rhq/resource/inventory/")) {
+                        } else if (path.startsWith("/rhq/resource/inventory/")
+                            && !(path.startsWith("/rhq/resource/inventory/view.xhtml")
+                                || (facets.isPluginConfiguration() && path
+                                    .startsWith("/rhq/resource/inventory/view-connection.xhtml")) || path
+                                .startsWith("/rhq/resource/inventory/view-agent.xhtml"))) {
                             path = "/rhq/resource/inventory/view.xhtml";
+                        } else if (path.startsWith("/rhq/resource/operation/resourceOperationHistoryDetails.xhtml")) {
+                            path = "/rhq/resource/operation/resourceOperationHistory.xhtml";
+                        } else if (path.startsWith("/rhq/resource/operation/resourceOperationScheduleDetails.xhtml")) {
+                            path = "/rhq/resource/operation/resourceOperationSchedules.xhtml";
+                        } else if (path.startsWith("/rhq/resource/monitor/response.xhtml") && !facets.isCallTime()) {
+                            path = fallbackPath;
                         }
                     }
 
@@ -133,27 +141,27 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                 } else if (node.getData() instanceof AutoGroupComposite) {
                     AutoGroupComposite ag = (AutoGroupComposite) node.getData();
 
-
-
-                        if (ag.getSubcategory() != null) {
+                    if (ag.getSubcategory() != null) {
+                        state.setSelected(e.getOldSelection());
+                        // this is a subcategory or subsubcategory, no page to display right now
+                        FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree",
+                            new FacesMessage(FacesMessage.SEVERITY_WARN, "No subcategory pages exist", null));
+                        return;
+                    } else {
+                        if (ag.getMemberCount() != node.getChildren().size()) {
+                            // you don't have access to every autogroup resource
                             state.setSelected(e.getOldSelection());
-                            // this is a subcategory or subsubcategory, no page to display right now
-                            FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree",
-                                    new FacesMessage(FacesMessage.SEVERITY_WARN, "No subcategory pages exist", null));
+                            FacesContext.getCurrentInstance().addMessage(
+                                "leftNavTreeForm:leftNavTree",
+                                new FacesMessage(FacesMessage.SEVERITY_WARN,
+                                    "You must have view access to all resources in an autogroup to view it", null));
                             return;
                         } else {
-                            if (ag.getMemberCount() != node.getChildren().size()) {
-                                // you don't have access to every autogroup resource
-                                state.setSelected(e.getOldSelection());
-                                FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree",
-                                        new FacesMessage(FacesMessage.SEVERITY_WARN, "You must have view access to all resources in an autogroup to view it", null));
-                                return;
-                            } else {
-                                String path = "/rhq/autogroup/monitor/graphs.xhtml?parent=" + ag.getParentResource().getId()
-                                    + "&type=" + ag.getResourceType().getId();
-                                response.sendRedirect(path);
-                            }
+                            String path = "/rhq/autogroup/monitor/graphs.xhtml?parent="
+                                + ag.getParentResource().getId() + "&type=" + ag.getResourceType().getId();
+                            response.sendRedirect(path);
                         }
+                    }
 
                 }
             }

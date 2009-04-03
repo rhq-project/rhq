@@ -22,9 +22,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+
 import javax.management.MBeanRegistration;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.Calendar;
@@ -418,5 +420,29 @@ public class SchedulerService implements SchedulerServiceMBean, MBeanRegistratio
     public void triggerJobWithVolatileTrigger(String jobName, String groupName, JobDataMap data)
         throws SchedulerException {
         scheduler.triggerJob(jobName, groupName, data);
+    }
+
+    public JobListener getGlobalJobListener(String jobName) throws SchedulerException {
+        return scheduler.getGlobalJobListener(jobName);
+    }
+
+    public TriggerListener getGlobalTriggerListener(String triggerName) throws SchedulerException {
+        return scheduler.getGlobalTriggerListener(triggerName);
+    }
+
+    public boolean isStarted() throws SchedulerException {
+        return scheduler.isStarted();
+    }
+
+    public boolean removeGlobalJobListener(String jobName) throws SchedulerException {
+        return scheduler.removeGlobalJobListener(jobName);
+    }
+
+    public boolean removeGlobalTriggerListener(String triggerName) throws SchedulerException {
+        return scheduler.removeGlobalTriggerListener(triggerName);
+    }
+
+    public void startDelayed(int delay) throws SchedulerException {
+        scheduler.startDelayed(delay);
     }
 }

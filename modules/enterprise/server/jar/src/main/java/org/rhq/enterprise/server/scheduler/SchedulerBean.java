@@ -23,8 +23,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+
 import javax.ejb.Stateless;
 import javax.management.MBeanServerInvocationHandler;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.Calendar;
@@ -42,6 +44,7 @@ import org.quartz.Trigger;
 import org.quartz.TriggerListener;
 import org.quartz.UnableToInterruptJobException;
 import org.quartz.spi.JobFactory;
+
 import org.jboss.mx.util.MBeanServerLocator;
 
 /**
@@ -489,5 +492,30 @@ public class SchedulerBean implements SchedulerLocal {
     public void triggerJobWithVolatileTrigger(String jobName, String groupName, JobDataMap data)
         throws SchedulerException {
         getSchedulerService().triggerJob(jobName, groupName, data);
+    }
+
+    /* new methods in quartz 1.6.5 below this line */
+    public JobListener getGlobalJobListener(String jobName) throws SchedulerException {
+        return getSchedulerService().getGlobalJobListener(jobName);
+    }
+
+    public TriggerListener getGlobalTriggerListener(String triggerName) throws SchedulerException {
+        return getSchedulerService().getGlobalTriggerListener(triggerName);
+    }
+
+    public boolean isStarted() throws SchedulerException {
+        return getSchedulerService().isStarted();
+    }
+
+    public boolean removeGlobalJobListener(String jobName) throws SchedulerException {
+        return getSchedulerService().removeGlobalJobListener(jobName);
+    }
+
+    public boolean removeGlobalTriggerListener(String triggerName) throws SchedulerException {
+        return getSchedulerService().removeGlobalTriggerListener(triggerName);
+    }
+
+    public void startDelayed(int delay) throws SchedulerException {
+        getSchedulerService().startDelayed(delay);
     }
 }

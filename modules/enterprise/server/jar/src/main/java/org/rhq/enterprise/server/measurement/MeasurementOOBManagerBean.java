@@ -105,13 +105,12 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             conn = rhqDs.getConnection();
             DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
 
-            long t0 =  System.currentTimeMillis();
+            long t0 = System.currentTimeMillis();
             long tstart = t0;
-
 
             // first truncate tmp table
             log.debug("Truncating tmp table");
-//            stmt = conn.prepareStatement(MeasurementOOB.TRUNCATE_TMP_TABLE);
+            //            stmt = conn.prepareStatement(MeasurementOOB.TRUNCATE_TMP_TABLE);
             stmt = conn.prepareStatement("DELETE FROM RHQ_MEASUREMENT_OOB_TMP");
             stmt.executeUpdate();
             long t1 = System.currentTimeMillis();
@@ -122,7 +121,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
             // Compute the OOBs and put them in the tmp table
             if (dbType instanceof PostgresqlDatabaseType)
-                theQuery = MeasurementOOB.INSERT_QUERY.replace("%TRUE%","true");
+                theQuery = MeasurementOOB.INSERT_QUERY.replace("%TRUE%", "true");
             else if (dbType instanceof OracleDatabaseType)
                 theQuery = MeasurementOOB.INSERT_QUERY.replace("%TRUE%", "1");
             else
@@ -156,20 +155,17 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
                 t1 = System.currentTimeMillis();
                 timings.add((t1 - t0));
                 log.debug("Insert of new oobs done");
-            }
-            else if (dbType instanceof OracleDatabaseType) {
+            } else if (dbType instanceof OracleDatabaseType) {
                 theQuery = MeasurementOOB.MERGE_TABLES_ORACLE;
                 stmt = conn.prepareStatement(theQuery);
                 stmt.executeUpdate();
                 t1 = System.currentTimeMillis();
                 timings.add((t1 - t0));
                 log.debug("Merge of master table done");
-            }
-            else
+            } else
                 throw new IllegalArgumentException("Unknown database type, can't continue: " + dbType);
 
-
-            log.info("Done calculating OOBs. [" + count + "] entries in [" + (t1 - tstart) + "] ms ("+timings + ")" );
+            log.info("Done calculating OOBs. [" + count + "] entries in [" + (t1 - tstart) + "] ms (" + timings + ")");
         } catch (SQLException e) {
             log.error(e);
         } catch (Exception e) {
@@ -185,7 +181,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * #computeOOBsFromHourBeginingAt
      * @param subject Caller
      */
-//    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+    //    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     public void computeOOBsFromLastHour(Subject subject) {
 
         Query q = entityManager.createNamedQuery(MeasurementDataNumeric1H.GET_MAX_TIMESTAMP);
@@ -263,13 +259,11 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * @param parentNameFilter a parent resource name to filter for   @return List of schedules with the corresponing oob aggregates
      * @param pc PageControl to do pagination
      */
+    @SuppressWarnings("unchecked")
     public PageList<MeasurementOOBComposite> getSchedulesWithOOBs(Subject subject, String metricNameFilter,
-                                                                  String resourceNameFilter, String parentNameFilter,
-                                                                  PageControl pc
-    ) {
+        String resourceNameFilter, String parentNameFilter, PageControl pc) {
 
         pc.initDefaultOrderingField("o.oobFactor", PageOrdering.DESC);
-
 
         Query queryCount;
         Query query;
@@ -280,22 +274,22 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             queryCount = entityManager.createNamedQuery(MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT);
             query = PersistenceUtility.createQueryWithOrderBy(entityManager,
                 MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE, pc);
-        }
-        else {
-            String tmp = PersistenceUtility.getQueryDefinitionFromNamedQuery(entityManager,MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE);
-            tmp += MeasurementOOB.SECURITY_ADDITION ;
-            query = PersistenceUtility.createNonNamedQueryWithOrderBy(entityManager,tmp,pc);
+        } else {
+            String tmp = PersistenceUtility.getQueryDefinitionFromNamedQuery(entityManager,
+                MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE);
+            tmp += MeasurementOOB.SECURITY_ADDITION;
+            query = PersistenceUtility.createNonNamedQueryWithOrderBy(entityManager, tmp, pc);
 
-            tmp = PersistenceUtility.getQueryDefinitionFromNamedQuery(entityManager,MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT);
-            tmp += MeasurementOOB.SECURITY_ADDITION ;
-            queryCount = PersistenceUtility.createNonNamedQueryWithOrderBy(entityManager,tmp,pc);
+            tmp = PersistenceUtility.getQueryDefinitionFromNamedQuery(entityManager,
+                MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT);
+            tmp += MeasurementOOB.SECURITY_ADDITION;
+            queryCount = PersistenceUtility.createNonNamedQueryWithOrderBy(entityManager, tmp, pc);
         }
 
         // trim crap, toUpper it and put % around it for a LIKE query
         metricNameFilter = PersistenceUtility.formatSearchParameter(metricNameFilter);
         resourceNameFilter = PersistenceUtility.formatSearchParameter(resourceNameFilter);
         parentNameFilter = PersistenceUtility.formatSearchParameter(parentNameFilter);
-
 
         query.setParameter("metricName", metricNameFilter);
         queryCount.setParameter("metricName", metricNameFilter);
@@ -310,7 +304,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         }
 
         List<MeasurementOOBComposite> results = query.getResultList();
-        long totalCount = queryCount.getResultList().size();
+        long totalCount = (Long) queryCount.getSingleResult();
 
         if (!results.isEmpty()) {
 
@@ -344,6 +338,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
      * @param n max number of entries wanted
      * @return
      */
+    @SuppressWarnings("unchecked")
     public PageList<MeasurementOOBComposite> getHighestNOOBsForResource(Subject subject, int resourceId, int n) {
 
         if (!authMangager.canViewResource(subject, resourceId)) {

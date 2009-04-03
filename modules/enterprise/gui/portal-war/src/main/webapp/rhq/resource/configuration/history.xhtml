@@ -173,10 +173,11 @@
 
                     <h:outputText value="Individual Resource Update"
                                   rendered="#{empty item.aggregateConfigurationUpdate}"/>
-                    <h:outputLink value="/rhq/group/configuration/details.xhtml"
+                    <h:outputLink value="/rhq/group/configuration/history.xhtml"
                                   rendered="#{not empty item.aggregateConfigurationUpdate}">
                         <f:param name="groupId" value="#{item.aggregateConfigurationUpdate.group.id}"/>
                         <f:param name="arcuId" value="#{item.aggregateConfigurationUpdate.id}"/>
+                        <f:param name="mode" value="aggregate"/>
                         <h:outputText value="Group Update Member"/>
                     </h:outputLink>
                 </rich:column>

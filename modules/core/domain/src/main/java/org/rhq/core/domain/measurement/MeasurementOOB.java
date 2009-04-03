@@ -49,7 +49,7 @@ import javax.persistence.Table;
                         "  AND (UPPER(parent.name) LIKE :parentName OR :parentName is null ) "
                             ),
         @NamedQuery(name=MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT,
-                query = "SELECT sched.id " +
+                query = "SELECT COUNT(sched.id) " +
                         "FROM MeasurementOOB o , MeasurementSchedule sched "+
                         "LEFT JOIN sched.definition def " +
                         "LEFT JOIN sched.resource res " +

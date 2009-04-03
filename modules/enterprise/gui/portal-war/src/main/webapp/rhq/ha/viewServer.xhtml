@@ -154,16 +154,6 @@
                   <onc:select name="selectedAgents" value="#{item.id}" />
                </rich:column>
 
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="a.id">
-                        <h:outputText styleClass="headerText" value="ID" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  
-                  <h:outputText value="#{item.id}"/>
-               </rich:column>
-
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="a.name">
@@ -174,7 +164,7 @@
                   <h:outputLink value="viewAgent.xhtml">
                      <f:param name="mode" value="view"/>
                      <f:param name="agentId" value="#{item.id}"/>
-                     <f:param name="serverId" value="#{param.serverId}"/>                     
+                     <f:param name="serverId" value="#{param.serverId}"/>
                      <h:outputText value="#{item.name}" />
                   </h:outputLink>
                </rich:column>
@@ -197,16 +187,6 @@
                   </f:facet>
 
                   <h:outputText value="#{item.port}"/>
-               </rich:column>
-
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="a.agentToken">
-                        <h:outputText styleClass="headerText" value="Token" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{item.agentToken}"/>
                </rich:column>
 
                <rich:column>
@@ -233,20 +213,10 @@
                   </h:outputLink>
                </rich:column>
 
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="a.status">
-                        <h:outputText styleClass="headerText" value="Status" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-
-                  <h:outputText value="#{item.status}"/>
-               </rich:column>
-
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 9:6 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 9 : 6}" width="100%">
+                     <rich:column colspan="6" width="100%">
                         <ui:param name="paginationDataTableName" value="connectedAgentsDataTable"/>
                         <ui:param name="paginationDataModel" value="#{connectedAgentsDataModel}"/>
                         <ui:param name="paginationPageControl" value="#{PageControl.ServerConnectedAgentsView}"/>

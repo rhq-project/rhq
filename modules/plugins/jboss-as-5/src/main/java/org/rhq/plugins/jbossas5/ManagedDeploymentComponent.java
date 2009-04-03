@@ -195,11 +195,12 @@ public class ManagedDeploymentComponent
     // ------------ DeleteResourceFacet implementation -------------
 
     public void deleteResource() throws Exception {
-        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
-        String deploymentName = pluginConfig.getSimple(DEPLOYMENT_NAME_PROPERTY).getStringValue();
-        log.debug("Undeploying deployment [" + deploymentName + "]...");
         DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
-        DeploymentProgress progress = deploymentManager.remove(deploymentName);
+        log.debug("Stopping deployment [" + this.deploymentName + "]...");
+        DeploymentProgress progress = deploymentManager.stop(deploymentName);
+        DeploymentUtils.run(progress);
+        log.debug("Removing deployment [" + this.deploymentName + "]...");
+        progress = deploymentManager.remove(deploymentName);
         DeploymentUtils.run(progress);
     }
 

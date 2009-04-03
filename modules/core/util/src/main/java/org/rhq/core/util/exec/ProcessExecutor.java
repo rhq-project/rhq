@@ -369,7 +369,7 @@ public class ProcessExecutor {
         // If executable verification has been turned off then assume the caller wants his executable "as-is".
         // Otherwise, validate and ensure a full path. 
         if (Boolean.TRUE.equals(process.isCheckExecutableExists())) {
-            if (Boolean.TRUE.equals(process.isCheckExecutableExists()) && !progFile.exists()) {
+            if (!progFile.exists()) {
                 throw new FileNotFoundException(UtilI18NResourceKeys.MSG.getMsg(
                     UtilI18NResourceKeys.PROCESS_EXEC_PROGRAM_DOES_NOT_EXIST, progFile));
             }

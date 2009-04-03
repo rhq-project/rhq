@@ -52,7 +52,7 @@ public class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryCom
     {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
         ResourceType resourceType = resourceDiscoveryContext.getResourceType();
-        log.debug("Discovering " + resourceType.getName() + " Resources..." );
+        log.trace("Discovering " + resourceType.getName() + " Resources..." );
         KnownDeploymentTypes deploymentType = ConversionUtils.getDeploymentType(resourceType);
         String deploymentTypeString = deploymentType.getType();
 
@@ -117,7 +117,7 @@ public class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryCom
             }
         }
 
-        log.debug("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources." );
+        log.trace("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources." );
         return discoveredResources;
     }
 

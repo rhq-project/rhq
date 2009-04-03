@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.util.exec;
 
 import java.io.OutputStream;
@@ -27,6 +27,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
 import org.rhq.core.util.UtilI18NResourceKeys;
 
 /**
@@ -50,6 +51,7 @@ public class ProcessToStart {
     private static final String PARAM_BACKUP_OUTPUT_FILE = "backupOutputFile";
     private static final String PARAM_WAIT_FOR_EXIT = "waitForExit";
     private static final String PARAM_KILL_ON_TIMEOUT = "killOnTimeout";
+    private static final String PARAM_CHECK_EXECUTABLE_EXISTS = "checkExecutableExists";
 
     private Map<String, Object> map = new HashMap<String, Object>();
 
@@ -566,6 +568,40 @@ public class ProcessToStart {
             map.put(PARAM_KILL_ON_TIMEOUT, value);
         } else {
             map.remove(PARAM_KILL_ON_TIMEOUT);
+        }
+    }
+
+    /**
+     * If <code>true</code>, then the executable will first be checked for its existance.
+     * If the executable does not exist, the execution should fail-fast. If <code>false</code>,
+     * the process will attempt to be executed no matter what. This will allow the operating
+     * system to check its executable PATH to find the executable if required.
+     *
+     * @return check flag (default is <code>true</code>, will never be <code>null</code>)
+     */
+    public Boolean isCheckExecutableExists() {
+        Boolean flag = (Boolean) map.get(PARAM_CHECK_EXECUTABLE_EXISTS);
+
+        if (flag == null) {
+            flag = Boolean.TRUE;
+        }
+
+        return flag;
+    }
+
+    /**
+     * Sets the flag to indicate if the executable should be checked for existence first.
+     *
+     * @param value the check flag
+     *
+     * @see   #isCheckExecutableExists()
+     */
+    public void setCheckExecutableExists(Boolean value) {
+        // flag is optional, but non-nullable; remove it if null is passed in
+        if (value != null) {
+            map.put(PARAM_CHECK_EXECUTABLE_EXISTS, value);
+        } else {
+            map.remove(PARAM_CHECK_EXECUTABLE_EXISTS);
         }
     }
 }

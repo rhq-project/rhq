@@ -258,10 +258,10 @@
       </dependency>
 
       <dependency>
-         <groupId>opensymphony</groupId>
+         <groupId>org.opensymphony.quartz</groupId>
          <artifactId>quartz</artifactId>
-         <version>1.5.2</version>
-         <scope>provided</scope> <!-- by JBossAS default config, which includes v1.5.2 -->
+         <version>1.6.5</version>
+         <scope>provided</scope> <!-- by JBossAS itself, which the container build has packaged with 1.6.5 -->
       </dependency>
 
       <!-- == Seam Related Dependencies ================ -->

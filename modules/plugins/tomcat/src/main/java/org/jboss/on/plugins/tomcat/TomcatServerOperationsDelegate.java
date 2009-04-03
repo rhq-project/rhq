@@ -227,9 +227,14 @@ public class TomcatServerOperationsDelegate {
             : TomcatDiscoveryComponent.EWS_TOMCAT_6;
 
         processExecution = new ProcessExecution("service");
+        // disable the executable existence check because it is a command on the supplied PATH
+        processExecution.setCheckExecutableExists(false);
         processExecution.setArguments(new ArrayList<String>());
         processExecution.getArguments().add(rpm);
         processExecution.getArguments().add("start");
+
+        Map<String, String> envVars = new LinkedHashMap<String, String>(System.getenv());
+        processExecution.setEnvironmentVariables(envVars);
 
         initProcessExecution(processExecution);
 
@@ -298,9 +303,14 @@ public class TomcatServerOperationsDelegate {
             : TomcatDiscoveryComponent.EWS_TOMCAT_6;
 
         processExecution = new ProcessExecution("service");
+        // disable the executable existence check because it is a command on the supplied PATH        
         processExecution.setArguments(new ArrayList<String>());
         processExecution.getArguments().add(rpm);
         processExecution.getArguments().add("stop");
+
+        Map<String, String> envVars = new LinkedHashMap<String, String>(System.getenv());
+        log.info("Operation Envs: " + envVars);
+        processExecution.setEnvironmentVariables(envVars);
 
         initProcessExecution(processExecution);
 

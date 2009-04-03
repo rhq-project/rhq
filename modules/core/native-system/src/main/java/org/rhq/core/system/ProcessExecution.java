@@ -73,8 +73,7 @@ public class ProcessExecution {
      *
      * @param executable the full path to the executable that will be run
      */
-    public void setExecutable(@NotNull
-    String executable) {
+    public void setExecutable(@NotNull String executable) {
         this.executable = executable;
     }
 
@@ -108,8 +107,7 @@ public class ProcessExecution {
      *
      * @param arguments an optional set of arguments to pass to the executable
      */
-    public void setArguments(@Nullable
-    List<String> arguments) {
+    public void setArguments(@Nullable List<String> arguments) {
         this.arguments = arguments;
     }
 
@@ -118,8 +116,7 @@ public class ProcessExecution {
      *
      * @param arguments an optional set of arguments to pass to the executable
      */
-    public void setArguments(@Nullable
-    String[] arguments) {
+    public void setArguments(@Nullable String[] arguments) {
         this.arguments = new ArrayList<String>(Arrays.asList(arguments));
     }
 
@@ -157,8 +154,7 @@ public class ProcessExecution {
      *
      * @param environmentVariables an optional set of environment variables to pass to the process
      */
-    public void setEnvironmentVariables(@Nullable
-    Map<String, String> environmentVariables) {
+    public void setEnvironmentVariables(@Nullable Map<String, String> environmentVariables) {
         this.environmentVariables = environmentVariables;
     }
 
@@ -173,8 +169,7 @@ public class ProcessExecution {
      *
      * @param workingDirectory The directory the process should get as working directory.
      */
-    public void setWorkingDirectory(@Nullable
-    String workingDirectory) {
+    public void setWorkingDirectory(@Nullable String workingDirectory) {
         this.workingDirectory = workingDirectory;
     }
 
@@ -224,6 +219,14 @@ public class ProcessExecution {
         this.killOnTimeout = killOnTimeout;
     }
 
+    /**
+     * If <code>true</code>, then the executable should first be checked for its existence.
+     * If the executable does not exist, the execution should fail-fast. If <code>false</code>,
+     * the process will attempt to be executed no matter what. This will allow the operating
+     * system to check its executable PATH to find the executable as necessary.
+     *
+     * @return check flag (default is <code>true</code>)
+     */
     public boolean isCheckExecutableExists() {
         return checkExecutableExists;
     }

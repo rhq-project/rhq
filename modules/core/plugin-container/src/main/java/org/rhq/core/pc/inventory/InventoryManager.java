@@ -184,33 +184,35 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 loadFromDisk();
             }
 
+            // Discover the platform first thing.
             executePlatformScan();
 
-            // Never run more than one discovery at a time.
-            inventoryThreadPoolExecutor = new ScheduledThreadPoolExecutor(1, new LoggingThreadFactory(
-                INVENTORY_THREAD_POOL_NAME, true));
-
-            serverScanExecutor = new AutoDiscoveryExecutor(null, this, configuration);
-
-            // After ten seconds, periodically run the autodiscovery scan
-
-            if (configuration.isInsideAgent()) {
-                inventoryThreadPoolExecutor.scheduleWithFixedDelay(serverScanExecutor, configuration
-                    .getServerDiscoveryInitialDelay(), configuration.getServerDiscoveryPeriod(), TimeUnit.SECONDS);
-            }
-
-            serviceScanExecutor = new RuntimeDiscoveryExecutor(this, configuration);
-            if (configuration.isInsideAgent()) {
-                inventoryThreadPoolExecutor.scheduleWithFixedDelay(serviceScanExecutor, configuration
-                    .getServiceDiscoveryInitialDelay(), configuration.getServiceDiscoveryPeriod(), TimeUnit.SECONDS);
-            }
-
-            // Never run more than one availability check at a time.
+            // Never run more than one avail check at a time.
             availabilityThreadPoolExecutor = new ScheduledThreadPoolExecutor(AVAIL_THREAD_POOL_CORE_POOL_SIZE,
                 new LoggingThreadFactory(AVAIL_THREAD_POOL_NAME, true));
             availabilityExecutor = new AvailabilityExecutor(this);
-            availabilityThreadPoolExecutor.scheduleWithFixedDelay(availabilityExecutor, configuration
-                .getAvailabilityScanInitialDelay(), configuration.getAvailabilityScanPeriod(), TimeUnit.SECONDS);
+            
+            // Never run more than one discovery scan at a time (service and service scans share the same pool).
+            inventoryThreadPoolExecutor = new ScheduledThreadPoolExecutor(1, new LoggingThreadFactory(
+                INVENTORY_THREAD_POOL_NAME, true));
+            serverScanExecutor = new AutoDiscoveryExecutor(null, this, configuration);
+            serviceScanExecutor = new RuntimeDiscoveryExecutor(this, configuration);
+
+            // Only schedule periodic discovery scans and avail checks if we are running inside the RHQ Agent (versus
+            // inside EmbJopr).
+            if (configuration.isInsideAgent()) {
+                // After an initial delay (5s by default), periodically run an availability check (every 1m by default).
+                availabilityThreadPoolExecutor.scheduleWithFixedDelay(availabilityExecutor, configuration
+                    .getAvailabilityScanInitialDelay(), configuration.getAvailabilityScanPeriod(), TimeUnit.SECONDS);
+
+                // After an initial delay (10s by default), periodically run a server discovery scan (every 15m by default).
+                inventoryThreadPoolExecutor.scheduleWithFixedDelay(serverScanExecutor, configuration
+                    .getServerDiscoveryInitialDelay(), configuration.getServerDiscoveryPeriod(), TimeUnit.SECONDS);
+
+                // After an initial delay (20s by default), periodically run a service discovery scan (every 1d by default).
+                inventoryThreadPoolExecutor.scheduleWithFixedDelay(serviceScanExecutor, configuration
+                    .getServiceDiscoveryInitialDelay(), configuration.getServiceDiscoveryPeriod(), TimeUnit.SECONDS);
+            }
         } finally {
             inventoryLock.writeLock().unlock();
         }

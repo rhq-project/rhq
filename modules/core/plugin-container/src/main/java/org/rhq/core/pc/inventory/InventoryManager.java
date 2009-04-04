@@ -191,7 +191,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             availabilityThreadPoolExecutor = new ScheduledThreadPoolExecutor(AVAIL_THREAD_POOL_CORE_POOL_SIZE,
                 new LoggingThreadFactory(AVAIL_THREAD_POOL_NAME, true));
             availabilityExecutor = new AvailabilityExecutor(this);
-            
+
             // Never run more than one discovery scan at a time (service and service scans share the same pool).
             inventoryThreadPoolExecutor = new ScheduledThreadPoolExecutor(1, new LoggingThreadFactory(
                 INVENTORY_THREAD_POOL_NAME, true));
@@ -359,20 +359,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (resourceContainer != null) {
             if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
                 ResourceComponent resourceComponent = null;
-                try
-                {
+                try {
                     resourceComponent = resourceContainer.createResourceComponentProxy(ResourceComponent.class,
-                            FacetLockType.READ, 5000, true, true);
+                        FacetLockType.READ, 5000, true, true);
                     availType = resourceComponent.getAvailability();
-                }
-                catch (RuntimeException e)
-                {
-                    log.error("Call to getAvailablity() on ResourceComponent for " + resource + " failed.", e);
-                    availType = AvailabilityType.DOWN;
-                }
-                catch (PluginContainerException e)
-                {
+                } catch (PluginContainerException e) {
                     log.error("Failed to retrieve ResourceComponent for " + resource + ".", e);
+                } catch (Throwable t) {
+                    log.error("Call to getAvailablity() on ResourceComponent for " + resource + " failed.", t);
+                    availType = AvailabilityType.DOWN;
                 }
             }
         } else {
@@ -962,9 +957,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @throws PluginContainerException            for all other errors
      */
     @SuppressWarnings("unchecked")
-    public void activateResource(Resource resource, @NotNull
-    ResourceContainer container, boolean updatedPluginConfig) throws InvalidPluginConfigurationException,
-        PluginContainerException {
+    public void activateResource(Resource resource, @NotNull ResourceContainer container, boolean updatedPluginConfig)
+        throws InvalidPluginConfigurationException, PluginContainerException {
         ResourceComponent component = container.getResourceComponent();
 
         // if the component already exists and is started, and the resource's plugin config has not changed, there is

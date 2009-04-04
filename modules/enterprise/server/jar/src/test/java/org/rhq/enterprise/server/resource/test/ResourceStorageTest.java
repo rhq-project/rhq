@@ -101,7 +101,7 @@ public class ResourceStorageTest extends AbstractEJB3Test {
         try {
             ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-            PageControl pc = new PageControl(1, 5, new OrderingField("g.name", PageOrdering.ASC));
+            PageControl pc = new PageControl(1, 5, new OrderingField("rg.name", PageOrdering.ASC));
 
             //Subject subject = subjectManager.loginUnauthenticated("ghinkle");
             Subject subject = subjectManager.getOverlord();
@@ -123,7 +123,7 @@ public class ResourceStorageTest extends AbstractEJB3Test {
         try {
             ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-            PageControl pc = new PageControl(1, 5, new OrderingField("g.name", PageOrdering.ASC));
+            PageControl pc = new PageControl(1, 5, new OrderingField("rg.name", PageOrdering.ASC));
             PageList<ResourceGroupComposite> groups = groupManager.getResourceGroupsFiltered(subjectManager
                 .getOverlord(), GroupCategory.COMPATIBLE, null, null, null, null, null, pc);
             System.out.println("Found compatible groups: " + groups.getTotalSize());

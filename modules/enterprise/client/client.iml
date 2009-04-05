@@ -166,11 +166,11 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$M2_REPO$/opensymphony/quartz/1.5.2/quartz-1.5.2.jar!/" />
+          <root url="jar://$M2_REPO$/org/opensymphony/quartz/quartz/1.6.5/quartz-1.6.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$M2_REPO$/opensymphony/quartz/1.5.2/quartz-1.5.2-sources.jar!/" />
+          <root url="jar://$M2_REPO$/org/opensymphony/quartz/quartz/1.6.5/quartz-1.6.5.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -263,7 +263,7 @@
     <orderEntry type="library" name="Maven: jboss:jboss-j2ee:4.2.1.GA" level="project" />
     <orderEntry type="library" name="Maven: jboss:jboss-ejb3-client:4.2.2.GA" level="project" />
     <orderEntry type="library" name="Maven: jboss:jbossall-client:4.2.2.GA" level="project" />
-    <orderEntry type="library" name="Maven: opensymphony:quartz:1.5.2" level="project" />
+    <orderEntry type="library" name="Maven: org.opensymphony.quartz:quartz:1.5.2" level="project" />
     <orderEntry type="library" name="Maven: hibernate:hibernate3:3.2.r14201-1" level="project" />
     <orderEntry type="library" name="Maven: jboss.jboss-embeddable-ejb3:jboss-ejb3-all:1.0.0.Alpha9" level="project" />
     <orderEntry type="library" name="Maven: jboss.jboss-embeddable-ejb3:hibernate-all:1.0.0.Alpha9" level="project" />

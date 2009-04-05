@@ -79,7 +79,7 @@
   <AuxClasspathEntry>~/.m2/repository/javax/el/el-api/1.0/el-api-1.0.jar</AuxClasspathEntry>
   <AuxClasspathEntry>~/.m2/repository/com/sun/facelets/jsf-facelets/1.1.13/jsf-facelets-1.1.13.jar</AuxClasspathEntry>
   <AuxClasspathEntry>~/.m2/repository/mc4j/org-mc4j-ems/1.2.0/org-mc4j-ems-1.2.0.jar</AuxClasspathEntry>
-  <AuxClasspathEntry>~/.m2/repository/opensymphony/quartz/1.5.2/quartz-1.5.2.jar</AuxClasspathEntry>
+  <AuxClasspathEntry>~/.m2/repository/org/opensymphony/quartz/quartz/1.6.5/quartz-1.6.5.jar</AuxClasspathEntry>
   <AuxClasspathEntry>~/.m2/repository/javax/mail/mail/1.3.1/mail-1.3.1.jar</AuxClasspathEntry>
   <AuxClasspathEntry>~/.m2/repository/commons-fileupload/commons-fileupload/1.2/commons-fileupload-1.2.jar</AuxClasspathEntry>
   <AuxClasspathEntry>~/.m2/repository/org/richfaces/framework/richfaces-api/3.1.3-GA/richfaces-api-3.1.3-GA.jar</AuxClasspathEntry>

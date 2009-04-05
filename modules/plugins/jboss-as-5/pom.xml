@@ -32,7 +32,7 @@
     <properties>
         <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
                         
-        <jboss-man.version>2.1.0.CR5</jboss-man.version>
+        <jboss-man.version>2.1.0.CR6</jboss-man.version>
         <jboss-profileservice-spi.version>5.1.0.CR2</jboss-profileservice-spi.version>
     </properties>
 
@@ -53,14 +53,14 @@
         </dependency>
 
         <!-- NOTE: Uncomment the below dep if you want to pull down the jboss-profileservice 
-                   sources jar for debugging purposes. -->                                
-        <!--
+                   sources jar for debugging purposes. -->        
+        <!--                   
         <dependency>
           <groupId>org.jboss</groupId>
           <artifactId>jboss-profileservice</artifactId>                    
           <version>5.1.0.CR1</version>
           <scope>provided</scope>
-        </dependency>                        
+        </dependency>                                
         -->
         
         <dependency>

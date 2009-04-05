@@ -230,7 +230,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
     private EventSeverity[] getEventSeverity() {
         String[] severityNames = getSeverityFilter();
-        if (severityNames != null) {
+        if (severityNames != null && severityNames.length > 0) {
             EventSeverity[] severities = new EventSeverity[severityNames.length];
             for (int i = 0; i < severityNames.length; i++) {
                 severities[i] = Enum.valueOf(EventSeverity.class, severityNames[i]);

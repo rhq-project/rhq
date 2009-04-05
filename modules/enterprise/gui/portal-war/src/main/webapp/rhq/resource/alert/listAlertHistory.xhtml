@@ -35,7 +35,7 @@
                <h:selectOneMenu id="alertDefinitionFilter" value="#{ListAlertHistoryUIBean.alertDefinitionFilter}"
                                 style="width: 300px;">
                    <a4j:support event="onchange" 
-                                reRender="alertHistoryDataTable, alertHistoryDataTableScroller"
+                                reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
                                 status="commonStatus" />
 
                    <f:selectItems value="#{ListAlertHistoryUIBean.alertDefinitionSelectItems}"/>
@@ -47,7 +47,7 @@
                <h:selectOneMenu id="alertPriorityFilter" value="#{ListAlertHistoryUIBean.alertPriorityFilter}"
                                 style="width: 300px;">
                    <a4j:support event="onchange" 
-                                reRender="alertHistoryDataTable, alertHistoryDataTableScroller"
+                                reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
                                 status="commonStatus" />
 
                    <f:selectItems value="#{ListAlertHistoryUIBean.alertPrioritySelectItems}"/>

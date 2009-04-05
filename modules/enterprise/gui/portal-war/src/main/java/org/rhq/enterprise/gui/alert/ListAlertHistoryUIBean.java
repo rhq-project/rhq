@@ -214,6 +214,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
             String dateStr = getDateFilter(); // get the outer class's JSF-managed property
             Date date = null;
 
+            ListAlertHistoryUIBean.this.setDateErrors(null);
             if ((dateStr != null) && !dateStr.equals("")) {
                 try {
                     DateFormat df = new SimpleDateFormat("MM/dd/yyyy");

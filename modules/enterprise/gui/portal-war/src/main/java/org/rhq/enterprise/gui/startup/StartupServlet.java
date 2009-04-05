@@ -58,6 +58,8 @@ import org.rhq.enterprise.server.scheduler.jobs.CloudManagerJob;
 import org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob;
 import org.rhq.enterprise.server.scheduler.jobs.DynaGroupAutoRecalculationJob;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
+import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
 
 /**
  * This servlet is ensured to be initialized after the rest of the RHQ Server has been deployed and started.
@@ -78,10 +80,12 @@ public class StartupServlet extends HttpServlet {
         // As a security measure, make sure the installer has been undeployed
         LookupUtil.getSystemManager().undeployInstaller();
 
-        // get this singleton right now so we load the classes immediately into our classloader 
+        // get singletons right now so we load the classes immediately into our classloader 
         AlertConditionCacheCoordinator.getInstance();
         SessionManager.getInstance();
         SubjectPreferencesCache.getInstance();
+        AlertSerializer.getSingleton();
+        AvailabilityReportSerializer.getSingleton();
 
         // Before starting determine the operating mode of this server and
         // take any necessary initialization action. Must happen before comm startup since listeners

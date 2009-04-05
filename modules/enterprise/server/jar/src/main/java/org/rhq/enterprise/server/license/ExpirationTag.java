@@ -25,6 +25,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+
 import org.rhq.core.util.xmlparser.XmlAttr;
 import org.rhq.core.util.xmlparser.XmlAttrException;
 import org.rhq.core.util.xmlparser.XmlTagInfo;
@@ -113,7 +114,7 @@ final class ExpirationTag extends LicenseTermTag {
     }
 
     protected void termValidated() {
-        getLicense().setExpiration(_expMillis);
+        //getLicense().setExpiration(_expMillis);
         getLicense().setTrial(trial);
     }
 }

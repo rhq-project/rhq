@@ -125,11 +125,7 @@ public class LicenseStoreManager {
                         throw new CorruptLicenseException(LRES.get(LRES.ERR_CORRUPT_VALIDATION));
                     }
 
-                    /*
-                     * it's the same one, so take the previously calculated date instead (because it's a duration), but
-                     * do not store anything (no need to)
-                     */
-                    return Math.min(license.getLicenseExpiration(), expiration);
+                    return license.getLicenseExpiration();
                 } else {
                     // can't update a real/regular license with a trial one
                     throw new UpdateTrialLicenseException(LRES.get(LRES.ERR_TRIAL_VALIDATION));

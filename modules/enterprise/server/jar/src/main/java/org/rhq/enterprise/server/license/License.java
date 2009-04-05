@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import org.rhq.core.clientapi.util.StringUtil;
 
 public final class License implements Serializable {
@@ -56,7 +57,7 @@ public final class License implements Serializable {
     = "_{my*K|c~1kJ@apv!6l?MF9ZeH\"+#L&NC3Y`>BV0nERiA:DGdqQuh 2S<=WgtOf%r'[\\7s5o}UPT$(^bx)X]/-I4wj8;.z,";
 
     protected License() {
-        _expiration = 0;
+        _expiration = EXPIRES_NEVER;
     }
 
     protected String getMasterKey() {
@@ -99,9 +100,11 @@ public final class License implements Serializable {
         _licenseePhone = p;
     }
 
+    /*
     protected void setExpiration(long ex) {
         _expiration = ex;
     }
+    */
 
     public boolean getIsPerpetualLicense() {
         return (_expiration == EXPIRES_NEVER);

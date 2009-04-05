@@ -202,8 +202,8 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
           <display:column width="1%" property="id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"fromToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
             <display:checkboxdecorator name="availableGroup" onclick="ToggleSelection(this, widgetProperties)" styleClass="availableListMember"/>
           </display:column>
-          <display:column property="name" title="common.header.Group" sortAttr="g.name" width="50%"/>
-          <display:column property="description" title="common.header.Description" sortAttr="g.description" width="50%"/>
+          <display:column property="name" title="common.header.Group" sortAttr="rg.name" width="50%"/>
+          <display:column property="description" title="common.header.Description" sortAttr="rg.description" width="50%"/>
         </display:table>
 
       </div>
@@ -238,8 +238,8 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
           <display:column width="1%" property="id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, widgetProperties)\" name=\"toToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox">
             <display:checkboxdecorator name="pendingGroup" onclick="ToggleSelection(this, widgetProperties)" styleClass="pendingListMember"/>
           </display:column>
-          <display:column property="name" title="common.header.Group" sortAttr="g.name" width="50%"/>
-          <display:column property="description" title="common.header.Description" width="50%" sortAttr="g.description"/>
+          <display:column property="name" title="common.header.Group" sortAttr="rg.name" width="50%"/>
+          <display:column property="description" title="common.header.Description" width="50%" sortAttr="rg.description"/>
         </display:table>
 
       </div>

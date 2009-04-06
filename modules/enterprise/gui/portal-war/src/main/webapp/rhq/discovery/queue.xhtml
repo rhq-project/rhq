@@ -144,7 +144,7 @@
                   <rich:column>
                      <f:facet name="header">
                         <h:panelGrid id="panel" columns="5">
-                              <h:selectBooleanCheckbox id="select-all-checkbox" onchange="checkAll(this)">
+                              <h:selectBooleanCheckbox id="select-all-checkbox" onclick="checkAll(this)">
                                  <rich:toolTip value="Select All Platforms (Selects All Servers In Expanded Platforms Only)"/>
                               </h:selectBooleanCheckbox>
                               <rich:spacer width="3" height="1" />
@@ -174,7 +174,7 @@
                      </h:commandLink>
                      <h:selectBooleanCheckbox id="checkbox_platform"
                                               value="#{AutoDiscoverySessionUIBean.selectedResources[platformQueueItem.id]}"
-                                              onchange="checkPlatform(this, #{platformQueueItem.id})" />
+                                              onclick="checkPlatform(this, #{platformQueueItem.id})" />
                      <input type="hidden"
                             name="platform_servers_#{platformQueueItem.id}"
                             id="platform_servers_#{platformQueueItem.id}"
@@ -241,7 +241,7 @@
                                  rendered="#{AutoDiscoverySessionUIBean.expandedMap[platformQueueItem.id]}">
                      <rich:column>
                         <h:selectBooleanCheckbox id="checkbox_server"
-                                                 onchange="checkServer(this, #{platformQueueItem.id}, #{serverQueueItem.id})"
+                                                 onclick="checkServer(this, #{platformQueueItem.id}, #{serverQueueItem.id})"
                                                  value="#{AutoDiscoverySessionUIBean.selectedResources[serverQueueItem.id]}"
                                                  style="float:right;" />
                      </rich:column>

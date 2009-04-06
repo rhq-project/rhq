@@ -346,16 +346,27 @@ public class ApplicationComponent
         Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
         String fullFileName = pluginConfiguration.getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
 
-        File backup = new File (fullFileName + ".bak"); // See FileContentDelegate#createContent
+        File backup;
+        String fileName;
+        // Check if we have an exploded war or not.
+        if (fullFileName != null && fullFileName.endsWith("/")) {
+            fileName = fullFileName.substring(0,fullFileName.length()-1);
+        }
+        else {
+            fileName = fullFileName;
+        }
+
+        backup = new File (fileName + ".bak");
+
         if (!backup.exists()) {
-            throw new FileNotFoundException("Backup file " + fullFileName + ".bak does not exist");
+            throw new FileNotFoundException("Backup file " + backup + " does not exist");
         }
         File directory = backup.getParentFile();
         if (!directory.canWrite()) {
             throw new IOException("Can not modify directory " + directory );
         }
 
-        File tmpBackup = new File(fullFileName + ".tmp.bak");
+        File tmpBackup = new File(fileName + ".tmp.bak");
         File file = new File(fullFileName);
         boolean good = file.renameTo(tmpBackup);
 

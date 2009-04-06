@@ -133,8 +133,9 @@
         <rich:fileUpload
             id="upload"
             fileUploadListener="#{InstalledPluginsUIBean.fileUploadListener}"
-            maxFilesQuantity="3"
+            maxFilesQuantity="10"
             acceptedTypes="jar"
+            noDuplicate="true"
             immediateUpload="false"
             autoclear="false"
             allowFlash="false">

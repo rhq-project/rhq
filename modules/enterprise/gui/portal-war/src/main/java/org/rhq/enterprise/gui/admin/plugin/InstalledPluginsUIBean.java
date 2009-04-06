@@ -101,11 +101,9 @@ public class InstalledPluginsUIBean {
             FileOutputStream fos = new FileOutputStream(agentPlugin);
             FileInputStream fis = new FileInputStream(uploadedPlugin);
             StreamUtil.copy(fis, fos);
-            log.info("A new plugin has been deployed [" + agentPlugin + "]. Will now perform a scan to register it...");
-
-            scan();
-
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "New agent plugin processed: " + agentPlugin);
+            log.info("A new plugin has been deployed [" + agentPlugin
+                + "]. A scan is required now in order to register it.");
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "New agent plugin uploaded: " + agentPlugin);
         } catch (Exception e) {
             String err = "Failed to process uploaded agent plugin";
             log.error(err + " - Cause: " + e);

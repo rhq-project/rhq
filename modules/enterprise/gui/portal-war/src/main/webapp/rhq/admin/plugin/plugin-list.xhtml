@@ -20,7 +20,8 @@
 
 <ui:define name="body">
 
-<h:messages showSummary="true"
+<h:messages id="pluginsmessages"
+            showSummary="true"
             showDetail="true"
             infoClass="InfoBlock"
             warnClass="WarnBlock"
@@ -139,7 +140,7 @@
             immediateUpload="false"
             autoclear="false"
             allowFlash="false">
-            <a4j:support event="onuploadcomplete" reRender="info" />
+            <a4j:support event="onuploadcomplete" reRender="pluginsmessages" />
         </rich:fileUpload>
     </h:panelGrid>
 

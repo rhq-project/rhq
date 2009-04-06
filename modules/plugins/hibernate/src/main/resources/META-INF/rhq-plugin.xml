@@ -9,7 +9,6 @@
         xmlns:c="urn:xmlns:rhq-configuration">
 
    <depends plugin="JMX" />
-   <depends plugin="Tomcat" />
    <depends plugin="JBossAS" useClasses="true"/>
 
 
@@ -20,7 +19,6 @@
 
       <runs-inside>
          <parent-resource-type name="JMX Server" plugin="JMX"/>
-         <parent-resource-type name="Tomcat Server" plugin="Tomcat"/>
          <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
       </runs-inside>
 

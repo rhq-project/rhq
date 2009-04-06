@@ -303,7 +303,8 @@ public class TomcatServerOperationsDelegate {
             : TomcatDiscoveryComponent.EWS_TOMCAT_6;
 
         processExecution = new ProcessExecution("service");
-        // disable the executable existence check because it is a command on the supplied PATH        
+        // disable the executable existence check because it is a command on the supplied PATH
+        processExecution.setCheckExecutableExists(false);
         processExecution.setArguments(new ArrayList<String>());
         processExecution.getArguments().add(rpm);
         processExecution.getArguments().add("stop");

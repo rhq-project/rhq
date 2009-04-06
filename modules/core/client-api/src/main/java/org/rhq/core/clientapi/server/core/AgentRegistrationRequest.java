@@ -147,12 +147,12 @@ public class AgentRegistrationRequest implements Serializable {
     public String toString() {
         StringBuilder str = new StringBuilder("AgentRegistrationRequest: [");
         str.append("name=[" + this.name);
-        str.append("]; address=" + this.address);
-        str.append("]; port=" + this.port);
-        str.append("]; remote-endpoint=" + this.remoteEndpoint);
-        str.append("]; regenerate-token=" + this.regenerateTokenFlag);
-        str.append("]; original-token=<was " + ((this.originalToken == null) ? "" : "not ") + "null>");
-        str.append("]; agent-version=" + this.agentVersion);
+        str.append("]; address=[" + this.address);
+        str.append("]; port=[" + this.port);
+        str.append("]; remote-endpoint=[" + this.remoteEndpoint);
+        str.append("]; regenerate-token=[" + this.regenerateTokenFlag);
+        str.append("]; original-token=[<was " + ((this.originalToken == null) ? "" : "not ") + "null>");
+        str.append("]; agent-version=[" + this.agentVersion);
         str.append("]");
         return str.toString();
     }

@@ -28,6 +28,8 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 
 /**
+ * A base class for PropertyMap <-> ???MetaValue adapters.
+ *
  * @author Mark Spritzler
  */
 public abstract class AbstractPropertyMapAdapter implements PropertyAdapter<PropertyMap, PropertyDefinitionMap>

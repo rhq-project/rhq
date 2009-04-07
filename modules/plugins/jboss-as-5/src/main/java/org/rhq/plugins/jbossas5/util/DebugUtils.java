@@ -102,23 +102,22 @@ public abstract class DebugUtils {
         } else if (metaValue.getMetaType().isCollection()) {
             CollectionValue collectionValue = (CollectionValue)metaValue;
             buffer.append(collectionValue).append("\n");
-            for (int i = 0; i < indentLevel; i++) buffer.append("  ");
+            /*for (int i = 0; i < indentLevel; i++) buffer.append("  ");
             buffer.append("Elements:\n");
             indentLevel++;
-            for (MetaValue elementMetaValue : collectionValue.getElements()) {
-                convertMetaValueToString(elementMetaValue, buffer, true, indentLevel);
-            }
+            for (MetaValue elementMetaValue : collectionValue.getElements())
+                convertMetaValueToString(elementMetaValue, buffer, true, indentLevel);*/
         } else if (metaValue.getMetaType().isComposite()) {
             CompositeValue compositeValue = (CompositeValue)metaValue;
             buffer.append(compositeValue).append("\n");
-            for (int i = 0; i < indentLevel; i++) buffer.append("  ");
+            /*for (int i = 0; i < indentLevel; i++) buffer.append("  ");
             buffer.append("Items:\n");
             indentLevel++;
             for (String key : compositeValue.getMetaType().keySet()) {
                 for (int i = 0; i < indentLevel; i++) buffer.append("  ");
                 buffer.append(key).append("=");
                 convertMetaValueToString(compositeValue.get(key), buffer, false, indentLevel);
-            }
+            }*/
         } else {
             buffer.append(metaValue).append("\n");
         }

@@ -41,7 +41,7 @@ public abstract class AbstractPropertySimpleAdapter implements PropertyAdapter<P
         return propSimple;
     }
 
-    public Serializable getSimplePropertyValue(PropertySimple prop, PropertyDefinitionSimple propDef)
+    protected Serializable getSimplePropertyValue(PropertySimple prop, PropertyDefinitionSimple propDef)
     {
         Serializable value = null;
         if (propDef != null)
@@ -77,9 +77,7 @@ public abstract class AbstractPropertySimpleAdapter implements PropertyAdapter<P
             }
         }
         if (value == null)
-        {
             value = prop.getStringValue();
-        }
         return value;
     }
 }

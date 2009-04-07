@@ -130,15 +130,15 @@ public class ProfileServiceFactory
     {
     	try
     	{
-    		LOG.debug("About to load profile via Management View...");
+    		LOG.trace("About to load profile via ManagementView...");
     		long startTime = System.currentTimeMillis();
     		managementView.load();
     	    long elapsedTime = System.currentTimeMillis() - startTime;
-    		LOG.debug("Loaded profile via Management View in " + elapsedTime + " milliseconds.");
+    		LOG.debug("Loaded profile via Management View in " + elapsedTime + " ms.");
     	}
     	catch (Exception e)
     	{
-    		LOG.error("Could not load profile via Management View.", e);
+    		LOG.error("Failed to load profile via Management View.", e);
     	}    	
     }    
     
@@ -146,15 +146,15 @@ public class ProfileServiceFactory
     {
     	try
     	{
-    		LOG.debug("Loading profile via Deployment Manager...");
+    		LOG.trace("Loading profile '" + DEFAULT_PROFILE_KEY + "' via Deployment Manager...");
     		long startTime = System.currentTimeMillis();
     		deploymentManager.loadProfile(DEFAULT_PROFILE_KEY);
     	    long elapsedTime = System.currentTimeMillis() - startTime;
-    		LOG.debug("Loaded profile via Deployment Manager in " + elapsedTime + " milliseconds.");
+    		LOG.debug("Loaded profile '" + DEFAULT_PROFILE_KEY + "' via Deployment Manager in " + elapsedTime + " ms.");
     	}
     	catch (Exception e)
     	{
-    		LOG.error("Could not find profile via Deployment Manager.", e);
+    		LOG.error("Failed to load profile '" + DEFAULT_PROFILE_KEY + "' via Deployment Manager.", e);
     	}    	
     }    
     

@@ -29,13 +29,13 @@
 '>
 
 <!ENTITY datasourceMetrics '
-    <metric property="availableConnectionCount" measurementType="dynamic" displayType="summary" displayName="Available Connection Count" description="number of available connection" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+    <metric property="availableConnectionCount" measurementType="dynamic" displayType="summary" displayName="Available Connection Count" description="number of available connections" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
     <metric property="connectionCount" measurementType="dynamic" displayType="summary" displayName="Connection Count" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
     <metric property="connectionCreatedCount" measurementType="dynamic" displayType="detail" displayName="Connection Created Count" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
     <metric property="connectionDestroyedCount" measurementType="dynamic" displayType="detail" displayName="Connection Destroyed Count" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
     <metric property="inUseConnectionCount" measurementType="dynamic" displayType="detail" displayName="In Use Connection Count" description="number of connections currently in use" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
     <metric property="local-transaction" displayType="summary" displayName="Local Transaction" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
-    <metric property="maxConnectionsInUseCount" measurementType="dynamic" displayType="detail" displayName="Max Connections In Use Count" description="number of maximum connections in use" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
+    <metric property="maxConnectionsInUseCount" measurementType="dynamic" displayType="detail" displayName="Max Connections In Use Count" description="maximum number of connections in use" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
     <metric property="maxSize" measurementType="dynamic" displayType="detail" displayName="Max Size" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
     <metric property="minSize" measurementType="dynamic" displayType="detail" displayName="Min Size" defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
     <metric property="poolJndiName" displayType="summary" displayName="Pool Jndi Name" defaultOn="true" defaultInterval="60000" dataType="trait" category="performance"/>
@@ -1170,16 +1170,8 @@
                     <c:simple-property name="jms-type" default="queue"/>
                     <c:map-property name="customProperties"
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
-                        <c:simple-property name="DLQ"
-                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.PropertySimpleToObjectNameCompositeValueAdapter"/>
-                        <c:simple-property name="expiryQueue"
-                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.PropertySimpleToObjectNameCompositeValueAdapter"/>
-                        <c:simple-property name="serverPeer"
-                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.PropertySimpleToObjectNameCompositeValueAdapter"/>
-                        <!--
                         <c:simple-property name="securityConfig"
                                            default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
-                         -->
                     </c:map-property>
                     <c:map-property name="customMetrics"
                                     description="Holds a list of custom Metrics, and the Adapter class to use">
@@ -1241,10 +1233,6 @@
             &managedObjectMetrics;
 
             <!-- Traits -->
-            <!-- TODO: Remove this once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
-            <metric property="name" displayType="summary"
-                    description="This queue's name"
-                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
 
             <metric property="createdProgrammatically" displayType="summary"
                     description="True if this queue was created programmatically"
@@ -1256,6 +1244,7 @@
                     defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
 
             <!-- Numerics -->
+
             <metric property="consumerCount" measurementType="dynamic" displayType="detail" displayName="Consumer Count"
                     description="The number of consumers on the queue" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
             <metric property="deliveringCount" measurementType="dynamic" displayType="detail" displayName="Delivering Count"
@@ -1280,11 +1269,8 @@
 
                 <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/QueueServiceMO.java -->
 
-                <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
-                <!--
                 <c:simple-property required="true" name="name" readOnly="true"
                                    description="The name of this queue."/>
-                -->
 
                 <c:simple-property required="true" name="JNDIName" readOnly="true"
                                    description="This queue's JNDI name; default is '/queue/{queueName}'."/>
@@ -1292,47 +1278,47 @@
                 <!-- NOTE: The clustered, downCacheSize, fullSize, and pageSize props are set to readOnly="true" as
                            a temporary workaround for https://jira.jboss.org/jira/browse/JOPR-112. -->
 
-                <c:simple-property type="boolean" required="false" name="clustered" default="true" readOnly="true"
+                <c:simple-property type="boolean" required="true" name="clustered" default="true" readOnly="true"
                                    description="Is this queue clustered?"/>
 
-                <c:simple-property type="integer" required="false" name="downCacheSize" default="2000" readOnly="true">
+                <c:simple-property type="integer" required="true" name="downCacheSize" default="2000" readOnly="true">
                     <c:description>
                         When paging messages to storage from a subscription, they first go into a &quot;Down Cache&quot; before
                         being written to storage. This enables the write to occur as a single operation, thus aiding
                         performance. This setting determines the maximum number of messages that the Down Cache will hold
-                        before they are flushed to storage. Can only be set when the topic is stopped. The default value is 2000.
+                        before they are flushed to storage. Can only be set when the queue is stopped. The default value is 2000.
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="fullSize" default="75000" readOnly="true">
+                <c:simple-property type="integer" required="true" name="fullSize" default="75000" readOnly="true">
                     <c:description>
                         The maximum number of messages held by the queue in memory at any one time.
                         The actual subscription can hold many more messages than this, but these are paged to and from
-                        storage as necessary, as messages are added or consumed. Can only be set when the topic is stopped.
+                        storage as necessary, as messages are added or consumed. Can only be set when the queue is stopped.
                         The default value is 75000.
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="maxDeliveryAttempts"
+                <c:simple-property type="integer" required="true" name="maxDeliveryAttempts"
                                    description="The number of delivery attempts before a message to this queue is moved to the DLQ."/>
 
-                <c:simple-property type="integer" required="false" name="maxSize"
+                <c:simple-property type="integer" required="true" name="maxSize"
                                    description="The maximum number of messages this queue can hold before they are dropped."/>
 
                 <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
                 <!--
-                <c:simple-property type="integer" required="false" name="messageCounterHistoryDayLimit"
+                <c:simple-property type="integer" required="true" name="messageCounterHistoryDayLimit"
                                    description="This queue's message counter history day limit - &lt;0: unlimited, =0: disabled, &gt;0: maximum day count."/>
                 -->
 
-                <c:simple-property type="integer" required="false" name="pageSize" readOnly="true">
+                <c:simple-property type="integer" required="true" name="pageSize" readOnly="true">
                     <c:description>
                         When loading messages from a subscription, this is the maximum number of messages to
                         pre-load in one operation. Can only be set when the queue is stopped. The default value is 2000.
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="long" required="false" name="redeliveryDelay" units="milliseconds"
+                <c:simple-property type="long" required="true" name="redeliveryDelay" units="milliseconds"
                                    description="The delay in milliseconds before a rolled back or recovered message is redelivered."/>
 
                 <c:simple-property required="false" name="DLQ"
@@ -1342,12 +1328,6 @@
                 <c:simple-property required="false" name="serverPeer"
                                    description="The JMX ObjectName of the server peer this queue was deployed on"/>
 
-                <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6716 is fixed. -->
-                <!--
-                <c:map-property required="false" name="securityConfig"
-                                description="The queue's security configuration"/>
-                -->
-                <!--
                 <c:list-property name="securityConfig" max="4" min="2"
                                  displayName="Security Configurations"
                                  description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
@@ -1380,7 +1360,7 @@
                     </c:map-property>
 
                 </c:list-property>
-                -->
+
             </resource-configuration>
         </service>
 
@@ -1404,16 +1384,8 @@
                     <c:simple-property name="jms-type" default="topic"/>
                     <c:map-property name="customProperties"
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
-                        <c:simple-property name="DLQ"
-                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.PropertySimpleToObjectNameCompositeValueAdapter"/>
-                        <c:simple-property name="expiryQueue"
-                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.PropertySimpleToObjectNameCompositeValueAdapter"/>
-                        <c:simple-property name="serverPeer"
-                                           default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.PropertySimpleToObjectNameCompositeValueAdapter"/>
-                        <!--
                         <c:simple-property name="securityConfig"
                                            default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
-                        -->
                     </c:map-property>
                     <c:map-property name="customMetrics"
                                     description="Holds a list of custom Metrics, and the Adapter class to use">
@@ -1510,9 +1482,7 @@
             &managedObjectMetrics;
 
             <!-- Traits -->
-            <metric property="name" displayType="summary"
-                    description="This topic's name"
-                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
+
             <metric property="createdProgrammatically" displayType="summary"
                     description="True if this topic was created programmatically"
                     defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
@@ -1523,6 +1493,7 @@
                     defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
 
             <!-- Numerics -->
+
             <metric property="allMessageCount" measurementType="dynamic" displayType="detail" displayName="All Message Count"
                     description="The count of all messages in all subscriptions of this topic" defaultOn="true" defaultInterval="60000" dataType="measurement" category="throughput"/>
             <metric property="allSubscriptionsCount" measurementType="dynamic" displayType="detail" displayName="All Subscriptions Count"
@@ -1540,11 +1511,8 @@
 
                 <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/TopicServiceMO.java -->
 
-                <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
-                <!--
                 <c:simple-property required="true" name="name" readOnly="true"
                                    description="The name of this topic."/>
-                -->
 
                 <c:simple-property required="true" name="JNDIName" readOnly="true"
                                    description="This topic's JNDI name; default is '/topic/{topicName}'."/>
@@ -1552,7 +1520,7 @@
                 <!-- NOTE: The clustered, downCacheSize, fullSize, and pageSize props are set to readOnly="true" as
                            a temporary workaround for https://jira.jboss.org/jira/browse/JOPR-112. -->
 
-                <c:simple-property type="boolean" required="false" name="clustered" default="false" readOnly="true"
+                <c:simple-property type="boolean" required="true" name="clustered" default="false" readOnly="true"
                                    description="Is this topic clustered?"/>
 
                 <c:simple-property type="integer" required="true" name="downCacheSize" default="2000" readOnly="true">
@@ -1564,7 +1532,7 @@
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="fullSize" default="75000" readOnly="true">
+                <c:simple-property type="integer" required="true" name="fullSize" default="75000" readOnly="true">
                     <c:description>
                         The maximum number of messages held by the topic subscriptions in memory at any one time.
                         The actual subscription can hold many more messages than this, but these are paged to and from
@@ -1573,26 +1541,26 @@
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="maxDeliveryAttempts"
+                <c:simple-property type="integer" required="true" name="maxDeliveryAttempts"
                                    description="The number of delivery attempts before a message to a subscriber of this topic is moved to the DLQ."/>
 
-                <c:simple-property type="integer" required="false" name="maxSize"
+                <c:simple-property type="integer" required="true" name="maxSize"
                                    description="The maximum number of messages this topic can hold before they are dropped."/>
 
                 <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
                 <!--
-                <c:simple-property type="integer" required="false" name="messageCounterHistoryDayLimit"
+                <c:simple-property type="integer" required="true" name="messageCounterHistoryDayLimit"
                                    description="This topic's message counter history day limit - &lt;0: unlimited, =0: disabled, &gt;0: maximum day count."/>
                 -->
 
-                <c:simple-property type="integer" required="false" name="pageSize" readOnly="true">
+                <c:simple-property type="integer" required="true" name="pageSize" readOnly="true">
                     <c:description>
                         When loading messages from a subscription, this is the maximum number of messages to
                         pre-load in one operation. Can only be set when the topic is stopped. The default value is 2000.
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="long" required="false" name="redeliveryDelay" units="milliseconds"
+                <c:simple-property type="long" required="true" name="redeliveryDelay" units="milliseconds"
                                    description="The delay in milliseconds before a rolled back or recovered message is redelivered."/>
 
                 <c:simple-property required="false" name="DLQ"
@@ -1602,12 +1570,6 @@
                 <c:simple-property required="false" name="serverPeer"
                                    description="The JMX ObjectName of the server peer this topic was deployed on"/>
 
-                <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6716 is fixed. -->
-                <!--
-                <c:map-property required="false" name="securityConfig"
-                                description="The topic's security configuration"/>
-                -->
-                <!--
                 <c:list-property name="securityConfig" max="4" min="2"
                                  displayName="Security Configurations"
                                  description="This element specifies a XML fragment which describes the access control list to be used by the SecurityManager to authorize client operations against the destination. The content model is the same as for the SecurityManager SecurityConf attribute.">
@@ -1639,7 +1601,7 @@
                                            type="boolean"/>
                     </c:map-property>
                 </c:list-property>
-                -->
+
             </resource-configuration>
         </service>
 

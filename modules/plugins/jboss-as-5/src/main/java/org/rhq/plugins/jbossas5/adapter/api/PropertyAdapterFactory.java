@@ -40,6 +40,7 @@ package org.rhq.plugins.jbossas5.adapter.api;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertySimpleToEnumValueAdapter;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToCompositeValueSupportAdapter;
  import org.rhq.plugins.jbossas5.adapter.impl.configuration.PropertyMapToPropertiesValueAdapter;
+ import org.jetbrains.annotations.Nullable;
 
  /**
  * @author Mark Spritzler
@@ -104,9 +105,11 @@ public class PropertyAdapterFactory
         return propertyAdapter;
     }
 
+    @Nullable
     public static PropertyAdapter getCustomPropertyAdapter(PropertySimple customProp)
     {
-        String propertyName = customProp.getName();
+        if (customProp == null)
+            return null;        
         String adapterClassName = customProp.getStringValue();
         PropertyAdapter propertyAdapter = null;
         try

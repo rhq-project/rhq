@@ -80,8 +80,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
     private final Log log = LogFactory.getLog(this.getClass());
 
     private String componentName;
-    private ComponentType componentType;
-    private static final MetaValue[] EMPTY_META_VALUE_ARRAY = new MetaValue[0];
+    private ComponentType componentType;    
 
     // ResourceComponent Implementation  --------------------------------------------
 
@@ -171,8 +170,10 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
         ManagedComponent managedComponent = ProfileServiceFactory.getManagedComponent(managementView,
                 this.componentType, this.componentName);
+        log.debug("Updating " + toString(managedComponent) + "...");
         managementView.updateComponent(managedComponent);
         managementView.process();
+        managementView.load();
     }
 
     // ------------------------------------------------------------------------------
@@ -235,6 +236,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         if (managedComponent == null)
             throw new IllegalStateException("Failed to find [" + this.componentType + "] ManagedComponent named ["
                     + this.componentName + "].");
+        log.debug("Retrieved " + toString(managedComponent) + ".");
         return managedComponent;
     }
 
@@ -266,5 +268,13 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         }
         throw new IllegalStateException("ManagedOperation named '" + operationDefinition.getName()
                 + "' not found on ManagedComponent [" + getManagedComponent() + "].");
+    }
+
+    private static String toString(ManagedComponent managedComponent) {
+        Map<String, ManagedProperty> properties = managedComponent.getProperties();
+        return managedComponent.getClass().getSimpleName() + "@" + System.identityHashCode(managedComponent) + "["
+                + "type=" + managedComponent.getType() + ", name=" + managedComponent.getName()
+                + ", properties=" + properties.getClass().getSimpleName() + "@" + System.identityHashCode(properties)
+                + "]";
     }
 }

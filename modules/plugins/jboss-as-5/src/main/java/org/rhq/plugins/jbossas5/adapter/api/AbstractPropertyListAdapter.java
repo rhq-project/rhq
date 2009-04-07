@@ -28,6 +28,8 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.jboss.metatype.api.values.MetaValue;
 
 /**
+ * A base class for PropertyList <-> ???MetaValue adapters.
+ *
  * @author Mark Spritzler
  */
 public abstract class AbstractPropertyListAdapter implements PropertyAdapter<PropertyList, PropertyDefinitionList>

@@ -22,6 +22,8 @@
   */
 package org.rhq.plugins.jbossas5.adapter.impl.configuration;
 
+import java.io.Serializable;
+
 import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.values.SimpleValueSupport;
 import org.jboss.metatype.api.values.SimpleValue;
@@ -42,7 +44,8 @@ public class PropertySimpleToSimpleValueAdapter extends AbstractPropertySimpleAd
         if (propSimple == null || metaValue == null)
             return;
         SimpleValueSupport simpleValueSupport = (SimpleValueSupport) metaValue;
-        simpleValueSupport.setValue(propSimple.getStringValue());
+        Serializable value = getSimplePropertyValue(propSimple, propDefSimple);
+        simpleValueSupport.setValue(value);
     }
 
     public void populatePropertyFromMetaValue(PropertySimple propSimple, MetaValue metaValue, PropertyDefinitionSimple propDefSimple)
@@ -52,8 +55,11 @@ public class PropertySimpleToSimpleValueAdapter extends AbstractPropertySimpleAd
     }
 
     public MetaValue convertToMetaValue(PropertySimple propSimple, PropertyDefinitionSimple propDefSimple, MetaType metaType)
-    {        
-        SimpleValue simpleValue = new SimpleValueSupport((SimpleMetaType) metaType, propSimple.getStringValue());
+    {
+        if (propSimple.getStringValue() == null)
+            return null;
+        SimpleValue simpleValue = new SimpleValueSupport((SimpleMetaType) metaType,
+                getSimplePropertyValue(propSimple, propDefSimple));
         populateMetaValueFromProperty(propSimple, simpleValue, propDefSimple);                    
         return simpleValue;
     }

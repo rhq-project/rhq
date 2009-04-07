@@ -1503,11 +1503,10 @@ public class Resource implements Comparable<Resource>, Externalizable {
             out.writeObject(resourceType.getCategory());
         }
 
-        if (childResources != null && childResources.getClass().getName().contains("hibernate")) {
-            out.writeObject(new LinkedHashSet<Resource>(childResources));
-        } else {
-            out.writeObject(childResources);
-        }
+        // We make a copy of the childResources Set for two reasons: 1) to avoid calling writeObject() on the Set if it
+        // happens to be a Hibernate proxy (which would only ever be true on the Server side), and 2) to reduce the
+        // chances of a ConcurrentModificationException occurring in some other thread that is iterating the original Set.
+        out.writeObject(new LinkedHashSet<Resource>(childResources));
 
         // Don't write plugin configs out if they are a lazy proxy
         if (pluginConfiguration != null && pluginConfiguration.getClass().getName().contains("hibernate")) {

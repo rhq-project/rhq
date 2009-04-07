@@ -363,7 +363,7 @@ public abstract class PagedListDataModel<T> extends DataModel {
                     log.debug(pageControlView + ": Successfully fetched page (second time)");
                 }
             } catch (Throwable t) {
-                log.error("Could not retrieve collection for " + pageControlView);
+                log.error("Could not retrieve collection for " + pageControlView, t);
             }
         }
 

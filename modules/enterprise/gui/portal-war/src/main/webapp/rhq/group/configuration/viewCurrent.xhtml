@@ -24,6 +24,8 @@
 
            <input type="hidden" name="groupId" value="#{ViewGroupResourceConfigurationUIBean.group.id}" />
 
+           <h:outputText rendered="#{not ResourceGroupUIBean.permissions.configure}" value="You do not have permissions to change the configuration of this group"/>
+
            <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
                <h:commandButton value="EDIT" action="#{ViewGroupResourceConfigurationUIBean.edit}"
                                 title="Edit this Compatible Group Configuration"
@@ -40,6 +42,7 @@
 
                </a4j:outputPanel>
            </a4j:region>
+
 
            <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
                <h:commandButton value="EDIT" action="#{ViewGroupResourceConfigurationUIBean.edit}"

@@ -76,7 +76,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
     }
 
     public String[] getSeverityFilter() {
-        if (severityFilter == null) {
+        if (severityFilter == null || severityFilter.length == 0) {
             FacesContext facesContext = FacesContextUtility.getFacesContext();
             HttpServletRequest request = (HttpServletRequest) facesContext.getExternalContext().getRequest();
             severityFilter = request.getParameterValues("eventHistoryForm:severityFilter");

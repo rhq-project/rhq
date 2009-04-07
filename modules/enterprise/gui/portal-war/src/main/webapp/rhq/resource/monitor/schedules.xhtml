@@ -22,6 +22,9 @@
 
 <ui:define name="content">
 
+    <h:outputText rendered="#{not ResourceUIBean.permissions.measure}" value="You don't have the measure permission for this resource and therefore can not change metric schedules"/>
+
+
       <h:form id="resourceSchedulesForm">
          <!-- hack to override the default button on the page, make this button pseudo-first in the form, 
               but take it out of the document flow and position it off the screen -->
@@ -119,7 +122,7 @@
                <f:facet name="footer" rendered="false">
                   <rich:columnGroup>
                      <rich:column colspan="6">
-                        <h:panelGrid columns="4">
+                        <h:panelGrid columns="4" rendered="#{ResourceUIBean.permissions.measure}">
                            <onc:selectCommandButton id="disableSelectedSchedules"
                                                     name="disableSelectedSchedules"
                                                     action="#{ListResourceMeasurementScheduleUIBean.disableSelected}"

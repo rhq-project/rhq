@@ -1450,7 +1450,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<Resource>(results, (int) count, pageControl);
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     @SuppressWarnings("unchecked")
     // RHQ-796, queries now return the parent resource attached
     public PageList<ResourceWithAvailability> getExplicitResourceWithAvailabilityByResourceGroup(Subject subject,
@@ -1922,16 +1921,18 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 "  JOIN FETCH res.currentAvailability JOIN FETCH res.resourceType rt \n" +
                 "  LEFT JOIN FETCH rt.subCategory sc LEFT JOIN FETCH sc.parentSubCategory \n" +
                 "WHERE \n" +
-                "    res.id IN (SELECT rr.id FROM Resource rr JOIN rr.explicitGroups g WHERE g.id = :groupId)\n" +
-                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
-                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
-                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
-                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)";
+                "  res.inventoryStatus = :inventoryStatus \n" +
+                "  AND (res.id IN (SELECT rr.id FROM Resource rr JOIN rr.explicitGroups g WHERE g.id = :groupId)\n" +
+                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
+                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
+                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
+                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId))";
 
         EntityManager em = LookupUtil.getEntityManager();
         Query query = em.createQuery(ql);
 
         query.setParameter("groupId", compatibleGroupId);
+        query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
         List<Resource> resources = query.getResultList();
 
         if (false) { //!authorizationManager.isInventoryManager(user)) {
@@ -1940,15 +1941,18 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 "  JOIN FETCH res.currentAvailability JOIN FETCH res.resourceType rt \n" +
                 "  LEFT JOIN FETCH rt.subCategory sc LEFT JOIN FETCH sc.parentSubCategory \n" +
                 "WHERE \n" +
-                "    (res.id IN (SELECT rr.id FROM Resource rr JOIN rr.explicitGroups g WHERE g.id = :groupId)\n" +
-                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
-                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
-                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
-                " OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId) \n"
-                + ") AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)";
+                "  res.inventoryStatus = :inventoryStatus \n" +
+                "  AND (res.id IN (SELECT rr.id FROM Resource rr JOIN rr.explicitGroups g WHERE g.id = :groupId)\n" +
+                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
+                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
+                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
+                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId) \n" +
+                "  )) " +
+                "  AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)";
             Query secQuery = em.createQuery(secQueryString);
             secQuery.setParameter("groupId", compatibleGroupId);
             secQuery.setParameter("subject", user);
+            query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
             List<Integer> visible = secQuery.getResultList();
             ListIterator<Resource> iter = resources.listIterator();
             while (iter.hasNext()) {

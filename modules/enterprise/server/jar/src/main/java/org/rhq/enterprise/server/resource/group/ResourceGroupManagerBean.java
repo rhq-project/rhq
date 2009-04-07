@@ -678,10 +678,20 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     public List<Resource> getResourcesForResourceGroup(Subject subject, int groupId, GroupCategory category) {
         ResourceGroup group = getResourceGroupById(subject, groupId, category);
         Set<Resource> res = group.getExplicitResources();
-        List<Resource> ret = new ArrayList<Resource>(res.size());
-        ret.addAll(res);
+        if (res != null && res.size() > 0) {
+            List<Resource> resources =
+                    PersistenceUtility.getHibernateSession(entityManager).createFilter(res, "where this.inventoryStatus = :inventoryStatus")
+                            .setParameter("inventoryStatus", InventoryStatus.COMMITTED)
+                            .list();
 
-        return ret;
+            return resources;
+        } else {
+
+            List<Resource> ret = new ArrayList<Resource>(res.size());
+            ret.addAll(res);
+
+            return ret;
+        }
     }
 
     /* (non-Javadoc)
@@ -725,15 +735,46 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     }
 
     public ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId) {
-        PageList<ResourceGroupComposite> results = getResourceGroupsFiltered(subject, null, null, null, null, null,
-            groupId, PageControl.getSingleRowInstance());
+//        PageList<ResourceGroupComposite> results = getResourceGroupsFiltered(subject, null, null, null, null, null,
+//            groupId, PageControl.getSingleRowInstance());
+//
+//        if (results.size() != 1) {
+//
+//            // Auto cluster backing groups have a special security allowance that let's a non-inventory-manager
+//            // view them even if they aren't in one of their roles, by nature of the fact that the user has all
+//            // the resources in the group visible.
+//
+//
+//            throw new IllegalStateException("Found incorrect number of results (" + results.size()
+//                + " when looking up ResourceGroupComposite for group[id=" + groupId + "]");
+//        }
 
-        if (results.size() != 1) {
-            throw new IllegalStateException("Found incorrect number of results (" + results.size()
-                + " when looking up ResourceGroupComposite for group[id=" + groupId + "]");
-        }
 
-        ResourceGroupComposite composite = results.get(0);
+        String queryString =
+                "SELECT \n" +
+                "  (SELECT count(er) " +
+                "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId),\n" +
+                "  (SELECT avg(er.currentAvailability.availabilityType) " +
+                "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId) AS eavail,\n" +
+                "  (SELECT count(ir) " +
+                "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId),\n" +
+                "  (SELECT avg(ir.currentAvailability.availabilityType) " +
+                "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId), g \n" +
+                "FROM ResourceGroup g where g.id = :groupId";
+
+        // TODO GH: secure this
+        Query query = entityManager.createQuery(queryString);
+        query.setParameter("groupId", groupId);
+        Object[] data = (Object[]) query.getSingleResult();
+
+        ResourceGroupComposite composite =
+                new ResourceGroupComposite(
+                        ((Number) data[0]).longValue(),
+                        ((Number) data[1]).doubleValue(),
+                        ((Number) data[2]).longValue(),
+                        ((Number) data[3]).doubleValue(),
+                        (ResourceGroup) data[4]
+                );
         composite.getResourceGroup().getModifiedBy().getFirstName();
 
         return composite;

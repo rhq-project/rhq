@@ -90,27 +90,61 @@ import org.rhq.core.domain.configuration.PropertySimple;
         @QueryHint(name = "org.hibernate.cacheable", value = "true"),
         @QueryHint(name = "org.hibernate.cacheRegion", value = "security") }, query = "SELECT distinct p "
         + "FROM Subject AS s, IN (s.roles) r, IN (r.permissions) p " + "WHERE s = :subject"),
+
     @NamedQuery(name = Subject.QUERY_HAS_GLOBAL_PERMISSION, hints = {
         @QueryHint(name = "org.hibernate.cacheable", value = "true"),
         @QueryHint(name = "org.hibernate.cacheRegion", value = "security") }, query = "SELECT COUNT(p) "
         + "FROM Subject AS s, IN (s.roles) r, IN (r.permissions) p " + "WHERE s = :subject AND p = :permission"),
-    @NamedQuery(name = Subject.QUERY_GET_PERMISSIONS_BY_GROUP_ID, query = "SELECT distinct p "
-        + "FROM ResourceGroup g, IN (g.roles) r, IN (r.subjects) s, IN (r.permissions) p "
-        + "WHERE s = :subject AND g.id = :groupId"),
-    @NamedQuery(name = Subject.QUERY_HAS_GROUP_PERMISSION, query = "SELECT COUNT(g) "
-        + "FROM ResourceGroup g, IN (g.roles) r, IN (r.subjects) s, IN (r.permissions) p "
-        + "WHERE s = :subject AND g.id = :groupId AND p = :permission"),
+
+    @NamedQuery(name = Subject.QUERY_GET_PERMISSIONS_BY_GROUP_ID, query =
+            "SELECT DISTINCT p " +
+            "FROM Role r JOIN r.subjects s JOIN r.permissions p " +
+            "WHERE " +
+            "  (" +
+            "    r in (SELECT r2 from ResourceGroup g JOIN g.roles r2 WHERE g.id = :groupId) " +
+            "    OR r in (SELECT r3 from ResourceGroup g JOIN g.clusterResourceGroup crg JOIN crg.roles r3 WHERE g.id = :groupId AND crg.recursive = true) " +
+            "  ) " +
+            "  AND s = :subject"),
+
+    @NamedQuery(name = Subject.QUERY_HAS_GROUP_PERMISSION, query =
+            "SELECT count(r) " +
+            "FROM Role r JOIN r.subjects s JOIN r.permissions p " +
+            "WHERE " +
+            "  (" +
+            "    r in (SELECT r2 from ResourceGroup g JOIN g.roles r2 WHERE g.id = :groupId) " +
+            "    OR r in (SELECT r3 from ResourceGroup g JOIN g.clusterResourceGroup crg JOIN crg.roles r3 WHERE g.id = :groupId AND crg.recursive = true) " +
+            "  ) " +
+            "  AND s = :subject " +
+            "  AND p = :permission"),
+
     @NamedQuery(name = Subject.QUERY_GET_PERMISSIONS_BY_RESOURCE_ID, query = "SELECT distinct p "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s, IN (r.permissions) p "
         + "WHERE s = :subject AND res.id = :resourceId"),
+
     @NamedQuery(name = Subject.QUERY_HAS_RESOURCE_PERMISSION, query = "SELECT COUNT(res) "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s, IN (r.permissions) p "
         + "WHERE s = :subject AND res.id = :resourceId AND p = :permission"),
+
     @NamedQuery(name = Subject.QUERY_CAN_VIEW_RESOURCE, query = "SELECT COUNT(res) "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + "WHERE s = :subject AND res.id = :resourceId"),
-    @NamedQuery(name = Subject.QUERY_CAN_VIEW_GROUP, query = "SELECT COUNT(g) "
-        + "FROM ResourceGroup g, IN (g.roles) r, IN (r.subjects) s " + "WHERE s = :subject AND g.id = :groupId"),
+
+    @NamedQuery(name = Subject.QUERY_CAN_VIEW_GROUP, query =
+            "SELECT count(g) " +
+            "FROM ResourceGroup g " +
+            "WHERE (g.id IN (SELECT rg.id " +
+            "                  FROM ResourceGroup rg " +
+            "                  JOIN rg.roles r " +
+            "                  JOIN r.subjects s " +
+            "                 WHERE s = :subject) " +
+            "    OR g.id IN (SELECT rg.id " +
+            "                  FROM ResourceGroup rg " +
+            "                  JOIN rg.clusterResourceGroup crg " +
+            "                  JOIN crg.roles r " +
+            "                  JOIN r.subjects s " +
+            "                 WHERE crg.recursive = true AND s = :subject)) " +
+            "    AND g.id = :groupId"),
+
     /*
      * No easy way to test whether ALL resources are      in some group     in some role     in some subject     where
      * subject.id = <id> & role.permission = <perm>
@@ -121,6 +155,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
     @NamedQuery(name = Subject.QUERY_GET_RESOURCES_BY_PERMISSION, query = "SELECT distinct res.id "
         + "FROM Subject s, IN (s.roles) r, IN (r.permissions) p, IN (r.resourceGroups) g, IN (g.implicitResources) res "
         + "WHERE s = :subject AND p = :permission"),
+
     @NamedQuery(name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION_WITH_EXCLUDES, query = "" //
         + "SELECT s" + "  FROM Subject s" //
         + " WHERE s.id NOT IN" //
@@ -437,10 +472,12 @@ public class Subject implements Externalizable {
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeInt(this.id);
         out.writeUTF(this.name);
+        out.writeInt(this.sessionId);
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         this.id = in.readInt();
         this.name = in.readUTF();
+        this.sessionId = in.readInt();
     }
 }

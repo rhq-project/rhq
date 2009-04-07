@@ -129,8 +129,9 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
                 results = resourceManager.getImplicitResourceWithAvailabilityByResourceGroup(getSubject(),
                     getResourceGroup(), pageControl);
             } else {
-                results = resourceManager.getExplicitResourceWithAvailabilityByResourceGroup(getSubject(),
-                    getResourceGroup(), pageControl);
+                results = resourceManager.getExplicitResourceWithAvailabilityByResourceGroup(
+                        LookupUtil.getSubjectManager().getOverlord(),
+                        getResourceGroup(), pageControl);
             }
 
             return results;

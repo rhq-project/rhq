@@ -134,8 +134,9 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
                 if (node.getData() instanceof ClusterKey) {
 
                     ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
-                    ResourceGroup group = clusterManager.createAutoClusterBackingGroup(subject, (ClusterKey) node.getData(), true);
-
+                    ResourceGroup group = clusterManager.createAutoClusterBackingGroup(
+                            LookupUtil.getSubjectManager().getOverlord(), 
+                            (ClusterKey) node.getData(), true);
 
                     String path = "/rhq/group/inventory/view.xhtml";
 
@@ -151,8 +152,11 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
                     response.sendRedirect(path + "?groupId=" + ((ResourceGroup)node.getData()).getId());
                 }
             }
-        } catch (IOException e1) {
-            e1.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
+        } catch (Exception e1) {
+            state.setSelected(e.getOldSelection());
+            FacesContext.getCurrentInstance().addMessage("leftNavGroupTreeForm:leftNavGroupTree",
+                new FacesMessage(FacesMessage.SEVERITY_WARN, "Unable to browse to selected group view: " + e1.getMessage(), null));
+            e1.printStackTrace();
         }
     }
 

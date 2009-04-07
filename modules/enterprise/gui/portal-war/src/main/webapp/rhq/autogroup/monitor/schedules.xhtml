@@ -22,6 +22,9 @@
 
 <ui:define name="content">
 
+    <h:outputText rendered="#{not AutoGroupUIBean.measurementManager}" value="You don't have the measure permission for these resources and therefore can not change metric schedules"/>
+    
+
       <h:form id="autoGroupSchedulesForm">
          <!-- hack to override the default button on the page, make this button pseudo-first in the form,
               but take it out of the document flow and position it off the screen -->
@@ -114,7 +117,7 @@
                <f:facet name="footer" rendered="false">
                   <rich:columnGroup>
                      <rich:column colspan="6">
-                        <h:panelGrid columns="4">
+                        <h:panelGrid columns="4" rendered="#{AutoGroupUIBean.measurementManager}">
                            <onc:selectCommandButton id="disableSelectedSchedules"
                                                     name="disableSelectedSchedules"
                                                     action="#{ListAutoGroupMeasurementScheduleUIBean.disableSelected}"

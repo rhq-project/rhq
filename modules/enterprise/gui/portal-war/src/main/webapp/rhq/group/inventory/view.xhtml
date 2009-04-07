@@ -142,7 +142,7 @@
 <h:panelGrid columns="2" cellspacing="3" rendered="#{ResourceGroupUIBean.recursive}">
    <h:outputLabel for="showRecursiveMembers" value="Show Recursive Members: " />
    <h:selectBooleanCheckbox id="showRecursiveMembers" value="#{ListResourceGroupMembersUIBean.showRecursiveMembers}" >
-       <a4j:support event="onchange" reRender="resourceTypeCounts, resourceGroupMembersDataTable, resourceGroupMembersDataTableScroller"/>
+       <a4j:support event="onchange" reRender="resourceTypeCounts, resourceGroupMembersDataTable, resourceGroupMembersDataTableScroller" status="commonStatus"/>
    </h:selectBooleanCheckbox>
 </h:panelGrid>
 

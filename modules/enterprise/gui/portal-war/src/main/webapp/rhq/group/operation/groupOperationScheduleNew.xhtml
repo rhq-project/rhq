@@ -23,6 +23,8 @@
       <!-- 
         ResourceGroup Operation Definitions
         -->
+
+       <h:outputText rendered="#{not ResourceGroupUIBean.permissions.control}" value="You do not have permissions to execute operations on this group"/>
             
       <h:form id="newScheduleForm">
          <input type="hidden" name="groupId" value="#{param.groupId}" />
@@ -78,7 +80,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputLink action="success">
+                  <h:outputLink action="success" rendered="#{ResourceGroupUIBean.permissions.control}">
                      <f:param name="opId" value="#{item.id}" />
                      <f:param name="groupId" value="#{param.groupId}"/>
                      <f:param name="parentGroupId" value="#{param.parentGroupId}" />
@@ -87,6 +89,8 @@
                      <h:outputText value="#{item.displayName} *" rendered="#{(not empty param.opId) and (param.opId == item.id)}"/>
                      <h:outputText value="#{item.displayName}" rendered="#{(empty param.opId) or (param.opId != item.id)}"/>
                   </h:outputLink>
+
+                   <h:outputText value="#{item.displayName}" rendered="#{not ResourceGroupUIBean.permissions.control}"/>
                   
                </rich:column>
                
@@ -105,7 +109,7 @@
             </h:panelGrid>
          </rich:panel>
          
-         <rich:panel rendered="#{not empty param.opId}" styleClass="BlockContent">
+         <rich:panel rendered="#{not empty param.opId and ResourceGroupUIBean.permissions.control}" styleClass="BlockContent">
             <f:facet name="header">
                <h:outputText value="Operation Parameters"/>
             </f:facet>
@@ -117,7 +121,7 @@
                         nullConfigurationStyle="InfoBlock"/>
          </rich:panel>
          
-         <rich:panel rendered="#{not empty param.opId}" styleClass="BlockContent">
+         <rich:panel rendered="#{not empty param.opId and ResourceGroupUIBean.permissions.control}" styleClass="BlockContent">
             <f:facet name="header">
                <h:outputText value="Resource Operation Order"/>
             </f:facet>
@@ -143,7 +147,7 @@
             </h:panelGrid> 
          </rich:panel>
          
-         <rich:panel rendered="#{not empty param.opId}" styleClass="BlockContent">
+         <rich:panel rendered="#{not empty param.opId and ResourceGroupUIBean.permissions.control}" styleClass="BlockContent">
             <f:facet name="header">
                <h:outputText value="Operation Schedule Details"/>
             </f:facet>
@@ -152,7 +156,7 @@
                                renderType="classic" />
          </rich:panel>
          
-         <rich:panel rendered="#{not empty param.opId}" styleClass="BlockContent"> 
+         <rich:panel rendered="#{not empty param.opId and ResourceGroupUIBean.permissions.control}" styleClass="BlockContent">
             <f:facet name="header">
                <h:outputText value="Other Options"/>
             </f:facet>

@@ -82,6 +82,7 @@ import org.rhq.core.pc.operation.OperationManager;
 import org.rhq.core.pc.operation.OperationServicesAdapter;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pc.plugin.PluginManager;
+import org.rhq.core.pc.util.DiscoveryComponentProxyFactory;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.content.ContentContext;
@@ -165,6 +166,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
 
+    private DiscoveryComponentProxyFactory discoveryComponentProxyFactory;
+
     public InventoryManager() {
         super(DiscoveryAgentService.class);
     }
@@ -177,6 +180,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         try {
             log.info("Initializing Inventory Manager...");
+
+            this.discoveryComponentProxyFactory = new DiscoveryComponentProxyFactory();
+            this.discoveryComponentProxyFactory.initialize();
 
             this.agent = new Agent(this.configuration.getContainerName(), null, 0, null, null);
 
@@ -229,6 +235,18 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (configuration.isInsideAgent()) {
             this.persistToDisk();
         }
+        this.discoveryComponentProxyFactory.shutdown();
+    }
+
+    @SuppressWarnings("unchecked")
+    public Set<DiscoveredResourceDetails> invokeDiscoveryComponent(ResourceDiscoveryComponent component,
+        ResourceDiscoveryContext context) throws Exception {
+
+        final long timeout = 300000L; // TODO: should this be configurable? should each caller be able to set this differently?
+        ResourceDiscoveryComponent proxy;
+        proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(component, timeout);
+        Set<DiscoveredResourceDetails> results = proxy.discoverResources(context);
+        return results;
     }
 
     @Nullable
@@ -409,8 +427,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     .getContainerName());
 
             // Ask the plugin's discovery component to find the new resource, throwing exceptions if it cannot be found at all.
-            Set<DiscoveredResourceDetails> discoveredResources = discoveryComponent
-                .discoverResources(resourceDiscoveryContext);
+            Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(discoveryComponent,
+                resourceDiscoveryContext);
             if ((discoveredResources == null) || discoveredResources.isEmpty()) {
                 log
                     .info("Plugin Warning: discovery component "
@@ -1012,7 +1030,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             ResourceContext context = new ResourceContext(resource, // the resource itself
                 parentComponent, // its parent component
-                discoveryComponent, // the discovery component
+                discoveryComponent, // the discovery component (TODO: should this be the discovery component proxy??)
                 SystemInfoFactory.createSystemInfo(), // for native access
                 this.configuration.getTemporaryDirectory(), // location for plugin to write temp files
                 pluginDataDir, // location for plugin to write data files
@@ -1295,7 +1313,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     Set<DiscoveredResourceDetails> discoveredResources = null;
 
                     try {
-                        discoveredResources = component.discoverResources(context);
+                        discoveredResources = invokeDiscoveryComponent(component, context);
                     } catch (Throwable e) {
                         log.warn("Platform plugin discovery failed - skipping", e);
                     }
@@ -1555,7 +1573,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, parentComponent,
                 parentResourceContext, SystemInfoFactory.createSystemInfo(), processScanResults,
                 Collections.EMPTY_LIST, this.configuration.getContainerName());
-            Set<DiscoveredResourceDetails> discoveredResources = discoveryComponent.discoverResources(context);
+            Set<DiscoveredResourceDetails> discoveredResources = invokeDiscoveryComponent(discoveryComponent, context);
             newResources = new HashSet<Resource>();
             if ((discoveredResources != null) && (!discoveredResources.isEmpty())) {
                 IdentityHashMap<Configuration, DiscoveredResourceDetails> pluginConfigObjects = new IdentityHashMap<Configuration, DiscoveredResourceDetails>();
@@ -1594,10 +1612,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         long elapsedTime = System.currentTimeMillis() - startTime;
-        if (elapsedTime > 1000)
-            log
-                .warn("***PERF*** discovery for [" + resourceType.getName() + "] Resources took " + elapsedTime
-                    + " ms.");
+        if (elapsedTime > 20000)
+            log.info("Discovery for [" + resourceType.getName() + "] Resources took " + elapsedTime + " ms.");
         else
             log.debug("Discovery for [" + resourceType.getName() + "] Resources completed in " + elapsedTime + " ms.");
         return newResources;

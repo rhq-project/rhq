@@ -238,6 +238,7 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         return;
     }
 
+    @SuppressWarnings("unchecked")
     private void discoveryForSingleResourceType(String pcName, PrintWriter out, ResourceType resourceType,
         boolean verbose) throws Exception {
         // perform auto-discovery PIQL queries now to see if we can auto-detect resources that are running now
@@ -274,7 +275,8 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, platformComponent,
             platformContainer.getResourceContext(), systemInfo, scanResults, Collections.EMPTY_LIST, pcName);
 
-        Set<DiscoveredResourceDetails> discoveredResources = discoveryComponent.discoverResources(context);
+        Set<DiscoveredResourceDetails> discoveredResources = inventoryManager.invokeDiscoveryComponent(
+            discoveryComponent, context);
 
         if (discoveredResources != null) {
             for (DiscoveredResourceDetails discoveredResource : discoveredResources) {

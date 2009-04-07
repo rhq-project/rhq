@@ -265,28 +265,14 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
         pc.initDefaultOrderingField("o.oobFactor", PageOrdering.DESC);
 
-        Query queryCount;
-        Query query;
-
         boolean isAdmin = authMangager.isOverlord(subject) || authMangager.isSystemSuperuser(subject);
 
-        if (isAdmin) {
-            queryCount = entityManager.createNamedQuery(MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT);
-            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-                MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE, pc);
-        } else {
-            String tmp = PersistenceUtility.getQueryDefinitionFromNamedQuery(entityManager,
-                MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE);
-            tmp += MeasurementOOB.SECURITY_ADDITION;
-            query = PersistenceUtility.createNonNamedQueryWithOrderBy(entityManager, tmp, pc);
+        String queryName = isAdmin ? MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_ADMIN
+            : MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE;
 
-            tmp = PersistenceUtility.getQueryDefinitionFromNamedQuery(entityManager,
-                MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT);
-            tmp += MeasurementOOB.SECURITY_ADDITION;
-            queryCount = PersistenceUtility.createNonNamedQueryWithOrderBy(entityManager, tmp, pc);
-        }
+        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName, "sched.id");
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
-        // trim crap, toUpper it and put % around it for a LIKE query
         metricNameFilter = PersistenceUtility.formatSearchParameter(metricNameFilter);
         resourceNameFilter = PersistenceUtility.formatSearchParameter(resourceNameFilter);
         parentNameFilter = PersistenceUtility.formatSearchParameter(parentNameFilter);

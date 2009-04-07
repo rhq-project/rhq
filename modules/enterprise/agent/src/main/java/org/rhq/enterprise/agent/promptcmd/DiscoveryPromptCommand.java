@@ -20,20 +20,23 @@ package org.rhq.enterprise.agent.promptcmd;
 
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
+
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import mazz.i18n.Msg;
+
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
@@ -114,9 +117,9 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         boolean verbose = false;
 
         String sopts = "-p:r:fv";
-        LongOpt[] lopts = { new LongOpt("plugin", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
-            new LongOpt("resourceType", LongOpt.REQUIRED_ARGUMENT, null, 'r'),
-            new LongOpt("full", LongOpt.NO_ARGUMENT, null, 'f'),
+        LongOpt[] lopts = { new LongOpt("plugin", LongOpt.REQUIRED_ARGUMENT, null, 'p'), //
+            new LongOpt("resourceType", LongOpt.REQUIRED_ARGUMENT, null, 'r'), //
+            new LongOpt("full", LongOpt.NO_ARGUMENT, null, 'f'), //
             new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v')};
 
         Getopt getopt = new Getopt("discovery", args, sopts, lopts);
@@ -171,7 +174,8 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         return;
     }
 
-    private void discovery(String pcName, PrintWriter out, String pluginName, String resourceTypeName, boolean verbose) throws Exception {
+    private void discovery(String pcName, PrintWriter out, String pluginName, String resourceTypeName, boolean verbose)
+        throws Exception {
         PluginContainer pc = PluginContainer.getInstance();
         PluginMetadataManager metadataManager = pc.getPluginManager().getMetadataManager();
         Set<ResourceType> typesToDiscover = new HashSet<ResourceType>();
@@ -235,8 +239,7 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
     }
 
     private void discoveryForSingleResourceType(String pcName, PrintWriter out, ResourceType resourceType,
-                                                boolean verbose)
-        throws Exception {
+        boolean verbose) throws Exception {
         // perform auto-discovery PIQL queries now to see if we can auto-detect resources that are running now
         List<ProcessScanResult> scanResults = new ArrayList<ProcessScanResult>();
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
@@ -268,15 +271,8 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         ResourceContainer platformContainer = inventoryManager.getResourceContainer(inventoryManager.getPlatform());
         ResourceComponent platformComponent = inventoryManager.getResourceComponent(inventoryManager.getPlatform());
 
-        ResourceDiscoveryContext context =
-                new ResourceDiscoveryContext(
-                        resourceType,
-                        platformComponent,
-                        platformContainer.getResourceContext(),
-                        systemInfo,
-                        scanResults,
-                        Collections.EMPTY_LIST,
-                        pcName);
+        ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, platformComponent,
+            platformContainer.getResourceContext(), systemInfo, scanResults, Collections.EMPTY_LIST, pcName);
 
         Set<DiscoveredResourceDetails> discoveredResources = discoveryComponent.discoverResources(context);
 
@@ -287,7 +283,7 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
                     .getResourceKey(), discoveredResource.getResourceName(), discoveredResource.getResourceVersion(),
                     discoveredResource.getResourceDescription()));
                 if (verbose) {
-                    printConfiguration(discoveredResource.getPluginConfiguration(), out);                    
+                    printConfiguration(discoveredResource.getPluginConfiguration(), out);
                 }
             }
         }
@@ -302,7 +298,7 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
             builder.append(property.getName());
             builder.append("=");
             if (property instanceof PropertySimple) {
-                String value = ((PropertySimple)property).getStringValue();
+                String value = ((PropertySimple) property).getStringValue();
                 builder.append((value != null) ? "\"" + value + "\"" : value);
             } else {
                 builder.append(property);

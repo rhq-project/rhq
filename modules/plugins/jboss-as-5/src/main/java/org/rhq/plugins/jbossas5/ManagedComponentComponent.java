@@ -58,6 +58,7 @@ package org.rhq.plugins.jbossas5;
  import org.rhq.core.pluginapi.operation.OperationResult;
  import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
  import org.rhq.plugins.jbossas5.util.ConversionUtils;
+ import org.rhq.plugins.jbossas5.util.ResourceTypeUtils;
  import org.jetbrains.annotations.NotNull;
 
  /**
@@ -172,8 +173,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
                 this.componentType, this.componentName);
         log.debug("Updating " + toString(managedComponent) + "...");
         managementView.updateComponent(managedComponent);
-        managementView.process();
-        managementView.load();
+        //managementView.process();        
     }
 
     // ------------------------------------------------------------------------------
@@ -243,14 +243,11 @@ public class ManagedComponentComponent extends AbstractManagedComponent
     @NotNull
     private OperationDefinition getOperationDefinition(String operationName) {
         ResourceType resourceType = getResourceContext().getResourceType();
-        Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
-        for (OperationDefinition operationDefinition : operationDefinitions)
-        {
-            if (operationDefinition.getName().equals(operationName))
-                return operationDefinition;
-        }
-        throw new IllegalStateException("Operation named '" + operationName + "' is not defined for Resource type '"
-                + resourceType.getName() + "' in the '" + resourceType.getPlugin() + "' plugin's descriptor.");
+        OperationDefinition operationDefinition = ResourceTypeUtils.getOperationDefinition(resourceType, operationName);
+        if (operationDefinition == null)
+            throw new IllegalStateException("Operation named '" + operationName + "' is not defined for Resource type '"
+                    + resourceType.getName() + "' in the '" + resourceType.getPlugin() + "' plugin's descriptor.");
+        return operationDefinition;
     }
 
     @NotNull

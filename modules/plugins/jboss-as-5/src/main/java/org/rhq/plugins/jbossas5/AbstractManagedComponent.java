@@ -30,6 +30,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
 
@@ -53,21 +54,22 @@ public abstract class AbstractManagedComponent implements ConfigurationFacet {
     // ConfigurationComponent Implementation  --------------------------------------------
 
     public Configuration loadResourceConfiguration() {
-        Map<String, ManagedProperty> managedProperties;
-        try {
-            managedProperties = getManagedProperties();
-        }
-        catch (Exception e) {
-            getLog().error("Failed to load underlying ManagedProperties for " + this.resourceDescription + ".", e);
-            throw new RuntimeException("Failed to load underlying ManagedProperties for" + this.resourceDescription + ".", e);
-        }
-        Map<String, PropertySimple> customProps =
-                ResourceComponentUtils.getCustomProperties(this.resourceContext.getPluginConfiguration());
-        if (getLog().isDebugEnabled()) getLog().debug("*** AFTER LOAD:\n"
-                + DebugUtils.convertPropertiesToString(managedProperties));
-        @SuppressWarnings({"UnnecessaryLocalVariable"})
-        Configuration resourceConfig = ConversionUtils.convertManagedObjectToConfiguration(managedProperties,
+        Configuration resourceConfig;
+        try
+        {
+            Map<String, ManagedProperty> managedProperties = getManagedProperties();
+            Map<String, PropertySimple> customProps =
+                    ResourceComponentUtils.getCustomProperties(this.resourceContext.getPluginConfiguration());
+            if (getLog().isDebugEnabled()) getLog().debug("*** AFTER LOAD:\n"
+                    + DebugUtils.convertPropertiesToString(managedProperties));
+            resourceConfig = ConversionUtils.convertManagedObjectToConfiguration(managedProperties,
                 customProps, this.resourceContext.getResourceType());
+        }
+        catch (Exception e)
+        {
+            getLog().error("Failed to load configuration for " + this.resourceDescription + ".", e);
+            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        }
         return resourceConfig;
     }
 
@@ -90,10 +92,9 @@ public abstract class AbstractManagedComponent implements ConfigurationFacet {
         }
         catch (Exception e)
         {
-
-            getLog().error("Failed to update configuration for " + this.resourceDescription + ".");
+            getLog().error("Failed to update configuration for " + this.resourceDescription + ".", e);
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.FAILURE);
-            configurationUpdateReport.setErrorMessageFromThrowable(e);
+            configurationUpdateReport.setErrorMessage(ThrowableUtil.getAllMessages(e));
         }
     }
 

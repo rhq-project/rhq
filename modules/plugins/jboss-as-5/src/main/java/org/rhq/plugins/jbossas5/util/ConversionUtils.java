@@ -341,9 +341,9 @@ public class ConversionUtils
             
             PropertyDefinition resultPropDef = resultPropDefs.values().iterator().next();                        
                      
-            // Don't return any results, if the actual result object is null
+            // Don't return any results, if the actual result object is null.
             if (resultMetaValue == null) {
-            	// lets check if result is required or not, if it is log an error   
+            	// Check if result is required or not, and if it is, log an error.
             	if (resultPropDef.isRequired()) {
 	            	LOG.error("Plugin error: Operation [" + operationDefinition.getName()
 	        				+ "] is defined as returning a required result, but it returned null.");
@@ -392,7 +392,7 @@ public class ConversionUtils
         if (value != null)
         {
             MeasurementAdapter measurementAdapter = MeasurementAdapterFactory.getMeasurementPropertyAdapter(type);
-            MeasurementDefinition measurementDefinition = getMeasurementDefinition(resourceType, metricName);
+            MeasurementDefinition measurementDefinition = ResourceTypeUtils.getMeasurementDefinition(resourceType, metricName);
             if (measurementDefinition != null)
             {
                 measurementAdapter.setMeasurementData(report, value, request, measurementDefinition);
@@ -404,16 +404,4 @@ public class ConversionUtils
         }
     }
 
-    private static MeasurementDefinition getMeasurementDefinition(ResourceType resourceType, String metricName) {
-        MeasurementDefinition measurementDefinition = null;
-        for (MeasurementDefinition definition : resourceType.getMetricDefinitions())
-        {
-            if (definition.getName().equals(metricName))
-            {
-                measurementDefinition = definition;
-                break;
-            }
-        }
-        return measurementDefinition;
-    }
 }

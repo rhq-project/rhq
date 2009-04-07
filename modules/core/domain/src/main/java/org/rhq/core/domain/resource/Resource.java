@@ -1114,6 +1114,9 @@ public class Resource implements Comparable<Resource>, Externalizable {
     }
 
     public void setChildResources(Set<Resource> children) {
+        if (children == null) {
+            children = new LinkedHashSet<Resource>();
+        }
         this.childResources = children;
     }
 

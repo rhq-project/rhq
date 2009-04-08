@@ -116,7 +116,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
     public void beforeMethod() throws Exception {
         prepareScheduler();
 
-        simulatedOperation_Sleep = 500;
+        simulatedOperation_Sleep = 500L;
         simulatedOperation_Timeout = false;
         simulatedOperation_Error = null;
 
@@ -148,7 +148,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 20000; // the operation timeout is defined at 10 seconds, we'll block it for 20s
+        simulatedOperation_Sleep = 20000L; // the operation timeout is defined at 10 seconds, we'll block it for 20s
 
         Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date());
         ResourceOperationSchedule schedule = operationManager.scheduleResourceOperation(superuser, resource.getId(),
@@ -158,7 +158,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedules != null;
         assert schedules.size() == 1;
 
-        Thread.sleep(12000); // wait for it to timeout
+        Thread.sleep(12000L); // wait for it to timeout
 
         // this will change all INPROGRESS histories that have timed out to FAILURE
         operationManager.checkForTimedOutOperations(superuser);
@@ -194,10 +194,10 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
         // let the trigger not fire until several seconds from now so we can query the schedule itself
-        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 10000));
+        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 10000L));
         GroupOperationSchedule schedule = operationManager.scheduleGroupOperation(superuser, newGroup.getId(), null,
             true, "testOp", null, trigger, "desc");
         assert schedule != null;
@@ -240,14 +240,14 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
         Configuration params = new Configuration();
         params.put(new PropertySimple("param1", "group-test"));
         params.put(new PropertySimple("param2", "blah"));
 
         // let the trigger not fire until several seconds from now so we can query the schedule itself
-        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 3600000));
+        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 3600000L));
         GroupOperationSchedule schedule = operationManager.scheduleGroupOperation(superuser, newGroup.getId(), null,
             true, "testOp", params, trigger, "desc");
         assert schedule != null;
@@ -310,10 +310,10 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
         // let the trigger not fire until several seconds from now so we can query the schedule itself
-        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 5000));
+        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 5000L));
         GroupOperationSchedule schedule = operationManager.scheduleGroupOperation(superuser, newGroup.getId(), null,
             true, "testOp", null, trigger, "desc");
         assert schedule != null;
@@ -333,7 +333,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert returnedSchedule.getOperationName().equals("testOp");
         assert returnedSchedule.getDescription().equals("desc");
 
-        Thread.sleep(9000); // wait for it to be triggered and finish
+        Thread.sleep(9000L); // wait for it to be triggered and finish
 
         PageList<GroupOperationHistory> results;
         results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
@@ -365,7 +365,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 30000;
+        simulatedOperation_Sleep = 30000L;
         simulatedOperation_CancelResults = new CancelResults(InterruptedState.RUNNING);
 
         Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date());
@@ -376,7 +376,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         // wait for it to be triggered so we get a history item
         for (int i = 0; i < 5; i++) {
-            Thread.sleep(1000);
+            Thread.sleep(1000L);
             results = operationManager.getPendingGroupOperationHistories(superuser, newGroup.getId(), PageControl
                 .getUnlimitedInstance());
             if ((results != null) && (results.size() > 0)) {
@@ -393,7 +393,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         PageList<ResourceOperationHistory> results2 = null;
 
         for (int i = 0; i < 5; i++) {
-            Thread.sleep(1000);
+            Thread.sleep(1000L);
             results2 = operationManager.getPendingResourceOperationHistories(superuser, newResource.getId(),
                 PageControl.getUnlimitedInstance());
             if ((results2 != null) && (results2.size() > 0)) {
@@ -452,7 +452,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 30000;
+        simulatedOperation_Sleep = 30000L;
         simulatedOperation_CancelResults = new CancelResults(InterruptedState.FINISHED);
 
         Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date());
@@ -463,7 +463,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         // wait for it to be triggered so we get a history item
         for (int i = 0; i < 5; i++) {
-            Thread.sleep(1000);
+            Thread.sleep(1000L);
             results = operationManager.getPendingGroupOperationHistories(superuser, newGroup.getId(), PageControl
                 .getUnlimitedInstance());
             if ((results != null) && (results.size() > 0)) {
@@ -528,7 +528,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         // make it a success
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
         Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date());
         GroupOperationSchedule schedule = operationManager.scheduleGroupOperation(superuser, newGroup.getId(),
@@ -539,7 +539,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedule.getParameters() == null;
         assert schedule.getGroup().getId() == newGroup.getId();
 
-        Thread.sleep(4000); // wait for it to finish, should be fast
+        Thread.sleep(4000L); // wait for it to finish, should be fast
 
         PageList<GroupOperationHistory> results;
         results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
@@ -601,7 +601,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         // make it a success
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
         Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", 1, 750);
         GroupOperationSchedule schedule = operationManager.scheduleGroupOperation(superuser, newGroup.getId(),
@@ -612,7 +612,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedule.getParameters() == null;
         assert schedule.getGroup().getId() == newGroup.getId();
 
-        Thread.sleep(4000); // wait for it to finish, should be fast
+        Thread.sleep(4000L); // wait for it to finish, should be fast
 
         PageList<GroupOperationHistory> results;
         results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
@@ -690,7 +690,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         // make it a success
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
         Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date());
         Configuration params = new Configuration();
@@ -717,7 +717,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         int scheduleParamId = schedule.getParameters().getId();
 
-        Thread.sleep(4000); // wait for it to finish, should be fast
+        Thread.sleep(4000L); // wait for it to finish, should be fast
 
         PageList<GroupOperationHistory> results;
         results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
@@ -779,7 +779,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         simulatedOperation_Error = "an error!";
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
         Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date());
         GroupOperationSchedule schedule = operationManager.scheduleGroupOperation(superuser, newGroup.getId(),
@@ -790,7 +790,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedule.getParameters() == null;
         assert schedule.getGroup().getId() == newGroup.getId();
 
-        Thread.sleep(4000); // wait for it to finish, should be fast
+        Thread.sleep(4000L); // wait for it to finish, should be fast
 
         PageList<GroupOperationHistory> results;
         results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
@@ -840,7 +840,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = true;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
         Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date());
         GroupOperationSchedule schedule = operationManager.scheduleGroupOperation(superuser, newGroup.getId(),
@@ -851,7 +851,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedule.getParameters() == null;
         assert schedule.getGroup().getId() == newGroup.getId();
 
-        Thread.sleep(4000); // wait for it to finish, should be fast
+        Thread.sleep(4000L); // wait for it to finish, should be fast
 
         PageList<GroupOperationHistory> results;
         results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
@@ -902,9 +902,9 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
-        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 10000));
+        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 10000L));
         ResourceOperationSchedule schedule = operationManager.scheduleResourceOperation(superuser, resource.getId(),
             "testOp", null, trigger, "desc");
         assert schedule != null;
@@ -953,13 +953,13 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
         Configuration params = new Configuration();
         params.put(new PropertySimple("param1", "group-test"));
         params.put(new PropertySimple("param2", "blah"));
 
-        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 10000));
+        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 10000L));
         ResourceOperationSchedule schedule = operationManager.scheduleResourceOperation(superuser, resource.getId(),
             "testOp", params, trigger, "desc");
         assert schedule != null;
@@ -1008,9 +1008,9 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
-        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 5000));
+        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 5000L));
         ResourceOperationSchedule schedule = operationManager.scheduleResourceOperation(superuser, resource.getId(),
             "testOp", null, trigger, "desc");
         assert schedule != null;
@@ -1030,7 +1030,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert returnedSchedule.getOperationName().equals("testOp");
         assert returnedSchedule.getDescription().equals("desc");
 
-        Thread.sleep(9000); // wait for it to be triggered and complete
+        Thread.sleep(9000L); // wait for it to be triggered and complete
 
         PageList<ResourceOperationHistory> results;
         results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
@@ -1057,9 +1057,9 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         simulatedOperation_Error = "some error";
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
-        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 5000));
+        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 5000L));
         ResourceOperationSchedule schedule = operationManager.scheduleResourceOperation(superuser, resource.getId(),
             "testOp", null, trigger, "desc");
         assert schedule != null;
@@ -1079,7 +1079,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert returnedSchedule.getOperationName().equals("testOp");
         assert returnedSchedule.getDescription().equals("desc");
 
-        Thread.sleep(9000); // wait for it to be triggered and complete
+        Thread.sleep(9000L); // wait for it to be triggered and complete
 
         PageList<ResourceOperationHistory> results;
         results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
@@ -1106,9 +1106,9 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = true;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
-        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 5000));
+        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 5000L));
         ResourceOperationSchedule schedule = operationManager.scheduleResourceOperation(superuser, resource.getId(),
             "testOp", null, trigger, "desc");
         assert schedule != null;
@@ -1128,7 +1128,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert returnedSchedule.getOperationName().equals("testOp");
         assert returnedSchedule.getDescription().equals("desc");
 
-        Thread.sleep(9000); // wait for it to be triggered and complete
+        Thread.sleep(9000L); // wait for it to be triggered and complete
 
         PageList<ResourceOperationHistory> results;
         results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
@@ -1157,7 +1157,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 30000; // long enough so it doesn't finish before we cancel
+        simulatedOperation_Sleep = 30000L; // long enough so it doesn't finish before we cancel
         simulatedOperation_CancelResults = new CancelResults(InterruptedState.RUNNING);
 
         Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date());
@@ -1167,7 +1167,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         // wait for it to be triggered so we get a history item
         for (int i = 0; i < 5; i++) {
-            Thread.sleep(1000);
+            Thread.sleep(1000L);
             results = operationManager.getPendingResourceOperationHistories(superuser, resource.getId(), PageControl
                 .getUnlimitedInstance());
             if ((results != null) && (results.size() > 0)) {
@@ -1217,7 +1217,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 30000; // long enough so it doesn't notify that it finished before we cancel
+        simulatedOperation_Sleep = 30000L; // long enough so it doesn't notify that it finished before we cancel
         simulatedOperation_CancelResults = new CancelResults(InterruptedState.FINISHED); // agent says its finished
 
         Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date());
@@ -1227,7 +1227,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         // wait for it to be triggered so we get a history item
         for (int i = 0; i < 5; i++) {
-            Thread.sleep(1000);
+            Thread.sleep(1000L);
             results = operationManager.getPendingResourceOperationHistories(superuser, resource.getId(), PageControl
                 .getUnlimitedInstance());
             if ((results != null) && (results.size() > 0)) {
@@ -1276,9 +1276,9 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         // make it a success after 500ms
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
-        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date());
+        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis()));
         ResourceOperationSchedule schedule = operationManager.scheduleResourceOperation(superuser, resource.getId(),
             "testOp", null, trigger, "desc");
         assert schedule != null;
@@ -1287,7 +1287,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedule.getParameters() == null;
         assert schedule.getResource().getId() == newResource.getId();
 
-        Thread.sleep(4000); // wait for it to finish, should be very quick
+        Thread.sleep(4000L); // wait for it to finish, should be very quick
 
         PageList<ResourceOperationHistory> results;
         results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
@@ -1331,7 +1331,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         // make it a success
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
         Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", 1, 750);
         ResourceOperationSchedule schedule = operationManager.scheduleResourceOperation(superuser, resource.getId(),
@@ -1342,7 +1342,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedule.getParameters() == null;
         assert schedule.getResource().getId() == newResource.getId();
 
-        Thread.sleep(4000); // wait for it to finish, should be very quick
+        Thread.sleep(4000L); // wait for it to finish, should be very quick
 
         PageList<ResourceOperationHistory> results;
         results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
@@ -1390,7 +1390,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         // make it a success after 500ms
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
-        simulatedOperation_Sleep = 0;
+        simulatedOperation_Sleep = 0L;
 
         Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date());
         Configuration params = new Configuration();
@@ -1407,7 +1407,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         int scheduleParamId = schedule.getParameters().getId();
 
-        Thread.sleep(4000); // wait for it to finish, should be very quick
+        Thread.sleep(4000L); // wait for it to finish, should be very quick
 
         PageList<ResourceOperationHistory> results;
         results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
@@ -1641,12 +1641,13 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
                 @Override
                 public void run() {
                     try {
-                        System.out.println("~~~~~OPERATION TRIGGERED! op=" + operationName + ", jobId=" + jobId);
+                        System.out.println("~~~~~OPERATION TRIGGERED! op=" + operationName + ", jobId=" + jobId
+                            + ", time=" + new Date());
 
                         long start = System.currentTimeMillis();
 
                         // this method simulates the agent actually invoking the operation
-                        if (simulatedOperation_Sleep > 0) {
+                        if (simulatedOperation_Sleep > 0L) {
                             Thread.sleep(simulatedOperation_Sleep);
                         }
 

@@ -65,7 +65,7 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
     }
 
     private enum ResourceLevel {
-        RESOURCE("Resource"), PARENT("Parent"), GRANDPARENT("Grandparent");
+        RESOURCE("Resource"), CHILD("Child"), PARENT("Parent"), GRANDPARENT("Grandparent");
         private String displayName;
 
         private ResourceLevel(String displayName) {
@@ -124,7 +124,9 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
     private String selectedComparison;
     private String enteredValue = "";
     private String selectedGroupBy;
+    private String selectedUnset;
     private boolean groupby;
+    private boolean unset;
     private boolean typeSelectionDisabled;
 
     private SelectItem[] resourceLevels;
@@ -245,6 +247,14 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
         this.selectedGroupBy = selectedGroupBy;
     }
 
+    public String getSelectedUnset() {
+        return selectedUnset;
+    }
+
+    public void setSelectedUnset(String selectedUnset) {
+        this.selectedUnset = selectedUnset;
+    }
+
     public void setSelectedComparison(String selectedComparison) {
         this.selectedComparison = selectedComparison;
     }
@@ -263,6 +273,14 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
 
     public void setGroupby(boolean groupby) {
         this.groupby = groupby;
+    }
+
+    public boolean isUnset() {
+        return unset;
+    }
+
+    public void setUnset(boolean unset) {
+        this.unset = unset;
     }
 
     public SelectItem[] getPropertyTypes() {
@@ -317,7 +335,9 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
             String.class, "Resource");
         this.selectedProperty = FacesContextUtility.getOptionalRequestParameter("libraryForm:property");
         this.selectedGroupBy = FacesContextUtility.getOptionalRequestParameter("libraryForm:selectedGroupBy");
+        this.selectedUnset = FacesContextUtility.getOptionalRequestParameter("libraryForm:selectedUnset");
         this.groupby = Boolean.valueOf(this.selectedGroupBy);
+        this.unset = Boolean.valueOf(this.selectedUnset);
         this.enteredValue = FacesContextUtility.getOptionalRequestParameter("libraryForm:value", String.class, "");
         this.selectedComparison = FacesContextUtility.getOptionalRequestParameter("libraryForm:comparison");
 
@@ -416,7 +436,7 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
             } else if (type == PropertyType.RESOURCE_CONFIGURATION) {
                 propertyNames = expressionBuilderManager.getResourceConfigurationPropertyNames(resourceTypeId);
             } else if (type == PropertyType.RESOURCE) {
-                propertyNames = Arrays.asList(new String[] { "id", "name", "version" });
+                propertyNames = Arrays.asList(new String[] { "id", "name", "version", "availability" });
             }
 
             if (propertyNames.size() == 0) {
@@ -438,11 +458,17 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
         if (this.isGroupby()) {
             buf.append("groupby ");
         }
+        if (this.isUnset()) {
+            buf.append("empty ");
+        }
 
         buf.append("resource.");
 
         switch (ResourceLevel.getFromDisplayName(this.selectedResourceLevel)) {
         case RESOURCE:
+            break;
+        case CHILD:
+            buf.append("child.");
             break;
         case PARENT:
             buf.append("parent.");
@@ -469,7 +495,7 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
             break;
         }
 
-        if (!groupby) {
+        if (!groupby && !unset) {
 
             switch (Comparison.getFromDisplayName(this.selectedComparison)) {
             case EQUALS:

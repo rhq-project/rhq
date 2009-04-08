@@ -22,18 +22,20 @@
             <h:outputText value="Group By:"/>
             <h:selectManyCheckbox id="selectedGroupBy" name="selectedGroupBy"
                                   onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
+                                  disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedUnset}"
                                   value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy}">
                 <f:selectItem itemLabel="Yes" itemValue="true"/>
 
                 <rich:toolTip showDelay="1000">
                     <span style="white-space:nowrap">
-                        GroupBy will cause the system to pivot on the values from the entered expressions creating
-                        a separate group for each value. E.g. GroupBy on the cluster name to create a group for each
+                        GroupBy will cause the system to pivot on the <br/>
+                        values from the entered expressions creating a <br/> 
+                        separate group for each value. E.g. GroupBy on <br/>
+                        the cluster name to create a group for each <br/>
                         cluster with all cluster members in it.
                     </span>
                 </rich:toolTip>
             </h:selectManyCheckbox>
-
 
             <h:outputText value="Resource: " />
             <h:selectOneMenu id="resourceLevel" name="resourceLevel"
@@ -105,8 +107,9 @@
               <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.properties}" />
                <rich:toolTip showDelay="1000">
                     <span style="white-space:nowrap">
-                        The name of the property to query. This is defined by the type of expression<br/>
-                        as well as the resource Type.
+                        The name of the property to query. <br/>
+                        This is defined by the type of <br/>
+                        expression as well as the resource Type.
                     </span>
                 </rich:toolTip>
            </h:selectOneMenu>
@@ -117,18 +120,38 @@
                          rendered="#{onf:length(GroupDefinitionExpressionBuilderLibraryUIBean.resourceTypes) != 0 and
                                      onf:length(GroupDefinitionExpressionBuilderLibraryUIBean.properties) == 0}" />
 
+            <h:outputText value="Unset:"/>
+            <h:selectManyCheckbox id="selectedUnset" name="selectedUnset"
+                                  onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
+                                  disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy}"
+                                  value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedUnset}">
+                <f:selectItem itemLabel="Yes" itemValue="true"/>
+
+                <rich:toolTip showDelay="1000">
+                    <span style="white-space:nowrap">
+                        Unset will find all of the values that <br/>
+                        have a null value in the database. This <br/>
+                        is not possible using the '=' operator <br/>
+                        because of how databases store and query data.
+                    </span>
+                </rich:toolTip>
+            </h:selectManyCheckbox>
 
             <h:outputText value="Comparison Type: "/>
             <h:selectOneMenu id="comparison" name="comparison"
                              onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
-                             disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy || GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType == 'Resource Type'}"
+                             disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy ||
+                                         GroupDefinitionExpressionBuilderLibraryUIBean.selectedUnset ||
+                                         GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType == 'Resource Type'}"
                              value="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedComparison}">
                <f:selectItems value="#{GroupDefinitionExpressionBuilderLibraryUIBean.comparisonTypes}"/>
             </h:selectOneMenu>
 
             <h:outputText value="Value: " />
             <h:inputText id="value" name="value"
-                         disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy || GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType == 'Resource Type'}"
+                         disabled="#{GroupDefinitionExpressionBuilderLibraryUIBean.selectedGroupBy ||
+                                     GroupDefinitionExpressionBuilderLibraryUIBean.selectedUnset ||
+                                     GroupDefinitionExpressionBuilderLibraryUIBean.selectedPropertyType == 'Resource Type'}"
                          onblur="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
                          onchange="document.getElementById('libraryForm:hiddenChangeSubmit').click();"
                          onkeypress="valueTimerKeypressHandler();"

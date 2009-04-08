@@ -269,16 +269,13 @@ public class StandaloneContainer {
         }
 
         switch (com) {
-        case NATIVE:
-            doNative(tokens);
-            break;
-        case AVAIL:
-            avail();
-            break;
         case ASCAN:
             AvailabilityReport aReport = pc.getDiscoveryAgentService().executeAvailabilityScanImmediately(false);
 
             System.out.println(aReport);
+            break;
+        case AVAIL:
+            avail();
             break;
         case DISCOVER:
             discover(tokens);
@@ -291,21 +288,24 @@ public class StandaloneContainer {
                 System.out.println(comm + " ( " + comm.getAbbrev() + " ), " + comm.getArgs() + " : " + comm.getHelp());
             }
             break;
-        case MEASURE:
-            measure(tokens);
-            break;
         case INVOKE:
             invokeOps(tokens);
             break;
+        case MEASURE:
+            measure(tokens);
+            break;
+        case NATIVE:
+            doNative(tokens);
+            break;
+        case QUIT:
+            System.out.println("Terminating ..");
+            return true;
         case RESOURCES:
             resources();
             break;
         case SET:
             set(tokens);
             break;
-        case QUIT:
-            System.out.println("Terminating ..");
-            return true;
         case WAIT:
             Thread.sleep(Integer.valueOf(tokens[1]));
             break;
@@ -493,17 +493,17 @@ public class StandaloneContainer {
      * List of possible commands
      */
     private enum Command {
-        NATIVE("n", "e | d | s", 1, "Enables/disables native system or shows native status"), //
-        AVAIL("a", "", 0, "Shows an availability report"), //
         ASCAN("as", "", 0, "Triggers an availability scan"), //
+        AVAIL("a", "", 0, "Shows an availability report"), //
         DISCOVER("disc", " s | i", 1, "Triggers a discovery scan"), //
         //      EVENT("e", "", 0,  "Pull events"), // TODO needs to be defined
         HELP("h", "", 0, "Shows this help"), //
+        INVOKE("i", "operation [params]", 1, "Triggers running an operation"), //
         MEASURE("m", "datatype property+", 2, "Triggers getting metric values. All need to be of the same data type"), //
-        INVOKE("i", "operation [params]", 1, "Triggers running an operation"), // 
+        NATIVE("n", "e | d | s", 1, "Enables/disables native system or shows native status"), //
+        QUIT("quit", "", 0, "Terminates the application"), //
         RESOURCES("res", "", 0, "Shows the discovere resources"), //
         SET("set", "resourceId n", 2, "Sets the resource id to work with"), //
-        QUIT("quit", "", 0, "Terminates the application"), //
         WAIT("w", "milliseconds", 1, "Waits the given amount of time");
 
         private String abbrev;

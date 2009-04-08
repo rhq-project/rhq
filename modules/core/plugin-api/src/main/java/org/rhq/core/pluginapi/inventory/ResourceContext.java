@@ -80,7 +80,7 @@ public class ResourceContext<T extends ResourceComponent> {
      *                                   will be given this context object of the plugin
      * @param parentResourceComponent    the parent component of the context's associated resource component
      * @param resourceDiscoveryComponent the discovery component that can be used to detect other resources of the same
-     *                                   type as this resource
+     *                                   type as this resource (may be <code>null</code>)
      * @param systemInfo                 information about the system on which the plugin and its plugin container are
      *                                   running
      * @param temporaryDirectory         a temporary directory for plugin use that is destroyed at agent shutdown
@@ -190,24 +190,26 @@ public class ResourceContext<T extends ResourceComponent> {
     public ProcessInfo getNativeProcess() {
         if ((this.processInfo == null) || !this.processInfo.isRunning()) {
             // TODO: should we null out processInfo?  if it isn't running, the old processInfo is no longer valid
-            try {
-                Set<DiscoveredResourceDetails> details;
-                ResourceDiscoveryContext context;
+            if (this.resourceDiscoveryComponent != null) {
+                try {
+                    Set<DiscoveredResourceDetails> details;
+                    ResourceDiscoveryContext context;
 
-                context = new ResourceDiscoveryContext(this.resourceType, this.parentResourceComponent, this,
-                    this.systemInformation, getNativeProcessesForType(), Collections.EMPTY_LIST,
-                    getPluginContainerName());
+                    context = new ResourceDiscoveryContext(this.resourceType, this.parentResourceComponent, this,
+                        this.systemInformation, getNativeProcessesForType(), Collections.EMPTY_LIST,
+                        getPluginContainerName());
 
-                details = this.resourceDiscoveryComponent.discoverResources(context);
+                    details = this.resourceDiscoveryComponent.discoverResources(context);
 
-                for (DiscoveredResourceDetails detail : details) {
-                    if (detail.getResourceKey().equals(this.resourceKey)) {
-                        this.processInfo = detail.getProcessInfo();
+                    for (DiscoveredResourceDetails detail : details) {
+                        if (detail.getResourceKey().equals(this.resourceKey)) {
+                            this.processInfo = detail.getProcessInfo();
+                        }
                     }
+                } catch (Exception e) {
+                    LogFactory.getLog(getClass()).warn(
+                        "Cannot get native process for resource [" + this.resourceKey + "] - discovery failed", e);
                 }
-            } catch (Exception e) {
-                LogFactory.getLog(getClass()).warn(
-                    "Cannot get native process for resource [" + this.resourceKey + "] - discovery failed", e);
             }
         }
 

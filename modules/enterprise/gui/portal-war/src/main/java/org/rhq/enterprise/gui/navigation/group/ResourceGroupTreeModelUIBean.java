@@ -33,6 +33,8 @@ import javax.faces.context.FacesContext;
 import javax.faces.el.MethodBinding;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.richfaces.component.html.ContextMenu;
 import org.richfaces.component.html.HtmlMenuGroup;
 import org.richfaces.component.html.HtmlMenuItem;
@@ -69,6 +71,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ResourceGroupTreeModelUIBean {
 
+    private final Log log = LogFactory.getLog(ResourceGroupTreeModelUIBean.class);
+
     private List<ResourceGroupTreeNode> roots = new ArrayList<ResourceGroupTreeNode>();
     private ResourceGroupTreeNode rootNode = null;
     private List<ResourceGroupTreeNode> children = new ArrayList<ResourceGroupTreeNode>();
@@ -90,8 +94,6 @@ public class ResourceGroupTreeModelUIBean {
 
     private void loadTree() {
 
-        long start = System.currentTimeMillis();
-
         FacesContext facesContext = FacesContext.getCurrentInstance();
         ExternalContext externalContext = facesContext.getExternalContext();
 
@@ -109,14 +111,22 @@ public class ResourceGroupTreeModelUIBean {
 
         rootNode = new ResourceGroupTreeNode(parentGroup);
 
+        long start = System.currentTimeMillis();
         List<Resource> resources = resourceManager.getResourcesByCompatibleGroup(EnterpriseFacesContextUtility
             .getSubject(), parentGroup.getId(), PageControl.getUnlimitedInstance());
+        long end = System.currentTimeMillis();
+        log.debug("Loaded resources by group in " + (end - start));
 
+        start = System.currentTimeMillis();
         List<Resource> members = groupManager.getResourcesForResourceGroup(EnterpriseFacesContextUtility.getSubject(),
             parentGroup.getId(), GroupCategory.COMPATIBLE);
+        end = System.currentTimeMillis();
+        log.debug("Loaded memebers by group in " + (end - start));
 
+        start = System.currentTimeMillis();
         rootNode = load(parentGroup, resources, members);
-        //        System.out.println("Loaded group tree in: " + (System.currentTimeMillis() - start));
+        end = System.currentTimeMillis();
+        log.debug("Constructed tree in " + (end - start));
     }
 
     private ResourceGroupTreeNode load(ResourceGroup group, List<Resource> resources, List<Resource> members) {
@@ -193,7 +203,9 @@ public class ResourceGroupTreeModelUIBean {
 
     public List<ResourceGroupTreeNode> getRoots() {
         if (rootNode == null) {
+            long start = System.currentTimeMillis();
             loadTree();
+            log.debug("Loaded full tree in " + (System.currentTimeMillis() - start));
         }
         List<ResourceGroupTreeNode> roots = new ArrayList<ResourceGroupTreeNode>();
         roots.add(this.rootNode);
@@ -347,14 +359,16 @@ public class ResourceGroupTreeModelUIBean {
         if (facets.isConfiguration()) {
             url = "/rhq/group/configuration/viewCurrent.xhtml?" + attributes;
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Configure_grey_16.png", "Configuration");
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Configure_grey_16.png",
+                "Configuration");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 
         if (facets.isOperation()) {
             url = "/rhq/group/operation/groupOperationScheduleNew.xhtml?" + attributes;
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Operation_grey_16.png", "Operations");
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Operation_grey_16.png",
+                "Operations");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 

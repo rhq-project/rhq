@@ -23,6 +23,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
@@ -37,8 +40,6 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  * Backing bean for the left navigation tree for resources
@@ -66,15 +67,27 @@ public class ResourceTreeModelUIBean {
         }
 
         Subject user = EnterpriseFacesContextUtility.getSubject();
+
+        long start = System.currentTimeMillis();
         Resource rootResource = resourceManager.getRootResourceForResource(searchId);
+        long end = System.currentTimeMillis();
+        log.debug("Found root resource in " + (end - start));
+
         Agent agent = agentManager.getAgentByResourceId(rootResource.getId());
+
+        start = System.currentTimeMillis();
         List<Resource> resources = resourceManager.getResourcesByAgent(user, agent.getId(), PageControl
             .getUnlimitedInstance());
+        end = System.currentTimeMillis();
+        log.debug("Loaded raw resources in " + (end - start));
 
+        start = System.currentTimeMillis();
         rootNode = load(rootResource.getId(), resources, false);
+        end = System.currentTimeMillis();
+        log.debug("Constructed tree in " + (end - start));
     }
 
-    public static ResourceTreeNode  load(int rootId, List<Resource> resources, boolean alwaysGroup) {
+    public static ResourceTreeNode load(int rootId, List<Resource> resources, boolean alwaysGroup) {
         Resource found = null;
         for (Resource res : resources) {
             if (res.getId() == rootId) {
@@ -129,7 +142,9 @@ public class ResourceTreeModelUIBean {
             }
 
             for (Object rsc : children.keySet()) {
-                if (rsc != null && (rsc instanceof ResourceSubCategory || children.get(rsc).size() > 1 || (alwaysGroup && children.get(rsc).size() == 1))) {
+                if (rsc != null
+                    && (rsc instanceof ResourceSubCategory || children.get(rsc).size() > 1 || (alwaysGroup && children
+                        .get(rsc).size() == 1))) {
                     double avail = 0;
                     List<Resource> entries = children.get(rsc);
                     for (Resource res : entries) {
@@ -197,7 +212,7 @@ public class ResourceTreeModelUIBean {
                     }
                 } else if (compositeParent.getResourceType() != null) {
                     if (compositeParent.getResourceType().equals(res.getResourceType())
-                            && compositeParent.getParentResource().getId() == res.getParentResource().getId()) {
+                        && compositeParent.getParentResource().getId() == res.getParentResource().getId()) {
                         if (children.containsKey(res.getResourceType())) {
                             children.get(res.getResourceType()).add(res);
                         } else {
@@ -211,9 +226,8 @@ public class ResourceTreeModelUIBean {
 
             for (Object rsc : children.keySet()) {
                 if (rsc != null
-                    && (rsc instanceof ResourceSubCategory
-                        || ((children.get(rsc).size() > 1 || (alwaysGroup && children.get(rsc).size() == 1))
-                            && ((AutoGroupComposite) parentNode.getData()).getSubcategory() != null))) {
+                    && (rsc instanceof ResourceSubCategory || ((children.get(rsc).size() > 1 || (alwaysGroup && children
+                        .get(rsc).size() == 1)) && ((AutoGroupComposite) parentNode.getData()).getSubcategory() != null))) {
                     double avail = 0;
                     List<Resource> entries = children.get(rsc);
                     for (Resource res : entries) {
@@ -270,7 +284,7 @@ public class ResourceTreeModelUIBean {
         if (rootNode == null) {
             long start = System.currentTimeMillis();
             loadTree();
-            log.debug("Loaded tree in " + (System.currentTimeMillis() - start));
+            log.debug("Loaded full tree in " + (System.currentTimeMillis() - start));
         }
 
         return rootNode;

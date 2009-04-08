@@ -138,6 +138,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public int createResourceGroup(Subject user, ResourceGroup group) throws ResourceGroupNotFoundException,
         ResourceGroupAlreadyExistsException {
+        /*
+        GH: We are now allowing Groups where names collide... TODO, should this only be allowed for cluster auto backing groups?
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME);
         query.setParameter("name", group.getName());
 
@@ -145,7 +147,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         if (groups.size() != 0) {
             throw new ResourceGroupAlreadyExistsException("ResourceGroup with name " + group.getName()
                 + " already exists");
-        }
+        }*/
 
         long time = System.currentTimeMillis();
         group.setCtime(time);
@@ -735,20 +737,13 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     }
 
     public ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId) {
-//        PageList<ResourceGroupComposite> results = getResourceGroupsFiltered(subject, null, null, null, null, null,
-//            groupId, PageControl.getSingleRowInstance());
-//
-//        if (results.size() != 1) {
-//
-//            // Auto cluster backing groups have a special security allowance that let's a non-inventory-manager
-//            // view them even if they aren't in one of their roles, by nature of the fact that the user has all
-//            // the resources in the group visible.
-//
-//
-//            throw new IllegalStateException("Found incorrect number of results (" + results.size()
-//                + " when looking up ResourceGroupComposite for group[id=" + groupId + "]");
-//        }
+            // Auto cluster backing groups have a special security allowance that let's a non-inventory-manager
+            // view them even if they aren't directly in one of their roles, by nature of the fact that the user has
+            // the parent cluster group in one of its roles.
 
+        if (!authorizationManager.canViewGroup(subject, groupId)) {
+            throw new PermissionException("You do not have permission to view this resource group");
+        }
 
         String queryString =
                 "SELECT \n" +
@@ -762,12 +757,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
                 "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId), g \n" +
                 "FROM ResourceGroup g where g.id = :groupId";
 
-        // TODO GH: secure this
         Query query = entityManager.createQuery(queryString);
         query.setParameter("groupId", groupId);
         Object[] data = (Object[]) query.getSingleResult();
 
-        ResourceGroupComposite composite =
+        ResourceGroupComposite composite = null;
+        if (((Number)data[2]).longValue() > 0) {
+
+           composite =
                 new ResourceGroupComposite(
                         ((Number) data[0]).longValue(),
                         ((Number) data[1]).doubleValue(),
@@ -775,6 +772,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
                         ((Number) data[3]).doubleValue(),
                         (ResourceGroup) data[4]
                 );
+        } else {
+            composite = new ResourceGroupComposite(0,0,0,0,(ResourceGroup)data[4]);
+        }
         composite.getResourceGroup().getModifiedBy().getFirstName();
 
         return composite;

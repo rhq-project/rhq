@@ -102,16 +102,25 @@ import org.rhq.core.domain.resource.ResourceType;
 
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_NAME, query = "SELECT rg FROM ResourceGroup AS rg WHERE LOWER(rg.name) = LOWER(:name)"),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY, query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.clusterKey = :clusterKey"),
-    @NamedQuery(name = ResourceGroup.QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE, query = "SELECT DISTINCT rg "
-        + "FROM ResourceGroup AS rg LEFT JOIN rg.roles AS r " + "WHERE rg.id NOT IN " + "( SELECT irg.id "
-        + "  FROM Role ir JOIN ir.resourceGroups AS irg " + "  WHERE ir.id = :roleId )"),
-    @NamedQuery(name = ResourceGroup.QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE_WITH_EXCLUDES, query = "SELECT DISTINCT rg "
-        + "FROM ResourceGroup AS rg LEFT JOIN rg.roles AS r "
-        + "WHERE rg.id NOT IN "
-        + "( SELECT irg.id "
-        + "  FROM Role ir JOIN ir.resourceGroups AS irg "
-        + "  WHERE ir.id = :roleId ) "
-        + "AND rg.id NOT IN ( :excludeIds )"),
+
+    @NamedQuery(name = ResourceGroup.QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE, query =
+            "SELECT DISTINCT rg " +
+            "FROM ResourceGroup AS rg LEFT JOIN rg.roles AS r " +
+            "WHERE rg.id NOT IN " +
+            "  ( SELECT irg.id FROM Role ir JOIN ir.resourceGroups AS irg "  +
+            "    WHERE ir.id = :roleId )" +
+            "  AND rg.clusterResourceGroup is NULL"),
+
+    @NamedQuery(name = ResourceGroup.QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE_WITH_EXCLUDES, query =
+            "SELECT DISTINCT rg " +
+            "FROM ResourceGroup AS rg LEFT JOIN rg.roles AS r " +
+            "WHERE rg.id NOT IN " +
+            "  ( SELECT irg.id " +
+            "    FROM Role ir JOIN ir.resourceGroups AS irg " +
+            "    WHERE ir.id = :roleId ) " +
+            "  AND rg.id NOT IN ( :excludeIds )" +
+            "  AND rg.clusterResourceGroup is NULL"),
+        
     @NamedQuery(name = ResourceGroup.QUERY_GET_RESOURCE_GROUPS_ASSIGNED_TO_ROLE, query = "SELECT rg FROM ResourceGroup AS rg JOIN rg.roles AS r WHERE r.id = :id"),
 
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_IDS_admin, query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.id IN ( :ids )"),

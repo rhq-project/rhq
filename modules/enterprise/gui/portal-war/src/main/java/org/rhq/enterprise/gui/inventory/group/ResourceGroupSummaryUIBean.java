@@ -59,7 +59,8 @@ public class ResourceGroupSummaryUIBean extends PagedDataTableUIBean {
             ResourceGroup resourceGroup = EnterpriseFacesContextUtility.getResourceGroup();
 
             PageList<ResourceWithAvailability> results = resourceManager
-                .getExplicitResourceWithAvailabilityByResourceGroup(subject, resourceGroup, pageControl);
+                .getExplicitResourceWithAvailabilityByResourceGroup(LookupUtil.getSubjectManager().getOverlord(),
+                        resourceGroup, pageControl);
 
             return results;
         }

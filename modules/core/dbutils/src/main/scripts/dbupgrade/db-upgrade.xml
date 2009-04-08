@@ -1361,6 +1361,19 @@ DB Upgrade:
       <schema-addColumn table="RHQ_QRTZ_FIRED_TRIGGERS" column="PRIORITY" columnType="INTEGER" />
    </schemaSpec>
 
+    <schemaSpec version="2.52">
+        <schema-directSQL>
+            <statement desc="Deleting unique name constraint on RHQ_RESOURCE_GROUP">
+                DROP INDEX RHQ_RES_GROUP_NAME
+            </statement>
+        </schema-directSQL>
+        <schema-directSQL>
+            <statement desc="Deleting unique name constraint on RHQ_RESOURCE_GROUP">
+                CREATE INDEX RHQ_RES_GROUP_NAME ON RHQ_RESOURCE_GROUP (name)
+            </statement>
+        </schema-directSQL>
+    </schemaSpec>
+
 </dbupgrade>
 
 </target>

@@ -126,7 +126,8 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
         public PageList<ResourceWithAvailability> fetchPage(PageControl pageControl) {
             PageList<ResourceWithAvailability> results = null;
             if (getShowRecursiveMembers()) {
-                results = resourceManager.getImplicitResourceWithAvailabilityByResourceGroup(getSubject(),
+                results = resourceManager.getImplicitResourceWithAvailabilityByResourceGroup(
+                        LookupUtil.getSubjectManager().getOverlord(),
                     getResourceGroup(), pageControl);
             } else {
                 results = resourceManager.getExplicitResourceWithAvailabilityByResourceGroup(

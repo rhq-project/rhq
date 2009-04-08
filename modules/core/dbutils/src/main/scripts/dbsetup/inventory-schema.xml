@@ -176,7 +176,7 @@
 
         <column name="VISIBLE" type="BOOLEAN"/>
         
-        <index name="RHQ_RES_GROUP_NAME" unique="true">
+        <index name="RHQ_RES_GROUP_NAME" unique="false">
             <field ref="NAME"/>
         </index>
     </table>

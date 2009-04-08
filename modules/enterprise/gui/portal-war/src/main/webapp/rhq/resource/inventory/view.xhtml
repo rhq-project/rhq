@@ -721,17 +721,8 @@
                </h:panelGroup>
             </f:facet>
 
-            <h:panelGroup rendered="#{resourceGroupComposite.explicitUp gt 0}">
-               <h:outputText value="#{resourceGroupComposite.explicitUp}" />
-               <h:graphicImage value="/images/icons/availability_green_16.png" alt="Up" title="Up" />
-            </h:panelGroup>
-            <h:outputText value=" / " 
-                          rendered="#{resourceGroupComposite.explicitUp gt 0 and 
-                                      resourceGroupComposite.explicitDown gt 0}"/>
-            <h:panelGroup rendered="#{resourceGroupComposite.explicitDown gt 0}">
-               <h:outputText value="#{resourceGroupComposite.explicitDown}" />
-               <h:graphicImage value="/images/icons/availability_red_16.png" alt="Down" title="Down" />
-            </h:panelGroup>
+            <h:outputText value="#{item.explicitFormatted}" 
+                          escape="false" />
          </rich:column>
 
          <rich:column>
@@ -743,17 +734,8 @@
                </h:panelGroup>
             </f:facet>
 
-            <h:panelGroup rendered="#{resourceGroupComposite.implicitUp gt 0}">
-               <h:outputText value="#{resourceGroupComposite.implicitUp}" />
-               <h:graphicImage value="/images/icons/availability_green_16.png" alt="Up" title="Up" />
-            </h:panelGroup>
-            <h:outputText value=" / " 
-                          rendered="#{resourceGroupComposite.implicitUp gt 0 and 
-                                      resourceGroupComposite.implicitDown gt 0}"/>
-            <h:panelGroup rendered="#{resourceGroupComposite.implicitDown gt 0}">
-               <h:outputText value="#{resourceGroupComposite.implicitDown}" />
-               <h:graphicImage value="/images/icons/availability_red_16.png" alt="Down" title="Down" />
-            </h:panelGroup>
+            <h:outputText value="#{item.implicitFormatted}" 
+                          escape="false" />
          </rich:column>
 
          <f:facet name="footer">

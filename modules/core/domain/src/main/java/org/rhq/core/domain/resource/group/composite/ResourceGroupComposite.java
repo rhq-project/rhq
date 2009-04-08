@@ -121,34 +121,58 @@ public class ResourceGroupComposite implements Serializable {
     }
 
     public String getExplicitFormatted() {
-        StringBuilder results = new StringBuilder();
-        if (getExplicitUp() > 0) {
-            results.append(getExplicitUp());
-            results.append("<img src=\"/images/icons/availability_green_16.png\" />");
-        }
-        if (getExplicitUp() > 0 && getExplicitDown() > 0) {
-            results.append(" / ");
-        }
-        if (getExplicitDown() > 0) {
-            results.append(getExplicitDown());
-            results.append("<img src=\"/images/icons/availability_red_16.png\" />");
-        }
-        return results.toString();
+        return getAlignedAvailabilityResults(getExplicitUp(), getExplicitDown());
     }
 
     public String getImplicitFormatted() {
+        return getAlignedAvailabilityResults(getImplicitUp(), getImplicitDown());
+    }
+
+    private String getAlignedAvailabilityResults(long up, long down) {
         StringBuilder results = new StringBuilder();
-        if (getImplicitUp() > 0) {
-            results.append(getImplicitUp());
-            results.append("<img src=\"/images/icons/availability_green_16.png\" />");
+        results.append("<table width=\"120px\"><tr>");
+        if (up == 0 && down == 0) {
+            results.append(getColumn(false));
+            results.append(getColumn(true));
+            results.append(getColumn(false, "0 <img src=\"/images/icons/availability_grey_16.png\" />"));
+        } else {
+            if (up > 0) {
+                results.append(getColumn(false, up, " <img src=\"/images/icons/availability_green_16.png\" />"));
+            } else {
+                results.append(getColumn(false,
+                    "&nbsp;&nbsp;<img src=\"/images/blank.png\" width=\"16px\" height=\"16px\" />"));
+            }
+            if (up > 0 && down > 0) {
+                results.append(getColumn(true, " / "));
+            } else {
+                results.append(getColumn(true));
+            }
+            if (down > 0) {
+                results.append(getColumn(false, down, " <img src=\"/images/icons/availability_red_16.png\" />"));
+            } else {
+                results.append(getColumn(false,
+                    "&nbsp;&nbsp;<img src=\"/images/blank.png\" width=\"16px\" height=\"16px\" />"));
+            }
         }
-        if (getImplicitUp() > 0 && getImplicitDown() > 0) {
-            results.append(" / ");
+        results.append("</tr></table>");
+        return results.toString();
+    }
+
+    private String getColumn(boolean isSpacerColumn, Object... data) {
+        StringBuilder results = new StringBuilder();
+        if (isSpacerColumn) {
+            results.append("<td nowrap=\"nowrap\" style=\"white-space:nowrap;\" width=\"10px\" align=\"right\" >");
+        } else {
+            results.append("<td nowrap=\"nowrap\" style=\"white-space:nowrap;\" width=\"55px\" align=\"right\" >");
         }
-        if (getImplicitDown() > 0) {
-            results.append(getImplicitDown());
-            results.append("<img src=\"/images/icons/availability_red_16.png\" />");
+        if (data == null) {
+            results.append("&nbsp;");
+        } else {
+            for (Object datum : data) {
+                results.append(datum == null ? "&nbsp;" : datum);
+            }
         }
+        results.append("</td>");
         return results.toString();
     }
 

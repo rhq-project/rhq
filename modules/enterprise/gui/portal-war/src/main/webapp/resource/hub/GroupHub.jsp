@@ -267,11 +267,11 @@
                          title="common.header.Description" sortAttr="rg.description"/>
 
          <display:column width="10%" property="explicitFormatted" title="resource.common.monitor.visibility.ChildAvailabilityTH"
-                         styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" valign="middle"
+                         headerStyleClass="ListHeaderCheckbox" valign="middle"
                          sortAttr="explicitAvail"/>
 
          <display:column width="10%" property="implicitFormatted" title="resource.common.monitor.visibility.DescendentAvailabilityTH"
-                         styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" valign="middle"
+                         headerStyleClass="ListHeaderCheckbox" valign="middle"
                          sortAttr="implicitAvail"/>
 
       </display:table>

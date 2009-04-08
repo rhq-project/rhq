@@ -84,9 +84,11 @@ public class JMSSecurityConfigAdapter extends AbstractPropertyListAdapter
     public MetaValue convertToMetaValue(PropertyList propertyList, PropertyDefinitionList propertyDefinitionList,
                                         MetaType metaType)
     {
-        MapCompositeMetaType securityConfigCompositeValue = new MapCompositeMetaType(
-                new MapCompositeMetaType(SimpleMetaType.BOOLEAN));
-        return new MapCompositeValueSupport(securityConfigCompositeValue);
+        MapCompositeMetaType securityConfigCompositeMetaType = (MapCompositeMetaType)metaType;
+        MapCompositeValueSupport securityConfigCompositeValue =
+                new MapCompositeValueSupport(securityConfigCompositeMetaType.getValueType());
+        populateMetaValueFromProperty(propertyList, securityConfigCompositeValue, propertyDefinitionList);
+        return securityConfigCompositeValue;
     }
 
     public void populateMetaValueFromProperty(PropertyList propertyList, MetaValue metaValue,

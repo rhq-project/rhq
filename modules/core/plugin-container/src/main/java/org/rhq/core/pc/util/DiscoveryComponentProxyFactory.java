@@ -27,6 +27,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -38,12 +40,18 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.TimeoutException;
+import org.rhq.core.pc.plugin.BlacklistedException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 
 /**
  * Factory that can build discovery component proxies. These proxies wrap
  * timeouts around discovery component method invocations.
+ *
+ * Note that if a discovery component invocation times out, the resource type
+ * will be blacklisted by this factory. Any further attempt to retrieve a proxy
+ * for that resource type's discovery component will fail.
  *
  * @author John Mazzitelli
  */
@@ -52,6 +60,7 @@ public class DiscoveryComponentProxyFactory {
 
     private static final String DAEMON_THREAD_POOL_NAME = "ResourceDiscoveryComponent.invoker.daemon";
     private ExecutorService daemonThreadPool = null;
+    private final Set<ResourceType> blacklist = new HashSet<ResourceType>();
 
     /**
      * Given a discovery component instance, this returns that component wrapped in a proxy that provides the ability
@@ -59,21 +68,29 @@ public class DiscoveryComponentProxyFactory {
      * to make calls into the plugin discovery component and not deadlock if that plugin misbehaves and never returns
      * (or takes too long to return).
      *
+     * @param type the resource type that is to be discovered by the given discovery component
      * @param component the discovery component to be wrapped in a timer proxy
      * @param timeout the time, in milliseconds, that invocations can take to invoke discovery component methods
      * 
      * @return the discovery component wrapped in a proxy that should be used to make calls to the component
      *
      * @throws PluginContainerException if this method failed to create the proxy
+     * @throws BlacklistedException if the resource type's discovery component has been blacklisted and
+     *                              not allowed to be invoked anymore
      */
     @SuppressWarnings("unchecked")
-    public ResourceDiscoveryComponent getDiscoveryComponentProxy(ResourceDiscoveryComponent component, long timeout)
-        throws PluginContainerException {
+    public ResourceDiscoveryComponent getDiscoveryComponentProxy(ResourceType type,
+        ResourceDiscoveryComponent component, long timeout) throws PluginContainerException, BlacklistedException {
+
+        if (isResourceTypeBlacklisted(type)) {
+            throw new BlacklistedException("Discovery component for resource type [" + type + "] has been blacklisted");
+        }
+
         try {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
             // this is the handler that will actually invoke the method calls
-            ResourceDiscoveryComponentInvocationHandler handler = new ResourceDiscoveryComponentInvocationHandler(
+            ResourceDiscoveryComponentInvocationHandler handler = new ResourceDiscoveryComponentInvocationHandler(type,
                 component, timeout);
 
             // this is the proxy that will look like the discovery component object that the caller will use
@@ -99,6 +116,31 @@ public class DiscoveryComponentProxyFactory {
         daemonThreadPool = null;
     }
 
+    public HashSet<ResourceType> getResourceTypeBlacklist() {
+        synchronized (this.blacklist) {
+            return new HashSet<ResourceType>(this.blacklist); // return a copy, not the real set
+        }
+    }
+
+    public void clearResourceTypeBlacklist() {
+        synchronized (this.blacklist) {
+            this.blacklist.clear();
+        }
+    }
+
+    public boolean isResourceTypeBlacklisted(ResourceType type) {
+        synchronized (this.blacklist) {
+            return this.blacklist.contains(type);
+        }
+    }
+
+    public void addResourceTypeToBlacklist(ResourceType type) {
+        synchronized (this.blacklist) {
+            this.blacklist.add(type);
+        }
+        log.warn("The discovery component for resource type [" + type + "] has been blacklisted");
+    }
+
     private ExecutorService getThreadPool() {
         return daemonThreadPool;
     }
@@ -112,8 +154,11 @@ public class DiscoveryComponentProxyFactory {
     private class ResourceDiscoveryComponentInvocationHandler implements InvocationHandler {
         private final ResourceDiscoveryComponent component;
         private final long timeout;
+        private final ResourceType resourceType;
 
-        public ResourceDiscoveryComponentInvocationHandler(ResourceDiscoveryComponent component, long timeout) {
+        public ResourceDiscoveryComponentInvocationHandler(ResourceType type, ResourceDiscoveryComponent component,
+            long timeout) {
+
             if (timeout <= 0) {
                 throw new IllegalArgumentException("timeout value is not positive.");
             }
@@ -121,11 +166,17 @@ public class DiscoveryComponentProxyFactory {
                 throw new IllegalArgumentException("component is null");
             }
 
+            this.resourceType = type;
             this.component = component;
             this.timeout = timeout;
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (isResourceTypeBlacklisted(this.resourceType)) {
+                throw new RuntimeException("Discovery component for resource type [" + this.resourceType
+                    + "] has been blacklisted and can no longer be invoked");
+            }
+
             if (method.getDeclaringClass().equals(ResourceDiscoveryComponent.class)) {
                 return invokeInNewThread(method, args);
             } else {
@@ -150,6 +201,7 @@ public class DiscoveryComponentProxyFactory {
                 }
                 throw e.getCause();
             } catch (java.util.concurrent.TimeoutException e) {
+                addResourceTypeToBlacklist(this.resourceType);
                 String msg = invokedMethodString(method, args, "timed out. Invocation thread will be interrupted");
                 log.debug(msg);
                 future.cancel(true);

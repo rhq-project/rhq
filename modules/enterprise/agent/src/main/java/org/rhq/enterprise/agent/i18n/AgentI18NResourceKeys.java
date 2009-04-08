@@ -1702,14 +1702,16 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("discovery")
     String DISCOVERY = "PromptCommand.discovery";
 
-    @I18NMessage("discovery [--plugin=<plugin name>] [--resourceType=<type name>] [--verbose]\\n\\\n"
-        + "        discovery --full")
+    @I18NMessage("discovery [--plugin=<plugin name>] [--resourceType=<type name>]\\n\\\n" //
+        + "\\                  [--verbose]\\n\\\n" //
+        + "\\        discovery --full [--verbose]\\n\\\n" //
+        + "\\        discovery --blacklist={list|clear}")
     String DISCOVERY_SYNTAX = "PromptCommand.discovery.syntax";
 
     @I18NMessage("Asks a plugin to run a server scan discovery")
     String DISCOVERY_HELP = "PromptCommand.discovery.help";
 
-    @I18NMessage("Asks a plugin to run a server discovery scan. This is a way to determine\\n\\\n"
+    @I18NMessage("Asks a plugin to run a discovery scan. This is a way to determine\\n\\\n"
         + "what servers a plugin can actually find.  Note that this will run a server\\n\\\n"
         + "scan, not a service scan (i.e. it will not try to discover child services\\n\\\n"
         + "for parent servers already in inventory) unless you use --full. Also note\\n\\\n"
@@ -1717,8 +1719,8 @@ public interface AgentI18NResourceKeys {
         + "The valid command line arguments are:\\n\\\n"
         + "\\  -f, --full : Runs a detailed discovery inside the plugin container.\\n\\\n"
         + "\\               This will update the actual agent inventory by sending\\n\\\n"
-        + "\\               an inventory report to the server. \\n\\\n"
-        + "\\               Note that the results are not output.\\n\\\n"
+        + "\\               an inventory report to the server.\\n\\\n"
+        + "\\               This ignores --plugin and --resourceType.\\n\\\n"
         + "\\  -p, --plugin=<name> : The name of the plugin whose discovery will run.\\n\\\n"
         + "\\                        If you do not specify a plugin, all plugins will\\n\\\n"
         + "\\                        run their discovery.\\n\\\n"
@@ -1728,8 +1730,38 @@ public interface AgentI18NResourceKeys {
         + "\\                              discovered (and if no plugin was specified,\\n\\\n"
         + "\\                              then all resource types for all plugins will\\n\\\n"
         + "\\                              be discovered).\\n\\\n"
-        + "\\  -v, --verbose : Prints the plugin configuration of each discovered server.")
+        + "\\  -v, --verbose : If doing a non-full discovery, this prints the plugin\\n\\\n"
+        + "\\                  configuration of each discovered resource. For --full\\n\\\n"
+        + "\\                  scans, this will dump all resources and errors found.\\n\\\n"
+        + "\\  -b, --blacklist={list|clear} : Operates on the blacklist which determines\\n\\\n"
+        + "\\                                 which resource types are not discoverable.\\n\\\n"
+        + "\\                                 (note that specifying this option will not\\n\\\n"
+        + "\\                                 run an actual discovery scan)\\n\\\n"
+        + "\\                                 'list' prints blacklisted resource types.\\n\\\n"
+        + "\\                                 'clear' delists all resource types which\\n\\\n"
+        + "\\                                 re-enables all types to be discoverable.")
     String DISCOVERY_DETAILED_HELP = "PromptCommand.discovery.detailed-help";
+
+    @I18NMessage("Full discovery run in [{0}] ms")
+    String DISCOVERY_FULL_RUN = "PromptCommand.discovery.full-run";
+
+    @I18NMessage("=== {0} Inventory Report ===\\n\\\n" //
+        + "Start Time:     {1,date,medium} {1,time,medium}\\n\\\n" //
+        + "Finish Time:    {2,date,medium} {2,time,medium}\\n\\\n" //
+        + "Resource Count: {3}\\n\\\n")
+    String DISCOVERY_INVENTORY_REPORT_SUMMARY = "PromptCommand.discovery.inventory-report-summary";
+
+    @I18NMessage("Resource: {0}")
+    String DISCOVERY_INVENTORY_REPORT_RESOURCE = "PromptCommand.discovery.inventory-report-resource";
+
+    @I18NMessage("Error: {0}")
+    String DISCOVERY_INVENTORY_REPORT_ERROR = "PromptCommand.discovery.inventory-report-error";
+
+    @I18NMessage("Blacklist: {0}")
+    String DISCOVERY_BLACKLIST_LIST = "PromptCommand.discovery.blacklist.list";
+
+    @I18NMessage("Blacklist has been cleared. All resource types are re-enabled for discovery.")
+    String DISCOVERY_BLACKLIST_CLEAR = "PromptCommand.discovery.blacklist.clear";
 
     @I18NMessage("You must first start the plugin container before attempting discovery.")
     String DISCOVERY_PC_NOT_STARTED = "PromptCommand.discovery.pc-not-started";

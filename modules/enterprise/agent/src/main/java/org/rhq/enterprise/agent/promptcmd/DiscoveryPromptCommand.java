@@ -24,6 +24,7 @@ import gnu.getopt.LongOpt;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,13 +35,16 @@ import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.resource.ProcessScan;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
+import org.rhq.core.pc.util.DiscoveryComponentProxyFactory;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -50,6 +54,7 @@ import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.system.pquery.ProcessInfoQuery;
+import org.rhq.core.util.exception.ExceptionPackage;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.agent.AgentMain;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
@@ -115,12 +120,14 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         String pluginName = null;
         String resourceTypeName = null;
         boolean verbose = false;
+        boolean full = false;
 
-        String sopts = "-p:r:fv";
+        String sopts = "-p:r:fvb:";
         LongOpt[] lopts = { new LongOpt("plugin", LongOpt.REQUIRED_ARGUMENT, null, 'p'), //
             new LongOpt("resourceType", LongOpt.REQUIRED_ARGUMENT, null, 'r'), //
             new LongOpt("full", LongOpt.NO_ARGUMENT, null, 'f'), //
-            new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v')};
+            new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v'), //
+            new LongOpt("blacklist", LongOpt.REQUIRED_ARGUMENT, null, 'b') };
 
         Getopt getopt = new Getopt("discovery", args, sopts, lopts);
         int code;
@@ -145,10 +152,23 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
             }
 
             case 'f': {
-                long start = System.currentTimeMillis();
-                PluginContainer.getInstance().getInventoryManager().executeServerScanImmediately();
-                PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
-                out.println("Full discovery run in " + (System.currentTimeMillis() - start) + "ms");
+                full = true;
+                break;
+            }
+
+            case 'b': {
+                String opt = getopt.getOptarg();
+                InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+                DiscoveryComponentProxyFactory factory = inventoryManager.getDiscoveryComponentProxyFactory();
+                if (opt.equalsIgnoreCase("list")) {
+                    HashSet<ResourceType> blacklist = factory.getResourceTypeBlacklist();
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_BLACKLIST_LIST, blacklist));
+                } else if (opt.equalsIgnoreCase("clear")) {
+                    factory.clearResourceTypeBlacklist();
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_BLACKLIST_CLEAR));
+                } else {
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.HELP_SYNTAX_LABEL, getSyntax()));
+                }
                 return;
             }
 
@@ -164,11 +184,22 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
             return;
         }
 
-        try {
-            discovery(pcName, out, pluginName, resourceTypeName, verbose);
-        } catch (Exception e) {
-            out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_ERROR, ThrowableUtil.getAllMessages(e)));
-            return;
+        if (full) {
+            // do a full discovery - we ignored the -p and -r options and do everything
+            InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+            long start = System.currentTimeMillis();
+            InventoryReport scan1 = inventoryManager.executeServerScanImmediately();
+            InventoryReport scan2 = inventoryManager.executeServiceScanImmediately();
+            out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_FULL_RUN, (System.currentTimeMillis() - start)));
+            printInventoryReport(scan1, out, verbose);
+            printInventoryReport(scan2, out, verbose);
+        } else {
+            try {
+                discovery(pcName, out, pluginName, resourceTypeName, verbose);
+            } catch (Exception e) {
+                out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_ERROR, ThrowableUtil.getAllMessages(e)));
+                return;
+            }
         }
 
         return;
@@ -240,60 +271,64 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
 
     @SuppressWarnings("unchecked")
     private void discoveryForSingleResourceType(String pcName, PrintWriter out, ResourceType resourceType,
-        boolean verbose) throws Exception {
-        // perform auto-discovery PIQL queries now to see if we can auto-detect resources that are running now
-        List<ProcessScanResult> scanResults = new ArrayList<ProcessScanResult>();
-        SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
+        boolean verbose) {
 
-        Set<ProcessScan> processScans = resourceType.getProcessScans();
-        if ((processScans != null) && (processScans.size() > 0)) {
-            try {
-                ProcessInfoQuery piq = new ProcessInfoQuery(systemInfo.getAllProcesses());
-                if (processScans != null) {
-                    for (ProcessScan processScan : processScans) {
-                        List<ProcessInfo> queryResults = piq.query(processScan.getQuery());
-                        if ((queryResults != null) && (queryResults.size() > 0)) {
-                            for (ProcessInfo autoDiscoveredProcess : queryResults) {
-                                scanResults.add(new ProcessScanResult(processScan, autoDiscoveredProcess));
-                                out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_PROCESS_SCAN, resourceType
-                                    .getPlugin(), resourceType.getName(), processScan, autoDiscoveredProcess));
+        try {
+            // perform auto-discovery PIQL queries now to see if we can auto-detect resources that are running now
+            List<ProcessScanResult> scanResults = new ArrayList<ProcessScanResult>();
+            SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
+
+            Set<ProcessScan> processScans = resourceType.getProcessScans();
+            if ((processScans != null) && (processScans.size() > 0)) {
+                try {
+                    ProcessInfoQuery piq = new ProcessInfoQuery(systemInfo.getAllProcesses());
+                    if (processScans != null) {
+                        for (ProcessScan processScan : processScans) {
+                            List<ProcessInfo> queryResults = piq.query(processScan.getQuery());
+                            if ((queryResults != null) && (queryResults.size() > 0)) {
+                                for (ProcessInfo autoDiscoveredProcess : queryResults) {
+                                    scanResults.add(new ProcessScanResult(processScan, autoDiscoveredProcess));
+                                    out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_PROCESS_SCAN, resourceType
+                                        .getPlugin(), resourceType.getName(), processScan, autoDiscoveredProcess));
+                                }
                             }
                         }
                     }
-                }
-            } catch (UnsupportedOperationException uoe) {
-                // don't worry if we do not have a native library to support process scans
-            }
-        }
-
-        PluginComponentFactory componentFactory = PluginContainer.getInstance().getPluginComponentFactory();
-        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-        ResourceDiscoveryComponent discoveryComponent = componentFactory.getDiscoveryComponent(resourceType);
-        ResourceContainer platformContainer = inventoryManager.getResourceContainer(inventoryManager.getPlatform());
-        ResourceComponent platformComponent = inventoryManager.getResourceComponent(inventoryManager.getPlatform());
-
-        ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, platformComponent,
-            platformContainer.getResourceContext(), systemInfo, scanResults, Collections.EMPTY_LIST, pcName);
-
-        Set<DiscoveredResourceDetails> discoveredResources = inventoryManager.invokeDiscoveryComponent(
-            discoveryComponent, context);
-
-        if (discoveredResources != null) {
-            for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
-                out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_COMPONENT_RESULT, discoveredResource
-                    .getResourceType().getPlugin(), discoveredResource.getResourceType().getName(), discoveredResource
-                    .getResourceKey(), discoveredResource.getResourceName(), discoveredResource.getResourceVersion(),
-                    discoveredResource.getResourceDescription()));
-                if (verbose) {
-                    printConfiguration(discoveredResource.getPluginConfiguration(), out);
+                } catch (UnsupportedOperationException uoe) {
+                    // don't worry if we do not have a native library to support process scans
                 }
             }
+
+            PluginComponentFactory componentFactory = PluginContainer.getInstance().getPluginComponentFactory();
+            InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+            ResourceDiscoveryComponent discoveryComponent = componentFactory.getDiscoveryComponent(resourceType);
+            ResourceContainer platformContainer = inventoryManager.getResourceContainer(inventoryManager.getPlatform());
+            ResourceComponent platformComponent = inventoryManager.getResourceComponent(inventoryManager.getPlatform());
+
+            ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, platformComponent,
+                platformContainer.getResourceContext(), systemInfo, scanResults, Collections.EMPTY_LIST, pcName);
+
+            Set<DiscoveredResourceDetails> discoveredResources;
+            discoveredResources = inventoryManager.invokeDiscoveryComponent(discoveryComponent, context);
+            if (discoveredResources != null) {
+                for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_COMPONENT_RESULT, discoveredResource
+                        .getResourceType().getPlugin(), discoveredResource.getResourceType().getName(),
+                        discoveredResource.getResourceKey(), discoveredResource.getResourceName(), discoveredResource
+                            .getResourceVersion(), discoveredResource.getResourceDescription()));
+                    if (verbose) {
+                        printConfiguration(discoveredResource.getPluginConfiguration(), out);
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            out.println(ThrowableUtil.getAllMessages(t));
         }
 
         return;
     }
 
-    private static void printConfiguration(Configuration config, PrintWriter out) {
+    private void printConfiguration(Configuration config, PrintWriter out) {
         for (Property property : config.getMap().values()) {
             StringBuilder builder = new StringBuilder();
             builder.append("    ");
@@ -307,5 +342,35 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
             }
             out.println(builder);
         }
+    }
+
+    private void printInventoryReport(InventoryReport report, PrintWriter out, boolean verbose) {
+        long start = report.getStartTime();
+        long end = report.getEndTime();
+        boolean isServiceScan = report.isRuntimeReport();
+        int count = report.getResourceCount();
+        Set<Resource> roots = report.getAddedRoots();
+        List<ExceptionPackage> errors = report.getErrors();
+
+        out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_INVENTORY_REPORT_SUMMARY,
+            (isServiceScan ? "Service Scan" : "Server Scan"), new Date(start), new Date(end), count));
+
+        if (verbose) {
+            if (roots != null) {
+                for (Resource resource : roots) {
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_INVENTORY_REPORT_RESOURCE, resource));
+                }
+            }
+
+            if (errors != null) {
+                for (ExceptionPackage error : errors) {
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_INVENTORY_REPORT_ERROR, error
+                        .getAllMessages()));
+                }
+            }
+        }
+
+        out.println();
+        return;
     }
 }

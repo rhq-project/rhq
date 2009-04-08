@@ -31,7 +31,6 @@ package org.rhq.plugins.jbossas5;
  import org.jboss.deployers.spi.management.ManagementView;
  import org.jboss.managed.api.ComponentType;
  import org.jboss.managed.api.ManagedComponent;
- import org.jboss.managed.api.ManagedDeployment;
  import org.jboss.managed.api.ManagedOperation;
  import org.jboss.managed.api.ManagedProperty;
  import org.jboss.managed.api.RunState;
@@ -106,11 +105,13 @@ public class ManagedComponentComponent extends AbstractManagedComponent
 
     public void deleteResource() throws Exception
     {
-        ManagedComponent managedComponent = getManagedComponent();
+        throw new UnsupportedOperationException("Deletion of " + getResourceContext().getResourceType().getName()
+                + " Resources is not currently supported.");
+        /*ManagedComponent managedComponent = getManagedComponent();
         log.debug("Removing " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
         ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
         managementView.removeComponent(managedComponent);
-        managementView.reload();
+        managementView.reload();*/
     }
 
     // OperationFacet Implementation  --------------------------------------------

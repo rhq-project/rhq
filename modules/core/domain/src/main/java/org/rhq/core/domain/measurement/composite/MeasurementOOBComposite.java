@@ -49,8 +49,9 @@ public class MeasurementOOBComposite implements Serializable {
     private String parentName;
     private Integer parentId;
 
-    public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, long timestamp, int definitionId,
-                                   int factor, double blMin, double blMax, MeasurementUnits units, String parentName, Integer parentId) {
+    public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId,
+        long timestamp, int definitionId, int factor, double blMin, double blMax, MeasurementUnits units,
+        String parentName, Integer parentId) {
         this.resourceName = resourceName;
         this.resourceId = resourceId;
         this.scheduleName = scheduleName;
@@ -65,8 +66,8 @@ public class MeasurementOOBComposite implements Serializable {
         this.parentName = parentName;
     }
 
-        public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId, long timestamp, int definitionId,
-                                   int factor, double blMin, double blMax, MeasurementUnits unit) {
+    public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId,
+        long timestamp, int definitionId, int factor, double blMin, double blMax, MeasurementUnits unit) {
         this.resourceName = resourceName;
         this.resourceId = resourceId;
         this.scheduleName = scheduleName;
@@ -153,26 +154,25 @@ public class MeasurementOOBComposite implements Serializable {
     }
 
     public void calculateOutlier() {
-        if ((blMin - dataMin) < (dataMax-blMax)) {
+        if ((blMin - dataMin) < (dataMax - blMax)) {
             outlier = dataMax;
-        }
-        else {
+        } else {
             outlier = dataMin;
         }
     }
 
     public String getFormattedBaseband() {
 
-        String min = MeasurementConverter.format(blMin,units,true) ;
-        String max = MeasurementConverter.format(blMax,units,true) ;
+        String min = MeasurementConverter.format(blMin, units, true);
+        String max = MeasurementConverter.format(blMax, units, true);
 
-        String result = min + " - " + max;
+        String result = "(" + min + ", " + max + ")";
 
         return result;
     }
 
     public String getFormattedOutlier() {
-        return MeasurementConverter.format(outlier,units,true) ;
+        return MeasurementConverter.format(outlier, units, true);
     }
 
     @Override

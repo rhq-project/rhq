@@ -123,7 +123,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         newGroup = newResource.getExplicitGroups().iterator().next();
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void afterMethod() throws Exception {
         unprepareScheduler();
 

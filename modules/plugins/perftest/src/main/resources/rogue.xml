@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<scenario xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="urn:xmlns:jboss.org:on-perftest">
+
+<!--
+   -Don.perftest.scenario=rogue
+   -Don.perftest.server-rogue-count=10
+   
+   There is an additional system property you can set to determine the discovery component behavior.
+   You set this either to "error" which causes discovery component to throw an Exception or you set it to
+   a number which is the number of seconds the discovery component will sleep before returning. Any other
+   value and the component throws an InvalidPluginConfigurationException. If you do not set this, the discovery
+   component returns normally.
+   
+   -Don.perftest.server-rogue-discovery=error // discovery component throws an exception during auto-discovery scan
+   -Don.perftest.server-rogue-discovery=foo // discovery component throws an invalid config exception during auto-discovery scan
+   -Don.perftest.server-rogue-discovery=60 // discovery component sleeps for 60 seconds during auto-discovery scan
+   
+   There is another system property that allows the discovery component to abort this discovery sleep.
+   If you set on.perftest.server-rogue-discovery-interruptable to true, and the plugin container times out
+   the discovery, the rogue discovery will be nice and abort what its doing and have the thread return.
+   Otherwise, the rogue discovery component will ignore the interrupt and keep sleeping until its done.
+   
+   -Don.perftest.server-rogue-discovery-interruptable=true 
+ -->
+
+   <resource type="server-rogue">
+      <simpleResourceGenerator property="on.perftest.server-rogue-count"/>
+   </resource>
+
+</scenario>

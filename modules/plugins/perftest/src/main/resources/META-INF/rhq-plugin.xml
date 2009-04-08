@@ -298,6 +298,28 @@
       </service>
    </server>
 
+   <server name="server-rogue"
+           class="PerfTestRogueComponent"
+           discovery="PerfTestRogueDiscoveryComponent"
+           description="Test Server That Behaves Badly">
+      <!-- 
+      <plugin-configuration>
+         <c:simple-property name="avail" type="string" description="Set to true if the resource should be UP, false if DOWN. Anything else, throw an exception"/>
+      </plugin-configuration>
+       -->
+      <operation name="op1">
+         <parameters>
+            <c:simple-property name="sleep" default="1000" required="true" type="long" description="Set to a number to force the component to sleep that number of milliseconds"/>
+            <c:simple-property name="status" default="success" required="true" description="Set to 'success' or 'failure' for the op status. Any other value throws an exception"/>
+         </parameters>
+      </operation>
+      <resource-configuration>
+         <c:simple-property name="updateSleep" default="1000" required="true" type="long" description="Set to a number to force the component to sleep that number of milliseconds when updating the config"/>
+         <c:simple-property name="updateStatus" default="success" required="true" description="Set to 'success' or 'failure' for the update status. Any other value throws an exception"/>
+         <c:simple-property name="loadSleep" default="1000" required="true" type="long" description="Set to a number to force the component to sleep that number of milliseconds when loading the config"/>
+         <c:simple-property name="loadStatus" default="success" required="true" description="Set to 'success' or 'failure' for the load status (failure throws an exception during load)"/>
+      </resource-configuration>
+   </server>
 
    <help>
       <![CDATA[

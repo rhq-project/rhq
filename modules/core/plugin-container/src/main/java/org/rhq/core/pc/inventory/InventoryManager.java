@@ -242,7 +242,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
     public Set<DiscoveredResourceDetails> invokeDiscoveryComponent(ResourceDiscoveryComponent component,
         ResourceDiscoveryContext context) throws Exception {
 
-        final long timeout = 300000L; // TODO: should this be configurable? should each caller be able to set this differently?
+        // TODO: remove this system property and put the timeout in the plugin descriptor, a timeout per type
+        long timeout = Long.parseLong(System.getProperty("rhq.test.discovery-timeout", "300000"));
+
         ResourceDiscoveryComponent proxy;
         proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(component, timeout);
         Set<DiscoveredResourceDetails> results = proxy.discoverResources(context);

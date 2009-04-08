@@ -23,11 +23,6 @@
 
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr>
-    <td class="BlockContent" align="right">
-      <tiles:insert page="/resource/hub/ResourceHubLinks.jsp"/>
-    </td>
-  </tr>
-  <tr>
     <td class="BlockContent">    
       <table width="100%" cellpadding="1" cellspacing="0" border="0">
 

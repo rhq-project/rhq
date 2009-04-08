@@ -94,6 +94,20 @@
             </rich:menuItem>
         </rich:menuGroup>
 
+        <rich:menuSeparator rendered="#{GlobalPermissionsUIBean.inventory}"/>
+        
+        <ui:remove>***** NEW RESOURCE GROUP *****</ui:remove>
+        <rich:menuItem submitMode="none" onclick="window.location = '/resource/group/Inventory.do?mode=new'"
+                       rendered="#{GlobalPermissionsUIBean.inventory}">
+            <h:outputText value="#{msg['resource.hub.NewGroupLink']}"/>
+        </rich:menuItem>
+        
+        <ui:remove>***** NEW GROUP DEFINITIONS *****</ui:remove>
+        <rich:menuItem submitMode="none" onclick="window.location = '/rhq/definition/group/new.xhtml'"
+                       rendered="#{GlobalPermissionsUIBean.inventory}">
+            <h:outputText value="#{msg['resource.hub.NewGroupDefinitionLink']}"/>
+        </rich:menuItem>
+
         <rich:menuSeparator/>
 
         <ui:remove>***** Resources > FAVORITE RESOURCES *****</ui:remove>

@@ -89,11 +89,16 @@ public class ManagedDeploymentComponent
         extends AbstractManagedComponent
         implements ResourceComponent, MeasurementFacet, OperationFacet, ContentFacet, DeleteResourceFacet,
         ProgressListener {
+    public static final String RESOURCE_TYPE_EAR = "Enterprise Application (EAR)";
+    public static final String RESOURCE_TYPE_WAR = "Web Application (WAR)";
+    
     public static final String DEPLOYMENT_NAME_PROPERTY = "deploymentName";
     public static final String DEPLOYMENT_TYPE_NAME_PROPERTY = "deploymentTypeName";
 
     private static final String CUSTOM_PATH_TRAIT = "custom.path";
     private static final String CUSTOM_EXPLODED_TRAIT = "custom.exploded";
+
+    private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
 
     /**
      * Name of the backing package type that will be used when discovering packages. This corresponds to the name
@@ -140,6 +145,8 @@ public class ManagedDeploymentComponent
         this.deploymentFile = getDeploymentFile();
         String deploymentTypeName = pluginConfig.getSimple(DEPLOYMENT_TYPE_NAME_PROPERTY).getStringValue();
         this.deploymentType = KnownDeploymentTypes.valueOf(deploymentTypeName);
+        log.debug("Started ResourceComponent for " + getResourceDescription() + ", managing " + this.deploymentType
+                + " deployment '" + this.deploymentName + "' with path '" + this.deploymentFile + "'.");
     }
 
     public AvailabilityType getAvailability() {
@@ -204,14 +211,6 @@ public class ManagedDeploymentComponent
         DeploymentUtils.run(progress);
     }
 
-    private File getDeploymentFile() throws MalformedURLException {
-        URL vfsURL = new URL(this.deploymentName);
-        String path = vfsURL.getPath();
-        while (path.charAt(0) == '/')
-            path = path.substring(1);
-        return new File(path);
-    }
-
     // ------------ ContentFacet implementation -------------
 
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
@@ -231,34 +230,31 @@ public class ManagedDeploymentComponent
         }
     }
 
-    public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
-        Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
+    public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType packageType) {
+        if (!this.deploymentFile.exists())
+            throw new IllegalStateException("Deployment file '" + this.deploymentFile + "' for " +
+                    getResourceDescription() + " does not exist.");
 
-        // If the parent EAR/WAR resource was found, this file should exist
-        if (this.deploymentFile.exists()) {
-            // Package name and file name of the application are the same
-            String fileName = this.deploymentFile.getName();
-
-            PackageVersions versions = loadApplicationVersions();
-            String version = versions.getVersion(fileName);
-
-            // First discovery of this EAR/WAR
-            if (version == null) {
-                version = "1.0";
-                versions.putVersion(fileName, version);
-                versions.saveToDisk();
-            }
-
-            PackageDetailsKey key = new PackageDetailsKey(fileName, version, PKG_TYPE_FILE, ARCHITECTURE);
-            ResourcePackageDetails details = new ResourcePackageDetails(key);
-            details.setFileName(fileName);
-            details.setLocation(this.deploymentFile.getPath());
-            if (!this.deploymentFile.isDirectory())
-                details.setFileSize(this.deploymentFile.length());
-            details.setFileCreatedDate(null); // TODO: get created date via SIGAR
-
-            packages.add(details);
+        String fileName = this.deploymentFile.getName();
+        PackageVersions packageVersions = loadPackageVersions();
+        String version = packageVersions.getVersion(fileName);
+        if (version == null) {
+            // This is either the first time we've discovered this EAR/WAR, or someone purged the PC's data dir.
+            version = "1.0";
+            packageVersions.putVersion(fileName, version);
+            packageVersions.saveToDisk();
         }
+
+        // Package name is the deployment's file name (e.g. foo.ear).
+        PackageDetailsKey key = new PackageDetailsKey(fileName, version, PKG_TYPE_FILE, ARCHITECTURE);
+        ResourcePackageDetails packageDetails = new ResourcePackageDetails(key);
+        packageDetails.setFileName(fileName);
+        packageDetails.setLocation(this.deploymentFile.getPath());
+        if (!this.deploymentFile.isDirectory())
+            packageDetails.setFileSize(this.deploymentFile.length());
+        packageDetails.setFileCreatedDate(null); // TODO: get created date via SIGAR
+        Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
+        packages.add(packageDetails);
 
         return packages;
     }
@@ -410,12 +406,24 @@ public class ManagedDeploymentComponent
         return managementView.getDeployment(resourceKey);
     }
 
+    private File getDeploymentFile() throws MalformedURLException {
+        URL vfsURL = new URL(this.deploymentName);
+        String path = vfsURL.getPath();
+        // Under Windows, the deployment name URL will look like:
+        // vfszip:/C:/opt/jboss-5.1.0.CR1/server/default/deploy/eardeployment.ear/
+        // so we need to trim the leading slash off the path portion. Java considers the version with the leading slash
+        // to be a valid and equivalent path, but the leading slash is unnecessary and ugly, so we shall axe it.
+        if (IS_WINDOWS && path.charAt(0) == '/')
+            path = path.substring(1);
+        return new File(path);
+    }
+
     /**
      * Returns an instantiated and loaded versions store access point.
      *
      * @return will not be <code>null</code>
      */
-    private PackageVersions loadApplicationVersions() {
+    private PackageVersions loadPackageVersions() {
         if (this.versions == null) {
             ResourceType resourceType = getResourceContext().getResourceType();
             String pluginName = resourceType.getPlugin();
@@ -455,7 +463,7 @@ public class ManagedDeploymentComponent
         String packageName = appFile.getName();
         log.debug("Persisting application version '" + packageDetails.getVersion() + "' for package '" + packageName
                 + "'");
-        PackageVersions versions = loadApplicationVersions();
+        PackageVersions versions = loadPackageVersions();
         versions.putVersion(packageName, packageDetails.getVersion());
     }
 

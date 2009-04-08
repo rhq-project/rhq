@@ -27,7 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
-import org.rhq.plugins.jbossas5.ManagedComponentComponent;
+import org.rhq.plugins.jbossas5.ManagedDeploymentComponent;
 
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
@@ -43,9 +43,9 @@ public abstract class DeploymentUtils {
     {
         String resourceTypeName = resourceType.getName();
         String expectedExtension;
-        if (resourceTypeName.equals(ManagedComponentComponent.RESOURCE_TYPE_EAR)) {
+        if (resourceTypeName.equals(ManagedDeploymentComponent.RESOURCE_TYPE_EAR)) {
             expectedExtension = "ear";
-        } else if (resourceTypeName.equals(ManagedComponentComponent.RESOURCE_TYPE_WAR)){
+        } else if (resourceTypeName.equals(ManagedDeploymentComponent.RESOURCE_TYPE_WAR)){
             expectedExtension = "war";
         } else {
             expectedExtension = "jar";

@@ -71,9 +71,6 @@ package org.rhq.plugins.jbossas5;
 public class ManagedComponentComponent extends AbstractManagedComponent
         implements ResourceComponent, ConfigurationFacet, DeleteResourceFacet, OperationFacet, MeasurementFacet
 {
-    public static final String RESOURCE_TYPE_EAR = "Enterprise Application (EAR)";
-    public static final String RESOURCE_TYPE_WAR = "Web Application (WAR)";
-
     public static final String COMPONENT_TYPE_PROPERTY = "componentType";
     public static final String COMPONENT_SUBTYPE_PROPERTY = "componentSubtype";
     public static final String COMPONENT_NAME_PROPERTY = "componentName";
@@ -109,12 +106,11 @@ public class ManagedComponentComponent extends AbstractManagedComponent
 
     public void deleteResource() throws Exception
     {
-        log.debug("Deleting ManagedComponent [" + this.componentName + "]...");
-        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
         ManagedComponent managedComponent = getManagedComponent();
-        ManagedDeployment deployment = managedComponent.getDeployment();
-        deployment.removeComponent(this.componentName);
-        managementView.process();
+        log.debug("Removing " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
+        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        managementView.removeComponent(managedComponent);
+        managementView.reload();
     }
 
     // OperationFacet Implementation  --------------------------------------------
@@ -168,12 +164,11 @@ public class ManagedComponentComponent extends AbstractManagedComponent
     }
 
     protected void updateComponent() throws Exception {
+        ManagedComponent managedComponent = getManagedComponent();
+        log.debug("Updating " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
         ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
-        ManagedComponent managedComponent = ProfileServiceFactory.getManagedComponent(managementView,
-                this.componentType, this.componentName);
-        log.debug("Updating " + toString(managedComponent) + "...");
         managementView.updateComponent(managedComponent);
-        //managementView.process();        
+        managementView.reload();
     }
 
     // ------------------------------------------------------------------------------

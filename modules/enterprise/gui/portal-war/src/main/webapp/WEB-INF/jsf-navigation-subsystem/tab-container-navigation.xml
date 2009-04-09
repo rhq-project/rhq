@@ -21,7 +21,7 @@
       </navigation-case>
    </navigation-rule>
    
-   <!-- Problem Resources History -->
+   <!-- Suspect Metrics History -->
    <navigation-rule>
       <from-view-id>/rhq/subsystem/oobHistory.xhtml</from-view-id>
 

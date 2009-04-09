@@ -194,15 +194,34 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
             } else {
                 /* Form does not have the list of participating resources so we need
                  * to add it to the form so that they will all be checked at the bottom of the ui
+                 * Use the 'r' parameters if supplied, otherwise, all group resources
                  */
-                int allResourcesSize = allResources.size();
-                resourceIds = new Integer[allResourcesSize];
-                resIds = new ArrayList<Integer>();
-                for (int j = 0; j < allResourcesSize; j++) {
-                    if (j < DEFAULT_MAX_RESOURCES) {
-                        Integer resourceId = allResources.get(j).getId();
-                        resIds.add(resourceId);
-                        resourceIds[j] = resourceId;
+                if ((null != r) || (r.length > 0)) {
+                    resourceIds = new Integer[r.length];
+                    resIds = new ArrayList<Integer>();
+                    for (int j = 0; j < r.length; ++j) {
+                        if (j < DEFAULT_MAX_RESOURCES) {
+                            Integer resourceId = 0;
+                            try {
+                                resourceId = Integer.valueOf(r[j]);
+                            } catch (NumberFormatException e) {
+                                // this should not happen, resource ids should be guaranteed ints
+                                resourceId = -1;
+                            }
+                            resIds.add(resourceId);
+                            resourceIds[j] = resourceId;
+                        }
+                    }
+                } else {
+                    int allResourcesSize = allResources.size();
+                    resourceIds = new Integer[allResourcesSize];
+                    resIds = new ArrayList<Integer>();
+                    for (int j = 0; j < allResourcesSize; j++) {
+                        if (j < DEFAULT_MAX_RESOURCES) {
+                            Integer resourceId = allResources.get(j).getId();
+                            resIds.add(resourceId);
+                            resourceIds[j] = resourceId;
+                        }
                     }
                 }
 

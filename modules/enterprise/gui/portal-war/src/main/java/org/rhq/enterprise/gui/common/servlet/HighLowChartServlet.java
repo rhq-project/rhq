@@ -118,9 +118,9 @@ public class HighLowChartServlet extends ChartServlet implements SingleThreadMod
             } else {
                 units = getUnitsFromDefinitionId(overlord, definitionId);
             }
-            log.info("Caller did not pass MeasuremntUnits, calculated them as " + units.getName());
+            log.debug("Caller did not pass MeasuremntUnits, calculated them as " + units.getName());
         } else {
-            log.info("Caller passed MeasurementUnits of " + parameter);
+            log.debug("Caller passed MeasurementUnits of " + parameter);
         }
 
         super.parseParameters(request);

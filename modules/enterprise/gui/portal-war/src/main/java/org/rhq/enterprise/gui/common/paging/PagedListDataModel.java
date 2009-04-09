@@ -21,16 +21,19 @@ package org.rhq.enterprise.gui.common.paging;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.faces.model.DataModel;
+import javax.persistence.EntityManager;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.util.HibernateStatisticsStopWatch;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * <p>A special type of JSF DataModel to allow a datatable and datascroller to page through a large set of data without
@@ -265,19 +268,29 @@ public abstract class PagedListDataModel<T> extends DataModel {
     }
 
     public PageList<T> getDataPage(PageControl pc) {
-        PageList<T> results;
-        if (true) {
-            long start = System.currentTimeMillis();
-            results = fetchPageGuarded(pc);
-            long end = System.currentTimeMillis();
-            long time = end - start;
+
+        long start = 0L;
+        HibernateStatisticsStopWatch stopWatch = null;
+        if (log.isDebugEnabled()) {
+            start = System.currentTimeMillis();
+            EntityManager entityManager = LookupUtil.getEntityManager();
+            stopWatch = new HibernateStatisticsStopWatch(entityManager);
+            stopWatch.start();
+        }
+
+        PageList<T> results = fetchPageGuarded(pc);
+
+        if (log.isDebugEnabled()) {
+            long time = System.currentTimeMillis() - start;
+            stopWatch.stop();
+
             log.debug("Fetch time was [" + time + "]ms for " + pageControlView);
             if (time > 2000L) {
                 log.debug("Slow loading page " + pageControlView);
             }
-        } else {
-            results = fetchPageGuarded(pc);
+            log.debug("Performance for " + pageControlView + ": " + stopWatch.toString());
         }
+
         return results;
     }
 
@@ -285,8 +298,8 @@ public abstract class PagedListDataModel<T> extends DataModel {
         PageList<T> results = null;
         boolean tryQueryAgain = false;
         try {
-            if (log.isDebugEnabled()) {
-                log.debug(pageControlView + ": " + pc);
+            if (log.isTraceEnabled()) {
+                log.trace(pageControlView + ": " + pc);
             }
             if (pc.getPageSize() == PageControl.SIZE_UNLIMITED && pc.getPageNumber() != 0) {
                 /* 
@@ -295,8 +308,8 @@ public abstract class PagedListDataModel<T> extends DataModel {
                  * make all that much sense and was most likely due to a mistake upstream in the
                  * usage of the pagination / sorting framework.
                  */
-                if (log.isDebugEnabled()) {
-                    log.debug(pageControlView + ": Forcing UNLIMITED PageControl's pageNumber to 0");
+                if (log.isTraceEnabled()) {
+                    log.trace(pageControlView + ": Forcing UNLIMITED PageControl's pageNumber to 0");
                 }
                 pc.setPageNumber(0);
                 setPageControl(pc);
@@ -304,8 +317,8 @@ public abstract class PagedListDataModel<T> extends DataModel {
 
             // try the data fetch with the potentially changed (and persisted) PageControl object
             results = fetchPage(pc);
-            if (log.isDebugEnabled()) {
-                log.debug(pageControlView + ": Successfully fetched page (first time)");
+            if (log.isTraceEnabled()) {
+                log.trace(pageControlView + ": Successfully fetched page (first time)");
             }
 
             /*
@@ -318,17 +331,17 @@ public abstract class PagedListDataModel<T> extends DataModel {
              * update the page control to get the view consistent with the backend once again.
              */
             if (results.getTotalSize() <= pc.getStartRow() || (results.isEmpty() && pc.getPageNumber() != 0)) {
-                if (log.isDebugEnabled()) {
+                if (log.isTraceEnabled()) {
                     if (results.getTotalSize() <= pc.getStartRow()) {
-                        log.debug(pageControlView + ": Results size[" + results.getTotalSize()
+                        log.trace(pageControlView + ": Results size[" + results.getTotalSize()
                             + "] was less than PageControl startRow[" + pc.getStartRow() + "]");
                     } else {
-                        log.debug(pageControlView + ": Results were empty, but pageNumber was non-zero");
+                        log.trace(pageControlView + ": Results were empty, but pageNumber was non-zero");
                     }
                 }
                 resetToDefaults(pc);
-                if (log.isDebugEnabled()) {
-                    log.debug(pageControlView + ": resetting to " + pc);
+                if (log.isTraceEnabled()) {
+                    log.trace(pageControlView + ": resetting to " + pc);
                 }
                 tryQueryAgain = true;
             }
@@ -346,21 +359,21 @@ public abstract class PagedListDataModel<T> extends DataModel {
              * ordering (though the underlying SLSB may add a default ordering downstream). 
              */
             resetToDefaults(pc);
-            if (log.isDebugEnabled()) {
-                log.debug(pageControlView + ": Received error[" + t.getMessage() + "], resetting to " + pc);
+            if (log.isTraceEnabled()) {
+                log.trace(pageControlView + ": Received error[" + t.getMessage() + "], resetting to " + pc);
             }
             tryQueryAgain = true;
         }
 
         // round 2 should be guaranteed because of use of defaultPageControl
         if (tryQueryAgain) {
-            if (log.isDebugEnabled()) {
-                log.debug(pageControlView + ": Trying query again");
+            if (log.isTraceEnabled()) {
+                log.trace(pageControlView + ": Trying query again");
             }
             try {
                 results = fetchPage(pc);
-                if (log.isDebugEnabled()) {
-                    log.debug(pageControlView + ": Successfully fetched page (second time)");
+                if (log.isTraceEnabled()) {
+                    log.trace(pageControlView + ": Successfully fetched page (second time)");
                 }
             } catch (Throwable t) {
                 log.error("Could not retrieve collection for " + pageControlView, t);

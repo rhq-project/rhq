@@ -43,6 +43,7 @@ import org.hibernate.ejb.EntityManagerImpl;
 import org.hibernate.engine.NamedQueryDefinition;
 import org.hibernate.engine.SessionFactoryImplementor;
 import org.hibernate.jmx.StatisticsService;
+import org.hibernate.stat.Statistics;
 
 /**
  * Various persistence utility methods - mostly Hibernate-specific.
@@ -294,6 +295,13 @@ public class PersistenceUtility {
         } catch (Exception e) {
             LOG.warn("Couldn't register hibernate statistics mbean", e);
         }
+    }
+
+    public static Statistics getStatisticsService(EntityManager entityManager, MBeanServer server) {
+        Session hibernateSession = PersistenceUtility.getHibernateSession(entityManager);
+        SessionFactory hibernateSessionFactory = hibernateSession.getSessionFactory();
+        Statistics hibernateStatistics = hibernateSessionFactory.getStatistics();
+        return hibernateStatistics;
     }
 
     public static String getQueryDefinitionFromNamedQuery(EntityManager entityManager, String queryName) {

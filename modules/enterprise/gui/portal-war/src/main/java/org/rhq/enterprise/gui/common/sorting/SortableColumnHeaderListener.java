@@ -25,6 +25,8 @@ import javax.faces.event.ActionListener;
 
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.gui.util.FacesComponentUtility;
+import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
+import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 
 public class SortableColumnHeaderListener implements ActionListener {
@@ -34,10 +36,14 @@ public class SortableColumnHeaderListener implements ActionListener {
 
         UIData table = FacesComponentUtility.getAncestorOfType(columnHeader, UIData.class);
         PagedListDataModel<?> model = (PagedListDataModel<?>) table.getValue();
+
+        // work-around to bypass stale data model caused by a4j:keepAlive for the PagedDataTableUIBean
+        PageControlView pageControlView = model.getPageControlView();
+        PagedDataTableUIBean pagedDataTableUIBean = pageControlView.getPagedDataTableUIBean();
+        pagedDataTableUIBean.setDataModel(null);
+
         PageControl pc = model.getPageControl();
-
         pc.sortBy(sort);
-
         model.setPageControl(pc);
     }
 }

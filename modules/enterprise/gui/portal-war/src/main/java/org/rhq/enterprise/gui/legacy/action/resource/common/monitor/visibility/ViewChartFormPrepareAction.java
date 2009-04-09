@@ -196,7 +196,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
                  * to add it to the form so that they will all be checked at the bottom of the ui
                  * Use the 'r' parameters if supplied, otherwise, all group resources
                  */
-                if ((null != r) || (r.length > 0)) {
+                if ((null != r) && (r.length > 0)) {
                     resourceIds = new Integer[r.length];
                     resIds = new ArrayList<Integer>();
                     for (int j = 0; j < r.length; ++j) {

@@ -46,7 +46,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public class InventoryHierarchyTag extends TagSupport {
-    private static final String BASE_RESOURCE_URL = "/rhq/resource/inventory/view.xhtml";
+    private static final String BASE_RESOURCE_URL = "/rhq/resource/summary/overview.xhtml";
 
     //private static final String BASE_GROUP_URL = "/Resource.do?type=GROUP";
     private static final String BASE_GROUP_URL = "/rhq/group/inventory/view.xhtml";
@@ -119,7 +119,8 @@ public class InventoryHierarchyTag extends TagSupport {
     private String buildResourceHTML(Integer resourceId) {
         List<Resource> ancestorResources = this.resourceManager.getResourceLineage(resourceId);
         if (ancestorResources.isEmpty()) {
-            throw new IllegalStateException("The list of ancestor resources should always contain at least one resource - the resource whose lineage was requested.");
+            throw new IllegalStateException(
+                "The list of ancestor resources should always contain at least one resource - the resource whose lineage was requested.");
         }
 
         Resource parentResource = ancestorResources.get(ancestorResources.size() - 1);
@@ -191,7 +192,8 @@ public class InventoryHierarchyTag extends TagSupport {
     }
 
     private String buildAutoGroupURL() {
-        String url = BASE_AUTOGROUP_URL + "?id=" + parentResourceId + "&parent=" + parentResourceId + "&type=" + resourceTypeId;
+        String url = BASE_AUTOGROUP_URL + "?id=" + parentResourceId + "&parent=" + parentResourceId + "&type="
+            + resourceTypeId;
 
         // Session-encode the URL in case the client doesn't have cookies enabled.
         return encodeURL(url);

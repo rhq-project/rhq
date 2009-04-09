@@ -36,7 +36,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public class ResourceLineageRenderer extends Renderer {
-    private static final String BASE_RESOURCE_URL = "/rhq/resource/inventory/view.xhtml";
+    private static final String BASE_RESOURCE_URL = "/rhq/resource/summary/overview.xhtml";
     private static final String SEPARATOR = " > ";
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();

@@ -69,6 +69,7 @@ public class DatasourceConfigurationEditor {
 
     public static final String[] XA_PROPS = { "xa-datasource-class", "track-connection-by-tx",
         "isSameRM-override-value" };
+    private static final String[][] XA_SPECIALS = { { "connection-url", "URL" } , { "user-name", "User" }, {"password", "Password"}};
 
     /* All props with customizations
      * jndi-name driver-class  <!-- xa-datasource-class --> connection-url user-name password min-pool-size
@@ -80,6 +81,9 @@ public class DatasourceConfigurationEditor {
      */
 
     private static Log log = LogFactory.getLog(DatasourceConfigurationEditor.class);
+    private static final String XA_DATASOURCE_PROPERTIES = "xa-datasource-properties";
+    private static final String CONNECTION_PROPERTY = "connection-property";
+    private static final String XA_DATASOURCE_PROPERTY = "xa-datasource-property";
 
     public static Configuration loadDatasource(File file, String name) {
         /*
@@ -129,10 +133,11 @@ public class DatasourceConfigurationEditor {
 
             if (type.equals(XA_TX_TYPE)) {
                 bindElements(datasourceElement, config, XA_PROPS);
-                bindMap(datasourceElement, config, "xa-datasource-properties");
+                bindMap(datasourceElement, config, XA_DATASOURCE_PROPERTIES);
+                bindXASpecialElements(datasourceElement,config);
             } else {
                 bindElements(datasourceElement, config, NON_XA_PROPS);
-                bindMap(datasourceElement, config, "connection-property");
+                bindMap(datasourceElement, config, CONNECTION_PROPERTY);
             }
 
             return config;
@@ -166,6 +171,12 @@ public class DatasourceConfigurationEditor {
         }
     }
 
+    /**
+     * Update or create a Datasource file
+     * @param deploymentFile
+     * @param name
+     * @param report
+     */
     public static void updateDatasource(File deploymentFile, String name, CreateResourceReport report) {
         try {
             updateDatasource(deploymentFile, name, report.getResourceConfiguration());
@@ -179,6 +190,14 @@ public class DatasourceConfigurationEditor {
         }
     }
 
+    /**
+     * Update or create a new datasource
+     * @param deploymentFile
+     * @param name
+     * @param config
+     * @throws JDOMException
+     * @throws IOException
+     */
     private static void updateDatasource(File deploymentFile, String name, Configuration config) throws JDOMException,
         IOException {
         Document doc;
@@ -214,10 +233,11 @@ public class DatasourceConfigurationEditor {
 
         if (type.equals(XA_TX_TYPE)) {
             updateElements(datasourceElement, config, XA_PROPS);
-            updateMap(datasourceElement, config, "xa-datasource-property");
+            updateMap(datasourceElement, config, XA_DATASOURCE_PROPERTIES);
+            updateXAElements(datasourceElement, config);
         } else {
             updateElements(datasourceElement, config, NON_XA_PROPS);
-            updateMap(datasourceElement, config, "connection-property");
+            updateMap(datasourceElement, config, CONNECTION_PROPERTY);
         }
 
         if (isNewDatasource) {
@@ -227,9 +247,66 @@ public class DatasourceConfigurationEditor {
         updateFile(deploymentFile, doc);
     }
 
+    /**
+     * We need to pick elements that are in the 'normal' pool and pass them in the form of
+     * &ltxa-property name="xxx"&gt;value&lt;/xa-property&gt;
+     * @param parent parent elment (xa-datsource)
+     * @param config passed configuration
+     * @param xaSpecials pairs of items that need special treatment
+     */
+    private static void updateXAElements(Element parent, Configuration config) {
+
+        for (String[] pair: XA_SPECIALS) {
+            String prop = pair[0]; // Property in the configuration
+            String name = pair[1]; // value of the name attribute
+            String value = config.getSimpleValue(prop,""); // value to set
+
+            Element child = null;
+            if (value == null) {
+
+                List<Element> elems = parent.getChildren(XA_DATASOURCE_PROPERTY);
+                for (Element elem : elems) {
+                    if (elem.getAttribute("name").getValue().equals(name)) {
+                        parent.removeContent(elem); // TODO CCME?
+                        break;
+                    }
+                }
+
+            } else {
+                //  find the child and update if it exists
+
+                List<Element> elems = parent.getChildren(XA_DATASOURCE_PROPERTY);
+                for (Element elem : elems) {
+                    if (elem.getAttribute("name").getValue().equals(name)) {
+                        child = elem;
+                        break;
+                    }
+                }
+                if (child== null) {
+                    child = new Element(XA_DATASOURCE_PROPERTY);
+                    child.setAttribute("name",name);
+                    parent.addContent(child);
+                }
+
+                child.setText(value);
+            }
+
+            // remove the non-xa version of the property with name prop
+            Element notNeeded = parent.getChild(prop);
+            if (notNeeded != null) {
+                parent.removeContent(notNeeded);
+            }
+        }
+
+    }
+
     public static void deleteDataSource(File deploymentFile, String name) {
         Document doc;
         Element root;
+        if (deploymentFile==null) {
+            log.error("DeleteDatasource: passed file is null");
+            return;
+        }
         if (deploymentFile.exists()) {
             try {
                 SAXBuilder builder = new SAXBuilder();
@@ -337,6 +414,29 @@ public class DatasourceConfigurationEditor {
             config.put(new PropertySimple(name, child.getText()));
         }
     }
+
+    /**
+     * Bid the special XA datasource elements
+     * @param parent
+     * @param config
+     */
+    private static void bindXASpecialElements(Element parent, Configuration config) {
+
+        List<Element> xaProps = parent.getChildren(XA_DATASOURCE_PROPERTY);
+
+        for (String[] pair: XA_SPECIALS) {
+            String prop = pair[0]; // Property in the configuration
+            String name = pair[1]; // value of the name attribute
+
+            for (Element elem : xaProps ) {
+                if (elem.getAttribute("name").getValue().equals(name)) {
+                    config.put(new PropertySimple(prop,elem.getText()));
+                }
+            }
+        }
+
+    }
+
 
     private static Element findDatasourceElement(Element root, String name) {
         for (Object child : root.getChildren()) {

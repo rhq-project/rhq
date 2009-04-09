@@ -25,11 +25,10 @@
       <rich:panel styleClass="BlockContent">
 
          <f:facet name="header" styleClass="BlockTitle">
-            Create New Child of Type #{CreateNewConfigurationChildResourceUIBean.resourceType.name} 
+            <h:outputText value="Create New Child of Type #{CreateNewConfigurationChildResourceUIBean.resourceType.name}" /> 
          </f:facet>
 
-         <p>Select a template that will be used to initially populate the configuration for the resource being
-            added.</p>         
+         <p><h:outputText value="Select a template that will be used to initially populate the configuration for the resource being added."/></p>
 
          <h:form id="selectTemplateForm">
 

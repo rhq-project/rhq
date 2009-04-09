@@ -29,7 +29,7 @@
 
       <rich:panel>
 
-         <f:facet name="header">Create New Resource</f:facet>
+         <f:facet name="header"><h:outputText value="Create New Resource"/></f:facet>
 
          <p><h:outputText value="In order to create a new #{CreateNewPackageChildResourceUIBean.resourceType.name}, a new
          package must be deployed as the basis for the resource. The following information is required to
@@ -38,7 +38,7 @@
          <table>
             <c:if test="#{CreateNewPackageChildResourceUIBean.packageType.supportsArchitecture}">
                <tr>
-                  <td align="right"><b>Package Architecture<h:outputText value="#{CreateNewPackageChildResourceUIBean.packageType.supportsArchitecture}"/> </b></td>
+                  <td align="right"><b><h:outputText value="Package Architecture #{CreateNewPackageChildResourceUIBean.packageType.supportsArchitecture}"/> </b></td>
                   <td align="left">
                      <h:selectOneMenu value="#{CreateNewPackageChildResourceUIBean.selectedArchitectureId}">
                         <f:selectItems value="#{CreateNewPackageChildResourceUIBean.architectures}" />

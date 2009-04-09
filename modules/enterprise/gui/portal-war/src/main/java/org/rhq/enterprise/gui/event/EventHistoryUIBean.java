@@ -69,6 +69,12 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
     public EventHistoryUIBean() {
         context = WebUtility.getEntityContext();
+
+        SelectItem[] defaultSelectedItems = getSeverityFilterSelectItems();
+        severityFilter = new String[defaultSelectedItems.length];
+        for (int i = 0; i < severityFilter.length; i++) {
+            severityFilter[i] = (String) defaultSelectedItems[i].getValue();
+        }
     }
 
     public EntityContext getContext() {
@@ -207,6 +213,11 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
             String source = getSourceFilter();
 
             PageList<EventComposite> results = new PageList<EventComposite>();
+            if (severities != null && severities.length == 0) {
+                // RHQ-1913, nothing was selected so no results should display, short-cut logic
+                return results;
+            }
+
             if (context.category == EntityContext.Category.Resource) {
                 results = eventManager.getEvents(getSubject(), new int[] { context.resourceId },
                     rangePreferences.begin, rangePreferences.end, severities, source, search, pc);
@@ -230,7 +241,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
 
     private EventSeverity[] getEventSeverity() {
         String[] severityNames = getSeverityFilter();
-        if (severityNames != null && severityNames.length > 0) {
+        if (severityNames != null) {
             EventSeverity[] severities = new EventSeverity[severityNames.length];
             for (int i = 0; i < severityNames.length; i++) {
                 severities[i] = Enum.valueOf(EventSeverity.class, severityNames[i]);

@@ -1,67 +1,68 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.gui.configuration;
 
- import java.util.Collection;
+import java.util.Collection;
 
- import javax.el.MethodExpression;
- import javax.el.ValueExpression;
- import javax.faces.component.UIComponent;
- import javax.faces.component.UIInput;
- import javax.faces.component.UIParameter;
- import javax.faces.component.html.HtmlCommandLink;
- import javax.faces.component.html.HtmlPanelGrid;
- import javax.faces.component.html.HtmlPanelGroup;
- import javax.faces.component.html.HtmlSelectBooleanCheckbox;
- import javax.faces.context.FacesContext;
+import javax.el.MethodExpression;
+import javax.el.ValueExpression;
+import javax.faces.component.UIComponent;
+import javax.faces.component.UIInput;
+import javax.faces.component.UIParameter;
+import javax.faces.component.html.HtmlCommandLink;
+import javax.faces.component.html.HtmlPanelGrid;
+import javax.faces.component.html.HtmlPanelGroup;
+import javax.faces.component.html.HtmlSelectBooleanCheckbox;
+import javax.faces.context.FacesContext;
 
- import org.apache.commons.logging.Log;
- import org.apache.commons.logging.LogFactory;
- import org.jetbrains.annotations.NotNull;
- import org.jetbrains.annotations.Nullable;
- import org.rhq.core.domain.configuration.AbstractPropertyMap;
- import org.rhq.core.domain.configuration.Property;
- import org.rhq.core.domain.configuration.PropertyList;
- import org.rhq.core.domain.configuration.PropertyMap;
- import org.rhq.core.domain.configuration.PropertySimple;
- import org.rhq.core.domain.configuration.definition.PropertyDefinition;
- import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
- import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
- import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
- import org.rhq.core.gui.RequestParameterNameConstants;
- import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
- import org.rhq.core.gui.configuration.propset.ConfigurationSetComponent;
- import org.rhq.core.gui.util.FacesComponentUtility;
- import org.rhq.core.gui.util.FacesExpressionUtility;
- import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
- import org.richfaces.component.html.HtmlModalPanel;
- import org.ajax4jsf.component.html.HtmlAjaxCommandLink;
+import org.ajax4jsf.component.html.HtmlAjaxCommandLink;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.richfaces.component.html.HtmlModalPanel;
 
- /**
- * A factory that generates a tree of JSF components that depicts a given collection of JON {@link Property}s.
- *
- * @author Ian Springer
- */
+import org.rhq.core.domain.configuration.AbstractPropertyMap;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.gui.RequestParameterNameConstants;
+import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
+import org.rhq.core.gui.configuration.propset.ConfigurationSetComponent;
+import org.rhq.core.gui.util.FacesComponentUtility;
+import org.rhq.core.gui.util.FacesExpressionUtility;
+import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
+
+/**
+* A factory that generates a tree of JSF components that depicts a given collection of JON {@link Property}s.
+*
+* @author Ian Springer
+*/
 public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private final Log LOG = LogFactory.getLog(AbstractPropertyBagUIComponentTreeFactory.class);
 
@@ -88,7 +89,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private static final String NESTED_PROPERTIES_TABLE_STYLE_CLASS = "nested-properties-table";
     private static final String PROPERTIES_TABLE_HEADER_CELL_STYLE_CLASS = "properties-table-header-cell";
     private static final String NESTED_PROPERTIES_TABLE_HEADER_CELL_STYLE_CLASS = "nested-properties-table-header-cell";
-    private static final String NESTED_PROPERTIES_TABLE_INDENT_CELL_STYLE_CLASS = "nested-properties-table-indent-cell";    
+    private static final String NESTED_PROPERTIES_TABLE_INDENT_CELL_STYLE_CLASS = "nested-properties-table-indent-cell";
     private static final String PROPERTY_ERROR_CELL_STYLE_CLASS = "property-error-cell";
     private static final String OPENMAP_PROPERTIES_TABLE_STYLE_CLASS = "openmap-properties-table";
     private static final String OPENMAP_PROPERTY_DISPLAY_NAME_CELL_STYLE_CLASS = "openmap-property-display-name-cell";
@@ -99,16 +100,16 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private static final String LIST_PROPERTY_VALUE_CELL_STYLE_CLASS = "list-property-value-cell";
     private static final String LIST_PROPERTY_DESCRIPTION_CELL_STYLE_CLASS = "list-property-description-cell";
     private static final String LIST_PROPERTY_ENABLED_CELL_STYLE_CLASS = "list-property-enabled-cell";
-    private static final String LIST_PROPERTY_CHILDREN_CELL_STYLE_CLASS = "list-property-children-cell";        
+    private static final String LIST_PROPERTY_CHILDREN_CELL_STYLE_CLASS = "list-property-children-cell";
     private static final String PROPERTY_MAP_SUMMARY_TABLE_STYLE_CLASS = "property-map-summary-table";
     private static final String PROPERTY_MAP_SUMMARY_DATA_HEADER_CELL_STYLE_CLASS = "property-map-summary-data-header-cell";
     private static final String PROPERTY_MAP_SUMMARY_HEADER_TEXT_STYLE_CLASS = "property-map-summary-header-text";
     private static final String PROPERTY_MAP_SUMMARY_BUTTONS_CELL_STYLE_CLASS = "property-map-summary-buttons-cell";
     private static final String PROPERTY_MAP_SUMMARY_DATA_CELL_STYLE_CLASS = "property-map-summary-data-cell";
     private static final String PROPERTY_MAP_SUMMARY_DATA_TEXT_STYLE_CLASS = "property-map-summary-data-text";
-    private static final String PROPERTY_MAP_SUMMARY_BUTTON_FOOTER_STYLE_CLASS = "property-buttonfooterrow";    
-    private static final String BUTTONS_TABLE_STYLE_CLASS = "buttons-table";    
-    private static final String VALUES_DIFFER_TEXT_STYLE_CLASS = "values-differ-text";    
+    private static final String PROPERTY_MAP_SUMMARY_BUTTON_FOOTER_STYLE_CLASS = "property-buttonfooterrow";
+    private static final String BUTTONS_TABLE_STYLE_CLASS = "buttons-table";
+    private static final String VALUES_DIFFER_TEXT_STYLE_CLASS = "values-differ-text";
 
     private AbstractConfigurationComponent config;
     private Collection<PropertyDefinition> propertyDefinitions;
@@ -119,7 +120,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     private boolean isAggregate;
     private HtmlModalPanel memberValuesModalPanel;
 
-     public AbstractPropertyBagUIComponentTreeFactory(AbstractConfigurationComponent config,
+    public AbstractPropertyBagUIComponentTreeFactory(AbstractConfigurationComponent config,
         Collection<PropertyDefinition> propertyDefinitions, AbstractPropertyMap propertyMap, boolean topLevel,
         String valueExpressionFormat) {
         this.config = config;
@@ -131,7 +132,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         // The below variable is for the new group config impl being implemented by Ian.
         this.isAggregate = (this.config instanceof ConfigurationSetComponent);
         if (this.isAggregate) {
-            ConfigurationSetComponent configurationSetComponent = (ConfigurationSetComponent)this.config;
+            ConfigurationSetComponent configurationSetComponent = (ConfigurationSetComponent) this.config;
             this.memberValuesModalPanel = configurationSetComponent.getPropSetModalPanel();
         }
     }
@@ -296,18 +297,20 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         PropertySimple propertySimple = this.propertyMap.getSimple(propertyDefinitionSimple.getName());
         ValueExpression propertyValueExpression = createPropertyValueExpression(propertySimple.getName(),
-                this.valueExpressionFormat);
+            this.valueExpressionFormat);
 
         UIInput input = null;
         if (!this.isAggregate || (propertySimple.getOverride() != null && propertySimple.getOverride()))
             // We need to create the input component ahead of when we need to add it to the component tree, since we
             // need to know the input component's id in order to render the unset control.
-            input = PropertyRenderingUtility.createInputForSimpleProperty(propertyDefinitionSimple,
-                    propertySimple, propertyValueExpression, getListIndex(), this.isAggregate, this.config.isReadOnly(),
-                    this.config.isFullyEditable(), this.config.isPrevalidate());
+            input = PropertyRenderingUtility.createInputForSimpleProperty(propertyDefinitionSimple, propertySimple,
+                propertyValueExpression, getListIndex(), this.isAggregate, this.config.isReadOnly(), this.config
+                    .isFullyEditable(), this.config.isPrevalidate());
 
-        FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_DISPLAY_NAME_CELL + "'>");
-        PropertyRenderingUtility.addPropertyDisplayName(parent, propertyDefinitionSimple, propertySimple, this.config.isReadOnly());
+        FacesComponentUtility
+            .addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_DISPLAY_NAME_CELL + "'>");
+        PropertyRenderingUtility.addPropertyDisplayName(parent, propertyDefinitionSimple, propertySimple, this.config
+            .isReadOnly());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         // TODO: Get rid of the override checkbox once the group plugin config has been converted over to the new
@@ -320,9 +323,8 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
         if (!propertyDefinitionSimple.isRequired())
-            PropertyRenderingUtility.addUnsetControl(parent, propertyDefinitionSimple, propertySimple,
-                    this.config.getListIndex(), input, this.isAggregate, this.config.isReadOnly(),
-                    this.config.isFullyEditable());
+            PropertyRenderingUtility.addUnsetControl(parent, propertyDefinitionSimple, propertySimple, this.config
+                .getListIndex(), input, this.isAggregate, this.config.isReadOnly(), this.config.isFullyEditable());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_VALUE_CELL + "'>");
@@ -341,39 +343,37 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         addDebug(parent, false, ".addSimpleProperty()");
     }
 
-     private void addPropertySimpleValue(UIComponent parent, @Nullable UIInput input,
-                                         ValueExpression propertyValueExpression)
-     {
-         if (!this.isAggregate) {
-             parent.getChildren().add(input);
-             return;
-         }
+    private void addPropertySimpleValue(UIComponent parent, @Nullable UIInput input,
+        ValueExpression propertyValueExpression) {
+        if (!this.isAggregate) {
+            parent.getChildren().add(input);
+            return;
+        }
 
-         HtmlPanelGrid panelGrid = FacesComponentUtility.addPanelGrid(parent, null, 2, CssStyleClasses.BUTTONS_TABLE);
-         panelGrid.setColumnClasses("aggregate-property-value-cell, aggregate-property-members-icon-cell");
-         if (input != null)
-             panelGrid.getChildren().add(input);
-         else
-             FacesComponentUtility.addOutputText(panelGrid, null, "Member Values Differ",
-                     VALUES_DIFFER_TEXT_STYLE_CLASS);
+        HtmlPanelGrid panelGrid = FacesComponentUtility.addPanelGrid(parent, null, 2, CssStyleClasses.BUTTONS_TABLE);
+        panelGrid.setColumnClasses("aggregate-property-value-cell, aggregate-property-members-icon-cell");
+        if (input != null)
+            panelGrid.getChildren().add(input);
+        else
+            FacesComponentUtility
+                .addOutputText(panelGrid, null, "Member Values Differ", VALUES_DIFFER_TEXT_STYLE_CLASS);
 
-         // Add the Members button which will display the "drill-down" modal panel.
-         HtmlAjaxCommandLink ajaxCommandLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
-         panelGrid.getChildren().add(ajaxCommandLink);
-         ajaxCommandLink.setOncomplete("Richfaces.showModalPanel('" +
-             this.memberValuesModalPanel.getClientId(FacesContext.getCurrentInstance()) + "');");
-         //ajaxCommandLink.setReRender("rhq_propSet");
-         String verb = this.config.isReadOnly() ? "View" : "Edit";
-         String tooltip = verb + " Member Values";
-         ajaxCommandLink.setTitle(tooltip);
-         FacesComponentUtility.addParameter(ajaxCommandLink, null, "propertyExpressionString",
-            propertyValueExpression.getExpressionString());
-         FacesComponentUtility.addParameter(ajaxCommandLink, null, "refresh",
-                 ConfigRenderer.PROPERTY_SET_COMPONENT_ID);
-         FacesComponentUtility.addGraphicImage(ajaxCommandLink, null, "/images/icn_member_configs.png", null);
-     }
+        // Add the Members button which will display the "drill-down" modal panel.
+        HtmlAjaxCommandLink ajaxCommandLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);
+        panelGrid.getChildren().add(ajaxCommandLink);
+        ajaxCommandLink.setOncomplete("Richfaces.showModalPanel('"
+            + this.memberValuesModalPanel.getClientId(FacesContext.getCurrentInstance()) + "');");
+        //ajaxCommandLink.setReRender("rhq_propSet");
+        String verb = this.config.isReadOnly() ? "View" : "Edit";
+        String tooltip = verb + " Member Values";
+        ajaxCommandLink.setTitle(tooltip);
+        FacesComponentUtility.addParameter(ajaxCommandLink, null, "propertyExpressionString", propertyValueExpression
+            .getExpressionString());
+        FacesComponentUtility.addParameter(ajaxCommandLink, null, "refresh", ConfigRenderer.PROPERTY_SET_COMPONENT_ID);
+        FacesComponentUtility.addGraphicImage(ajaxCommandLink, null, "/images/icn_member_configs.png", null);
+    }
 
-     private void addOpenMapMemberProperty(HtmlPanelGroup parent, PropertyDefinitionMap propertyDefinitionMap,
+    private void addOpenMapMemberProperty(HtmlPanelGroup parent, PropertyDefinitionMap propertyDefinitionMap,
         PropertySimple propertySimple, String rowStyleClass) {
         addDebug(parent, true, ".addOpenMapMemberProperty()");
         String mapName = ((PropertyMap) this.propertyMap).getName();
@@ -397,8 +397,8 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
         ValueExpression valueExpression = FacesExpressionUtility.createValueExpression(expressionString, String.class);
         UIInput input = null;
         if (!this.isAggregate || propertySimple.getOverride() != null && propertySimple.getOverride())
-            input = PropertyRenderingUtility.createInputForSimpleProperty(propertySimple,
-                   valueExpression, this.config.isReadOnly());
+            input = PropertyRenderingUtility.createInputForSimpleProperty(propertySimple, valueExpression, this.config
+                .isReadOnly());
         addPropertySimpleValue(wrapper, input, valueExpression);
         FacesComponentUtility.addVerbatimText(wrapper, "</td>");
 
@@ -408,7 +408,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
                 + "'>");
             HtmlCommandLink deleteLink = FacesComponentUtility.createComponent(HtmlCommandLink.class);
             wrapper.getChildren().add(deleteLink);
-            
+
             deleteLink.setTitle(DELETE_MAP_BUTTON_TITLE);
             deleteLink.setImmediate(true); // skip validation (we only want to validate upon Save)
 
@@ -445,8 +445,8 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + LIST_PROPERTY_DISPLAY_NAME_CELL_STYLE_CLASS
             + "'>");
-        PropertyRenderingUtility.addPropertyDisplayName(parent, listPropertyDefinition, listProperty,
-                this.config.isReadOnly());
+        PropertyRenderingUtility.addPropertyDisplayName(parent, listPropertyDefinition, listProperty, this.config
+            .isReadOnly());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + LIST_PROPERTY_ENABLED_CELL_STYLE_CLASS + "' />");
@@ -466,13 +466,16 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
                 addListMemberMapProperties(parent, listProperty, (PropertyDefinitionMap) listMemberPropertyDefinition,
                     rowStyleClass);
             } else {
-                addErrorRow(parent, "Viewing/editing of lists of"
-                    + " properties is not yet supported for group Configurations."
-                    + " To view/edit this property for group members, please go to the Configure>Current tab for each member separately."
-                    , rowStyleClass);
+                addErrorRow(
+                    parent,
+                    "Viewing/editing of lists of"
+                        + " properties is not yet supported for group Configurations."
+                        + " To view/edit this property for group members, please go to the Configure>Current tab for each member separately.",
+                    rowStyleClass);
             }
         } else {
-            addErrorRow(parent, "Viewing/editing of lists of " + listMemberPropertyDefinition.getClass().getSimpleName()
+            addErrorRow(parent, "Viewing/editing of lists of "
+                + listMemberPropertyDefinition.getClass().getSimpleName()
                 + " properties is not yet supported. Here's the list's toString() value for now: "
                 + ((listProperty != null) ? listProperty.getList() : null), rowStyleClass);
         }
@@ -648,7 +651,8 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             FacesComponentUtility.addVerbatimText(parent, "<td class='" + PROPERTY_MAP_SUMMARY_DATA_CELL_STYLE_CLASS
                 + "'>");
             if (mapMemberSimpleProperty.getStringValue() == null) {
-                FacesComponentUtility.addOutputText(parent, this.config, "not set", CssStyleClasses.REQUIRED_MARKER_TEXT);
+                FacesComponentUtility.addOutputText(parent, this.config, "not set",
+                    CssStyleClasses.REQUIRED_MARKER_TEXT);
             } else {
                 FacesComponentUtility.addOutputText(parent, this.config, mapMemberSimpleProperty.getStringValue(),
                     PROPERTY_MAP_SUMMARY_DATA_TEXT_STYLE_CLASS);
@@ -678,8 +682,8 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + LIST_PROPERTY_DISPLAY_NAME_CELL_STYLE_CLASS
             + "'>");
-        PropertyRenderingUtility.addPropertyDisplayName(parent, propertyDefinitionMap,
-                this.propertyMap.get(propertyDefinitionMap.getName()), this.config.isReadOnly());
+        PropertyRenderingUtility.addPropertyDisplayName(parent, propertyDefinitionMap, this.propertyMap
+            .get(propertyDefinitionMap.getName()), this.config.isReadOnly());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + LIST_PROPERTY_ENABLED_CELL_STYLE_CLASS + "' />");
@@ -755,7 +759,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             input.setId(propertyId);
 
             Boolean shouldOverride = ((PropertySimple) property).getOverride();
-            FacesComponentUtility.setOverride(input, (shouldOverride != null && shouldOverride) );
+            FacesComponentUtility.setOverride(input, (shouldOverride != null && shouldOverride));
         }
 
         setInputOverrideExpression(input, propertyDefinitionSimple.getName());
@@ -764,7 +768,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
     }
 
     private void addPropertyOverrideControl(UIComponent parent, PropertyDefinitionSimple propertyDefinitionSimple,
-                                            UIInput valueInput) {
+        UIInput valueInput) {
         HtmlSelectBooleanCheckbox overrideCheckbox = createInputOverrideForSimpleProperty(propertyDefinitionSimple);
         parent.getChildren().add(overrideCheckbox);
         overrideCheckbox.setValue(isOverride(propertyDefinitionSimple));
@@ -778,12 +782,12 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
          * input is checked    , enabled unsetCheckbox   ** only cascade enable valueInput dom elements if the
          * unsetCheckbox is NOT unset
          */
-        StringBuilder onchange = new StringBuilder();
+        StringBuilder onclick = new StringBuilder();
         for (String valueInputHtmlDomReference : PropertyRenderingUtility.getHtmlDomReferences(valueInput)) {
-            onchange.append("setInputOverride(").append(valueInputHtmlDomReference).append(", this.checked);");
+            onclick.append("setInputOverride(").append(valueInputHtmlDomReference).append(", this.checked);");
         }
 
-        overrideCheckbox.setOnchange(onchange.toString());
+        overrideCheckbox.setOnclick(onclick.toString());
     }
 
     /**
@@ -814,8 +818,7 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
     private boolean isReadOnly(PropertyDefinition propertyDefinition) {
         // A fully editable config overrides any other means of setting read only.
-        return (!this.config.isFullyEditable() &&
-                (this.config.isReadOnly() || (propertyDefinition.isReadOnly() && !isInvalidRequiredProperty(propertyDefinition))));
+        return (!this.config.isFullyEditable() && (this.config.isReadOnly() || (propertyDefinition.isReadOnly() && !isInvalidRequiredProperty(propertyDefinition))));
     }
 
     private boolean isInvalidRequiredProperty(PropertyDefinition propertyDefinition) {

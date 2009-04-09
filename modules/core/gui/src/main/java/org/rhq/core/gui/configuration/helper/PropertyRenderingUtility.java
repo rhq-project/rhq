@@ -153,10 +153,10 @@ public class PropertyRenderingUtility {
         // TODO: specify a component id
     }
 
-    public static HtmlSelectBooleanCheckbox addUnsetControl(UIComponent parent, PropertyDefinitionSimple propertyDefinitionSimple,
-        PropertySimple propertySimple, Integer listIndex, UIInput valueInput, boolean configIsAggregate, boolean configReadOnly,
-        boolean configFullyEditable) {
-        
+    public static HtmlSelectBooleanCheckbox addUnsetControl(UIComponent parent,
+        PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple, Integer listIndex,
+        UIInput valueInput, boolean configIsAggregate, boolean configReadOnly, boolean configFullyEditable) {
+
         HtmlSelectBooleanCheckbox unsetCheckbox = FacesComponentUtility.createComponent(
             HtmlSelectBooleanCheckbox.class, null);
         if (propertySimple != null) {
@@ -176,11 +176,11 @@ public class PropertyRenderingUtility {
             //            id of the corresponding JSF input component in some cases (e.g. radio buttons). However, the
             //            name property that JSF renders on the HTML DOM input element does always match the JSF
             //            component id. (ips, 05/31/07)
-            StringBuilder onchange = new StringBuilder();
+            StringBuilder onclick = new StringBuilder();
             for (String htmlDomReference : getHtmlDomReferences(valueInput)) {
-                onchange.append("setInputUnset(").append(htmlDomReference).append(", this.checked);");
+                onclick.append("setInputUnset(").append(htmlDomReference).append(", this.checked);");
             }
-            unsetCheckbox.setOnchange(onchange.toString());
+            unsetCheckbox.setOnclick(onclick.toString());
         }
         return unsetCheckbox;
     }
@@ -411,8 +411,8 @@ public class PropertyRenderingUtility {
         }
     }
 
-    private static void addErrorMessages(UIInput input, @Nullable
-    PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple, boolean prevalidate) {
+    private static void addErrorMessages(UIInput input, @Nullable PropertyDefinitionSimple propertyDefinitionSimple,
+        PropertySimple propertySimple, boolean prevalidate) {
         if (prevalidate) {
             // Pre-validate the property's value, in case the PC sent us an invalid live config.
             PropertySimpleValueValidator validator = new PropertySimpleValueValidator(propertyDefinitionSimple);

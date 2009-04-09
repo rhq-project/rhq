@@ -1275,50 +1275,52 @@
                 <c:simple-property required="true" name="JNDIName" readOnly="true"
                                    description="This queue's JNDI name; default is '/queue/{queueName}'."/>
 
-                <!-- NOTE: The clustered, downCacheSize, fullSize, and pageSize props are set to readOnly="true" as
-                           a temporary workaround for https://jira.jboss.org/jira/browse/JOPR-112. -->
+                <c:simple-property type="boolean" required="false" name="clustered" default="true"
+                                   description="Is this queue clustered? Updates to this property will not go into effect until the queue has been restarted."/>
 
-                <c:simple-property type="boolean" required="true" name="clustered" default="true" readOnly="true"
-                                   description="Is this queue clustered?"/>
-
-                <c:simple-property type="integer" required="true" name="downCacheSize" default="2000" readOnly="true">
+                <c:simple-property type="integer" required="false" name="downCacheSize" default="2000">
                     <c:description>
                         When paging messages to storage from a subscription, they first go into a &quot;Down Cache&quot; before
                         being written to storage. This enables the write to occur as a single operation, thus aiding
                         performance. This setting determines the maximum number of messages that the Down Cache will hold
-                        before they are flushed to storage. Can only be set when the queue is stopped. The default value is 2000.
+                        before they are flushed to storage.
+                        Updates to this property will not go into effect until the queue has been restarted.
+                        The default value is 2000.
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="true" name="fullSize" default="75000" readOnly="true">
+                <c:simple-property type="integer" required="false" name="fullSize" default="75000">
                     <c:description>
                         The maximum number of messages held by the queue in memory at any one time.
                         The actual subscription can hold many more messages than this, but these are paged to and from
-                        storage as necessary, as messages are added or consumed. Can only be set when the queue is stopped.
+                        storage as necessary, as messages are added or consumed.
+                        Updates to this property will not go into effect until the queue has been restarted.
                         The default value is 75000.
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="true" name="maxDeliveryAttempts"
+                <c:simple-property type="integer" required="false" name="maxDeliveryAttempts"
                                    description="The number of delivery attempts before a message to this queue is moved to the DLQ."/>
 
-                <c:simple-property type="integer" required="true" name="maxSize"
+                <c:simple-property type="integer" required="false" name="maxSize"
                                    description="The maximum number of messages this queue can hold before they are dropped."/>
 
                 <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
                 <!--
-                <c:simple-property type="integer" required="true" name="messageCounterHistoryDayLimit"
+                <c:simple-property type="integer" required="false" name="messageCounterHistoryDayLimit"
                                    description="This queue's message counter history day limit - &lt;0: unlimited, =0: disabled, &gt;0: maximum day count."/>
                 -->
 
-                <c:simple-property type="integer" required="true" name="pageSize" readOnly="true">
+                <c:simple-property type="integer" required="false" name="pageSize">
                     <c:description>
                         When loading messages from a subscription, this is the maximum number of messages to
-                        pre-load in one operation. Can only be set when the queue is stopped. The default value is 2000.
+                        pre-load in one operation.
+                        Updates to this property will not go into effect until the queue has been restarted.
+                        The default value is 2000.
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="long" required="true" name="redeliveryDelay" units="milliseconds"
+                <c:simple-property type="long" required="false" name="redeliveryDelay" units="milliseconds"
                                    description="The delay in milliseconds before a rolled back or recovered message is redelivered."/>
 
                 <c:simple-property required="false" name="DLQ"
@@ -1326,7 +1328,7 @@
                 <c:simple-property required="false" name="expiryQueue"
                                    description="The JMX ObjectName of the expiry queue for this queue, overrides the default expiry queue on the server peer"/>
                 <c:simple-property required="false" name="serverPeer"
-                                   description="The JMX ObjectName of the server peer this queue was deployed on"/>
+                                   description="The JMX ObjectName of the server peer this queue was deployed on. Updates to this property will not go into effect until the queue has been restarted."/>
 
                 <c:list-property name="securityConfig" max="4" min="2"
                                  displayName="Security Configurations"
@@ -1517,50 +1519,52 @@
                 <c:simple-property required="true" name="JNDIName" readOnly="true"
                                    description="This topic's JNDI name; default is '/topic/{topicName}'."/>
 
-                <!-- NOTE: The clustered, downCacheSize, fullSize, and pageSize props are set to readOnly="true" as
-                           a temporary workaround for https://jira.jboss.org/jira/browse/JOPR-112. -->
+                <c:simple-property type="boolean" required="false" name="clustered" default="false"
+                                   description="Is this topic clustered? Updates to this property will not go into effect until the topic has been restarted."/>
 
-                <c:simple-property type="boolean" required="true" name="clustered" default="false" readOnly="true"
-                                   description="Is this topic clustered?"/>
-
-                <c:simple-property type="integer" required="true" name="downCacheSize" default="2000" readOnly="true">
+                <c:simple-property type="integer" required="false" name="downCacheSize" default="2000">
                     <c:description>
                         When paging messages to storage from a subscription, they first go into a &quot;Down Cache&quot; before
                         being written to storage. This enables the write to occur as a single operation, thus aiding
                         performance. This setting determines the maximum number of messages that the Down Cache will hold
-                        before they are flushed to storage. Can only be set when the topic is stopped. The default value is 2000.
+                        before they are flushed to storage.
+                        Updates to this property will not go into effect until the topic has been restarted.
+                        The default value is 2000.
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="true" name="fullSize" default="75000" readOnly="true">
+                <c:simple-property type="integer" required="false" name="fullSize" default="75000">
                     <c:description>
                         The maximum number of messages held by the topic subscriptions in memory at any one time.
                         The actual subscription can hold many more messages than this, but these are paged to and from
-                        storage as necessary, as messages are added or consumed. Can only be set when the topic is stopped.
+                        storage as necessary, as messages are added or consumed.
+                        Updates to this property will not go into effect until the topic has been restarted.
                         The default value is 75000.
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="true" name="maxDeliveryAttempts"
+                <c:simple-property type="integer" required="false" name="maxDeliveryAttempts"
                                    description="The number of delivery attempts before a message to a subscriber of this topic is moved to the DLQ."/>
 
-                <c:simple-property type="integer" required="true" name="maxSize"
+                <c:simple-property type="integer" required="false" name="maxSize"
                                    description="The maximum number of messages this topic can hold before they are dropped."/>
 
                 <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
                 <!--
-                <c:simple-property type="integer" required="true" name="messageCounterHistoryDayLimit"
+                <c:simple-property type="integer" required="false" name="messageCounterHistoryDayLimit"
                                    description="This topic's message counter history day limit - &lt;0: unlimited, =0: disabled, &gt;0: maximum day count."/>
                 -->
 
-                <c:simple-property type="integer" required="true" name="pageSize" readOnly="true">
+                <c:simple-property type="integer" required="false" name="pageSize">
                     <c:description>
                         When loading messages from a subscription, this is the maximum number of messages to
-                        pre-load in one operation. Can only be set when the topic is stopped. The default value is 2000.
+                        pre-load in one operation.
+                        Updates to this property will not go into effect until the topic has been restarted.
+                        The default value is 2000.
                     </c:description>
                 </c:simple-property>
 
-                <c:simple-property type="long" required="true" name="redeliveryDelay" units="milliseconds"
+                <c:simple-property type="long" required="false" name="redeliveryDelay" units="milliseconds"
                                    description="The delay in milliseconds before a rolled back or recovered message is redelivered."/>
 
                 <c:simple-property required="false" name="DLQ"
@@ -1568,7 +1572,7 @@
                 <c:simple-property required="false" name="expiryQueue"
                                    description="The JMX ObjectName of the expiry queue for this topic, overrides the default expiry queue on the server peer"/>
                 <c:simple-property required="false" name="serverPeer"
-                                   description="The JMX ObjectName of the server peer this topic was deployed on"/>
+                                   description="The JMX ObjectName of the server peer this topic was deployed on. Updates to this property will not go into effect until the topic has been restarted."/>
 
                 <c:list-property name="securityConfig" max="4" min="2"
                                  displayName="Security Configurations"

@@ -79,7 +79,7 @@ public class ResourceTreeModelUIBean {
         List<Resource> resources = resourceManager.getResourcesByAgent(user, agent.getId(), PageControl
             .getUnlimitedInstance());
         end = System.currentTimeMillis();
-        log.debug("Loaded raw resources in " + (end - start));
+        log.debug("Loaded " + resources.size() + " raw resources in " + (end - start));
 
         start = System.currentTimeMillis();
         rootNode = load(rootResource.getId(), resources, false);

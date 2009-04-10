@@ -115,13 +115,13 @@ public class ResourceGroupTreeModelUIBean {
         List<Resource> resources = resourceManager.getResourcesByCompatibleGroup(EnterpriseFacesContextUtility
             .getSubject(), parentGroup.getId(), PageControl.getUnlimitedInstance());
         long end = System.currentTimeMillis();
-        log.debug("Loaded resources by group in " + (end - start));
+        log.debug("Loaded  " + resources.size() + " resources by group in " + (end - start));
 
         start = System.currentTimeMillis();
         List<Resource> members = groupManager.getResourcesForResourceGroup(EnterpriseFacesContextUtility.getSubject(),
             parentGroup.getId(), GroupCategory.COMPATIBLE);
         end = System.currentTimeMillis();
-        log.debug("Loaded memebers by group in " + (end - start));
+        log.debug("Loaded  " + members.size() + " memebers by group in " + (end - start));
 
         start = System.currentTimeMillis();
         rootNode = load(parentGroup, resources, members);

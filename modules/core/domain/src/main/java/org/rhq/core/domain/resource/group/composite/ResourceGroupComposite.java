@@ -68,6 +68,15 @@ public class ResourceGroupComposite implements Serializable {
             implicitAvail = implicitAvailability;
         }
 
+        if (this.resourceGroup.getGroupCategory() == GroupCategory.COMPATIBLE) {
+            this.category = GroupCategory.COMPATIBLE;
+        } else if (this.resourceGroup.getGroupCategory() == GroupCategory.MIXED) {
+            this.category = GroupCategory.MIXED;
+        } else {
+            throw new IllegalArgumentException("Unknown category " + this.resourceGroup.getGroupCategory()
+                + " for ResourceGroup " + this.resourceGroup.getName());
+        }
+
         this.resourceGroup = resourceGroup;
     }
 

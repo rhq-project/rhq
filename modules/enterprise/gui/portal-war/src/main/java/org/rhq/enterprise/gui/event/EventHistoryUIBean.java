@@ -213,7 +213,7 @@ public class EventHistoryUIBean extends PagedDataTableUIBean {
             String source = getSourceFilter();
 
             PageList<EventComposite> results = new PageList<EventComposite>();
-            if (severities != null && severities.length == 0) {
+            if (severities == null || (severities != null && severities.length == 0)) {
                 // RHQ-1913, nothing was selected so no results should display, short-cut logic
                 return results;
             }

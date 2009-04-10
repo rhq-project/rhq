@@ -20,6 +20,9 @@ package org.rhq.enterprise.gui.common.framework;
 
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -38,11 +41,15 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class UserPreferencesUIBean {
 
+    private final Log log = LogFactory.getLog(UserPreferencesUIBean.class);
+
     public static final String LEFT_RESOURCE_NAV_SHOWING = "ui.leftResourceNavShowing";
     public static final String SUMMARY_PANEL_DISPLAY_STATE = "ui.summaryPanelDisplayState";
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
+    private List<Resource> resourceFavorites;
+    private List<ResourceGroup> groupFavorites;
 
     public Subject getSubject() {
         return EnterpriseFacesContextUtility.getSubject();
@@ -81,22 +88,27 @@ public class UserPreferencesUIBean {
     }
 
     public List<Resource> getResourceFavorites() {
-        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        if (resourceFavorites == null) {
+            WebUser user = EnterpriseFacesContextUtility.getWebUser();
+            WebUserPreferences.FavoriteResourcePortletPreferences favoriteResources = user.getWebPreferences()
+                .getFavoriteResourcePortletPreferences();
 
-        WebUserPreferences.FavoriteResourcePortletPreferences favoriteResources = user.getWebPreferences()
-            .getFavoriteResourcePortletPreferences();
-
-        return resourceManager.getResourceByIds(getSubject(), favoriteResources.asArray(), false, PageControl
-            .getUnlimitedInstance());
+            resourceFavorites = resourceManager.getResourceByIds(getSubject(), favoriteResources.asArray(), false,
+                PageControl.getUnlimitedInstance());
+        }
+        return resourceFavorites;
     }
 
     public List<ResourceGroup> getGroupFavorites() {
-        WebUser user = EnterpriseFacesContextUtility.getWebUser();
+        if (groupFavorites == null) {
+            WebUser user = EnterpriseFacesContextUtility.getWebUser();
+            WebUserPreferences.FavoriteGroupPortletPreferences favoriteGroups = user.getWebPreferences()
+                .getFavoriteGroupPortletPreferences();
 
-        WebUserPreferences.FavoriteGroupPortletPreferences favoriteGroups = user.getWebPreferences()
-            .getFavoriteGroupPortletPreferences();
-        return groupManager.getResourceGroupByIds(getSubject(), favoriteGroups.asArray(), PageControl
-            .getUnlimitedInstance());
+            groupFavorites = groupManager.getResourceGroupByIds(getSubject(), favoriteGroups.asArray(), PageControl
+                .getUnlimitedInstance());
+        }
+        return groupFavorites;
     }
 
     public List<WebUserPreferences.ResourceVisit> getRecentVisits() {

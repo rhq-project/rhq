@@ -43,9 +43,11 @@ public class FavoritesUIBean {
     }
 
     public boolean isFavorite() {
-        log.debug("isFavorite for " + getResourceId());
-        this.favorite = QuickFavoritesUtil.determineIfFavoriteResource(FacesContextUtility.getRequest());
-        return this.favorite;
+        if (favorite == null) {
+            log.debug("isFavorite for " + getResourceId());
+            favorite = QuickFavoritesUtil.determineIfFavoriteResource(FacesContextUtility.getRequest());
+        }
+        return favorite;
     }
 
     public String toggleFavorite() {

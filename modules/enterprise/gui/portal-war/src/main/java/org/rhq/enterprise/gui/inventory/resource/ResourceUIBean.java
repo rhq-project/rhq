@@ -63,6 +63,8 @@ public class ResourceUIBean {
     private ResourcePermission permissions;
     private ResourceFacets facets;
     private ResourceError invalidPluginConfigurationError;
+    private ResourceAvailabilitySummary availabilitySummary;
+    private AvailabilityType availabilityType;
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
@@ -177,14 +179,20 @@ public class ResourceUIBean {
     }
 
     public AvailabilityType getAvailabilityType() {
-        AvailabilityManagerLocal manager = LookupUtil.getAvailabilityManager();
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-        AvailabilityType avail = manager.getCurrentAvailabilityTypeForResource(subject, getId());
-        return avail;
+        if (availabilityType == null) {
+            AvailabilityManagerLocal manager = LookupUtil.getAvailabilityManager();
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            availabilityType = manager.getCurrentAvailabilityTypeForResource(subject, getId());
+        }
+        return availabilityType;
     }
 
     public ResourceAvailabilitySummary getAvailabilitySummary() {
-        return resourceManager.getAvailabilitySummary(EnterpriseFacesContextUtility.getSubject(), getId());
+        if (availabilitySummary == null) {
+            availabilitySummary = resourceManager.getAvailabilitySummary(EnterpriseFacesContextUtility.getSubject(),
+                getId());
+        }
+        return availabilitySummary;
     }
 
 }

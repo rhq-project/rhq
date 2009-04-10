@@ -332,10 +332,14 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         }
 
         PageControl pc = new PageControl(0, n);
-        pc.initDefaultOrderingField("o.oobFactor", PageOrdering.DESC);
+        pc.addDefaultOrderingField("sched.id");
+        pc.addDefaultOrderingField("o.oobFactor", PageOrdering.DESC);
 
-        Query query = entityManager.createNamedQuery(MeasurementOOB.GET_HIGHEST_FACTORS_FOR_RESOURCE);
+        String queryName = MeasurementOOB.GET_HIGHEST_FACTORS_FOR_RESOURCE;
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, queryName);
         query.setParameter("resourceId", resourceId);
+        countQuery.setParameter("resourceId", resourceId);
 
         List<MeasurementOOBComposite> results = query.getResultList();
 
@@ -359,7 +363,8 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             }
         }
         // return the result
-        PageList<MeasurementOOBComposite> result = new PageList<MeasurementOOBComposite>(results, n, pc);
+        long totalCount = (Long) countQuery.getSingleResult();
+        PageList<MeasurementOOBComposite> result = new PageList<MeasurementOOBComposite>(results, (int) totalCount, pc);
 
         return result;
 

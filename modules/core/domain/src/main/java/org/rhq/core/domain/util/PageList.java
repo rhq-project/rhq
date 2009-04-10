@@ -66,7 +66,7 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
         super(collection);
         this.totalSize = totalSize;
         if (collection.size() == 0 && totalSize > 0) {
-            LOG.warn("PageList was passed an empty collection but the 'totalSize' attribute was " + totalSize);
+            LOG.warn("PageList was passed an empty collection but 'totalSize' was " + totalSize + ", " + pageControl);
         }
         this.isUnbounded = false;
         this.pageControl = pageControl;

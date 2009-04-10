@@ -25,10 +25,10 @@ public class ResourceOverviewUIBean {
     private List<ResourceConfigurationUpdate> recentConfigChanges;
     private List<Tuple<EventSeverity, Integer>> recentEventCounts;
     private List<InstalledPackageHistory> recentPackageHistory;
+    private List<MeasurementOOBComposite> recentOObs;
 
     private Subject subject;
     private int resourceId;
-    private List<MeasurementOOBComposite> recentOObs;
 
     public ResourceOverviewUIBean() {
         subject = EnterpriseFacesContextUtility.getSubject();

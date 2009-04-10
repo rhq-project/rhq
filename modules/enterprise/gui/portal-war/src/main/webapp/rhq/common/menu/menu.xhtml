@@ -175,19 +175,19 @@
         </rich:menuItem>
 
         <ui:remove>***** Groups > GROUP DEFINITIONS *****</ui:remove>
-        <rich:menuItem submitMode="none" icon="/images/GroupDefinition_16.png" 
+        <rich:menuItem submitMode="none" icon="/images/GroupDefinition_16.png"
                        onclick="window.location = '/rhq/definition/group/list.xhtml'">
             <h:outputText value="#{msg['resource.hub.filter.groupDefinitions']}"/>
         </rich:menuItem>
 
         <rich:menuSeparator rendered="#{GlobalPermissionsUIBean.inventory}"/>
-        
+
         <ui:remove>***** Groups > NEW RESOURCE GROUP *****</ui:remove>
         <rich:menuItem submitMode="none" onclick="window.location = '/resource/group/Inventory.do?mode=new'"
                        rendered="#{GlobalPermissionsUIBean.inventory}">
             <h:outputText value="#{msg['resource.hub.NewGroupLink']}"/>
         </rich:menuItem>
-        
+
         <ui:remove>***** Groups > NEW GROUP DEFINITIONS *****</ui:remove>
         <rich:menuItem submitMode="none" onclick="window.location = '/rhq/definition/group/new.xhtml'"
                        rendered="#{GlobalPermissionsUIBean.inventory}">
@@ -219,6 +219,43 @@
                 </c:if>
             </c:forEach>
         </rich:menuGroup>
+
+        <rich:menuSeparator/>
+
+        <ui:remove>***** Groups > SEARCH *****</ui:remove>
+        <rich:menuItem submitMode="none" disabled="true" iconDisabled="/images/icons/Search_16.png">
+            <h:outputText value="Search: " style="color: black;"/>
+            <h:panelGroup>
+                <h:inputText id="selectedGroup" style="width: 250px;" immediate="true"
+                             onkeypress="return ignoreEnterKey(event);" />
+                <rich:suggestionbox id="groupSelectBox" for="selectedGroup" tokens=",[]"
+                                    ajaxSingle="true" immediate="true"
+                                    suggestionAction="#{ResourceGroupSelectUIBean.autocomplete}"
+                                    var="result" data="foo" fetchValue="#{result.groupQueryString}"
+                                    nothingLabel="No matching groups found"
+                                    style="background-color: #cccccc;"
+                                    onselect="document.location.href='/rhq/group/inventory/view.xhtml?' + #{rich:element('selectedGroup')}.value"
+                                    usingSuggestObjects="false" width="700" height="400">
+                    <h:column>
+                        <f:facet name="header">Avail</f:facet>
+                        <h:graphicImage value="/images/icons/availability_green_16.png" rendered="#{result.implicitUp > 0 and result.implicitDown == 0}"/>
+                        <h:graphicImage value="/images/icons/availability_red_16.png" rendered="#{result.implicitUp == 0 and result.implicitDown > 0}"/>
+                        <h:graphicImage value="/images/icons/availability_yellow_16.png" rendered="#{result.implicitUp > 0 and result.implicitDown > 0}"/>
+                        <h:graphicImage value="/images/icons/availability_grey_16.png" rendered="#{result.implicitUp == 0 and result.implicitDown == 0}"/>
+                    </h:column>
+                    <h:column>
+                        <f:facet name="header">Group</f:facet>
+                        <h:outputText value="#{result.resourceGroup.name}"/>
+                    </h:column>
+                    <h:column>
+                        <f:facet name="header">Category</f:facet>
+                        <h:outputText value="#{result.category.name}" rendered="#{result.category.name == 'MIXED'}"/>
+                        <h:outputText value="#{result.resourceGroup.resourceType.name}" rendered="#{result.category.name == 'COMPATIBLE'}"/>
+                    </h:column>
+                </rich:suggestionbox>
+            </h:panelGroup>
+        </rich:menuItem>
+
     </rich:dropDownMenu>
 
     <ui:remove>===== ADMINISTRATION =====</ui:remove>

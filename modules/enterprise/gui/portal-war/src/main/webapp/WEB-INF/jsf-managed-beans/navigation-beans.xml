@@ -29,5 +29,10 @@
         <managed-bean-class>org.rhq.enterprise.gui.navigation.resource.ResourceSelectUIBean</managed-bean-class>
         <managed-bean-scope>request</managed-bean-scope>
     </managed-bean>
+    <managed-bean>
+        <managed-bean-name>ResourceGroupSelectUIBean</managed-bean-name>
+        <managed-bean-class>org.rhq.enterprise.gui.navigation.group.ResourceGroupSelectUIBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>
 
 </faces-config>

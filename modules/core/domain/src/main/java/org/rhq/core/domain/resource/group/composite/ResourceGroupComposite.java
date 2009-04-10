@@ -68,6 +68,8 @@ public class ResourceGroupComposite implements Serializable {
             implicitAvail = implicitAvailability;
         }
 
+        this.resourceGroup = resourceGroup;
+
         if (this.resourceGroup.getGroupCategory() == GroupCategory.COMPATIBLE) {
             this.category = GroupCategory.COMPATIBLE;
         } else if (this.resourceGroup.getGroupCategory() == GroupCategory.MIXED) {
@@ -76,8 +78,6 @@ public class ResourceGroupComposite implements Serializable {
             throw new IllegalArgumentException("Unknown category " + this.resourceGroup.getGroupCategory()
                 + " for ResourceGroup " + this.resourceGroup.getName());
         }
-
-        this.resourceGroup = resourceGroup;
     }
 
     public Double getImplicitAvail() {
@@ -118,6 +118,16 @@ public class ResourceGroupComposite implements Serializable {
 
     public String getImplicitFormatted() {
         return getAlignedAvailabilityResults(getImplicitUp(), getImplicitDown());
+    }
+
+    /**
+     * Returns a query string snippet that can be passed to group URLs that reference this specific group.
+     * Note that the returned string does not include the "?" itself.
+     * 
+     * @return query string snippet that can appear after the "?" in group URLs.
+     */
+    public String getGroupQueryString() {
+        return "category=" + getCategory().getName() + "&amp;groupId=" + getResourceGroup().getId();
     }
 
     private String getAlignedAvailabilityResults(long up, long down) {

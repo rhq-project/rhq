@@ -25,57 +25,22 @@
 
     <ui:remove>===== DASHBOARD =====</ui:remove>
 
-    <h:outputLink value="/Dashboard.do">
-        <h:outputText value="#{msg['dash.home.PageTitle']}"/>
-    </h:outputLink>
-
-    <ui:remove>===== RESOURCES =====</ui:remove>
-
     <rich:dropDownMenu>
         <f:facet name="label">
             <h:panelGroup>
-                <h:outputLink value="/ResourceHub.do">
-                    <h:outputText value="Resources"/>
+                <h:outputLink value="/Dashboard.do">
+                    <h:outputText value="#{msg['dash.home.PageTitle']}"/>
                 </h:outputLink>
             </h:panelGroup>
         </f:facet>
 
-        <ui:remove>***** Resources > PLAFORMS *****</ui:remove>
-        <rich:menuItem submitMode="none" icon="/images/icons/Platform_up_16.png"
-                       onclick="window.location = '/ResourceHub.do?resourceCategory=PLATFORM'">
-            <h:outputText value="#{msg['resource.hub.filter.platform']}"/>
+        <ui:remove>***** Dashboard > AUTO-DISCOVERY QUEUE *****</ui:remove>
+        <rich:menuItem submitMode="none"
+                       onclick="window.location = '/rhq/discovery/queue.xhtml'">
+            <h:outputText value="Auto Discovery Queue"/>
         </rich:menuItem>
 
-        <ui:remove>***** Resources > SERVERS *****</ui:remove>
-        <rich:menuItem submitMode="none" icon="/images/icons/Server_up_16.png"
-                       onclick="window.location = '/ResourceHub.do?resourceCategory=SERVER'">
-            <h:outputText value="#{msg['resource.hub.filter.server']}"/>
-        </rich:menuItem>
-
-        <ui:remove>***** Resources > SERVICES *****</ui:remove>
-        <rich:menuItem submitMode="none" icon="/images/icons/Service_up_16.png"
-                       onclick="window.location = '/ResourceHub.do?resourceCategory=SERVICE'">
-            <h:outputText value="#{msg['resource.hub.filter.service']}"/>
-        </rich:menuItem>
-
-        <ui:remove>***** Resources > COMPATIBLE GROUPS *****</ui:remove>
-        <rich:menuItem submitMode="none" icon="/images/icons/Cluster_up_16.png"
-                       onclick="window.location = '/GroupHub.do?groupCategory=COMPATIBLE'">
-            <h:outputText value="#{msg['resource.hub.filter.compatibleGroups']}"/>
-        </rich:menuItem>
-
-        <ui:remove>***** Resources > MIXED GROUPS *****</ui:remove>
-        <rich:menuItem submitMode="none" icon="/images/icons/Group_up_16.png"
-                       onclick="window.location = '/GroupHub.do?groupCategory=MIXED'">
-            <h:outputText value="#{msg['resource.hub.filter.mixedGroups']}"/>
-        </rich:menuItem>
-
-        <ui:remove>***** Resources > GROUP DEFINITIONS *****</ui:remove>
-        <rich:menuItem submitMode="none" onclick="window.location = '/rhq/definition/group/list.xhtml'">
-            <h:outputText value="#{msg['resource.hub.filter.groupDefinitions']}"/>
-        </rich:menuItem>
-
-        <ui:remove>***** Resources > SYSTEM VIEWS *****</ui:remove>
+        <ui:remove>***** Dashboard > SYSTEM VIEWS *****</ui:remove>
         <rich:menuGroup value="Subsystem Views">
             <rich:menuItem submitMode="none" icon="/images/icons/Configure_16.png"
                            onclick="window.location = '/rhq/subsystem/configurationUpdate.xhtml'">Configuration Changes
@@ -94,18 +59,35 @@
             </rich:menuItem>
         </rich:menuGroup>
 
-        <rich:menuSeparator rendered="#{GlobalPermissionsUIBean.inventory}"/>
-        
-        <ui:remove>***** NEW RESOURCE GROUP *****</ui:remove>
-        <rich:menuItem submitMode="none" onclick="window.location = '/resource/group/Inventory.do?mode=new'"
-                       rendered="#{GlobalPermissionsUIBean.inventory}">
-            <h:outputText value="#{msg['resource.hub.NewGroupLink']}"/>
+    </rich:dropDownMenu>
+
+    <ui:remove>===== RESOURCES =====</ui:remove>
+
+    <rich:dropDownMenu>
+        <f:facet name="label">
+            <h:panelGroup>
+                <h:outputLink value="/ResourceHub.do">
+                    <h:outputText value="Resources"/>
+                </h:outputLink>
+            </h:panelGroup>
+        </f:facet>
+
+        <ui:remove>***** Resources > PLATFORMS *****</ui:remove>
+        <rich:menuItem submitMode="none" icon="/images/icons/Platform_up_16.png"
+                       onclick="window.location = '/ResourceHub.do?resourceCategory=PLATFORM'">
+            <h:outputText value="#{msg['resource.hub.filter.platform']}"/>
         </rich:menuItem>
-        
-        <ui:remove>***** NEW GROUP DEFINITIONS *****</ui:remove>
-        <rich:menuItem submitMode="none" onclick="window.location = '/rhq/definition/group/new.xhtml'"
-                       rendered="#{GlobalPermissionsUIBean.inventory}">
-            <h:outputText value="#{msg['resource.hub.NewGroupDefinitionLink']}"/>
+
+        <ui:remove>***** Resources > SERVERS *****</ui:remove>
+        <rich:menuItem submitMode="none" icon="/images/icons/Server_up_16.png"
+                       onclick="window.location = '/ResourceHub.do?resourceCategory=SERVER'">
+            <h:outputText value="#{msg['resource.hub.filter.server']}"/>
+        </rich:menuItem>
+
+        <ui:remove>***** Resources > SERVICES *****</ui:remove>
+        <rich:menuItem submitMode="none" icon="/images/icons/Service_up_16.png"
+                       onclick="window.location = '/ResourceHub.do?resourceCategory=SERVICE'">
+            <h:outputText value="#{msg['resource.hub.filter.service']}"/>
         </rich:menuItem>
 
         <rich:menuSeparator/>
@@ -121,31 +103,13 @@
             </c:forEach>
         </rich:menuGroup>
 
-        <ui:remove>***** Resources > FAVORITE GROUPS *****</ui:remove>
-        <rich:menuGroup value="Favorite Groups" icon="/images/icons/Favorite_16.png">
-            <c:forEach var="group" items="#{UserPreferencesUIBean.groupFavorites}">
-                <rich:menuItem submitMode="none"
-                               icon="/images/icons/#{group.groupCategory == 'MIXED' ? 'Group' : 'Cluster'}_up_16.png"
-                               onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{group.id}'">
-                    <h:outputText value="#{group.name}"/>
-                </rich:menuItem>
-            </c:forEach>
-        </rich:menuGroup>
-
         <ui:remove>***** Resources > RECENTLY VIEWED *****</ui:remove>
-        <rich:menuGroup value="Recently Viewed" icon="/images/icons/History_16.png">
+        <rich:menuGroup value="Recently Viewed Resources" icon="/images/icons/History_16.png">
             <c:forEach var="visit" items="#{UserPreferencesUIBean.recentVisits}">
                 <c:if test="#{visit.kind == 'PLATFORM' or visit.kind == 'SERVER' or visit.kind == 'SERVICE'}">
                 <rich:menuItem submitMode="none"
                                icon="/images/icons/#{visit.kind.displayName}_up_16.png"
                                onclick="window.location = '#{onf:getDefaultResourceTabURL()}?id=#{visit.id}'">
-                    <h:outputText value="#{visit.name}"/>
-                </rich:menuItem>
-                </c:if>
-                <c:if test="#{visit.kind == 'COMPATIBLE_GROUP' or visit.kind == 'MIXED_GROUP'}">
-                <rich:menuItem submitMode="none"
-                               icon="/images/icons/#{visit.kind == 'COMPATIBLE_GROUP' ? 'Cluster' : 'Group'}_up_16.png"
-                               onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{visit.id}'">
                     <h:outputText value="#{visit.name}"/>
                 </rich:menuItem>
                 </c:if>
@@ -155,7 +119,7 @@
         <rich:menuSeparator/>
 
         <ui:remove>***** Resources > SEARCH *****</ui:remove>
-        <rich:menuItem submitMode="none" disabled="true" icon="/images/icons/Search_16.png">
+        <rich:menuItem submitMode="none" disabled="true" iconDisabled="/images/icons/Search_16.png">
             <h:outputText value="Search: " style="color: black;"/>
             <h:panelGroup>
                 <h:inputText id="selectedResource" style="width: 250px;" immediate="true"
@@ -185,6 +149,76 @@
             </h:panelGroup>
         </rich:menuItem>
 
+    </rich:dropDownMenu>
+
+    <ui:remove>===== GROUPS =====</ui:remove>
+
+    <rich:dropDownMenu>
+        <f:facet name="label">
+            <h:panelGroup>
+                <h:outputLink value="/GroupHub.do">
+                    <h:outputText value="Groups"/>
+                </h:outputLink>
+            </h:panelGroup>
+        </f:facet>
+
+        <ui:remove>***** Groups > COMPATIBLE GROUPS *****</ui:remove>
+        <rich:menuItem submitMode="none" icon="/images/icons/Cluster_up_16.png"
+                       onclick="window.location = '/GroupHub.do?groupCategory=COMPATIBLE'">
+            <h:outputText value="#{msg['resource.hub.filter.compatibleGroups']}"/>
+        </rich:menuItem>
+
+        <ui:remove>***** Groups > MIXED GROUPS *****</ui:remove>
+        <rich:menuItem submitMode="none" icon="/images/icons/Group_up_16.png"
+                       onclick="window.location = '/GroupHub.do?groupCategory=MIXED'">
+            <h:outputText value="#{msg['resource.hub.filter.mixedGroups']}"/>
+        </rich:menuItem>
+
+        <ui:remove>***** Groups > GROUP DEFINITIONS *****</ui:remove>
+        <rich:menuItem submitMode="none" icon="/images/GroupDefinition_16.png" 
+                       onclick="window.location = '/rhq/definition/group/list.xhtml'">
+            <h:outputText value="#{msg['resource.hub.filter.groupDefinitions']}"/>
+        </rich:menuItem>
+
+        <rich:menuSeparator rendered="#{GlobalPermissionsUIBean.inventory}"/>
+        
+        <ui:remove>***** Groups > NEW RESOURCE GROUP *****</ui:remove>
+        <rich:menuItem submitMode="none" onclick="window.location = '/resource/group/Inventory.do?mode=new'"
+                       rendered="#{GlobalPermissionsUIBean.inventory}">
+            <h:outputText value="#{msg['resource.hub.NewGroupLink']}"/>
+        </rich:menuItem>
+        
+        <ui:remove>***** Groups > NEW GROUP DEFINITIONS *****</ui:remove>
+        <rich:menuItem submitMode="none" onclick="window.location = '/rhq/definition/group/new.xhtml'"
+                       rendered="#{GlobalPermissionsUIBean.inventory}">
+            <h:outputText value="#{msg['resource.hub.NewGroupDefinitionLink']}"/>
+        </rich:menuItem>
+
+        <rich:menuSeparator/>
+
+        <ui:remove>***** Groups > FAVORITE GROUPS *****</ui:remove>
+        <rich:menuGroup value="Favorite Groups" icon="/images/icons/Favorite_16.png">
+            <c:forEach var="group" items="#{UserPreferencesUIBean.groupFavorites}">
+                <rich:menuItem submitMode="none"
+                               icon="/images/icons/#{group.groupCategory == 'MIXED' ? 'Group' : 'Cluster'}_up_16.png"
+                               onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{group.id}'">
+                    <h:outputText value="#{group.name}"/>
+                </rich:menuItem>
+            </c:forEach>
+        </rich:menuGroup>
+
+        <ui:remove>***** Groups > RECENTLY VIEWED *****</ui:remove>
+        <rich:menuGroup value="Recently Viewed Groups" icon="/images/icons/History_16.png">
+            <c:forEach var="visit" items="#{UserPreferencesUIBean.recentVisits}">
+                <c:if test="#{visit.kind == 'COMPATIBLE_GROUP' or visit.kind == 'MIXED_GROUP'}">
+                <rich:menuItem submitMode="none"
+                               icon="/images/icons/#{visit.kind == 'COMPATIBLE_GROUP' ? 'Cluster' : 'Group'}_up_16.png"
+                               onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{visit.id}'">
+                    <h:outputText value="#{visit.name}"/>
+                </rich:menuItem>
+                </c:if>
+            </c:forEach>
+        </rich:menuGroup>
     </rich:dropDownMenu>
 
     <ui:remove>===== ADMINISTRATION =====</ui:remove>

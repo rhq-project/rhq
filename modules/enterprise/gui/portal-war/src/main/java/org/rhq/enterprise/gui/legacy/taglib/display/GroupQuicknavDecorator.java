@@ -30,6 +30,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.gui.util.UrlUtility;
 import org.rhq.enterprise.gui.legacy.HubConstants;
+import org.rhq.enterprise.server.resource.ResourceFacetsCache;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -55,9 +56,9 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
 
         ResourceType type = resourceGroupComposite.getResourceGroup().getResourceType();
         if (type == null) {
-            this.resourceFacets = new ResourceFacets(false, false, false, false, false, false, false);
+            this.resourceFacets = ResourceFacets.NONE;
         } else {
-            this.resourceFacets = LookupUtil.getResourceTypeManager().getResourceFacets(type.getId());
+            this.resourceFacets = ResourceFacetsCache.getSingleton().getResourceFacets(type.getId());
         }
         return getOutput();
     }

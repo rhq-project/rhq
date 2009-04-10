@@ -25,6 +25,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
+import org.rhq.enterprise.server.resource.ResourceFacetsCache;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -50,9 +51,9 @@ public class ResourceQuicknavDecorator extends QuicknavDecorator {
 
         ResourceType type = this.resourceComposite.getResource().getResourceType();
         if (type == null) {
-            this.resourceFacets = new ResourceFacets(false, false, false, false, false, false, false);
+            this.resourceFacets = ResourceFacets.NONE;
         } else {
-            this.resourceFacets = LookupUtil.getResourceTypeManager().getResourceFacets(type.getId());
+            this.resourceFacets = ResourceFacetsCache.getSingleton().getResourceFacets(type.getId());
         }
         return getOutput();
     }

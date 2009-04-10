@@ -32,16 +32,24 @@ import java.io.Serializable;
 public class ResourceFacets implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private boolean measurement;
-    private boolean event;
-    private boolean pluginConfiguration;
-    private boolean configuration;
-    private boolean operation;
-    private boolean content;
-    private boolean callTime;
+    public static ResourceFacets NONE = new ResourceFacets(-1, false, false, false, false, false, false, false);
+    public static ResourceFacets ALL = new ResourceFacets(-1, true, true, true, true, true, true, true);
+    /*
+     * immutable private member data makes this object safe to use in a concurrent environment, such as a 
+     * concurrent-acess cache of ResourceFacets objects
+     */
+    private final int resourceTypeId;
+    private final boolean measurement;
+    private final boolean event;
+    private final boolean pluginConfiguration;
+    private final boolean configuration;
+    private final boolean operation;
+    private final boolean content;
+    private final boolean callTime;
 
-    public ResourceFacets(boolean measurement, boolean event, boolean pluginConfiguration, boolean configuration,
-        boolean operation, boolean content, boolean callTime) {
+    public ResourceFacets(int resourceTypeId, boolean measurement, boolean event, boolean pluginConfiguration,
+        boolean configuration, boolean operation, boolean content, boolean callTime) {
+        this.resourceTypeId = resourceTypeId;
         this.measurement = measurement;
         this.event = event;
         this.pluginConfiguration = pluginConfiguration;
@@ -51,8 +59,9 @@ public class ResourceFacets implements Serializable {
         this.callTime = callTime;
     }
 
-    public ResourceFacets(Number measurement, Number event, Number pluginConfiguration, Number configuration,
-        Number operation, Number content, Number callTime) {
+    public ResourceFacets(int resourceTypeId, Number measurement, Number event, Number pluginConfiguration,
+        Number configuration, Number operation, Number content, Number callTime) {
+        this.resourceTypeId = resourceTypeId;
         this.measurement = measurement.intValue() != 0;
         this.event = event.intValue() != 0;
         this.pluginConfiguration = pluginConfiguration.intValue() != 0;
@@ -60,6 +69,10 @@ public class ResourceFacets implements Serializable {
         this.operation = operation.intValue() != 0;
         this.content = content.intValue() != 0;
         this.callTime = callTime.intValue() != 0;
+    }
+
+    public int getResourceTypeId() {
+        return resourceTypeId;
     }
 
     /**

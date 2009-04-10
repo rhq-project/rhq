@@ -157,7 +157,21 @@ import org.rhq.core.domain.operation.OperationDefinition;
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_ID_WITH_ALL_OPERATIONS, query = "SELECT DISTINCT rt "
         + "FROM ResourceType rt " + "LEFT JOIN FETCH rt.operationDefinitions def "
         + "LEFT JOIN FETCH def.parametersConfigurationDefinition "
-        + "LEFT JOIN FETCH def.resultsConfigurationDefinition " + "WHERE rt.id = :id") })
+        + "LEFT JOIN FETCH def.resultsConfigurationDefinition " + "WHERE rt.id = :id"),
+    @NamedQuery(name = ResourceType.QUERY_FIND_RESOURCE_FACETS, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceFacets " //
+        + "       ( " //
+        + "         rt.id," // the resourceTypeId
+        + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef)," // measurement
+        + "         (SELECT COUNT(eventDef) FROM rt.eventDefinitions eventDef)," // event
+        + "         (SELECT COUNT(pluginConfig) FROM rt.pluginConfigurationDefinition pluginConfig)," // pluginConfiguration
+        + "         (SELECT COUNT(resConfig) FROM rt.resourceConfigurationDefinition resConfig)," // configuration
+        + "         (SELECT COUNT(operationDef) FROM rt.operationDefinitions operationDef)," // operation
+        + "         (SELECT COUNT(packageType) FROM rt.packageTypes packageType)," // content
+        + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef WHERE metricDef.dataType = 3)" // calltime
+        + "       ) " //
+        + "  FROM ResourceType rt " //
+        + " WHERE ( rt.id = :resourceTypeId OR :resourceTypeId IS NULL )") })
 @NamedNativeQueries( {
     // TODO: Add authz conditions to the below query.
     @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY, query = "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.subcategory_id, crt.plugin_config_def_id, crt.res_config_def_id "
@@ -236,6 +250,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     public static final String QUERY_FIND_BY_RESOURCE_GROUP = "ResourceType.findByResourceGroup";
 
     public static final String MAPPING_FIND_CHILDREN_BY_CATEGORY = "ResourceType.findChildrenByCategoryMapping";
+    public static final String QUERY_FIND_RESOURCE_FACETS = "ResourceType.findResourceFacets";
 
     @Id
     @Column(name = "ID", nullable = false)

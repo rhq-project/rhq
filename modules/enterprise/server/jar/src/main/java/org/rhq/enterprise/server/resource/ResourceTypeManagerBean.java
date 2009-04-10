@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.resource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +31,9 @@ import java.util.TreeSet;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.Timeout;
+import javax.ejb.Timer;
+import javax.ejb.TimerService;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -67,6 +71,9 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
 
     // TODO: Add a getResourceTypeByResourceId method.
 
+    @javax.annotation.Resource
+    TimerService timerService;
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     EntityManager entityManager;
 
@@ -76,6 +83,40 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
     @EJB
     @IgnoreDependency
     private ResourceManagerLocal resourceManager;
+
+    @EJB
+    private ResourceTypeManagerLocal resourceTypeManager;
+
+    private final String TIMER_DATA = "ResourceTypeManagerBean.reloadResourceFacetsCache";
+
+    @SuppressWarnings("unchecked")
+    public void scheduleResourceFacetsReloader() {
+        /* each time the webapp is reloaded, it would create 
+         * duplicate events if we don't cancel the existing ones
+         */
+        Collection<Timer> timers = timerService.getTimers();
+        for (Timer existingTimer : timers) {
+            log.debug("Found timer - attempting to cancel: " + existingTimer.toString());
+            try {
+                existingTimer.cancel();
+            } catch (Exception e) {
+                log.warn("Failed in attempting to cancel timer: " + existingTimer.toString());
+            }
+        }
+
+        // single-action timer that will trigger in 10 seconds
+        timerService.createTimer(10000, TIMER_DATA);
+    }
+
+    @Timeout
+    public void handleHeartbeatTimer(Timer timer) {
+        try {
+            resourceTypeManager.reloadResourceFacetsCache();
+        } finally {
+            // reschedule ourself to trigger in another 30 seconds
+            timerService.createTimer(30000, TIMER_DATA);
+        }
+    }
 
     public ResourceType getResourceTypeById(Subject subject, int id) throws ResourceTypeNotFoundException {
         // this operation does not need to be secured; types are data side-effects of authorized resources
@@ -388,27 +429,27 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
      */
     @SuppressWarnings("unchecked")
     public ResourceFacets getResourceFacets(int resourceTypeId) {
-        Query query = entityManager.createQuery("" //
-            + "SELECT new org.rhq.core.domain.resource.composite.ResourceFacets " //
-            + "       ( " //
-            + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef)," // measurement
-            + "         (SELECT COUNT(eventDef) FROM rt.eventDefinitions eventDef)," // event
-            + "         (SELECT COUNT(pluginConfig) FROM rt.pluginConfigurationDefinition pluginConfig)," // pluginConfiguration
-            + "         (SELECT COUNT(resConfig) FROM rt.resourceConfigurationDefinition resConfig)," // configuration
-            + "         (SELECT COUNT(operationDef) FROM rt.operationDefinitions operationDef)," // operation
-            + "         (SELECT COUNT(packageType) FROM rt.packageTypes packageType)," // content
-            + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef WHERE metricDef.dataType = 3)" // calltime
-            + "       ) " //
-            + "  FROM ResourceType rt " //
-            + " WHERE rt.id = :resourceTypeId");
+        ResourceFacets cachedFacet = ResourceFacetsCache.getSingleton().getResourceFacets(resourceTypeId);
+        if (cachedFacet != null) {
+            return cachedFacet;
+        }
+        // be paranoid and fallback to getting the results directly from the database
+        Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_RESOURCE_FACETS);
         query.setParameter("resourceTypeId", resourceTypeId);
-        //ResourceType resourceType = this.getResourceTypeById(subject, resourceTypeId);
-        //ResourceFacets resourceFacets = new ResourceFacets(resourceType);
         List<ResourceFacets> facets = query.getResultList();
         if (facets.size() != 1) {
-            return new ResourceFacets(false, false, false, false, false, false, false);
+            return new ResourceFacets(resourceTypeId, false, false, false, false, false, false, false);
         }
         return facets.get(0);
+    }
+
+    @SuppressWarnings("unchecked")
+    public void reloadResourceFacetsCache() {
+        Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_RESOURCE_FACETS);
+        query.setParameter("resourceTypeId", null);
+        List<ResourceFacets> facets = query.getResultList();
+
+        ResourceFacetsCache.getSingleton().reload(facets);
     }
 
     @SuppressWarnings("unchecked")

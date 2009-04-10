@@ -43,6 +43,8 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 public interface ResourceTypeManagerLocal {
     // TODO: Add a getResourceTypeByResourceId method.
 
+    void scheduleResourceFacetsReloader();
+
     ResourceType getResourceTypeById(Subject subject, int id) throws ResourceTypeNotFoundException;
 
     ResourceType getResourceTypeByParentAndName(Subject subject, ResourceType parent, String name)
@@ -95,6 +97,8 @@ public interface ResourceTypeManagerLocal {
      * Inventory, ...) can be displayed for a resource of a certain type
      */
     ResourceFacets getResourceFacets(int resourceTypeId);
+
+    void reloadResourceFacetsCache();
 
     /**
      * Obtain ResourceTypes that match a given category or all if category is null. Note that the caller needs to have

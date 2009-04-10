@@ -49,6 +49,7 @@ import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.core.plugin.ProductPluginDeployerMBean;
 import org.rhq.enterprise.server.plugin.content.ContentSourcePluginServiceManagement;
+import org.rhq.enterprise.server.resource.ResourceFacetsCache;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForSuspectedAgentsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob;
@@ -86,6 +87,7 @@ public class StartupServlet extends HttpServlet {
         SubjectPreferencesCache.getInstance();
         AlertSerializer.getSingleton();
         AvailabilityReportSerializer.getSingleton();
+        ResourceFacetsCache.getSingleton();
 
         // Before starting determine the operating mode of this server and
         // take any necessary initialization action. Must happen before comm startup since listeners
@@ -272,6 +274,7 @@ public class StartupServlet extends HttpServlet {
         LookupUtil.getServerManager().scheduleServerHeartbeat();
         LookupUtil.getCacheConsistenyManager().scheduleServerCacheReloader();
         LookupUtil.getSystemManager().scheduleConfigCacheReloader();
+        LookupUtil.getResourceTypeManager().scheduleResourceFacetsReloader();
 
         // DynaGroup Auto-Recalculation Job
         try {

@@ -49,7 +49,6 @@ import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.core.plugin.ProductPluginDeployerMBean;
 import org.rhq.enterprise.server.plugin.content.ContentSourcePluginServiceManagement;
-import org.rhq.enterprise.server.resource.ResourceFacetsCache;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForSuspectedAgentsJob;
 import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob;
@@ -310,7 +309,7 @@ public class StartupServlet extends HttpServlet {
         // Timed Out Operations Job
         try {
             final long initialDelay = 1000L * 60 * 3; // 3 min
-            final long interval = 1000L * 60 * 1; // 1 min
+            final long interval = 1000L * 60 * 10; // 10 minutes
             scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutOperationsJob.class, true, false, initialDelay,
                 interval);
         } catch (Exception e) {

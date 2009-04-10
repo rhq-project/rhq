@@ -9,7 +9,6 @@ import javax.persistence.EntityManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.util.HibernateStatisticsStopWatch;
 
 public class HibernatePerformanceMonitor {
     private static final Log log = LogFactory.getLog(HibernatePerformanceMonitor.class);

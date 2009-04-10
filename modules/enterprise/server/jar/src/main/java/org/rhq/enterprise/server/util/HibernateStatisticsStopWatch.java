@@ -1,4 +1,4 @@
-package org.rhq.core.domain.util;
+package org.rhq.enterprise.server.util;
 
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
@@ -8,6 +8,8 @@ import javax.management.MBeanServer;
 import javax.persistence.EntityManager;
 
 import org.hibernate.stat.Statistics;
+
+import org.rhq.core.domain.util.PersistenceUtility;
 
 public class HibernateStatisticsStopWatch {
 

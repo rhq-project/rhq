@@ -43,10 +43,11 @@
 
 <!-- NOTE: For Datasource ManagedProperty annotations, see:
      https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/main/org/jboss/resource/metadata/mcf/DataSourceDeploymentMetaData.java
-     Descriptions of datasource config props can also be culled from:
+     Descriptions of datasource config props can also be culled from the following locations:
      https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/resources/dtd/jboss-ds_5_0.dtd
-     and:
      http://www.jboss.org/file-access/default/members/jbossas/freezone/docs/Administration_And_Configuration_Guide/5/html/Configuring_JDBC_DataSources.html
+     http://www.jboss.org/community/wiki/ConfigDataSources
+     http://www.jboss.org/community/wiki/ConfigJCACommon
   -->
 
 <!ENTITY datasourceConnectionResourceConfigProps '
@@ -112,13 +113,10 @@
                        units="milliseconds"
                        activationPolicy="immediate" type="integer" required="false">
         <c:description>
-            Indicates the maximum time in milliseconds to block while waiting for a connection before
-            throwing
-            an exception. Note that this blocks only while waiting for a permit for a connection, and
-            will never
-            throw an exception if creating a new connection takes an inordinately long time. If nothing
-            is specified
-            the default of 30000 milliseconds is used.
+            Indicates the maximum time in milliseconds to block while waiting for a connection before throwing
+            an exception. Note that this blocks only while waiting for a permit for a connection, and will never
+            throw an exception if creating a new connection takes an inordinately long time. If nothing is specified,
+            the default of 30000 (30 seconds) is used.
         </c:description>
         <c:constraint>
             <c:integer-constraint minimum="0"/>
@@ -128,7 +126,7 @@
     <c:simple-property name="idle-timeout-minutes" type="integer" activationPolicy="immediate"
                        displayName="Idle Timeout" units="minutes" required="false" default="15">
         <c:description>
-            The maximum time, in minutes, a connection may be idle before being closed. Default is 15 minutes.
+            The maximum time, in minutes, a connection may be idle before being closed. The default is 15 minutes.
         </c:description>
         <c:constraint>
             <c:integer-constraint minimum="0"/>
@@ -137,11 +135,14 @@
 
     <c:simple-property name="set-tx-query-timeout"
                        displayName="Set Tx Query Timeout"
-                       description="whether to set the query timeout based on the time remaining until transaction timeout;
-                  any configured query timeout will be used if there is no transaction. The default is false."
                        type="boolean"
                        required="false"
-                       activationPolicy="immediate"/>
+                       activationPolicy="immediate">
+        <c:description>
+            Whether to set the query timeout based on the time remaining until transaction timeout;
+            any configured query timeout will be used if there is no transaction. The default is false.
+        </c:description>
+    </c:simple-property>
 
     <c:simple-property name="query-timeout"
                        displayName="Query Timeout"
@@ -177,28 +178,32 @@
     <c:simple-property name="valid-connection-checker-class-name" type="string"
                        activationPolicy="immediate"
                        displayName="Valid Connection Checker Class Name" required="false">
-        <c:description>Fully qualified name of the Java class used to validate if a connection is valid.</c:description>
+        <c:description>
+            Fully qualified name of the Java class used to validate if a connection is valid.
+        </c:description>
     </c:simple-property>
 
     <c:simple-property name="stale-connection-checker-class-name"
                        displayName="Stale Connection Checker Class Name"
-                       description="Fully qualified name of the Java class used to check if a connection has become stale."
                        type="string"
-                       required="false"/>
+                       required="false">
+        <c:description>
+            Fully qualified name of the Java class used to check if a connection has become stale.
+        </c:description>
+    </c:simple-property>
 
     <c:simple-property name="use-java-context"
                        displayName="Use Java Context"
                        type="boolean"
                        required="false">
-        <c:description>Indicates whether the JNDI name should be bound under the java context,
-            which causes the DataSource to only be accessible from within the JBoss server VM.
+        <c:description>
+            Indicates whether the JNDI name should be bound under the "java" context,
+            which causes the DataSource to only be accessible from within the JBossAS VM.
             The default is true.</c:description>
         <c:property-options>
             <c:option name="True" value="true"/>
             <c:option name="False" value="false"/>
         </c:property-options>
-        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
-        </c:defaultValueDescription>
     </c:simple-property>
 
     <c:map-property name="security-domain" displayName="Security Settings" required="false">
@@ -236,52 +241,60 @@
 
     <c:simple-property name="new-connection-sql" type="longString" activationPolicy="immediate"
                        displayName="New Connection SQL" required="false">
-        <c:description>SQL statement to execute whenever a new connection is added to the pool;
-            this can be used to set the connection schema, etc.
+        <c:description>
+            An SQL statement to execute whenever a new connection is added to the pool; this can be used to set the
+            connection schema, etc.
         </c:description>
     </c:simple-property>
 
     <c:simple-property name="exception-sorter-class-name" type="string" activationPolicy="immediate"
                        displayName="Exception Sorter Class Name" required="false">
-        <c:description>Java class to check if an exception should be broadcast.</c:description>
+        <c:description>
+            The fully qualified name of a Java class to use to check if an exception should be broadcast.
+        </c:description>
     </c:simple-property>
 
     <c:simple-property name="check-valid-connection-sql" type="longString" activationPolicy="immediate"
                        displayName="Check Valid Connection SQL" required="false">
-        <c:description>SQL to check the validity of a pool connection.</c:description>
+        <c:description>The SQL statement to use to check the validity of a pool connection.</c:description>
     </c:simple-property>
 
     <c:simple-property name="track-statements" type="string" activationPolicy="immediate"
                        displayName="Track Statements" required="false">
-        <c:description>Whether to check for unclosed statements when the connection is returned to the
-            pool.
+        <c:description>
+            Whether to check for unclosed Statements and ResultSets when connections are returned to the pool. The
+            default is "yes-no-warnings".
         </c:description>
         <c:property-options>
             <c:option name="No" value="no"/>
             <c:option name="Yes" value="yes"/>
             <c:option name="Yes, but no warnings" value="yes-no-warnings" default="true"/>
         </c:property-options>
-        <c:defaultValueDescription>If nothing is specified, the default of &quot;Yes, but not warnings&quot; will
-            be used.
-        </c:defaultValueDescription>
     </c:simple-property>
 
     <c:simple-property name="no-tx-separate-pools" type="boolean" activationPolicy="immediate"
                        displayName="No Tx Separate Pools" required="false">
-        <c:description>Whether or not to use separate pools.</c:description>
+        <c:description>Whether or not to use separate pools. The default is true.</c:description>
         <c:property-options>
             <c:option name="True" value="true"/>
             <c:option name="False" value="false"/>
         </c:property-options>
-        <c:defaultValueDescription>If nothing is specified, the default of true will be used.
-        </c:defaultValueDescription>
     </c:simple-property>
 
     <c:simple-property name="type-mapping" displayName="Type Mappings" required="false"/>
 
-    <c:simple-property type="integer" required="false" name="allocation-retry"/>
+    <c:simple-property type="integer" required="false" name="allocation-retry">
+        <c:description>
+            The number of times that allocating a connection should be tried before throwing an exception. The default
+            is 0.
+        </c:description>
+    </c:simple-property>
 
-    <c:simple-property type="long" required="false" name="allocation-retry-wait-millis" units="milliseconds"/>
+    <c:simple-property type="long" required="false" name="allocation-retry-wait-millis" units="milliseconds">
+        <c:description>
+            The time in milliseconds to wait between retrying to allocate a connection. The default is 5000 (5 seconds).
+        </c:description>
+    </c:simple-property>
 
     <c:simple-property type="boolean" required="false" name="background-validation" default="false">
         <c:description>
@@ -298,13 +311,26 @@
         </c:description>
     </c:simple-property>
 
-    <c:simple-property required="false" name="connection-definition"/>
+    <c:simple-property required="false" name="connection-definition">
+        <c:description>
+            The connection definition inside the RAR deployment uniquely identified by the connection factory interface,
+            e.g. "javax.sql.DataSource".
+        </c:description>
+    </c:simple-property>
 
-    <c:simple-property type="boolean" required="false" name="isSameRM-override-value"/>
+    <c:simple-property type="boolean" required="false" name="isSameRM-override-value">
+        <c:description>
+            If set, unconditionally sets the boolean return value of javax.transaction.xa.XAResource.isSameRM(XAResource).
+        </c:description>
+    </c:simple-property>
 
-    <c:simple-property required="false" name="jmx-invoker-name"/>
+    <c:simple-property required="false" name="jmx-invoker-name">
+        <c:description>
+            The ObjectName of the JMX Invoker MBean associated with this datasource.
+        </c:description>
+    </c:simple-property>
 
-    <c:map-property required="false" name="metadata">
+    <c:map-property required="false" name="metadata" description="Metadata properties.">
         <c:simple-property required="false" name="typeMapping"
                            description="The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml">
             <c:property-options>
@@ -337,17 +363,47 @@
         </c:simple-property>
     </c:map-property>
 
-    <c:simple-property type="boolean" required="false" name="prefill"/>
+    <c:simple-property type="boolean" required="false" name="prefill">
+        <c:description>
+            Whether to attempt to prefill the connection pool to the minimum number of connections. NOTE: Only
+            supporting pools (OnePool) support this feature. A warning can be found in the logs if the pool does not
+            support this.
+        </c:description>
+    </c:simple-property>
 
-    <c:simple-property required="false" name="rar-name"/>
+    <c:simple-property required="false" name="rar-name">
+        <c:description>
+             The RAR deployment to associate with the connection manager MBean. e.g. jms-ra.rar or
+             myapplication.ear#my.rar for nested rars.
+        </c:description>
+    </c:simple-property>
 
-    <c:simple-property required="false" name="statistics-formatter"/>
+    <c:simple-property required="false" name="statistics-formatter">
+        <c:description>
+             The fully qualified class name of the class to use for formatting managed connection pool statistics for
+             this datasource. The class must implement the org.jboss.resource.statistic.formatter.StatisticsFormatter.
+             interface. The default is "org.jboss.resource.statistic.pool.JBossDefaultSubPoolStatisticFormatter".
+        </c:description>
+    </c:simple-property>
 
-    <c:simple-property required="false" name="url-delimiter" description="The DataSource url delimiter"/>
+    <c:simple-property required="false" name="url-delimiter">
+        <c:description>
+             Specifies the delimiter for URLs in connection-url for HA datasources.
+        </c:description>
+    </c:simple-property>
 
-    <c:simple-property required="false" name="url-selector-strategy-class-name" description="The DataSource url selector strategy class name"/>
+    <c:simple-property required="false" name="url-selector-strategy-class-name">
+        <c:description>
+             The fully qualified class name of a class that implements the
+             org.jboss.resource.adapter.jdbc.URLSelectorStrategy interface.
+        </c:description>
+    </c:simple-property>
 
-    <c:simple-property type="boolean" required="false" name="use-strict-min"/>
+    <c:simple-property type="boolean" required="false" name="use-strict-min">
+        <c:description>
+             Whether idle connections below the min-pool-size should be closed.
+        </c:description>
+    </c:simple-property>
 
     <c:simple-property type="long" required="false" name="use-try-lock" default="60000">
         <c:description>
@@ -396,7 +452,11 @@
     </c:map-property>
 '>
 
-<!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/main/org/jboss/resource/metadata/mcf/ManagedConnectionFactoryDeploymentMetaData.java -->
+<!--
+   See:
+       https://anonsvn.jboss.org/repos/jbossas/trunk/connector/src/main/org/jboss/resource/metadata/mcf/ManagedConnectionFactoryDeploymentMetaData.java
+       http://www.jboss.org/community/wiki/ConfigJCACommon
+ -->
 
 <!ENTITY connectionFactoryConnectionResourceConfigProps '
     <c:simple-property required="true" name="jndi-name" displayName="JNDI Name"

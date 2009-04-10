@@ -35,6 +35,7 @@ import org.jboss.managed.api.ManagedOperation;
 import org.jboss.managed.api.ManagedParameter;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.managed.api.ComponentType;
+import org.jboss.managed.api.annotation.ViewUse;
 import org.jboss.metatype.api.types.MetaType;
 import org.jboss.metatype.api.types.MapCompositeMetaType;
 import org.jboss.metatype.api.types.SimpleMetaType;
@@ -156,25 +157,35 @@ public class ConversionUtils
         {
             PropertyDefinition propertyDefinition = propDefs.get(propName);
             ManagedProperty managedProperty = managedProperties.get(propName);
-            if (managedProperty != null && propertyDefinition != null)
-            {
-                PropertySimple customProp = customProps.get(propName);
-                PropertyAdapter propertyAdapter = PropertyAdapterFactory.getCustomPropertyAdapter(customProp);
-                MetaValue metaValue = managedProperty.getValue();
-                if (metaValue != null)
-                {
-                    if (propertyAdapter == null)
-                        propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaValue);
-                    if (propertyAdapter == null)
-                    {
-                        LOG.error("Unable to get the PropertyAdapter from the factory for type: "
-                                + metaValue.getMetaType().getTypeName() + " for ResourceType: " + resourceType.getName());
-                        continue;
-                    }
-                    Property property = propertyAdapter.convertToProperty(managedProperty.getValue(), propertyDefinition);
-                    config.put(property);
-                }
+            if (propertyDefinition == null) {
+                if (!managedProperty.hasViewUse(ViewUse.STATISTIC))
+                    LOG.debug(resourceType + " does not define a property corresponding to ManagedProperty '" + propName
+                            + "'.");
+                continue;
             }
+            if (managedProperty == null) {
+                // This should never happen, but don't let it blow us up.
+                LOG.error("ManagedProperty '" + propName + "' has a null value in the ManagedProperties Map.");
+                continue;
+            }
+            MetaValue metaValue = managedProperty.getValue();
+            if (managedProperty.isRemoved() || metaValue == null) {
+                // Don't even add a Property to the Configuration if the ManagedProperty is flagged as removed or has a
+                // null value.
+                continue;
+            }
+            PropertySimple customProp = customProps.get(propName);
+            PropertyAdapter propertyAdapter = PropertyAdapterFactory.getCustomPropertyAdapter(customProp);
+            if (propertyAdapter == null)
+                propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaValue);
+            if (propertyAdapter == null)
+            {
+                LOG.error("Unable to find a PropertyAdapter for ManagedProperty '" + propName + "' with MetaType ["
+                        + metaValue.getMetaType() + "] for ResourceType '" + resourceType.getName() + "'.");
+                continue;
+            }
+            Property property = propertyAdapter.convertToProperty(metaValue, propertyDefinition);
+            config.put(property);
         }
         return config;
     }
@@ -215,7 +226,16 @@ public class ConversionUtils
     {
         if (property == null ||
             (property instanceof PropertySimple && ((PropertySimple)property).getStringValue() == null)) {
+            // Property is unset, which translates to "removed" in Profile Service lingo.
             managedProperty.setRemoved(true);
+            MetaType metaType = managedProperty.getMetaType();
+            if (!metaType.isPrimitive()) {
+                // Set the value to null for non-primitive ManagedProperties to tell the managed resource to use its
+                // built-in default value.
+                LOG.debug("Setting value of removed non-primitive ManagedProperty '" + managedProperty.getName()
+                    + "' to null...");
+                managedProperty.setValue(null);
+            }
             return;
         }
         // See if there is a custom adapter defined for this property.
@@ -379,6 +399,8 @@ public class ConversionUtils
         } else if (valueType.isGeneric() && metaType.isGeneric())
             return true;
         else if (valueType.isTable() && metaType.isTable())
+            return true;
+        else if (valueType.isProperties() && metaType.isProperties())
             return true;
         else
             return false;

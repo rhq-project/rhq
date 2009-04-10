@@ -232,7 +232,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         if (managedComponent == null)
             throw new IllegalStateException("Failed to find [" + this.componentType + "] ManagedComponent named ["
                     + this.componentName + "].");
-        log.debug("Retrieved " + toString(managedComponent) + ".");
+        log.trace("Retrieved " + toString(managedComponent) + ".");
         return managedComponent;
     }
 

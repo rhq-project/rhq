@@ -26,6 +26,8 @@ import java.util.Map;
 
 import javax.faces.model.DataModel;
 
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -133,6 +135,11 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
                 results = resourceManager.getExplicitResourceWithAvailabilityByResourceGroup(
                         LookupUtil.getSubjectManager().getOverlord(),
                         getResourceGroup(), pageControl);
+            }
+            for (ResourceWithAvailability composite : results) {
+                ResourceType type = composite.getResource().getResourceType();
+                ResourceFacets facets = LookupUtil.getResourceTypeManager().getResourceFacets(type.getId());
+                composite.setResourceFacets(facets);
             }
 
             return results;

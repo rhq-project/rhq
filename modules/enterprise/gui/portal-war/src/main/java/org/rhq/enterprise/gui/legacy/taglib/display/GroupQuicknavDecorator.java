@@ -23,6 +23,8 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -45,10 +47,18 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
     private static final String CONTENT_URL = "/rhq/group/content/view.xhtml?mode=view";
 
     private ResourceGroupComposite resourceGroupComposite;
+    private ResourceFacets resourceFacets;
 
     @Override
     public String decorate(Object columnValue) throws Exception {
         this.resourceGroupComposite = (ResourceGroupComposite) columnValue;
+
+        ResourceType type = resourceGroupComposite.getResourceGroup().getResourceType();
+        if (type == null) {
+            this.resourceFacets = new ResourceFacets(false, false, false, false, false, false, false);
+        } else {
+            this.resourceFacets = LookupUtil.getResourceTypeManager().getResourceFacets(type.getId());
+        }
         return getOutput();
     }
 
@@ -78,7 +88,7 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isEventsSupported() {
-        return (isCompatibleGroup() && this.resourceGroupComposite.getResourceFacets().isEvent());
+        return (isCompatibleGroup() && this.resourceFacets.isEvent());
     }
 
     @Override
@@ -88,12 +98,12 @@ public class GroupQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isConfigureSupported() {
-        return (isCompatibleGroup() && this.resourceGroupComposite.getResourceFacets().isConfiguration());
+        return (isCompatibleGroup() && this.resourceFacets.isConfiguration());
     }
 
     @Override
     protected boolean isOperationsSupported() {
-        return (isCompatibleGroup() && this.resourceGroupComposite.getResourceFacets().isOperation());
+        return (isCompatibleGroup() && this.resourceFacets.isOperation());
     }
 
     @Override

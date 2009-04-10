@@ -61,7 +61,6 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -117,11 +116,8 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
      */
     public static ResourceFacets getResourceFacets(int resourceTypeId) {
         ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
-        try {
-            return resourceTypeManager.getResourceFacets(EnterpriseFacesContextUtility.getSubject(), resourceTypeId);
-        } catch (ResourceTypeNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        return resourceTypeManager.getResourceFacets(resourceTypeId);
+
     }
 
     public static ResourceFacets getFacets() {

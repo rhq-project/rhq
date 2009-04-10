@@ -25,23 +25,16 @@ import javax.faces.FacesException;
 import javax.faces.application.ViewHandler;
 import javax.faces.component.UIViewRoot;
 import javax.faces.context.FacesContext;
-import javax.persistence.EntityManager;
 
 import com.sun.facelets.FaceletViewHandler;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.rhq.core.domain.util.HibernateStatisticsStopWatch;
 import org.rhq.core.gui.util.FacesExpressionUtility;
-import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 
 /**
  * @author Joseph Marques
  */
 public class FaceletRedirectionViewHandler extends FaceletViewHandler {
-
-    private final Log log = LogFactory.getLog(FaceletRedirectionViewHandler.class);
 
     public FaceletRedirectionViewHandler(ViewHandler handler) {
         super(handler);
@@ -58,16 +51,8 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
 
     @Override
     public void renderView(FacesContext context, UIViewRoot viewToRender) throws IOException, FacesException {
-        HibernateStatisticsStopWatch stopWatch = null;
-        if (log.isDebugEnabled()) {
-            EntityManager entityManager = LookupUtil.getEntityManager();
-            stopWatch = new HibernateStatisticsStopWatch(entityManager);
-            stopWatch.start();
-        }
+        long monitorId = HibernatePerformanceMonitor.get().start();
         super.renderView(context, viewToRender);
-        if (log.isDebugEnabled()) {
-            stopWatch.stop();
-            log.debug("Performance for URL " + viewToRender.getViewId() + ": " + stopWatch.toString());
-        }
+        HibernatePerformanceMonitor.get().stop(monitorId, "URL " + viewToRender.getViewId());
     }
 }

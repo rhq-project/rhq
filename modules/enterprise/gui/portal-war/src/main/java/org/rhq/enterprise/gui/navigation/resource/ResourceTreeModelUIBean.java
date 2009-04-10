@@ -39,6 +39,7 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -69,21 +70,27 @@ public class ResourceTreeModelUIBean {
         Subject user = EnterpriseFacesContextUtility.getSubject();
 
         long start = System.currentTimeMillis();
+        long monitorId = HibernatePerformanceMonitor.get().start();
         Resource rootResource = resourceManager.getRootResourceForResource(searchId);
         long end = System.currentTimeMillis();
+        HibernatePerformanceMonitor.get().stop(monitorId, "ResourceTree root resource");
         log.debug("Found root resource in " + (end - start));
 
         Agent agent = agentManager.getAgentByResourceId(rootResource.getId());
 
         start = System.currentTimeMillis();
+        monitorId = HibernatePerformanceMonitor.get().start();
         List<Resource> resources = resourceManager.getResourcesByAgent(user, agent.getId(), PageControl
             .getUnlimitedInstance());
         end = System.currentTimeMillis();
+        HibernatePerformanceMonitor.get().stop(monitorId, "ResourceTree agent resource");
         log.debug("Loaded " + resources.size() + " raw resources in " + (end - start));
 
         start = System.currentTimeMillis();
+        monitorId = HibernatePerformanceMonitor.get().start();
         rootNode = load(rootResource.getId(), resources, false);
         end = System.currentTimeMillis();
+        HibernatePerformanceMonitor.get().stop(monitorId, "ResourceTree tree construction");
         log.debug("Constructed tree in " + (end - start));
     }
 

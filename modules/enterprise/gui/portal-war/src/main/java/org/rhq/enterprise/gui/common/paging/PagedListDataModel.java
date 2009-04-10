@@ -21,19 +21,17 @@ package org.rhq.enterprise.gui.common.paging;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.faces.model.DataModel;
-import javax.persistence.EntityManager;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.util.HibernateStatisticsStopWatch;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 
 /**
  * <p>A special type of JSF DataModel to allow a datatable and datascroller to page through a large set of data without
@@ -269,26 +267,19 @@ public abstract class PagedListDataModel<T> extends DataModel {
 
     public PageList<T> getDataPage(PageControl pc) {
 
-        long start = 0L;
-        HibernateStatisticsStopWatch stopWatch = null;
-        if (log.isDebugEnabled()) {
-            start = System.currentTimeMillis();
-            EntityManager entityManager = LookupUtil.getEntityManager();
-            stopWatch = new HibernateStatisticsStopWatch(entityManager);
-            stopWatch.start();
-        }
+        long start = System.currentTimeMillis();
+        long monitorId = HibernatePerformanceMonitor.get().start();
 
         PageList<T> results = fetchPageGuarded(pc);
 
+        HibernatePerformanceMonitor.get().stop(monitorId, pageControlView.toString());
         if (log.isDebugEnabled()) {
             long time = System.currentTimeMillis() - start;
-            stopWatch.stop();
 
             log.debug("Fetch time was [" + time + "]ms for " + pageControlView);
             if (time > 2000L) {
                 log.debug("Slow loading page " + pageControlView);
             }
-            log.debug("Performance for " + pageControlView + ": " + stopWatch.toString());
         }
 
         return results;

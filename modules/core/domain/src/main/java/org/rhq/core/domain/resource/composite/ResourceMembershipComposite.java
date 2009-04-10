@@ -46,7 +46,6 @@ public class ResourceMembershipComposite implements Serializable {
         this.resource = resource;
         this.parent = parent;
         ResourceType resourceType = this.resource.getResourceType();
-        this.resourceFacets = new ResourceFacets(resourceType);
 
         this.explicit = (explicitCount.intValue() > 0);
         this.implicit = (implicitCount.intValue() > 0);
@@ -62,6 +61,10 @@ public class ResourceMembershipComposite implements Serializable {
 
     public ResourceFacets getResourceFacets() {
         return resourceFacets;
+    }
+
+    public void setResourceFacets(ResourceFacets facets) {
+        this.resourceFacets = facets;
     }
 
     public void setResource(Resource resource) {

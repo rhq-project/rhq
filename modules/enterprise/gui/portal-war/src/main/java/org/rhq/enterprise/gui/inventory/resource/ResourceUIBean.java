@@ -42,7 +42,6 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -95,11 +94,7 @@ public class ResourceUIBean {
         Set<Permission> resourcePerms = this.authorizationManager.getImplicitResourcePermissions(subject, this.resource
             .getId());
         this.permissions = new ResourcePermission(resourcePerms);
-        try {
-            this.facets = this.resourceTypeManager.getResourceFacets(subject, getResourceType().getId());
-        } catch (ResourceTypeNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        this.facets = this.resourceTypeManager.getResourceFacets(getResourceType().getId());
 
         List<ResourceError> errors = this.resourceManager.getResourceErrors(subject, this.resource.getId(),
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);

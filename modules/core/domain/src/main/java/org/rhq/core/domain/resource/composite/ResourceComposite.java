@@ -28,7 +28,6 @@ import javax.xml.bind.annotation.XmlElement;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * @author Greg Hinkle
@@ -101,10 +100,6 @@ public class ResourceComposite implements Serializable {
         this.parent = parent;
         this.availability = availability;
         this.resourcePermission = resourcePermission;
-
-        // TODO: Add support for retrieving the supported facets to the Resource.QUERY_FIND_COMPOSITE_COUNT query.
-        ResourceType resourceType = this.resource.getResourceType();
-        this.resourceFacets = new ResourceFacets(resourceType);
     }
 
     public Resource getResource() {
@@ -127,9 +122,13 @@ public class ResourceComposite implements Serializable {
         return resourceFacets;
     }
 
+    public void setResourceFacets(ResourceFacets facets) {
+        this.resourceFacets = facets;
+    }
+
     @Override
     public String toString() {
         return "[ResourceComposite] Resource: " + resource + "\n\tAvailability: " + availability + "\n\tPermissions: "
-            + resourcePermission + "\n\tFacets: " + resourceFacets;
+            + resourcePermission;
     }
 }

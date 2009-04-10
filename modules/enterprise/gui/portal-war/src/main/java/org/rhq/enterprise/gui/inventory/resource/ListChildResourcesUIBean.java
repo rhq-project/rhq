@@ -330,6 +330,10 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
             PageList<ResourceComposite> resourceComposites = resourceManager
                 .getResourceCompositeForParentAndTypeAndCategory(EnterpriseFacesContextUtility.getSubject(),
                     resourceCategory, resourceTypeId, EnterpriseFacesContextUtility.getResource(), pageControl);
+            for (ResourceComposite composite : resourceComposites) {
+                ResourceType type = composite.getResource().getResourceType();
+                composite.setResourceFacets(resourceTypeManager.getResourceFacets(type.getId()));
+            }
             return resourceComposites;
         }
     }

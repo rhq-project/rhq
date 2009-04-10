@@ -23,11 +23,6 @@
 package org.rhq.core.domain.resource.composite;
 
 import java.io.Serializable;
-import java.util.Set;
-
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * The set of facets a Resource supports - used to determine which quicknav icons and tabs to display in the UI.
@@ -45,27 +40,6 @@ public class ResourceFacets implements Serializable {
     private boolean content;
     private boolean callTime;
 
-    public ResourceFacets(ResourceType type) {
-        this(!type.getMetricDefinitions().isEmpty(), //
-            !type.getEventDefinitions().isEmpty(), //
-            type.getPluginConfigurationDefinition() != null, //
-            type.getResourceConfigurationDefinition() != null, //
-            !type.getOperationDefinitions().isEmpty(), //
-            !type.getPackageTypes().isEmpty(), //
-            exposesCallTimeMetrics(type));
-    }
-
-    private static boolean exposesCallTimeMetrics(ResourceType resourceType) {
-        Set<MeasurementDefinition> measurementDefs = resourceType.getMetricDefinitions();
-        for (MeasurementDefinition measurementDef : measurementDefs) {
-            if (measurementDef.getDataType() == DataType.CALLTIME) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public ResourceFacets(boolean measurement, boolean event, boolean pluginConfiguration, boolean configuration,
         boolean operation, boolean content, boolean callTime) {
         this.measurement = measurement;
@@ -75,6 +49,17 @@ public class ResourceFacets implements Serializable {
         this.operation = operation;
         this.content = content;
         this.callTime = callTime;
+    }
+
+    public ResourceFacets(Number measurement, Number event, Number pluginConfiguration, Number configuration,
+        Number operation, Number content, Number callTime) {
+        this.measurement = measurement.intValue() != 0;
+        this.event = event.intValue() != 0;
+        this.pluginConfiguration = pluginConfiguration.intValue() != 0;
+        this.configuration = configuration.intValue() != 0;
+        this.operation = operation.intValue() != 0;
+        this.content = content.intValue() != 0;
+        this.callTime = callTime.intValue() != 0;
     }
 
     /**

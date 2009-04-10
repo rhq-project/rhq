@@ -386,10 +386,29 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal {
      * Return which facets are available for the passed return type. This is e.g. used to determine which tabs (Monitor,
      * Inventory, ...) can be displayed for a resource of a certain type
      */
-    public ResourceFacets getResourceFacets(Subject subject, int resourceTypeId) throws ResourceTypeNotFoundException {
-        ResourceType resourceType = this.getResourceTypeById(subject, resourceTypeId);
-        ResourceFacets resourceFacets = new ResourceFacets(resourceType);
-        return resourceFacets;
+    @SuppressWarnings("unchecked")
+    public ResourceFacets getResourceFacets(int resourceTypeId) {
+        Query query = entityManager.createQuery("" //
+            + "SELECT new org.rhq.core.domain.resource.composite.ResourceFacets " //
+            + "       ( " //
+            + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef)," // measurement
+            + "         (SELECT COUNT(eventDef) FROM rt.eventDefinitions eventDef)," // event
+            + "         (SELECT COUNT(pluginConfig) FROM rt.pluginConfigurationDefinition pluginConfig)," // pluginConfiguration
+            + "         (SELECT COUNT(resConfig) FROM rt.resourceConfigurationDefinition resConfig)," // configuration
+            + "         (SELECT COUNT(operationDef) FROM rt.operationDefinitions operationDef)," // operation
+            + "         (SELECT COUNT(packageType) FROM rt.packageTypes packageType)," // content
+            + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef WHERE metricDef.dataType = 3)" // calltime
+            + "       ) " //
+            + "  FROM ResourceType rt " //
+            + " WHERE rt.id = :resourceTypeId");
+        query.setParameter("resourceTypeId", resourceTypeId);
+        //ResourceType resourceType = this.getResourceTypeById(subject, resourceTypeId);
+        //ResourceFacets resourceFacets = new ResourceFacets(resourceType);
+        List<ResourceFacets> facets = query.getResultList();
+        if (facets.size() != 1) {
+            return new ResourceFacets(false, false, false, false, false, false, false);
+        }
+        return facets.get(0);
     }
 
     @SuppressWarnings("unchecked")

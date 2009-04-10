@@ -28,6 +28,7 @@ import javax.faces.render.Renderer;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -51,7 +52,9 @@ public class ResourceLineageRenderer extends Renderer {
     public void encodeBegin(FacesContext facesContext, UIComponent component) throws IOException {
         ResourceLineageComponent resourceLineage = (ResourceLineageComponent) component;
         ResponseWriter writer = facesContext.getResponseWriter();
+        long monitorId = HibernatePerformanceMonitor.get().start();
         List<Resource> ancestorResources = this.resourceManager.getResourceLineage(resourceLineage.getResourceId());
+        HibernatePerformanceMonitor.get().stop(monitorId, "ResourceLineage renderer");
         if (ancestorResources.isEmpty()) {
             throw new IllegalStateException(
                 "The list of ancestor resources should always contain at least one resource - the resource whose lineage was requested.");

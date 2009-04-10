@@ -64,6 +64,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.cluster.ClusterKey;
 import org.rhq.enterprise.server.resource.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -112,20 +113,26 @@ public class ResourceGroupTreeModelUIBean {
         rootNode = new ResourceGroupTreeNode(parentGroup);
 
         long start = System.currentTimeMillis();
+        long monitorId = HibernatePerformanceMonitor.get().start();
         List<Resource> resources = resourceManager.getResourcesByCompatibleGroup(EnterpriseFacesContextUtility
             .getSubject(), parentGroup.getId(), PageControl.getUnlimitedInstance());
         long end = System.currentTimeMillis();
+        HibernatePerformanceMonitor.get().stop(monitorId, "ResourceGroupTree group resources");
         log.debug("Loaded  " + resources.size() + " resources by group in " + (end - start));
 
         start = System.currentTimeMillis();
+        monitorId = HibernatePerformanceMonitor.get().start();
         List<Resource> members = groupManager.getResourcesForResourceGroup(EnterpriseFacesContextUtility.getSubject(),
             parentGroup.getId(), GroupCategory.COMPATIBLE);
         end = System.currentTimeMillis();
+        HibernatePerformanceMonitor.get().stop(monitorId, "ResourceGroupTree group members");
         log.debug("Loaded  " + members.size() + " memebers by group in " + (end - start));
 
         start = System.currentTimeMillis();
+        monitorId = HibernatePerformanceMonitor.get().start();
         rootNode = load(parentGroup, resources, members);
         end = System.currentTimeMillis();
+        HibernatePerformanceMonitor.get().stop(monitorId, "ResourceGroupTree tree construction");
         log.debug("Constructed tree in " + (end - start));
     }
 
@@ -277,7 +284,7 @@ public class ResourceGroupTreeModelUIBean {
 
                 this.resourceContextMenu.getChildren().add(nameItem);
 
-                ResourceFacets facets = this.resourceTypeManager.getResourceFacets(subject, type.getId());
+                ResourceFacets facets = this.resourceTypeManager.getResourceFacets(type.getId());
 
                 addQuickLinks(String.valueOf(group.getId()), parentGroupIdString, facets);
 

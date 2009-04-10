@@ -39,7 +39,6 @@ import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ResourceGroupUIBean {
@@ -77,12 +76,7 @@ public class ResourceGroupUIBean {
             this.resourceGroup.getId());
         this.permissions = new ResourcePermission(permissions);
         if (this.resourceGroup.getGroupCategory() == GroupCategory.COMPATIBLE) {
-            try {
-                this.facets = this.resourceTypeManager.getResourceFacets(subject, this.resourceGroup.getResourceType()
-                    .getId());
-            } catch (ResourceTypeNotFoundException e) {
-                throw new RuntimeException(e);
-            }
+            this.facets = this.resourceTypeManager.getResourceFacets(this.resourceGroup.getResourceType().getId());
         }
     }
 

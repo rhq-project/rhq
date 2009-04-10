@@ -42,7 +42,6 @@ import org.rhq.enterprise.gui.common.tag.FunctionTagLibrary;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -101,8 +100,8 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
 
                     Resource resource = this.resourceManager.getResourceById(subject, ((Resource) node.getData())
                         .getId());
-                    ResourceFacets facets = this.resourceTypeManager.getResourceFacets(subject, resource
-                        .getResourceType().getId());
+                    ResourceFacets facets = this.resourceTypeManager.getResourceFacets(resource.getResourceType()
+                        .getId());
 
                     String fallbackPath = FunctionTagLibrary.getDefaultResourceTabURL();
 
@@ -166,8 +165,6 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                 }
             }
         } catch (IOException e1) {
-            e1.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
-        } catch (ResourceTypeNotFoundException e1) {
             e1.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
         }
     }

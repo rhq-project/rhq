@@ -24,8 +24,6 @@ package org.rhq.core.domain.resource.group.composite;
 
 import java.io.Serializable;
 
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
@@ -42,7 +40,6 @@ public class ResourceGroupComposite implements Serializable {
     private ResourceGroup resourceGroup;
 
     private GroupCategory category;
-    private ResourceFacets resourceFacets;
     private long implicitUp;
     private long implicitDown;
     private long explicitUp;
@@ -72,20 +69,6 @@ public class ResourceGroupComposite implements Serializable {
         }
 
         this.resourceGroup = resourceGroup;
-
-        if (this.resourceGroup.getGroupCategory() == GroupCategory.COMPATIBLE) {
-            this.category = GroupCategory.COMPATIBLE;
-            ResourceType resourceType = this.resourceGroup.getResourceType();
-            this.resourceFacets = new ResourceFacets(resourceType);
-        } else if (this.resourceGroup.getGroupCategory() == GroupCategory.MIXED) {
-            this.category = GroupCategory.MIXED;
-
-            // Mixed groups don't support any of the resource facets.
-            this.resourceFacets = new ResourceFacets(false, false, false, false, false, false, false);
-        } else {
-            throw new IllegalArgumentException("Unknown category " + this.resourceGroup.getGroupCategory()
-                + " for ResourceGroup " + this.resourceGroup.getName());
-        }
     }
 
     public Double getImplicitAvail() {
@@ -174,10 +157,6 @@ public class ResourceGroupComposite implements Serializable {
         }
         results.append("</td>");
         return results.toString();
-    }
-
-    public ResourceFacets getResourceFacets() {
-        return this.resourceFacets;
     }
 
     @Override

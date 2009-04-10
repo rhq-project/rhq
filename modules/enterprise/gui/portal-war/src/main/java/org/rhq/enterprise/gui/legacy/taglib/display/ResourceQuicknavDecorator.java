@@ -21,7 +21,9 @@ package org.rhq.enterprise.gui.legacy.taglib.display;
 import javax.servlet.http.HttpServletRequest;
 
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -40,10 +42,18 @@ public class ResourceQuicknavDecorator extends QuicknavDecorator {
     private static final String CONTENT_URL = "/rhq/resource/content/view.xhtml?mode=view";
 
     private ResourceComposite resourceComposite;
+    private ResourceFacets resourceFacets;
 
     @Override
     public String decorate(Object columnValue) throws Exception {
         this.resourceComposite = (ResourceComposite) columnValue;
+
+        ResourceType type = this.resourceComposite.getResource().getResourceType();
+        if (type == null) {
+            this.resourceFacets = new ResourceFacets(false, false, false, false, false, false, false);
+        } else {
+            this.resourceFacets = LookupUtil.getResourceTypeManager().getResourceFacets(type.getId());
+        }
         return getOutput();
     }
 
@@ -66,7 +76,7 @@ public class ResourceQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isEventsSupported() {
-        return this.resourceComposite.getResourceFacets().isEvent();
+        return this.resourceFacets.isEvent();
     }
 
     @Override
@@ -76,12 +86,12 @@ public class ResourceQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isConfigureSupported() {
-        return this.resourceComposite.getResourceFacets().isConfiguration();
+        return this.resourceFacets.isConfiguration();
     }
 
     @Override
     protected boolean isOperationsSupported() {
-        return this.resourceComposite.getResourceFacets().isOperation();
+        return this.resourceFacets.isOperation();
     }
 
     @Override
@@ -91,7 +101,7 @@ public class ResourceQuicknavDecorator extends QuicknavDecorator {
 
     @Override
     protected boolean isContentSupported() {
-        return this.resourceComposite.getResourceFacets().isContent();
+        return this.resourceFacets.isContent();
     }
 
     // TODO: For now, all icons are "allowed", but this may change in the future.

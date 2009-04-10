@@ -82,7 +82,7 @@ public class ResourceTreeContextMenuUIBean {
             addMenuItem(res.getResourceType().getName(), true);
 
             // quick links
-            ResourceFacets facets = this.resourceTypeManager.getResourceFacets(subject, resourceTypeId);
+            ResourceFacets facets = this.resourceTypeManager.getResourceFacets(resourceTypeId);
             addQuickLinks(resourceIdString, facets);
 
             // separator bar
@@ -140,14 +140,16 @@ public class ResourceTreeContextMenuUIBean {
         if (facets.isConfiguration()) {
             url = "/rhq/resource/configuration/view.xhtml?id=" + resourceId;
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Configure_grey_16.png", "Configuration");
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Configure_grey_16.png",
+                "Configuration");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 
         if (facets.isOperation()) {
             url = "/rhq/resource/operation/resourceOperationScheduleNew.xhtml?id=" + resourceId;
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Operation_grey_16.png", "Operations");
+            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Operation_grey_16.png",
+                "Operations");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 

@@ -18,6 +18,12 @@
          <ejb-name>*</ejb-name>
          <interceptor-class>org.rhq.enterprise.server.common.TransactionInterruptInterceptor</interceptor-class>
       </interceptor-binding>
+      <!-- enable this to get lots of performance data as you navigate around the UI
+      <interceptor-binding>
+         <ejb-name>*</ejb-name>
+         <interceptor-class>org.rhq.enterprise.server.common.PerformanceMonitorInterceptor</interceptor-class>
+      </interceptor-binding>
+       -->
 
    </assembly-descriptor>
 

@@ -307,7 +307,7 @@ public class StartupServlet extends HttpServlet {
         // Timed Out Operations Job
         try {
             final long initialDelay = 1000L * 60 * 3; // 3 min
-            final long interval = 1000L * 60 * 10; // 10 mins
+            final long interval = 1000L * 60 * 1; // 1 min
             scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutOperationsJob.class, true, false, initialDelay,
                 interval);
         } catch (Exception e) {

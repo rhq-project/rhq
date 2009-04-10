@@ -67,6 +67,27 @@ public interface OperationManagerLocal {
         Configuration parameters, Trigger trigger, String description) throws SchedulerException;
 
     /**
+     * Schedules an operation for execution on the given resource.
+     *
+     * @param  user           The logged in user's subject.
+     * @param  resourceId     the resource that is the target of the operation
+     * @param  operationName  the actual operation to invoke
+     * @param  delay          the number of milliseconds to delay this operation, 0 for immediate start.
+     * @param  repeatInterval the number of milliseconds after completion to repeat this operation. 0 for no repeat.
+     * @param  repeatCount    the number of times to repeat this operation. -1 infinite, 0 for no repeat. 
+     * @param  timeout        the number of seconds before this operation will fail due to timeout. 0 for no timeout.
+     * @param  parameters     the names parameters for the operation. 
+     * @param  description    user-entered description of the job to be scheduled
+     *
+     * @return the information on the new schedule
+     *
+     * @throws Exception if failed to schedule the operation
+     */
+    ResourceOperationSchedule scheduleResourceOperation(Subject user, int resourceId, String operationName, long delay,
+        long repeatInterval, int repeatCount, int timeout, Configuration parameters, String description)
+        throws Exception;
+
+    /**
      * Schedules an operation for execution on members of the given group.
      *
      * @param  whoami                    the user who is asking to schedule the job

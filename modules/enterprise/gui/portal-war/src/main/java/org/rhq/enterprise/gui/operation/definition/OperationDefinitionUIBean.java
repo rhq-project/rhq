@@ -47,6 +47,9 @@ public abstract class OperationDefinitionUIBean extends PagedDataTableUIBean {
         if (operationId != null) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             this.operationDefinition = operationManager.getOperationDefinition(subject, operationId);
+            // initialize the timeout to any defined for the operation. This may be overriden by the user.
+            Integer defaultTimeout = this.operationDefinition.getTimeout();
+            this.timeout = (defaultTimeout == null) ? "" : String.valueOf(defaultTimeout);
         }
     }
 
@@ -59,11 +62,6 @@ public abstract class OperationDefinitionUIBean extends PagedDataTableUIBean {
     }
 
     public String getTimeout() {
-        // we want to cache the definition, but have a separately manageable timeout
-        // this will allow the user to override the timeout and pass this along in the request submission
-        Integer defaultTimeout = this.operationDefinition.getTimeout();
-        this.timeout = (defaultTimeout == null) ? "" : String.valueOf(defaultTimeout);
-
         return this.timeout;
     }
 

@@ -57,14 +57,14 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
     }
 
     @Override
-    protected void buildView(FacesContext context, UIViewRoot viewToRender) throws IOException, FacesException {
+    public void renderView(FacesContext context, UIViewRoot viewToRender) throws IOException, FacesException {
         HibernateStatisticsStopWatch stopWatch = null;
         if (log.isDebugEnabled()) {
             EntityManager entityManager = LookupUtil.getEntityManager();
             stopWatch = new HibernateStatisticsStopWatch(entityManager);
             stopWatch.start();
         }
-        super.buildView(context, viewToRender);
+        super.renderView(context, viewToRender);
         if (log.isDebugEnabled()) {
             stopWatch.stop();
             log.debug("Performance for URL " + viewToRender.getViewId() + ": " + stopWatch.toString());

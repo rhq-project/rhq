@@ -28,20 +28,11 @@ import org.apache.commons.logging.LogFactory;
 public class AlertSerializer {
     private final Log log = LogFactory.getLog(AlertSerializer.class);
 
-    private static Map<Integer, ReentrantReadWriteLock> alertDefinitionLocks;
-
-    private static AlertSerializer singleton;
-
-    private AlertSerializer() {
-        alertDefinitionLocks = new HashMap<Integer, ReentrantReadWriteLock>();
-    }
+    private static Map<Integer, ReentrantReadWriteLock> locks = new HashMap<Integer, ReentrantReadWriteLock>();
+    private static AlertSerializer singleton = new AlertSerializer();;
 
     // synchronize so only one thread creates our singleton
     public static synchronized AlertSerializer getSingleton() {
-        if (singleton == null) {
-            singleton = new AlertSerializer();
-        }
-
         return singleton;
     }
 
@@ -56,11 +47,11 @@ public class AlertSerializer {
         log.debug(msg + ": about to synchronize");
         synchronized (this) {
             log.debug(msg + ": synchronized");
-            lock = alertDefinitionLocks.get(alertDefinitionId);
+            lock = locks.get(alertDefinitionId);
             if (lock == null) {
                 log.debug(msg + ": creating new lock");
                 lock = new ReentrantReadWriteLock();
-                alertDefinitionLocks.put(alertDefinitionId, lock);
+                locks.put(alertDefinitionId, lock);
             }
         }
 
@@ -70,7 +61,7 @@ public class AlertSerializer {
     }
 
     public void unlock(int alertDefinitionId) {
-        ReentrantReadWriteLock lock = alertDefinitionLocks.get(alertDefinitionId);
+        ReentrantReadWriteLock lock = locks.get(alertDefinitionId);
 
         String msg = "tid= " + Thread.currentThread().getId() + ": alertDefinitionId=" + alertDefinitionId;
 

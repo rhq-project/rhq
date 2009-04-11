@@ -1958,7 +1958,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
     }
 
-    public List<Resource> getFlyWeightObjectGraphFromReportingQueryResults(List<Object[]> reportQueryResults) {
+    private List<Resource> getFlyWeightObjectGraphFromReportingQueryResults(List<Object[]> reportQueryResults) {
         List<Resource> resources = new ArrayList<Resource>();
 
         Map<Integer, Resource> flyWeightResourceCache = new HashMap<Integer, Resource>();

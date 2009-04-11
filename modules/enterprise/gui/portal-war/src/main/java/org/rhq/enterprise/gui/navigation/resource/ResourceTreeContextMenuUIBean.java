@@ -26,7 +26,6 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -35,7 +34,6 @@ public class ResourceTreeContextMenuUIBean {
 
     private static final String STYLE_QUICK_LINKS_ICON = "margin: 2px;";
 
-    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
     private OperationManagerLocal operationManager = LookupUtil.getOperationManager();
     private MeasurementScheduleManagerLocal measurementScheduleManager = LookupUtil.getMeasurementScheduleManager();
@@ -75,7 +73,7 @@ public class ResourceTreeContextMenuUIBean {
             int resourceId = Integer.parseInt(resourceIdString);
             int resourceTypeId = Integer.parseInt(resourceTypeIdString);
 
-            Resource res = resourceManager.getResourceById(subject, resourceId);
+            Resource res = EnterpriseFacesContextUtility.getResource();
 
             // basic information
             addMenuItem(res.getName(), true);

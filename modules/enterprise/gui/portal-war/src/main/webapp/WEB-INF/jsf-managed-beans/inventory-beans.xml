@@ -131,28 +131,6 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
-    <managed-bean>
-        <managed-bean-name>ResourceTreeModelUIBean</managed-bean-name>
-        <managed-bean-class>org.rhq.enterprise.gui.navigation.resource.ResourceTreeModelUIBean</managed-bean-class>
-        <managed-bean-scope>request</managed-bean-scope>
-    </managed-bean>
-    <managed-bean>
-        <managed-bean-name>ResourceTreeContextMenuUIBean</managed-bean-name>
-        <managed-bean-class>org.rhq.enterprise.gui.navigation.resource.ResourceTreeContextMenuUIBean</managed-bean-class>
-        <managed-bean-scope>request</managed-bean-scope>
-    </managed-bean>
-    <managed-bean>
-        <managed-bean-name>ResourceTreeStateAdvisor</managed-bean-name>
-        <managed-bean-class>org.rhq.enterprise.gui.navigation.resource.ResourceTreeStateAdvisor</managed-bean-class>
-        <managed-bean-scope>session</managed-bean-scope>
-    </managed-bean>
-
-    <managed-bean>
-        <managed-bean-name>ResourceSelectUIBean</managed-bean-name>
-        <managed-bean-class>org.rhq.enterprise.gui.navigation.resource.ResourceSelectUIBean</managed-bean-class>
-        <managed-bean-scope>request</managed-bean-scope>
-    </managed-bean>
-
    <!-- /rhq/resource/inventory/history.xhtml -->
    <managed-bean>
       <managed-bean-name>ListPluginConfigurationUpdateUIBean</managed-bean-name>

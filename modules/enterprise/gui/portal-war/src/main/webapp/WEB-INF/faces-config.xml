@@ -26,6 +26,7 @@
       <phase-listener>org.jboss.seam.jsf.SeamPhaseListener</phase-listener>
       -->
       <phase-listener>org.rhq.enterprise.gui.common.framework.FacesMessagePropogationPhaseListener</phase-listener>
+      <phase-listener>org.rhq.enterprise.gui.common.framework.PhaseTracker</phase-listener>
       <phase-listener>org.rhq.core.gui.util.IdChunkGeneratorPhaseListener</phase-listener>
    </lifecycle>
    

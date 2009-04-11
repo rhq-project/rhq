@@ -56,7 +56,6 @@ public abstract class PagedListDataModel<T> extends DataModel {
     private int currentRowIndex;
     private PageControlView pageControlView;
     private PageList<T> pageList;
-    private String lastViewId;
     private String beanName;
 
     /**
@@ -123,16 +122,6 @@ public abstract class PagedListDataModel<T> extends DataModel {
             PageControl pageControl = getPageControl();
             pageList = getDataPage(pageControl);
         }
-
-        // the user has previously been to this view, and is returning
-        else if (!FacesContext.getCurrentInstance().getViewRoot().getViewId().equals(lastViewId)) {
-            PageControl pageControl = getPageControl();
-            lastViewId = FacesContext.getCurrentInstance().getViewRoot().getViewId();
-            pageList = getDataPage(pageControl);
-        }
-
-        // no longer needed because changes to the PageControl as a result of getting results are repersisted automatically
-        //setPageControl(pageList.getPageControl());
 
         return pageList;
     }

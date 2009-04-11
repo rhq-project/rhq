@@ -124,6 +124,13 @@
    </category>
    -->
 
+   <!-- Logs Hibernate statistics used to help trace Hibernate queries -->
+   <!--
+   <category name="org.rhq.enterprise.server.util.HibernatePerformanceMonitor">
+     <priority value="DEBUG"/>
+   </category>
+   -->
+
    <!-- Top category for the entire comm module -->
    <!--
    <category name="org.rhq.enterprise.communications">

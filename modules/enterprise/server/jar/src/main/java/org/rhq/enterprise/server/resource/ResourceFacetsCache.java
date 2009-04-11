@@ -18,7 +18,7 @@ public class ResourceFacetsCache {
 
     /*
      * Do not need concurrent collections as long as the cache does not take direct modifications.  The algorithm below
-     * is lockless because when the cache needs to be reloaded the collections is fully constructed BEFORE replacing the
+     * is lockless because when the cache needs to be reloaded the collection is fully constructed BEFORE replacing the
      * reference to the private member variable.  In this way, the private member variable become a true read-only
      * construct.  Furthermore, concurrent access to the contents of the cache is safe because the ResourceFacets object
      * is immutable.

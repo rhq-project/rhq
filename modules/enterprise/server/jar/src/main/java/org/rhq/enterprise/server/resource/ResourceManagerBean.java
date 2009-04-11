@@ -18,9 +18,12 @@
  */
 package org.rhq.enterprise.server.resource;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -70,8 +73,9 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementOOB;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataKey;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataValue;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -448,7 +452,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         q = entityManager.createNamedQuery(MeasurementOOB.DELETE_FOR_RESOURCES);
         q.setParameter("resources", resources);
         q.executeUpdate();
-
 
         // bulk delete: measurement schedule, must come after measurement baseline, trait, and calltime data
         q = entityManager.createNamedQuery(MeasurementSchedule.DELETE_BY_RESOURCES);
@@ -1866,44 +1869,123 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new ResourceAvailabilitySummary(upTime, downTime, failures, lastChange, current);
     }
 
+    @SuppressWarnings("unchecked")
     public List<Resource> getResourcesByAgent(Subject user, int agentId, PageControl unlimitedInstance) {
         // Note: I didn't put these queries in as named queries since they have very specific prefeching
         // for this use case.
 
-        String ql = "SELECT res "
-            + "FROM Resource res join fetch res.currentAvailability join fetch res.resourceType rt "
-            + "left join fetch rt.subCategory sc left join fetch sc.parentSubCategory "
-            + "WHERE res.inventoryStatus = :inventoryStatus AND res.agent.id = :agentId";
+        String prefetchQueryString = "" //
+            + "    SELECT res.id, res.uuid, res.name, " //
+            + "           parent.id, parent.name, " //
+            + "           currentAvail.availabilityType, " //
+            + "           type.id, type.name, type.plugin, type.category, " //
+            + "           subCategory.id, subCategory.name, " //
+            + "           parentSubCategory.id, parentSubCategory.name " //
+            + "      FROM Resource res " //
+            + "      JOIN res.currentAvailability currentAvail " //
+            + "      JOIN res.resourceType type " //
+            + " LEFT JOIN type.subCategory subCategory " //
+            + " LEFT JOIN subCategory.parentSubCategory parentSubCategory " //
+            + " LEFT JOIN res.parentResource parent " //
+            + "     WHERE res.inventoryStatus = :inventoryStatus " //
+            + "       AND res.agent.id = :agentId";
 
-        EntityManager em = LookupUtil.getEntityManager();
-        Query query = em.createQuery(ql);
+        Query prefetchQuery = entityManager.createQuery(prefetchQueryString);
+        prefetchQuery.setParameter("agentId", agentId);
+        prefetchQuery.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
 
-        query.setParameter("agentId", agentId);
-        query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
-        List<Resource> resources = query.getResultList();
+        List<Object[]> prefetchedData = prefetchQuery.getResultList();
+        List<Resource> resources = new ArrayList<Resource>();
+
+        Map<Integer, Resource> flyWeightResourceCache = new HashMap<Integer, Resource>();
+        Map<Integer, ResourceType> flyWeightTypeCache = new HashMap<Integer, ResourceType>();
+        Map<Integer, ResourceSubCategory> flyWeightSubCategoryCache = new HashMap<Integer, ResourceSubCategory>();
+        for (Object[] prefetched : prefetchedData) {
+            // casts
+            int i = 0;
+            Integer resourceId = (Integer) prefetched[i++];
+            String resourceUuid = (String) prefetched[i++];
+            String resourceName = (String) prefetched[i++];
+
+            Integer parentId = (Integer) prefetched[i++];
+            String parentName = (String) prefetched[i++];
+
+            AvailabilityType availType = (AvailabilityType) prefetched[i++];
+
+            Integer typeId = (Integer) prefetched[i++];
+            String typeName = (String) prefetched[i++];
+            String typePlugin = (String) prefetched[i++];
+            ResourceCategory typeCategory = (ResourceCategory) prefetched[i++];
+
+            Integer subCategoryId = (Integer) prefetched[i++];
+            String subCategoryName = (String) prefetched[i++];
+
+            Integer parentSubCategoryId = (Integer) prefetched[i++];
+            String parentSubCategoryName = (String) prefetched[i++];
+
+            // object graph
+            Resource flyWeightResource = getFlyWeight(resourceId, resourceName, flyWeightResourceCache, Resource.class);
+            flyWeightResource.setUuid(resourceUuid);
+
+            if (parentId != null) {
+                Resource flyWeightParent = getFlyWeight(parentId, parentName, flyWeightResourceCache, Resource.class);
+                flyWeightResource.setParentResource(flyWeightParent);
+                flyWeightParent.addChildResource(flyWeightResource);
+            }
+
+            ResourceAvailability currentAvail = new ResourceAvailability(flyWeightResource, availType);
+            flyWeightResource.setCurrentAvailability(currentAvail);
+
+            ResourceType flyWeightType = getFlyWeight(typeId, typeName, flyWeightTypeCache, ResourceType.class);
+            flyWeightType.setPlugin(typePlugin);
+            flyWeightType.setCategory(typeCategory);
+            flyWeightResource.setResourceType(flyWeightType);
+
+            if (subCategoryId != null) {
+                ResourceSubCategory flyWeightSubCategory = getFlyWeight(subCategoryId, subCategoryName,
+                    flyWeightSubCategoryCache, ResourceSubCategory.class);
+                flyWeightType.setSubCategory(flyWeightSubCategory);
+
+                if (parentSubCategoryId != null) {
+                    ResourceSubCategory flyWeightParentSubCategory = getFlyWeight(parentSubCategoryId,
+                        parentSubCategoryName, flyWeightSubCategoryCache, ResourceSubCategory.class);
+                    flyWeightParentSubCategory.setParentSubCategory(flyWeightParentSubCategory);
+                }
+            }
+
+            resources.add(flyWeightResource);
+        }
 
         if (!authorizationManager.isInventoryManager(user)) {
-            String secQueryString = "SELECT res.id "
-                + "FROM Resource res "
-                + "WHERE res.inventoryStatus = :inventoryStatus AND res.agent.id = :agentId "
-                + " AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)";
-            Query secQuery = em.createQuery(secQueryString);
-            secQuery.setParameter("agentId", agentId);
-            secQuery.setParameter("subject", user);
-            secQuery.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
+            String authorizationQueryString = "" //
+                + "SELECT res.id " //
+                + "  FROM Resource res " //
+                + " WHERE res.inventoryStatus = :inventoryStatus " //
+                + "   AND res.agent.id = :agentId " //
+                + "   AND res.id IN ( SELECT rr.id " //
+                + "                     FROM Resource rr " //
+                + "                     JOIN rr.implicitGroups g " //
+                + "                     JOIN g.roles r " //
+                + "                     JOIN r.subjects s " //
+                + "                    WHERE s = :subject)";
 
-            List<Integer> visible = secQuery.getResultList();
+            Query authorizationQuery = entityManager.createQuery(authorizationQueryString);
+            authorizationQuery.setParameter("agentId", agentId);
+            authorizationQuery.setParameter("subject", user);
+            authorizationQuery.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
+            List<Integer> visibleResources = authorizationQuery.getResultList();
 
             ListIterator<Resource> iter = resources.listIterator();
             while (iter.hasNext()) {
                 Resource res = iter.next();
-                boolean found = false;
-                for (Integer vis : visible) {
-                    if (res.getId() == vis) {
-                        found = true;
+                boolean authorized = false;
+                for (Integer visible : visibleResources) {
+                    if (res.getId() == visible) {
+                        authorized = true;
+                        break;
                     }
                 }
-                if (!found) {
+                if (!authorized) {
                     iter.set(new LockedResource(res));
                 }
             }
@@ -1912,21 +1994,44 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return resources;
     }
 
+    private <T> T getFlyWeight(int id, String name, Map<Integer, T> cache, Class<T> clazz) {
+        if (cache.containsKey(id)) {
+            return cache.get(id);
+        }
+        try {
+            Constructor<T> noargConstructor = clazz.getConstructor();
+            T flyWeight = noargConstructor.newInstance();
+
+            Method setIdMethod = clazz.getMethod("setId", Integer.TYPE);
+            setIdMethod.invoke(flyWeight, id);
+
+            Method setNameMethod = clazz.getMethod("setName", String.class);
+            setNameMethod.invoke(flyWeight, name);
+
+            cache.put(id, flyWeight);
+            return flyWeight;
+        } catch (Throwable t) {
+            log.equals(t);
+            throw new IllegalArgumentException("Class " + clazz.getSimpleName()
+                + " needs a no-arg constructor, as well as setId(int) and setName(String) methods");
+        }
+    }
+
     public List<Resource> getResourcesByCompatibleGroup(Subject user, int compatibleGroupId, PageControl pageControl) {
         // Note: I didn't put these queries in as named queries since they have very specific prefeching
         // for this use case.
 
-        String ql = "SELECT res \n" +
-                "FROM Resource res \n" +
-                "  JOIN FETCH res.currentAvailability JOIN FETCH res.resourceType rt \n" +
-                "  LEFT JOIN FETCH rt.subCategory sc LEFT JOIN FETCH sc.parentSubCategory \n" +
-                "WHERE \n" +
-                "  res.inventoryStatus = :inventoryStatus \n" +
-                "  AND (res.id IN (SELECT rr.id FROM Resource rr JOIN rr.explicitGroups g WHERE g.id = :groupId)\n" +
-                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
-                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
-                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
-                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId))";
+        String ql = "SELECT res \n"
+            + "FROM Resource res \n"
+            + "  JOIN FETCH res.currentAvailability JOIN FETCH res.resourceType rt \n"
+            + "  LEFT JOIN FETCH rt.subCategory sc LEFT JOIN FETCH sc.parentSubCategory \n"
+            + "WHERE \n"
+            + "  res.inventoryStatus = :inventoryStatus \n"
+            + "  AND (res.id IN (SELECT rr.id FROM Resource rr JOIN rr.explicitGroups g WHERE g.id = :groupId)\n"
+            + "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.explicitGroups g WHERE g.id = :groupId)\n"
+            + "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n"
+            + "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n"
+            + "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId))";
 
         EntityManager em = LookupUtil.getEntityManager();
         Query query = em.createQuery(ql);
@@ -1936,19 +2041,19 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         List<Resource> resources = query.getResultList();
 
         if (false) { //!authorizationManager.isInventoryManager(user)) {
-            String secQueryString = "SELECT res \n" +
-                "FROM Resource res \n" +
-                "  JOIN FETCH res.currentAvailability JOIN FETCH res.resourceType rt \n" +
-                "  LEFT JOIN FETCH rt.subCategory sc LEFT JOIN FETCH sc.parentSubCategory \n" +
-                "WHERE \n" +
-                "  res.inventoryStatus = :inventoryStatus \n" +
-                "  AND (res.id IN (SELECT rr.id FROM Resource rr JOIN rr.explicitGroups g WHERE g.id = :groupId)\n" +
-                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
-                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
-                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n" +
-                "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId) \n" +
-                "  )) " +
-                "  AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)";
+            String secQueryString = "SELECT res \n"
+                + "FROM Resource res \n"
+                + "  JOIN FETCH res.currentAvailability JOIN FETCH res.resourceType rt \n"
+                + "  LEFT JOIN FETCH rt.subCategory sc LEFT JOIN FETCH sc.parentSubCategory \n"
+                + "WHERE \n"
+                + "  res.inventoryStatus = :inventoryStatus \n"
+                + "  AND (res.id IN (SELECT rr.id FROM Resource rr JOIN rr.explicitGroups g WHERE g.id = :groupId)\n"
+                + "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.explicitGroups g WHERE g.id = :groupId)\n"
+                + "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n"
+                + "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId)\n"
+                + "    OR res.id IN (SELECT rr.id FROM Resource rr JOIN rr.parentResource.parentResource.parentResource.parentResource.explicitGroups g WHERE g.id = :groupId) \n"
+                + "  )) "
+                + "  AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)";
             Query secQuery = em.createQuery(secQueryString);
             secQuery.setParameter("groupId", compatibleGroupId);
             secQuery.setParameter("subject", user);

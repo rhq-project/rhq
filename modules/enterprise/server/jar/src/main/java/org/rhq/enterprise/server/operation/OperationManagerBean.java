@@ -964,22 +964,40 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return;
     }
 
-    public List<OperationDefinition> getSupportedResourceOperations(Subject whoami, int resourceId) {
-        Resource resource = getResourceIfAuthorized(whoami, resourceId);
+    @SuppressWarnings("unchecked")
+    public List<OperationDefinition> getSupportedResourceOperations(Subject whoami, int resourceId, boolean eagerLoaded) {
+        if (!authorizationManager.canViewResource(whoami, resourceId)) {
+            throw new PermissionException("User [" + whoami + "] does not have permission to view resource ["
+                + resourceId + "]");
+        }
 
-        int resourceTypeId = resource.getResourceType().getId();
+        try {
+            String queryName = eagerLoaded ? OperationDefinition.QUERY_FIND_BY_RESOURCE_AND_NAME
+                : OperationDefinition.QUERY_FIND_LIGHT_WEIGHT_BY_RESOURCE_AND_NAME;
 
-        return getSupportedResourceTypeOperations(whoami, resourceTypeId);
+            Query query = entityManager.createNamedQuery(queryName);
+            query.setParameter("resourceId", resourceId);
+            query.setParameter("operationName", null);
+
+            List<OperationDefinition> results = query.getResultList();
+            return results;
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot get support operations for resource [" + resourceId + "]: " + e, e);
+        }
     }
 
     @SuppressWarnings("unchecked")
-    public List<OperationDefinition> getSupportedResourceTypeOperations(Subject whoami, int resourceTypeId) {
+    public List<OperationDefinition> getSupportedResourceTypeOperations(Subject whoami, int resourceTypeId,
+        boolean eagerLoaded) {
         try {
-            Query query = entityManager.createNamedQuery(OperationDefinition.QUERY_FIND_BY_RESOURCE_TYPE_ID);
-            query.setParameter("resourceTypeId", resourceTypeId);
+            String queryName = eagerLoaded ? OperationDefinition.QUERY_FIND_BY_TYPE_AND_NAME
+                : OperationDefinition.QUERY_FIND_LIGHT_WEIGHT_BY_TYPE_AND_NAME;
 
-            List<OperationDefinition> results;
-            results = query.getResultList();
+            Query query = entityManager.createNamedQuery(queryName);
+            query.setParameter("resourceTypeId", resourceTypeId);
+            query.setParameter("operationName", null);
+
+            List<OperationDefinition> results = query.getResultList();
             return results;
         } catch (Exception e) {
             throw new RuntimeException("Cannot get support operations for resourceType [" + resourceTypeId + "]: " + e,
@@ -988,21 +1006,25 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     @SuppressWarnings( { "unchecked" })
-    public List<OperationDefinition> getSupportedGroupOperations(Subject whoami, int compatibleGroupId) {
-        ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, compatibleGroupId);
-
-        int resourceTypeId = group.getResourceType().getId();
+    public List<OperationDefinition> getSupportedGroupOperations(Subject whoami, int compatibleGroupId,
+        boolean eagerLoaded) {
+        if (!authorizationManager.canViewGroup(whoami, compatibleGroupId)) {
+            throw new PermissionException("User [" + whoami + "] does not have permission to view group ["
+                + compatibleGroupId + "]");
+        }
 
         try {
-            Query query = entityManager.createNamedQuery(OperationDefinition.QUERY_FIND_BY_RESOURCE_TYPE_ID);
-            query.setParameter("resourceTypeId", resourceTypeId);
+            String queryName = eagerLoaded ? OperationDefinition.QUERY_FIND_BY_GROUP_AND_NAME
+                : OperationDefinition.QUERY_FIND_LIGHT_WEIGHT_BY_GROUP_AND_NAME;
 
-            List<OperationDefinition> results;
-            results = query.getResultList();
+            Query query = entityManager.createNamedQuery(queryName);
+            query.setParameter("groupId", compatibleGroupId);
+            query.setParameter("operationName", null);
+
+            List<OperationDefinition> results = query.getResultList();
             return results;
         } catch (Exception e) {
-            throw new RuntimeException("Cannot get support operations for resourceType [" + resourceTypeId + "]: " + e,
-                e);
+            throw new RuntimeException("Cannot get support operations for group [" + compatibleGroupId + "]: " + e, e);
         }
     }
 

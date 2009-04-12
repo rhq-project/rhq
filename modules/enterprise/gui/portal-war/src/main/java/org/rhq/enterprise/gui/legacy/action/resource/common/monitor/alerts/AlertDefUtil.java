@@ -246,10 +246,11 @@ public final class AlertDefUtil {
         OperationManagerLocal operationManager = LookupUtil.getOperationManager();
         List<OperationDefinition> operationDefinitions = null;
 
+        // need to eager load the definitions so the check against getParametersConfigurationDefinition succeeds below
         if (isAlertTemplate) {
-            operationDefinitions = operationManager.getSupportedResourceTypeOperations(subject, id);
+            operationDefinitions = operationManager.getSupportedResourceTypeOperations(subject, id, true);
         } else {
-            operationDefinitions = operationManager.getSupportedResourceOperations(subject, id);
+            operationDefinitions = operationManager.getSupportedResourceOperations(subject, id, true);
         }
 
         for (OperationDefinition definition : operationDefinitions) {

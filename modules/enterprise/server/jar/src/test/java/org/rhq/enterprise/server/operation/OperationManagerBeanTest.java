@@ -1455,7 +1455,8 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert op.getName().equals("testOp");
         assert op.equals(newOperation);
 
-        ops = operationManager.getSupportedGroupOperations(superuser, newGroup.getId());
+        // need to eager load the definition because .equals compares the resource type objects
+        ops = operationManager.getSupportedGroupOperations(superuser, newGroup.getId(), true);
         assert ops != null;
         assert ops.size() == 1;
         op = ops.iterator().next();
@@ -1471,7 +1472,8 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert op.getName().equals("testOp");
         assert op.equals(newOperation);
 
-        ops = operationManager.getSupportedResourceOperations(superuser, newResource.getId());
+        // need to eager load the definition because .equals compares the resource type objects
+        ops = operationManager.getSupportedResourceOperations(superuser, newResource.getId(), true);
         assert ops != null;
         assert ops.size() == 1;
         op = ops.iterator().next();
@@ -1522,7 +1524,8 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
             }
 
             try {
-                operationManager.getSupportedGroupOperations(noPermSubject, newGroup.getId());
+                // do not need to eager load just to test authorization
+                operationManager.getSupportedGroupOperations(noPermSubject, newGroup.getId(), false);
                 assert false : "Should not have permission to do this";
             } catch (PermissionException expected) {
             }
@@ -1535,7 +1538,8 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
             }
 
             try {
-                operationManager.getSupportedResourceOperations(noPermSubject, newResource.getId());
+                // do not need to eager load just to test authorization
+                operationManager.getSupportedResourceOperations(noPermSubject, newResource.getId(), false);
                 assert false : "Should not have permission to do this";
             } catch (PermissionException expected) {
             }

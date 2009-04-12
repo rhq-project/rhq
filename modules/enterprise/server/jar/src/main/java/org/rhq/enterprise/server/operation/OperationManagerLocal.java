@@ -408,30 +408,36 @@ public interface OperationManagerLocal {
      *
      * @param  whoami
      * @param  resourceId
+     * @param  eagerLoaded if true the parametersConfigurationDefinition, resultsConfigurationDefinition, and
+     *         resourceType fields are eagerly loaded, otherwise they are left as null references
      *
      * @return the operation definitions for the resource
      */
-    List<OperationDefinition> getSupportedResourceOperations(Subject whoami, int resourceId);
+    List<OperationDefinition> getSupportedResourceOperations(Subject whoami, int resourceId, boolean eagerLoaded);
 
     /**
      * Returns the definitions of all the operations supported by the given resource type.
      *
      * @param  whoami
      * @param  resourceTypeId
+     * @param  eagerLoaded if true the parametersConfigurationDefinition, resultsConfigurationDefinition, and
+     *         resourceType fields are eagerly loaded, otherwise they are left as null references
      *
      * @return the operation definitions for the resource type
      */
-    List<OperationDefinition> getSupportedResourceTypeOperations(Subject whoami, int resourceTypeId);
+    List<OperationDefinition> getSupportedResourceTypeOperations(Subject whoami, int resourceTypeId, boolean eagerLoaded);
 
     /**
      * Returns the definitions of all the operations supported by the given group.
      *
      * @param  whoami
      * @param  compatibleGroupId
+     * @param  eagerLoaded if true the parametersConfigurationDefinition, resultsConfigurationDefinition, and
+     *         resourceType fields are eagerly loaded, otherwise they are left as null references
      *
      * @return the operation definitions for the group
      */
-    List<OperationDefinition> getSupportedGroupOperations(Subject whoami, int compatibleGroupId);
+    List<OperationDefinition> getSupportedGroupOperations(Subject whoami, int compatibleGroupId, boolean eagerLoaded);
 
     /**
      * Returns the definition of the named operation supported by the given resource. If the operation is not valid for

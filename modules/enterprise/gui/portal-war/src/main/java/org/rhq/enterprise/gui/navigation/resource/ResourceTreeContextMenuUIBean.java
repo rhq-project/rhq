@@ -92,9 +92,9 @@ public class ResourceTreeContextMenuUIBean {
             addMeasurementsViewMetricChartMenu(resourceIdString, schedules);
             addMeasurementGraphToViewsMenu(resourceIdString, schedules);
 
-            // operations menu
+            // operations menu, lazy-loaded entries because only name/id are needed for display 
             List<OperationDefinition> operations = operationManager.getSupportedResourceTypeOperations(subject,
-                resourceTypeId);
+                resourceTypeId, false);
             addOperationsMenu(resourceIdString, operations);
         }
     }

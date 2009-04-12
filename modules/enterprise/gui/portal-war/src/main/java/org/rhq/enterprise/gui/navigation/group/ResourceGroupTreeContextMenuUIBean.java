@@ -112,9 +112,9 @@ public class ResourceGroupTreeContextMenuUIBean {
                 .getMeasurementDefinitionsByResourceType(subject, type.getId(), null, null);
             addMeasurementGraphToViewsMenu(String.valueOf(group.getId()), definitions);
 
-            // operations menugroup
+            // operations menugroup, lazy-loaded entries because only name/id are needed for display
             List<OperationDefinition> operations = operationManager.getSupportedResourceTypeOperations(subject, type
-                .getId());
+                .getId(), false);
             addOperationsMenu(String.valueOf(group.getId()), parentGroupIdString, operations);
         }
     }

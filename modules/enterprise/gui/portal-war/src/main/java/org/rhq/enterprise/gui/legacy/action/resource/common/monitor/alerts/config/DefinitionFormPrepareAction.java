@@ -179,7 +179,9 @@ public abstract class DefinitionFormPrepareAction extends TilesAction {
 
         List<OptionItem> controlActions = new ArrayList<OptionItem>();
         OperationManagerLocal operationManager = LookupUtil.getOperationManager();
-        for (OperationDefinition action : operationManager.getSupportedResourceTypeOperations(subject, type.getId())) {
+        // do not need to eagerly load the definitions because only name and displayName are needed
+        for (OperationDefinition action : operationManager.getSupportedResourceTypeOperations(subject, type.getId(),
+            false)) {
             OptionItem actionItem = new OptionItem(action.getDisplayName(), action.getName());
             controlActions.add(actionItem);
         }

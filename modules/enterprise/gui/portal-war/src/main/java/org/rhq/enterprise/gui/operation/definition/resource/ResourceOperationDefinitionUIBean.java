@@ -41,8 +41,9 @@ public class ResourceOperationDefinitionUIBean extends OperationDefinitionUIBean
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Resource resource = EnterpriseFacesContextUtility.getResource();
 
+        // only name and definition are displayed in the "Supported Operations" section of the Operation>New sub-tab
         List<OperationDefinition> definitions = operationManager.getSupportedResourceOperations(subject, resource
-            .getId());
+            .getId(), false);
 
         return new PageList<OperationDefinition>(definitions, new PageControl(0, definitions.size()));
     }

@@ -532,13 +532,15 @@ public interface OperationManagerLocal {
     /**
      * @param  resourceTypeId
      * @param  operationName
+     * @param  eagerLoaded if true the parametersConfigurationDefinition, resultsConfigurationDefinition, and
+     *         resourceType fields are eagerly loaded, otherwise they are left as null references
      *
      * @return the operation definition
      *
      * @throws OperationDefinitionNotFoundException
      */
-    OperationDefinition getOperationDefinitionByResourceTypeAndName(int resourceTypeId, String operationName)
-        throws OperationDefinitionNotFoundException;
+    OperationDefinition getOperationDefinitionByResourceTypeAndName(int resourceTypeId, String operationName,
+        boolean eagerLoaded) throws OperationDefinitionNotFoundException;
 
     /**
      * Gets a list of all recently completed resource operations. This is used to support the dashboard operations

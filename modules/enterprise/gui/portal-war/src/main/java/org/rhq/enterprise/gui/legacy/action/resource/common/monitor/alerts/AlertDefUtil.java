@@ -91,7 +91,7 @@ public final class AlertDefUtil {
                 OperationManagerLocal operationManager = LookupUtil.getOperationManager();
 
                 OperationDefinition definition = operationManager.getOperationDefinitionByResourceTypeAndName(
-                    resourceTypeId, operationName);
+                    resourceTypeId, operationName, false);
                 textValue.append(definition.getDisplayName()).append(' ');
             } catch (Exception e) {
                 textValue.append(cond.getName()).append(' ');

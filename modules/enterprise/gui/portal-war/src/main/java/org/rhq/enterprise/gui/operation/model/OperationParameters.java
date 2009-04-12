@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.operation.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -60,7 +61,8 @@ public class OperationParameters {
         OperationDefinition definition;
 
         try {
-            definition = operationManager.getOperationDefinitionByResourceTypeAndName(type.getId(), operationName);
+            definition = operationManager
+                .getOperationDefinitionByResourceTypeAndName(type.getId(), operationName, true);
         } catch (OperationDefinitionNotFoundException odnfe) {
             throw new PluginReloadedException("The plugin for " + type.getName()
                 + " has been updated since this schedule was created, and the operation " + operationName
@@ -80,8 +82,7 @@ public class OperationParameters {
         return this.configurationDefinition;
     }
 
-    public void setConfigurationDefinition(@NotNull
-    ConfigurationDefinition configurationDefinition) {
+    public void setConfigurationDefinition(@NotNull ConfigurationDefinition configurationDefinition) {
         this.configurationDefinition = configurationDefinition;
     }
 
@@ -90,8 +91,7 @@ public class OperationParameters {
         return this.configuration;
     }
 
-    public void setConfiguration(@NotNull
-    Configuration configuration) {
+    public void setConfiguration(@NotNull Configuration configuration) {
         this.configuration = configuration;
     }
 

@@ -689,7 +689,7 @@ public class AlertManagerBean implements AlertManagerLocal {
                 OperationManagerLocal operationManager = LookupUtil.getOperationManager(); // TODO why is this here? Why not the class wide variable?
 
                 OperationDefinition definition = operationManager.getOperationDefinitionByResourceTypeAndName(
-                    resourceTypeId, operationName);
+                    resourceTypeId, operationName, false);
                 builder.append(definition.getDisplayName()).append(' ');
             } catch (Exception e) {
                 builder.append(condition.getName()).append(' ');

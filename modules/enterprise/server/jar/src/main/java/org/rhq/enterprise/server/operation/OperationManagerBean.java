@@ -205,7 +205,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     private void putDisplayName(JobDataMap jobDataMap, int resourceTypeId, String operationName) {
         try {
             OperationDefinition operationDefintion = getOperationDefinitionByResourceTypeAndName(resourceTypeId,
-                operationName);
+                operationName, false);
             jobDataMap.put(OperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME, operationDefintion.getDisplayName());
         } catch (OperationDefinitionNotFoundException odnfe) {
             jobDataMap.put(OperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME, operationName);
@@ -1670,22 +1670,22 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return operationDefinition;
     }
 
-    public OperationDefinition getOperationDefinitionByResourceTypeAndName(int resourceTypeId, String operationName)
-        throws OperationDefinitionNotFoundException {
-        ResourceType resourceType = entityManager.find(ResourceType.class, resourceTypeId);
+    @SuppressWarnings("unchecked")
+    public OperationDefinition getOperationDefinitionByResourceTypeAndName(int resourceTypeId, String operationName,
+        boolean eagerLoaded) throws OperationDefinitionNotFoundException {
+        String queryName = eagerLoaded ? OperationDefinition.QUERY_FIND_BY_TYPE_AND_NAME
+            : OperationDefinition.QUERY_FIND_LIGHT_WEIGHT_BY_TYPE_AND_NAME;
+        Query query = entityManager.createNamedQuery(queryName);
+        query.setParameter("resourceTypeId", resourceTypeId);
+        query.setParameter("operationName", operationName);
+        List<OperationDefinition> results = query.getResultList();
 
-        OperationDefinition operationDefinition = null;
-        for (OperationDefinition definition : resourceType.getOperationDefinitions()) {
-            if (definition.getName().equals(operationName)) {
-                operationDefinition = definition;
-            }
+        if (results.size() != 1) {
+            throw new OperationDefinitionNotFoundException("There were " + results.size() + " operations called "
+                + operationName + " for resourceType[id=" + resourceTypeId + "]");
         }
 
-        if (operationDefinition == null) {
-            throw new OperationDefinitionNotFoundException();
-        }
-
-        return operationDefinition;
+        return results.get(0);
     }
 
     private void notifyAlertConditionCacheManager(String callingMethod, OperationHistory operationHistory) {

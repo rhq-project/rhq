@@ -1,28 +1,29 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.operation;
 
 import java.io.Serializable;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -36,21 +37,41 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
- * The definition of a JON operation. An operation definition is associated with a particular physical resource type
+ * The definition of an RHQ operation. An operation definition is associated with a particular physical resource type
  * (e.g. JBossAS server) and an optional resource version range.
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = OperationDefinition.QUERY_FIND_BY_RESOURCE_TYPE_ID, query = "SELECT od "
-    + "FROM OperationDefinition AS od " + "WHERE od.resourceType.id = :resourceTypeId " + "ORDER BY od.displayName") })
+@NamedQueries( //
+{
+    @NamedQuery(name = OperationDefinition.QUERY_FIND_BY_RESOURCE_TYPE_ID, query = "" //
+        + "   SELECT od " //
+        + "     FROM OperationDefinition AS od " //
+        + "    WHERE od.resourceType.id = :resourceTypeId " //
+        + " ORDER BY od.displayName"), //
+    @NamedQuery(name = OperationDefinition.QUERY_FIND_BY_TYPE_AND_NAME, query = "" //
+        + "   SELECT od " //
+        + "     FROM OperationDefinition AS od " //
+        + "    WHERE od.resourceType.id = :resourceTypeId " //
+        + "      AND od.name = :operationName"),
+    @NamedQuery(name = OperationDefinition.QUERY_FIND_LIGHT_WEIGHT_BY_TYPE_AND_NAME, query = "" //
+        + "   SELECT new org.rhq.core.domain.operation.composite.OperationDefinitionLightWeight " //
+        + "          ( od.id, od.name, od.resourceVersionRange, od.description, od.timeout, od.displayName ) " //
+        + "     FROM OperationDefinition AS od " //
+        + "    WHERE od.resourceType.id = :resourceTypeId " //
+        + "      AND od.name = :operationName") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_OPERATION_DEF_ID_SEQ")
 @Table(name = "RHQ_OPERATION_DEF")
 public class OperationDefinition implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_ID = "OperationDefinition.findByResourceTypeId";
+    public static final String QUERY_FIND_BY_TYPE_AND_NAME = "OperationDefinition.findByTypeAndName";
+    public static final String QUERY_FIND_LIGHT_WEIGHT_BY_TYPE_AND_NAME = "OperationDefinition.findLightWeightByTypeAndName";
 
     private static final long serialVersionUID = 1L;
 
@@ -66,7 +87,6 @@ public class OperationDefinition implements Serializable {
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")
     @Id
-    @SuppressWarnings( { "unused" })
     private int id;
 
     @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = false)
@@ -100,21 +120,23 @@ public class OperationDefinition implements Serializable {
     protected OperationDefinition() {
     }
 
-    public OperationDefinition(@NotNull
-    String name, String resourceVersionRange, String description) {
+    public OperationDefinition(@NotNull String name, String resourceVersionRange, String description) {
         this.name = name;
         this.resourceVersionRange = resourceVersionRange;
         this.description = description;
     }
 
-    public OperationDefinition(ResourceType resourceType, @NotNull
-    String name) {
+    public OperationDefinition(ResourceType resourceType, @NotNull String name) {
         this.resourceType = resourceType;
         this.name = name;
     }
 
     public int getId() {
         return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public ResourceType getResourceType() {
@@ -130,8 +152,7 @@ public class OperationDefinition implements Serializable {
         return name;
     }
 
-    public void setName(@NotNull
-    String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 

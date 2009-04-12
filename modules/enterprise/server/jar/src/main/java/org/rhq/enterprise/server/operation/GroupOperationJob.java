@@ -98,7 +98,7 @@ public class GroupOperationJob extends OperationJob {
 
             // we need the operation definition to fill in the history item
             OperationDefinition op;
-            op = operationManager.getSupportedGroupOperation(user, group.getId(), schedule.getOperationName());
+            op = operationManager.getSupportedGroupOperation(user, group.getId(), schedule.getOperationName(), false);
 
             // first we need to create an INPROGRESS *group* history item
             Configuration parameters = schedule.getParameters();

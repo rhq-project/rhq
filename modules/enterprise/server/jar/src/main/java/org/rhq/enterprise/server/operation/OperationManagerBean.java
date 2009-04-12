@@ -63,7 +63,6 @@ import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -1007,49 +1006,52 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
-    public OperationDefinition getSupportedResourceOperation(Subject whoami, int resourceId, String operationName) {
-        Resource resource = getResourceIfAuthorized(whoami, resourceId);
-
-        int resourceTypeId = resource.getResourceType().getId();
-
-        try {
-            Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_ID_WITH_ALL_OPERATIONS);
-            query.setParameter("id", resourceTypeId);
-            ResourceType resourceType = (ResourceType) query.getSingleResult();
-
-            for (OperationDefinition def : resourceType.getOperationDefinitions()) {
-                if (def.getName().equals(operationName)) {
-                    return def;
-                }
-            }
-
-            throw new IllegalArgumentException("Unknown operation");
-        } catch (Exception e) {
-            throw new RuntimeException("Cannot get operation [" + operationName + "] for resourceType ["
-                + resourceTypeId + "]: " + e, e);
+    @SuppressWarnings("unchecked")
+    public OperationDefinition getSupportedResourceOperation(Subject whoami, int resourceId, String operationName,
+        boolean eagerLoaded) {
+        if (!authorizationManager.canViewResource(whoami, resourceId)) {
+            throw new PermissionException("User [" + whoami + "] does not have permission to view resource ["
+                + resourceId + "]");
         }
+
+        String queryName = eagerLoaded ? OperationDefinition.QUERY_FIND_BY_RESOURCE_AND_NAME
+            : OperationDefinition.QUERY_FIND_LIGHT_WEIGHT_BY_RESOURCE_AND_NAME;
+
+        Query query = entityManager.createNamedQuery(queryName);
+        query.setParameter("resourceId", resourceId);
+        query.setParameter("operationName", operationName);
+        List<OperationDefinition> results = query.getResultList();
+
+        if (results.size() != 1) {
+            throw new RuntimeException("Found " + results.size() + " operations called [" + operationName
+                + "] for resource [" + resourceId + "]: ");
+        }
+
+        return results.get(0);
     }
 
-    public OperationDefinition getSupportedGroupOperation(Subject whoami, int compatibleGroupId, String operationName) {
-        ResourceGroup group = getCompatibleGroupIfAuthorized(whoami, compatibleGroupId);
-
-        int resourceTypeId = group.getResourceType().getId();
-
-        try {
-            Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_ID_WITH_ALL_OPERATIONS);
-            query.setParameter("id", resourceTypeId);
-            ResourceType resourceType = (ResourceType) query.getSingleResult();
-            for (OperationDefinition def : resourceType.getOperationDefinitions()) {
-                if (def.getName().equals(operationName)) {
-                    return def;
-                }
-            }
-
-            throw new IllegalArgumentException("Unknown operation");
-        } catch (Exception e) {
-            throw new RuntimeException("Cannot get operation [" + operationName + "] for resourceType ["
-                + resourceTypeId + "]: " + e, e);
+    @SuppressWarnings("unchecked")
+    public OperationDefinition getSupportedGroupOperation(Subject whoami, int compatibleGroupId, String operationName,
+        boolean eagerLoaded) {
+        if (!authorizationManager.canViewGroup(whoami, compatibleGroupId)) {
+            throw new PermissionException("User [" + whoami + "] does not have permission to view group ["
+                + compatibleGroupId + "]");
         }
+
+        String queryName = eagerLoaded ? OperationDefinition.QUERY_FIND_BY_GROUP_AND_NAME
+            : OperationDefinition.QUERY_FIND_LIGHT_WEIGHT_BY_GROUP_AND_NAME;
+
+        Query query = entityManager.createNamedQuery(queryName);
+        query.setParameter("groupId", compatibleGroupId);
+        query.setParameter("operationName", operationName);
+        List<OperationDefinition> results = query.getResultList();
+
+        if (results.size() != 1) {
+            throw new RuntimeException("Found " + results.size() + " operations called [" + operationName
+                + "] for group [" + compatibleGroupId + "]: ");
+        }
+
+        return results.get(0);
     }
 
     public boolean isResourceOperationSupported(Subject whoami, int resourceId) {
@@ -1371,7 +1373,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 ResourceOperationSchedule sched = getResourceOperationSchedule(subject, composite.getOperationJobId()
                     .toString());
                 OperationDefinition def = getSupportedResourceOperation(overlord, composite.getResourceId(), sched
-                    .getOperationName());
+                    .getOperationName(), false);
                 composite.setOperationName((def.getDisplayName() != null) ? def.getDisplayName() : sched
                     .getOperationName());
             } catch (SchedulerException se) {
@@ -1425,7 +1427,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 GroupOperationSchedule sched = getGroupOperationSchedule(subject, composite.getOperationJobId()
                     .toString());
                 OperationDefinition def = getSupportedGroupOperation(overlord, composite.getGroupId(), sched
-                    .getOperationName());
+                    .getOperationName(), false);
                 composite.setOperationName((def.getDisplayName() != null) ? def.getDisplayName() : sched
                     .getOperationName());
             } catch (SchedulerException se) {

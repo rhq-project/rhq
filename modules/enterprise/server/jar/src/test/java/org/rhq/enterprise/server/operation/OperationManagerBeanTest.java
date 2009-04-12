@@ -1448,7 +1448,8 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         OperationDefinition op;
         List<OperationDefinition> ops;
 
-        op = operationManager.getSupportedGroupOperation(superuser, newGroup.getId(), "testOp");
+        // need to eager load the definition because .equals compares the resource type objects
+        op = operationManager.getSupportedGroupOperation(superuser, newGroup.getId(), "testOp", true);
         assert op != null;
         assert op.getId() > 0;
         assert op.getName().equals("testOp");
@@ -1463,7 +1464,8 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert op.getName().equals("testOp");
         assert op.equals(newOperation);
 
-        op = operationManager.getSupportedResourceOperation(superuser, newResource.getId(), "testOp");
+        // need to eager load the definition because .equals compares the resource type objects
+        op = operationManager.getSupportedResourceOperation(superuser, newResource.getId(), "testOp", true);
         assert op != null;
         assert op.getId() > 0;
         assert op.getName().equals("testOp");
@@ -1513,7 +1515,8 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
             }
 
             try {
-                operationManager.getSupportedGroupOperation(noPermSubject, newGroup.getId(), "testOp");
+                // do not need to eager load just to test authorization
+                operationManager.getSupportedGroupOperation(noPermSubject, newGroup.getId(), "testOp", false);
                 assert false : "Should not have permission to do this";
             } catch (PermissionException expected) {
             }
@@ -1525,7 +1528,8 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
             }
 
             try {
-                operationManager.getSupportedResourceOperation(noPermSubject, newResource.getId(), "testOp");
+                // do not need to eager load just to test authorization
+                operationManager.getSupportedResourceOperation(noPermSubject, newResource.getId(), "testOp", false);
                 assert false : "Should not have permission to do this";
             } catch (PermissionException expected) {
             }

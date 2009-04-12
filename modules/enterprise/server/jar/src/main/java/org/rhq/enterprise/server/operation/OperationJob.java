@@ -84,7 +84,7 @@ public abstract class OperationJob implements Job {
         // we need the operation definition to fill in the history item
         OperationDefinition op;
         op = operationManager.getSupportedResourceOperation(schedule.getSubject(), schedule.getResource().getId(),
-            schedule.getOperationName());
+            schedule.getOperationName(), false);
 
         // first we need to create an INPROGRESS history item
         Configuration parameters = schedule.getParameters();

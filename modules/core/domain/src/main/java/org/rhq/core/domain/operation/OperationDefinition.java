@@ -65,6 +65,32 @@ import org.rhq.core.domain.resource.ResourceType;
         + "          ( od.id, od.name, od.resourceVersionRange, od.description, od.timeout, od.displayName ) " //
         + "     FROM OperationDefinition AS od " //
         + "    WHERE od.resourceType.id = :resourceTypeId " //
+        + "      AND od.name = :operationName"),
+    @NamedQuery(name = OperationDefinition.QUERY_FIND_BY_RESOURCE_AND_NAME, query = "" //
+        + "   SELECT od " //
+        + "     FROM OperationDefinition AS od, Resource res " //
+        + "    WHERE od.resourceType.id = res.resourceType.id " //
+        + "      AND res.id = :resourceId " //
+        + "      AND od.name = :operationName"),
+    @NamedQuery(name = OperationDefinition.QUERY_FIND_LIGHT_WEIGHT_BY_RESOURCE_AND_NAME, query = "" //
+        + "   SELECT new org.rhq.core.domain.operation.composite.OperationDefinitionLightWeight " //
+        + "          ( od.id, od.name, od.resourceVersionRange, od.description, od.timeout, od.displayName ) " //
+        + "     FROM OperationDefinition AS od, Resource res " //
+        + "    WHERE od.resourceType.id = res.resourceType.id " //
+        + "      AND res.id = :resourceId " //
+        + "      AND od.name = :operationName"),
+    @NamedQuery(name = OperationDefinition.QUERY_FIND_BY_GROUP_AND_NAME, query = "" //
+        + "   SELECT od " //
+        + "     FROM OperationDefinition AS od, ResourceGroup rg " //
+        + "    WHERE od.resourceType.id = rg.resourceType.id " //
+        + "      AND rg.id = :groupId " //
+        + "      AND od.name = :operationName"),
+    @NamedQuery(name = OperationDefinition.QUERY_FIND_LIGHT_WEIGHT_BY_GROUP_AND_NAME, query = "" //
+        + "   SELECT new org.rhq.core.domain.operation.composite.OperationDefinitionLightWeight " //
+        + "          ( od.id, od.name, od.resourceVersionRange, od.description, od.timeout, od.displayName ) " //
+        + "     FROM OperationDefinition AS od, ResourceGroup rg " //
+        + "    WHERE od.resourceType.id = rg.resourceType.id " //
+        + "      AND rg.id = :groupId " //
         + "      AND od.name = :operationName") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_OPERATION_DEF_ID_SEQ")
 @Table(name = "RHQ_OPERATION_DEF")
@@ -72,6 +98,10 @@ public class OperationDefinition implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_ID = "OperationDefinition.findByResourceTypeId";
     public static final String QUERY_FIND_BY_TYPE_AND_NAME = "OperationDefinition.findByTypeAndName";
     public static final String QUERY_FIND_LIGHT_WEIGHT_BY_TYPE_AND_NAME = "OperationDefinition.findLightWeightByTypeAndName";
+    public static final String QUERY_FIND_BY_RESOURCE_AND_NAME = "OperationDefinition.findByResourceAndName";
+    public static final String QUERY_FIND_LIGHT_WEIGHT_BY_RESOURCE_AND_NAME = "OperationDefinition.findLightWeightByResourceAndName";
+    public static final String QUERY_FIND_BY_GROUP_AND_NAME = "OperationDefinition.findByGroupAndName";
+    public static final String QUERY_FIND_LIGHT_WEIGHT_BY_GROUP_AND_NAME = "OperationDefinition.findLightWeightByGroupAndName";
 
     private static final long serialVersionUID = 1L;
 

@@ -440,10 +440,13 @@ public interface OperationManagerLocal {
      * @param  whoami
      * @param  resourceId
      * @param  operationName
+     * @param  eagerLoaded if true the parametersConfigurationDefinition, resultsConfigurationDefinition, and
+     *         resourceType fields are eagerly loaded, otherwise they are left as null references
      *
      * @return the named operation definition for the resource
      */
-    OperationDefinition getSupportedResourceOperation(Subject whoami, int resourceId, String operationName);
+    OperationDefinition getSupportedResourceOperation(Subject whoami, int resourceId, String operationName,
+        boolean eagerLoaded);
 
     /**
      * Returns the definition of the named operation supported by the given group. If the operation is not valid for the
@@ -452,10 +455,13 @@ public interface OperationManagerLocal {
      * @param  whoami
      * @param  compatibleGroupId
      * @param  operationName
+     * @param  eagerLoaded if true the parametersConfigurationDefinition, resultsConfigurationDefinition, and
+     *         resourceType fields are eagerly loaded, otherwise they are left as null references
      *
      * @return the named operation definition for the group
      */
-    OperationDefinition getSupportedGroupOperation(Subject whoami, int compatibleGroupId, String operationName);
+    OperationDefinition getSupportedGroupOperation(Subject whoami, int compatibleGroupId, String operationName,
+        boolean eagerLoaded);
 
     /**
      * Determines if the given resource has at least one operation.

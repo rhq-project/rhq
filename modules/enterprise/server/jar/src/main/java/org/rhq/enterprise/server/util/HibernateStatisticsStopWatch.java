@@ -29,6 +29,7 @@ public class HibernateStatisticsStopWatch {
         values.put("TransactionCount", stats.getTransactionCount());
         values.put("EntityLoadCount", stats.getEntityLoadCount());
         values.put("ConnectCount", stats.getConnectCount());
+        values.put("Time", System.currentTimeMillis());
     }
 
     public void stop() {
@@ -37,6 +38,7 @@ public class HibernateStatisticsStopWatch {
         values.put("TransactionCount", stats.getTransactionCount() - values.get("TransactionCount"));
         values.put("EntityLoadCount", stats.getEntityLoadCount() - values.get("EntityLoadCount"));
         values.put("ConnectCount", stats.getConnectCount() - values.get("ConnectCount"));
+        values.put("Time", System.currentTimeMillis() - values.get("ConnectCount"));
     }
 
     public String toString() {
@@ -44,7 +46,8 @@ public class HibernateStatisticsStopWatch {
             + "[ QueryExecutions=" + values.get("QueryExecutionCount") //
             + ", Transactions=" + values.get("TransactionCount") //
             + ", EntityLoads=" + values.get("EntityLoadCount") //
-            + ", Connects=" + values.get("ConnectCount") + " ]";
+            + ", Connects=" + values.get("ConnectCount") //
+            + ", Time=" + values.get("Time") + " ]";
     }
 
     private Statistics getStats() {

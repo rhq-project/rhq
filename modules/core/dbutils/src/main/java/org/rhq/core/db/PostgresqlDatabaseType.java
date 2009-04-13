@@ -133,14 +133,7 @@ public abstract class PostgresqlDatabaseType extends DatabaseType {
                 db_column_type += " (" + precision + ")";
             }
 
-            // In PostgreSQL you are not allowed to change a column type.
-            // So instead, we rename the column, create a new column with the
-            // desired datatype, copy the data over from the renamed/old column,
-            // and then drop the renamed/old column.
-            sql_list.add("ALTER TABLE " + table + " RENAME " + column + " TO tmp_" + column);
-            sql_list.add("ALTER TABLE " + table + " ADD " + column + " " + db_column_type);
-            sql_list.add("UPDATE " + table + " SET " + column + " = tmp_" + column);
-            sql_list.add("ALTER TABLE " + table + " DROP COLUMN tmp_" + column);
+            sql_list.add("ALTER TABLE " + table + " ALTER COLUMN " + column + " TYPE " + db_column_type);
         }
 
         if (default_value != null) {

@@ -36,6 +36,7 @@
                                 style="width: 300px;">
                    <a4j:support event="onchange" 
                                 reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
+                                actionListener="#{ListAlertHistoryUIBean.clearDataModel}"
                                 status="commonStatus" />
 
                    <f:selectItems value="#{ListAlertHistoryUIBean.alertDefinitionSelectItems}"/>
@@ -48,6 +49,7 @@
                                 style="width: 300px;">
                    <a4j:support event="onchange" 
                                 reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
+                                actionListener="#{ListAlertHistoryUIBean.clearDataModel}"
                                 status="commonStatus" />
 
                    <f:selectItems value="#{ListAlertHistoryUIBean.alertPrioritySelectItems}"/>
@@ -61,6 +63,7 @@
                             style="width: 300px;" />
                <a4j:commandButton value="GO" 
                                   reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
+                                  actionListener="#{ListAlertHistoryUIBean.clearDataModel}"
                                   status="commonStatus" 
                                   styleClass="buttonmed">
                   <s:defaultAction />
@@ -71,8 +74,6 @@
             <br/>
 
             <h:panelGrid columns="1" styleClass="data-table">
-
-                <a4j:keepAlive beanName="ListAlertHistoryUIBean"/>
 
             <ui:param name="alertHistoryDataModel" value="#{ListAlertHistoryUIBean.dataModel}"/>
             <rich:dataTable id="alertHistoryDataTable"
@@ -173,17 +174,7 @@
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Recovery Info" />
                   </f:facet>
-                  <h:outputText value="This alert caused its alert definition to be disabled" rendered="#{onf:getAlertRecoveryInfo(item.alert.id) == 2}"/>
-                  <h:outputText value="N/A" rendered="#{onf:getAlertRecoveryInfo(item.alert.id) == 1}"/>
-
-                  <h:outputText value="Triggered '" rendered="#{onf:getAlertRecoveryInfo(item.alert.id) != '1' and onf:getAlertRecoveryInfo(item.alert.id) != '2'}"/>
-                  <h:outputLink value="/alerts/Config.do" rendered="#{onf:getAlertRecoveryInfo(item.alert.id) != '1' and onf:getAlertRecoveryInfo(item.alert.id) != '2'}">
-                     <f:param name="mode" value="viewRoles"/>
-                     <f:param name="id" value="#{Resource.id}"/>
-                     <f:param name="ad" value="#{item.alert.recoveryId}"/>
-                     <h:outputText value="#{onf:getAlertRecoveryInfo(item.alert.id)}"/>
-                  </h:outputLink>
-                  <h:outputText value="' to be re-enabled" rendered="#{onf:getAlertRecoveryInfo(item.alert.id) != '1' and onf:getAlertRecoveryInfo(item.alert.id) != '2'}"/>
+                  <h:outputText value="#{item.recoveryInfo}" />
                </rich:column>
 
                <f:facet name="footer">
@@ -207,6 +198,8 @@
             </rich:dataTable>
  
             </h:panelGrid>
+            
+            <a4j:keepAlive beanName="ListAlertHistoryUIBean"/>
 
          </rich:panel>
       </h:form>

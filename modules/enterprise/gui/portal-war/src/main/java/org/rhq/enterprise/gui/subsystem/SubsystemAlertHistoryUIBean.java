@@ -199,6 +199,10 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
                     history.setConditionText("No Conditions");
                     history.setConditionValue("--");
                 }
+
+                String recoveryInfo = AlertDefUtil.getAlertRecoveryInfo(history.getAlert(), history.getAlert()
+                    .getAlertDefinition().getResource().getId());
+                history.setRecoveryInfo(recoveryInfo);
             }
             return result;
         }

@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDampening;
@@ -42,6 +43,8 @@ import org.rhq.enterprise.gui.legacy.beans.AlertConditionBean;
 import org.rhq.enterprise.gui.legacy.beans.OptionItem;
 import org.rhq.enterprise.gui.legacy.exception.ParameterNotFoundException;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -264,6 +267,26 @@ public final class AlertDefUtil {
         }
 
         return operations;
+    }
+
+    public static String getAlertRecoveryInfo(Alert alert, int resourceId) {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+
+        if (alert.getRecoveryId() != 0) {
+            Integer recoveryAlertId = alert.getRecoveryId();
+            AlertDefinitionManagerLocal alertDefinitionManagerLocal = LookupUtil.getAlertDefinitionManager();
+            AlertDefinition recoveryAlertDefinition = alertDefinitionManagerLocal.getAlertDefinitionById(subject,
+                recoveryAlertId);
+            //return recoveryAlertDefinition.getName();
+            return "Triggered '<a href=\"/alerts/Config.do?mode=viewRoles&id=" + resourceId + "&ad" + recoveryAlertId
+                + "\">" + recoveryAlertDefinition.getName() + "</a>' to be re-enabled";
+        }
+
+        if (alert.getWillRecover()) {
+            return "This alert caused its alert definition to be disabled";
+        }
+
+        return "N/A";
     }
 
 }

@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
@@ -71,6 +72,7 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
     private String alertPriorityFilter;
     private SelectItem[] alertDefinitionSelectItems;
     private SelectItem[] alertPrioritySelectItems;
+    private int identity = new Random(System.currentTimeMillis()).nextInt(100);
 
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
     private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
@@ -87,7 +89,6 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public void setDateFilter(String dateFilter) {
         this.dateFilter = dateFilter;
-        this.dataModel = null;
     }
 
     public String getDateErrors() {
@@ -96,7 +97,6 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public void setDateErrors(String dateErrors) {
         this.dateErrors = dateErrors;
-        this.dataModel = null;
     }
 
     /*
@@ -111,7 +111,6 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public void setAlertDefinitionFilter(String alertDefinitionFilter) {
         this.alertDefinitionFilter = alertDefinitionFilter;
-        this.dataModel = null;
     }
 
     public SelectItem[] getAlertDefinitionSelectItems() {
@@ -126,7 +125,6 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public void setAlertDefinitionSelectItems(SelectItem[] alertDefinitionSelectItems) {
         this.alertDefinitionSelectItems = alertDefinitionSelectItems;
-        this.dataModel = null;
     }
 
     /*
@@ -141,7 +139,6 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public void setAlertPriorityFilter(String alertPriorityFilter) {
         this.alertPriorityFilter = alertPriorityFilter;
-        this.dataModel = null;
     }
 
     public SelectItem[] getAlertPrioritySelectItems() {
@@ -154,7 +151,6 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     public void setAlertPrioritySelectItems(SelectItem[] alertPrioritySelectItems) {
         this.alertPrioritySelectItems = alertPrioritySelectItems;
-        this.dataModel = null;
     }
 
     public String deleteSelectedAlerts() {
@@ -172,8 +168,6 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete selected alerts.", e);
         }
 
-        this.dataModel = null;
-
         return "success";
     }
 
@@ -190,7 +184,6 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
                 + resource.getId() + " ]", e);
             log.error("failed to delete alerts for resource[ " + resource.getId() + " ]", e);
         }
-        this.dataModel = null;
 
         return "success";
     }
@@ -235,15 +228,18 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
                 beginTime = date.getTime();
                 endTime = new Date(beginTime + MILLIS_IN_DAY).getTime();
             }
-            PageList<Alert> alerts = alertManager.findAlerts(getResource().getId(), alertDefinitionId, alertPriority,
+            Resource resource = getResource();
+            PageList<Alert> alerts = alertManager.findAlerts(resource.getId(), alertDefinitionId, alertPriority,
                 beginTime, endTime, pc);
 
             List<AlertWithLatestConditionLog> results = new ArrayList<AlertWithLatestConditionLog>(alerts.size());
 
             HttpServletRequest request = FacesContextUtility.getRequest();
             for (Alert alert : alerts) {
+                String recoveryInfo = AlertDefUtil.getAlertRecoveryInfo(alert, resource.getId());
+
                 if (alert.getConditionLogs().size() > 1) {
-                    results.add(new AlertWithLatestConditionLog(alert, "Multiple Conditions", "--"));
+                    results.add(new AlertWithLatestConditionLog(alert, "Multiple Conditions", "--", recoveryInfo));
                 } else if (alert.getConditionLogs().size() == 1) {
                     AlertConditionLog log = alert.getConditionLogs().iterator().next();
                     AlertCondition condition = log.getCondition();
@@ -255,10 +251,11 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
                             .getMeasurementDefinition().getUnits(), true);
                     }
 
-                    results.add(new AlertWithLatestConditionLog(alert, displayText, firedValue));
+                    results.add(new AlertWithLatestConditionLog(alert, displayText, firedValue, recoveryInfo));
                 } else {
-                    results.add(new AlertWithLatestConditionLog(alert, "No Conditions", "--"));
+                    results.add(new AlertWithLatestConditionLog(alert, "No Conditions", "--", recoveryInfo));
                 }
+
             }
 
             return new PageList<AlertWithLatestConditionLog>(results, alerts.getTotalSize(), pc);
@@ -283,9 +280,5 @@ public class ListAlertHistoryUIBean extends PagedDataTableUIBean {
 
     private String[] getSelectedAlerts() {
         return FacesContextUtility.getRequest().getParameterValues("selectedAlerts");
-    }
-
-    public String getRecoveryInfo() {
-        return "N/A";
     }
 }

@@ -35,9 +35,9 @@ public class AlertHistoryComposite {
 
     private String conditionText;
     private String conditionValue;
+    private String recoveryInfo;
 
     public AlertHistoryComposite(Alert alert, Integer parentResourceId, String parentResourceName) {
-        super();
         this.alert = alert;
         this.parentResourceId = parentResourceId;
         this.parentResourceName = parentResourceName;
@@ -69,6 +69,14 @@ public class AlertHistoryComposite {
 
     public void setConditionValue(String conditionValue) {
         this.conditionValue = conditionValue;
+    }
+
+    public String getRecoveryInfo() {
+        return recoveryInfo;
+    }
+
+    public void setRecoveryInfo(String recoveryInfo) {
+        this.recoveryInfo = recoveryInfo;
     }
 
 }

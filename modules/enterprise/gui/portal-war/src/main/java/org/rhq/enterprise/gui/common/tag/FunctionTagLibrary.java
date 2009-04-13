@@ -35,8 +35,6 @@ import org.rhq.core.clientapi.util.units.ScaleConstants;
 import org.rhq.core.clientapi.util.units.UnitNumber;
 import org.rhq.core.clientapi.util.units.UnitsConstants;
 import org.rhq.core.clientapi.util.units.UnitsFormat;
-import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -55,8 +53,6 @@ import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
-import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.common.EntityContext;
 import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
@@ -217,33 +213,6 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     public static Resource getResource(int resourceId) {
         Subject user = EnterpriseFacesContextUtility.getSubject();
         return LookupUtil.getResourceManager().getResourceById(user, resourceId);
-    }
-
-    /**
-     * Returns the alert recovery information
-     * 
-     * @param    alertId
-     * @return   Alert recovery information
-     * @author   Fady Matar     
-     */
-    public static String getAlertRecoveryInfo(int alertId) {
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-        AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-        Alert alert = alertManager.getById(alertId);
-
-        if (alert.getRecoveryId() != 0) {
-            Integer recoveryAlertId = alert.getRecoveryId();
-            AlertDefinitionManagerLocal alertDefinitionManagerLocal = LookupUtil.getAlertDefinitionManager();
-            AlertDefinition recoveryAlertDefinition = alertDefinitionManagerLocal.getAlertDefinitionById(subject,
-                recoveryAlertId);
-            return recoveryAlertDefinition.getName();
-        }
-
-        if (alert.getWillRecover()) {
-            return "2";
-        }
-
-        return "1";
     }
 
     public static String trimString(String str, int numChars) {

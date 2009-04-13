@@ -120,7 +120,8 @@ public abstract class PagedListDataModel<T> extends DataModel {
         // ensure page exists - first time going to this view
         if (pageList == null) {
             PageControl pageControl = getPageControl();
-            pageList = getDataPage(pageControl);
+            PageList<T> results = getDataPage(pageControl);
+            pageList = results;
         }
 
         return pageList;

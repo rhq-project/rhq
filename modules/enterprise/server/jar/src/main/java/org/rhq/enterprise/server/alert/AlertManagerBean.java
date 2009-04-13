@@ -109,6 +109,8 @@ public class AlertManagerBean implements AlertManagerLocal {
     @EJB
     @IgnoreDependency
     private OperationManagerLocal operationManager;
+    @EJB
+    private EmailManagerLocal emailManager;
 
     private static Date bootTime = null;
 
@@ -596,7 +598,6 @@ public class AlertManagerBean implements AlertManagerLocal {
     private void sendAlertNotificationEmails(Alert alert, Set<String> emailAddresses) {
         log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
 
-        EmailManagerLocal emailManager = LookupUtil.getEmailManagerBean();
         AlertDefinition alertDefinition = alert.getAlertDefinition();
         Map<String, String> alertMessage = emailManager.getAlertEmailMessage(
             prettyPrintResourceHierarchy(alertDefinition.getResource()), alertDefinition.getResource().getName(),
@@ -686,7 +687,6 @@ public class AlertManagerBean implements AlertManagerLocal {
             try {
                 Integer resourceTypeId = condition.getAlertDefinition().getResource().getResourceType().getId();
                 String operationName = condition.getName();
-                OperationManagerLocal operationManager = LookupUtil.getOperationManager(); // TODO why is this here? Why not the class wide variable?
 
                 OperationDefinition definition = operationManager.getOperationDefinitionByResourceTypeAndName(
                     resourceTypeId, operationName, false);

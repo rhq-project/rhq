@@ -1732,8 +1732,8 @@
 
         <service name="Enterprise Application (EAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
+                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
                  description="Enterprise Application"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -1791,9 +1791,9 @@
 
         <service name="Web Application (WAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
-                 description="Web Applications"
+                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
+                 description="a standalone web application (WAR)"
                  createDeletePolicy="both"
                  creationDataType="content">
         
@@ -1804,7 +1804,7 @@
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="war" readOnly="true"/>
-                    <c:simple-property name="descriptionTemplate" default="Web Application" readOnly="true"/>
+                    <c:simple-property name="descriptionTemplate" default="a standalone web application (WAR)" readOnly="true"/>
                     <c:simple-property name="deploymentTypeName" default="JavaEEWebApplication" readOnly="true">
                         <c:description>
                             The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
@@ -1848,10 +1848,52 @@
 
         </service>
 
+        <service name="Embedded Web Application (WAR)"
+                 subCategory="Applications"
+                 class="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentDiscoveryComponent"
+                 description="an embedded web application (WAR)">
+
+            <plugin-configuration>
+                <c:group name="general" displayName="General">
+                    <c:simple-property name="deploymentName" description="The name of this WAR" readOnly="true"/>
+                </c:group>
+                <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
+                    <c:simple-property name="extension" default="war" readOnly="true"/>
+                    <c:simple-property name="descriptionTemplate" default="an embedded web application (WAR)" readOnly="true"/>
+                    <c:simple-property name="deploymentTypeName" default="JavaEEWebApplication" readOnly="true">
+                        <c:description>
+                            The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
+                            corresponding to this deployment's type.
+                        </c:description>
+                    </c:simple-property>
+                    <c:simple-property name="embedded" default="JavaEEWebApplication" readOnly="true"/>
+                </c:group>
+            </plugin-configuration>
+
+            <operation name="start"
+                       description="starts this WAR"/>
+
+            <operation name="stop"
+                       description="stops this WAR"/>
+
+            <operation name="restart"
+                       description="stops and then restarts this WAR"/>
+
+            <metric property="custom.parent" displayName="Parent"
+                    dataType="trait" displayType="summary"
+                    description="the name of this WAR's parent deployment"/>
+
+            <resource-configuration>
+                &deploymentResourceConfigProps;
+            </resource-configuration>
+
+        </service>
+
         <service name="EJB 2.x Application (EJB JAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
+                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
                  description="EJB Applications"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -1892,8 +1934,8 @@
 
         <service name="EJB 3.x Application (EJB JAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
+                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
                  description="EJB 3.x Applications"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -1934,8 +1976,8 @@
 
         <service name="JBoss Service (SAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
+                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
                  description="JBoss Services"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -1976,8 +2018,8 @@
 
         <service name="Resource Adaptor (RAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
+                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
                  description="Resource Adaptors"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -2018,8 +2060,8 @@
 
         <service name="Microcontainer Beans (MC Beans)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.ManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.ManagedDeploymentDiscoveryComponent"
+                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
                  description="Microcontainer Beans"
                  createDeletePolicy="both"
                  creationDataType="content">

@@ -45,7 +45,7 @@ import org.rhq.plugins.jbossas5.util.ConversionUtils;
  * @author Mark Spritzler
  * @author Ian Springer
  */
-public class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryComponent<ApplicationServerComponent> {
+public abstract class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryComponent<ApplicationServerComponent> {
     private final Log log = LogFactory.getLog(this.getClass());    
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApplicationServerComponent> resourceDiscoveryContext)
@@ -84,13 +84,15 @@ public class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryCom
                 try
                 {
                     ManagedDeployment managedDeployment = managementView.getDeployment(deploymentName);
+                    if (!accept(managedDeployment))
+                        continue;
                     String resourceName = managedDeployment.getSimpleName();
                     // @TODO remove this when AS5 actually implements this for sars, and some other DeploymentTypes that haven't implemented getSimpleName()
                     if (resourceName.equals("%Generated%"))
                     {
                         resourceName = getResourceName(deploymentName);
                     }
-                    String version = "?"; // TODO
+                    String version = null; // TODO
                     DiscoveredResourceDetails resource =
                             new DiscoveredResourceDetails(resourceType,
                                     deploymentName,
@@ -99,7 +101,7 @@ public class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryCom
                                     resourceType.getDescription(),
                                     resourceDiscoveryContext.getDefaultPluginConfiguration(),
                                     null);
-                    // example of a deployment name: vfszip:/C:/opt/jboss-5.0.0.GA/server/default/deploy/foo.war
+                    // example of a deployment name: vfszip:/C:/opt/jboss-5.1.0.CR1/server/default/deploy/foo.war
                     resource.getPluginConfiguration().put(
                             new PropertySimple(ManagedDeploymentComponent.DEPLOYMENT_NAME_PROPERTY, deploymentName));
                     discoveredResources.add(resource);
@@ -120,6 +122,8 @@ public class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryCom
         log.trace("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources." );
         return discoveredResources;
     }
+
+    protected abstract boolean accept(ManagedDeployment managedDeployment);
 
     private static String getResourceName(String fullPath)
     {

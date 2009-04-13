@@ -39,16 +39,22 @@
 
                <h:outputText value="Total: #{paginationDataModel.rowCount}" 
                              style="margin-right: 1em; font-weight: bold; "/>
-               <h:outputText value="Items Per Page:" 
-                             style="margin-right: 2em; font-weight: bold; "
-                             rendered="#{paginationDataModel.rowCount > paginationSettingUIBean.minimumPageSize
-                                         and not paginationPageControl.unlimited}"/>
+               <h:outputText value="Items Per Page: #{paginationPageControl.pageSize}" 
+                             style="font-weight: bold; "
+                             rendered="#{paginationDataModel.rowCount gt paginationSettingUIBean.minimumPageSize
+                                         and not paginationPageControl.unlimited
+                                         and not (onf:length(paginationSettingUIBean.pageSizes) gt 1)}" />
+               <h:outputText value="Items Per Page:"
+                             style="margin-right: 1em; font-weight: bold; "
+                             rendered="#{paginationDataModel.rowCount gt paginationSettingUIBean.minimumPageSize
+                                         and not paginationPageControl.unlimited
+                                         and (onf:length(paginationSettingUIBean.pageSizes) gt 1)}"/>
                <h:selectOneListbox id="currentPageSize" 
                                    size="1"
                                    value="#{paginationPageControl.pageSize}"
-                                   rendered="#{paginationDataModel.rowCount > paginationSettingUIBean.minimumPageSize
+                                   rendered="#{paginationDataModel.rowCount gt paginationSettingUIBean.minimumPageSize
                                                and not paginationPageControl.unlimited
-                                               and onf:length(paginationSettingUIBean.pageSizes) gt 1}">
+                                               and (onf:length(paginationSettingUIBean.pageSizes) gt 1)}">
                   <a4j:support event="onchange" 
                                status="commonStatus"
                                reRender="#{paginationDataTableName}, #{paginationDataScrollerName}"/>
@@ -58,13 +64,17 @@
                             </td>
                         <td nowrap="nowrap">
 
+                <!--  Limit to 7 pages until e find a general fix for RHQ-1813 -->
                 <rich:datascroller id="#{paginationDataScrollerName}"
                                   for="#{paginationDataTableName}"
                                   status="commonStatus"
                                   rendered="#{not paginationPageControl.unlimited}"
+                                  selectedStyle="font-weight: bold;"
+                                  inactiveStyle="font-weight: normal;"
                                   stepControls="show"
                                   fastControls="hide"
                                   boundaryControls="hide"
+                                  maxPages="7"
                                   page="#{paginationPageControl.pageNumber}">
                   <f:facet name="next">
                      <h:panelGroup>

@@ -39,7 +39,10 @@
                <h:outputLabel for="sourceFilter" value="Source Filter: " />
                <h:inputText id="sourceFilter" value="#{EventHistoryUIBean.sourceFilter}"
                             style="width: 300px;">
-                   <a4j:support event="onchange" reRender="eventHistoryDataTable,eventHistoryDataTableScroller" />
+                   <a4j:support event="onchange"
+                                status="commonStatus" 
+                                reRender="eventHistoryDataTable, eventHistoryDataTableScroller" 
+                                actionListener="#{EventHistoryUIBean.clearDataModel}" />
                </h:inputText>
                <rich:spacer/>
 
@@ -47,21 +50,27 @@
                <h:inputText id="searchFilter" value="#{EventHistoryUIBean.searchFilter}"
                             onkeypress="return ignoreEnterKey(event);"
                             style="width: 300px;" />
+                   <a4j:support event="onchange"
+                                status="commonStatus"
+                                reRender="eventHistoryDataTable, eventHistoryDataTableScroller" 
+                                actionListener="#{EventHistoryUIBean.clearDataModel}" />
                <rich:spacer/>
                
                <h:outputLabel for="severityFilter" value="Severity Filter: " />
                <h:selectManyCheckbox id="severityFilter" value="#{EventHistoryUIBean.severityFilter}"
                                     style="width: 300px;">
                    <a4j:support event="onchange"
-                                status="commonStatus" 
-                                reRender="eventHistoryDataTable,eventHistoryDataTableScroller" />
+                                status="commonStatus"
+                                reRender="eventHistoryDataTable,eventHistoryDataTableScroller"
+                                actionListener="#{EventHistoryUIBean.clearDataModel}" />
 
                    <f:selectItems value="#{EventHistoryUIBean.severityFilterSelectItems}"/>
                </h:selectManyCheckbox>
                
                <a4j:commandButton value="GO"
-                                  status="commonStatus" 
+                                  status="commonStatus"
                                   reRender="eventHistoryDataTable,eventHistoryDataTableScroller"
+                                  actionListener="#{EventHistoryUIBean.clearDataModel}"
                                   styleClass="buttonmed">
                   <s:defaultAction />
                </a4j:commandButton>

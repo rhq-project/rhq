@@ -49,6 +49,7 @@ import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -62,6 +63,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.RecursivityChangeType;
 import org.rhq.enterprise.server.resource.group.ResourceGroupAlreadyExistsException;
@@ -95,6 +97,9 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
     @EJB
     private ResourceGroupManagerLocal resourceGroupManager;
+
+    @EJB
+    private ResourceTypeManagerLocal resourceTypeManager;
 
     @EJB
     private ResourceManagerLocal resourceManager;
@@ -513,8 +518,9 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             double implicitAvail = (Double) row[3];
 
             ResourceGroup group = groupMap.get(groupIds.get(i++));
+            ResourceFacets facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
             ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitAvail, implicitCount,
-                implicitAvail, group);
+                implicitAvail, group, facets);
             results.add(composite);
         }
 

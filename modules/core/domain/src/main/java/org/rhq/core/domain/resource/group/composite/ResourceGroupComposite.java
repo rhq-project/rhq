@@ -24,26 +24,30 @@ package org.rhq.core.domain.resource.group.composite;
 
 import java.io.Serializable;
 
+import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
 /**
  * @author Greg Hinkle
  * @author Ian Springer
+ * @author Joseph Marques
  */
 public class ResourceGroupComposite implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Double implicitAvail;
-    private Double explicitAvail;
-    private ResourceGroup resourceGroup;
+    private final Double implicitAvail;
+    private final Double explicitAvail;
+    private final ResourceGroup resourceGroup;
 
-    private GroupCategory category;
-    private long implicitUp;
-    private long implicitDown;
-    private long explicitUp;
-    private long explicitDown;
+    private final GroupCategory category;
+    private final long implicitUp;
+    private final long implicitDown;
+    private final long explicitUp;
+    private final long explicitDown;
+
+    private final ResourceFacets resourceFacets;
 
     private class GroupDefinitionMember extends ResourceGroup {
         public void setGroupCategory(GroupCategory category) {
@@ -52,13 +56,15 @@ public class ResourceGroupComposite implements Serializable {
     }
 
     public ResourceGroupComposite(long explicitCount, double explicitAvailability, long implicitCount,
-        double implicitAvailability, ResourceGroup resourceGroup) {
+        double implicitAvailability, ResourceGroup resourceGroup, ResourceFacets facets) {
 
         explicitUp = Math.round(explicitCount * explicitAvailability);
         explicitDown = explicitCount - explicitUp;
         if (explicitUp + explicitDown > 0) {
             // keep explicitAvail null if there are no explicit resources in the group
             explicitAvail = explicitAvailability;
+        } else {
+            explicitAvail = null;
         }
 
         implicitUp = Math.round(implicitCount * implicitAvailability);
@@ -66,6 +72,8 @@ public class ResourceGroupComposite implements Serializable {
         if (implicitUp + implicitDown > 0) {
             // keep implicitAvail null if there are no implicit resources in the group
             implicitAvail = implicitAvailability;
+        } else {
+            implicitAvail = null;
         }
 
         this.resourceGroup = resourceGroup;
@@ -78,6 +86,8 @@ public class ResourceGroupComposite implements Serializable {
             throw new IllegalArgumentException("Unknown category " + this.resourceGroup.getGroupCategory()
                 + " for ResourceGroup " + this.resourceGroup.getName());
         }
+
+        this.resourceFacets = facets;
     }
 
     public Double getImplicitAvail() {
@@ -118,6 +128,10 @@ public class ResourceGroupComposite implements Serializable {
 
     public String getImplicitFormatted() {
         return getAlignedAvailabilityResults(getImplicitUp(), getImplicitDown());
+    }
+
+    public ResourceFacets getResourceFacets() {
+        return resourceFacets;
     }
 
     /**

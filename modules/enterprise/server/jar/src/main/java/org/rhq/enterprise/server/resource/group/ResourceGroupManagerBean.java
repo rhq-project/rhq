@@ -66,6 +66,7 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -681,10 +682,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         ResourceGroup group = getResourceGroupById(subject, groupId, category);
         Set<Resource> res = group.getExplicitResources();
         if (res != null && res.size() > 0) {
-            List<Resource> resources =
-                    PersistenceUtility.getHibernateSession(entityManager).createFilter(res, "where this.inventoryStatus = :inventoryStatus")
-                            .setParameter("inventoryStatus", InventoryStatus.COMMITTED)
-                            .list();
+            List<Resource> resources = PersistenceUtility.getHibernateSession(entityManager).createFilter(res,
+                "where this.inventoryStatus = :inventoryStatus").setParameter("inventoryStatus",
+                InventoryStatus.COMMITTED).list();
 
             return resources;
         } else {
@@ -737,45 +737,43 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     }
 
     public ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId) {
-            // Auto cluster backing groups have a special security allowance that let's a non-inventory-manager
-            // view them even if they aren't directly in one of their roles, by nature of the fact that the user has
-            // the parent cluster group in one of its roles.
+        // Auto cluster backing groups have a special security allowance that let's a non-inventory-manager
+        // view them even if they aren't directly in one of their roles, by nature of the fact that the user has
+        // the parent cluster group in one of its roles.
 
         if (!authorizationManager.canViewGroup(subject, groupId)) {
             throw new PermissionException("You do not have permission to view this resource group");
         }
 
-        String queryString =
-                "SELECT \n" +
-                "  (SELECT count(er) " +
-                "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId),\n" +
-                "  (SELECT avg(er.currentAvailability.availabilityType) " +
-                "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId) AS eavail,\n" +
-                "  (SELECT count(ir) " +
-                "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId),\n" +
-                "  (SELECT avg(ir.currentAvailability.availabilityType) " +
-                "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId), g \n" +
-                "FROM ResourceGroup g where g.id = :groupId";
+        String queryString = "SELECT \n" + "  (SELECT count(er) "
+            + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId),\n"
+            + "  (SELECT avg(er.currentAvailability.availabilityType) "
+            + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId) AS eavail,\n"
+            + "  (SELECT count(ir) "
+            + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId),\n"
+            + "  (SELECT avg(ir.currentAvailability.availabilityType) "
+            + "       FROM ResourceGroup g JOIN g.implicitResources ir where g.id = :groupId), g \n"
+            + "FROM ResourceGroup g where g.id = :groupId";
 
         Query query = entityManager.createQuery(queryString);
         query.setParameter("groupId", groupId);
         Object[] data = (Object[]) query.getSingleResult();
 
-        ResourceGroupComposite composite = null;
-        if (((Number)data[2]).longValue() > 0) {
+        ResourceGroup group = (ResourceGroup) data[4];
+        ResourceFacets facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
 
-           composite =
-                new ResourceGroupComposite(
-                        ((Number) data[0]).longValue(),
-                        ((Number) data[1]).doubleValue(),
-                        ((Number) data[2]).longValue(),
-                        ((Number) data[3]).doubleValue(),
-                        (ResourceGroup) data[4]
-                );
+        ResourceGroupComposite composite = null;
+        if (((Number) data[2]).longValue() > 0) {
+            composite = new ResourceGroupComposite( //
+                ((Number) data[0]).longValue(), //
+                ((Number) data[1]).doubleValue(), //
+                ((Number) data[2]).longValue(), //
+                ((Number) data[3]).doubleValue(), //
+                group, facets);
         } else {
-            composite = new ResourceGroupComposite(0,0,0,0,(ResourceGroup)data[4]);
+            composite = new ResourceGroupComposite(0, 0, 0, 0, group, facets);
         }
-        composite.getResourceGroup().getModifiedBy().getFirstName();
+        group.getModifiedBy().getFirstName();
 
         return composite;
     }
@@ -1108,8 +1106,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             long implicitCount = (Long) row[2];
             double implicitAvail = (Double) row[3];
             ResourceGroup group = groupMap.get(groupIds.get(i++));
+            ResourceFacets facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
             ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitAvail, implicitCount,
-                implicitAvail, group);
+                implicitAvail, group, facets);
             results.add(composite);
         }
 

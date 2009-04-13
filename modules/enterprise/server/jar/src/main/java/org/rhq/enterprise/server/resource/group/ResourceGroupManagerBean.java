@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -1134,6 +1135,10 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
     @SuppressWarnings("unchecked")
     public List<Integer> getDeletedResourceGroupIds(List<Integer> possibleGroupIds) {
+        if (possibleGroupIds == null || possibleGroupIds.size() == 0) {
+            return Collections.emptyList();
+        }
+
         String queryString = "" //
             + "SELECT rg.id " //
             + "  FROM ResourceGroup rg " //

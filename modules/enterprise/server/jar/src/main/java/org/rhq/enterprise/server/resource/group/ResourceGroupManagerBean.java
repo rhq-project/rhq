@@ -761,7 +761,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         Object[] data = (Object[]) query.getSingleResult();
 
         ResourceGroup group = (ResourceGroup) data[4];
-        ResourceFacets facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
+        ResourceType type = group.getResourceType();
+        ResourceFacets facets;
+        if (type == null) {
+            // mixed group
+            facets = ResourceFacets.NONE;
+        } else {
+            facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
+        }
 
         ResourceGroupComposite composite = null;
         if (((Number) data[2]).longValue() > 0) {

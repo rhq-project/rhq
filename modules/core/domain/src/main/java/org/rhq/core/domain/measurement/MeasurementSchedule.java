@@ -74,10 +74,14 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = MeasurementSchedule.FIND_SCHEDULES_WITH_BASLINES_TO_CALC, query = "SELECT ms FROM MeasurementSchedule ms "
         + "WHERE ms.enabled = true AND ms.definition.numericType = :measType "
         + "AND ms.baseline.computeTime < :ctime AND ms.baseline.userEntered = false"),
-    @NamedQuery(name = MeasurementSchedule.FIND_ALL_FOR_RESOURCE_ID, query = "SELECT ms FROM MeasurementSchedule ms WHERE ms.resource.id = :resourceId "
-        + "AND (ms.definition.dataType = :dataType OR :dataType is null) "
-        + "AND (ms.definition.displayType = :displayType OR :displayType is null) "
-        + "AND (ms.enabled = :enabled OR :enabled is null) "),
+    @NamedQuery(name = MeasurementSchedule.FIND_ALL_FOR_RESOURCE_ID, query = "" //
+        + "    SELECT ms " //
+        + "      FROM MeasurementSchedule ms " //
+        + "JOIN FETCH ms.definition " //
+        + "     WHERE ms.resource.id = :resourceId " //
+        + "       AND (ms.definition.dataType = :dataType OR :dataType is null) "
+        + "       AND (ms.definition.displayType = :displayType OR :displayType is null) "
+        + "       AND (ms.enabled = :enabled OR :enabled is null) "),
     @NamedQuery(name = MeasurementSchedule.FIND_BY_DEFINITION_IDS_AND_RESOURCE_ID, query = "SELECT ms FROM MeasurementSchedule ms WHERE ms.definition.id IN (:definitionIds) AND ms.resource.id = :resourceId"),
     @NamedQuery(name = MeasurementSchedule.FIND_SCHEDULE_COMPOSITE_FOR_RESOURCE, query = "SELECT new org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite(ms.definition, ms.enabled, ms.interval) "
         + "FROM MeasurementSchedule ms WHERE ms.resource.id = :resourceId "

@@ -172,7 +172,7 @@
                       interval="60000"
                       ignoreDupResponses="true"
                       status="commonStatus"
-                      actionListener="ResourceGroupOperationCompletedHistoryUIBean"
+                      actionListener="#{ResourceGroupOperationCompletedHistoryUIBean.clearDataModel}"
                       reRender="resourceGroupOperationCompletedHistoryDataTable" />
             <rich:dataTable rendered="#{resourceGroupOperationCompletedHistoryDataModel.rowCount gt 0}"
                             id="resourceGroupOperationCompletedHistoryDataTable" 

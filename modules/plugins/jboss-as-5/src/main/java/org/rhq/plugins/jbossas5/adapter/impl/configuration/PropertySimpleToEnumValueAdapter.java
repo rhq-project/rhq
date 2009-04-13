@@ -33,20 +33,14 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.plugins.jbossas5.adapter.api.AbstractPropertySimpleAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 
- /**
+/**
+ * This class provides code that maps back and forth between a {@link PropertySimple} and
+ * an {@link EnumValueSupport}.
+ *
  * @author Ian Springer
  */
 public class PropertySimpleToEnumValueAdapter extends AbstractPropertySimpleAdapter implements PropertyAdapter<PropertySimple, PropertyDefinitionSimple>
 {
-    public void populateMetaValueFromProperty(PropertySimple propSimple, MetaValue metaValue, PropertyDefinitionSimple propDefSimple)
-    {
-        if (propSimple == null || metaValue == null)
-            return;
-        EnumValueSupport enumValueSupport = (EnumValueSupport) metaValue;
-        String value = propSimple.getStringValue();
-        enumValueSupport.setValue(value);
-    }
-
     public void populatePropertyFromMetaValue(PropertySimple propSimple, MetaValue metaValue, PropertyDefinitionSimple propDefSimple)
     {
         Object value = (metaValue != null) ? ((EnumValue) metaValue).getValue() : null;
@@ -60,5 +54,11 @@ public class PropertySimpleToEnumValueAdapter extends AbstractPropertySimpleAdap
         EnumValue enumValue = new EnumValueSupport((EnumMetaType) metaType, propSimple.getStringValue());
         populateMetaValueFromProperty(propSimple, enumValue, propDefSimple);
         return enumValue;
+    }
+
+    protected void setInnerValue(String propSimpleValue, MetaValue metaValue, PropertyDefinitionSimple propDefSimple)
+    {
+        EnumValueSupport enumValueSupport = (EnumValueSupport) metaValue;
+        enumValueSupport.setValue(propSimpleValue);
     }
 }

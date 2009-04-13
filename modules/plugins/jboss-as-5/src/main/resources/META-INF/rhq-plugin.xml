@@ -1298,9 +1298,10 @@
                     description="True if this queue was created programmatically"
                     defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
 
-            <!-- TODO: Remove this once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
+            <!-- NOTE: We have to make this a trait rather than a resource config prop due to a bug in JBMESSAGING
+                       (see https://jira.jboss.org/jira/browse/JBAS-6721). -->
             <metric property="messageCounterHistoryDayLimit"
-                    description="This queue's message counter history day limit - &lt;0: unlimited, =0: disabled, &gt;0: maximum day count" 
+                    description="This queue's message counter history day limit - &lt;0: unlimited, =0: history disabled, &gt;0: maximum day count"
                     defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
 
             <!-- Numerics -->
@@ -1330,15 +1331,19 @@
                 <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/QueueServiceMO.java -->
 
                 <c:simple-property required="true" name="name" readOnly="true"
-                                   description="The name of this queue."/>
+                                   description="The name of this queue (e.g. 'MyQueue')."/>
 
                 <c:simple-property required="true" name="JNDIName" readOnly="true"
-                                   description="This queue's JNDI name; default is '/queue/{queueName}'."/>
+                                   description="This queue's JNDI name (e.g. '/queue/MyQueue')."/>
 
-                <c:simple-property type="boolean" required="false" name="clustered" default="true"
-                                   description="Is this queue clustered? Updates to this property will not go into effect until the queue has been restarted."/>
+                <c:simple-property type="boolean" required="false" name="clustered" defaultValue="false">
+                    <c:description>
+                        Is this queue clustered? Updates to this property will not go into effect until the queue has
+                        been restarted. The default value is false.
+                    </c:description>
+                </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="downCacheSize" default="2000">
+                <c:simple-property type="integer" required="false" name="downCacheSize" defaultValue="2000">
                     <c:description>
                         When paging messages to storage from a subscription, they first go into a &quot;Down Cache&quot; before
                         being written to storage. This enables the write to occur as a single operation, thus aiding
@@ -1347,41 +1352,65 @@
                         Updates to this property will not go into effect until the queue has been restarted.
                         The default value is 2000.
                     </c:description>
+                    <c:constraint>
+                        <c:integer-constraint minimum="1"/>
+                    </c:constraint>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="fullSize" default="75000">
+                <c:simple-property type="integer" required="false" name="fullSize" defaultValue="200000">
                     <c:description>
-                        The maximum number of messages held by the queue in memory at any one time.
-                        The actual subscription can hold many more messages than this, but these are paged to and from
+                        The maximum number of messages for the queue held in memory at any one time.
+                        The actual queue can hold many more messages than this, but these are paged to and from
                         storage as necessary, as messages are added or consumed.
                         Updates to this property will not go into effect until the queue has been restarted.
-                        The default value is 75000.
+                        The default value is 200000.
                     </c:description>
+                    <c:constraint>
+                        <c:integer-constraint minimum="1"/>
+                    </c:constraint>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="maxDeliveryAttempts"
-                                   description="The number of delivery attempts before a message to this queue is moved to the DLQ."/>
+                <c:simple-property type="integer" required="false" name="maxDeliveryAttempts" defaultValue="-1">
+                    <c:description>
+                        The number of delivery attempts before a message to a subscriber of this queue is moved to the
+                        DLQ. The default value is 10. A value of -1 indicates the default value should be used.
+                    </c:description>
+                    <c:constraint>
+                        <c:integer-constraint minimum="-1"/>
+                    </c:constraint>
+                </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="maxSize"
-                                   description="The maximum number of messages this queue can hold before they are dropped."/>
+                <c:simple-property type="integer" required="false" name="maxSize" defaultValue="-1">
+                    <c:description>
+                        The maximum number of messages this queue can hold before they are dropped.
+                        A value of -1 means there is no maximum. The default value is -1.
+                    </c:description>
+                    <c:constraint>
+                        <c:integer-constraint minimum="-1"/>
+                    </c:constraint>
+                </c:simple-property>
 
-                <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
-                <!--
-                <c:simple-property type="integer" required="false" name="messageCounterHistoryDayLimit"
-                                   description="This queue's message counter history day limit - &lt;0: unlimited, =0: disabled, &gt;0: maximum day count."/>
-                -->
-
-                <c:simple-property type="integer" required="false" name="pageSize">
+                <c:simple-property type="integer" required="false" name="pageSize" defaultValue="2000">
                     <c:description>
                         When loading messages from a subscription, this is the maximum number of messages to
-                        pre-load in one operation.
+                        pre-load in one operation. Must be less than Full Size and greater than or equal to Down Cache Size.
                         Updates to this property will not go into effect until the queue has been restarted.
                         The default value is 2000.
                     </c:description>
+                    <c:constraint>
+                        <c:integer-constraint minimum="1"/>
+                    </c:constraint>
                 </c:simple-property>
 
-                <c:simple-property type="long" required="false" name="redeliveryDelay" units="milliseconds"
-                                   description="The delay in milliseconds before a rolled back or recovered message is redelivered."/>
+                <c:simple-property type="long" required="false" name="redeliveryDelay" units="milliseconds" defaultValue="-1">
+                    <c:description>
+                        The delay in milliseconds before a rolled back or recovered message is redelivered.
+                        Set to 0 to disable redelivery. The default value is 0. A value of -1 indicates the default value should be used.
+                    </c:description>
+                    <c:constraint>
+                        <c:integer-constraint minimum="-1"/>
+                    </c:constraint>
+                </c:simple-property>
 
                 <c:simple-property required="false" name="DLQ"
                                    description="The JMX ObjectName of the DLQ for this queue, overrides the default DLQ on the server peer"/>
@@ -1549,9 +1578,10 @@
                     description="True if this topic was created programmatically"
                     defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
 
-            <!-- TODO: Remove this once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
+            <!-- NOTE: We have to make this a trait rather than a resource config prop due to a bug in JBMESSAGING
+                       (see https://jira.jboss.org/jira/browse/JBAS-6721). -->
             <metric property="messageCounterHistoryDayLimit"
-                    description="This topic's message counter history day limit - &lt;0: unlimited, =0: disabled, &gt;0: maximum day count"
+                    description="This topic's message counter history day limit - &lt;0: unlimited, =0: history disabled, &gt;0: maximum day count"
                     defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
 
             <!-- Numerics -->
@@ -1574,15 +1604,19 @@
                 <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/TopicServiceMO.java -->
 
                 <c:simple-property required="true" name="name" readOnly="true"
-                                   description="The name of this topic."/>
+                                   description="The name of this topic (e.g. 'MyTopic')."/>
 
                 <c:simple-property required="true" name="JNDIName" readOnly="true"
-                                   description="This topic's JNDI name; default is '/topic/{topicName}'."/>
+                                   description="This topic's JNDI name (e.g. '/topic/MyTopic')"/>
 
-                <c:simple-property type="boolean" required="false" name="clustered" default="false"
-                                   description="Is this topic clustered? Updates to this property will not go into effect until the topic has been restarted."/>
+                <c:simple-property type="boolean" required="false" name="clustered" defaultValue="false">
+                    <c:description>
+                        Is this topic clustered? Updates to this property will not go into effect until the topic has
+                        been restarted. The default value is false.
+                    </c:description>
+                </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="downCacheSize" default="2000">
+                <c:simple-property type="integer" required="false" name="downCacheSize" defaultValue="2000">
                     <c:description>
                         When paging messages to storage from a subscription, they first go into a &quot;Down Cache&quot; before
                         being written to storage. This enables the write to occur as a single operation, thus aiding
@@ -1591,41 +1625,65 @@
                         Updates to this property will not go into effect until the topic has been restarted.
                         The default value is 2000.
                     </c:description>
+                    <c:constraint>
+                        <c:integer-constraint minimum="1"/>
+                    </c:constraint>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="fullSize" default="75000">
+                <c:simple-property type="integer" required="false" name="fullSize" defaultValue="200000">
                     <c:description>
                         The maximum number of messages held by the topic subscriptions in memory at any one time.
                         The actual subscription can hold many more messages than this, but these are paged to and from
                         storage as necessary, as messages are added or consumed.
                         Updates to this property will not go into effect until the topic has been restarted.
-                        The default value is 75000.
+                        The default value is 200000.
                     </c:description>
+                    <c:constraint>
+                        <c:integer-constraint minimum="1"/>
+                    </c:constraint>
                 </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="maxDeliveryAttempts"
-                                   description="The number of delivery attempts before a message to a subscriber of this topic is moved to the DLQ."/>
+                <c:simple-property type="integer" required="false" name="maxDeliveryAttempts" defaultValue="-1">
+                    <c:description>
+                        The number of delivery attempts before a message to a subscriber of this topic is moved to the
+                        DLQ. The default value is 10. A value of -1 indicates the default value should be used.
+                    </c:description>
+                    <c:constraint>
+                        <c:integer-constraint minimum="-1"/>
+                    </c:constraint>
+                </c:simple-property>
 
-                <c:simple-property type="integer" required="false" name="maxSize"
-                                   description="The maximum number of messages this topic can hold before they are dropped."/>
+                <c:simple-property type="integer" required="false" name="maxSize" defaultValue="-1">
+                    <c:description>
+                        The maximum number of messages this topic can hold before they are dropped.
+                        A value of -1 means there is no maximum. The default value is -1.
+                    </c:description>
+                    <c:constraint>
+                        <c:integer-constraint minimum="-1"/>
+                    </c:constraint>
+                </c:simple-property>
 
-                <!-- TODO: Add this back once https://jira.jboss.org/jira/browse/JBAS-6721 is fixed. -->
-                <!--
-                <c:simple-property type="integer" required="false" name="messageCounterHistoryDayLimit"
-                                   description="This topic's message counter history day limit - &lt;0: unlimited, =0: disabled, &gt;0: maximum day count."/>
-                -->
-
-                <c:simple-property type="integer" required="false" name="pageSize">
+                <c:simple-property type="integer" required="false" name="pageSize" defaultValue="2000">
                     <c:description>
                         When loading messages from a subscription, this is the maximum number of messages to
-                        pre-load in one operation.
+                        pre-load in one operation. Must be less than Full Size and greater than or equal to Down Cache Size.
                         Updates to this property will not go into effect until the topic has been restarted.
                         The default value is 2000.
                     </c:description>
+                    <c:constraint>
+                        <c:integer-constraint minimum="1"/>
+                    </c:constraint>
                 </c:simple-property>
 
-                <c:simple-property type="long" required="false" name="redeliveryDelay" units="milliseconds"
-                                   description="The delay in milliseconds before a rolled back or recovered message is redelivered."/>
+                <c:simple-property type="long" required="false" name="redeliveryDelay" units="milliseconds" defaultValue="-1">
+                    <c:description>
+                        The delay in milliseconds before a rolled back or recovered message is redelivered.
+                        Set to 0 to disable redelivery. The default value is 0. A value of -1 indicates the default value should be used.
+                    </c:description>
+                    <c:constraint>
+                        <c:integer-constraint minimum="-1"/>
+                    </c:constraint>
+                </c:simple-property>
 
                 <c:simple-property required="false" name="DLQ"
                                    description="The JMX ObjectName of the DLQ for this topic, overrides the default DLQ on the server peer"/>

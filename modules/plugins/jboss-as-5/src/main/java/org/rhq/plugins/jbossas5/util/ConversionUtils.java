@@ -41,6 +41,7 @@ import org.jboss.metatype.api.types.MapCompositeMetaType;
 import org.jboss.metatype.api.types.SimpleMetaType;
 import org.jboss.metatype.api.types.CompositeMetaType;
 import org.jboss.metatype.api.values.MetaValue;
+import org.jboss.metatype.api.values.SimpleValueSupport;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -226,17 +227,10 @@ public class ConversionUtils
     {
         if (property == null ||
             (property instanceof PropertySimple && ((PropertySimple)property).getStringValue() == null)) {
-            // Property is unset, which translates to "removed" in Profile Service lingo.
+            // The property is unset, which translates to "removed" in Profile Service lingo.
+            // We will also set the ManagedProperty's MetaValue to a default value - this will be handled by the
+            // conversion performed below by the property's adapter.
             managedProperty.setRemoved(true);
-            MetaType metaType = managedProperty.getMetaType();
-            if (!metaType.isPrimitive()) {
-                // Set the value to null for non-primitive ManagedProperties to tell the managed resource to use its
-                // built-in default value.
-                LOG.debug("Setting value of removed non-primitive ManagedProperty '" + managedProperty.getName()
-                    + "' to null...");
-                managedProperty.setValue(null);
-            }
-            return;
         }
         // See if there is a custom adapter defined for this property.
         PropertyAdapter propertyAdapter = PropertyAdapterFactory.getCustomPropertyAdapter(customProperty);

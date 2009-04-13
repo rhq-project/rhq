@@ -23,17 +23,21 @@
 package org.rhq.plugins.jbossas5.adapter.api;
 
 import org.jboss.metatype.api.values.MetaValue;
+
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.definition.PropertySimpleType;
-
-import java.io.Serializable;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
- * A base class for PropertySimple <-> ???MetaValue adapters.
+ * A base class for {@link PropertySimple} <-> ???MetaValue adapters.
+ *
+ * @author Ian Springer
  */
 public abstract class AbstractPropertySimpleAdapter implements PropertyAdapter<PropertySimple, PropertyDefinitionSimple>
 {
+    private final Log log = LogFactory.getLog(this.getClass());
+
     public PropertySimple convertToProperty(MetaValue metaValue, PropertyDefinitionSimple propDefSimple)
     {
         PropertySimple propSimple = new PropertySimple(propDefSimple.getName(), null);
@@ -41,43 +45,36 @@ public abstract class AbstractPropertySimpleAdapter implements PropertyAdapter<P
         return propSimple;
     }
 
-    protected Serializable getSimplePropertyValue(PropertySimple prop, PropertyDefinitionSimple propDef)
+    public void populateMetaValueFromProperty(PropertySimple propSimple, MetaValue metaValue,
+                                              PropertyDefinitionSimple propDefSimple)
     {
-        Serializable value = null;
-        if (propDef != null)
-        {
-            PropertySimpleType type = propDef.getType();
-            switch (type)
-            {
-                case BOOLEAN:
-                {
-                    value = prop.getBooleanValue();
-                    break;
-                }
-                case INTEGER:
-                {
-                    value = prop.getIntegerValue();
-                    break;
-                }
-                case LONG:
-                {
-                    value = prop.getLongValue();
-                    break;
-                }
-                case FLOAT:
-                {
-                    value = prop.getFloatValue();
-                    break;
-                }
-                case DOUBLE:
-                {
-                    value = prop.getDoubleValue();
-                    break;
-                }
+        if (metaValue == null)
+            throw new IllegalArgumentException("MetaValue to be populated is null.");
+        String value;
+        if (propSimple == null || propSimple.getStringValue() == null) {
+            // Value is null (i.e. prop is unset) - figure out what to use as a default value.
+            String defaultValue = propDefSimple.getDefaultValue();
+            if (defaultValue != null) {
+                log.debug("Simple property '" + propDefSimple.getName()
+                        + "' has a null value - setting inner value of corresponding ManagedProperty's MetaValue to plugin-specified default ('"
+                        + defaultValue + "')...");
+                value = defaultValue;
+            } else {
+                if (metaValue.getMetaType().isPrimitive())
+                    // If it's a primitive, don't mess with the MetaValue - just let it keep whatever inner value it
+                    // currently has.
+                    return;
+                // It's a non-primitive - set its value to null. In most cases, this should tell the managed resource
+                // to use its internal default.
+                log.debug("Simple property '" + propDefSimple.getName()
+                        + "' has a null value - setting inner value of corresponding ManagedProperty's MetaValue to null...");
+                value = null;
             }
+        } else {
+            value = propSimple.getStringValue();
         }
-        if (value == null)
-            value = prop.getStringValue();
-        return value;
+        setInnerValue(value, metaValue, propDefSimple);
     }
+
+    protected abstract void setInnerValue(String propSimpleValue, MetaValue metaValue, PropertyDefinitionSimple propDefSimple);
 }

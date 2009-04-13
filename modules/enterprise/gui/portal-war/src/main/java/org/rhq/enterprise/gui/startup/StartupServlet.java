@@ -89,8 +89,12 @@ public class StartupServlet extends HttpServlet {
         AvailabilityReportSerializer.getSingleton();
 
         // load resource facets cache
-        ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
-        typeManager.reloadResourceFacetsCache();
+        try {
+            ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
+            typeManager.reloadResourceFacetsCache();
+        } catch (Throwable t) {
+            log("Could not load ResourceFacets cache", t);
+        }
 
         // Before starting determine the operating mode of this server and
         // take any necessary initialization action. Must happen before comm startup since listeners

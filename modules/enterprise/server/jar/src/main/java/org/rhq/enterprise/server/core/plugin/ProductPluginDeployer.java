@@ -63,6 +63,7 @@ import org.rhq.enterprise.server.core.concurrency.LatchedServiceCircularityExcep
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceController;
 import org.rhq.enterprise.server.core.concurrency.LatchedServiceException;
 import org.rhq.enterprise.server.license.LicenseManager;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -455,6 +456,14 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         registerPlugins(dependencyGraph);
         log.info("Plugin metadata updates are complete: " + this.namesOfPluginsToBeRegistered);
         this.namesOfPluginsToBeRegistered.clear();
+
+        // load resource facets cache
+        try {
+            ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
+            typeManager.reloadResourceFacetsCache();
+        } catch (Throwable t) {
+            log.error("Could not load ResourceFacets cache", t);
+        }
 
         // Trigger vacuums on some tables as the initial deployment might have changed a lot of things.
         // There are probably more tables involved though.

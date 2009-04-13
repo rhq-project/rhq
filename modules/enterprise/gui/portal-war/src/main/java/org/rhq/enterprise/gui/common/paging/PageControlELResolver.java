@@ -53,9 +53,6 @@ public class PageControlELResolver extends ELResolver {
 
     @Override
     public Class<?> getType(ELContext context, Object base, Object property) {
-        //System.out.println("getType.Base is " + (base == null ? "<null>" : base));
-        //System.out.println("getType.Property is " + (property == null ? "<null>" : property));
-
         Class<?> result = null;
 
         if (context == null) {
@@ -86,9 +83,6 @@ public class PageControlELResolver extends ELResolver {
 
     @Override
     public Object getValue(ELContext context, Object base, Object property) {
-        //System.out.println("getValue.Base is " + (base == null ? "<null>" : base));
-        //System.out.println("getValue.Property is " + (property == null ? "<null>" : property));
-
         if (context == null) {
             throw new NullPointerException("ELContext was null for getValue method in PageControlELResolver");
         }

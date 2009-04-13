@@ -19,8 +19,11 @@
 package org.rhq.core.db.ant.dbupgrade;
 
 import java.sql.Connection;
+
 import mazz.i18n.Msg;
+
 import org.apache.tools.ant.BuildException;
+
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.ant.DbAntI18NFactory;
 import org.rhq.core.db.ant.DbAntI18NResourceKeys;
@@ -81,7 +84,7 @@ public class SST_DeleteColumn extends SchemaSpecTask {
                 return; // good for us, its already been deleted
             }
 
-            log(MSG.getMsg(DbAntI18NResourceKeys.DELETING_COLUMN, table, column));
+            log(MSG.getMsg(DbAntI18NResourceKeys.DELETING_COLUMN, column, table));
 
             db_type.deleteColumn(conn, table, column);
         } catch (Exception e) {

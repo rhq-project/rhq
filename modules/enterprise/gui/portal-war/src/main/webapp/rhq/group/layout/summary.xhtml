@@ -52,12 +52,12 @@ groupId - the group id of the Group being accessed
 <h:panelGroup layout="block" style="width: 100%; background-color: #E5E5E5;">
 
 
-    <table width="100%" style="padding-right: 20px; padding-top: 5px;" cellpadding="0" cellspacing="0">
+    <table width="100%" style="align: center; padding-top: 5px;" cellpadding="0" cellspacing="0">
                 <tr>
                     <td>
 
                         <h:graphicImage value="/images/icons/${ResourceGroupUIBean.compatible ? 'Cluster' : 'Group' }_up_24.png"/>
-                        <h:outputText style="font-size: large;" value="#{ResourceGroupUIBean.name}"/>
+                        <h:outputText style="font-size: 24px;" value="#{ResourceGroupUIBean.name}"/>
 
                     </td>
                     <td width="30">
@@ -158,7 +158,7 @@ groupId - the group id of the Group being accessed
 
             <rich:dataTable id="resourceGroupMembersDataTable"
                             rows="#{PageControl.MiniResourceGroupMemberList.pageSize}"
-                            style="width: 80%; margin-left: auto; margin-right: auto;"
+                            style="width: 80%; margin-left: 10%; margin-right: 10%;"
                             rendered="#{ResourceGroupUIBean.compatible}"
                             value="#{resourceGroupMembersDataModel}"
                             var="resourceWithAvailability"

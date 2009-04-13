@@ -64,7 +64,6 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
 
     public void setShowRecursiveMembers(boolean showRecursiveMembers) {
         this.showRecursiveMembers = showRecursiveMembers;
-        dataModel = null; // this will force getDataModel to query next time it's called
     }
 
     public boolean getShowRecursiveMembers() {
@@ -128,13 +127,11 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
         public PageList<ResourceWithAvailability> fetchPage(PageControl pageControl) {
             PageList<ResourceWithAvailability> results = null;
             if (getShowRecursiveMembers()) {
-                results = resourceManager.getImplicitResourceWithAvailabilityByResourceGroup(
-                        LookupUtil.getSubjectManager().getOverlord(),
-                    getResourceGroup(), pageControl);
+                results = resourceManager.getImplicitResourceWithAvailabilityByResourceGroup(LookupUtil
+                    .getSubjectManager().getOverlord(), getResourceGroup(), pageControl);
             } else {
-                results = resourceManager.getExplicitResourceWithAvailabilityByResourceGroup(
-                        LookupUtil.getSubjectManager().getOverlord(),
-                        getResourceGroup(), pageControl);
+                results = resourceManager.getExplicitResourceWithAvailabilityByResourceGroup(LookupUtil
+                    .getSubjectManager().getOverlord(), getResourceGroup(), pageControl);
             }
             for (ResourceWithAvailability composite : results) {
                 ResourceType type = composite.getResource().getResourceType();

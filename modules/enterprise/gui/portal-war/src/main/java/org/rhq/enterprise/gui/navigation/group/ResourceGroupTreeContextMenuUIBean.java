@@ -30,6 +30,7 @@ import org.richfaces.component.html.HtmlMenuItem;
 import org.richfaces.component.html.HtmlMenuSeparator;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
@@ -109,7 +110,7 @@ public class ResourceGroupTreeContextMenuUIBean {
 
             // measurements menu
             List<MeasurementDefinition> definitions = measurementDefinitionManager
-                .getMeasurementDefinitionsByResourceType(subject, type.getId(), null, null);
+                .getMeasurementDefinitionsByResourceType(subject, type.getId(), DataType.MEASUREMENT, null);
             addMeasurementGraphToViewsMenu(String.valueOf(group.getId()), definitions);
 
             // operations menugroup, lazy-loaded entries because only name/id are needed for display

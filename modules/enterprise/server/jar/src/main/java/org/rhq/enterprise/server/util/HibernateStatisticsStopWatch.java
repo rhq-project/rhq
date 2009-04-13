@@ -38,7 +38,7 @@ public class HibernateStatisticsStopWatch {
         values.put("TransactionCount", stats.getTransactionCount() - values.get("TransactionCount"));
         values.put("EntityLoadCount", stats.getEntityLoadCount() - values.get("EntityLoadCount"));
         values.put("ConnectCount", stats.getConnectCount() - values.get("ConnectCount"));
-        values.put("Time", System.currentTimeMillis() - values.get("ConnectCount"));
+        values.put("Time", System.currentTimeMillis() - values.get("Time"));
     }
 
     public String toString() {

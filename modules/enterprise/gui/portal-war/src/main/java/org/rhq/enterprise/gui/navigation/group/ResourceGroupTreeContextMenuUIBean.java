@@ -142,7 +142,6 @@ public class ResourceGroupTreeContextMenuUIBean {
         HtmlMenuGroup membersMenuItem = new HtmlMenuGroup();
         membersMenuItem.setValue("Members");
         membersMenuItem.setId("menu_groupMembers_" + group.getId());
-        membersMenuItem.setDisabled(true);
         membersMenuItem.setStyle("color: black;");
 
         for (Resource res : resources) {

@@ -71,7 +71,8 @@
          <b>Recursive: </b> #{ResourceGroupUIBean.recursive}
       </h:panelGroup>
       
-      <h:panelGroup layout="block" rendered="#{!empty ResourceGroupUIBean.groupDefinition and GlobalPermissionsUIBean.inventory}" >
+      <h:panelGroup layout="block" rendered="#{!empty ResourceGroupUIBean.groupDefinition and 
+                                               GlobalPermissionsUIBean.inventory}" >
          <b>Group Definition: </b>
          <h:outputLink value="/rhq/definition/group/view.xhtml">
             <f:param name="groupDefinitionId" value="#{ResourceGroupUIBean.groupDefinition.id}"/>
@@ -87,7 +88,8 @@
       <input type="hidden" name="category" value="#{param.category}"/>
 
       <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell"
-                   rendered="#{ResourceGroupUIBean.permissions.inventory}">
+                   rendered="#{ResourceGroupUIBean.permissions.inventory and
+                               !ResourceGroupUIBean.clusterGroup}">
          <h:commandButton value="EDIT..." action="#{EditGroupGeneralPropertiesUIBean.begin}"
                           title="Edit General Properties" styleClass="buttonmed"
                           rendered="#{empty ResourceGroupUIBean.groupDefinition}" />
@@ -296,12 +298,14 @@
             <h:commandButton action="#{ListResourceGroupMembersUIBean.addNewResources}"
                              value="ADD TO GROUP"
                              styleClass="on-pager-button buttonsmall" 
-                             rendered="#{GlobalPermissionsUIBean.inventory}" />
+                             rendered="#{GlobalPermissionsUIBean.inventory and
+                                         !ResourceGroupUIBean.clusterGroup}" />
 
             <onc:selectCommandButton action="#{DeleteResourcesFromGroupUIBean.removeSelectedResources}"
                                      value="REMOVE FROM GROUP" target="selectedResources"
                                      styleClass="on-pager-button buttonsmall" 
-                                     rendered="#{GlobalPermissionsUIBean.inventory}" />
+                                     rendered="#{GlobalPermissionsUIBean.inventory and
+                                                 !ResourceGroupUIBean.clusterGroup}" />
             
             <ui:param name="paginationDataTableName" value="resourceGroupMembersDataTable"/>
             <ui:param name="paginationDataModel" value="#{resourceGroupMembersDataModel}"/>

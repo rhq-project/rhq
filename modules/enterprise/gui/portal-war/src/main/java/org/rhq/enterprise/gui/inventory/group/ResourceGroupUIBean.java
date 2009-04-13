@@ -98,6 +98,10 @@ public class ResourceGroupUIBean {
         return (this.resourceGroup.getGroupCategory() == GroupCategory.COMPATIBLE);
     }
 
+    public boolean isClusterGroup() {
+        return (this.resourceGroup.getClusterKey() != null);
+    }
+
     public String getDescription() {
         return this.resourceGroup.getDescription();
     }

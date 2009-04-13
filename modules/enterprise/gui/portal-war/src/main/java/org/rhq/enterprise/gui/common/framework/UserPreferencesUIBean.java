@@ -123,6 +123,7 @@ public class UserPreferencesUIBean {
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
         WebUserPreferences prefs = user.getWebPreferences();
         WebUserPreferences.ResourceVisit visit = null;
+
         if (resourceId != null) {
             Resource res = resourceManager.getResourceById(getSubject(), Integer.parseInt(resourceId));
             visit = new WebUserPreferences.ResourceVisit(Integer.parseInt(resourceId), res.getName(),
@@ -133,8 +134,8 @@ public class UserPreferencesUIBean {
                 .getResourceType() != null ? WebUserPreferences.ResourceVisit.Kind.COMPATIBLE_GROUP
                 : WebUserPreferences.ResourceVisit.Kind.MIXED_GROUP));
         }
-        if (visit != null) {
 
+        if (visit != null) {
             prefs.addRecentResource(visit);
         }
     }

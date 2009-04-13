@@ -1131,4 +1131,20 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         }
         return results;
     }
+
+    @SuppressWarnings("unchecked")
+    public List<Integer> getDeletedResourceGroupIds(List<Integer> possibleGroupIds) {
+        String queryString = "" //
+            + "SELECT rg.id " //
+            + "  FROM ResourceGroup rg " //
+            + " WHERE rg.id IN ( :groupIds ) ";
+
+        Query query = entityManager.createQuery(queryString);
+        query.setParameter("groupIds", possibleGroupIds);
+        List<Integer> validIds = query.getResultList();
+
+        List<Integer> results = new ArrayList<Integer>(possibleGroupIds);
+        results.removeAll(validIds);
+        return results;
+    }
 }

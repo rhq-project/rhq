@@ -126,4 +126,6 @@ public interface ResourceGroupManagerLocal {
     PageList<ResourceGroupComposite> getResourceGroupsFiltered(Subject subject, GroupCategory groupCategory,
         ResourceCategory resourceCategory, ResourceType resourceType, String nameFilter, Integer resourceId,
         Integer groupId, PageControl pc);
+
+    List<Integer> getDeletedResourceGroupIds(List<Integer> groupIds);
 }

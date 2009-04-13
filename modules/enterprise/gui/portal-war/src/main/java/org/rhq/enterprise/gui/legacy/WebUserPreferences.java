@@ -20,6 +20,7 @@ import org.rhq.enterprise.gui.uibeans.UIConstants;
 import org.rhq.enterprise.server.alert.engine.internal.Tuple;
 import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesBase;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class WebUserPreferences extends SubjectPreferencesBase {
@@ -376,6 +377,9 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     public FavoriteGroupPortletPreferences getFavoriteGroupPortletPreferences() {
         FavoriteGroupPortletPreferences prefs = new FavoriteGroupPortletPreferences();
         prefs.groupIds = getPreferenceAsIntegerList(PREF_DASH_FAVORITE_GROUPS, PREF_ITEM_DELIM);
+        if (removeDeletedGroups(prefs.groupIds)) {
+            setFavoriteGroupPortletPreferences(prefs);
+        }
         return prefs;
     }
 
@@ -668,6 +672,17 @@ public class WebUserPreferences extends SubjectPreferencesBase {
             }
         }
         return removed;
+    }
+
+    private boolean removeDeletedGroups(List<Integer> groupIds) {
+        ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
+        List<Integer> deletedGroupIds = groupManager.getDeletedResourceGroupIds(groupIds);
+
+        for (Integer deletedGroupId : deletedGroupIds) {
+            groupIds.remove((Object) deletedGroupId);
+        }
+
+        return deletedGroupIds.size() > 0;
     }
 
     public PageControl getPageControl(PageControlView view) {

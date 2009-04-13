@@ -43,7 +43,7 @@
       <!-- exposes the users preferences -->
       <managed-bean-name>UserPreferencesUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.common.framework.UserPreferencesUIBean</managed-bean-class>
-      <managed-bean-scope>session</managed-bean-scope>
+      <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
 

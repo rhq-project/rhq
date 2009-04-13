@@ -49,6 +49,7 @@ import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -518,7 +519,15 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             double implicitAvail = (Double) row[3];
 
             ResourceGroup group = groupMap.get(groupIds.get(i++));
-            ResourceFacets facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
+            ResourceType type = group.getResourceType();
+            ResourceFacets facets;
+            if (type == null) {
+                // mixed group
+                facets = ResourceFacets.NONE;
+            } else {
+                // compatible group
+                facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
+            }
             ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitAvail, implicitCount,
                 implicitAvail, group, facets);
             results.add(composite);

@@ -767,6 +767,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             // mixed group
             facets = ResourceFacets.NONE;
         } else {
+            // compatible group
             facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
         }
 
@@ -1114,7 +1115,15 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             long implicitCount = (Long) row[2];
             double implicitAvail = (Double) row[3];
             ResourceGroup group = groupMap.get(groupIds.get(i++));
-            ResourceFacets facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
+            ResourceType type = group.getResourceType();
+            ResourceFacets facets;
+            if (type == null) {
+                // mixed group
+                facets = ResourceFacets.NONE;
+            } else {
+                // compatible group
+                facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
+            }
             ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitAvail, implicitCount,
                 implicitAvail, group, facets);
             results.add(composite);

@@ -43,8 +43,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 public interface ResourceTypeManagerLocal {
     // TODO: Add a getResourceTypeByResourceId method.
 
-    void scheduleResourceFacetsReloader();
-
     ResourceType getResourceTypeById(Subject subject, int id) throws ResourceTypeNotFoundException;
 
     ResourceType getResourceTypeByParentAndName(Subject subject, ResourceType parent, String name)

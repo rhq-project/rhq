@@ -2031,21 +2031,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // for this use case.
 
         String reportingQueryString = "" //
-            + "SELECT res.id, res.uuid, res.name, res.resourceKey, " //
+            + "    SELECT res.id, res.uuid, res.name, res.resourceKey, " //
             + "           parent.id, parent.name, " //
             + "           currentAvail.availabilityType, " //
             + "           type.id, type.name, type.plugin, type.category, " //
             + "           subCategory.id, subCategory.name, " //
             + "           parentSubCategory.id, parentSubCategory.name " //
-            + "FROM Resource res " //
-            + "      JOIN res.implicitGroups g "
+            + "      FROM Resource res " //
+            + "      JOIN res.implicitGroups g " //
             + "      JOIN res.currentAvailability currentAvail " //
             + "      JOIN res.resourceType type " //
             + " LEFT JOIN type.subCategory subCategory " //
             + " LEFT JOIN subCategory.parentSubCategory parentSubCategory " //
             + " LEFT JOIN res.parentResource parent " //
-            + "WHERE res.inventoryStatus = :inventoryStatus " //
-            + "      AND g.id = :groupId";
+            + "     WHERE res.inventoryStatus = :inventoryStatus " //
+            + "       AND g.id = :groupId";
 
         Query reportingQuery = entityManager.createQuery(reportingQueryString);
         reportingQuery.setParameter("groupId", compatibleGroupId);

@@ -25,8 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.faces.context.FacesContext;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -53,7 +51,6 @@ public class ResourceGroupTreeModelUIBean {
 
     private final Log log = LogFactory.getLog(ResourceGroupTreeModelUIBean.class);
 
-    private List<ResourceGroupTreeNode> roots = new ArrayList<ResourceGroupTreeNode>();
     private ResourceGroupTreeNode rootNode = null;
     private List<ResourceGroupTreeNode> children = new ArrayList<ResourceGroupTreeNode>();
 
@@ -63,8 +60,6 @@ public class ResourceGroupTreeModelUIBean {
     private String nodeTitle;
 
     private void loadTree() {
-
-        FacesContext facesContext = FacesContext.getCurrentInstance();
 
         Integer parentGroupId = FacesContextUtility.getOptionalRequestParameter("parentGroupId", Integer.class);
         ResourceGroup parentGroup;
@@ -90,8 +85,7 @@ public class ResourceGroupTreeModelUIBean {
 
         start = System.currentTimeMillis();
         monitorId = HibernatePerformanceMonitor.get().start();
-        List<Resource> members = groupManager.getResourcesForResourceGroup(EnterpriseFacesContextUtility.getSubject(),
-            parentGroup.getId(), GroupCategory.COMPATIBLE);
+        List<Integer> members = resourceManager.getExplicitResourceIdsByResourceGroup(parentGroup.getId());
         end = System.currentTimeMillis();
         HibernatePerformanceMonitor.get().stop(monitorId, "ResourceGroupTree group members");
         log.debug("Loaded  " + members.size() + " memebers by group in " + (end - start));
@@ -104,12 +98,12 @@ public class ResourceGroupTreeModelUIBean {
         log.debug("Constructed tree in " + (end - start));
     }
 
-    private ResourceGroupTreeNode load(ResourceGroup group, List<Resource> resources, List<Resource> members) {
+    private ResourceGroupTreeNode load(ResourceGroup group, List<Resource> resources, List<Integer> members) {
 
         Set<ResourceTreeNode> memberNodes = new HashSet<ResourceTreeNode>();
 
-        for (Resource member : members) {
-            memberNodes.add(ResourceTreeModelUIBean.load(member.getId(), resources, true));
+        for (Integer member : members) {
+            memberNodes.add(ResourceTreeModelUIBean.load(member.intValue(), resources, true));
         }
 
         ResourceGroupTreeNode root = new ResourceGroupTreeNode(group);

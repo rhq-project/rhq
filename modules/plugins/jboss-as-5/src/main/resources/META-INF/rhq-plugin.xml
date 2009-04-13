@@ -1336,10 +1336,10 @@
                 <c:simple-property required="true" name="JNDIName" readOnly="true"
                                    description="This queue's JNDI name (e.g. '/queue/MyQueue')."/>
 
-                <c:simple-property type="boolean" required="false" name="clustered" defaultValue="false">
+                <c:simple-property type="boolean" required="false" name="clustered" readOnly="true" defaultValue="false">
                     <c:description>
-                        Is this queue clustered? Updates to this property will not go into effect until the queue has
-                        been restarted. The default value is false.
+                        Is this queue clustered? For an existing queue, this property is read-only. If not specified
+                        when creating a new queue, the default value is false.
                     </c:description>
                 </c:simple-property>
 
@@ -1609,10 +1609,10 @@
                 <c:simple-property required="true" name="JNDIName" readOnly="true"
                                    description="This topic's JNDI name (e.g. '/topic/MyTopic')"/>
 
-                <c:simple-property type="boolean" required="false" name="clustered" defaultValue="false">
+                <c:simple-property type="boolean" required="false" name="clustered" readOnly="true" defaultValue="false">
                     <c:description>
-                        Is this topic clustered? Updates to this property will not go into effect until the topic has
-                        been restarted. The default value is false.
+                        Is this topic clustered? For an existing topic, this property is read-only. If not specified
+                        when creating a new topic, the default value is false.
                     </c:description>
                 </c:simple-property>
 

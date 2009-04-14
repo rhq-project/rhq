@@ -22,8 +22,6 @@ import java.util.Set;
 import java.util.Map;
 import java.util.UUID;
 
-import org.testng.annotations.Test;
-
 import org.jboss.managed.api.DeploymentTemplateInfo;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.managed.api.ComponentType;
@@ -42,7 +40,6 @@ public class TxConnectionFactoryTest extends AbstractManagedComponentTest
     private static final String TEMPLATE_NAME = "TxConnectionFactoryTemplate";
     private static final ComponentType COMPONENT_TYPE = KnownComponentTypes.ConnectionFactoryTypes.XA.getType();
 
-    @Test
     public void testCreateValid() throws Exception {
         final String componentName = UUID.randomUUID().toString();
         DeploymentTemplateInfo template = this.managementView.getTemplate(TEMPLATE_NAME);
@@ -54,7 +51,6 @@ public class TxConnectionFactoryTest extends AbstractManagedComponentTest
         this.managementView.removeComponent(component);
     }
 
-    @Test
     public void testCreateNonMandatoryPropertiesNull() throws Exception {
         final String componentName = UUID.randomUUID().toString();
         DeploymentTemplateInfo template = this.managementView.getTemplate(TEMPLATE_NAME);
@@ -66,7 +62,6 @@ public class TxConnectionFactoryTest extends AbstractManagedComponentTest
         this.managementView.removeComponent(component);
     }
 
-    @Test
     public void testCreateNonMandatoryPropertyValuesNull() throws Exception {
         final String componentName = UUID.randomUUID().toString();
         DeploymentTemplateInfo template = this.managementView.getTemplate(TEMPLATE_NAME);
@@ -78,7 +73,6 @@ public class TxConnectionFactoryTest extends AbstractManagedComponentTest
         this.managementView.removeComponent(component);
     }
 
-    @Test
     public void testCreateNonMandatoryPropertyInnerValuesNull() throws Exception {
         final String componentName = UUID.randomUUID().toString();
         DeploymentTemplateInfo template = this.managementView.getTemplate(TEMPLATE_NAME);
@@ -98,7 +92,6 @@ public class TxConnectionFactoryTest extends AbstractManagedComponentTest
         this.managementView.removeComponent(component);
     }
 
-    @Test
     public void testCreateMandatoryPropertiesNull() throws Exception {
         final String componentName = UUID.randomUUID().toString();
         DeploymentTemplateInfo template = this.managementView.getTemplate(TEMPLATE_NAME);
@@ -109,7 +102,6 @@ public class TxConnectionFactoryTest extends AbstractManagedComponentTest
         createComponentWithFailureExpected(COMPONENT_TYPE, componentName, template);        
     }
 
-    @Test
     public void testCreateMandatoryPropertyValuesNull() throws Exception {
         final String componentName = UUID.randomUUID().toString();
         DeploymentTemplateInfo template = this.managementView.getTemplate(TEMPLATE_NAME);
@@ -120,7 +112,6 @@ public class TxConnectionFactoryTest extends AbstractManagedComponentTest
         createComponentWithFailureExpected(COMPONENT_TYPE, componentName, template);
     }
 
-    @Test
     public void testCreateMandatoryPropertyInnerValuesNull() throws Exception {
         final String componentName = UUID.randomUUID().toString();
         DeploymentTemplateInfo template = this.managementView.getTemplate(TEMPLATE_NAME);
@@ -145,5 +136,4 @@ public class TxConnectionFactoryTest extends AbstractManagedComponentTest
         setSimpleStringProperty(properties, "rar-name", "jms-ra.rar");
         setSimpleStringProperty(properties, "connection-definition", "org.jboss.resource.adapter.jms.JmsConnectionFactory");
     }
-
 }

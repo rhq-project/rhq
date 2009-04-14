@@ -20,9 +20,6 @@ package org.rhq.plugins.jbossas5.test;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.testng.TestListenerAdapter;
-import org.testng.TestNG;
-import org.testng.reporters.TextReporter;
 
 /**
  * Runs unit tests that need to run within a JBossAS 5.x instance to communicate with the profile service in-process.
@@ -36,19 +33,62 @@ public class UnitTestRunner
     public void runUnitTests()
     {
         log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>> Running unit tests...");
-        TestListenerAdapter reporter = new TextReporter(null, 2);
-        TestNG testResults = new TestNG();
-        testResults.setTestClasses(new Class[]{TxConnectionFactoryTest.class});
-        testResults.addListener(reporter);
+        TxConnectionFactoryTest txConnectionFactoryTest = new TxConnectionFactoryTest();
         try
         {
-            testResults.run();
+            txConnectionFactoryTest.testCreateMandatoryPropertiesNull();
         }
-        catch (Exception e)
+        catch (Throwable t)
         {
-            log.fatal("Error while attempting to run unit tests!", e);
+            log.error("Test failed.", t);
         }
-        if (testResults.hasFailure())
-            log.error("Unit test failures!");
+        try
+        {
+            txConnectionFactoryTest.testCreateMandatoryPropertyInnerValuesNull();
+        }
+        catch (Throwable t)
+        {
+            log.error("Test failed.", t);
+        }
+        try
+        {
+            txConnectionFactoryTest.testCreateMandatoryPropertyValuesNull();
+        }
+        catch (Throwable t)
+        {
+            log.error("Test failed.", t);
+        }
+        try
+        {
+            txConnectionFactoryTest.testCreateNonMandatoryPropertiesNull();
+        }
+        catch (Throwable t)
+        {
+            log.error("Test failed.", t);
+        }
+        try
+        {
+            txConnectionFactoryTest.testCreateNonMandatoryPropertyInnerValuesNull();
+        }
+        catch (Throwable t)
+        {
+            log.error("Test failed.", t);
+        }
+        try
+        {
+            txConnectionFactoryTest.testCreateNonMandatoryPropertyValuesNull();
+        }
+        catch (Throwable t)
+        {
+            log.error("Test failed.", t);
+        }
+        try
+        {
+            txConnectionFactoryTest.testCreateValid();
+        }
+        catch (Throwable t)
+        {
+            log.error("Test failed.", t);
+        }        
     }
 }

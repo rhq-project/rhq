@@ -24,7 +24,6 @@ import java.util.Set;
 
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
-import org.testng.annotations.BeforeSuite;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -34,7 +33,6 @@ import org.jboss.managed.api.ManagedProperty;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.plugins.ManagedPropertyImpl;
-import org.jboss.profileservice.spi.ProfileService;
 import org.jboss.metatype.api.values.SimpleValueSupport;
 import org.jboss.metatype.api.types.SimpleMetaType;
 
@@ -47,10 +45,9 @@ public class AbstractManagedComponentTest
     
     protected ManagementView managementView;
 
-    @BeforeSuite(alwaysRun = true)
-    public void initProfileService() {
+    public AbstractManagedComponentTest()
+    {
         System.out.println("Initializing profile service...");
-        ProfileService profileService = ProfileServiceFactory.getProfileService();
         ProfileServiceFactory.refreshCurrentProfileView();
         this.managementView = ProfileServiceFactory.getCurrentProfileView();
     }

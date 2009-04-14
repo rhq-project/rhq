@@ -669,18 +669,20 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return resource;
     }
 
-    @NotNull
+    @SuppressWarnings("unchecked")
     public Resource getResourceById(Subject user, int id) {
-        Resource resource = entityManager.find(Resource.class, id);
-        if (resource == null) {
-            throw new ResourceNotFoundException(id);
-        }
-
-        if (!authorizationManager.canViewResource(user, resource.getId())) {
+        if (!authorizationManager.canViewResource(user, id)) {
             throw new PermissionException("User [" + user + "] does not have permission to view resource [" + id + "]");
         }
 
-        return resource;
+        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_BY_ID);
+        query.setParameter("resourceId", id);
+        List<Resource> resources = query.getResultList();
+
+        if (resources.size() != 1) {
+            throw new ResourceNotFoundException(id);
+        }
+        return resources.get(0);
     }
 
     @Nullable
@@ -1751,7 +1753,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @SuppressWarnings("unchecked")
     public List<ResourceError> getResourceErrors(Subject user, int resourceId, ResourceErrorType errorType) {
         // do authz check
-        getResourceById(user, resourceId);
+        if (!authorizationManager.canViewResource(user, resourceId)) {
+            throw new PermissionException("User [" + user + "] does not have permission to view resource ["
+                + resourceId + "]");
+        }
 
         // we passed authz check, now get the errors
         Query query = entityManager.createNamedQuery(ResourceError.QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPE);

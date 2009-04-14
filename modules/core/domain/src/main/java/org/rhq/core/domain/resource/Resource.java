@@ -526,6 +526,12 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "   AND (:category = res.resourceType.category OR :category IS NULL) " //
         + "   AND (res.inventoryStatus = :inventoryStatus) " //
         + "   AND res.id NOT IN ( :excludeIds ) "),
+    @NamedQuery(name = Resource.QUERY_FIND_BY_ID, query = "" //
+        + "    SELECT res " //
+        + "      FROM Resource res " //
+        + "JOIN FETCH res.currentAvailability " // fetch to remove extra query
+        + "JOIN FETCH res.resourceType " // fetch to remove extra query
+        + "     WHERE res.id =  :resourceId "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_IDS, query = "" //
         + "    SELECT res " //
         + "      FROM Resource res " //
@@ -761,6 +767,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_DASHBOARD_PORTLET = "Resource.getAvailableResourcesForDashboardPortlet";
     public static final String QUERY_GET_AVAILABLE_RESOURCES_FOR_DASHBOARD_PORTLET_WITH_EXCLUDES = "Resource.getAvailableResourcesForDashboardPortletWithExcludes";
 
+    public static final String QUERY_FIND_BY_ID = "Resource.findById";
     public static final String QUERY_FIND_BY_IDS = "Resource.findByIds";
     public static final String QUERY_FIND_BY_IDS_ADMIN = "Resource.findByIds_admin";
 

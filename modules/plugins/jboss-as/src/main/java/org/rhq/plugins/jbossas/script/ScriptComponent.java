@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas.script;
 
 import java.io.File;
@@ -34,7 +34,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -60,7 +59,7 @@ public class ScriptComponent implements ResourceComponent<JBossASServerComponent
     public static final String EXECUTE_OPERATION = "execute";
 
     public static final String COMMAND_LINE_ARGUMENTS_PARAM_PROP = "commandLineArguments";
-    
+
     private static final String EXIT_CODE_RESULT_PROP = "exitCode";
     private static final String OUTPUT_RESULT_PROP = "output";
 
@@ -109,7 +108,7 @@ public class ScriptComponent implements ResourceComponent<JBossASServerComponent
 
             Integer exitCode = processExecutionResults.getExitCode();
             String output = processExecutionResults.getCapturedOutput(); // NOTE: this is stdout + stderr
-            
+
             Configuration complexResults = operationResult.getComplexResults();
             complexResults.put(new PropertySimple(EXIT_CODE_RESULT_PROP, exitCode));
             complexResults.put(new PropertySimple(OUTPUT_RESULT_PROP, output));
@@ -124,28 +123,32 @@ public class ScriptComponent implements ResourceComponent<JBossASServerComponent
     }
 
     private void setCommandLineArguments(Configuration params, ProcessExecution processExecution) {
-        String cmdLineArgsString = params.getSimpleValue(COMMAND_LINE_ARGUMENTS_PARAM_PROP, null);
-        List<String> cmdLineArgs = createCommandLineArgumentList(cmdLineArgsString);
         List<String> processExecutionArguments = processExecution.getArguments();
-        if (processExecutionArguments == null) {
+        if (null == processExecutionArguments) {
             processExecutionArguments = new ArrayList<String>();
             processExecution.setArguments(processExecutionArguments);
         }
 
-        processExecutionArguments.addAll(cmdLineArgs);
+        String cmdLineArgsString = params.getSimpleValue(COMMAND_LINE_ARGUMENTS_PARAM_PROP, null);
+        List<String> cmdLineArgs = createCommandLineArgumentList(cmdLineArgsString);
+        if (null != cmdLineArgs) {
+            processExecutionArguments.addAll(cmdLineArgs);
+        }
     }
 
     private void setEnvironmentVariables(ProcessExecution processExecution) {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        String envVars = pluginConfig.getSimpleValue(ENVIRONMENT_VARIABLES_CONFIG_PROP, null);
-        Map<String, String> envVarsMap = createEnvironmentVariableMap(envVars);
         Map<String, String> processExecutionEnvironmentVariables = processExecution.getEnvironmentVariables();
-        if (processExecutionEnvironmentVariables == null) {
+        if (null == processExecutionEnvironmentVariables) {
             processExecutionEnvironmentVariables = new LinkedHashMap<String, String>();
             processExecution.setEnvironmentVariables(processExecutionEnvironmentVariables);
         }
 
-        processExecutionEnvironmentVariables.putAll(envVarsMap);
+        String envVars = pluginConfig.getSimpleValue(ENVIRONMENT_VARIABLES_CONFIG_PROP, null);
+        Map<String, String> envVarsMap = createEnvironmentVariableMap(envVars);
+        if (null != envVarsMap) {
+            processExecutionEnvironmentVariables.putAll(envVarsMap);
+        }
     }
 
     @NotNull

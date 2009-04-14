@@ -54,14 +54,14 @@
 
         <!-- NOTE: Uncomment the below dep if you want to pull down the jboss-profileservice 
                    sources jar for debugging purposes. -->        
-        <!--
+        
         <dependency>
           <groupId>org.jboss</groupId>
           <artifactId>jboss-profileservice</artifactId>                    
           <version>5.1.0.CR1</version>
           <scope>provided</scope>
         </dependency>                                
-        -->
+        
         
         <dependency>
           <groupId>org.jboss.man</groupId>
@@ -182,16 +182,23 @@
         </plugins>
     </build>
 
-    <repositories>
+    <repositories>    
         <repository>
-        <id>jboss-snapshot</id>
-        <name>JBoss Snapshot Repository</name>
-        <url>http://snapshots.jboss.org/maven2/</url>
-        <snapshots>
-            <enabled>true</enabled>
-            <updatePolicy>always</updatePolicy>
-        </snapshots>
+            <id>jboss</id>
+            <name>JBoss Repository</name>
+            <url>http://repository.jboss.org/maven2/</url>
         </repository>
+<!--            
+        <repository>
+            <id>jboss-snapshots</id>
+            <name>JBoss Snapshot Repository</name>
+            <url>http://snapshots.jboss.org/maven2/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+-->        
     </repositories>
 
 </project>

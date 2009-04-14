@@ -56,6 +56,8 @@ public class PersistenceUtility {
 
     private static final Pattern COUNT_QUERY_PATTERN = Pattern.compile("^(\\s*SELECT\\s+)(.*?)(\\s+FROM.*)",
         Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
+    private static final Pattern COUNT_QUERY_REMOVE_FETCH = Pattern.compile("FETCH", Pattern.CASE_INSENSITIVE
+        | Pattern.MULTILINE | Pattern.DOTALL);
 
     public static final String HIBERNATE_STATISTICS_MBEAN_OBJECTNAME = "Hibernate:type=statistics,application=RHQ";
 
@@ -174,12 +176,23 @@ public class PersistenceUtility {
     public static Query createCountQuery(EntityManager entityManager, String queryName, String countItem) {
         NamedQueryDefinition namedQueryDefinition = getNamedQueryDefinition(entityManager, queryName);
         String query = namedQueryDefinition.getQueryString();
+
         Matcher matcher = COUNT_QUERY_PATTERN.matcher(query);
         if (!matcher.find()) {
             throw new RuntimeException("Unable to transform query into count query [" + queryName + " - " + query + "]");
         }
 
         String newQuery = matcher.group(1) + "COUNT(" + countItem + ")" + matcher.group(3);
+
+        matcher = COUNT_QUERY_REMOVE_FETCH.matcher(newQuery);
+        if (matcher.find()) {
+            StringBuffer buffer = new StringBuffer();
+            do {
+                matcher.appendReplacement(buffer, "");
+            } while (matcher.find());
+            matcher.appendTail(buffer);
+            newQuery = buffer.toString();
+        }
         if (LOG.isTraceEnabled()) {
             LOG.trace("Transformed query to count query [" + queryName + "] resulting in [" + newQuery + "]");
         }

@@ -28,6 +28,8 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.PluginDescriptorGenerator;
 
@@ -40,10 +42,11 @@ import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.profileservice.spi.ProfileKey;
 import org.jboss.profileservice.spi.ProfileService;
 
-/**
- * Discovery component for JBossAS 5.x Servers.
+ /**
+ * Discovery component for JBoss AS, 5.1.0.CR1 or later, Servers.
  *
  * @author Mark Spritzler
+ * @author Ian Springer
  */
 public class ApplicationServerDiscoveryComponent
         implements ResourceDiscoveryComponent
@@ -67,20 +70,23 @@ public class ApplicationServerDiscoveryComponent
         } else {
             log.debug("Found the following active profiles: " + profileKeys);
         }
-        
-        // this should really come from the install directory attribute on the JBAS managed component itself
-        String configurationName = "default";
-
-        // we may need to get the JBAS part from the managed component too, in order to generate EAP at the appropriate times
-        String resourceName = "JBAS (" + configurationName + ")";
-       
-        // this should really come from the install directory attribute on the JBAS managed component itself
-        String resourceKey = "/usr/bin/jboss";
-               
-        // this should really come from the version attribute on the JBAS managed component itself
-        String version = "5.0 CR1";
 
         ProfileServiceFactory.refreshCurrentProfileView();
+
+        String serverName = ResourceComponentUtils.getMCBeanAnyPropertyStringValue("jboss.system:type=ServerConfig", "serverName");
+
+        // TODO: We'll need to get the JBoss AS part from the Profile Service too, in order to generate EAP versus AS at
+        //       the appropriate times.
+        String resourceName = "JBoss AS 5 (" + serverName + ")";
+       
+        // TODO: Get the real config set dir from the Profile Service (not important for Embedded, but essential for
+        //       Enterprise).
+        String resourceKey = "/opt/jboss/server/default";
+
+        String version = ResourceComponentUtils.getMCBeanAnyPropertyStringValue("jboss.system:type=ServerConfig", "specificationVersion");
+
+        Configuration pluginConfig = resourceDiscoveryContext.getDefaultPluginConfiguration();
+        pluginConfig.put(new PropertySimple(ApplicationServerComponent.SERVER_NAME_PROPERTY, serverName));
 
         DiscoveredResourceDetails server =
                 new DiscoveredResourceDetails(
@@ -89,7 +95,7 @@ public class ApplicationServerDiscoveryComponent
                         resourceName,
                         version,
                         DEFAULT_RESOURCE_DESCRIPTION,
-                        resourceDiscoveryContext.getDefaultPluginConfiguration(),
+                        pluginConfig,
                         null);
         servers.add(server);
 /*

@@ -790,6 +790,16 @@
             </subcategory>
         </subcategories>
 
+        <plugin-configuration>
+            <c:simple-property name="serverName"
+                               description="the name of the active profile (i.e. configuration set) the server is using"
+                               readOnly="true"/>
+        </plugin-configuration>
+
+        <metric property="custom.serverName" displayName="Server Name"
+                dataType="trait" displayType="summary"
+                description="the name of the active profile (i.e. configuration set) the server is using"/>
+
         <!--<content name="library" displayName="Jar Library" category="deployable"
                 description="Library Jar files deployed in JBoss AS">
              <configuration>

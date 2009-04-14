@@ -50,6 +50,9 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
@@ -59,6 +62,7 @@ import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
@@ -67,29 +71,28 @@ import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
  /**
- * ResourceComponent for a JBossAS, 5.1.0.CR1 or later, Server.
+ * ResourceComponent for a JBoss AS, 5.1.0.CR1 or later, Server.
  *
  * @author Jason Dobies
  * @author Mark Spritzler
  * @author Ian Springer
  */
 public class ApplicationServerComponent
-        implements ResourceComponent, CreateChildResourceFacet, ConfigurationFacet, ProgressListener
+        implements ResourceComponent, CreateChildResourceFacet, MeasurementFacet, ConfigurationFacet, ProgressListener
 {
     private final Log log = LogFactory.getLog(this.getClass());
 
     // Constants  --------------------------------------------
 
-    private static final String TEMPLATE_NAME_PROPERTY = "templateName";
-    private static final String RESOURCE_NAME_PROPERTY = "resourceName";
+    static final String TEMPLATE_NAME_PROPERTY = "templateName";
+    static final String RESOURCE_NAME_PROPERTY = "resourceName";
+    static final String SERVER_NAME_PROPERTY = "serverName";
+
     private static final String MANAGED_PROPERTY_GROUP = "managedPropertyGroup";
+    private static final String CUSTOM_SERVER_NAME_TRAIT = "custom.serverName";
 
     private ResourceContext resourceContext;
     private File deployDirectory;
-
-    //private ContentContext contentContext;
-    //private OperationContext operationContext;
-    //private EventContext eventContext;
 
     public AvailabilityType getAvailability()
     {
@@ -100,10 +103,6 @@ public class ApplicationServerComponent
     public void start(ResourceContext resourceContext)
     {
         this.resourceContext = resourceContext;
-
-        //this.eventContext = resourceContext.getEventContext();
-        //this.contentContext = resourceContext.getContentContext();
-        //this.operationContext = resourceContext.getOperationContext();
     }
 
     public void stop()
@@ -111,7 +110,23 @@ public class ApplicationServerComponent
         return;
     }
 
-    // ConfigurationComponent  --------------------------------------------
+    // ------------ MeasurementFacet Implementation ------------
+
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests)
+            throws NoSuchDeploymentException
+    {
+        for (MeasurementScheduleRequest request : requests) {
+            String metricName = request.getName();
+            if (metricName.equals(CUSTOM_SERVER_NAME_TRAIT)) {
+                Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+                String serverName = pluginConfig.getSimple(SERVER_NAME_PROPERTY).getStringValue();
+                MeasurementDataTrait trait = new MeasurementDataTrait(request, serverName);
+                report.addData(trait);
+            }
+        }
+    }
+
+    // ------------ ConfigurationFacet Implementation ------------
 
     public Configuration loadResourceConfiguration()
     {

@@ -1766,9 +1766,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     public void addResourceError(ResourceError resourceError) {
-        Resource resource = entityManager.find(Resource.class, resourceError.getResource().getId());
-
-        if (resource == null) {
+        Subject overlord = subjectManager.getOverlord();
+        Resource resource;
+        try {
+            resource = getResourceById(overlord, resourceError.getResource().getId());
+        } catch (ResourceNotFoundException rnfe) {
             throw new ResourceNotFoundException("Resource error contains an unknown Resource id: " + resourceError);
         }
 

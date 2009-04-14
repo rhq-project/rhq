@@ -56,6 +56,12 @@ public class PropertySetRenderer extends Renderer {
 
     private static final String INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID_SUFFIX = "-initInputsJavaScript";
 
+    private static final String PROPERTY_ALL_TO_SAME_VALUE_CONTROLS_COLUMN_CLASSES = ","
+        + CssStyleClasses.PROPERTY_VALUE_CELL_BORDERLESS + ",";
+
+    private static final String OPTIONAL_PROPERTY_ALL_TO_SAME_VALUE_CONTROLS_COLUMN_CLASSES = ","
+        + CssStyleClasses.PROPERTY_VALUE_CELL_BORDERLESS + ",,,";
+
     /**
      * Decode any new state from request parameters for the given {@link PropertySetComponent}.
      *
@@ -162,10 +168,10 @@ public class PropertySetRenderer extends Renderer {
         HtmlPanelGrid panelGrid = FacesComponentUtility.createComponent(HtmlPanelGrid.class);
         if (isOptional(propertyDefinitionSimple)) {
             panelGrid.setColumns(5);
-            panelGrid.setColumnClasses(",property-value-cell-borderless,,,");
+            panelGrid.setColumnClasses(OPTIONAL_PROPERTY_ALL_TO_SAME_VALUE_CONTROLS_COLUMN_CLASSES);
         } else {
             panelGrid.setColumns(3);
-            panelGrid.setColumnClasses(",property-value-cell-borderless,");
+            panelGrid.setColumnClasses(PROPERTY_ALL_TO_SAME_VALUE_CONTROLS_COLUMN_CLASSES);
         }
         setAllToSameValueControlPanel.getChildren().add(panelGrid);
 

@@ -32,6 +32,7 @@ public class CssStyleClasses {
     public static final String REQUIRED_MARKER_TEXT = "required-marker-text";
     public static final String PROPERTY_DISPLAY_NAME_CELL = "property-display-name-cell";
     public static final String PROPERTY_VALUE_CELL = "property-value-cell";
+    public static final String PROPERTY_VALUE_CELL_BORDERLESS = "property-value-cell-borderless";
     public static final String MEMBER_PROPERTY_LABEL_CELL = "member-property-label-cell";
     public static final String MEMBER_PROPERTY_UNSET_CELL = "member-property-unset-cell";
     public static final String MEMBER_PROPERTY_VALUE_CELL = "member-property-value-cell";

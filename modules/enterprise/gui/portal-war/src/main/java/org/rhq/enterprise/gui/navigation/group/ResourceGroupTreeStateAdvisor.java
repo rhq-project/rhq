@@ -135,7 +135,7 @@ public class ResourceGroupTreeStateAdvisor implements TreeStateAdvisor {
 
                     ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
                     ResourceGroup group = clusterManager.createAutoClusterBackingGroup(
-                            LookupUtil.getSubjectManager().getOverlord(), 
+                            subject,
                             (ClusterKey) node.getData(), true);
 
                     String path = "/rhq/group/inventory/view.xhtml";

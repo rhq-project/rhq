@@ -35,6 +35,9 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
@@ -52,7 +55,15 @@ public class ClusterManagerBean implements ClusterManagerLocal {
     private EntityManager entityManager;
 
     @EJB
-    ResourceGroupManagerLocal resourceGroupManager;
+    private ResourceGroupManagerLocal resourceGroupManager;
+
+    @EJB
+    private AuthorizationManagerLocal authorizationManager;
+    
+    @EJB
+    private SubjectManagerLocal subjectManager;
+
+
 
     public ResourceGroup createAutoClusterBackingGroup(Subject subject, ClusterKey clusterKey, boolean addResources) {
         ResourceGroup autoClusterBackingGroup = null;
@@ -62,6 +73,10 @@ public class ClusterManagerBean implements ClusterManagerLocal {
 
         ResourceType resourceType = entityManager.find(ResourceType.class, ClusterKey.getResourceType(clusterKey));
         ResourceGroup resourceGroup = entityManager.find(ResourceGroup.class, clusterKey.getClusterGroupId());
+
+        if (!authorizationManager.canViewGroup(subject, clusterKey.getClusterGroupId())) {
+            throw new PermissionException("You do not have permission to view child cluster groups of the group [" + resourceGroup.getName() + "]");
+        }
 
         List<Resource> resources = null;
         try {
@@ -90,7 +105,9 @@ public class ClusterManagerBean implements ClusterManagerLocal {
                 autoClusterBackingGroup.setClusterResourceGroup(resourceGroup);
                 autoClusterBackingGroup.setVisible(false);
 
-                int id = resourceGroupManager.createResourceGroup(subject, autoClusterBackingGroup);
+                // You are allowed to cause the creation of an auto cluster backing group as long as you can
+                // view the parent group. (That check was done above)
+                int id = resourceGroupManager.createResourceGroup(subjectManager.getOverlord(), autoClusterBackingGroup);
                 autoClusterBackingGroup = entityManager.find(ResourceGroup.class, id);
 
             } catch (ResourceGroupAlreadyExistsException e) {

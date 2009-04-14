@@ -712,7 +712,7 @@
             <h:outputText value="#{resourceGroupComposite.resourceGroup.description}"/>
          </rich:column>
 
-         <rich:column>
+         <rich:column styleClass="resource-availability-cell">
             <f:facet name="header">
                <h:panelGroup>
                   <onc:sortableColumnHeader sort="explicitAvail">
@@ -721,11 +721,11 @@
                </h:panelGroup>
             </f:facet>
 
-            <h:outputText value="#{item.explicitFormatted}" 
+            <h:outputText value="#{resourceGroupComposite.explicitFormatted}" 
                           escape="false" />
          </rich:column>
 
-         <rich:column>
+         <rich:column styleClass="resource-availability-cell">
             <f:facet name="header">
                <h:panelGroup>
                   <onc:sortableColumnHeader sort="implicitAvail">
@@ -734,7 +734,7 @@
                </h:panelGroup>
             </f:facet>
 
-            <h:outputText value="#{item.implicitFormatted}" 
+            <h:outputText value="#{resourceGroupComposite.implicitFormatted}" 
                           escape="false" />
          </rich:column>
 

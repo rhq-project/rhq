@@ -527,18 +527,41 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "   AND (res.inventoryStatus = :inventoryStatus) " //
         + "   AND res.id NOT IN ( :excludeIds ) "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_IDS, query = "" //
-        + "SELECT res " //
-        + "  FROM Resource res " //
-        + " WHERE res.id IN ( :ids ) " //
-        + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject) "),
-    @NamedQuery(name = Resource.QUERY_FIND_BY_IDS_ADMIN, query = "SELECT res FROM Resource res WHERE res.id IN ( :ids )"),
+        + "    SELECT res " //
+        + "      FROM Resource res " //
+        + "JOIN FETCH res.currentAvailability " // fetch to remove extra query
+        + "JOIN FETCH res.resourceType " // fetch to remove extra query
+        + "     WHERE res.id IN ( :ids ) " //
+        + "      AND res.id IN ( SELECT rr.id FROM Resource rr " //
+        + "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
+        + "                       WHERE s = :subject) "),
+    @NamedQuery(name = Resource.QUERY_FIND_BY_IDS_ADMIN, query = "" //
+        + "    SELECT res " //
+        + "      FROM Resource res " //
+        + "JOIN FETCH res.currentAvailability " // fetch to remove extra query
+        + "JOIN FETCH res.resourceType " // fetch to remove extra query
+        + "     WHERE res.id IN ( :ids )"),
     @NamedQuery(name = Resource.QUERY_FIND_WITH_PARENT_BY_IDS, query = "" //
-        + "SELECT res " //
-        + "  FROM Resource res " //
-        + "  LEFT JOIN FETCH res.parentResource parent " //
-        + " WHERE res.id IN ( :ids ) " //
-        + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject) "),
-    @NamedQuery(name = Resource.QUERY_FIND_WITH_PARENT_BY_IDS_ADMIN, query = "SELECT res FROM Resource res LEFT JOIN FETCH res.parentResource parent WHERE res.id IN ( :ids )"),
+        + "         SELECT res " //
+        + "           FROM Resource res " //
+        + "     JOIN FETCH res.currentAvailability " // fetch to remove extra query
+        + "     JOIN FETCH res.resourceType " // fetch to remove extra query
+        + "LEFT JOIN FETCH res.parentResource parent " //
+        + "LEFT JOIN FETCH parent.currentAvailability " // left fetch to remove extra query for parent
+        + "LEFT JOIN FETCH parent.resourceType " // left fetch to remove extra query for parent
+        + "          WHERE res.id IN ( :ids ) " //
+        + "            AND res.id IN ( SELECT rr.id FROM Resource rr " //
+        + "                              JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
+        + "                             WHERE s = :subject) "),
+    @NamedQuery(name = Resource.QUERY_FIND_WITH_PARENT_BY_IDS_ADMIN, query = "" //
+        + "         SELECT res " //
+        + "           FROM Resource res " //
+        + "     JOIN FETCH res.currentAvailability " // fetch to remove extra query
+        + "     JOIN FETCH res.resourceType " // fetch to remove extra query
+        + "LEFT JOIN FETCH res.parentResource parent " //
+        + "LEFT JOIN FETCH parent.currentAvailability " // left fetch to remove extra query for parent
+        + "LEFT JOIN FETCH parent.resourceType " // left fetch to remove extra query for parent
+        + "          WHERE res.id IN ( :ids )"),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite(res, a.availabilityType, " //
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 8), " // we want MANAGE_MEASUREMENTS

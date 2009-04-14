@@ -671,10 +671,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @SuppressWarnings("unchecked")
     public Resource getResourceById(Subject user, int id) {
-        if (!authorizationManager.canViewResource(user, id)) {
-            throw new PermissionException("User [" + user + "] does not have permission to view resource [" + id + "]");
-        }
-
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_BY_ID);
         query.setParameter("resourceId", id);
         List<Resource> resources = query.getResultList();
@@ -682,6 +678,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         if (resources.size() != 1) {
             throw new ResourceNotFoundException(id);
         }
+
+        if (!authorizationManager.canViewResource(user, id)) {
+            throw new PermissionException("User [" + user + "] does not have permission to view resource [" + id + "]");
+        }
+
         return resources.get(0);
     }
 

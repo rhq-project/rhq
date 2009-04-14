@@ -1790,7 +1790,7 @@ P.compact {
     text-align: center;
 }
 
-.property-value-cell {
+.property-value-cell, .property-value-cell-borderless {
     width: 285px;
 }
 

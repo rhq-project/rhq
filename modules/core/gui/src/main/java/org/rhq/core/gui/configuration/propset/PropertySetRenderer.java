@@ -116,7 +116,8 @@ public class PropertySetRenderer extends Renderer {
         addPropertyDisplayNameAndDescription(propertySetComponent, propertyDefinitionSimple, propertySimple);
 
         boolean configReadOnly = propertySetComponent.getReadOnly() != null && propertySetComponent.getReadOnly();
-        boolean propIsReadOnly = PropertyRenderingUtility.isReadOnly(propertyDefinitionSimple, null, configReadOnly, false);
+        boolean propIsReadOnly = PropertyRenderingUtility.isReadOnly(propertyDefinitionSimple, null, configReadOnly,
+            false);
         HtmlPanelGroup setAllToSameValueControlPanel = null;
         if (!propIsReadOnly) {
             // NOTE: We'll add children to the below panel a bit later when we know the id's of the inputs.
@@ -133,8 +134,7 @@ public class PropertySetRenderer extends Renderer {
 
         List<PropertyInfo> propertyInfos = createPropertyInfos(propertySetComponent, propertySimple);
 
-        for (int i = 0; i < propertyInfos.size(); i++)
-        {
+        for (int i = 0; i < propertyInfos.size(); i++) {
             PropertyInfo propertyInfo = propertyInfos.get(i);
             String rowStyleClass = ((i % 2) == 0) ? CssStyleClasses.ROW_ODD : CssStyleClasses.ROW_EVEN;
             addPropertyRow(propertySetComponent, propertyDefinitionSimple, propertyInfo, rowStyleClass);
@@ -160,7 +160,13 @@ public class PropertySetRenderer extends Renderer {
         // NOTE: Don't add the input to the component tree yet - we'll add it a bit later.
 
         HtmlPanelGrid panelGrid = FacesComponentUtility.createComponent(HtmlPanelGrid.class);
-        panelGrid.setColumns(isOptional(propertyDefinitionSimple) ? 5 : 3);
+        if (isOptional(propertyDefinitionSimple)) {
+            panelGrid.setColumns(5);
+            panelGrid.setColumnClasses(",property-value-cell-borderless,,,");
+        } else {
+            panelGrid.setColumns(3);
+            panelGrid.setColumnClasses(",property-value-cell-borderless,");
+        }
         setAllToSameValueControlPanel.getChildren().add(panelGrid);
 
         FacesComponentUtility.addOutputText(panelGrid, null, "Set All Values To: ", null);
@@ -172,9 +178,8 @@ public class PropertySetRenderer extends Renderer {
         HtmlSelectBooleanCheckbox unsetCheckbox = null;
         if (isOptional(propertyDefinitionSimple)) {
             FacesComponentUtility.addOutputText(panelGrid, null, "Unset All: ", null);
-            unsetCheckbox = PropertyRenderingUtility.addUnsetControl(panelGrid,
-                    propertyDefinitionSimple, null, propertySetComponent.getListIndex(), input, false,
-                    propertySetComponent.getReadOnly(), false);
+            unsetCheckbox = PropertyRenderingUtility.addUnsetControl(panelGrid, propertyDefinitionSimple, null,
+                propertySetComponent.getListIndex(), input, false, propertySetComponent.getReadOnly(), false);
         }
 
         // the 'APPLY' button
@@ -284,7 +289,8 @@ public class PropertySetRenderer extends Renderer {
         return propertyInfos;
     }
 
-    private void addPropertiesTableHeaderRow(PropertySetComponent propertySetComponent, PropertyDefinitionSimple propertyDefinitionSimple) {
+    private void addPropertiesTableHeaderRow(PropertySetComponent propertySetComponent,
+        PropertyDefinitionSimple propertyDefinitionSimple) {
         FacesComponentUtility.addVerbatimText(propertySetComponent, "\n\n<tr>");
 
         FacesComponentUtility.addVerbatimText(propertySetComponent, "<th class='"
@@ -295,7 +301,8 @@ public class PropertySetRenderer extends Renderer {
         if (isOptional(propertyDefinitionSimple)) {
             FacesComponentUtility.addVerbatimText(propertySetComponent, "<th class='"
                 + CssStyleClasses.PROPERTIES_TABLE_HEADER_CELL + "'>");
-            FacesComponentUtility.addOutputText(propertySetComponent, null, "Unset", FacesComponentUtility.NO_STYLE_CLASS);
+            FacesComponentUtility.addOutputText(propertySetComponent, null, "Unset",
+                FacesComponentUtility.NO_STYLE_CLASS);
             FacesComponentUtility.addVerbatimText(propertySetComponent, "</th>");
         }
 
@@ -368,9 +375,9 @@ public class PropertySetRenderer extends Renderer {
         if (isOptional(propertyDefinitionSimple)) {
             FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='"
                 + CssStyleClasses.MEMBER_PROPERTY_UNSET_CELL + "'>");
-            HtmlSelectBooleanCheckbox unsetCheckbox = PropertyRenderingUtility.addUnsetControl(propertySetComponent, propertyDefinitionSimple, propertyInfo
-                    .getProperty(), propertySetComponent.getListIndex(), input, false, propertySetComponent.getReadOnly(),
-                    false);
+            HtmlSelectBooleanCheckbox unsetCheckbox = PropertyRenderingUtility.addUnsetControl(propertySetComponent,
+                propertyDefinitionSimple, propertyInfo.getProperty(), propertySetComponent.getListIndex(), input,
+                false, propertySetComponent.getReadOnly(), false);
             propertyInfo.setUnsetCheckbox(unsetCheckbox);
             FacesComponentUtility.addVerbatimText(propertySetComponent, "</td>");
         }
@@ -386,8 +393,7 @@ public class PropertySetRenderer extends Renderer {
         FacesComponentUtility.addVerbatimText(propertySetComponent, "</tr>");
     }
 
-    private static boolean isOptional(PropertyDefinitionSimple propertyDefinitionSimple)
-    {
+    private static boolean isOptional(PropertyDefinitionSimple propertyDefinitionSimple) {
         return propertyDefinitionSimple == null || !propertyDefinitionSimple.isRequired();
     }
 
@@ -425,13 +431,11 @@ public class PropertySetRenderer extends Renderer {
             this.input = input;
         }
 
-        public HtmlSelectBooleanCheckbox getUnsetCheckbox()
-        {
+        public HtmlSelectBooleanCheckbox getUnsetCheckbox() {
             return unsetCheckbox;
         }
 
-        public void setUnsetCheckbox(HtmlSelectBooleanCheckbox unsetCheckbox)
-        {
+        public void setUnsetCheckbox(HtmlSelectBooleanCheckbox unsetCheckbox) {
             this.unsetCheckbox = unsetCheckbox;
         }
 

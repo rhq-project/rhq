@@ -87,7 +87,7 @@ public abstract class DebugUtils {
                 throw new IllegalStateException("Value of ManagedProperty [" + managedProperty.getName()
                         + "] is not a MetaValue - it is a " + value.getClass().getName() + ".");
             if (value == null)
-                buf.append(", type=").append(managedProperty.getMetaType().getClass().getSimpleName());
+                buf.append(", type=").append(managedProperty.getMetaType());
             buf.append(", value=").append(convertMetaValueToString((MetaValue)value));
         }
         return buf.toString();

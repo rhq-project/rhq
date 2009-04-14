@@ -48,7 +48,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Greg Hinkle
  */
 public class ResourceTreeModelUIBean {
-    private final Log log = LogFactory.getLog(ResourceTreeModelUIBean.class);
+    private static final Log log = LogFactory.getLog(ResourceTreeModelUIBean.class);
 
     private List<ResourceTreeNode> roots = new ArrayList<ResourceTreeNode>();
     private ResourceTreeNode rootNode = null;
@@ -86,6 +86,9 @@ public class ResourceTreeModelUIBean {
         HibernatePerformanceMonitor.get().stop(monitorId, "ResourceTree agent resource");
         log.debug("Loaded " + resources.size() + " raw resources in " + (end - start));
 
+        reparent(resources);
+
+
         start = System.currentTimeMillis();
         monitorId = HibernatePerformanceMonitor.get().start();
         rootNode = load(rootResource.getId(), resources, false);
@@ -102,50 +105,69 @@ public class ResourceTreeModelUIBean {
             }
         }
         ResourceTreeNode root = new ResourceTreeNode(found);
-        load(root, resources, alwaysGroup);
+        long start = System.currentTimeMillis();
+        load(root, alwaysGroup);
         return root;
     }
 
-    public static void load(ResourceTreeNode parentNode, List<Resource> resources, boolean alwaysGroup) {
+    public static void reparent(List<Resource> resources) {
+        long start = System.currentTimeMillis();
+
+        HashMap<Integer,Resource> lookupTable = new HashMap<Integer, Resource>(resources.size());
+        for (Resource res : resources) {
+            lookupTable.put(res.getId(),res);
+        }
+
+        for (Resource res : lookupTable.values()) {
+            if (res.getParentResource() != null) {
+                Resource parent = lookupTable.get(res.getParentResource().getId());
+                if (parent != null) {
+                    parent.addChildResource(res);
+                }
+            }
+        }
+        log.debug("Reparenting took: " + (System.currentTimeMillis() - start));
+    }
+
+    public static void load(ResourceTreeNode parentNode, boolean alwaysGroup) {
 
         if (parentNode.getData() instanceof Resource) {
             Resource parentResource = (Resource) parentNode.getData();
 
             Map<Object, List<Resource>> children = new HashMap<Object, List<Resource>>();
-            for (Resource res : resources) {
-                if (res.getParentResource() != null && res.getParentResource().getId() == parentResource.getId()) {
-                    if (res.getResourceType().getSubCategory() != null) {
-                        // These are children that have subcategories
-                        // Split them by if they are a sub-sub category or just a category
-                        if (res.getResourceType().getSubCategory().getParentSubCategory() == null) {
-                            if (children.containsKey(res.getResourceType().getSubCategory())) {
-                                children.get(res.getResourceType().getSubCategory()).add(res);
-                            } else {
-                                ArrayList<Resource> list = new ArrayList<Resource>();
-                                list.add(res);
-                                children.put(res.getResourceType().getSubCategory(), list);
-                            }
-                        } else if (res.getResourceType().getSubCategory().getParentSubCategory() != null) {
-                            if (children.containsKey(res.getResourceType().getSubCategory().getParentSubCategory())) {
-                                children.get(res.getResourceType().getSubCategory().getParentSubCategory()).add(res);
-                            } else {
-                                ArrayList<Resource> list = new ArrayList<Resource>();
-                                list.add(res);
-                                children.put(res.getResourceType().getSubCategory().getParentSubCategory(), list);
-                            }
-                        }
-                    } else {
-                        // These are children without categories of the parent resource
-                        // - Add them into groupings by their resource type
-                        if (children.containsKey(res.getResourceType())) {
-                            children.get(res.getResourceType()).add(res);
+            for (Resource res : parentResource.getChildResources()) {
+                if (res.getResourceType().getSubCategory() != null) {
+                    // These are children that have subcategories
+                    // Split them by if they are a sub-sub category or just a category
+                    if (res.getResourceType().getSubCategory().getParentSubCategory() == null) {
+                        if (children.containsKey(res.getResourceType().getSubCategory())) {
+                            children.get(res.getResourceType().getSubCategory()).add(res);
                         } else {
                             ArrayList<Resource> list = new ArrayList<Resource>();
                             list.add(res);
-                            children.put(res.getResourceType(), list);
+                            children.put(res.getResourceType().getSubCategory(), list);
+                        }
+                    } else if (res.getResourceType().getSubCategory().getParentSubCategory() != null) {
+                        if (children.containsKey(res.getResourceType().getSubCategory().getParentSubCategory())) {
+                            children.get(res.getResourceType().getSubCategory().getParentSubCategory()).add(res);
+                        } else {
+                            ArrayList<Resource> list = new ArrayList<Resource>();
+                            list.add(res);
+                            children.put(res.getResourceType().getSubCategory().getParentSubCategory(), list);
                         }
                     }
+                } else {
+                    // These are children without categories of the parent resource
+                    // - Add them into groupings by their resource type
+                    if (children.containsKey(res.getResourceType())) {
+                        children.get(res.getResourceType()).add(res);
+                    } else {
+                        ArrayList<Resource> list = new ArrayList<Resource>();
+                        list.add(res);
+                        children.put(res.getResourceType(), list);
+                    }
                 }
+
             }
 
             for (Object rsc : children.keySet()) {
@@ -166,7 +188,7 @@ public class ResourceTreeModelUIBean {
                         agc = new AutoGroupComposite(avail, parentResource, (ResourceType) rsc, entries.size());
                     }
                     ResourceTreeNode node = new ResourceTreeNode(agc);
-                    load(node, resources, alwaysGroup);
+                    load(node, alwaysGroup);
 
                     if (!recursivelyLocked(node)) {
                         parentNode.getChildren().add(node);
@@ -176,7 +198,7 @@ public class ResourceTreeModelUIBean {
                     for (Resource res : entries) {
                         ResourceTreeNode node = new ResourceTreeNode(res);
 
-                        load(node, resources, alwaysGroup);
+                        load(node, alwaysGroup);
                         if (!recursivelyLocked(node)) {
                             parentNode.getChildren().add(node);
                         }
@@ -190,7 +212,7 @@ public class ResourceTreeModelUIBean {
             AutoGroupComposite compositeParent = (AutoGroupComposite) parentNode.getData();
 
             Map<Object, List<Resource>> children = new HashMap<Object, List<Resource>>();
-            for (Resource res : resources) {
+            for (Resource res : compositeParent.getParentResource().getChildResources()) {
                 if (compositeParent.getSubcategory() != null) {
                     // parent is a sub category
                     if (res.getResourceType().getSubCategory() != null
@@ -251,7 +273,7 @@ public class ResourceTreeModelUIBean {
                             entries.size());
                     }
                     ResourceTreeNode node = new ResourceTreeNode(agc);
-                    load(node, resources, alwaysGroup);
+                    load(node, alwaysGroup);
                     if (!recursivelyLocked(node)) {
                         parentNode.getChildren().add(node);
                     }
@@ -259,7 +281,7 @@ public class ResourceTreeModelUIBean {
                     List<Resource> entries = children.get(rsc);
                     for (Resource res : entries) {
                         ResourceTreeNode node = new ResourceTreeNode(res);
-                        load(node, resources, alwaysGroup);
+                        load(node, alwaysGroup);
                         if (!recursivelyLocked(node)) {
                             parentNode.getChildren().add(node);
                         }

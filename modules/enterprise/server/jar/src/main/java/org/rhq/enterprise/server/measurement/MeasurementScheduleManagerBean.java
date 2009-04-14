@@ -918,6 +918,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         }
 
         try {
+            int created = 0; // will be >0 if we created one or more new schedules for the resource
+
             try {
                 // GH: I know this seems odd, but its the only incantation that I could get Hibernate to swallow
                 Query insertQuery = entityManager
@@ -932,7 +934,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 insertQuery.setFlushMode(FlushModeType.COMMIT);
                 insertQuery.setParameter("resourceId", resourceId);
 
-                int created = insertQuery.executeUpdate();
+                created = insertQuery.executeUpdate();
                 log.debug("Batch created [" + created + "] default measurement schedules for resource [" + resourceId
                     + "]");
             } catch (Exception e) {
@@ -948,6 +950,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             List<MeasurementScheduleRequest> schedules = selectQuery.getResultList();
             ResourceMeasurementScheduleRequest resourceSchedule = new ResourceMeasurementScheduleRequest(resourceId);
             resourceSchedule.getMeasurementSchedules().addAll(schedules);
+            resourceSchedule.setCreatedCount(created);
 
             allSchedules.add(resourceSchedule);
             if (getDescendents) {

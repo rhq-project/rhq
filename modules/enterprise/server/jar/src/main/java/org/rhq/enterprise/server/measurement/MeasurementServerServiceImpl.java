@@ -24,8 +24,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -65,6 +69,43 @@ public class MeasurementServerServiceImpl implements MeasurementServerService {
                 + results.size() + '/' + time);
         }
 
+        // for those resources that had one or more schedules created, we need to apply alert templates to them
+        AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+
+        start = System.currentTimeMillis();
+        for (ResourceMeasurementScheduleRequest resultItem : results) {
+            if (resultItem.getCreatedCount() > 0) {
+                applyAlertTemplate(resultItem.getResourceId(), false, alertTemplateManager, subjectManager);
+            }
+        }
+        time = (System.currentTimeMillis() - start);
+        if (time >= 10000L) {
+            log.info("Performance: apply alert templates timing: millis=" + time);
+        } else if (log.isDebugEnabled()) {
+            log.debug("Performance: apply alert templates timing: millis=" + time);
+        }
+
         return results;
+    }
+
+    /**
+     * Applies alert templates as necessary to the specified Resource and, as specified, its descendants. This
+     * should only be requested for any particular resource one time, typically as it's committed to inventory.
+     *   
+     * @param resourceId a {@link Resource} id
+     * @param descendants true if the resource's descendants should be included, or false if not
+     * @param alertTemplateManager
+     * @param subjectManager 
+     */
+    private void applyAlertTemplate(int resourceId, boolean descendants,
+        AlertTemplateManagerLocal alertTemplateManager, SubjectManagerLocal subjectManager) {
+
+        try {
+            Subject overlord = subjectManager.getOverlord();
+            alertTemplateManager.updateAlertDefinitionsForResource(overlord, resourceId, descendants);
+        } catch (Exception e) {
+            log.warn("Could not apply alert templates for resourceId = " + resourceId, e);
+        }
     }
 }

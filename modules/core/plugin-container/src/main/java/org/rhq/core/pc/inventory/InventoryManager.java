@@ -1467,15 +1467,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    private void syncAlertTemplates(Set<Resource> resources) {
-        for (Resource resource : resources) {
-            if (resource.getInventoryStatus() == InventoryStatus.COMMITTED) {
-                configuration.getServerServices().getDiscoveryServerService().applyAlertTemplate(resource.getId(),
-                    false);
-            }
-        }
-    }
-
     private void installSchedules(Set<ResourceMeasurementScheduleRequest> scheduleRequests) {
         if (PluginContainer.getInstance().getMeasurementManager() != null) {
             PluginContainer.getInstance().getMeasurementManager().scheduleCollection(scheduleRequests);
@@ -2011,8 +2002,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.debug("Syncing metric schedules and alert templates for newly imported Resources: " + resources);
             }
             syncSchedules(resources);
-            syncAlertTemplates(resources);
         }
+        return;
     }
 
     private void refreshResourceComponentState(ResourceContainer container, boolean pluginConfigUpdated) {

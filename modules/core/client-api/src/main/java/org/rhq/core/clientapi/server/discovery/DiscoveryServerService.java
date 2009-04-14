@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.clientapi.server.discovery;
 
 import java.util.Map;
@@ -44,7 +44,6 @@ public interface DiscoveryServerService {
     String CONCURRENCY_LIMIT_INVENTORY_REPORT = "rhq.server.concurrency-limit.inventory-report";
     String CONCURRENCY_LIMIT_AVAILABILITY_REPORT = "rhq.server.concurrency-limit.availability-report";
     String CONCURRENCY_LIMIT_INVENTORY_SYNC = "rhq.server.concurrency-limit.inventory-sync";
-    String CONCURRENCY_LIMIT_ALERT_TEMPLATE = "rhq.server.concurrency-limit.alert-template";
 
     /**
      * Merge the platform/servers/services contained in the specified inventory report into the server's inventory. Note
@@ -135,14 +134,4 @@ public interface DiscoveryServerService {
      * @return true if the Resource was updated, or false if the Resource was not in inventory
      */
     boolean updateResourceVersion(int resourceId, String version);
-
-    /**
-     * Applies alert templates as necessary to the specified Resource and, as specified, its descendants. This
-     * should only be requested for any particular resource one time, typically as it's committed to inventory.
-     *   
-     * @param  resourceId a {@link Resource} id
-     * @param  descendants    true if the resource's descendants should be included, or false if not
-     */
-    @LimitedConcurrency(CONCURRENCY_LIMIT_ALERT_TEMPLATE)
-    void applyAlertTemplate(int resourceId, boolean descendants);
 }

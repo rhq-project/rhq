@@ -27,7 +27,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
@@ -36,8 +35,6 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.enterprise.server.alert.AlertDefinitionCreationException;
-import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -181,40 +178,5 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
             }
         }
         return pojoResource;
-    }
-
-    public void applyAlertTemplate(int resourceId, boolean descendants) {
-        AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-
-        long start = System.currentTimeMillis();
-
-        try {
-            // apply alert templates
-            try {
-                alertTemplateManager.updateAlertDefinitionsForResource(overlord, resourceId, descendants);
-            } catch (AlertDefinitionCreationException adce) {
-                /* should never happen because AlertDefinitionCreationException is only ever
-                 * thrown if updateAlertDefinitionsForResource isn't called as the overlord
-                 *
-                 * but we'll log it anyway, just in case, so it isn't just swallowed
-                 */
-                log.error(adce);
-            } catch (Exception e) {
-                log.debug("Could not apply alert templates for resourceId = " + resourceId, e);
-            }
-        } catch (Exception e) {
-            log.warn("Invalid resource with resourceId = " + resourceId, e);
-        }
-
-        long time = (System.currentTimeMillis() - start);
-
-        if (time >= 10000L) {
-            log.info("Performance: commit resource timing: resource/descendants/millis=" + resourceId + '/'
-                + descendants + '/' + time);
-        } else if (log.isDebugEnabled()) {
-            log.debug("Performance: commit resource timing: resource/descendents/millis=" + resourceId + '/'
-                + descendants + '/' + time);
-        }
     }
 }

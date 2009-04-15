@@ -117,7 +117,6 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         alertTemplate.setResourceType(type); // mark this as an alert "template" definition
         int alertTemplateId = alertDefinitionManager.createAlertDefinition(user, alertTemplate, null);
 
-        //if (cascade) {Cascade is always assumed to be true - RHQ-720
         try {
             int definitionCount = 0;
             for (Resource resource : type.getResources()) {
@@ -146,18 +145,12 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
              */
             LOG.error(adce);
         }
-        //}
 
         return alertTemplateId;
     }
 
+    @SuppressWarnings("unchecked")
     public void updateAlertDefinitionsForResource(Subject user, Integer resourceId)
-        throws AlertDefinitionCreationException, InvalidAlertDefinitionException {
-
-        updateAlertDefinitionsForResource(user, resourceId, false);
-    }
-
-    public void updateAlertDefinitionsForResource(Subject user, int resourceId, boolean descendants)
         throws AlertDefinitionCreationException, InvalidAlertDefinitionException {
         if (0 == resourceId) {
             throw new AlertDefinitionCreationException("Unexpected resourceId = 0");
@@ -168,21 +161,20 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                 "Updating the alert definitions for a resource is an implicit system operation and must only be performed by the overlord");
         }
 
-        Resource resource = entityManager.find(Resource.class, resourceId);
+        // get list of AlertTemplates that should be, but haven't already been, applied to this resource
+        Query query = entityManager.createNamedQuery("" //
+            + " SELECT template " //
+            + "   FROM AlertDefinition template, Resource res " //
+            + "  WHERE template.resourceType.id = res.resourceType.id " //
+            + "    AND res.id = :resourceId " //
+            + "    AND template.id NOT IN ( SELECT ad.id " //
+            + "                               FROM AlertDefinition ad " //
+            + "                              WHERE ad.resource.id = :resourceId ) ");
+        query.setParameter("resourceId", resourceId);
+        List<AlertDefinition> unappliedTemplates = query.getResultList();
 
-        if (descendants) {
-            for (Resource child : resource.getChildResources()) {
-                updateAlertDefinitionsForResource(user, child.getId(), descendants);
-            }
-        }
-
-        ResourceType resourceType = resource.getResourceType();
-
-        List<AlertDefinition> templates = getAlertTemplates(user, resourceType.getId(), PageControl
-            .getUnlimitedInstance());
-
-        for (AlertDefinition template : templates) {
-            alertTemplateManager.updateAlertDefinitionsForResource(user, template, resource.getId());
+        for (AlertDefinition template : unappliedTemplates) {
+            alertTemplateManager.updateAlertDefinitionsForResource(user, template, resourceId);
         }
     }
 
@@ -206,13 +198,10 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         for (Integer alertTemplateId : alertTemplateIds) {
             alertDefinitionManager.removeAlertDefinitions(user, new Integer[] { alertTemplateId });
 
-            //            if (cascade) {
-            // cascading is a system side effects, and so should be performed by the overlord
             List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
             alertDefinitionManager.removeAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
                 .toArray(new Integer[alertDefinitions.size()]));
         }
-        //        }
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
@@ -220,12 +209,9 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         for (Integer alertTemplateId : alertTemplateIds) {
             alertDefinitionManager.enableAlertDefinitions(user, new Integer[] { alertTemplateId });
 
-            //            if (cascade) {
-            // cascading is a system side effects, and so should be performed by the overlord
             List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
             alertDefinitionManager.enableAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
                 .toArray(new Integer[alertDefinitions.size()]));
-            //            }
         }
     }
 
@@ -234,12 +220,9 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         for (Integer alertTemplateId : alertTemplateIds) {
             alertDefinitionManager.disableAlertDefinitions(user, new Integer[] { alertTemplateId });
 
-            //            if (cascade) {
-            // cascading is a system side effects, and so should be performed by the overlord
             List<Integer> alertDefinitions = getAlertDefinitionIdsByTemplateId(user, alertTemplateId);
             alertDefinitionManager.disableAlertDefinitions(subjectManager.getOverlord(), alertDefinitions
                 .toArray(new Integer[alertDefinitions.size()]));
-            //            }
         }
     }
 
@@ -259,7 +242,6 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
             LOG.error("Attempt to update a deleted template " + alertTemplate.toSimpleString());
         }
 
-        //if (cascade) { Cascade is always assumed to be true - RHQ-720
         Subject overlord = subjectManager.getOverlord();
         int definitionCount = 0;
 
@@ -326,7 +308,6 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
              */
             LOG.error(adce);
         }
-        //}
 
         return updatedTemplate;
     }

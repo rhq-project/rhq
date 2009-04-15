@@ -197,7 +197,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
 
             // apply alert templates
             try {
-                alertTemplateManager.updateAlertDefinitionsForResource(overlord, resourceId, false);
+                alertTemplateManager.updateAlertDefinitionsForResource(overlord, resourceId);
             } catch (AlertDefinitionCreationException adce) {
                 /* should never happen because AlertDefinitionCreationException is only ever
                  * thrown if updateAlertDefinitionsForResource isn't called as the overlord

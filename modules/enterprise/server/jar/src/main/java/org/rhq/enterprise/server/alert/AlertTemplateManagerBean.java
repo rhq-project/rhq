@@ -167,9 +167,11 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
             + "   FROM AlertDefinition template, Resource res " //
             + "  WHERE template.resourceType.id = res.resourceType.id " //
             + "    AND res.id = :resourceId " //
+            + "    AND template.deleted = false " //
             + "    AND template.id NOT IN ( SELECT ad.id " //
             + "                               FROM AlertDefinition ad " //
-            + "                              WHERE ad.resource.id = :resourceId ) ");
+            + "                              WHERE ad.resource.id = :resourceId " //
+            + "                                AND ad.deleted = false ) ");
         query.setParameter("resourceId", resourceId);
         List<AlertDefinition> unappliedTemplates = query.getResultList();
 

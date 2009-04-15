@@ -1121,15 +1121,16 @@ public class Resource implements Comparable<Resource>, Externalizable {
     }
 
     /**
-     * This method should be called whenever we want the agent to recognized that someone about this resource has
-     * changed on the server-side that requires it to synchronize.
+     * This method should be called whenever we want the agent to recognize that something about this resource has
+     * changed on the server-side that requires synchronization to take place.
      * 
-     * we don't want to modify the mtime every time this resource is updated/merged; this field has special meaning
-     * to the agent-side representation of this resource in the plugin container; if the server-side mtime is latera
-     * than the agent-side, the agent things this resource has been modified in some way and will start a workflow that
+     * We don't want to modify the mtime every time this resource is updated/merged; this field has special meaning
+     * to the agent-side representation of this resource in the plugin container; if the server-side mtime is later
+     * than the agent-side, the agent thinks this resource has been modified in some way and will start a workflow that
      * causes synchronization to happen; however, the agent only cares about specific types of updates to the resource:
+     * 
      *  - plugin configuration changes
-     *  - measurement schedules updated
+     *  - measurement schedule updates
      *  - basic fields modified such as name, description, inventory status, etc
      *  
      * For a list of changes that the agent cares about, see InventoryManager.mergeResource(Resource, Resource)

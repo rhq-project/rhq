@@ -98,7 +98,7 @@ SplitPane.prototype = {
         this.divider.style.position="absolute";
         this.divider.style.width=SplitPane.handleWidth + "px";
         this.divider.style.top="0px";
-        this.divider.style.zIndex=2;
+        this.divider.style.zIndex=0;
 
         this.containerWidth = this.getWidth(this.container);
 

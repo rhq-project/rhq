@@ -1053,7 +1053,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         Query query = entityManager.createQuery("" //
             + "SELECT res.id " //
             + "  FROM Resource res " //
-            + " WHERE res.parent.id IN ( :parentIds ) ");
+            + " WHERE res.parentResource.id IN ( :parentIds ) ");
         query.setParameter("parentIds", batchIds);
         List<Integer> batchChildrenIds = query.getResultList();
         Set<Integer> batchChildrenIdSet = new HashSet<Integer>(batchChildrenIds);

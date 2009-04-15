@@ -6,7 +6,7 @@
     <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-helpers</artifactId>
-      <version>1.2.0-SNAPSHOT</version>
+      <version>1.2.0.EmbJopr_1_2_0-1</version>
     </parent>
 
 
@@ -16,11 +16,11 @@
 
     <name>RHQ plugin generator</name>
     <description>Helper to generate plugin skeletons</description>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>1.2.0.EmbJopr_1_2_0-1</version>
 
     <scm>
-      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/helpers/pluginGen</connection>
-      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/helpers/pluginGen</developerConnection>
+      <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1</connection>
+      <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1</developerConnection>
    </scm>
 
    <build>

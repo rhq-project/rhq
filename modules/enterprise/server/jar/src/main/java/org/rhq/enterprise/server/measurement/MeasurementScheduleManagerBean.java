@@ -554,7 +554,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     public void disableDefaultCollectionForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds,
         boolean updateSchedules) {
 
-        nodifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, -1, updateSchedules);
+        modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, -1, updateSchedules);
         return;
     }
 
@@ -577,9 +577,10 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
         Set<ResourceMeasurementScheduleRequest> resourceMeasurementScheduleRequests = new HashSet<ResourceMeasurementScheduleRequest>();
         resourceMeasurementScheduleRequests.add(resourceMeasurementScheduleRequest);
-        sendUpdatedSchedulesToAgent(resource.getAgent(), resourceMeasurementScheduleRequests);
-
-        resource.setMtime(System.currentTimeMillis());
+        boolean synced = sendUpdatedSchedulesToAgent(resource.getAgent(), resourceMeasurementScheduleRequests);
+        if (!synced) {
+            resource.setAgentSynchronizationNeeded();
+        }
         entityManager.merge(resource);
 
         return;
@@ -627,11 +628,11 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         int[] measurementDefinitionIds, long collectionInterval, boolean updateExistingSchedules) {
 
         collectionInterval = verifyMinimumCollectionInterval(collectionInterval);
-        nodifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, collectionInterval,
+        modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, collectionInterval,
             updateExistingSchedules);
     }
 
-    private void nodifyDefaultCollectionIntervalForMeasurementDefinitions(Subject subject,
+    private void modifyDefaultCollectionIntervalForMeasurementDefinitions(Subject subject,
         int[] measurementDefinitionIds, long collectionInterval, boolean updateExistingSchedules) {
 
         if (measurementDefinitionIds == null || measurementDefinitionIds.length == 0) {
@@ -691,25 +692,36 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 agentUpdate.add(reqMap.get(resourceId));
             }
 
-            setResourcesModifiedByMeasurementDefinitionIds(measurementDefinitionIds);
-
+            // convert the int[] to Integer[], incase we need to set
+            List<Integer> measurementDefinitionList = convertIntArrayToListOfIntegers(measurementDefinitionIds);
             // send schedule updates to agents
             for (Map.Entry<Agent, Set<ResourceMeasurementScheduleRequest>> agentEntry : agentUpdates.entrySet()) {
-                sendUpdatedSchedulesToAgent(agentEntry.getKey(), agentEntry.getValue());
+                boolean synced = sendUpdatedSchedulesToAgent(agentEntry.getKey(), agentEntry.getValue());
+                if (!synced) {
+                    /* 
+                     * only sync resources that are affected by this set of definitions that were updated, and only 
+                     * for the agent that couldn't be contacted (under the assumption that 9 times out of 10 the agent
+                     * will be up; so, we don't want to unnecessarily mark more resources as needing syncing that don't
+                     */
+                    int agentId = agentEntry.getKey().getId();
+                    setAgentSynchronizationNeededByDefinitionsForAgent(agentId, measurementDefinitionList);
+                }
             }
         }
     }
 
-    private void setResourcesModifiedByMeasurementDefinitionIds(int... measurementDefinitionIds) {
+    private void setAgentSynchronizationNeededByDefinitionsForAgent(int agentId, List<Integer> measurementDefinitionIds) {
         String updateSQL = "" //
             + "UPDATE Resource res " //
             + "   SET res.mtime = :now " //
-            + " WHERE res.resourceType.id IN ( SELECT md.resourceType.id " //
+            + " WHERE res.agent.id = :agentId " //
+            + "       res.resourceType.id IN ( SELECT md.resourceType.id " //
             + "                                  FROM MeasurementDefinition md " //
             + "                                 WHERE md.id IN ( :definitionIds ) )";
         Query updateQuery = entityManager.createQuery(updateSQL);
         updateQuery.setParameter("now", System.currentTimeMillis());
-        updateQuery.setParameter("definitionIds", convertIntArrayToListOfIntegers(measurementDefinitionIds));
+        updateQuery.setParameter("agentId", agentId);
+        updateQuery.setParameter("definitionIds", measurementDefinitionIds);
         int updateCount = updateQuery.executeUpdate();
         log.info("" + updateCount + " resources mtime fields were updated as a result of this metric template update");
     }
@@ -736,9 +748,10 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
         Set<ResourceMeasurementScheduleRequest> resourceMeasurementScheduleRequests = new HashSet<ResourceMeasurementScheduleRequest>();
         resourceMeasurementScheduleRequests.add(resourceMeasurementScheduleRequest);
-        sendUpdatedSchedulesToAgent(resource.getAgent(), resourceMeasurementScheduleRequests);
-
-        resource.setMtime(System.currentTimeMillis());
+        boolean synced = sendUpdatedSchedulesToAgent(resource.getAgent(), resourceMeasurementScheduleRequests);
+        if (!synced) {
+            resource.setAgentSynchronizationNeeded();
+        }
         entityManager.merge(resource);
 
         return;
@@ -846,18 +859,20 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return results;
     }
 
-    private void sendUpdatedSchedulesToAgent(Agent agent,
+    private boolean sendUpdatedSchedulesToAgent(Agent agent,
         Set<ResourceMeasurementScheduleRequest> resourceMeasurementScheduleRequest) {
         try {
             AgentClient agentClient = LookupUtil.getAgentManager().getAgentClient(agent);
             if (agentClient.ping(2000) == false) {
                 log.debug("Won't send MeasurementSchedules to offline Agent[id=" + agent.getId() + "]");
-                return;
+                return false;
             }
             agentClient.getMeasurementAgentService().updateCollection(resourceMeasurementScheduleRequest);
+            return true; // successfully sync'ed schedules down to the agent
         } catch (Throwable t) {
             log.error("Error updating MeasurementSchedules for Agent[id=" + agent.getId() + "]: " + t);
         }
+        return false; // catch all and presume the live sync failed
     }
 
     /**

@@ -1731,7 +1731,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     public Resource getResourceTree(int rootResourceId, boolean recursive) {
-        Resource root = entityManager.find(Resource.class, rootResourceId);
+        Subject overlord = subjectManager.getOverlord();
+        Resource root = getResourceById(overlord, rootResourceId);
         if (root != null) {
             prefetchResource(root, recursive);
             // load the parent - note we only load the root resource's parent

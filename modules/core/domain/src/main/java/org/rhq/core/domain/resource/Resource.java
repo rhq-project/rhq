@@ -52,7 +52,6 @@ import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.PostPersist;
 import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
 import javax.persistence.QueryHint;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -986,6 +985,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setId(int id) {
         this.id = id;
+        setAgentSynchronizationNeeded();
     }
 
     /**
@@ -1000,6 +1000,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+        setAgentSynchronizationNeeded();
     }
 
     @NotNull
@@ -1009,6 +1010,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setName(@NotNull String name) {
         this.name = name;
+        setAgentSynchronizationNeeded();
     }
 
     public String getResourceKey() {
@@ -1017,6 +1019,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setResourceKey(String resourceKey) {
         this.resourceKey = resourceKey;
+        setAgentSynchronizationNeeded();
     }
 
     public ResourceType getResourceType() {
@@ -1025,6 +1028,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setResourceType(ResourceType resourceType) {
         this.resourceType = resourceType;
+        setAgentSynchronizationNeeded();
     }
 
     public InventoryStatus getInventoryStatus() {
@@ -1033,6 +1037,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setInventoryStatus(InventoryStatus inventoryStatus) {
         this.inventoryStatus = inventoryStatus;
+        setAgentSynchronizationNeeded();
     }
 
     /**
@@ -1064,6 +1069,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setDescription(String description) {
         this.description = description;
+        setAgentSynchronizationNeeded();
     }
 
     /**
@@ -1114,8 +1120,23 @@ public class Resource implements Comparable<Resource>, Externalizable {
         this.itime = inventoryTime;
     }
 
-    @PreUpdate
-    void onUpdate() {
+    /**
+     * This method should be called whenever we want the agent to recognized that someone about this resource has
+     * changed on the server-side that requires it to synchronize.
+     * 
+     * we don't want to modify the mtime every time this resource is updated/merged; this field has special meaning
+     * to the agent-side representation of this resource in the plugin container; if the server-side mtime is latera
+     * than the agent-side, the agent things this resource has been modified in some way and will start a workflow that
+     * causes synchronization to happen; however, the agent only cares about specific types of updates to the resource:
+     *  - plugin configuration changes
+     *  - measurement schedules updated
+     *  - basic fields modified such as name, description, inventory status, etc
+     *  
+     * For a list of changes that the agent cares about, see InventoryManager.mergeResource(Resource, Resource)
+     */
+
+    // @PreUpdate
+    public void setAgentSynchronizationNeeded() {
         this.mtime = System.currentTimeMillis();
     }
 
@@ -1133,6 +1154,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public void setLocation(String location) {
         this.location = location;
+        setAgentSynchronizationNeeded();
     }
 
     public Set<Resource> getChildResources() {

@@ -26,6 +26,7 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -37,7 +38,7 @@ public class ResourceTreeContextMenuUIBean {
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
     private OperationManagerLocal operationManager = LookupUtil.getOperationManager();
     private MeasurementScheduleManagerLocal measurementScheduleManager = LookupUtil.getMeasurementScheduleManager();
-
+    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ContextMenu resourceContextMenu;
 
     public ContextMenu getMenu() {
@@ -73,8 +74,12 @@ public class ResourceTreeContextMenuUIBean {
             int resourceId = Integer.parseInt(resourceIdString);
             int resourceTypeId = Integer.parseInt(resourceTypeIdString);
 
-            Resource res = EnterpriseFacesContextUtility.getResource();
+            //The resource is taken from ResourceManager because of error when the AutoGroup is selected in the menu
+            // the resource is not in Faces Context
+            //Resource res = EnterpriseFacesContextUtility.getResource();
 
+            Resource res = resourceManager.getResourceById(subject, resourceId);
+            //Resource res = 
             // basic information
             addMenuItem(res.getName(), true);
             addMenuItem(res.getResourceType().getName(), true);

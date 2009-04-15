@@ -177,6 +177,10 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "  FROM Resource res " //
         + " WHERE res.parentResource.id = :parentResourceId " //
         + "   AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null)"),
+    @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_IDS_BY_PARENT_IDS, query = "" //
+        + "SELECT res.id " //
+        + "  FROM Resource res " //
+        + " WHERE res.parentResource.id IN ( :parentIds ) "), //
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN, query = "" //
         + "SELECT res "
         + "  FROM Resource res " //
@@ -693,6 +697,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
 
     public static final String QUERY_FIND_VALID_COMMITTED_RESOURCE_IDS_ADMIN = "Resource.findValidCommittedResourceIds_admin";
     public static final String QUERY_FIND_CHILDREN_IDS_ADMIN = "Resource.findChildrenIds_admin";
+    public static final String QUERY_FIND_CHILDREN_IDS_BY_PARENT_IDS = "Resource.findChildrenIdsByParentIds";
     public static final String QUERY_FIND_CHILDREN = "Resource.findChildren";
     public static final String QUERY_FIND_CHILDREN_ADMIN = "Resource.findChildren_admin";
 

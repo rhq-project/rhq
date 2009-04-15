@@ -88,7 +88,13 @@ import org.rhq.core.domain.resource.Resource;
         + "AND (ms.definition.dataType = :dataType OR :dataType is null) "),
     @NamedQuery(name = MeasurementSchedule.GET_SCHEDULED_MEASUREMENTS_PER_MINUTED, query = "SELECT SUM(1000.0 / ms.interval) * 60.0 FROM MeasurementSchedule ms WHERE ms.enabled = true"),
     @NamedQuery(name = MeasurementSchedule.DISABLE_ALL, query = "UPDATE MeasurementSchedule ms SET ms.enabled = false"),
-    @NamedQuery(name = MeasurementSchedule.DELETE_BY_RESOURCES, query = "DELETE MeasurementSchedule ms WHERE ms.resource IN ( :resources )") })
+    @NamedQuery(name = MeasurementSchedule.DELETE_BY_RESOURCES, query = "DELETE MeasurementSchedule ms WHERE ms.resource IN ( :resources )"),
+    @NamedQuery(name = MeasurementSchedule.REPORTING_RESOURCE_MEASUREMENT_SCHEDULE_REQUEST, query = "" //
+        + "SELECT res.id, ms.id, def.name, ms.interval, ms.enabled, def.dataType, def.rawNumericType "
+        + "  FROM MeasurementSchedule ms " //
+        + "  JOIN ms.definition def " //
+        + "  JOIN ms.resource res " //
+        + " WHERE res.id IN ( :resourceIds )") })
 @SequenceGenerator(name = "RHQ_METRIC_SCHED_ID_SEQ", sequenceName = "RHQ_MEASUREMENT_SCHED_ID_SEQ")
 @Table(name = "RHQ_MEASUREMENT_SCHED", uniqueConstraints = { @UniqueConstraint(columnNames = { "DEFINITION",
     "RESOURCE_ID" }) })
@@ -134,6 +140,7 @@ public class MeasurementSchedule implements Serializable {
     public static final String DELETE_BY_RESOURCES = "MeasurementSchedule.deleteByResources";
     public static final String FIND_ALL_FOR_DEFINITIONS = "MeasurementSchedule.FIND_ALL_FOR_DEFINITIONS";
 
+    public static final String REPORTING_RESOURCE_MEASUREMENT_SCHEDULE_REQUEST = "MeasurementSchedule.ReportingResourceMeasurementScheduleRequest";
     public static final String NATIVE_QUERY_INSERT_SCHEDULES_POSTGRES = "" //
         + "INSERT INTO RHQ_MEASUREMENT_SCHED ( ID, ENABLED, COLL_INTERVAL, DEFINITION, RESOURCE_ID ) " //
         + "     SELECT nextval('RHQ_MEASUREMENT_SCHED_ID_SEQ'), " //

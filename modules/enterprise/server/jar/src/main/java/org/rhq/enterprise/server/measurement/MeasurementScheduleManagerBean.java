@@ -928,12 +928,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 insertSchedulesFor(batchIds);
 
                 // use reporting query to ensure no additional loads except what we want, and no attached objects
-                Query selectQuery = entityManager.createQuery("" //
-                    + "SELECT res.id, ms.id, def.name, ms.interval, ms.enabled, def.dataType, def.rawNumericType "
-                    + "  FROM MeasurementSchedule ms " //
-                    + "  JOIN ms.definition def " //
-                    + "  JOIN ms.resource res " //
-                    + " WHERE res.id IN ( :resourceIds )");
+                Query selectQuery = entityManager
+                    .createNamedQuery(MeasurementSchedule.REPORTING_RESOURCE_MEASUREMENT_SCHEDULE_REQUEST);
                 selectQuery.setParameter("resourceIds", batchIds);
                 List<Object[]> rawResults = selectQuery.getResultList();
 
@@ -1050,10 +1046,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
     @SuppressWarnings("unchecked")
     private Set<Integer> getChildrenIdByParentIds(List<Integer> batchIds) {
-        Query query = entityManager.createQuery("" //
-            + "SELECT res.id " //
-            + "  FROM Resource res " //
-            + " WHERE res.parentResource.id IN ( :parentIds ) ");
+        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_CHILDREN_IDS_BY_PARENT_IDS);
         query.setParameter("parentIds", batchIds);
         List<Integer> batchChildrenIds = query.getResultList();
         Set<Integer> batchChildrenIdSet = new HashSet<Integer>(batchChildrenIds);

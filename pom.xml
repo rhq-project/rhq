@@ -4,7 +4,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-parent</artifactId>
-  <version>1.2.0.EmbJopr_1_2_0-1</version>
+  <version>1.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>RHQ</name>
@@ -18,8 +18,8 @@
   </organization>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk</developerConnection>
   </scm>
 
   <issueManagement>

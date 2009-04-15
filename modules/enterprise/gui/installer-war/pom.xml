@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>1.2.0.EmbJopr_1_2_0-1</version>
+    <version>1.2.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
   <description>The ON Enterprise Installer webapp</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/enterprise/gui/installer-war</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_EmbJopr_1_2_0-1/modules/enterprise/gui/installer-war</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/gui/installer-war/</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/gui/installer-war/</developerConnection>
   </scm>
 
   <properties>
@@ -206,9 +206,9 @@
                 </i18n>
                 <copy todir="${project.build.outputDirectory}" encoding="UTF-8" outputencoding="UTF-8">
                   <fileset dir="${basedir}/target/resources/WEB-INF/classes">
-                    <include name="InstallerMessages*.properties" />
+                    <include name="InstallerMessages*.properties"/>
                   </fileset>
-                  <mapper type="glob" from="*" to="*.unfiltered" />
+                  <mapper type="glob" from="*" to="*.unfiltered"/>
                 </copy>
               </tasks>
             </configuration>

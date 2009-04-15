@@ -645,12 +645,16 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
      <!-- TODO: do we want to completely delete it? right now I just disable it so we can re-enable out in the field
      <delete dir="${jboss.deploy.dir}/jmx-console.war" />
      -->
-     <move file="${jboss.deploy.dir}/jmx-console.war" tofile="${jboss.deploy.dir}/jmx-console.war.rej"/>
+     <move file="${jboss.deploy.dir}/jmx-console.war" 
+           tofile="${jboss.deploy.dir}/jmx-console.war.rej" 
+           failonerror="false"/>
   </target>
 
   <target name="undeploy-mail-service" unless="predeploy">
      <echo>Preparing for release - undeploying Mail Service...</echo>
-     <move file="${jboss.deploy.dir}/mail-service.xml" tofile="${jboss.deploy.dir}/mail-service.xml.rej"/>
+     <move file="${jboss.deploy.dir}/mail-service.xml" 
+           tofile="${jboss.deploy.dir}/mail-service.xml.rej" 
+           failonerror="false"/>
   </target>
 
   <!-- Removing cluster service in 1.1, potentially adding back later for cluster management support
@@ -658,24 +662,27 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
        do not fail on error, because we don't want to fail if the file has already been renamed -->
   <target name="undeploy-cluster-service">
      <echo>Undeploying Cluster Service...</echo>
-     <move failonerror="false"
-           file="${jboss.deploy.dir}/cluster-service.xml"
-           tofile="${jboss.deploy.dir}/cluster-service.xml.rej"/>
+     <move file="${jboss.deploy.dir}/cluster-service.xml"
+           tofile="${jboss.deploy.dir}/cluster-service.xml.rej"
+           failonerror="false"/>
   </target>
 
   <target name="undeploy-alert-cache-service" unless="predeploy">
      <echo>Preparing for release - undeploying Alert Cache Service...</echo>
-     <move file="${jboss.deploy.dir}/alert-cache-service.xml" tofile="${jboss.deploy.dir}/alert-cache-service.xml.rej"/>
+     <move file="${jboss.deploy.dir}/alert-cache-service.xml" 
+           tofile="${jboss.deploy.dir}/alert-cache-service.xml.rej"/>
   </target>
 
   <target name="undeploy-embedded-agent" unless="predeploy">
      <echo>Preparing for release - undeploying Embedded Agent...</echo>
-     <move file="${jboss.deploy.dir}/rhq-agent.sar" tofile="${jboss.deploy.dir}/rhq-agent.sar.rej"/>
+     <move file="${jboss.deploy.dir}/rhq-agent.sar" 
+           tofile="${jboss.deploy.dir}/rhq-agent.sar.rej"/>
   </target>
 
   <target name="undeploy-ear" unless="predeploy">
      <echo>Preparing for release - cleaning and undeploying EAR...</echo>
-     <move file="${jboss.deploy.dir}/${rhq.earName}" tofile="${jboss.deploy.dir}/${rhq.earName}.rej"/>
+     <move file="${jboss.deploy.dir}/${rhq.earName}" 
+           tofile="${jboss.deploy.dir}/${rhq.earName}.rej"/>
   </target>
 
   <target name="undeploy-ds" unless="predeploy">
@@ -685,12 +692,16 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
 
   <target name="deploy-postgres-ds" if="predeploy-postgres">
      <echo>Postgres will be your datasource backend!</echo>
-     <copy file="${jboss.deploy.dir}/${ds.postgres.file}" tofile="${jboss.deploy.dir}/rhq-ds.xml" verbose="true"/>
+     <copy file="${jboss.deploy.dir}/${ds.postgres.file}" 
+           tofile="${jboss.deploy.dir}/rhq-ds.xml" 
+           verbose="true"/>
   </target>
 
   <target name="deploy-oracle-ds" if="predeploy-oracle">
      <echo>Oracle will be your datasource backend!</echo>
-     <copy file="${jboss.deploy.dir}/${ds.oracle.file}" tofile="${jboss.deploy.dir}/rhq-ds.xml" verbose="true"/>
+     <copy file="${jboss.deploy.dir}/${ds.oracle.file}" 
+           tofile="${jboss.deploy.dir}/rhq-ds.xml" 
+           verbose="true"/>
   </target>
 
 </project>

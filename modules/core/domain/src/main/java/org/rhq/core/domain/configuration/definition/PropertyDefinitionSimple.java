@@ -79,7 +79,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
      * {@link PropertyDefinition#required} field is <code>false</code> (i.e. for optional properties). Conversely, this
      * field should be null for properties whose {@link PropertyDefinition#required} field is <code>true</code> (i.e. for
      * required properties). 
-     * @Deprecated Use the (default) template instead
+     * @deprecated Use the (default) template instead
      */
     @Deprecated
     @Column(name = "DEFAULT_VALUE", length = 2000)

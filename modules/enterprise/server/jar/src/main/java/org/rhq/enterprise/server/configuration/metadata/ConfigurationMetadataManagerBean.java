@@ -409,7 +409,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                     existingPDS.addConstraints(con);
                 }
 
-                // handle <defaultValueDescription> [0..1]
+                // handle <defaultValue> [0..1]
                 existingPDS.setDefaultValue(newPDS.getDefaultValue());
             } else {
                 // other type

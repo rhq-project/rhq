@@ -527,30 +527,30 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "   AND (res.inventoryStatus = :inventoryStatus) " //
         + "   AND res.id NOT IN ( :excludeIds ) "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_ID, query = "" //
-        + "    SELECT res " //
-        + "      FROM Resource res " //
-        + "JOIN FETCH res.currentAvailability " // fetch to remove extra query
-        + "JOIN FETCH res.resourceType " // fetch to remove extra query
-        + "     WHERE res.id =  :resourceId "),
+        + "         SELECT res " //
+        + "           FROM Resource res " //
+        + "LEFT JOIN FETCH res.currentAvailability " // fetch to remove extra query, LEFT so unit tests needn't set it
+        + "     JOIN FETCH res.resourceType " // fetch to remove extra query
+        + "          WHERE res.id =  :resourceId "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_IDS, query = "" //
-        + "    SELECT res " //
-        + "      FROM Resource res " //
-        + "JOIN FETCH res.currentAvailability " // fetch to remove extra query
-        + "JOIN FETCH res.resourceType " // fetch to remove extra query
-        + "     WHERE res.id IN ( :ids ) " //
-        + "      AND res.id IN ( SELECT rr.id FROM Resource rr " //
-        + "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
-        + "                       WHERE s = :subject) "),
+        + "         SELECT res " //
+        + "           FROM Resource res " //
+        + "LEFT JOIN FETCH res.currentAvailability " // fetch to remove extra query, LEFT so unit tests needn't set it
+        + "     JOIN FETCH res.resourceType " // fetch to remove extra query
+        + "          WHERE res.id IN ( :ids ) " //
+        + "            AND res.id IN ( SELECT rr.id FROM Resource rr " //
+        + "                              JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
+        + "                             WHERE s = :subject) "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_IDS_ADMIN, query = "" //
-        + "    SELECT res " //
-        + "      FROM Resource res " //
-        + "JOIN FETCH res.currentAvailability " // fetch to remove extra query
-        + "JOIN FETCH res.resourceType " // fetch to remove extra query
-        + "     WHERE res.id IN ( :ids )"),
+        + "         SELECT res " //
+        + "           FROM Resource res " //
+        + "LEFT JOIN FETCH res.currentAvailability " // fetch to remove extra query, LEFT so unit tests needn't set it
+        + "     JOIN FETCH res.resourceType " // fetch to remove extra query
+        + "          WHERE res.id IN ( :ids )"),
     @NamedQuery(name = Resource.QUERY_FIND_WITH_PARENT_BY_IDS, query = "" //
         + "         SELECT res " //
         + "           FROM Resource res " //
-        + "     JOIN FETCH res.currentAvailability " // fetch to remove extra query
+        + "LEFT JOIN FETCH res.currentAvailability " // fetch to remove extra query, LEFT so unit tests needn't set it
         + "     JOIN FETCH res.resourceType " // fetch to remove extra query
         + "LEFT JOIN FETCH res.parentResource parent " //
         + "LEFT JOIN FETCH parent.currentAvailability " // left fetch to remove extra query for parent
@@ -562,7 +562,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = Resource.QUERY_FIND_WITH_PARENT_BY_IDS_ADMIN, query = "" //
         + "         SELECT res " //
         + "           FROM Resource res " //
-        + "     JOIN FETCH res.currentAvailability " // fetch to remove extra query
+        + "LEFT JOIN FETCH res.currentAvailability " // fetch to remove extra query, LEFT so unit tests needn't set it
         + "     JOIN FETCH res.resourceType " // fetch to remove extra query
         + "LEFT JOIN FETCH res.parentResource parent " //
         + "LEFT JOIN FETCH parent.currentAvailability " // left fetch to remove extra query for parent

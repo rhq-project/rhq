@@ -162,7 +162,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         }
 
         // get list of AlertTemplates that should be, but haven't already been, applied to this resource
-        Query query = entityManager.createNamedQuery("" //
+        Query query = entityManager.createQuery("" //
             + " SELECT template " //
             + "   FROM AlertDefinition template, Resource res " //
             + "  WHERE template.resourceType.id = res.resourceType.id " //

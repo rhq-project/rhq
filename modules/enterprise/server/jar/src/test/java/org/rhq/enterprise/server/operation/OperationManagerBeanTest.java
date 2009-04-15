@@ -1584,6 +1584,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
                 throw e;
             }
 
+            em.flush();
             getTransactionManager().commit();
         } finally {
             em.close();

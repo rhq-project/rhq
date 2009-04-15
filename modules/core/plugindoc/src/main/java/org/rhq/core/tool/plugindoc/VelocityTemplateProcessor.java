@@ -27,35 +27,42 @@ import java.io.Writer;
 import java.util.Properties;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.Velocity;
+import org.apache.velocity.app.VelocityEngine;
 
 /**
  * @author Ian Springer
  */
 public class VelocityTemplateProcessor {
-    private VelocityContext context = new VelocityContext();
+    private VelocityContext context;
     private Template template;
 
-    public VelocityTemplateProcessor(String templateResourcePath) {
-        Properties velocityConfig = createVelocityConfiguration();
-        try {
-            Velocity.init(velocityConfig);
-            this.template = Velocity.getTemplate(templateResourcePath);
-        } catch (Exception e) {
+    public VelocityTemplateProcessor(String templateResourcePath, String macroLibrary, Class referenceInsertionClass) {
+        this.context = new VelocityContext();
+        Properties config = createVelocityConfiguration(macroLibrary, referenceInsertionClass);
+        try
+        {
+            VelocityEngine engine = new VelocityEngine(config);
+            this.template = engine.getTemplate(templateResourcePath);
+        }
+        catch (Exception e)
+        {
             throw new RuntimeException(e);
         }
     }
 
-    private Properties createVelocityConfiguration() {
+    private Properties createVelocityConfiguration(String macroLibrary, Class referenceInsertionClass) {
         Properties velocityConfig = new Properties();
-
         // Velocity configuration syntax reference:
-        //   http://velocity.apache.org/engine/releases/velocity-1.5/developer-guide.html#velocity_configuration_keys_and_values
+        //   http://velocity.apache.org/engine/releases/velocity-1.6/developer-guide.html
         velocityConfig.setProperty("resource.loader", "class");
         velocityConfig.setProperty("class.resource.loader.class",
             "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
-        velocityConfig.setProperty("eventhandler.referenceinsertion.class", EscapeConfluenceReference.class.getName());        
-        velocityConfig.setProperty("velocimacro.library", "macros.vm");
+        if (referenceInsertionClass != null)
+            velocityConfig.setProperty("eventhandler.referenceinsertion.class", referenceInsertionClass.getName());
+        String macroLibraries = "common-macros.vm";
+        if (macroLibrary != null)
+           macroLibraries += ", " + macroLibrary;
+        velocityConfig.setProperty("velocimacro.library", macroLibraries);
         return velocityConfig;
     }
 

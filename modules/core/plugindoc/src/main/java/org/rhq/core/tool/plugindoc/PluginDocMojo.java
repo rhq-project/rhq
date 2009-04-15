@@ -67,6 +67,8 @@ public class PluginDocMojo extends AbstractMojo {
     private static final String PLUGIN_DESCRIPTOR_JAXB_CONTEXT_PATH = "org.rhq.core.clientapi.descriptor.plugin";
     private static final String CONFLUENCE_TEMPLATE_RESOURCE_PATH = "resource-type-doc-confluence.vm";
     private static final String DOCBOOK_TEMPLATE_RESOURCE_PATH = "resource-type-doc-docbook.vm";
+    private static final String CONFLUENCE_MACRO_LIBRARY_RESOURCE_PATH = "confluence-macros.vm";
+    private static final String DOCBOOK_MACRO_LIBRARY_RESOURCE_PATH = "docbook-macros.vm";
 
     private final Log log = LogFactory.getLog(PluginDocMojo.class);
 
@@ -120,8 +122,8 @@ public class PluginDocMojo extends AbstractMojo {
             return;
         }
 
-        PluginDescriptorProcessor descriptorProcessor = new PluginDescriptorProcessor(
-            parsePluginDescriptor(pluginXmlFile));
+        PluginDescriptor pluginDescriptor = parsePluginDescriptor(pluginXmlFile);
+        PluginDescriptorProcessor descriptorProcessor = new PluginDescriptorProcessor(pluginDescriptor);
         Set<ResourceType> resourceTypes;
         try {
             resourceTypes = descriptorProcessor.processPluginDescriptor();
@@ -129,11 +131,17 @@ public class PluginDocMojo extends AbstractMojo {
             throw new MojoExecutionException("Failed to process plugin descriptor.", e);
         }
 
-        File outputDir = new File(this.project.getBasedir(), OUTPUT_DIR_PATH);
+        String pluginName = pluginDescriptor.getName();
+        File baseOutputDir = new File(this.project.getBasedir().getParentFile(), OUTPUT_DIR_PATH);
+        File outputDir = new File(baseOutputDir, pluginName);
         outputDir.mkdirs();
 
-        VelocityTemplateProcessor confluenceTemplateProcessor = new VelocityTemplateProcessor(CONFLUENCE_TEMPLATE_RESOURCE_PATH);
-        VelocityTemplateProcessor docbookTemplateProcessor = new VelocityTemplateProcessor(DOCBOOK_TEMPLATE_RESOURCE_PATH);
+        VelocityTemplateProcessor confluenceTemplateProcessor =
+                new VelocityTemplateProcessor(CONFLUENCE_TEMPLATE_RESOURCE_PATH, CONFLUENCE_MACRO_LIBRARY_RESOURCE_PATH,
+                        EscapeConfluenceReference.class);
+        VelocityTemplateProcessor docbookTemplateProcessor =
+                new VelocityTemplateProcessor(DOCBOOK_TEMPLATE_RESOURCE_PATH, DOCBOOK_MACRO_LIBRARY_RESOURCE_PATH,
+                        null);
 
         if (this.confluenceUrl != null) {
             log.debug("Using Confluence URL: " + this.confluenceUrl);

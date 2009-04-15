@@ -1,0 +1,36 @@
+#macro( displayResourceTypeLink $resourceType )
+${resourceType.name.replace(" ", "_")}#if ( !${resourceType.name.endsWith("${resourceType.category}")} )_${resourceType.category}#end
+#end
+
+#macro( displayConfig $config )
+#if ( !${config} )
+<para>none</para>
+#else
+<table>
+    <title></title>
+    <tgroup cols="4" align="left" colsep="1" rowsep="1">
+        <thead>
+            <row>
+                <entry>Name</entry>
+                <entry>Description</entry>
+                <entry>Required</entry>
+                <entry>Internal Name</entry>
+            </row>
+        </thead>
+        <tbody>
+#foreach( ${propertyDefinition} in ${config.propertyDefinitions} )
+            <row>
+                <entry>${propertyDefinition.displayName}</entry>
+                <entry>$!{propertyDefinition.description}</entry>
+                <entry>#if ( ${propertyDefinition.required} ) yes #else no #end</entry>
+                <entry>${propertyDefinition.name}</entry>
+            </row>
+#end
+        </tbody>
+    </tgroup>
+</table>
+<note>
+    <para>The Internal Name is what must be used to reference Configuration Properties in Dynamic Group Definition expressions.</para>
+</note>
+#end
+#end

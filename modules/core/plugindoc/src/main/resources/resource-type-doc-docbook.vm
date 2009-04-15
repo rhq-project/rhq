@@ -1,141 +1,192 @@
-<section id="Connector_Service">
-	<title>#displayResourceTypeName( ${resourceType} )</title>
+<?xml version="1.0" encoding="UTF-8"?>
 
-    <section id="Overview">
-	    <title>Overview</title>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 
-	    <informaltable frame="all">
-		    <tgroup cols="2"><tbody>
-				    <row>
-					    <entry>
-						    <para><emphasis role="bold">Description: </emphasis></para>
-					    </entry>
-					    <entry>
-						    <para>$!{resourceType.description}</para>
-					    </entry>
-				    </row>
-				    <row>
-					    <entry>
-						    <para><emphasis role="bold">Singleton: </emphasis></para>
-					    </entry>
-					    <entry>
-						    <para>#if ( ${resourceType.singleton} ) yes #else no #end</para>
-					    </entry>
-				    </row>
-				    <row>
-					    <entry>
-						    <para><emphasis role="bold">Plugin: </emphasis></para>
-					    </entry>
-					    <entry>
-						    <para>${resourceType.plugin}</para>
-					    </entry>
-				    </row>
-			    </tbody>
-		    </tgroup>
-	    </informaltable>
+<section id="#displayResourceTypeName( ${resourceType} )">
+    <title>#displayResourceTypeName( ${resourceType} )</title>
 
-    </section>
+    <bridgehead>Overview</bridgehead>
+    <table>
+        <title>Overview</title>
+        <tgroup cols="2" align="left" colsep="1" rowsep="1">
+            <tbody>
+                <row>
+                    <entry>Description:</entry>
+                    <entry>$!{resourceType.description}</entry>
+                </row>
+                <row>
+                    <entry>Singleton:</entry>
+                    <entry>#if ( ${resourceType.singleton} ) yes #else no #end</entry>
+                </row>
+                <row>
+                    <entry>Plugin:</entry>
+                    <entry>${resourceType.plugin}</entry>
+                </row>
+            </tbody>
+        </tgroup>
+    </table>
+
 
 #if ( ${resourceType.helpText} )
 <note><para>${resourceType.helpText}</para></note>
 #end
 
 
-    <section id="Overview">
-	    <title>Parent Resource Types</title>
-
+    <bridgehead>Parent Resource Types</bridgehead>
 #if ( !${resourceType.parentResourceTypes.isEmpty()} )
-        <itemizedlist>
+    <itemizedlist>
 #foreach ( ${parentResourceType} in ${resourceType.parentResourceTypes} )
-            <listitem><para>#displayResourceTypeName( ${parentResourceType} )</para></listitem>
+        <listitem><simpara><xref linkend="#displayResourceTypeLink( ${parentResourceType} )"/></simpara></listitem>
 #end
-        </itemizedlist>
+    </itemizedlist>
 #elseif ( ${resourceType.category.name} != "PLATFORM" )
-        <itemizedlist>
-            <listitem><para>Managed Platforms</para></listitem>
-        </itemizedlist>
+    <itemizedlist>
+        <listitem><simpara><xref linkend="Managed_Platforms"/></simpara></listitem>
+    </itemizedlist>
 #else
-<emphasis>none</emphasis>
+    <para>none</para>
 #end
-    </section>
 
 
-    <section id="Overview">
-	    <title>Child Resource Types</title>
-
+    <bridgehead>Child Resource Types</bridgehead>
 #if ( !${resourceType.childResourceTypes.isEmpty()} )
+    <itemizedlist>
 #foreach( ${childResourceType} in ${resourceType.childResourceTypes} )
-* [#displayResourceTypeName( ${childResourceType} )]
+        <listitem><simpara><xref linkend="#displayResourceTypeLink( ${childResourceType} )"/></simpara></listitem>
 #end
+    </itemizedlist>
 #elseif ( ${resourceType.category.name} == "PLATFORM" )
-[Managed Servers|b. Managed Servers]
-[Managed Platform Services|c. Managed Platform Services]
+    <itemizedlist>
+        <listitem><simpara><xref linkend="Managed_Servers"/></simpara></listitem>
+        <listitem><simpara><xref linkend="Managed_Platform_Services"/></simpara></listitem>
+    </itemizedlist>
 #else
-_none_
+    <para>none</para>
 #end
-    </section>
 
 
 #if ( ${resourceType.category.name} == "SERVER" )
-h2. Autodiscovery Process Scans
-
+    <bridgehead>Autodiscovery Process Scans</bridgehead>
 #if ( ${resourceType.processScans.isEmpty()} )
-_none_
+    <para>none</para>
 #else
-|| Name || Query ||
+    <table>
+        <title>Metrics</title>
+        <tgroup cols="4" align="left" colsep="1" rowsep="1">
+            <thead>
+                <row>
+                    <entry>Name</entry>
+                    <entry>Query</entry>
+                </row>
+            </thead>
+            <tbody>
 #foreach( ${processScan} in ${resourceType.processScans} )
-| ${processScan.name} | ${processScan.query} |
+                <row>
+                    <entry>${processScan.name}</entry>
+                    <entry>${processScan.query}</entry>
+                </row>
+#end
+            </tbody>
+        </tgroup>
+    </table>
 #end
 #end
 
-#end
 
-
-h2. Connection Properties
-
+    <bridgehead>Connection Properties</bridgehead>
 #displayConfig( ${resourceType.pluginConfigurationDefinition} )
 
-
-h2. Metrics
+    <bridgehead>Metrics</bridgehead>
 
 #if ( ${resourceType.metricDefinitions.isEmpty()} )
-_none_
+    <para>none</para>
 #else
-|| Name || Type || Description || Internal Name ||
+    <table>
+        <title>Metrics</title>
+        <tgroup cols="4" align="left" colsep="1" rowsep="1">
+            <thead>
+                <row>
+                    <entry>Name</entry>
+                    <entry>Type</entry>
+                    <entry>Description</entry>
+                    <entry>Internal Name</entry>
+                </row>
+            </thead>
+            <tbody>
 #foreach( ${metricDefinition} in ${resourceType.metricDefinitions} )
-| ${metricDefinition.displayName} | ${metricDefinition.dataType.toString().toLowerCase()} | $!{metricDefinition.description} | ${metricDefinition.name} |
+                <row>
+                    <entry>${metricDefinition.displayName}</entry>
+                    <entry>${metricDefinition.dataType.toString().toLowerCase()}</entry>
+                    <entry>$!{metricDefinition.description}</entry>
+                    <entry>${metricDefinition.name}</entry>
+                </row>
 #end
+            </tbody>
+        </tgroup>
+    </table>
+    <note>
+        <para>The Internal Name is what must be used to reference Traits in Dynamic Group Definition expressions.</para>
+    </note>
 #end
 
-{note}
-The Internal Name is what must be used to reference Traits in Dynamic Group Definition expressions.
-{note}
 
-
-h2. Configuration Properties
-
+    <bridgehead>Configuration Properties</bridgehead>
 #displayConfig( ${resourceType.resourceConfigurationDefinition} )
 
 
-h2. Operations
-
+    <bridgehead>Operations</bridgehead>
 #if ( ${resourceType.operationDefinitions.isEmpty()} )
-_none_
+    <para>none</para>
 #else
-|| Name || Description ||
+    <table>
+        <title>Metrics</title>
+        <tgroup cols="4" align="left" colsep="1" rowsep="1">
+            <thead>
+                <row>
+                    <entry>Name</entry>
+                    <entry>Description</entry>
+                </row>
+            </thead>
+            <tbody>
 #foreach( ${operationDefinition} in ${resourceType.operationDefinitions} )
-| ${operationDefinition.displayName} | $!{operationDefinition.description} |
+                <row>
+                    <entry>${operationDefinition.displayName}</entry>
+                    <entry>$!{operationDefinition.description}</entry>
+                </row>
 #end
+            </tbody>
+        </tgroup>
+    </table>
 #end
 
-
-h2. Package Types
-
+    <bridgehead>Package Types</bridgehead>
 #if ( ${resourceType.packageTypes.isEmpty()} )
-_none_
+    <para>none</para>
 #else
-|| Name || Category || Description ||
+    <table>
+        <title>Package Types</title>
+        <tgroup cols="4" align="left" colsep="1" rowsep="1">
+            <thead>
+                <row>
+                    <entry>Name</entry>
+                    <entry>Category</entry>
+                    <entry>Description</entry>
+                </row>
+            </thead>
+            <tbody>
 #foreach( ${packageType} in ${resourceType.packageTypes} )
-| ${packageType.displayName} | ${packageType.category} | $!{artifactType.description} |
+                <row>
+                    <entry>${packageType.displayName}</entry>
+                    <entry>$!{packageType.category}</entry>
+                    <entry>$!{packageType.description}</entry>
+                </row>
 #end
+            </tbody>
+        </tgroup>
+    </table>
 #end
+
+    <!--<xi:include href="Child_Service.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>-->
+
+</section>

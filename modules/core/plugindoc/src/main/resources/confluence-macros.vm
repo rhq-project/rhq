@@ -1,8 +1,3 @@
-#macro( displayResourceTypeName $resourceType )
-${resourceType.name}#if ( !${resourceType.name.endsWith("${resourceType.category}")} ) ${resourceType.category}#end
-#end
-
-
 #macro( displayConfig $config )
 #if ( !${config} )
 _none_

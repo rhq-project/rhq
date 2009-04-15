@@ -1442,11 +1442,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 Set<ResourceMeasurementScheduleRequest> scheduleRequests = configuration.getServerServices()
                     .getMeasurementServerService().getLatestSchedulesForResourceId(resource.getId(), false);
                 installSchedules(scheduleRequests);
-                for (Resource child : resource.getChildResources()) {
-                    scheduleRequests = configuration.getServerServices().getMeasurementServerService()
-                        .getLatestSchedulesForResourceId(child.getId(), true);
-                    installSchedules(scheduleRequests);
+
+                // performing syncing of the children schedules in one fell swoop
+                Set<Integer> childrenIds = new HashSet<Integer>();
+                for (Resource child : new HashSet<Resource>(resource.getChildResources())) {
+                    childrenIds.add(child.getId());
                 }
+                scheduleRequests = configuration.getServerServices().getMeasurementServerService()
+                    .getLatestSchedulesForResourceIds(childrenIds, true);
+                installSchedules(scheduleRequests);
             } else {
                 Set<ResourceMeasurementScheduleRequest> scheduleRequests = configuration.getServerServices()
                     .getMeasurementServerService().getLatestSchedulesForResourceId(resource.getId(), true);
@@ -1456,15 +1460,24 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private void syncSchedules(Set<Resource> resources) {
+        if (log.isDebugEnabled()) {
+            log.debug("syncSchedules(Set<Resource>) for resources: " + resources);
+        }
 
+        if (resources.isEmpty()) {
+            return;
+        }
+
+        Set<Integer> committedResourceIds = new HashSet<Integer>();
         for (Resource resource : resources) {
             if (resource.getInventoryStatus() == InventoryStatus.COMMITTED) {
-
-                Set<ResourceMeasurementScheduleRequest> scheduleRequests = configuration.getServerServices()
-                    .getMeasurementServerService().getLatestSchedulesForResourceId(resource.getId(), false);
-                installSchedules(scheduleRequests);
+                committedResourceIds.add(resource.getId());
             }
         }
+
+        Set<ResourceMeasurementScheduleRequest> scheduleRequests = configuration.getServerServices()
+            .getMeasurementServerService().getLatestSchedulesForResourceIds(committedResourceIds, false);
+        installSchedules(scheduleRequests);
     }
 
     private void postProcessNewlyCommittedResources(Set<Resource> resources) {

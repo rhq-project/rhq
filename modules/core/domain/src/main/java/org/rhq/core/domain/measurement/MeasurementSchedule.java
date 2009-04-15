@@ -134,6 +134,37 @@ public class MeasurementSchedule implements Serializable {
     public static final String DELETE_BY_RESOURCES = "MeasurementSchedule.deleteByResources";
     public static final String FIND_ALL_FOR_DEFINITIONS = "MeasurementSchedule.FIND_ALL_FOR_DEFINITIONS";
 
+    public static final String NATIVE_QUERY_INSERT_SCHEDULES_POSTGRES = "" //
+        + "INSERT INTO RHQ_MEASUREMENT_SCHED ( ID, ENABLED, COLL_INTERVAL, DEFINITION, RESOURCE_ID ) " //
+        + "     SELECT nextval('RHQ_MEASUREMENT_SCHED_ID_SEQ'), " //
+        + "            def.DEFAULT_ON AS defaultOn, " //
+        + "            def.DEFAULT_INTERVAL AS interval, " //
+        + "            def.ID AS definitionId, " //
+        + "            res.ID AS resourceId " //
+        + "       FROM RHQ_RESOURCE res, RHQ_RESOURCE_TYPE type, RHQ_MEASUREMENT_DEF def " //
+        + "      WHERE ( res.ID in ( @@RESOURCES@@ ) ) " //
+        + "        AND type.ID = res.RESOURCE_TYPE_ID " //
+        + "        AND type.ID = def.RESOURCE_TYPE_ID " //
+        + "        AND ( def.ID NOT IN ( SELECT ms.DEFINITION " //
+        + "                                FROM RHQ_MEASUREMENT_SCHED ms " //
+        + "                               WHERE ms.RESOURCE_ID = res.ID ) )";
+
+    public static final String NATIVE_QUERY_INSERT_SCHEDULES_ORACLE = "" //
+        + "INSERT INTO RHQ_MEASUREMENT_SCHED ( ID, ENABLED, COLL_INTERVAL, DEFINITION, RESOURCE_ID ) " //
+        + "     SELECT RHQ_MEASUREMENT_SCHED_ID_SEQ.nextval, " //
+        + "            defaultOn, interval, definitionId, resourceId "
+        + "       FROM ( SELECT def.DEFAULT_ON AS defaultOn, " //
+        + "                     def.DEFAULT_INTERVAL AS interval, " //
+        + "                     def.ID AS definitionId, " //
+        + "                     res.ID AS resourceId " //
+        + "                FROM RHQ_RESOURCE res, RHQ_RESOURCE_TYPE type, RHQ_MEASUREMENT_DEF def " //
+        + "               WHERE ( res.ID in ( @@RESOURCES@@ ) ) " //
+        + "                 AND type.ID = res.RESOURCE_TYPE_ID " //
+        + "                 AND type.ID = def.RESOURCE_TYPE_ID " //
+        + "                 AND ( def.ID NOT IN ( SELECT ms.DEFINITION " //
+        + "                                         FROM RHQ_MEASUREMENT_SCHED ms " //
+        + "                                        WHERE ms.RESOURCE_ID = res.ID ) ) )";
+
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_METRIC_SCHED_ID_SEQ")
     @Id
     private int id;

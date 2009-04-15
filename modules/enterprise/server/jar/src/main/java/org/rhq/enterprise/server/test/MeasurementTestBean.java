@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.test;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -69,7 +70,9 @@ public class MeasurementTestBean implements MeasurementTestLocal {
     public void sendTestMeasurementReport() {
         Resource res = setupFakePlatformIfNeeded();
         Set<ResourceMeasurementScheduleRequest> scheds;
-        scheds = measurementScheduleManager.getSchedulesForResourceAndItsDescendants(res.getId(), false);
+        Set<Integer> resourceIds = new HashSet<Integer>();
+        resourceIds.add(res.getId());
+        scheds = measurementScheduleManager.getSchedulesForResourceAndItsDescendants(resourceIds, false);
 
         Date now = new Date();
         MeasurementReport report = new MeasurementReport();

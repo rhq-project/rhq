@@ -185,16 +185,33 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     }
 
     public void postProcessNewlyCommittedResources(Set<Integer> resourceIds) {
+        if (log.isDebugEnabled()) {
+            log.debug("Post-processing " + resourceIds.size() + "newly committed resources");
+            log.debug("Ids were: " + resourceIds);
+        }
+
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
 
+        long start = System.currentTimeMillis();
+
+        // do this in one fell swoop, instead of one resource at a time
+        scheduleManager.getSchedulesForResourceAndItsDescendants(resourceIds, false);
+
+        long time = (System.currentTimeMillis() - start);
+
+        if (time >= 10000L) {
+            log.info("Performance: commit resource, create schedules timing: resourceCount/millis="
+                + resourceIds.size() + '/' + time);
+        } else if (log.isDebugEnabled()) {
+            log.debug("Performance: commit resource, create schedules timing: resourceCount/millis="
+                + resourceIds.size() + '/' + time);
+        }
+
+        start = System.currentTimeMillis();
+
         for (Integer resourceId : resourceIds) {
-
-            long start = System.currentTimeMillis();
-
-            scheduleManager.getSchedulesForResourceAndItsDescendants(resourceId, false);
-
             // apply alert templates
             try {
                 alertTemplateManager.updateAlertDefinitionsForResource(overlord, resourceId);
@@ -208,14 +225,16 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
             } catch (Exception e) {
                 log.debug("Could not apply alert templates for resourceId = " + resourceId, e);
             }
+        }
 
-            long time = (System.currentTimeMillis() - start);
+        time = (System.currentTimeMillis() - start);
 
-            if (time >= 10000L) {
-                log.info("Performance: commit resource timing: resource/millis=" + resourceId + '/' + '/' + time);
-            } else if (log.isDebugEnabled()) {
-                log.debug("Performance: commit resource timing: resource/millis=" + resourceId + '/' + '/' + time);
-            }
+        if (time >= 10000L) {
+            log.info("Performance: commit resource, apply alert templates timing: resourceCount/millis="
+                + resourceIds.size() + '/' + time);
+        } else if (log.isDebugEnabled()) {
+            log.debug("Performance: commit resource, apply alert templates timing: resourceCount/millis="
+                + resourceIds.size() + '/' + time);
         }
 
     }

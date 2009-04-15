@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.measurement;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -48,23 +49,30 @@ public class MeasurementServerServiceImpl implements MeasurementServerService {
         }
     }
 
-    public Set<ResourceMeasurementScheduleRequest> getLatestSchedulesForResourceId(int resourceId,
+    public Set<ResourceMeasurementScheduleRequest> getLatestSchedulesForResourceIds(Set<Integer> resourceIds,
         boolean getChildSchedules) {
         MeasurementScheduleManagerLocal measurementScheduleManager = LookupUtil.getMeasurementScheduleManager();
 
         long start = System.currentTimeMillis();
         Set<ResourceMeasurementScheduleRequest> results = measurementScheduleManager
-            .getSchedulesForResourceAndItsDescendants(resourceId, getChildSchedules);
+            .getSchedulesForResourceAndItsDescendants(resourceIds, getChildSchedules);
         long time = (System.currentTimeMillis() - start);
 
         if (time >= 10000L) {
-            log.info("Performance: get measurement schedules timing: resource/count/millis=" + resourceId + '/'
-                + results.size() + '/' + time);
+            log.info("Performance: get measurement schedules timing: resourceCount/scheduleCount/millis="
+                + resourceIds.size() + '/' + results.size() + '/' + time);
         } else if (log.isDebugEnabled()) {
-            log.debug("Performance: get measurement schedules timing: resource/count/millis=" + resourceId + '/'
-                + results.size() + '/' + time);
+            log.debug("Performance: get measurement schedules timing: resourceCount/scheduleCount/millis="
+                + resourceIds.size() + '/' + results.size() + '/' + time);
         }
 
         return results;
+    }
+
+    public Set<ResourceMeasurementScheduleRequest> getLatestSchedulesForResourceId(int resourceId,
+        boolean getChildSchedules) {
+        Set<Integer> resourceIdSet = new HashSet<Integer>();
+        resourceIdSet.add(resourceId);
+        return getLatestSchedulesForResourceIds(resourceIdSet, getChildSchedules);
     }
 }

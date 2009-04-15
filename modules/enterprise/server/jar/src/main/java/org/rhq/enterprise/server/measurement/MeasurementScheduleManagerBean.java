@@ -35,7 +35,6 @@ import javax.ejb.EJB;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.FlushModeType;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -48,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.db.DatabaseType;
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
@@ -58,6 +58,7 @@ import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
 import org.rhq.core.domain.resource.Agent;
@@ -83,6 +84,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.ArrayUtils;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -97,6 +99,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class MeasurementScheduleManagerBean implements MeasurementScheduleManagerLocal {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
+
+    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
+    private DataSource dataSource;
 
     @EJB
     @IgnoreDependency
@@ -124,10 +129,10 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
     private final Log log = LogFactory.getLog(MeasurementScheduleManagerBean.class);
 
-    public Set<ResourceMeasurementScheduleRequest> getSchedulesForResourceAndItsDescendants(int resourceId,
+    public Set<ResourceMeasurementScheduleRequest> getSchedulesForResourceAndItsDescendants(Set<Integer> resourceIds,
         boolean getDescendents) {
         Set<ResourceMeasurementScheduleRequest> allSchedules = new HashSet<ResourceMeasurementScheduleRequest>();
-        getSchedulesForResourceAndItsDescendants(resourceId, allSchedules, getDescendents);
+        getSchedulesForResourceAndItsDescendants(resourceIds, allSchedules, getDescendents);
         return allSchedules;
     }
 
@@ -403,7 +408,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      */
     PageList<MeasurementScheduleComposite> getCurrentMeasurementSchedulesForResourcesAndType(PageControl pageControl,
         Collection<Resource> resources, ResourceType resType, Set<MeasurementDefinition> definitions) {
-        DataSource ds = (DataSource) ctx.lookup("RHQ_DS");
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet resultSet = null;
@@ -459,7 +463,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         List<MeasurementScheduleComposite> compList = new ArrayList<MeasurementScheduleComposite>(numDefs);
 
         try {
-            conn = ds.getConnection();
+            conn = dataSource.getConnection();
             ps = conn.prepareStatement(queryString);
             JDBCUtil.bindNTimes(ps, defIds, 1);
             JDBCUtil.bindNTimes(ps, resIds, numDefs + 1);
@@ -902,72 +906,158 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     /**
      * This gets measurement schedules for a resource and optionally its dependents. It creates them as necessary.
      *
-     * @param resourceId     The id of the resource to retrieve schedules for
+     * @param resourceIds    The ids of the resources to retrieve schedules for
      * @param allSchedules   The set to which the schedules should be added
      * @param getDescendents If true, schedules for all descendent resources will also be loaded
      */
     @SuppressWarnings("unchecked")
-    private void getSchedulesForResourceAndItsDescendants(int resourceId,
+    private void getSchedulesForResourceAndItsDescendants(Set<Integer> resourceIds,
         Set<ResourceMeasurementScheduleRequest> allSchedules, boolean getDescendents) {
-        /*
-         * this would, if it still happens, likely be due to some un-handled oddity in the inventory sync stuff.
-         */
-        if (resourceId == 0) {
-            log.warn("Can not get schedules for resource with id=0");
+
+        if (resourceIds == null || resourceIds.size() == 0) {
+            log.warn("Can not get schedules for an empty collection");
             return;
         }
 
         try {
-            try {
-                // GH: I know this seems odd, but its the only incantation that I could get Hibernate to swallow
-                Query insertQuery = entityManager
-                    .createQuery("INSERT into MeasurementSchedule(enabled, interval, definition, resource) \n"
-                        + "SELECT md.defaultOn, md.defaultInterval, md, res   \n"
-                        + "FROM Resource res, ResourceType rt, MeasurementDefinition md\n"
-                        + "WHERE res.id = :resourceId\n"
-                        + "   AND res.resourceType.id = rt.id\n"
-                        + "   AND rt.id = md.resourceType.id\n"
-                        + "   AND md.id not in (select ms.definition.id from MeasurementSchedule ms WHERE ms.resource.id = :resourceId)");
+            Integer[] resourceIdArray = resourceIds.toArray(new Integer[resourceIds.size()]);
+            for (int batchIndex = 0; batchIndex < resourceIdArray.length; batchIndex += 1000) {
+                Integer[] batchIdArray = ArrayUtils.copyOfRange(resourceIdArray, batchIndex, batchIndex + 1000);
+                List<Integer> batchIds = Arrays.asList(batchIdArray);
 
-                insertQuery.setFlushMode(FlushModeType.COMMIT);
-                insertQuery.setParameter("resourceId", resourceId);
+                insertSchedulesFor(batchIds);
 
-                int created = insertQuery.executeUpdate();
-                log.debug("Batch created [" + created + "] default measurement schedules for resource [" + resourceId
-                    + "]");
-            } catch (Exception e) {
-                log.debug("Could not create schedule for resourceId = " + resourceId, e);
-            }
+                // use reporting query to ensure no additional loads except what we want, and no attached objects
+                Query selectQuery = entityManager.createQuery("" //
+                    + "SELECT res.id, ms.id, def.name, ms.interval, ms.enabled, def.dataType, def.rawNumericType "
+                    + "  FROM MeasurementSchedule ms " //
+                    + "  JOIN ms.definition def " //
+                    + "  JOIN ms.resource res " //
+                    + " WHERE res.id IN ( :resourceIds )");
+                selectQuery.setParameter("resourceIds", batchIds);
+                List<Object[]> rawResults = selectQuery.getResultList();
 
-            Query selectQuery = entityManager
-                .createQuery("SELECT new org.rhq.core.domain.measurement.MeasurementScheduleRequest( ms ) "
-                    + "FROM MeasurementSchedule ms " + "WHERE ms.resource.id = :resourceId");
+                Map<Integer, ResourceMeasurementScheduleRequest> scheduleRequestMap = new HashMap<Integer, ResourceMeasurementScheduleRequest>();
+                for (Object[] rawResult : rawResults) {
+                    Integer resourceId = (Integer) rawResult[0];
+                    Integer scheduleId = (Integer) rawResult[1];
+                    String definitionName = (String) rawResult[2];
+                    Long interval = (Long) rawResult[3];
+                    Boolean enabled = (Boolean) rawResult[4];
+                    DataType dataType = (DataType) rawResult[5];
+                    NumericType rawNumericType = (NumericType) rawResult[6];
 
-            selectQuery.setFlushMode(FlushModeType.COMMIT);
-            selectQuery.setParameter("resourceId", resourceId);
-            List<MeasurementScheduleRequest> schedules = selectQuery.getResultList();
-            ResourceMeasurementScheduleRequest resourceSchedule = new ResourceMeasurementScheduleRequest(resourceId);
-            resourceSchedule.getMeasurementSchedules().addAll(schedules);
+                    ResourceMeasurementScheduleRequest scheduleRequest = scheduleRequestMap.get(resourceId);
+                    if (scheduleRequest == null) {
+                        scheduleRequest = new ResourceMeasurementScheduleRequest(resourceId);
+                        scheduleRequestMap.put(resourceId, scheduleRequest);
+                        allSchedules.add(scheduleRequest);
+                    }
 
-            allSchedules.add(resourceSchedule);
-            if (getDescendents) {
-                Resource resource = entityManager.find(Resource.class, resourceId);
-
-                // recursively get all the default schedules for all children of the resource
-                for (Resource child : resource.getChildResources()) {
-                    getSchedulesForResourceAndItsDescendants(child.getId(), allSchedules, getDescendents);
+                    MeasurementScheduleRequest requestData = new MeasurementScheduleRequest(scheduleId, definitionName,
+                        interval, enabled, dataType, rawNumericType);
+                    scheduleRequest.addMeasurementScheduleRequest(requestData);
                 }
 
-                if (resource.getChildResources().size() > 20) {
-                    entityManager.flush();
-                    entityManager.clear();
+                if (getDescendents) {
+                    // recursively get all the default schedules for all children of the resource
+                    Set<Integer> batchChildrenIds = getChildrenIdByParentIds(batchIds);
+                    getSchedulesForResourceAndItsDescendants(batchChildrenIds, allSchedules, getDescendents);
                 }
             }
         } catch (Throwable t) {
-            log.warn("problem creating schedules for resourceId = " + resourceId, t);
+            log.warn("problem creating schedules for resourceIds [" + resourceIds + "]", t);
         }
 
         return;
+    }
+
+    private int insertSchedulesFor(List<Integer> batchIds) throws Exception {
+        /* 
+         * JM: (April 15th, 2009)
+         * 
+         *     the "res.id" token on the final line does not get the "res" alias from the outer query appropriately;
+         *     instead, it tries to reference the table name itself as "RHQ_RESOURCE.ID", which bombs with[2] on 
+         *     postgres; i thought of using "WHERE ms.resource.uuid = res.uuid" which would work because UUID column 
+         *     name is not reused for any other entity in the model, let alone on any table used in this query; however,
+         *     this felt like a hack, and I wasn't sure whether UUID would be unique across very large inventories; if
+         *     it's not, there is a slight chance that the insert query could do the wrong thing (albeit rare), so I 
+         *     erred on the side of correctness and went with native sql which allowed me to use the proper id alias in 
+         *     the correlated subquery; correctness aside, keeping the logic using resource id should allow the query 
+         *     optimizer to use indexes instead of having to look up the rows on the resource table to get the uuid
+         *
+         * [1] - http://opensource.atlassian.com/projects/hibernate/browse/HHH-1397
+         * [2] - ERROR: invalid reference to FROM-clause entry for table "rhq_resource"
+         *
+         * Query insertHQL = entityManager.createQuery("" //
+         *     + "INSERT INTO MeasurementSchedule( enabled, interval, definition, resource ) \n"
+         *     + "     SELECT md.defaultOn, md.defaultInterval, md, res \n"
+         *     + "       FROM Resource res, ResourceType rt, MeasurementDefinition md \n"
+         *     + "      WHERE res.id IN ( :resourceIds ) \n"
+         *     + "        AND res.resourceType.id = rt.id \n"
+         *     + "        AND rt.id = md.resourceType.id \n"
+         *     + "        AND md.id NOT IN ( SELECT ms.definition.id \n" //
+         *     + "                             FROM MeasurementSchedule ms \n" //
+         *     + "                            WHERE ms.resource.id = res.id )");
+         */
+
+        Connection conn = null;
+        PreparedStatement insertStatement = null;
+
+        int created = -1;
+        try {
+            conn = dataSource.getConnection();
+            DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+
+            String queryString = null;
+            if (dbType instanceof PostgresqlDatabaseType) {
+                queryString = MeasurementSchedule.NATIVE_QUERY_INSERT_SCHEDULES_POSTGRES;
+            } else {
+                queryString = MeasurementSchedule.NATIVE_QUERY_INSERT_SCHEDULES_ORACLE;
+            }
+
+            queryString = JDBCUtil.transformQueryForMultipleInParameters(queryString, "@@RESOURCES@@", batchIds.size());
+            insertStatement = conn.prepareStatement(queryString);
+
+            int[] resourceIds = new int[batchIds.size()];
+            for (int i = 0; i < resourceIds.length; i++) {
+                resourceIds[i] = batchIds.get(i);
+            }
+            JDBCUtil.bindNTimes(insertStatement, resourceIds, 1);
+
+            created = insertStatement.executeUpdate();
+            if (log.isDebugEnabled()) {
+                log.debug("Batch created [" + created + "] default measurement schedules for resource batch ["
+                    + batchIds + "]");
+            }
+        } finally {
+            if (insertStatement != null) {
+                try {
+                    insertStatement.close();
+                } catch (Exception e) {
+                }
+            }
+
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (Exception e) {
+                }
+            }
+        }
+        return created;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Set<Integer> getChildrenIdByParentIds(List<Integer> batchIds) {
+        Query query = entityManager.createQuery("" //
+            + "SELECT res.id " //
+            + "  FROM Resource res " //
+            + " WHERE res.parent.id IN ( :parentIds ) ");
+        query.setParameter("parentIds", batchIds);
+        List<Integer> batchChildrenIds = query.getResultList();
+        Set<Integer> batchChildrenIdSet = new HashSet<Integer>(batchChildrenIds);
+        return batchChildrenIdSet;
     }
 
     public int getScheduledMeasurementsPerMinute() {

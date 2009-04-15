@@ -114,6 +114,7 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.util.ArrayUtils;
 
 /**
  * A manager that provides methods for creating, updating, deleting, and querying {@link Resource}s.
@@ -193,7 +194,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // defined. These are needed before applying alert templates for the resource type.
         // This call will create the schedules as necessary and, as a side effect, apply the templates.
         // TODO: jshaughn - This fails for resource types without metric definitions
-        measurementScheduleManager.getSchedulesForResourceAndItsDescendants(resource.getId(), false);
+        Set<Integer> ids = new HashSet<Integer>();
+        ids.add(resource.getId());
+        measurementScheduleManager.getSchedulesForResourceAndItsDescendants(ids, false);
     }
 
     private void updateImplicitMembership(Subject subject, Resource resource) {
@@ -1396,24 +1399,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Arrays.sort(resourceIds); // likely that ids in close proximity are co-located physically (data block-wise)
         Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS);
         for (int i = 0; i < resourceIds.length; i += 1000) {
-            Integer[] batchRange = copyOfRange(resourceIds, i, i + 1000);
+            Integer[] batchRange = ArrayUtils.copyOfRange(resourceIds, i, i + 1000);
             query.setParameter("resourceIds", Arrays.asList(batchRange));
             List<ResourceIdFlyWeight> batchResults = query.getResultList();
             results.addAll(batchResults);
         }
 
         return results;
-    }
-
-    // similar to Arrays.copyOfRange, but this allows execution on JDK5
-    private Integer[] copyOfRange(Integer[] arr, int from, int to) {
-        if (to < from) {
-            throw new IllegalArgumentException(to + "<" + from);
-        }
-        int newSize = to - from;
-        Integer[] copy = new Integer[newSize];
-        System.arraycopy(arr, from, copy, 0, Math.min(arr.length - from, newSize));
-        return copy;
     }
 
     @SuppressWarnings("unchecked")

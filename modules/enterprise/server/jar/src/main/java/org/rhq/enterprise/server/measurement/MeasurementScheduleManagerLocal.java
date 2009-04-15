@@ -51,12 +51,12 @@ public interface MeasurementScheduleManagerLocal {
      * all measurements for the resource's children. This will also create schedules for resources if they do not
      * already exist.
      *
-     * @param  resourceId     ID of the resource whose measurements are to be returned
+     * @param  resourceIds    IDs of the resources whose measurements are to be returned
      * @param  getDescendents if true, descendents will be loaded as well
      *
      * @return the set of resource schedule requests for a subtree or a single resource
      */
-    Set<ResourceMeasurementScheduleRequest> getSchedulesForResourceAndItsDescendants(int resourceId,
+    Set<ResourceMeasurementScheduleRequest> getSchedulesForResourceAndItsDescendants(Set<Integer> resourceIds,
         boolean getDescendents);
 
     /**

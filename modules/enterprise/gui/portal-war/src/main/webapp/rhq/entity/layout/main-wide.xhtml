@@ -32,8 +32,14 @@ REQUEST PARAMETERS:
 <ui:composition template="/rhq/layout/main-layout.xhtml">
 
    THIS TEXT WILL BE REMOVED AS WELL.
+    
+
 
    <ui:define name="body-area">
+     <!-- This hack will check the left nav state which invokes the saving of recent viewed groups/resources
+     (needed for groups that don't display a left tree)
+     <h:outputText value="#{UserPreferencesUIBean.leftResourceNavState}"/> -->
+
       
      <div class="content-full">
          <div id="Breadcrumb">

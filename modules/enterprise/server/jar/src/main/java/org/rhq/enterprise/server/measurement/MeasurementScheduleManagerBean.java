@@ -915,7 +915,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         Set<ResourceMeasurementScheduleRequest> allSchedules, boolean getDescendents) {
 
         if (resourceIds == null || resourceIds.size() == 0) {
-            log.warn("Can not get schedules for an empty collection");
+            // no work to do
             return;
         }
 

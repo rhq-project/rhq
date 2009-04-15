@@ -41,12 +41,14 @@ import java.io.File;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.profileservice.spi.ProfileKey;
 import org.jboss.profileservice.spi.ProfileService;
+import org.jboss.managed.api.ComponentType;
+import org.jboss.managed.api.ManagedComponent;
 
  /**
  * Discovery component for JBoss AS, 5.1.0.CR1 or later, Servers.
  *
- * @author Mark Spritzler
  * @author Ian Springer
+ * @author Mark Spritzler  
  */
 public class ApplicationServerDiscoveryComponent
         implements ResourceDiscoveryComponent
@@ -73,7 +75,9 @@ public class ApplicationServerDiscoveryComponent
 
         ProfileServiceFactory.refreshCurrentProfileView();
 
-        String serverName = ResourceComponentUtils.getMCBeanAnyPropertyStringValue("jboss.system:type=ServerConfig", "serverName");
+        ManagedComponent serverConfigComponent = ManagedComponentUtils.getSingletonManagedComponent(
+                new ComponentType("MCBean", "ServerConfig"));
+        String serverName = ManagedComponentUtils.getSimplePropertyStringValue(serverConfigComponent, "serverName");
 
         // TODO: We'll need to get the JBoss AS part from the Profile Service too, in order to generate EAP versus AS at
         //       the appropriate times.
@@ -83,7 +87,7 @@ public class ApplicationServerDiscoveryComponent
         //       Enterprise).
         String resourceKey = "/opt/jboss/server/default";
 
-        String version = ResourceComponentUtils.getMCBeanAnyPropertyStringValue("jboss.system:type=ServerConfig", "specificationVersion");
+        String version = ManagedComponentUtils.getSimplePropertyStringValue(serverConfigComponent, "specificationVersion");
 
         Configuration pluginConfig = resourceDiscoveryContext.getDefaultPluginConfiguration();
         pluginConfig.put(new PropertySimple(ApplicationServerComponent.SERVER_NAME_PROPERTY, serverName));

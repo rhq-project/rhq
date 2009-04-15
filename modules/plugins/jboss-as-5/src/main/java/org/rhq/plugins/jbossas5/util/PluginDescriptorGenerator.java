@@ -329,7 +329,10 @@ public class PluginDescriptorGenerator {
             knownComponentTypes.add(componentType.getType());
         }
         knownComponentTypes.add(new ComponentType("MCBean", "JTA"));
+        knownComponentTypes.add(new ComponentType("MCBean", "MCServer"));
         knownComponentTypes.add(new ComponentType("MCBean", "Security"));
+        knownComponentTypes.add(new ComponentType("MCBean", "ServerConfig"));
+        knownComponentTypes.add(new ComponentType("MCBean", "ServerInfo"));
         knownComponentTypes.add(new ComponentType("MCBean", "ServicebindingManager"));
         knownComponentTypes.add(new ComponentType("MCBean", "ServiceBindingSet"));
         knownComponentTypes.add(new ComponentType("MCBean", "ServicebindingStore"));

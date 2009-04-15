@@ -21,7 +21,6 @@ package org.rhq.plugins.jbossas5;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,13 +28,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
-
-import org.jboss.deployers.spi.management.ManagementView;
-import org.jboss.deployers.spi.management.KnownComponentTypes;
-import org.jboss.managed.api.ManagedComponent;
-import org.jboss.managed.api.ManagedProperty;
-import org.jboss.metatype.api.values.SimpleValue;
 
 /**
  * @author Ian Springer
@@ -44,31 +36,6 @@ public class ResourceComponentUtils {
     private static final String CUSTOM_PROPERTIES_PROPERTY = "customProperties";
 
     private static final Log LOG = LogFactory.getLog(ResourceComponentUtils.class);
-
-    public static String getMCBeanAnyPropertyStringValue(String componentName, String propertyName)
-    {
-        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
-        Set<ManagedComponent> anyMCBeanComponents;
-        try
-        {
-            anyMCBeanComponents = managementView.getComponentsForType(KnownComponentTypes.MCBean.Any.getType());
-        }
-        catch (Exception e)
-        {
-            throw new IllegalStateException(e);
-        }
-        String value = null;
-        for (ManagedComponent anyMCBeanComponent : anyMCBeanComponents)
-        {
-            if (anyMCBeanComponent.getName().equals(componentName))
-            {
-                ManagedProperty versionManagedProperty = anyMCBeanComponent.getProperty(propertyName);
-                SimpleValue versionSimpleValue = (SimpleValue)versionManagedProperty.getValue();
-                value = (String)versionSimpleValue.getValue();
-            }
-        }
-        return value;
-    }
 
     public static Map<String, PropertySimple> getCustomProperties(Configuration pluginConfig) {
         Map<String, PropertySimple> customProperties = new LinkedHashMap<String, PropertySimple>();

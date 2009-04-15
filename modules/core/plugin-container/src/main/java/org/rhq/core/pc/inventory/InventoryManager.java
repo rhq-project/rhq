@@ -517,7 +517,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             resource.setId(mergeResourceResponse.getResourceId());
             Set newResources = new LinkedHashSet<Resource>();
             newResources.add(resource);
-            syncSchedulesAndTemplatesForNewlyImportedResources(newResources);
+            postProcessNewlyCommittedResources(newResources);
             performServiceScan(resource.getId());
         }
 
@@ -719,7 +719,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             mergeUnknownResources(unknownResourceIds);
             mergeModifiedResources(modifiedResourceIds);
             purgeObsoleteResources(allUuids);
-            syncSchedulesAndTemplatesForNewlyImportedResources(newlyCommittedResources);
+            postProcessNewlyCommittedResources(newlyCommittedResources);
             if (log.isDebugEnabled()) {
                 if (!deletedResourceIds.isEmpty()) {
                     log.debug("Ignored " + deletedResourceIds.size() + " DELETED resources.");
@@ -1467,6 +1467,25 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    private void postProcessNewlyCommittedResources(Set<Resource> resources) {
+        if (log.isDebugEnabled()) {
+            log.debug("Post-processing newly committed resources: " + resources);
+        }
+
+        if (resources.isEmpty()) {
+            return;
+        }
+
+        Set<Integer> newlyCommittedResourceIds = new HashSet<Integer>();
+        for (Resource resource : resources) {
+            if (resource.getInventoryStatus() == InventoryStatus.COMMITTED) {
+                newlyCommittedResourceIds.add(resource.getId());
+            }
+        }
+        configuration.getServerServices().getDiscoveryServerService().postProcessNewlyCommittedResources(
+            newlyCommittedResourceIds);
+    }
+
     private void installSchedules(Set<ResourceMeasurementScheduleRequest> scheduleRequests) {
         if (PluginContainer.getInstance().getMeasurementManager() != null) {
             PluginContainer.getInstance().getMeasurementManager().scheduleCollection(scheduleRequests);
@@ -1994,16 +2013,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         } finally {
             this.inventoryLock.writeLock().unlock();
         }
-    }
-
-    private void syncSchedulesAndTemplatesForNewlyImportedResources(Set<Resource> resources) {
-        if (!resources.isEmpty()) {
-            if (log.isDebugEnabled()) {
-                log.debug("Syncing metric schedules and alert templates for newly imported Resources: " + resources);
-            }
-            syncSchedules(resources);
-        }
-        return;
     }
 
     private void refreshResourceComponentState(ResourceContainer container, boolean pluginConfigUpdated) {

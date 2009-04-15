@@ -134,4 +134,15 @@ public interface DiscoveryServerService {
      * @return true if the Resource was updated, or false if the Resource was not in inventory
      */
     boolean updateResourceVersion(int resourceId, String version);
+
+    /**
+     * Gives the server a chance to apply any necessary post-processing that's needed for newly committed resources
+     * that have been successfully synchronized on the agent.
+     *   
+     * @param  resourceIds a collection of{@link Resource} ids that have been newly committed and successfully
+     *                     synchronized on the agent
+     */
+    @Asynchronous(guaranteedDelivery = true)
+    @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_SYNC)
+    void postProcessNewlyCommittedResources(Set<Integer> resourceIds);
 }

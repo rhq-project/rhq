@@ -30,6 +30,11 @@
          <c:if test="${not empty param.opId}">
             <input type="hidden" name="opId" value="#{param.opId}" />
          </c:if>
+
+          <h:outputText value="You do not have permission to execute or schedule operations against this resource"
+                        rendered="#{!ResourceUIBean.permissions.control}"/>
+          
+
       
         <rich:panel styleClass="BlockContent">
             <f:facet name="header">Supported Operations</f:facet>
@@ -76,14 +81,16 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
                   
-                  <h:outputLink action="success">
+                  <h:outputLink action="success" rendered="#{ResourceUIBean.permissions.control}">
                      <f:param name="opId" value="#{item.id}" />
                      <f:param name="id" value="#{param.id}"/>
                      
                      <h:outputText value="#{item.displayName} *" rendered="#{(not empty param.opId) and (param.opId == item.id)}"/>
                      <h:outputText value="#{item.displayName}" rendered="#{(empty param.opId) or (param.opId != item.id)}"/>
                   </h:outputLink>
-                  
+
+                   <h:outputText rendered="#{!ResourceUIBean.permissions.control}" value="#{item.displayName}"/>
+
                </rich:column>
 
                <rich:column>

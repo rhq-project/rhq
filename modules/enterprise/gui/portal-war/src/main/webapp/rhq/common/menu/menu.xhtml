@@ -325,7 +325,9 @@
                 <h:outputText value="Agent Update Binary Version Info"/>
             </rich:menuItem>
             <rich:menuItem submitMode="none" onclick="window.location = '/agentupdate/download'">
-                <h:outputText value="Download Agent Update Binary"/>
+                <h:outputLink value="/agentupdate/download">
+                    <h:outputText value="Download Agent Update Binary"/>
+                </h:outputLink>
             </rich:menuItem>
             <rich:menuItem submitMode="none" onclick="window.location = '/downloads'">
                 <h:outputText value="Agent Connectors"/>

@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.EnumSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -274,25 +275,28 @@ public class MetadataConversionUtils {
         Set<MeasurementDefinition> measurementDefs = new TreeSet(new MeasurementDefinitionComparator());
         if (props == null)
             return measurementDefs;
-        for(ManagedProperty prop : props.values()) {
-            if (!prop.hasViewUse(ViewUse.STATISTIC) && !prop.hasViewUse(ViewUse.RUNTIME))
-                continue; // not a metric prop
-            if (prop.getMetaType().isSimple()) {
-                DataType dataType = (prop.hasViewUse(ViewUse.STATISTIC)) ? DataType.MEASUREMENT : DataType.TRAIT;
-                int defaultInterval = (prop.hasViewUse(ViewUse.STATISTIC)) ? 60000 : 600000;
-                DisplayType displayType = (prop.hasViewUse(ViewUse.STATISTIC)) ? DisplayType.DETAIL : DisplayType.SUMMARY;
-                MeasurementDefinition measurementDef = new MeasurementDefinition(prop.getName(),
-                            MeasurementCategory.PERFORMANCE, MeasurementUnits.NONE, dataType, true, defaultInterval,
-                            displayType);
-                measurementDefs.add(measurementDef);
-                measurementDef.setDisplayName(StringUtils.deCamelCase(prop.getName()));
-                String desc = (!prop.getName().equals(prop.getDescription())) ? prop.getDescription() : null;
-                measurementDef.setDescription(desc);
-            } else if (prop.getMetaType().isComposite()) {
-                addMeasurementDefinitionsForCompositeManagedProperty(prop, measurementDefs);
+        for(ManagedProperty prop : props.values()) {            
+            if (prop.hasViewUse(ViewUse.RUNTIME) || prop.hasViewUse(ViewUse.STATISTIC)) {
+                if (prop.getMetaType().isSimple())
+                    addMeasurementDefinitionForSimpleManagedProperty(prop);
+                else if (prop.getMetaType().isComposite())
+                    addMeasurementDefinitionsForCompositeManagedProperty(prop, measurementDefs);
             }
         }
         return measurementDefs;
+    }
+
+    private static void addMeasurementDefinitionForSimpleManagedProperty(ManagedProperty prop)
+    {
+        DataType dataType = (prop.hasViewUse(ViewUse.STATISTIC)) ? DataType.MEASUREMENT : DataType.TRAIT;
+        int defaultInterval = (prop.hasViewUse(ViewUse.STATISTIC)) ? 60000 : 600000;
+        DisplayType displayType = (prop.hasViewUse(ViewUse.STATISTIC)) ? DisplayType.DETAIL : DisplayType.SUMMARY;
+        MeasurementDefinition measurementDef = new MeasurementDefinition(prop.getName(),
+                    MeasurementCategory.PERFORMANCE, MeasurementUnits.NONE, dataType, true, defaultInterval,
+                    displayType);
+        measurementDef.setDisplayName(StringUtils.deCamelCase(prop.getName()));
+        String desc = (!prop.getName().equals(prop.getDescription())) ? prop.getDescription() : null;
+        measurementDef.setDescription(desc);
     }
 
     private static Set<MeasurementDefinition> convertMetricPropertiesToMeasurementDefinitions(ManagedDeployment deployment)
@@ -331,10 +335,12 @@ public class MetadataConversionUtils {
     {
         Set<PropertyDefinition> propDefs = new TreeSet(new PropertyDefinitionComparator());
         for(ManagedProperty prop : managedProps.values()) {
-            if (!prop.hasViewUse(ViewUse.CONFIGURATION))
-                continue;
-            PropertyDefinition propDef = convertManagedPropertyToPropertyDefinition(prop);
-            propDefs.add(propDef);
+            EnumSet<ViewUse> viewUses = ManagedComponentUtils.getViewUses(prop);
+            // Assume a property with no view uses is a config prop.
+            if (viewUses.contains(ViewUse.CONFIGURATION) || viewUses.contains(ViewUse.RUNTIME) || viewUses.isEmpty()) {
+                PropertyDefinition propDef = convertManagedPropertyToPropertyDefinition(prop);
+                propDefs.add(propDef);
+            }
         }
         if (propDefs.isEmpty())
             return null;

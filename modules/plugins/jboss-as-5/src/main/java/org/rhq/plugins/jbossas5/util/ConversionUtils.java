@@ -41,7 +41,6 @@ import org.jboss.metatype.api.types.MapCompositeMetaType;
 import org.jboss.metatype.api.types.SimpleMetaType;
 import org.jboss.metatype.api.types.CompositeMetaType;
 import org.jboss.metatype.api.values.MetaValue;
-import org.jboss.metatype.api.values.SimpleValueSupport;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;

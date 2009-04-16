@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.plugins.jbossas5;
+package org.rhq.plugins.jbossas5.util;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;

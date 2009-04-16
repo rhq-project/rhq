@@ -32,6 +32,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.PluginDescriptorGenerator;
+import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
 import java.util.Collection;
 import java.util.HashSet;

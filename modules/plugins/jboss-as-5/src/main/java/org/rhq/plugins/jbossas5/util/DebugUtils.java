@@ -23,8 +23,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 
 import org.jetbrains.annotations.Nullable;
+import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedProperty;
@@ -74,11 +76,8 @@ public abstract class DebugUtils {
             buf.append("name=").append(managedProperty.getName());
             if (!managedProperty.getName().equals(managedProperty.getMappedName()))
                 buf.append(", mappedName=").append(managedProperty.getMappedName());
-            String viewUse = "NONE";
-            for (ViewUse value : ViewUse.values())
-                if (managedProperty.hasViewUse(value))
-                    viewUse = value.name();
-            buf.append(", viewUse=").append(viewUse);
+            EnumSet<ViewUse> viewUses = ManagedComponentUtils.getViewUses(managedProperty);
+            buf.append(", viewUses=").append(viewUses);
             buf.append(", readOnly=").append(managedProperty.isReadOnly());
             buf.append(", mandatory=").append(managedProperty.isMandatory());
             buf.append(", removed=").append(managedProperty.isRemoved());
@@ -128,8 +127,8 @@ public abstract class DebugUtils {
          * Use viewUse as primary sort field and name as secondary sort field.
          */
         public int compare(ManagedProperty prop1, ManagedProperty prop2) {
-            ViewUse prop1ViewUse = getViewUse(prop1);
-            ViewUse prop2ViewUse = getViewUse(prop2);
+            ViewUse prop1ViewUse = getPrimaryViewUse(prop1);
+            ViewUse prop2ViewUse = getPrimaryViewUse(prop2);
             if (prop1ViewUse == null)
                return (prop2ViewUse == null) ? 0 : -1;
             if (prop2ViewUse == null)
@@ -141,7 +140,7 @@ public abstract class DebugUtils {
         }
 
         @Nullable
-        private static ViewUse getViewUse(ManagedProperty managedProperty)
+        private static ViewUse getPrimaryViewUse(ManagedProperty managedProperty)
         {
             ViewUse viewUse;
             if (managedProperty.hasViewUse(ViewUse.CONFIGURATION))

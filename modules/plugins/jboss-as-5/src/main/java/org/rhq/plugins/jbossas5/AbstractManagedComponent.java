@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
+import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
 
 /**
  * @author Ian Springer

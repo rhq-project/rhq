@@ -69,6 +69,7 @@ import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
+import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
 
  /**
  * ResourceComponent for a JBoss AS, 5.1.0.CR1 or later, Server.

@@ -16,16 +16,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.plugins.jbossas5;
+package org.rhq.plugins.jbossas5.util;
 
 import java.util.Set;
+import java.util.EnumSet;
 
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
+import org.jetbrains.annotations.NotNull;
 
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedProperty;
+import org.jboss.managed.api.annotation.ViewUse;
 import org.jboss.metatype.api.values.SimpleValue;
 
 /**
@@ -58,5 +61,16 @@ public class ManagedComponentUtils
         ManagedProperty versionManagedProperty = component.getProperty(propertyName);
         SimpleValue versionSimpleValue = (SimpleValue)versionManagedProperty.getValue();
         return (versionSimpleValue != null) ? (String)versionSimpleValue.getValue() : null;
+    }
+
+    @NotNull
+    public static EnumSet<ViewUse> getViewUses(ManagedProperty managedProperty)
+    {
+        EnumSet<ViewUse> viewUses = EnumSet.noneOf(ViewUse.class);
+        for (ViewUse viewUse : ViewUse.values()) {
+           if (managedProperty.hasViewUse(viewUse))
+               viewUses.add(viewUse);
+        }
+        return viewUses;
     }
 }

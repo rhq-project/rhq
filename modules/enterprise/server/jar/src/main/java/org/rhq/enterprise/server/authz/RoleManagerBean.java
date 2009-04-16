@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.authz;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -139,12 +140,14 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
                 deleteNotificationQuery.setParameter("roleId", role_id);
                 deleteNotificationQuery.executeUpdate(); // discard result, might not have been set for any notifications
 
-                for (Subject doomedSubjectRelationship : doomedRole.getSubjects()) {
+                Set<Subject> subjectsToUnhook = new HashSet<Subject>(doomedRole.getSubjects()); // avoid concurrent mod exception
+                for (Subject doomedSubjectRelationship : subjectsToUnhook) {
                     doomedRole.removeSubject(doomedSubjectRelationship);
                     entityManager.merge(doomedSubjectRelationship);
                 }
 
-                for (ResourceGroup doomedResourceGroupRelationship : doomedRole.getResourceGroups()) {
+                Set<ResourceGroup> groupsToUnhook = new HashSet<ResourceGroup>(doomedRole.getResourceGroups()); // avoid concurrent mod exception
+                for (ResourceGroup doomedResourceGroupRelationship : groupsToUnhook) {
                     doomedRole.removeResourceGroup(doomedResourceGroupRelationship);
                     entityManager.merge(doomedResourceGroupRelationship);
                 }

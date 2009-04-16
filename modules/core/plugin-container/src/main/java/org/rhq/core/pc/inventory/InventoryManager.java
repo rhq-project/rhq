@@ -710,15 +710,25 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Set<Integer> modifiedResourceIds = new LinkedHashSet<Integer>();
         Set<Integer> deletedResourceIds = new LinkedHashSet<Integer>();
         Set<Resource> newlyCommittedResources = new LinkedHashSet<Resource>();
-        Set<String> allUuids = new HashSet<String>();
+        Set<String> allServerSideUuids = new HashSet<String>();
 
         // rhq-980 Adding agent-side logging to report any unexpected synch failure. 
         try {
+            getAllUuids(syncInfo, allServerSideUuids);
+
+            log.debug("Processing Server sync info...");
             processSyncInfo(syncInfo, syncedResources, unknownResourceIds, modifiedResourceIds, deletedResourceIds,
-                newlyCommittedResources, allUuids);
+                newlyCommittedResources);
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("DONE Processing sync info - took %d ms - synced %d Resources "
+                    + "- found %d unknown Resources and %d modified Resources.",
+                    (System.currentTimeMillis() - startTime), syncedResources.size(), unknownResourceIds.size(),
+                    modifiedResourceIds.size()));
+            }
+
             mergeUnknownResources(unknownResourceIds);
             mergeModifiedResources(modifiedResourceIds);
-            purgeObsoleteResources(allUuids);
+            purgeObsoleteResources(allServerSideUuids);
             postProcessNewlyCommittedResources(newlyCommittedResources);
             if (log.isDebugEnabled()) {
                 if (!deletedResourceIds.isEmpty()) {
@@ -741,6 +751,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 + " and its descendants: " + t.getMessage());
             // convert to runtime exception so as not to change the api
             throw new RuntimeException(t);
+        }
+    }
+
+    private void getAllUuids(ResourceSyncInfo syncInfo, Set<String> allServerSideUuids) {
+        allServerSideUuids.add(syncInfo.getUuid());
+        for (ResourceSyncInfo child : syncInfo.getChildSyncInfos()) {
+            getAllUuids(child, allServerSideUuids);
         }
     }
 
@@ -1802,14 +1819,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private void processSyncInfo(ResourceSyncInfo syncInfo, Set<Resource> syncedResources,
         Set<Integer> unknownResourceIds, Set<Integer> modifiedResourceIds, Set<Integer> deletedResourceIds,
-        Set<Resource> newlyCommittedResources, Set<String> allUuids) {
-        long startTime = System.currentTimeMillis();
-        boolean initialCall = allUuids.isEmpty();
-        if (initialCall)
-            log.debug("Processing Server sync info...");
-
-        allUuids.add(syncInfo.getUuid());
-
+        Set<Resource> newlyCommittedResources) {
         if (InventoryStatus.DELETED == syncInfo.getInventoryStatus()) {
             // A previously deleted resource still being reported by the server. Support for this option can
             // be removed if the server is ever modified to not report deleted resources. It is happening currently
@@ -1821,6 +1831,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (container == null) {
                 // Either a manually added Resource or just something we haven't discovered.
                 unknownResourceIds.add(syncInfo.getId());
+                log.info("Got unknown resource " + syncInfo.getId());
             } else {
                 Resource resource = container.getResource();
 
@@ -1857,17 +1868,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 // Recurse...
                 for (ResourceSyncInfo childSyncInfo : syncInfo.getChildSyncInfos()) {
                     processSyncInfo(childSyncInfo, syncedResources, unknownResourceIds, modifiedResourceIds,
-                        deletedResourceIds, newlyCommittedResources, allUuids);
+                        deletedResourceIds, newlyCommittedResources);
                 }
             }
-        }
-
-        if (initialCall && log.isDebugEnabled()) {
-            log.debug(String.format(
-                "DONE Processing sync info - took %d ms. Processed %d Resources - synced %d Resources "
-                    + "- found %d unknown Resources and %d modified Resources.",
-                (System.currentTimeMillis() - startTime), allUuids.size(), syncedResources.size(), unknownResourceIds
-                    .size(), modifiedResourceIds.size()));
         }
     }
 
@@ -1894,13 +1897,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
             mergeResource(unknownResource);
             syncSchedulesRecursively(unknownResource);
         }
+
+        //print(this.platform, 0);
     }
 
     private void print(Resource resourceTreeNode, int level) {
+        StringBuilder builder = new StringBuilder();
         for (int i = 0; i < level; i++) {
-            System.out.print("   ");
+            builder.append("   ");
         }
-        System.out.println(resourceTreeNode.getId() + " " + resourceTreeNode.getUuid());
+        log.info(builder.toString() + resourceTreeNode.getId() + " " + resourceTreeNode.getUuid());
         for (Resource child : resourceTreeNode.getChildResources()) {
             print(child, level + 1);
         }

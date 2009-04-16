@@ -150,6 +150,9 @@ id - the id of the Resource being accessed
 </h:panelGroup>
 
 
+<a4j:keepAlive beanName="ListOfTraits"/>
+
+
 <rich:simpleTogglePanel switchType="ajax" id="summary-toggle-panel" headerClass="summaryHeader"
                         actionListener="#{UserPreferencesUIBean.updateSummaryPanelDisplayState}"
                         value="#{UserPreferencesUIBean.summaryPanelDisplayState}">
@@ -203,7 +206,6 @@ id - the id of the Resource being accessed
 
             <!-- spacer -->
 
-            <a4j:keepAlive beanName="ListOfTraits"/>
 
             <!-- summary traits -->
             <h:dataTable var="traitPair" value="#{ListOfTraits.traitPairs}" styleClass="summary-props-table"

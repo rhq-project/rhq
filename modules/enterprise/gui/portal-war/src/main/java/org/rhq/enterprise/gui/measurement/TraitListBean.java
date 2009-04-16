@@ -36,6 +36,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  */
 public class TraitListBean {
+
     private List<List<MeasurementDataTrait>> traitPairs;
     private int totalTraits;
 
@@ -70,8 +71,13 @@ public class TraitListBean {
     }
 
     public List<List<MeasurementDataTrait>> getTraitPairs() {
-        if (this.traitPairs == null)
-            load();
+        if (this.traitPairs == null) {
+            try {
+                load();
+            } catch (Exception e) {
+                // This happens sometimes when the summary areas is closed, but we won't worry about it
+            }
+        }
         return this.traitPairs;
     }
 

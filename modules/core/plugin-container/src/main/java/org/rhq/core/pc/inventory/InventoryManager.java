@@ -1820,6 +1820,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (container == null) {
                 // Either a manually added Resource or just something we haven't discovered.
                 unknownResourceIds.add(syncInfo.getId());
+                System.out.println("Found unknown resource " + syncInfo.getId());
             } else {
                 Resource resource = container.getResource();
 
@@ -1842,10 +1843,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         log.error("PC Resource id (" + resource.getId() + ") does not match Server Resource id ("
                             + syncInfo.getId() + ") for Resource with uuid " + resource.getUuid() + ": " + resource);
                         modifiedResourceIds.add(syncInfo.getId());
+                        System.out.println("Found modified resource " + syncInfo.getId());
                     }
                     // See if it's been modified on the Server since the last time we synced.
                     else if (resource.getMtime() < syncInfo.getMtime()) {
                         modifiedResourceIds.add(resource.getId());
+                        System.out.println("Found modified resource " + syncInfo.getId());
                     } else {
                         // Only try to start up the component if the Resource has *not* been modified on the Server.
                         // Otherwise, hold off until we've synced the Resource with the Server.
@@ -1966,11 +1969,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private boolean mergeResource(Resource sourceResource, Resource targetResource) {
-        targetResource.setId(sourceResource.getId());
         if (targetResource.getId() != 0 && targetResource.getId() != sourceResource.getId()) {
             log.warn("Id for " + targetResource + " changed from [" + targetResource.getId() + "] to ["
                 + sourceResource.getId() + "].");
         }
+        targetResource.setId(sourceResource.getId());
         targetResource.setUuid(sourceResource.getUuid());
         if (!targetResource.getResourceKey().equals(sourceResource.getResourceKey())) {
             log.warn("Resource key for " + targetResource + " changed from [" + targetResource.getResourceKey()

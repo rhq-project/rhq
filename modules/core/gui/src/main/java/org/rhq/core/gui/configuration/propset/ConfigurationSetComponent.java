@@ -25,21 +25,21 @@ package org.rhq.core.gui.configuration.propset;
 import javax.faces.component.UIForm;
 
 import org.jetbrains.annotations.Nullable;
+import org.richfaces.component.html.HtmlModalPanel;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.gui.configuration.AbstractConfigurationComponent;
 import org.rhq.core.gui.util.FacesComponentIdFactory;
 import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesExpressionUtility;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.richfaces.component.html.HtmlModalPanel;
 
 /**
  * A component that represents a set of RHQ Configurations which share the same ConfigurationDefinition.
  *
  * @author Ian Springer
  */
-public class ConfigurationSetComponent extends AbstractConfigurationComponent implements FacesComponentIdFactory
-{
+public class ConfigurationSetComponent extends AbstractConfigurationComponent implements FacesComponentIdFactory {
     public static final String COMPONENT_TYPE = "org.rhq.ConfigurationSet";
     public static final String COMPONENT_FAMILY = "rhq";
 
@@ -47,58 +47,49 @@ public class ConfigurationSetComponent extends AbstractConfigurationComponent im
 
     @Nullable
     public Configuration getConfiguration() {
-        ConfigurationSet configurationSet = FacesComponentUtility.getExpressionAttribute(this, CONFIGURATION_SET_ATTRIBUTE,
-                ConfigurationSet.class);
+        ConfigurationSet configurationSet = FacesComponentUtility.getExpressionAttribute(this,
+            CONFIGURATION_SET_ATTRIBUTE, ConfigurationSet.class);
         return (configurationSet != null) ? configurationSet.getAggregateConfiguration() : null;
     }
 
     @Nullable
     public ConfigurationDefinition getConfigurationDefinition() {
-        ConfigurationSet configurationSet = FacesComponentUtility.getExpressionAttribute(this, CONFIGURATION_SET_ATTRIBUTE,
-                ConfigurationSet.class);
+        ConfigurationSet configurationSet = FacesComponentUtility.getExpressionAttribute(this,
+            CONFIGURATION_SET_ATTRIBUTE, ConfigurationSet.class);
         return (configurationSet != null) ? configurationSet.getConfigurationDefinition() : null;
     }
 
-    public String getConfigurationDefinitionExpressionString()
-    {
+    public String getConfigurationDefinitionExpressionString() {
         String configurationSetExpressionString = getValueExpression(CONFIGURATION_SET_ATTRIBUTE).getExpressionString();
         return "#{" + FacesExpressionUtility.unwrapExpressionString(configurationSetExpressionString)
-                + ".configurationDefinition}";
+            + ".configurationDefinition}";
     }
 
     public String getConfigurationExpressionString() {
         String configurationSetExpressionString = getValueExpression(CONFIGURATION_SET_ATTRIBUTE).getExpressionString();
         return "#{" + FacesExpressionUtility.unwrapExpressionString(configurationSetExpressionString)
-                + ".aggregateConfiguration}";
+            + ".aggregateConfiguration}";
     }
 
     @Nullable
-    public ConfigurationSet getConfigurationSet()
-    {
+    public ConfigurationSet getConfigurationSet() {
         //noinspection UnnecessaryLocalVariable
-        ConfigurationSet configurationSet = FacesComponentUtility.getExpressionAttribute(this, CONFIGURATION_SET_ATTRIBUTE,
-                ConfigurationSet.class);
+        ConfigurationSet configurationSet = FacesComponentUtility.getExpressionAttribute(this,
+            CONFIGURATION_SET_ATTRIBUTE, ConfigurationSet.class);
         return configurationSet;
     }
 
-    public static String getPropSetModalPanelId(ConfigurationSetComponent configurationSetComponent)
-    {
+    public static String getPropSetModalPanelId(ConfigurationSetComponent configurationSetComponent) {
         return configurationSetComponent.getId() + "PropSetModalPanel";
     }
 
-    public static String getPropSetFormId(ConfigurationSetComponent configurationSetComponent)
-    {
+    public static String getPropSetFormId(ConfigurationSetComponent configurationSetComponent) {
         return configurationSetComponent.getId() + "PropSetForm";
     }
 
     @Nullable
     public HtmlModalPanel getPropSetModalPanel() {
         UIForm configSetForm = FacesComponentUtility.getEnclosingForm(this);
-        UIForm propSetForm = (UIForm)configSetForm.getParent().findComponent(getPropSetFormId(this));
-        if (propSetForm == null)
-            return null;
-        @SuppressWarnings({"UnnecessaryLocalVariable"})
-        HtmlModalPanel propSetModalPanel = (HtmlModalPanel)propSetForm.findComponent(getPropSetModalPanelId(this));
-        return propSetModalPanel;
+        return (HtmlModalPanel) configSetForm.getParent().findComponent(getPropSetModalPanelId(this));
     }
 }

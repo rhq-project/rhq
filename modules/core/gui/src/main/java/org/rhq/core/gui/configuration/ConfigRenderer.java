@@ -501,20 +501,8 @@ public class ConfigRenderer extends Renderer {
     private void addPropSetModalPanel(ConfigurationSetComponent configurationSetComponent) {
         UIForm configSetForm = FacesComponentUtility.getEnclosingForm(configurationSetComponent);
 
-        // Insert the propSet form as a sibling of the configSet form, just after the form in the component tree.
-        HtmlForm propSetForm = new HtmlForm();
-        int index = getComponentIndex(configSetForm);
-        configSetForm.getParent().getChildren().add(index + 1, propSetForm);
-        String propSetFormId = ConfigurationSetComponent.getPropSetFormId(configurationSetComponent);
-        propSetForm.setId(propSetFormId);
-        propSetForm.setOnsubmit("prepareInputsForSubmission(this)");
-
-        // Add the modal panel as a child of the propSet form.
+        // Add the modal panel as a sibling of the configSet form.
         HtmlModalPanel modalPanel = FacesComponentUtility.createComponent(HtmlModalPanel.class);
-        propSetForm.getChildren().add(modalPanel);
-        // The below setting is critical - it allows us to be enclosed in a form (in this case, the form surrounding
-        // the config component) (see https://jira.jboss.org/jira/browse/RF-5588).
-        modalPanel.setDomElementAttachment("form");
         String modalPanelId = ConfigurationSetComponent.getPropSetModalPanelId(configurationSetComponent);
         modalPanel.setId(modalPanelId);
         modalPanel.setWidth(715);
@@ -524,18 +512,29 @@ public class ConfigRenderer extends Renderer {
         modalPanel.setOnbeforeshow("sizeAppropriately('configSetForm:" + modalPanelId + "')");
         modalPanel.setOnresize("keepCentered('configSetForm:" + modalPanelId + "')");
 
-        // Add inputs for the request params that need to be forwarded when the propSet form is submitted.
-        forwardParameter(modalPanel, "id");
-        forwardParameter(modalPanel, "groupId");
-        forwardParameter(modalPanel, "arcuId");
-        forwardParameter(modalPanel, "apcuId");
-        forwardParameter(modalPanel, "mode");
+        // Insert the modal panel as a sibling of the configSet form, just after the form in the component tree.
+        int index = getComponentIndex(configSetForm);
+        configSetForm.getParent().getChildren().add(index + 1, modalPanel);
 
-        addPropSetButtons(configurationSetComponent, modalPanel);
+        // Add the propSet form as a child of the modal panel.
+        HtmlForm propSetForm = new HtmlForm();
+        modalPanel.getChildren().add(propSetForm);
+        String propSetFormId = ConfigurationSetComponent.getPropSetFormId(configurationSetComponent);
+        propSetForm.setId(propSetFormId);
+        propSetForm.setOnsubmit("prepareInputsForSubmission(this)");
+
+        // Add inputs for the request params that need to be forwarded when the propSet form is submitted.
+        forwardParameter(propSetForm, "id");
+        forwardParameter(propSetForm, "groupId");
+        forwardParameter(propSetForm, "arcuId");
+        forwardParameter(propSetForm, "apcuId");
+        forwardParameter(propSetForm, "mode");
+
+        addPropSetButtons(configurationSetComponent, propSetForm);
 
         // Add an AJAX region+panel as a child of this second form.
         HtmlAjaxRegion ajaxRegion = FacesComponentUtility.createComponent(HtmlAjaxRegion.class);
-        modalPanel.getChildren().add(ajaxRegion);
+        propSetForm.getChildren().add(ajaxRegion);
         HtmlAjaxOutputPanel ajaxOutputPanel = FacesComponentUtility.createComponent(HtmlAjaxOutputPanel.class);
         ajaxRegion.getChildren().add(ajaxOutputPanel);
         ajaxOutputPanel.setLayout("block");
@@ -559,25 +558,26 @@ public class ConfigRenderer extends Renderer {
         propertySet.setValueExpression(PropertySetComponent.CONFIGURATION_SET_ATTRIBUTE, configurationSetComponent
             .getValueExpression(ConfigurationSetComponent.CONFIGURATION_SET_ATTRIBUTE));
 
-        addPropSetButtons(configurationSetComponent, modalPanel);
+        addPropSetButtons(configurationSetComponent, propSetForm);
 
         return;
     }
 
-    private void forwardParameter(HtmlModalPanel modalPanel, String paramName) {
+    private void forwardParameter(HtmlForm modalPanelForm, String paramName) {
         Map<String, String> requestParamMap = FacesContext.getCurrentInstance().getExternalContext()
             .getRequestParameterMap();
         String paramValue = requestParamMap.get(paramName);
         if (paramValue != null)
-            FacesComponentUtility.addVerbatimText(modalPanel, "<input type='hidden' name='" + paramName + "' value='"
-                + paramValue + "'/>");
+            FacesComponentUtility.addVerbatimText(modalPanelForm, "<input type='hidden' name='" + paramName
+                + "' value='" + paramValue + "'/>");
     }
 
-    private void addPropSetButtons(ConfigurationSetComponent configurationSetComponent, HtmlModalPanel modalPanel) {
-        String modalPanelClientId = modalPanel.getClientId(FacesContext.getCurrentInstance());
+    private void addPropSetButtons(ConfigurationSetComponent configurationSetComponent, HtmlForm modalPanelForm) {
+        //the modal panel form is embedded inside the modal panel itself
+        String modalPanelClientId = modalPanelForm.getParent().getClientId(FacesContext.getCurrentInstance());
 
-        HtmlPanelGrid panelGrid = FacesComponentUtility
-            .addPanelGrid(modalPanel, null, 2, CssStyleClasses.BUTTONS_TABLE);
+        HtmlPanelGrid panelGrid = FacesComponentUtility.addPanelGrid(modalPanelForm, null, 2,
+            CssStyleClasses.BUTTONS_TABLE);
 
         // OK button
         HtmlAjaxCommandLink okLink = FacesComponentUtility.createComponent(HtmlAjaxCommandLink.class);

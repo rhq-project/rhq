@@ -27,6 +27,8 @@ THIS TEXT WILL BE REMOVED.
          <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
       </h:panelGroup>
 
+      <h:outputText value="You do not have permission to edit this resource's configuration" rendered="#{!ResourceUIBean.permissions.configure}"/>
+
       <h:form id="viewResourceConfigurationForm">
 
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>

@@ -1820,7 +1820,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (container == null) {
                 // Either a manually added Resource or just something we haven't discovered.
                 unknownResourceIds.add(syncInfo.getId());
-                System.out.println("Found unknown resource " + syncInfo.getId());
             } else {
                 Resource resource = container.getResource();
 
@@ -1843,12 +1842,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         log.error("PC Resource id (" + resource.getId() + ") does not match Server Resource id ("
                             + syncInfo.getId() + ") for Resource with uuid " + resource.getUuid() + ": " + resource);
                         modifiedResourceIds.add(syncInfo.getId());
-                        System.out.println("Found modified resource " + syncInfo.getId());
                     }
                     // See if it's been modified on the Server since the last time we synced.
                     else if (resource.getMtime() < syncInfo.getMtime()) {
                         modifiedResourceIds.add(resource.getId());
-                        System.out.println("Found modified resource " + syncInfo.getId());
                     } else {
                         // Only try to start up the component if the Resource has *not* been modified on the Server.
                         // Otherwise, hold off until we've synced the Resource with the Server.
@@ -1898,10 +1895,21 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    private void print(Resource resourceTreeNode, int level) {
+        for (int i = 0; i < level; i++) {
+            System.out.print("   ");
+        }
+        System.out.println(resourceTreeNode.getId() + " " + resourceTreeNode.getUuid());
+        for (Resource child : resourceTreeNode.getChildResources()) {
+            print(child, level + 1);
+        }
+    }
+
     private void mergeResource(Resource resource) {
         if (log.isDebugEnabled()) {
             log.debug("Merging " + resource + " into local inventory...");
         }
+        Resource passedResource = resource; // always keep a reference to the passed resource
         Resource parentResource;
         if (resource.getParentResource() != null) {
             ResourceContainer parentResourceContainer = getResourceContainer(resource.getParentResource());
@@ -1962,7 +1970,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         refreshResourceComponentState(resourceContainer, pluginConfigUpdated);
 
         // Recurse... wrap in new HashSet to avoid CMEs
-        Set<Resource> childResources = new HashSet<Resource>(resource.getChildResources());
+        Set<Resource> childResources = new HashSet<Resource>(passedResource.getChildResources());
         for (Resource childResource : childResources) {
             mergeResource(childResource);
         }

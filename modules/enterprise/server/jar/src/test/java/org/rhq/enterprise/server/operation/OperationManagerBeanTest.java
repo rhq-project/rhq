@@ -1036,6 +1036,17 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
 
+        assert results != null : "Results were unexpectedly empty";
+        if (results.isEmpty()) {
+            System.out.println("We did not yet get a result -- waiting some more");
+            Thread.sleep(5000);
+            results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+                PageControl.getUnlimitedInstance());
+        }
+
+        assert results != null : "Results were unexpectedly empty";
+        assert !results.isEmpty() : "We did not get results back";
+
         operationManager.deleteOperationHistory(superuser, results.get(0).getId(), false);
 
         // make sure it was purged

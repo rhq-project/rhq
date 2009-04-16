@@ -4,59 +4,62 @@
 
 <project name="jopr-server" basedir="." default="run">
 
-  <target name="init">
-    <property name="jboss.home" location="${project.build.outputDirectory}/jbossas" />
-    <property name="jboss.deploy.dir" location="${jboss.home}/server/default/deploy" />
-    <property name="resources-filtered.dir" location="${basedir}/target/resources-filtered" />
-  </target>
+	<target name="init">
+		<property name="jboss.home" location="${project.build.outputDirectory}/jbossas" />
+		<property name="jboss.deploy.dir" location="${jboss.home}/server/default/deploy" />
+		<property name="resources-filtered.dir" location="${basedir}/target/resources-filtered" />
+	</target>
 
-  <target name="run"
-          depends="init">
+	<target name="run" depends="init">
 
-    <echo>*** Building Jopr Server dist... ***</echo>
+		<echo>*** Building Jopr Server dist... ***</echo>
 
-    <echo>Unzipping the RHQ Server distro zipfile...</echo>
-    <antcall target="unzip-rhq-server" />
+		<echo>Unzipping the RHQ Server distro zipfile...</echo>
+		<antcall target="unzip-rhq-server" />
 
-    <copy todir="${resources-filtered.dir}" encoding="UTF-8" outputencoding="UTF-8">
-       <fileset dir="${project.build.outputDirectory}">
-          <include name="jbossas/server/default/deploy/rhq.ear.rej/rhq-portal.war/WEB-INF/classes/ApplicationResources.properties.unfiltered"/>
-          <include name="jbossas/server/default/deploy/rhq-installer.war/WEB-INF/classes/InstallerMessages*.properties.unfiltered"/>
-       </fileset>
-       <mapper type="glob" from="*.unfiltered" to="*"/>
-    </copy>
+		<copy todir="${resources-filtered.dir}" encoding="UTF-8" outputencoding="UTF-8">
+			<fileset dir="${project.build.outputDirectory}">
+				<include name="jbossas/server/default/deploy/rhq.ear.rej/rhq-portal.war/WEB-INF/classes/ApplicationResources.properties.unfiltered" />
+				<include name="jbossas/server/default/deploy/rhq-installer.war/WEB-INF/classes/InstallerMessages*.properties.unfiltered" />
+			</fileset>
+			<mapper type="glob" from="*.unfiltered" to="*" />
+		</copy>
 
-    <!-- NOTE: We copy the binary resources ourselves, because the Maven resources-plugin will
+		<!-- NOTE: We copy the binary resources ourselves, because the Maven resources-plugin will
                not overwrite existing files unless filtering is enabled, and enabling filtering
                on binary files would cause the files to get corrupted. See
                http://jira.codehaus.org/browse/MRESOURCES-43 -->
-    <echo>Replacing RHQ logos and message bundles with Jopr versions...</echo>
-    <copy todir="${project.build.outputDirectory}" overwrite="true">
-      <fileset dir="${basedir}/src/main/resources-binary"/>
-    </copy>
-  	
-    <echo>Temporarily deleting the unused content source server plugins...</echo>
-    <delete>
-      <fileset dir="${jboss.deploy.dir}" includes="**/rhq-serverplugin-yum*"/>
-    </delete>
-  	
-    <echo>Adding license headers files...</echo>
-    <copy todir="${project.build.outputDirectory}">         
-       <fileset dir="${basedir}/../../.." includes="LICENSE*" />
-    </copy>                                                
+		<echo>Replacing RHQ logos and message bundles with Jopr versions...</echo>
+		<copy todir="${project.build.outputDirectory}">
+			<fileset dir="${basedir}/src/main/resources-binary" />
+		</copy>
 
-        
-  </target>
+		<echo>Temporarily deleting the unused content source server plugins...</echo>
+		<delete>
+			<fileset dir="${jboss.deploy.dir}" includes="**/rhq-serverplugin-yum*" />
+		</delete>
 
-  <target name="unzip-rhq-server">
-    <property name="rhq-server.zip"
-              location="${settings.localRepository}/org/rhq/rhq-enterprise-server-container/${rhq.version}/rhq-enterprise-server-container-${rhq.version}.zip" />
-    <unzip src="${rhq-server.zip}"
-           dest="${basedir}/target" />
-  	 <move todir="${project.build.outputDirectory}">
-      <fileset dir="${basedir}/target/rhq-server-${rhq.version}" />
-    </move>
-    <delete dir="${basedir}/target/rhq-server-${rhq.version}"/>   	
-  </target>
+		<echo>Adding LICENSE files...</echo>
+		<copy todir="${project.build.outputDirectory}" overwrite="true">
+			<fileset dir="${basedir}/../../.." includes="LICENSE*" />
+		</copy>
+
+	</target>
+
+	<target name="unzip-rhq-server">
+		<property name="rhq-server.zip" location="${settings.localRepository}/org/rhq/rhq-enterprise-server-container/${rhq.version}/rhq-enterprise-server-container-${rhq.version}.zip" />
+		<unzip src="${rhq-server.zip}" dest="${basedir}/target" />
+
+		<echo>Removing RHQ LICENSE files...</echo>
+		<delete>
+			<fileset dir="${basedir}/target/rhq-server-${rhq.version}" includes="**/LICENSE*" />
+		</delete>
+
+		<move todir="${project.build.outputDirectory}">
+			<fileset dir="${basedir}/target/rhq-server-${rhq.version}" />
+		</move>
+		<delete dir="${basedir}/target/rhq-server-${rhq.version}" />
+
+	</target>
 
 </project>

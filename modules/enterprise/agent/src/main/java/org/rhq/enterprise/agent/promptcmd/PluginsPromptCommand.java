@@ -168,7 +168,8 @@ public class PluginsPromptCommand implements AgentPromptCommand {
         PrintWriter out = agent.getOut();
 
         // make sure our agent is currently in communications with the server
-        if (agent.getClientCommandSender() == null) {
+        ClientCommandSender clientCommandSender = agent.getClientCommandSender();
+        if (clientCommandSender == null || !clientCommandSender.isSending()) {
             out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGINS_ERROR_NOT_SENDING));
             return;
         }
@@ -178,19 +179,25 @@ public class PluginsPromptCommand implements AgentPromptCommand {
             executePCCommand(agent, "stop");
         }
 
-        out.println(MSG.getMsg(AgentI18NResourceKeys.UPDATING_PLUGINS));
+        // catch any exceptions and keep going so we can restart the PC, even if plugins failed to update
+        try {
+            out.println(MSG.getMsg(AgentI18NResourceKeys.UPDATING_PLUGINS));
 
-        List<Plugin> updated_plugins = updatePlugins(agent);
+            List<Plugin> updated_plugins = updatePlugins(agent);
 
-        if ((updated_plugins != null) && (updated_plugins.size() > 0)) {
-            for (Plugin plugin : updated_plugins) {
-                out.println(MSG.getMsg(AgentI18NResourceKeys.DOWNLOADING_PLUGIN_COMPLETE, plugin.getPath()));
+            if ((updated_plugins != null) && (updated_plugins.size() > 0)) {
+                for (Plugin plugin : updated_plugins) {
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.DOWNLOADING_PLUGIN_COMPLETE, plugin.getPath()));
+                }
+            } else {
+                out.println(MSG.getMsg(AgentI18NResourceKeys.UPDATING_PLUGINS_ALREADY_UPTODATE));
             }
-        } else {
-            out.println(MSG.getMsg(AgentI18NResourceKeys.UPDATING_PLUGINS_ALREADY_UPTODATE));
-        }
 
-        out.println(MSG.getMsg(AgentI18NResourceKeys.UPDATING_PLUGINS_COMPLETE));
+            out.println(MSG.getMsg(AgentI18NResourceKeys.UPDATING_PLUGINS_COMPLETE));
+        } catch (Throwable t) {
+            out.println(MSG.getMsg(AgentI18NResourceKeys.UPDATING_PLUGINS_FAILURE));
+            out.println(ThrowableUtil.getAllMessages(t));
+        }
 
         if (recyclePC) {
             executePCCommand(agent, "start");

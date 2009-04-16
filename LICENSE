@@ -1,5 +1,5 @@
 RHQ Management Platform
-Copyright (C) 2006-2008 Red Hat, Inc. and others
+Copyright (C) 2006-2009 Red Hat, Inc. and others
 All rights reserved.
 
 This program is free software; you can redistribute it and/or 
@@ -15,7 +15,7 @@ Software Foundation. Which license a module is under is defined
 by the header text of the code within a module.
 
 It is the intention of this license that plugins to this platform
-can be distrubuted under other licenses as they link only to the
+can be distributed under other licenses as they link only to the
 modules that are also available under the GNU Lesser General
 Public License.
 

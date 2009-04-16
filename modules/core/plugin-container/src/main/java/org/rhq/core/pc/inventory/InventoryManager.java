@@ -1270,7 +1270,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 inventoryFile.loadInventory();
 
                 this.platform = inventoryFile.getPlatform();
-                this.resourceContainers = inventoryFile.getResourceContainers();
+                this.resourceContainers.putAll(inventoryFile.getResourceContainers());
 
                 initResourceContainer(this.platform);
                 activateFromDisk(this.platform);

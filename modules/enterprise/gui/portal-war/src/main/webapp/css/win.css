@@ -1910,7 +1910,8 @@ ul.radio-group .unspecified {
 }
 
 .property-map-summary-table {
-    margin-left: 15px;
+	width: 100%;
+    margin:4px 0px 6px 6px;
     border: 2px solid #DDD;
     border-collapse: collapse;
 }
@@ -1920,15 +1921,6 @@ ul.radio-group .unspecified {
     padding: 4px;
     vertical-align: top;
     text-align: center;
-}
-
-.property-map-summary-data-header-cell {
-    width: 110px;
-    background-color: #DDD;
-}
-
-.property-map-summary-data-cell {
-    width: 110px;
 }
 
 .property-map-summary-header-text {

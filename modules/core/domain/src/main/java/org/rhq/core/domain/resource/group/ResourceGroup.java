@@ -156,7 +156,15 @@ import org.rhq.core.domain.resource.ResourceType;
         + "  FROM ResourceGroup g " + "  JOIN g.explicitResources res " + " WHERE g.id = :groupId "),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_GROUP_DEFINITION_AND_EXPRESSION, query = "SELECT g "
         + "  FROM ResourceGroup g " + " WHERE (g.groupByClause = :groupByClause OR :groupByClause IS NULL) "
-        + "   AND g.groupDefinition.id = :groupDefinitionId ") })
+        + "   AND g.groupDefinition.id = :groupDefinitionId "),
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_RESOURCE_IDS_NOT_IN_GROUP_EXPLICIT, query = "" //
+        + " SELECT res.id " //
+        + "   FROM Resource res " //
+        + "  WHERE res.id IN ( :resourceIds ) " //
+        + "    AND res.id NOT IN ( SELECT explicitRes.id " //
+        + "                          FROM ResourceGroup rg " //
+        + "                          JOIN rg.explicitResources explicitRes " //
+        + "                         WHERE rg.id = :groupId ) ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_RESOURCE_GROUP_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_GROUP")
 public class ResourceGroup extends Group {
@@ -266,6 +274,67 @@ public class ResourceGroup extends Group {
 
     public static final String QUERY_NATIVE_FIND_FILTERED_MEMBER_RESOURCE_FRAGMENT_WHERE = "" //
         + " AND ( res.id = ? ) "; // resourceId
+
+    public static final String QUERY_FIND_RESOURCE_IDS_NOT_IN_GROUP_EXPLICIT = "ResourceGroup.findResourceIdsNotInGroupExplicit";
+    public static final String QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_EXPLICIT = "" //
+        + "    insert into RHQ_RESOURCE_GROUP_RES_EXP_MAP ( RESOURCE_ID, RESOURCE_GROUP_ID ) " //
+        + "         select res.ID, ? " // groupId
+        + "           from RHQ_RESOURCE res " //
+        + "          where res.ID in ( @@RESOURCE_IDS@@ ) ";
+    public static final String QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_IMPLICIT = "" //
+        + "    insert into RHQ_RESOURCE_GROUP_RES_IMP_MAP ( RESOURCE_ID, RESOURCE_GROUP_ID ) " //
+        + "         select res.ID, ? " // groupId
+        + "           from RHQ_RESOURCE res " //
+        + "          where res.ID in ( @@RESOURCE_IDS@@ ) ";
+    public static final String QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_IMPLICIT_RECURSIVE = "" //
+        + "    insert into RHQ_RESOURCE_GROUP_RES_IMP_MAP ( RESOURCE_ID, RESOURCE_GROUP_ID ) " //
+        + "         select res.ID, ? " // groupId
+        + "           from RHQ_RESOURCE res " //
+        + "left outer join RHQ_RESOURCE g1parent on res.PARENT_RESOURCE_ID = g1parent.ID " //
+        + "left outer join RHQ_RESOURCE g2parent on g1parent.PARENT_RESOURCE_ID = g2parent.ID " //
+        + "left outer join RHQ_RESOURCE g3parent on g2parent.PARENT_RESOURCE_ID = g3parent.ID " //
+        + "left outer join RHQ_RESOURCE g4parent on g3parent.PARENT_RESOURCE_ID = g4parent.ID " //
+        + "left outer join RHQ_RESOURCE g5parent on g4parent.PARENT_RESOURCE_ID = g5parent.ID " //
+        + "left outer join RHQ_RESOURCE g6parent on g5parent.PARENT_RESOURCE_ID = g6parent.ID " //
+        + "          where ( res.ID = ? or " // resourceId
+        + "                  g1parent.ID = ? or " // resourceId
+        + "                  g2parent.ID = ? or " // resourceId
+        + "                  g3parent.ID = ? or " // resourceId
+        + "                  g4parent.ID = ? or " // resourceId
+        + "                  g5parent.ID = ? or " // resourceId
+        + "                  g6parent.ID = ? ) " // resourceId
+        + "            and ( res.ID not in ( select impRes.ID " //
+        + "                                    from RHQ_RESOURCE_GROUP rg " //
+        + "                              inner join RHQ_RESOURCE_GROUP_RES_IMP_MAP implicitMap on rg.ID = implicitMap.RESOURCE_GROUP_ID " //
+        + "                              inner join RHQ_RESOURCE impRes on implicitMap.RESOURCE_ID = impRes.ID " //
+        + "                                   where rg.ID = ? ) ) "; // groupId
+    public static final String QUERY_NATIVE_REMOVE_RESOURCES_FROM_GROUP_EXPLICIT = "" //
+        + "    delete from RHQ_RESOURCE_GROUP_RES_EXP_MAP " //
+        + "          where RESOURCE_GROUP_ID = ? " // groupId
+        + "            and RESOURCE_ID in ( @@RESOURCE_IDS@@ ) ";
+    public static final String QUERY_NATIVE_REMOVE_RESOURCES_FROM_GROUP_IMPLICIT = "" //
+        + "    delete from RHQ_RESOURCE_GROUP_RES_IMP_MAP " //
+        + "          where RESOURCE_GROUP_ID = ? " // groupId
+        + "            and RESOURCE_ID in ( @@RESOURCE_IDS@@ ) ";
+    public static final String QUERY_NATIVE_REMOVE_RESOURCES_FROM_GROUP_IMPLICIT_RECURSIVE = "" //
+        + "    delete from RHQ_RESOURCE_GROUP_RES_IMP_MAP " //
+        + "          where RESOURCE_GROUP_ID = ? " // groupId
+        + "            and RESOURCE_ID in " //
+        + "                ( select res.id " //
+        + "                    from RHQ_RESOURCE res " //
+        + "         left outer join RHQ_RESOURCE g1parent on res.PARENT_RESOURCE_ID = g1parent.ID " //
+        + "         left outer join RHQ_RESOURCE g2parent on g1parent.PARENT_RESOURCE_ID = g2parent.ID " //
+        + "         left outer join RHQ_RESOURCE g3parent on g2parent.PARENT_RESOURCE_ID = g3parent.ID " //
+        + "         left outer join RHQ_RESOURCE g4parent on g3parent.PARENT_RESOURCE_ID = g4parent.ID " //
+        + "         left outer join RHQ_RESOURCE g5parent on g4parent.PARENT_RESOURCE_ID = g5parent.ID " //
+        + "         left outer join RHQ_RESOURCE g6parent on g5parent.PARENT_RESOURCE_ID = g6parent.ID " //
+        + "                   where ( res.ID = ? or " // resourceId
+        + "                           g1parent.ID = ? or " // resourceId
+        + "                           g2parent.ID = ? or " // resourceId
+        + "                           g3parent.ID = ? or " // resourceId
+        + "                           g4parent.ID = ? or " // resourceId
+        + "                           g5parent.ID = ? or " // resourceId
+        + "                           g6parent.ID = ? ) )"; // resourceId;
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")

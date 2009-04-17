@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +67,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
-import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -87,6 +85,7 @@ import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.util.ArrayUtils;
 
 /**
  * A manager that provides methods for creating, updating, deleting, and querying
@@ -136,7 +135,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public int createResourceGroup(Subject user, ResourceGroup group) throws ResourceGroupNotFoundException,
         ResourceGroupAlreadyExistsException {
@@ -212,14 +210,13 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             enableRecursivityForGroup(user, groupId);
         } else if (changeType == RecursivityChangeType.RemovedRecursion) {
             newlyAttachedGroup.setRecursive(false);
-            resourceGroupManager.clearImplicitResources(groupId);
+            clearImplicitResources(groupId);
             makeImplicitMirrorExplicit(groupId);
         }
         return newlyAttachedGroup;
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void clearImplicitResources(int resourceGroupId) throws ResourceGroupUpdateException {
+    private void clearImplicitResources(int resourceGroupId) throws ResourceGroupUpdateException {
         Connection conn = null;
         PreparedStatement removeImplicitStatement = null;
         try {
@@ -369,116 +366,207 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         ResourceGroupUpdateException {
 
         // step 1: clear the implicit and preparation for adding a different set of resources to it
-        resourceGroupManager.clearImplicitResources(groupId);
+        clearImplicitResources(groupId);
 
         // step 2: prepare the list of resources to be used to pass to the method that does the recursive logic
         List<Integer> explicitResourceIdList = resourceManager.getExplicitResourceIdsByResourceGroup(groupId);
-        Integer[] explicitResourceIds = explicitResourceIdList.toArray(new Integer[explicitResourceIdList.size()]);
-        List<ResourceIdFlyWeight> explicitFlyWeights = resourceManager.getFlyWeights(explicitResourceIds);
 
-        // step 3: loop over the explicit resources and re-add them to the group with the recursive bit on
-        ResourceGroup attachedGroup = getResourceGroupById(subject, groupId, null);
-        for (ResourceIdFlyWeight explicitFly : explicitFlyWeights) {
-            addResourcesToGroupHelper(attachedGroup, explicitFly, true);
-        }
+        // step 3: add the explicit resources back, this time with the recursive bit flipped on
+        addResourcesToGroupImplicit(subject, groupId, explicitResourceIdList, false, true);
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public ResourceGroup addResourcesToGroup(Subject subject, Integer groupId, Integer[] resourceIds)
+    public void addResourcesToGroup(Subject subject, Integer groupId, Integer[] resourceIds)
         throws ResourceGroupNotFoundException, ResourceGroupUpdateException {
-        long startTime = System.currentTimeMillis();
+        List<Integer> resourceIdList = Arrays.asList(resourceIds);
+        boolean isRecursive = isRecursive(groupId);
+        addResourcesToGroupImplicit(subject, groupId, resourceIdList, true, isRecursive);
+        addResourcesToGroupExplicit(subject, groupId, resourceIdList, isRecursive);
+    }
 
-        ResourceGroup attachedGroup = getResourceGroupById(subject, groupId, null);
-        if (resourceIds.length == 0) {
-            return attachedGroup;
+    private void addResourcesToGroupExplicit(Subject subject, Integer groupId, List<Integer> resourceIds,
+        boolean isRecursive) throws ResourceGroupUpdateException {
+        // nothing to add
+        if (resourceIds == null || resourceIds.size() == 0) {
+            return;
         }
 
-        Set<Resource> explicitResources = new HashSet<Resource>(attachedGroup.getExplicitResources());
+        List<Integer> nonMemberResources = getNonMemberExplicitResources(groupId, resourceIds);
+        if (nonMemberResources.size() == 0) {
+            // everybody was already a member
+            return;
+        }
+        int[] resourceIdsToAdd = ArrayUtils.unwrapList(nonMemberResources);
 
-        // This is a convenience, because the logic already disallows duplicate items
-        Set<Integer> uniqueResourceIds = new HashSet<Integer>();
-        uniqueResourceIds.addAll(Arrays.asList(resourceIds));
+        Connection conn = null;
+        PreparedStatement insertExplicitStatement = null;
+        try {
+            conn = rhqDs.getConnection();
 
-        // list to hold the different types of errors
-        List<Integer> alreadyMemberIds = new ArrayList<Integer>();
+            // insert explicit resources
+            String insertExplicitQueryString = JDBCUtil
+                .transformQueryForMultipleInParameters(ResourceGroup.QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_EXPLICIT,
+                    "@@RESOURCE_IDS@@", resourceIdsToAdd.length);
+            insertExplicitStatement = conn.prepareStatement(insertExplicitQueryString);
+            insertExplicitStatement.setInt(1, groupId);
+            JDBCUtil.bindNTimes(insertExplicitStatement, resourceIdsToAdd, 2);
+            insertExplicitStatement.executeUpdate();
+        } catch (SQLException sqle) {
+            log.error("Error adding resources to group[id=" + groupId + "]: ", sqle);
+            throw new ResourceGroupUpdateException("Error adding resources from group[id=" + groupId + "]: "
+                + sqle.getMessage());
+        } finally {
+            JDBCUtil.safeClose(insertExplicitStatement);
+            JDBCUtil.safeClose(conn);
+        }
+        return;
+    }
 
-        List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(uniqueResourceIds
-            .toArray(new Integer[uniqueResourceIds.size()]));
+    private void addResourcesToGroupImplicit(Subject subject, Integer groupId, List<Integer> resourceIds,
+        boolean filterByExplicitMembership, boolean isRecursive) throws ResourceGroupUpdateException {
+        if (resourceIds == null || resourceIds.size() == 0) {
+            // nothing to add
+            return;
+        }
 
-        for (ResourceIdFlyWeight fly : flyWeights) {
-            // if resource is already in the explicit list, no work needs to be done
-            if (explicitResources.contains(fly)) {
-                // record this id that already exists in group's explicit list
-                alreadyMemberIds.add(fly.getId());
-                continue;
+        int[] resourceIdsToAdd;
+        if (filterByExplicitMembership) {
+            List<Integer> nonMemberResources = getNonMemberExplicitResources(groupId, resourceIds);
+            if (nonMemberResources.size() == 0) {
+                // everybody was already a member
+                return;
             }
-
-            // updates explicit and implicit stuff
-            addResourcesToGroupHelper(attachedGroup, fly, false);
+            resourceIdsToAdd = ArrayUtils.unwrapList(nonMemberResources);
+        } else {
+            resourceIdsToAdd = ArrayUtils.unwrapList(resourceIds);
         }
 
-        ResourceGroup mergedResult = entityManager.merge(attachedGroup);
+        Connection conn = null;
+        PreparedStatement insertExplicitStatement = null;
+        PreparedStatement insertImplicitStatement = null;
+        try {
+            conn = rhqDs.getConnection();
 
-        if (alreadyMemberIds.size() != 0) {
-            throw new ResourceGroupUpdateException(
-                ((alreadyMemberIds.size() != 0) ? ("The following resources were already members of the group: " + alreadyMemberIds
-                    .toString())
-                    : ""));
+            // insert implicit resources
+            if (isRecursive) {
+                insertImplicitStatement = conn
+                    .prepareStatement(ResourceGroup.QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_IMPLICIT_RECURSIVE);
+                insertImplicitStatement.setInt(1, groupId);
+                insertImplicitStatement.setInt(9, groupId);
+                for (int resourceId : resourceIdsToAdd) {
+                    insertImplicitStatement.setInt(2, resourceId);
+                    insertImplicitStatement.setInt(3, resourceId);
+                    insertImplicitStatement.setInt(4, resourceId);
+                    insertImplicitStatement.setInt(5, resourceId);
+                    insertImplicitStatement.setInt(6, resourceId);
+                    insertImplicitStatement.setInt(7, resourceId);
+                    insertImplicitStatement.setInt(8, resourceId);
+                    insertImplicitStatement.executeUpdate();
+                }
+            } else {
+                String insertImplicitQueryString = JDBCUtil.transformQueryForMultipleInParameters(
+                    ResourceGroup.QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_IMPLICIT, "@@RESOURCE_IDS@@",
+                    resourceIdsToAdd.length);
+                insertImplicitStatement = conn.prepareStatement(insertImplicitQueryString);
+                insertImplicitStatement.setInt(1, groupId);
+                JDBCUtil.bindNTimes(insertImplicitStatement, resourceIdsToAdd, 2);
+                insertImplicitStatement.executeUpdate();
+            }
+        } catch (SQLException sqle) {
+            log.error("Error adding resources to group[id=" + groupId + "]: ", sqle);
+            throw new ResourceGroupUpdateException("Error adding resources from group[id=" + groupId + "]: "
+                + sqle.getMessage());
+        } finally {
+            JDBCUtil.safeClose(insertExplicitStatement);
+            JDBCUtil.safeClose(insertImplicitStatement);
+            JDBCUtil.safeClose(conn);
         }
+        return;
+    }
 
-        long endTime = System.currentTimeMillis();
+    private boolean isRecursive(int groupId) {
+        Subject overlord = subjectManager.getOverlord();
+        ResourceGroup attachedGroup = getResourceGroupById(overlord, groupId, null);
+        return attachedGroup.isRecursive();
+    }
 
-        log.debug("addResourcesToGroup took " + (endTime - startTime) + " millis");
-
-        return mergedResult;
+    @SuppressWarnings("unchecked")
+    private List<Integer> getNonMemberExplicitResources(int groupId, List<Integer> resourceIds) {
+        if (resourceIds == null || resourceIds.size() == 0) {
+            return Collections.emptyList();
+        }
+        Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_RESOURCE_IDS_NOT_IN_GROUP_EXPLICIT);
+        query.setParameter("groupId", groupId);
+        query.setParameter("resourceIds", resourceIds);
+        List<Integer> nonMemberResources = query.getResultList();
+        return nonMemberResources;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public ResourceGroup removeResourcesFromGroup(Subject subject, Integer groupId, Integer[] resourceIds)
+    public void removeResourcesFromGroup(Subject subject, Integer groupId, Integer[] resourceIds)
         throws ResourceGroupNotFoundException, ResourceGroupUpdateException {
-        long startTime = System.currentTimeMillis();
-
-        ResourceGroup attachedGroup = getResourceGroupById(subject, groupId, null);
-        if (resourceIds.length == 0) {
-            return attachedGroup;
+        if (resourceIds == null || resourceIds.length == 0) {
+            return;
         }
 
-        // Proper operation insists that the passed group not contain dups
-        Set<Integer> uniqueResourceIds = new HashSet<Integer>();
-        uniqueResourceIds.addAll(Arrays.asList(resourceIds));
+        int[] resourceIdsToRemove = ArrayUtils.unwrapArray(resourceIds);
 
-        // list to hold the different types of errors
-        List<Integer> notValidMemberIds = new ArrayList<Integer>();
+        Connection conn = null;
+        PreparedStatement deleteExplicitStatement = null;
+        PreparedStatement deleteImplicitStatement = null;
+        try {
+            conn = rhqDs.getConnection();
 
-        List<ResourceIdFlyWeight> flyWeights = resourceManager.getFlyWeights(uniqueResourceIds
-            .toArray(new Integer[uniqueResourceIds.size()]));
-        // prepare structures for remove*Helper
-
-        for (ResourceIdFlyWeight fly : flyWeights) {
-            // no work needs to be done if the resource isn't in the explicit list
-            if (!attachedGroup.getExplicitResources().contains(fly)) {
-                // record this id that doesn't belong to the group's explicit list
-                notValidMemberIds.add(fly.getId());
-                continue;
+            // insert implicit resources, must occur before deleting explicit
+            if (isRecursive(groupId)) {
+                deleteImplicitStatement = conn
+                    .prepareStatement(ResourceGroup.QUERY_NATIVE_REMOVE_RESOURCES_FROM_GROUP_IMPLICIT_RECURSIVE);
+                deleteImplicitStatement.setInt(1, groupId);
+                for (int resourceId : resourceIdsToRemove) {
+                    // no-op if this resource's ancestor is also in the explicit list
+                    List<Integer> lineage = resourceManager.getResourceIdLineage(resourceId);
+                    List<Integer> nonMembers = getNonMemberExplicitResources(groupId, lineage);
+                    if (lineage.size() != nonMembers.size()) {
+                        // one or more of my parents were in the explicit list, no-op to remove me
+                        continue;
+                    }
+                    deleteImplicitStatement.setInt(2, resourceId);
+                    deleteImplicitStatement.setInt(3, resourceId);
+                    deleteImplicitStatement.setInt(4, resourceId);
+                    deleteImplicitStatement.setInt(5, resourceId);
+                    deleteImplicitStatement.setInt(6, resourceId);
+                    deleteImplicitStatement.setInt(7, resourceId);
+                    deleteImplicitStatement.setInt(8, resourceId);
+                    deleteImplicitStatement.executeUpdate();
+                }
+            } else {
+                String deleteImplicitQueryString = JDBCUtil.transformQueryForMultipleInParameters(
+                    ResourceGroup.QUERY_NATIVE_REMOVE_RESOURCES_FROM_GROUP_IMPLICIT, "@@RESOURCE_IDS@@",
+                    resourceIdsToRemove.length);
+                deleteImplicitStatement = conn.prepareStatement(deleteImplicitQueryString);
+                deleteImplicitStatement.setInt(1, groupId);
+                JDBCUtil.bindNTimes(deleteImplicitStatement, resourceIdsToRemove, 2);
+                deleteImplicitStatement.executeUpdate();
             }
 
-            // updates explicit and implicit stuff
-            removeResourcesFromGroupHelper(attachedGroup, fly);
+            // delete explicit resources
+            String deleteExplicitQueryString = JDBCUtil.transformQueryForMultipleInParameters(
+                ResourceGroup.QUERY_NATIVE_REMOVE_RESOURCES_FROM_GROUP_EXPLICIT, "@@RESOURCE_IDS@@",
+                resourceIdsToRemove.length);
+            deleteExplicitStatement = conn.prepareStatement(deleteExplicitQueryString);
+            deleteExplicitStatement.setInt(1, groupId);
+            JDBCUtil.bindNTimes(deleteExplicitStatement, resourceIdsToRemove, 2);
+            deleteExplicitStatement.executeUpdate();
+        } catch (SQLException sqle) {
+            log.error("Error removing resources to group[id=" + groupId + "]: ", sqle);
+            throw new ResourceGroupUpdateException("Error removing resources from group[id=" + groupId + "]: "
+                + sqle.getMessage());
+        } finally {
+            JDBCUtil.safeClose(deleteExplicitStatement);
+            JDBCUtil.safeClose(deleteImplicitStatement);
+            JDBCUtil.safeClose(conn);
         }
-
-        if (notValidMemberIds.size() != 0) {
-            throw new ResourceGroupUpdateException(
-                ((notValidMemberIds.size() != 0) ? ("The following resources are not members of the group["
-                    + attachedGroup + "]: " + notValidMemberIds.toString()) : ""));
-        }
-
-        ResourceGroup mergedResult = entityManager.merge(attachedGroup);
-
-        long endTime = System.currentTimeMillis();
-
-        log.info("removeResourcesFromGroup took " + (endTime - startTime) + " millis");
-
-        return mergedResult;
+        return;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -679,6 +767,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
      * org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal#getResourcesForResourceGroup(org.jboss.on.domain.auth.Subject,
      * int)
      */
+    @SuppressWarnings("unchecked")
     public List<Resource> getResourcesForResourceGroup(Subject subject, int groupId, GroupCategory category) {
         ResourceGroup group = getResourceGroupById(subject, groupId, category);
         Set<Resource> res = group.getExplicitResources();
@@ -872,94 +961,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         countQuery.setParameter("groupId", resourceGroupId);
         long count = (Long) countQuery.getSingleResult();
         return (int) count;
-    }
-
-    /*
-     * This method constructs the implicit resource list based on an explicit resource passed to it.  If
-     * <code>group.isRecursive()</code> is true, all of <code>resource</code>'s descendants will be added to the
-     * implicit list. Otherwise, only <code>resource</code> will be added to the implicit list.
-     *
-     * This helper method simultaneously manages the explicit lists as well, so it is crucial to not make changes to the
-     * explicit groups for a resource OR or explicit resources for a group outside of this method.
-     */
-    private void addResourcesToGroupHelper(ResourceGroup group, ResourceIdFlyWeight fly, boolean alreadyInExplicit) {
-        // both groups get the resource added to the explicit list
-        if (alreadyInExplicit == false) {
-            // but if we know we're already in the explicit list, skip this and continue processing
-            group.addExplicitResource(fly);
-        }
-
-        // implicit list mirrors explicit, if the group is not recursive
-        if (!group.isRecursive()) {
-            group.addImplicitResource(fly);
-            return;
-        }
-
-        List<ResourceIdFlyWeight> toBeSearched = new LinkedList<ResourceIdFlyWeight>();
-        toBeSearched.add(fly);
-
-        // BFS the descendants of resource
-        while (toBeSearched.size() > 0) {
-            ResourceIdFlyWeight nextFly = toBeSearched.remove(0);
-
-            // add to the collection we want to change
-            group.addImplicitResource(nextFly);
-
-            // and continue
-            List<ResourceIdFlyWeight> children = resourceManager.getChildrenFlyWeights(nextFly.getId(),
-                InventoryStatus.COMMITTED);
-            toBeSearched.addAll(children);
-        }
-    }
-
-    private void removeResourcesFromGroupHelper(ResourceGroup group, ResourceIdFlyWeight fly) {
-
-        // groups always get the resources remove from the explicit list
-        group.removeExplicitResource(fly);
-
-        // non-recursive groups always get the resources removed from the explicit list
-        if (!group.isRecursive()) {
-            group.removeImplicitResource(fly);
-            return;
-        }
-
-        /*
-         * if some ancestor is in the explicit group, the implicit list will contain
-         * the descendant subtree of resource - thus, no work has to be done here
-         */
-        List<Integer> lineage = resourceManager.getResourceIdLineage(fly.getId());
-        for (Resource explicit : new HashSet<Resource>(group.getExplicitResources())) {
-            Integer explicitId = explicit.getId();
-            if (lineage.contains(explicitId)) {
-                return;
-            }
-        }
-
-        List<ResourceIdFlyWeight> toBeSearched = new LinkedList<ResourceIdFlyWeight>();
-
-        // remove from the collection we want to change
-        group.removeImplicitResource(fly);
-
-        // BFS the descendants of resource - starting with the children
-        toBeSearched.addAll(resourceManager.getChildrenFlyWeights(fly.getId(), InventoryStatus.COMMITTED));
-
-        while (toBeSearched.size() > 0) {
-            ResourceIdFlyWeight nextFly = toBeSearched.remove(0);
-
-            /*
-             * no need to remove the subtree from this relative root because we know it was also added explicitly to the
-             * group
-             */
-            if (group.getExplicitResources().contains(nextFly)) {
-                continue;
-            }
-
-            // remove from the collection we want to change
-            group.removeImplicitResource(nextFly);
-
-            // and continue
-            toBeSearched.addAll(resourceManager.getChildrenFlyWeights(nextFly.getId(), InventoryStatus.COMMITTED));
-        }
     }
 
     public PageList<ResourceGroupComposite> getResourceGroupsFiltered(Subject subject, GroupCategory groupCategory,

@@ -405,8 +405,10 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         Set<Integer> idsToRemove = new HashSet<Integer>(existingResourceIds);
         idsToRemove.removeAll(result.getData());
 
-        resourceGroupManager.addResourcesToGroup(overlord, resourceGroupId, idsToAdd.toArray(new Integer[0]));
-        resourceGroupManager.removeResourcesFromGroup(overlord, resourceGroupId, idsToRemove.toArray(new Integer[0]));
+        resourceGroupManager.addResourcesToGroup(overlord, resourceGroupId, idsToAdd.toArray(new Integer[idsToAdd
+            .size()]));
+        resourceGroupManager.removeResourcesFromGroup(overlord, resourceGroupId, idsToRemove
+            .toArray(new Integer[idsToRemove.size()]));
 
         try {
             resourceGroupManager.setResourceType(resourceGroupId);

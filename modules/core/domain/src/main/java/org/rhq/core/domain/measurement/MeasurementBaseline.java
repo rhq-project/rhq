@@ -141,7 +141,8 @@ public class MeasurementBaseline implements Serializable {
             // but only calculate baselines for schedules where we have data that fills (startTime, endTime)
             + "         HAVING data1h.SCHEDULE_ID in ( SELECT mdata.SCHEDULE_ID "
             + "                                          FROM RHQ_MEASUREMENT_DATA_NUM_1H mdata  " //
-            + "                                         WHERE mdata.TIME_STAMP <= ? ) "; // ?4=startTime
+            + "                                         WHERE mdata.TIME_STAMP <= ? ) " // ?4=startTime
+            + "          LIMIT 100000 "; // batch at most 100K inserts at a time to shrink the xtn size
 
         NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_ORACLE = "" //
             + "    INSERT INTO RHQ_MEASUREMENT_BLINE ( id, BL_MIN, BL_MAX, BL_MEAN, BL_COMPUTE_TIME, SCHEDULE_ID ) "
@@ -162,12 +163,12 @@ public class MeasurementBaseline implements Serializable {
             + "                   WHERE ( def.numeric_type = 0 ) " // only dynamics (NumericType.DYNAMIC)
             + "                     AND ( bline.id IS NULL ) " // no baseline means it was deleted or never calculated
             + "                     AND ( data1h.TIME_STAMP BETWEEN ? AND ? ) " // ?2=startTime, ?3=endTime
+            + "                     AND ROWNUM < 100001 " // batch at most 100K inserts at a time to shrink the xtn size
             + "                GROUP BY data1h.SCHEDULE_ID  " // baselines are aggregates per schedule
             // but only calculate baselines for schedules where we have data that fills (startTime, endTime)
             + "                  HAVING data1h.SCHEDULE_ID in ( SELECT mdata.SCHEDULE_ID " //
             + "                                                   FROM RHQ_MEASUREMENT_DATA_NUM_1H mdata "
-            + "                                                  WHERE mdata.TIME_STAMP <= ? ) " // ?4=startTime
-            + "                 ) ";
+            + "                                                  WHERE mdata.TIME_STAMP <= ? ) ) "; // ?4=startTime
     }
     private static final long serialVersionUID = 1L;
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "MEAS_BL_GEN")

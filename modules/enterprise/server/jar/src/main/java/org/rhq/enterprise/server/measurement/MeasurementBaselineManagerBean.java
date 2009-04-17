@@ -133,9 +133,32 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
                 + (System.currentTimeMillis() - now) + ")ms");
 
             now = System.currentTimeMillis();
-            int inserted = measurementBaselineManager._calculateAutoBaselinesINSERT(amountOfData);
-            log.info("Calculated and inserted [" + inserted + "] new baselines. (" + (System.currentTimeMillis() - now)
-                + ")ms");
+            int totalInserted = 0;
+            while (true) {
+                /* 
+                 * each call is done in a separate xtn of at most 100K inserted rows; this helps to keep the xtn
+                 * shorter to avoid timeouts in scenarios where baseline calculations bunch together. the idea was that
+                 * by basing a batch of baseline calculations off of the import time of the resource into inventory, 
+                 * that the total work would naturally be staggered throughout the day. in practice, this didn't always
+                 * work as intended for one of several reasons:
+                 * 
+                 *   1) all servers in the cloud were down for a few days (maybe a slow product upgrade, maybe a cold 
+                 *      data center relocation)
+                 *   2) issues with running the job itself, if quartz had locking issues under severe load and somehow
+                 *      this job wasn't get executed for a few hours / days
+                 *   3) the user tended to import all new resources / platforms at the same time of day, thus bypassing
+                 *      the implicit optimization of trying to stagger the calculations by resource commit time
+                 *  
+                 */
+                int inserted = measurementBaselineManager._calculateAutoBaselinesINSERT(amountOfData);
+                totalInserted += inserted;
+                // since we're batch 100K inserts at a time, we're done if we didn't have that many to insert
+                if (inserted < 100000) {
+                    break;
+                }
+            }
+            log.info("Calculated and inserted [" + totalInserted + "] new baselines. ("
+                + (System.currentTimeMillis() - now) + ")ms");
 
             MeasurementMonitor.getMBean().incrementBaselineCalculationTime(System.currentTimeMillis() - computeTime);
 

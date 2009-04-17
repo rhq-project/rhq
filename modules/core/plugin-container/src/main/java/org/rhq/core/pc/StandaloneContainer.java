@@ -28,8 +28,10 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -38,6 +40,7 @@ import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.pc.operation.OperationContextImpl;
@@ -63,6 +66,9 @@ public class StandaloneContainer {
     InventoryManager inventoryManager;
     Integer opId = 0;
     List<String> history = new ArrayList<String>(10);
+    Map<Integer,Configuration> resConfigMap = new HashMap<Integer,Configuration>();
+
+
     private static final String HISTORY_HELP = "!! : repeat the last action\n" + //
         "!? : show the history of commands issued\n" + //
         "!h : show this help\n" + //
@@ -283,6 +289,9 @@ public class StandaloneContainer {
         //            case EVENT:
         //                event(tokens);
         //                break;
+        case FIND:
+            find(tokens);
+            break;
         case HELP:
             for (Command comm : EnumSet.allOf(Command.class)) {
                 System.out.println(comm + " ( " + comm.getAbbrev() + " ), " + comm.getArgs() + " : " + comm.getHelp());
@@ -405,6 +414,46 @@ public class StandaloneContainer {
     }
 
     /**
+     * Search resources or resource types by name. Wildcard is the *
+     * @param tokens tokenized command line tokens[0] is the command itself
+     */
+    private void find(String[] tokens) {
+        String pattern = tokens[2];
+        pattern = pattern.replaceAll("\\*","\\.\\*");
+
+        if (tokens[1].equals("r")) {
+            Set<Resource> resources = getResources();
+            for (Resource res: resources) {
+                if (res.getName().matches(pattern)) {
+                    System.out.println(res.getId() + ": " + res.getName() + " ( " + res.getParentResource() + " )");
+                }
+            }
+        } else if (tokens[1].equals("t")) {
+            Set<ResourceType> types = pc.getPluginManager().getMetadataManager().getAllTypes();
+            for (ResourceType type : types ) {
+                if (type.getName().matches(pattern)) {
+                    System.out.println(type.getId() + ": " + type.getName() + " (" + type.getPlugin() + " )");
+                }
+            }
+        } else if (tokens[1].equals("rt")) {
+            Set<ResourceType> types = pc.getPluginManager().getMetadataManager().getAllTypes();
+            Set<Resource> resources = getResources();
+            for (ResourceType type : types ) {
+                if (type.getName().matches(pattern)) {
+                    for (Resource res : resources) {
+                        if (res.getResourceType().equals(type)) {
+                            System.out.println(res.getId() + ": " + res.getName() + " ( " + res.getParentResource() + " )");
+                        }
+                    }
+                }
+            }
+        } else {
+            System.err.println("'" + tokens[1] + "' is no valid option for find");
+        }
+
+    }
+
+    /**
      * Sets working parameters
      * @param tokens tokenized command line tokens[0] is the command itself
      */
@@ -497,6 +546,7 @@ public class StandaloneContainer {
         AVAIL("a", "", 0, "Shows an availability report"), //
         DISCOVER("disc", " s | i", 1, "Triggers a discovery scan"), //
         //      EVENT("e", "", 0,  "Pull events"), // TODO needs to be defined
+        FIND("find", "r | t  | rt <name>", 2, "Searches a (r)esource, resource (t)ype or resources of (rt)ype. Use * as wildcard"),
         HELP("h", "", 0, "Shows this help"), //
         INVOKE("i", "operation [params]", 1, "Triggers running an operation"), //
         MEASURE("m", "datatype property+", 2, "Triggers getting metric values. All need to be of the same data type"), //

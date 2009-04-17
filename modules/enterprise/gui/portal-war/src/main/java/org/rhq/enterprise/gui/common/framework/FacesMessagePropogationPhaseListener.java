@@ -33,7 +33,6 @@ import javax.faces.event.PhaseListener;
 import org.jetbrains.annotations.Nullable;
 
 import org.jboss.seam.core.Manager;
-import org.jboss.seam.faces.FacesMessages;
 
 /**
  * A phase listener that propogates global JSF messages across redirects.
@@ -65,8 +64,7 @@ public class FacesMessagePropogationPhaseListener implements PhaseListener {
         PhaseId phaseId = event.getPhaseId();
         if (phaseId == PhaseId.INVOKE_APPLICATION) {
             // We want to store the messages in the context after the application has done its processing.
-            if (!Manager.instance().isReallyLongRunningConversation()
-                || FacesMessages.instance().getCurrentMessages().isEmpty()) {
+            if (!Manager.instance().isReallyLongRunningConversation()) {
                 putGlobalFacesMessagesInSession();
             }
         } else if (phaseId == PhaseId.RENDER_RESPONSE) {

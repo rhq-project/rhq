@@ -20,20 +20,21 @@ package org.rhq.enterprise.gui.configuration.group;
 
 import javax.faces.application.FacesMessage;
 
-import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.gui.legacy.ParamConstants;
-import org.rhq.enterprise.server.authz.PermissionException;
-
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Begin;
 import org.jboss.seam.annotations.Create;
+import org.jboss.seam.annotations.End;
 import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.annotations.End;
 import org.jboss.seam.core.Conversation;
 import org.jboss.seam.faces.Redirect;
+
+import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.legacy.ParamConstants;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
 
 /**
  * A POJO Seam component that handles loading and updating of Resource configurations across a compatible Group.
@@ -42,7 +43,7 @@ import org.jboss.seam.faces.Redirect;
  */
 @Name("EditGroupResourceConfigurationUIBean")
 @Scope(ScopeType.CONVERSATION)
-public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceConfigurationUIBean {    
+public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceConfigurationUIBean {
     public static final String VIEW_ID = "/rhq/group/configuration/editCurrent.xhtml";
 
     @In(value = "org.jboss.seam.faces.redirect")
@@ -62,29 +63,33 @@ public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceC
      * Agents. This gets called when user clicks the SAVE button.
      */
     public void updateConfigurations() {
+        String viewId = null;
         try {
             // TODO: See if there's some way for the config renderer to handle calling applyAggregateConfiguration(),
             //       so the managed bean doesn't have to worry about doing it.
             getConfigurationSet().applyAggregateConfiguration();
-            getConfigurationManager().scheduleAggregateResourceConfigurationUpdate(EnterpriseFacesContextUtility
-                .getSubject(), getGroup().getId(), getResourceConfigurations());
+            getConfigurationManager().scheduleAggregateResourceConfigurationUpdate(
+                EnterpriseFacesContextUtility.getSubject(), getGroup().getId(), getResourceConfigurations());
+
+            FacesContextUtility
+                .addMessage(FacesMessage.SEVERITY_INFO, "Group Resource Configuration update scheduled.");
+            Conversation.instance().endBeforeRedirect();
+            viewId = GroupResourceConfigurationHistoryUIBean.VIEW_ID;
+        } catch (ConfigurationUpdateStillInProgressException updateException) {
+            FacesContextUtility
+                .addMessage(FacesMessage.SEVERITY_WARN,
+                    "Configuration update is currently in progress. Please consider reviewing the changes before submitting your changes.");
+            viewId = VIEW_ID;
+        } catch (PermissionException e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, e.getLocalizedMessage());
+            viewId = ViewGroupResourceConfigurationUIBean.VIEW_ID;
         } catch (Exception e) {
-            if (e instanceof PermissionException) {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, e.getLocalizedMessage());
-                this.redirect.setViewId(ViewGroupResourceConfigurationUIBean.VIEW_ID);
-            } else {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to schedule group Resource Configuration update - cause: " + e);
-                this.redirect.setViewId(VIEW_ID);
-            }
-            this.redirect.execute();
-            return;
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "Failed to schedule group Resource Configuration update - cause: " + e);
+            viewId = VIEW_ID;
         }
-        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Group Resource Configuration update scheduled.");
-        Conversation.instance().endBeforeRedirect();
-        this.redirect.setViewId(GroupResourceConfigurationHistoryUIBean.VIEW_ID);
+        this.redirect.setViewId(viewId);
         this.redirect.execute();
-        return;
     }
 
     /**

@@ -34,6 +34,10 @@ import javax.servlet.http.HttpServletRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.jboss.seam.core.Manager;
+import org.jboss.seam.faces.FacesMessages;
+import org.jboss.seam.util.Strings;
+
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.exception.WrappedRemotingException;
 
@@ -147,7 +151,22 @@ public abstract class FacesContextUtility {
      * @param detail   localized detail message text; if null, no detail will be included in the message
      */
     public static void addMessage(@NotNull Severity severity, @NotNull String summary, @Nullable String detail) {
-        getFacesContext().addMessage(null, new FacesMessage(severity, summary, (detail != null) ? detail : ""));
+        //Now that we're using Seam for some of the pages, we use different mechanisms for transferring messages
+        //across redirect boundaries.
+        //If we are inside a long running conversation, we want Seam to do its thing, otherwise 
+        //FacesmessagePropogationPhaseListener will step in eventually.
+        if (Manager.instance().isReallyLongRunningConversation()) {
+            //nothing's easy... Seam StatusMessage (which we're creating here) considers empty string the same
+            //as null. If the message is then eventually shown on the page, the null detail is replaced with the
+            //summary which would leave us with the summary displayed twice on the page.
+            //Because the detail therefore must not be empty, we must resort to an ugly hack here:
+
+            //FIXME &nbsp; doesn't work because it gets escaped on the page...
+            String detailToUse = Strings.isEmpty(detail) ? "&nbsp;" : detail;
+            FacesMessages.instance().add(toSeverity(severity), null, null, summary, detailToUse);
+        } else {
+            getFacesContext().addMessage(null, new FacesMessage(severity, summary, (detail != null) ? detail : ""));
+        }
     }
 
     @NotNull
@@ -243,5 +262,25 @@ public abstract class FacesContextUtility {
         }
 
         return detailMessage.toString();
+    }
+
+    /**
+     * Convert a FacesMessage.Severity to a StatusMessage.Severity
+     * 
+     * Taken from {@link org.jboss.seam.faces.FacesMessages} private method. 
+     */
+    private static org.jboss.seam.international.StatusMessage.Severity toSeverity(
+        javax.faces.application.FacesMessage.Severity severity) {
+        if (FacesMessage.SEVERITY_ERROR.equals(severity)) {
+            return org.jboss.seam.international.StatusMessage.Severity.ERROR;
+        } else if (FacesMessage.SEVERITY_FATAL.equals(severity)) {
+            return org.jboss.seam.international.StatusMessage.Severity.FATAL;
+        } else if (FacesMessage.SEVERITY_INFO.equals(severity)) {
+            return org.jboss.seam.international.StatusMessage.Severity.INFO;
+        } else if (FacesMessage.SEVERITY_WARN.equals(severity)) {
+            return org.jboss.seam.international.StatusMessage.Severity.WARN;
+        } else {
+            return null;
+        }
     }
 }

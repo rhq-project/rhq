@@ -198,7 +198,7 @@
 	</tiles:insert>
 	<html:hidden property="editingCurrentUser"/>
 	<!-- CONTENTS -->
-	<table width="100%" cellpadding="0" cellspacing="0" border="1">
+	<table width="100%" cellpadding="0" cellspacing="0" border="0">
 	 
 	  
 	    <tr>

@@ -42,6 +42,7 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
+import org.apache.velocity.app.event.implement.EscapeXmlReference;
 import org.codehaus.swizzle.confluence.Confluence;
 import org.codehaus.swizzle.confluence.Page;
 import org.codehaus.swizzle.confluence.SwizzleException;
@@ -52,7 +53,7 @@ import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * Generates both Confluence and Docbook format documentation for an RHQ plugin based on the plugin's descriptor (i.e.
- * rhq-plugin.xml). Invoke from a RHQ plugin module directory as follows:
+ * rhq-plugin.xml). Invoke from an RHQ plugin module directory as follows:
  * <code>mvn org.rhq:rhq-core-plugindoc:plugindoc</code>
  *
  * @author                       Ian Springer
@@ -141,7 +142,7 @@ public class PluginDocMojo extends AbstractMojo {
                         EscapeConfluenceReference.class);
         VelocityTemplateProcessor docbookTemplateProcessor =
                 new VelocityTemplateProcessor(DOCBOOK_TEMPLATE_RESOURCE_PATH, DOCBOOK_MACRO_LIBRARY_RESOURCE_PATH,
-                        null);
+                        EscapeXmlReference.class);
 
         if (this.confluenceUrl != null) {
             log.debug("Using Confluence URL: " + this.confluenceUrl);
@@ -266,7 +267,7 @@ public class PluginDocMojo extends AbstractMojo {
 
     private static String escapeFileName(String fileName)
     {
-        return fileName.replace('/', '-').replace('\\', '-');
+        return fileName.replace('/', '-').replace('\\', '-').replace(' ', '_');
     }
 
     private static String escapePageTitle(String fileName)

@@ -73,7 +73,7 @@
 #else
     <table>
         <title>Metrics</title>
-        <tgroup cols="4" align="left" colsep="1" rowsep="1">
+        <tgroup cols="2" align="left" colsep="1" rowsep="1">
             <thead>
                 <row>
                     <entry>Name</entry>
@@ -141,7 +141,7 @@
 #else
     <table>
         <title>Metrics</title>
-        <tgroup cols="4" align="left" colsep="1" rowsep="1">
+        <tgroup cols="2" align="left" colsep="1" rowsep="1">
             <thead>
                 <row>
                     <entry>Name</entry>
@@ -160,13 +160,14 @@
     </table>
 #end
 
+
     <bridgehead>Package Types</bridgehead>
 #if ( ${resourceType.packageTypes.isEmpty()} )
     <para>none</para>
 #else
     <table>
         <title>Package Types</title>
-        <tgroup cols="4" align="left" colsep="1" rowsep="1">
+        <tgroup cols="3" align="left" colsep="1" rowsep="1">
             <thead>
                 <row>
                     <entry>Name</entry>
@@ -187,6 +188,9 @@
     </table>
 #end
 
-    <!--<xi:include href="Child_Service.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>-->
 
+#foreach( ${childResourceType} in ${resourceType.childResourceTypes} )
+    <xi:include href="#displayResourceTypeLink( ${childResourceType} ).xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+#end
+    
 </section>

@@ -1039,7 +1039,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert results != null : "Results were unexpectedly empty";
         if (results.isEmpty()) {
             System.out.println("We did not yet get a result -- waiting some more");
-            Thread.sleep(5000);
+            Thread.sleep(5000L);
             results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
                 PageControl.getUnlimitedInstance());
         }
@@ -1145,7 +1145,13 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
-        assert results.size() == 1;
+        if (results.isEmpty()) {
+            System.out.println("We did not yet get a result -- waiting some more");
+            Thread.sleep(5000L);
+            results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+                PageControl.getUnlimitedInstance());
+        }
+        assert results.size() == 1 : "Did not get 1 result but " + results.size();
 
         ResourceOperationHistory history = results.get(0);
         assert history.getErrorMessage() != null : history;
@@ -1158,7 +1164,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         results = operationManager.getCompletedResourceOperationHistories(superuser, newResource.getId(), null, null,
             PageControl.getUnlimitedInstance());
         assert results != null;
-        assert results.size() == 0;
+        assert results.size() == 0 : "Did not get 0 result but " + results.size();
     }
 
     @Test(enabled = ENABLE_TESTS)

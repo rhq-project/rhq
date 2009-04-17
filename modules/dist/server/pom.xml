@@ -32,12 +32,12 @@
     <product.sales.email>sales@redhat.com</product.sales.email>
     <product.support.email>support@redhat.com</product.support.email>
     <product.version>${project.version}</product.version>
-    <product.help.doc.root>http://www.jboss.org/community/docs/</product.help.doc.root>
-    <product.help.installation>DOC-12828</product.help.installation>
-    <product.help.guide.server>DOC-12803</product.help.guide.server>
-    <product.help.guide.agent>DOC-12803</product.help.guide.agent>
-    <product.help.FAQ>DOC-12803</product.help.FAQ>
-    <product.help.config.props>DOC-12803</product.help.config.props>
+    <product.help.doc.root>http://www.redhat.com/docs/en-US/JBoss_ON/html/</product.help.doc.root>
+    <product.help.installation>Installation_Guide/index.html</product.help.installation>
+    <product.help.guide.server>JON_Server_Guide/index.html</product.help.guide.server>
+    <product.help.guide.agent>JON_Agent_Guide/index.html</product.help.guide.agent>
+    <product.help.FAQ>FAQs/index.html</product.help.FAQ>
+    <product.help.config.props>http://support.rhq-project.org/display/RHQ/Configuring+the+Server</product.help.config.props>
   </properties>
 
   <dependencies>

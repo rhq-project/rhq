@@ -732,7 +732,7 @@ public interface InstallerI18NResourceKeys {
     String HELP_DOC_FAQ_LABEL = "helpDocFaqLabel";
 
     // the page that contains all the config props help text
-    // this is under the help doc root
+    // this is NOT under the help doc root - it should be a doc root too
     @I18NMessage("${product.help.config.props}")
     String HELP_DOC_RHQ_SERVER_PROP_PARENT_PAGE = "helpDocRHQServerPropParentPage";
 

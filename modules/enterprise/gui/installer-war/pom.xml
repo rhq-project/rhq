@@ -40,7 +40,7 @@
     <product.help.guide.server>Running+the+Server</product.help.guide.server>
     <product.help.guide.agent>Running+the+Agent</product.help.guide.agent>
     <product.help.FAQ>FAQ</product.help.FAQ>
-    <product.help.config.props>Configuring+the+Server#ConfiguringtheServer</product.help.config.props>
+    <product.help.config.props>http://support.rhq-project.org/display/RHQ/Configuring+the+Server#ConfiguringtheServer</product.help.config.props>
   </properties>
 
   <dependencies>

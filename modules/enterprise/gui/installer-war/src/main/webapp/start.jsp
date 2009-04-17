@@ -40,7 +40,7 @@
       <h:panelGrid columns="1">
          <h:panelGrid columns="2"
                       rowClasses="evenRow,oddRow">
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[0].itemDefinition.help}', 'propertyHelp')">
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[0].itemDefinition.help}', 'propertyHelp')">
                <h:outputText value="#{configurationBean.databaseConfiguration[0].itemDefinition.propertyLabel}" />
             </h:outputLink>
             <h:selectOneMenu id="databasetype"
@@ -62,35 +62,35 @@
                <f:selectItems value="#{configurationBean.databaseConfiguration[0].itemDefinition.options}" />
             </h:selectOneMenu>
 
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[1].itemDefinition.help}', 'propertyHelp')">
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[1].itemDefinition.help}', 'propertyHelp')">
                <h:outputText value="#{configurationBean.databaseConfiguration[1].itemDefinition.propertyLabel}" />
             </h:outputLink>
             <h:inputText id="databaseconnectionurl"
                          size="#{configurationBean.databaseConfiguration[1].itemDefinition.fieldSize}"
                          value="#{configurationBean.databaseConfiguration[1].value}" />
 
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[2].itemDefinition.help}', 'propertyHelp')">
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[2].itemDefinition.help}', 'propertyHelp')">
                <h:outputText value="#{configurationBean.databaseConfiguration[2].itemDefinition.propertyLabel}" />
             </h:outputLink>
             <h:inputText id="databasedriverclass"
                          size="#{configurationBean.databaseConfiguration[2].itemDefinition.fieldSize}"
                          value="#{configurationBean.databaseConfiguration[2].value}" />
 
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[3].itemDefinition.help}', 'propertyHelp')">
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[3].itemDefinition.help}', 'propertyHelp')">
                <h:outputText value="#{configurationBean.databaseConfiguration[3].itemDefinition.propertyLabel}" />
             </h:outputLink>
             <h:inputText id="databasexadatasourceclass"
                          size="#{configurationBean.databaseConfiguration[3].itemDefinition.fieldSize}"
                          value="#{configurationBean.databaseConfiguration[3].value}" />
 
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[4].itemDefinition.help}', 'propertyHelp')">
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[4].itemDefinition.help}', 'propertyHelp')">
                <h:outputText value="#{configurationBean.databaseConfiguration[4].itemDefinition.propertyLabel}" />
             </h:outputLink>
             <h:inputText id="databaseusername"
                          size="#{configurationBean.databaseConfiguration[4].itemDefinition.fieldSize}"
                          value="#{configurationBean.databaseConfiguration[4].value}" />
 
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[5].itemDefinition.help}', 'propertyHelp')">
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.databaseConfiguration[5].itemDefinition.help}', 'propertyHelp')">
                <h:outputText value="#{configurationBean.databaseConfiguration[5].itemDefinition.propertyLabel}" />
             </h:outputLink>
             <h:inputText id="databasepassword"
@@ -151,7 +151,7 @@
 
             <h:panelGrid columns="2" >
 
-               <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-RegisteredServers', 'propertyHelp')" >
+               <h:outputLink value="javascript:popUp('#{bundle.helpDocRHQServerPropParentPage}-RegisteredServers', 'propertyHelp')" >
                   <h:outputText value="#{bundle.registeredServersLabel}" />
                </h:outputLink>
                <h:selectOneMenu value="#{configurationBean.selectedRegisteredServerName}"
@@ -179,7 +179,7 @@
             <h:outputText value=" " />
             <h:outputText value="#{bundle.requiresRestart}" style="font-weight:bold" />
 
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaServerName.itemDefinition.help}', 'propertyHelp')" >
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaServerName.itemDefinition.help}', 'propertyHelp')" >
                <h:outputText value="#{bundle.propertyHighAvailabilityName}" />
             </h:outputLink>
             <h:inputText id="haservername" size="#{configurationBean.propHaServerName.itemDefinition.fieldSize}"
@@ -188,7 +188,7 @@
             <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaServerName.itemDefinition.requiresRestart}" />
             <h:outputText value="#{bundle.noString}" rendered="#{!configurationBean.propHaServerName.itemDefinition.requiresRestart}" />
 
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerPublicAddress', 'propertyHelp')" >
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRHQServerPropParentPage}-ServerPublicAddress', 'propertyHelp')" >
                <h:outputText value="#{bundle.propertyHighAvailabilityEndpointAddress}" />
             </h:outputLink>
             <h:inputText id="haendpointaddress" size="#{configurationBean.propHaServerName.itemDefinition.fieldSize}"
@@ -196,7 +196,7 @@
             </h:inputText>
             <h:outputText value="#{bundle.noString}" />
 
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaEndpointPort.itemDefinition.help}', 'propertyHelp')" >
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaEndpointPort.itemDefinition.help}', 'propertyHelp')" >
                <h:outputText value="#{bundle.propertyHttpPort}" />
             </h:outputLink>
             <h:inputText id="haendpointport" size="#{configurationBean.propHaEndpointPort.itemDefinition.fieldSize}"
@@ -204,7 +204,7 @@
             </h:inputText>
             <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaEndpointPort.itemDefinition.requiresRestart}" />
 
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaEndpointSecurePort.itemDefinition.help}', 'propertyHelp')" >
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRHQServerPropParentPage}#{configurationBean.propHaEndpointSecurePort.itemDefinition.help}', 'propertyHelp')" >
                <h:outputText value="#{bundle.propertyHttpsPort}" />
             </h:outputLink>
             <h:inputText id="haendpointsecureport" size="#{configurationBean.propHaEndpointSecurePort.itemDefinition.fieldSize}"
@@ -212,7 +212,7 @@
             </h:inputText>
             <h:outputText value="#{bundle.yesString}" rendered="#{configurationBean.propHaEndpointSecurePort.itemDefinition.requiresRestart}" />
 
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}-ServerAffinityGroup', 'propertyHelp')"
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRHQServerPropParentPage}-ServerAffinityGroup', 'propertyHelp')"
                           rendered="#{configurationBean.showAdvancedSettings == true}" >
                <h:outputText value="#{bundle.propertyHighAvailabilityAffinityGroup}" />
             </h:outputLink>
@@ -236,7 +236,7 @@
                <h:outputText value="" />
             </f:facet>
 
-            <h:outputLink value="javascript:popUp('#{bundle.helpDocRoot}#{bundle.helpDocRHQServerPropParentPage}#{prop.itemDefinition.help}', 'propertyHelp')">
+            <h:outputLink value="javascript:popUp('#{bundle.helpDocRHQServerPropParentPage}#{prop.itemDefinition.help}', 'propertyHelp')">
                <h:outputText value="#{prop.itemDefinition.propertyLabel}" />
             </h:outputLink>
          </h:column>

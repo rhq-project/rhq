@@ -317,24 +317,42 @@ public class ResourceGroup extends Group {
         + "          where RESOURCE_GROUP_ID = ? " // groupId
         + "            and RESOURCE_ID in ( @@RESOURCE_IDS@@ ) ";
     public static final String QUERY_NATIVE_REMOVE_RESOURCES_FROM_GROUP_IMPLICIT_RECURSIVE = "" //
-        + "    delete from RHQ_RESOURCE_GROUP_RES_IMP_MAP " //
-        + "          where RESOURCE_GROUP_ID = ? " // groupId
-        + "            and RESOURCE_ID in " //
-        + "                ( select res.id " //
-        + "                    from RHQ_RESOURCE res " //
-        + "         left outer join RHQ_RESOURCE g1parent on res.PARENT_RESOURCE_ID = g1parent.ID " //
-        + "         left outer join RHQ_RESOURCE g2parent on g1parent.PARENT_RESOURCE_ID = g2parent.ID " //
-        + "         left outer join RHQ_RESOURCE g3parent on g2parent.PARENT_RESOURCE_ID = g3parent.ID " //
-        + "         left outer join RHQ_RESOURCE g4parent on g3parent.PARENT_RESOURCE_ID = g4parent.ID " //
-        + "         left outer join RHQ_RESOURCE g5parent on g4parent.PARENT_RESOURCE_ID = g5parent.ID " //
-        + "         left outer join RHQ_RESOURCE g6parent on g5parent.PARENT_RESOURCE_ID = g6parent.ID " //
-        + "                   where ( res.ID = ? or " // resourceId
-        + "                           g1parent.ID = ? or " // resourceId
-        + "                           g2parent.ID = ? or " // resourceId
-        + "                           g3parent.ID = ? or " // resourceId
-        + "                           g4parent.ID = ? or " // resourceId
-        + "                           g5parent.ID = ? or " // resourceId
-        + "                           g6parent.ID = ? ) )"; // resourceId;
+        + "   delete from RHQ_RESOURCE_GROUP_RES_IMP_MAP " // delete mappings
+        + "         where RESOURCE_GROUP_ID = ? " // groupId
+        + "           and RESOURCE_ID in " // from any descendant of resourceId, including itself
+        + "               ( select res.id " //
+        + "                   from RHQ_RESOURCE res " //
+        + "        left outer join RHQ_RESOURCE g1parent on res.PARENT_RESOURCE_ID = g1parent.ID " //
+        + "        left outer join RHQ_RESOURCE g2parent on g1parent.PARENT_RESOURCE_ID = g2parent.ID " //
+        + "        left outer join RHQ_RESOURCE g3parent on g2parent.PARENT_RESOURCE_ID = g3parent.ID " //
+        + "        left outer join RHQ_RESOURCE g4parent on g3parent.PARENT_RESOURCE_ID = g4parent.ID " //
+        + "        left outer join RHQ_RESOURCE g5parent on g4parent.PARENT_RESOURCE_ID = g5parent.ID " //
+        + "        left outer join RHQ_RESOURCE g6parent on g5parent.PARENT_RESOURCE_ID = g6parent.ID " //
+        + "                  where ( res.ID = ? or " // resourceId
+        + "                          g1parent.ID = ? or " // resourceId
+        + "                          g2parent.ID = ? or " // resourceId
+        + "                          g3parent.ID = ? or " // resourceId
+        + "                          g4parent.ID = ? or " // resourceId
+        + "                          g5parent.ID = ? or " // resourceId
+        + "                          g6parent.ID = ? ) ) " // resourceId
+        + "           and RESOURCE_ID not in " // which aren't already descendants of members in the explicit set
+        + "               ( select res.id " //
+        + "                   from RHQ_RESOURCE_GROUP_RES_EXP_MAP alreadyMember, RHQ_RESOURCE res " //
+        + "        left outer join RHQ_RESOURCE g1parent on res.PARENT_RESOURCE_ID = g1parent.ID " //
+        + "        left outer join RHQ_RESOURCE g2parent on g1parent.PARENT_RESOURCE_ID = g2parent.ID " //
+        + "        left outer join RHQ_RESOURCE g3parent on g2parent.PARENT_RESOURCE_ID = g3parent.ID " //
+        + "        left outer join RHQ_RESOURCE g4parent on g3parent.PARENT_RESOURCE_ID = g4parent.ID " //
+        + "        left outer join RHQ_RESOURCE g5parent on g4parent.PARENT_RESOURCE_ID = g5parent.ID " //
+        + "        left outer join RHQ_RESOURCE g6parent on g5parent.PARENT_RESOURCE_ID = g6parent.ID " //
+        + "                  where alreadyMember.RESOURCE_GROUP_ID = ? " // groupId
+        + "                    and alreadyMember.RESOURCE_ID <> ? " // resourceId
+        + "                    and ( res.ID = alreadyMember.RESOURCE_ID or " //
+        + "                          g1parent.ID = alreadyMember.RESOURCE_ID or " //
+        + "                          g2parent.ID = alreadyMember.RESOURCE_ID or " //
+        + "                          g3parent.ID = alreadyMember.RESOURCE_ID or " //
+        + "                          g4parent.ID = alreadyMember.RESOURCE_ID or " //
+        + "                          g5parent.ID = alreadyMember.RESOURCE_ID or " //
+        + "                          g6parent.ID = alreadyMember.RESOURCE_ID ) ) ";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "id")

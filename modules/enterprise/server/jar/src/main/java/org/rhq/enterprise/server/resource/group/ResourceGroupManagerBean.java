@@ -379,7 +379,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
     public void addResourcesToGroup(Subject subject, Integer groupId, Integer[] resourceIds)
         throws ResourceGroupNotFoundException, ResourceGroupUpdateException {
         List<Integer> resourceIdList = Arrays.asList(resourceIds);
-        boolean isRecursive = isRecursive(groupId);
+        boolean isRecursive = isRecursive(groupId); // will perform check for group existence
         addResourcesToGroupImplicit(subject, groupId, resourceIdList, true, isRecursive);
         addResourcesToGroupExplicit(subject, groupId, resourceIdList, isRecursive);
     }
@@ -509,6 +509,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             return;
         }
 
+        boolean isRecursive = isRecursive(groupId); // will perform check for group existence
+
+        List<Integer> nonMembersToBeRemoved = getNonMemberExplicitResources(groupId, Arrays.asList(resourceIds));
+        if (nonMembersToBeRemoved.size() != 0) {
+            throw new ResourceGroupUpdateException("Can not remove resources[" + nonMembersToBeRemoved
+                + "] which are not part of the group[id=" + groupId + "]");
+        }
+
         int[] resourceIdsToRemove = ArrayUtils.unwrapArray(resourceIds);
 
         Connection conn = null;
@@ -518,10 +526,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             conn = rhqDs.getConnection();
 
             // insert implicit resources, must occur before deleting explicit
-            if (isRecursive(groupId)) {
+            if (isRecursive) {
                 deleteImplicitStatement = conn
                     .prepareStatement(ResourceGroup.QUERY_NATIVE_REMOVE_RESOURCES_FROM_GROUP_IMPLICIT_RECURSIVE);
                 deleteImplicitStatement.setInt(1, groupId);
+                deleteImplicitStatement.setInt(9, groupId);
                 for (int resourceId : resourceIdsToRemove) {
                     // no-op if this resource's ancestor is also in the explicit list
                     List<Integer> lineage = resourceManager.getResourceIdLineage(resourceId);
@@ -537,6 +546,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
                     deleteImplicitStatement.setInt(6, resourceId);
                     deleteImplicitStatement.setInt(7, resourceId);
                     deleteImplicitStatement.setInt(8, resourceId);
+                    deleteImplicitStatement.setInt(10, resourceId);
                     deleteImplicitStatement.executeUpdate();
                 }
             } else {

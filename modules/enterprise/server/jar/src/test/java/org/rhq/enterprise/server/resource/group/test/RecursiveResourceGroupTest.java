@@ -361,7 +361,6 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
 
     private List<Integer> getIds(List<Resource> resources) {
         List<Integer> results = new ArrayList<Integer>();
-        int i = 0;
         for (Resource res : resources) {
             results.add(res.getId());
         }

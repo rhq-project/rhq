@@ -583,9 +583,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
     }
 
-    private void ensureNoPluginConfigurationUpdatesInProgress(ResourceGroup compatibleGroup) throws Exception {
+    private void ensureNoPluginConfigurationUpdatesInProgress(ResourceGroup compatibleGroup)
+        throws ConfigurationUpdateStillInProgressException {
         if (isAggregatePluginConfigurationUpdateInProgress(this.subjectManager.getOverlord(), compatibleGroup.getId())) {
-            throw new Exception("Current group plugin configuration for " + compatibleGroup
+            throw new ConfigurationUpdateStillInProgressException("Current group plugin configuration for "
+                + compatibleGroup
                 + " cannot be calculated, because a group plugin configuration update is currently in progress.");
         }
         List<Resource> resourcesWithPluginConfigUpdatesInProgress = new ArrayList<Resource>();
@@ -594,7 +596,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 resourcesWithPluginConfigUpdatesInProgress.add(memberResource);
         }
         if (!resourcesWithPluginConfigUpdatesInProgress.isEmpty())
-            throw new Exception(
+            throw new ConfigurationUpdateStillInProgressException(
                 "Current group plugin configuration for "
                     + compatibleGroup
                     + " cannot be calculated, because plugin configuration updates are currently in progress for the following Resources: "

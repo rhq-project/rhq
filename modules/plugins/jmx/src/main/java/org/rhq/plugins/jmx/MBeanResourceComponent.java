@@ -87,9 +87,16 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
     private static final Pattern PROPERTY_PATTERN = Pattern.compile("^\\{(?:\\{([^\\}]*)\\})?([^\\}]*)\\}$");
     private static final Pattern TEMPLATE_PATTERN = Pattern.compile("%([^%]+)%");
 
-    // these should be private - subclasses need to override the getter/setter/load methods to affect these
-    private EmsBean emsBean;
-    private ResourceContext<T> resourceContext;
+    // these two should be private - subclasses need to override the getter/setter/load methods to affect these
+    /**
+     * @deprecated do not use this - use {@link #getEmsBean()} instead
+     */
+    protected EmsBean bean;
+
+    /**
+     * @deprecated do not use this - use {@link #getResourceContext()} instead
+     */
+    protected ResourceContext<T> resourceContext;
 
     /**
      * Stores the context and loads the MBean.
@@ -119,14 +126,14 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
      * @see #loadBean()
      */
     public EmsBean getEmsBean() {
-        if (this.emsBean == null) {
-            this.emsBean = loadBean();
-            if (this.emsBean == null)
+        if (this.bean == null) {
+            this.bean = loadBean();
+            if (this.bean == null)
                 throw new IllegalStateException("EMS bean was null for Resource with type ["
                     + this.resourceContext.getResourceType() + "] and key [" + this.resourceContext.getResourceKey()
                     + "].");
         }
-        return this.emsBean;
+        return this.bean;
     }
 
     /**
@@ -135,7 +142,7 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
      * @param bean the new MBean representing the component resource
      */
     protected void setEmsBean(EmsBean bean) {
-        this.emsBean = bean;
+        this.bean = bean;
     }
 
     public ResourceContext<T> getResourceContext() {
@@ -199,10 +206,10 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
                 return AvailabilityType.DOWN;
             }
         } catch (RuntimeException e) {
-            if (this.emsBean != null) {
+            if (this.bean != null) {
                 // Retry by connecting to a new parent connection (this bean might have been connected to by an old
                 // provider that's since been recreated).
-                this.emsBean = null;
+                this.bean = null;
                 if (getEmsBean().isRegistered()) {
                     return AvailabilityType.UP;
                 } else {
@@ -428,7 +435,7 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
         for (String key : report.getConfiguration().getSimpleProperties().keySet()) {
             PropertySimple property = report.getConfiguration().getSimple(key);
             if (property != null) {
-                EmsAttribute attribute = this.emsBean.getAttribute(key);
+                EmsAttribute attribute = this.bean.getAttribute(key);
                 try {
                     switch (configurationDefinition.getPropertyDefinitionSimple(property.getName()).getType()) {
                     case INTEGER: {

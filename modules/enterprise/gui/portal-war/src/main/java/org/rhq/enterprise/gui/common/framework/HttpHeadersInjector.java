@@ -38,7 +38,6 @@ public class HttpHeadersInjector implements PhaseListener {
 
     private static final long serialVersionUID = 1411618613425109468L;
 
-    @Override
     public void afterPhase(PhaseEvent event) {
         //nothing done in here
     }
@@ -48,7 +47,6 @@ public class HttpHeadersInjector implements PhaseListener {
      * the RENDER_RESPONSE phase begins so that the headers are 
      * output before any other data.
      */
-    @Override
     public void beforePhase(PhaseEvent event) {
         Object r = FacesContextUtility.getFacesContext().getExternalContext().getResponse();
 
@@ -66,7 +64,6 @@ public class HttpHeadersInjector implements PhaseListener {
         }
     }
 
-    @Override
     public PhaseId getPhaseId() {
         return PhaseId.RENDER_RESPONSE;
     }

@@ -607,6 +607,8 @@
    <h:form id="containingGroupsForm">
 
        <input type="hidden" name="id" value="#{param.id}"/>
+       
+       <a4j:keepAlive beanName="ListContainingGroupsUIBean" />
 
       <h:panelGroup layout="block" rendered="#{ListContainingGroupsUIBean.dataModel.rowCount == 0}">
          This resource is not currently a member of any groups.

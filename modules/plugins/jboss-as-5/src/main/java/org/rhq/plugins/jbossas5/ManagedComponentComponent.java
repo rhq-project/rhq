@@ -93,7 +93,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         this.componentType = ConversionUtils.getComponentType(getResourceContext().getResourceType());
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
         this.componentName = pluginConfig.getSimple(COMPONENT_NAME_PROPERTY).getStringValue();
-        return;
+        log.trace("Started ResourceComponent for " + getResourceDescription() + ", managing " + this.componentType
+                + " component '" + this.componentName + "'.");
     }
 
     public void stop()
@@ -166,7 +167,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
 
     protected void updateComponent() throws Exception {
         ManagedComponent managedComponent = getManagedComponent();
-        log.debug("Updating " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
+        log.trace("Updating " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
         ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
         managementView.updateComponent(managedComponent);
         managementView.reload();

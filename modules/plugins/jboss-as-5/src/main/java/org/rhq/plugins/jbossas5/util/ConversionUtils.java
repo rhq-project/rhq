@@ -39,7 +39,6 @@ import org.jboss.managed.api.annotation.ViewUse;
 import org.jboss.metatype.api.types.MetaType;
 import org.jboss.metatype.api.types.MapCompositeMetaType;
 import org.jboss.metatype.api.types.SimpleMetaType;
-import org.jboss.metatype.api.types.CompositeMetaType;
 import org.jboss.metatype.api.values.MetaValue;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -73,8 +72,8 @@ import org.jetbrains.annotations.Nullable;
  * This should not include converting between Property objects and ManagedProperties. Those conversions
  * should be in the corresponding Adapter classes.
  *
- * @author Mark Spritzler
  * @author Ian Springer
+ * @author Mark Spritzler
  */
 public class ConversionUtils
 {
@@ -365,7 +364,7 @@ public class ConversionUtils
         	}
             
             MetaType resultMetaType = operation.getReturnType();
-            if (!instanceOf(resultMetaValue, resultMetaType))
+            if (!MetaTypeUtils.instanceOf(resultMetaValue, resultMetaType))
                 LOG.debug("Profile Service Error: Result type (" + resultMetaType + ") of [" + operation.getName()
                         + "] ManagedOperation does not match the type of the value returned by invoke() (" 
                         + resultMetaValue + ").");
@@ -374,29 +373,6 @@ public class ConversionUtils
             Property resultProp = propertyAdapter.convertToProperty(resultMetaValue, resultPropDef);
             complexResults.put(resultProp);
         }
-    }
-
-    private static boolean instanceOf(MetaValue metaValue, MetaType metaType) {
-        MetaType valueType = metaValue.getMetaType();
-        if (valueType.isSimple() && metaType.isSimple())
-            return true;
-        else if (valueType.isEnum() && metaType.isEnum())
-            return true;
-        else if (valueType.isCollection() && metaType.isCollection())
-            return true;
-        else if (valueType.isArray() && metaType.isArray())
-            return true;
-        else if (valueType.isComposite() && metaType.isComposite()) {
-            return (valueType instanceof MapCompositeMetaType && metaType instanceof MapCompositeMetaType) ||
-                   (!(valueType instanceof CompositeMetaType) && !(metaType instanceof CompositeMetaType));
-        } else if (valueType.isGeneric() && metaType.isGeneric())
-            return true;
-        else if (valueType.isTable() && metaType.isTable())
-            return true;
-        else if (valueType.isProperties() && metaType.isProperties())
-            return true;
-        else
-            return false;
     }
 
     public static void convertMetricValuesToMeasurement(MeasurementReport report, ManagedProperty metricProperty, MeasurementScheduleRequest request, ResourceType resourceType, String deploymentName)

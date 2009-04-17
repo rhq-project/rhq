@@ -93,7 +93,7 @@ public abstract class ManagedDeploymentComponent
         this.deploymentFile = getDeploymentFile();
         String deploymentTypeName = pluginConfig.getSimple(DEPLOYMENT_TYPE_NAME_PROPERTY).getStringValue();
         this.deploymentType = KnownDeploymentTypes.valueOf(deploymentTypeName);
-        log.debug("Started ResourceComponent for " + getResourceDescription() + ", managing " + this.deploymentType
+        log.trace("Started ResourceComponent for " + getResourceDescription() + ", managing " + this.deploymentType
                 + " deployment '" + this.deploymentName + "' with path '" + this.deploymentFile + "'.");
     }
 

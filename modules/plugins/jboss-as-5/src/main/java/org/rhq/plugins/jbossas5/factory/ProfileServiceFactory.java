@@ -29,6 +29,8 @@ import javax.naming.NamingException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
+
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.managed.api.ComponentType;
@@ -59,6 +61,7 @@ public class ProfileServiceFactory
      *
      * @return ProfileService
      */
+    @NotNull
     public static ProfileService getProfileService()
     {
         if (profileService == null)
@@ -70,17 +73,16 @@ public class ProfileServiceFactory
             }
             catch (NamingException e)
             {
-                LOG.error("Unable to get an InitialContext to JBossAS 5.", e);
-                return null;
+                throw new RuntimeException("Failed to create JNDI InitialContext.", e);
             }
-
             try
             {
                 profileService = (ProfileService) initialContext.lookup(PROFILE_SERVICE_JNDI_NAME);
             }
-            catch (Exception e)
+            catch (NamingException e)
             {
-                LOG.error("Exception thrown when looking up ProfileService on JBoss AS 5", e);
+                throw new RuntimeException("Failed to lookup JNDI name '" + PROFILE_SERVICE_JNDI_NAME
+                        + "' from InitialContext.", e);
             }
         }
         return profileService;
@@ -130,11 +132,11 @@ public class ProfileServiceFactory
     {
     	try
     	{
-    		LOG.trace("About to load profile via ManagementView...");
+    		LOG.trace("Loading profile via ManagementView...");
     		long startTime = System.currentTimeMillis();
     		managementView.load();
     	    long elapsedTime = System.currentTimeMillis() - startTime;
-    		LOG.debug("Loaded profile via Management View in " + elapsedTime + " ms.");
+    		LOG.trace("Loaded profile via Management View in " + elapsedTime + " ms.");
     	}
     	catch (Exception e)
     	{
@@ -150,7 +152,7 @@ public class ProfileServiceFactory
     		long startTime = System.currentTimeMillis();
     		deploymentManager.loadProfile(DEFAULT_PROFILE_KEY);
     	    long elapsedTime = System.currentTimeMillis() - startTime;
-    		LOG.debug("Loaded profile '" + DEFAULT_PROFILE_KEY + "' via Deployment Manager in " + elapsedTime + " ms.");
+    		LOG.trace("Loaded profile '" + DEFAULT_PROFILE_KEY + "' via Deployment Manager in " + elapsedTime + " ms.");
     	}
     	catch (Exception e)
     	{
@@ -169,8 +171,8 @@ public class ProfileServiceFactory
     public static ManagedComponent getManagedComponent(ComponentType type, String name)
             throws Exception
     {
-        ManagementView mgtView = getCurrentProfileView();
-        return getManagedComponent(mgtView, type, name);
+        ManagementView managementView = getCurrentProfileView();
+        return getManagedComponent(managementView, type, name);
     }
 
     /**

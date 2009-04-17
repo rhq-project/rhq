@@ -239,7 +239,6 @@
         </c:description>
     </c:simple-property>
 
-    <!--
     <c:map-property name="security-domain" displayName="Security Settings" required="false">
         <c:description>
             Security settings
@@ -271,7 +270,6 @@
             </c:description>
         </c:simple-property>
     </c:map-property>
-    -->
 
     <c:simple-property name="statistics-formatter" required="false">
         <c:description>

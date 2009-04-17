@@ -157,7 +157,7 @@ public abstract class ManagedDeploymentComponent
 
     protected ManagedDeployment getManagedDeployment() throws NoSuchDeploymentException
     {
-        //ProfileServiceFactory.refreshCurrentProfileView();
+        ProfileServiceFactory.refreshCurrentProfileView();
         ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
         String resourceKey = getResourceContext().getResourceKey();
         return managementView.getDeployment(resourceKey);

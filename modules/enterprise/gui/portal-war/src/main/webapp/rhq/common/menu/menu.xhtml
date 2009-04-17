@@ -23,24 +23,16 @@
         <h:graphicImage value="/images/logo_icon.png"/>
     </h:outputLink>
 
-    <ui:remove>===== DASHBOARD =====</ui:remove>
+    <ui:remove>===== OVERVIEW =====</ui:remove>
 
     <rich:dropDownMenu>
         <f:facet name="label">
             <h:panelGroup>
-                <h:outputLink value="/Dashboard.do">
-                    <h:outputText value="#{msg['dash.home.PageTitle']}"/>
-                </h:outputLink>
+                <h:outputText value="Overview"/>
             </h:panelGroup>
         </f:facet>
 
-        <ui:remove>***** Dashboard > AUTO-DISCOVERY QUEUE *****</ui:remove>
-        <rich:menuItem submitMode="none"
-                       onclick="window.location = '/rhq/discovery/queue.xhtml'">
-            <h:outputText value="Auto Discovery Queue"/>
-        </rich:menuItem>
-
-        <ui:remove>***** Dashboard > SYSTEM VIEWS *****</ui:remove>
+        <ui:remove>***** Overview > SYSTEM VIEWS *****</ui:remove>
         <rich:menuGroup value="Subsystem Views">
             <rich:menuItem submitMode="none" icon="/images/icons/Configure_16.png"
                            onclick="window.location = '/rhq/subsystem/configurationUpdate.xhtml'">Configuration Changes
@@ -58,6 +50,18 @@
                            onclick="window.location = '/rhq/subsystem/alertDefinitions.xhtml'">Alert Definitions
             </rich:menuItem>
         </rich:menuGroup>
+
+        <ui:remove>***** Overview > AUTO-DISCOVERY QUEUE *****</ui:remove>
+        <rich:menuItem submitMode="none"
+                       onclick="window.location = '/rhq/discovery/queue.xhtml'">
+            <h:outputText value="Auto Discovery Queue"/>
+        </rich:menuItem>
+
+        <ui:remove>***** Overview > DASHBOARD *****</ui:remove>
+        <rich:menuItem submitMode="none"
+                       onclick="window.location = '/Dashboard.do'">
+            <h:outputText value="Dashboard"/>
+        </rich:menuItem>
 
     </rich:dropDownMenu>
 

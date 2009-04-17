@@ -82,15 +82,6 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
     private String createNewResourceTypeId;
 
     public ListChildResourcesUIBean() {
-        try {
-            // RHQ-1933: remove session-cached UIBeans, whose navigation filters through /rhq/resource/inventory/view.xhtml
-            FacesContextUtility.removeSessionScopedBean(CreateNewConfigurationChildResourceUIBean.class);
-            FacesContextUtility.removeSessionScopedBean(CreateNewPackageChildResourceUIBean.class);
-            FacesContextUtility.removeSessionScopedBean(UploadNewChildPackageUIBean.class);
-        } catch (Throwable t) {
-            // if any error happens whatsoever, continue processing as if this code didn't exist 
-        }
-
         this.utilizedChildServerTypes = this.resourceTypeManager.getUtilizedChildResourceTypesByCategory(
             EnterpriseFacesContextUtility.getSubject(), EnterpriseFacesContextUtility.getResource(),
             ResourceCategory.SERVER);
@@ -118,6 +109,18 @@ public class ListChildResourcesUIBean extends PagedDataTableUIBean {
 
         this.manuallyAddResourceTypeId = DEFAULT_RESOURCE_TYPE_ID;
         this.createNewResourceTypeId = DEFAULT_RESOURCE_TYPE_ID;
+    }
+
+    public String getClearStaleBeans() {
+        try {
+            // RHQ-1933: remove session-cached UIBeans, whose navigation filters through /rhq/resource/inventory/view.xhtml
+            FacesContextUtility.removeSessionScopedBean(CreateNewConfigurationChildResourceUIBean.class);
+            FacesContextUtility.removeSessionScopedBean(CreateNewPackageChildResourceUIBean.class);
+            FacesContextUtility.removeSessionScopedBean(UploadNewChildPackageUIBean.class);
+        } catch (Throwable t) {
+            // if any error happens whatsoever, continue processing as if this code didn't exist 
+        }
+        return null;
     }
 
     public List<SelectItem> getUtilizedChildServerTypes() {

@@ -27,6 +27,7 @@
       -->
       <phase-listener>org.rhq.enterprise.gui.common.framework.FacesMessagePropogationPhaseListener</phase-listener>
       <phase-listener>org.rhq.enterprise.gui.common.framework.PhaseTracker</phase-listener>
+      <phase-listener>org.rhq.enterprise.gui.common.framework.HttpHeadersInjector</phase-listener>
       <phase-listener>org.rhq.core.gui.util.IdChunkGeneratorPhaseListener</phase-listener>
    </lifecycle>
    

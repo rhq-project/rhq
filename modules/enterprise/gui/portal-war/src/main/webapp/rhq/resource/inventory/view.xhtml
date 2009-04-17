@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
-
+<!-- 
 <!DOCTYPE html
       PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
+-->
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
@@ -107,6 +107,13 @@
 
     <input type="hidden" name="id" value="#{param.id}"/>
 
+    <ui:remove><!-- 
+        This method call clears any stale session-scoped beans that might have been left
+        by previous calls to creation pages of various child resources.
+        This then prevents the duplicate id errors when those pages are re-entered.
+    --></ui:remove>
+    #{ListChildResourcesUIBean.clearStaleBeans}
+    
 <!-- CHILD RESOURCE TYPE FILTER -->
 <h:panelGroup layout="block" rendered="#{ListChildResourcesUIBean.utilizedChildTypesCount > 1}" style="margin-bottom: 6px;">
 

@@ -37,7 +37,7 @@
     <product.help.guide.server>JON_Server_Guide/index.html</product.help.guide.server>
     <product.help.guide.agent>JON_Agent_Guide/index.html</product.help.guide.agent>
     <product.help.FAQ>FAQs/index.html</product.help.FAQ>
-    <product.help.config.props>http://support.rhq-project.org/display/RHQ/Configuring+the+Server</product.help.config.props>
+    <product.help.config.props>http://support.rhq-project.org/display/RHQ/Configuring+the+Server#ConfiguringtheServer</product.help.config.props>
   </properties>
 
   <dependencies>

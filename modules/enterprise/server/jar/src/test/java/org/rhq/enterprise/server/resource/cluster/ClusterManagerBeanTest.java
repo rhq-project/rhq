@@ -20,7 +20,6 @@
 package org.rhq.enterprise.server.resource.cluster;
 
 import java.util.List;
-import java.util.Set;
 
 import javax.persistence.EntityManager;
 
@@ -121,7 +120,10 @@ public class ClusterManagerBeanTest extends AbstractEJB3Test {
             assertNotNull(backingGroup);
             assertEquals(backingGroup.getClusterKey(), clusterKey.toString());
             assertEquals(backingGroup.getClusterResourceGroup(), clusterGroup);
-            Set<Resource> backingGroupResources = backingGroup.getExplicitResources();
+            //Set<Resource> backingGroupResources = backingGroup.getExplicitResources();
+            // explicitResources for backingGroup is lazy, so we need to hit resourceManager for the answer 
+            List<Resource> backingGroupResources = resourceManager.getExplicitResourcesByResourceGroup(subject,
+                backingGroup, PageControl.getUnlimitedInstance());
             assertEquals(backingGroupResources.size(), resources.size());
             for (Resource resource : backingGroupResources) {
                 assert resources.contains(resource);

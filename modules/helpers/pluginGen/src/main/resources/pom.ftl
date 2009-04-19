@@ -69,7 +69,7 @@
                             <artifactItems>
 
                                 <!-- TODO include needed external jars
-                                     that should go into your jar file                                     
+                                     that should go into your jar file
 
                                 The next one is an example:
                                 -->
@@ -172,58 +172,60 @@
                 </plugins>
             </build>
 
-            <repositories>
-                <repository>
-                    <snapshots>
-                        <enabled>false</enabled>
-                    </snapshots>
-                    <id>jboss</id>
-                    <name>JBoss Repository</name>
-                    <url>http://repository.jboss.org/maven2/</url>
-                </repository>
-                <!-- TODO add your own maven repositories here (if needed) -->
-            </repositories>
-
-            <pluginRepositories>
-                <pluginRepository>
-                    <snapshots>
-                        <enabled>false</enabled>
-                    </snapshots>
-                    <id>jboss</id>
-                    <name>JBoss Plugin Repository</name>
-                    <url>http://repository.jboss.org/maven2/</url>
-                </pluginRepository>
-            </pluginRepositories>
-
-
-            <dependencies>
-                <dependency>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                    <version>1.1</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.rhq</groupId>
-                    <artifactId>rhq-core-domain</artifactId>
-                    <version>${r"${project.version}"}</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.rhq</groupId>
-                    <artifactId>rhq-core-plugin-api</artifactId>
-                    <version>${r"${project.version}"}</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.rhq</groupId>
-                    <artifactId>rhq-core-native-system</artifactId>
-                    <version>${r"${project.version}"}</version>
-                    <scope>provided</scope>
-                </dependency>
-
-                <!-- TODO add your dependencies here -->
-
-            </dependencies>
         </profile>
     </profiles>
+
+
+        <repositories>
+            <repository>
+                <snapshots>
+                    <enabled>false</enabled>
+                </snapshots>
+                <id>jboss</id>
+                <name>JBoss Repository</name>
+                <url>http://repository.jboss.org/maven2/</url>
+            </repository>
+            <!-- TODO add your own maven repositories here (if needed) -->
+        </repositories>
+
+        <pluginRepositories>
+            <pluginRepository>
+                <snapshots>
+                    <enabled>false</enabled>
+                </snapshots>
+                <id>jboss</id>
+                <name>JBoss Plugin Repository</name>
+                <url>http://repository.jboss.org/maven2/</url>
+            </pluginRepository>
+        </pluginRepositories>
+
+
+        <dependencies>
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>1.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.rhq</groupId>
+                <artifactId>rhq-core-domain</artifactId>
+                <version>${r"${project.version}"}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.rhq</groupId>
+                <artifactId>rhq-core-plugin-api</artifactId>
+                <version>${r"${project.version}"}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.rhq</groupId>
+                <artifactId>rhq-core-native-system</artifactId>
+                <version>${r"${project.version}"}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- TODO add your dependencies here -->
+
+        </dependencies>
 </project>

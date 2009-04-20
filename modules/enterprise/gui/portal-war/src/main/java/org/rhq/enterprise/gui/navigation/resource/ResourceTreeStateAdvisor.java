@@ -57,6 +57,8 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
     private int selectedId;
     private int selecteAGTypeId;
 
+    private boolean hasMessages = false;
+
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
@@ -93,6 +95,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                         "leftNavTreeForm:leftNavTree",
                         new FacesMessage(FacesMessage.SEVERITY_WARN,
                             "You have not been granted view access to this resource", null));
+
                     return;
 
                 } else if (node.getData() instanceof Resource) {
@@ -145,6 +148,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                         // this is a subcategory or subsubcategory, no page to display right now
                         FacesContext.getCurrentInstance().addMessage("leftNavTreeForm:leftNavTree",
                             new FacesMessage(FacesMessage.SEVERITY_WARN, "No subcategory pages exist", null));
+
                         return;
                     } else {
                         if (ag.getMemberCount() != node.getChildren().size()) {
@@ -154,6 +158,7 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                                 "leftNavTreeForm:leftNavTree",
                                 new FacesMessage(FacesMessage.SEVERITY_WARN,
                                     "You must have view access to all resources in an autogroup to view it", null));
+
                             return;
                         } else {
                             String path = "/rhq/autogroup/monitor/graphs.xhtml?parent="
@@ -270,6 +275,11 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
             return Boolean.TRUE;
         }
         return null;
+    }
+
+    public boolean getHasMessages() {
+        hasMessages = FacesContext.getCurrentInstance().getMessages("leftNavTreeForm:leftNavTree").hasNext();
+        return hasMessages;
     }
 
 }

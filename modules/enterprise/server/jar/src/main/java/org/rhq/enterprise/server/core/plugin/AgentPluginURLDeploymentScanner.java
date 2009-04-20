@@ -176,7 +176,8 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
     /**
      * This method will stream up plugin content if the server has a plugin file
      * but there is null content in the database (only occurs when upgrading an old server to the new
-     * schema that supports database-storage for plugins).
+     * schema that supports database-storage for plugins). This method will be a no-op for
+     * recent versions of the server because the database will no longer have null content from now on. 
      */
     private void fixMissingPluginContent() throws Exception {
         Connection conn = null;
@@ -210,6 +211,9 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
         }
 
         if (!pluginsMissingContentInDb.isEmpty()) {
+            // if a plugin used to exist but now doesn't, it should be deleted - we should not fail when this occurs
+            List<String> pluginsToDelete = new ArrayList<String>();
+
             // in all likelihood, the new plugins have different filenames; but since the descriptors
             // will have the same plugin names, we'll be able to key off of plugin name
             PluginDescriptor descriptor;
@@ -238,9 +242,41 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
                     log.info("Missing content for plugin [" + name + "] will be uploaded from [" + pluginFile
                         + "]. different=" + different);
                 } else {
-                    throw new Exception("The database knows of a plugin named [" + name + "] with path [" + path
+                    pluginsToDelete.add(name);
+                    log.warn("The database knows of a plugin named [" + name + "] with path [" + path
                         + "] but the content is missing. This server does not have this plugin in ["
                         + this.pluginDirectory + "] so the database cannot be updated with the content.");
+                }
+            }
+
+            if (!pluginsToDelete.isEmpty()) {
+                TransactionManager tm = LookupUtil.getTransactionManager();
+                for (String pluginName : pluginsToDelete) {
+                    try {
+                        tm.begin();
+                        DataSource ds = LookupUtil.getDataSource();
+                        conn = ds.getConnection();
+                        ps = conn.prepareStatement("DELETE " + Plugin.TABLE_NAME + " WHERE NAME = ?");
+                        ps.setString(1, pluginName);
+                        int updateResults = ps.executeUpdate();
+                        if (updateResults == 1) {
+                            log.warn("Purged obsolete plugin [" + pluginName
+                                + "] from the db - if resources were commited to inventory for this plugin,"
+                                + " you should uninventory them to avoid getting warnings in the server and agent");
+                        } else {
+                            // TODO: should we throw an exception or is continuing the right thing to do?
+                            log.error("Failed to purge obsolete plugin [" + pluginName + "] from the db");
+                        }
+                    } catch (Exception e) {
+                        tm.rollback();
+                        tm = null;
+                        throw e;
+                    } finally {
+                        JDBCUtil.safeClose(conn, ps, null);
+                        if (tm != null) {
+                            tm.commit();
+                        }
+                    }
                 }
             }
         }

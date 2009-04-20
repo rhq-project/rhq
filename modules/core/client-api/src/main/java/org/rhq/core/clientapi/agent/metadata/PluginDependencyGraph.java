@@ -1,35 +1,40 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.clientapi.agent.metadata;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.pc.plugin.PluginManager;
 
 /**
  * This class determines the deployment order for plugins by building the dependency graph of the plugins. You use this
@@ -214,7 +219,14 @@ public class PluginDependencyGraph {
 
         List<PluginDependency> childDependencies = dependencyMap.get(pluginName);
         if (childDependencies == null) {
-            throw new IllegalArgumentException("Plugin [" + pluginName + "] does not exist in the dependency graph yet");
+            /* 
+             * in general, missing dependencies will cause this plugin to fail later in the deployment process;
+             * however, there are certain rare circumstances when deployments will succeed even in the face of
+             * missing dependencies; in these cases, we'll be a little lenient when parsing the dependency graph
+             */
+            LogFactory.getLog(PluginManager.class).warn(
+                "Plugin [" + pluginName + "] does not exist in the dependency graph yet");
+            return Collections.emptySet();
         }
 
         for (PluginDependency childDependency : childDependencies) {

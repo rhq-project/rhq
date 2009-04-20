@@ -1167,9 +1167,14 @@
 		            <c:simple-property required="false" name="arg#0" displayName="selector"/>
 		        </parameters>
 		        <results>
-		            <c:list-property required="false" name="result" description="All messages for the specified selector">
-		                <c:map-property required="false" name="element"/>
-		            </c:list-property>
+	                <c:notes>List all messages with selector</c:notes>
+	                <c:list-property name="result">
+	                    <c:map-property required="false" name="element">
+	                        <c:simple-property required="false" name="JMSCorrelationID"/>
+	                        <c:simple-property required="false" name="JMSMessageID"/>
+	                        <c:simple-property type="long" required="false" name="JMSTimestamp"/>
+	                    </c:map-property>
+	                </c:list-property>
 		        </results>
 		    </operation>
 		
@@ -1178,9 +1183,14 @@
 		            <c:simple-property required="false" name="arg#0" displayName="selector"/>
 		        </parameters>
 		        <results>
-		            <c:list-property required="false" name="result" description="All durable messages for the specified selector">
-		                <c:map-property required="false" name="element"/>
-		            </c:list-property>
+	                <c:notes>List all durable mesages using a selector</c:notes>
+	                <c:list-property name="result">
+	                    <c:map-property required="false" name="element">
+	                        <c:simple-property required="false" name="JMSCorrelationID"/>
+	                        <c:simple-property required="false" name="JMSMessageID"/>
+	                        <c:simple-property type="long" required="false" name="JMSTimestamp"/>
+	                    </c:map-property>
+	                </c:list-property>
 		        </results>
 		    </operation>
 		
@@ -1189,20 +1199,27 @@
 		            <c:simple-property required="false" name="arg#0" displayName="selector"/>
 		       </parameters>
 		        <results>
-		            <c:list-property required="false" name="result" description="All non-durable messages for the specified selector">
-		                <c:map-property required="false" name="element"/>
-		            </c:list-property>
+	                <c:notes>List all non durable mesages using a selector</c:notes>
+	                <c:list-property name="result">
+	                    <c:map-property required="false" name="element">
+	                        <c:simple-property required="false" name="JMSCorrelationID"/>
+	                        <c:simple-property required="false" name="JMSMessageID"/>
+	                        <c:simple-property type="long" required="false" name="JMSTimestamp"/>
+	                    </c:map-property>
+	                </c:list-property>
 		        </results>
 		    </operation>
 
             <operation name="listMessageCounterAsHTML" displayName="List Message Counter As HTML" description="Get the message counter as HTML">
                 <results>
-                    <c:simple-property name="result"/>
+                    <c:notes>Get the message counter as HTML</c:notes>
+                    <c:simple-property required="false" name="result"/>
                 </results>
             </operation>
 
             <operation name="listMessageCounterHistoryAsHTML" displayName="List Message Counter History As HTML" description="Get the message counter history as HTML">
                 <results>
+                 	<c:notes>Get the message counter history as HTML</c:notes>
                     <c:simple-property name="result"/>
                 </results>
             </operation>
@@ -1413,9 +1430,14 @@
 		            <c:simple-property required="false" name="arg#1" displayName="selector"/>
 		        </parameters>
 		        <results>
-		            <c:list-property required="false" name="result" description="All messages for the specified subscription with the specified selector">
-		                <c:map-property required="false" name="element"/>
-		            </c:list-property>
+	                <c:notes>List all messages for the specified subscription with the specified selector</c:notes>
+	                <c:list-property name="result">
+	                    <c:map-property required="false" name="element">
+	                        <c:simple-property required="false" name="JMSCorrelationID"/>
+	                        <c:simple-property required="false" name="JMSMessageID"/>
+	                        <c:simple-property type="long" required="false" name="JMSTimestamp"/>
+	                    </c:map-property>
+	                </c:list-property>
 		        </results>
 		    </operation>
 		
@@ -1425,9 +1447,14 @@
 		            <c:simple-property required="false" name="arg#1" displayName="selector"/>
 		        </parameters>
 		        <results>
-		            <c:list-property required="false" name="result" description="All durable messages for the specified subscription with the specified selector">
-		                <c:map-property required="false" name="element"/>
-		            </c:list-property>
+	                <c:notes>List all durable messages for the specified subscription with the specified selector</c:notes>
+	                <c:list-property name="result">
+	                    <c:map-property required="false" name="element">
+	                        <c:simple-property required="false" name="JMSCorrelationID"/>
+	                        <c:simple-property required="false" name="JMSMessageID"/>
+	                        <c:simple-property type="long" required="false" name="JMSTimestamp"/>
+	                    </c:map-property>
+	                </c:list-property>
 		        </results>
 		    </operation>
 		
@@ -1437,17 +1464,23 @@
 		            <c:simple-property required="false" name="arg#1" displayName="selector"/>
 		       </parameters>
 		        <results>
-		            <c:list-property required="false" name="result" description="All non-durable messages for the specified subscription with the specified selector">
-		                <c:map-property required="false" name="element"/>
-		            </c:list-property>
+	                <c:notes>List all non durable messages for the specified subscription with the specified selector</c:notes>
+	                <c:list-property name="result">
+	                    <c:map-property required="false" name="element">
+	                        <c:simple-property required="false" name="JMSCorrelationID"/>
+	                        <c:simple-property required="false" name="JMSMessageID"/>
+	                        <c:simple-property type="long" required="false" name="JMSTimestamp"/>
+	                    </c:map-property>
+	                </c:list-property>
 		        </results>
 		    </operation>
 
             <operation name="listAllSubscriptions" displayName="List All Subscriptions"
                        description="Return all subscriptions for the topic">
                 <results>
+					<c:notes>Return all subscriptions for the topic</c:notes>                
                     <c:list-property name="result">
-                        <c:simple-property required="false" name="item"/>
+                        <c:simple-property required="false" name="element"/>
                     </c:list-property>
                 </results>
             </operation>
@@ -1455,15 +1488,17 @@
             <operation name="listAllSubscriptionsAsHTML" displayName="List All Subscriptions As HTML"
                        description="Return all subscriptions for the topic in HTML">
                 <results>
-                    <c:simple-property name="result"/>
+                    <c:notes>Return all subscriptions for the topic in HTML</c:notes>
+                    <c:simple-property required="false" name="result"/>
                 </results>
             </operation>
 
             <operation name="listDurableSubscriptions" displayName="List Durable Subscriptions"
                        description="Return all durable subscriptions for the topic">
                 <results>
+                	<c:notes>Return all durable subscriptions for the topic</c:notes>
                     <c:list-property name="result">
-                        <c:simple-property required="false" name="item"/>
+                        <c:simple-property required="false" name="element"/>
                     </c:list-property>
                 </results>
             </operation>
@@ -1471,13 +1506,15 @@
             <operation name="listDurableSubscriptionsAsHTML" displayName="List Durable Subscriptions As HTML"
                        description="Return all durable subscriptions for the topic in HTML">
                 <results>
-                    <c:simple-property name="result"/>
+                	<c:notes>Return all durable subscriptions for the topic in HTML</c:notes>
+                    <c:simple-property required="false" name="result"/>
                 </results>
             </operation>
 
             <operation name="listNonDurableSubscriptions" displayName="List Non Durable Subscriptions"
                        description="Return all non durable subscriptions for the topic">
                 <results>
+                  	<c:notes>Return all non durable subscriptions for the topic</c:notes>
                     <c:list-property name="result">
                         <c:simple-property required="false" name="item"/>
                     </c:list-property>
@@ -1487,6 +1524,7 @@
             <operation name="listNonDurableSubscriptionsAsHTML" displayName="List Non Durable Subscriptions As HTML"
                        description="Return all non durable subscriptions for the topic in HTML">
                 <results>
+                    <c:notes>Return all non durable subscriptions for the topic in HTML</c:notes>
                     <c:simple-property name="result"/>
                 </results>
             </operation>

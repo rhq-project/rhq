@@ -32,9 +32,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.rhq.core.pc.plugin.PluginManager;
 
 /**
  * This class determines the deployment order for plugins by building the dependency graph of the plugins. You use this
@@ -47,6 +46,7 @@ import org.rhq.core.pc.plugin.PluginManager;
  * @author John Mazzitelli
  */
 public class PluginDependencyGraph {
+    private static final Log log = LogFactory.getLog(PluginDependencyGraph.class);
     /**
      * Keyed on plugin name with the values of their dependencies (which are other plugin names). The values must never
      * be null - if there are no dependencies, an empty list will exist.
@@ -224,8 +224,7 @@ public class PluginDependencyGraph {
              * however, there are certain rare circumstances when deployments will succeed even in the face of
              * missing dependencies; in these cases, we'll be a little lenient when parsing the dependency graph
              */
-            LogFactory.getLog(PluginManager.class).warn(
-                "Plugin [" + pluginName + "] does not exist in the dependency graph yet");
+            log.warn("Plugin [" + pluginName + "] does not exist in the dependency graph yet");
             return Collections.emptySet();
         }
 

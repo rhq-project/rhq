@@ -78,7 +78,7 @@ public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceC
         } catch (ConfigurationUpdateStillInProgressException updateException) {
             FacesContextUtility
                 .addMessage(FacesMessage.SEVERITY_WARN,
-                    "Configuration update is currently in progress. Please consider reviewing the changes before submitting your changes.");
+                    "Configuration update is currently in progress. Please consider reviewing the changes before submitting.");
             viewId = VIEW_ID;
         } catch (PermissionException e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, e.getLocalizedMessage());

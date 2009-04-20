@@ -159,10 +159,9 @@ public abstract class FacesContextUtility {
             //nothing's easy... Seam StatusMessage (which we're creating here) considers empty string the same
             //as null. If the message is then eventually shown on the page, the null detail is replaced with the
             //summary which would leave us with the summary displayed twice on the page.
-            //Because the detail therefore must not be empty, we must resort to an ugly hack here:
-
-            //FIXME &nbsp; doesn't work because it gets escaped on the page...
-            String detailToUse = Strings.isEmpty(detail) ? "&nbsp;" : detail;
+            //Because the detail therefore must not be empty, we must resort to an ugly hack here and put in a unicode
+            //for non-breakable space:
+            String detailToUse = Strings.isEmpty(detail) ? "\u00a0" : detail;
             FacesMessages.instance().add(toSeverity(severity), null, null, summary, detailToUse);
         } else {
             getFacesContext().addMessage(null, new FacesMessage(severity, summary, (detail != null) ? detail : ""));

@@ -33,12 +33,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.InventoryManager;
@@ -281,7 +283,7 @@ public class StandaloneContainer {
             System.out.println(aReport);
             break;
         case AVAIL:
-            avail();
+            avail(tokens);
             break;
         case DISCOVER:
             discover(tokens);
@@ -393,10 +395,19 @@ public class StandaloneContainer {
      * Shows the list of availabilities known so far
      * for resources that have been discovered
      */
-    private void avail() {
+    private void avail(String[] tokens) {
         Set<Resource> resources = getResources();
+
+        int id = 0;
+        if (tokens.length>1) {
+            id = Integer.valueOf(tokens[1]);
+        }
+
         for (Resource res : resources) {
-            System.out.println(inventoryManager.getCurrentAvailability(res));
+            if (id==0 || (id != 0 && res.getId()==id)) {
+                Availability availability = inventoryManager.getCurrentAvailability(res);
+                System.out.println(res.getName() + "( " + res.getId() + " ):" + availability.getAvailabilityType());
+            }
         }
     }
 
@@ -406,11 +417,17 @@ public class StandaloneContainer {
      */
     private Set<Resource> getResources() {
 
-        Set<Resource> res = new HashSet<Resource>();
-        res.add(platform);
-        res.addAll(platform.getChildResources());
+        Set<Resource> resources = new HashSet<Resource>();
 
-        return res;
+        Stack<Resource> stack = new Stack<Resource>();
+        stack.push(platform);
+        while (!stack.isEmpty()) {
+            Resource r = stack.pop();
+            resources.add(r);
+            stack.addAll(r.getChildResources());
+        }
+
+        return resources;
     }
 
     /**
@@ -481,6 +498,7 @@ public class StandaloneContainer {
      */
     private void discover(String[] tokens) {
 
+        Set<Resource> existing = getResources();
         InventoryReport report;
         String what = tokens[1];
         if (what.startsWith("s"))
@@ -493,8 +511,10 @@ public class StandaloneContainer {
         }
 
         System.out.println("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
-        System.out.println(report.getAddedRoots());
-        System.out.println(platform.getChildResources());
+        // Print the just discovered resources.
+        Set<Resource> newOnes = getResources();
+        newOnes.removeAll(existing);
+        System.out.println(newOnes);
     }
 
     private void measure(String[] tokens) {
@@ -543,7 +563,7 @@ public class StandaloneContainer {
      */
     private enum Command {
         ASCAN("as", "", 0, "Triggers an availability scan"), //
-        AVAIL("a", "", 0, "Shows an availability report"), //
+        AVAIL("a", " ( id )", 0, "Shows an availability report. If id is given, only shows availability for resource with id id"), //
         DISCOVER("disc", " s | i", 1, "Triggers a discovery scan"), //
         //      EVENT("e", "", 0,  "Pull events"), // TODO needs to be defined
         FIND("find", "r | t  | rt <name>", 2, "Searches a (r)esource, resource (t)ype or resources of (rt)ype. Use * as wildcard"),

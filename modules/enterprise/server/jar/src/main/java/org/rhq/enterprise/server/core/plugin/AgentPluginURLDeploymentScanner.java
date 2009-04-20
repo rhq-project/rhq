@@ -245,7 +245,8 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
                     pluginsToDelete.add(name);
                     log.warn("The database knows of a plugin named [" + name + "] with path [" + path
                         + "] but the content is missing. This server does not have this plugin in ["
-                        + this.pluginDirectory + "] so the database cannot be updated with the content.");
+                        + this.pluginDirectory + "] so the database cannot be updated with the content."
+                        + " This plugin must be installed to manage existing inventory for its resource types.");
                 }
             }
 
@@ -256,7 +257,7 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
                         tm.begin();
                         DataSource ds = LookupUtil.getDataSource();
                         conn = ds.getConnection();
-                        ps = conn.prepareStatement("DELETE " + Plugin.TABLE_NAME + " WHERE NAME = ?");
+                        ps = conn.prepareStatement("DELETE FROM " + Plugin.TABLE_NAME + " WHERE NAME = ?");
                         ps.setString(1, pluginName);
                         int updateResults = ps.executeUpdate();
                         if (updateResults == 1) {

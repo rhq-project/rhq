@@ -64,31 +64,24 @@ public class ApplicationServerDiscoveryComponent
         log.trace("Discovering " + resourceDiscoveryContext.getResourceType().getName() + " Resources..." );
 
         Set<DiscoveredResourceDetails> servers = new HashSet<DiscoveredResourceDetails>();
-        // Not just the one that it finds when in the embedded console
+
         ProfileService profileService = ProfileServiceFactory.getProfileService();
-
         Collection<ProfileKey> profileKeys = profileService.getActiveProfileKeys();
-        if (profileKeys == null || profileKeys.isEmpty()) {
-        	log.error("No active profiles found.");
-        } else {
-            log.debug("Found the following active profiles: " + profileKeys);
-        }
-
+        if (profileKeys.isEmpty())
+        	throw new IllegalStateException("No active profiles found.");
+        log.trace("Found the following active profiles: " + profileKeys);
         ProfileServiceFactory.refreshCurrentProfileView();
 
         ManagedComponent serverConfigComponent = ManagedComponentUtils.getSingletonManagedComponent(
                 new ComponentType("MCBean", "ServerConfig"));
-        String serverName = ManagedComponentUtils.getSimplePropertyStringValue(serverConfigComponent, "serverName");
+        String serverName = (String)ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent, "serverName");
 
-        // TODO: We'll need to get the JBoss AS part from the Profile Service too, in order to generate EAP versus AS at
-        //       the appropriate times.
+        // TODO: Figure out if the instance is AS or EAP, and reflect that in the Resource name.
         String resourceName = "JBoss AS 5 (" + serverName + ")";
-       
-        // TODO: Get the real config set dir from the Profile Service (not important for Embedded, but essential for
-        //       Enterprise).
-        String resourceKey = "/opt/jboss/server/default";
 
-        String version = ManagedComponentUtils.getSimplePropertyStringValue(serverConfigComponent, "specificationVersion");
+        String resourceKey = (String)ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent, "serverHomeDir");
+
+        String version = (String)ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent, "specificationVersion");
 
         Configuration pluginConfig = resourceDiscoveryContext.getDefaultPluginConfiguration();
         pluginConfig.put(new PropertySimple(ApplicationServerComponent.SERVER_NAME_PROPERTY, serverName));

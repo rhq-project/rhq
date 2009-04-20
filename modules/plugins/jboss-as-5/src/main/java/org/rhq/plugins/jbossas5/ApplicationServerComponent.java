@@ -23,9 +23,12 @@
 package org.rhq.plugins.jbossas5;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.net.URL;
 import java.net.MalformedURLException;
 
@@ -40,6 +43,7 @@ import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.DeploymentTemplateInfo;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.managed.api.ManagedComponent;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -53,6 +57,8 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
@@ -70,6 +76,7 @@ import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
+import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
  /**
  * ResourceComponent for a JBoss AS, 5.1.0.CR1 or later, Server.
@@ -80,17 +87,16 @@ import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
  */
 public class ApplicationServerComponent
         implements ResourceComponent, CreateChildResourceFacet, MeasurementFacet, ConfigurationFacet, ProgressListener
-{
-    private final Log log = LogFactory.getLog(this.getClass());
-
-    // Constants  --------------------------------------------
-
+{    
     static final String TEMPLATE_NAME_PROPERTY = "templateName";
     static final String RESOURCE_NAME_PROPERTY = "resourceName";
     static final String SERVER_NAME_PROPERTY = "serverName";
 
     private static final String MANAGED_PROPERTY_GROUP = "managedPropertyGroup";
-    private static final String CUSTOM_SERVER_NAME_TRAIT = "custom.serverName";
+
+    private static final Pattern METRIC_NAME_PATTERN = Pattern.compile("(.*)\\|(.*)\\|(.*)\\|(.*)");
+
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private ResourceContext resourceContext;
     private File deployDirectory;
@@ -114,15 +120,42 @@ public class ApplicationServerComponent
     // ------------ MeasurementFacet Implementation ------------
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests)
-            throws NoSuchDeploymentException
     {
         for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
-            if (metricName.equals(CUSTOM_SERVER_NAME_TRAIT)) {
-                Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-                String serverName = pluginConfig.getSimple(SERVER_NAME_PROPERTY).getStringValue();
-                MeasurementDataTrait trait = new MeasurementDataTrait(request, serverName);
-                report.addData(trait);
+            try
+            {
+                Matcher matcher = METRIC_NAME_PATTERN.matcher(metricName);
+                if (!matcher.matches()) {
+                    log.error("Metric name '" + metricName + "' does not match pattern '" + METRIC_NAME_PATTERN + "'.");
+                    continue;
+                }
+                String componentCategory = matcher.group(1);
+                String componentSubType = matcher.group(2);
+                String componentName = matcher.group(3);
+                String propertyName = matcher.group(4);
+                ComponentType componentType = new ComponentType(componentCategory, componentSubType);
+                ManagedComponent component;
+                if (componentName.equals("*")) {
+                    component = ManagedComponentUtils.getSingletonManagedComponent(componentType);
+                } else {
+                    component = ManagedComponentUtils.getManagedComponent(componentType, componentName);
+                }
+                Serializable value = ManagedComponentUtils.getSimplePropertyValue(component, propertyName);
+                if (value == null) {
+                    log.debug("Null value returned for metric '" + metricName + "'.");
+                    continue;
+                }
+                if (request.getDataType() == DataType.MEASUREMENT) {
+                    Number number = (Number)value;
+                    report.addData(new MeasurementDataNumeric(request, number.doubleValue()));
+                } else if (request.getDataType() == DataType.TRAIT) {
+                    report.addData(new MeasurementDataTrait(request, value.toString()));
+                }
+            }
+            catch (RuntimeException e)
+            {
+                log.error("Failed to obtain metric '" + metricName + "'.", e);
             }
         }
     }

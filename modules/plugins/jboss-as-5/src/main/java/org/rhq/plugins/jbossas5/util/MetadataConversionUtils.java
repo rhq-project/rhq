@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.EnumSet;
+import java.util.HashSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -61,6 +62,7 @@ import org.jboss.metatype.api.types.MapCompositeMetaType;
 import org.jboss.metatype.api.types.MetaType;
 import org.jboss.metatype.api.types.PropertiesMetaType;
 import org.jboss.metatype.api.types.TableMetaType;
+import org.jboss.metatype.api.types.SimpleMetaType;
 import org.jboss.metatype.api.values.ArrayValue;
 import org.jboss.metatype.api.values.CollectionValue;
 import org.jboss.metatype.api.values.GenericValue;
@@ -271,34 +273,6 @@ public class MetadataConversionUtils {
         return configDef;
     }
 
-    private static Set<MeasurementDefinition> convertMetricPropertiesToMeasurementDefinitions(Map<String, ManagedProperty> props) {
-        Set<MeasurementDefinition> measurementDefs = new TreeSet(new MeasurementDefinitionComparator());
-        if (props == null)
-            return measurementDefs;
-        for(ManagedProperty prop : props.values()) {            
-            if (prop.hasViewUse(ViewUse.RUNTIME) || prop.hasViewUse(ViewUse.STATISTIC)) {
-                if (prop.getMetaType().isSimple())
-                    addMeasurementDefinitionForSimpleManagedProperty(prop);
-                else if (prop.getMetaType().isComposite())
-                    addMeasurementDefinitionsForCompositeManagedProperty(prop, measurementDefs);
-            }
-        }
-        return measurementDefs;
-    }
-
-    private static void addMeasurementDefinitionForSimpleManagedProperty(ManagedProperty prop)
-    {
-        DataType dataType = (prop.hasViewUse(ViewUse.STATISTIC)) ? DataType.MEASUREMENT : DataType.TRAIT;
-        int defaultInterval = (prop.hasViewUse(ViewUse.STATISTIC)) ? 60000 : 600000;
-        DisplayType displayType = (prop.hasViewUse(ViewUse.STATISTIC)) ? DisplayType.DETAIL : DisplayType.SUMMARY;
-        MeasurementDefinition measurementDef = new MeasurementDefinition(prop.getName(),
-                    MeasurementCategory.PERFORMANCE, MeasurementUnits.NONE, dataType, true, defaultInterval,
-                    displayType);
-        measurementDef.setDisplayName(StringUtils.deCamelCase(prop.getName()));
-        String desc = (!prop.getName().equals(prop.getDescription())) ? prop.getDescription() : null;
-        measurementDef.setDescription(desc);
-    }
-
     private static Set<MeasurementDefinition> convertMetricPropertiesToMeasurementDefinitions(ManagedDeployment deployment)
     {
        return convertMetricPropertiesToMeasurementDefinitions(deployment.getProperties());
@@ -309,13 +283,62 @@ public class MetadataConversionUtils {
        return convertMetricPropertiesToMeasurementDefinitions(component.getProperties());
     }
 
-    private static void addMeasurementDefinitionsForCompositeManagedProperty(ManagedProperty property,
-                                                                             Set<MeasurementDefinition> measurementDefs) {
+    private static Set<MeasurementDefinition> convertMetricPropertiesToMeasurementDefinitions(Map<String, ManagedProperty> props) {
+        Set<MeasurementDefinition> measurementDefs = new TreeSet(new MeasurementDefinitionComparator());
+        if (props == null)
+            return measurementDefs;
+        for(ManagedProperty prop : props.values()) {            
+            if (prop.hasViewUse(ViewUse.RUNTIME) || prop.hasViewUse(ViewUse.STATISTIC)) {
+                MetaType metaType = prop.getMetaType();
+                if (metaType.isSimple() || metaType.isEnum())
+                {
+                    MeasurementDefinition measurementDef = getMeasurementDefinitionForSimpleManagedProperty(prop);
+                    measurementDefs.add(measurementDef);
+                }
+                else if (prop.getMetaType().isComposite())
+                {
+                    Set<MeasurementDefinition> compositeMeasurementDefs =
+                            getMeasurementDefinitionsForCompositeManagedProperty(prop);
+                    measurementDefs.addAll(compositeMeasurementDefs);
+                }
+                else
+                {
+                    LOG.warn("Skipping property [" + prop + "] with unsupported type [" + metaType + "].");
+                }
+            }
+        }
+        return measurementDefs;
+    }
+
+    private static MeasurementDefinition getMeasurementDefinitionForSimpleManagedProperty(ManagedProperty prop)
+    {
+        MetaType metaType = prop.getMetaType();
+        DataType dataType;
+        if (metaType.isSimple()) {
+            SimpleMetaType simpleMetaType = (SimpleMetaType)metaType;
+            dataType = (prop.hasViewUse(ViewUse.STATISTIC) && MetaTypeUtils.isNumeric(simpleMetaType)) ?
+                    DataType.MEASUREMENT : DataType.TRAIT;
+        } else { // metaType.isEnum()
+            // Enum values are always Strings.
+            dataType = DataType.TRAIT;
+        }        
+        int defaultInterval = (dataType == DataType.MEASUREMENT) ? 60000 : 600000;
+        DisplayType displayType = (dataType == DataType.MEASUREMENT) ? DisplayType.DETAIL : DisplayType.SUMMARY;
+        MeasurementDefinition measurementDef = new MeasurementDefinition(prop.getName(),
+                MeasurementCategory.PERFORMANCE, MeasurementUnits.NONE, dataType, true, defaultInterval, displayType);
+        measurementDef.setDisplayName(StringUtils.deCamelCase(prop.getName()));
+        String desc = (!prop.getName().equals(prop.getDescription())) ? prop.getDescription() : null;
+        measurementDef.setDescription(desc);
+        return measurementDef;
+    }
+
+    private static Set<MeasurementDefinition> getMeasurementDefinitionsForCompositeManagedProperty(ManagedProperty property) {
+        Set<MeasurementDefinition> measurementDefs = new HashSet();
         CompositeMetaType compositeMetaType = (CompositeMetaType)property.getMetaType();
         Set<String> itemNames = compositeMetaType.keySet();
         for (String itemName : itemNames) {
             MetaType itemType = compositeMetaType.getType(itemName);
-            if (itemType.isSimple()) {
+            if (itemType.isSimple() || itemType.isEnum()) {
                 String metricName = property.getName() + "." + itemName;
                 DataType dataType = (itemType.getClassName().equals(String.class.getName())) ?
                         DataType.TRAIT : DataType.MEASUREMENT;
@@ -329,6 +352,7 @@ public class MetadataConversionUtils {
                         + itemType + "] - skipping..." );
             }
          }
+        return measurementDefs;
     }
 
     private static ConfigurationDefinition convertConfigurationPropertiesToConfigurationDefinition(String configName, Map<String, ManagedProperty> managedProps)

@@ -22,6 +22,7 @@ import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.types.MetaType;
 import org.jboss.metatype.api.types.MapCompositeMetaType;
 import org.jboss.metatype.api.types.CompositeMetaType;
+import org.jboss.metatype.api.types.SimpleMetaType;
 
 /**
  * @author Mark Spritzler
@@ -58,6 +59,23 @@ public class MetaTypeUtils
             return true;
         else
             return false;
+    }
+
+    public static boolean isNumeric(SimpleMetaType simpleMetaType) {
+        return (simpleMetaType.equals(SimpleMetaType.BIGDECIMAL) ||
+                    simpleMetaType.equals(SimpleMetaType.BIGINTEGER) ||
+                    simpleMetaType.equals(SimpleMetaType.BYTE) ||
+                    simpleMetaType.equals(SimpleMetaType.BYTE_PRIMITIVE) ||
+                    simpleMetaType.equals(SimpleMetaType.DOUBLE) ||
+                    simpleMetaType.equals(SimpleMetaType.DOUBLE_PRIMITIVE) ||
+                    simpleMetaType.equals(SimpleMetaType.FLOAT) ||
+                    simpleMetaType.equals(SimpleMetaType.FLOAT_PRIMITIVE) ||
+                    simpleMetaType.equals(SimpleMetaType.INTEGER) ||
+                    simpleMetaType.equals(SimpleMetaType.INTEGER_PRIMITIVE) ||
+                    simpleMetaType.equals(SimpleMetaType.LONG) ||
+                    simpleMetaType.equals(SimpleMetaType.LONG_PRIMITIVE) ||
+                    simpleMetaType.equals(SimpleMetaType.SHORT) ||
+                    simpleMetaType.equals(SimpleMetaType.SHORT_PRIMITIVE));
     }
 
     private MetaTypeUtils()

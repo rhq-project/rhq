@@ -52,8 +52,6 @@ public class PropertySimpleToSimpleValueAdapter extends AbstractPropertySimpleAd
 
     public MetaValue convertToMetaValue(PropertySimple propSimple, PropertyDefinitionSimple propDefSimple, MetaType metaType)
     {
-        if (propSimple.getStringValue() == null)
-            return null;
         SimpleValue simpleValue = new SimpleValueSupport((SimpleMetaType) metaType, null);
         populateMetaValueFromProperty(propSimple, simpleValue, propDefSimple);                    
         return simpleValue;

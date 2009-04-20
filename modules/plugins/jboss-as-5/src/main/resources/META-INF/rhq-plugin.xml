@@ -12,12 +12,22 @@
                description="Flush the connections in the pool"/>
 
     <operation name="listFormattedSubPoolStatistics" displayName="List Formatted Sub Pool Statistics"
-               description="Obtain a formatted statistics report">
+               description="Obtain a formatted sub pool statistics report">
         <parameters>
-            <c:simple-property required="false" name="formatClassName" description="The StatisticsFormatter class name"/>
+            <c:simple-property required="false" name="formatClassName"
+                               defaultValue="org.jboss.resource.statistic.pool.JBossDefaultSubPoolStatisticFormatter">
+                <c:description>
+                    The fully qualified name of the Java class to use to format the the sub pool statistics. The default
+                    is "org.jboss.resource.statistic.pool.JBossDefaultSubPoolStatisticFormatter".
+                </c:description>
+            </c:simple-property>                                                              
         </parameters>
         <results>
-            <c:simple-property name="result" type="longString"/>
+            <c:simple-property name="result" type="longString">
+                <c:description>
+                    A formatted sub pool statistics report.
+                </c:description>
+            </c:simple-property>
         </results>
     </operation>
 
@@ -53,10 +63,12 @@
 <!ENTITY datasourceAndConnectionFactoryConnectionResourceConfigProps '
     <c:simple-property name="min-pool-size"
                        displayName="Minimum Pool Size"
-                       description="Indicates the minimum number of connections the pool should hold. The default is 0."
                        type="integer"
                        required="false"
                        defaultValue="0">
+        <c:description>
+            Indicates the minimum number of connections the pool should hold. The default is 0.
+        </c:description>
         <c:constraint>
             <c:integer-constraint minimum="0"/>
         </c:constraint>
@@ -64,10 +76,12 @@
 
     <c:simple-property name="max-pool-size"
                        displayName="Maximum Pool Size"
-                       description="Indicates the maximum number of connections the pool should hold. The default is 10."
                        type="integer"
                        required="false"
                        defaultValue="10">
+        <c:description>
+            Indicates the maximum number of connections the pool should hold. The default is 10.
+        </c:description>
         <c:constraint>
             <c:integer-constraint minimum="0"/>
         </c:constraint>
@@ -93,32 +107,6 @@
                        type="password"
                        activationPolicy="immediate"
                        required="false"/>
-
-    <c:simple-property name="min-pool-size"
-                       displayName="Minimum Pool Size"
-                       description="Indicates the minimum number of connections the pool should hold."
-                       type="integer"
-                       activationPolicy="immediate"
-                       required="false">
-        <c:constraint>
-            <c:integer-constraint minimum="0"/>
-        </c:constraint>
-        <c:defaultValueDescription>If nothing is specified, the default of 0 will be used.
-        </c:defaultValueDescription>
-    </c:simple-property>
-
-    <c:simple-property name="max-pool-size"
-                       displayName="Maximum Pool Size"
-                       description="Indicates the maximum number of connections the pool should hold."
-                       activationPolicy="immediate"
-                       type="integer"
-                       required="false">
-        <c:constraint>
-            <c:integer-constraint minimum="0"/>
-        </c:constraint>
-        <c:defaultValueDescription>If nothing is specified, the default of 20 will be used.
-        </c:defaultValueDescription>
-    </c:simple-property>
 '>
 
 <!ENTITY datasourceAndConnectionFactoryAdvancedResourceConfigProps '

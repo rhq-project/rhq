@@ -515,6 +515,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             // Sync our local resource up with the one now in server inventory. Treat this like a newlyCommittedResource
             resource.setId(mergeResourceResponse.getResourceId());
+            resource.setMtime(0); // this will indicate that this resource is "dirty" and needs to be synced/merged later
             Set newResources = new LinkedHashSet<Resource>();
             newResources.add(resource);
             postProcessNewlyCommittedResources(newResources);

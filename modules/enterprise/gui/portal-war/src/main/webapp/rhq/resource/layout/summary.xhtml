@@ -195,10 +195,12 @@ id - the id of the Resource being accessed
                     <h:outputText value="#{ResourceUIBean.parent.resourceType.name} "
                                   rendered="#{ResourceUIBean.parent ne null}"/>
                     <h:outputLink value="/rhq/resource/inventory/view.xhtml"
-                                  rendered="#{ResourceUIBean.parent != null}">
+                                  rendered="#{ResourceUIBean.canShowParent and ResourceUIBean.parent ne null}">
                         <f:param name="id" value="#{ResourceUIBean.parent.id}"/>
                         '#{ResourceUIBean.parent.name}'
                     </h:outputLink>
+                    <h:outputText value="#{ResourceUIBean.parent.name} "
+                                  rendered="#{!ResourceUIBean.canShowParent and ResourceUIBean.parent ne null}"/>
                     <h:outputText value="none" style="font-style: italic"
                                   rendered="#{ResourceUIBean.parent == null}"/>
                 </h:panelGroup>

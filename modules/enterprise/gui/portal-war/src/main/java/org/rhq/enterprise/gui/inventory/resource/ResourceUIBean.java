@@ -64,6 +64,7 @@ public class ResourceUIBean {
     private ResourceError invalidPluginConfigurationError;
     private ResourceAvailabilitySummary availabilitySummary;
     private AvailabilityType availabilityType;
+    private boolean canShowParent = false;
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
@@ -95,6 +96,10 @@ public class ResourceUIBean {
             .getId());
         this.permissions = new ResourcePermission(resourcePerms);
         this.facets = this.resourceTypeManager.getResourceFacets(getResourceType().getId());
+
+        //parent can be viewed by user only if he is allowed to see it
+        if (parent != null)
+            this.canShowParent = this.authorizationManager.canViewResource(subject, parent.getId());
 
         List<ResourceError> errors = this.resourceManager.getResourceErrors(subject, this.resource.getId(),
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
@@ -188,6 +193,10 @@ public class ResourceUIBean {
                 getId());
         }
         return availabilitySummary;
+    }
+
+    public boolean isCanShowParent() {
+        return canShowParent;
     }
 
 }

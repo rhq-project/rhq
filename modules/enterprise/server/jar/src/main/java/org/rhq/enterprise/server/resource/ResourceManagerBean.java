@@ -2016,7 +2016,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 if (parentSubCategoryId != null) {
                     ResourceSubCategory flyWeightParentSubCategory = getFlyWeight(parentSubCategoryId,
                         parentSubCategoryName, flyWeightSubCategoryCache, ResourceSubCategory.class);
-                    flyWeightParentSubCategory.setParentSubCategory(flyWeightParentSubCategory);
+                    flyWeightSubCategory.setParentSubCategory(flyWeightParentSubCategory);
                 }
             }
 

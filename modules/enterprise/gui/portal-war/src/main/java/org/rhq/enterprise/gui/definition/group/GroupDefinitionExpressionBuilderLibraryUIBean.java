@@ -162,6 +162,7 @@ public class GroupDefinitionExpressionBuilderLibraryUIBean {
         // setup the Plugin drop-down
         List<String> pluginNames = new ArrayList<String>();
         for (Plugin plugin : LookupUtil.getResourceMetadataManager().getPlugins()) {
+            // TODO: do we want to do this only when plugin.isEnabled() is true?
             pluginNames.add(plugin.getName());
         }
         Collections.sort(pluginNames);

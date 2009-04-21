@@ -260,7 +260,12 @@ public class CoreServerServiceImpl implements CoreServerService {
         try {
             em = LookupUtil.getEntityManager();
             Query q = em.createNamedQuery(Plugin.QUERY_FIND_ALL);
-            plugins.addAll(q.getResultList());
+            List<Plugin> resultList = q.getResultList();
+            for (Plugin potentialPlugin : resultList) {
+                if (potentialPlugin.isEnabled()) {
+                    plugins.add(potentialPlugin);
+                }
+            }
         } catch (Exception e) {
             log.warn("Failed to get the list of latest plugins", e);
             throw new WrappedRemotingException(e);

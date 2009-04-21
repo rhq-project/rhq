@@ -117,6 +117,7 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
         List<String> pluginNames = new ArrayList<String>();
 
         for (Plugin plugin : plugins) {
+            // TODO: do we want to do this only when plugin.isEnabled() is true?
             pluginNames.add(plugin.getName());
         }
 

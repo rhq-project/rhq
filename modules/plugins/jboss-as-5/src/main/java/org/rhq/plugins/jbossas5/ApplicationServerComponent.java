@@ -125,6 +125,8 @@ public class ApplicationServerComponent
             String metricName = request.getName();
             try
             {
+                // Metric names are expected to have the following syntax:
+                // "<componentType>|<componentSubType>|<componentName>|<propertyName>"
                 Matcher matcher = METRIC_NAME_PATTERN.matcher(metricName);
                 if (!matcher.matches()) {
                     log.error("Metric name '" + metricName + "' does not match pattern '" + METRIC_NAME_PATTERN + "'.");

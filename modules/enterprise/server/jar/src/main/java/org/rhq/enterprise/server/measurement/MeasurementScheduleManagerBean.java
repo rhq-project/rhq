@@ -34,6 +34,8 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -120,6 +122,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     @EJB
     @IgnoreDependency
     private ResourceTypeManagerLocal resourceTypeManager;
+
+    @EJB
+    private MeasurementScheduleManagerLocal measurementScheduleManager;
 
     @javax.annotation.Resource
     private SessionContext ctx;
@@ -925,7 +930,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      * @param allSchedules   The set to which the schedules should be added
      * @param getDescendents If true, schedules for all descendent resources will also be loaded
      */
-    @SuppressWarnings("unchecked")
     private void getSchedulesForResourceAndItsDescendants(Set<Integer> resourceIds,
         Set<ResourceMeasurementScheduleRequest> allSchedules, boolean getDescendents) {
 
@@ -940,35 +944,12 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 Integer[] batchIdArray = ArrayUtils.copyOfRange(resourceIdArray, batchIndex, batchIndex + 1000);
                 List<Integer> batchIds = Arrays.asList(batchIdArray);
 
-                insertSchedulesFor(batchIds);
-
-                // use reporting query to ensure no additional loads except what we want, and no attached objects
-                Query selectQuery = entityManager
-                    .createNamedQuery(MeasurementSchedule.REPORTING_RESOURCE_MEASUREMENT_SCHEDULE_REQUEST);
-                selectQuery.setParameter("resourceIds", batchIds);
-                List<Object[]> rawResults = selectQuery.getResultList();
-
-                Map<Integer, ResourceMeasurementScheduleRequest> scheduleRequestMap = new HashMap<Integer, ResourceMeasurementScheduleRequest>();
-                for (Object[] rawResult : rawResults) {
-                    Integer resourceId = (Integer) rawResult[0];
-                    Integer scheduleId = (Integer) rawResult[1];
-                    String definitionName = (String) rawResult[2];
-                    Long interval = (Long) rawResult[3];
-                    Boolean enabled = (Boolean) rawResult[4];
-                    DataType dataType = (DataType) rawResult[5];
-                    NumericType rawNumericType = (NumericType) rawResult[6];
-
-                    ResourceMeasurementScheduleRequest scheduleRequest = scheduleRequestMap.get(resourceId);
-                    if (scheduleRequest == null) {
-                        scheduleRequest = new ResourceMeasurementScheduleRequest(resourceId);
-                        scheduleRequestMap.put(resourceId, scheduleRequest);
-                        allSchedules.add(scheduleRequest);
-                    }
-
-                    MeasurementScheduleRequest requestData = new MeasurementScheduleRequest(scheduleId, definitionName,
-                        interval, enabled, dataType, rawNumericType);
-                    scheduleRequest.addMeasurementScheduleRequest(requestData);
-                }
+                /* 
+                 * need to use a native query solution for both the insertion and returning the results because if we
+                 * go through Hibernate to return the results it will not see the effects of the insert statement
+                 */
+                measurementScheduleManager.insertSchedulesFor(batchIds);
+                measurementScheduleManager.returnSchedulesFor(batchIds, allSchedules);
 
                 if (getDescendents) {
                     // recursively get all the default schedules for all children of the resource
@@ -983,7 +964,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return;
     }
 
-    private int insertSchedulesFor(List<Integer> batchIds) throws Exception {
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public int insertSchedulesFor(List<Integer> batchIds) throws Exception {
         /* 
          * JM: (April 15th, 2009)
          * 
@@ -1020,15 +1002,16 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             conn = dataSource.getConnection();
             DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
 
-            String queryString = null;
+            String insertQueryString = null;
             if (dbType instanceof PostgresqlDatabaseType) {
-                queryString = MeasurementSchedule.NATIVE_QUERY_INSERT_SCHEDULES_POSTGRES;
+                insertQueryString = MeasurementSchedule.NATIVE_QUERY_INSERT_SCHEDULES_POSTGRES;
             } else {
-                queryString = MeasurementSchedule.NATIVE_QUERY_INSERT_SCHEDULES_ORACLE;
+                insertQueryString = MeasurementSchedule.NATIVE_QUERY_INSERT_SCHEDULES_ORACLE;
             }
 
-            queryString = JDBCUtil.transformQueryForMultipleInParameters(queryString, "@@RESOURCES@@", batchIds.size());
-            insertStatement = conn.prepareStatement(queryString);
+            insertQueryString = JDBCUtil.transformQueryForMultipleInParameters(insertQueryString, "@@RESOURCES@@",
+                batchIds.size());
+            insertStatement = conn.prepareStatement(insertQueryString);
 
             int[] resourceIds = new int[batchIds.size()];
             for (int i = 0; i < resourceIds.length; i++) {
@@ -1036,6 +1019,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             }
             JDBCUtil.bindNTimes(insertStatement, resourceIds, 1);
 
+            // first create whatever schedules may be needed
             created = insertStatement.executeUpdate();
             if (log.isDebugEnabled()) {
                 log.debug("Batch created [" + created + "] default measurement schedules for resource batch ["
@@ -1045,6 +1029,67 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             if (insertStatement != null) {
                 try {
                     insertStatement.close();
+                } catch (Exception e) {
+                }
+            }
+
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (Exception e) {
+                }
+            }
+        }
+        return created;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public int returnSchedulesFor(List<Integer> batchIds, Set<ResourceMeasurementScheduleRequest> allSchedules)
+        throws Exception {
+        Connection conn = null;
+        PreparedStatement resultsStatement = null;
+
+        int created = -1;
+        try {
+            conn = dataSource.getConnection();
+
+            String resultsQueryString = MeasurementSchedule.NATIVE_QUERY_REPORTING_RESOURCE_MEASUREMENT_SCHEDULE_REQUEST;
+            resultsQueryString = JDBCUtil.transformQueryForMultipleInParameters(resultsQueryString, "@@RESOURCES@@",
+                batchIds.size());
+            resultsStatement = conn.prepareStatement(resultsQueryString);
+
+            int[] resourceIds = new int[batchIds.size()];
+            for (int i = 0; i < resourceIds.length; i++) {
+                resourceIds[i] = batchIds.get(i);
+            }
+            JDBCUtil.bindNTimes(resultsStatement, resourceIds, 1);
+
+            Map<Integer, ResourceMeasurementScheduleRequest> scheduleRequestMap = new HashMap<Integer, ResourceMeasurementScheduleRequest>();
+            ResultSet results = resultsStatement.executeQuery();
+            while (results.next()) {
+                Integer resourceId = (Integer) results.getInt(1);
+                Integer scheduleId = (Integer) results.getInt(2);
+                String definitionName = (String) results.getString(3);
+                Long interval = (Long) results.getLong(4);
+                Boolean enabled = (Boolean) results.getBoolean(5);
+                DataType dataType = DataType.values()[results.getInt(6)];
+                NumericType rawNumericType = NumericType.values()[results.getInt(7)];
+
+                ResourceMeasurementScheduleRequest scheduleRequest = scheduleRequestMap.get(resourceId);
+                if (scheduleRequest == null) {
+                    scheduleRequest = new ResourceMeasurementScheduleRequest(resourceId);
+                    scheduleRequestMap.put(resourceId, scheduleRequest);
+                    allSchedules.add(scheduleRequest);
+                }
+
+                MeasurementScheduleRequest requestData = new MeasurementScheduleRequest(scheduleId, definitionName,
+                    interval, enabled, dataType, rawNumericType);
+                scheduleRequest.addMeasurementScheduleRequest(requestData);
+            }
+        } finally {
+            if (resultsStatement != null) {
+                try {
+                    resultsStatement.close();
                 } catch (Exception e) {
                 }
             }

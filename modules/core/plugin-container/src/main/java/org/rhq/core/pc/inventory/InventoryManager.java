@@ -1513,8 +1513,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 newlyCommittedResourceIds.add(resource.getId());
             }
         }
-        configuration.getServerServices().getDiscoveryServerService().postProcessNewlyCommittedResources(
-            newlyCommittedResourceIds);
+        Set<ResourceMeasurementScheduleRequest> schedules = configuration.getServerServices()
+            .getDiscoveryServerService().postProcessNewlyCommittedResources(newlyCommittedResourceIds);
+        installSchedules(schedules);
     }
 
     private void installSchedules(Set<ResourceMeasurementScheduleRequest> scheduleRequests) {

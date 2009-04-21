@@ -32,6 +32,7 @@ import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
+import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -184,7 +185,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         return pojoResource;
     }
 
-    public void postProcessNewlyCommittedResources(Set<Integer> resourceIds) {
+    public Set<ResourceMeasurementScheduleRequest> postProcessNewlyCommittedResources(Set<Integer> resourceIds) {
         if (log.isDebugEnabled()) {
             log.debug("Post-processing " + resourceIds.size() + "newly committed resources");
             log.debug("Ids were: " + resourceIds);
@@ -197,7 +198,8 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         long start = System.currentTimeMillis();
 
         // do this in one fell swoop, instead of one resource at a time
-        scheduleManager.getSchedulesForResourceAndItsDescendants(resourceIds, false);
+        Set<ResourceMeasurementScheduleRequest> results = scheduleManager.getSchedulesForResourceAndItsDescendants(
+            resourceIds, false);
 
         long time = (System.currentTimeMillis() - start);
 
@@ -237,5 +239,6 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
                 + resourceIds.size() + '/' + time);
         }
 
+        return results;
     }
 }

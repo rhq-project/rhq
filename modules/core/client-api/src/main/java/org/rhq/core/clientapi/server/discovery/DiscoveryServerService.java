@@ -32,6 +32,7 @@ import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
+import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -141,8 +142,10 @@ public interface DiscoveryServerService {
      *   
      * @param  resourceIds a collection of{@link Resource} ids that have been newly committed and successfully
      *                     synchronized on the agent
+     *
+     * @return the current list of measurement schedules that should be installed agent side for each resource contained
+     *         within the passed set
      */
-    @Asynchronous(guaranteedDelivery = true)
     @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_SYNC)
-    void postProcessNewlyCommittedResources(Set<Integer> resourceIds);
+    Set<ResourceMeasurementScheduleRequest> postProcessNewlyCommittedResources(Set<Integer> resourceIds);
 }

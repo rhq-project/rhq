@@ -340,4 +340,9 @@ public interface MeasurementScheduleManagerLocal {
      * @param newDefinition The {@link MeasurementDefinition} where we derive the schedules from
      */
     public void createSchedulesForExistingResources(ResourceType type, MeasurementDefinition newDefinition);
+
+    public int insertSchedulesFor(List<Integer> batchIds) throws Exception;
+
+    public int returnSchedulesFor(List<Integer> batchIds, Set<ResourceMeasurementScheduleRequest> allSchedules)
+        throws Exception;
 }

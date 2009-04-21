@@ -422,7 +422,7 @@ input:disabled{
 /* ------------------------------ List of Maps Styles ------------------------- */
 
 .property-map-summary-table {
-   width: 100%;               
+   width: 95%;
    margin: 4px 0px 6px 6px ;
    border-collapse: collapse;
    background-color: white;

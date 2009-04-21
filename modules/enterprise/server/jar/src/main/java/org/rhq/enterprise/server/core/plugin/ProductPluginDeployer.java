@@ -551,7 +551,12 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
             for (String dependencyPluginName : dependencyGraph.getPluginDependencies(pluginName)) {
                 LatchedPluginDeploymentService dependencyService = getServiceIfExists(dependencyPluginName,
                     latchedDependencyMap);
-                service.addDependency(dependencyService);
+                if (null != dependencyService) {
+                    service.addDependency(dependencyService);
+                } else {
+                    log.warn("Ignoring " + pluginName + " dependency on missing dependency plugin: "
+                        + dependencyPluginName);
+                }
             }
         }
 
@@ -570,12 +575,15 @@ public class ProductPluginDeployer extends SubDeployerSupport implements Product
 
     private LatchedPluginDeploymentService getServiceIfExists(String pluginName,
         Map<String, LatchedPluginDeploymentService> latchedServiceMap) {
+
         LatchedPluginDeploymentService result = latchedServiceMap.get(pluginName);
         if (result == null) {
             DeploymentInfo deploymentInfo = this.deploymentInfos.get(pluginName);
             PluginDescriptor descriptor = this.pluginDescriptors.get(pluginName);
-            result = new LatchedPluginDeploymentService(pluginName, deploymentInfo, descriptor);
-            latchedServiceMap.put(pluginName, result);
+            if ((null != deploymentInfo) && (null != descriptor)) {
+                result = new LatchedPluginDeploymentService(pluginName, deploymentInfo, descriptor);
+                latchedServiceMap.put(pluginName, result);
+            }
         }
         return result;
     }

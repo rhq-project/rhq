@@ -224,7 +224,8 @@ public class PluginDependencyGraph {
              * however, there are certain rare circumstances when deployments will succeed even in the face of
              * missing dependencies; in these cases, we'll be a little lenient when parsing the dependency graph
              */
-            log.warn("Plugin [" + pluginName + "] does not exist in the dependency graph yet");
+            log.warn("Plugin [" + pluginName + "] does not yet exist in the dependency graph to satisfy "
+                + dependingPlugins);
             return Collections.emptySet();
         }
 

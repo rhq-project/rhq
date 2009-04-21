@@ -45,6 +45,10 @@ import org.jboss.mx.util.ObjectNameFactory;
 
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.db.DatabaseType;
+import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.OracleDatabaseType;
+import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.util.MD5Generator;
 import org.rhq.core.util.jdbc.JDBCUtil;
@@ -73,6 +77,8 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
         .create("rhq:service=AgentPluginURLDeploymentScanner,type=DeploymentScanner,flavor=URL");
 
     private Log log = LogFactory.getLog(AgentPluginURLDeploymentScanner.class);
+
+    private DatabaseType dbType = null;
 
     /** The location where the user stores agent plugin files */
     private File pluginDirectory;
@@ -123,7 +129,8 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
             conn = ds.getConnection();
 
             // get all the plugins
-            ps = conn.prepareStatement("SELECT NAME, PATH, MD5, MTIME FROM " + Plugin.TABLE_NAME);
+            ps = conn.prepareStatement("SELECT NAME, PATH, MD5, MTIME FROM " + Plugin.TABLE_NAME + " WHERE ENABLED=?");
+            setEnabledFlag(conn, ps, 1, true);
             rs = ps.executeQuery();
             while (rs.next()) {
                 String name = rs.getString(1);
@@ -154,11 +161,12 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
             JDBCUtil.safeClose(ps, rs);
 
             // write all our updated plugins to the file system
-            ps = conn.prepareStatement("SELECT CONTENT FROM " + Plugin.TABLE_NAME + " WHERE NAME = ?");
+            ps = conn.prepareStatement("SELECT CONTENT FROM " + Plugin.TABLE_NAME + " WHERE NAME = ? AND ENABLED = ?");
             for (Plugin plugin : updatedPlugins) {
                 File file = new File(this.pluginDirectory, plugin.getPath());
 
                 ps.setString(1, plugin.getName());
+                setEnabledFlag(conn, ps, 2, true);
                 rs = ps.executeQuery();
                 rs.next();
                 InputStream content = rs.getBinaryStream(1);
@@ -197,7 +205,9 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
         try {
             DataSource ds = LookupUtil.getDataSource();
             conn = ds.getConnection();
-            ps = conn.prepareStatement("SELECT NAME, PATH, MD5 FROM " + Plugin.TABLE_NAME + " WHERE CONTENT IS NULL");
+            ps = conn.prepareStatement("SELECT NAME, PATH, MD5 FROM " + Plugin.TABLE_NAME
+                + " WHERE CONTENT IS NULL AND ENABLED = ?");
+            setEnabledFlag(conn, ps, 1, true);
             rs = ps.executeQuery();
             while (rs.next()) {
                 String name = rs.getString(1);
@@ -257,16 +267,17 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
                         tm.begin();
                         DataSource ds = LookupUtil.getDataSource();
                         conn = ds.getConnection();
-                        ps = conn.prepareStatement("DELETE FROM " + Plugin.TABLE_NAME + " WHERE NAME = ?");
-                        ps.setString(1, pluginName);
+                        ps = conn.prepareStatement("UPDATE " + Plugin.TABLE_NAME + " SET ENABLED = ? WHERE NAME = ?");
+                        setEnabledFlag(conn, ps, 1, false);
+                        ps.setString(2, pluginName);
                         int updateResults = ps.executeUpdate();
                         if (updateResults == 1) {
-                            log.warn("Purged obsolete plugin [" + pluginName
-                                + "] from the db - if resources were commited to inventory for this plugin,"
-                                + " you should uninventory them to avoid getting warnings in the server and agent");
+                            log.warn("Disabled unavailable plugin [" + pluginName
+                                + "] - This plugin must be provided to manage committed resources for its types."
+                                + " Uninventory obsolete resources to avoid getting warnings in the server and agent.");
                         } else {
                             // TODO: should we throw an exception or is continuing the right thing to do?
-                            log.error("Failed to purge obsolete plugin [" + pluginName + "] from the db");
+                            log.error("Failed to disable unavailable plugin [" + pluginName + "].");
                         }
                     } catch (Exception e) {
                         tm.rollback();
@@ -283,6 +294,19 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
         }
 
         return;
+    }
+
+    private void setEnabledFlag(Connection conn, PreparedStatement ps, int index, boolean enabled) throws Exception {
+        if (null == this.dbType) {
+            this.dbType = DatabaseTypeFactory.getDatabaseType(conn);
+        }
+        if (dbType instanceof PostgresqlDatabaseType) {
+            ps.setBoolean(1, enabled);
+        } else if (dbType instanceof OracleDatabaseType) {
+            ps.setInt(1, (enabled ? 1 : 0));
+        } else {
+            throw new RuntimeException("Unknown database type : " + dbType);
+        }
     }
 
     /**

@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
+import java.io.Serializable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,6 +41,8 @@ import org.jboss.metatype.api.types.MetaType;
 import org.jboss.metatype.api.types.MapCompositeMetaType;
 import org.jboss.metatype.api.types.SimpleMetaType;
 import org.jboss.metatype.api.values.MetaValue;
+import org.jboss.metatype.api.values.SimpleValue;
+import org.jboss.metatype.api.values.EnumValue;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -230,6 +233,12 @@ public class ConversionUtils
             // conversion performed below by the property's adapter.
             managedProperty.setRemoved(true);
         }
+        // If the ManagedProperty defines a default value, assume it's more definitive than any default value that may
+        // have been defined in the plugin descriptor, and update the PropertyDefinition to use that as its default
+        // value.
+        MetaValue defaultValue = managedProperty.getDefaultValue();
+        if (defaultValue != null)
+             updateDefaultValueOnPropertyDefinition(propertyDefinition, defaultValue);
         // See if there is a custom adapter defined for this property.
         PropertyAdapter propertyAdapter = PropertyAdapterFactory.getCustomPropertyAdapter(customProperty);
         MetaValue metaValue = managedProperty.getValue();
@@ -250,6 +259,32 @@ public class ConversionUtils
                     + " to MetaValue of type " + metaType + "...");
             metaValue = propertyAdapter.convertToMetaValue(property, propertyDefinition, metaType);
             managedProperty.setValue(metaValue);
+        }
+    }
+
+    private static void updateDefaultValueOnPropertyDefinition(PropertyDefinition propertyDefinition,
+                                                               @NotNull MetaValue defaultValue)
+    {
+        if (!(propertyDefinition instanceof PropertyDefinitionSimple)) {
+            LOG.debug("Cannot update default value on non-simple property definition " + propertyDefinition
+                    + "(default value is " + defaultValue + ").");
+            return;
+        }
+        MetaType metaType = defaultValue.getMetaType();
+        if (!metaType.isSimple() && !metaType.isEnum()) {
+            LOG.debug("Cannot update default value on " + propertyDefinition
+                    + ", because default value's type (" + metaType + ") is not simple or enum.");
+            return;
+        }
+        PropertyDefinitionSimple propertyDefinitionSimple = (PropertyDefinitionSimple)propertyDefinition;
+        if (metaType.isSimple()) {
+            SimpleValue defaultSimpleValue = (SimpleValue)defaultValue;
+            Serializable value = defaultSimpleValue.getValue();
+            propertyDefinitionSimple.setDefaultValue((value != null) ? value.toString() : null);
+        } else { // defaultValueMetaType.isEnum()
+            EnumValue defaultEnumValue = (EnumValue)defaultValue;
+            Serializable value = defaultEnumValue.getValue();
+            propertyDefinitionSimple.setDefaultValue((value != null) ? value.toString() : null);
         }
     }
 

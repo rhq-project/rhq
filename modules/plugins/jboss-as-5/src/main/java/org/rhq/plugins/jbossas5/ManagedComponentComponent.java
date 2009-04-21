@@ -106,14 +106,15 @@ public class ManagedComponentComponent extends AbstractManagedComponent
 
     public void deleteResource() throws Exception
     {
-        /*throw new UnsupportedOperationException("Deletion of " + getResourceContext().getResourceType().getName()
+        throw new UnsupportedOperationException("Deletion of " + getResourceContext().getResourceType().getName()
                 + " Resources is not currently supported.");
-        */
+        /*
         ManagedComponent managedComponent = getManagedComponent();
         log.debug("Removing " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
         ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
         managementView.removeComponent(managedComponent);
         managementView.reload();
+        */
     }
 
     // OperationFacet Implementation  --------------------------------------------

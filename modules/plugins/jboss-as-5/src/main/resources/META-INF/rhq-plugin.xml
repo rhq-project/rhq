@@ -615,7 +615,9 @@
             description="JBoss Application Server">
 
         <subcategories>
+            <!-- remove until we have support for JVM management
             <subcategory name="Environment"/>
+            -->
             <subcategory name="Resources"
                          description="Different types of Resources">
                 <subcategory name="Datasources"
@@ -1742,10 +1744,12 @@
                 </configuration>
             </content>
 
+            <!-- 
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
-
+ 			-->
+           
         </service>
 
         <service name="Web Application (WAR)"
@@ -1801,9 +1805,11 @@
                 </configuration>
             </content>
 
+            <!-- 
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
+ 			-->
 
         </service>
 
@@ -1843,11 +1849,14 @@
                     dataType="trait" displayType="summary"
                     description="the name of this WAR's parent deployment"/>
 
+            <!-- 
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
-
+ 			-->
+ 			
         </service>
+
 
         <service name="EJB 2.x Application (EJB JAR)"
                  subCategory="Applications"
@@ -1885,9 +1894,11 @@
             <content name="file" displayName="Jar File" category="deployable" isCreationType="true">
             </content>
 
+            <!-- 
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
+ 			-->
 
         </service>
 
@@ -1927,12 +1938,13 @@
             <content name="file" displayName="Jar File" category="deployable" isCreationType="true">
             </content>
 
+            <!-- 
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
-
+ 			-->
         </service>
-
+<!-- 
         <service name="JBoss Service (SAR)"
                  subCategory="Applications"
                  class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
@@ -1974,7 +1986,7 @@
             </resource-configuration>
 
         </service>
-
+ -->
         <service name="Resource Adaptor (RAR)"
                  subCategory="Applications"
                  class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
@@ -2011,12 +2023,14 @@
             <content name="file" displayName="Rar File" category="deployable" isCreationType="true">
             </content>
 
+            <!-- 
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
+ 			-->
+      </service>
 
-        </service>
-
+<!-- 
         <service name="Microcontainer Beans (MC Beans)"
                  subCategory="Applications"
                  class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
@@ -2058,7 +2072,7 @@
             </resource-configuration>
 
         </service>
-
+ -->
     </server>
 
 </plugin>

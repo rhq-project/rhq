@@ -57,6 +57,7 @@ public class InstalledPluginUIBean {
     }
 
     public void setEnabled(boolean enabled) {
+        // TODO is this supposed to be empty?
     }
 
     public void undeploy() {

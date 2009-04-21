@@ -19,7 +19,9 @@
 package org.rhq.enterprise.server.core.plugin;
 
 import java.util.List;
+
 import javax.management.ObjectName;
+
 import org.jboss.mx.util.ObjectNameFactory;
 
 /**
@@ -46,7 +48,7 @@ public interface ProductPluginDeployerMBean extends org.jboss.deployment.SubDepl
     String getPluginDir();
 
     /**
-     * Get a list of names of all plugins that are currently deployed.
+     * Get a list of names of all plugins that are currently deployed, Whether enabled or disabled.
      *
      * @return list of plugin names
      */

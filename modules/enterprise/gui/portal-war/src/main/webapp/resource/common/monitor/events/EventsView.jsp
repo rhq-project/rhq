@@ -21,6 +21,10 @@
   <head>
       <base target="_top"/>
 
+      <script type="text/javascript">
+          SimileAjax_urlPrefix = "/js/timeline/ajax/api/";
+      </script> 
+      <script src="/js/timeline/ajax/api/simile-ajax-api.js" type="text/javascript"></script>
       <script src="/js/timeline/api/timeline-api.js" type="text/javascript"></script>
       <script src="/js/timeline/examples/examples.js" type="text/javascript"></script>
       <title>Simple jsp page</title>

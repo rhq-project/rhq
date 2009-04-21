@@ -1215,14 +1215,14 @@
             <operation name="listMessageCounterAsHTML" displayName="List Message Counter As HTML" description="Get the message counter as HTML">
                 <results>
                     <c:notes>Get the message counter as HTML</c:notes>
-                    <c:simple-property required="false" name="result"/>
+                    <c:simple-property required="false" type="longString" name="result"/>
                 </results>
             </operation>
 
             <operation name="listMessageCounterHistoryAsHTML" displayName="List Message Counter History As HTML" description="Get the message counter history as HTML">
                 <results>
                  	<c:notes>Get the message counter history as HTML</c:notes>
-                    <c:simple-property name="result"/>
+                    <c:simple-property type="longString" name="result"/>
                 </results>
             </operation>
 
@@ -1491,7 +1491,7 @@
                        description="Return all subscriptions for the topic in HTML">
                 <results>
                     <c:notes>Return all subscriptions for the topic in HTML</c:notes>
-                    <c:simple-property required="false" name="result"/>
+                    <c:simple-property required="false" type="longString" name="result"/>
                 </results>
             </operation>
 
@@ -1509,7 +1509,7 @@
                        description="Return all durable subscriptions for the topic in HTML">
                 <results>
                 	<c:notes>Return all durable subscriptions for the topic in HTML</c:notes>
-                    <c:simple-property required="false" name="result"/>
+                    <c:simple-property required="false" type="longString" name="result"/>
                 </results>
             </operation>
 
@@ -1527,7 +1527,7 @@
                        description="Return all non durable subscriptions for the topic in HTML">
                 <results>
                     <c:notes>Return all non durable subscriptions for the topic in HTML</c:notes>
-                    <c:simple-property name="result"/>
+                    <c:simple-property name="result" type="longString" />
                 </results>
             </operation>
 

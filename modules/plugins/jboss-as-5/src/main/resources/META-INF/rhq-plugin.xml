@@ -567,10 +567,6 @@
 
 <!-- These are the operations that Topics and Queues both have. -->
 <!ENTITY destinationOperations '
-    <operation name="create" displayName="Create" description="Service lifecycle operation"/>
-
-    <operation name="destroy" displayName="Destroy" description="Service lifecycle operation"/>
-
     <operation name="removeAllMessages" displayName="Remove All Messages" description="Remove all messages"/>
 
     <operation name="start" displayName="Start" description="Service lifecycle operation"/>

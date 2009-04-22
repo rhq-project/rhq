@@ -166,7 +166,7 @@ public class MeasurementOOBComposite implements Serializable {
         String min = MeasurementConverter.format(blMin, units, true);
         String max = MeasurementConverter.format(blMax, units, true);
 
-        String result = "(" + min + ", " + max + ")";
+        String result =  min + ", " + max ;
 
         return result;
     }

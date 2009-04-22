@@ -19,22 +19,35 @@
 package org.rhq.enterprise.gui.common.framework;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
+import javax.el.ELException;
 import javax.el.ValueExpression;
 import javax.faces.FacesException;
+import javax.faces.application.FacesMessage;
 import javax.faces.application.ViewHandler;
 import javax.faces.component.UIViewRoot;
+import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 
 import com.sun.facelets.FaceletViewHandler;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.FacesExpressionUtility;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 
 /**
  * @author Joseph Marques
  */
 public class FaceletRedirectionViewHandler extends FaceletViewHandler {
+
+    private static Log log = LogFactory.getLog(FaceletRedirectionViewHandler.class);
 
     public FaceletRedirectionViewHandler(ViewHandler handler) {
         super(handler);
@@ -51,8 +64,45 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
 
     @Override
     public void renderView(FacesContext context, UIViewRoot viewToRender) throws IOException, FacesException {
-        long monitorId = HibernatePerformanceMonitor.get().start();
-        super.renderView(context, viewToRender);
-        HibernatePerformanceMonitor.get().stop(monitorId, "URL " + viewToRender.getViewId());
+        try {
+            long monitorId = HibernatePerformanceMonitor.get().start();
+            super.renderView(context, viewToRender);
+            HibernatePerformanceMonitor.get().stop(monitorId, "URL " + viewToRender.getViewId());
+        } catch (Throwable t) {
+            try {
+                FacesContextUtility.getResponse().sendRedirect("/common/GenericError.jsp");
+            } catch (IOException ioe) {
+                log.fatal("Could not process redirect to handle application error");
+            }
+        }
     }
+
+    @Override
+    protected void handleRenderException(FacesContext context, Exception ex) throws IOException, ELException,
+        FacesException {
+        try {
+            if (context.getViewRoot().getViewId().equals("/rhq/common/error.xhtml")) {
+                log.error("Redirected back to ourselves, there must be a problem with the error.xhtml page", ex);
+                return;
+            }
+
+            FacesContext facesContext = FacesContext.getCurrentInstance();
+
+            List<FacesMessage> savedMessages = new ArrayList<FacesMessage>();
+            String exceptionDetails = ThrowableUtil.getAllMessages(ex);
+            savedMessages.add(new FacesMessage(FacesMessage.SEVERITY_ERROR, "Could not process request",
+                exceptionDetails));
+
+            ExternalContext externalContext = facesContext.getExternalContext();
+            Map<String, Object> sessionMap = externalContext.getSessionMap();
+
+            sessionMap.put("GLOBAL_RENDER_ERROR", ex);
+
+            FacesContextUtility.getResponse().sendRedirect("/rhq/common/error.xhtml");
+            //FacesContextUtility.getResponse().sendRedirect("/common/GenericError.jsp");
+        } catch (IOException ioe) {
+            log.fatal("Could not process redirect to handle application error");
+        }
+    }
+
 }

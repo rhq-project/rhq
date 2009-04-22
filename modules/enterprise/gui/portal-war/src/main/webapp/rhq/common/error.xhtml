@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.org/rich"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function">
+
+<ui:composition template="/rhq/layout/main-layout.xhtml">
+
+<ui:param name="defaultPageTitle" value="Error processing page"/>
+
+<ui:define name="body-area">
+   <rich:spacer height="150px" />
+
+   <table align="center" width="500px">
+      <tr>
+         <td valign="middle"><h:graphicImage value="/images/icons/availability_grey_24.png" /></td>
+         <td valign="middle"><h:outputText value=" #{GenericErrorUIBean.summary}" style="font-size: 22px;"/></td>
+      </tr>
+      <tr>
+         <td>&nbsp;</td>
+         <td><h:outputText value="#{GenericErrorUIBean.details}" style="font-size: 18px;"/></td>
+      </tr>
+      <tr>
+         <td>&nbsp;</td>
+         <td>
+            <h:outputText value="${msg['error.Error.ReturnTo']} " />
+            <h:outputLink value="javascript:history.back(1)">
+               <h:outputText value="${msg['error.Error.PreviousPageLink']} " />
+            </h:outputLink>
+            <h:outputLink value="/Dashboard.do">
+               <h:outputText value="${msg['error.Error.DashboardLink']} " />
+            </h:outputLink>
+            <h:outputLink value="/ResourceHub.do">
+               <h:outputText value="${msg['error.Error.ResourceHubLink']}" />
+            </h:outputLink> 
+         </td>
+      </tr>
+   </table>
+   
+</ui:define>
+
+</ui:composition>
+
+</html>

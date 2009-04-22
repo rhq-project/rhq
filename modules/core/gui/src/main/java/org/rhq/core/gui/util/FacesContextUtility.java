@@ -30,6 +30,7 @@ import javax.faces.application.FacesMessage;
 import javax.faces.application.FacesMessage.Severity;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,6 +117,11 @@ public abstract class FacesContextUtility {
     public static HttpServletRequest getRequest() {
         HttpServletRequest request = (HttpServletRequest) getFacesContext().getExternalContext().getRequest();
         return request;
+    }
+
+    public static HttpServletResponse getResponse() {
+        HttpServletResponse response = (HttpServletResponse) getFacesContext().getExternalContext().getResponse();
+        return response;
     }
 
     /**

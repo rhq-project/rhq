@@ -23,7 +23,7 @@
                 <input type="hidden" name="groupId" value="#{param.groupId}"/>
                 <input type="hidden" name="parentGroupId" value="#{param.parentGroupId}"/>
 
-                <a4j:region renderRegionOnly="true">
+                <a4j:region renderRegionOnly="false">
 
                     <a4j:outputPanel id="messagePanel" layout="block" ajaxRendered="true" style="width: 100%;">
                         <h:message for="leftNavGroupTree" showSummary="true" showDetail="false"  style="background-color: yellow; display:block; width:100%;"/>
@@ -62,7 +62,7 @@
                                        icon="/images/icons/Cluster_up_16.png"
                                        iconLeaf="/images/icons/Cluster_up_16.png">
 
-                            <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000"
+                            <a4j:support event="oncontextmenu" reRender="groupMenu" timeout="5000"
                                          disableDefault="true" status="commonStatus" limitToList="true"
                                          ajaxSingle="true">
 
@@ -70,7 +70,7 @@
                                 <f:param name="contextParentGroupId" value="#{groupTreeItem.data.id}"/>
 
 
-                                <rich:componentControl disableDefault="true" event="oncomplete" for="resourceMenu"
+                                <rich:componentControl disableDefault="true" event="oncomplete" for="groupMenu"
                                                        operation="show">
                                     <f:param name="contextGroupId" value="#{groupTreeItem.data.id}"/>
                                 </rich:componentControl>
@@ -94,14 +94,14 @@
                                        icon="/images/icons/Cluster_up_16.png"
                                        iconLeaf="/images/icons/Cluster_up_16.png">
 
-                            <a4j:support event="oncontextmenu" reRender="resourceMenu" timeout="5000"
+                            <a4j:support event="oncontextmenu" reRender="groupMenu" timeout="5000"
                                          disableDefault="true" status="commonStatus" limitToList="true"
                                          ajaxSingle="true">
 
                                 <f:param name="contextClusterKey" value="#{groupTreeItem.data.key}"/>
                                 <f:param name="contextParentGroupId" value="#{param.parentGroupId == null ? param.groupId : param.parentGroupId}"/>
 
-                                <rich:componentControl disableDefault="true" event="oncomplete" for="resourceMenu"
+                                <rich:componentControl disableDefault="true" event="oncomplete" for="groupMenu"
                                                        operation="show">
                                     <f:param name="clusterKey" value="#{groupTreeItem.data}"/>
                                 </rich:componentControl>
@@ -123,25 +123,6 @@
                         </rich:treeNode>
 
                     </rich:tree>
-
-
-                    <!--<a4j:log popup="false" level="WARN" style="width: 800px; height: 300px;"></a4j:log>-->
-
-                    <a4j:outputPanel layout="none" id="contextMenuPanel">
-
-                        <h:panelGroup id="contentMenuPanelGroup">
-
-                            <!-- TODO: Implement GroupTreeContextMenuUIBean. -->
-                            <rich:contextMenu attached="false" id="resourceMenu"
-                                              binding="#{ResourceGroupTreeContextMenuUIBean.menu}"
-                                              disableDefaultMenu="false" style="z-index: 50;"
-                                              submitMode="ajax" >
-
-                            </rich:contextMenu>
-
-                        </h:panelGroup>
-                    </a4j:outputPanel>
-
 
                 </a4j:region>
 

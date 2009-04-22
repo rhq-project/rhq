@@ -36,11 +36,12 @@ import java.util.Set;
 import java.util.Stack;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.InventoryReport;
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
-import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.inventory.InventoryManager;
@@ -52,6 +53,7 @@ import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationServices;
 import org.rhq.core.pluginapi.operation.OperationServicesResult;
+import org.rhq.core.pluginapi.operation.OperationServicesResultCode;
 import org.rhq.core.system.SystemInfoFactory;
 
 /**
@@ -62,13 +64,22 @@ import org.rhq.core.system.SystemInfoFactory;
  */
 public class StandaloneContainer {
 
+    /** PLugin container we are working with */
     private PluginContainer pc;
+    /** Resource id that need to be set to invoke or measure a resource */
     private int resourceId;
+    /** Platform resource as base */
     private Resource platform;
+    /** The inventory manager within the plugin container */
     InventoryManager inventoryManager;
+    /** Global operation counter */
     Integer opId = 0;
+    /** Holder for the command history */
     List<String> history = new ArrayList<String>(10);
+    /** Map of resource plugin configurations */
     Map<Integer,Configuration> resConfigMap = new HashMap<Integer,Configuration>();
+    /** variable set by find() and which can be used in set() */
+    int dollarR = 0;
 
 
     private static final String HISTORY_HELP = "!! : repeat the last action\n" + //
@@ -77,6 +88,7 @@ public class StandaloneContainer {
         "!nn : repeat history item with number nn\n" + //
         "!w fileName : write history to file with name fileName\n" + //
         "!dnn : delete history item with number nn";
+
 
     public static void main(String[] argv) {
         StandaloneContainer sc = new StandaloneContainer();
@@ -96,6 +108,13 @@ public class StandaloneContainer {
         sc.run(br);
     }
 
+    /**
+     * Run the show. Sets up the plugin container and runs the main loop
+     * If we read input from a file, the method will terminate after all input
+     * is consumed.
+     * @param br A BufferedReader - either standard in or a file.
+     *
+     */
     private void run(BufferedReader br) {
 
         boolean shouldQuit = false;
@@ -123,9 +142,8 @@ public class StandaloneContainer {
         System.out.println("\nReady.");
 
         // Run the main loop
-        try {
-            while (!shouldQuit) {
-
+        while (!shouldQuit) {
+            try {
                 System.out.print("[" + history.size() + "]:" + resourceId + " > ");
                 String answer = br.readLine();
                 if (answer == null) {
@@ -142,13 +160,14 @@ public class StandaloneContainer {
                         shouldQuit = dispatchCommand(tokens);
                     }
                 }
+            } catch (Throwable throwable) {
+                System.err.println("Exception happened: " + throwable + "\n");
             }
-
-            // unload
-            pc.shutdown();
-        } catch (Throwable throwable) {
-            System.err.println("Exception happened: " + throwable + "\n");
         }
+
+        System.out.println("Shutting down ...");
+        // unload when we're done
+        pc.shutdown();
 
     }
 
@@ -340,10 +359,24 @@ public class StandaloneContainer {
         OperationContext operationContext = new OperationContextImpl(resourceId, operationServices);
         opId++;
 
-        // TODO fix config -- use some property editor to pass in the remaining fields
-        OperationServicesResult res = operationServices.invokeOperation(operationContext, tokens[1], null, 2000);
-        Configuration result = res.getComplexResults();
-        System.out.println(result.getProperties());
+        Configuration config = null;
+        if (tokens.length>2)
+                config=createConfigurationFromString(tokens[2]);
+
+        OperationServicesResult res = operationServices.invokeOperation(operationContext, tokens[1], config, 2000);
+        if (res.getResultCode() == OperationServicesResultCode.FAILURE) {
+            System.err.println("Failure executing the operation: \n" + res.getErrorStackTrace());
+        }
+        else if (res.getResultCode() == OperationServicesResultCode.TIMED_OUT) {
+            System.err.println("Operation timed out ");
+        }
+        else {
+            Configuration result = res.getComplexResults();
+            if (res==null)
+                System.out.println("Operation did not return a result");
+            else
+                System.out.println(result.getProperties());
+        }
 
     }
 
@@ -394,6 +427,7 @@ public class StandaloneContainer {
     /**
      * Shows the list of availabilities known so far
      * for resources that have been discovered
+     * @param tokens tokenized command line tokens[0] is the command itself
      */
     private void avail(String[] tokens) {
         Set<Resource> resources = getResources();
@@ -432,6 +466,8 @@ public class StandaloneContainer {
 
     /**
      * Search resources or resource types by name. Wildcard is the *
+     * As side effect - if searching for resources, $r is set to the id of the resource
+     * shown last. This can be used in set calls.
      * @param tokens tokenized command line tokens[0] is the command itself
      */
     private void find(String[] tokens) {
@@ -443,6 +479,7 @@ public class StandaloneContainer {
             for (Resource res: resources) {
                 if (res.getName().matches(pattern)) {
                     System.out.println(res.getId() + ": " + res.getName() + " ( " + res.getParentResource() + " )");
+                    dollarR = res.getId();
                 }
             }
         } else if (tokens[1].equals("t")) {
@@ -460,6 +497,7 @@ public class StandaloneContainer {
                     for (Resource res : resources) {
                         if (res.getResourceType().equals(type)) {
                             System.out.println(res.getId() + ": " + res.getName() + " ( " + res.getParentResource() + " )");
+                            dollarR = res.getId();
                         }
                     }
                 }
@@ -471,7 +509,8 @@ public class StandaloneContainer {
     }
 
     /**
-     * Sets working parameters
+     * Sets working parameter. If the 2nd argument is $r the variable $r set by the latest
+     * #find(String[]) call is used.
      * @param tokens tokenized command line tokens[0] is the command itself
      */
     private void set(String[] tokens) {
@@ -483,7 +522,11 @@ public class StandaloneContainer {
             //pluginName = arg;
         } else if (comm.startsWith("r")) {
             try {
-                resourceId = Integer.valueOf(arg);
+                if (arg.equals("$r")) {
+                    resourceId = dollarR;
+                }
+                else
+                    resourceId = Integer.valueOf(arg);
             } catch (NumberFormatException nfe) {
                 System.err.println("Sorry, but [" + arg + "] is no valid number");
             }
@@ -493,7 +536,12 @@ public class StandaloneContainer {
     }
 
     /**
-     * Perform a discovery scan and return the results.
+     * Perform a discovery scan and return the results. Options are:
+     * <ul>
+     * <li>s: servers only</li>
+     * <li>i: services only</li>
+     * <li>all: servers and then services</lI>
+     * </ul>
      * @param tokens tokenized command line tokens[0] is the command itself
      */
     private void discover(String[] tokens) {
@@ -501,22 +549,33 @@ public class StandaloneContainer {
         Set<Resource> existing = getResources();
         InventoryReport report;
         String what = tokens[1];
+        long t1 = System.currentTimeMillis();
         if (what.startsWith("s"))
-            report = pc.getInventoryManager().executeServerScanImmediately();
+            pc.getInventoryManager().executeServerScanImmediately();
         else if (what.startsWith("i"))
-            report = pc.getInventoryManager().executeServiceScanImmediately();
+            pc.getInventoryManager().executeServiceScanImmediately();
+        else if (what.startsWith("all")) {
+            pc.getInventoryManager().executeServerScanImmediately();
+            pc.getInventoryManager().executeServiceScanImmediately();
+        }
         else {
             System.err.println("Unknown option. Only 's' and 'i' are applicable");
             return;
         }
+        long t2 = System.currentTimeMillis();
 
-        System.out.println("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
+        System.out.println("Discovery took: " + (t2 - t1) + "ms");
         // Print the just discovered resources.
         Set<Resource> newOnes = getResources();
         newOnes.removeAll(existing);
         System.out.println(newOnes);
     }
 
+    /**
+     * Run collecting of measuremen values. All metrics need to be of the same type,
+     * that is given as first argument. Remaining arguments are the names of the metrics.
+     * @param tokens tokenized command line tokens[0] is the command itself
+     */
     private void measure(String[] tokens) {
         if (resourceId == 0) {
             System.err.println("No resource set");
@@ -544,6 +603,12 @@ public class StandaloneContainer {
 
     }
 
+    /**
+     * Helper to get the DataType from the passed input
+     * @param token Input to convert
+     * @return A valid DataType or null if no valid DataType can be determined.
+     * @see org.rhq.core.domain.measurement.DataType for possible token values
+     */
     private DataType getDataType(String token) {
         String c = token.toLowerCase();
         if (c.startsWith("m"))
@@ -559,21 +624,43 @@ public class StandaloneContainer {
     }
 
     /**
+     * Creates a configuration object from the passed String. The string must consist
+     * of individual key-value pairs, that are spearated by || keys and values are separated by
+     * =.  Only simple properties are supported for the configuration.
+     * @param input The input string, may be null
+     * @return a Configuration object or null if input was null
+     */
+    private Configuration createConfigurationFromString(String input) {
+        if (input == null)
+            return null;
+
+        Configuration config = new Configuration();
+        String[] pairs = input.split("\\|\\|");
+        for (String pair : pairs) {
+            String[] kv = pair.split("=");
+            PropertySimple ps = new PropertySimple(kv[0],kv[1]);
+            config.put(ps);
+        }
+        return config;
+    }
+
+    /**
      * List of possible commands
      */
     private enum Command {
         ASCAN("as", "", 0, "Triggers an availability scan"), //
         AVAIL("a", " ( id )", 0, "Shows an availability report. If id is given, only shows availability for resource with id id"), //
-        DISCOVER("disc", " s | i", 1, "Triggers a discovery scan"), //
+        DISCOVER("disc", " s | i |Êall", 1, "Triggers a discovery scan for (s)erver, serv(i)ce or all resources"), //
         //      EVENT("e", "", 0,  "Pull events"), // TODO needs to be defined
-        FIND("find", "r | t  | rt <name>", 2, "Searches a (r)esource, resource (t)ype or resources of (rt)ype. Use * as wildcard"),
+        FIND("find", "r | t  | rt <name>", 2, "Searches a (r)esource, resource (t)ype or resources of (rt)ype. Use * as wildcard.\n"
+                +" Will set $r for the last resource shown."),
         HELP("h", "", 0, "Shows this help"), //
         INVOKE("i", "operation [params]", 1, "Triggers running an operation"), //
         MEASURE("m", "datatype property+", 2, "Triggers getting metric values. All need to be of the same data type"), //
         NATIVE("n", "e | d | s", 1, "Enables/disables native system or shows native status"), //
         QUIT("quit", "", 0, "Terminates the application"), //
         RESOURCES("res", "", 0, "Shows the discovere resources"), //
-        SET("set", "resourceId n", 2, "Sets the resource id to work with"), //
+        SET("set", "resourceId n", 2, "Sets the resource id to work with. N can be a number or '$r' as result of last find resource call"), //
         WAIT("w", "milliseconds", 1, "Waits the given amount of time");
 
         private String abbrev;
@@ -593,6 +680,13 @@ public class StandaloneContainer {
             return minArgs;
         }
 
+        /**
+         * Construct a new Command
+         * @param abbrev Abbreviation for this command
+         * @param args Description of expected arguments
+         * @param minArgs Minumum number of arguments that need to be present
+         * @param help A short description of the command
+         */
         private Command(String abbrev, String args, int minArgs, String help) {
             this.abbrev = abbrev;
             this.args = args;

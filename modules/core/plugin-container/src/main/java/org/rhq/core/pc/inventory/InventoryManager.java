@@ -386,6 +386,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serviceScanExecutor);
     }
 
+    // this will NOT send a availability report up to the server!
     public AvailabilityReport executeAvailabilityScanImmediately(boolean changedOnlyReport) {
         try {
             AvailabilityExecutor availExec = new AvailabilityExecutor(this);
@@ -396,7 +397,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 availExec.sendFullReportNextTime();
             }
 
-            return availabilityThreadPoolExecutor.submit((Callable<AvailabilityReport>) availExec).get();
+            AvailabilityReport availabilityReport = availabilityThreadPoolExecutor.submit(
+                (Callable<AvailabilityReport>) availExec).get();
+
+            // because the above uses the Callable interface (on purpose), the avail executor will not
+            // hand the report off to the Inventory Manager for sending to the server. Because this report
+            // will not be sent to the server, we need to be careful because our ResourceContainers will
+            // still have their avaialabilities updated. This may mean a change in availability detected
+            // in the above scan will not make its way to the server. To avoid the possibliity of losing
+            // availability status changes, we need to tell the real availability executor to send a
+            // full report next time it runs its periodic scan. (RHQ-1997)
+            this.availabilityExecutor.sendFullReportNextTime();
+
+            return availabilityReport;
         } catch (InterruptedException e) {
             throw new RuntimeException("Availability scan execution was interrupted", e);
         } catch (ExecutionException e) {

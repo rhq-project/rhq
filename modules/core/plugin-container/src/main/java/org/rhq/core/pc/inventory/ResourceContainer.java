@@ -79,7 +79,7 @@ public class ResourceContainer implements Serializable {
     private transient ResourceContext resourceContext;
     private transient ResourceComponentState resourceComponentState = ResourceComponentState.STOPPED;
     private transient ReentrantReadWriteLock facetAccessLock = new ReentrantReadWriteLock();
-    private Resource resource;
+    private final Resource resource;
     private Availability availability;
     private Set<ResourcePackageDetails> installedPackages = new HashSet<ResourcePackageDetails>();
     private Set<MeasurementScheduleRequest> measurementSchedule = new HashSet<MeasurementScheduleRequest>();
@@ -116,12 +116,14 @@ public class ResourceContainer implements Serializable {
 
     public Availability updateAvailability(AvailabilityType availabilityType) {
         Date now = new Date();
-        this.availability = new Availability(this.resource, now, availabilityType);
-        return availability;
+        synchronized (this) {
+            this.availability = new Availability(this.resource, now, availabilityType);
+            return this.availability;
+        }
     }
 
     public Resource getResource() {
-        return resource;
+        return this.resource;
     }
 
     /**
@@ -131,7 +133,9 @@ public class ResourceContainer implements Serializable {
      * @return resource's availability or <code>null</code> if it is not known
      */
     public Availability getAvailability() {
-        return availability;
+        synchronized (this) {
+            return this.availability;
+        }
     }
 
     /**
@@ -142,7 +146,7 @@ public class ResourceContainer implements Serializable {
      * @return lock that provides read-only access into all facets of this container's component.
      */
     public Lock getReadFacetLock() {
-        return facetAccessLock.readLock();
+        return this.facetAccessLock.readLock();
     }
 
     /**
@@ -152,39 +156,55 @@ public class ResourceContainer implements Serializable {
      * @return lock that provides read-write access into all facets of this container's component.
      */
     public Lock getWriteFacetLock() {
-        return facetAccessLock.writeLock();
+        return this.facetAccessLock.writeLock();
     }
 
     public Set<ResourcePackageDetails> getInstalledPackages() {
-        return installedPackages;
+        synchronized (this) {
+            return this.installedPackages;
+        }
     }
 
     public void setInstalledPackages(Set<ResourcePackageDetails> installedPackages) {
-        this.installedPackages = installedPackages;
+        synchronized (this) {
+            this.installedPackages = installedPackages;
+        }
     }
 
     public ResourceComponent getResourceComponent() {
-        return resourceComponent;
+        synchronized (this) {
+            return this.resourceComponent;
+        }
     }
 
     public void setResourceComponent(ResourceComponent resourceComponent) {
-        this.resourceComponent = resourceComponent;
+        synchronized (this) {
+            this.resourceComponent = resourceComponent;
+        }
     }
 
     public ResourceContext getResourceContext() {
-        return resourceContext;
+        synchronized (this) {
+            return this.resourceContext;
+        }
     }
 
     public void setResourceContext(ResourceContext resourceContext) {
-        this.resourceContext = resourceContext;
+        synchronized (this) {
+            this.resourceContext = resourceContext;
+        }
     }
 
     public Set<MeasurementScheduleRequest> getMeasurementSchedule() {
-        return measurementSchedule;
+        synchronized (this) {
+            return this.measurementSchedule;
+        }
     }
 
     public void setMeasurementSchedule(Set<MeasurementScheduleRequest> measurementSchedule) {
-        this.measurementSchedule = measurementSchedule;
+        synchronized (this) {
+            this.measurementSchedule = measurementSchedule;
+        }
     }
 
     /**
@@ -200,33 +220,43 @@ public class ResourceContainer implements Serializable {
             updateScheduleIds.add(update.getScheduleId());
         }
 
-        Set<MeasurementScheduleRequest> toBeRemoved = new HashSet<MeasurementScheduleRequest>();
-        for (MeasurementScheduleRequest current : this.measurementSchedule) {
-            if (updateScheduleIds.contains(current.getScheduleId())) {
-                toBeRemoved.add(current);
+        synchronized (this) {
+            Set<MeasurementScheduleRequest> toBeRemoved = new HashSet<MeasurementScheduleRequest>();
+            for (MeasurementScheduleRequest current : this.measurementSchedule) {
+                if (updateScheduleIds.contains(current.getScheduleId())) {
+                    toBeRemoved.add(current);
+                }
             }
-        }
-        // first remove all the old versions of the measurement schedules
-        this.measurementSchedule.removeAll(toBeRemoved);
+            // first remove all the old versions of the measurement schedules
+            this.measurementSchedule.removeAll(toBeRemoved);
 
-        // then add the new versions
-        return measurementSchedule.addAll(measurementScheduleUpdate);
+            // then add the new versions
+            return this.measurementSchedule.addAll(measurementScheduleUpdate);
+        }
     }
 
     public ResourceComponentState getResourceComponentState() {
-        return this.resourceComponentState;
+        synchronized (this) {
+            return this.resourceComponentState;
+        }
     }
 
     public void setResourceComponentState(ResourceComponentState state) {
-        this.resourceComponentState = state;
+        synchronized (this) {
+            this.resourceComponentState = state;
+        }
     }
 
     public SynchronizationState getSynchronizationState() {
-        return synchronizationState;
+        synchronized (this) {
+            return this.synchronizationState;
+        }
     }
 
     public void setSynchronizationState(SynchronizationState synchronizationState) {
-        this.synchronizationState = synchronizationState;
+        synchronized (this) {
+            this.synchronizationState = synchronizationState;
+        }
     }
 
     @Override
@@ -286,21 +316,26 @@ public class ResourceContainer implements Serializable {
         key = 31 * key + (int) (timeout ^ (timeout >>> 32));
         key = 31 * key + (daemonThread ? 1 : 0);
 
-        if (proxyCache == null)
-            proxyCache = new HashMap<Integer, Object>();
-        T proxy = (T) proxyCache.get(key);
-        if (proxy == null) {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        synchronized (this) {
+            if (this.proxyCache == null) {
+                this.proxyCache = new HashMap<Integer, Object>();
+            }
 
-            // this is the handler that will actually acquire the lock and invoke the facet method call
-            ResourceComponentInvocationHandler handler = new ResourceComponentInvocationHandler(this, lockType,
-                timeout, daemonThread, facetInterface);
+            T proxy = (T) this.proxyCache.get(key);
+            if (proxy == null) {
+                ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
-            // this is the proxy that will look like the facet interface that the caller will use
-            proxy = (T) Proxy.newProxyInstance(classLoader, new Class<?>[] { facetInterface }, handler);
-            proxyCache.put(key, proxy);
+                // this is the handler that will actually acquire the lock and invoke the facet method call
+                ResourceComponentInvocationHandler handler = new ResourceComponentInvocationHandler(this, lockType,
+                    timeout, daemonThread, facetInterface);
+
+                // this is the proxy that will look like the facet interface that the caller will use
+                proxy = (T) Proxy.newProxyInstance(classLoader, new Class<?>[] { facetInterface }, handler);
+                this.proxyCache.put(key, proxy);
+            }
+
+            return proxy;
         }
-        return proxy;
     }
 
     private String getFacetLockStatus() {

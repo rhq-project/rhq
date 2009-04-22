@@ -170,7 +170,7 @@ public class MeasurementSchedule implements Serializable {
         + "                 AND NOT EXISTS ( SELECT ms.id " //
         + "                                    FROM RHQ_MEASUREMENT_SCHED ms " //
         + "                                   WHERE ms.RESOURCE_ID = res.ID " //
-        + "                                     AND ms.DEFINITION = def.ID ) ";
+        + "                                     AND ms.DEFINITION = def.ID ) ) ";
 
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "RHQ_METRIC_SCHED_ID_SEQ")
     @Id

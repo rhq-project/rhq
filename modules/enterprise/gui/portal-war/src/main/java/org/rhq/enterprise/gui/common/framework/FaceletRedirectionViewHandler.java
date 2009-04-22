@@ -60,17 +60,9 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
 
     @Override
     public void renderView(FacesContext context, UIViewRoot viewToRender) throws IOException, FacesException {
-        try {
-            long monitorId = HibernatePerformanceMonitor.get().start();
-            super.renderView(context, viewToRender);
-            HibernatePerformanceMonitor.get().stop(monitorId, "URL " + viewToRender.getViewId());
-        } catch (Throwable t) {
-            try {
-                FacesContextUtility.getResponse().sendRedirect("/common/GenericError.jsp");
-            } catch (IOException ioe) {
-                log.fatal("Could not process redirect to handle application error");
-            }
-        }
+        long monitorId = HibernatePerformanceMonitor.get().start();
+        super.renderView(context, viewToRender);
+        HibernatePerformanceMonitor.get().stop(monitorId, "URL " + viewToRender.getViewId());
     }
 
     @Override
@@ -89,7 +81,7 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
 
             FacesContextUtility.getResponse().sendRedirect("/rhq/common/error.xhtml");
         } catch (IOException ioe) {
-            log.fatal("Could not process redirect to handle application error");
+            log.fatal("Could not process redirect to handle application error", ioe);
         }
     }
 

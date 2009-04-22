@@ -565,13 +565,13 @@
             defaultOn="true" defaultInterval="60000" dataType="measurement" category="performance"/>
 '>
 
-<!-- These are the operations that Topics and Queues both have. -->
+<!-- These are the operations that both Topics and Queues have. -->
 <!ENTITY destinationOperations '
-    <operation name="removeAllMessages" displayName="Remove All Messages" description="Remove all messages"/>
+    <operation name="removeAllMessages" displayName="Remove All Messages" description="Remove all messages from the destination."/>
 
-    <operation name="start" displayName="Start" description="Service lifecycle operation"/>
+    <operation name="start" displayName="Start" description="Start the destination."/>
 
-    <operation name="stop" displayName="Stop" description="Service lifecycle operation"/>
+    <operation name="stop" displayName="Stop" description="Stop the destination."/>
 '>
 
 <!ENTITY deploymentResourceConfigProps '
@@ -611,9 +611,7 @@
             description="JBoss Application Server">
 
         <subcategories>
-            <!-- remove until we have support for JVM management
             <subcategory name="Environment"/>
-            -->
             <subcategory name="Resources"
                          description="Different types of Resources">
                 <subcategory name="Datasources"
@@ -1211,14 +1209,14 @@
             <operation name="listMessageCounterAsHTML" displayName="List Message Counter As HTML" description="Get the message counter as HTML">
                 <results>
                     <c:notes>Get the message counter as HTML</c:notes>
-                    <c:simple-property required="false" type="longString" name="result"/>
+                    <c:simple-property required="false" name="result"/>
                 </results>
             </operation>
 
             <operation name="listMessageCounterHistoryAsHTML" displayName="List Message Counter History As HTML" description="Get the message counter history as HTML">
                 <results>
                  	<c:notes>Get the message counter history as HTML</c:notes>
-                    <c:simple-property type="longString" name="result"/>
+                    <c:simple-property name="result"/>
                 </results>
             </operation>
 
@@ -1487,7 +1485,7 @@
                        description="Return all subscriptions for the topic in HTML">
                 <results>
                     <c:notes>Return all subscriptions for the topic in HTML</c:notes>
-                    <c:simple-property required="false" type="longString" name="result"/>
+                    <c:simple-property required="false" name="result"/>
                 </results>
             </operation>
 
@@ -1505,7 +1503,7 @@
                        description="Return all durable subscriptions for the topic in HTML">
                 <results>
                 	<c:notes>Return all durable subscriptions for the topic in HTML</c:notes>
-                    <c:simple-property required="false" type="longString" name="result"/>
+                    <c:simple-property required="false" name="result"/>
                 </results>
             </operation>
 
@@ -1523,7 +1521,7 @@
                        description="Return all non durable subscriptions for the topic in HTML">
                 <results>
                     <c:notes>Return all non durable subscriptions for the topic in HTML</c:notes>
-                    <c:simple-property name="result" type="longString" />
+                    <c:simple-property name="result"/>
                 </results>
             </operation>
 
@@ -1740,12 +1738,10 @@
                 </configuration>
             </content>
 
-            <!-- 
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
- 			-->
-           
+
         </service>
 
         <service name="Web Application (WAR)"
@@ -1801,11 +1797,9 @@
                 </configuration>
             </content>
 
-            <!-- 
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
- 			-->
 
         </service>
 
@@ -1845,20 +1839,17 @@
                     dataType="trait" displayType="summary"
                     description="the name of this WAR's parent deployment"/>
 
-            <!-- 
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
- 			-->
- 			
-        </service>
 
+        </service>
 
         <service name="EJB 2.x Application (EJB JAR)"
                  subCategory="Applications"
                  class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
                  discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
-                 description="EJB Applications"
+                 description="a standalone EJB 2.x application"
                  createDeletePolicy="both"
                  creationDataType="content">
 
@@ -1869,7 +1860,7 @@
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="jar" readOnly="true"/>
-                    <c:simple-property name="descriptionTemplate" default="EJB Application" readOnly="true"/>
+                    <c:simple-property name="descriptionTemplate" default="a standalone EJB 2.x application" readOnly="true"/>
                     <c:simple-property name="deploymentTypeName" default="JavaEEEnterpriseBeans2x" readOnly="true">
                         <c:description>
                             The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
@@ -1879,6 +1870,15 @@
                 </c:group>
             </plugin-configuration>
 
+            <operation name="start"
+                       description="starts this EJB JAR"/>
+
+            <operation name="stop"
+                       description="stops this EJB JAR"/>
+
+            <operation name="restart"
+                       description="stops and then restarts this EJB JAR"/>
+
             <metric property="custom.path" displayName="Path"
                     dataType="trait" displayType="summary"
                     description="the absolute path of this EJB JAR file or directory"/>
@@ -1887,22 +1887,20 @@
                     dataType="trait" displayType="summary"
                     description="whether this EJB JAR is deployed exploded (i.e. as a directory)"/>
 
-            <content name="file" displayName="Jar File" category="deployable" isCreationType="true">
+            <content name="file" displayName="EJB JAR File" category="deployable" isCreationType="true">
             </content>
 
-            <!-- 
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
- 			-->
 
         </service>
 
-        <service name="EJB 3.x Application (EJB JAR)"
+        <service name="Embedded EJB 2.x Application (EJB JAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
-                 description="EJB 3.x Applications"
+                 class="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentDiscoveryComponent"
+                 description="an embedded EJB 2.x application"
                  createDeletePolicy="both"
                  creationDataType="content">
 
@@ -1913,7 +1911,51 @@
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="jar" readOnly="true"/>
-                    <c:simple-property name="descriptionTemplate" default="EJB Application" readOnly="true"/>
+                    <c:simple-property name="descriptionTemplate" default="an embedded EJB 2.x application" readOnly="true"/>
+                    <c:simple-property name="deploymentTypeName" default="JavaEEEnterpriseBeans2x" readOnly="true">
+                        <c:description>
+                            The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
+                            corresponding to this deployment's type.
+                        </c:description>
+                    </c:simple-property>
+                </c:group>
+            </plugin-configuration>
+
+            <operation name="start"
+                       description="starts this EJB JAR"/>
+
+            <operation name="stop"
+                       description="stops this EJB JAR"/>
+
+            <operation name="restart"
+                       description="stops and then restarts this EJB JAR"/>
+
+            <metric property="custom.parent" displayName="Parent"
+                    dataType="trait" displayType="summary"
+                    description="the name of this EJB JAR's parent deployment"/>
+
+            <resource-configuration>
+                &deploymentResourceConfigProps;
+            </resource-configuration>
+
+        </service>
+
+        <service name="EJB 3.x Application (EJB JAR)"
+                 subCategory="Applications"
+                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
+                 description="a standalone EJB 3.x application"
+                 createDeletePolicy="both"
+                 creationDataType="content">
+
+            <plugin-configuration>
+                <c:group name="general" displayName="General">
+                    <c:simple-property name="deploymentName" description="The name of this JAR" readOnly="true"/>
+                    <c:simple-property name="filename" readOnly="true"/>
+                </c:group>
+                <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
+                    <c:simple-property name="extension" default="jar" readOnly="true"/>
+                    <c:simple-property name="descriptionTemplate" default="a standalone EJB 3.x application" readOnly="true"/>
                     <c:simple-property name="deploymentTypeName" default="JavaEEEnterpriseBeans3x" readOnly="true">
                         <c:description>
                             The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
@@ -1923,6 +1965,15 @@
                 </c:group>
             </plugin-configuration>
 
+            <operation name="start"
+                       description="starts this EJB JAR"/>
+
+            <operation name="stop"
+                       description="stops this EJB JAR"/>
+
+            <operation name="restart"
+                       description="stops and then restarts this EJB JAR"/>
+
             <metric property="custom.path" displayName="Path"
                     dataType="trait" displayType="summary"
                     description="the absolute path of this EJB JAR file or directory"/>
@@ -1931,16 +1982,59 @@
                     dataType="trait" displayType="summary"
                     description="whether this EJB JAR is deployed exploded (i.e. as a directory)"/>
 
-            <content name="file" displayName="Jar File" category="deployable" isCreationType="true">
+            <content name="file" displayName="EJB JAR File" category="deployable" isCreationType="true">
             </content>
 
-            <!-- 
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
- 			-->
+
         </service>
-<!-- 
+
+        <service name="Embedded EJB 3.x Application (EJB JAR)"
+                 subCategory="Applications"
+                 class="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentDiscoveryComponent"
+                 description="an embedded EJB 3.x application"
+                 createDeletePolicy="both"
+                 creationDataType="content">
+
+            <plugin-configuration>
+                <c:group name="general" displayName="General">
+                    <c:simple-property name="deploymentName" description="The name of this JAR" readOnly="true"/>
+                    <c:simple-property name="filename" readOnly="true"/>
+                </c:group>
+                <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
+                    <c:simple-property name="extension" default="jar" readOnly="true"/>
+                    <c:simple-property name="descriptionTemplate" default="an embedded EJB 3.x application" readOnly="true"/>
+                    <c:simple-property name="deploymentTypeName" default="JavaEEEnterpriseBeans3x" readOnly="true">
+                        <c:description>
+                            The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
+                            corresponding to this deployment's type.
+                        </c:description>
+                    </c:simple-property>
+                </c:group>
+            </plugin-configuration>
+
+            <operation name="start"
+                       description="starts this EJB JAR"/>
+
+            <operation name="stop"
+                       description="stops this EJB JAR"/>
+
+            <operation name="restart"
+                       description="stops and then restarts this EJB JAR"/>
+
+            <metric property="custom.parent" displayName="Parent"
+                    dataType="trait" displayType="summary"
+                    description="the name of this EJB JAR's parent deployment"/>
+
+            <resource-configuration>
+                &deploymentResourceConfigProps;
+            </resource-configuration>
+
+        </service>
+<!--
         <service name="JBoss Service (SAR)"
                  subCategory="Applications"
                  class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
@@ -1982,12 +2076,12 @@
             </resource-configuration>
 
         </service>
- -->
+-->
         <service name="Resource Adaptor (RAR)"
                  subCategory="Applications"
                  class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
                  discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
-                 description="Resource Adaptors"
+                 description="a standalone resource adaptor"
                  createDeletePolicy="both"
                  creationDataType="content">
 
@@ -1998,7 +2092,7 @@
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="beans" readOnly="true"/>
-                    <c:simple-property name="descriptionTemplate" default="Resource Adaptor" readOnly="true"/>
+                    <c:simple-property name="descriptionTemplate" default="a standalone resource adaptor" readOnly="true"/>
                     <c:simple-property name="deploymentTypeName" default="JavaEEResourceAdaptor" readOnly="true">
                         <c:description>
                             The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
@@ -2008,6 +2102,15 @@
                 </c:group>
             </plugin-configuration>
 
+            <operation name="start"
+                       description="starts this RAR"/>
+
+            <operation name="stop"
+                       description="stops this RAR"/>
+
+            <operation name="restart"
+                       description="stops and then restarts this RAR"/>
+
             <metric property="custom.path" displayName="Path"
                     dataType="trait" displayType="summary"
                     description="the absolute path of this RAR file or directory"/>
@@ -2016,17 +2119,59 @@
                     dataType="trait" displayType="summary"
                     description="whether this RAR is deployed exploded (i.e. as a directory)"/>
 
-            <content name="file" displayName="Rar File" category="deployable" isCreationType="true">
+            <content name="file" displayName="RAR File" category="deployable" isCreationType="true">
             </content>
 
-            <!-- 
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
- 			-->
-      </service>
 
-<!-- 
+        </service>
+
+        <service name="Embedded Resource Adaptor (RAR)"
+                 subCategory="Applications"
+                 class="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentComponent"
+                 discovery="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentDiscoveryComponent"
+                 description="an embedded resource adaptor"
+                 createDeletePolicy="both"
+                 creationDataType="content">
+
+            <plugin-configuration>
+                <c:group name="general" displayName="General">
+                    <c:simple-property name="deploymentName" description="The name of this RAR" readOnly="true"/>
+                    <c:simple-property name="filename" readOnly="true"/>
+                </c:group>
+                <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
+                    <c:simple-property name="extension" default="beans" readOnly="true"/>
+                    <c:simple-property name="descriptionTemplate" default="an embedded resource adaptor" readOnly="true"/>
+                    <c:simple-property name="deploymentTypeName" default="JavaEEResourceAdaptor" readOnly="true">
+                        <c:description>
+                            The name of the item from the org.jboss.deployers.spi.management.KnownDeploymentTypes enum
+                            corresponding to this deployment's type.
+                        </c:description>
+                    </c:simple-property>
+                </c:group>
+            </plugin-configuration>
+
+            <operation name="start"
+                       description="starts this RAR"/>
+
+            <operation name="stop"
+                       description="stops this RAR"/>
+
+            <operation name="restart"
+                       description="stops and then restarts this RAR"/>
+
+            <metric property="custom.parent" displayName="Parent"
+                    dataType="trait" displayType="summary"
+                    description="the name of this RAR's parent deployment"/>
+
+            <resource-configuration>
+                &deploymentResourceConfigProps;
+            </resource-configuration>
+
+        </service>
+<!--
         <service name="Microcontainer Beans (MC Beans)"
                  subCategory="Applications"
                  class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
@@ -2068,7 +2213,7 @@
             </resource-configuration>
 
         </service>
- -->
+-->
     </server>
 
 </plugin>

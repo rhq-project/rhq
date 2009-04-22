@@ -19,14 +19,11 @@
 package org.rhq.enterprise.gui.common.framework;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import javax.el.ELException;
 import javax.el.ValueExpression;
 import javax.faces.FacesException;
-import javax.faces.application.FacesMessage;
 import javax.faces.application.ViewHandler;
 import javax.faces.component.UIViewRoot;
 import javax.faces.context.ExternalContext;
@@ -39,7 +36,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.FacesExpressionUtility;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 
 /**
@@ -87,19 +83,11 @@ public class FaceletRedirectionViewHandler extends FaceletViewHandler {
             }
 
             FacesContext facesContext = FacesContext.getCurrentInstance();
-
-            List<FacesMessage> savedMessages = new ArrayList<FacesMessage>();
-            String exceptionDetails = ThrowableUtil.getAllMessages(ex);
-            savedMessages.add(new FacesMessage(FacesMessage.SEVERITY_ERROR, "Could not process request",
-                exceptionDetails));
-
             ExternalContext externalContext = facesContext.getExternalContext();
             Map<String, Object> sessionMap = externalContext.getSessionMap();
-
             sessionMap.put("GLOBAL_RENDER_ERROR", ex);
 
             FacesContextUtility.getResponse().sendRedirect("/rhq/common/error.xhtml");
-            //FacesContextUtility.getResponse().sendRedirect("/common/GenericError.jsp");
         } catch (IOException ioe) {
             log.fatal("Could not process redirect to handle application error");
         }

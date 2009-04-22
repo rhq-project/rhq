@@ -316,7 +316,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         ResourceGroup group = entityManager.find(ResourceGroup.class, id);
 
         if (group == null) {
-            throw new ResourceGroupNotFoundException("Resource group with specified id does not exist");
+            throw new ResourceGroupNotFoundException(id);
         }
 
         if (!authorizationManager.canViewGroup(user, group.getId())) {
@@ -836,6 +836,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         return ret;
     }
 
+    @SuppressWarnings("unchecked")
     public ResourceGroupComposite getResourceGroupComposite(Subject subject, int groupId) {
         // Auto cluster backing groups have a special security allowance that let's a non-inventory-manager
         // view them even if they aren't directly in one of their roles, by nature of the fact that the user has
@@ -845,7 +846,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             throw new PermissionException("You do not have permission to view this resource group");
         }
 
-        String queryString = "SELECT \n" + "  (SELECT count(er) "
+        String queryString = "SELECT \n" //
+            + "  (SELECT count(er) "
             + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId),\n"
             + "  (SELECT avg(er.currentAvailability.availabilityType) "
             + "       FROM ResourceGroup g JOIN g.explicitResources er where g.id = :groupId) AS eavail,\n"
@@ -857,7 +859,13 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
 
         Query query = entityManager.createQuery(queryString);
         query.setParameter("groupId", groupId);
-        Object[] data = (Object[]) query.getSingleResult();
+        List<Object[]> results = (List<Object[]>) query.getResultList();
+
+        if (results.size() == 0) {
+            throw new ResourceGroupNotFoundException(groupId);
+        }
+
+        Object[] data = results.get(0);
 
         ResourceGroup group = (ResourceGroup) data[4];
         ResourceType type = group.getResourceType();

@@ -101,7 +101,6 @@ public class ResourceGroupTreeModelUIBean {
     private ResourceGroupTreeNode load(ResourceGroup group, List<Resource> resources, List<Integer> members) {
 
         Set<ResourceTreeNode> memberNodes = new HashSet<ResourceTreeNode>();
-        ResourceTreeModelUIBean.reparent(resources);
 
         for (Integer member : members) {
             memberNodes.add(ResourceTreeModelUIBean.load(member.intValue(), resources, true));

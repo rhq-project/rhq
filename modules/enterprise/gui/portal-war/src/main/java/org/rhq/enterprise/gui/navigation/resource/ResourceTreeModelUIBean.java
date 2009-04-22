@@ -86,8 +86,6 @@ public class ResourceTreeModelUIBean {
         HibernatePerformanceMonitor.get().stop(monitorId, "ResourceTree agent resource");
         log.debug("Loaded " + resources.size() + " raw resources in " + (end - start));
 
-        reparent(resources);
-
 
         start = System.currentTimeMillis();
         monitorId = HibernatePerformanceMonitor.get().start();
@@ -110,25 +108,7 @@ public class ResourceTreeModelUIBean {
         return root;
     }
 
-    public static void reparent(List<Resource> resources) {
-        long start = System.currentTimeMillis();
-
-        HashMap<Integer,Resource> lookupTable = new HashMap<Integer, Resource>(resources.size());
-        for (Resource res : resources) {
-            lookupTable.put(res.getId(),res);
-        }
-
-        for (Resource res : lookupTable.values()) {
-            if (res.getParentResource() != null) {
-                Resource parent = lookupTable.get(res.getParentResource().getId());
-                if (parent != null) {
-                    parent.addChildResource(res);
-                }
-            }
-        }
-        log.debug("Reparenting took: " + (System.currentTimeMillis() - start));
-    }
-
+    
     public static void load(ResourceTreeNode parentNode, boolean alwaysGroup) {
 
         if (parentNode.getData() instanceof Resource) {
@@ -289,7 +269,6 @@ public class ResourceTreeModelUIBean {
                 }
             }
         }
-
     }
 
     public static boolean recursivelyLocked(ResourceTreeNode node) {

@@ -1917,18 +1917,20 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             authorizationQuery.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
             List<Integer> visibleResources = authorizationQuery.getResultList();
 
+            HashSet<Integer> visibleIdSet = new HashSet<Integer>(visibleResources);
+
             ListIterator<Resource> iter = resources.listIterator();
             while (iter.hasNext()) {
                 Resource res = iter.next();
-                boolean authorized = false;
-                for (Integer visible : visibleResources) {
-                    if (res.getId() == visible) {
-                        authorized = true;
-                        break;
+
+                if (!visibleIdSet.contains(res.getId())) {
+                    Resource replacement = new LockedResource(res);
+                    if (res.getParentResource() != null) {
+                        Resource parent = res.getParentResource();
+                        parent.removeChildResource(res);
+                        parent.addChildResource(replacement);
                     }
-                }
-                if (!authorized) {
-                    iter.set(new LockedResource(res));
+                    iter.set(replacement);
                 }
             }
         }
@@ -2073,17 +2075,20 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             authorizationQuery.setParameter("subject", user);
             List<Integer> visibleResources = authorizationQuery.getResultList();
 
+            HashSet<Integer> visibleIdSet = new HashSet<Integer>(visibleResources);
+
             ListIterator<Resource> iter = resources.listIterator();
             while (iter.hasNext()) {
                 Resource res = iter.next();
-                boolean authorized = false;
-                for (Integer visible : visibleResources) {
-                    if (res.getId() == visible) {
-                        authorized = true;
+
+                if (!visibleIdSet.contains(res.getId())) {
+                    Resource replacement = new LockedResource(res);
+                    if (res.getParentResource() != null) {
+                        Resource parent = res.getParentResource();
+                        parent.removeChildResource(res);
+                        parent.addChildResource(replacement);
                     }
-                }
-                if (!authorized) {
-                    iter.set(new LockedResource(res));
+                    iter.set(replacement);
                 }
             }
         }

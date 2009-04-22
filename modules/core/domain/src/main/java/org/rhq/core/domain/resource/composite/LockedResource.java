@@ -35,6 +35,7 @@ public class LockedResource extends Resource {
 
     public LockedResource(Resource resource) {
         setParentResource(resource.getParentResource());
+        setChildResources(resource.getChildResources());
         setResourceType(resource.getResourceType());
         setId(resource.getId());
         setUuid(resource.getUuid());

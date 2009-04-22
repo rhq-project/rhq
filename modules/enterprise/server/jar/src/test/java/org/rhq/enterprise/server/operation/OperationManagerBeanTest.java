@@ -1096,6 +1096,16 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
             PageControl.getUnlimitedInstance());
 
+        assert results != null;
+        if (results.isEmpty()) {
+            System.out.println("We did not yet get a result -- waiting some more");
+            Thread.sleep(5000L);
+            results = operationManager.getCompletedResourceOperationHistories(superuser, resource.getId(), null, null,
+            PageControl.getUnlimitedInstance());
+        }
+        assert results.size() == 1: "Did not get 1 result, but " + results.size();
+
+
         ResourceOperationHistory history = results.get(0);
         assert history.getErrorMessage() != null : history;
         assert history.getErrorMessage().indexOf("some error") > -1 : history;

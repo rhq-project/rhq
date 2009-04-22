@@ -50,6 +50,9 @@ public class CachedConditionManagerBean implements CachedConditionManagerLocal {
     private EntityManager entityManager;
 
     @EJB
+    private AlertDefinitionManagerLocal alertDefinitionManager;
+
+    @EJB
     private AlertConditionLogManagerLocal alertConditionLogManager;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -60,6 +63,18 @@ public class CachedConditionManagerBean implements CachedConditionManagerLocal {
          */
         if (conditionMessage instanceof ActiveAlertConditionMessage) {
             ActiveAlertConditionMessage activeConditionMessage = (ActiveAlertConditionMessage) conditionMessage;
+
+            if (alertDefinitionManager.isEnabled(definitionId) == false) {
+                if (log.isDebugEnabled()) {
+                    log.debug("AlertDefinition[id=" //
+                        + activeConditionMessage.getAlertConditionId() //
+                        + "] was already disabled " //
+                        + "(likely due to recovery logic disablement on earlier messages in this process batch), " //
+                        + "ignoring " //
+                        + activeConditionMessage);
+                }
+                return;
+            }
 
             alertConditionLogManager.updateUnmatchedLogByAlertConditionId(activeConditionMessage.getAlertConditionId(),
                 activeConditionMessage.getTimestamp(), activeConditionMessage.getValue());

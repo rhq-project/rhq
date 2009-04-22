@@ -265,6 +265,14 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal {
         return modifiedCount;
     }
 
+    @SuppressWarnings("unchecked")
+    public boolean isEnabled(Integer definitionId) {
+        Query enabledQuery = entityManager.createNamedQuery(AlertDefinition.QUERY_IS_ENABLED);
+        enabledQuery.setParameter("alertDefinitionId", definitionId);
+        List<Integer> resultIds = enabledQuery.getResultList();
+        return (resultIds.size() == 1);
+    }
+
     public int disableAlertDefinitions(Subject user, Integer[] alertDefinitionIds) {
         int modifiedCount = 0;
         for (int alertDefId : alertDefinitionIds) {

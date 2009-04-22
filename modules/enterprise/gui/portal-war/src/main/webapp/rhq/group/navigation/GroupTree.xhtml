@@ -29,6 +29,7 @@
                         <h:message for="leftNavGroupTree" showSummary="true" showDetail="false"  style="background-color: yellow; display:block; width:100%;"/>
                     </a4j:outputPanel>
 
+                    <a4j:keepAlive beanName="ResourceGroupTreeModelUIBean" />
 
                     <f:facet name="header">
                         Server Resources (in single element pages)
@@ -133,7 +134,8 @@
                             <!-- TODO: Implement GroupTreeContextMenuUIBean. -->
                             <rich:contextMenu attached="false" id="resourceMenu"
                                               binding="#{ResourceGroupTreeContextMenuUIBean.menu}"
-                                              disableDefaultMenu="false" style="z-index: 50;" >
+                                              disableDefaultMenu="false" style="z-index: 50;"
+                                              submitMode="ajax" >
 
                             </rich:contextMenu>
 

@@ -30,7 +30,7 @@
                 <h:message for="leftNavTree" showSummary="true" showDetail="false" style="background-color: yellow; display:block; width:100%;"/>
             </a4j:outputPanel>
 
-
+                <a4j:keepAlive beanName="ResourceTreeModelUIBean" />
 
                 <rich:tree style="width: 100%; height: 100%; min-width: 100%; min-height: 100%" switchType="ajax"
                            stateAdvisor="#{ResourceTreeStateAdvisor}"
@@ -102,7 +102,8 @@
 
                     <h:panelGroup id="contentMenuPanelGroup">
                     <rich:contextMenu attached="true" id="resourceMenu" binding="#{ResourceTreeContextMenuUIBean.menu}"
-                                      disableDefaultMenu="false" style="z-index: 50;" />
+                                      disableDefaultMenu="false" style="z-index: 50;" 
+                                      submitMode="ajax" />
                     </h:panelGroup>
 
                 </a4j:outputPanel>

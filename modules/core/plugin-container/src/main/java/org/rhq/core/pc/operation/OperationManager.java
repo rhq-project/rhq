@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.operation;
 
 import java.util.EnumSet;
@@ -29,15 +29,17 @@ import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.agent.operation.CancelResults;
-import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
+import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
 import org.rhq.core.clientapi.server.operation.OperationServerService;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -81,8 +83,8 @@ public class OperationManager extends AgentService implements OperationAgentServ
         LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>(10000);
         LoggingThreadFactory threadFactory = new LoggingThreadFactory(SENDER_THREAD_POOL_NAME, true);
         int maxPoolSize = configuration.getOperationInvokerThreadPoolSize();
-        ThreadPoolExecutor threadPool = new ThreadPoolExecutor(1, maxPoolSize, 1000, TimeUnit.MILLISECONDS,
-            queue, threadFactory);
+        ThreadPoolExecutor threadPool = new ThreadPoolExecutor(1, maxPoolSize, 1000, TimeUnit.MILLISECONDS, queue,
+            threadFactory);
         operationGateway = new OperationThreadPoolGateway(threadPool);
     }
 
@@ -103,10 +105,8 @@ public class OperationManager extends AgentService implements OperationAgentServ
         this.configuration = configuration;
     }
 
-    public void invokeOperation(@NotNull
-    final String jobId, final int resourceId, @NotNull
-    final String operationName, @Nullable
-    final Configuration parameterConfig) throws PluginContainerException {
+    public void invokeOperation(@NotNull final String jobId, final int resourceId, @NotNull final String operationName,
+        @Nullable final Configuration parameterConfig) throws PluginContainerException {
         invokeOperation(jobId, resourceId, operationName, parameterConfig, getOperationServerService());
     }
 
@@ -122,8 +122,10 @@ public class OperationManager extends AgentService implements OperationAgentServ
             final long invocationTime = System.currentTimeMillis();
 
             OperationDefinition operationDefinition = getOperationDefinition(resourceId, operationName);
-            if (operationDefinition != null && operationDefinition.getParametersConfigurationDefinition() != null && parameterConfig != null) {
-                ConfigurationUtility.normalizeConfiguration(parameterConfig, operationDefinition.getParametersConfigurationDefinition());
+            if (operationDefinition != null && operationDefinition.getParametersConfigurationDefinition() != null
+                && parameterConfig != null) {
+                ConfigurationUtility.normalizeConfiguration(parameterConfig, operationDefinition
+                    .getParametersConfigurationDefinition());
             }
 
             // create our timer task that will force the operation invocation to time out if it takes too long to complete
@@ -143,7 +145,7 @@ public class OperationManager extends AgentService implements OperationAgentServ
                 }
             };
 
-            timer.schedule(timerTask, operationTimeout);            
+            timer.schedule(timerTask, operationTimeout);
 
             theJob[0] = new OperationInvocation(resourceId, invocationTime, timerTask, parameterConfig, jobId,
                 operationName, operationComponent, operationServerService, operationGateway, operationDefinition);
@@ -160,6 +162,15 @@ public class OperationManager extends AgentService implements OperationAgentServ
 
     public CancelResults cancelOperation(String jobId) {
         OperationInvocation operation = operationGateway.getOperationInvocation(jobId);
+        /*
+         * there is a small window of time during which the user sees the operation as INPROGRESS (and thus available
+         * for cancellation).  the user click on the cancel button, but by the time the request makes it down to the
+         * agent the operation has completed (or failed).  in this case, asking for the operation from the gateway will
+         * fail with a NullPointerException.  here, we assume the job has finished and return that to the caller.
+         */
+        if (operation == null) {
+            return new CancelResults(InterruptedState.FINISHED);
+        }
         EnumSet<Status> interruptedStatus = operation.markAsCanceled();
 
         // tell the caller what state the operation was in when it was canceled
@@ -185,7 +196,8 @@ public class OperationManager extends AgentService implements OperationAgentServ
      * @throws PluginContainerException on error
      */
     protected OperationFacet getOperationFacet(int resourceId, long facetMethodTimeout) throws PluginContainerException {
-        return ComponentUtil.getComponent(resourceId, OperationFacet.class, FacetLockType.WRITE, facetMethodTimeout, false, false);
+        return ComponentUtil.getComponent(resourceId, OperationFacet.class, FacetLockType.WRITE, facetMethodTimeout,
+            false, false);
     }
 
     /**

@@ -69,7 +69,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
                     // this is a trick(y) one, as we do not want to honor updates
                     // of the default interval when a plugin was already deployed once and
                     // we do a redeploy
-                    assert def.getDefaultInterval() == 10000 : "DefaultInterval should be 10000 for Five in v1";
+                    assert def.getDefaultInterval() == 30000L : "DefaultInterval should be 30000 for Five in v1";
                 }
             }
 
@@ -96,7 +96,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
                     // this is a trick(y) one, as we do not want to honor updates
                     // of the default interval when a plugin was already deployed once and
                     // we do a redeploy
-                    assert def.getDefaultInterval() == 10000 : "DefaultInterval should still be 10000 for Five in v2";
+                    assert def.getDefaultInterval() == 30000L : "DefaultInterval should still be 30000 for Five in v2";
                 }
             }
 
@@ -119,7 +119,7 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
                     // this is a trick(y) one, as we do not want to honor updates
                     // of the default interval when a plugin was already deployed once and
                     // we do a redeploy
-                    assert def.getDefaultInterval() == 10000 : "DefaultInterval should be 10000 for Five in v3";
+                    assert def.getDefaultInterval() == 30000L : "DefaultInterval should be 30000 for Five in v3";
                 }
             }
         } finally {

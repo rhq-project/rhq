@@ -1878,15 +1878,6 @@
                 </c:group>
             </plugin-configuration>
 
-            <operation name="start"
-                       description="starts this WAR"/>
-
-            <operation name="stop"
-                       description="stops this WAR"/>
-
-            <operation name="restart"
-                       description="stops and then restarts this WAR"/>
-
             <metric property="custom.parent" displayName="Parent"
                     dataType="trait" displayType="summary"
                     description="the name of this WAR's parent deployment"/>
@@ -1971,15 +1962,6 @@
                 </c:group>
             </plugin-configuration>
 
-            <operation name="start"
-                       description="starts this EJB JAR"/>
-
-            <operation name="stop"
-                       description="stops this EJB JAR"/>
-
-            <operation name="restart"
-                       description="stops and then restarts this EJB JAR"/>
-
             <metric property="custom.parent" displayName="Parent"
                     dataType="trait" displayType="summary"
                     description="the name of this EJB JAR's parent deployment"/>
@@ -2063,15 +2045,6 @@
                     </c:simple-property>
                 </c:group>
             </plugin-configuration>
-
-            <operation name="start"
-                       description="starts this EJB JAR"/>
-
-            <operation name="stop"
-                       description="stops this EJB JAR"/>
-
-            <operation name="restart"
-                       description="stops and then restarts this EJB JAR"/>
 
             <metric property="custom.parent" displayName="Parent"
                     dataType="trait" displayType="summary"
@@ -2198,15 +2171,6 @@
                     </c:simple-property>
                 </c:group>
             </plugin-configuration>
-
-            <operation name="start"
-                       description="starts this RAR"/>
-
-            <operation name="stop"
-                       description="stops this RAR"/>
-
-            <operation name="restart"
-                       description="stops and then restarts this RAR"/>
 
             <metric property="custom.parent" displayName="Parent"
                     dataType="trait" displayType="summary"

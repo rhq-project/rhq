@@ -148,7 +148,8 @@ import org.rhq.core.domain.resource.ResourceType;
     @NamedQuery(name = AlertDefinition.QUERY_FIND_DEFINITION_ID_BY_CONDITION_ID, query = "" //
         + "SELECT ac.alertDefinition.id " //
         + "  FROM AlertCondition ac " //
-        + " WHERE ac.id = :alertConditionId "), @NamedQuery(name = AlertDefinition.QUERY_IS_ENABLED, query = "" //
+        + " WHERE ac.id = :alertConditionId "), //
+    @NamedQuery(name = AlertDefinition.QUERY_IS_ENABLED, query = "" //
         + "SELECT ad.id " //
         + "  FROM AlertDefinition ad " //
         + " WHERE ad.id = :alertDefinitionId " //

@@ -43,6 +43,7 @@ import javax.faces.render.Renderer;
 import org.ajax4jsf.component.html.HtmlAjaxCommandLink;
 import org.ajax4jsf.component.html.HtmlAjaxOutputPanel;
 import org.ajax4jsf.component.html.HtmlAjaxRegion;
+import org.ajax4jsf.context.AjaxContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.richfaces.component.html.HtmlModalPanel;
@@ -71,6 +72,7 @@ import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
  *
  * @author Ian Springer
  */
+// TODO: Make subclasses of this for rendering ConfigUIComponents versus rendering ConfigurationSetComponents.
 public class ConfigRenderer extends Renderer {
     public static final String PROPERTY_SET_COMPONENT_ID = "rhq_propSet";
 
@@ -127,20 +129,24 @@ public class ConfigRenderer extends Renderer {
     public void encodeBegin(FacesContext facesContext, UIComponent component) throws IOException {
         AbstractConfigurationComponent configurationComponent = (AbstractConfigurationComponent) component;
 
-        // If it's an AJAX request for this component, recalculate the aggregate config from the member configs
-        // and clear our child components. NOTE: This can *not* be done in decode(), because the model
-        // will not have been updated yet with any changes made to child UIInput values.
         if (isAjaxRefresh(configurationComponent)) {
-            ConfigurationSetComponent configurationSetComponent = ((ConfigurationSetComponent) configurationComponent);
-            HtmlModalPanel propSetModalPanel = configurationSetComponent.getPropSetModalPanel();
-            if (propertySetComponentContainsInvalidInputs(configurationSetComponent)) {
-                // Make sure the modal panel is shown when rendered, so the user will see the validation errors.
-                propSetModalPanel.setShowWhenRendered(true);
-            } else {
-                // Otherwise, make sure it's not rendered.
-                propSetModalPanel.setShowWhenRendered(false);
-                configurationSetComponent.getConfigurationSet().calculateAggregateConfiguration();
+            if (configurationComponent instanceof ConfigUIComponent) {
                 component.getChildren().clear();
+            } else { // configurationComponent instanceof ConfigurationSetComponent
+                // If it's an AJAX request for a configSet component, recalculate the aggregate config from the member
+                // configs and clear our child components. NOTE: This can *not* be done in decode(), because the model
+                // will not have been updated yet with any changes made to child UIInput values.
+                ConfigurationSetComponent configurationSetComponent = ((ConfigurationSetComponent) configurationComponent);
+                HtmlModalPanel propSetModalPanel = configurationSetComponent.getPropSetModalPanel();
+                if (propertySetComponentContainsInvalidInputs(configurationSetComponent)) {
+                    // Make sure the modal panel is shown when rendered, so the user will see the validation errors.
+                    propSetModalPanel.setShowWhenRendered(true);
+                } else {
+                    // Otherwise, make sure it's not rendered.
+                    propSetModalPanel.setShowWhenRendered(false);
+                    configurationSetComponent.getConfigurationSet().calculateAggregateConfiguration();
+                    component.getChildren().clear();
+                }
             }
         }
 
@@ -157,8 +163,12 @@ public class ConfigRenderer extends Renderer {
     }
 
     private boolean isAjaxRefresh(AbstractConfigurationComponent configurationComponent) {
-        String refresh = FacesContextUtility.getOptionalRequestParameter("refresh");
-        return refresh != null && refresh.equals(configurationComponent.getId());
+        if (configurationComponent instanceof ConfigUIComponent) {
+            return AjaxContext.getCurrentInstance().isAjaxRequest();
+        } else { // configurationComponent instanceof ConfigurationSetComponent
+            String refresh = FacesContextUtility.getOptionalRequestParameter("refresh");
+            return configurationComponent.getId().equals(refresh);
+        }
     }
 
     private static boolean propertySetComponentContainsInvalidInputs(ConfigurationSetComponent configurationSetComponent) {

@@ -53,6 +53,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ProcessScan;
@@ -685,6 +686,11 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             if (existingDefinitions.isEmpty()) {
                 // They're all new.
                 for (MeasurementDefinition newDefinition : newType.getMetricDefinitions()) {
+                    if (newDefinition.getDefaultInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
+                        newDefinition.setDefaultInterval(MeasurementSchedule.MINIMUM_INTERVAL);
+                        log.info("Definition [" + newDefinition
+                            + "] has too short of a default interval, setting to minimum");
+                    }
                     existingType.addMetricDefinition(newDefinition);
                     entityManager.persist(newDefinition);
 
@@ -699,7 +705,17 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                         if (existingDefinition.getName().equals(newDefinition.getName())
                             && (existingDefinition.isPerMinute() == newDefinition.isPerMinute())) {
                             found = true;
+
                             existingDefinition.update(newDefinition, false);
+
+                            // we normally do not want to touch interval in case a user changed it,
+                            // but we cannot allow too-short of an interval, so override it if necessary
+                            if (existingDefinition.getDefaultInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
+                                existingDefinition.setDefaultInterval(MeasurementSchedule.MINIMUM_INTERVAL);
+                                log.info("Definition [" + existingDefinition
+                                    + "] has too short of a default interval, setting to minimum");
+                            }
+
                             entityManager.merge(existingDefinition);
 
                             // There is nothing in the schedules that need to be updated.
@@ -741,8 +757,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 }
 
                 entityManager.flush();
-
-                // TODO send updates to agents ?
             }
         }
         // TODO what if they are null? --> delete everything from existingType

@@ -96,6 +96,8 @@ public class MeasurementSchedule implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public static final long MINIMUM_INTERVAL = 30000L;
+
     /**
      * Finds schedules that have a baseline attached that needs to be recalculated. MeasuremetType is passed in
      * :measType, baseline compute time in :ctime
@@ -223,7 +225,7 @@ public class MeasurementSchedule implements Serializable {
     }
 
     public long getInterval() {
-        return interval;
+        return (this.interval < MINIMUM_INTERVAL) ? MINIMUM_INTERVAL : this.interval;
     }
 
     /**

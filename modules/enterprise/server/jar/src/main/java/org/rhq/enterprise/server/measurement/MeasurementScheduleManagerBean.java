@@ -1158,7 +1158,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             if (resourcesUpdatedCount > 0) {
                 // now try to tell the agents that certain resources have changed
                 String findResourcesQueryString = "" //
-                    + " SELECT res.id,  " //
+                    + " SELECT res.id " //
                     + "   FROM Resource res " //
                     + "  WHERE res.mtime = :currentTime ";
                 Query findResourcesQuery = entityManager.createQuery(findResourcesQueryString);

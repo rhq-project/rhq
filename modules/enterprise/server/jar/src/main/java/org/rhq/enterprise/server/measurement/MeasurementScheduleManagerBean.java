@@ -1129,6 +1129,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void errorCorrectSchedules() {
         /* 
          * update mtime of resources whose schedules are < 30s, this will indicate to the 
@@ -1152,7 +1153,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 + "    SET interval = 30000 " //
                 + "  WHERE interval < 30000 ";
             Query updateSchedulesQuery = entityManager.createQuery(updateSchedulesQueryString);
-            updateSchedulesQuery.setParameter("currentTime", System.currentTimeMillis());
             int schedulesUpdatedCount = updateSchedulesQuery.executeUpdate();
 
             if (resourcesUpdatedCount > 0) {
@@ -1174,7 +1174,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 }
             }
         } catch (Throwable t) {
-            log.fatal("There was a problem correcting errors for MeasurementSchedules", t);
+            log.error("There was a problem correcting errors for MeasurementSchedules", t);
         }
     }
 

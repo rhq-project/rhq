@@ -1178,7 +1178,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         }
     }
 
-    public void updateMeasurementSchedulesForResources(List<Integer> resourceIds) {
+    private void updateMeasurementSchedulesForResources(List<Integer> resourceIds) {
         if (resourceIds.size() == 0) {
             return;
         }

@@ -568,7 +568,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
             JDBCUtil.bindNTimes(deleteExplicitStatement, resourceIdsToRemove, 2);
             deleteExplicitStatement.executeUpdate();
         } catch (SQLException sqle) {
-            log.error("Error removing resources to group[id=" + groupId + "]: ", sqle);
+            log.error("Error removing resources from group[id=" + groupId + "]: ", sqle);
             throw new ResourceGroupUpdateException("Error removing resources from group[id=" + groupId + "]: "
                 + sqle.getMessage());
         } finally {
@@ -1186,5 +1186,22 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal {
         List<Integer> results = new ArrayList<Integer>(possibleGroupIds);
         results.removeAll(validIds);
         return results;
+    }
+
+    public void ensureMembershipMatches(Subject subject, Integer groupId, List<Integer> resourceIds)
+        throws ResourceGroupUpdateException {
+        List<Integer> currentMembers = resourceManager.getExplicitResourceIdsByResourceGroup(groupId);
+
+        List<Integer> newMembers = new ArrayList<Integer>(resourceIds); // members needing addition
+        newMembers.removeAll(currentMembers);
+        if (newMembers.size() > 0) {
+            addResourcesToGroup(subject, groupId, newMembers.toArray(new Integer[newMembers.size()]));
+        }
+
+        List<Integer> extraMembers = new ArrayList<Integer>(currentMembers); // members needing removal
+        extraMembers.removeAll(resourceIds);
+        if (extraMembers.size() > 0) {
+            removeResourcesFromGroup(subject, groupId, extraMembers.toArray(new Integer[extraMembers.size()]));
+        }
     }
 }

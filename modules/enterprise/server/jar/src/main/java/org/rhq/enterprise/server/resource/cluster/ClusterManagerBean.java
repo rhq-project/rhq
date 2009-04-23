@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.resource.cluster;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -59,11 +60,9 @@ public class ClusterManagerBean implements ClusterManagerLocal {
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
-    
+
     @EJB
     private SubjectManagerLocal subjectManager;
-
-
 
     public ResourceGroup createAutoClusterBackingGroup(Subject subject, ClusterKey clusterKey, boolean addResources) {
         ResourceGroup autoClusterBackingGroup = null;
@@ -75,7 +74,8 @@ public class ClusterManagerBean implements ClusterManagerLocal {
         ResourceGroup resourceGroup = entityManager.find(ResourceGroup.class, clusterKey.getClusterGroupId());
 
         if (!authorizationManager.canViewGroup(subject, clusterKey.getClusterGroupId())) {
-            throw new PermissionException("You do not have permission to view child cluster groups of the group [" + resourceGroup.getName() + "]");
+            throw new PermissionException("You do not have permission to view child cluster groups of the group ["
+                + resourceGroup.getName() + "]");
         }
 
         List<Resource> resources = null;
@@ -107,7 +107,8 @@ public class ClusterManagerBean implements ClusterManagerLocal {
 
                 // You are allowed to cause the creation of an auto cluster backing group as long as you can
                 // view the parent group. (That check was done above)
-                int id = resourceGroupManager.createResourceGroup(subjectManager.getOverlord(), autoClusterBackingGroup);
+                int id = resourceGroupManager
+                    .createResourceGroup(subjectManager.getOverlord(), autoClusterBackingGroup);
                 autoClusterBackingGroup = entityManager.find(ResourceGroup.class, id);
 
             } catch (ResourceGroupAlreadyExistsException e) {
@@ -122,15 +123,16 @@ public class ClusterManagerBean implements ClusterManagerLocal {
                 resources = getAutoClusterResources(subject, clusterKey);
             }
 
-            Integer[] resourceIds = new Integer[resources.size()];
-            for (int i = 0; i < resourceIds.length; ++i) {
-                resourceIds[i] = resources.get(i).getId();
+            List<Integer> resourceIds = new ArrayList<Integer>();
+            for (Resource res : resources) {
+                resourceIds.add(res.getId());
             }
 
             try {
                 // You are allowed to cause the creation of an auto cluster backing group as long as you can
                 // view the parent group. (That check was done above)
-                resourceGroupManager.addResourcesToGroup(subjectManager.getOverlord(), autoClusterBackingGroup.getId(), resourceIds);
+                resourceGroupManager.ensureMembershipMatches(subjectManager.getOverlord(), autoClusterBackingGroup
+                    .getId(), resourceIds);
             } catch (ResourceGroupUpdateException e) {
                 log.error("Could not add resources to group:" + e);
             }

@@ -126,4 +126,7 @@ public interface ResourceGroupManagerLocal {
         Integer groupId, PageControl pc);
 
     List<Integer> getDeletedResourceGroupIds(List<Integer> groupIds);
+
+    void ensureMembershipMatches(Subject subject, Integer groupId, List<Integer> resourceIds)
+        throws ResourceGroupUpdateException;
 }

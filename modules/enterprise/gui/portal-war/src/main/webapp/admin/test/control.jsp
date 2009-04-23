@@ -19,6 +19,7 @@
 <%@ page import="org.rhq.enterprise.server.cloud.instance.ServerManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.ResourceGroupTestBeanLocal" %>
 <%@ page import="org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal" %>
+<%@ page import="org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.core.AgentManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.system.SystemManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.auth.SubjectManagerLocal" %>
@@ -46,6 +47,7 @@
    ServerManagerLocal serverManager;
    AlertTemplateTestLocal alertTemplateTestBean;
    MeasurementBaselineManagerLocal measurementBaselineManager;
+   MeasurementScheduleManagerLocal measurementScheduleManager;
    AgentManagerLocal agentManager;
    SystemManagerLocal systemManager;
    SubjectManagerLocal subjectManager;
@@ -58,6 +60,7 @@
    serverManager = LookupUtil.getServerManager();
    alertTemplateTestBean = LookupUtil.getAlertTemplateTestBean();
    measurementBaselineManager = LookupUtil.getMeasurementBaselineManager();
+   measurementScheduleManager = LookupUtil.getMeasurementScheduleManager();
    agentManager = LookupUtil.getAgentManager();
    systemManager = LookupUtil.getSystemManager();
    subjectManager = LookupUtil.getSubjectManager();
@@ -173,6 +176,10 @@
          rangePrefs.lastN = lastHours;
          prefs.setMetricRangePreferences(rangePrefs);
       }
+      else if ("errorCorrectSchedules".equals("mode"))
+      {
+         measurementScheduleManager.errorCorrectSchedules();
+      }
    }
    catch (Exception e)
    {
@@ -279,6 +286,8 @@ Send New Platform Inventory Report
       <a href="<c:out value="${url}"/>">Force Data Purge Now</a></li>
   <li><c:url var="url" value="/admin/test/control.jsp?mode=calculateOOBs"/>
       <a href="<c:out value="${url}"/>">Force calculation of OOBs</a></li>
+  <li><c:url var="url" value="/admin/test/control.jsp?mode=errorCorrectSchedules"/>
+      <a href="<c:out value="${url}"/>">Error-Correct Measurement Schedules</a></li>
 </ul>
 
 <h2>Alerts</h2>

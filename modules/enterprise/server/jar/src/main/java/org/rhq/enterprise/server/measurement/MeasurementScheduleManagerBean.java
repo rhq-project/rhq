@@ -76,6 +76,7 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -125,6 +126,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
     @EJB
     private MeasurementScheduleManagerLocal measurementScheduleManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
 
     @javax.annotation.Resource
     private SessionContext ctx;
@@ -1114,8 +1118,109 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     public int getScheduledMeasurementsPerMinute() {
-        Number rate = (Number) entityManager.createNamedQuery(
-            MeasurementSchedule.GET_SCHEDULED_MEASUREMENTS_PER_MINUTED).getSingleResult();
+        Number rate = 0;
+        try {
+            rate = (Number) entityManager.createNamedQuery(MeasurementSchedule.GET_SCHEDULED_MEASUREMENTS_PER_MINUTED)
+                .getSingleResult();
+        } catch (Throwable t) {
+            measurementScheduleManager.errorCorrectSchedules();
+        }
         return (rate == null) ? 0 : rate.intValue();
+    }
+
+    @SuppressWarnings("unchecked")
+    public void errorCorrectSchedules() {
+        /* 
+         * update mtime of resources whose schedules are < 30s, this will indicate to the 
+         * agent that it needs to sync / merge schedules for the resources updated here
+         */
+        try {
+            long now = System.currentTimeMillis();
+            String updateResourcesQueryString = "" //
+                + " UPDATE Resource " //
+                + "    SET mtime = :currentTime " //
+                + "  WHERE id IN ( SELECT ms.resource.id " //
+                + "                  FROM MeasurementSchedule ms " // 
+                + "                 WHERE ms.interval < 30000 ) ";
+            Query updateResourcesQuery = entityManager.createQuery(updateResourcesQueryString);
+            updateResourcesQuery.setParameter("currentTime", now);
+            int resourcesUpdatedCount = updateResourcesQuery.executeUpdate();
+
+            // update schedules to 30s whose schedules are < 30s
+            String updateSchedulesQueryString = "" //
+                + " UPDATE MeasurementSchedule " //
+                + "    SET interval = 30000 " //
+                + "  WHERE interval < 30000 ";
+            Query updateSchedulesQuery = entityManager.createQuery(updateSchedulesQueryString);
+            updateSchedulesQuery.setParameter("currentTime", System.currentTimeMillis());
+            int schedulesUpdatedCount = updateSchedulesQuery.executeUpdate();
+
+            if (resourcesUpdatedCount > 0) {
+                // now try to tell the agents that certain resources have changed
+                String findResourcesQueryString = "" //
+                    + " SELECT res.id,  " //
+                    + "   FROM Resource res " //
+                    + "  WHERE res.mtime = :currentTime ";
+                Query findResourcesQuery = entityManager.createQuery(findResourcesQueryString);
+                findResourcesQuery.setParameter("currentTime", now);
+                List<Integer> updatedResourceIds = findResourcesQuery.getResultList();
+                updateMeasurementSchedulesForResources(updatedResourceIds);
+
+                log.error("MeasurementSchedule data was corrupt: automatically updated " + resourcesUpdatedCount
+                    + " resources and " + schedulesUpdatedCount + " to correct the issue; agents were notified");
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("MeasurementSchedule data was checked for corruption, but all data was consistent");
+                }
+            }
+        } catch (Throwable t) {
+            log.fatal("There was a problem correcting errors for MeasurementSchedules", t);
+        }
+    }
+
+    public void updateMeasurementSchedulesForResources(List<Integer> resourceIds) {
+        if (resourceIds.size() == 0) {
+            return;
+        }
+
+        // first get all the resources, which is needed to get the agent mappings
+        Subject overlord = subjectManager.getOverlord();
+        Integer[] resourceIdArray = resourceIds.toArray(new Integer[resourceIds.size()]);
+        PageList<Resource> resources = resourceManager.getResourceByIds(overlord, resourceIdArray, false, PageControl
+            .getUnlimitedInstance());
+
+        // then get all the requests
+        Set<Integer> resourceIdSet = new HashSet<Integer>(resourceIds);
+        Set<ResourceMeasurementScheduleRequest> requests = getSchedulesForResourceAndItsDescendants(resourceIdSet,
+            false);
+
+        Map<Agent, Set<ResourceMeasurementScheduleRequest>> agentScheduleMap = new HashMap<Agent, Set<ResourceMeasurementScheduleRequest>>();
+        for (Resource resource : resources) {
+            Agent agent = resource.getAgent();
+            Set<ResourceMeasurementScheduleRequest> agentSchedules = agentScheduleMap.get(agent);
+            if (agentSchedules == null) {
+                agentSchedules = new HashSet<ResourceMeasurementScheduleRequest>();
+                agentScheduleMap.put(agent, agentSchedules);
+            }
+            for (ResourceMeasurementScheduleRequest request : requests) {
+                int resId = resource.getId();
+                if (request.getResourceId() == resId) {
+                    agentSchedules.add(request);
+                }
+            }
+        }
+
+        for (Map.Entry<Agent, Set<ResourceMeasurementScheduleRequest>> agentScheduleEntry : agentScheduleMap.entrySet()) {
+            Agent agent = agentScheduleEntry.getKey();
+            Set<ResourceMeasurementScheduleRequest> schedules = agentScheduleEntry.getValue();
+            try {
+                sendUpdatedSchedulesToAgent(agent, schedules);
+            } catch (Throwable t) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Tried to immediately sync agent[name=" + agent.getName()
+                        + "] with error-corrected schedules failed");
+                }
+            }
+        }
     }
 }

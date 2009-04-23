@@ -345,4 +345,12 @@ public interface MeasurementScheduleManagerLocal {
 
     public int returnSchedulesFor(List<Integer> batchIds, Set<ResourceMeasurementScheduleRequest> allSchedules)
         throws Exception;
+
+    /**
+     * This method should be called when it is determined that the data in the measurement schedule table might be
+     * corrupt. This happens when the schedules get a collection interval of less than 30 seconds. Execution of this
+     * method will automatically correct that situation, and update the mtime's of the corresponding resources whose
+     * schedules were corrupt, to cause the agent to synchronize those schedules.
+     */
+    public void errorCorrectSchedules();
 }

@@ -1128,7 +1128,7 @@
         </service>
 
         <service name="Queue"
-                 class="ManagedComponentComponent"
+                 class="JmsDestinationComponent"
                  createDeletePolicy="both"
                  subCategory="JMS Destinations"
                  discovery="ManagedComponentDiscoveryComponent">
@@ -1346,12 +1346,38 @@
                     </c:constraint>
                 </c:simple-property>
 
-                <c:simple-property required="false" name="DLQ"
-                                   description="The JMX ObjectName of the DLQ for this queue, overrides the default DLQ on the server peer"/>
-                <c:simple-property required="false" name="expiryQueue"
-                                   description="The JMX ObjectName of the expiry queue for this queue, overrides the default expiry queue on the server peer"/>
-                <c:simple-property required="false" name="serverPeer"
-                                   description="The JMX ObjectName of the server peer this queue was deployed on. Updates to this property will not go into effect until the queue has been restarted."/>
+                <c:simple-property required="false" name="DLQ">
+                    <c:description>
+                        The JMX ObjectName of the dead letter queue (DLQ) for this queue (e.g.
+                        "jboss.messaging.destination:service=Queue,name=PrivateDLQ") - overrides the default DLQ on the
+                        server peer.
+                    </c:description>
+                    <c:constraint>
+                        <c:regex-constraint expression="[^:]+:.+"/>
+                    </c:constraint>
+                </c:simple-property>
+
+                <c:simple-property required="false" name="expiryQueue">
+                    <c:description>
+                        The JMX ObjectName of the expiry queue for this queue (e.g.
+                        "jboss.messaging.destination:service=Queue,name=PrivateExpiryQueue") - overrides the default
+                        expiry queue on the server peer.
+                    </c:description>
+                    <c:constraint>
+                        <c:regex-constraint expression="[^:]+:.+"/>
+                    </c:constraint>
+                </c:simple-property>
+
+                <c:simple-property required="false" name="serverPeer">
+                    <c:description>
+                        The JMX ObjectName of the server peer this queue was deployed on (e.g.
+                        "jboss.messaging:service=ServerPeer"). Updates to this property will not go into effect until
+                        the queue has been restarted.
+                    </c:description>
+                    <c:constraint>
+                        <c:regex-constraint expression="[^:]+:.+"/>
+                    </c:constraint>
+                </c:simple-property>
 
                 <c:list-property name="securityConfig" max="4" min="2"
                                  displayName="Security Configurations"
@@ -1390,7 +1416,7 @@
         </service>
 
         <service name="Topic"
-                 class="ManagedComponentComponent"
+                 class="JmsDestinationComponent"
                  createDeletePolicy="both"
                  subCategory="JMS Destinations"
                  discovery="ManagedComponentDiscoveryComponent">
@@ -1640,12 +1666,38 @@
                     </c:constraint>
                 </c:simple-property>
 
-                <c:simple-property required="false" name="DLQ"
-                                   description="The JMX ObjectName of the DLQ for this topic, overrides the default DLQ on the server peer"/>
-                <c:simple-property required="false" name="expiryQueue"
-                                   description="The JMX ObjectName of the expiry queue for this topic, overrides the default expiry queue on the server peer"/>
-                <c:simple-property required="false" name="serverPeer"
-                                   description="The JMX ObjectName of the server peer this topic was deployed on. Updates to this property will not go into effect until the topic has been restarted."/>
+                <c:simple-property required="false" name="DLQ">
+                    <c:description>
+                        The JMX ObjectName of the dead letter queue (DLQ) for this topic (e.g.
+                        "jboss.messaging.destination:service=Queue,name=PrivateDLQ") - overrides the default DLQ on the
+                        server peer.
+                    </c:description>
+                    <c:constraint>
+                        <c:regex-constraint expression="[^:]+:.+"/>
+                    </c:constraint>
+                </c:simple-property>
+
+                <c:simple-property required="false" name="expiryQueue">
+                    <c:description>
+                        The JMX ObjectName of the expiry queue for this topic (e.g.
+                        "jboss.messaging.destination:service=Queue,name=PrivateExpiryQueue") - overrides the default
+                        expiry queue on the server peer.
+                    </c:description>
+                    <c:constraint>
+                        <c:regex-constraint expression="[^:]+:.+"/>
+                    </c:constraint>
+                </c:simple-property>
+
+                <c:simple-property required="false" name="serverPeer">
+                    <c:description>
+                        The JMX ObjectName of the server peer this topic was deployed on (e.g.
+                        "jboss.messaging:service=ServerPeer"). Updates to this property will not go into effect until
+                        the topic has been restarted.
+                    </c:description>
+                    <c:constraint>
+                        <c:regex-constraint expression="[^:]+:.+"/>
+                    </c:constraint>
+                </c:simple-property>
 
                 <c:list-property name="securityConfig" max="4" min="2"
                                  displayName="Security Configurations"

@@ -31,6 +31,8 @@ import org.jboss.metatype.api.values.SimpleValue;
 import org.jboss.managed.api.ManagedProperty;
 
 /**
+ * A Resource component for JBoss AS 5 Tx Connection Factories.
+ * 
  * @author Ian Springer
  */
 public class TxConnectionFactoryComponent extends ManagedComponentComponent

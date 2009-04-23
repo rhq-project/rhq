@@ -1952,9 +1952,7 @@
                  subCategory="Applications"
                  class="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentComponent"
                  discovery="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentDiscoveryComponent"
-                 description="an embedded EJB 2.x application"
-                 createDeletePolicy="both"
-                 creationDataType="content">
+                 description="an embedded EJB 2.x application">
 
             <plugin-configuration>
                 <c:group name="general" displayName="General">
@@ -2047,9 +2045,7 @@
                  subCategory="Applications"
                  class="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentComponent"
                  discovery="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentDiscoveryComponent"
-                 description="an embedded EJB 3.x application"
-                 createDeletePolicy="both"
-                 creationDataType="content">
+                 description="an embedded EJB 3.x application">
 
             <plugin-configuration>
                 <c:group name="general" displayName="General">
@@ -2184,9 +2180,7 @@
                  subCategory="Applications"
                  class="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentComponent"
                  discovery="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentDiscoveryComponent"
-                 description="an embedded resource adaptor"
-                 createDeletePolicy="both"
-                 creationDataType="content">
+                 description="an embedded resource adaptor">
 
             <plugin-configuration>
                 <c:group name="general" displayName="General">

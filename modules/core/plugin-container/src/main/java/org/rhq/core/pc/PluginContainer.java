@@ -254,6 +254,9 @@ public class PluginContainer implements ContainerService {
         Lock lock = obtainWriteLock();
         try {
             if (started) {
+
+                boolean isInsideAgent = configuration.isInsideAgent();
+
                 eventManager.shutdown();
                 contentManager.shutdown();
                 resourceFactoryManager.shutdown();
@@ -283,7 +286,10 @@ public class PluginContainer implements ContainerService {
 
                 started = false;
 
-                cleanMemory();
+                // we typically do not want to do this if embedded somewhere other than the agent VM
+                if (isInsideAgent) {
+                    cleanMemory();
+                }
             }
         } finally {
             releaseLock(lock);

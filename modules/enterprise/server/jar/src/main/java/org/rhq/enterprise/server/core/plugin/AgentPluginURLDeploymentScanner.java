@@ -58,14 +58,14 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * This is an extended URL deployment scanner so this can look at both the
  * file system and the database for new agent plugins.
- * 
+ *
  * If an agent plugin is different in the database than on the filesystem,
  * this scanner will stream the plugin's content to the filesystem. This
  * scanner will then do the normal file system scanning (and will therefore
  * see the new plugin from the database now in the file system and will
  * process it normally, as if someone hand-copied that plugin to the
  * file system).
- * 
+ *
  * @author John Mazzitelli
  */
 public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
@@ -185,7 +185,7 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
      * This method will stream up plugin content if the server has a plugin file
      * but there is null content in the database (only occurs when upgrading an old server to the new
      * schema that supports database-storage for plugins). This method will be a no-op for
-     * recent versions of the server because the database will no longer have null content from now on. 
+     * recent versions of the server because the database will no longer have null content from now on.
      */
     private void fixMissingPluginContent() throws Exception {
         Connection conn = null;
@@ -301,9 +301,9 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
             this.dbType = DatabaseTypeFactory.getDatabaseType(conn);
         }
         if (dbType instanceof PostgresqlDatabaseType) {
-            ps.setBoolean(1, enabled);
+            ps.setBoolean(index, enabled);
         } else if (dbType instanceof OracleDatabaseType) {
-            ps.setInt(1, (enabled ? 1 : 0));
+            ps.setInt(index, (enabled ? 1 : 0));
         } else {
             throw new RuntimeException("Unknown database type : " + dbType);
         }
@@ -313,7 +313,7 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
      * This will write the contents of the given plugin file to the database.
      * This will store both the contents and the MD5 in an atomic transaction
      * so they remain insync.
-     * 
+     *
      * When <code>different</code> is <code>false</code>, it means the original
      * plugin and the one currently found on the file system are the same.
      *
@@ -328,8 +328,8 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
      * @param file the plugin file whose content will be streamed to the database
      * @param different this will be <code>true</code> if the given file has a different filename
      *                  that the plugin's "path" as found in the database.
-     *                   
-     * 
+     *
+     *
      * @throws Exception
      */
     private void streamPluginFileContentToDatabase(String name, File file, boolean different) throws Exception {

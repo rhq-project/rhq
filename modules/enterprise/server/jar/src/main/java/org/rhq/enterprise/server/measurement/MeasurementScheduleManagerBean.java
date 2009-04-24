@@ -1078,6 +1078,9 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 Boolean enabled = (Boolean) results.getBoolean(5);
                 DataType dataType = DataType.values()[results.getInt(6)];
                 NumericType rawNumericType = NumericType.values()[results.getInt(7)];
+                if (results.wasNull()) {
+                    rawNumericType = null;
+                }
 
                 ResourceMeasurementScheduleRequest scheduleRequest = scheduleRequestMap.get(resourceId);
                 if (scheduleRequest == null) {

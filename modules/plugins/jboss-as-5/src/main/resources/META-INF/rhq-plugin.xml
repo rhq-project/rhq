@@ -594,6 +594,18 @@
     <c:simple-property required="false" name="version"/>
 '>
 
+<!--<c:simple-property name="deployDirectory" type="string" required="true" default="deploy"
+                              description="Path of the directory where the EAR should be deployed (e.g. "deploy" or "farm") - relative to the AS configuration set directory (e.g. /opt/jboss-5.1.0.CR1/server/default)."/>-->
+           
+<!ENTITY deploymentContentConfigProps '
+    <configuration>
+        <c:group name="deployment" displayName="Deployment Options">
+           <c:simple-property name="deployExploded" type="boolean" required="true" default="false"
+                              description="Should the archive be deployed in exploded form (i.e. as a directory)"/>
+        </c:group>
+    </configuration>
+'>
+
 ]>
 
 <!--############################################# END OF XML ENTITIES ###############################################-->
@@ -610,8 +622,7 @@
             discovery="ApplicationServerDiscoveryComponent"
             description="JBoss Application Server">
 
-        <subcategories>
-            <subcategory name="Environment"/>
+        <subcategories>           
             <subcategory name="Resources"
                          description="Different types of Resources">
                 <subcategory name="Datasources"
@@ -1780,14 +1791,7 @@
                     description="whether this EAR is deployed exploded (i.e. as a directory)"/>
 
             <content name="file" displayName="EAR File" category="deployable" isCreationType="true">
-                <configuration>
-                    <c:group name="deployment" displayName="Deployment Options">
-                       <!--<c:simple-property name="deployDirectory" type="string" required="true" default="deploy"
-                                          description="Path of the directory where the EAR should be deployed (e.g. 'deploy' or 'farm') - relative to the AS configuration set directory (e.g. /opt/jboss-5.1.0.CR1/server/default)."/>-->
-                       <c:simple-property name="deployExploded" type="boolean" required="true" default="false"
-                                          description="Should the EAR be deployed in exploded form (i.e. as a directory)?"/>
-                    </c:group>
-                </configuration>
+            	&deploymentContentConfigProps;
             </content>
 
             <resource-configuration>
@@ -1839,14 +1843,7 @@
                     description="whether this WAR is deployed exploded (i.e. as a directory)"/>
 
             <content name="file" displayName="WAR File" category="deployable" isCreationType="true">
-                <configuration>
-                   <c:group name="deployment" displayName="Deployment Options">
-                      <!--<c:simple-property name="deployDirectory" type="string" required="true" default="deploy"
-                                         description="Path of the directory where the WAR should be deployed (e.g. 'deploy' or 'farm') - relative to the AS configuration set directory (e.g. /opt/jboss-5.1.0.CR1/server/default)."/>-->
-                      <c:simple-property name="deployExploded" type="boolean" required="true" default="false"
-                                         description="Should the WAR be deployed in exploded form (i.e. as a directory)?"/>
-                   </c:group>
-                </configuration>
+                &deploymentContentConfigProps;
             </content>
 
             <resource-configuration>
@@ -1931,14 +1928,7 @@
                     description="whether this EJB JAR is deployed exploded (i.e. as a directory)"/>
 
             <content name="file" displayName="EJB JAR File" category="deployable" isCreationType="true">
-                <configuration>
-                   <c:group name="deployment" displayName="Deployment Options">
-                      <!--<c:simple-property name="deployDirectory" type="string" required="true" default="deploy"
-                                         description="Path of the directory where the WAR should be deployed (e.g. 'deploy' or 'farm') - relative to the AS configuration set directory (e.g. /opt/jboss-5.1.0.CR1/server/default)."/>-->
-                      <c:simple-property name="deployExploded" type="boolean" required="true" default="false"
-                                         description="Should the WAR be deployed in exploded form (i.e. as a directory)?"/>
-                   </c:group>
-                </configuration>
+            	&deploymentContentConfigProps;
             </content>
 
             <resource-configuration>
@@ -2023,14 +2013,7 @@
                     description="whether this EJB JAR is deployed exploded (i.e. as a directory)"/>
 
             <content name="file" displayName="EJB JAR File" category="deployable" isCreationType="true">
-                <configuration>
-                   <c:group name="deployment" displayName="Deployment Options">
-                      <!--<c:simple-property name="deployDirectory" type="string" required="true" default="deploy"
-                                         description="Path of the directory where the WAR should be deployed (e.g. 'deploy' or 'farm') - relative to the AS configuration set directory (e.g. /opt/jboss-5.1.0.CR1/server/default)."/>-->
-                      <c:simple-property name="deployExploded" type="boolean" required="true" default="false"
-                                         description="Should the WAR be deployed in exploded form (i.e. as a directory)?"/>
-                   </c:group>
-                </configuration>
+            	&deploymentContentConfigProps;
             </content>
 
             <resource-configuration>
@@ -2157,14 +2140,7 @@
                     description="whether this RAR is deployed exploded (i.e. as a directory)"/>
 
             <content name="file" displayName="RAR File" category="deployable" isCreationType="true">
-                <configuration>
-                   <c:group name="deployment" displayName="Deployment Options">
-                      <!--<c:simple-property name="deployDirectory" type="string" required="true" default="deploy"
-                                         description="Path of the directory where the WAR should be deployed (e.g. 'deploy' or 'farm') - relative to the AS configuration set directory (e.g. /opt/jboss-5.1.0.CR1/server/default)."/>-->
-                      <c:simple-property name="deployExploded" type="boolean" required="true" default="false"
-                                         description="Should the WAR be deployed in exploded form (i.e. as a directory)?"/>
-                   </c:group>
-                </configuration>
+            	&deploymentContentConfigProps;
             </content>
 
             <resource-configuration>

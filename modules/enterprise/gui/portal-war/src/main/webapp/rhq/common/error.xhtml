@@ -21,32 +21,73 @@
 <ui:define name="body-area">
    <rich:spacer height="150px" />
 
-   <table align="center" width="500px">
-      <tr>
-         <td valign="middle"><h:graphicImage value="/images/icons/availability_grey_24.png" /></td>
-         <td valign="middle"><h:outputText value=" #{GenericErrorUIBean.summary}" style="font-size: 22px;"/></td>
-      </tr>
-      <tr>
-         <td>&nbsp;</td>
-         <td><h:outputText value="#{GenericErrorUIBean.details}" style="font-size: 18px;"/></td>
-      </tr>
-      <tr>
-         <td>&nbsp;</td>
-         <td>
-            <h:outputText value="${msg['error.Error.ReturnTo']} " />
-            <h:outputLink value="javascript:history.back(1)">
-               <h:outputText value="${msg['error.Error.PreviousPageLink']} " />
-            </h:outputLink>
-            <h:outputLink value="/Dashboard.do">
-               <h:outputText value="${msg['error.Error.DashboardLink']} " />
-            </h:outputLink>
-            <h:outputLink value="/ResourceHub.do">
-               <h:outputText value="${msg['error.Error.ResourceHubLink']}" />
-            </h:outputLink> 
-         </td>
-      </tr>
-   </table>
-   
+      <table align="center" width="500px">
+         <tr>
+            <td valign="middle"><h:graphicImage value="/images/icons/availability_grey_24.png" /></td>
+            <td valign="middle"><h:outputText value=" #{GenericErrorUIBean.summary}" style="font-size: 22px;"/></td>
+         </tr>
+         <tr>
+            <td>&nbsp;</td>
+            <td><h:outputText value="#{GenericErrorUIBean.details}" style="font-size: 18px;"/></td>
+         </tr>
+         <tr>
+            <td>&nbsp;</td>
+            <td>
+               <h:outputText value="${msg['error.Error.YouCan']} " />
+               <h:outputLink value="#" id="showTraceDetails">
+                  <h:outputText value="${msg['error.Error.StackTraceHereLink']} " />
+                  <rich:componentControl for="traceDetailsModalPanel" attachTo="showTraceDetails" 
+                                         operation="show" event="onclick"/>
+               </h:outputLink>
+               <h:outputText value="${msg['error.Error.ReturnTo']} " />
+               <h:outputLink value="javascript:history.back(1)">
+                  <h:outputText value="${msg['error.Error.PreviousPageLink']} " />
+               </h:outputLink>
+               <h:outputLink value="/Dashboard.do">
+                  <h:outputText value="${msg['error.Error.DashboardLink']} " />
+               </h:outputLink>
+               <h:outputLink value="/ResourceHub.do">
+                  <h:outputText value="${msg['error.Error.ResourceHubLink']}" />
+               </h:outputLink> 
+            </td>
+         </tr>
+      </table>
+
+      <rich:modalPanel id="traceDetailsModalPanel" width="800" height="550" style="overflow: auto;" 
+                       onmaskclick="#{rich:component('traceDetailsModalPanel')}.hide()">
+         <f:facet name="header">
+            <h:outputText value="Trace Details"/>
+         </f:facet>
+         <f:facet name="controls">
+            <a href="javascript:Richfaces.hideModalPanel('traceDetailsModalPanel')">Close</a>
+         </f:facet>
+
+         <table width="100%">
+            <a4j:repeat value="#{GenericErrorUIBean.trace}" var="frame">
+               <tr>
+                  <td>
+                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                           <td class="BlockTitle" width="100%"><h:outputText value="#{frame.lefty}" /></td>
+                        </tr>
+                     </table>
+                  </td>
+               </tr>
+               <tr> 
+                  <td class="BlockContent">
+                     <blockquote><h:outputText value="#{frame.righty}" /></blockquote>
+                  </td>
+               </tr> 
+               <tr> 
+                  <td class="BlockBottomLine">
+                     <img src="/images/spacer.gif" width="1" height="1" border="0" />
+                  </td>
+               </tr>
+            </a4j:repeat>
+         </table>
+
+      </rich:modalPanel>
+
 </ui:define>
 
 </ui:composition>

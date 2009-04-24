@@ -19,34 +19,52 @@
 package org.rhq.enterprise.gui.common.error;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 
-import org.rhq.core.util.exception.ThrowableUtil;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.clientapi.util.StringUtil;
+import org.rhq.enterprise.server.alert.engine.internal.Tuple;
 
 /**
  * @author Joseph Marques
  */
 public class GenericErrorUIBean {
 
+    private final Log log = LogFactory.getLog(GenericErrorUIBean.class);
+
     String summary;
     String details;
-    List<String> trace;
+    List<Tuple<String, String>> trace;
 
     public GenericErrorUIBean() {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         ExternalContext externalContext = facesContext.getExternalContext();
         Map<String, Object> sessionMap = externalContext.getSessionMap();
-        trace = new ArrayList<String>();
+
+        trace = new ArrayList<Tuple<String, String>>();
         Throwable ex = (Exception) sessionMap.remove("GLOBAL_RENDER_ERROR");
-        trace = Arrays.asList(ThrowableUtil.getAllMessagesArray(ex));
+
+        // let's put this in the server log along with showing the user
+        log.error("Error processing user request", ex);
+
+        String message = ex.getLocalizedMessage();
+        String stack = StringUtil.getFirstStackTrace(ex);
+        trace.add(new Tuple<String, String>(message, stack));
+
         while (ex.getCause() != null) {
             ex = ex.getCause();
+
+            message = ex.getLocalizedMessage();
+            stack = StringUtil.getFirstStackTrace(ex);
+            trace.add(new Tuple<String, String>(message, stack));
         }
+
         summary = ex.getClass().getSimpleName();
         details = ex.getMessage();
     }
@@ -59,7 +77,7 @@ public class GenericErrorUIBean {
         return details;
     }
 
-    public List<String> getTrace() {
+    public List<Tuple<String, String>> getTrace() {
         return trace;
     }
 }

@@ -212,21 +212,29 @@ public class StandaloneManagedDeploymentComponent extends ManagedDeploymentCompo
                     + backupOfOriginalFile + "'.");
         }
 
-        // Now remove/undeploy the original app.
-        DeploymentProgress progress;
+        // Now stop the original app.
         try
         {
             DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
-            progress = deploymentManager.remove(this.deploymentName);
+            DeploymentProgress progress = deploymentManager.stop(this.deploymentName);
+            DeploymentUtils.run(progress);
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException("Failed to stop deployment [" + this.deploymentName + "].", e);
+        }
+
+        // And then remove it (this will delete the physical file/dir from the deploy dir).
+        try
+        {
+            DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
+            DeploymentProgress progress = deploymentManager.remove(this.deploymentName);
+            DeploymentUtils.run(progress);
         }
         catch (Exception e)
         {
             throw new RuntimeException("Failed to remove deployment [" + this.deploymentName + "].", e);
-        }
-        progress.run();
-        DeploymentStatus status = progress.getDeploymentStatus();
-        if (status.isFailed())
-            throw new RuntimeException(status.getMessage(), status.getFailure());
+        }               
 
         // Deploy away!
         log.debug("Deploying '" + tempFile + "'...");

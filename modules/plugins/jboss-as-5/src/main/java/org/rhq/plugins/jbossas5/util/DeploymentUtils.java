@@ -81,11 +81,9 @@ public abstract class DeploymentUtils {
             boolean copyContent = !deployLocation.equals(archiveFile);
             progress = deploymentManager.distribute(archiveFileName, contentURL, copyContent);
         }
-
-        progress.run();
         run(progress);
 
-        // Get the repository names for the distributed deployment.
+        // Now that we've distributed the deployment, we need to start it!
         String[] repositoryNames = progress.getDeploymentID().getRepositoryNames();
         progress = deploymentManager.start(repositoryNames);
         return run(progress);

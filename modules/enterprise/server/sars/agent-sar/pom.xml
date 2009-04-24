@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-enterprise-server-sars-parent</artifactId>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>1.2.0.CR1</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -16,8 +16,8 @@
   <description>The SAR that allows the server to embed the agent</description>
 
   <scm>
-    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/sars/agent-sar/</connection>
-    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/sars/agent-sar/</developerConnection>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_CR1/modules/enterprise/server/sars/agent-sar</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/tags/RHQ_1_2_0_CR1/modules/enterprise/server/sars/agent-sar</developerConnection>
   </scm>
 
   <properties>

@@ -54,7 +54,6 @@ import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
-import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;

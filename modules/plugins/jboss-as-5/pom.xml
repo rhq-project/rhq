@@ -88,7 +88,7 @@
         
         <!-- NOTE: Uncomment the below deps if you want to pull down the jboss-profileservice 
                    and jboss-system sources jars for debugging purposes. -->        
-        
+        <!--
         <dependency>
           <groupId>org.jboss</groupId>
           <artifactId>jboss-profileservice</artifactId>                    
@@ -101,7 +101,7 @@
           <version>5.1.0.CR1</version>
           <scope>provided</scope>
         </dependency>                                
-        
+        -->
     </dependencies>
 
     <build>

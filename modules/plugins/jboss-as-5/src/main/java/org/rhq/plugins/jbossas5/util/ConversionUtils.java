@@ -64,7 +64,7 @@ import org.rhq.plugins.jbossas5.adapter.api.MeasurementAdapterFactory;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.ManagedComponentComponent;
-import org.rhq.plugins.jbossas5.ManagedDeploymentComponent;
+import org.rhq.plugins.jbossas5.AbstractManagedDeploymentComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,7 +127,7 @@ public class ConversionUtils
             DEFAULT_PLUGIN_CONFIG_CACHE.put(resourceTypeName, defaultPluginConfig);
         }
 
-        String typeName = defaultPluginConfig.getSimpleValue(ManagedDeploymentComponent.DEPLOYMENT_TYPE_NAME_PROPERTY, null);
+        String typeName = defaultPluginConfig.getSimpleValue(AbstractManagedDeploymentComponent.DEPLOYMENT_TYPE_NAME_PROPERTY, null);
         if (typeName == null || typeName.equals(""))
             throw new IllegalStateException("Required plugin configuration property '"
                     + ManagedComponentComponent.COMPONENT_TYPE_PROPERTY + "' is not defined in default template.");

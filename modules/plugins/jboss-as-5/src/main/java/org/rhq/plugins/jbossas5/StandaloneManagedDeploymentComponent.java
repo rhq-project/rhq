@@ -62,7 +62,7 @@ import org.apache.commons.logging.LogFactory;
 /**
  * @author Ian Springer
  */
-public class StandaloneManagedDeploymentComponent extends ManagedDeploymentComponent
+public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploymentComponent
         implements MeasurementFacet, ContentFacet, DeleteResourceFacet
 {
     private static final String CUSTOM_PATH_TRAIT = "custom.path";

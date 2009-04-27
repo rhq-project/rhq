@@ -103,7 +103,7 @@ public abstract class ManagedDeploymentDiscoveryComponent implements ResourceDis
                                     null);
                     // example of a deployment name: vfszip:/C:/opt/jboss-5.1.0.CR1/server/default/deploy/foo.war
                     resource.getPluginConfiguration().put(
-                            new PropertySimple(ManagedDeploymentComponent.DEPLOYMENT_NAME_PROPERTY, deploymentName));
+                            new PropertySimple(AbstractManagedDeploymentComponent.DEPLOYMENT_NAME_PROPERTY, deploymentName));
                     discoveredResources.add(resource);
                 }
                 catch (NoSuchDeploymentException e)

@@ -30,7 +30,7 @@ import org.jboss.profileservice.spi.NoSuchDeploymentException;
 /**
  * @author Ian Springer
  */
-public class EmbeddedManagedDeploymentComponent extends ManagedDeploymentComponent
+public class EmbeddedManagedDeploymentComponent extends AbstractManagedDeploymentComponent
     implements MeasurementFacet
 {
     private static final String CUSTOM_PARENT_TRAIT = "custom.parent";

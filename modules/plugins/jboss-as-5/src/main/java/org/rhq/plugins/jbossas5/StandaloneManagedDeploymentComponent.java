@@ -65,6 +65,10 @@ import org.apache.commons.logging.LogFactory;
 public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploymentComponent
         implements MeasurementFacet, ContentFacet, DeleteResourceFacet
 {
+    public static final String RESOURCE_TYPE_EAR = "Enterprise Application (EAR)";
+    public static final String RESOURCE_TYPE_WAR = "Web Application (WAR)";
+    public static final String RESOURCE_TYPE_RAR = "Resource Adaptor (RAR)";
+
     private static final String CUSTOM_PATH_TRAIT = "custom.path";
     private static final String CUSTOM_EXPLODED_TRAIT = "custom.exploded";
 

@@ -58,10 +58,7 @@ import org.jboss.profileservice.spi.NoSuchDeploymentException;
  */
 public abstract class AbstractManagedDeploymentComponent
         extends AbstractManagedComponent
-        implements ResourceComponent, OperationFacet, ProgressListener {
-    public static final String RESOURCE_TYPE_EAR = "Enterprise Application (EAR)";
-    public static final String RESOURCE_TYPE_WAR = "Web Application (WAR)";
-    
+        implements ResourceComponent, OperationFacet, ProgressListener {    
     public static final String DEPLOYMENT_NAME_PROPERTY = "deploymentName";
     public static final String DEPLOYMENT_TYPE_NAME_PROPERTY = "deploymentTypeName";
 

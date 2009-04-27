@@ -27,7 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
-import org.rhq.plugins.jbossas5.AbstractManagedDeploymentComponent;
+import org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent;
 
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
@@ -36,17 +36,19 @@ import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 /**
  * @author Ian Springer
  */
-public abstract class DeploymentUtils {
+public class DeploymentUtils {
     private static final Log LOG = LogFactory.getLog(DeploymentUtils.class);
 
     public static boolean hasCorrectExtension(File archiveFile, ResourceType resourceType)
     {
         String resourceTypeName = resourceType.getName();
         String expectedExtension;
-        if (resourceTypeName.equals(AbstractManagedDeploymentComponent.RESOURCE_TYPE_EAR)) {
+        if (resourceTypeName.equals(StandaloneManagedDeploymentComponent.RESOURCE_TYPE_EAR)) {
             expectedExtension = "ear";
-        } else if (resourceTypeName.equals(AbstractManagedDeploymentComponent.RESOURCE_TYPE_WAR)){
+        } else if (resourceTypeName.equals(StandaloneManagedDeploymentComponent.RESOURCE_TYPE_WAR)){
             expectedExtension = "war";
+        } else if (resourceTypeName.equals(StandaloneManagedDeploymentComponent.RESOURCE_TYPE_RAR)){
+            expectedExtension = "rar";
         } else {
             expectedExtension = "jar";
         }
@@ -98,5 +100,9 @@ public abstract class DeploymentUtils {
             //noinspection ThrowableResultOfMethodCallIgnored
             throw new Exception(status.getMessage(), status.getFailure());
         return status;
+    }
+
+    private DeploymentUtils()
+    {
     }
 }

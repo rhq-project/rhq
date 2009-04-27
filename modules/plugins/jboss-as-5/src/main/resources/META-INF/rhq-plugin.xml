@@ -622,7 +622,10 @@
             discovery="ApplicationServerDiscoveryComponent"
             description="JBoss Application Server">
 
-        <subcategories>           
+        <subcategories>
+            <!-- Remove until we have support for JVM management.
+            <subcategory name="Environment"/>
+            -->
             <subcategory name="Resources"
                          description="Different types of Resources">
                 <subcategory name="Datasources"
@@ -716,6 +719,9 @@
                 <c:simple-property name="sealed" readOnly="true" type="boolean" description="True if the JAR is sealed."/>
             </configuration>
         </content>-->
+
+
+        <!-- =================================== ManagedComponent Resource types =================================== -->
 
         <service name="No Tx Datasource"
                  class="ManagedComponentComponent"
@@ -1220,14 +1226,14 @@
             <operation name="listMessageCounterAsHTML" displayName="List Message Counter As HTML" description="Get the message counter as HTML">
                 <results>
                     <c:notes>Get the message counter as HTML</c:notes>
-                    <c:simple-property required="false" name="result"/>
+                    <c:simple-property name="result" type="longString"/>
                 </results>
             </operation>
 
             <operation name="listMessageCounterHistoryAsHTML" displayName="List Message Counter History As HTML" description="Get the message counter history as HTML">
                 <results>
                  	<c:notes>Get the message counter history as HTML</c:notes>
-                    <c:simple-property name="result"/>
+                    <c:simple-property name="result" type="longString"/>
                 </results>
             </operation>
 
@@ -1522,7 +1528,7 @@
                        description="Return all subscriptions for the topic in HTML">
                 <results>
                     <c:notes>Return all subscriptions for the topic in HTML</c:notes>
-                    <c:simple-property required="false" name="result"/>
+                    <c:simple-property name="result" type="longString"/>
                 </results>
             </operation>
 
@@ -1540,7 +1546,7 @@
                        description="Return all durable subscriptions for the topic in HTML">
                 <results>
                 	<c:notes>Return all durable subscriptions for the topic in HTML</c:notes>
-                    <c:simple-property required="false" name="result"/>
+                    <c:simple-property name="result" type="longString"/>
                 </results>
             </operation>
 
@@ -1558,7 +1564,7 @@
                        description="Return all non durable subscriptions for the topic in HTML">
                 <results>
                     <c:notes>Return all non durable subscriptions for the topic in HTML</c:notes>
-                    <c:simple-property name="result"/>
+                    <c:simple-property name="result" type="longString"/>
                 </results>
             </operation>
 
@@ -1746,7 +1752,7 @@
         </service>
 
 
-        <!-- ======================================== Deployment types ======================================= -->
+        <!-- =================================== ManagedDeployment Resource types ================================== -->
 
         <service name="Enterprise Application (EAR)"
                  subCategory="Applications"
@@ -1794,9 +1800,11 @@
             	&deploymentContentConfigProps;
             </content>
 
+            <!--
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
+            -->
 
         </service>
 
@@ -1846,9 +1854,11 @@
                 &deploymentContentConfigProps;
             </content>
 
+            <!--
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
+            -->
 
         </service>
 
@@ -1879,9 +1889,11 @@
                     dataType="trait" displayType="summary"
                     description="the name of this WAR's parent deployment"/>
 
+            <!--
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
+            -->
 
         </service>
 
@@ -1931,9 +1943,11 @@
             	&deploymentContentConfigProps;
             </content>
 
+            <!--
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
+            -->
 
         </service>
 
@@ -1964,9 +1978,11 @@
                     dataType="trait" displayType="summary"
                     description="the name of this EJB JAR's parent deployment"/>
 
+            <!--
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
+            -->
 
         </service>
 
@@ -2016,9 +2032,11 @@
             	&deploymentContentConfigProps;
             </content>
 
+            <!--
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
+            -->
 
         </service>
 
@@ -2049,9 +2067,11 @@
                     dataType="trait" displayType="summary"
                     description="the name of this EJB JAR's parent deployment"/>
 
+            <!--
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
+            -->
 
         </service>
 <!--
@@ -2143,9 +2163,11 @@
             	&deploymentContentConfigProps;
             </content>
 
+            <!--
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
+            -->
 
         </service>
 
@@ -2176,9 +2198,11 @@
                     dataType="trait" displayType="summary"
                     description="the name of this RAR's parent deployment"/>
 
+            <!--
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
+            -->
 
         </service>
 <!--

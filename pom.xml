@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>1.2.0.CR2</version>
+    <version>1.2.0-SNAPSHOT</version>
   </parent>
   
   <groupId>org.jboss.on</groupId>
@@ -37,7 +37,7 @@
 
   <properties>    
     <rhq.groupId>org.rhq</rhq.groupId>
-    <rhq.version>1.2.0.CR2</rhq.version>
+    <rhq.version>1.2.0-SNAPSHOT</rhq.version>
     <rhq.product.name>RHQ</rhq.product.name>
     <rhq.earName>rhq.ear</rhq.earName>
     <!-- the below path is relative to {rhq-trunk} -->

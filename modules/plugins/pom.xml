@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.jboss.on</groupId>
 		<artifactId>jopr-modules-parent</artifactId>
-		<version>2.2.0.GA</version>
+		<version>2.3.0-SNAPSHOT</version>
 	</parent>
     
 	<!--  Plugin poms should not set their parent pom to this artifact. Instead, set to "jopr-modules-parent".  This is due to
@@ -17,8 +17,8 @@
 	<description>parent POM for all Jopr plugins</description>
 	
     <scm>
-		<connection>scm:svn:http://svn.jboss.org/repos/jopr/tags/Jopr_2_2_0_GA/modules/plugins</connection>
-		<developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/tags/Jopr_2_2_0_GA/modules/plugins</developerConnection>
+		<connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/plugins</connection>
+		<developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/plugins</developerConnection>
 	</scm>
 	
     <properties>

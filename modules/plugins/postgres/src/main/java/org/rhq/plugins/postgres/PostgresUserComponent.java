@@ -97,14 +97,18 @@ public class PostgresUserComponent implements DatabaseComponent<PostgresServerCo
             rs = statement.executeQuery();
             rs.next();
             Configuration config = new Configuration();
+            config.put(new PropertySimple("user", rs.getString("rolname")));
             config.put(new PropertySimple("canLogin", rs.getBoolean("rolcanlogin")));
             config.put(new PropertySimple("inheritRights", rs.getBoolean("rolinherit")));
             config.put(new PropertySimple("superuser", rs.getBoolean("rolsuper")));
             config.put(new PropertySimple("canCreateDatabaseObjects", rs.getBoolean("rolcreatedb")));
-            config.put(new PropertySimple("canCreateRoles", rs.getBoolean("rolcreaterol")));
+            config.put(new PropertySimple("canCreateRoles", rs.getBoolean("rolcreaterole")));
             config.put(new PropertySimple("canModifyCatalogDirectly", rs.getBoolean("rolcatupdate")));
-            config.put(new PropertySimple("connectionLimit", rs.getBoolean("rolconnlimit")));
+            config.put(new PropertySimple("connectionLimit", rs.getInt("rolconnlimit")));
             return config;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         } finally {
             JDBCUtil.safeClose(statement, rs);
         }
@@ -114,7 +118,7 @@ public class PostgresUserComponent implements DatabaseComponent<PostgresServerCo
         Configuration config = report.getConfiguration();
 
         Statement statement = null;
-        String sql = getUserSQL(config, UpdateType.UPDATE);
+        String sql = getUserSQL(config, UpdateType.ALTER);
         try {
             statement = getConnection().createStatement();
             int updates = statement.executeUpdate(sql);
@@ -131,7 +135,7 @@ public class PostgresUserComponent implements DatabaseComponent<PostgresServerCo
     }
 
     public enum UpdateType {
-        CREATE, UPDATE, DROP
+        CREATE, ALTER, DROP
     }
 
     public static String getUserSQL(Configuration config, UpdateType type) {
@@ -141,15 +145,22 @@ public class PostgresUserComponent implements DatabaseComponent<PostgresServerCo
             connectionLimit = connLimit.getIntegerValue();
         }
 
-        return type.name()
+        String sql = type.name()
             + " USER "
             + config.getSimpleValue("user", null)
-            + " "
-            + ((type != UpdateType.DROP) ? ("WITH PASSWORD '" + config.getSimpleValue("password", "") + "' "
-                + (config.getSimple("canCreateDatabaseObjects").getBooleanValue() ? "CREATEDB " : "NOCREATEDB ")
-                + (config.getSimple("canCreateRoles").getBooleanValue() ? "CREATEUSER " : "NOCREATEUSER ") + ((connectionLimit > -1) ? ("CONNECTION LIMIT " + connectionLimit)
-                : " "))
-                : "");
+            + " ";
+
+        if (type != UpdateType.DROP) {
+            if (config.getSimpleValue("password",null) != null && config.getSimpleValue("password",null).length() != 0) {
+                sql += " WITH PASSWORD '" + config.getSimpleValue("password",null) + "' ";
+            }
+
+            sql += (config.getSimple("canCreateDatabaseObjects").getBooleanValue() ? "CREATEDB " : "NOCREATEDB ");
+            sql += (config.getSimple("canCreateRoles").getBooleanValue() ? "CREATEUSER " : "NOCREATEUSER ");
+            sql += (connectionLimit > -1) ? ("CONNECTION LIMIT " + connectionLimit): "";
+        }
+
+        return sql;
     }
 
     public void deleteResource() throws Exception {

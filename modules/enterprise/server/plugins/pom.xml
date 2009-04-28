@@ -27,6 +27,7 @@
   <modules>
     <module>disk</module>
     <module>yum</module>
+    <module>url</module>
   </modules>
 
 </project>

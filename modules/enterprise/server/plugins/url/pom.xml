@@ -1,0 +1,141 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
+    <version>1.2.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-serverplugin-url</artifactId>
+  <packaging>jar</packaging>
+
+  <name>RHQ Enterprise Server URL Content Source Plugin</name>
+  <description>URL Content Source Plugin</description>
+
+  <scm>
+    <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/plugins/url/</connection>
+    <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/plugins/url/</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>modules/enterprise/server/plugins/url/</scm.module.path>
+  </properties>
+
+  <dependencies>
+
+    <!-- Internal Deps -->
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-domain</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-client-api</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- 3rd Party Deps -->
+
+    <!-- TODO: This is a fix for the Javac bug requiring annotations to be
+         available when compiling dependent classes. It is fixed in JDK 6 -->
+    <dependency>
+      <groupId>javax.persistence</groupId>
+      <artifactId>persistence-api</artifactId>
+      <version>1.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>jboss.jboss-embeddable-ejb3</groupId>
+      <artifactId>hibernate-all</artifactId>
+      <version>1.0.0.Alpha9</version>
+      <scope>provided</scope>
+      <!-- needed for referenced domain entities that use Hibernate annotations -->
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+          <!--
+          <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
+          -->
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+
+   <profiles>
+
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-serverplugins</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <tasks>
+                            <mkdir dir="${rhq.deploymentDir}" />
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Updating ${deployment.file}...</echo>
+                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Deleting ${deployment.file}...</echo>
+                            <delete file="${deployment.file}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                   </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+
+   </profiles>
+
+</project>

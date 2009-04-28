@@ -338,7 +338,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         PageList<GroupOperationHistory> results;
         results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
-        assert results.size() == 1;
+        assert results.size() == 1: "Expected 1 result, but got " + results.size();
 
         operationManager.deleteOperationHistory(superuser, results.get(0).getId(), false);
 
@@ -796,7 +796,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         results = operationManager.getCompletedGroupOperationHistories(superuser, newGroup.getId(), PageControl
             .getUnlimitedInstance());
         assert results != null;
-        assert results.size() == 1;
+        assert results.size() == 1 : "Did not get 1 result back, but " + results.size();
         GroupOperationHistory history = results.get(0);
         assert history.getId() > 0 : history;
         assert history.getJobId() != null : history;

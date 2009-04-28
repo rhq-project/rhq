@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.platform;
 
 import java.io.IOException;
@@ -57,16 +57,12 @@ import org.rhq.plugins.platform.content.yum.YumProxy;
 import org.rhq.plugins.platform.content.yum.YumServer;
 
 public class LinuxPlatformComponent extends PlatformComponent implements ContentFacet {
-    // Constants  --------------------------------------------
-
     // the prefix for all distro trait names
     private static final String DISTRO_TRAIT_NAME_PREFIX = "distro.";
 
     // trait metric names
     private static final String TRAIT_DISTRO_NAME = DISTRO_TRAIT_NAME_PREFIX + "name";
     private static final String TRAIT_DISTRO_VERSION = DISTRO_TRAIT_NAME_PREFIX + "version";
-
-    // Attributes  --------------------------------------------
 
     private final Log log = LogFactory.getLog(LinuxPlatformComponent.class);
 
@@ -75,19 +71,30 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
     private YumServer yumServer = new YumServer();
     private YumProxy yumProxy = new YumProxy();
 
+    private boolean enableContentDiscovery = false;
+
     @Override
     public void start(ResourceContext context) {
         super.start(context);
 
-        // TODO: temporarily disabling RPM content stuff
+        Configuration pluginConfiguration = context.getPluginConfiguration();
+        PropertySimple contentProp = pluginConfiguration.getSimple("enableContentDiscovery");
+        if (contentProp != null) {
+            Boolean bool = contentProp.getBooleanValue();
+            this.enableContentDiscovery = (bool != null) ? bool.booleanValue() : false;
+        } else {
+            this.enableContentDiscovery = false;
+        }
 
-        //RpmPackageDiscoveryDelegate.setSystemInfo(this.resourceContext.getSystemInformation());
-        //RpmPackageDiscoveryDelegate.checkExecutables();
+        if (this.enableContentDiscovery) {
+            RpmPackageDiscoveryDelegate.setSystemInfo(this.resourceContext.getSystemInformation());
+            RpmPackageDiscoveryDelegate.checkExecutables();
 
-        //DebPackageDiscoveryDelegate.setSystemInfo(this.resourceContext.getSystemInformation());
-        //DebPackageDiscoveryDelegate.checkExecutables();
+            //DebPackageDiscoveryDelegate.setSystemInfo(this.resourceContext.getSystemInformation());
+            //DebPackageDiscoveryDelegate.checkExecutables();
 
-        //startWithContentContext(context.getContentContext());
+            startWithContentContext(context.getContentContext());
+        }
     }
 
     @Override
@@ -97,11 +104,11 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
     }
 
     private void startWithContentContext(ContentContext context) {
-        contentContext = context;
+        this.contentContext = context;
         try {
-            YumContext yumContext = new PluginContext(yumPort(), resourceContext, context);
+            YumContext yumContext = new PluginContext(yumPort(), this.resourceContext, context);
             yumServer.start(yumContext);
-            yumProxy.init(resourceContext);
+            yumProxy.init(this.resourceContext);
         } catch (Exception e) {
             log.error("Start failed:", e);
         }
@@ -109,11 +116,14 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
 
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
         Set<ResourcePackageDetails> detailsSet = new HashSet<ResourcePackageDetails>();
-        if (type.getName().equals("rpm")) {
-            try {
-                detailsSet = RpmPackageDiscoveryDelegate.discoverPackages(type);
-            } catch (IOException e) {
-                log.error("Error while trying to discover RPMs", e);
+
+        if (this.enableContentDiscovery) {
+            if (type.getName().equals("rpm")) {
+                try {
+                    detailsSet = RpmPackageDiscoveryDelegate.discoverPackages(type);
+                } catch (IOException e) {
+                    log.error("Error while trying to discover RPMs", e);
+                }
             }
         }
 
@@ -166,22 +176,6 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
         return null;
     }
 
-    /*
-     * public Set<InstalledPackageDetails> getInstalledPackages(PackageType type) { Set<InstalledPackageDetails>
-     * detailsSet = new HashSet<InstalledPackageDetails>(); if (type.getName().equals("rpm")) {   try   {
-     * detailsSet = RpmPackageDiscoveryDelegate.discoverPackages(type);   }   catch (IOException e)   {
-     * log.error("Error while trying to discover RPMs", e);   } } else if (type.getName().equals("deb")) {
-     */
-    /*
-     *       try      {         detailsSet = DebPackageDiscoveryDelegate.discoverPackages(type);      }      catch
-     * (IOException e)      {         log.error("Error while trying to discover DEBs", e);      }
-     */
-    /*
-     *    }   return detailsSet;
-     *
-     * }
-     */
-
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metricRequests) {
         super.getValues(report, metricRequests);
@@ -195,10 +189,14 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if ("cleanYumMetadataCache".equals(name)) {
-            log.info("Cleaning yum metadata");
-            yumServer.cleanMetadata();
-            yumProxy.cleanMetadata();
-            return new OperationResult();
+            if (this.enableContentDiscovery) {
+                log.info("Cleaning yum metadata");
+                yumServer.cleanMetadata();
+                yumProxy.cleanMetadata();
+                return new OperationResult();
+            } else {
+                throw new UnsupportedOperationException("Content discovery is disabled, this operation is a no-op");
+            }
         }
 
         return super.invokeOperation(name, parameters);
@@ -218,7 +216,7 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
     }
 
     private int yumPort() {
-        PropertySimple p = resourceContext.getPluginConfiguration().getSimple("yumPort");
+        PropertySimple p = this.resourceContext.getPluginConfiguration().getSimple("yumPort");
         return ((p != null) ? p.getIntegerValue() : 9080);
     }
 }

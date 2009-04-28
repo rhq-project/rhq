@@ -1,31 +1,34 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.platform;
 
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
@@ -42,13 +45,23 @@ import org.rhq.plugins.platform.win.WindowsSoftwareDelegate;
  */
 public class WindowsPlatformComponent extends PlatformComponent implements ContentFacet {
     private Win32EventLogDelegate eventLogDelegate;
+    private boolean enableContentDiscovery = false;
 
     public void start(ResourceContext context) {
         super.start(context);
-        if (context.getPluginConfiguration().getSimple("eventTrackingEnabled").getBooleanValue()) {
-            eventLogDelegate = new Win32EventLogDelegate(context.getPluginConfiguration());
+        Configuration pluginConfiguration = context.getPluginConfiguration();
+        if (pluginConfiguration.getSimple("eventTrackingEnabled").getBooleanValue()) {
+            eventLogDelegate = new Win32EventLogDelegate(pluginConfiguration);
             eventLogDelegate.open();
             context.getEventContext().registerEventPoller(eventLogDelegate, 60);
+        }
+
+        PropertySimple contentProp = pluginConfiguration.getSimple("enableContentDiscovery");
+        if (contentProp != null) {
+            Boolean bool = contentProp.getBooleanValue();
+            this.enableContentDiscovery = (bool != null) ? bool.booleanValue() : false;
+        } else {
+            this.enableContentDiscovery = false;
         }
     }
 
@@ -73,7 +86,11 @@ public class WindowsPlatformComponent extends PlatformComponent implements Conte
     }
 
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
-        return new WindowsSoftwareDelegate().discoverInstalledSoftware(type);
+        if (this.enableContentDiscovery) {
+            return new WindowsSoftwareDelegate().discoverInstalledSoftware(type);
+        } else {
+            return new HashSet<ResourcePackageDetails>();
+        }
     }
 
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {

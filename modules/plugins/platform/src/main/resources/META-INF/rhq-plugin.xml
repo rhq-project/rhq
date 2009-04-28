@@ -164,6 +164,16 @@
       &platformSubcategories;
 
        <plugin-configuration>
+           <c:group name="Content">
+              <c:description>Settings to support content/package functionality</c:description>
+              <c:simple-property
+                  name="enableContentDiscovery" 
+                  default="false"
+                  required="true" 
+                  type="boolean"
+                  description="If true, attempts will be made to discover installed packages on this platform">
+              </c:simple-property>
+           </c:group>
            <c:group name="Event Logs">
                <c:description>Tracking of events sent to the Windows Event Logs</c:description>
                <c:simple-property name="eventTrackingEnabled" type="boolean" required="true" default="false" description="Enables the collection of Windows events into the event subsystem"/>
@@ -185,7 +195,6 @@
 
        <event name="Event Log" description="Windows event log" displayName="Event Log"/>
 
-<!-- temporarily disable content
        <content name="InstalledSoftware" displayName="Installed Software" category="deployable" description="Installed Windows Software">
           <configuration>
               <c:simple-property name="Publisher"/>
@@ -198,7 +207,7 @@
               <c:simple-property name="EstimatedSize" units="kilobytes"/>
          </configuration>
       </content>
--->
+
    </platform>
 
    <platform name="Linux"
@@ -209,35 +218,43 @@
       &platformSubcategories;
       
       <plugin-configuration>
-         <c:simple-property
-               name="yumPort" 
-               displayName="Yum server port" 
-               default="9080"
-               required="true" 
-               type="integer"
-               description="The port the plugin will listen on in order to process yum requests">
-            <c:constraint>
-               <c:integer-constraint minimum="1024" maximum="65535"/>
-            </c:constraint>
-         </c:simple-property>
-         <c:simple-property
-               name="metadataCacheTimeout" 
-               displayName="Metadata Cache Timeout" 
-               default="1800"
-               required="false" 
-               type="integer"
-               description="The time, in seconds, that the package metadata will always be considered valid. After the cache has lived this long or longer, the cache will be checked to see if it is stale, and if so, will be refreshed.">
-            <c:constraint>
-               <c:integer-constraint minimum="0"/>
-            </c:constraint>
-         </c:simple-property>
+         <c:group name="Content">
+            <c:description>Settings to support content/package functionality</c:description>
+            <c:simple-property
+                  name="enableContentDiscovery" 
+                  default="false"
+                  required="true" 
+                  type="boolean"
+                  description="If true, attempts will be made to discover installed packages on this platform">
+            </c:simple-property>
+            <c:simple-property
+                  name="yumPort" 
+                  displayName="Yum server port" 
+                  default="9080"
+                  required="true" 
+                  type="integer"
+                  description="The port the plugin will listen on in order to process yum requests">
+               <c:constraint>
+                  <c:integer-constraint minimum="1024" maximum="65535"/>
+               </c:constraint>
+            </c:simple-property>
+            <c:simple-property
+                  name="metadataCacheTimeout" 
+                  displayName="Metadata Cache Timeout" 
+                  default="1800"
+                  required="false" 
+                  type="integer"
+                  description="The time, in seconds, that the package metadata will always be considered valid. After the cache has lived this long or longer, the cache will be checked to see if it is stale, and if so, will be refreshed.">
+               <c:constraint>
+                  <c:integer-constraint minimum="0"/>
+               </c:constraint>
+            </c:simple-property>
+         </c:group>
       </plugin-configuration>
       
       &platformOperations;
 
-<!-- temporarily disable content
       <operation name="cleanYumMetadataCache" description="Deletes all cached package metadata" />
--->
 
       &nativeMetrics;
       &platformCpu;
@@ -256,7 +273,6 @@
               displayType="summary"
               defaultOn="true" />
 
-<!-- temporarily disable content
       <content name="rpm" displayName="RPM File" category="deployable" description="Red Hat installable package">
          <configuration>
             <c:simple-property name="version" displayName="Version"/>
@@ -264,6 +280,7 @@
             <c:simple-property name="url" displayName="URL"/>   
          </configuration>
       </content>
+<!-- temporarily disable deb content
       <content name="deb" displayName="DEB File" category="deployable" description="Debian installable package">
          <configuration>
             <c:simple-property name="Version"/>

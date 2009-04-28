@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<plugin name="JBossOSGi"
+        displayName="JBossOSGiPlugin"
+        package="org.jboss.on.plugins.jbossOsgi.JBossOSGi"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <depends plugin="JMX"/>
+
+    <server
+            name="JBossOSGi"
+            discovery="JBossOsgiServerDiscovery"
+            class="JBossOsgiServerComponent"
+                createDeletePolicy="create-only"
+        >
+
+        <plugin-configuration>
+            <c:simple-property name="connectorAddress" description="JMX Remoting address of the remote JBossOSGi Server" />
+            <c:template name="default" description="The default setup for JBossOSGi">
+                <c:simple-property name="connectorAddress" displayName="URL of the remote server"
+                                   defaultValue="service:jmx:rmi://127.0.0.1/jndi/rmi://127.0.0.1:1090/jmxconnector"/>
+            </c:template>
+        </plugin-configuration>
+
+        <operation name="getBundle" description="Retrieve the object name for the passed bundle name">
+            <parameters>
+                <c:simple-property name="name" description="Name of the bundle" type="string"/>
+            </parameters>
+            <results>
+                <c:simple-property name="operationResult" description="Objectname of the bundle" type="string"/>
+            </results>
+        </operation>
+
+        <event name="log" displayName="Log Entries" description="Log entries from the OSGi Server" />
+
+        <service name="OSGiBundle"
+                 description="A deployed bundle"
+                 discovery="BundleDiscovery"
+                 class="BundleComponent">
+            <operation name="start" description="Starts the bundle" displayName="Start"/>
+            <operation name="stop" description="Stops the bundle" displayName="Stop" />
+            <operation name="getProperty" description="Retrieve the value of the passed property">
+                <parameters>
+                    <c:simple-property name="name" description="Name of the property" type="string"/>
+                </parameters>
+                <results>
+                    <c:simple-property name="operationResult" description="Value of the property" type="string"/>
+                </results>
+            </operation>
+
+            <metric property="version" dataType="trait" description="The version of this bundle" displayType="summary"/>
+            <metric property="location" dataType="trait" description="The location of this bundle (in filesystem)"/>
+            <metric property="description" dataType="trait" description="Description of this bundle" displayType="summary" />
+
+
+        </service>
+
+    </server>
+
+
+</plugin>

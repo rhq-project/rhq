@@ -225,6 +225,12 @@
 
                 <artifactItem>
                   <groupId>org.rhq</groupId>
+                  <artifactId>rhq-cli-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
                   <artifactId>rhq-database-plugin</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>

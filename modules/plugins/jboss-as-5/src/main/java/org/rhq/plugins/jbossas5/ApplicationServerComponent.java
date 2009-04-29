@@ -31,6 +31,8 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.net.URL;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -69,6 +71,7 @@ import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
@@ -77,6 +80,10 @@ import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
+import org.rhq.plugins.jbossas5.connection.RemoteProfileServiceConnectionProvider;
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
+import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider;
+import org.jetbrains.annotations.NotNull;
 
  /**
  * ResourceComponent for a JBoss AS, 5.1.0.CR1 or later, Server.
@@ -87,11 +94,7 @@ import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
  */
 public class ApplicationServerComponent
         implements ResourceComponent, CreateChildResourceFacet, MeasurementFacet, ConfigurationFacet, ProgressListener
-{    
-    static final String TEMPLATE_NAME_PROPERTY = "templateName";
-    static final String RESOURCE_NAME_PROPERTY = "resourceName";
-    static final String SERVER_NAME_PROPERTY = "serverName";
-
+{
     private static final String MANAGED_PROPERTY_GROUP = "managedPropertyGroup";
 
     private static final Pattern METRIC_NAME_PATTERN = Pattern.compile("(.*)\\|(.*)\\|(.*)\\|(.*)");
@@ -100,6 +103,7 @@ public class ApplicationServerComponent
 
     private ResourceContext resourceContext;
     private File deployDirectory;
+    private LogFileEventResourceComponentHelper logFileEventDelegate;
 
     public AvailabilityType getAvailability()
     {
@@ -109,12 +113,28 @@ public class ApplicationServerComponent
 
     public void start(ResourceContext resourceContext)
     {
+        Configuration pluginConfig = resourceContext.getPluginConfiguration();
+        //PropertySimple namingUrlProp = pluginConfig.getSimple(PluginConfigPropNames.NAMING_URL);
+        PropertySimple namingUrlProp = new PropertySimple(PluginConfigPropNames.NAMING_URL, "jnp://127.0.0.1:1099");
+        ProfileServiceConnectionProvider connectionProvider;
+        if (namingUrlProp != null) {
+            String namingUrl = namingUrlProp.getStringValue();
+            validateNamingURL(namingUrl);
+            String principal = pluginConfig.getSimpleValue(PluginConfigPropNames.PRINCIPAL, null);
+            String credentials = pluginConfig.getSimpleValue(PluginConfigPropNames.CREDENTIALS, null);
+            connectionProvider = new RemoteProfileServiceConnectionProvider(namingUrl, principal, credentials);
+        } else {
+            connectionProvider = new LocalProfileServiceConnectionProvider();
+        }
+        connectionProvider.connect();
         this.resourceContext = resourceContext;
+        this.logFileEventDelegate = new LogFileEventResourceComponentHelper(this.resourceContext);
+        this.logFileEventDelegate.startLogFileEventPollers();
     }
 
     public void stop()
     {
-        return;
+        this.logFileEventDelegate.stopLogFileEventPollers();        
     }
 
     // ------------ MeasurementFacet Implementation ------------
@@ -223,9 +243,9 @@ public class ApplicationServerComponent
 
     private static String getResourceName(Configuration pluginConfig, Configuration resourceConfig)
     {
-        PropertySimple resourceNameProp = pluginConfig.getSimple(RESOURCE_NAME_PROPERTY);
+        PropertySimple resourceNameProp = pluginConfig.getSimple(ManagedComponentComponent.PluginConfigPropNames.RESOURCE_NAME);
         if (resourceNameProp == null || resourceNameProp.getStringValue() == null)
-            throw new IllegalStateException("Property [" + RESOURCE_NAME_PROPERTY
+            throw new IllegalStateException("Property [" + ManagedComponentComponent.PluginConfigPropNames.RESOURCE_NAME
                     + "] is not defined in the default plugin configuration.");
         String resourceNamePropName = resourceNameProp.getStringValue();
         PropertySimple propToUseAsResourceName = resourceConfig.getSimple(resourceNamePropName);
@@ -261,7 +281,7 @@ public class ApplicationServerComponent
         String resourceKey = getResourceKey(resourceType, resourceName);
         createResourceReport.setResourceKey(resourceKey);
 
-        PropertySimple templateNameProperty = defaultPluginConfig.getSimple(TEMPLATE_NAME_PROPERTY);
+        PropertySimple templateNameProperty = defaultPluginConfig.getSimple(ManagedComponentComponent.PluginConfigPropNames.TEMPLATE_NAME);
         String templateName = templateNameProperty.getStringValue();
 
         ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
@@ -411,6 +431,45 @@ public class ApplicationServerComponent
         File deployDir = warFile.getParentFile();
         log.debug(">>>>> Deploy directory: " + deployDir);
         return deployDir;
+    }
+
+    @NotNull
+    static File resolvePathRelativeToHomeDir(Configuration pluginConfig, @NotNull String path) {
+        File configDir = new File(path);
+        if (!configDir.isAbsolute()) {
+            String homeDir = pluginConfig.getSimple(PluginConfigPropNames.HOME_DIR).getStringValue();
+            configDir = new File(homeDir, path);
+        }
+
+        return configDir;
+    }
+
+    private static void validateNamingURL(String namingURL)
+    {
+        URI namingURI;
+        try
+        {
+            namingURI = new URI(namingURL);
+        }
+        catch (URISyntaxException e)
+        {
+            throw new RuntimeException("Naming URL '" + namingURL + "' is not valid: " + e.getLocalizedMessage());
+        }
+        if (!namingURI.isAbsolute())
+            throw new RuntimeException("Naming URL '" + namingURL + "' is not absolute.");
+        if (!namingURI.getScheme().equals("jnp"))
+            throw new RuntimeException("Naming URL '" + namingURL + "' has an invalid protocol - the only valid protocol is 'jnp'.");
+    }
+
+    static abstract class PluginConfigPropNames {
+        static final String SERVER_NAME = "serverName";
+        static final String NAMING_URL = "namingURL";
+        static final String PRINCIPAL = "principal";
+        static final String CREDENTIALS = "credentials";
+        static final String HOME_DIR = "homeDir";
+        static final String SERVER_HOME_DIR = "serverHomeDir";
+        static final String JAVA_HOME = "javaHome";
+        static final String BIND_ADDRESS = "bindAddress";
     }
 }
 

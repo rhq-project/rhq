@@ -644,7 +644,44 @@
             <c:simple-property name="serverName"
                                description="the name of the active profile (i.e. configuration set) the server is using"
                                readOnly="true"/>
+
+             <c:group name="events">
+                 <c:list-property name="logEventSources">
+                     <c:map-property name="logEventSource">
+                         <c:simple-property name="logFilePath" type="file" summary="true"
+                                            description="The absolute path to the source log file."/>
+                         <c:simple-property name="enabled" type="boolean" summary="true"
+                                            description="A flag indicating whether of not this log Event source is currently
+                                                         enabled (i.e. whether the associated log file should be tailed for
+                                                         new entries)."/>
+                         <c:simple-property name="dateFormat" required="false"
+                                            description="The date format to use when parsing the dates in log entries. The
+                                                         format must be in the syntax defined by the Java SimpleDateFormat
+                                                         class. If not specified, the three date formats that are predefined
+                                                         by Log4J (ISO8601, DATE, and ABSOLUTE) will be tried."/>
+                         <c:simple-property name="includesPattern" required="false"
+                                            description="A regular expression against which a log entry's detail is matched
+                                                         to determine if an Event should be fired for that entry. If not
+                                                         specified, no filtering of log entries will be done based on their
+                                                         detail."/>
+                         <c:simple-property name="minimumSeverity" required="false" default="error"
+                                            description="The minimum severity of Events that should be collected for this
+                                                         source. If not specified, there is no minimum severity (i.e. all
+                                                         events will be collected).">
+                             <c:property-options>
+                                <c:option name="debug" value="debug"/>
+                                <c:option name="info"  value="info"/>
+                                <c:option name="warn"  value="warn"/>
+                                <c:option name="error" value="error" default="true"/>
+                                <c:option name="fatal" value="fatal"/>
+                             </c:property-options>
+                         </c:simple-property>
+                     </c:map-property>
+                 </c:list-property>
+             </c:group>
         </plugin-configuration>
+
+        <process-scan name="jbossas" query="process|basename|match=^java.*,arg|org.jboss.Main|match=.*"/>
 
           <!--
           <metric property="partitionName" dataType="trait" displayType="summary"
@@ -706,6 +743,8 @@
           <metric displayName="Transactions Rolledback" property="MCBean|JTA|*|rollbackCount" measurementType="trendsup"
                   defaultInterval="600000" defaultOn="true" category="utilization"
                   description="Number of transactions commited since last restart"/>
+
+          <event name="logEntry" description="an entry in a log file"/>
 
         <!--<content name="library" displayName="Jar Library" category="deployable"
                 description="Library Jar files deployed in JBoss AS">

@@ -49,6 +49,7 @@ import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jbossas.helper.JBossInstallationInfo;
 import org.rhq.plugins.jbossas.helper.JBossInstanceInfo;
@@ -210,11 +211,11 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
         if (serverLogFile.exists() && !serverLogFile.isDirectory()) {
             PropertyMap serverLogEventSource = new PropertyMap("serverLog");
             serverLogEventSource.put(new PropertySimple(
-                JBossASServerComponent.LogEventSourcePropertyNames.LOG_FILE_PATH, serverLogFile));
-            serverLogEventSource.put(new PropertySimple(JBossASServerComponent.LogEventSourcePropertyNames.ENABLED,
+                LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.LOG_FILE_PATH, serverLogFile));
+            serverLogEventSource.put(new PropertySimple(LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.ENABLED,
                 Boolean.FALSE));
             PropertyList logEventSources = pluginConfiguration
-                .getList(JBossASServerComponent.LOG_EVENT_SOURCES_CONFIG_PROP);
+                .getList(LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP);
             logEventSources.add(serverLogEventSource);
         }
     }
@@ -297,18 +298,18 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
             if (rhqLogFile.exists() && !rhqLogFile.isDirectory()) {
                 try {
                     PropertyMap serverLogEventSource = new PropertyMap("serverLog");
-                    serverLogEventSource
-                        .put(new PropertySimple(JBossASServerComponent.LogEventSourcePropertyNames.LOG_FILE_PATH,
+                    serverLogEventSource.put(
+                            new PropertySimple(LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.LOG_FILE_PATH,
                             rhqLogFile.getCanonicalPath()));
                     serverLogEventSource.put(new PropertySimple(
-                        JBossASServerComponent.LogEventSourcePropertyNames.ENABLED, Boolean.FALSE));
+                        LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.ENABLED, Boolean.FALSE));
                     serverLogEventSource.put(new PropertySimple(
-                        JBossASServerComponent.LogEventSourcePropertyNames.MINIMUM_SEVERITY, "info"));
+                        LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.MINIMUM_SEVERITY, "info"));
                     PropertyList logEventSources = pluginConfiguration
-                        .getList(JBossASServerComponent.LOG_EVENT_SOURCES_CONFIG_PROP);
+                        .getList(LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP);
                     logEventSources.add(serverLogEventSource);
                 } catch (IOException e) {
-                    log.warn("Unable to setup rhq server log monitoring", e);
+                    log.warn("Unable to setup RHQ Server log file monitoring.", e);
                 }
 
             }

@@ -273,4 +273,10 @@ public class ManagedComponentComponent extends AbstractManagedComponent
                 + ", properties=" + properties.getClass().getSimpleName() + "@" + System.identityHashCode(properties)
                 + "]";
     }
+
+    static abstract class PluginConfigPropNames {
+        static final String TEMPLATE_NAME = "templateName";
+        static final String RESOURCE_NAME = "resourceName";
+    }
+
 }

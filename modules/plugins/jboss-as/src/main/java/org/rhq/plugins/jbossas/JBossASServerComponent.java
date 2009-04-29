@@ -30,8 +30,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,8 +38,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -67,9 +63,6 @@ import org.mc4j.ems.connection.support.metadata.ConnectionTypeDescriptor;
 import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
@@ -79,7 +72,6 @@ import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
@@ -89,10 +81,7 @@ import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
-import org.rhq.core.pluginapi.event.EventContext;
-import org.rhq.core.pluginapi.event.EventPoller;
-import org.rhq.core.pluginapi.event.log.Log4JLogEntryProcessor;
-import org.rhq.core.pluginapi.event.log.LogFileEventPoller;
+import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.ApplicationServerComponent;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
@@ -142,17 +131,6 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
     public static final String BINDING_ADDRESS_CONFIG_PROP = "bindingAddress";
 
-    public static final String LOG_EVENT_SOURCES_CONFIG_PROP = "logEventSources";
-    public static final String LOG_EVENT_SOURCE_CONFIG_PROP = "logEventSource";
-
-    public abstract static class LogEventSourcePropertyNames {
-        public static final String LOG_FILE_PATH = "logFilePath";
-        public static final String ENABLED = "enabled";
-        public static final String DATE_FORMAT = "dateFormat";
-        public static final String INCLUDES_PATTERN = "includesPattern";
-        public static final String MINIMUM_SEVERITY = "minimumSeverity";
-    }
-
     static final String DEFAULT_START_SCRIPT = "bin" + File.separator + "run."
         + ((File.separatorChar == '/') ? "sh" : "bat");
     static final String DEFAULT_SHUTDOWN_SCRIPT = "bin" + File.separator + "shutdown."
@@ -175,8 +153,6 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
     private static final String DISTRIBUTED_REPLICANT_MANAGER_MBEAN_NAME_TEMPLATE = "jboss:partitionName=%partitionName%,service=DistributedReplicantManager";
 
-    private static final String LOG_ENTRY_EVENT_TYPE = "logEntry";
-
     /**
      * This is the timeout for the initial connection to the MBeanServer that is made by {@link #start(ResourceContext)}.
      */
@@ -193,7 +169,6 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
     private ResourceContext resourceContext;
     private ContentContext contentContext;
-    private EventContext eventContext;
 
     private ControlActionFacade controlFacade;
     private JBPMWorkflowManager workflowManager;
@@ -209,6 +184,8 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
      */
     private JBossASServerOperationsDelegate operationsDelegate;
 
+    private LogFileEventResourceComponentHelper logFileEventDelegate;
+
     /**
      * Controls the dampening of connection error stack traces in an attempt to control spam to the log
      * file. Each time a connection error is encountered, this will be incremented. When the connection
@@ -222,7 +199,6 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
     public void start(ResourceContext context) throws Exception {
         this.resourceContext = context;
-        this.eventContext = context.getEventContext();
         this.contentContext = context.getContentContext();
 
         this.operationsDelegate = new JBossASServerOperationsDelegate(this, resourceContext.getSystemInformation());
@@ -264,11 +240,12 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
         }
 
-        startLogFileEventPollers();
+        this.logFileEventDelegate = new LogFileEventResourceComponentHelper(this.resourceContext);
+        this.logFileEventDelegate.startLogFileEventPollers();
     }
 
     public void stop() {
-        stopLogFileEventPollers();
+        this.logFileEventDelegate.stopLogFileEventPollers();
         if (this.connection != null) {
             try {
                 this.connection.close();
@@ -1019,67 +996,6 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
         }
     }
 
-    private void startLogFileEventPollers() {
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        PropertyList logEventSources = pluginConfig.getList(JBossASServerComponent.LOG_EVENT_SOURCES_CONFIG_PROP);
-        for (Property prop : logEventSources.getList()) {
-            PropertyMap logEventSource = (PropertyMap) prop;
-            Boolean enabled = Boolean.valueOf(logEventSource.getSimpleValue(LogEventSourcePropertyNames.ENABLED, null));
-            if (enabled) {
-                String logFilePathname = logEventSource.getSimpleValue(LogEventSourcePropertyNames.LOG_FILE_PATH, null);
-                if (logFilePathname==null) {
-                    log.info("LOGFILE: No logfile path given, can not watch this event log.");
-                    return;
-                }
-                File logFile = new File(logFilePathname);
-                if (!logFile.exists() || !logFile.canRead()) {
-                    log.error("LOGFILE: Logfile at location " + logFilePathname + " does not exist or is not readable. Can not start watching the event log.");
-                    return;
-                }
-
-                Log4JLogEntryProcessor processor = new Log4JLogEntryProcessor(LOG_ENTRY_EVENT_TYPE, logFile);
-                String dateFormatString = logEventSource.getSimpleValue(LogEventSourcePropertyNames.DATE_FORMAT, null);
-                if (dateFormatString != null) {
-                    try {
-                        DateFormat dateFormat = new SimpleDateFormat(dateFormatString); // TODO locale specific ?
-                        processor.setDateFormat(dateFormat);
-                    } catch (IllegalArgumentException e) {
-                        throw new InvalidPluginConfigurationException("Date format [" + dateFormatString
-                            + "] is not a valid simple date format.");
-                    }
-                }
-                String includesPatternString = logEventSource.getSimpleValue(
-                    LogEventSourcePropertyNames.INCLUDES_PATTERN, null);
-                if (includesPatternString != null) {
-                    try {
-                        Pattern includesPattern = Pattern.compile(includesPatternString);
-                        processor.setIncludesPattern(includesPattern);
-                    } catch (PatternSyntaxException e) {
-                        throw new InvalidPluginConfigurationException("Includes pattern [" + includesPatternString
-                            + "] is not a valid regular expression.");
-                    }
-                }
-                String minimumSeverityString = logEventSource.getSimpleValue(
-                    LogEventSourcePropertyNames.MINIMUM_SEVERITY, null);
-                if (minimumSeverityString != null) {
-                    EventSeverity minimumSeverity = EventSeverity.valueOf(minimumSeverityString.toUpperCase());
-                    processor.setMinimumSeverity(minimumSeverity);
-                }
-                EventPoller poller = new LogFileEventPoller(this.eventContext, LOG_ENTRY_EVENT_TYPE, logFile, processor);
-                this.eventContext.registerEventPoller(poller, 60, logFile.getPath());
-            }
-        }
-    }
-
-    private void stopLogFileEventPollers() {
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        PropertyList logEventSources = pluginConfig.getList(JBossASServerComponent.LOG_EVENT_SOURCES_CONFIG_PROP);
-        for (Property prop : logEventSources.getList()) {
-            PropertyMap logEventSource = (PropertyMap) prop;
-            String logFilePath = logEventSource.getSimpleValue(LogEventSourcePropertyNames.LOG_FILE_PATH, null);
-            this.eventContext.unregisterEventPoller(LOG_ENTRY_EVENT_TYPE, logFilePath);
-        }
-    }
 
     @Nullable
     private String getPartitionName() {

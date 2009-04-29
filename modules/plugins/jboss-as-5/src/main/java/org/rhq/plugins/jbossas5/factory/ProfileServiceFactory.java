@@ -43,7 +43,10 @@ import org.jboss.profileservice.spi.ProfileService;
  * ProfileService object.
  *
  * @author Mark Spritzler
+ *
+ * @deprecated use {@link org.rhq.plugins.jbossas5.connection.ProfileServiceConnection} instead
  */
+@Deprecated
 public class ProfileServiceFactory
 {
     private static final Log LOG = LogFactory.getLog(ProfileServiceFactory.class);

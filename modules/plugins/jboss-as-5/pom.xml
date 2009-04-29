@@ -92,6 +92,13 @@
           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
           <scope>provided</scope> <!-- by PC -->
         </dependency>  
+
+        <dependency>
+          <groupId>org.hyperic</groupId>
+          <artifactId>sigar</artifactId>
+          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+          <scope>provided</scope> <!-- by PC -->
+        </dependency>
         
         <!-- NOTE: Uncomment the below deps if you want to pull down the jboss-profileservice 
                    and jboss-system sources jars for debugging purposes. -->        

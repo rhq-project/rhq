@@ -37,7 +37,7 @@ package org.rhq.plugins.jbossas5;
  import org.rhq.core.domain.configuration.PropertyList;
  import org.rhq.core.domain.configuration.PropertyMap;
  import org.rhq.core.domain.configuration.PropertySimple;
- import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
+ //import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
  import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
  import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
  import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
@@ -325,7 +325,7 @@ public class ApplicationServerDiscoveryComponent
 
     private void configureEventSourceForServerLogFile(Configuration pluginConfiguration)
     {
-        File rhqLogFile = ApplicationServerComponent.resolvePathRelativeToHomeDir(pluginConfiguration,
+        /*File rhqLogFile = ApplicationServerComponent.resolvePathRelativeToHomeDir(pluginConfiguration,
             "../logs/rhq-server-log4j.log");
         if (rhqLogFile.exists() && !rhqLogFile.isDirectory()) {
             try {
@@ -344,7 +344,7 @@ public class ApplicationServerDiscoveryComponent
                 log.warn("Unable to setup RHQ Server log file monitoring.", e);
             }
 
-        }
+        }*/
     }
 
     private static String getJnpURL(JBossInstanceInfo cmdLine, File installHome, File configDir) {
@@ -369,7 +369,7 @@ public class ApplicationServerDiscoveryComponent
     }
 
     private void initLogEventSourcesConfigProp(File configDir, Configuration pluginConfig) {
-        File logDir = new File(configDir, "log");
+        /*File logDir = new File(configDir, "log");
         File serverLogFile = new File(logDir, "server.log");
         if (serverLogFile.exists() && !serverLogFile.isDirectory()) {
             PropertyMap serverLogEventSource = new PropertyMap("serverLog");
@@ -380,7 +380,7 @@ public class ApplicationServerDiscoveryComponent
             PropertyList logEventSources = pluginConfig
                 .getList(LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP);
             logEventSources.add(serverLogEventSource);
-        }
+        }*/
     }
 
     private void generatePluginDescriptor(ResourceDiscoveryContext resourceDiscoveryContext) {

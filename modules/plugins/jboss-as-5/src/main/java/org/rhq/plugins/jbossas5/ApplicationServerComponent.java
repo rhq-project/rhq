@@ -71,7 +71,7 @@ import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
+//import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
@@ -103,7 +103,7 @@ public class ApplicationServerComponent
 
     private ResourceContext resourceContext;
     private File deployDirectory;
-    private LogFileEventResourceComponentHelper logFileEventDelegate;
+    //private LogFileEventResourceComponentHelper logFileEventDelegate;
 
     public AvailabilityType getAvailability()
     {
@@ -128,13 +128,14 @@ public class ApplicationServerComponent
         }
         connectionProvider.connect();
         this.resourceContext = resourceContext;
-        this.logFileEventDelegate = new LogFileEventResourceComponentHelper(this.resourceContext);
-        this.logFileEventDelegate.startLogFileEventPollers();
+
+        //this.logFileEventDelegate = new LogFileEventResourceComponentHelper(this.resourceContext);
+        //this.logFileEventDelegate.startLogFileEventPollers();
     }
 
     public void stop()
     {
-        this.logFileEventDelegate.stopLogFileEventPollers();        
+        //this.logFileEventDelegate.stopLogFileEventPollers();
     }
 
     // ------------ MeasurementFacet Implementation ------------

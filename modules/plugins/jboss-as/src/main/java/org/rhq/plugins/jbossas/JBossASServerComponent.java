@@ -81,7 +81,7 @@ import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
-import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
+//import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.ApplicationServerComponent;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
@@ -184,7 +184,7 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
      */
     private JBossASServerOperationsDelegate operationsDelegate;
 
-    private LogFileEventResourceComponentHelper logFileEventDelegate;
+    //private LogFileEventResourceComponentHelper logFileEventDelegate;
 
     /**
      * Controls the dampening of connection error stack traces in an attempt to control spam to the log
@@ -240,12 +240,12 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
 
         }
 
-        this.logFileEventDelegate = new LogFileEventResourceComponentHelper(this.resourceContext);
-        this.logFileEventDelegate.startLogFileEventPollers();
+        //this.logFileEventDelegate = new LogFileEventResourceComponentHelper(this.resourceContext);
+        //this.logFileEventDelegate.startLogFileEventPollers();
     }
 
     public void stop() {
-        this.logFileEventDelegate.stopLogFileEventPollers();
+        //this.logFileEventDelegate.stopLogFileEventPollers();
         if (this.connection != null) {
             try {
                 this.connection.close();

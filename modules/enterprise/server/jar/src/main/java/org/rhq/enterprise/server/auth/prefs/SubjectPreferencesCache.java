@@ -39,26 +39,41 @@ public class SubjectPreferencesCache {
 
     private void load(int subjectId) {
         if (!subjectPreferences.containsKey(subjectId)) {
-            Subject subject = subjectManager.loadUserConfiguration(subjectId);
-            Configuration configuration = subject.getUserConfiguration();
-            subjectPreferences.put(subjectId, configuration);
+            try {
+                Subject subject = subjectManager.loadUserConfiguration(subjectId);
+                Configuration configuration = subject.getUserConfiguration();
+                subjectPreferences.put(subjectId, configuration);
+            } catch (Throwable t) {
+                log.warn("Can not get preferences for subject[id=" + subjectId + "], subject does not exist yet");
+            }
         }
     }
 
     public synchronized PropertySimple getUserProperty(int subjectId, String propertyName) {
         load(subjectId);
-        PropertySimple prop = subjectPreferences.get(subjectId).getSimple(propertyName);
+
+        Configuration config = subjectPreferences.get(subjectId);
+        if (config == null) {
+            return null;
+        }
+
+        PropertySimple prop = config.getSimple(propertyName);
         if (prop == null) {
             return null;
         }
+
         return new PropertySimple(propertyName, prop.getStringValue());
     }
 
     public synchronized void setUserProperty(int subjectId, String propertyName, String value) {
         load(subjectId);
-        Configuration config = subjectPreferences.get(subjectId);
-        PropertySimple prop = config.getSimple(propertyName);
 
+        Configuration config = subjectPreferences.get(subjectId);
+        if (config == null) {
+            return;
+        }
+
+        PropertySimple prop = config.getSimple(propertyName);
         if (prop == null) {
             prop = new PropertySimple(propertyName, value);
             config.put(prop); // add new to collection
@@ -80,7 +95,13 @@ public class SubjectPreferencesCache {
 
     public synchronized void unsetUserProperty(int subjectId, String propertyName) {
         load(subjectId);
-        Property property = subjectPreferences.get(subjectId).remove(propertyName);
+
+        Configuration config = subjectPreferences.get(subjectId);
+        if (config == null) {
+            return;
+        }
+
+        Property property = config.remove(propertyName);
         // it's possible property was already removed, and thus this operation becomes a no-op to the backing store
         if (property != null && property.getId() != 0) {
             try {

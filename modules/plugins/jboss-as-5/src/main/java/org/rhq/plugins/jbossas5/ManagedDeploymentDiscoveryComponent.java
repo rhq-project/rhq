@@ -36,7 +36,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 
 /**
@@ -48,19 +47,19 @@ import org.rhq.plugins.jbossas5.util.ConversionUtils;
 public abstract class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryComponent<ApplicationServerComponent> {
     private final Log log = LogFactory.getLog(this.getClass());    
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApplicationServerComponent> resourceDiscoveryContext)
+    public Set<DiscoveredResourceDetails> discoverResources(
+            ResourceDiscoveryContext<ApplicationServerComponent> discoveryContext)
     {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
-        ResourceType resourceType = resourceDiscoveryContext.getResourceType();
+        ResourceType resourceType = discoveryContext.getResourceType();
         log.trace("Discovering " + resourceType.getName() + " Resources..." );
         KnownDeploymentTypes deploymentType = ConversionUtils.getDeploymentType(resourceType);
         String deploymentTypeString = deploymentType.getType();
 
+        ManagementView managementView = discoveryContext.getParentResourceComponent().getConnection().getManagementView();
         // TODO (ips): Only refresh the ManagementView *once* per runtime discovery scan, rather than every time this
-        //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.
-        ProfileServiceFactory.refreshCurrentProfileView();
-
-        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.        
+        managementView.reload();
 
         Set<String> deploymentNames = null;
         try
@@ -99,7 +98,7 @@ public abstract class ManagedDeploymentDiscoveryComponent implements ResourceDis
                                     resourceName,
                                     version,
                                     resourceType.getDescription(),
-                                    resourceDiscoveryContext.getDefaultPluginConfiguration(),
+                                    discoveryContext.getDefaultPluginConfiguration(),
                                     null);
                     // example of a deployment name: vfszip:/C:/opt/jboss-5.1.0.CR1/server/default/deploy/foo.war
                     resource.getPluginConfiguration().put(

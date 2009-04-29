@@ -41,6 +41,7 @@ import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 import org.jboss.deployers.spi.management.deploy.ProgressEvent;
 import org.jboss.deployers.spi.management.deploy.ProgressListener;
+import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.DeploymentTemplateInfo;
 import org.jboss.managed.api.ManagedProperty;
@@ -74,7 +75,6 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 //import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
 import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
-import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
@@ -83,7 +83,9 @@ import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 import org.rhq.plugins.jbossas5.connection.RemoteProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider;
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
  /**
  * ResourceComponent for a JBoss AS, 5.1.0.CR1 or later, Server.
@@ -102,33 +104,22 @@ public class ApplicationServerComponent
     private final Log log = LogFactory.getLog(this.getClass());
 
     private ResourceContext resourceContext;
+    private ProfileServiceConnection connection;
     private File deployDirectory;
+
     //private LogFileEventResourceComponentHelper logFileEventDelegate;
 
     public AvailabilityType getAvailability()
     {
-        // TODO: Always returning UP is fine for Embedded, but we'll need to actually check avail for Enterprise.
-        return AvailabilityType.UP;
+        connect();
+        // TODO: Ping the connection to make sure it's not defunct.
+        return (this.connection != null) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
     public void start(ResourceContext resourceContext)
     {
-        Configuration pluginConfig = resourceContext.getPluginConfiguration();
-        //PropertySimple namingUrlProp = pluginConfig.getSimple(PluginConfigPropNames.NAMING_URL);
-        PropertySimple namingUrlProp = new PropertySimple(PluginConfigPropNames.NAMING_URL, "jnp://127.0.0.1:1099");
-        ProfileServiceConnectionProvider connectionProvider;
-        if (namingUrlProp != null) {
-            String namingUrl = namingUrlProp.getStringValue();
-            validateNamingURL(namingUrl);
-            String principal = pluginConfig.getSimpleValue(PluginConfigPropNames.PRINCIPAL, null);
-            String credentials = pluginConfig.getSimpleValue(PluginConfigPropNames.CREDENTIALS, null);
-            connectionProvider = new RemoteProfileServiceConnectionProvider(namingUrl, principal, credentials);
-        } else {
-            connectionProvider = new LocalProfileServiceConnectionProvider();
-        }
-        connectionProvider.connect();
         this.resourceContext = resourceContext;
-
+        connect();
         //this.logFileEventDelegate = new LogFileEventResourceComponentHelper(this.resourceContext);
         //this.logFileEventDelegate.startLogFileEventPollers();
     }
@@ -142,6 +133,7 @@ public class ApplicationServerComponent
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests)
     {
+        ManagementView managementView = getConnection().getManagementView();
         for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
             try
@@ -160,9 +152,9 @@ public class ApplicationServerComponent
                 ComponentType componentType = new ComponentType(componentCategory, componentSubType);
                 ManagedComponent component;
                 if (componentName.equals("*")) {
-                    component = ManagedComponentUtils.getSingletonManagedComponent(componentType);
+                    component = ManagedComponentUtils.getSingletonManagedComponent(managementView, componentType);
                 } else {
-                    component = ManagedComponentUtils.getManagedComponent(componentType, componentName);
+                    component = ManagedComponentUtils.getManagedComponent(managementView, componentType, componentName);
                 }
                 Serializable value = ManagedComponentUtils.getSimplePropertyValue(component, propertyName);
                 if (value == null) {
@@ -225,6 +217,38 @@ public class ApplicationServerComponent
         log.debug(eventInfo);
     }
 
+    @Nullable
+    public ProfileServiceConnection getConnection() {
+        connect();
+        return this.connection;
+    }
+
+    // ---------------------------------------------------------------
+
+    private void connect() {
+        if (this.connection != null)
+            return;
+        // TODO: Check for a defunct connection and if found try to reconnect.
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        PropertySimple namingUrlProp = pluginConfig.getSimple(PluginConfigPropNames.NAMING_URL);        
+        ProfileServiceConnectionProvider connectionProvider;
+        if (namingUrlProp != null) {
+            String namingUrl = namingUrlProp.getStringValue();
+            validateNamingURL(namingUrl);
+            String principal = pluginConfig.getSimpleValue(PluginConfigPropNames.PRINCIPAL, null);
+            String credentials = pluginConfig.getSimpleValue(PluginConfigPropNames.CREDENTIALS, null);
+            connectionProvider = new RemoteProfileServiceConnectionProvider(namingUrl, principal, credentials);
+        } else {
+            connectionProvider = new LocalProfileServiceConnectionProvider();
+        }
+        try {
+            this.connection = connectionProvider.connect();
+        }
+        catch (RuntimeException e) {
+            log.debug("Failed to connect to Profile Service.", e);
+        }
+    }
+
     private void handleMiscManagedProperties(Collection<PropertyDefinition> managedPropertyGroup,
                                              Map<String, ManagedProperty> managedProperties,
                                              Configuration pluginConfiguration)
@@ -271,7 +295,8 @@ public class ApplicationServerComponent
         Configuration resourceConfig = createResourceReport.getResourceConfiguration();
         String resourceName = getResourceName(defaultPluginConfig, resourceConfig);
         ComponentType componentType = ConversionUtils.getComponentType(resourceType);
-        if (ProfileServiceFactory.isManagedComponent(resourceName, componentType)) {
+        ManagementView managementView = getConnection().getManagementView();
+        if (ManagedComponentUtils.isManagedComponent(managementView, resourceName, componentType)) {
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
             createResourceReport.setErrorMessage("A " + resourceType.getName() + " named '" + resourceName
                     + "' already exists.");
@@ -285,7 +310,6 @@ public class ApplicationServerComponent
         PropertySimple templateNameProperty = defaultPluginConfig.getSimple(ManagedComponentComponent.PluginConfigPropNames.TEMPLATE_NAME);
         String templateName = templateNameProperty.getStringValue();
 
-        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
         DeploymentTemplateInfo template;
         try
         {
@@ -352,7 +376,9 @@ public class ApplicationServerComponent
             @SuppressWarnings({"ConstantConditions"})
             boolean deployExploded = deployTimeConfig.getSimple("deployExploded").getBooleanValue();
 
-            DeploymentStatus status = DeploymentUtils.deployArchive(archiveFile, getDeployDirectory(), deployExploded);
+            DeploymentManager deploymentManager = getConnection().getDeploymentManager();
+            DeploymentStatus status = DeploymentUtils.deployArchive(deploymentManager, archiveFile,
+                    getDeployDirectory(), deployExploded);
 
             if (status.getState() == DeploymentStatus.StateType.COMPLETED) {
                 createResourceReport.setResourceName(archivePath);
@@ -384,8 +410,8 @@ public class ApplicationServerComponent
         String archiveFileName = archiveFile.getName();
         KnownDeploymentTypes deploymentType = ConversionUtils.getDeploymentType(resourceType);
         String deploymentTypeString = deploymentType.getType();
-        ProfileServiceFactory.refreshCurrentProfileView();
-        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        ManagementView managementView = getConnection().getManagementView();
+        managementView.reload();
         Set<ManagedDeployment> managedDeployments = managementView.getDeploymentsForType(deploymentTypeString);
         for (ManagedDeployment managedDeployment : managedDeployments)
         {
@@ -396,7 +422,7 @@ public class ApplicationServerComponent
 
     private File computeDeployDirectory()
     {
-        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        ManagementView managementView = getConnection().getManagementView();
         Set<ManagedDeployment> warDeployments;
         try
         {

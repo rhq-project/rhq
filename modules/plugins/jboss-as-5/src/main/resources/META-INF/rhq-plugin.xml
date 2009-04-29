@@ -645,6 +645,25 @@
                                description="the name of the active profile (i.e. configuration set) the server is using"
                                readOnly="true"/>
 
+             <c:group name="connectionInfo">
+               <c:simple-property name="namingURL" displayName="Naming Provider URL"
+                                  description="The JNP URL with which to connect to the JBoss Application Server instance (e.g. jnp://127.0.0.1:1099)."
+                                  default="jnp://127.0.0.1:1099"/>
+               <c:simple-property name="principal" required="false" description="The name of the principal (i.e. user) to authenticate."/>
+               <c:simple-property name="credentials" type="password" required="false"
+                                  description="The credentials (i.e. password) that should be used to authenticate the principal."/>
+               <c:simple-property name="homeDir" displayName="JBoss Home Directory" type="directory" readOnly="true"
+                                  description="The absolute path to the directory where JBoss AS is installed (e.g. /opt/jboss-5.1.0.GA)."/>
+               <c:simple-property name="serverHomeDir" displayName="Configuration Path" type="directory" readOnly="true"
+                                  description="The path to the configuration directory under which this instance
+                                               operates (e.g. /opt/jboss-5.1.0.GA/server/default); if the path is not absolute,
+                                               then it will be resolved relative to {homeDir}."/>
+               <c:simple-property name="serverName" displayName="Configuration Set" required="false"
+                                  description="The name of the server configuration (e.g. minimal, default, or all);
+                                               if not specified, it will default to the last path component of {serverHomeDir}."
+                                  default="default"/>
+             </c:group>
+
              <c:group name="events">
                  <c:list-property name="logEventSources">
                      <c:map-property name="logEventSource">

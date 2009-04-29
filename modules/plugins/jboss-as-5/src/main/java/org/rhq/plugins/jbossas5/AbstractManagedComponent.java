@@ -25,6 +25,7 @@ import org.apache.commons.logging.Log;
 import org.jboss.managed.api.ManagedProperty;
 
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.domain.configuration.Configuration;
@@ -34,15 +35,16 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
 import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 
 /**
  * @author Ian Springer
  */
-public abstract class AbstractManagedComponent implements ConfigurationFacet {
-    private ResourceContext resourceContext;
+public abstract class AbstractManagedComponent implements ResourceComponent<ApplicationServerComponent>, ConfigurationFacet {
+    private ResourceContext<ApplicationServerComponent> resourceContext;
     private String resourceDescription;
 
-    public void start(ResourceContext resourceContext) throws Exception {
+    public void start(ResourceContext<ApplicationServerComponent> resourceContext) throws Exception {
         this.resourceContext = resourceContext;
         this.resourceDescription = this.resourceContext.getResourceType()
                     + " Resource with key [" + this.resourceContext.getResourceKey() + "]";
@@ -106,10 +108,14 @@ public abstract class AbstractManagedComponent implements ConfigurationFacet {
     protected abstract Log getLog();
 
     protected ResourceContext getResourceContext() {
-        return resourceContext;
+        return this.resourceContext;
     }
 
-    public String getResourceDescription() {
+    protected ProfileServiceConnection getConnection() {
+        return this.resourceContext.getParentResourceComponent().getConnection();
+    }
+
+    protected String getResourceDescription() {
         return resourceDescription;
     }
 }

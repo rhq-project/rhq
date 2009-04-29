@@ -22,8 +22,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.DebugUtils;
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -45,11 +45,11 @@ public class AbstractManagedComponentTest
     
     protected ManagementView managementView;
 
-    public AbstractManagedComponentTest()
+    public AbstractManagedComponentTest(ProfileServiceConnection connection)
     {
-        System.out.println("Initializing profile service...");
-        ProfileServiceFactory.refreshCurrentProfileView();
-        this.managementView = ProfileServiceFactory.getCurrentProfileView();
+        System.out.println("Initializing profile service...");        
+        this.managementView = connection.getManagementView();
+        this.managementView.reload();
     }
 
     protected Set<ManagedProperty> getMandatoryProperties(DeploymentTemplateInfo template)

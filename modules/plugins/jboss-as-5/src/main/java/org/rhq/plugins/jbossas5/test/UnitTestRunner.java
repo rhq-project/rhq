@@ -20,6 +20,7 @@ package org.rhq.plugins.jbossas5.test;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 
 /**
  * Runs unit tests that need to run within a JBossAS 5.x instance to communicate with the profile service in-process.
@@ -30,10 +31,10 @@ public class UnitTestRunner
 {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public void runUnitTests()
+    public void runUnitTests(ProfileServiceConnection connection)
     {
         log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>> Running unit tests...");
-        TxConnectionFactoryTest txConnectionFactoryTest = new TxConnectionFactoryTest();
+        TxConnectionFactoryTest txConnectionFactoryTest = new TxConnectionFactoryTest(connection);
         try
         {
             txConnectionFactoryTest.testCreateMandatoryPropertiesNull();

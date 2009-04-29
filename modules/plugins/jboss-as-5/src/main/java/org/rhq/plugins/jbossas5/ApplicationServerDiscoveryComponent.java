@@ -32,10 +32,9 @@ package org.rhq.plugins.jbossas5;
 
  import org.apache.commons.logging.Log;
  import org.apache.commons.logging.LogFactory;
+ import org.apache.maven.artifact.versioning.ComparableVersion;
  import org.jetbrains.annotations.Nullable;
  import org.rhq.core.domain.configuration.Configuration;
- import org.rhq.core.domain.configuration.PropertyList;
- import org.rhq.core.domain.configuration.PropertyMap;
  import org.rhq.core.domain.configuration.PropertySimple;
  //import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
  import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -48,7 +47,6 @@ package org.rhq.plugins.jbossas5;
  import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider;
  import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
  import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
- import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
  import org.rhq.plugins.jbossas5.helper.JBossInstallationInfo;
  import org.rhq.plugins.jbossas5.helper.JBossInstanceInfo;
  import org.rhq.plugins.jbossas5.helper.JBossProperties;
@@ -77,6 +75,7 @@ public class ApplicationServerDiscoveryComponent
     private static final String ANY_ADDRESS = "0.0.0.0";
     private static final String LOCALHOST = "127.0.0.1";
     private static final String JAVA_HOME_ENV_VAR = "JAVA_HOME";
+    private static final ComparableVersion MINIMUM_VERSION = new ComparableVersion("5.1.0.CR1");
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -104,12 +103,6 @@ public class ApplicationServerDiscoveryComponent
         }
         log.trace("Discovered " + resources.size() + " " + discoveryContext.getResourceType().getName() + " Resources." );
 
-        boolean debug = Boolean.getBoolean(JBMANCON_DEBUG_SYSPROP);
-        if (debug) {
-            //new UnitTestRunner().runUnitTests();
-            //generatePluginDescriptor(discoveryContext);
-        }
-
         return resources;
     }
 
@@ -117,6 +110,7 @@ public class ApplicationServerDiscoveryComponent
     {
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
         List<ProcessScanResult> autoDiscoveryResults = discoveryContext.getAutoDiscoveredProcesses();
+
         for (ProcessScanResult autoDiscoveryResult : autoDiscoveryResults) {
             ProcessInfo processInfo = autoDiscoveryResult.getProcessInfo();
             if (log.isDebugEnabled())
@@ -130,11 +124,13 @@ public class ApplicationServerDiscoveryComponent
                 continue;
             }
 
-            // See if we have an AS 5 - if so, skip it.
+            // See if this JBAS instance's version is less than 5.1.0.CR1 - if so, skip it.
             JBossInstallationInfo installInfo = cmdLine.getInstallInfo();
-            if (installInfo.getVersion().startsWith("5")) {
+            ComparableVersion version = new ComparableVersion(installInfo.getVersion());
+            if (version.compareTo(MINIMUM_VERSION) < 0) {
                 if (log.isDebugEnabled())
-                    log.debug("Found an AS 5, which is not supported by this plugin - skipping...");
+                    log.debug("JBAS version " + version + " is not supported by this plugin (minimum version is "
+                            + MINIMUM_VERSION + ") - skipping...");
                 continue;
             }
 
@@ -221,12 +217,14 @@ public class ApplicationServerDiscoveryComponent
         return resourceDetails;
     }
 
-    private DiscoveredResourceDetails discoverInProcessJBossAS(ResourceDiscoveryContext resourceDiscoveryContext)
+    @Nullable
+    private DiscoveredResourceDetails discoverInProcessJBossAS(ResourceDiscoveryContext discoveryContext)
     {
         ProfileServiceConnectionProvider connectionProvider = new LocalProfileServiceConnectionProvider();
+        ProfileServiceConnection connection;
         try
         {
-            ProfileServiceConnection connection = connectionProvider.connect();
+            connection = connectionProvider.connect();
         }
         catch (Exception e)
         {
@@ -235,7 +233,8 @@ public class ApplicationServerDiscoveryComponent
             return null;
         }
 
-        ManagedComponent serverConfigComponent = ManagedComponentUtils.getSingletonManagedComponent(
+        ManagementView managementView = connection.getManagementView();
+        ManagedComponent serverConfigComponent = ManagedComponentUtils.getSingletonManagedComponent(managementView,
                 new ComponentType("MCBean", "ServerConfig"));
         String serverName = (String)ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent, "serverName");
 
@@ -246,11 +245,17 @@ public class ApplicationServerDiscoveryComponent
 
         String version = (String)ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent, "specificationVersion");
 
-        Configuration pluginConfig = resourceDiscoveryContext.getDefaultPluginConfiguration();
+        Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
         pluginConfig.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.SERVER_NAME, serverName));
 
+        boolean debug = Boolean.getBoolean(JBMANCON_DEBUG_SYSPROP);
+        if (debug) {
+            //new UnitTestRunner().runUnitTests(connection);
+            //generatePluginDescriptor(discoveryContext, connection);
+        }
+
         return new DiscoveredResourceDetails(
-                resourceDiscoveryContext.getResourceType(),
+                discoveryContext.getResourceType(),
                 resourceKey,
                 resourceName,
                 version,
@@ -343,7 +348,6 @@ public class ApplicationServerDiscoveryComponent
             } catch (IOException e) {
                 log.warn("Unable to setup RHQ Server log file monitoring.", e);
             }
-
         }*/
     }
 
@@ -361,9 +365,8 @@ public class ApplicationServerDiscoveryComponent
         JnpConfig config = JnpConfig.getConfig(installHome, serviceXML, props);
         if ((config == null) || (config.getJnpPort() == null)) {
             File namingServiceFile = new File(configDir, JBOSS_NAMING_SERVICE_XML);
-            if (namingServiceFile.exists()) {
+            if (namingServiceFile.exists())
                 config = JnpConfig.getConfig(installHome, namingServiceFile, props);
-            }
         }
         return config;
     }
@@ -383,11 +386,12 @@ public class ApplicationServerDiscoveryComponent
         }*/
     }
 
-    private void generatePluginDescriptor(ResourceDiscoveryContext resourceDiscoveryContext) {
+    private void generatePluginDescriptor(ResourceDiscoveryContext discoveryContext,
+                                          ProfileServiceConnection connection) {
         log.info("Generating RHQ plugin descriptor...");
         try {
-            ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
-            File tempDir = resourceDiscoveryContext.getParentResourceContext().getTemporaryDirectory();
+            ManagementView managementView = connection.getManagementView();
+            File tempDir = discoveryContext.getParentResourceContext().getTemporaryDirectory();
             PluginDescriptorGenerator.generatePluginDescriptor(managementView, tempDir);
         }
         catch (Exception e) {

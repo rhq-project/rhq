@@ -22,8 +22,6 @@
   */
 package org.rhq.plugins.jbossas5.factory;
 
-import java.util.Set;
-
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
@@ -33,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
-import org.jboss.managed.api.ComponentType;
-import org.jboss.managed.api.ManagedComponent;
 import org.jboss.profileservice.spi.ProfileKey;
 import org.jboss.profileservice.spi.ProfileService;
 
@@ -162,69 +158,6 @@ public class ProfileServiceFactory
     		LOG.error("Failed to load profile '" + DEFAULT_PROFILE_KEY + "' via Deployment Manager.", e);
     	}    	
     }    
-    
-    /**
-     * Locate the given ComponentType with the given component name.
-     *
-     * @param type ComponentType of the component to get
-     * @param name String name of the component
-     * @return the matching ManagedComponent if found, null otherwise
-     * @throws Exception on error
-     */
-    public static ManagedComponent getManagedComponent(ComponentType type, String name)
-            throws Exception
-    {
-        ManagementView managementView = getCurrentProfileView();
-        return getManagedComponent(managementView, type, name);
-    }
 
-    /**
-     * Locate the given ComponentType with the given component name.
-     *
-     * @param managementView
-     * @param type
-     * @param name
-     * @return the matching ManagedComponent if found, null otherwise
-     * @throws Exception on error
-     */
-    public static ManagedComponent getManagedComponent(ManagementView managementView,
-                                                       ComponentType type, String name)
-            throws Exception
-    {
-        Set<ManagedComponent> managedComponents = managementView.getComponentsForType(type);
-        if (managedComponents != null) {
-            for (ManagedComponent managedComponent : managedComponents) {
-                if (managedComponent.getName().equals(name))
-                    return managedComponent;
-            }
-        }
-        return null;
-    }
 
-    /**
-     * 
-     * @param name
-     * @param componentType
-     * @return
-     */
-    public static boolean isManagedComponent(String name, ComponentType componentType)
-    {
-        boolean isDeployed = false;
-        if (name != null)
-        {
-            try
-            {
-                ManagedComponent component = getManagedComponent(componentType, name);
-                if (component != null)
-                    isDeployed = true;
-            }
-            catch (Exception e)
-            {
-                // Setting it to true to be safe than sorry, since there might be a component
-                // already deployed in the AS. TODO (ips): I don't think I like this.
-                isDeployed = true;
-            }
-        }
-        return isDeployed;
-    }
 }

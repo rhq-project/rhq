@@ -32,7 +32,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.ConversionUtils;
 
 import java.util.HashSet;
@@ -55,11 +54,10 @@ public class ManagedComponentDiscoveryComponent
         ResourceType resourceType = discoveryContext.getResourceType();
         log.trace("Discovering " + resourceType.getName() + " Resources..." );
 
+        ManagementView managementView = discoveryContext.getParentResourceComponent().getConnection().getManagementView();
         // TODO (ips): Only refresh the ManagementView *once* per runtime discovery scan, rather than every time this
         //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.
-        ProfileServiceFactory.refreshCurrentProfileView();
-
-        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        managementView.reload();        
 
         ComponentType componentType = ConversionUtils.getComponentType(resourceType);
         Set<ManagedComponent> components;

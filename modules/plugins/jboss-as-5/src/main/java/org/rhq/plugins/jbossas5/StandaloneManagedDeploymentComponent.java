@@ -49,7 +49,6 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
@@ -218,7 +217,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         // Now stop the original app.
         try
         {
-            DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
+            DeploymentManager deploymentManager = getConnection().getDeploymentManager();
             DeploymentProgress progress = deploymentManager.stop(this.deploymentName);
             DeploymentUtils.run(progress);
         }
@@ -230,7 +229,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         // And then remove it (this will delete the physical file/dir from the deploy dir).
         try
         {
-            DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
+            DeploymentManager deploymentManager = getConnection().getDeploymentManager();
             DeploymentProgress progress = deploymentManager.remove(this.deploymentName);
             DeploymentUtils.run(progress);
         }
@@ -242,8 +241,9 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         // Deploy away!
         log.debug("Deploying '" + tempFile + "'...");
         File deployDir = this.deploymentFile.getParentFile();
+        DeploymentManager deploymentManager = getConnection().getDeploymentManager();
         try {
-            DeploymentUtils.deployArchive(tempFile, deployDir, deployExploded);
+            DeploymentUtils.deployArchive(deploymentManager, tempFile, deployDir, deployExploded);
         }
         catch (Exception e) {
             // Deploy failed - rollback to the original app file...
@@ -253,7 +253,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 // Delete the new app, which failed to deploy.
                 FileUtils.forceDelete(this.deploymentFile);
                 // Need to redeploy the original file - this generally should succeed.
-                DeploymentUtils.deployArchive(backupOfOriginalFile, deployDir, deployExploded);
+                DeploymentUtils.deployArchive(deploymentManager, backupOfOriginalFile, deployDir, deployExploded);
                 errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
             }
             catch (Exception e1) {
@@ -284,7 +284,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
     // ------------ DeleteResourceFacet implementation -------------
 
     public void deleteResource() throws Exception {
-        DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
+        DeploymentManager deploymentManager = getConnection().getDeploymentManager();
         log.debug("Stopping deployment [" + this.deploymentName + "]...");
         DeploymentProgress progress = deploymentManager.stop(deploymentName);
         DeploymentUtils.run(progress);

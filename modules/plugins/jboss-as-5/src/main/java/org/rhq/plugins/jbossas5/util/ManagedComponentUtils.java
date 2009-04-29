@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.EnumSet;
 import java.io.Serializable;
 
-import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.jetbrains.annotations.NotNull;
 
 import org.jboss.deployers.spi.management.ManagementView;
@@ -39,9 +38,10 @@ import org.jboss.metatype.api.types.MetaType;
  */
 public class ManagedComponentUtils
 {
-    public static ManagedComponent getManagedComponent(ComponentType componentType, String componentName)
+    public static ManagedComponent getManagedComponent(ManagementView managementView, ComponentType componentType,
+                                                       String componentName)
     {
-        Set<ManagedComponent> components = getManagedComponents(componentType);
+        Set<ManagedComponent> components = getManagedComponents(managementView, componentType);
         for (ManagedComponent component : components)
         {
             if (component.getName().equals(componentName))
@@ -50,9 +50,10 @@ public class ManagedComponentUtils
         return null;
     }
 
-    public static ManagedComponent getSingletonManagedComponent(ComponentType componentType)
+    public static ManagedComponent getSingletonManagedComponent(ManagementView managementView,
+                                                                ComponentType componentType)
     {
-        Set<ManagedComponent> components = getManagedComponents(componentType);
+        Set<ManagedComponent> components = getManagedComponents(managementView, componentType);
         if (components.size() != 1)
             throw new IllegalStateException("Found more than one component of type " + componentType + ": "
                     + components);
@@ -89,10 +90,36 @@ public class ManagedComponentUtils
         return viewUses;
     }
 
-    @NotNull
-    private static Set<ManagedComponent> getManagedComponents(ComponentType componentType)
+    /**
+     *
+     * @param name
+     * @param componentType
+     * @return
+     */
+    public static boolean isManagedComponent(ManagementView managementView, String name, ComponentType componentType)
     {
-        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        boolean isDeployed = false;
+        if (name != null)
+        {
+            try
+            {
+                ManagedComponent component = getManagedComponent(managementView, componentType, name);
+                if (component != null)
+                    isDeployed = true;
+            }
+            catch (Exception e)
+            {
+                // Setting it to true to be safe than sorry, since there might be a component
+                // already deployed in the AS. TODO (ips): I don't think I like this.
+                isDeployed = true;
+            }
+        }
+        return isDeployed;
+    }
+
+    @NotNull
+    private static Set<ManagedComponent> getManagedComponents(ManagementView managementView, ComponentType componentType)
+    {
         Set<ManagedComponent> components;
         try
         {

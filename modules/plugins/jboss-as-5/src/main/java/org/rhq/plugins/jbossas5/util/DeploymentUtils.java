@@ -26,7 +26,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.ZipUtil;
-import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent;
 
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
@@ -59,12 +58,12 @@ public class DeploymentUtils {
         return (lastPeriod != -1 && expectedExtension.equals(extension));
     }
 
-    public static DeploymentStatus deployArchive(File archiveFile, File deployDirectory, boolean deployExploded)
+    public static DeploymentStatus deployArchive(DeploymentManager deploymentManager, File archiveFile, 
+                                                 File deployDirectory, boolean deployExploded)
             throws Exception
     {
         if (deployDirectory == null)
             throw new IllegalArgumentException("Deploy directory is null.");
-        DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
         String archiveFileName = archiveFile.getName();
         DeploymentProgress progress;
         if (deployExploded) {

@@ -19,6 +19,7 @@
 package org.rhq.plugins.jbossas5.connection;
 
 import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.profileservice.spi.ProfileService;
 
 /**
@@ -29,4 +30,5 @@ public interface ProfileServiceConnection
     ProfileServiceConnectionProvider getConnectionProvider();
     ProfileService getProfileService();
     ManagementView getManagementView();
+    DeploymentManager getDeploymentManager();
 }

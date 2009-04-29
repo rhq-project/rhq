@@ -31,11 +31,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
@@ -51,14 +49,14 @@ import org.jboss.managed.api.ManagedProperty;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
 
 /**
- * ResourceComponent for managing ManagedDeployments (EARs, WARs, SARs, etc.).
+ * ResourceComponent for managing ManagedDeployments (EARs, WARs, etc.).
  *
  * @author Mark Spritzler
  * @author Ian Springer
  */
 public abstract class AbstractManagedDeploymentComponent
         extends AbstractManagedComponent
-        implements ResourceComponent, OperationFacet, ProgressListener {    
+        implements OperationFacet, ProgressListener {
     public static final String DEPLOYMENT_NAME_PROPERTY = "deploymentName";
     public static final String DEPLOYMENT_TYPE_NAME_PROPERTY = "deploymentTypeName";
 
@@ -83,7 +81,7 @@ public abstract class AbstractManagedDeploymentComponent
 
     // ----------- ResourceComponent Implementation ------------
 
-    public void start(ResourceContext resourceContext) throws Exception {
+    public void start(ResourceContext<ApplicationServerComponent> resourceContext) throws Exception {
         super.start(resourceContext);
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         this.deploymentName = pluginConfig.getSimple(DEPLOYMENT_NAME_PROPERTY).getStringValue();
@@ -110,7 +108,7 @@ public abstract class AbstractManagedDeploymentComponent
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException, Exception
     {
-        DeploymentManager deploymentManager = ProfileServiceFactory.getDeploymentManager();
+        DeploymentManager deploymentManager = getConnection().getDeploymentManager();
         DeploymentProgress progress;
         if (name.equals("start")) {
             progress = deploymentManager.start(this.deploymentName);
@@ -146,7 +144,7 @@ public abstract class AbstractManagedDeploymentComponent
     }
 
     protected void updateComponent() throws Exception {
-        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        ManagementView managementView = getConnection().getManagementView();
         managementView.process();
     }
 
@@ -154,8 +152,8 @@ public abstract class AbstractManagedDeploymentComponent
 
     protected ManagedDeployment getManagedDeployment() throws NoSuchDeploymentException
     {
-        ProfileServiceFactory.refreshCurrentProfileView();
-        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        ManagementView managementView = getConnection().getManagementView();
+        managementView.reload();
         String resourceKey = getResourceContext().getResourceKey();
         return managementView.getDeployment(resourceKey);
     }

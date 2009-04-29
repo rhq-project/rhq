@@ -32,6 +32,8 @@ import org.jboss.metatype.api.values.SimpleValueSupport;
 import org.jboss.metatype.api.types.SimpleMetaType;
 import org.jboss.deployers.spi.management.KnownComponentTypes;
 
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
+
 /**
  * @author Ian Springer
  */
@@ -39,6 +41,10 @@ public class TxConnectionFactoryTest extends AbstractManagedComponentTest
 {
     private static final String TEMPLATE_NAME = "TxConnectionFactoryTemplate";
     private static final ComponentType COMPONENT_TYPE = KnownComponentTypes.ConnectionFactoryTypes.XA.getType();
+
+    public TxConnectionFactoryTest(ProfileServiceConnection connection) {
+        super(connection);
+    }
 
     public void testCreateValid() throws Exception {
         final String componentName = UUID.randomUUID().toString();

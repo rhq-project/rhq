@@ -50,14 +50,13 @@ package org.rhq.plugins.jbossas5;
  import org.rhq.core.domain.resource.ResourceType;
  import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
  import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
- import org.rhq.core.pluginapi.inventory.ResourceComponent;
  import org.rhq.core.pluginapi.inventory.ResourceContext;
  import org.rhq.core.pluginapi.measurement.MeasurementFacet;
  import org.rhq.core.pluginapi.operation.OperationFacet;
  import org.rhq.core.pluginapi.operation.OperationResult;
- import org.rhq.plugins.jbossas5.factory.ProfileServiceFactory;
  import org.rhq.plugins.jbossas5.util.ConversionUtils;
  import org.rhq.plugins.jbossas5.util.ResourceTypeUtils;
+ import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
  import org.jetbrains.annotations.NotNull;
 
  /**
@@ -68,7 +67,7 @@ package org.rhq.plugins.jbossas5;
  * @author Mark Spritzler
  */
 public class ManagedComponentComponent extends AbstractManagedComponent
-        implements ResourceComponent, ConfigurationFacet, DeleteResourceFacet, OperationFacet, MeasurementFacet
+        implements ConfigurationFacet, DeleteResourceFacet, OperationFacet, MeasurementFacet
 {
     public static final String COMPONENT_TYPE_PROPERTY = "componentType";
     public static final String COMPONENT_SUBTYPE_PROPERTY = "componentSubtype";
@@ -88,7 +87,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
                 AvailabilityType.DOWN;
     }
 
-    public void start(ResourceContext resourceContext) throws Exception {
+    public void start(ResourceContext<ApplicationServerComponent> resourceContext) throws Exception {
         super.start(resourceContext);
         this.componentType = ConversionUtils.getComponentType(getResourceContext().getResourceType());
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
@@ -170,7 +169,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
     protected void updateComponent() throws Exception {
         ManagedComponent managedComponent = getManagedComponent();
         log.trace("Updating " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
-        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        ManagementView managementView = getConnection().getManagementView();
         managementView.updateComponent(managedComponent);
         managementView.reload();
     }
@@ -195,7 +194,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         return simpleValue;
     }
 
-    private void addSimpleValueToMeasurementReport(MeasurementReport report, MeasurementScheduleRequest request, SimpleValue simpleValue) {
+    private void addSimpleValueToMeasurementReport(MeasurementReport report, MeasurementScheduleRequest request,
+                                                   SimpleValue simpleValue) {
         DataType dataType = request.getDataType();
         switch (dataType) {
             case MEASUREMENT:
@@ -223,9 +223,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent
     {
         ManagedComponent managedComponent;
         try {
-            //ProfileServiceFactory.refreshCurrentProfileView();
-            ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
-            managedComponent = ProfileServiceFactory.getManagedComponent(managementView, this.componentType,
+            ManagementView managementView = getConnection().getManagementView();
+            managedComponent = ManagedComponentUtils.getManagedComponent(managementView, this.componentType,
                     this.componentName);
         }
         catch (Exception e) {

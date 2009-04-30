@@ -29,6 +29,7 @@
 <link rel=stylesheet href="<html:rewrite page="/css/win.css"/>" type="text/css">
 <script language="JavaScript" src="<html:rewrite page="/js/functions.js"/>" type="text/javascript"></script>
 <script language="JavaScript" src="<html:rewrite page="/js/rhq.js"/>" type="text/javascript"></script>
+<script type="text/javascript" src="/js/prototype.js"></script>
 <script language="JavaScript" type="text/javascript">
   if (top != self)
     top.location.href = self.document.location;

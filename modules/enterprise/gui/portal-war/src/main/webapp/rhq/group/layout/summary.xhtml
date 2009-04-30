@@ -72,23 +72,25 @@ groupId - the group id of the Group being accessed
                     </td>
 
                     <td width="30">
-                        <a4j:outputPanel id="favoritesPanel" ajaxRendered="true">
-                            <a4j:support event="onclick"
-                                         action="#{ResourceGroupUIBean.toggleFavorite}" reRender="favoritesPanel"
-                                         status="commonStatus"
-                                         disableDefault="true"/>
-
+                        <a4j:region>
                             <h:graphicImage style="z-index: 10;" id="favoritesStar"
-                                            value="#{ResourceGroupUIBean.favorite ? '/images/icons/Favorite_24.png' : '/images/icons/Favorite_grey_24.png'}"/>
+                                            value="#{ResourceGroupUIBean.favorite ? '/images/icons/Favorite_24.png' : '/images/icons/Favorite_grey_24.png'}">
+	                           <a4j:support event="onclick"
+	                                        action="#{ResourceGroupUIBean.toggleFavorite}" 
+	                                        reRender="favoritesStar, groupsMenu"
+	                                        ajaxSingle="true"
+	                                        status="commonStatus"
+	                                        disableDefault="true"/>	
+                            </h:graphicImage>                
 
 
-                            <rich:toolTip for="favoritesPanel">
+                            <rich:toolTip for="favoritesStar">
                                 <h:outputText value="Add resource to favorites list"
                                               rendered="#{!ResourceGroupUIBean.favorite}"/>
                                 <h:outputText value="Remove resource from favorites list"
                                               rendered="#{ResourceGroupUIBean.favorite}"/>
                             </rich:toolTip>
-                        </a4j:outputPanel>
+                        </a4j:region>
                     </td>
                 </tr>
             </table>

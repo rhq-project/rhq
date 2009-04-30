@@ -121,27 +121,24 @@ id - the id of the Resource being accessed
             </td>
             <td width="30">
 
-                <a4j:outputPanel id="favoritesPanel">
-
-
-                    <a4j:support event="onclick"
-                                 action="#{FavoritesUIBean.toggleFavorite}" reRender="favoritesPanel"
-                                 status="commonStatus"
-                                 disableDefault="true"/>
-
-                    <h:graphicImage style="z-index: 10;" id="favoritesStar"
-                                    value="#{FavoritesUIBean.favorite ? '/images/icons/Favorite_24.png' : '/images/icons/Favorite_grey_24.png'}"/>
-
-
-                    <rich:toolTip for="favoritesPanel">
-                        <h:outputText value="Add resource to favorites list"
-                                      rendered="#{!FavoritesUIBean.favorite}"/>
-                        <h:outputText value="Remove resource from favorites list"
-                                      rendered="#{FavoritesUIBean.favorite}"/>
-                    </rich:toolTip>
-                </a4j:outputPanel>
-
-
+                <a4j:region>
+		            <h:graphicImage style="z-index: 10;" id="favoritesStar"
+		                            value="#{FavoritesUIBean.favorite ? '/images/icons/Favorite_24.png' : '/images/icons/Favorite_grey_24.png'}">                                    
+						<a4j:support event="onclick"
+						             action="#{FavoritesUIBean.toggleFavorite}" 
+						             reRender="favoritesStar, resourcesMenu"
+						             status="commonStatus"
+						             ajaxSingle="true"
+						             disableDefault="true"/>
+		            </h:graphicImage>
+		
+		            <rich:toolTip for="favoritesStar">
+		                <h:outputText value="Add resource to favorites list"
+		                              rendered="#{!FavoritesUIBean.favorite}"/>
+		                <h:outputText value="Remove resource from favorites list"
+		                              rendered="#{FavoritesUIBean.favorite}"/>
+		            </rich:toolTip>
+	            </a4j:region>
             </td>
 
         </tr>
@@ -155,7 +152,8 @@ id - the id of the Resource being accessed
 
 <rich:simpleTogglePanel switchType="ajax" id="summary-toggle-panel" headerClass="summaryHeader"
                         actionListener="#{UserPreferencesUIBean.updateSummaryPanelDisplayState}"
-                        value="#{UserPreferencesUIBean.summaryPanelDisplayState}">
+                        value="#{UserPreferencesUIBean.summaryPanelDisplayState}"
+                        ajaxSingle="true">
 
     <f:facet name="openMarker"><h:graphicImage value="/images/summaryHidden.png"/> </f:facet>
     <f:facet name="closeMarker"><h:graphicImage value="/images/summaryShown.png"/> </f:facet>

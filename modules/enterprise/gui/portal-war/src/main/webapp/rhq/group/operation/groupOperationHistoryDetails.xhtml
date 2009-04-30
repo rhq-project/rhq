@@ -16,9 +16,6 @@
 
 <ui:composition template="/rhq/group/layout/main.xhtml">
 
-<a4j:keepAlive beanName="ResourceGroupOperationHistoryDetailsUIBean"/>
-
-
 <ui:param name="pageTitle" value="View Operations History Details for ResourceGroup '#{ResourceGroupUIBean.name}'"/>
 <ui:param name="selectedTabName" value="Operations.History"/>
 
@@ -41,6 +38,8 @@
 <input type="hidden" name="groupId" value="${param.groupId}"/>
 <input type="hidden" name="opId" value="${param.opId}"/>
 <input type="hidden" name="category" value="#{param.category}"/>
+
+<a4j:keepAlive beanName="ResourceGroupOperationHistoryDetailsUIBean" ajaxOnly="true"/>
 
 <h:outputLink value="/rhq/group/operation/groupOperationHistory.xhtml">
     <f:param name="groupId" value="#{param.groupId}"/>

@@ -81,6 +81,7 @@ public class RemoteProfileServiceConnectionProvider extends AbstractProfileServi
                 env.setProperty(Context.INITIAL_CONTEXT_FACTORY, JNDI_LOGIN_INITIAL_CONTEXT_FACTORY);
                 env.setProperty(Context.SECURITY_PRINCIPAL, this.principal);
                 env.setProperty(Context.SECURITY_CREDENTIALS, this.credentials);
+                log.debug("Connecting to Profile Service via remote JNDI using env [" + env + "]...");
                 InitialContext initialContext = createInitialContext(env);
                 profileService = (ProfileService)lookup(initialContext, SECURE_PROFILE_SERVICE_JNDI_NAME);
                 managementView = (ManagementView)lookup(initialContext, SECURE_MANAGEMENT_VIEW_JNDI_NAME);
@@ -91,6 +92,7 @@ public class RemoteProfileServiceConnectionProvider extends AbstractProfileServi
                 // Make sure the timeout always happens, even if the JBoss server is hung.
                 env.setProperty("jnp.timeout", String.valueOf(JNP_TIMEOUT));
                 env.setProperty("jnp.sotimeout", String.valueOf(JNP_SO_TIMEOUT));
+                log.debug("Connecting to Profile Service via remote JNDI using env [" + env + "]...");
                 InitialContext initialContext = createInitialContext(env);
                 profileService = (ProfileService)lookup(initialContext, PROFILE_SERVICE_JNDI_NAME);
                 managementView = profileService.getViewManager();

@@ -20,6 +20,9 @@ package org.rhq.plugins.jbossas5.connection;
 
 import javax.naming.InitialContext;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.jboss.profileservice.spi.ProfileService;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
@@ -31,8 +34,11 @@ public class LocalProfileServiceConnectionProvider extends AbstractProfileServic
 {
     private static final String PROFILE_SERVICE_JNDI_NAME = "ProfileService";
 
+    private final Log log = LogFactory.getLog(this.getClass());
+
     protected ProfileServiceConnectionImpl doConnect()
     {
+        log.debug("Connecting to Profile Service via local JNDI...");
         InitialContext initialContext = createInitialContext(null);
         ProfileService profileService = (ProfileService)lookup(initialContext, PROFILE_SERVICE_JNDI_NAME);
         ManagementView managementView = profileService.getViewManager();

@@ -230,14 +230,13 @@ public class ApplicationServerComponent
             return;
         // TODO: Check for a defunct connection and if found try to reconnect.
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        PropertySimple namingUrlProp = pluginConfig.getSimple(PluginConfigPropNames.NAMING_URL);        
+        String namingURL = pluginConfig.getSimpleValue(PluginConfigPropNames.NAMING_URL, null);
         ProfileServiceConnectionProvider connectionProvider;
-        if (namingUrlProp != null) {
-            String namingUrl = namingUrlProp.getStringValue();
-            validateNamingURL(namingUrl);
+        if (namingURL != null) {
+            validateNamingURL(namingURL);
             String principal = pluginConfig.getSimpleValue(PluginConfigPropNames.PRINCIPAL, null);
             String credentials = pluginConfig.getSimpleValue(PluginConfigPropNames.CREDENTIALS, null);
-            connectionProvider = new RemoteProfileServiceConnectionProvider(namingUrl, principal, credentials);
+            connectionProvider = new RemoteProfileServiceConnectionProvider(namingURL, principal, credentials);
         } else {
             connectionProvider = new LocalProfileServiceConnectionProvider();
         }

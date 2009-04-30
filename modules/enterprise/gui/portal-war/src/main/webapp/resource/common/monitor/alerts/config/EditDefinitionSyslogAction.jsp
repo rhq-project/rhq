@@ -78,7 +78,7 @@
   <c:if test="${(! empty EditAlertDefinitionSyslogActionForm.id) and (EditAlertDefinitionSyslogActionForm.id > 0)}">
   <tr valign="top">
     <td colspan="2" width="100%" class="BlockContent">
-      <html:checkbox property="shouldBeRemoved" onclick="javascript:syslogFormEnabledToggle();"/>
+      <html:checkbox property="shouldBeRemoved" onclick="syslogFormEnabledToggle(this.form);"/>
       <fmt:message key="alert.config.props.Syslog.Dissociate"/>
     </td>
   </tr>

@@ -19,7 +19,7 @@ function changeDropDown (masterSelName, selName, selDD, baselineOption) {
         "\nbaselineOption: " + baselineOption +
         "\nmasterSelValue: " + masterSelValue);
 */
-  if (masterSelValue == '') {
+  if (masterSelValue == '' || masterSelValue == "-1") {
     sel.disabled = true;
   } else {
     sel.options.length = 0;
@@ -50,124 +50,124 @@ function changeDropDown (masterSelName, selName, selDD, baselineOption) {
   }
 }
 
-function selectDampeningRule()
+function selectDampeningRule(alertForm)
 {
-  if ( document.forms[0].whenEnabled[0].checked == true )
+  if ( alertForm.whenEnabled[0].checked == true )
   {
-	selectDampeningRuleNone();
+	selectDampeningRuleNone(alertForm);
   } 
-  else if ( document.forms[0].whenEnabled[1].checked == true ) 
+  else if ( alertForm.whenEnabled[1].checked == true ) 
   {
-	selectDampeningRuleConsecutiveCount();
+	selectDampeningRuleConsecutiveCount(alertForm);
   } 
-  else if ( document.forms[0].whenEnabled[2].checked == true ) 
+  else if ( alertForm.whenEnabled[2].checked == true ) 
   {
-	selectDampeningRulePartialCount();
+	selectDampeningRulePartialCount(alertForm);
   }
 /*
-  else if ( document.forms[0].whenEnabled[3].checked == true )
+  else if ( alertForm.whenEnabled[3].checked == true )
   {
-	selectDampeningRuleInverseCount();
+	selectDampeningRuleInverseCount(alertForm);
   }
 */
-  else if ( document.forms[0].whenEnabled[3].checked == true )
+  else if ( alertForm.whenEnabled[3].checked == true )
   {
-	selectDampeningRuleDurationCount();
+	selectDampeningRuleDurationCount(alertForm);
   }
 }
 
-function selectDampeningRuleNone()
+function selectDampeningRuleNone(alertForm)
 {
-   document.forms[0].whenEnabled[0].click();
+	alertForm.whenEnabled[0].click();
    
-   document.forms[0].consecutiveCountValue.value = "";
+	alertForm.consecutiveCountValue.value = "";
     
-   document.forms[0].partialCountValue.value = "";
-   document.forms[0].partialCountPeriod.value = "";
+	alertForm.partialCountValue.value = "";
+	alertForm.partialCountPeriod.value = "";
     
-   //document.forms[0].inverseCountValue.value = "";
+   //alertForm.inverseCountValue.value = "";
    
-   document.forms[0].durationCountValue.value = "";
-   document.forms[0].durationCountPeriod.value = "";
+	alertForm.durationCountValue.value = "";
+	alertForm.durationCountPeriod.value = "";
 }
 
-function selectDampeningRuleConsecutiveCount()
+function selectDampeningRuleConsecutiveCount(alertForm)
 {  
-   document.forms[0].whenEnabled[1].click();
+	alertForm.whenEnabled[1].click();
  
-   document.forms[0].partialCountValue.value = "";
-   document.forms[0].partialCountPeriod.value = "";
+	alertForm.partialCountValue.value = "";
+	alertForm.partialCountPeriod.value = "";
     
-   //document.forms[0].inverseCountValue.value = "";
+   //alertForm.inverseCountValue.value = "";
    
-   document.forms[0].durationCountValue.value = "";
-   document.forms[0].durationCountPeriod.value = "";
+	alertForm.durationCountValue.value = "";
+	alertForm.durationCountPeriod.value = "";
 }
 
-function selectDampeningRulePartialCount()
+function selectDampeningRulePartialCount(alertForm)
 {
-   document.forms[0].whenEnabled[2].click();
+	alertForm.whenEnabled[2].click();
 
-   document.forms[0].consecutiveCountValue.value = "";
+	alertForm.consecutiveCountValue.value = "";
     
-   //document.forms[0].inverseCountValue.value = "";
+   //alertForm.inverseCountValue.value = "";
    
-   document.forms[0].durationCountValue.value = "";
-   document.forms[0].durationCountPeriod.value = "";
+	alertForm.durationCountValue.value = "";
+	alertForm.durationCountPeriod.value = "";
 }
 
 /*
-function selectDampeningRuleInverseCount()
+function selectDampeningRuleInverseCount(alertForm)
 {
-   document.forms[0].whenEnabled[3].click();
+	alertForm.whenEnabled[3].click();
 
-   document.forms[0].consecutiveCountValue.value = "";
+	alertForm.consecutiveCountValue.value = "";
     
-   document.forms[0].partialCountValue.value = "";
-   document.forms[0].partialCountPeriod.value = "";
+	alertForm.partialCountValue.value = "";
+	alertForm.partialCountPeriod.value = "";
    
-   document.forms[0].durationCountValue.value = "";
-   document.forms[0].durationCountPeriod.value = "";
+	alertForm.durationCountValue.value = "";
+	alertForm.durationCountPeriod.value = "";
 }
 */
 
-function selectDampeningRuleDurationCount()
+function selectDampeningRuleDurationCount(alertForm)
 {
-   document.forms[0].whenEnabled[3].click();
+	alertForm.whenEnabled[3].click();
 
-   document.forms[0].consecutiveCountValue.value = "";
+	alertForm.consecutiveCountValue.value = "";
     
-   document.forms[0].partialCountValue.value = "";
-   document.forms[0].partialCountPeriod.value = "";
+	alertForm.partialCountValue.value = "";
+	alertForm.partialCountPeriod.value = "";
     
-   //document.forms[0].inverseCountValue.value = "";
+   //alertForm.inverseCountValue.value = "";
 }
 
-function checkRecover() {
-  if (document.forms[0].disableForRecovery.checked == true) {
-    document.forms[0].recoverId.disabled = true;
+function checkRecover(alertForm) {
+  if (alertForm.disableForRecovery.checked == true) {
+	  alertForm.recoverId.disabled = true;
   }
   else {
-    document.forms[0].recoverId.disabled = false;
+	  alertForm.recoverId.disabled = false;
   }
 
-  if (document.forms[0].recoverId.value == '') {
-    document.forms[0].disableForRecovery.disabled = false;
+  if (alertForm.recoverId.value == '') {
+	  alertForm.disableForRecovery.disabled = false;
   }
   else {
-    document.forms[0].disableForRecovery.disabled = true;
+	  alertForm.disableForRecovery.disabled = true;
   }
 }
 
-function syslogFormEnabledToggle() {
-  if (document.forms[0].shouldBeRemoved.checked) {
-    document.forms[0].metaProject.disabled = true;
-    document.forms[0].project.disabled = true;
-    document.forms[0].version.disabled = true;
+function syslogFormEnabledToggle(alertForm) {
+  if (alertForm.shouldBeRemoved.checked) {
+	  alertForm.metaProject.disabled = true;
+	  alertForm.project.disabled = true;
+	  alertForm.version.disabled = true;
   } else {
-    document.forms[0].metaProject.disabled = false;
-    document.forms[0].project.disabled = false;
-    document.forms[0].version.disabled = false;
+	  alertForm.metaProject.disabled = false;
+	  alertForm.project.disabled = false;
+	  alertForm.version.disabled = false;
   }
 }
 /*-- END alertConfigFunctions.js --*/

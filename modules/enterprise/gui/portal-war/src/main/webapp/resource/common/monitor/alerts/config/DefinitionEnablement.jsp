@@ -83,7 +83,7 @@
       </td>
       <td class="BlockContent">
         <fmt:message key="alert.config.props.CB.RecoveryFor"/>
-          <html:select property="recoverId" onchange="checkRecover();">
+          <html:select property="recoverId" onchange="checkRecover(this.form);">
             <html:option value="" key="alert.dropdown.SelectOption"/>
             <html:optionsCollection property="alertnames" label="key" value="value"/>
           </html:select>
@@ -102,7 +102,7 @@
       
       <!-- RHS "NONE" dampening -->
       <td class="BlockContent">
-        <html:radio property="whenEnabled" value="${dampenNone}" onchange="selectDampeningRule();" />
+        <html:radio property="whenEnabled" value="${dampenNone}" onchange="selectDampeningRule(this.form);" />
         <fmt:message key="alert.config.props.CB.Content.DampenNone"/>
       </td>
     </tr>
@@ -111,10 +111,10 @@
     <tr>
       <td class="BlockLabel">&nbsp;</td>
       <td class="<c:out value='${consecutiveCountClass}'/>">
-        <html:radio property="whenEnabled" value="${dampenConsecutiveCount}" onchange="selectDampeningRule();" />
+        <html:radio property="whenEnabled" value="${dampenConsecutiveCount}" onchange="selectDampeningRule(this.form);" />
         
         <fmt:message key="alert.config.props.CB.Content.DampenConsecutiveCount.1"/>&nbsp;
-        <html:text property="consecutiveCountValue" size="2" onkeypress="selectDampeningRuleConsecutiveCount();"/>&nbsp;
+        <html:text property="consecutiveCountValue" size="2" onkeypress="selectDampeningRuleConsecutiveCount(this.form);"/>&nbsp;
         
         <fmt:message key="alert.config.props.CB.Content.DampenConsecutiveCount.2"/>&nbsp;
         
@@ -131,13 +131,13 @@
     <tr>
       <td class="BlockLabel">&nbsp;</td>
       <td class="<c:out value='${partialCountClass}'/>">
-        <html:radio property="whenEnabled" value="${dampenPartialCount}" onchange="selectDampeningRule();" />
+        <html:radio property="whenEnabled" value="${dampenPartialCount}" onchange="selectDampeningRule(this.form);" />
         
         <fmt:message key="alert.config.props.CB.Content.DampenPartialCount.1"/>&nbsp;
-        <html:text property="partialCountValue" size="2" onkeypress="selectDampeningRulePartialCount();"/>&nbsp;
+        <html:text property="partialCountValue" size="2" onkeypress="selectDampeningRulePartialCount(this.form);"/>&nbsp;
         
         <fmt:message key="alert.config.props.CB.Content.DampenPartialCount.2"/>&nbsp;
-        <html:text property="partialCountPeriod" size="2" maxlength="3" onkeypress="selectDampeningRulePartialCount();" />&nbsp;
+        <html:text property="partialCountPeriod" size="2" maxlength="3" onkeypress="selectDampeningRulePartialCount(this.form);" />&nbsp;
         
         <fmt:message key="alert.config.props.CB.Content.DampenPartialCount.3"/>
         
@@ -156,7 +156,7 @@
     <tr>
       <td class="BlockLabel">&nbsp;</td>
       <td class="<c:out value='${inverseCountClass}'/>">
-        <html:radio property="whenEnabled" value="${dampenInverseCount}" onchange="selectDampeningRule();" />
+        <html:radio property="whenEnabled" value="${dampenInverseCount}" onchange="selectDampeningRule(this.form);" />
         
         <fmt:message key="alert.config.props.CB.Content.DampenInverseCount.1"/>&nbsp;
         <html:text property="inverseCountValue" size="2" onkeypress="selectDampeningRuleInverseCount();"/>&nbsp;
@@ -177,13 +177,13 @@
     <tr>
       <td class="BlockLabel">&nbsp;</td>
       <td class="<c:out value='${durationCountClass}'/>">
-        <html:radio property="whenEnabled" value="${dampenDurationCount}" onchange="selectDampeningRule();" />
+        <html:radio property="whenEnabled" value="${dampenDurationCount}" onchange="selectDampeningRule(this.form);" />
         
         <fmt:message key="alert.config.props.CB.Content.DampenDurationCount.1"/>&nbsp;
-        <html:text property="durationCountValue" size="2" maxlength="3" onkeypress="selectDampeningRuleDurationCount();" />&nbsp;
+        <html:text property="durationCountValue" size="2" maxlength="3" onkeypress="selectDampeningRuleDurationCount(this.form);" />&nbsp;
         
         <fmt:message key="alert.config.props.CB.Content.DampenDurationCount.2"/>&nbsp;
-        <html:text property="durationCountPeriod" size="2" maxlength="3" onkeypress="selectDampeningRuleDurationCount();" />&nbsp;
+        <html:text property="durationCountPeriod" size="2" maxlength="3" onkeypress="selectDampeningRuleDurationCount(this.form);" />&nbsp;
         
         <tiles:insert definition=".events.config.conditions.enablement.timeunits">
           <tiles:put name="property" value="durationCountPeriodUnits"/>
@@ -211,10 +211,10 @@
         </b>
       </td>
       <td class="BlockContent">
-        <html:checkbox property="disableForRecovery" onchange="checkRecover();"/>
+        <html:checkbox styleId="disableForRecoveryCheckbox" property="disableForRecovery" onchange="checkRecover(this.form);"/>
         <fmt:message key="alert.config.props.CB.Content.UntilRecovered"/>
         <script language="JavaScript" type="text/javascript">
-          checkRecover();
+          checkRecover(document.getElementById("disableForRecoveryCheckbox").form);
         </script>
         <br>
         <%-- JBNADM-2183: disable filters that are not implemented yet

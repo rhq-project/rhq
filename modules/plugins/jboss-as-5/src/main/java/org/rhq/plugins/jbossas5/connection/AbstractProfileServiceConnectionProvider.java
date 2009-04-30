@@ -42,7 +42,6 @@ public abstract class AbstractProfileServiceConnectionProvider implements Profil
         this.connected = true;
         if (this.existingConnection == null)
             this.existingConnection = connection;
-        this.existingConnection.getManagementView().reload();
         return this.existingConnection;
     }
 

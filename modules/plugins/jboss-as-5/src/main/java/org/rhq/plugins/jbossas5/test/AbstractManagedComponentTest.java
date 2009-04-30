@@ -49,7 +49,7 @@ public class AbstractManagedComponentTest
     {
         System.out.println("Initializing profile service...");        
         this.managementView = connection.getManagementView();
-        this.managementView.reload();
+        this.managementView.load();
     }
 
     protected Set<ManagedProperty> getMandatoryProperties(DeploymentTemplateInfo template)

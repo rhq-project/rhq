@@ -19,6 +19,7 @@
 package org.rhq.plugins.jbossas5.connection;
 
 import org.jboss.profileservice.spi.ProfileService;
+import org.jboss.profileservice.spi.ProfileKey;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 
@@ -27,6 +28,8 @@ import org.jboss.deployers.spi.management.deploy.DeploymentManager;
  */
 public class ProfileServiceConnectionImpl implements ProfileServiceConnection
 {
+    private static final ProfileKey DEFAULT_PROFILE_KEY = new ProfileKey(ProfileKey.DEFAULT);
+
     private AbstractProfileServiceConnectionProvider connectionProvider;
     private ProfileService profileService;
     private ManagementView managementView;
@@ -38,7 +41,18 @@ public class ProfileServiceConnectionImpl implements ProfileServiceConnection
         this.connectionProvider = connectionProvider;
         this.profileService = profileService;
         this.managementView = managementView;
+        this.managementView.load();
         this.deploymentManager = deploymentManager;
+        // Load and associate the given profile with the DeploymentManager for future operations. This is mandatory
+        // in order for us to be able to successfully invoke the various DeploymentManager methods.
+        try
+        {
+            this.deploymentManager.loadProfile(DEFAULT_PROFILE_KEY);
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
     }
 
     public ProfileServiceConnectionProvider getConnectionProvider()

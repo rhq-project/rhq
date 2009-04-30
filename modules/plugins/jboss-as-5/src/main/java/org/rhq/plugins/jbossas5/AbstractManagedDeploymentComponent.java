@@ -153,7 +153,7 @@ public abstract class AbstractManagedDeploymentComponent
     protected ManagedDeployment getManagedDeployment() throws NoSuchDeploymentException
     {
         ManagementView managementView = getConnection().getManagementView();
-        managementView.reload();
+        managementView.load();
         String resourceKey = getResourceContext().getResourceKey();
         return managementView.getDeployment(resourceKey);
     }

@@ -57,7 +57,7 @@ public class ManagedComponentDiscoveryComponent
         ManagementView managementView = discoveryContext.getParentResourceComponent().getConnection().getManagementView();
         // TODO (ips): Only refresh the ManagementView *once* per runtime discovery scan, rather than every time this
         //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.
-        managementView.reload();        
+        managementView.load();
 
         ComponentType componentType = ConversionUtils.getComponentType(resourceType);
         Set<ManagedComponent> components;

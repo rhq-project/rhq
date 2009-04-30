@@ -112,7 +112,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         log.debug("Removing " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
         ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
         managementView.removeComponent(managedComponent);
-        managementView.reload();
+        managementView.load();
         */
     }
 
@@ -171,7 +171,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         log.trace("Updating " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
         ManagementView managementView = getConnection().getManagementView();
         managementView.updateComponent(managedComponent);
-        managementView.reload();
+        managementView.load();
     }
 
     // ------------------------------------------------------------------------------

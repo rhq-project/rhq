@@ -410,7 +410,7 @@ public class ApplicationServerComponent
         KnownDeploymentTypes deploymentType = ConversionUtils.getDeploymentType(resourceType);
         String deploymentTypeString = deploymentType.getType();
         ManagementView managementView = getConnection().getManagementView();
-        managementView.reload();
+        managementView.load();
         Set<ManagedDeployment> managedDeployments = managementView.getDeploymentsForType(deploymentTypeString);
         for (ManagedDeployment managedDeployment : managedDeployments)
         {

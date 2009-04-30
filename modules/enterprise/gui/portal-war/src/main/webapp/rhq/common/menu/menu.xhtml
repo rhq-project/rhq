@@ -126,6 +126,7 @@
         <rich:menuItem submitMode="none" disabled="true" iconDisabled="/images/icons/Search_16.png">
             <h:outputText value="Search: " style="color: black;"/>
             <h:panelGroup>
+            <a4j:form id="quickHelp" ajaxSingle="true" ajaxSubmit="true" reRender="quickHelp" limitToList="true" selfRendered="true">
                 <h:inputText id="selectedResource" style="width: 250px;" immediate="true"
                              onkeypress="return ignoreEnterKey(event);" />
                 <rich:suggestionbox id="resourceSelectBox" for="selectedResource" tokens=",[]"
@@ -150,6 +151,7 @@
                         <h:outputText value="#{result.parent.name}"/>
                     </h:column>
                 </rich:suggestionbox>
+               </a4j:form>
             </h:panelGroup>
         </rich:menuItem>
 
@@ -354,14 +356,14 @@
 
         <ui:remove>***** Help > DOCUMENTATION *****</ui:remove>
         <rich:menuItem submitMode="none"
-                       onclick="window.location = 'http://www.redhat.com/docs/en-US/JBoss_ON/'"
+                       onclick="window.open('http://www.redhat.com/docs/en-US/JBoss_ON/')"
                        target="blank_">
             <h:outputText value="Online Documentation"/>
         </rich:menuItem>
 
         <ui:remove>***** Help > SUPPORT CASE *****</ui:remove>
         <rich:menuItem submitMode="none"
-                       onclick="window.location = 'https://support.redhat.com/jbossnetwork/restricted/addCase.html'"
+                       onclick="window.open('https://support.redhat.com/jbossnetwork/restricted/addCase.html')"
                        target="blank_">
             <h:outputText value="Open a Support Case"/>
         </rich:menuItem>

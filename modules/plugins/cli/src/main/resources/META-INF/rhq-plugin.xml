@@ -50,32 +50,16 @@
       <process-scan name="ScanIdentifier" query="process|basename|match=^java.*,arg|org.jboss.Main|match=.*"/>
       -->
 
-      <!--
-         CHANGE: An operation element is added for each operation that may be executed against resources of this type.
-                 The parameters element is optional; properties defined within will be displayed to the user when
-                 invoking the operation. If the resource has no applicable operations, these elements may be omitted.
-
-         REQUIRED INTERFACE: The resource component for this resource type must implement the OperationFacet interface
-                             if any operations are specified.
-      -->
-      <!--
-      <operation name="testSimple"
-                 description="Test simple-property configuration element for a resource operation">
+      <operation name="execute"
+                 description="Executes the CLI executable with a set of arguments and returns the output and exit code.">
          <parameters>
-            <c:group name="required" displayName="Required Parameters" hiddenByDefault="false">
-               <c:description>All of these properties are required</c:description>
-               <c:simple-property name="aNumber" type="integer" required="true" default="42" displayName="A Number" description="A number between 1 and 100, inclusive">
-                  <c:constraint>
-                     <c:integer-constraint minimum="1" maximum="100"/>
-                  </c:constraint>
-               </c:simple-property>
-            </c:group>
+               <c:simple-property name="arguments" required="false" description="The arguments to pass to the executable." />
          </parameters>
          <results>
-             <c:simple-property name="results" />
+             <c:simple-property name="exitCode" type="integer" required="true"/>
+             <c:simple-property name="output" required="false" />
          </results>
       </operation>
-      -->
 
       <!--
          CHANGE: For each measurement that should be collected for resources of this type, a metric element is added.

@@ -61,8 +61,8 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
     protected static final String PLUGINCONFIG_EXECUTABLE = "executable";
     protected static final String PLUGINCONFIG_WORKINGDIR = "workingDirectory";
     protected static final String PLUGINCONFIG_ENVVARS = "environmentVariables";
-    protected static final String PLUGINCONFIG_ENVVAR_NAME = "environmentVariableName";
-    protected static final String PLUGINCONFIG_ENVVAR_VALUE = "environmentVariableValue";
+    protected static final String PLUGINCONFIG_ENVVAR_NAME = "name";
+    protected static final String PLUGINCONFIG_ENVVAR_VALUE = "value";
     protected static final String PLUGINCONFIG_AVAIL_EXECUTE_CHECK = "availabilityExecuteCheck";
     protected static final String PLUGINCONFIG_AVAIL_EXITCODE_REGEX = "availabilityExitCodeRegex";
     protected static final String PLUGINCONFIG_AVAIL_OUTPUT_REGEX = "availabilityOutputRegex";
@@ -71,6 +71,10 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
     protected static final String PLUGINCONFIG_FIXED_VERSION = "fixedVersion";
     protected static final String PLUGINCONFIG_DESC_ARGS = "descriptionArguments";
     protected static final String PLUGINCONFIG_FIXED_DESC = "fixedDescription";
+
+    protected static final String OPERATION_PARAM_ARGUMENTS = "arguments";
+    protected static final String OPERATION_RESULT_EXIT_CODE = "exitCode";
+    protected static final String OPERATION_RESULT_OUTPUT = "output";
 
     private Configuration resourceConfiguration;
     private ResourceContext resourceContext;
@@ -112,13 +116,39 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
     }
 
     /**
-     * The plugin container will call this method when it wants to invoke an operation on your managed resource. Your
-     * plugin will connect to the managed resource and invoke the analogous operation in your own custom way.
-     *
+     * Invokes the CLI executable. User can tell us what arguments to pass to the executable.
+     * The result includes the output of the process as well as the exit code.
+     * 
      * @see OperationFacet#invokeOperation(String, Configuration)
      */
-    public OperationResult invokeOperation(String name, Configuration configuration) {
-        return null;
+    public OperationResult invokeOperation(String name, Configuration configuration) throws Exception {
+
+        OperationResult result = new OperationResult();
+
+        String arguments = configuration.getSimpleValue(OPERATION_PARAM_ARGUMENTS, null);
+
+        ProcessExecutionResults exeResults = executeCliExecutable(arguments, 3600000L, true); // wait no more than 1 hour
+        Integer exitcode = exeResults.getExitCode();
+        String output = exeResults.getCapturedOutput();
+        Throwable error = exeResults.getError();
+
+        if (exitcode == null) {
+            exitcode = Integer.valueOf(-999);
+        }
+
+        if (output == null) {
+            output = "";
+        }
+
+        if (error != null) {
+            result.setErrorMessage(ThrowableUtil.getAllMessages(error));
+        }
+
+        Configuration resultsConfig = result.getComplexResults();
+        resultsConfig.put(new PropertySimple(OPERATION_RESULT_EXIT_CODE, exitcode));
+        resultsConfig.put(new PropertySimple(OPERATION_RESULT_OUTPUT, output));
+
+        return result;
     }
 
     /**
@@ -274,7 +304,14 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
 
                 boolean outputMatches = output.matches(availOutputRegex);
                 if (!outputMatches) {
-                    logDebug("CLI output did not match regex, resource is considered DOWN");
+                    if (log.isDebugEnabled()) {
+                        String outputToLog = output;
+                        if (outputToLog.length() > 100) {
+                            outputToLog = outputToLog.substring(0, 100) + "...";
+                        }
+                        logDebug("CLI output [" + outputToLog + "] did not match regex [" + availOutputRegex
+                            + "], resource is considered DOWN");
+                    }
                     return false;
                 }
             }

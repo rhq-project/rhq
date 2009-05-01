@@ -146,7 +146,7 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
                         if (!fileMd5.equals(md5)) {
                             log.info("Found agent plugin in the DB that is newer than the one we have [" + name
                                 + "]. DB timestamp=[" + new Date(mtime) + "]; file timestamp=[" + new Date(fileMtime)
-                                + "]");
+                                + "]; DB MD5=[" + md5 + "]; file MD5=[" + fileMd5 + "]");
                             Plugin plugin = new Plugin(name, path, md5);
                             plugin.setMtime(mtime);
                             updatedPlugins.add(plugin);

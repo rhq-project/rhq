@@ -47,25 +47,26 @@ rem JBOSS_CLASSPATH was not yet set
 if not "%JBOSS_CLASSPATH%" == "" GOTO HAVE_JB_CP
 rem set JBOSS_CLASSPATH=%JBOSS_HOME%\client\jbossall-client.jar
 
-rem For call to new InitialContext()...
+rem For the call to new InitialContext() (using org.jnp.interfaces.NamingContextFactory)...
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jnp-client.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\common\lib\jboss-security-aspects.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jbosssx-client.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-aop-client.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-common-core.jar
-rem For call to InitialContext.lookup()...
+rem For the call to InitialContext.lookup()...
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-remoting.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-aspect-jdk50-client.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\trove.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\javassist.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-security-spi.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-javaee.jar
-rem For ProfileService remote calls...
+rem For remote invocations on the ProfileService proxy (e.g. ProfileService.getViewManager())...
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\concurrent.jar
-set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-security-spi.jar
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-client.jar
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-mdr.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\lib\jboss-profileservice-spi.jar
-rem set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\lib\jboss-managed.jar
-rem set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\lib\jboss-metatype.jar
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\lib\jboss-managed.jar
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\lib\jboss-metatype.jar
 
 :HAVE_JB_CP
 

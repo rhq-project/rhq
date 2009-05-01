@@ -22,6 +22,8 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -123,22 +125,43 @@ public class CliDiscoveryComponent implements ResourceDiscoveryComponent {
      */
     protected String determineDescription(ResourceDiscoveryContext context, Configuration pluginConfig) {
         String description = null;
-        PropertySimple descriptionProp = pluginConfig.getSimple(CliServerComponent.PLUGINCONFIG_FIXED_DESC);
-        if (descriptionProp != null && descriptionProp.getStringValue() != null) {
-            description = descriptionProp.getStringValue();
-        } else {
-            String args = pluginConfig.getSimpleValue(CliServerComponent.PLUGINCONFIG_DESC_ARGS, null);
-            ProcessExecutionResults results = CliServerComponent.executeCliExecutable(context.getSystemInformation(),
-                pluginConfig, args, 5000L, true);
-            if (results != null) {
-                if (results.getError() != null) {
-                    log.warn("Failed to execute cli executable to get description. Cause: "
-                        + ThrowableUtil.getAllMessages(results.getError()));
-                } else if (results.getCapturedOutput() != null) {
-                    description = results.getCapturedOutput();
+        try {
+            PropertySimple descriptionProp = pluginConfig.getSimple(CliServerComponent.PLUGINCONFIG_FIXED_DESC);
+            if (descriptionProp != null && descriptionProp.getStringValue() != null) {
+                description = descriptionProp.getStringValue();
+            } else {
+                String args = pluginConfig.getSimpleValue(CliServerComponent.PLUGINCONFIG_DESC_ARGS, null);
+                ProcessExecutionResults results = CliServerComponent.executeCliExecutable(context
+                    .getSystemInformation(), pluginConfig, args, 5000L, true);
+                if (results != null) {
+                    if (results.getError() != null) {
+                        log.warn("Failed to execute cli executable to get description. Cause: "
+                            + ThrowableUtil.getAllMessages(results.getError()));
+                    } else if (results.getCapturedOutput() != null) {
+                        String regex = pluginConfig.getSimpleValue(CliServerComponent.PLUGINCONFIG_DESC_REGEX, null);
+                        String output = results.getCapturedOutput();
+                        if (regex == null) {
+                            description = output;
+                        } else {
+                            Pattern pattern = Pattern.compile(regex);
+                            Matcher match = pattern.matcher(output);
+                            if (match.find()) {
+                                if (match.groupCount() > 0) {
+                                    description = match.group(1);
+                                } else {
+                                    description = output;
+                                }
+                            } else {
+                                log.warn("Description regex [" + regex + "] did not match: " + truncateString(output));
+                            }
+                        }
+                    }
                 }
             }
+        } catch (Exception e) {
+            log.warn("Cannot determine description of CLI server resource. Cause: " + e);
         }
+
         return description;
     }
 
@@ -151,23 +174,57 @@ public class CliDiscoveryComponent implements ResourceDiscoveryComponent {
      * @return the version or <code>null</code> if it could not be determined
      */
     protected String determineVersion(ResourceDiscoveryContext context, Configuration pluginConfig) {
-        String version = "unknown";
-        PropertySimple versionProp = pluginConfig.getSimple(CliServerComponent.PLUGINCONFIG_FIXED_VERSION);
-        if (versionProp != null && versionProp.getStringValue() != null) {
-            version = versionProp.getStringValue();
-        } else {
-            String args = pluginConfig.getSimpleValue(CliServerComponent.PLUGINCONFIG_VERSION_ARGS, null);
-            ProcessExecutionResults results = CliServerComponent.executeCliExecutable(context.getSystemInformation(),
-                pluginConfig, args, 5000L, true);
-            if (results != null) {
-                if (results.getError() != null) {
-                    log.warn("Failed to execute cli executable to get version. Cause: "
-                        + ThrowableUtil.getAllMessages(results.getError()));
-                } else if (results.getCapturedOutput() != null) {
-                    version = results.getCapturedOutput();
+        String version = null;
+        try {
+            PropertySimple versionProp = pluginConfig.getSimple(CliServerComponent.PLUGINCONFIG_FIXED_VERSION);
+            if (versionProp != null && versionProp.getStringValue() != null) {
+                version = versionProp.getStringValue();
+            } else {
+                String args = pluginConfig.getSimpleValue(CliServerComponent.PLUGINCONFIG_VERSION_ARGS, null);
+                ProcessExecutionResults results = CliServerComponent.executeCliExecutable(context
+                    .getSystemInformation(), pluginConfig, args, 5000L, true);
+                if (results != null) {
+                    if (results.getError() != null) {
+                        log.warn("Failed to execute cli executable to get version. Cause: "
+                            + ThrowableUtil.getAllMessages(results.getError()));
+                    } else if (results.getCapturedOutput() != null) {
+                        String regex = pluginConfig.getSimpleValue(CliServerComponent.PLUGINCONFIG_VERSION_REGEX, null);
+                        String output = results.getCapturedOutput();
+                        if (regex == null) {
+                            version = output;
+                        } else {
+                            Pattern pattern = Pattern.compile(regex);
+                            Matcher match = pattern.matcher(output);
+                            if (match.find()) {
+                                if (match.groupCount() > 0) {
+                                    version = match.group(1);
+                                } else {
+                                    version = output;
+                                }
+                            } else {
+                                log.warn("Version regex [" + regex + "] did not match: " + truncateString(output));
+                            }
+                        }
+                    }
                 }
             }
+        } catch (Exception e) {
+            log.warn("Cannot determine version of CLI server resource. Cause: " + e);
         }
         return version;
+    }
+
+    /**
+     * Truncate a string so it is short, usually for display or logging purposes.
+     * 
+     * @param output the output to trim
+     * @return the trimmed output
+     */
+    private String truncateString(String output) {
+        String outputToLog = output;
+        if (outputToLog != null && outputToLog.length() > 100) {
+            outputToLog = outputToLog.substring(0, 100) + "...";
+        }
+        return outputToLog;
     }
 }

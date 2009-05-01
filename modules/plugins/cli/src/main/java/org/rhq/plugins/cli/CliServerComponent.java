@@ -23,22 +23,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -55,8 +56,11 @@ import org.rhq.core.util.exception.ThrowableUtil;
  *
  * @author John Mazzitelli
  */
-public class CliServerComponent implements ResourceComponent, MeasurementFacet, OperationFacet, ConfigurationFacet {
+public class CliServerComponent implements ResourceComponent, MeasurementFacet, OperationFacet {
+
     private final Log log = LogFactory.getLog(CliServerComponent.class);
+
+    private static final long MAX_WAIT_TIME = 3600000L;
 
     protected static final String PLUGINCONFIG_EXECUTABLE = "executable";
     protected static final String PLUGINCONFIG_WORKINGDIR = "workingDirectory";
@@ -68,13 +72,19 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
     protected static final String PLUGINCONFIG_AVAIL_OUTPUT_REGEX = "availabilityOutputRegex";
     protected static final String PLUGINCONFIG_AVAIL_ARGS = "availabilityArguments";
     protected static final String PLUGINCONFIG_VERSION_ARGS = "versionArguments";
+    protected static final String PLUGINCONFIG_VERSION_REGEX = "versionRegex";
     protected static final String PLUGINCONFIG_FIXED_VERSION = "fixedVersion";
     protected static final String PLUGINCONFIG_DESC_ARGS = "descriptionArguments";
+    protected static final String PLUGINCONFIG_DESC_REGEX = "descriptionRegex";
     protected static final String PLUGINCONFIG_FIXED_DESC = "fixedDescription";
 
     protected static final String OPERATION_PARAM_ARGUMENTS = "arguments";
-    protected static final String OPERATION_RESULT_EXIT_CODE = "exitCode";
+    protected static final String OPERATION_RESULT_EXITCODE = "exitCode";
     protected static final String OPERATION_RESULT_OUTPUT = "output";
+
+    protected static final String METRIC_PROPERTY_ARGUMENTS = "arguments";
+    protected static final String METRIC_PROPERTY_REGEX = "regex";
+    protected static final String METRIC_PROPERTY_EXITCODE = "exitcode";
 
     private Configuration resourceConfiguration;
     private ResourceContext resourceContext;
@@ -98,21 +108,172 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
         return result ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
+    /**
+     * Executes the CLI and based on the measurement property, collects the appropriate measurement value.
+     * This supports measurement data and traits.
+     * A metric property can be a string that is assumed the arguments to pass to the CLI. However, if
+     * the property is in the form "{arguments}|regex", the arguments are passed to the CLI and the metric
+     * value is taken from the regex match. Examples of metric properties:
+     *  
+     * <ul>
+     * <li>"-a --arg2=123" - passes that string as the arguments list, the metric value is the output of the CLI</li> 
+     * <li>"{}|exitcode" - no arguments are passed to the CLI and the metric value is the exit code of the CLI</li>
+     * <li>"{-a}|[lL]abel(\p{Digit}+)[\r\n]*" - "-a" is the argument passed to the CLI and the metric value is the digits following the label of the output</li>
+     * <li>"{}|[ABC]+" - no arguments are passed and the value is the output of the CLI assuming it matches the regex</li>
+     * <li>"{--foobar}|foobar (.*) blah" - passes "--foobar" as the argument and the metric value is the string that matches the regex group</li>
+     * </ul>
+     * 
+     * @see MeasurementFacet#getValues(MeasurementReport, Set)
+     */
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
-        for (MeasurementScheduleRequest request : requests) {
-            String name = request.getName();
+        Map<String, ProcessExecutionResults> exeResultsCache = new HashMap<String, ProcessExecutionResults>();
 
-            // TODO: based on the request information, you must collect the requested measurement(s)
-            //       you can use the name of the measurement to determine what you actually need to collect
+        for (MeasurementScheduleRequest request : requests) {
+            String metricPropertyName = request.getName();
+            boolean dataMustBeNumeric;
+
+            if (request.getDataType() == DataType.MEASUREMENT) {
+                dataMustBeNumeric = true;
+            } else if (request.getDataType() == DataType.TRAIT) {
+                dataMustBeNumeric = false;
+            } else {
+                log.error("Plugin does not support metric [" + metricPropertyName + "] of type ["
+                    + request.getDataType() + "]");
+                continue;
+            }
+
             try {
-                Number value = new Integer(1); // dummy measurement value - this should come from the managed resource
-                report.addData(new MeasurementDataNumeric(request, value.doubleValue()));
+
+                // determine how to execute the CLI for this metric
+                Map<String, String> argsRegex = parseMetricProperty(metricPropertyName);
+                Object dataValue;
+
+                if (argsRegex == null) {
+                    continue; // this metric's property was invalid, skip this one and move on to the next
+                }
+
+                String arguments = argsRegex.get(METRIC_PROPERTY_ARGUMENTS);
+                String regex = argsRegex.get(METRIC_PROPERTY_REGEX);
+                boolean valueIsExitCode = METRIC_PROPERTY_EXITCODE.equals(regex);
+
+                // if we already executed it with the same arguments, don't bother doing it again
+                ProcessExecutionResults exeResults = exeResultsCache.get((arguments == null) ? "" : arguments);
+                if (exeResults == null) {
+                    boolean captureOutput = !valueIsExitCode; // don't need output if we need to just check exit code
+                    exeResults = executeCliExecutable(arguments, MAX_WAIT_TIME, captureOutput);
+                    exeResultsCache.put((arguments == null) ? "" : arguments, exeResults);
+                }
+
+                // don't report a metric value if the CLI failed to execute
+                if (exeResults.getError() != null) {
+                    log.error("Cannot collect CLI metric [" + metricPropertyName + "]. Cause: "
+                        + ThrowableUtil.getAllMessages(exeResults.getError()));
+                    continue;
+                }
+
+                // set dataValue to the appropriate value based on how the metric property defined it
+                if (valueIsExitCode) {
+                    dataValue = exeResults.getExitCode();
+                    if (dataValue == null) {
+                        log.error("Could not determine exit code for metric property [" + metricPropertyName
+                            + "] - metric will not be collected");
+                        continue;
+                    }
+                } else if (regex != null) {
+                    final String output = exeResults.getCapturedOutput();
+                    if (output == null) {
+                        log.error("Could not get output for metric property [" + metricPropertyName
+                            + "] -- metric will not be collected");
+                        continue;
+                    }
+
+                    Pattern pattern = Pattern.compile(regex);
+                    Matcher match = pattern.matcher(output);
+                    if (match.find()) {
+                        if (match.groupCount() > 0) {
+                            dataValue = match.group(1);
+                        } else {
+                            dataValue = output;
+                        }
+                    } else {
+                        log.error("Output did not match metric property [" + metricPropertyName
+                            + "] - metric will not be collected: " + truncateString(output));
+                        continue;
+                    }
+                } else {
+                    dataValue = exeResults.getCapturedOutput();
+                    if (dataValue == null) {
+                        log.error("Could not get output for metric property [" + metricPropertyName
+                            + "] - metric will not be collected");
+                        continue;
+                    }
+                }
+
+                // add the metric value to the measurement report
+                if (dataMustBeNumeric) {
+                    Double numeric = Double.parseDouble(dataValue.toString().trim());
+                    report.addData(new MeasurementDataNumeric(request, numeric.doubleValue()));
+                } else {
+                    report.addData(new MeasurementDataTrait(request, dataValue.toString().trim()));
+                }
             } catch (Exception e) {
-                log.error("Failed to obtain measurement [" + name + "]. Cause: " + e);
+                log.error("Failed to obtain measurement [" + metricPropertyName + "]. Cause: " + e);
             }
         }
 
+        exeResultsCache.clear(); // help out the garbage collector, since this could be alot of data
+        exeResultsCache = null;
+
         return;
+    }
+
+    /**
+     * Given a metric property name, this parses it into its different pieces and returns a
+     * map of the different tokens. The format of the metric property one of the following:
+     * <pre>
+     * arguments
+     * {arguments}|regex
+     * {arguments}|exitcode
+     * </pre>
+     *
+     * where "arguments" is the empty or non-empty string of the arguments to pass to the CLI executable,
+     * regex is a empty or non-empty regular expresssion string to match the output (if there is a matching
+     * group in the regex, its value will be used as the metric value, not the full output of the executable),
+     * exitcode is the literal string "exitcode" to indicate that the exit code value is to be used as the metric value.
+     *
+     * @param metricPropertyName the name of the property in the metric descriptor
+     * @return map containing the pieces that have been parsed out - the keys are
+     *             either {@link #METRIC_PROPERTY_ARGUMENTS} or {@link #METRIC_PROPERTY_REGEX}.
+     *             The map will be <code>null</code> if the property name is invalid for some reason.
+     *             A map entry will not exist if it was not specified in the property name.
+     */
+    protected Map<String, String> parseMetricProperty(String metricPropertyName) {
+        HashMap<String, String> map = new HashMap<String, String>();
+
+        if (metricPropertyName != null && metricPropertyName.length() > 0) {
+            if (!metricPropertyName.startsWith("{")) {
+                map.put(METRIC_PROPERTY_ARGUMENTS, metricPropertyName); // the property is entirely the arguments 
+            } else {
+                String[] argsRegex = metricPropertyName.substring(1).split("\\}\\|", 2);
+                if (argsRegex.length != 2) {
+                    log.error("Invalid metric property [" + metricPropertyName + "] - metric will not be collected");
+                    return null;
+                }
+                if (!isValidRegularExpression(argsRegex[1])) {
+                    log.error("Invalid regex [" + argsRegex[1] + "] for metric property [" + metricPropertyName
+                        + "] - metric will not be collected");
+                    return null;
+                }
+                if (argsRegex[0].length() > 0) {
+                    map.put(METRIC_PROPERTY_ARGUMENTS, argsRegex[0]);
+                }
+                if (argsRegex[1].length() > 0) {
+                    map.put(METRIC_PROPERTY_REGEX, argsRegex[1]);
+                }
+            }
+        }
+
+        return map;
     }
 
     /**
@@ -127,7 +288,7 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
 
         String arguments = configuration.getSimpleValue(OPERATION_PARAM_ARGUMENTS, null);
 
-        ProcessExecutionResults exeResults = executeCliExecutable(arguments, 3600000L, true); // wait no more than 1 hour
+        ProcessExecutionResults exeResults = executeCliExecutable(arguments, MAX_WAIT_TIME, true);
         Integer exitcode = exeResults.getExitCode();
         String output = exeResults.getCapturedOutput();
         Throwable error = exeResults.getError();
@@ -145,57 +306,44 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
         }
 
         Configuration resultsConfig = result.getComplexResults();
-        resultsConfig.put(new PropertySimple(OPERATION_RESULT_EXIT_CODE, exitcode));
+        resultsConfig.put(new PropertySimple(OPERATION_RESULT_EXITCODE, exitcode));
         resultsConfig.put(new PropertySimple(OPERATION_RESULT_OUTPUT, output));
 
         return result;
-    }
-
-    /**
-     * The plugin container will call this method and it needs to obtain the current configuration of the managed
-     * resource. Your plugin will obtain the managed resource's configuration in your own custom way and populate the
-     * returned Configuration object with the managed resource's configuration property values.
-     *
-     * @see ConfigurationFacet#loadResourceConfiguration()
-     */
-    public Configuration loadResourceConfiguration() {
-        // here we simulate the loading of the managed resource's configuration
-
-        if (resourceConfiguration == null) {
-            // for this example, we will create a simple dummy configuration to start with.
-            // note that it is empty, so we're assuming there are no required configs in the plugin descriptor.
-            resourceConfiguration = new Configuration();
-        }
-
-        Configuration config = resourceConfiguration;
-
-        return config;
-    }
-
-    /**
-     * The plugin container will call this method when it has a new configuration for your managed resource. Your plugin
-     * will re-configure the managed resource in your own custom way, setting its configuration based on the new values
-     * of the given configuration.
-     *
-     * @see ConfigurationFacet#updateResourceConfiguration(ConfigurationUpdateReport)
-     */
-    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        // this simulates the plugin taking the new configuration and reconfiguring the managed resource
-        resourceConfiguration = report.getConfiguration().deepCopy();
-
-        report.setStatus(ConfigurationUpdateStatus.SUCCESS);
     }
 
     protected ResourceContext getResourcContext() {
         return this.resourceContext;
     }
 
+    /**
+     * Executes the CLI executable with the given arguments.
+     * 
+     * @param args the arguments to send to the executable (may be <code>null</code>)
+     * @param wait the maximum time in milliseconds to wait for the process to execute; 0 means do not wait 
+     * @param captureOutput if <code>true</code>, the executables output will be captured and returned
+     *
+     * @return the results of the execution
+     *
+     * @throws InvalidPluginConfigurationException
+     */
     protected ProcessExecutionResults executeCliExecutable(String args, long wait, boolean captureOutput)
         throws InvalidPluginConfigurationException {
 
         SystemInfo sysInfo = this.resourceContext.getSystemInformation();
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        return executeCliExecutable(sysInfo, pluginConfig, args, wait, captureOutput);
+        ProcessExecutionResults results = executeCliExecutable(sysInfo, pluginConfig, args, wait, captureOutput);
+
+        if (log.isDebugEnabled()) {
+            if (results != null) {
+                logDebug("CLI results: exitcode=[" + results.getExitCode() + "]; error=[" + results.getError()
+                    + "]; output=" + truncateString(results.getCapturedOutput()));
+            } else {
+                logDebug("CLI has null results");
+            }
+        }
+
+        return results;
     }
 
     // This is protected static so the discovery component can use it.
@@ -211,6 +359,7 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
         processExecution.setKillOnTimeout(true);
 
         ProcessExecutionResults results = sysInfo.executeProcess(processExecution);
+
         return results;
     }
 
@@ -305,11 +454,7 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
                 boolean outputMatches = output.matches(availOutputRegex);
                 if (!outputMatches) {
                     if (log.isDebugEnabled()) {
-                        String outputToLog = output;
-                        if (outputToLog.length() > 100) {
-                            outputToLog = outputToLog.substring(0, 100) + "...";
-                        }
-                        logDebug("CLI output [" + outputToLog + "] did not match regex [" + availOutputRegex
+                        logDebug("CLI output [" + truncateString(output) + "] did not match regex [" + availOutputRegex
                             + "], resource is considered DOWN");
                     }
                     return false;
@@ -319,6 +464,20 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
 
         // everything passes, resource is UP
         return true;
+    }
+
+    /**
+     * Truncate a string so it is short, usually for display or logging purposes.
+     * 
+     * @param output the output to trim
+     * @return the trimmed output
+     */
+    private String truncateString(String output) {
+        String outputToLog = output;
+        if (outputToLog != null && outputToLog.length() > 100) {
+            outputToLog = outputToLog.substring(0, 100) + "...";
+        }
+        return outputToLog;
     }
 
     private static ProcessExecution getProcessExecutionInfo(Configuration pluginConfig)
@@ -368,6 +527,15 @@ public class CliServerComponent implements ResourceComponent, MeasurementFacet, 
         processExecution.setWorkingDirectory(workingDir);
 
         return processExecution;
+    }
+
+    private boolean isValidRegularExpression(String regex) {
+        try {
+            Pattern.compile(regex);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void logDebug(String msg) {

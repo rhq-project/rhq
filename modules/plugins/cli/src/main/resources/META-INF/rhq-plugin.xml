@@ -33,18 +33,20 @@
          </c:group>
          <c:group name="version" displayName="Version Definition">
             <c:simple-property name="versionArguments" required="false" description="The arguments to pass to the CLI that will help determine the version of the managed resource"/>
+            <c:simple-property name="versionRegex" required="false" description="The regex that can pick out the version from the CLI output. If the regex has a captured group, its matched content will be used as the version. If there is no captured group, the entire output will be used as the version."/>
             <c:simple-property name="fixedVersion" required="false" description="If specified, this will be the version of the managed resource - the CLI will not be invoked to determine it." />
          </c:group>
          <c:group name="description" displayName="Description Definition">
             <c:simple-property name="descriptionArguments" required="false" description="The arguments to pass to the CLI that will help determine the managed resource description. This can be arguments to enable verbose version output."/>
+            <c:simple-property name="descriptionRegex" required="false" description="The regex that can pick out the description from the CLI output. If the regex has a captured group, its matched content will be used as the description. If there is no captured group, the entire output will be used as the description."/>
             <c:simple-property name="fixedDescription" required="false" description="If specified, this will be the description of the managed resource - the CLI will not be invoked to determine it." />
          </c:group>
       </plugin-configuration>
 
       <!--
-         CHANGE: The process-scan element requests the plugin container provide the discovery component for
-                 this resource type with the results of scanning the machine for running processes. If there is
-                 no use for this in a given resource type, this entry may be omitted.
+         The process-scan element requests the plugin container provide the discovery component for
+         this resource type with the results of scanning the machine for running processes. If there is
+         no use for this in a given resource type, this entry may be omitted.
       -->
       <!--
       <process-scan name="ScanIdentifier" query="process|basename|match=^java.*,arg|org.jboss.Main|match=.*"/>
@@ -62,35 +64,27 @@
       </operation>
 
       <!--
-         CHANGE: For each measurement that should be collected for resources of this type, a metric element is added.
-                 In addition to identifying the metric, a default collection interval and whether or not the
-                 metric is even collected by default are indicated. If the resource has no measurements to be
-                 collected, these elements may be omitted.
-
-         REQUIRED INTERFACE: The resource component for this resource type must implement the MeasurementFacet interface
-                             if any metrics are specified.
+         For each measurement that should be collected for resources of this type, a metric element is added.
+         In addition to identifying the metric, a default collection interval and whether or not the
+         metric is even collected by default are indicated. If the resource has no measurements to be
+         collected, these elements may be omitted. Note that the metric property string contains information
+         like the arguments to pass to the executable and an optional regex to use to pick out the metric
+         value from the output of the executable. The arguments are specified inside curly braces. If the metric
+         value is the entire output, you do not have to specify a regex, the output will be assumed to be
+         the value of the metric in that case. If regex is explicitly the string "exitcode", the metric value will be
+         the CLI executable's exitcode value.
       -->
       <!--
-      <metric property="MeasurementName"
+      <metric property="{arguments}|regex"
+              dataType="measurement"
               displayName="The Measurement Name"
               description="Describes what this measurement is actually telling you"
               defaultOn="true"
+              units="none"
               defaultInterval="300000"
+              displayType="summary"
               category="performance" />
       -->
 
-      <!--
-         CHANGE: Resource configuration properties are used to configure resources themselves, as compared to the plugin
-                 configuration which refers to the connection to a resource. If the resource-configuration
-                 entity is specified, at least one property must be provided.
-
-         REQUIRED INTERFACE: The resource component for this resource type must implement the ConfigurationFacet
-                             interface if a resource-configuration element is supplied.
-      -->
-      <!--
-      <resource-configuration>
-         <c:simple-property name="port" type="integer" displayName="Port on which to listen" />
-      </resource-configuration>
-      -->
    </server>
 </plugin>

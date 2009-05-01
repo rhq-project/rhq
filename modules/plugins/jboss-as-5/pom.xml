@@ -40,7 +40,7 @@
 		  <groupId>${rhq.groupId}</groupId>
 		  <artifactId>rhq-core-client-api</artifactId>
 		  <version>${rhq.version}</version>			
-          <scope>provided</scope>
+          <scope>provided</scope> <!-- by PC -->
 		</dependency>
         
         <!-- Needed for the plugin descriptor generator code -->
@@ -78,26 +78,140 @@
           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
           <scope>provided</scope> <!-- by PC -->
         </dependency>
-        
-        <!-- client API jars (temporary) -->
+                
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-common</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>provided</scope> <!-- by PC -->
+      </dependency>
+      
         <dependency>
           <groupId>org.jboss.integration</groupId>
           <artifactId>jboss-profileservice-spi</artifactId>                    
           <version>${jboss-profileservice-spi.version}</version>          
+          <!--<scope>provided</scope>-->
         </dependency>        
         
         <dependency>
           <groupId>org.jboss.man</groupId>
           <artifactId>jboss-managed</artifactId>
           <version>${jboss-man.version}</version>          
+          <!--<scope>provided</scope>-->
         </dependency>
         
         <dependency>
           <groupId>org.jboss.man</groupId>
           <artifactId>jboss-metatype</artifactId>
           <version>${jboss-man.version}</version>          
+          <!--<scope>provided</scope>-->
         </dependency>
 
+        <!--======= client API jars (temporary) =======-->
+        <!--        
+        <dependency>
+          <groupId>org.jboss.jbossas</groupId>
+          <artifactId>jboss-as-client</artifactId>
+          <version>5.1.0.CR1</version>          
+          <type>pom</type>       
+          <scope>runtime</scope>          
+        </dependency>       
+        -->
+        
+        <dependency>
+          <groupId>org.jboss.naming</groupId>
+          <artifactId>jnp-client</artifactId>
+          <version>5.0.1.GA</version>    
+          <scope>runtime</scope>                   
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.aspects</groupId>
+          <artifactId>jboss-security-aspects</artifactId>
+          <version>1.0.0.GA</version>    
+          <scope>runtime</scope>                   
+        </dependency>
+        
+        <dependency>
+          <groupId>org.jboss.security</groupId>
+          <artifactId>jbosssx-client</artifactId>
+          <version>2.0.3.SP1</version>          
+          <scope>runtime</scope>          
+        </dependency>       
+
+        <dependency>
+          <groupId>org.jboss.aop</groupId>
+          <artifactId>jboss-aop</artifactId>
+          <version>2.1.0.CR3</version>     
+          <classifier>client</classifier>          
+          <scope>runtime</scope>          
+        </dependency>       
+        
+        <dependency>
+          <groupId>org.jboss.remoting</groupId>
+          <artifactId>jboss-remoting</artifactId>
+          <version>2.5.1</version>          
+          <scope>runtime</scope>          
+        </dependency>       
+
+        <dependency>
+          <groupId>org.jboss.jbossas</groupId>
+          <artifactId>jboss-as-aspects</artifactId>
+          <version>5.1.0.CR1</version>   
+          <classifier>jboss-aspect-jdk50-client</classifier>
+          <scope>runtime</scope>              
+        </dependency>        
+
+        <dependency>
+          <groupId>trove</groupId>
+          <artifactId>trove</artifactId>
+          <version>1.0.2</version>          
+          <scope>runtime</scope>          
+        </dependency>       
+
+        <dependency>
+          <groupId>javassist</groupId>
+          <artifactId>javassist</artifactId>
+          <version>3.9.0.GA</version>          
+          <scope>runtime</scope>          
+        </dependency>       
+
+        <dependency>
+          <groupId>org.jboss.security</groupId>
+          <artifactId>jboss-security-spi</artifactId>
+          <version>2.0.3.SP1</version>          
+          <scope>runtime</scope>          
+        </dependency>       
+        
+        <dependency>
+          <groupId>org.jboss.javaee</groupId>
+          <artifactId>jboss-javaee</artifactId>
+          <version>5.0.1.GA</version>          
+          <scope>runtime</scope>          
+        </dependency>       
+
+        <dependency>
+          <groupId>oswego-concurrent</groupId>
+          <artifactId>concurrent</artifactId>
+          <version>1.3.4-jboss</version>          
+          <scope>runtime</scope>          
+        </dependency>       
+
+        <dependency>
+          <groupId>org.jboss.client</groupId>
+          <artifactId>jboss-client</artifactId>
+          <version>5.1.0.CR1</version>   
+          <scope>runtime</scope>              
+        </dependency>               
+
+        <dependency>
+          <groupId>org.jboss</groupId>
+          <artifactId>jboss-mdr</artifactId>
+          <version>2.0.1.GA</version>   
+          <scope>runtime</scope>              
+        </dependency>               
+        
+<!--        
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
           <artifactId>jboss-ejb3-common</artifactId>
@@ -156,7 +270,8 @@
           <artifactId>jbosssx</artifactId>
           <version>2.1.0.20090318</version>                   
         </dependency>
-        
+-->    
+
         <!-- NOTE: Uncomment the below deps if you want to pull down the jboss-profileservice 
                    and jboss-system sources jars for debugging purposes. -->        
         <!--
@@ -192,9 +307,10 @@
                       <id>copy-dependencies</id>
                       <phase>process-resources</phase>
                       <goals>
-                         <goal>copy</goal>
+                        <goal>copy-dependencies</goal>
                       </goals>
                       <configuration>
+                      <!--
                          <artifactItems>
                             <artifactItem>
                                <groupId>org.apache.commons</groupId>
@@ -202,7 +318,6 @@
                                <version>1.3.2</version>                               
                             </artifactItem>
                             
-                            <!-- client API jars (temporary) -->
                             <artifactItem>
                                <groupId>org.jboss.integration</groupId>
                                <artifactId>jboss-profileservice-spi</artifactId>                    
@@ -221,6 +336,13 @@
                                <version>${jboss-man.version}</version>          
                              </artifactItem>
 
+                             <artifactItem>
+                               <groupId>org/jboss/jbossas</groupId>
+                               <artifactId>jboss-as-client</artifactId>
+                               <version>5.1.0.CR1</version>          
+                               <type>pom</type>          
+                             </artifactItem>
+                             
                              <artifactItem>
                                <groupId>org.jboss.ejb3</groupId>
                                <artifactId>jboss-ejb3-common</artifactId>
@@ -278,8 +400,11 @@
                                <groupId>org.jboss.security</groupId>
                                <artifactId>jbosssx</artifactId>
                                <version>2.1.0.20090318</version>                   
-                             </artifactItem>        
+                             </artifactItem>                                     
                          </artifactItems>
+                         -->
+                         <includeScope>runtime</includeScope>
+                         <excludeTransitive>true</excludeTransitive>
                          <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                       </configuration>
                    </execution>

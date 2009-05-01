@@ -29,6 +29,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -143,7 +144,9 @@ public class AgentPluginURLDeploymentScanner extends URLDeploymentScanner {
                     if (fileMtime < mtime) {
                         String fileMd5 = MD5Generator.getDigestString(file);
                         if (!fileMd5.equals(md5)) {
-                            log.info("Found agent plugin in the DB that is newer than the one we have: " + name);
+                            log.info("Found agent plugin in the DB that is newer than the one we have [" + name
+                                + "]. DB timestamp=[" + new Date(mtime) + "]; file timestamp=[" + new Date(fileMtime)
+                                + "]");
                             Plugin plugin = new Plugin(name, path, md5);
                             plugin.setMtime(mtime);
                             updatedPlugins.add(plugin);

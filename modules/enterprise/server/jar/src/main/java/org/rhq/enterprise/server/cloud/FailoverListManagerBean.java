@@ -510,9 +510,12 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     }
 
     public void deleteServerListsForAgent(Agent agent) {
-        Query query = entityManager.createNamedQuery(FailoverList.QUERY_DELETE_VIA_AGENT);
-        query.setParameter("agent", agent);
-        query.executeUpdate();
+        Query query1 = entityManager.createNamedQuery(FailoverListDetails.QUERY_DELETE_VIA_AGENT);
+        Query query2 = entityManager.createNamedQuery(FailoverList.QUERY_DELETE_VIA_AGENT);
+        query1.setParameter("agent", agent);
+        query2.setParameter("agent", agent);
+        query1.executeUpdate();
+        query2.executeUpdate();
     }
 
     public void deleteServerListDetailsForServer(int serverId) {

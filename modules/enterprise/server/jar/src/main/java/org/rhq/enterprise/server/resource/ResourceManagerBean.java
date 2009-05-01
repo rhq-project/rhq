@@ -254,6 +254,18 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             throw new PermissionException("You do not have permission to delete resource [" + resourceId + "]");
         }
 
+        // if the resource has no parent, its a top root resource and its agent should be purged too
+        // test code does not always follow this rule, so catch and continue.
+        Agent doomedAgent = null;
+        if (resource.getParentResource() == null) {
+            try {
+                doomedAgent = agentManager.getAgentByResourceId(resourceId);
+            } catch (Exception e) {
+                doomedAgent = null;
+                log.warn("This warning should occur in TEST code only! " + e);
+            }
+        }
+
         AgentClient agentClient = null;
 
         try {
@@ -306,6 +318,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             } catch (Exception e) {
                 log.warn(" Unable to inform agent of inventory removal for resource [" + resourceId + "]", e);
             }
+        }
+
+        if (doomedAgent != null) {
+            agentManager.deleteAgent(doomedAgent);
         }
 
         return deletedResourceIds;

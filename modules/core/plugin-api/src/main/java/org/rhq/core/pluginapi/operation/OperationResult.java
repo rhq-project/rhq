@@ -127,6 +127,11 @@ public class OperationResult {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + complexResults + "]";
+        StringBuilder str = new StringBuilder(this.getClass().getSimpleName());
+        if (getErrorMessage() != null) {
+            str.append(" error=[").append(getErrorMessage()).append("];");
+        }
+        str.append(" [").append(getComplexResults()).append("]");
+        return str.toString();
     }
 }

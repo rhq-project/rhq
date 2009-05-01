@@ -19,8 +19,6 @@
 package org.rhq.enterprise.server.util;
 
 import java.lang.management.ManagementFactory;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.management.MBeanServer;
 import javax.persistence.EntityManager;
@@ -34,46 +32,41 @@ import org.rhq.core.domain.util.PersistenceUtility;
  */
 public class HibernateStatisticsStopWatch {
 
-    private EntityManager entityManager;
+    private Statistics stats;
 
-    private Map<String, Long> values;
+    long queryExecutions;
+    long transations;
+    long entityLoads;
+    long connects;
+    long time;
 
     public HibernateStatisticsStopWatch(EntityManager entityManager) {
-        this.entityManager = entityManager;
+        MBeanServer platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
+        this.stats = PersistenceUtility.getStatisticsService(entityManager, platformMBeanServer);
     }
 
     public void start() {
-        values = new HashMap<String, Long>();
-
-        Statistics stats = getStats();
-        values.put("QueryExecutionCount", stats.getQueryExecutionCount());
-        values.put("TransactionCount", stats.getTransactionCount());
-        values.put("EntityLoadCount", stats.getEntityLoadCount());
-        values.put("ConnectCount", stats.getConnectCount());
-        values.put("Time", System.currentTimeMillis());
+        queryExecutions = -stats.getQueryExecutionCount();
+        transations = -stats.getTransactionCount();
+        entityLoads = -stats.getEntityLoadCount();
+        connects = -stats.getConnectCount();
+        time = -System.currentTimeMillis();
     }
 
     public void stop() {
-        Statistics stats = getStats();
-        values.put("QueryExecutionCount", stats.getQueryExecutionCount() - values.get("QueryExecutionCount"));
-        values.put("TransactionCount", stats.getTransactionCount() - values.get("TransactionCount"));
-        values.put("EntityLoadCount", stats.getEntityLoadCount() - values.get("EntityLoadCount"));
-        values.put("ConnectCount", stats.getConnectCount() - values.get("ConnectCount"));
-        values.put("Time", System.currentTimeMillis() - values.get("Time"));
+        queryExecutions += stats.getQueryExecutionCount();
+        transations += stats.getTransactionCount();
+        entityLoads += stats.getEntityLoadCount();
+        connects += stats.getConnectCount();
+        time += System.currentTimeMillis();
     }
 
     public String toString() {
         return "HibernateStats" //
-            + "[ QueryExecutions=" + values.get("QueryExecutionCount") //
-            + ", Transactions=" + values.get("TransactionCount") //
-            + ", EntityLoads=" + values.get("EntityLoadCount") //
-            + ", Connects=" + values.get("ConnectCount") //
-            + ", Time=" + values.get("Time") + " ]";
-    }
-
-    private Statistics getStats() {
-        MBeanServer platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
-        Statistics stats = PersistenceUtility.getStatisticsService(entityManager, platformMBeanServer);
-        return stats;
+            + "[ queries=" + queryExecutions //
+            + ", xactions=" + transations //
+            + ", loads=" + entityLoads //
+            + ", connects=" + connects //
+            + ", time=" + time + " ]";
     }
 }

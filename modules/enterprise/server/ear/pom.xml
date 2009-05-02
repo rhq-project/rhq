@@ -364,6 +364,12 @@
 
                 <artifactItem>
                   <groupId>org.rhq</groupId>
+                  <artifactId>rhq-serverplugin-url</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
                   <artifactId>rhq-serverplugin-yum</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>

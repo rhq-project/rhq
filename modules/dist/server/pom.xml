@@ -133,7 +133,7 @@
             </configuration>
           </execution>
 
-          <!-- The jboss-software plugin is not currently needed in the binary distribution. Leaving this if we want to add it back
+          <!-- if jboss-software plugin is not needed in the binary distribution, comment this out -->
           <execution>
             <id>copy-jopr-serverplugins</id>
             <phase>generate-resources</phase>
@@ -153,7 +153,7 @@
               <outputDirectory>${project.build.outputDirectory}/jbossas/server/default/deploy/rhq.ear.rej/rhq-serverplugins</outputDirectory>
             </configuration>
           </execution>
-          -->
+          <!-- -->
           
         </executions>
       </plugin>

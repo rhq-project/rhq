@@ -34,10 +34,13 @@
 			<fileset dir="${basedir}/src/main/resources-binary" />
 		</copy>
 
+        <!-- if there are any content source plugins we do not want in the distro, remove them here -->
+        <!--
 		<echo>Temporarily deleting the unused content source server plugins...</echo>
 		<delete>
 			<fileset dir="${jboss.deploy.dir}" includes="**/rhq-serverplugin-yum*" />
 		</delete>
+        -->
 
 		<echo>Adding LICENSE files...</echo>
 		<copy todir="${project.build.outputDirectory}" overwrite="true">

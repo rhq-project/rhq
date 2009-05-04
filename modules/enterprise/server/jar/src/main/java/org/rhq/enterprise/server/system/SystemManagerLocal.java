@@ -141,6 +141,13 @@ public interface SystemManagerLocal {
      * This is meant for internal use only! You probably want to use {@link #getSystemConfiguration()}
      * instead.
      */
+    void loadSystemConfigurationCacheInNewTx();
+
+    /**
+     * Grabs the current system configuration from the database and reloads the cache with it.
+     * This is meant for internal use only! You probably want to use {@link #getSystemConfiguration()}
+     * instead.
+     */
     void loadSystemConfigurationCache();
 
     //////////////////////////////////

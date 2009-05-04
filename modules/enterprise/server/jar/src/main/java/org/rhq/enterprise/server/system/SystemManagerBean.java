@@ -139,7 +139,7 @@ public class SystemManagerBean implements SystemManagerLocal {
             //       a need for the timestamp column/checking, we just load in the full config now.
             //       We never need 2 round trips, and this table is small enough that selecting the
             //       all its rows is really not going to effect performance much.
-            systemManager.loadSystemConfigurationCache();
+            systemManager.loadSystemConfigurationCacheInNewTx();
         } catch (Throwable t) {
             log.error("Failed to reload the system config cache - will try again later. Cause: " + t);
         } finally {
@@ -178,6 +178,12 @@ public class SystemManagerBean implements SystemManagerLocal {
         Properties copy = new Properties();
         copy.putAll(systemConfigurationCache);
         return copy;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void loadSystemConfigurationCacheInNewTx() {
+        // this is used by our timer, so any exceptions coming out here doesn't throw away our timer
+        loadSystemConfigurationCache();
     }
 
     public void loadSystemConfigurationCache() {

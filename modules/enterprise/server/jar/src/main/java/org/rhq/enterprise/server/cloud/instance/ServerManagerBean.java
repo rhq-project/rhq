@@ -27,6 +27,8 @@ import javax.ejb.Stateless;
 import javax.ejb.Timeout;
 import javax.ejb.Timer;
 import javax.ejb.TimerService;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -39,10 +41,11 @@ import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.communications.GlobalSuspendCommandListener;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * If you want to manipulate or report on the {@link Server} instance that
@@ -77,6 +80,15 @@ public class ServerManagerBean implements ServerManagerLocal {
     @EJB
     private StatusManagerLocal agentStatusManager;
 
+    @EJB
+    private PartitionEventManagerLocal partitionEventManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private ServerManagerLocal serverManager;
+
     private final String TIMER_DATA = "ServerManagerBean.beat";
 
     @SuppressWarnings("unchecked")
@@ -100,7 +112,7 @@ public class ServerManagerBean implements ServerManagerLocal {
     @Timeout
     public void handleHeartbeatTimer(Timer timer) {
         try {
-            beat();
+            serverManager.beat();
         } catch (Throwable t) {
             log.error("Failed to handle cloud heartbeat timer - will try again later. Cause: " + t);
         } finally {
@@ -229,10 +241,10 @@ public class ServerManagerBean implements ServerManagerLocal {
             if ((Server.OperationMode.NORMAL == serverMode)
                 && (Server.OperationMode.INSTALLED == lastEstablishedServerMode)) {
 
-                LookupUtil.getPartitionEventManager().cloudPartitionEventRequest(
-                    LookupUtil.getSubjectManager().getOverlord(), PartitionEventType.OPERATION_MODE_CHANGE, audit);
+                partitionEventManager.cloudPartitionEventRequest(subjectManager.getOverlord(),
+                    PartitionEventType.OPERATION_MODE_CHANGE, audit);
             } else {
-                LookupUtil.getPartitionEventManager().auditPartitionEvent(LookupUtil.getSubjectManager().getOverlord(),
+                partitionEventManager.auditPartitionEvent(subjectManager.getOverlord(),
                     PartitionEventType.OPERATION_MODE_CHANGE, audit);
             }
 
@@ -260,6 +272,7 @@ public class ServerManagerBean implements ServerManagerLocal {
             Server.OperationMode.MAINTENANCE.name());
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void beat() {
         Server server = getServer();
         server.setMtime(System.currentTimeMillis());

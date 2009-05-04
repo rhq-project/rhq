@@ -28,6 +28,9 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+/**
+ * Backing JSF managed bean for <code>/rhq/common/monitor/response.xhtml</code>.
+ */
 public class CallTimeUIBean extends PagedDataTableUIBean {
 
     private final Log log = LogFactory.getLog(this.getClass());
@@ -75,10 +78,10 @@ public class CallTimeUIBean extends PagedDataTableUIBean {
                     .getMeasurementSchedulesForResourceAndType(subject, resourceId, DataType.CALLTIME, null, false);
                 if (callTimeSchedules.size() == 0) {
                     FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                        "This resource does not support response time metric");
+                        "This resource does not support response time metrics.");
                 } else if (callTimeSchedules.size() > 1) {
                     FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                        "This resource defines multiple resource time metrics, only one is allowed");
+                        "This resource defines multiple resource time metrics - only one is allowed.");
                 } else {
                     int scheduleId = callTimeSchedules.get(0).getId();
                     results = callTimeDataManager.getCallTimeDataForResource(subject, scheduleId,
@@ -86,10 +89,10 @@ public class CallTimeUIBean extends PagedDataTableUIBean {
                 }
             } else if (context.category == EntityContext.Category.ResourceGroup) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                    "Response time metrics are not yet supported for compatible groups");
+                    "Response time metrics are not yet supported for compatible groups.");
             } else if (context.category == EntityContext.Category.AutoGroup) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
-                    "Response time metrics are not yet supported for autogroups");
+                    "Response time metrics are not yet supported for auto-groups.");
             } else {
                 log.error(context.getUnknownContextMessage());
             }

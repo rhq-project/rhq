@@ -7,11 +7,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>test</groupId>
-    <artifactId>jbas5-jnp-client</artifactId>
+    <artifactId>jbas5-ejb-client</artifactId>
     <version>1.0</version>
     <packaging>jar</packaging>
 
-    <name>JBAS5 JNP Client</name>
+    <name>JBAS5 EJB Client</name>
     <description>a simple client for testing connecting to a JBAS5 instance via JNP and looking up the ProfileService</description>
 
     <properties>
@@ -151,7 +151,22 @@
           <artifactId>jboss-metatype</artifactId>
           <version>2.1.0.CR8</version>          
         </dependency>        
-<!--
+        
+        <dependency>
+          <groupId>org.jboss.jbossas</groupId>
+          <artifactId>jboss-as-security</artifactId>
+          <version>5.1.0.CR1</version>    
+          <classifier>client</classifier>
+          <scope>runtime</scope>                            
+        </dependency>        
+
+        <dependency>
+          <groupId>org.jboss.integration</groupId>
+          <artifactId>jboss-transaction-spi</artifactId>                    
+          <version>5.1.0.CR3</version>          
+          <scope>runtime</scope>                            
+        </dependency>        
+        
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
           <artifactId>jboss-ejb3-common</artifactId>
@@ -198,19 +213,7 @@
           <version>1.0.0</version>         
           <classifier>client</classifier>
         </dependency>
-
-        <dependency>
-          <groupId>org.jboss.naming</groupId>
-          <artifactId>jnp-client</artifactId>
-          <version>5.0.1.GA</version>                   
-        </dependency>
-
-        <dependency>
-          <groupId>org.jboss.security</groupId>
-          <artifactId>jbosssx</artifactId>
-          <version>2.1.0.20090318</version>                   
-        </dependency> 
--->        
+   
       </dependencies>
 
     <build>
@@ -246,7 +249,7 @@
             <configuration>
               <archive>
                 <manifest>
-                  <mainClass>test.RmiClient</mainClass>
+                  <mainClass>test.EjbClient</mainClass>
                   <addClasspath>true</addClasspath>
                   <classpathPrefix>lib</classpathPrefix>
                 </manifest>

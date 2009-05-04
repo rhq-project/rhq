@@ -480,6 +480,8 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
 # The frequency (in millis) the server checks for updated agent plugins
 rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
 
+# Remote/Web Service API
+rhq.server.enable.web.services=false
 </echo>
 
   </target>

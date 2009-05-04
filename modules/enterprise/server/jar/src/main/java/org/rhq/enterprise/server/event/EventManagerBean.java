@@ -485,7 +485,7 @@ public class EventManagerBean implements EventManagerLocal {
         if (isCountQuery) {
             query = "SELECT count(ev.id) ";
         } else {
-            query = "SELECT ev.detail, ev.id AS evid, substr(evs.location, 1, 30), ev.severity, ev.timestamp, res.id AS resid, res.name ";
+            query = "SELECT ev.detail, ev.id AS evid, evs.location, ev.severity, ev.timestamp, res.id AS resid, res.name ";
         }
         query += " FROM RHQ_Event ev ";
         query += " INNER JOIN RHQ_Event_Source evs ON evs.id = ev.event_source_id ";

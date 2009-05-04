@@ -68,6 +68,13 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author     Ian Springer
  */
 public class FunctionTagLibrary extends AbstractTagLibrary {
+
+    private enum ElideMode {
+        LEFT, RIGHT, MIDDLE
+    }
+
+    public static final String ELLIPSIS = "\u2026";
+
     /**
      * Namespace used to import this library in Facelets pages
      */
@@ -215,12 +222,66 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         return LookupUtil.getResourceManager().getResourceById(user, resourceId);
     }
 
-    public static String trimString(String str, int numChars) {
-        if (str == null)
-            throw new IllegalArgumentException("cannot retrieve characters of a null string");
-        if (numChars > str.length())
+    /**
+     * Elides given string using an ellipsis character.
+     * 
+     * The mode is one of "left", "right", "middle" (case insensitive).
+     * 
+     * @see #elideStringCustom(String, int, String, String)
+     */
+    public static String elideString(String str, int numChars, String mode) {
+        return elideStringCustom(str, numChars, mode, ELLIPSIS);
+    }
+
+    /**
+     * Elides given string using the specified ellipsis. 
+     * The mode is one of "left", "right", "middle" (case insensitive).
+     * The resulting string has at most numChars characters.
+     * 
+     * @param str the string to elide
+     * @param numChars the length of the elided string
+     * @param mode the elide mode
+     * @param ellipsis the ellipsis string
+     * @return the elided string
+     */
+    public static String elideStringCustom(String str, int numChars, String mode, String ellipsis) {
+        ElideMode eMode = Enum.valueOf(ElideMode.class, mode.toUpperCase());
+        return elideString(str, numChars, eMode, ellipsis);
+    }
+
+    private static String elideString(String str, int numChars, ElideMode mode, String ellipsis) {
+        if (str == null) {
+            throw new IllegalArgumentException("Cannot elide a null string");
+        }
+
+        if (ellipsis == null) {
+            throw new IllegalArgumentException("Ellipsis can't be null when eliding a string");
+        }
+
+        if (numChars >= str.length()) {
             return str;
-        return str.substring(0, numChars) + "...";
+        }
+
+        int ellipsisLength = ellipsis.length();
+
+        StringBuilder result = new StringBuilder(numChars);
+
+        if (mode == ElideMode.LEFT) {
+            result.append(ellipsis);
+            result.append(str.substring(str.length() - numChars - ellipsisLength + 1, str.length()));
+        } else if (mode == ElideMode.MIDDLE) {
+            int firstHalf = (numChars - ellipsisLength) / 2;
+            int secondHalf = firstHalf + ((numChars - ellipsisLength) % 2);
+
+            result.append(str.substring(0, firstHalf));
+            result.append(ellipsis);
+            result.append(str.substring(str.length() - secondHalf + 1, str.length()));
+        } else if (mode == ElideMode.RIGHT) {
+            result.append(str.substring(0, numChars - ellipsisLength + 1));
+            result.append(ellipsis);
+        }
+
+        return result.toString();
     }
 
     private final static String AMP = "&amp;";

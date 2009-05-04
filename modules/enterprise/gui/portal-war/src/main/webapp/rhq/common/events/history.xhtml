@@ -134,7 +134,7 @@
                             <h:outputText styleClass="headerText" value="Source" />
                         </onc:sortableColumnHeader>
                     </f:facet>
-                    <h:outputText value="#{item.sourceLocation}" />
+                    <h:outputText value="#{onf:elideString(item.sourceLocation, 50, 'left')}" title="#{item.sourceLocation}"/>
                 </rich:column>
 
                 <rich:column>
@@ -146,7 +146,7 @@
                                      reRender="eventDetailsModalPanel" ajaxSingle="true"
                                      limitToList="true"
                                      oncomplete="Richfaces.showModalPanel('modalPanelForm:eventDetailsModalPanel')">
-                       <h:outputText value="#{onf:trimString(item.eventDetail,160)}" />
+                       <h:outputText value="#{onf:elideString(item.eventDetail, 160, 'right')}" />
                     </a4j:commandLink>
                 </rich:column>
 

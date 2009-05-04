@@ -31,7 +31,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-plugins-parent</artifactId>
-        <version>1.2.0-SNAPSHOT</version><!-- TODO adjust RHQ version -->
+        <version>1.3.0-SNAPSHOT</version><!-- TODO adjust RHQ version -->
     </parent>
 
     <groupId>${props.packagePrefix}</groupId>

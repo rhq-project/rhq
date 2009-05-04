@@ -62,17 +62,17 @@ public class CloudManagerBean implements CloudManagerLocal {
     private EntityManager entityManager;
 
     @EJB
-    CloudManagerLocal cloudManager;
+    private CloudManagerLocal cloudManager;
 
     @EJB
-    FailoverListManagerLocal failoverListManager;
+    private FailoverListManagerLocal failoverListManager;
 
     @EJB
-    PartitionEventManagerLocal partitionEventManager;
+    private PartitionEventManagerLocal partitionEventManager;
 
     @EJB
     @IgnoreDependency
-    ServerManagerLocal serverManager;
+    private ServerManagerLocal serverManager;
 
     public List<Agent> getAgentsByServerName(String serverName) {
         Server server = cloudManager.getServerByName(serverName);

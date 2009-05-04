@@ -18,9 +18,9 @@
     <orderEntry type="library" exported="" name="Maven: i18nlog:i18nlog:1.0.9" level="project" />
     <orderEntry type="library" name="Maven: javax.xml.bind:jaxb-api:2.1" level="project" />
     <orderEntry type="library" name="Maven: javax.xml.stream:stax-api:1.0-2" level="project" />
-    <orderEntry type="library" name="Maven: javax.activation:activation:1.1" level="project" />
+    <orderEntry type="library" exported="" name="Maven: javax.activation:activation:1.1.1" level="project" />
     <orderEntry type="library" name="Maven: org.testng:testng:jdk15:5.7" level="project" />
-    <orderEntry type="library" name="Maven: junit:junit:3.8.1" level="project" />
+    <orderEntry type="library" exported="" name="Maven: junit:junit:3.8.1" level="project" />
     <orderEntry type="library" name="Maven: org.jetbrains:annotations:7.0.2" level="project" />
     <orderEntry type="module" module-name="rhq-core-domain" />
     <orderEntry type="module" module-name="rhq-core-util" />
@@ -38,6 +38,37 @@
     <orderEntry type="library" name="Maven: mc4j:org-mc4j-ems:1.2.6" level="project" />
     <orderEntry type="library" name="Maven: com.sun:tools:1.4.2" level="project" />
     <orderEntry type="library" exported="" name="Maven: org.osgi:org.osgi.core:r4v41" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.osgi:org.osgi.compendium:r4v41" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.osgi:jboss-osgi-spi:1.0.0.Beta1" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.deployers:jboss-deployers-client-spi:2.0.5.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.deployers:jboss-deployers-core-spi:2.0.5.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss:jboss-common-core:2.2.10.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.man:jboss-managed:2.0.0.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.man:jboss-metatype:2.0.0.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss:jboss-mdr:2.0.1.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: sun-jaxb:jaxb-api:2.1.4" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.deployers:jboss-deployers-vfs:2.0.5.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.deployers:jboss-deployers-vfs-spi:2.0.5.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss:jboss-vfs:2.1.0.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.deployers:jboss-deployers-spi:2.0.5.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.deployers:jboss-deployers-structure-spi:2.0.5.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.microcontainer:jboss-dependency:2.0.4.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss:jbossxb:2.0.0.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss:jboss-reflect:2.0.2.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: apache-xerces:xml-apis:2.9.1" level="project" />
+    <orderEntry type="library" exported="" name="Maven: apache-xerces:xercesImpl:2.9.1" level="project" />
+    <orderEntry type="library" exported="" name="Maven: wutka-dtdparser:dtdparser121:1.2.1" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.integration:jboss-classloading-spi:5.0.3.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.logging:jboss-logging-spi:2.0.5.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.cl:jboss-classloading:2.0.3.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.cl:jboss-classloader:2.0.3.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: stax:stax-api:1.0" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.microcontainer:jboss-kernel:2.0.4.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.cl:jboss-classloading-vfs:2.0.3.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.deployers:jboss-deployers-core:2.0.5.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.deployers:jboss-deployers-client:2.0.5.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.jboss.deployers:jboss-deployers-impl:2.0.5.GA" level="project" />
+    <orderEntry type="library" exported="" name="Maven: javassist:javassist:3.9.0.GA" level="project" />
   </component>
 </module>
 

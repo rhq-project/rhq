@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.conf
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionErrors;
@@ -82,9 +83,23 @@ public class AddOthersForm extends AddNotificationsForm {
         } else {
             errs = new ActionErrors();
         }
-
+        String[] emails = emailAddresses.split(",");
         try {
-            InternetAddress[] addresses = InternetAddress.parse(emailAddresses);
+
+            for (int i = 0; i < emails.length; i++) {
+
+                String email = emails[i];
+
+                int center = email.indexOf('@');
+
+                if (center == -1)
+                    throw new AddressException("At-sign is missing.");
+
+                if ((email.length() - center) == 0)
+                    throw new AddressException("Domain name is missing.");
+            }
+
+            InternetAddress[] addresses = InternetAddress.parse(emailAddresses, true);
         } catch (AddressException e) {
             if (e.getRef() == null) {
                 ActionMessage err = new ActionMessage("alert.config.error.InvalidEmailAddresses", e.getMessage());

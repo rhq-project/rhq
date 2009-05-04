@@ -51,7 +51,7 @@ public abstract class WebUtility {
     public static Integer getResourceId(ServletRequest request) {
         String resourceIdString = request.getParameter(ParamConstants.RESOURCE_ID_PARAM);
         Integer resourceId = null;
-        if (resourceIdString != null) {
+        if (resourceIdString != null && !resourceIdString.equals("")) {
             resourceId = Integer.parseInt(resourceIdString);
         }
 

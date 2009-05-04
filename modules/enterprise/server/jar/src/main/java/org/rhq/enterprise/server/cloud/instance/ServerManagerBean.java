@@ -39,8 +39,8 @@ import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.communications.GlobalSuspendCommandListener;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -101,6 +101,8 @@ public class ServerManagerBean implements ServerManagerLocal {
     public void handleHeartbeatTimer(Timer timer) {
         try {
             beat();
+        } catch (Throwable t) {
+            log.error("Failed to handle cloud heartbeat timer - will try again later. Cause: " + t);
         } finally {
             // reschedule ourself to trigger in another 30 seconds
             timerService.createTimer(30000, TIMER_DATA);

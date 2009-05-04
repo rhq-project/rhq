@@ -85,6 +85,8 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
     public void handleHeartbeatTimer(Timer timer) {
         try {
             cacheConsistencyManager.reloadServerCacheIfNeeded();
+        } catch (Throwable t) {
+            log.error("Failed to reload server cache if needed - will try again later. Cause: " + t);
         } finally {
             // reschedule ourself to trigger in another 30 seconds
             timerService.createTimer(30000, TIMER_DATA);

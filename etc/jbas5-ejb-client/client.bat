@@ -8,8 +8,8 @@ rem $Id$
 if not "%ECHO%" == ""  echo %ECHO%
 if "%OS%" == "Windows_NT"  setlocal
 
-set MAIN_JAR_NAME=jbas5-jnp-client-1.0.jar
-set MAIN_CLASS=test.RmiClient
+set MAIN_JAR_NAME=jbas5-ejb-client-1.0.jar
+set MAIN_CLASS=test.EjbClient
 
 set JBOSS_HOME=C:\opt\jboss-5.1.0.GA-SNAPSHOT
 
@@ -60,10 +60,18 @@ set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\trove.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\javassist.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-security-spi.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-javaee.jar
-rem For remote invocations on the ProfileService proxy (e.g. ProfileService.getViewManager())...
-set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\concurrent.jar
-set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-client.jar
-set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-mdr.jar
+rem For remote invocations on the ProfileService proxy (e.g. ProfileService.getDomains())...
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-integration.jar
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-ejb3-common-client.jar
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-ejb3-core-client.jar
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-ejb3-ext-api.jar
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-ejb3-ext-api-impl.jar
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-ejb3-proxy-spi-client.jar
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-ejb3-proxy-impl-client.jar
+set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-ejb3-security-client.jar
+rem set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\concurrent.jar
+rem set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-client.jar
+rem set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\client\jboss-mdr.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\lib\jboss-profileservice-spi.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\lib\jboss-managed.jar
 set JBOSS_CLASSPATH=%JBOSS_CLASSPATH%;%JBOSS_HOME%\lib\jboss-metatype.jar

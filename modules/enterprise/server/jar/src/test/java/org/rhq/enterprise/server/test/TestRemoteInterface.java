@@ -53,6 +53,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerRemote;
  * @author Jay Shaughnessy
  */
 
+@Test(groups = "ws")
 public class TestRemoteInterface extends AssertJUnit {
 
     static private final boolean TESTS_ENABLED = false;
@@ -164,8 +165,7 @@ public class TestRemoteInterface extends AssertJUnit {
         assertNull(subjectManager.findSubjectByName(user, "ws-test-user"));
     }
 
-    //@Test(enabled = TESTS_ENABLED)
-    // @Test(enabled = true)
+    @Test(enabled = TESTS_ENABLED)
     public void testOperation() throws Exception {
 
         URL wsdlURL = new URL(WSDL_URL_PREFIX + "SubjectManagerBean?wsdl");

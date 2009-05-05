@@ -574,7 +574,8 @@ Build-OS-Version=${os.version}
             <plugins>
                <plugin>
                   <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration>          
+                  <configuration>                
+                     <groups>ws</groups>
                      <excludes>
                         <exclude>com/**/*.java</exclude>
                      </excludes>

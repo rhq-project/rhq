@@ -147,7 +147,7 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
             String serverName = serverManager.getIdentity();
 
             if (log.isDebugEnabled()) {
-                log.info(serverName + " took [" + (endTime - startTime)
+                log.debug(serverName + " took [" + (endTime - startTime)
                     + "]ms to reload cache for the follow agentIds: " + agentIds + " agents");
             } else {
                 log.info(serverName + " took [" + (endTime - startTime) + "]ms to reload cache for " + agentIds.size()

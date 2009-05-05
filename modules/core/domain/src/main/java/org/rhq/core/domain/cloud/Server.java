@@ -63,7 +63,11 @@ import org.rhq.core.domain.resource.Agent;
         + "       (SELECT COUNT(a) FROM Agent a WHERE a.server = s) " //
         + "     ) " //
         + "  FROM Server s"),
-    @NamedQuery(name = Server.QUERY_FIND_BY_NAME, query = "SELECT s FROM Server s WHERE s.name = :name"),
+    @NamedQuery(name = Server.QUERY_FIND_BY_NAME, query = "" //
+        + "         SELECT s " //
+        + "           FROM Server s " //
+        + "LEFT JOIN FETCH s.affinityGroup " //
+        + "          WHERE s.name = :name"),
     @NamedQuery(name = Server.QUERY_FIND_ALL_CLOUD_MEMBERS, query = "SELECT s FROM Server s WHERE NOT s.operationMode = 'INSTALLED'"),
     @NamedQuery(name = Server.QUERY_FIND_BY_AFFINITY_GROUP, query = "" //
         + "SELECT s " //

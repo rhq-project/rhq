@@ -25,6 +25,7 @@ package org.rhq.core.domain.resource.composite;
 import java.io.Serializable;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
@@ -118,6 +119,7 @@ public class ResourceComposite implements Serializable {
         return resourcePermission;
     }
 
+    @XmlTransient
     public ResourceFacets getResourceFacets() {
         return resourceFacets;
     }

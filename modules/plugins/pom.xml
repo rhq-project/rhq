@@ -75,7 +75,7 @@
   </dependencies>
 
   <modules>
-
+    <!--  core plugins  -->
     <module>platform</module>
     <module>jmx</module>    
     <module>rhq-agent</module>
@@ -84,8 +84,10 @@
     <module>database</module>
     <module>postgres</module>
 
+    <!--  other, possibly experimental plugins -->
     <module>apt</module>
-    <module>grub</module>
+    <module>cli</module>    
+    <module>grub</module>    
 <!-- not behaving       <module>hardware</module> -->
     <module>hosts</module>
     <module>hudson</module>
@@ -99,7 +101,6 @@
     <module>snmptrapd</module>
     <module>sshd</module>
     <module>virt</module>
-    <module>cli</module>
 
     <!-- make this the last - it will validate all the plugins -->
     <module>validate-all-plugins</module>

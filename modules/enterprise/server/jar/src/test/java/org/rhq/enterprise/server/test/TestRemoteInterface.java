@@ -53,7 +53,6 @@ import org.rhq.enterprise.server.resource.ResourceManagerRemote;
  * @author Jay Shaughnessy
  */
 
-@Test(groups = { "WS" })
 public class TestRemoteInterface extends AssertJUnit {
 
     static private final boolean TESTS_ENABLED = false;
@@ -82,7 +81,8 @@ public class TestRemoteInterface extends AssertJUnit {
         user = null;
     }
 
-    @Test(enabled = TESTS_ENABLED)
+    //@Test(enabled = TESTS_ENABLED)    
+    @Test(enabled = true)
     public void testUserManagement() throws Exception {
         URL wsdlURL = new URL(WSDL_URL_PREFIX + "SubjectManagerBean?wsdl");
         QName serviceName = new QName(TARGET_NS_SUBJECT_MANAGER, "SubjectManagerBeanService");
@@ -90,6 +90,8 @@ public class TestRemoteInterface extends AssertJUnit {
         subjectManager = service.getPort(SubjectManagerRemote.class);
 
         user = subjectManager.login("ws-test", "ws-test");
+
+        assertNotNull(user);
 
         assertTrue(subjectManager.isLoggedIn("ws-test"));
 
@@ -163,7 +165,7 @@ public class TestRemoteInterface extends AssertJUnit {
     }
 
     //@Test(enabled = TESTS_ENABLED)
-    @Test(enabled = true)
+    // @Test(enabled = true)
     public void testOperation() throws Exception {
 
         URL wsdlURL = new URL(WSDL_URL_PREFIX + "SubjectManagerBean?wsdl");
@@ -325,16 +327,16 @@ public class TestRemoteInterface extends AssertJUnit {
         }
 
         // remove any completed histories
-        history = operationManager.getCompletedResourceOperationHistories(user, testAS.getResource().getId(),
-            null, null, PageControl.getUnlimitedInstance());
+        history = operationManager.getCompletedResourceOperationHistories(user, testAS.getResource().getId(), null,
+            null, PageControl.getUnlimitedInstance());
 
         if (!history.isEmpty()) {
             for (ResourceOperationHistory roh : history) {
                 operationManager.deleteOperationHistory(user, roh.getId(), true);
             }
 
-            history = operationManager.getCompletedResourceOperationHistories(user, testAS.getResource().getId(),
-                null, null, PageControl.getUnlimitedInstance());
+            history = operationManager.getCompletedResourceOperationHistories(user, testAS.getResource().getId(), null,
+                null, PageControl.getUnlimitedInstance());
             assertTrue(history.isEmpty());
         }
 
@@ -356,8 +358,8 @@ public class TestRemoteInterface extends AssertJUnit {
             operationManager.cancelOperationHistory(user, history.get(0).getId(), true);
         }
 
-        history = operationManager.getCompletedResourceOperationHistories(user, testAS.getResource().getId(),
-            null, null, PageControl.getUnlimitedInstance());
+        history = operationManager.getCompletedResourceOperationHistories(user, testAS.getResource().getId(), null,
+            null, PageControl.getUnlimitedInstance());
         assertEquals(1, history.size());
 
         // remove scheduled operations

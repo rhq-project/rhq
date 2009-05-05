@@ -98,7 +98,7 @@
           <version>5.0.1.GA</version>          
           <scope>runtime</scope>          
         </dependency>       
-<!--
+
         <dependency>
           <groupId>oswego-concurrent</groupId>
           <artifactId>concurrent</artifactId>
@@ -119,7 +119,7 @@
           <version>2.0.1.GA</version>   
           <scope>runtime</scope>              
         </dependency>               
--->
+
         <dependency>
           <groupId>org.jboss.logging</groupId>
           <artifactId>jboss-logging-spi</artifactId>
@@ -166,12 +166,6 @@
         <dependency>
           <groupId>org.jboss.ejb3</groupId>
           <artifactId>jboss-ejb3-ext-api</artifactId>
-          <version>1.0.0</version>                    
-        </dependency>
-
-        <dependency>
-          <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-ext-api-impl</artifactId>
           <version>1.0.0</version>                    
         </dependency>
 

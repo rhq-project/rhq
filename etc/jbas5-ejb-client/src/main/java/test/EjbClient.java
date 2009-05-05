@@ -18,14 +18,17 @@ public class EjbClient
    private static final String SECURE_MANAGEMENT_VIEW_JNDI_NAME = "SecureManagementView/remote";
    private static final String SECURE_DEPLOYMENT_MANAGER_JNDI_NAME = "SecureDeploymentManager/remote";
    
+   private static final String PROFILE_SERVICE_PRINCIPAL = "javaduke";
+   private static final String PROFILE_SERVICE_CREDENTIALS = "anotherduke";
+   
    public static void main(String[] args)
       throws Exception
    {           
       Properties env = new Properties();
       env.setProperty(Context.PROVIDER_URL, "jnp://127.0.0.1:1099/");
       env.setProperty(Context.INITIAL_CONTEXT_FACTORY, JNDI_LOGIN_INITIAL_CONTEXT_FACTORY);
-      env.setProperty(Context.SECURITY_PRINCIPAL, "admin");
-      env.setProperty(Context.SECURITY_CREDENTIALS, "admin");      
+      env.setProperty(Context.SECURITY_PRINCIPAL, PROFILE_SERVICE_PRINCIPAL);
+      env.setProperty(Context.SECURITY_CREDENTIALS, PROFILE_SERVICE_CREDENTIALS);      
       
       InitialContext initialContext = createInitialContext(env);
       ProfileService profileService = (ProfileService)lookup(initialContext, SECURE_PROFILE_SERVICE_JNDI_NAME);      

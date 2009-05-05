@@ -163,15 +163,25 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void mergeMeasurementReport(MeasurementReport report) {
         long start = System.currentTimeMillis();
         // TODO GH: Deal with offset (this is only for situations where the clock doesn't match on the agent)
 
-        this.measurementDataManager.addNumericData(report.getNumericData());
-        this.measurementDataManager.addTraitData(report.getTraitData());
-        this.callTimeDataManager.addCallTimeData(report.getCallTimeData());
+        /* 
+         * even if these methods check for null/empty collections, they cross the EJB boundary and so unnecessarily
+         * start transactions.  by checking the null/emptiness of a collection here, by only create transactions 
+         * when real work will be done;
+         */
+        if (report.getNumericData() != null && !report.getNumericData().isEmpty()) {
+            this.measurementDataManager.addNumericData(report.getNumericData());
+        }
+        if (report.getTraitData() != null && !report.getTraitData().isEmpty()) {
+            this.measurementDataManager.addTraitData(report.getTraitData());
+        }
+        if (report.getCallTimeData() != null && !report.getCallTimeData().isEmpty()) {
+            this.callTimeDataManager.addCallTimeData(report.getCallTimeData());
+        }
 
         long time = System.currentTimeMillis() - start;
         MeasurementMonitor.getMBean().incrementMeasurementInsertTime(time);

@@ -26,13 +26,6 @@
           <version>5.0.1.GA</version>      
           <scope>runtime</scope>                 
         </dependency>
-
-        <dependency>
-          <groupId>org.jboss.aspects</groupId>
-          <artifactId>jboss-security-aspects</artifactId>
-          <version>1.0.0.GA</version>    
-          <scope>runtime</scope>                   
-        </dependency>
         
         <dependency>
           <groupId>org.jboss.security</groupId>
@@ -41,6 +34,13 @@
           <scope>runtime</scope>          
         </dependency>       
 
+        <dependency>
+          <groupId>org.jboss.aspects</groupId>
+          <artifactId>jboss-security-aspects</artifactId>
+          <version>1.0.0.GA</version>    
+          <scope>runtime</scope>                   
+        </dependency>
+        
         <dependency>
           <groupId>org.jboss.aop</groupId>
           <artifactId>jboss-aop</artifactId>
@@ -151,66 +151,7 @@
           <artifactId>jboss-metatype</artifactId>
           <version>2.1.0.CR8</version>          
         </dependency>        
-<!--
-        <dependency>
-          <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-common</artifactId>
-          <version>1.0.0</version>          
-          <classifier>client</classifier>
-        </dependency>
-
-        <dependency>
-          <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-core</artifactId>
-          <version>1.1.4</version>          
-          <classifier>client</classifier>
-        </dependency>
-
-        <dependency>
-          <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-ext-api</artifactId>
-          <version>1.0.0</version>                    
-        </dependency>
-
-        <dependency>
-          <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-ext-api-impl</artifactId>
-          <version>1.0.0</version>                    
-        </dependency>
-
-        <dependency>
-          <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-proxy-spi</artifactId>
-          <version>1.0.0</version>         
-          <classifier>client</classifier>
-        </dependency>
         
-        <dependency>
-          <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-proxy-impl</artifactId>
-          <version>1.0.2</version>         
-          <classifier>client</classifier>
-        </dependency>
-
-        <dependency>
-          <groupId>org.jboss.ejb3</groupId>
-          <artifactId>jboss-ejb3-security</artifactId>
-          <version>1.0.0</version>         
-          <classifier>client</classifier>
-        </dependency>
-
-        <dependency>
-          <groupId>org.jboss.naming</groupId>
-          <artifactId>jnp-client</artifactId>
-          <version>5.0.1.GA</version>                   
-        </dependency>
-
-        <dependency>
-          <groupId>org.jboss.security</groupId>
-          <artifactId>jbosssx</artifactId>
-          <version>2.1.0.20090318</version>                   
-        </dependency> 
--->        
       </dependencies>
 
     <build>

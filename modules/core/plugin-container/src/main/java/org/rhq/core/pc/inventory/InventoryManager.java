@@ -39,6 +39,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.Lock;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -418,22 +419,47 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    // TODO (ips): Refactor this so that it shares the code from AvailablityExecutor.checkInventory().
+    /**
+     * Returns the current availablity for the specified Resource if no other thread currently possesses a write lock
+     * on that Resource's ResourceComponent, or otherwise, returns the last-collected availablity for the Resource.
+     *
+     * @param  resource a Resource
+     *
+     * @return the current availablity for the specified Resource if no other thread currently possesses a write lock
+     *         on that Resource's ResourceComponent, or otherwise, the last-collected availablity for the Resource
+     */
+    // TODO (ips): Perhaps refactor this so that it shares code with AvailablityExecutor.checkInventory().
     public Availability getCurrentAvailability(Resource resource) {
         AvailabilityType availType = null; // i.e. UNKNOWN;
         ResourceContainer resourceContainer = getResourceContainer(resource);
         if (resourceContainer != null) {
             if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
-                ResourceComponent resourceComponent = null;
-                try {
-                    resourceComponent = resourceContainer.createResourceComponentProxy(ResourceComponent.class,
-                        FacetLockType.READ, 5000, true, true);
-                    availType = resourceComponent.getAvailability();
-                } catch (PluginContainerException e) {
-                    log.error("Failed to retrieve ResourceComponent for " + resource + ".", e);
-                } catch (Throwable t) {
-                    log.error("Call to getAvailablity() on ResourceComponent for " + resource + " failed.", t);
-                    availType = AvailabilityType.DOWN;
+                ResourceComponent resourceComponent;
+                Lock lock = resourceContainer.getReadFacetLock();
+                if (lock.tryLock()) {
+                    // We have acquired the lock.
+                    try
+                    {
+                        ResourceCategory resourceCategory = resource.getResourceType().getCategory();
+                        // Give the call to getAvailablity() a bit more time if the Resource is a server.
+                        long componentTimeout = (resourceCategory == ResourceCategory.SERVER) ? 5000 : 2500;
+                        // We already possess the lock, so tell the proxy not to do any locking of its own.
+                        resourceComponent = resourceContainer.createResourceComponentProxy(ResourceComponent.class,
+                            FacetLockType.NONE, componentTimeout, true, true);
+                        availType = resourceComponent.getAvailability();
+                    }
+                    catch (PluginContainerException e)
+                    {
+                        log.error("Failed to retrieve ResourceComponent for " + resource + ".", e);
+                    } catch (RuntimeException e) {
+                        log.error("Call to getAvailablity() on ResourceComponent for " + resource + " failed.", e);
+                        availType = AvailabilityType.DOWN;
+                    } finally {
+                        lock.unlock();
+                    }
+                } else {
+                    // Some other thread possesses the lock - just return the last-collected availablity for the Resource.
+                    availType = resourceContainer.getAvailability().getAvailabilityType();
                 }
             }
         } else {

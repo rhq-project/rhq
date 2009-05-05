@@ -272,7 +272,7 @@ public class ResourceContainer implements Serializable {
      * the same as {@link #getResourceComponent()}).
      *
      * @param  facetInterface the interface that the component implements and will expose via the proxy
-     * @param  lockType       the type of lock to use when synchronizing access
+     * @param  lockType       the type of lock to use when synchronizing access; must not be null
      * @param  timeout        if the method invocation thread has not completed after this many milliseconds, interrupt
      *                        it; value must be positive
      * @param  daemonThread   whether or not the thread used for the invocation should be a daemon thread
@@ -377,7 +377,7 @@ public class ResourceContainer implements Serializable {
          *
          * @param container the resource container managing the resource component upon which the method will be invoked;
          *                  caller must ensure the container's component is never null
-         * @param lockType the type of lock to use for the invocation
+         * @param lockType the type of facet lock to acquire for the invocation; must not be null
          * @param timeout if the method invocation thread has not completed after this many milliseconds, interrupt it;
         *                value must be positive
          * @param daemonThread whether or not the thread used for the invocation should be a daemon thread
@@ -386,12 +386,10 @@ public class ResourceContainer implements Serializable {
         public ResourceComponentInvocationHandler(ResourceContainer container, FacetLockType lockType, long timeout,
             boolean daemonThread, Class facetInterface) {
             this.container = container;
-            if (lockType == FacetLockType.WRITE) {
-                this.lock = container.getWriteFacetLock();
-            } else if (lockType == FacetLockType.READ) {
-                this.lock = container.getReadFacetLock();
-            } else {
-                this.lock = null;
+            switch (lockType) {
+                case WRITE: this.lock = container.getWriteFacetLock(); break;
+                case READ: this.lock = container.getReadFacetLock(); break;
+                default: this.lock = null; break;
             }
             if (timeout <= 0) {
                 throw new IllegalArgumentException("timeout value is not positive.");
@@ -476,8 +474,6 @@ public class ResourceContainer implements Serializable {
                 }
                 // If we made it here, we have acquired the lock.
             }
-
-            Boolean isReentrant = null;
 
             try {
                 // This is the actual call into the resource component's facet interface.

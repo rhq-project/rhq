@@ -109,13 +109,14 @@
           <!--<scope>provided</scope>-->
         </dependency>
 
-        <!-- NOTE: Uncomment the below deps if you want to pull down the jboss-profileservice 
-                   and jboss-system sources jars for debugging purposes. -->        
+        <!-- Uncomment the below deps if you want to pull down the jboss-profileservice 
+             and jboss-system sources jars for debugging purposes. NOTE: These jars are
+             *not* available from the public JBoss repo. -->        
         <!--
         <dependency>
           <groupId>org.jboss</groupId>
           <artifactId>jboss-profileservice</artifactId>                    
-          <version>5.1.0.CR1</version>
+          <version>5.1.0.GA</version>
           <scope>provided</scope>
         </dependency>                                
         <dependency>
@@ -129,6 +130,12 @@
 
     <build>
         <plugins>
+        
+<plugin>
+   <groupId>org.twdata.maven</groupId>
+   <artifactId>maven-cli-plugin</artifactId>
+</plugin>
+        
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>

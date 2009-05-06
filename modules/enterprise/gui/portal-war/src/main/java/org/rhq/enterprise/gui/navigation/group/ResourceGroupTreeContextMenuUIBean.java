@@ -18,32 +18,28 @@
  */
 package org.rhq.enterprise.gui.navigation.group;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
-import javax.faces.component.html.HtmlGraphicImage;
-import javax.faces.component.html.HtmlOutputLink;
-import javax.servlet.http.HttpServletRequest;
 
 import org.richfaces.component.html.ContextMenu;
 import org.richfaces.component.html.HtmlMenuGroup;
 import org.richfaces.component.html.HtmlMenuItem;
-import org.richfaces.component.html.HtmlMenuSeparator;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.navigation.contextmenu.MenuItemDescriptor;
+import org.rhq.enterprise.gui.navigation.contextmenu.MetricMenuItemDescriptor;
+import org.rhq.enterprise.gui.navigation.contextmenu.QuickLinksDescriptor;
+import org.rhq.enterprise.gui.navigation.contextmenu.TreeContextMenuBase;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.cluster.ClusterKey;
 import org.rhq.enterprise.server.resource.cluster.ClusterManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -51,97 +47,126 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Greg Hinkle
+ * @author Lukas Krejci
  */
-public class ResourceGroupTreeContextMenuUIBean {
+public class ResourceGroupTreeContextMenuUIBean extends TreeContextMenuBase {
 
-    private static final String STYLE_QUICK_LINKS_ICON = "margin: 2px;";
+    private ResourceGroup currentResourceGroup;
+    private String currentParentResourceGroupId;
+    private List<MenuItemDescriptor> menuItemDescriptorsForView;
+    private List<MetricMenuItemDescriptor> metricMenuItemDescriptorsForGraph;
+    private List<MenuItemDescriptor> menuItemDescriptorsForOperations;
 
     private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
-    private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
     private ClusterManagerLocal clusterManager = LookupUtil.getClusterManager();
     private OperationManagerLocal operationManager = LookupUtil.getOperationManager();
     private MeasurementDefinitionManagerLocal measurementDefinitionManager = LookupUtil
         .getMeasurementDefinitionManager();
 
-    private ContextMenu resourceContextMenu;
-
-    public ContextMenu getMenu() {
-        return resourceContextMenu;
-    }
-
-    public void setMenu(ContextMenu menu) throws ResourceTypeNotFoundException {
-        this.resourceContextMenu = menu;
-
-        this.resourceContextMenu.getChildren().clear();
-
+    @Override
+    protected void init() throws Exception {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
 
         String clusterKeyString = FacesContextUtility.getOptionalRequestParameter("contextClusterKey");
         String groupIdString = FacesContextUtility.getOptionalRequestParameter("contextGroupId");
-        String parentGroupIdString = FacesContextUtility.getOptionalRequestParameter("contextParentGroupId");
+        currentParentResourceGroupId = FacesContextUtility.getOptionalRequestParameter("contextParentGroupId");
 
-        ResourceGroup group = null;
+        currentResourceGroup = null;
 
         if (clusterKeyString != null) {
             ClusterKey key = ClusterKey.valueOf(clusterKeyString);
-            group = clusterManager.createAutoClusterBackingGroup(subject, key, false);
+            currentResourceGroup = clusterManager.createAutoClusterBackingGroup(subject, key, false);
 
         } else if (groupIdString != null) {
             int groupId = Integer.parseInt(groupIdString);
-            group = groupManager.getResourceGroupById(subject, groupId, null);
+            currentResourceGroup = groupManager.getResourceGroupById(subject, groupId, null);
 
         }
 
-        if (group != null && group.getResourceType() != null) {
-            ResourceType type = group.getResourceType();
-
-            // basic information
-            addMenuItem("menu_group_" + group.getId(), group.getName(), true);
-
-            // quick links
-            ResourceFacets facets = this.resourceTypeManager.getResourceFacets(type.getId());
-            addQuickLinks(String.valueOf(group.getId()), parentGroupIdString, facets);
-
-            // members menu
-            addMembers(group);
-
-            // separator bar
-            this.resourceContextMenu.getChildren().add(new HtmlMenuSeparator());
-
-            // measurements menu
+        if (currentResourceGroup != null) {
             List<MeasurementDefinition> definitions = measurementDefinitionManager
-                .getMeasurementDefinitionsByResourceType(subject, type.getId(), DataType.MEASUREMENT, null);
-            addMeasurementGraphToViewsMenu(String.valueOf(group.getId()), definitions);
+                .getMeasurementDefinitionsByResourceType(subject, currentResourceGroup.getResourceType().getId(),
+                    DataType.MEASUREMENT, null);
 
             // operations menugroup, lazy-loaded entries because only name/id are needed for display
-            List<OperationDefinition> operations = operationManager.getSupportedResourceTypeOperations(subject, type
-                .getId(), false);
-            addOperationsMenu(String.valueOf(group.getId()), parentGroupIdString, operations);
+            List<OperationDefinition> operations = operationManager.getSupportedResourceTypeOperations(subject,
+                currentResourceGroup.getResourceType().getId(), false);
+
+            menuItemDescriptorsForView = createViewMenuItemDescriptors(currentResourceGroup, definitions);
+            metricMenuItemDescriptorsForGraph = createGraphMenuItemDescriptors(currentResourceGroup, definitions);
+            menuItemDescriptorsForOperations = createOperationMenuItemDescriptors(currentResourceGroup.getId(),
+                currentParentResourceGroupId, operations);
+        } else {
+            menuItemDescriptorsForView = null;
+            metricMenuItemDescriptorsForGraph = null;
+            menuItemDescriptorsForOperations = null;
         }
     }
 
-    private void addMenuItem(String id, String value, boolean disabled) {
-        HtmlMenuItem nameItem = new HtmlMenuItem();
-        nameItem.setId(id);
-        nameItem.setValue(value);
-        nameItem.setDisabled(disabled);
-        nameItem.setStyle("color: black;");
-        this.resourceContextMenu.getChildren().add(nameItem);
+    @Override
+    protected List<String> getMenuHeaders() {
+        return Collections.singletonList(currentResourceGroup.getName());
     }
 
-    private void addMembers(ResourceGroup group) {
+    @Override
+    protected QuickLinksDescriptor getMenuQuickLinks() {
+        QuickLinksDescriptor descriptor = new QuickLinksDescriptor();
+
+        descriptor.setMenuItemId("menu_groupQuickLinks_" + currentResourceGroup.getId());
+
+        String attributes = "groupId=" + currentResourceGroup.getId();
+        if (currentParentResourceGroupId != null) {
+            attributes += "&parentGroupId=" + currentParentResourceGroupId;
+        }
+
+        descriptor.setMonitoringUrl("/rhq/group/monitor/graphs.xhtml?" + attributes);
+        descriptor.setInventoryUrl("/rhq/group/inventory/view.xhtml?" + attributes);
+        descriptor.setConfigurationUrl("/rhq/group/configuration/viewCurrent.xhtml?" + attributes);
+        descriptor.setOperationUrl("/rhq/group/operation/groupOperationScheduleNew.xhtml?" + attributes);
+        descriptor.setEventUrl("/rhq/group/events/history.xhtml?" + attributes);
+
+        return descriptor;
+    }
+
+    @Override
+    protected List<MenuItemDescriptor> getViewChartsMenuItems() {
+        return menuItemDescriptorsForView;
+    }
+
+    @Override
+    protected List<MetricMenuItemDescriptor> getGraphToViewMenuItems() {
+        return metricMenuItemDescriptorsForGraph;
+    }
+
+    @Override
+    protected List<MenuItemDescriptor> getOperationsMenuItems() {
+        return menuItemDescriptorsForOperations;
+    }
+
+    @Override
+    protected int getResourceTypeId() {
+        return currentResourceGroup.getResourceType().getId();
+    }
+
+    @Override
+    protected boolean shouldCreateMenu() {
+        return currentResourceGroup != null && currentResourceGroup.getResourceType() != null;
+    }
+
+    @Override
+    protected void addAdditionalMenuItems(ContextMenu menu) {
         List<Resource> resources = null;
-        if (group.getClusterKey() != null) {
+        if (currentResourceGroup.getClusterKey() != null) {
             resources = clusterManager.getAutoClusterResources(EnterpriseFacesContextUtility.getSubject(), ClusterKey
-                .valueOf(group.getClusterKey()));
+                .valueOf(currentResourceGroup.getClusterKey()));
         } else {
-            resources = groupManager.getResourcesForResourceGroup(EnterpriseFacesContextUtility.getSubject(), group
-                .getId(), null);
+            resources = groupManager.getResourcesForResourceGroup(EnterpriseFacesContextUtility.getSubject(),
+                currentResourceGroup.getId(), null);
         }
 
         HtmlMenuGroup membersMenuItem = new HtmlMenuGroup();
         membersMenuItem.setValue("Members");
-        membersMenuItem.setId("menu_groupMembers_" + group.getId());
+        membersMenuItem.setId("menu_groupMembers_" + currentResourceGroup.getId());
         membersMenuItem.setStyle("color: black;");
 
         for (Resource res : resources) {
@@ -157,121 +182,76 @@ public class ResourceGroupTreeContextMenuUIBean {
             membersMenuItem.getChildren().add(menuItem);
         }
 
-        this.resourceContextMenu.getChildren().add(membersMenuItem);
+        menu.getChildren().add(membersMenuItem);
     }
 
-    private void addQuickLinks(String groupId, String parentGroupId, ResourceFacets facets) {
-        HtmlMenuItem quickLinksItem = new HtmlMenuItem();
-        quickLinksItem.setSubmitMode("none");
-        quickLinksItem.setId("menu_groupQuickLinks_" + groupId);
+    private List<MetricMenuItemDescriptor> createGraphMenuItemDescriptors(ResourceGroup group,
+        List<MeasurementDefinition> definitions) {
 
-        String url;
-        HtmlOutputLink link;
-        HtmlGraphicImage image;
+        List<MetricMenuItemDescriptor> ret = new ArrayList<MetricMenuItemDescriptor>();
 
-        String attributes = "groupId=" + groupId;
-        if (parentGroupId != null) {
-            attributes += "&parentGroupId=" + parentGroupId;
+        for (MeasurementDefinition definition : definitions) {
+            MetricMenuItemDescriptor descriptor = new MetricMenuItemDescriptor();
+
+            fillBasicMetricMenuItemDescriptor(descriptor, group.getId(), "measurementGraphMenuItem_", definition);
+            descriptor.setMetricToken("cg," + group.getId() + "," + definition.getId());
+
+            ret.add(descriptor);
         }
 
-        if (LookupUtil.getSystemManager().isMonitoringEnabled()) {
-            url = "/rhq/group/monitor/graphs.xhtml?" + attributes;
-            link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Monitor_grey_16.png", "Monitor");
-            image.setStyle(STYLE_QUICK_LINKS_ICON);
-        }
-
-        url = "/rhq/group/inventory/view.xhtml?" + attributes;
-        link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-        image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Inventory_grey_16.png", "Inventory");
-        image.setStyle(STYLE_QUICK_LINKS_ICON);
-
-        if (facets.isConfiguration()) {
-            url = "/rhq/group/configuration/viewCurrent.xhtml?" + attributes;
-            link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Configure_grey_16.png",
-                "Configuration");
-            image.setStyle(STYLE_QUICK_LINKS_ICON);
-        }
-
-        if (facets.isOperation()) {
-            url = "/rhq/group/operation/groupOperationScheduleNew.xhtml?" + attributes;
-            link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Operation_grey_16.png",
-                "Operations");
-            image.setStyle(STYLE_QUICK_LINKS_ICON);
-        }
-
-        if (facets.isEvent()) {
-            url = "/rhq/group/events/history.xhtml?" + attributes;
-            link = FacesComponentUtility.addOutputLink(quickLinksItem, null, url);
-            image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Events_grey_16.png", "Events");
-            image.setStyle(STYLE_QUICK_LINKS_ICON);
-        }
-
-        this.resourceContextMenu.getChildren().add(quickLinksItem);
+        return ret;
     }
 
-    private void addMeasurementGraphToViewsMenu(String groupId, List<MeasurementDefinition> definitions) {
-        HttpServletRequest request = FacesContextUtility.getRequest();
-        String requestURL = request.getRequestURL().toString().toLowerCase();
-        boolean onMonitorGraphsSubtab = (requestURL.indexOf("/monitor/graphs.xhtml") != -1);
+    private List<MenuItemDescriptor> createViewMenuItemDescriptors(ResourceGroup group,
+        List<MeasurementDefinition> definitions) {
 
-        // addChartToGraph menu only if you're looking at the graphs
-        if (onMonitorGraphsSubtab && definitions != null) {
-            HtmlMenuGroup measurementMenu = new HtmlMenuGroup();
-            measurementMenu.setValue("Add Graph to View");
-            this.resourceContextMenu.getChildren().add(measurementMenu);
-            measurementMenu.setDisabled(definitions.isEmpty());
+        List<MenuItemDescriptor> ret = new ArrayList<MenuItemDescriptor>();
 
-            for (MeasurementDefinition definition : definitions) {
-                HtmlMenuItem menuItem = new HtmlMenuItem();
-                String subOption = definition.getDisplayName();
-                menuItem.setValue(subOption);
-                menuItem.setId("measurementGraphMenuItem_" + definition.getId());
+        for (MeasurementDefinition definition : definitions) {
+            MenuItemDescriptor descriptor = new MenuItemDescriptor();
 
-                /**
-                 * resource    '<resourceId>,<scheduleId>'
-                 * compatgroup 'cg,<groupId>,<definitionId>'
-                 * autogroup   'ag,<parentId>,<definitionId>,<typeId>'
-                 */
-                String onClickAddMeasurements = "addMetric('cg," + groupId + "," + definition.getId() + "');";
-                String onClickRefreshPage = "setTimeout(window.location.reload(), 5000);"; // refresh after 5 secs
+            fillBasicMetricMenuItemDescriptor(descriptor, group.getId(), "measurementChartMenuItem_", definition);
 
-                menuItem.setSubmitMode("none");
-                menuItem.setOnclick(onClickAddMeasurements + onClickRefreshPage);
+            ret.add(descriptor);
+        }
 
-                measurementMenu.getChildren().add(menuItem);
+        return ret;
+    }
+
+    private List<MenuItemDescriptor> createOperationMenuItemDescriptors(int groupId, String parentGroupId,
+        List<OperationDefinition> operations) {
+        List<MenuItemDescriptor> ret = new ArrayList<MenuItemDescriptor>();
+
+        for (OperationDefinition def : operations) {
+            MenuItemDescriptor descriptor = new MenuItemDescriptor();
+            descriptor.setMenuItemId("operation_" + def.getId());
+            descriptor.setName(def.getDisplayName());
+
+            String url = "/rhq/group/operation/groupOperationScheduleNew.xhtml";
+            url += "?opId=" + def.getId();
+            url += "&groupId=" + groupId;
+            if (parentGroupId != null) {
+                url += "&parentGroupId=" + parentGroupId;
             }
+            descriptor.setUrl(url);
+
+            ret.add(descriptor);
         }
+
+        return ret;
     }
 
-    private void addOperationsMenu(String groupId, String parentGroupId, List<OperationDefinition> operations) {
+    private void fillBasicMetricMenuItemDescriptor(MenuItemDescriptor descriptor, int groupId, String idPrefix,
+        MeasurementDefinition definition) {
 
-        if (operations != null) {
-            HtmlMenuGroup operationsMenu = new HtmlMenuGroup();
-            operationsMenu.setValue("Operations");
-            this.resourceContextMenu.getChildren().add(operationsMenu);
-            operationsMenu.setDisabled(operations.isEmpty());
+        descriptor.setMenuItemId(idPrefix + definition.getId());
+        descriptor.setName(definition.getDisplayName());
+        String url = "/resource/common/monitor/Visibility.do";
+        url += "?mode=chartSingleMetricSingleResource";
+        url += "&m=" + definition.getId();
+        url += "&groupId=" + groupId;
 
-            for (OperationDefinition def : operations) {
-                HtmlMenuItem menuItem = new HtmlMenuItem();
-                String subOption = def.getDisplayName();
-                menuItem.setValue(subOption);
-                menuItem.setId("operation_" + def.getId());
-
-                String url = "/rhq/group/operation/groupOperationScheduleNew.xhtml";
-                url += "?opId=" + def.getId();
-                url += "&groupId=" + groupId;
-                if (parentGroupId != null) {
-                    url += "&parentGroupId=" + parentGroupId;
-                }
-
-                menuItem.setSubmitMode("none");
-                menuItem.setOnclick("document.location.href='" + url + "'");
-
-                operationsMenu.getChildren().add(menuItem);
-            }
-        }
+        descriptor.setUrl(url);
     }
+
 }

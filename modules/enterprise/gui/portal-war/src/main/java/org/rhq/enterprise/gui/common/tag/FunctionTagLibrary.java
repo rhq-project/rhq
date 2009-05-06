@@ -217,6 +217,25 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
         }
     }
 
+    /**
+     * This method is akin to {@link #contextFragmentURL()} but produces a correct fragment
+     * for the indicators chart action (/resource/common/monitor/visibility/IndicatorCharts.do).
+     * 
+     * This legacy struts action expects a "ctype" parameter where the new UI uses "type".
+     * 
+     * @return context fragment of the URL based on the current entity.
+     */
+    public static String contextFragmentURLForIndicatorsChart() {
+        EntityContext context = WebUtility.getEntityContext();
+        switch (context.category) {
+        case AutoGroup:
+            return ParamConstants.PARENT_RESOURCE_ID_PARAM + "=" + String.valueOf(context.parentResourceId) + "&"
+                + ParamConstants.CHILD_RESOURCE_TYPE_ID_PARAM + "=" + String.valueOf(context.resourceTypeId);
+        default:
+            return contextFragmentURL();
+        }
+    }
+
     public static Resource getResource(int resourceId) {
         Subject user = EnterpriseFacesContextUtility.getSubject();
         return LookupUtil.getResourceManager().getResourceById(user, resourceId);

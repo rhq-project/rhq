@@ -52,6 +52,19 @@
                                    iconLeaf="/images/icons/#{resourceTreeItem.data.resourceType == null? 'Subcategory' : 'Auto_group'}_16.png"
                                    icon="/images/icons/#{resourceTreeItem.data.resourceType == null? 'Subcategory' : 'Auto_group'}_16.png">
 
+                        <a4j:support event="oncontextmenu" reRender="autoGroupMenu" timeout="5000"
+                                     disableDefault="true" status="commonStatus" limitToList="true"
+                                     ajaxSingle="true">
+                                     
+                            <f:param name="contextParentResourceId" value="#{resourceTreeItem.data.parentResource.id}"/>
+                            <f:param name="contextAutoGroupResourceTypeId" value="#{resourceTreeItem.data.resourceType.id}"/>                           
+                            <rich:componentControl disableDefault="true" event="oncomplete" for="autoGroupMenu"
+                                                   operation="show">
+                                <f:param value="#{resourceTreeItem.data.parentResource.id}" name="id"/>
+                                <f:param value="#{resourceTreeItem.data.resourceType.name}" name="type"/>
+                            </rich:componentControl>
+                        </a4j:support>
+                                     
                         <h:outputText value="#{resourceTreeItem} "
                                       styleClass="availLink#{resourceTreeItem.data.availability == 0 ? 'Down' : (resourceTreeItem.data.availability == 1 ? 'Up' : 'Mixed')}"/>
                         <h:outputText value="(#{resourceTreeItem.children.size})"
@@ -73,7 +86,6 @@
                                      disableDefault="true" status="commonStatus" limitToList="true"
                                      ajaxSingle="true">
                             <f:param name="contextResourceId" value="#{resourceTreeItem.data.id}"/>
-                            <f:param name="contextResourceTypeId" value="#{resourceTreeItem.data.resourceType.id}"/>
                             <rich:componentControl disableDefault="true" event="oncomplete" for="resourceMenu"
                                                    operation="show">
                                 <f:param value="#{resourceTreeItem.data.name}" name="name"/>

@@ -65,7 +65,11 @@ id - the id of the Resource being accessed
        <rich:contextMenu attached="false" id="resourceMenu" 
                          binding="#{ResourceTreeContextMenuUIBean.menu}"
                          disableDefaultMenu="false" style="z-index: 50;" 
-                         submitMode="ajax" rendered="#{not empty param.id}" />
+                         submitMode="ajax" rendered="#{not empty param.id or not empty param.parent}" />
+       <rich:contextMenu attached="false" id="autoGroupMenu" 
+                         binding="#{AutoGroupTreeContextMenuUIBean.menu}"
+                         disableDefaultMenu="false" style="z-index: 50;" 
+                         submitMode="ajax" rendered="#{not empty param.id or not empty param.parent}" />
        <rich:contextMenu attached="false" id="groupMenu" 
                          binding="#{ResourceGroupTreeContextMenuUIBean.menu}"
                          disableDefaultMenu="false" style="z-index: 50;" 

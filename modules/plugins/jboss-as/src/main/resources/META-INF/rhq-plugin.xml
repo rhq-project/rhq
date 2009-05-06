@@ -215,7 +215,11 @@
        <![CDATA[
         h3. Binding to IP addresses
 
-        When starting JBossAS instances that need to be monitored using remote JMX (i.e. JNP), it is necessary that the {{java.rmi.server.hostname}} System property is set to the same value as the server's JNP address (which is set to the {{jboss.bind.address}} System property by default). Due to bugs in JBossAS \[1]\[2], {{java.rmi.server.hostname}} will default to "127.0.0.1", unless JBossAS is started using -b, in which case {{java.rmi.server.hostname}} will default to the bind address specified as the argument to -b.
+        When starting JBossAS instances that need to be monitored using remote JMX (i.e. JNP), it is necessary for the
+        {{java.rmi.server.hostname}} System property to be set to the same value as the server's JNP address (which is
+        set to the {{jboss.bind.address}} System property by default). Due to bugs in JBossAS \[1]\[2],
+        {{java.rmi.server.hostname}} will default to "127.0.0.1", unless JBossAS is started using -b, in which case
+        {{java.rmi.server.hostname}} will default to the bind address specified as the argument to -b.
 
         Therefore, you must start your JBossAS instances using either -b, e.g.:
 
@@ -232,7 +236,9 @@
         Otherwise, you will not be able to manage the instance via JON.
 
         {note}
-        Using -b is the recommended way to specify the bind address, since, in addition to setting {{jboss.bind.address}} and {{java.rmi.server.hostname}}, it will also set a couple other JGroups-related System properties to the specified address.
+        Using -b is the recommended way to specify the bind address, since, in addition to setting
+        {{jboss.bind.address}} and {{java.rmi.server.hostname}}, it will also set a couple other JGroups-related System
+        properties to the specified address.
         {note}
 
         \[1] http://jira.jboss.com/jira/browse/JBAS-4736
@@ -240,13 +246,13 @@
 
         h3. Monitoring of EJB 2.x EJBs
 
-        The issue here is that JBossAS changed its way it creates the MBeans names of the deployed EJBs from the jndiNames / ejb-names (this has happened around 4.0.3.sp1)
-        Basically the <jndi-name> or (if it is not present) <local-jndi-name> from jboss.xml is used.
+        The issue here is that JBossAS changed the way it creates the MBean names of the deployed EJBs from the
+        JNDI names / EJB names (this happened around version 4.0.3.sp1). Basically the <jndi-name>, or
+        <local-jndi-name> if <jnid-name> is not present, from jboss.xml is used.
 
         So the workaround is to set the <jndi-name> to the ejb-name in your application.
-        As this probably breaks client code, you want/need to afterwards have a naming reference restoring the original hierarchy.
-
-        For example:
+        As this probably breaks client code, you will want to setup a naming reference that restores the original
+        hierarchy. For example:
 
         If you have in jboss.xml:
         {code:title=jboss.xml}
@@ -274,10 +280,11 @@
 </mbean>
         {code}
 
-        When you have done this, you probably still need to go into the inventory of the respective beans, edit the configuration and just click ok.
+        When you have done this, you probably still need to go into the inventory of the respective beans, edit the
+        configuration and just click ok.
 
-        The namig alias ensures that clients of the Ability ejb can still see the bean in JNDI at the place it looks for.
-        Naming aliases appear in JNDIView (within JMX-Console) as LinkRef.
+        The naming alias ensures that clients of the Ability EJB can still find the bean in JNDI at the original
+        location. Naming aliases appear in JNDIView (within JMX-Console) as LinkRef.
        ]]>
        </help>
 

@@ -26,10 +26,7 @@
 <html>
 <head>
 <title><fmt:message key="login.title" /></title>
-<link rel=stylesheet href="<html:rewrite page="/css/win.css"/>" type="text/css">
-<script language="JavaScript" src="<html:rewrite page="/js/functions.js"/>" type="text/javascript"></script>
-<script language="JavaScript" src="<html:rewrite page="/js/rhq.js"/>" type="text/javascript"></script>
-<script type="text/javascript" src="/js/prototype.js"></script>
+<link rel="stylesheet" href="<html:rewrite page="/css/win.css"/>" type="text/css">
 <script language="JavaScript" type="text/javascript">
   if (top != self)
     top.location.href = self.document.location;
@@ -92,7 +89,7 @@ input.button_submit {
             <fmt:message var="urlDomain" key="product.url.domain" />
             <fmt:message var="productName" key="product.fullName" />
             <a href="#" onclick="openAbout(aboutWindowTitle)">
-                <html:img page="/images/logo_header.png" title="${productName}" />
+                <img src="/images/logo_header.png" title="${productName}" />
             </a>
         </td>
         <td valign="top" align="right">

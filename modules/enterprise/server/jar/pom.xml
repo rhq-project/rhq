@@ -443,7 +443,7 @@ Build-OS-Version=${os.version}
                  <excludes>  
                     <exclude>com/**/*.java</exclude>
                  </excludes>
-                 <excludedGroups>${rhq.testng.excludedGroups},WS</excludedGroups>
+                 <excludedGroups>${rhq.testng.excludedGroups},ws</excludedGroups>
                  <systemProperties>
                     <property>
                        <name>embeddedDeployment</name>

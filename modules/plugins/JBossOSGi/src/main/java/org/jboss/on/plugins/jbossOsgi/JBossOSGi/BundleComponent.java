@@ -119,13 +119,17 @@ public class BundleComponent implements ResourceComponent<JBossOsgiServerCompone
         bean.refreshAttributes(theMetrics);
 
         for (MeasurementScheduleRequest msr : metrics) {
+            EmsAttribute attribute = bean.getAttribute(msr.getName());
+            if (attribute==null)
+                continue;
+            
             if (msr.getDataType() == DataType.MEASUREMENT) {
-                Double value = (Double) bean.getAttribute(msr.getName()).getValue();
+                Double value = (Double) attribute.getValue();
                 MeasurementDataNumeric data = new MeasurementDataNumeric(msr,value);
                 report.addData(data);
             }
             else if (msr.getDataType() == DataType.TRAIT) {
-                String value = (String) bean.getAttribute(msr.getName()).getValue();
+                String value = (String) attribute.getValue();
                 MeasurementDataTrait data = new MeasurementDataTrait(msr,value);
                 report.addData(data);
             }

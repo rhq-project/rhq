@@ -68,8 +68,9 @@ public class JBossOsgiServerDiscovery implements ResourceDiscoveryComponent {
 
         boolean found = testConnection(c);
         if (found) {
+            String simplifiedRemote = simplifyUrl(remote);
             DiscoveredResourceDetails detail = new DiscoveredResourceDetails( discoveryContext.getResourceType(),
-                    remote, "JBossOSGi @ " + remote , null, "JBossOSGi Server", c, null);
+                    remote, "JBossOSGi @ " + simplifiedRemote , null, "JBossOSGi Server", c, null);
 
 
             // Add to return values
@@ -78,6 +79,32 @@ public class JBossOsgiServerDiscovery implements ResourceDiscoveryComponent {
         }
         return discoveredResources;
 
+    }
+
+    /**
+     * Fiddle host:port from the service string for the resource name that will be displayed. If input is null,
+     * null will be returned.
+     * @param remote Input jmx-remote service url.
+     * @return short version of the input if anything goes wrong
+     */
+    private String simplifyUrl(String remote) {
+        if (remote==null)
+            return null;
+
+        if (remote.indexOf("rmi://")==-1) // Nothing to do
+            return remote;
+
+        int i = remote.lastIndexOf("rmi://");
+        i+=6;
+        if (i>remote.length())
+            return remote;
+
+        String res = remote.substring(i);
+        i = res.indexOf("/");
+        if (i>0)
+            res = res.substring(0,i);
+
+        return res;
     }
 
     /**

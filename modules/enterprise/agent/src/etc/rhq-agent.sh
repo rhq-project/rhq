@@ -202,7 +202,7 @@ if [ "x$_CYGWIN" != "x" ]; then
 fi
 
 # to support other agents/plugin containers, allow the caller to override the main classname
-if [ "x$RHQ_AGENT_MAINCLASS" == "x" ]; then
+if [ "x$RHQ_AGENT_MAINCLASS" = "x" ]; then
    RHQ_AGENT_MAINCLASS="org.rhq.enterprise.agent.AgentMain"
 fi
 

@@ -13,10 +13,6 @@
 
     <name>JBAS5 JNP Client</name>
     <description>a simple client for testing connecting to a JBAS5 instance via JNP and looking up the ProfileService</description>
-
-    <properties>
-        <jboss.home>C:/opt/jboss-5.1.0.GA-SNAPSHOT</jboss.home>
-    </properties>
     
     <dependencies>
 
@@ -106,12 +102,14 @@
           <scope>runtime</scope>          
         </dependency>       
 
+        <!-- aka jboss-client.jar -->
         <dependency>
-          <groupId>org.jboss.client</groupId>
-          <artifactId>jboss-client</artifactId>
-          <version>5.1.0.CR1</version>   
-          <scope>runtime</scope>              
-        </dependency>               
+            <groupId>org.jboss.jbossas</groupId>
+            <artifactId>jboss-as-server</artifactId>           
+            <version>5.1.0.CR1</version>
+            <classifier>client</classifier>
+            <scope>runtime</scope>
+        </dependency>         
 
         <dependency>
           <groupId>org.jboss</groupId>

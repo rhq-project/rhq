@@ -459,7 +459,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     }
                 } else {
                     // Some other thread possesses the lock - just return the last-collected availablity for the Resource.
-                    availType = resourceContainer.getAvailability().getAvailabilityType();
+                    return resourceContainer.getAvailability();
                 }
             }
         } else {

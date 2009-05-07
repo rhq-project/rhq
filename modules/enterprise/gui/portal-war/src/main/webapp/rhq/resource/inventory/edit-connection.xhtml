@@ -29,19 +29,19 @@
          </f:facet>
 
          <h:form id="editConnectionPropertiesForm" onsubmit="prepareInputsForSubmission(this)">
-
+ 				<h:commandButton type="submit" action="#{ConnectionPropertiesUIBean.update}" value="OK" style="display:none;">
+                     <s:defaultAction />
+                </h:commandButton>
             <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-
+         
             <onc:config configurationDefinition="#{ConnectionPropertiesUIBean.configurationDefinition}"
                         configuration="#{ConnectionPropertiesUIBean.configuration}"
                         nullConfigurationDefinitionMessage="#{ConnectionPropertiesUIBean.nullConfigurationDefinitionMessage}"
                         nullConfigurationMessage="#{ConnectionPropertiesUIBean.nullConfigurationMessage}"
                         prevalidate="true"/>
-
             <h:panelGroup layout="block" styleClass="BlockContent">
                <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
                   <h:commandButton type="submit" action="#{ConnectionPropertiesUIBean.update}" value="OK" styleClass="buttonmed">
-                     <s:defaultAction />
                   </h:commandButton>
                   <h:commandButton type="submit" action="#{ConnectionPropertiesUIBean.cancel}" immediate="true" value="CANCEL" styleClass="buttonmed"/>
                </h:panelGrid>

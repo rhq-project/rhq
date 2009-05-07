@@ -77,19 +77,23 @@
 </table>
 
 <c:if test="${not empty Resource}">
+ <c:if test="${!alertDef.deleted}">
   <hq:authorization permission="MANAGE_ALERTS">
     <tiles:insert definition=".toolbar.edit">
       <tiles:put name="editUrl"><c:out value="/alerts/Config.do?mode=editProperties&ad=${alertDef.id}&id=${Resource.id}"/></tiles:put>
     </tiles:insert>
   </hq:authorization>
+  </c:if>
 </c:if>
 
 <c:if test="${not empty ResourceType}">
+ <c:if test="${!alertDef.deleted}">
   <hq:authorization permission="MANAGE_SETTINGS">
     <tiles:insert definition=".toolbar.edit">
       <tiles:put name="editUrl"><c:out value="/alerts/Config.do?mode=editProperties&ad=${alertDef.id}&type=${ResourceType.id}"/></tiles:put>
     </tiles:insert>
   </hq:authorization>
+    </c:if>
 </c:if>
 
 <br>

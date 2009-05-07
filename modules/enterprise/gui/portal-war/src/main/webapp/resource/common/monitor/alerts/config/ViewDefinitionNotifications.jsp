@@ -134,16 +134,19 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
     </c:when>
     <c:otherwise>
       <c:if test="${not empty Resource}">
-        <hq:authorization permission="MANAGE_ALERTS">
+       <c:if test="${!alertDef.deleted}">
+         <hq:authorization permission="MANAGE_ALERTS">
           <tiles:insert definition=".toolbar.addToList">
             <tiles:put name="addToListUrl"><c:out value="/alerts/Config.do?mode=${addMode}&id=${Resource.id}&ad=${alertDef.id}"/></tiles:put>
             <tiles:put name="widgetInstanceName" beanName="widgetInstanceName"/>
             <tiles:put name="pageList" beanName="notifyList"/>
             <tiles:put name="pageAction" beanName="selfUrl"/>
           </tiles:insert>
-        </hq:authorization>
+         </hq:authorization>
+        </c:if>
       </c:if>
       <c:if test="${not empty ResourceType}">
+       <c:if test="${!alertDef.deleted}">
         <hq:authorization permission="MANAGE_SETTINGS">
           <tiles:insert definition=".toolbar.addToList">
             <tiles:put name="addToListUrl"><c:out value="/alerts/Config.do?mode=${addMode}&type=${ResourceType.id}&ad=${alertDef.id}"/></tiles:put>
@@ -151,7 +154,8 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
             <tiles:put name="pageList" beanName="notifyList"/>
             <tiles:put name="pageAction" beanName="selfUrl"/>
           </tiles:insert>
-        </hq:authorization>
+         </hq:authorization>
+        </c:if>
       </c:if>
     </c:otherwise>
   </c:choose>

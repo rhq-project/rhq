@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
@@ -54,6 +54,7 @@ import org.rhq.core.domain.resource.Resource;
 @NamedQueries( {
     @NamedQuery(name = Channel.QUERY_FIND_ALL, query = "SELECT c FROM Channel c"),
     @NamedQuery(name = Channel.QUERY_FIND_BY_IDS, query = "SELECT c FROM Channel c WHERE c.id IN ( :ids )"),
+    @NamedQuery(name = Channel.QUERY_FIND_BY_NAME, query = "SELECT c FROM Channel c WHERE c.name = :name"),
     @NamedQuery(name = Channel.QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS, query = "SELECT c FROM Channel c LEFT JOIN FETCH c.channelContentSources ccs WHERE ccs.contentSource.id = :id"),
     @NamedQuery(name = Channel.QUERY_FIND_BY_CONTENT_SOURCE_ID, query = "SELECT c FROM Channel c LEFT JOIN c.channelContentSources ccs WHERE ccs.contentSource.id = :id"),
     @NamedQuery(name = Channel.QUERY_FIND_SUBSCRIBER_RESOURCES, query = "SELECT rc.resource FROM ResourceChannel rc WHERE rc.channel.id = :id"),
@@ -87,6 +88,7 @@ public class Channel implements Serializable {
 
     public static final String QUERY_FIND_ALL = "Channel.findAll";
     public static final String QUERY_FIND_BY_IDS = "Channel.findByIds";
+    public static final String QUERY_FIND_BY_NAME = "Channel.findByName";
     public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS = "Channel.findByContentSourceIdFetchCCS";
     public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID = "Channel.findByContentSourceId";
     public static final String QUERY_FIND_SUBSCRIBER_RESOURCES = "Channel.findSubscriberResources";

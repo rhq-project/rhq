@@ -269,20 +269,33 @@ public class ChannelManagerBean implements ChannelManagerLocal, ChannelManagerRe
             throw new ChannelException("Channel name is required");
         }
 
-        // TODO: check if channel name conflicts with any other channel in the system
+        List<Channel> channels = getChannelByName(c.getName());
+
+        if (channels.size() != 0) {
+            throw new ChannelException("There allready is a channel with given name.");
+        }
+
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Channel createChannel(Subject subject, Channel channel) throws ChannelException {
         validateChannel(channel);
 
-        // TODO: check if channel name conflicts with any other channel in the system
-
         log.debug("User [" + subject + "] is creating channel [" + channel + "]");
         entityManager.persist(channel);
         log.debug("User [" + subject + "] created channel [" + channel + "]");
 
         return channel; // now has the ID set
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Channel> getChannelByName(String name) {
+        Query query = entityManager.createNamedQuery(Channel.QUERY_FIND_BY_NAME);
+
+        query.setParameter("name", name);
+        List<Channel> results = query.getResultList();
+
+        return results;
     }
 
     @SuppressWarnings("unchecked")

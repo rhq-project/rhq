@@ -126,7 +126,6 @@
         <rich:menuItem submitMode="none" disabled="true" iconDisabled="/images/icons/Search_16.png">
             <h:outputText value="Search: " style="color: black;"/>
             <h:panelGroup>
-            <a4j:form id="quickHelp" ajaxSingle="true" ajaxSubmit="true" reRender="quickHelp" limitToList="true" selfRendered="true">
                 <h:inputText id="selectedResource" style="width: 250px;" immediate="true"
                              onkeypress="return ignoreEnterKey(event);" />
                 <rich:suggestionbox id="resourceSelectBox" for="selectedResource" tokens=",[]"
@@ -151,7 +150,6 @@
                         <h:outputText value="#{result.parent.name}"/>
                     </h:column>
                 </rich:suggestionbox>
-               </a4j:form>
             </h:panelGroup>
         </rich:menuItem>
 

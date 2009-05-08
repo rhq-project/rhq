@@ -48,7 +48,7 @@ esac
 # We also assume our custom environment script is located in the same
 # place as this script.
 # ----------------------------------------------------------------------
-_DOLLARZERO=`readlink "$0" || echo "$0"`
+_DOLLARZERO=`readlink "$0" 2>/dev/null || echo "$0"`
 RHQ_AGENT_BIN_DIR_PATH=`dirname "$_DOLLARZERO"`
 
 if [ -f "${RHQ_AGENT_BIN_DIR_PATH}/rhq-agent-env.sh" ]; then

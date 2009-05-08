@@ -179,7 +179,7 @@ esac
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_HOME" ]; then
-   _DOLLARZERO=`readlink "$0" || echo "$0"`
+   _DOLLARZERO=`readlink "$0" 2>/dev/null || echo "$0"`
    RHQ_SERVER_HOME=`dirname "$_DOLLARZERO"`/..
 else
    if [ ! -d "$RHQ_SERVER_HOME" ]; then

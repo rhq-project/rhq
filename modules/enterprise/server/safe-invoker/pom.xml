@@ -27,9 +27,9 @@
    <dependencies>
 
       <dependency>
-         <groupId>org.jboss</groupId>
+         <groupId>jboss.jbossws</groupId>
          <artifactId>jbossws-client</artifactId>
-         <version>2.0.1.SP2</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
       </dependency>
 
       <dependency>
@@ -41,7 +41,7 @@
       <dependency>
          <groupId>hibernate</groupId>
          <artifactId>hibernate3</artifactId>
-         <version>3.2.r14201-2</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 

@@ -111,14 +111,14 @@
       <dependency>
          <groupId>hibernate</groupId>
          <artifactId>hibernate3</artifactId>
-         <version>3.2.r14201-2</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>hibernate-annotations</groupId>
          <artifactId>hibernate-annotations</artifactId>
-         <version>3.2.1.GA</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
@@ -153,56 +153,56 @@
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-annotations-ejb3</artifactId>
-         <version>4.2.1.GA</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-cache</artifactId>
-         <version>1.4.1.SP3</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
          <scope>compile</scope>
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-common</artifactId>
-         <version>1.2.0.GA</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
-         <artifactId>jboss-ejb-api</artifactId>
-         <version>4.2.1.GA</version>
+         <artifactId>jboss-ejb3x</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-j2ee</artifactId>
-         <version>4.2.1.GA</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-jmx</artifactId>
-         <version>4.2.1.GA</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-system</artifactId>
-         <version>4.2.1.GA</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jbosssx</artifactId>
-         <version>4.2.1.GA</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
@@ -216,8 +216,22 @@
       <dependency>
          <groupId>org.jboss.transaction</groupId>
          <artifactId>jboss-jta</artifactId>
-         <version>4.2.3.SP5</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
          <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>jboss.jbossws</groupId>
+         <artifactId>jboss-jaxws</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <scope>provided</scope>
+      </dependency>
+      
+      <dependency>
+         <groupId>jboss.jbossws</groupId>
+         <artifactId>jbossws-client</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <scope>provided</scope>
       </dependency>
 
       <!-- TODO: remove this - tests should all be moved under the test source tree -->
@@ -289,19 +303,6 @@
          <scope>provided</scope>
       </dependency>
 
-      <dependency>
-         <groupId>org.jboss</groupId>
-         <artifactId>jboss-jaxws</artifactId>
-         <version>2.0.1.SP2</version>
-         <scope>provided</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss</groupId>
-         <artifactId>jbossws-client</artifactId>
-         <version>2.0.1.SP2</version>
-         <scope>provided</scope>
-      </dependency>
-
       <!-- Needed by com.jboss.jbossnetwork.apl.actions.xml.XPathProcessor; TODO: Remove once APL has been excised. -->
       <dependency>
          <groupId>xalan</groupId>
@@ -331,14 +332,14 @@
       <dependency>
          <groupId>hibernate-entitymanager</groupId>
          <artifactId>hibernate-entitymanager</artifactId>
-         <version>3.2.1.GA</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>test</scope>
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>javassist</artifactId>
-         <version>3.4.ga</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
          <scope>test</scope>
       </dependency>
 
@@ -576,6 +577,7 @@ Build-OS-Version=${os.version}
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>                
                      <groups>ws</groups>
+                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>                     
                      <excludes>
                         <exclude>com/**/*.java</exclude>
                      </excludes>
@@ -589,11 +591,7 @@ Build-OS-Version=${os.version}
                      </systemProperties>
                      <additionalClasspathElements>
                         <!-- The below is required for WS Java Client support -->
-                        <additionalClasspathElement>${jbossws-native-home}/deploy/lib/jbossws-spi.jar</additionalClasspathElement>               
-                        <additionalClasspathElement>${jbossws-native-home}/deploy/lib/jbossws-common.jar</additionalClasspathElement>                  
-                        <additionalClasspathElement>${jbossws-native-home}/deploy/lib/jbossws-native-saaj.jar</additionalClasspathElement>                  
-                        <additionalClasspathElement>${jbossws-native-home}/deploy/lib/wsdl4j.jar</additionalClasspathElement>
-                        <additionalClasspathElement>${jbossws-native-home}/deploy/lib/policy.jar</additionalClasspathElement>                  
+                        <additionalClasspathElement>${jbossws-native-home}/deploy/lib/jbossws-client.jar</additionalClasspathElement>
                      </additionalClasspathElements>
                   </configuration>
                </plugin>      

@@ -25,7 +25,6 @@
 
       <!-- dependency versions -->
       <el.version>1.0</el.version>
-      <hibernate-entitymanager.version>3.2.1.GA</hibernate-entitymanager.version>
       <jsf-facelets.version>1.1.14</jsf-facelets.version>
       <seam.version>2.1.0.SP1</seam.version>
       
@@ -132,7 +131,7 @@
       <dependency>
          <groupId>hibernate</groupId>
          <artifactId>hibernate3</artifactId>
-         <version>3.2.r14201-2</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
@@ -140,7 +139,7 @@
       <dependency>
          <groupId>hibernate-entitymanager</groupId>
          <artifactId>hibernate-entitymanager</artifactId>
-         <version>${hibernate-entitymanager.version}</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
@@ -148,7 +147,7 @@
       <dependency>
          <groupId>hibernate-annotations</groupId>
          <artifactId>hibernate-annotations</artifactId>
-         <version>3.2.1.GA</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
@@ -213,32 +212,23 @@
       <!-- needed for EJB3 annotations (e.g. ApplicationException) -->
       <dependency>
          <groupId>jboss</groupId>
-         <artifactId>jboss-ejb-api</artifactId>
-         <version>${jboss.version}</version>
+         <artifactId>jboss-ejb3x</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-j2ee</artifactId>
-         <version>${jboss.version}</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
-
-      <!--
-      <dependency>
-        <groupId>jboss.jboss-embeddable-ejb3</groupId>
-        <artifactId>jboss-ejb3-all</artifactId>
-        <version>1.0.0.Alpha9</version>
-        <scope>provided</scope>
-      </dependency>
-      -->
 
       <!-- used by org.jboss.on.enterprise.ui.servlet.startupShutdownListener -->
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-system</artifactId>
-         <version>${jboss.version}</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
@@ -246,7 +236,23 @@
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jbosssx</artifactId>
-         <version>${jboss.version}</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <!-- Needed due to JDK 1.5 bug. -->
+      <dependency>
+         <groupId>jboss.jbossws</groupId>
+         <artifactId>jboss-jaxws</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->         
+         <scope>provided</scope>
+      </dependency>
+
+      <!-- Needed due to JDK 1.5 bug. -->
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-annotations-ejb3</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->                  
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
@@ -379,22 +385,6 @@
          <groupId>xerces</groupId>
          <artifactId>xercesImpl</artifactId>
          <version>2.0.2</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <!-- Needed due to JDK 1.5 bug. -->
-      <dependency>
-         <groupId>org.jboss</groupId>
-         <artifactId>jboss-jaxws</artifactId>
-         <version>2.0.1.SP2</version>
-         <scope>provided</scope>
-      </dependency>
-
-      <!-- Needed due to JDK 1.5 bug. -->
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-annotations-ejb3</artifactId>
-         <version>4.2.1.GA</version>
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
       

@@ -138,7 +138,7 @@
 
     <echo>*** Preparing jbossas dir... ***</echo>
     <!-- Unzip vanilla JBoss dist zipfile... -->
-    <property name="jboss.zip" location="${settings.localRepository}/jboss/jboss/${jboss.version}/jboss-${jboss.version}.zip" />
+    <property name="jboss.zip" location="${settings.localRepository}/org/jboss/jbossas/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip" />
     <condition property="jboss.uptodate">
       <and>
         <uptodate srcfile="${jboss.zip}" targetfile="${jboss.home}" />
@@ -165,8 +165,16 @@
     <copy file="${basedir}/src/main/resources/jbossas/server/default/deploy/jbossws.sar/jbossws.beans/META-INF/jboss-beans.xml"
           toDir="${jboss.deploy.dir}/jbossws.sar/jbossws.beans/META-INF" verbose="true" />
 
-    <echo>Installing patched hibernate jar ...</echo>
-    <copy file="${settings.localRepository}/hibernate/hibernate3/3.2.r14201-2/hibernate3-3.2.r14201-2.jar"
+    <echo>Installing jgroups jar ...</echo>
+    <copy file="${jboss.home}/server/all/lib/jgroups.jar"
+          tofile="${jboss.home}/server/default/lib/jgroups.jar" verbose="true"/>
+
+    <echo>Installing jboss cache jar ...</echo>
+    <copy file="${jboss.home}/server/all/lib/jboss-cache-jdk50.jar"
+          tofile="${jboss.home}/server/default/lib/jboss-cache-jdk50.jar" verbose="true"/>
+
+  	 <echo>Installing patched hibernate jar ...</echo>
+    <copy file="${settings.localRepository}/hibernate/hibernate3/${hibernate3.version}/hibernate3-${hibernate3.version}.jar"
           tofile="${jboss.home}/server/default/lib/hibernate3.jar" verbose="true"/>
 
     <echo>Installing custom container library...</echo>
@@ -304,13 +312,13 @@
 
     <echo>Enabling server to run on Java 6 ...</echo>
     <move todir="${jboss.home}/lib/endorsed" verbose="true">
-       <fileset dir="${jboss.deploy.dir}/jbossws.sar">
-          <include name="jaxb-api.jar" />
-          <include name="jaxb-impl.jar" />
-          <include name="jboss-jaxrpc.jar" />
-          <include name="jboss-jaxws.jar" />
-          <include name="jboss-saaj.jar" />
-       </fileset>
+       <fileset dir="${jboss.home}/client">       	
+         <include name="jboss-jaxrpc.jar" />
+         <include name="jboss-jaxws.jar" />
+         <include name="jboss-jaxws-ext.jar" />
+         <include name="jboss-saaj.jar" />       	
+       	<include name="jaxb-api.jar" />
+       </fileset>    	
        <fileset dir="${jboss.home}/server/default/lib">
           <include name="activation.jar" />
        </fileset>
@@ -511,7 +519,7 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
   </target>
 
   <target name="unzip-jboss" unless="jboss.uptodate">
-    <unzip src="${settings.localRepository}/jboss/jboss/${jboss.version}/jboss-${jboss.version}.zip"
+    <unzip src="${settings.localRepository}/org/jboss/jbossas/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip"
            dest="${basedir}/target" />
     <delete dir="${jboss.home}" />
     <move file="${basedir}/target/jboss-${jboss.version}" tofile="${jboss.home}" />

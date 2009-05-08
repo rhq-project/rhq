@@ -63,7 +63,7 @@
       <dependency>
          <groupId>hibernate-annotations</groupId>
          <artifactId>hibernate-annotations</artifactId>
-         <version>3.2.1.GA</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- provided by the agent/plugin-container -->
       </dependency>
 

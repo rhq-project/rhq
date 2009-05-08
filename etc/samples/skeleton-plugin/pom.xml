@@ -15,7 +15,7 @@
   <description>A template for building a custom RHQ agent plugin</description>
 
   <properties>        
-    <rhq.version>1.1.2.GA</rhq.version>
+    <rhq.version>1.2.0.GA</rhq.version>
   </properties>    
   
   <dependencies>

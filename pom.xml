@@ -44,15 +44,29 @@
     <java5.home>${java.home}</java5.home>
 
     <!-- dependency versions -->
+    
+    <!-- Start: JBoss AS Dependency Versions
+         The dependency versions below are declared together as the versions of each are dependent on the
+         overall JBoss AS Server version.  Meaning, the AS provides these libs. When the Server
+         version is changed the versions of each of these should be validated and updated as needed. -->   
+    <jboss.version>4.2.3.GA</jboss.version>
+    <jboss-cache.version>1.4.1.SP9</jboss-cache.version>
+    <jboss-common.version>1.2.1.GA</jboss-common.version>
+    <jboss-jta.version>4.2.3.SP7</jboss-jta.version>
+    <jboss-remoting.version>2.2.2.SP8</jboss-remoting.version>    
+    <jboss-serialization.version>1.0.3.GA</jboss-serialization.version>
+    <jboss-javassist.version>3.8.0.GA</jboss-javassist.version>
+    <jbossws.version>3.0.1-native-2.0.4.GA</jbossws.version>
+    <!-- End: JBoss AS Dependency Versions -->
+    
     <commons-logging.version>1.1.0.jboss</commons-logging.version>
-    <concurrent.version>1.3.4-jboss</concurrent.version>
+    <concurrent.version>1.3.4-jboss-update1</concurrent.version> <!-- oswego-concurrent compatible with 4.2.3.GA -->
     <getopt.version>1.0.13</getopt.version>
+    <hibernate3.version>3.2.r14201-2</hibernate3.version>
+    <hibernate-annotations.version>3.2.1.GA</hibernate-annotations.version>
+    <hibernate-entitymanager.version>3.2.1.GA</hibernate-entitymanager.version>
     <jaxb-api.version>2.1</jaxb-api.version>
     <jaxb-impl.version>2.1.6</jaxb-impl.version>
-    <jboss.version>4.2.1.GA</jboss.version>
-    <jboss-common.version>1.2.0.GA</jboss-common.version>
-    <jboss-remoting.version>2.2.1.GA</jboss-remoting.version> <!-- version that ships w/ AS 4.2.1.GA -->
-    <jboss-serialization.version>1.0.3.GA</jboss-serialization.version> <!-- version that ships w/ AS 4.2.1.GA -->
     <jsf-api.version>1.2_12</jsf-api.version>
     <jsf-impl.version>1.2_12</jsf-impl.version>
     <ojdbc14.version>10.2.0.4.0</ojdbc14.version>
@@ -92,6 +106,115 @@
   <dependencyManagement>
 
     <dependencies>
+
+      <!-- Start: JBoss AS Dependencies
+           The dependencies below are declared together as the versions of each are dependent on the
+           overall JBoss AS Server version.  Meaning, the AS provides these libs. When the Server
+           version is changed the versions of each of these should be validated and updated as needed. -->   
+      <dependency>
+        <groupId>org.jboss.jbossas</groupId>
+        <artifactId>jboss-as-dist</artifactId>
+        <version>${jboss.version}</version>
+        <type>zip</type>        
+      </dependency>
+
+      <dependency>
+        <groupId>jboss</groupId>
+        <artifactId>jboss-all-client</artifactId>
+        <version>${jboss.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jboss</groupId>
+        <artifactId>jboss-annotations-ejb3</artifactId>
+        <version>${jboss.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jboss</groupId>
+        <artifactId>jboss-cache</artifactId>
+        <version>${jboss-cache.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jboss</groupId>
+        <artifactId>jboss-common</artifactId>
+        <version>${jboss-common.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jboss</groupId>
+        <artifactId>jboss-ejb3x</artifactId>
+        <version>${jboss.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jboss</groupId>
+        <artifactId>jboss-ejb3-client</artifactId>
+        <version>${jboss.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jboss</groupId>
+        <artifactId>jboss-j2ee</artifactId>
+        <version>${jboss.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jboss</groupId>
+        <artifactId>javassist</artifactId>
+        <version>${jboss-javassist.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jboss</groupId>
+        <artifactId>jboss-jmx</artifactId>
+        <version>${jboss.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jboss</groupId>
+        <artifactId>jboss-remoting</artifactId>
+        <version>${jboss-remoting.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jboss</groupId>
+        <artifactId>jboss-serialization</artifactId>
+        <version>${jboss-serialization.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jboss</groupId>
+        <artifactId>jbosssx</artifactId>
+        <version>${jboss.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jboss</groupId>
+        <artifactId>jboss-system</artifactId>
+        <version>${jboss.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss.jbossws</groupId>
+         <artifactId>jboss-jaxws</artifactId>
+         <version>${jbossws.version}</version>
+      </dependency>      
+
+      <dependency>
+         <groupId>jboss.jbossws</groupId>
+         <artifactId>jbossws-client</artifactId>
+         <version>${jbossws.version}</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.jboss.transaction</groupId>
+        <artifactId>jboss-jta</artifactId>
+        <version>${jboss-jta.version}</version>
+      </dependency>
+      
+      <!-- End: JBoss AS Dependencies -->
 
       <dependency>
         <groupId>commons-logging</groupId>
@@ -133,34 +256,28 @@
       </dependency>
 
       <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jboss-common</artifactId>
-        <version>${jboss-common.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jboss-jmx</artifactId>
-        <version>${jboss.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jboss-remoting</artifactId>
-        <version>${jboss-remoting.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jboss-serialization</artifactId>
-        <version>${jboss-serialization.version}</version>
-      </dependency>
-
-      <dependency>
         <groupId>mc4j</groupId>
         <artifactId>org-mc4j-ems</artifactId>
         <version>${ems.version}</version>
       </dependency>
+
+      <dependency>
+        <groupId>hibernate</groupId>
+        <artifactId>hibernate3</artifactId>
+        <version>${hibernate3.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>hibernate-annotations</groupId>
+         <artifactId>hibernate-annotations</artifactId>
+         <version>${hibernate-annotations.version}</version>
+      </dependency>
+      
+      <dependency>
+         <groupId>hibernate-entitymanager</groupId>
+         <artifactId>hibernate-entitymanager</artifactId>
+         <version>${hibernate-entitymanager.version}</version>
+      </dependency>      
 
       <dependency>
         <groupId>org.hyperic</groupId>

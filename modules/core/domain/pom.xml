@@ -40,14 +40,14 @@
       <dependency>
          <groupId>hibernate</groupId>
          <artifactId>hibernate3</artifactId>
-         <version>3.2.r14201-2</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>hibernate-annotations</groupId>
          <artifactId>hibernate-annotations</artifactId>
-         <version>3.2.1.GA</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
@@ -55,7 +55,7 @@
       <dependency>
          <groupId>hibernate-entitymanager</groupId>
          <artifactId>hibernate-entitymanager</artifactId>
-         <version>3.2.1.GA</version>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 

@@ -49,7 +49,7 @@ import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.util.FileUtils;
-//import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
+import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jbossas.helper.JBossInstallationInfo;
 import org.rhq.plugins.jbossas.helper.JBossInstanceInfo;
@@ -206,7 +206,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
     }
 
     private void initLogEventSourcesConfigProp(File configDir, Configuration pluginConfiguration) {
-        /*File logDir = new File(configDir, "log");
+        File logDir = new File(configDir, "log");
         File serverLogFile = new File(logDir, "server.log");
         if (serverLogFile.exists() && !serverLogFile.isDirectory()) {
             PropertyMap serverLogEventSource = new PropertyMap("serverLog");
@@ -217,7 +217,7 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent {
             PropertyList logEventSources = pluginConfiguration
                 .getList(LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP);
             logEventSources.add(serverLogEventSource);
-        }*/
+        }
     }
 
     private static JnpConfig getJnpConfig(File installHome, File configDir, Properties props) {

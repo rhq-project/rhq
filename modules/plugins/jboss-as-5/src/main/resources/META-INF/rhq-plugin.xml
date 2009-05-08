@@ -1064,6 +1064,8 @@
                 </c:group>
             </plugin-configuration>
 
+ 			&datasourceAndConnectionFactoryOperations;
+
             &managedObjectMetrics;
             &connectionFactoryMetrics;
 

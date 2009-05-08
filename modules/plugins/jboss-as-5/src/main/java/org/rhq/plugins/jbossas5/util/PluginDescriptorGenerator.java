@@ -312,8 +312,6 @@ public class PluginDescriptorGenerator {
         for (KnownComponentTypes.ConnectionFactoryTypes componentType : KnownComponentTypes.ConnectionFactoryTypes.values()) {
             knownComponentTypes.add(componentType.getType());
         }
-        // TODO: Remove the below line once we upgrade to profileservice-spi 5.1.0.CR2.
-        knownComponentTypes.add(new ComponentType("ConnectionFactory", "Tx"));
         for (KnownComponentTypes.JMSDestination componentType : KnownComponentTypes.JMSDestination.values()) {
             knownComponentTypes.add(componentType.getType());
         }
@@ -324,7 +322,9 @@ public class PluginDescriptorGenerator {
             knownComponentTypes.add(componentType.getType());
         }
         knownComponentTypes.add(new ComponentType("MBean", "Platform"));
+        knownComponentTypes.add(new ComponentType("MBean", "Servlet"));
         knownComponentTypes.add(new ComponentType("MBean", "Web"));
+        knownComponentTypes.add(new ComponentType("MBean", "WebApplicationManager"));
         for (KnownComponentTypes.MCBean componentType : KnownComponentTypes.MCBean.values()) {
             knownComponentTypes.add(componentType.getType());
         }

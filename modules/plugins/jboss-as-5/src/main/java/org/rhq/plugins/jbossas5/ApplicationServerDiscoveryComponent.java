@@ -36,13 +36,15 @@ package org.rhq.plugins.jbossas5;
  import org.jetbrains.annotations.Nullable;
  import org.rhq.core.domain.configuration.Configuration;
  import org.rhq.core.domain.configuration.PropertySimple;
- //import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
+ import org.rhq.core.domain.configuration.PropertyList;
+ import org.rhq.core.domain.configuration.PropertyMap;
  import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
  import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
  import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
  import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  import org.rhq.core.pluginapi.inventory.ProcessScanResult;
  import org.rhq.core.pluginapi.util.FileUtils;
+ import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
  import org.rhq.core.system.ProcessInfo;
  import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider;
  import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
@@ -157,10 +159,7 @@ public class ApplicationServerDiscoveryComponent
 
             String jnpURL = getJnpURL(cmdLine, installHome, configDir);
 
-            // TODO Set the connection type - local or remote
-            // (used by ApplicationServerComponent to connect to the Profile Service).
-            //pluginConfiguration.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
-            //    JBossConnectionTypeDescriptor.class.getName()));
+            // TODO? Set the connection type - local or remote
 
             // Set the required props...
             pluginConfiguration.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.NAMING_URL, jnpURL));
@@ -251,7 +250,7 @@ public class ApplicationServerDiscoveryComponent
         boolean debug = Boolean.getBoolean(JBMANCON_DEBUG_SYSPROP);
         if (debug) {
             //new UnitTestRunner().runUnitTests(connection);
-            //generatePluginDescriptor(discoveryContext, connection);
+            generatePluginDescriptor(discoveryContext, connection);
         }
 
         return new DiscoveredResourceDetails(
@@ -330,7 +329,7 @@ public class ApplicationServerDiscoveryComponent
 
     private void configureEventSourceForServerLogFile(Configuration pluginConfiguration)
     {
-        /*File rhqLogFile = ApplicationServerComponent.resolvePathRelativeToHomeDir(pluginConfiguration,
+        File rhqLogFile = ApplicationServerComponent.resolvePathRelativeToHomeDir(pluginConfiguration,
             "../logs/rhq-server-log4j.log");
         if (rhqLogFile.exists() && !rhqLogFile.isDirectory()) {
             try {
@@ -348,7 +347,7 @@ public class ApplicationServerDiscoveryComponent
             } catch (IOException e) {
                 log.warn("Unable to setup RHQ Server log file monitoring.", e);
             }
-        }*/
+        }
     }
 
     private static String getJnpURL(JBossInstanceInfo cmdLine, File installHome, File configDir) {
@@ -372,7 +371,7 @@ public class ApplicationServerDiscoveryComponent
     }
 
     private void initLogEventSourcesConfigProp(File configDir, Configuration pluginConfig) {
-        /*File logDir = new File(configDir, "log");
+        File logDir = new File(configDir, "log");
         File serverLogFile = new File(logDir, "server.log");
         if (serverLogFile.exists() && !serverLogFile.isDirectory()) {
             PropertyMap serverLogEventSource = new PropertyMap("serverLog");
@@ -383,7 +382,7 @@ public class ApplicationServerDiscoveryComponent
             PropertyList logEventSources = pluginConfig
                 .getList(LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP);
             logEventSources.add(serverLogEventSource);
-        }*/
+        }
     }
 
     private void generatePluginDescriptor(ResourceDiscoveryContext discoveryContext,

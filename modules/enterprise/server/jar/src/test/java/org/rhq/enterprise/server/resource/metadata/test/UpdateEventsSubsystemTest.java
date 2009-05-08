@@ -34,7 +34,6 @@ import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.event.EventManagerLocal;
@@ -231,11 +230,13 @@ public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
             resMgr.deleteResource(overlord, testResource.getId());
 
+            /* deleting the platform deletes the agent now, so ask the resMgr to do it all for us
             platform = entityManager.getReference(ResourceType.class, platform.getId());
             entityManager.remove(platform);
 
             Agent agent = entityManager.getReference(Agent.class, agentId);
             entityManager.remove(agent);
+            */
 
             Plugin plugin1 = entityManager.getReference(Plugin.class, plugin1Id);
             entityManager.remove(plugin1);

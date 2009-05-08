@@ -34,7 +34,6 @@ import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -257,8 +256,10 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
             entityManager.remove(server);
             entityManager.remove(parent);
 
+            /* agent is now implicitly removed now
             Agent agent = entityManager.getReference(Agent.class, agentId);
             entityManager.remove(agent);
+            */
 
             Plugin plugin1 = entityManager.getReference(Plugin.class, plugin1Id);
             entityManager.remove(plugin1);
@@ -372,8 +373,10 @@ public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
             platform = entityManager.getReference(ResourceType.class, platform.getId());
             entityManager.remove(platform);
 
+            /* agent is now implicitly removed now
             Agent agent = entityManager.getReference(Agent.class, agentId);
             entityManager.remove(agent);
+            */
 
             Plugin plugin1 = entityManager.getReference(Plugin.class, plugin1Id);
             entityManager.remove(plugin1);

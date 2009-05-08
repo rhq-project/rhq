@@ -139,8 +139,11 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         getTransactionManager().begin();
         try {
             EntityManager em = getEntityManager();
+
+            /* agent is now implicitly deleted
             Agent agent = em.find(Agent.class, agentId);
             em.remove(agent);
+            */
 
             ResourceType rt = em.find(ResourceType.class, resourceTypeId);
             Set<EventDefinition> evDs = rt.getEventDefinitions();

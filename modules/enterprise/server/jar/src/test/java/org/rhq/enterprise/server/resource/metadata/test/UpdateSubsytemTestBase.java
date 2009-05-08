@@ -35,6 +35,7 @@ import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 
@@ -93,6 +94,12 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
 
         prepareScheduler();
 
+    }
+
+    @AfterClass
+    public void afterClass() throws Exception {
+        unprepareForTestAgents();
+        unprepareScheduler();
     }
 
     @SuppressWarnings("unchecked")

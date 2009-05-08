@@ -23,6 +23,9 @@ import java.util.Set;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,6 +33,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ResourceTypeUtils
 {
+    public static Configuration getDefaultPluginConfiguration(ResourceType resourceType) {
+        ConfigurationDefinition pluginConfigurationDefinition = resourceType.getPluginConfigurationDefinition();
+        if (pluginConfigurationDefinition != null) {
+            ConfigurationTemplate template = pluginConfigurationDefinition.getDefaultTemplate();
+            if (template != null)
+                return template.getConfiguration().deepCopy();
+        }
+        return new Configuration(); // there is no default plugin config defined - return an empty one
+    }
+
     /**
      * TODO
      * @param resourceType

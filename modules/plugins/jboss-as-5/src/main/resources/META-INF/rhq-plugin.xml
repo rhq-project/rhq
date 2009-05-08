@@ -2184,7 +2184,7 @@
                     <c:simple-property name="filename" readOnly="true"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
-                    <c:simple-property name="extension" default="beans" readOnly="true"/>
+                    <c:simple-property name="extension" default="rar" readOnly="true"/>
                     <c:simple-property name="descriptionTemplate" default="a standalone resource adaptor" readOnly="true"/>
                     <c:simple-property name="deploymentTypeName" default="JavaEEResourceAdaptor" readOnly="true">
                         <c:description>
@@ -2236,7 +2236,7 @@
                     <c:simple-property name="filename" readOnly="true"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
-                    <c:simple-property name="extension" default="beans" readOnly="true"/>
+                    <c:simple-property name="extension" default="rar" readOnly="true"/>
                     <c:simple-property name="descriptionTemplate" default="an embedded resource adaptor" readOnly="true"/>
                     <c:simple-property name="deploymentTypeName" default="JavaEEResourceAdaptor" readOnly="true">
                         <c:description>
@@ -2273,7 +2273,7 @@
                     <c:simple-property name="filename" readOnly="true"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
-                    <c:simple-property name="extension" default="war" readOnly="true"/>
+                    <c:simple-property name="extension" default="beans" readOnly="true"/>
                     <c:simple-property name="descriptionTemplate" default="MC Beans" readOnly="true"/>
                     <c:simple-property name="deploymentTypeName" default="MCBeans" readOnly="true">
                         <c:description>

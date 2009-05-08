@@ -25,8 +25,9 @@ import java.net.URL;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.util.ZipUtil;
-import org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent;
+import org.rhq.plugins.jbossas5.AbstractManagedDeploymentComponent;
 
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
@@ -40,22 +41,18 @@ public class DeploymentUtils {
 
     public static boolean hasCorrectExtension(File archiveFile, ResourceType resourceType)
     {
-        String resourceTypeName = resourceType.getName();
-        String expectedExtension;
-        if (resourceTypeName.equals(StandaloneManagedDeploymentComponent.RESOURCE_TYPE_EAR)) {
-            expectedExtension = "ear";
-        } else if (resourceTypeName.equals(StandaloneManagedDeploymentComponent.RESOURCE_TYPE_WAR)){
-            expectedExtension = "war";
-        } else if (resourceTypeName.equals(StandaloneManagedDeploymentComponent.RESOURCE_TYPE_RAR)){
-            expectedExtension = "rar";
-        } else {
-            expectedExtension = "jar";
-        }
-        String archiveName = archiveFile.getName();
-        int lastPeriod = archiveName.lastIndexOf(".");
-        String extension = archiveName.substring(lastPeriod + 1);
-        // TODO: String compare should be case-insensitive if on Windows.
-        return (lastPeriod != -1 && expectedExtension.equals(extension));
+        Configuration defaultPluginConfig = ResourceTypeUtils.getDefaultPluginConfiguration(resourceType);
+        String expectedExtension =
+                defaultPluginConfig.getSimple(AbstractManagedDeploymentComponent.EXTENSION_PROPERTY).getStringValue();
+        if (expectedExtension == null)
+            throw new IllegalStateException("No value was defined for the required '"
+                    + AbstractManagedDeploymentComponent.EXTENSION_PROPERTY + "' plugin config prop for "
+                    + resourceType);
+        String archiveFileName = archiveFile.getName();
+        int lastPeriod = archiveFileName.lastIndexOf(".");
+        String extension = (lastPeriod != -1) ? archiveFileName.substring(lastPeriod + 1) : null;
+        // Use File.equals() to compare the extensions so case-sensitivity is correct for this platform.
+        return (extension != null && new File(extension).equals(new File(expectedExtension)));         
     }
 
     public static DeploymentStatus deployArchive(DeploymentManager deploymentManager, File archiveFile, 

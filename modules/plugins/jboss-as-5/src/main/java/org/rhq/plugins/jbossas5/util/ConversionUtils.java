@@ -53,7 +53,6 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -92,15 +91,7 @@ public class ConversionUtils
         String resourceTypeName = resourceType.getName();
         if (COMPONENT_TYPE_CACHE.containsKey(resourceTypeName))
             return COMPONENT_TYPE_CACHE.get(resourceTypeName);
-
-        Configuration defaultPluginConfig;
-        if (DEFAULT_PLUGIN_CONFIG_CACHE.containsKey(resourceTypeName))
-            defaultPluginConfig = DEFAULT_PLUGIN_CONFIG_CACHE.get(resourceTypeName);
-        else {
-            defaultPluginConfig = getDefaultPluginConfiguration(resourceType);
-            DEFAULT_PLUGIN_CONFIG_CACHE.put(resourceTypeName, defaultPluginConfig);
-        }
-
+        Configuration defaultPluginConfig = getDefaultPluginConfiguration(resourceType);
         String type = defaultPluginConfig.getSimpleValue(ManagedComponentComponent.COMPONENT_TYPE_PROPERTY, null);
         if (type == null || type.equals(""))
             throw new IllegalStateException("Required plugin configuration property '"
@@ -118,15 +109,7 @@ public class ConversionUtils
         String resourceTypeName = resourceType.getName();
         if (DEPLOYMENT_TYPE_CACHE.containsKey(resourceTypeName))
             return DEPLOYMENT_TYPE_CACHE.get(resourceTypeName);
-
-        Configuration defaultPluginConfig;
-        if (DEFAULT_PLUGIN_CONFIG_CACHE.containsKey(resourceTypeName))
-            defaultPluginConfig = DEFAULT_PLUGIN_CONFIG_CACHE.get(resourceTypeName);
-        else {
-            defaultPluginConfig = getDefaultPluginConfiguration(resourceType);
-            DEFAULT_PLUGIN_CONFIG_CACHE.put(resourceTypeName, defaultPluginConfig);
-        }
-
+        Configuration defaultPluginConfig = getDefaultPluginConfiguration(resourceType);
         String typeName = defaultPluginConfig.getSimpleValue(AbstractManagedDeploymentComponent.DEPLOYMENT_TYPE_NAME_PROPERTY, null);
         if (typeName == null || typeName.equals(""))
             throw new IllegalStateException("Required plugin configuration property '"
@@ -136,16 +119,6 @@ public class ConversionUtils
         return deploymentType;
     }
 
-    private static Configuration getDefaultPluginConfiguration(ResourceType resourceType) {
-        ConfigurationDefinition definition = resourceType.getPluginConfigurationDefinition();
-        if (definition != null) {
-            ConfigurationTemplate template = definition.getDefaultTemplate();
-            if (template != null) {
-                return template.getConfiguration().deepCopy();
-            }
-        }
-        return new Configuration(); // there is no default plugin config defined - return an empty one
-    }
 
     public static Configuration convertManagedObjectToConfiguration(Map<String, ManagedProperty> managedProperties,
                                                                     Map<String, PropertySimple> customProps,
@@ -220,6 +193,18 @@ public class ConversionUtils
                         + "descriptor but have no coresponding ManagedProperties: " + missingManagedPropertyNames);
         }
         return;
+    }
+
+    private static Configuration getDefaultPluginConfiguration(ResourceType resourceType)
+    {
+        Configuration defaultPluginConfig;
+        if (DEFAULT_PLUGIN_CONFIG_CACHE.containsKey(resourceType.getName()))
+            defaultPluginConfig = DEFAULT_PLUGIN_CONFIG_CACHE.get(resourceType.getName());
+        else {
+            defaultPluginConfig = ResourceTypeUtils.getDefaultPluginConfiguration(resourceType);
+            DEFAULT_PLUGIN_CONFIG_CACHE.put(resourceType.getName(), defaultPluginConfig);
+        }
+        return defaultPluginConfig;
     }
 
     private static void populateManagedPropertyFromProperty(Property property, PropertyDefinition propertyDefinition,

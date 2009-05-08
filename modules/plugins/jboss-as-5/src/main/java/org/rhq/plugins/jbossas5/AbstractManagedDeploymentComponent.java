@@ -59,6 +59,7 @@ public abstract class AbstractManagedDeploymentComponent
         implements OperationFacet, ProgressListener {
     public static final String DEPLOYMENT_NAME_PROPERTY = "deploymentName";
     public static final String DEPLOYMENT_TYPE_NAME_PROPERTY = "deploymentTypeName";
+    public static final String EXTENSION_PROPERTY = "extension";
 
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
 

@@ -62,6 +62,7 @@
           <module>plugin-container</module>
           <module>gui</module>
           <module>plugindoc</module>
+          <module>plugin-validator</module>
        </modules>
     </profile>
 

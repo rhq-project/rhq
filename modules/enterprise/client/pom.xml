@@ -145,7 +145,7 @@ available when compiling dependent classes. It is fixed in JDK 6 -->
         <dependency>
            <groupId>hibernate</groupId>
            <artifactId>hibernate3</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
            <scope>provided</scope> <!-- by JBossAS -->
         </dependency>
 
@@ -167,13 +167,13 @@ available when compiling dependent classes. It is fixed in JDK 6 -->
             <version>0.9.94</version>
         </dependency>
 
-      <dependency>
-        <groupId>org.testng</groupId>
-        <artifactId>testng</artifactId>
-        <version>5.8</version>
-        <scope>test</scope>
-        <classifier>jdk15</classifier>
-      </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>5.8</version>
+            <scope>test</scope>
+            <classifier>jdk15</classifier>
+        </dependency>
 
     </dependencies>
 

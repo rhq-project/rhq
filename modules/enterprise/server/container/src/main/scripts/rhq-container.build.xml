@@ -158,7 +158,7 @@
       </fileset>
       <fileset dir="${jboss.deploy.dir}/jbossws.sar/jbossws.beans/META-INF">
         <include name="jboss-beans.xml" />
-      </fileset>    	
+      </fileset>
     </delete>
     <copy file="${settings.localRepository}/org/rhq/safe-invoker/${rhq.version}/safe-invoker-${rhq.version}.jar"
            toDir="${jboss.deploy.dir}/jbossws.sar" verbose="true" />
@@ -173,7 +173,7 @@
     <copy file="${jboss.home}/server/all/lib/jboss-cache-jdk50.jar"
           tofile="${jboss.home}/server/default/lib/jboss-cache-jdk50.jar" verbose="true"/>
 
-  	 <echo>Installing patched hibernate jar ...</echo>
+    <echo>Installing patched hibernate jar ...</echo>
     <copy file="${settings.localRepository}/hibernate/hibernate3/${hibernate3.version}/hibernate3-${hibernate3.version}.jar"
           tofile="${jboss.home}/server/default/lib/hibernate3.jar" verbose="true"/>
 
@@ -312,13 +312,13 @@
 
     <echo>Enabling server to run on Java 6 ...</echo>
     <move todir="${jboss.home}/lib/endorsed" verbose="true">
-       <fileset dir="${jboss.home}/client">       	
+       <fileset dir="${jboss.home}/client">
          <include name="jboss-jaxrpc.jar" />
          <include name="jboss-jaxws.jar" />
          <include name="jboss-jaxws-ext.jar" />
-         <include name="jboss-saaj.jar" />       	
-       	<include name="jaxb-api.jar" />
-       </fileset>    	
+         <include name="jboss-saaj.jar" />
+         <include name="jaxb-api.jar" />
+       </fileset>
        <fileset dir="${jboss.home}/server/default/lib">
           <include name="activation.jar" />
        </fileset>
@@ -339,7 +339,7 @@
       </zipfileset>
       <zipfileset dir="${settings.localRepository}/commons-logging/commons-logging/1.1.1">
          <include name="commons-logging-1.1.1.jar"/>
-      </zipfileset>    	
+      </zipfileset>
    </zip>
   </target>
 
@@ -658,15 +658,15 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
      <!-- TODO: do we want to completely delete it? right now I just disable it so we can re-enable out in the field
      <delete dir="${jboss.deploy.dir}/jmx-console.war" />
      -->
-     <move file="${jboss.deploy.dir}/jmx-console.war" 
-           tofile="${jboss.deploy.dir}/jmx-console.war.rej" 
+     <move file="${jboss.deploy.dir}/jmx-console.war"
+           tofile="${jboss.deploy.dir}/jmx-console.war.rej"
            failonerror="false"/>
   </target>
 
   <target name="undeploy-mail-service" unless="predeploy">
      <echo>Preparing for release - undeploying Mail Service...</echo>
-     <move file="${jboss.deploy.dir}/mail-service.xml" 
-           tofile="${jboss.deploy.dir}/mail-service.xml.rej" 
+     <move file="${jboss.deploy.dir}/mail-service.xml"
+           tofile="${jboss.deploy.dir}/mail-service.xml.rej"
            failonerror="false"/>
   </target>
 
@@ -682,19 +682,19 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
 
   <target name="undeploy-alert-cache-service" unless="predeploy">
      <echo>Preparing for release - undeploying Alert Cache Service...</echo>
-     <move file="${jboss.deploy.dir}/alert-cache-service.xml" 
+     <move file="${jboss.deploy.dir}/alert-cache-service.xml"
            tofile="${jboss.deploy.dir}/alert-cache-service.xml.rej"/>
   </target>
 
   <target name="undeploy-embedded-agent" unless="predeploy">
      <echo>Preparing for release - undeploying Embedded Agent...</echo>
-     <move file="${jboss.deploy.dir}/rhq-agent.sar" 
+     <move file="${jboss.deploy.dir}/rhq-agent.sar"
            tofile="${jboss.deploy.dir}/rhq-agent.sar.rej"/>
   </target>
 
   <target name="undeploy-ear" unless="predeploy">
      <echo>Preparing for release - cleaning and undeploying EAR...</echo>
-     <move file="${jboss.deploy.dir}/${rhq.earName}" 
+     <move file="${jboss.deploy.dir}/${rhq.earName}"
            tofile="${jboss.deploy.dir}/${rhq.earName}.rej"/>
   </target>
 
@@ -705,15 +705,15 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
 
   <target name="deploy-postgres-ds" if="predeploy-postgres">
      <echo>Postgres will be your datasource backend!</echo>
-     <copy file="${jboss.deploy.dir}/${ds.postgres.file}" 
-           tofile="${jboss.deploy.dir}/rhq-ds.xml" 
+     <copy file="${jboss.deploy.dir}/${ds.postgres.file}"
+           tofile="${jboss.deploy.dir}/rhq-ds.xml"
            verbose="true"/>
   </target>
 
   <target name="deploy-oracle-ds" if="predeploy-oracle">
      <echo>Oracle will be your datasource backend!</echo>
-     <copy file="${jboss.deploy.dir}/${ds.oracle.file}" 
-           tofile="${jboss.deploy.dir}/rhq-ds.xml" 
+     <copy file="${jboss.deploy.dir}/${ds.oracle.file}"
+           tofile="${jboss.deploy.dir}/rhq-ds.xml"
            verbose="true"/>
   </target>
 

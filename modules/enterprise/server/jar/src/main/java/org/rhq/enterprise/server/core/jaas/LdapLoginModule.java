@@ -20,18 +20,22 @@ package org.rhq.enterprise.server.core.jaas;
 
 import java.security.acl.Group;
 import java.util.Iterator;
-import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Map.Entry;
+
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
 import javax.security.auth.login.LoginException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.security.SimpleGroup;
 import org.jboss.security.auth.spi.UsernamePasswordLoginModule;
+
 import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
 /**
@@ -226,7 +230,10 @@ public class LdapLoginModule extends UsernamePasswordLoginModule {
         // Setup SSL if requested
         String protocol = env.getProperty(Context.SECURITY_PROTOCOL);
         if ((protocol != null) && protocol.equals("ssl")) {
-            env.put("java.naming.ldap.factory.socket", UntrustedSSLSocketFactory.class.getName());
+            String ldapSocketFactory = env.getProperty("java.naming.ldap.factory.socket");
+            if (ldapSocketFactory == null) {
+                env.put("java.naming.ldap.factory.socket", UntrustedSSLSocketFactory.class.getName());
+            }
             env.put(Context.SECURITY_PROTOCOL, "ssl");
         }
 

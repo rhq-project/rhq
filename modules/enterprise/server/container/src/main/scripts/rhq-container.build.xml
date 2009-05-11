@@ -325,6 +325,13 @@
     </move>
     <delete file="${jboss.home}/lib/endorsed/xalan.jar" verbose="true" />
 
+    <echo>Adding support for the embedded agent ...</echo>
+    <move todir="${jboss.home}/lib/endorsed" verbose="true">
+       <fileset dir="${jboss.home}/client">        
+         <include name="jaxb-impl.jar" />
+       </fileset>       
+    </move>
+  	
   </target>
 
   <target name="package-connectors" if="package-connectors">

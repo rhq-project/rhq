@@ -40,11 +40,14 @@ import org.apache.maven.artifact.versioning.ComparableVersion;
      private static final String ANY_ADDRESS = "0.0.0.0";
      private static final String LOCALHOST_ADDRESS = "127.0.0.1";
      private static final String SOA_IMPL_VERSION_PREFIX = "SOA-";
+     private static final String EAP_IMPL_VERSION_PREFIX = "EAP-";
      private static final ComparableVersion VERSION_4_2 = new ComparableVersion("4.2");
 
      private JBossProductType productType;
      private String version;
      private String defaultBindAddress;
+     private boolean isEap ;
+     private String majorVersion;
 
      public JBossInstallationInfo(File installationDir) throws IOException {
          File binDir = new File(installationDir, "bin");
@@ -53,6 +56,8 @@ import org.apache.maven.artifact.versioning.ComparableVersion;
          this.productType = JBossProductType.determineJBossProductType(jarManifestAttributes);
          this.version = getVersion(jarManifestAttributes);
          this.defaultBindAddress = getDefaultServerName(this.version);
+         this.isEap = determineEap(jarManifestAttributes);
+         this.majorVersion = version.substring(0,version.indexOf('.'));
      }
 
      public JBossProductType getProductType() {
@@ -74,6 +79,18 @@ import org.apache.maven.artifact.versioning.ComparableVersion;
      }
 
      /**
+      * Returns if this is an EAP version of the server
+      * @return
+      */
+     public boolean isEap() {
+         return isEap;
+     }
+
+     public String getMajorVersion() {
+         return majorVersion;
+     }
+
+     /**
       * Loads the top-level attributes from the manifest file of the given jar file.
       *
       * @param jarFile the jar file
@@ -90,6 +107,24 @@ import org.apache.maven.artifact.versioning.ComparableVersion;
      private static String getVersion(Attributes jarManifestAttributes) {
          String implementationVersion = jarManifestAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
          // e.g. Implementation-Version: 4.2.2.GA (build: SVNTag=JBoss_4_2_2_GA date=200710221139)
+         int spaceIndex = validateImplementationVersion(implementationVersion);
+         String version = implementationVersion.substring(0, spaceIndex);
+         if (version.startsWith(SOA_IMPL_VERSION_PREFIX)) {
+             version = version.substring(SOA_IMPL_VERSION_PREFIX.length());
+         }
+         if (version.startsWith(EAP_IMPL_VERSION_PREFIX)) {
+             version = version.substring(EAP_IMPL_VERSION_PREFIX.length());
+         }
+         return version;
+     }
+
+     private static boolean determineEap(Attributes jarManifestAttributes) {
+         String implementationVersion = jarManifestAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+         validateImplementationVersion(implementationVersion);
+         return (implementationVersion.startsWith(EAP_IMPL_VERSION_PREFIX));
+     }
+
+     private static int validateImplementationVersion(String implementationVersion) {
          if (implementationVersion == null) {
              throw new IllegalStateException(
                      "'" + Attributes.Name.IMPLEMENTATION_VERSION + "' MANIFEST.MF attribute not found.");
@@ -99,16 +134,12 @@ import org.apache.maven.artifact.versioning.ComparableVersion;
              throw new IllegalStateException("'" + Attributes.Name.IMPLEMENTATION_VERSION +
                      "' MANIFEST.MF attribute has an invalid value: " + implementationVersion);
          }
-         String version = implementationVersion.substring(0, spaceIndex);
-         if (version.startsWith(SOA_IMPL_VERSION_PREFIX)) {
-             version = version.substring(SOA_IMPL_VERSION_PREFIX.length());
-         }
-         return version;
+         return spaceIndex;
      }
 
      private static String getDefaultServerName(String serverVersion) {
          ComparableVersion comparableVersion = new ComparableVersion(serverVersion);
-         return (comparableVersion.compareTo(VERSION_4_2) >= 0) ? ANY_ADDRESS : LOCALHOST_ADDRESS;
+         return (comparableVersion.compareTo(VERSION_4_2) >= 0) ? ANY_ADDRESS : LOCALHOST_ADDRESS; // TODO check
      }
 
      @Override

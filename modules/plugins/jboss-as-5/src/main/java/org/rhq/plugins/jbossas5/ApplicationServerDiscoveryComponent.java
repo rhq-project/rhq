@@ -23,48 +23,51 @@
 package org.rhq.plugins.jbossas5;
 
  import java.io.File;
- import java.io.IOException;
- import java.util.HashSet;
- import java.util.List;
- import java.util.Set;
+import java.io.IOException;
+ import java.io.BufferedReader;
+ import java.io.FileReader;
  import java.util.Arrays;
- import java.util.Properties;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 
- import org.apache.commons.logging.Log;
- import org.apache.commons.logging.LogFactory;
- import org.apache.maven.artifact.versioning.ComparableVersion;
- import org.jetbrains.annotations.Nullable;
- import org.rhq.core.domain.configuration.Configuration;
- import org.rhq.core.domain.configuration.PropertySimple;
- import org.rhq.core.domain.configuration.PropertyList;
- import org.rhq.core.domain.configuration.PropertyMap;
- import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
- import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
- import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
- import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
- import org.rhq.core.pluginapi.inventory.ProcessScanResult;
- import org.rhq.core.pluginapi.util.FileUtils;
- import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
- import org.rhq.core.system.ProcessInfo;
- import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider;
- import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
- import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
- import org.rhq.plugins.jbossas5.helper.JBossInstallationInfo;
- import org.rhq.plugins.jbossas5.helper.JBossInstanceInfo;
- import org.rhq.plugins.jbossas5.helper.JBossProperties;
- import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
- import org.rhq.plugins.jbossas5.util.PluginDescriptorGenerator;
- import org.rhq.plugins.jbossas5.util.JnpConfig;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.maven.artifact.versioning.ComparableVersion;
+import org.jetbrains.annotations.Nullable;
 
- import org.jboss.deployers.spi.management.ManagementView;
- import org.jboss.managed.api.ComponentType;
- import org.jboss.managed.api.ManagedComponent;
+import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.managed.api.ComponentType;
+import org.jboss.managed.api.ManagedComponent;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ProcessScanResult;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.system.ProcessInfo;
+import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider;
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
+import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
+import org.rhq.plugins.jbossas5.helper.JBossInstallationInfo;
+import org.rhq.plugins.jbossas5.helper.JBossInstanceInfo;
+import org.rhq.plugins.jbossas5.helper.JBossProperties;
+import org.rhq.plugins.jbossas5.util.JnpConfig;
+import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
+import org.rhq.plugins.jbossas5.util.PluginDescriptorGenerator;
 
  /**
  * Discovery component for JBoss AS, 5.1.0.CR1 or later, Servers.
  *
  * @author Ian Springer
- * @author Mark Spritzler  
+ * @author Mark Spritzler
  */
 public class ApplicationServerDiscoveryComponent
         implements ResourceDiscoveryComponent
@@ -237,10 +240,21 @@ public class ApplicationServerDiscoveryComponent
                 new ComponentType("MCBean", "ServerConfig"));
         String serverName = (String)ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent, "serverName");
 
-        // TODO: Figure out if the instance is AS or EAP, and reflect that in the Resource name.
-        String resourceName = "JBoss AS 5 (" + serverName + ")";
 
+        // serverHomeDir is the path to the started instance - e.g. jbossas/server/default/
         String resourceKey = (String)ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent, "serverHomeDir");
+
+        // Figure out if the instance is AS or EAP, and reflect that in the Resource name.
+        JBossInstallationInfo installInfo;
+        try {
+            installInfo = new JBossInstallationInfo(new File(resourceKey).getParentFile().getParentFile());
+        } catch (IOException e) {
+            throw new InvalidPluginConfigurationException(e);
+        }
+        String resourceName = "JBoss ";
+        resourceName += installInfo.isEap() ? "EAP " : "AS ";
+        resourceName += installInfo.getMajorVersion();
+        resourceName += " ("+serverName + ")";
 
         String version = (String)ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent, "specificationVersion");
 
@@ -351,6 +365,24 @@ public class ApplicationServerDiscoveryComponent
     }
 
     private static String getJnpURL(JBossInstanceInfo cmdLine, File installHome, File configDir) {
+
+        String path = cmdLine.getSystemProperties().getProperty(JBossProperties.SERVER_NAME)+ "/data/jnp-service.url";
+
+        File urlStore = new File(path);
+        if (urlStore.exists() && urlStore.canRead()) {
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(urlStore));
+                String jnpUrl = br.readLine();
+                if (jnpUrl!=null)
+                    return jnpUrl;
+            }
+            catch (IOException ioe) {
+                // Nothing to do
+            }
+        }
+
+
+        // Above did not work, so fall back to our previous scheme
         JnpConfig jnpConfig = getJnpConfig(installHome, configDir, cmdLine.getSystemProperties());
         String jnpAddress = (jnpConfig.getJnpAddress() != null) ? jnpConfig.getJnpAddress() : CHANGE_ME;
         if (jnpAddress.equals(ANY_ADDRESS))

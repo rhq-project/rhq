@@ -30,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -1703,6 +1704,11 @@ public class AgentMain {
                     keep_waiting = ((after == 0) || (updating));
 
                     if (!keep_waiting) {
+                        after = plugin_dir.list(new FilenameFilter() {
+                            public boolean accept(File dir, String name) {
+                                return name.endsWith(".jar");
+                            }
+                        }).length;
                         LOG.info(AgentI18NResourceKeys.DONE_WAITING_FOR_PLUGINS, after);
                         getOut().println(MSG.getMsg(AgentI18NResourceKeys.DONE_WAITING_FOR_PLUGINS, after));
                     }

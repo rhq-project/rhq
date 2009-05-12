@@ -23,7 +23,7 @@ import org.quartz.SimpleTrigger;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.common.scheduling.HtmlSimpleTrigger;
+import org.rhq.enterprise.gui.common.scheduling.OperationDetailsScheduleComponent;
 import org.rhq.enterprise.gui.operation.model.OperationParameters;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -35,7 +35,7 @@ public abstract class OperationScheduleDetailsUIBean {
     protected OperationManagerLocal manager;
     protected OperationSchedule schedule;
     private OperationParameters parameters;
-    private HtmlSimpleTrigger trigger;
+    private OperationDetailsScheduleComponent operationDetails;
 
     public OperationScheduleDetailsUIBean() {
         manager = LookupUtil.getOperationManager();
@@ -67,7 +67,7 @@ public abstract class OperationScheduleDetailsUIBean {
                 throw new IllegalStateException(se.getMessage(), se);
             }
 
-            trigger = new HtmlSimpleTrigger(quartzTrigger);
+            operationDetails = new OperationDetailsScheduleComponent(quartzTrigger);
         }
     }
 
@@ -85,10 +85,9 @@ public abstract class OperationScheduleDetailsUIBean {
         return parameters;
     }
 
-    public HtmlSimpleTrigger getTrigger() {
+    public OperationDetailsScheduleComponent getOperationDetails() {
         init();
-
-        return trigger;
+        return operationDetails;
     }
 
     public OperationManagerLocal getManager() {
@@ -107,7 +106,7 @@ public abstract class OperationScheduleDetailsUIBean {
         this.parameters = parameters;
     }
 
-    public void setTrigger(HtmlSimpleTrigger trigger) {
-        this.trigger = trigger;
+    public void setOperationDetails(OperationDetailsScheduleComponent operationDetails) {
+        this.operationDetails = operationDetails;
     }
 }

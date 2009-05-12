@@ -19,6 +19,8 @@
 package org.rhq.enterprise.gui.operation.schedule;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +42,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.common.scheduling.HtmlSimpleTrigger;
+import org.rhq.enterprise.gui.common.scheduling.OperationDetailsScheduleComponent;
 import org.rhq.enterprise.gui.operation.definition.OperationDefinitionParametersUIBean;
 import org.rhq.enterprise.gui.operation.definition.OperationDefinitionUIBean;
 import org.rhq.enterprise.gui.operation.definition.group.ResourceGroupOperationDefinitionUIBean;
@@ -56,7 +58,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public abstract class OperationScheduleUIBean extends PagedDataTableUIBean {
     private OperationSchedule selectedOperationSchedule;
     protected OperationManagerLocal manager;
-    private HtmlSimpleTrigger trigger;
+    private OperationDetailsScheduleComponent operationDetails = new OperationDetailsScheduleComponent();
 
     public OperationScheduleUIBean() {
         manager = LookupUtil.getOperationManager();
@@ -78,29 +80,30 @@ public abstract class OperationScheduleUIBean extends PagedDataTableUIBean {
         return "success";
     }
 
-    public HtmlSimpleTrigger getTrigger() {
-        return trigger;
+    public OperationDetailsScheduleComponent getOperationDetails() {
+        return operationDetails;
     }
 
-    public void setTrigger(HtmlSimpleTrigger trigger) {
-        this.trigger = trigger;
+    public void setOperationDetails(OperationDetailsScheduleComponent operationDetails) {
+        this.operationDetails = operationDetails;
     }
 
     public String schedule() {
         try {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            Integer operationId = FacesContextUtility.getRequiredRequestParameter("opId", Integer.class);
 
-            SimpleTrigger simpleTrigger = getTrigger().getQuartzSimpleTrigger();
+            SimpleTrigger simpleTrigger = getTrigger();
+
             long startTime = simpleTrigger.getStartTime().getTime();
             long now = System.currentTimeMillis();
             if (now - startTime > 60000) {
-                /* 
-                 * allow a resource to be scheduled up to 60 seconds in the past, in case the clock 
+                /*
+                 * allow a resource to be scheduled up to 60 seconds in the past, in case the clock
                  * ticks forward while the user is still filling out the operation schedule form
                  */
                 throw new IllegalArgumentException("Can not schedule operations in the past");
             }
+
             OperationDefinitionParametersUIBean operationParametersUIBean = FacesContextUtility
                 .getBean(OperationDefinitionParametersUIBean.class);
             Configuration configuration = operationParametersUIBean.getConfiguration();
@@ -137,7 +140,7 @@ public abstract class OperationScheduleUIBean extends PagedDataTableUIBean {
             return "success";
         }
 
-        if (getTrigger().getDeferred()) {
+        if (getOperationDetails().getDeferred()) {
             // a deferred trigger is a new schedule
             return "viewOperationSchedules";
         } else {
@@ -217,4 +220,46 @@ public abstract class OperationScheduleUIBean extends PagedDataTableUIBean {
     public abstract String getManagedBeanName();
 
     public abstract List<? extends OperationSchedule> getOperationScheduleList();
+
+    public SimpleTrigger getTrigger() {
+        OperationDetailsScheduleComponent component = this.getOperationDetails();
+        SimpleTrigger trigger = new SimpleTrigger();
+        //Validate if a start date is specified
+        Date now = Calendar.getInstance().getTime();
+        if ((component.getStart().equals("immediate"))) {
+            trigger.setStartTime(now);
+        } else {
+            component.setDeferred(true);
+            if (component.getStartDate() == null) {
+                throw new IllegalArgumentException("Please select a start date");
+            }
+            if (now.after(component.getStartDate())) {
+                throw new IllegalArgumentException("Scheduling cannot occur in the past");
+                //                FacesMessages.instance().addToControl("start", "Scheduling cannot occur in the past");
+            } else {
+                trigger.setStartTime(component.getStartDate());
+                if (component.getRecur().equals("never")) {
+                } else {
+                    //set the repetition interval of the trigger
+                    trigger.setRepeatCount(SimpleTrigger.REPEAT_INDEFINITELY);
+                    component.setRepeat(true);
+                    long repeatInterval = component.getUnit().getMillis() * component.getRepeatInterval();
+                    trigger.setRepeatInterval(repeatInterval);
+                    if (component.getEnd().equals("endDate")) {
+                        if (component.getEndDate() == null) {
+                            throw new IllegalArgumentException("Please select an end date");
+                        }
+                        component.setTerminate(true);
+                        if (component.getEndDate().before(component.getStartDate())) {
+                            throw new IllegalArgumentException("Scheduling cannot occur before the start date");
+                        } else {
+                            //set the end date of the trigger
+                            trigger.setEndTime(component.getEndDate());
+                        }
+                    }
+                }
+            }
+        }
+        return trigger;
+    }
 }

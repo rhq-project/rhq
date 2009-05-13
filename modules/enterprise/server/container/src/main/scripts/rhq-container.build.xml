@@ -165,14 +165,6 @@
     <copy file="${basedir}/src/main/resources/jbossas/server/default/deploy/jbossws.sar/jbossws.beans/META-INF/jboss-beans.xml"
           toDir="${jboss.deploy.dir}/jbossws.sar/jbossws.beans/META-INF" verbose="true" />
 
-    <echo>Installing jgroups jar ...</echo>
-    <copy file="${jboss.home}/server/all/lib/jgroups.jar"
-          tofile="${jboss.home}/server/default/lib/jgroups.jar" verbose="true"/>
-
-    <echo>Installing jboss cache jar ...</echo>
-    <copy file="${jboss.home}/server/all/lib/jboss-cache-jdk50.jar"
-          tofile="${jboss.home}/server/default/lib/jboss-cache-jdk50.jar" verbose="true"/>
-
     <echo>Installing patched hibernate jar ...</echo>
     <copy file="${settings.localRepository}/hibernate/hibernate3/${hibernate3.version}/hibernate3-${hibernate3.version}.jar"
           tofile="${jboss.home}/server/default/lib/hibernate3.jar" verbose="true"/>
@@ -278,10 +270,6 @@
     <echo>Deploying RT filter jar ...</echo>
     <copy file="${settings.localRepository}/org/rhq/rhq-rtfilter/${rhq.version}/rhq-rtfilter-${rhq.version}.jar"
           todir="${jboss.home}/server/default/lib" verbose="true" />
-
-    <!-- Delete 'minimal' and 'all' config dirs... -->
-    <delete dir="${jboss.home}/server/minimal" />
-    <delete dir="${jboss.home}/server/all" />
 
     <!-- Delete docs dir and README files... -->
     <delete dir="${jboss.home}/docs" />
@@ -530,6 +518,18 @@ rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
            dest="${basedir}/target" />
     <delete dir="${jboss.home}" />
     <move file="${basedir}/target/jboss-${jboss.version}" tofile="${jboss.home}" />
+  	
+    <echo>Installing jgroups jar ...</echo>
+    <copy file="${jboss.home}/server/all/lib/jgroups.jar"
+         tofile="${jboss.home}/server/default/lib/jgroups.jar" verbose="true"/>
+
+    <echo>Installing jboss cache jar ...</echo>
+    <copy file="${jboss.home}/server/all/lib/jboss-cache-jdk50.jar"
+         tofile="${jboss.home}/server/default/lib/jboss-cache-jdk50.jar" verbose="true"/>
+
+    <!-- Delete 'minimal' and 'all' config dirs... -->
+    <delete dir="${jboss.home}/server/minimal" />
+    <delete dir="${jboss.home}/server/all" />
   </target>
 
   <target name="generate-rhq-ssl-key" unless="rhq.keystore.exists">

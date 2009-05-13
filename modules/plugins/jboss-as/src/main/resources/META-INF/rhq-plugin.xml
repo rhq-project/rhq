@@ -127,11 +127,11 @@
       <process-scan name="JBoss4" query="process|basename|match=^java.*,arg|org.jboss.Main|match=.*"/>
 
       <operation name="start" displayName="Start"
-                 description="Start this application server. The script used is specified in Control Properties.">
+                 description="Start this application server. The script used is specified in the Operations group of connection properties.">
           <results><c:simple-property name="operationResult" description="Outcome of starting the server."/></results>
       </operation>
       <operation name="shutdown" displayName="Shutdown"
-                 description="Shutdown this application server via script or JMX depending on the settings in Advanced Properties.">
+                 description="Shutdown this application server via script or JMX depending on the settings in the Operations and Advanced groups of connection properties.">
           <results><c:simple-property name="operationResult" description="Outcome of stopping the server."/></results>
       </operation>
       <operation name="restart" displayName="Restart"

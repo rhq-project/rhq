@@ -79,6 +79,7 @@ import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -213,12 +214,15 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 Architecture packageArchitecture;
 
                 // We don't have an architecture enum, so it's very possible the plugin will pass in a crap string here.
-                // Catch and throw with a better error message
+                // Catch and log a better error message but continue processing the rest of the report
+                // TODO: if arch is "none" we should consider manually switching it to be our standard "noarch"
                 try {
                     packageArchitecture = (Architecture) architectureQuery.getSingleResult();
                 } catch (Exception e) {
-                    throw new RuntimeException("Could not load architecture for architecture name ["
-                        + resourcePackage.getArchitectureName() + "] for package [" + resourcePackage.getName() + "]");
+                    log.warn("Could not load architecture for architecture name ["
+                        + resourcePackage.getArchitectureName() + "] for package [" + resourcePackage.getName()
+                        + "]. Cause: " + ThrowableUtil.getAllMessages(e));
+                    continue;
                 }
 
                 packageVersion = new PackageVersion(generalPackage, resourcePackage.getVersion(), packageArchitecture);

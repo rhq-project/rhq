@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -144,7 +145,9 @@ public class UrlSource implements ContentSourceAdapter {
             setIndexUrl(new URL(rootUrlString + indexFileString));
         }
 
-        setRootUrl(new URL(rootUrlString));
+        URI uri = new URI(rootUrlString);
+        URL url = uri.toURL(); // proper RFC2396 decode happens here
+        setRootUrl(url);
 
         testConnection();
     }
@@ -200,6 +203,16 @@ public class UrlSource implements ContentSourceAdapter {
     }
 
     /**
+     * Returns the stream that contains the {@link #getIndexUrl() index file} content.
+     * @return index file content stream
+     * @throws Exception
+     */
+    protected InputStream getIndexInputStream() throws Exception {
+        InputStream indexStream = getIndexUrl().openStream();
+        return indexStream;
+    }
+
+    /**
      * Returns info on all the files listed in the {@link #getIndexUrl() index file}.
      * Blank lines in the index file will be ignored.
      * 
@@ -211,7 +224,7 @@ public class UrlSource implements ContentSourceAdapter {
     protected Map<String, RemotePackageInfo> getRemotePackageInfosFromIndex() throws Exception {
         Map<String, RemotePackageInfo> fileList = new HashMap<String, RemotePackageInfo>();
 
-        InputStream indexStream = getIndexUrl().openStream();
+        InputStream indexStream = getIndexInputStream();
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(indexStream));
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {

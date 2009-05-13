@@ -419,15 +419,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    /**
-     * Returns the current availablity for the specified Resource if no other thread currently possesses a write lock
-     * on that Resource's ResourceComponent, or otherwise, returns the last-collected availablity for the Resource.
-     *
-     * @param  resource a Resource
-     *
-     * @return the current availablity for the specified Resource if no other thread currently possesses a write lock
-     *         on that Resource's ResourceComponent, or otherwise, the last-collected availablity for the Resource
-     */
+    @NotNull
     // TODO (ips): Perhaps refactor this so that it shares code with AvailablityExecutor.checkInventory().
     public Availability getCurrentAvailability(Resource resource) {
         AvailabilityType availType = null; // i.e. UNKNOWN;
@@ -458,8 +450,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         lock.unlock();
                     }
                 } else {
-                    // Some other thread possesses the lock - just return the last-collected availablity for the Resource.
-                    return resourceContainer.getAvailability();
+                    // Some other thread possesses the lock - return the last-collected availablity for the Resource if
+                    // there is one.
+                    if (resourceContainer.getAvailability() != null)
+                        return resourceContainer.getAvailability();
                 }
             }
         } else {

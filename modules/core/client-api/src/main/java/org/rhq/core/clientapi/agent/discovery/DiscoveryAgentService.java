@@ -33,6 +33,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The interface to a RHQ Agent's Resource discovery subsystem.
@@ -105,14 +106,19 @@ public interface DiscoveryAgentService {
     AvailabilityReport executeAvailabilityScanImmediately(boolean changedOnlyReport);
 
     /**
-     * Returns the current availability state of the specified Resource (that is, the "live" availablity is requested
-     * from the plugin). If the availability is not known, "unknown" will be returned (that is, the
-     * {@link AvailabilityType} in the returned Availablity will be set to <code>null</code>).
+     * Returns the current availablity for the specified Resource if no other thread currently possesses a write lock
+     * on that Resource's ResourceComponent, or otherwise, returns the last-collected availablity for the Resource. If
+     * the availability is not known, "unknown" will be returned (that is, the {@link AvailabilityType} in the returned
+     * Availablity will be set to <code>null</code>).
      *
-     * @param  resource a resource
+     * @param  resource a Resource
      *
-     * @return the state of availability for the resource
+     * @return the current availablity for the specified Resource if no other thread currently possesses a write lock
+     *         on that Resource's ResourceComponent, or otherwise, the last-collected availablity for the Resource; if
+     *         the availability is not known, "unknown" will be returned (that is, the {@link AvailabilityType} in the
+     *         returned Availablity will be set to <code>null</code>).
      */
+    @NotNull
     Availability getCurrentAvailability(Resource resource);
 
     /**

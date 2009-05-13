@@ -55,6 +55,7 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This object holds information relative to the running state of a {@link ResourceComponent} in the Plugin Container.
@@ -132,6 +133,7 @@ public class ResourceContainer implements Serializable {
      *
      * @return resource's availability or <code>null</code> if it is not known
      */
+    @Nullable
     public Availability getAvailability() {
         synchronized (this) {
             return this.availability;

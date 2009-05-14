@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2008 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@ import org.jboss.managed.api.ManagedDeployment;
 /**
  * @author Ian Springer
  */
-public class StandaloneManagedDeploymentDiscoveryComponent extends AbstractManagedDeploymentDiscoveryComponent
+public class StandaloneWarDiscoveryComponent extends AbstractWarDiscoveryComponent
 {
     protected boolean accept(ManagedDeployment managedDeployment)
     {

@@ -29,11 +29,14 @@ package org.rhq.plugins.jbossas5;
  import org.apache.commons.logging.LogFactory;
 
  import org.jboss.deployers.spi.management.ManagementView;
+ import org.jboss.deployers.spi.management.deploy.DeploymentManager;
+ import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
  import org.jboss.managed.api.ComponentType;
  import org.jboss.managed.api.ManagedComponent;
  import org.jboss.managed.api.ManagedOperation;
  import org.jboss.managed.api.ManagedProperty;
  import org.jboss.managed.api.RunState;
+ import org.jboss.managed.api.ManagedDeployment;
  import org.jboss.metatype.api.values.CompositeValue;
  import org.jboss.metatype.api.values.MetaValue;
  import org.jboss.metatype.api.values.SimpleValue;
@@ -57,6 +60,7 @@ package org.rhq.plugins.jbossas5;
  import org.rhq.plugins.jbossas5.util.ConversionUtils;
  import org.rhq.plugins.jbossas5.util.ResourceTypeUtils;
  import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
+ import org.rhq.plugins.jbossas5.util.DeploymentUtils;
  import org.jetbrains.annotations.NotNull;
 
  /**
@@ -105,15 +109,20 @@ public class ManagedComponentComponent extends AbstractManagedComponent
 
     public void deleteResource() throws Exception
     {
-        throw new UnsupportedOperationException("Deletion of " + getResourceContext().getResourceType().getName()
-                + " Resources is not currently supported.");
-        /*
+        DeploymentManager deploymentManager = getConnection().getDeploymentManager();
+        if (!deploymentManager.isRedeploySupported())
+            throw new UnsupportedOperationException("Deletion of " + getResourceContext().getResourceType().getName()
+                     + " Resources is not currently supported.");
         ManagedComponent managedComponent = getManagedComponent();
         log.debug("Removing " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
-        ManagementView managementView = ProfileServiceFactory.getCurrentProfileView();
+        ManagementView managementView = getConnection().getManagementView();
         managementView.removeComponent(managedComponent);
         managementView.load();
-        */
+        ManagedDeployment parentDeployment = managedComponent.getDeployment();
+        log.debug("Redeploying parent deployment '" + parentDeployment.getName()
+                + "' in order to complete removal of component " + toString(managedComponent) + "...");
+        DeploymentProgress progress = deploymentManager.redeploy(parentDeployment.getName());
+        DeploymentUtils.run(progress);
     }
 
     // OperationFacet Implementation  --------------------------------------------

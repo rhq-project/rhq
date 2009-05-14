@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2008 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,36 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.plugins.jbossas5;
+package org.rhq.plugins.jbossas5.helper;
 
-import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.managed.api.ComponentType;
+import org.jboss.deployers.spi.management.KnownComponentTypes;
 
 /**
  * @author Ian Springer
  */
-public class StandaloneManagedDeploymentDiscoveryComponent extends AbstractManagedDeploymentDiscoveryComponent
+public interface MoreKnownComponentTypes
 {
-    protected boolean accept(ManagedDeployment managedDeployment)
-    {
-        return (managedDeployment.getParent() == null);
-    }
+   /**
+    * An enum of additional MBean:* ManagedComponent types not defined in {@link KnownComponentTypes}.
+    */
+   public enum MBean
+   {
+      WebApplication,
+      Servlet,
+      WebApplicationManager;
+
+      public String type()
+      {
+         return this.getClass().getSimpleName();
+      }
+      public String subtype()
+      {
+         return this.name();
+      }
+      public ComponentType getType()
+      {
+         return new ComponentType(type(), subtype());
+      }
+   }
 }

@@ -26,14 +26,21 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
@@ -56,7 +63,7 @@ import org.jboss.profileservice.spi.NoSuchDeploymentException;
  */
 public abstract class AbstractManagedDeploymentComponent
         extends AbstractManagedComponent
-        implements OperationFacet, ProgressListener {
+        implements MeasurementFacet, OperationFacet, ProgressListener {
     public static final String DEPLOYMENT_NAME_PROPERTY = "deploymentName";
     public static final String DEPLOYMENT_TYPE_NAME_PROPERTY = "deploymentTypeName";
     public static final String EXTENSION_PROPERTY = "extension";
@@ -103,6 +110,38 @@ public abstract class AbstractManagedDeploymentComponent
                     + e.getLocalizedMessage());
             return AvailabilityType.DOWN;
         }
+    }
+
+    // ------------ MeasurementFacet Implementation ------------
+
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests)
+            throws Exception
+    {
+        if (this.deploymentType == KnownDeploymentTypes.JavaEEWebApplication) {
+            WarMeasurementFacetDelegate warMeasurementFacetDelegate = new WarMeasurementFacetDelegate(getResourceContext());
+            warMeasurementFacetDelegate.getValues(report, requests);
+        }
+    }
+
+    // TODO (ips): This method could be useful to other plugins, so move it to MeasurementReport.
+    private static boolean isRequestInReport(MeasurementReport report, MeasurementScheduleRequest request)
+    {
+        if (request.getDataType() == DataType.MEASUREMENT) {
+            for (MeasurementDataNumeric numericDatum : report.getNumericData()) {
+                if (numericDatum.getName().equals(request.getName()))
+                    return true;
+            }
+            for (MeasurementDataTrait traitDatum : report.getTraitData()) {
+                if (traitDatum.getName().equals(request.getName()))
+                    return true;
+            }
+            // TODO
+            /*for (CallTimeData callTimeDatum : report.getCallTimeData()) {
+                if (callTimeDatum.getName().equals(request.getName()))
+                    return true;
+            }*/
+        }
+        return false;
     }
 
     // ------------ OperationFacet Implementation ------------

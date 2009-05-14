@@ -19,6 +19,7 @@
 package org.rhq.plugins.jbossas5;
 
 import java.util.Set;
+import java.util.HashSet;
 
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -38,15 +39,19 @@ public class EmbeddedManagedDeploymentComponent extends AbstractManagedDeploymen
     // ------------ MeasurementFacet Implementation ------------
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests)
-            throws NoSuchDeploymentException
+            throws Exception
     {
+        Set<MeasurementScheduleRequest> remainingRequests = new HashSet();
         for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
             if (metricName.equals(CUSTOM_PARENT_TRAIT)) {
                 String parentDeploymentName = getManagedDeployment().getParent().getName();
                 MeasurementDataTrait trait = new MeasurementDataTrait(request, parentDeploymentName);
                 report.addData(trait);
+            } else {
+                remainingRequests.add(request);
             }
         }
+        super.getValues(report, remainingRequests);
     }
 }

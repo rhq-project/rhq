@@ -606,6 +606,71 @@
     </configuration>
 '>
 
+<!ENTITY warMetrics '
+    <metric property="contextRoot" displayName="Context Root"
+            dataType="trait" displayType="summary"
+            description="this context root of this WAR - used as a unique path prefix for URLs corresponding to this WAR"/>
+
+    <metric property="virtualHosts" displayName="Virtual Hosts"
+            dataType="trait" displayType="summary"
+            description="the virtual hosts this WAR is running on"/>
+
+    <!--
+    <metric property="responseTime" displayName="HTTP Response Time"
+            dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
+            description="the minimum, maximum, and average response times for HTTP requests serviced by this webapp"/>
+    -->
+
+    <metric property="Servlet.minimumResponseTime" displayName="Minimum Response Time"
+            units="milliseconds"
+            description="the minimum response time for requests serviced by this WAR"/>
+
+    <metric property="Servlet.averageResponseTime" displayName="Average Response Time"
+            units="milliseconds"
+            description="the average response time for requests serviced by this WAR"/>
+
+    <metric property="Servlet.maximumResponseTime" displayName="Maximum Response Time"
+            units="milliseconds"
+            description="the maximum response time for requests serviced by this WAR"/>
+
+    <metric property="Servlet.totalResponseTime" displayName="Total Response Time"
+        units="milliseconds" measurementType="trendsup"
+        description="the total response time for requests serviced by this WAR"/>
+
+    <metric property="Servlet.requestCount" displayName="Number of Requests Serviced"
+           units="none" description="the number of requests serviced by this WAR"
+           measurementType="trendsup" displayType="summary"/>
+
+    <metric property="Servlet.errorCount" displayName="Number of Error Responses"
+           units="none" description="the number of error responses sent by this WAR"
+           measurementType="trendsup" displayType="summary"/>
+
+    <metric property="WebApplicationManager.activeSessions"
+           displayName="Currently Active Sessions"
+           units="none" description="the number of sessions that are currently active for this WAR" />
+
+    <metric property="WebApplicationManager.maxActive" displayName="Maximum Active Sessions"
+           units="none" description="the maximum number of sessions that have been active for this WAR" />
+
+    <metric property="WebApplicationManager.sessionCounter" displayName="Created Sessions"
+           units="none" description="the number of sessions created for this WAR"
+           measurementType="trendsup" />
+
+    <metric property="WebApplicationManager.expiredSessions" displayName="Expired Sessions"
+           units="none" description="the number of expired sessions for this WAR"
+           measurementType="trendsup" />
+
+    <metric property="WebApplicationManager.rejectedSessions" displayName="Rejected Sessions"
+           units="none" description="the number of sessions rejected for this WAR"
+           measurementType="trendsup" />
+
+    <metric property="WebApplicationManager.sessionAverageAliveTime" displayName="Average Session Alive Time"
+           units="seconds" description="the average alive time of sessions for this WAR" />
+
+    <metric property="WebApplicationManager.sessionMaxAliveTime" displayName="Max Session Alive Time"
+           units="seconds" description="the maximum alive time of sessions for this WAR" />
+'>
+
 ]>
 
 <!--############################################# END OF XML ENTITIES ###############################################-->
@@ -1866,7 +1931,7 @@
         <service name="Web Application (WAR)"
                  subCategory="Applications"
                  class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
+                 discovery="org.rhq.plugins.jbossas5.StandaloneWarDiscoveryComponent"
                  description="a standalone web application (WAR)"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -1875,6 +1940,8 @@
                 <c:group name="general" displayName="General">
                     <c:simple-property name="deploymentName" description="The name of this WAR" readOnly="true"/>
                     <c:simple-property name="filename" readOnly="true"/>
+                    <c:simple-property name="virtualHost" description="this WAR's virtual host (e.g. localhost)" readOnly="true"/>
+                    <c:simple-property name="contextPath" description="this WAR's context path (e.g. /admin-console" readOnly="true"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="war" readOnly="true"/>
@@ -1905,6 +1972,8 @@
                     dataType="trait" displayType="summary"
                     description="whether this WAR is deployed exploded (i.e. as a directory)"/>
 
+            &warMetrics;
+
             <content name="file" displayName="WAR File" category="deployable" isCreationType="true">
                 &deploymentContentConfigProps;
             </content>
@@ -1920,7 +1989,7 @@
         <service name="Embedded Web Application (WAR)"
                  subCategory="Applications"
                  class="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentDiscoveryComponent"
+                 discovery="org.rhq.plugins.jbossas5.EmbeddedWarDiscoveryComponent"
                  description="an embedded web application (WAR)">
 
             <plugin-configuration>
@@ -1943,6 +2012,8 @@
             <metric property="custom.parent" displayName="Parent"
                     dataType="trait" displayType="summary"
                     description="the name of this WAR's parent deployment"/>
+
+            &warMetrics;
 
             <!--
             <resource-configuration>

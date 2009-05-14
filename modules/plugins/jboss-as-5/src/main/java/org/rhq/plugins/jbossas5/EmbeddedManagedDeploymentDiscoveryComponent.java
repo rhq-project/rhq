@@ -23,7 +23,7 @@ import org.jboss.managed.api.ManagedDeployment;
 /**
  * @author Ian Springer
  */
-public class EmbeddedManagedDeploymentDiscoveryComponent extends ManagedDeploymentDiscoveryComponent
+public class EmbeddedManagedDeploymentDiscoveryComponent extends AbstractManagedDeploymentDiscoveryComponent
 {
     protected boolean accept(ManagedDeployment managedDeployment)
     {

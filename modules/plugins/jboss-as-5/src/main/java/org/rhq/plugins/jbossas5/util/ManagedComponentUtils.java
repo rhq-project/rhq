@@ -65,6 +65,9 @@ public class ManagedComponentUtils
     public static Serializable getSimplePropertyValue(ManagedComponent component, String propertyName)
     {
         ManagedProperty property = component.getProperty(propertyName);
+        if (property == null)
+            throw new IllegalStateException("Property named '" + propertyName + "' not found for ManagedComponent ["
+                    + component + "].");
         MetaType metaType = property.getMetaType();
         Serializable value;
         if (metaType.isSimple()) {

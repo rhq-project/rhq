@@ -324,6 +324,7 @@ public class PluginDescriptorGenerator {
         knownComponentTypes.add(new ComponentType("MBean", "Platform"));
         knownComponentTypes.add(new ComponentType("MBean", "Servlet"));
         knownComponentTypes.add(new ComponentType("MBean", "Web"));
+        knownComponentTypes.add(new ComponentType("MBean", "WebApplication"));
         knownComponentTypes.add(new ComponentType("MBean", "WebApplicationManager"));
         for (KnownComponentTypes.MCBean componentType : KnownComponentTypes.MCBean.values()) {
             knownComponentTypes.add(componentType.getType());

@@ -137,14 +137,6 @@
     </tag>
 
     <tag>
-        <tag-name>simpleTrigger</tag-name>
-        <component>
-            <component-type>org.jboss.on.HtmlSimpleTrigger</component-type>
-            <renderer-type>org.jboss.on.HtmlSimpleTrigger</renderer-type>
-        </component>
-    </tag>
-
-    <tag>
         <tag-name>dynamicPanelGroup</tag-name>
         <component>
             <component-type>org.jboss.on.DynamicPanelGroup</component-type>

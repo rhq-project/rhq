@@ -95,7 +95,6 @@
          /WEB-INF/jsf-components/sorting-components.xml,
          /WEB-INF/jsf-components/table-components.xml,
          /WEB-INF/jsf-components/time-components.xml,
-         /WEB-INF/jsf-components/trigger-components.xml,
          /WEB-INF/jsf-components/upload-components.xml,
          /WEB-INF/jsf-components/metric-components.xml,
 

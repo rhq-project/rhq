@@ -257,24 +257,25 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     }
 
     public AvailabilityType getAvailability() {
-    	try {
-    		EmsConnection connection = loadConnection();
-    		EmsBean bean = connection.getBean("jboss.system:type=ServerConfig");
+        try {
+            EmsConnection connection = loadConnection();
+            EmsBean bean = connection.getBean("jboss.system:type=ServerConfig");
 
-    		File serverHomeViaJNP = (File) bean.getAttribute("ServerHomeDir").refresh();
-    		if (this.configPath.equals(serverHomeViaJNP))
-    			return AvailabilityType.UP;
-    		else
-    			// a different server must have been started on our jnp url
-    			if (log.isDebugEnabled()) {
-    				log.debug("Availability check for JBAS resource with configPath [" + this.configPath +
-    						"] is trying to connect to a different running JBAS which is installed at [" +
-    						serverHomeViaJNP + "]. Returning AvailabilityType.DOWN for the former resource.");					
-    			}
-    			return AvailabilityType.DOWN;
-    	} catch (Exception e) {
-    		return AvailabilityType.DOWN;
-    	} 
+            File serverHomeViaJNP = (File) bean.getAttribute("ServerHomeDir").refresh();
+            if (this.configPath.equals(serverHomeViaJNP)) {
+                return AvailabilityType.UP;
+            } else {
+                // a different server must have been started on our jnp url
+                if (log.isDebugEnabled()) {
+                    log.debug("Availability check for JBAS resource with configPath [" + this.configPath
+                        + "] is trying to connect to a different running JBAS which is installed at ["
+                        + serverHomeViaJNP + "]. Returning AvailabilityType.DOWN for the former resource.");
+                }
+            }
+            return AvailabilityType.DOWN;
+        } catch (Exception e) {
+            return AvailabilityType.DOWN;
+        }
     }
 
     // MeasurementFacet Implementation  --------------------------------------------

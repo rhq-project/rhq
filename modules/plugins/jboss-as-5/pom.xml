@@ -29,7 +29,7 @@
 
     <properties>
         <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
-
+                        
         <jboss-man.version>2.1.0.CR8</jboss-man.version>
         <jboss-profileservice-spi.version>5.1.0.CR3</jboss-profileservice-spi.version>
     </properties>
@@ -39,17 +39,17 @@
 		<dependency>
 		  <groupId>${rhq.groupId}</groupId>
 		  <artifactId>rhq-core-client-api</artifactId>
-		  <version>${rhq.version}</version>
+		  <version>${rhq.version}</version>			
           <scope>provided</scope> <!-- by PC -->
 		</dependency>
-
+        
         <!-- Needed for the plugin descriptor generator code -->
         <dependency>
           <groupId>apache-xerces</groupId>
           <artifactId>xml-apis</artifactId>
           <version>2.9.1</version>
           <scope>provided</scope>
-        </dependency>
+        </dependency>    
 
         <!-- Needed for the plugin descriptor generator code -->
         <dependency>
@@ -57,20 +57,20 @@
           <artifactId>jaxb-api</artifactId>
           <version>2.1.4</version>
           <scope>provided</scope>
-        </dependency>
-
+        </dependency>    
+        
         <dependency>
           <groupId>org.apache.commons</groupId>
           <artifactId>commons-io</artifactId>
-          <version>1.3.2</version>
-        </dependency>
-
+          <version>1.3.2</version>          
+        </dependency>    
+        
         <dependency>
           <groupId>gnu-getopt</groupId>
           <artifactId>getopt</artifactId>
           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
           <scope>provided</scope> <!-- by PC -->
-        </dependency>
+        </dependency>  
 
         <dependency>
           <groupId>org.hyperic</groupId>
@@ -78,7 +78,7 @@
           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
           <scope>provided</scope> <!-- by PC -->
         </dependency>
-
+                
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-common</artifactId>
@@ -90,43 +90,43 @@
            referenced when running within Enterprise Jopr. -->
         <dependency>
           <groupId>org.jboss.integration</groupId>
-          <artifactId>jboss-profileservice-spi</artifactId>
-          <version>${jboss-profileservice-spi.version}</version>
+          <artifactId>jboss-profileservice-spi</artifactId>                    
+          <version>${jboss-profileservice-spi.version}</version>          
           <!--<scope>provided</scope>-->
-        </dependency>
-
+        </dependency>        
+        
         <dependency>
           <groupId>org.jboss.man</groupId>
           <artifactId>jboss-managed</artifactId>
-          <version>${jboss-man.version}</version>
+          <version>${jboss-man.version}</version>          
           <!--<scope>provided</scope>-->
         </dependency>
-
+        
         <dependency>
           <groupId>org.jboss.man</groupId>
           <artifactId>jboss-metatype</artifactId>
-          <version>${jboss-man.version}</version>
+          <version>${jboss-man.version}</version>          
           <!--<scope>provided</scope>-->
         </dependency>
 
-        <!-- Uncomment the below deps if you want to pull down the jboss-profileservice
+        <!-- Uncomment the below deps if you want to pull down the jboss-profileservice 
              and jboss-system sources jars for debugging purposes. NOTE: These jars are
-             *not* available from the public JBoss repo. -->
-
+             *not* available from the public JBoss repo. -->        
+        <!--
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
-            <artifactId>jboss-as-profileservice</artifactId>
-            <version>5.1.0.CR1</version>
-            <scope>provided</scope>
+            <artifactId>jboss-as-profileservice</artifactId>  
+            <version>5.1.0-SNAPSHOT</version>
+            <scope>provided</scope>            
         </dependency>
-
+        
         <dependency>
             <groupId>org.jboss.jbossas</groupId>
-            <artifactId>jboss-as-system</artifactId>
-            <version>5.1.0.CR1</version>
-            <scope>provided</scope>
+            <artifactId>jboss-as-system</artifactId>  
+            <version>5.1.0-SNAPSHOT</version>
+            <scope>provided</scope>            
         </dependency>
-
+        -->      
     </dependencies>
 
     <build>
@@ -156,7 +156,7 @@
                    </execution>
                 </executions>
             </plugin>
-
+         
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
@@ -191,13 +191,13 @@
         </plugins>
     </build>
 
-    <repositories>
+    <repositories>    
         <repository>
             <id>jboss</id>
             <name>JBoss Repository</name>
             <url>http://repository.jboss.org/maven2/</url>
         </repository>
-<!--
+<!--            
         <repository>
             <id>jboss-snapshots</id>
             <name>JBoss Snapshot Repository</name>
@@ -207,7 +207,7 @@
                 <updatePolicy>always</updatePolicy>
             </snapshots>
         </repository>
--->
+-->        
     </repositories>
 
 </project>

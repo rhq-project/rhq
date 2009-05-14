@@ -138,7 +138,7 @@ public abstract class OperationScheduleUIBean extends PagedDataTableUIBean {
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "There was an error scheduling your operation: " + e.getMessage());
-            return "success";
+            return "validationError";
         }
 
         if (getOperationDetails().getDeferred()) {

@@ -1,99 +1,89 @@
 <?xml version="1.0"?>
-
-<faces-config version="1.2" xmlns="http://java.sun.com/xml/ns/javaee"
+<faces-config version="1.2" 
+              xmlns="http://java.sun.com/xml/ns/javaee" 
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
-     
-   <!-- New Resource Operation Schedule -->
-   <navigation-rule>
-      <from-view-id>/rhq/resource/operation/resourceOperationScheduleNew.xhtml</from-view-id>
-
-      <navigation-case>
-         <!-- schedule an operation for deferred execution -->
-         <from-outcome>viewOperationSchedules</from-outcome>
-         <to-view-id>/rhq/resource/operation/resourceOperationSchedules.xhtml?id=#{param.id}</to-view-id>
-         <redirect/>
-      </navigation-case>
-
-      <navigation-case>
-         <!-- schedule an operation for immediate execution -->
-         <from-outcome>viewOperationHistory</from-outcome>
-         <to-view-id>/rhq/resource/operation/resourceOperationHistory.xhtml?id=#{param.id}</to-view-id>
-         <redirect/>
-      </navigation-case>
-
-      <navigation-case>
-         <!-- catch all navigation-case: if any actions return 'success', go back here -->
-         <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/resource/operation/resourceOperationScheduleNew.xhtml?id=#{param.id}&amp;opId=#{param.opId}</to-view-id>
-         <redirect/>
-      </navigation-case>
-      
-      <navigation-case>
-         <!-- sorting rule --> 
-         <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/resource/operation/resourceOperationScheduleNew.xhtml?id=#{param.id}</to-view-id>
-         <redirect/>
-      </navigation-case> 
-      
-   </navigation-rule>
-
-   <!-- Resource Operation Schedules -->
-   <navigation-rule>
-      <from-view-id>/rhq/resource/operation/resourceOperationSchedules.xhtml</from-view-id>
-
-      <navigation-case>
-         <!-- catch all navigation-case: if any actions return 'success', go here -->
-         <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/resource/operation/resourceOperationSchedules.xhtml?id=#{param.id}</to-view-id>
-         <redirect/>
-      </navigation-case>
-      
-      <navigation-case>
-         <!-- sorting rule --> 
-         <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/resource/operation/resourceOperationSchedules.xhtml?id=#{param.id}</to-view-id>
-         <redirect/>
-      </navigation-case>
-      
-      <navigation-case>
-         <!-- schedule an operation for immediate execution -->
-         <from-outcome>viewOperationHistory</from-outcome>
-         <to-view-id>/rhq/resource/operation/resourceOperationHistory.xhtml?id=#{param.id}</to-view-id>
-         <redirect/>
-      </navigation-case>
-      
-   </navigation-rule>
-     
-   <!-- Resource Operation History -->
-   <navigation-rule>
-      <from-view-id>/rhq/resource/operation/resourceOperationHistory.xhtml</from-view-id>
-
-      <navigation-case>
-         <!-- catch all navigation-case: if any actions return 'success', go here -->
-         <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/resource/operation/resourceOperationHistory.xhtml?id=#{param.id}</to-view-id>
-         <redirect/>
-      </navigation-case>
-      
-      <navigation-case>
-         <!-- sorting rule --> 
-         <from-outcome>sort</from-outcome>
-         <to-view-id>/rhq/resource/operation/resourceOperationHistory.xhtml?id=#{param.id}</to-view-id>
-         <redirect/>
-      </navigation-case> 
-      
-   </navigation-rule>
-
-   <navigation-rule>
-
-      <from-view-id>/rhq/resource/operation/resourceOperationHistoryDetails.xhtml</from-view-id>
-
-      <navigation-case>
-         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
-         <to-view-id>/rhq/resource/operation/view-results-map.xhtml</to-view-id>
-      </navigation-case>
-
-   </navigation-rule>
-
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee 
+                                  http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
+    
+    <!-- New Resource Operation Schedule -->
+    <navigation-rule>
+        <from-view-id>/rhq/resource/operation/resourceOperationScheduleNew.xhtml</from-view-id>
+        <navigation-case>
+            <!-- schedule an operation for deferred execution -->
+            <from-outcome>viewOperationSchedules</from-outcome>
+            <to-view-id>/rhq/resource/operation/resourceOperationSchedules.xhtml?id=#{param.id}</to-view-id>
+            <redirect />
+        </navigation-case>
+        <navigation-case>
+            <!-- schedule an operation for immediate execution -->
+            <from-outcome>viewOperationHistory</from-outcome>
+            <to-view-id>/rhq/resource/operation/resourceOperationHistory.xhtml?id=#{param.id}</to-view-id>
+            <redirect />
+        </navigation-case>
+        <navigation-case>
+            <!-- catch all navigation-case: if any actions return 'success', go back here -->
+            <from-outcome>success</from-outcome>
+            <to-view-id>/rhq/resource/operation/resourceOperationScheduleNew.xhtml?id=#{param.id}&amp;opId=#{param.opId}</to-view-id>
+            <redirect />
+        </navigation-case>
+        <navigation-case>
+            <!-- catch all navigation-case: if any actions return 'success', go back here -->
+            <from-outcome>validationError</from-outcome>
+            <to-view-id>/rhq/resource/operation/resourceOperationScheduleNew.xhtml</to-view-id>
+        </navigation-case>
+        <navigation-case>
+            <!-- sorting rule -->
+            <from-outcome>sort</from-outcome>
+            <to-view-id>/rhq/resource/operation/resourceOperationScheduleNew.xhtml?id=#{param.id}</to-view-id>
+            <redirect />
+        </navigation-case>
+    </navigation-rule>
+    
+    <!-- Resource Operation Schedules -->
+    <navigation-rule>
+        <from-view-id>/rhq/resource/operation/resourceOperationSchedules.xhtml</from-view-id>
+        <navigation-case>
+            <!-- catch all navigation-case: if any actions return 'success', go here -->
+            <from-outcome>success</from-outcome>
+            <to-view-id>/rhq/resource/operation/resourceOperationSchedules.xhtml?id=#{param.id}</to-view-id>
+            <redirect />
+        </navigation-case>
+        <navigation-case>
+            <!-- sorting rule -->
+            <from-outcome>sort</from-outcome>
+            <to-view-id>/rhq/resource/operation/resourceOperationSchedules.xhtml?id=#{param.id}</to-view-id>
+            <redirect />
+        </navigation-case>
+        <navigation-case>
+            <!-- schedule an operation for immediate execution -->
+            <from-outcome>viewOperationHistory</from-outcome>
+            <to-view-id>/rhq/resource/operation/resourceOperationHistory.xhtml?id=#{param.id}</to-view-id>
+            <redirect />
+        </navigation-case>
+    </navigation-rule>
+    
+    <!-- Resource Operation History -->
+    <navigation-rule>
+        <from-view-id>/rhq/resource/operation/resourceOperationHistory.xhtml</from-view-id>
+        <navigation-case>
+            <!-- catch all navigation-case: if any actions return 'success', go here -->
+            <from-outcome>success</from-outcome>
+            <to-view-id>/rhq/resource/operation/resourceOperationHistory.xhtml?id=#{param.id}</to-view-id>
+            <redirect />
+        </navigation-case>
+        <navigation-case>
+            <!-- sorting rule -->
+            <from-outcome>sort</from-outcome>
+            <to-view-id>/rhq/resource/operation/resourceOperationHistory.xhtml?id=#{param.id}</to-view-id>
+            <redirect />
+        </navigation-case>
+    </navigation-rule>
+    
+    <navigation-rule>
+        <from-view-id>/rhq/resource/operation/resourceOperationHistoryDetails.xhtml</from-view-id>
+        <navigation-case>
+            <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+            <to-view-id>/rhq/resource/operation/view-results-map.xhtml</to-view-id>
+        </navigation-case>
+    </navigation-rule>
 </faces-config>

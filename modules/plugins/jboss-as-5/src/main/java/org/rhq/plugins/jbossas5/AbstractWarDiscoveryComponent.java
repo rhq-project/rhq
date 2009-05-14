@@ -21,33 +21,37 @@ package org.rhq.plugins.jbossas5;
 import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.net.URI;
+import java.io.Serializable;
 
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
+import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
+import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.managed.api.ManagedProperty;
 import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.profileservice.spi.NoSuchDeploymentException;
 
 /**
  * @author Ian Springer
  */
 public abstract class AbstractWarDiscoveryComponent extends AbstractManagedDeploymentDiscoveryComponent
 {
-    public static final ComponentType WEB_APP_MBEAN_TYPE = new ComponentType("MBean", "WebApplication");
-    public static final ComponentType SERVLET_MBEAN_TYPE = new ComponentType("MBean", "Servlet");
-    public static final ComponentType WEB_APP_MANAGER_MBEAN_TYPE = new ComponentType("MBean", "WebApplicationManager");
-
     public static final String VIRTUAL_HOST_PROPERTY = "virtualHost";
     public static final String CONTEXT_PATH_PROPERTY = "contextPath";
+
+    private static final String CONTEXT_COMPONENT_NAME = "ContextMO";
 
     private Pattern WEB_APPLICATION_MBEAN_COMPONENT_NAME_PATTERN = Pattern.compile("//([^/]+)(.*)");
 
@@ -60,18 +64,35 @@ public abstract class AbstractWarDiscoveryComponent extends AbstractManagedDeplo
         Set<DiscoveredResourceDetails> discoveredResources = super.discoverResources(discoveryContext);
         ManagementView managementView =
                 discoveryContext.getParentResourceComponent().getConnection().getManagementView();
-        Map<String, ContextInfo> docBaseToWebAppMBeanComponentNamesMap =
-                getWebAppMBeanComponentInfo(managementView);
-        for (DiscoveredResourceDetails discoveredResource : discoveredResources)
+        /*Map<String, ContextInfo> docBaseToWebAppMBeanComponentNamesMap =
+                getWebAppMBeanComponentInfo(managementView);*/
+        for (Iterator<DiscoveredResourceDetails> iterator = discoveredResources.iterator(); iterator.hasNext();)
         {
-            Configuration pluginConfig = discoveredResource.getPluginConfiguration();
-            String deploymentName = pluginConfig.getSimple(
-                    AbstractManagedDeploymentComponent.DEPLOYMENT_NAME_PROPERTY).getStringValue();
-            URI deploymentURI = URI.create(deploymentName);
-            String docBase = deploymentURI.getPath(); 
-            ContextInfo contextInfo = docBaseToWebAppMBeanComponentNamesMap.get(docBase);
-            pluginConfig.put(new PropertySimple(VIRTUAL_HOST_PROPERTY, contextInfo.getVirtualHost()));
-            pluginConfig.put(new PropertySimple(CONTEXT_PATH_PROPERTY, contextInfo.getContextPath()));
+            DiscoveredResourceDetails discoveredResource = iterator.next();
+            try
+            {
+                Configuration pluginConfig = discoveredResource.getPluginConfiguration();
+                String deploymentName = pluginConfig.getSimple(
+                        AbstractManagedDeploymentComponent.DEPLOYMENT_NAME_PROPERTY).getStringValue();
+                ManagedDeployment deployment = managementView.getDeployment(deploymentName);
+                ManagedComponent contextComponent = deployment.getComponent(CONTEXT_COMPONENT_NAME);
+                // e.g. "/jmx-console"
+                String contextPath = (String)ManagedComponentUtils.getSimplePropertyValue(contextComponent, "contextRoot");
+                pluginConfig.put(new PropertySimple(VIRTUAL_HOST_PROPERTY, "localhost"));
+                pluginConfig.put(new PropertySimple(CONTEXT_PATH_PROPERTY, contextPath));
+                /*URI deploymentURI = URI.create(deploymentName);
+                String docBase = deploymentURI.getPath();
+                ContextInfo contextInfo = docBaseToWebAppMBeanComponentNamesMap.get(docBase);
+                pluginConfig.put(new PropertySimple(VIRTUAL_HOST_PROPERTY, contextInfo.getVirtualHost()));
+                pluginConfig.put(new PropertySimple(CONTEXT_PATH_PROPERTY, contextInfo.getContextPath()));*/
+            }
+            catch (Exception e)
+            {
+                // Don't let one bad apple spoil the barrel.
+                log.error("Failed to determine context root for WAR '" + discoveredResource.getResourceName() 
+                        + "' - WAR will not be discovered.");
+                iterator.remove();
+            }
         }
         return discoveredResources;
     }
@@ -81,7 +102,7 @@ public abstract class AbstractWarDiscoveryComponent extends AbstractManagedDeplo
         Set<ManagedComponent> webAppMBeanComponents;
         try
         {
-            webAppMBeanComponents = managementView.getComponentsForType(WEB_APP_MBEAN_TYPE);
+            webAppMBeanComponents = managementView.getComponentsForType(MoreKnownComponentTypes.MBean.WebApplication.getType());
         }
         catch (Exception e)
         {

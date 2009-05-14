@@ -18,34 +18,91 @@
  */
 package org.rhq.plugins.jbossas5.helper;
 
-import org.jboss.managed.api.ComponentType;
 import org.jboss.deployers.spi.management.KnownComponentTypes;
+import org.jboss.managed.api.ComponentType;
 
 /**
  * @author Ian Springer
  */
 public interface MoreKnownComponentTypes
 {
-   /**
-    * An enum of additional MBean:* ManagedComponent types not defined in {@link KnownComponentTypes}.
-    */
-   public enum MBean
-   {
-      WebApplication,
-      Servlet,
-      WebApplicationManager;
+    /**
+     * An enum of additional MBean:* ManagedComponent types not defined in {@link KnownComponentTypes}.
+     */
+    public enum MBean
+    {
+        Platform,
+        Servlet,
+        Web,
+        WebApplication,
+        WebApplicationManager;
 
-      public String type()
-      {
-         return this.getClass().getSimpleName();
-      }
-      public String subtype()
-      {
-         return this.name();
-      }
-      public ComponentType getType()
-      {
-         return new ComponentType(type(), subtype());
-      }
-   }
+        public String type()
+        {
+            return this.getClass().getSimpleName();
+        }
+
+        public String subtype()
+        {
+            return this.name();
+        }
+
+        public ComponentType getType()
+        {
+            return new ComponentType(type(), subtype());
+        }
+    }
+
+    /**
+     * An enum of additional MCBean:* ManagedComponent types not defined in {@link KnownComponentTypes}.
+     */
+    public enum MCBean
+    {
+        JTA,
+        MCServer,
+        Security,
+        ServerConfig,
+        ServerInfo,
+        ServicebindingManager,
+        ServiceBindingSet,
+        ServicebindingStore;
+
+        public String type()
+        {
+            return this.getClass().getSimpleName();
+        }
+
+        public String subtype()
+        {
+            return this.name();
+        }
+
+        public ComponentType getType()
+        {
+            return new ComponentType(type(), subtype());
+        }
+    }
+
+    /**
+     * An enum of additional WAR:* ManagedComponent types not defined in {@link KnownComponentTypes}.
+     */
+    public enum WAR
+    {
+        Context;
+
+        public String type()
+        {
+            return this.getClass().getSimpleName();
+        }
+
+        public String subtype()
+        {
+            return this.name();
+        }
+
+        public ComponentType getType()
+        {
+            return new ComponentType(type(), subtype());
+        }
+    }
 }

@@ -65,6 +65,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
 
 /**
  * Generates an RHQ plugin descriptor based on the ManagedComponent types represented in a Profile Service
@@ -306,37 +307,48 @@ public class PluginDescriptorGenerator {
 
     private static Set<ComponentType> getKnownComponentTypes() {
         Set<ComponentType> knownComponentTypes = new LinkedHashSet<ComponentType>();
+
+        // DataSource:*
         for (KnownComponentTypes.DataSourceTypes componentType : KnownComponentTypes.DataSourceTypes.values()) {
             knownComponentTypes.add(componentType.getType());
         }
+
+        // ConnectionFactory:*
         for (KnownComponentTypes.ConnectionFactoryTypes componentType : KnownComponentTypes.ConnectionFactoryTypes.values()) {
             knownComponentTypes.add(componentType.getType());
         }
+
+        // JMSDestination:*
         for (KnownComponentTypes.JMSDestination componentType : KnownComponentTypes.JMSDestination.values()) {
             knownComponentTypes.add(componentType.getType());
         }
+
+        // EJB:*
         for (KnownComponentTypes.EJB componentType : KnownComponentTypes.EJB.values()) {
             knownComponentTypes.add(componentType.getType());
         }
+
+        // MBean:*
         for (KnownComponentTypes.MBean componentType : KnownComponentTypes.MBean.values()) {
             knownComponentTypes.add(componentType.getType());
         }
-        knownComponentTypes.add(new ComponentType("MBean", "Platform"));
-        knownComponentTypes.add(new ComponentType("MBean", "Servlet"));
-        knownComponentTypes.add(new ComponentType("MBean", "Web"));
-        knownComponentTypes.add(new ComponentType("MBean", "WebApplication"));
-        knownComponentTypes.add(new ComponentType("MBean", "WebApplicationManager"));
+        for (MoreKnownComponentTypes.MBean componentType : MoreKnownComponentTypes.MBean.values()) {
+            knownComponentTypes.add(componentType.getType());
+        }
+
+        // MCBean:*
         for (KnownComponentTypes.MCBean componentType : KnownComponentTypes.MCBean.values()) {
             knownComponentTypes.add(componentType.getType());
         }
-        knownComponentTypes.add(new ComponentType("MCBean", "JTA"));
-        knownComponentTypes.add(new ComponentType("MCBean", "MCServer"));
-        knownComponentTypes.add(new ComponentType("MCBean", "Security"));
-        knownComponentTypes.add(new ComponentType("MCBean", "ServerConfig"));
-        knownComponentTypes.add(new ComponentType("MCBean", "ServerInfo"));
-        knownComponentTypes.add(new ComponentType("MCBean", "ServicebindingManager"));
-        knownComponentTypes.add(new ComponentType("MCBean", "ServiceBindingSet"));
-        knownComponentTypes.add(new ComponentType("MCBean", "ServicebindingStore"));
+        for (MoreKnownComponentTypes.MCBean componentType : MoreKnownComponentTypes.MCBean.values()) {
+            knownComponentTypes.add(componentType.getType());
+        }
+
+        // WAR:*
+        for (MoreKnownComponentTypes.WAR componentType : MoreKnownComponentTypes.WAR.values()) {
+            knownComponentTypes.add(componentType.getType());
+        }
+
         return knownComponentTypes;
     }
 

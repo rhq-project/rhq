@@ -240,14 +240,16 @@ public class ApplicationServerDiscoveryComponent
                 new ComponentType("MCBean", "ServerConfig"));
         String serverName = (String)ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent, "serverName");
 
-
-        // serverHomeDir is the path to the started instance - e.g. jbossas/server/default/
+        // serverHomeDir is the full path to the instance's configuration dir, e.g. "/opt/jboss-5.1.0.GA/server/default";
+        // that's guaranteed to be unique, so we'll use it as the Resource key.
         String resourceKey = (String)ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent, "serverHomeDir");
 
+        // homeDir is the full path to the JBoss installation dir used by this instance, e.g. "/opt/jboss-5.1.0.GA".
+        String homeDir = (String)ManagedComponentUtils.getSimplePropertyValue(serverConfigComponent, "homeDir");
         // Figure out if the instance is AS or EAP, and reflect that in the Resource name.
         JBossInstallationInfo installInfo;
         try {
-            installInfo = new JBossInstallationInfo(new File(resourceKey).getParentFile().getParentFile());
+            installInfo = new JBossInstallationInfo(new File(homeDir));
         } catch (IOException e) {
             throw new InvalidPluginConfigurationException(e);
         }

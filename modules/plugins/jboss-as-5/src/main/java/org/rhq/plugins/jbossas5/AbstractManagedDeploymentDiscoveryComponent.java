@@ -45,11 +45,11 @@ package org.rhq.plugins.jbossas5;
  * @author Mark Spritzler
  * @author Ian Springer
  */
-public abstract class AbstractManagedDeploymentDiscoveryComponent implements ResourceDiscoveryComponent<ApplicationServerComponent> {
+public abstract class AbstractManagedDeploymentDiscoveryComponent implements ResourceDiscoveryComponent<ProfileServiceComponent> {
     private final Log log = LogFactory.getLog(this.getClass());    
 
     public Set<DiscoveredResourceDetails> discoverResources(
-            ResourceDiscoveryContext<ApplicationServerComponent> discoveryContext)
+            ResourceDiscoveryContext<ProfileServiceComponent> discoveryContext)
     {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
         ResourceType resourceType = discoveryContext.getResourceType();

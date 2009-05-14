@@ -95,7 +95,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Ian Springer
  */
 public class ApplicationServerComponent
-        implements ResourceComponent, CreateChildResourceFacet, MeasurementFacet, ConfigurationFacet, ProgressListener
+        implements ResourceComponent, ProfileServiceComponent, CreateChildResourceFacet, MeasurementFacet,
+         ConfigurationFacet, ProgressListener
 {
     private static final String MANAGED_PROPERTY_GROUP = "managedPropertyGroup";
 

@@ -38,18 +38,20 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Discovery component for all ManagedComponents exposed by the JBoss AS 5.x Profile Service.
+ * Discovery component for ManagedComponents exposed by the JBoss AS 5.x Profile Service that will be represented as
+ * child Resources of the JBoss AS Resource.
  *
  * @author Jason Dobies
  * @author Mark Spritzer
+ * @author Ian Springer
  */
 public class ManagedComponentDiscoveryComponent
-        implements ResourceDiscoveryComponent<ApplicationServerComponent>
+        implements ResourceDiscoveryComponent<ProfileServiceComponent>
 {
     private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(
-            ResourceDiscoveryContext<ApplicationServerComponent> discoveryContext)
+            ResourceDiscoveryContext<ProfileServiceComponent> discoveryContext)
     {
         ResourceType resourceType = discoveryContext.getResourceType();
         log.trace("Discovering " + resourceType.getName() + " Resources..." );

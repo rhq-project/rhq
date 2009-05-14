@@ -91,7 +91,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
                 AvailabilityType.DOWN;
     }
 
-    public void start(ResourceContext<ApplicationServerComponent> resourceContext) throws Exception {
+    public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception {
         super.start(resourceContext);
         this.componentType = ConversionUtils.getComponentType(getResourceContext().getResourceType());
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
@@ -117,12 +117,12 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         log.debug("Removing " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
         ManagementView managementView = getConnection().getManagementView();
         managementView.removeComponent(managedComponent);
-        managementView.load();
         ManagedDeployment parentDeployment = managedComponent.getDeployment();
         log.debug("Redeploying parent deployment '" + parentDeployment.getName()
                 + "' in order to complete removal of component " + toString(managedComponent) + "...");
         DeploymentProgress progress = deploymentManager.redeploy(parentDeployment.getName());
         DeploymentUtils.run(progress);
+        managementView.load();
     }
 
     // OperationFacet Implementation  --------------------------------------------
@@ -228,7 +228,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         }
     }
 
-    private ManagedComponent getManagedComponent()
+    protected ManagedComponent getManagedComponent()
     {
         ManagedComponent managedComponent;
         try {

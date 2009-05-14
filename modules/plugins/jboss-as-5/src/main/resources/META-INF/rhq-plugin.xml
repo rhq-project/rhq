@@ -606,20 +606,51 @@
     </configuration>
 '>
 
-<!ENTITY warMetrics '
-    <metric property="contextRoot" displayName="Context Root"
+<!ENTITY webApplicationMetrics '
+    <metric property="contextRoot"
             dataType="trait" displayType="summary"
             description="this context root of this WAR - used as a unique path prefix for URLs corresponding to this WAR"/>
 
-    <metric property="virtualHosts" displayName="Virtual Hosts"
+    <metric property="virtualHosts"
             dataType="trait" displayType="summary"
-            description="the virtual hosts this WAR is running on"/>
+            description="the virtual hosts to which this WAR is deployed"/>
+'>
+
+<!ENTITY webApplicationContextMetrics '
+    <metric property="virtualHost"
+            dataType="trait" displayType="summary"
+            description="the virtual host with which this context is associated"/>
 
     <!--
-    <metric property="responseTime" displayName="HTTP Response Time"
+    <metric property="responseTime"
             dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
-            description="the minimum, maximum, and average response times for HTTP requests serviced by this webapp"/>
+            description="the minimum, maximum, and average response times for requests serviced by this webapp"/>
     -->
+
+    <metric property="activeSessions"
+           displayName="Currently Active Sessions"
+           units="none" description="the number of sessions that are currently active for this WAR" />
+
+    <metric property="maxActive" displayName="Maximum Active Sessions"
+           units="none" description="the maximum number of sessions that have been active for this WAR" />
+
+    <metric property="sessionCounter" displayName="Created Sessions"
+           units="none" description="the number of sessions created for this WAR"
+           measurementType="trendsup" />
+
+    <metric property="expiredSessions" displayName="Expired Sessions"
+           units="none" description="the number of expired sessions for this WAR"
+           measurementType="trendsup" />
+
+    <metric property="rejectedSessions" displayName="Rejected Sessions"
+           units="none" description="the number of sessions rejected for this WAR"
+           measurementType="trendsup" />
+
+    <metric property="sessionAverageAliveTime" displayName="Average Session Alive Time"
+           units="seconds" description="the average alive time of sessions for this WAR" />
+
+    <metric property="sessionMaxAliveTime" displayName="Max Session Alive Time"
+           units="seconds" description="the maximum alive time of sessions for this WAR" />
 
     <metric property="Servlet.minimumResponseTime" displayName="Minimum Response Time"
             units="milliseconds"
@@ -644,31 +675,6 @@
     <metric property="Servlet.errorCount" displayName="Number of Error Responses"
            units="none" description="the number of error responses sent by this WAR"
            measurementType="trendsup" displayType="summary"/>
-
-    <metric property="WebApplicationManager.activeSessions"
-           displayName="Currently Active Sessions"
-           units="none" description="the number of sessions that are currently active for this WAR" />
-
-    <metric property="WebApplicationManager.maxActive" displayName="Maximum Active Sessions"
-           units="none" description="the maximum number of sessions that have been active for this WAR" />
-
-    <metric property="WebApplicationManager.sessionCounter" displayName="Created Sessions"
-           units="none" description="the number of sessions created for this WAR"
-           measurementType="trendsup" />
-
-    <metric property="WebApplicationManager.expiredSessions" displayName="Expired Sessions"
-           units="none" description="the number of expired sessions for this WAR"
-           measurementType="trendsup" />
-
-    <metric property="WebApplicationManager.rejectedSessions" displayName="Rejected Sessions"
-           units="none" description="the number of sessions rejected for this WAR"
-           measurementType="trendsup" />
-
-    <metric property="WebApplicationManager.sessionAverageAliveTime" displayName="Average Session Alive Time"
-           units="seconds" description="the average alive time of sessions for this WAR" />
-
-    <metric property="WebApplicationManager.sessionMaxAliveTime" displayName="Max Session Alive Time"
-           units="seconds" description="the maximum alive time of sessions for this WAR" />
 '>
 
 ]>
@@ -1940,7 +1946,6 @@
                 <c:group name="general" displayName="General">
                     <c:simple-property name="deploymentName" description="The name of this WAR" readOnly="true"/>
                     <c:simple-property name="filename" readOnly="true"/>
-                    <c:simple-property name="virtualHost" description="this WAR's virtual host (e.g. localhost)" readOnly="true"/>
                     <c:simple-property name="contextPath" description="this WAR's context path (e.g. /admin-console" readOnly="true"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
@@ -1972,7 +1977,7 @@
                     dataType="trait" displayType="summary"
                     description="whether this WAR is deployed exploded (i.e. as a directory)"/>
 
-            &warMetrics;
+            &webApplicationMetrics;
 
             <content name="file" displayName="WAR File" category="deployable" isCreationType="true">
                 &deploymentContentConfigProps;
@@ -1983,6 +1988,23 @@
                 &deploymentResourceConfigProps;
             </resource-configuration>
             -->
+
+            <service name="Web Application Context"
+                     class="org.rhq.plugins.jbossas5.WebApplicationContextComponent"
+                     discovery="org.rhq.plugins.jbossas5.WebApplicationContextDiscoveryComponent"
+                     description="a web application context">
+
+                <plugin-configuration>
+                    <c:simple-property name="virtualHost" description="this WAR's virtual host (e.g. localhost)" readOnly="true"/>
+                    <c:group name="advanced">
+                        <c:simple-property name="componentType" default="MBean" readOnly="true"/>
+                        <c:simple-property name="componentSubtype" default="WebApplicationManager" readOnly="true"/>
+                        <c:simple-property name="componentName" readOnly="true"/>
+                    </c:group>
+                </plugin-configuration>
+
+                &webApplicationContextMetrics;
+            </service>
 
         </service>
 
@@ -1995,6 +2017,7 @@
             <plugin-configuration>
                 <c:group name="general" displayName="General">
                     <c:simple-property name="deploymentName" description="The name of this WAR" readOnly="true"/>
+                    <c:simple-property name="contextPath" description="this WAR's context path (e.g. /admin-console" readOnly="true"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="war" readOnly="true"/>
@@ -2013,13 +2036,30 @@
                     dataType="trait" displayType="summary"
                     description="the name of this WAR's parent deployment"/>
 
-            &warMetrics;
+            &webApplicationMetrics;
 
             <!--
             <resource-configuration>
                 &deploymentResourceConfigProps;
             </resource-configuration>
             -->
+
+            <service name="Embedded Web Application Context"
+                     class="org.rhq.plugins.jbossas5.WebApplicationContextComponent"
+                     discovery="org.rhq.plugins.jbossas5.WebApplicationContextDiscoveryComponent"
+                     description="a web application context">
+
+                <plugin-configuration>
+                    <c:simple-property name="virtualHost" description="this WAR's virtual host (e.g. localhost)" readOnly="true"/>
+                    <c:group name="advanced">
+                        <c:simple-property name="componentType" default="MBean" readOnly="true"/>
+                        <c:simple-property name="componentSubtype" default="WebApplicationManager" readOnly="true"/>
+                        <c:simple-property name="componentName" readOnly="true"/>
+                    </c:group>
+                </plugin-configuration>
+
+                &webApplicationContextMetrics;
+            </service>
 
         </service>
 

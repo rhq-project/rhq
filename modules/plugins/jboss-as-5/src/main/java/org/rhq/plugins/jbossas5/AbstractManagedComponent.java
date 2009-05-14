@@ -25,7 +25,6 @@ import org.apache.commons.logging.Log;
 import org.jboss.managed.api.ManagedProperty;
 
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.domain.configuration.Configuration;
@@ -40,11 +39,12 @@ import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 /**
  * @author Ian Springer
  */
-public abstract class AbstractManagedComponent implements ResourceComponent<ApplicationServerComponent>, ConfigurationFacet {
-    private ResourceContext<ApplicationServerComponent> resourceContext;
+public abstract class AbstractManagedComponent implements ProfileServiceComponent<ProfileServiceComponent>,
+        ConfigurationFacet {
+    private ResourceContext<ProfileServiceComponent> resourceContext;
     private String resourceDescription;
 
-    public void start(ResourceContext<ApplicationServerComponent> resourceContext) throws Exception {
+    public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception {
         this.resourceContext = resourceContext;
         this.resourceDescription = this.resourceContext.getResourceType()
                     + " Resource with key [" + this.resourceContext.getResourceKey() + "]";
@@ -107,11 +107,11 @@ public abstract class AbstractManagedComponent implements ResourceComponent<Appl
 
     protected abstract Log getLog();
 
-    protected ResourceContext getResourceContext() {
+    protected ResourceContext<ProfileServiceComponent> getResourceContext() {
         return this.resourceContext;
     }
 
-    protected ProfileServiceConnection getConnection() {
+    public ProfileServiceConnection getConnection() {
         return this.resourceContext.getParentResourceComponent().getConnection();
     }
 

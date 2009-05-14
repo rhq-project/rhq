@@ -89,7 +89,7 @@ public abstract class AbstractManagedDeploymentComponent
 
     // ----------- ResourceComponent Implementation ------------
 
-    public void start(ResourceContext<ApplicationServerComponent> resourceContext) throws Exception {
+    public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception {
         super.start(resourceContext);
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         this.deploymentName = pluginConfig.getSimple(DEPLOYMENT_NAME_PROPERTY).getStringValue();
@@ -193,9 +193,8 @@ public abstract class AbstractManagedDeploymentComponent
     protected ManagedDeployment getManagedDeployment() throws NoSuchDeploymentException
     {
         ManagementView managementView = getConnection().getManagementView();
-        managementView.load();
-        String resourceKey = getResourceContext().getResourceKey();
-        return managementView.getDeployment(resourceKey);
+        managementView.load();        
+        return managementView.getDeployment(this.deploymentName);
     }
 
     private File getDeploymentFile() throws MalformedURLException {

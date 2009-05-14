@@ -28,7 +28,6 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
-import org.rhq.enterprise.gui.common.scheduling.HtmlSimpleTrigger;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -36,8 +35,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public abstract class OperationDefinitionUIBean extends PagedDataTableUIBean {
     protected OperationManagerLocal operationManager = LookupUtil.getOperationManager();
     protected OperationDefinition operationDefinition = null;
-    private HtmlSimpleTrigger trigger;
-
     protected String timeout = null;
     protected String description = null;
 
@@ -74,14 +71,6 @@ public abstract class OperationDefinitionUIBean extends PagedDataTableUIBean {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public HtmlSimpleTrigger getTrigger() {
-        return trigger;
-    }
-
-    public void setTrigger(HtmlSimpleTrigger trigger) {
-        this.trigger = trigger;
     }
 
     @Override

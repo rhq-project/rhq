@@ -58,7 +58,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public abstract class OperationScheduleUIBean extends PagedDataTableUIBean {
     private OperationSchedule selectedOperationSchedule;
     protected OperationManagerLocal manager;
-    private OperationDetailsScheduleComponent operationDetails = new OperationDetailsScheduleComponent();
+    private OperationDetailsScheduleComponent operationDetails;
 
     public OperationScheduleUIBean() {
         manager = LookupUtil.getOperationManager();
@@ -76,12 +76,13 @@ public abstract class OperationScheduleUIBean extends PagedDataTableUIBean {
         ResourceOperationSchedule operationSchedule = (ResourceOperationSchedule) FacesContextUtility.getRequest()
             .getAttribute("item");
         setSelectedOperationSchedule(operationSchedule);
-
         return "success";
     }
 
     public OperationDetailsScheduleComponent getOperationDetails() {
-        return operationDetails;
+        if (this.operationDetails == null)
+            this.operationDetails = new OperationDetailsScheduleComponent();
+        return this.operationDetails;
     }
 
     public void setOperationDetails(OperationDetailsScheduleComponent operationDetails) {

@@ -400,13 +400,17 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     //      (ips, 09/05/08)
     public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, DataType dataType,
         String... measurementName) {
+        if (measurementName.length == 0) {
+            // There's no need to even call getValues() on the ResourceComponent if the list of metric names is empty.
+            return Collections.emptySet();
+        }
         MeasurementFacet measurementFacet;
-        ResourceContainer resCont = PluginContainer.getInstance().getInventoryManager().getResourceContainer(resourceId);
-        if (resCont == null) {
+        ResourceContainer resourceContainer = PluginContainer.getInstance().getInventoryManager().getResourceContainer(resourceId);
+        if (resourceContainer == null) {
             LOG.warn("Can not get resource container for resource with id " + resourceId);
             return null;
         }
-        Resource resource = resCont.getResource();
+        Resource resource = resourceContainer.getResource();
         ResourceType resourceType = resource.getResourceType();
         if (resourceType.getMetricDefinitions().isEmpty())
             return Collections.emptySet();

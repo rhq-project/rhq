@@ -33,6 +33,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 import org.rhq.plugins.jbossas5.util.RegularExpressionNameMatcher;
+import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
 
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ComponentType;
@@ -69,44 +70,28 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
     private String servletComponentNamesRegex;
 
     @Override
-    // TODO: Remove this once getRunState() has been fixed for MBean:WebApplicationManager MOs.
-    public AvailabilityType getAvailability()
-    {
-        try
-        {
-            getManagedComponent();
-            return AvailabilityType.UP;
-        }
-        catch (Exception e)
-        {
-            return AvailabilityType.DOWN;
-        }
-    }
-
-    @Override
     public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception
     {
         super.start(resourceContext);
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
-
-        this.servletComponentNamesRegex = SERVLET_COMPONENT_NAMES_REGEX_TEMPLATE;
-        this.servletComponentNamesRegex = replacePluginConfigProperty(this.servletComponentNamesRegex, pluginConfig,
-                VIRTUAL_HOST_PROPERTY);
-        this.servletComponentNamesRegex = replacePluginConfigProperty(this.servletComponentNamesRegex, pluginConfig,
-                AbstractWarDiscoveryComponent.CONTEXT_PATH_PROPERTY);
+        this.servletComponentNamesRegex =
+                ResourceComponentUtils.replacePropertyExpressionsInTemplate(SERVLET_COMPONENT_NAMES_REGEX_TEMPLATE,
+                        pluginConfig);
     }
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests)
             throws Exception
     {
+        ProfileServiceComponent warComponent = getResourceContext().getParentResourceComponent();
+        ManagementView managementView = warComponent.getConnection().getManagementView();
         Set<MeasurementScheduleRequest> remainingRequests = new LinkedHashSet();
         for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
             try
             {
                 if (metricName.startsWith(SERVLET_METRIC_PREFIX)) {
-                    Double value = getServletMetric(metricName);
+                    Double value = getServletMetric(managementView, metricName);
                     MeasurementDataNumeric metric = new MeasurementDataNumeric(request, value);
                     report.addData(metric);
                 } else if (metricName.equals(VIRTUAL_HOST_TRAIT)) {
@@ -128,21 +113,8 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
         super.getValues(report, remainingRequests);
     }
 
-    private static String replacePluginConfigProperty(String regex, Configuration pluginConfig, String propName)
+    private Double getServletMetric(ManagementView managementView, String metricName) throws Exception
     {
-        String propValue = pluginConfig.getSimple(propName).getStringValue();
-        return regex.replaceAll("%" + propName + "%", propValue);
-    }
-
-    private ManagementView getManagementView()
-    {
-        ProfileServiceComponent warComponent = getResourceContext().getParentResourceComponent();
-        return warComponent.getConnection().getManagementView();
-    }
-
-    private Double getServletMetric(String metricName) throws Exception
-    {
-        ManagementView managementView = getManagementView();
         ComponentType servletComponentType = MoreKnownComponentTypes.MBean.Servlet.getType();
         Set<ManagedComponent> servletComponents =
                 managementView.getMatchingComponents(this.servletComponentNamesRegex,

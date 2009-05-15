@@ -94,7 +94,7 @@ public class ManagedComponentDiscoveryComponent
                             discoveryContext.getDefaultPluginConfiguration(),
                             null);
 
-            resource.getPluginConfiguration().put(new PropertySimple(ManagedComponentComponent.COMPONENT_NAME_PROPERTY,
+            resource.getPluginConfiguration().put(new PropertySimple(ManagedComponentComponent.Config.COMPONENT_NAME,
                     component.getName()));
 
             discoveredResources.add(resource);

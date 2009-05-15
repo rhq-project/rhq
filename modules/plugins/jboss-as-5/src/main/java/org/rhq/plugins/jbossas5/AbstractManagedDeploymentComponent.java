@@ -146,7 +146,7 @@ public abstract class AbstractManagedDeploymentComponent
 
     // ------------ OperationFacet Implementation ------------
 
-    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException, Exception
+    public OperationResult invokeOperation(String name, Configuration parameters) throws Exception
     {
         DeploymentManager deploymentManager = getConnection().getDeploymentManager();
         DeploymentProgress progress;

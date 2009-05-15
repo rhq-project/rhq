@@ -862,6 +862,77 @@
         </content>-->
 
 
+        <service name="JBoss Web"
+                 description="JBoss Web Servlet Container"
+                 subCategory="Resources"
+                 discovery="JBossWebDiscoveryComponent"
+                 class="JBossWebComponent"
+                 singleton="true">
+
+           <service name="Connector"
+                    description="a JBoss Web Connector"
+                    discovery="ConnectorDiscoveryComponent"
+                    class="ConnectorComponent">
+
+               <plugin-configuration>
+                   <c:simple-property name="protocol" type="string" description="this connector's protocol (e.g. jk, ajp, http)" default="http"/>
+                   <c:simple-property name="address" type="string" description="the IP address this connector listens on" readOnly="true"/>
+                   <c:simple-property name="port" type="integer" description="the port this connector listens on" readOnly="true"/>
+                   <c:group name="advanced">
+                      <c:simple-property name="componentType" default="MBean" readOnly="true"/>
+                      <c:simple-property name="componentSubtype" default="WebRequestProcessor" readOnly="true"/>
+                      <c:simple-property name="componentName" readOnly="true"/>
+                   </c:group>
+               </plugin-configuration>
+
+              <metric property="maxTime"
+                      displayName="Maximum Request Time"
+                      description="the maximum time it took to process a request since the last restart"
+                      units="milliseconds"
+                      defaultOn="true" category="performance"/>
+
+              <metric property="requestCount"
+                      displayName="Request Count" description="the total number of requests processed since the last restart"
+                      defaultOn="false" category="utilization" measurementType="trendsup"/>
+
+              <metric property="errorCount"
+                      displayName="Error Count" description="the number of errors while processing requests since the last restart"
+                      defaultOn="true" category="utilization" measurementType="trendsup"/>
+
+              <metric property="ThreadPool|currentThreadsBusy"
+                      displayName="Current Active Threads"
+                      defaultOn="true" category="utilization" displayType="summary"
+                      description="the number of threads for this connector that are currently active"/>
+
+              <metric property="ThreadPool|currentThreadCount"
+                      displayName="Current Thread Count"
+                      defaultOn="true" category="utilization" displayType="summary"
+                      description="the number of threads for this connector that currently exist"/>
+
+           </service>
+
+           <service name="Virtual Host"
+                    discovery="VirtualHostDiscoveryComponent"
+                    class="VirtualHostComponent"
+                    description="a JBoss Web virtual host">
+
+               <plugin-configuration>
+                   <c:simple-property name="name" type="string" description="the virtual host's name (e.g. localhost)"/>
+                   <c:group name="advanced">
+                      <c:simple-property name="componentType" default="MBean" readOnly="true"/>
+                      <c:simple-property name="componentSubtype" default="WebHost" readOnly="true"/>
+                      <c:simple-property name="componentName" readOnly="true"/>
+                   </c:group>
+               </plugin-configuration>
+
+              <metric property="aliases"
+                      description="the aliases for this virtual host, if any"
+                      dataType="trait" displayType="summary"/>
+           </service>
+
+        </service>
+
+
         <!-- =================================== ManagedComponent Resource types =================================== -->
 
         <service name="No Tx Datasource"
@@ -876,24 +947,12 @@
                 <c:simple-property name="componentSubtype" default="NoTx" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="NoTxDataSourceTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="jndi-name">
-                    <c:defaultValueDescription>This holds the property in the configuration to use
-                        to define the filename that the profile service should use in the creation of a file
-                    </c:defaultValueDescription>
+                <c:simple-property name="resourceName" default="jndi-name" readOnly="true">
+                    <c:description>
+                        The name of the Resource configuration property whose value should be used as the
+                        Resource name when creating a new Resource of this type.
+                    </c:description>
                 </c:simple-property>
-                <c:group name="managedPropertyGroup" displayName="managedPropertyGroup">
-                    <c:simple-property name="datasource-type" default="no-tx-datasource">
-                        <c:defaultValueDescription>Profile Services managed property call datasource type
-                            which is used for datasources to have the correct main tag in a xxx-ds.xml file"
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-                    <c:map-property name="customProperties"
-                                    description="Holds a list of custom properties, and the Adapter type class to use ">
-                    </c:map-property>
-                    <c:map-property name="customMetrics"
-                                    description="Holds a list of custom Metrics, and the Adapter class to use">
-                    </c:map-property>
-                </c:group>
             </plugin-configuration>
 
             &datasourceAndConnectionFactoryOperations;
@@ -942,24 +1001,12 @@
                 <c:simple-property name="componentSubtype" default="LocalTx" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="LocalTxDataSourceTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="jndi-name">
-                    <c:defaultValueDescription>This holds the property in the configuration to use
-                        to define the filename that the profile service should use in the creation of a file
-                    </c:defaultValueDescription>
+                <c:simple-property name="resourceName" default="jndi-name" readOnly="true">
+                    <c:description>
+                        The name of the Resource configuration property whose value should be used as the
+                        Resource name when creating a new Resource of this type.
+                    </c:description>
                 </c:simple-property>
-                <c:group name="managedPropertyGroup" displayName="managedPropertyGroup" hiddenByDefault="true">
-                    <c:simple-property name="datasource-type" default="local-tx-datasource">
-                        <c:defaultValueDescription>Profile Services managed property call datasource type
-                            which is used for datasources to have the correct main tag in a xxx-ds.xml file
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-                    <c:map-property name="customProperties"
-                                    description="Holds a list of custom properties, and the Adapter type class to use ">
-                    </c:map-property>
-                    <c:map-property name="customMetrics"
-                                    description="Holds a list of custom metrics, and the Adapter class to use">
-                    </c:map-property>
-                </c:group>
             </plugin-configuration>
 
             &datasourceAndConnectionFactoryOperations;
@@ -1018,24 +1065,12 @@
                 <c:simple-property name="componentSubtype" default="XA" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="XADataSourceTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="jndi-name">
-                    <c:defaultValueDescription>This holds the property in the configuration to use
-                        to define the filename that the profile service should use in the creation of a file
-                    </c:defaultValueDescription>
+                <c:simple-property name="resourceName" default="jndi-name" readOnly="true">
+                    <c:description>
+                        The name of the Resource configuration property whose value should be used as the
+                        Resource name when creating a new Resource of this type.
+                    </c:description>
                 </c:simple-property>
-                <c:group name="managedPropertyGroup" displayName="managedPropertyGroup" hiddenByDefault="true">
-                    <c:simple-property name="datasource-type" default="xa-datasource">
-                        <c:defaultValueDescription>Profile Services managed property call datasource type
-                            which is used for datasources to have the correct main tag in a xxx-ds.xml file
-                        </c:defaultValueDescription>
-                    </c:simple-property>
-                    <c:map-property name="customProperties"
-                                    description="Holds a list of custom properties, and the Adapter type class to use ">
-                    </c:map-property>
-                    <c:map-property name="customMetrics"
-                                    description="Holds a list of custom Metrics, and the Adapter class to use">
-                    </c:map-property>
-                </c:group>
             </plugin-configuration>
 
             &datasourceAndConnectionFactoryOperations;
@@ -1135,10 +1170,11 @@
                 <c:simple-property name="componentSubtype" default="NoTx" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="NoTxConnectionFactoryTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="jndi-name">
-                    <c:defaultValueDescription>This holds the property in the configuration to use
-                        to define the filename that the profile service should use in the creation of a file
-                    </c:defaultValueDescription>
+                <c:simple-property name="resourceName" default="jndi-name" readOnly="true">
+                    <c:description>
+                        The name of the Resource configuration property whose value should be used as the
+                        Resource name when creating a new Resource of this type.
+                    </c:description>
                 </c:simple-property>
                 <c:group name="managedPropertyGroup"
                          displayName="managedPropertyGroup"
@@ -1147,9 +1183,6 @@
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
                         <c:simple-property name="config-property" 
                             default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.ConnectionFactoryConfigPropertyAdapter" />                
-                    </c:map-property>
-                    <c:map-property name="customMetrics"
-                                    description="Holds a list of custom Metrics, and the Adapter class to use">
                     </c:map-property>
                 </c:group>
             </plugin-configuration>
@@ -1200,11 +1233,11 @@
                 <c:simple-property name="componentSubtype" default="Tx" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="TxConnectionFactoryTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="jndi-name">
-                    <c:defaultValueDescription>
-                        The name of the resource-configuration property to use to define the ManagedComponent name that
-                        the profile service should use when creating a new ManagedComponent.
-                    </c:defaultValueDescription>
+                <c:simple-property name="resourceName" default="jndi-name" readOnly="true">
+                    <c:description>
+                        The name of the Resource configuration property whose value should be used as the
+                        Resource name when creating a new Resource of this type.
+                    </c:description>
                 </c:simple-property>
                 <c:group name="managedPropertyGroup"
                          displayName="managedPropertyGroup"
@@ -1213,9 +1246,6 @@
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
                         <c:simple-property name="config-property" 
                             default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.ConnectionFactoryConfigPropertyAdapter" />                
-                    </c:map-property>
-                    <c:map-property name="customMetrics"
-                                    description="Holds a list of custom Metrics, and the Adapter class to use">
                     </c:map-property>
                 </c:group>
             </plugin-configuration>
@@ -1302,10 +1332,11 @@
                 <c:simple-property name="componentSubtype" default="Queue" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="QueueTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="JNDIName">
-                    <c:defaultValueDescription>This holds the property in the configuration to use
-                        to define the filename that the profile service should use in the creation of a file
-                    </c:defaultValueDescription>
+                <c:simple-property name="resourceName" default="JNDIName" readOnly="true">
+                    <c:description>
+                        The name of the Resource configuration property whose value should be used as the
+                        Resource name when creating a new Resource of this type.
+                    </c:description>
                 </c:simple-property>
                 <c:group name="managedPropertyGroup" displayName="managedPropertyGroup" hiddenByDefault="true">
                     <c:simple-property name="jms-type" default="queue"/>
@@ -1313,9 +1344,6 @@
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
                         <c:simple-property name="securityConfig"
                                            default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
-                    </c:map-property>
-                    <c:map-property name="customMetrics"
-                                    description="Holds a list of custom Metrics, and the Adapter class to use">
                     </c:map-property>
                 </c:group>
             </plugin-configuration>
@@ -1590,10 +1618,11 @@
                 <c:simple-property name="componentSubtype" default="Topic" readOnly="true"/>
                 <c:simple-property name="componentName" readOnly="true"/>
                 <c:simple-property name="templateName" default="TopicTemplate" readOnly="true"/>
-                <c:simple-property name="resourceName" default="JNDIName">
-                    <c:defaultValueDescription>This holds the property in the configuration to use
-                        to define the filename that the profile service should use in the creation of a file
-                    </c:defaultValueDescription>
+                <c:simple-property name="resourceName" default="JNDIName" readOnly="true">
+                    <c:description>
+                        The name of the Resource configuration property whose value should be used as the
+                        Resource name when creating a new Resource of this type.
+                    </c:description>
                 </c:simple-property>
                 <c:group name="managedPropertyGroup" displayName="managedPropertyGroup" hiddenByDefault="true">
                     <c:simple-property name="jms-type" default="topic"/>
@@ -1601,9 +1630,6 @@
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
                         <c:simple-property name="securityConfig"
                                            default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.JMSSecurityConfigAdapter"/>
-                    </c:map-property>
-                    <c:map-property name="customMetrics"
-                                    description="Holds a list of custom Metrics, and the Adapter class to use">
                     </c:map-property>
                 </c:group>
             </plugin-configuration>

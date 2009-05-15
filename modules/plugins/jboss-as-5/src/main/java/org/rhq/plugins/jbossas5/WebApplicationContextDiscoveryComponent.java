@@ -40,6 +40,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 import org.rhq.plugins.jbossas5.util.RegularExpressionNameMatcher;
+import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
 
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ComponentType;
@@ -47,7 +48,7 @@ import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedDeployment;
 
 /**
- * Discovery component for contexts for a WAR - one context per vhost the WAR is deployed to.
+ * A component for discovering the contexts of a WAR - one context per vhost the WAR is deployed to.
  *
  * @author Ian Springer
  */
@@ -92,31 +93,33 @@ public class WebApplicationContextDiscoveryComponent
         for (ManagedComponent webApplicationComponent : webApplicationComponents)
         {
             String virtualHost = getWebApplicationComponentVirtualHost(webApplicationComponent);
-            String resourceName = "//" + virtualHost + contextPath + " Context";
+            String resourceName = "//" + virtualHost + contextPath;
             //noinspection UnnecessaryLocalVariable
             String resourceKey = virtualHost;
-            String version = null;
+            String resourceVersion = null;
+
+            Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
+
+            // Make sure to set the "virtualHost" and "contextPath" props before setting the "componentName" props,
+            // since those two props are referenced in the template for the "componentName" property.
+            pluginConfig.put(new PropertySimple(WebApplicationContextComponent.VIRTUAL_HOST_PROPERTY, virtualHost));
+            pluginConfig.put(new PropertySimple(AbstractWarDiscoveryComponent.CONTEXT_PATH_PROPERTY, contextPath));
+
+            // e.g. "jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=WebModule,name=//localhost/jmx-console"
+            String webApplicationManagerComponentName =
+                    ResourceComponentUtils.replacePropertyExpressionsInTemplate(WEB_APPLICATION_MANAGER_COMPONENT_NAME_TEMPLATE,
+                    pluginConfig);
+            pluginConfig.put(new PropertySimple(ManagedComponentComponent.Config.COMPONENT_NAME,
+                    webApplicationManagerComponentName));
+
             DiscoveredResourceDetails resource =
                     new DiscoveredResourceDetails(resourceType,
                             resourceKey,
                             resourceName,
-                            version,
+                            resourceVersion,
                             resourceType.getDescription(),
-                            discoveryContext.getDefaultPluginConfiguration(),
+                            pluginConfig,
                             null);
-            Configuration pluginConfig = resource.getPluginConfiguration();
-            pluginConfig.put(new PropertySimple(WebApplicationContextComponent.VIRTUAL_HOST_PROPERTY, virtualHost));
-            // TODO: This is temporary until I refactor the parent component to be a strongly-typed WarComponent.
-            pluginConfig.put(new PropertySimple(AbstractWarDiscoveryComponent.CONTEXT_PATH_PROPERTY, contextPath));
-
-            // e.g. "jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=WebModule,name=//localhost/jmx-console"
-            String webApplicationManagerComponentName = WEB_APPLICATION_MANAGER_COMPONENT_NAME_TEMPLATE;
-            webApplicationManagerComponentName = replacePluginConfigProperty(webApplicationManagerComponentName,
-                    pluginConfig, WebApplicationContextComponent.VIRTUAL_HOST_PROPERTY);
-            webApplicationManagerComponentName = replacePluginConfigProperty(webApplicationManagerComponentName,
-                    pluginConfig, AbstractWarDiscoveryComponent.CONTEXT_PATH_PROPERTY);
-            pluginConfig.put(new PropertySimple(ManagedComponentComponent.COMPONENT_NAME_PROPERTY,
-                    webApplicationManagerComponentName));
 
             discoveredResources.add(resource);
         }
@@ -163,11 +166,5 @@ public class WebApplicationContextDiscoveryComponent
         String name = objectName.getKeyProperty("name");
         // Return just the host portion, e.g. "localhost".
         return name.substring(2, name.lastIndexOf('/'));
-    }
-
-    private static String replacePluginConfigProperty(String regex, Configuration pluginConfig, String propName)
-    {
-        String propValue = pluginConfig.getSimple(propName).getStringValue();
-        return regex.replaceAll("%" + propName + "%", propValue);
     }
 }

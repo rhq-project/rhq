@@ -21,6 +21,8 @@ package org.rhq.plugins.jbossas5.util;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -56,4 +58,37 @@ public class ResourceComponentUtils {
         return customProperties;
     }
 
+    /**
+     * TODO
+     *
+     * @param template
+     * @param configuration
+     * @return
+     */
+    public static String replacePropertyExpressionsInTemplate(String template, Configuration configuration)
+    {
+        if (template == null) {
+            return null;
+        }
+        Pattern propExpressionPattern = Pattern.compile("%[^%]+%");
+        Matcher matcher = propExpressionPattern.matcher(template);
+        StringBuffer stringBuffer = new StringBuffer();
+        while (matcher.find()) {
+            // e.g. "%foo%"
+            String match = matcher.group();
+            // Strip off the percent signs, e.g. "foo".
+            String propName = match.substring(1, match.length() - 1);
+            PropertySimple prop = configuration.getSimple(propName);
+            if (prop == null) {
+                LOG.debug("WARNING: Template '" + template + "' references property '" + propName
+                        + "' that does not exist in " + configuration.toString(true));
+                continue;
+            }
+            if (prop.getStringValue() != null) {
+                matcher.appendReplacement(stringBuffer, prop.getStringValue());
+            }
+        }
+        matcher.appendTail(stringBuffer);
+        return stringBuffer.toString();
+    }
 }

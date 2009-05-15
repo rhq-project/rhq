@@ -92,14 +92,14 @@ public class ConversionUtils
         if (COMPONENT_TYPE_CACHE.containsKey(resourceTypeName))
             return COMPONENT_TYPE_CACHE.get(resourceTypeName);
         Configuration defaultPluginConfig = getDefaultPluginConfiguration(resourceType);
-        String type = defaultPluginConfig.getSimpleValue(ManagedComponentComponent.COMPONENT_TYPE_PROPERTY, null);
+        String type = defaultPluginConfig.getSimpleValue(ManagedComponentComponent.Config.COMPONENT_TYPE, null);
         if (type == null || type.equals(""))
             throw new IllegalStateException("Required plugin configuration property '"
-                    + ManagedComponentComponent.COMPONENT_TYPE_PROPERTY + "' is not defined in default template.");
-        String subtype = defaultPluginConfig.getSimpleValue(ManagedComponentComponent.COMPONENT_SUBTYPE_PROPERTY, null);
+                    + ManagedComponentComponent.Config.COMPONENT_TYPE + "' is not defined in default template.");
+        String subtype = defaultPluginConfig.getSimpleValue(ManagedComponentComponent.Config.COMPONENT_SUBTYPE, null);
         if (subtype == null || subtype.equals(""))
             throw new IllegalStateException("Required plugin configuration property '"
-                    + ManagedComponentComponent.COMPONENT_SUBTYPE_PROPERTY + "' is not defined in default template.");
+                    + ManagedComponentComponent.Config.COMPONENT_SUBTYPE + "' is not defined in default template.");
         ComponentType componentType = new ComponentType(type, subtype);
         COMPONENT_TYPE_CACHE.put(resourceTypeName, componentType);
         return componentType;
@@ -113,12 +113,11 @@ public class ConversionUtils
         String typeName = defaultPluginConfig.getSimpleValue(AbstractManagedDeploymentComponent.DEPLOYMENT_TYPE_NAME_PROPERTY, null);
         if (typeName == null || typeName.equals(""))
             throw new IllegalStateException("Required plugin configuration property '"
-                    + ManagedComponentComponent.COMPONENT_TYPE_PROPERTY + "' is not defined in default template.");
+                    + ManagedComponentComponent.Config.COMPONENT_TYPE + "' is not defined in default template.");
         KnownDeploymentTypes deploymentType = KnownDeploymentTypes.valueOf(typeName);
         DEPLOYMENT_TYPE_CACHE.put(resourceTypeName, deploymentType);
         return deploymentType;
     }
-
 
     public static Configuration convertManagedObjectToConfiguration(Map<String, ManagedProperty> managedProperties,
                                                                     Map<String, PropertySimple> customProps,

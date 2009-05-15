@@ -268,9 +268,9 @@ public class ApplicationServerComponent
 
     private static String getResourceName(Configuration pluginConfig, Configuration resourceConfig)
     {
-        PropertySimple resourceNameProp = pluginConfig.getSimple(ManagedComponentComponent.PluginConfigPropNames.RESOURCE_NAME);
+        PropertySimple resourceNameProp = pluginConfig.getSimple(ManagedComponentComponent.Config.RESOURCE_NAME);
         if (resourceNameProp == null || resourceNameProp.getStringValue() == null)
-            throw new IllegalStateException("Property [" + ManagedComponentComponent.PluginConfigPropNames.RESOURCE_NAME
+            throw new IllegalStateException("Property [" + ManagedComponentComponent.Config.RESOURCE_NAME
                     + "] is not defined in the default plugin configuration.");
         String resourceNamePropName = resourceNameProp.getStringValue();
         PropertySimple propToUseAsResourceName = resourceConfig.getSimple(resourceNamePropName);
@@ -307,7 +307,7 @@ public class ApplicationServerComponent
         String resourceKey = getResourceKey(resourceType, resourceName);
         createResourceReport.setResourceKey(resourceKey);
 
-        PropertySimple templateNameProperty = defaultPluginConfig.getSimple(ManagedComponentComponent.PluginConfigPropNames.TEMPLATE_NAME);
+        PropertySimple templateNameProperty = defaultPluginConfig.getSimple(ManagedComponentComponent.Config.TEMPLATE_NAME);
         String templateName = templateNameProperty.getStringValue();
 
         DeploymentTemplateInfo template;

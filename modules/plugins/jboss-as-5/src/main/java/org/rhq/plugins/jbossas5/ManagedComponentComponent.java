@@ -24,6 +24,9 @@ package org.rhq.plugins.jbossas5;
 
  import java.util.Map;
  import java.util.Set;
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.lang.reflect.Array;
 
  import org.apache.commons.logging.Log;
  import org.apache.commons.logging.LogFactory;
@@ -40,6 +43,9 @@ package org.rhq.plugins.jbossas5;
  import org.jboss.metatype.api.values.CompositeValue;
  import org.jboss.metatype.api.values.MetaValue;
  import org.jboss.metatype.api.values.SimpleValue;
+ import org.jboss.metatype.api.values.EnumValue;
+ import org.jboss.metatype.api.values.ArrayValue;
+ import org.jboss.metatype.api.values.CollectionValue;
 
  import org.rhq.core.domain.configuration.Configuration;
  import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -73,9 +79,18 @@ package org.rhq.plugins.jbossas5;
 public class ManagedComponentComponent extends AbstractManagedComponent
         implements ConfigurationFacet, DeleteResourceFacet, OperationFacet, MeasurementFacet
 {
-    public static final String COMPONENT_TYPE_PROPERTY = "componentType";
-    public static final String COMPONENT_SUBTYPE_PROPERTY = "componentSubtype";
+    public static interface Config
+    {
+        String COMPONENT_TYPE = "componentType";
+        String COMPONENT_SUBTYPE = "componentSubtype";
+        String COMPONENT_NAME = "componentName";
+        String TEMPLATE_NAME = "templateName";
+        String RESOURCE_NAME = "resourceName";
+    }
+
     public static final String COMPONENT_NAME_PROPERTY = "componentName";
+
+    protected static final char PREFIX_DELIMITER = '|';
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -95,7 +110,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent
         super.start(resourceContext);
         this.componentType = ConversionUtils.getComponentType(getResourceContext().getResourceType());
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
-        this.componentName = pluginConfig.getSimple(COMPONENT_NAME_PROPERTY).getStringValue();
+        this.componentName = pluginConfig.getSimple(Config.COMPONENT_NAME).getStringValue();
         log.trace("Started ResourceComponent for " + getResourceDescription() + ", managing " + this.componentType
                 + " component '" + this.componentName + "'.");
     }
@@ -155,9 +170,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent
                     String runState = managedComponent.getRunState().name();
                     report.addData(new MeasurementDataTrait(request, runState));
                 } else {
-                    SimpleValue simpleValue = getSimpleValue(managedComponent, request);
-                    if (simpleValue != null)
-                        addSimpleValueToMeasurementReport(report, request, simpleValue);
+                    Object value = getSimpleValue(managedComponent, request);
+                    addValueToMeasurementReport(report, request, value);
                 }
             } catch (Exception e) {
                 log.error("Failed to collect metric for " + request, e);
@@ -185,42 +199,87 @@ public class ManagedComponentComponent extends AbstractManagedComponent
 
     // ------------------------------------------------------------------------------
 
-    private SimpleValue getSimpleValue(ManagedComponent managedComponent, MeasurementScheduleRequest request) {
+    /**
+     * The name of the request (i.e. the metric name) can be in one of two forms:
+     *
+     * [prefix'|']simplePropertyName (e.g. "maxTime" or "ThreadPool|currentThreadCount")
+     * [prefix'|']compositePropertyName'.'key (e.g. "consumerCount" or "messageStatistics.count")
+     *
+     * @param managedComponent a managed component
+     * @param request a metric request
+     * @return the metric value
+     */
+    protected Object getSimpleValue(ManagedComponent managedComponent, MeasurementScheduleRequest request) {
         String metricName = request.getName();
-        int dotIndex = metricName.indexOf('.');
-        String metricPropName = (dotIndex == -1) ? metricName : metricName.substring(0, dotIndex);
+        int pipeIndex = metricName.indexOf(PREFIX_DELIMITER);
+        // Remove the prefix if there is one (e.g. "ThreadPool|currentThreadCount" -> "currentThreadCount").
+        String compositePropName = (pipeIndex == -1) ? metricName : metricName.substring(pipeIndex + 1);
+        int dotIndex = compositePropName.indexOf('.');
+        String metricPropName = (dotIndex == -1) ? compositePropName : compositePropName.substring(0, dotIndex);
         ManagedProperty metricProp = managedComponent.getProperty(metricPropName);
-        SimpleValue simpleValue;
-        if (dotIndex == -1)
-            simpleValue = (SimpleValue)metricProp.getValue();
-        else {
+        MetaValue metaValue;
+        if (dotIndex == -1) {
+            metaValue = metricProp.getValue();
+        } else {
             CompositeValue compositeValue = (CompositeValue)metricProp.getValue();
-            String key = metricName.substring(dotIndex + 1);
-            simpleValue = (SimpleValue)compositeValue.get(key);
+            String key = compositePropName.substring(dotIndex + 1);
+            metaValue = compositeValue.get(key);
         }
-        if (simpleValue == null)
-            log.debug("Profile service returned null value for metric [" + request.getName() + "].");
-        return simpleValue;
+        return getInnerValue(metaValue);
     }
 
-    private void addSimpleValueToMeasurementReport(MeasurementReport report, MeasurementScheduleRequest request,
-                                                   SimpleValue simpleValue) {
+    // TODO: Move this to a utility class.
+    private static Object getInnerValue(MetaValue metaValue)
+    {
+        if (metaValue == null) {
+            return null;
+        }
+        Object value;
+        if (metaValue.getMetaType().isSimple()) {
+            SimpleValue simpleValue = (SimpleValue)metaValue;
+            value = simpleValue.getValue();
+        } else if (metaValue.getMetaType().isEnum()) {
+            EnumValue enumValue = (EnumValue)metaValue;
+            value = enumValue.getValue();
+        } else if (metaValue.getMetaType().isArray()) {
+            ArrayValue arrayValue = (ArrayValue)metaValue;
+            value = arrayValue.getValue();
+        } else if (metaValue.getMetaType().isCollection()) {
+            CollectionValue collectionValue = (CollectionValue)metaValue;
+            List list = new ArrayList();
+            for (MetaValue element : collectionValue.getElements()) {
+                list.add(getInnerValue(element));
+            }
+            value = list;
+        } else {
+            value = metaValue.toString();
+        }
+        return value;
+    }
+
+    protected void addValueToMeasurementReport(MeasurementReport report,
+                                               MeasurementScheduleRequest request,
+                                               Object value) {
+        if (value == null) {
+            return;
+        }
+        String stringValue = toString(value);
+
         DataType dataType = request.getDataType();
         switch (dataType) {
             case MEASUREMENT:
                 try {
                     MeasurementDataNumeric dataNumeric = new MeasurementDataNumeric(request,
-                            Double.valueOf(simpleValue.getValue().toString()));
+                            Double.valueOf(stringValue));
                     report.addData(dataNumeric);
                 }
                 catch (NumberFormatException e) {
                     log.error("Profile service did not return a numeric value as expected for metric ["
-                            + request.getName() + "] - value returned was " + simpleValue + ".", e);
+                            + request.getName() + "] - value returned was " + value + ".", e);
                 }
                 break;
             case TRAIT:
-                MeasurementDataTrait dataTrait = new MeasurementDataTrait(request,
-                        String.valueOf(simpleValue.getValue()));
+                MeasurementDataTrait dataTrait = new MeasurementDataTrait(request, stringValue);
                 report.addData(dataTrait);
                 break;
             default:
@@ -282,9 +341,21 @@ public class ManagedComponentComponent extends AbstractManagedComponent
                 + "]";
     }
 
-    static abstract class PluginConfigPropNames {
-        static final String TEMPLATE_NAME = "templateName";
-        static final String RESOURCE_NAME = "resourceName";
+    private static String toString(@NotNull Object value)
+    {
+        if (value.getClass().isArray()) {
+            StringBuilder buffer = new StringBuilder();
+            int lastIndex = Array.getLength(value) - 1;
+            for (int  i = 0; i < Array.getLength(value); i++) {
+                buffer.append(String.valueOf(Array.get(value, i)));
+                if (i == lastIndex) {
+                    break;
+                }
+                buffer.append(", ");
+            }
+            return buffer.toString();
+        } else {
+            return value.toString();
+        }
     }
-
 }

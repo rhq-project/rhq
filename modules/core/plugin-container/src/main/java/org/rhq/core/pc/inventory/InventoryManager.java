@@ -434,7 +434,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     {
                         ResourceCategory resourceCategory = resource.getResourceType().getCategory();
                         // Give the call to getAvailablity() a bit more time if the Resource is a server.
-                        long componentTimeout = (resourceCategory == ResourceCategory.SERVER) ? 5000 : 2500;
+                        long componentTimeout = (resourceCategory == ResourceCategory.SERVER) ? 10000 : 5000;
                         // We already possess the lock, so tell the proxy not to do any locking of its own.
                         resourceComponent = resourceContainer.createResourceComponentProxy(ResourceComponent.class,
                             FacetLockType.NONE, componentTimeout, true, true);

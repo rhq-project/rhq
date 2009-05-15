@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
@@ -92,7 +92,7 @@ public class PackageDetails implements Serializable {
     /**
      * SHA256 hash of the file.
      */
-    private String SHA265;
+    private String SHA256;
 
     /**
      * Timestamp on when the package's file was created.
@@ -228,12 +228,22 @@ public class PackageDetails implements Serializable {
         this.MD5 = MD5;
     }
 
+    /** @deprecated */
     public String getSHA265() {
-        return SHA265;
+        return SHA256;
     }
 
-    public void setSHA265(String SHA265) {
-        this.SHA265 = SHA265;
+    public String getSHA256() {
+        return SHA256;
+    }
+
+    /** @deprecated */
+    public void setSHA265(String sha) {
+        this.SHA256 = sha;
+    }
+
+    public void setSHA256(String sha) {
+        this.SHA256 = sha;
     }
 
     public Long getFileCreatedDate() {

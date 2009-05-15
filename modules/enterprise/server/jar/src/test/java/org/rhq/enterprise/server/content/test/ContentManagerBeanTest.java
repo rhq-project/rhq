@@ -329,7 +329,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         package4.setLicenseVersion("2");
         package4.setLongDescription("Package X1 Long Description");
         package4.setMD5("7bf1adec93fdb899aeca248a38603d58");
-        package4.setSHA265("935f051cab5240b979bba87ce58183d50f592a962202ca683f12a7966414fe6c");
+        package4.setSHA256("935f051cab5240b979bba87ce58183d50f592a962202ca683f12a7966414fe6c");
         package4.setShortDescription("Package X1 Short Description");
 
         String package4Metadata = "Package X1 Metadata";

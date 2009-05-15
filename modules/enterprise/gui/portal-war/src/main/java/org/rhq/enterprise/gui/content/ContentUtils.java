@@ -58,7 +58,7 @@ public class ContentUtils {
         details.setLongDescription(packageVersion.getLongDescription());
         details.setMD5(packageVersion.getMD5());
         details.setMetadata(packageVersion.getMetadata());
-        details.setSHA265(packageVersion.getSHA256());
+        details.setSHA256(packageVersion.getSHA256());
         details.setShortDescription(packageVersion.getShortDescription());
 
         return details;

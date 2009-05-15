@@ -232,7 +232,7 @@ public class Repo {
         pkg.setFileSize(Long.parseLong(p.getChild("size", Repodata.yumns).getAttributeValue("package")));
         pkg.setFileCreatedDate(filedate(p));
         pkg.setLicenseName(p.getChild("format", Repodata.yumns).getChildText("license", Repodata.rpmns));
-        pkg.setSHA265(p.getChildText("checksum", Repodata.yumns));
+        pkg.setSHA256(p.getChildText("checksum", Repodata.yumns));
         pkg.setLocation(location(p));
         pkg.setMetadata(gzip(p));
         return pkg;

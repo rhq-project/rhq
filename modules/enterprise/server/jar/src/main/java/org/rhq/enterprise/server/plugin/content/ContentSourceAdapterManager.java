@@ -186,7 +186,7 @@ public class ContentSourceAdapterManager {
                 details.setLongDescription(pv.getLongDescription());
                 details.setMD5(pv.getMD5());
                 details.setMetadata(pv.getMetadata());
-                details.setSHA265(pv.getSHA256());
+                details.setSHA256(pv.getSHA256());
                 details.setShortDescription(pv.getShortDescription());
 
                 allDetails.add(details);

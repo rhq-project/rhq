@@ -4,12 +4,12 @@
         displayName="MySql Database"
         package="org.rhq.plugins.mysql"
         pluginLifecycleListener="MySqlPluginLifecycleListener"
-        description="Management and monitoring of MySql versions 8.2 and higher"
+        description="Management and monitoring of MySql versions 4/5 and higher"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-   <depends plugin="Database" useClasses="true"/>   
+   <depends plugin="Database" useClasses="true"/>
 
    <server name="MySql Server" discovery="MySqlDiscoveryComponent" class="MySqlComponent"
            description="MySql Server"
@@ -369,7 +369,7 @@
                   <c:simple-property name="contents"/>
               </results>
           </operation>
-         
+
 
          <metric displayName="Backends" property="numbackends" displayType="summary"/>
          <metric displayName="Transactions Committed" property="xact_commit" measurementType="trendsup" displayType="summary"/>
@@ -401,8 +401,8 @@
          </plugin-configuration>
 
 
-         
-      </service>      
+
+      </service>
    </server>
 
 </plugin>

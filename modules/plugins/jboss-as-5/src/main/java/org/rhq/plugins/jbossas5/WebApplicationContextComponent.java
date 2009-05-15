@@ -27,7 +27,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
@@ -47,6 +46,7 @@ import org.jboss.managed.api.ManagedComponent;
 public class WebApplicationContextComponent extends ManagedComponentComponent
 {
     public static final String VIRTUAL_HOST_PROPERTY = "virtualHost";
+    public static final String CONTEXT_PATH_PROPERTY = "contextPath";
 
     private static final String VIRTUAL_HOST_TRAIT = "virtualHost";
 
@@ -54,7 +54,7 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
     private static final String SERVLET_COMPONENT_NAMES_REGEX_TEMPLATE =
             "jboss.web:J2EEApplication=none,J2EEServer=none,"
           + "WebModule=//%" + VIRTUAL_HOST_PROPERTY + "%"
-          + "%" + AbstractWarDiscoveryComponent.CONTEXT_PATH_PROPERTY + "%,j2eeType=Servlet,name=[^,]+";
+          + "%" + CONTEXT_PATH_PROPERTY + "%,j2eeType=Servlet,name=[^,]+";
 
     private static final String SERVLET_METRIC_PREFIX = "Servlet.";
 

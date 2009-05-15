@@ -118,7 +118,7 @@ public abstract class AbstractManagedDeploymentComponent
             throws Exception
     {
         if (this.deploymentType == KnownDeploymentTypes.JavaEEWebApplication) {
-            WarMeasurementFacetDelegate warMeasurementFacetDelegate = new WarMeasurementFacetDelegate(getResourceContext());
+            WarMeasurementFacetDelegate warMeasurementFacetDelegate = new WarMeasurementFacetDelegate(this);
             warMeasurementFacetDelegate.getValues(report, requests);
         }
     }

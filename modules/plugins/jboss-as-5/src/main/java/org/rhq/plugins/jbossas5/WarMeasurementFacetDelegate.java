@@ -23,14 +23,17 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.configuration.Configuration;
+import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
 import org.jboss.deployers.spi.management.ManagementView;
+import org.jboss.managed.api.ManagedComponent;
+import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.profileservice.spi.NoSuchDeploymentException;
 
 /**
  * @author Ian Springer
@@ -40,31 +43,41 @@ public class WarMeasurementFacetDelegate implements MeasurementFacet
     private static final String CONTEXT_ROOT_TRAIT = "contextRoot";
     private static final String VIRTUAL_HOSTS_TRAIT = "virtualHosts";
 
+    private static final String CONTEXT_COMPONENT_NAME = "ContextMO";
+
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private ResourceContext<ProfileServiceComponent> resourceContext;
+    private AbstractManagedDeploymentComponent managedDeploymentComponent;
 
-    public WarMeasurementFacetDelegate(ResourceContext<ProfileServiceComponent> resourceContext)
+    public WarMeasurementFacetDelegate(AbstractManagedDeploymentComponent managedDeploymentComponent)
     {
-        this.resourceContext = resourceContext;
+        this.managedDeploymentComponent = managedDeploymentComponent;
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests)
             throws Exception
     {
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        String contextPath = pluginConfig.getSimple(AbstractWarDiscoveryComponent.CONTEXT_PATH_PROPERTY).getStringValue();
+        ManagementView managementView = this.managedDeploymentComponent.getConnection().getManagementView();
+        String contextPath = getContextPath();
         for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
             try
             {
                 if (metricName.equals(CONTEXT_ROOT_TRAIT)) {
+                    if (contextPath == null) {
+                        // We can't figure out the context root for a stopped WAR.
+                        continue;
+                    }
                     String contextRoot = (contextPath.equals("/")) ? "/" : contextPath.substring(1);
                     MeasurementDataTrait trait = new MeasurementDataTrait(request, contextRoot);
                     report.addData(trait);
                 } else if (metricName.equals(VIRTUAL_HOSTS_TRAIT)) {
+                    if (contextPath == null) {
+                        // We can't figure out the virtual hosts for a stopped WAR.
+                        continue;
+                    }
                     Set<String> virtualHosts = WebApplicationContextDiscoveryComponent.getVirtualHosts(contextPath,
-                            getManagementView());
+                            managementView);
                     String value = "";
                     for (Iterator<String> iterator = virtualHosts.iterator(); iterator.hasNext();)
                     {
@@ -80,15 +93,30 @@ public class WarMeasurementFacetDelegate implements MeasurementFacet
             catch (Exception e)
             {
                 // Don't let one bad apple spoil the barrel.
-                log.error("Failed to collect metric '" + metricName + "' for " + this.resourceContext.getResourceType()
-                        + " Resource with key " + this.resourceContext.getResourceKey() + ".", e);
+                log.error("Failed to collect metric '" + metricName + "' for "
+                        + this.managedDeploymentComponent.getResourceDescription() + ".", e);
             }
         }
     }
 
-    private ManagementView getManagementView()
+    /**
+     * Returns this WAR's context path (e.g. "/jmx-console"), or <code>null</code> if the WAR is currently stopped,
+     * since stopped WARs are not associated with any contexts.
+     *
+     * @return this WAR's context path (e.g. "/jmx-console"), or <code>null</code> if the WAR is currently stopped,
+     *         since stopped WARs are not associated with any contexts
+     * @throws NoSuchDeploymentException if the WAR is no longer deployed
+     */
+    @Nullable
+    private String getContextPath()
+            throws NoSuchDeploymentException
     {
-        ProfileServiceComponent jbasComponent = this.resourceContext.getParentResourceComponent();
-        return jbasComponent.getConnection().getManagementView();
+        ManagedDeployment deployment = this.managedDeploymentComponent.getManagedDeployment();
+        ManagedComponent contextComponent = deployment.getComponent(CONTEXT_COMPONENT_NAME);
+        if (contextComponent != null) {
+            return (String)ManagedComponentUtils.getSimplePropertyValue(contextComponent, "contextRoot");
+        } else {
+            return null;
+        }
     }
 }

@@ -25,6 +25,7 @@ package org.rhq.plugins.jbossas5;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.Collections;
 
 import javax.management.ObjectName;
 import javax.management.MalformedObjectNameException;
@@ -41,11 +42,13 @@ import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 import org.rhq.plugins.jbossas5.util.RegularExpressionNameMatcher;
 import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
+import org.jetbrains.annotations.Nullable;
 
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.profileservice.spi.NoSuchDeploymentException;
 
 /**
  * A component for discovering the contexts of a WAR - one context per vhost the WAR is deployed to.
@@ -61,12 +64,12 @@ public class WebApplicationContextDiscoveryComponent
     // (one component per vhost that WAR is deployed to).
     private static final String WEB_APPLICATION_COMPONENT_NAMES_REGEX_TEMPLATE =
             "jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=WebModule,name=//[^/]+%"
-                    + AbstractWarDiscoveryComponent.CONTEXT_PATH_PROPERTY + "%";
+                    + WebApplicationContextComponent.CONTEXT_PATH_PROPERTY + "%";
 
     // The name of the MBean:WebApplicationManager component for a WAR.
     private static final String WEB_APPLICATION_MANAGER_COMPONENT_NAME_TEMPLATE =
             "jboss.web:host=%" + WebApplicationContextComponent.VIRTUAL_HOST_PROPERTY + "%,"
-          + "path=%" + AbstractWarDiscoveryComponent.CONTEXT_PATH_PROPERTY + "%,type=Manager";
+          + "path=%" + WebApplicationContextComponent.CONTEXT_PATH_PROPERTY + "%,type=Manager";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -77,17 +80,13 @@ public class WebApplicationContextDiscoveryComponent
         log.trace("Discovering " + resourceType.getName() + " Resources...");
 
         AbstractManagedDeploymentComponent parentWarComponent = discoveryContext.getParentResourceComponent();
-        ManagedDeployment deployment = parentWarComponent.getManagedDeployment();
-        ManagedComponent contextComponent = deployment.getComponent(CONTEXT_COMPONENT_NAME);
-        // e.g. "/jmx-console"
-        String contextPath = (String)ManagedComponentUtils.getSimplePropertyValue(contextComponent, "contextRoot");
-
         ManagementView managementView = parentWarComponent.getConnection().getManagementView();
 
         // TODO (ips): Only refresh the ManagementView *once* per runtime discovery scan, rather than every time this
         //             method is called. Do this by providing a runtime scan id in the ResourceDiscoveryContext.
         managementView.load();
-        
+
+        String contextPath = getContextPath(discoveryContext);
         Set<ManagedComponent> webApplicationComponents = getWebApplicationComponents(contextPath, managementView);
         Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet(webApplicationComponents.size());
         for (ManagedComponent webApplicationComponent : webApplicationComponents)
@@ -103,7 +102,7 @@ public class WebApplicationContextDiscoveryComponent
             // Make sure to set the "virtualHost" and "contextPath" props before setting the "componentName" props,
             // since those two props are referenced in the template for the "componentName" property.
             pluginConfig.put(new PropertySimple(WebApplicationContextComponent.VIRTUAL_HOST_PROPERTY, virtualHost));
-            pluginConfig.put(new PropertySimple(AbstractWarDiscoveryComponent.CONTEXT_PATH_PROPERTY, contextPath));
+            pluginConfig.put(new PropertySimple(WebApplicationContextComponent.CONTEXT_PATH_PROPERTY, contextPath));
 
             // e.g. "jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=WebModule,name=//localhost/jmx-console"
             String webApplicationManagerComponentName =
@@ -128,6 +127,29 @@ public class WebApplicationContextDiscoveryComponent
         return discoveredResources;
     }
 
+    /**
+     * Returns the parent WAR's context path (e.g. "/jmx-console"), or <code>null</code> if the WAR is currently stopped,
+     * since stopped WARs are not associated with any contexts.
+     *
+     * @return this WAR's context path (e.g. "/jmx-console"), or <code>null</code> if the WAR is currently stopped,
+     *         since stopped WARs are not associated with any contexts
+     * @throws NoSuchDeploymentException if the WAR is no longer deployed
+     */
+    @Nullable
+    private String getContextPath(ResourceDiscoveryContext<AbstractManagedDeploymentComponent> discoveryContext)
+            throws NoSuchDeploymentException
+    {
+        AbstractManagedDeploymentComponent parentWarComponent = discoveryContext.getParentResourceComponent();
+        ManagedDeployment deployment = parentWarComponent.getManagedDeployment();
+        ManagedComponent contextComponent = deployment.getComponent(CONTEXT_COMPONENT_NAME);
+        // e.g. "/jmx-console"
+        if (contextComponent != null) {
+            return (String)ManagedComponentUtils.getSimplePropertyValue(contextComponent, "contextRoot");
+        } else {
+            return null;
+        }
+    }
+
     static Set<String> getVirtualHosts(String contextPath, ManagementView managementView) throws Exception
     {
         Set<String> virtualHosts = new HashSet();
@@ -143,9 +165,13 @@ public class WebApplicationContextDiscoveryComponent
     private static Set<ManagedComponent> getWebApplicationComponents(String contextPath, ManagementView managementView)
             throws Exception
     {
+        if (contextPath == null) {
+            // This means the WAR is stopped, which means it has no contexts associated with it.
+            return Collections.emptySet();
+        }
         String webApplicationManagerComponentNamesRegex =
                 WEB_APPLICATION_COMPONENT_NAMES_REGEX_TEMPLATE.replaceAll("%"
-                        + AbstractWarDiscoveryComponent.CONTEXT_PATH_PROPERTY + "%", contextPath);
+                        + WebApplicationContextComponent.CONTEXT_PATH_PROPERTY + "%", contextPath);
         ComponentType webApplicationComponentType = MoreKnownComponentTypes.MBean.WebApplication.getType();
         return managementView.getMatchingComponents(webApplicationManagerComponentNamesRegex,
                         webApplicationComponentType, new RegularExpressionNameMatcher());

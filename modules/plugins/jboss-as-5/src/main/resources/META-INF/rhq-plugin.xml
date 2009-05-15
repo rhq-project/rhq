@@ -1929,8 +1929,8 @@
 
         <service name="Enterprise Application (EAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
+                 class="StandaloneManagedDeploymentComponent"
+                 discovery="StandaloneManagedDeploymentDiscoveryComponent"
                  description="Enterprise Application"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -1983,8 +1983,8 @@
 
         <service name="Web Application (WAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.StandaloneWarDiscoveryComponent"
+                 class="StandaloneManagedDeploymentComponent"
+                 discovery="StandaloneManagedDeploymentDiscoveryComponent"
                  description="a standalone web application (WAR)"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -2037,8 +2037,8 @@
             -->
 
             <service name="Web Application Context"
-                     class="org.rhq.plugins.jbossas5.WebApplicationContextComponent"
-                     discovery="org.rhq.plugins.jbossas5.WebApplicationContextDiscoveryComponent"
+                     class="WebApplicationContextComponent"
+                     discovery="WebApplicationContextDiscoveryComponent"
                      description="a web application context">
 
                 <plugin-configuration>
@@ -2057,8 +2057,8 @@
 
         <service name="Embedded Web Application (WAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.EmbeddedWarDiscoveryComponent"
+                 class="EmbeddedManagedDeploymentComponent"
+                 discovery="EmbeddedManagedDeploymentDiscoveryComponent"
                  description="an embedded web application (WAR)">
 
             <plugin-configuration>
@@ -2092,8 +2092,8 @@
             -->
 
             <service name="Embedded Web Application Context"
-                     class="org.rhq.plugins.jbossas5.WebApplicationContextComponent"
-                     discovery="org.rhq.plugins.jbossas5.WebApplicationContextDiscoveryComponent"
+                     class="WebApplicationContextComponent"
+                     discovery="WebApplicationContextDiscoveryComponent"
                      description="a web application context">
 
                 <plugin-configuration>
@@ -2112,8 +2112,8 @@
 
         <service name="EJB 2.x Application (EJB JAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
+                 class="StandaloneManagedDeploymentComponent"
+                 discovery="StandaloneManagedDeploymentDiscoveryComponent"
                  description="a standalone EJB 2.x application"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -2166,8 +2166,8 @@
 
         <service name="Embedded EJB 2.x Application (EJB JAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentDiscoveryComponent"
+                 class="EmbeddedManagedDeploymentComponent"
+                 discovery="EmbeddedManagedDeploymentDiscoveryComponent"
                  description="an embedded EJB 2.x application">
 
             <plugin-configuration>
@@ -2201,8 +2201,8 @@
 
         <service name="EJB 3.x Application (EJB JAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
+                 class="StandaloneManagedDeploymentComponent"
+                 discovery="StandaloneManagedDeploymentDiscoveryComponent"
                  description="a standalone EJB 3.x application"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -2255,8 +2255,8 @@
 
         <service name="Embedded EJB 3.x Application (EJB JAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentDiscoveryComponent"
+                 class="EmbeddedManagedDeploymentComponent"
+                 discovery="EmbeddedManagedDeploymentDiscoveryComponent"
                  description="an embedded EJB 3.x application">
 
             <plugin-configuration>
@@ -2290,8 +2290,8 @@
 <!--
         <service name="JBoss Service (SAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
+                 class="StandaloneManagedDeploymentComponent"
+                 discovery="StandaloneManagedDeploymentDiscoveryComponent"
                  description="JBoss Services"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -2332,8 +2332,8 @@
 -->
         <service name="Resource Adaptor (RAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
+                 class="StandaloneManagedDeploymentComponent"
+                 discovery="StandaloneManagedDeploymentDiscoveryComponent"
                  description="a standalone resource adaptor"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -2386,8 +2386,8 @@
 
         <service name="Embedded Resource Adaptor (RAR)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.EmbeddedManagedDeploymentDiscoveryComponent"
+                 class="EmbeddedManagedDeploymentComponent"
+                 discovery="EmbeddedManagedDeploymentDiscoveryComponent"
                  description="an embedded resource adaptor">
 
             <plugin-configuration>
@@ -2421,8 +2421,8 @@
 <!--
         <service name="Microcontainer Beans (MC Beans)"
                  subCategory="Applications"
-                 class="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent"
-                 discovery="org.rhq.plugins.jbossas5.StandaloneManagedDeploymentDiscoveryComponent"
+                 class="StandaloneManagedDeploymentComponent"
+                 discovery="StandaloneManagedDeploymentDiscoveryComponent"
                  description="Microcontainer Beans"
                  createDeletePolicy="both"
                  creationDataType="content">

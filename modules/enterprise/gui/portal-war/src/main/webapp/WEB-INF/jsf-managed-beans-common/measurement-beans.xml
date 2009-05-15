@@ -22,6 +22,12 @@
       <managed-bean-class>org.rhq.enterprise.gui.measurement.tables.MetricsTableChartUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
+
+    <managed-bean>
+        <managed-bean-name>ResourceMetricSparklineUIBean</managed-bean-name>
+        <managed-bean-class>org.rhq.enterprise.gui.common.graph.SparklineUIBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>
    
    <!-- /rhq/common/monitor/response/** -->
    <managed-bean>

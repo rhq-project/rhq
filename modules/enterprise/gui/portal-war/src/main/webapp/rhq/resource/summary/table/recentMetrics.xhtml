@@ -15,6 +15,9 @@
    <ui:repeat var="metric"
               value="#{MetricsTableUIBean.metricSummaries}">
       <div style="text-indent: 20px;">
+          <rich:paint2D id="painter" width="60" height="18" style="margin: 2px"
+             data="#{param.id}:#{metric.definitionId}" format="png" paint="#{ResourceMetricSparklineUIBean.paint}" />
+
          <h:outputText value=" " />
          <h:outputLink value="/resource/common/monitor/Visibility.do">
              <f:param name="mode" value="chartSingleMetricSingleResource"/>
@@ -24,6 +27,8 @@
          </h:outputLink>
          <h:outputText value=": " />
          <h:outputText value="#{metric.lastMetric.valueFmt}"/>
+
+
          <br />
       </div>
    </ui:repeat>

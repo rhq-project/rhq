@@ -54,6 +54,8 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
     private SelectItem[] packageVersions;
     private String packageVersionFilter;
 
+    private String search;
+
     private ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
 
     // Constructors  --------------------------------------------
@@ -127,8 +129,9 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
                 resource = requestResource; // request switched the resource this UI bean is using
             }
 
-            PageList<PackageListItemComposite> pageList = contentUIManager.getInstalledPackages(subject,
-                requestResource.getId(), packageTypeFilter, packageVersionFilter, pc);
+            PageList<PackageListItemComposite> pageList =
+                    contentUIManager.getInstalledPackages(subject,
+                requestResource.getId(), packageTypeFilter, packageVersionFilter, search, pc);
 
             return pageList;
         }
@@ -188,5 +191,13 @@ public class ListPackagesUIBean extends PagedDataTableUIBean {
 
     public void setPackageVersionFilter(String packageVersionFilter) {
         this.packageVersionFilter = packageVersionFilter;
+    }
+
+    public String getSearch() {
+        return search;
+    }
+
+    public void setSearch(String search) {
+        this.search = search;
     }
 }

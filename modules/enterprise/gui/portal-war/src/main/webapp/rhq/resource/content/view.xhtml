@@ -25,17 +25,33 @@
       
       <h:form id="contentForm">
          <input type="hidden" name="id" value="${param.id}"/>
-         <rich:panel styleClass="BlockContent"> 
-         
+         <rich:panel styleClass="BlockContent">
+
+
             <f:facet name="header"><h:outputText value="Deployed Content"/></f:facet>
 
-            <h:panelGrid columns="2" width="100%">
+             <a4j:log level="debug" width="400"/>
+
+
+            <h:panelGrid columns="3" width="100%">
+                <h:panelGroup>
+                   <h:outputText value="Filter: " />
+                   <h:inputText id="search" value="#{ListPackagesUIBean.search}">
+                       <a4j:support event="onchange"
+                                    status="commonStatus"
+                                    reRender="packagesDataTable, packagesDataTableScroller"
+                                    actionListener="#{ListPackagesUIBean.clearDataModel}"/>
+                   </h:inputText>
+                </h:panelGroup>
 
                <h:panelGroup>
                   <h:outputText value="Package Type Filter: " />
                   <h:selectOneMenu id="packageTypeFilter"
                                    value="#{ListPackagesUIBean.packageTypeFilter}">
-                     <a4j:support event="onchange" reRender="packagesDataTable, packagesDataTableScroller"/>
+                      <a4j:support event="onchange"
+                                   status="commonStatus"
+                                   reRender="packagesDataTable, packagesDataTableScroller"
+                                   actionListener="#{ListPackagesUIBean.clearDataModel}"/>
                      <f:selectItems value="#{ListPackagesUIBean.packageTypes}" />
                   </h:selectOneMenu>
                </h:panelGroup>
@@ -44,7 +60,10 @@
                   <h:outputText value="Package Version Filter: " />
                   <h:selectOneMenu id="packageVersionFilter"
                                    value="#{ListPackagesUIBean.packageVersionFilter}">
-                     <a4j:support event="onchange" reRender="packagesDataTable, packagesDataTableScroller"/>
+                      <a4j:support event="onchange"
+                                   status="commonStatus"
+                                   reRender="packagesDataTable, packagesDataTableScroller"
+                                   actionListener="#{ListPackagesUIBean.clearDataModel}"/>
                      <f:selectItems value="#{ListPackagesUIBean.packageVersions}" />
                   </h:selectOneMenu>
                </h:panelGroup>
@@ -116,7 +135,21 @@
 
                   <h:outputText value="#{item.packageTypeName}"/>
                </rich:column>
-               
+
+                <rich:column>
+                   <f:facet name="header">
+                      <onc:sortableColumnHeader sort="ip.installationDate">
+                         <h:outputText styleClass="headerText" value="Installation Date" />
+                      </onc:sortableColumnHeader>
+                   </f:facet>
+
+                   <h:outputText value="#{item.timestamp}">
+                      <f:converter converterId="RelativeDurationConverter" />
+                   </h:outputText>
+                </rich:column>
+
+
+
                <f:facet name="footer">
                   <rich:columnGroup>
                      <rich:column colspan="4" width="100%">

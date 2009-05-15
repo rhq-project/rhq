@@ -19,9 +19,15 @@
 
 package org.rhq.plugins.netservices;
 
-import org.apache.commons.httpclient.Header;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Set;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -34,18 +40,13 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Set;
-
-
 /**
  * Monitoring of HTTP Servers
  * 
  * @author Greg Hinkle
  */
 public class HTTPNetServiceComponent implements ResourceComponent, MeasurementFacet, OperationFacet {
-
+    private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String CONFIG_URL = "url";
     public static final String CONFIG_USER = "user";
@@ -59,7 +60,6 @@ public class HTTPNetServiceComponent implements ResourceComponent, MeasurementFa
     public static final String CONFIG_METHOD = "method";
     public static final String CONFIG_FOLOW_REDIRECTS = "followRedirects";
     public static final String CONFIG_RESPONSE_PATTERN = "responsePattern";
-
 
     private ResourceContext resourceContext;
 
@@ -76,19 +76,18 @@ public class HTTPNetServiceComponent implements ResourceComponent, MeasurementFa
 
     public AvailabilityType getAvailability() {
         try {
-        return getValuesOrAvailability(null, null) ? AvailabilityType.UP : AvailabilityType.DOWN;
+            return getValuesOrAvailability(null, null) ? AvailabilityType.UP : AvailabilityType.DOWN;
         } catch (Exception e) {
             return AvailabilityType.DOWN;
         }
     }
 
-
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
         getValuesOrAvailability(report, metrics);
     }
 
-
-    public boolean getValuesOrAvailability(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+    public boolean getValuesOrAvailability(MeasurementReport report, Set<MeasurementScheduleRequest> metrics)
+        throws Exception {
 
         try {
 
@@ -100,14 +99,12 @@ public class HTTPNetServiceComponent implements ResourceComponent, MeasurementFa
 
             method.setFollowRedirects(config.getSimple(CONFIG_FOLOW_REDIRECTS).getBooleanValue());
 
-
             long start = System.currentTimeMillis();
             int responseCode = httpClient.executeMethod(method);
             long connectTime = System.currentTimeMillis() - start;
 
-            boolean success =
-                    !config.getSimple("validateResponseCode").getBooleanValue() 
-                    || (responseCode >= 200 && responseCode <= 299);
+            boolean success = !config.getSimple("validateResponseCode").getBooleanValue()
+                || (responseCode >= 200 && responseCode <= 299);
 
             String response = method.getResponseBodyAsString();
 
@@ -116,46 +113,47 @@ public class HTTPNetServiceComponent implements ResourceComponent, MeasurementFa
             SimpleDateFormat sdf = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss zzz");
             Date contentDate = sdf.parse(method.getResponseHeader("Date").getValue());
 
-//            System.out.println("Success: " + success);
-//            System.out.println("Response: " + responseCode);
-//            System.out.println("Connect Time: " + connectTime);
-//            System.out.println("Read Time: " + readTime);
-//            System.out.println("Content Length: " + response.length());
-//            System.out.println("Content Date: " + contentDate);
-//            System.out.println("Content Charset: " + method.getResponseCharSet());
-//            System.out.println("Content Age: " + (System.currentTimeMillis() - contentDate.getTime()));
+            //            System.out.println("Success: " + success);
+            //            System.out.println("Response: " + responseCode);
+            //            System.out.println("Connect Time: " + connectTime);
+            //            System.out.println("Read Time: " + readTime);
+            //            System.out.println("Content Length: " + response.length());
+            //            System.out.println("Content Date: " + contentDate);
+            //            System.out.println("Content Charset: " + method.getResponseCharSet());
+            //            System.out.println("Content Age: " + (System.currentTimeMillis() - contentDate.getTime()));
 
-//            System.out.println("-----------------------");
-//            for (Header header : method.getResponseHeaders()) {
-//                System.out.println(header.getName() + " =  " + header.getValue());
-//            }
+            //            System.out.println("-----------------------");
+            //            for (Header header : method.getResponseHeaders()) {
+            //                System.out.println(header.getName() + " =  " + header.getValue());
+            //            }
 
             if (metrics != null) {
                 for (MeasurementScheduleRequest request : metrics) {
                     if (request.getName().equals("connectTime")) {
-                        report.addData(new MeasurementDataNumeric(request, (double)connectTime));
+                        report.addData(new MeasurementDataNumeric(request, (double) connectTime));
                     } else if (request.getName().equals("readTime")) {
-                        report.addData(new MeasurementDataNumeric(request, (double)readTime));
+                        report.addData(new MeasurementDataNumeric(request, (double) readTime));
                     } else if (request.getName().equals("contentLength")) {
-                        report.addData(new MeasurementDataNumeric(request, (double)response.length()));
+                        report.addData(new MeasurementDataNumeric(request, (double) response.length()));
                     } else if (request.getName().equals("contentAge")) {
-                        report.addData(new MeasurementDataNumeric(request, (double)(System.currentTimeMillis() - contentDate.getTime())));
-                    } 
+                        report.addData(new MeasurementDataNumeric(request,
+                            (double) (System.currentTimeMillis() - contentDate.getTime())));
+                    }
                 }
             }
-
-
 
             return success;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
+            log.error(e);
         }
         return false;
     }
 
     // TODO GH: This really only makes sense to offer to go get the content if we can support long config content for responses bigger than 4k
-    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException, Exception {
+    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
+        Exception {
         Configuration config = resourceContext.getPluginConfiguration();
 
         HttpClient httpClient = new HttpClient();

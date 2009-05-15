@@ -262,7 +262,9 @@ public class ApplicationServerDiscoveryComponent
 
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
         pluginConfig.put(new PropertySimple(ApplicationServerComponent.PluginConfigPropNames.SERVER_NAME, serverName));
-
+        pluginConfig.put(new PropertySimple(
+				ApplicationServerComponent.PluginConfigPropNames.HOME_DIR,
+				homeDir));
         boolean debug = Boolean.getBoolean(JBMANCON_DEBUG_SYSPROP);
         if (debug) {
             //new UnitTestRunner().runUnitTests(connection);

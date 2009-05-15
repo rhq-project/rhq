@@ -35,7 +35,10 @@ public interface MoreKnownComponentTypes
         Servlet,
         Web,
         WebApplication,
-        WebApplicationManager;
+        WebApplicationManager,
+        WebHost,
+        WebRequestProcessor,
+        WebThreadPool;
 
         public String type()
         {
@@ -64,8 +67,9 @@ public interface MoreKnownComponentTypes
         ServerConfig,
         ServerInfo,
         ServicebindingManager,
+        ServicebindingMetadata,
         ServiceBindingSet,
-        ServicebindingStore;
+        ServiceBindingStore;
 
         public String type()
         {

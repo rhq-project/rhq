@@ -183,7 +183,7 @@ public class RssFeedParser {
                     packageDetails.setLicenseVersion(patch.getLicenseVersion());
                     packageDetails.setLocation(patch.getAutomatedDownloadUrl());
                     packageDetails.setMD5(patch.getMd5());
-                    packageDetails.setSHA265(patch.getSha256());
+                    packageDetails.setSHA256(patch.getSha256());
 
                     packageDetails.setShortDescription(patch.getShortDescription());
                     packageDetails.setLongDescription(patch.getLongDescription());

@@ -521,11 +521,28 @@
 
 
 <!ENTITY connectionFactoryAdvancedResourceConfigProps '
-    <c:map-property required="false" name="config-property">
+    <c:list-property required="false" name="config-property">
         <c:description>
             Properties to supply to the ManagedConnectionFactory (MCF) MBean service configuration.
         </c:description>
-    </c:map-property>
+        <c:map-property name="config-property">
+            <c:simple-property name="name" description="The name of the configuration property." />
+            <c:simple-property name="type" description="The type of the configuration property.">
+                <c:property-options>
+                    <c:option value="java.lang.String" default="true"/>
+                    <c:option value="java.lang.Boolean"/>
+                    <c:option value="java.lang.Integer"/>
+                    <c:option value="java.lang.Double"/>
+                    <c:option value="java.lang.Byte"/>
+                    <c:option value="java.lang.Short"/>
+                    <c:option value="java.lang.Long"/>
+                    <c:option value="java.lang.Float"/>
+                    <c:option value="java.lang.Character"/> 
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="value" required="false" description="The value of the configuration property." />
+        </c:map-property>
+    </c:list-property>
 '>
 
 <!ENTITY connectionFactoryMetrics '
@@ -1128,6 +1145,8 @@
                          hiddenByDefault="true">
                     <c:map-property name="customProperties"
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
+                        <c:simple-property name="config-property" 
+                            default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.ConnectionFactoryConfigPropertyAdapter" />                
                     </c:map-property>
                     <c:map-property name="customMetrics"
                                     description="Holds a list of custom Metrics, and the Adapter class to use">
@@ -1192,6 +1211,8 @@
                          hiddenByDefault="true">
                     <c:map-property name="customProperties"
                                     description="Holds a list of custom properties, and the Adapter type class to use ">
+                        <c:simple-property name="config-property" 
+                            default="org.rhq.plugins.jbossas5.adapter.impl.configuration.custom.ConnectionFactoryConfigPropertyAdapter" />                
                     </c:map-property>
                     <c:map-property name="customMetrics"
                                     description="Holds a list of custom Metrics, and the Adapter class to use">

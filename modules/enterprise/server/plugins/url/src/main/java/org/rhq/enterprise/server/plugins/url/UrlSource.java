@@ -18,10 +18,8 @@
  */
 package org.rhq.enterprise.server.plugins.url;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
@@ -37,20 +35,23 @@ import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsK
 import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.enterprise.server.plugins.url.RemotePackageInfo.SupportedPackageType;
 
 /**
  * This is a basic implementation of a content source that provides primative package
  * synchronization with a URL-based content source, such as an HTTP server.
  * 
  * In order for this URL content source to properly scan and find content in the
- * remote server, an index file must exist that provides a list of
+ * remote server, an index file must exist that provides metadata about each file.
+ * 
+ * There are two forms of the index metadata file. The simple form is a list of
  * each file relative to the root URL location. This index file can include paths to subdirectories
  * under the root URL. The index file must be named "content-index.txt" unless
- * overridden by the content source's configuration setting.
- * 
- * The metadata stored in this index file describes the packages.
- * Each line in the index file must be a single filename, followed by the MD5 of the files:
+ * overridden by the content source's configuration setting. The metadata stored in this simple index
+ * file describes the packages. Each line in the simple index file must be a single filename,
+ * followed by the MD5 of the files:
  *
  * <pre>
  * release-v1.0.zip|abe347586edbc6723461253457687bef
@@ -59,15 +60,18 @@ import org.rhq.core.domain.configuration.PropertyMap;
  * patches/patch-4567.jar|dcb567886eabc6723461253457687bef
  * </pre>
  *
+ * Note that this is a very inefficient type of content source because of the lack of metadata.
+ * Because the only thing we know is the URL to a piece of content and nothing else, the only way
+ * to determine things like version number is to possible download the content to scan it.
+ * 
+ * The other index file supported is an XML file that contains the full set of metadata needed
+ * to fully define a package. Its XML file has a schema - look at the schema for the full syntax. 
+ *
  * Subclasses can override this class if they want to support more full-featured metadata
  * (for example, an RSS feed found at the index URL).
  *
  * The index file can be specified as a full URL - if it is not, it will be assumed relative to
  * the root URL.
- * 
- * Note that this is a very inefficient type of content source because of the lack of metadata.
- * Because the only thing we know is the URL to a piece of content and nothing else, the only way
- * to determine things like version number is to possible download the content to scan it.
  *
  * @author John Mazzitelli
  */
@@ -99,6 +103,16 @@ public class UrlSource implements ContentSourceAdapter {
      * which files match to which package types.
      */
     private Map<String, SupportedPackageType> supportedPackageTypes;
+
+    /**
+     * Returns a stringified version of root URL that is used to build a full URL to content.
+     * This will be ensured to end with a "/".
+     * 
+     * @return root URL string that ends with a trailing "/".
+     */
+    protected String getRootUrlString() {
+        return this.rootUrlString;
+    }
 
     protected URL getRootUrl() {
         return this.rootUrl;
@@ -214,7 +228,6 @@ public class UrlSource implements ContentSourceAdapter {
 
     /**
      * Returns info on all the files listed in the {@link #getIndexUrl() index file}.
-     * Blank lines in the index file will be ignored.
      * 
      * @return map of Strings/Infos, where each string is the location relative to the root URL. Each string
      *         in the map keys is guaranteed not to have a leading slash.
@@ -222,25 +235,18 @@ public class UrlSource implements ContentSourceAdapter {
      * @throws Exception if the index file is missing or cannot be processed
      */
     protected Map<String, RemotePackageInfo> getRemotePackageInfosFromIndex() throws Exception {
-        Map<String, RemotePackageInfo> fileList = new HashMap<String, RemotePackageInfo>();
 
+        IndexParser parser;
+        if (getIndexUrl().toString().endsWith(".xml")) {
+            parser = new XmlIndexParser();
+        } else {
+            parser = new SimpleIndexParser();
+        }
+
+        Map<String, RemotePackageInfo> fileList = new HashMap<String, RemotePackageInfo>();
         InputStream indexStream = getIndexInputStream();
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(indexStream));
-            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                while (line.startsWith("/")) {
-                    line = (line.length() > 1) ? line.substring(1) : ""; // we don't want a leading slash
-                }
-                if (line.length() > 0) {
-                    String[] locationAndMd5 = line.split("\\|");
-                    // if the line doesn't have name|md5, we silently skip it
-                    if (locationAndMd5.length == 2) {
-                        URL locationUrl = new URL(this.rootUrlString + locationAndMd5[0]);
-                        RemotePackageInfo rpi = new RemotePackageInfo(locationAndMd5[0], locationUrl, locationAndMd5[1]);
-                        fileList.put(rpi.getLocation(), rpi);
-                    }
-                }
-            }
+            fileList = parser.parse(indexStream, this);
         } finally {
             indexStream.close();
         }
@@ -295,26 +301,34 @@ public class UrlSource implements ContentSourceAdapter {
             return null; // we can't handle this file - it is an unknown/unsupported package type
         }
 
-        String md5 = rpi.getMD5();
-        String name = new File(rpi.getLocation()).getName();
-        String version = md5; // very crude, but our 
-        String packageTypeName = supportedPackageType.packageTypeName;
-        String architectureName = supportedPackageType.architectureName;
-        String resourceTypeName = supportedPackageType.resourceTypeName;
-        String resourceTypePluginName = supportedPackageType.resourceTypePluginName;
+        ContentSourcePackageDetails pkg = null;
 
-        ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey(name, version, packageTypeName,
-            architectureName, resourceTypeName, resourceTypePluginName);
-        ContentSourcePackageDetails pkg = new ContentSourcePackageDetails(key);
+        if (rpi instanceof FullRemotePackageInfo) {
+            pkg = ((FullRemotePackageInfo) rpi).getContentSourcePackageDetails();
+        }
 
-        URLConnection urlConn = rpi.getUrl().openConnection();
-        pkg.setFileCreatedDate(urlConn.getLastModified());
-        pkg.setFileSize(new Long(urlConn.getContentLength()));
-        pkg.setDisplayName(name);
-        pkg.setFileName(name);
-        pkg.setMD5(md5);
-        pkg.setLocation(rpi.getLocation());
-        pkg.setShortDescription(null);
+        if (pkg == null) {
+            String md5 = rpi.getMD5();
+            String name = new File(rpi.getLocation()).getName();
+            String version = md5; // very crude, but we don't know the "real" version so use md5 as the next best thing
+            String packageTypeName = supportedPackageType.packageTypeName;
+            String architectureName = supportedPackageType.architectureName;
+            String resourceTypeName = supportedPackageType.resourceTypeName;
+            String resourceTypePluginName = supportedPackageType.resourceTypePluginName;
+
+            ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey(name, version, packageTypeName,
+                architectureName, resourceTypeName, resourceTypePluginName);
+            pkg = new ContentSourcePackageDetails(key);
+
+            URLConnection urlConn = rpi.getUrl().openConnection();
+            pkg.setFileCreatedDate(urlConn.getLastModified());
+            pkg.setFileSize(new Long(urlConn.getContentLength()));
+            pkg.setDisplayName(name);
+            pkg.setFileName(name);
+            pkg.setMD5(md5);
+            pkg.setLocation(rpi.getLocation());
+            pkg.setShortDescription(null);
+        }
 
         return pkg;
     }
@@ -331,14 +345,19 @@ public class UrlSource implements ContentSourceAdapter {
 
     protected void initializePackageTypes(Configuration config) {
 
+        // these package types are only needed if the index metadata does not provide
+        // the package type information already. If the metadata already provides the package type
+        // information for a package, these are not needed or used. But if the metadata does not
+        // tell us what package type a package is, we need this package type information to
+        // intelligently "guess" what a package's type is.
+
         Map<String, SupportedPackageType> supportedPackageTypes = new HashMap<String, SupportedPackageType>();
 
-        /* TODO: THE UI CURRENTLY DOES NOT SUPPORT ADDING/EDITING LIST OF MAPS, SO WE CAN ONLY SUPPORT ONE PACKAGE TYPE 
-         * SO FOR NOW, JUST SUPPORT A FLAT SET OF SIMPLE PROPS - WE WILL RE-ENABLE THIS CODE LATER */
-        if (false) {
+        PropertyList list = config.getList("packageTypes");
+        if (list != null) {
             // All of these properties must exist, any nulls should trigger runtime exceptions which is what we want
             // because if the configuration is bad, this content source should not initialize. 
-            List<Property> packageTypesList = config.getList("packageTypes").getList();
+            List<Property> packageTypesList = list.getList();
             for (Property property : packageTypesList) {
                 PropertyMap pkgType = (PropertyMap) property;
                 SupportedPackageType supportedPackageType = new SupportedPackageType();
@@ -350,15 +369,6 @@ public class UrlSource implements ContentSourceAdapter {
                 String filenameFilter = pkgType.getSimpleValue("filenameFilter", null);
                 supportedPackageTypes.put(filenameFilter, supportedPackageType);
             }
-        } else {
-            /* THIS CODE IS THE FLAT SET OF PROPS - USE UNTIL WE CAN EDIT MAPS AT WHICH TIME DELETE THIS ELSE CLAUSE */
-            SupportedPackageType supportedPackageType = new SupportedPackageType();
-            supportedPackageType.packageTypeName = config.getSimpleValue("packageTypeName", null);
-            supportedPackageType.architectureName = config.getSimpleValue("architectureName", null);
-            supportedPackageType.resourceTypeName = config.getSimpleValue("resourceTypeName", null);
-            supportedPackageType.resourceTypePluginName = config.getSimpleValue("resourceTypePluginName", null);
-            String filenameFilter = config.getSimpleValue("filenameFilter", null);
-            supportedPackageTypes.put(filenameFilter, supportedPackageType);
         }
 
         setSupportedPackageTypes(supportedPackageTypes);
@@ -366,18 +376,18 @@ public class UrlSource implements ContentSourceAdapter {
     }
 
     protected SupportedPackageType determinePackageType(RemotePackageInfo rpi) {
+        // first see if the package info already knows its package type
+        if (rpi.getSupportedPackageType() != null) {
+            return rpi.getSupportedPackageType();
+        }
+
+        // the info didn't know what package type it is, let's try to match it based on our content source configuration
         for (Map.Entry<String, SupportedPackageType> entry : getSupportedPackageTypes().entrySet()) {
             if (rpi.getLocation().matches(entry.getKey())) {
                 return entry.getValue();
             }
         }
-        return null; // the file doesn't match any known types for this content source
-    }
 
-    protected class SupportedPackageType {
-        public String packageTypeName;
-        public String architectureName;
-        public String resourceTypeName;
-        public String resourceTypePluginName;
+        return null; // the file doesn't match any known types for this content source
     }
 }

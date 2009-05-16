@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<xs:schema
+   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+   xmlns:rhq="urn:xmlns:rhq-contentsource-packagedetails"
+   targetNamespace="urn:xmlns:rhq-contentsource-packagedetails"
+   elementFormDefault="qualified"
+   jaxb:version="2.0"
+   xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+   blockDefault="">
+
+   <xs:annotation>
+      <xs:documentation>
+         Schema for content source package details metadata. This schema will provide the structure
+         that XML content sources (e.g. HttpSource) will use for their XML index files. This is
+         how such content sources can advertise what content they have available.
+      </xs:documentation>
+      <xs:appinfo>
+         <jaxb:schemaBindings>
+            <jaxb:package name="org.rhq.core.clientapi.descriptor.contentsource.packagedetails" />
+         </jaxb:schemaBindings>
+      </xs:appinfo>
+   </xs:annotation>
+
+   <xs:complexType name="packageDetailsKeyType">
+      <xs:annotation>
+         <xs:documentation>
+            The key to details of a package that a content source
+            provides. This key is used when referring to a package
+            version found in the remote content source repository.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="name">
+            <xs:annotation>
+               <xs:documentation>
+                  The name of the package.This name, combined with the
+                  version, identifies an individual package within its
+                  package type family.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="version">
+            <xs:annotation>
+               <xs:documentation>
+                  The version of the package. The format of this
+                  attribute will vary based on the package and the
+                  package type.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="package-type-name">
+            <xs:annotation>
+               <xs:documentation>
+                  Fully qualified name of the package type which defines
+                  the family of packages that this package belongs to
+                  (e.g. "rpm"). This is defined in the product plugin where
+                  the package type is defined.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="architecture-name">
+            <xs:annotation>
+               <xs:documentation>
+                  The architecture on which this package can be
+                  deployed. If there is no specific architecture that is
+                  associated with this package, then "noarch" should be
+                  used.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="resource-type-name">
+            <xs:annotation>
+               <xs:documentation>
+                  The name of the resource type for which this package
+                  is applicable. In other words, this is the resource
+                  type on which this package can be deployed. Because a
+                  resource type name itself is not unique, this type
+                  name must be paired with the product plugin name that defines
+                  the resource type.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="resource-type-plugin">
+            <xs:annotation>
+               <xs:documentation>
+                  The name of the product plugin that defined the resource type
+                  for which this package is applicable.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+
+   <xs:complexType name="packageDetailsType">
+      <xs:sequence>
+         <xs:element name="package-details-key" type="rhq:packageDetailsKeyType">
+         </xs:element>
+         <xs:element name="resource-versions" type="rhq:resourceVersionsType" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  The versions of the resource type which this package
+                  is applicable. In other words, this package is
+                  deployable only on resources that match these version
+                  strings.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="display-name" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  The human-readable name of the package suitable to be
+                  displayed on a user interface.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="display-version" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  The human-readable version of the package suitable to
+                  be displayed on a user interface.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="short-description" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  Just a few words that briefly describe this package.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="long-description" type="xs:string" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  The details that describe this package.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="classification" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  Provides additional classification metadata to
+                  describe the package. The possible values for this
+                  attribute will vary based on package type. For
+                  instance, two packages of the same package type may be
+                  differentiated as a "bug fix" or a "security update".
+                  Another way to use this would be to group packages
+                  together, such as "System Patches" or "Applications".
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="file-name" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  The name of the file that this package should be
+                  stored as. This typically is a combination of the
+                  package name and version, but it is not required to be
+                  so.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="file-size" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  The size, in bytes, of the package content.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:long">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="file-created-date" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  The date and time when the original content was
+                  created. This value is specified in epoch milliseconds.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:long">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="md5" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  The package content's md5 hashcode.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="sha256" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  The package content's sha256 hashcode.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="license-name" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  The name of the license that governs the usage of the
+                  package.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="license-version" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  The version of the license that governs the usage of
+                  the package.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="metadata" type="xs:string" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  Generic metadata that is used to extend the metadata
+                  for a particular package. This metadata is custom for
+                  a particular package type and can include things such
+                  as install instructions or errata information.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="extra-properties" type="rhq:configurationType" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  If the package type defines an extra set of custom
+                  properties, these are this package's property values.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="location" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  Defines the location where this package's content can
+                  be found on the content source remote repository.
+               </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+
+   <xs:complexType name="resourceVersionsType">
+      <xs:sequence>
+         <xs:element name="resource-version" minOccurs="1" maxOccurs="unbounded">
+            <xs:simpleType>
+               <xs:restriction base="xs:string">
+                  <xs:whiteSpace value="collapse"></xs:whiteSpace>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+
+   <xs:complexType name="packageType">
+      <xs:sequence>
+         <xs:element name="package" type="rhq:packageDetailsType" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="packages" type="rhq:packageType"></xs:element>
+
+   <!-- configuration property values schema -->
+
+   <xs:complexType name="configurationType">
+      <xs:annotation>
+         <xs:documentation>Describes all configurable elements.</xs:documentation>
+      </xs:annotation>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+         <xs:element name="simple-property" type="rhq:simplePropertyType" />
+         <xs:element name="list-property" type="rhq:listPropertyType" />
+         <xs:element name="map-property" type="rhq:mapPropertyType" />
+      </xs:choice>
+   </xs:complexType>
+
+   <xs:complexType name="simplePropertyType">
+      <xs:simpleContent>
+         <xs:extension base="xs:string">
+            <xs:attribute name="name" type="xs:string"/>
+         </xs:extension>
+      </xs:simpleContent>
+   </xs:complexType>
+
+   <xs:complexType name="listPropertyType">
+      <xs:complexContent>
+         <xs:extension base="rhq:configurationType">
+            <xs:attribute name="name" type="xs:string"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType name="mapPropertyType">
+      <xs:complexContent>
+         <xs:extension base="rhq:configurationType">
+            <xs:attribute name="name" type="xs:string"/>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+</xs:schema>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<p:packages xmlns:p="urn:xmlns:rhq-contentsource-packagedetails"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <p:package>
+    <p:package-details-key>
+      <p:name>Mazzname</p:name>
+      <p:version>Mazzversion</p:version>
+      <p:package-type-name>Mazzpackage-type-name</p:package-type-name>
+      <p:architecture-name>Mazzarchitecture-name</p:architecture-name>
+      <p:resource-type-name>Mazzresource-type-name</p:resource-type-name>
+      <p:resource-type-plugin>Mazzresource-type-plugin</p:resource-type-plugin>
+    </p:package-details-key>
+    <p:resource-versions>
+      <p:resource-version>Mazzresource-version1</p:resource-version>
+      <p:resource-version>Mazzresource-version2</p:resource-version>
+    </p:resource-versions>
+    <p:display-name>Mazzdisplay-name</p:display-name>
+    <p:display-version>Mazzdisplay-version</p:display-version>
+    <p:short-description>Mazzshort-description</p:short-description>
+    <p:long-description>Mazzlong-description</p:long-description>
+    <p:classification>Mazzclassification</p:classification>
+    <p:file-name>Mazzfile-name</p:file-name>
+    <p:file-size>123</p:file-size>
+    <p:file-created-date>456</p:file-created-date>
+    <p:md5>Mazzmd5</p:md5>
+    <p:sha256>Mazzsha256</p:sha256>
+    <p:license-name>Mazzlicense-name</p:license-name>
+    <p:license-version>Mazzlicense-version</p:license-version>
+    <p:metadata>Mazzmetadata</p:metadata>
+    <p:extra-properties>
+       <p:simple-property name="firstsimple">First Simple</p:simple-property>
+       <p:simple-property name="secondsimple">Second Simple</p:simple-property>
+       <p:list-property name="firstlist">
+          <p:simple-property>First List #1</p:simple-property>
+          <p:simple-property>First List #2</p:simple-property>
+          <p:simple-property>First List #3</p:simple-property>
+       </p:list-property>
+       <p:list-property name="anotherlist">
+          <p:simple-property name="alist">Another List #1</p:simple-property>
+          <p:simple-property name="alist">Another List #2</p:simple-property>
+          <p:simple-property name="alist">Another List #3</p:simple-property>
+       </p:list-property>
+       <p:map-property name="firstmap">
+          <p:simple-property name="firstmap1">First Map #1</p:simple-property>
+          <p:simple-property name="firstmap2">First Map #2</p:simple-property>
+          <p:simple-property name="firstmap3">First Map #3</p:simple-property>
+       </p:map-property>
+       <p:list-property name="list-o-maps">
+          <p:map-property name="map">
+             <p:simple-property name="map1value1">List-o-Map #1 value 1</p:simple-property>
+             <p:simple-property name="map1value2">List-o-Map #1 value 2</p:simple-property>
+          </p:map-property>
+          <p:map-property name="map">
+             <p:simple-property name="map2value1">List-o-Map #2 value 1</p:simple-property>
+             <p:simple-property name="map2value2">List-o-Map #2 value 2</p:simple-property>
+          </p:map-property>
+       </p:list-property>
+    </p:extra-properties>
+    <p:location>Mazzlocation</p:location>
+  </p:package>
+</p:packages>

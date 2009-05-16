@@ -24,11 +24,13 @@ public class RemotePackageInfo {
     private String location; // the path of the package relative to the root URL
     private URL url;
     private String md5;
+    private SupportedPackageType supportedPackageType;
 
     public RemotePackageInfo(String location, URL url, String md5) {
         this.location = location;
         this.url = url;
         this.md5 = md5;
+        this.supportedPackageType = null; // we don't know it
     }
 
     public String getLocation() {
@@ -41,5 +43,43 @@ public class RemotePackageInfo {
 
     public String getMD5() {
         return this.md5;
+    }
+
+    /**
+     * If this package info knows it, this will return the package type that supports this package.
+     * If this package info does not know its package type information, this will return <code>null</code>.
+     * 
+     * @return known package type that supports this package or <code>null</code> if not known
+     */
+    public SupportedPackageType getSupportedPackageType() {
+        return this.supportedPackageType;
+    }
+
+    public void setSupportedPackageType(SupportedPackageType type) {
+        this.supportedPackageType = type;
+    }
+
+    public String toString() {
+        StringBuilder str = new StringBuilder("RemotePackageInfo: ");
+        str.append("location=[").append(this.location);
+        str.append("], url=[").append(this.url);
+        str.append("], md5=[").append(this.md5);
+        if (this.supportedPackageType != null) {
+            str.append("], supportedPackageType=[").append(this.supportedPackageType.packageTypeName);
+            str.append(",").append(this.supportedPackageType.architectureName);
+            str.append(",").append(this.supportedPackageType.resourceTypeName);
+            str.append(",").append(this.supportedPackageType.resourceTypePluginName);
+            str.append("]");
+        } else {
+            str.append("], supportedPackageType=[unknown]");
+        }
+        return str.toString();
+    }
+
+    public static class SupportedPackageType {
+        public String packageTypeName;
+        public String architectureName;
+        public String resourceTypeName;
+        public String resourceTypePluginName;
     }
 }

@@ -15,25 +15,22 @@
          <c:simple-property name="rootUrl" type="string" required="true" description="The URL that contains all content that is to be served by this content source."/>
          <c:simple-property name="indexFile" type="string" required="true" default="content-index.txt" description="The index file that defines all the content that can be found on the remote server. If this is not a full URL, it is assumed to be relative to the root URL."/>
 
-         <!-- would like to be able to define multiple package types, but the UI doesn't allow editing maps yet
-         <c:list-property name="packageTypes" required="true" description="Defines the different package types that can be found on this disk content source">
+         <c:list-property name="packageTypes" required="true" min="0"
+                          description="Defines the different package types associated with specific filename filters. These are used only if the index file does not provide the package type information.">
             <c:map-property name="packageType">
-         -->
                <c:simple-property name="filenameFilter" required="true" summary="true" default=".*" description="A regular expression that identifies a file of this package type (e.g. '.*\.jar', '.*/i686/.*\.rpm$')"/>
                <c:simple-property name="packageTypeName" required="true" summary="true" description="The name that identifies the kind of package this type represents (e.g. 'ear', 'rpm')"/>
                <c:simple-property name="architectureName" required="true" summary="true" default="noarch" description="The specific hardware architecture this type of package can be deployed on. If there is no specific architecture required, use 'noarch'. (e.g. 'i686', 'amd64')"/>
                <c:simple-property name="resourceTypeName" required="true" summary="true" description="The name of the resource type on which this package can be deployed. This is the resource type name as defined in the agent plugin. (e.g. 'Linux', 'JBossAS Server')"/>
                <c:simple-property name="resourceTypePluginName" required="true" summary="true" description="The name of the plugin that defined the resource type. (e.g. 'Platform', 'JBossAS')"/>
-         <!--
             </c:map-property>
          </c:list-property>
-         -->
       </configuration>
 
    </contentSourceType>
 
    <contentSourceType name="HttpSource"
-                      displayName="Remote HTTP Content Source"
+                      displayName="HTTP Content Source"
                       description="This content source retrieves packages from a remote HTTP server, possibly via a proxy."
                       lazyLoad="true"
                       downloadMode="database"
@@ -43,19 +40,16 @@
          <c:simple-property name="rootUrl" type="string" required="true" description="The HTTP URL that contains all content that is to be served by this content source."/>
          <c:simple-property name="indexFile" type="string" required="true" default="content-index.txt" description="The index file that defines all the content that can be found on the remote server. If this is not a full URL, it is assumed to be relative to the root URL."/>
 
-         <!-- would like to be able to define multiple package types, but the UI doesn't allow editing maps yet
-         <c:list-property name="packageTypes" required="true" description="Defines the different package types that can be found on this disk content source">
+         <c:list-property name="packageTypes" required="true" min="0"
+                          description="Defines the different package types associated with specific filename filters. These are used only if the index file does not provide the package type information.">
             <c:map-property name="packageType">
-         -->
                <c:simple-property name="filenameFilter" required="true" summary="true" default=".*" description="A regular expression that identifies a file of this package type (e.g. '.*\.jar', '.*/i686/.*\.rpm$')"/>
                <c:simple-property name="packageTypeName" required="true" summary="true" description="The name that identifies the kind of package this type represents (e.g. 'ear', 'rpm')"/>
                <c:simple-property name="architectureName" required="true" summary="true" default="noarch" description="The specific hardware architecture this type of package can be deployed on. If there is no specific architecture required, use 'noarch'. (e.g. 'i686', 'amd64')"/>
                <c:simple-property name="resourceTypeName" required="true" summary="true" description="The name of the resource type on which this package can be deployed. This is the resource type name as defined in the agent plugin. (e.g. 'Linux', 'JBossAS Server')"/>
                <c:simple-property name="resourceTypePluginName" required="true" summary="true" description="The name of the plugin that defined the resource type. (e.g. 'Platform', 'JBossAS')"/>
-         <!--
             </c:map-property>
          </c:list-property>
-         -->
 
          <c:group name="security" displayName="Security Settings">
             <c:simple-property name="username" displayName="Username" type="string" required="false"

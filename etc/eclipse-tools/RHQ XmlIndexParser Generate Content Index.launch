@@ -7,6 +7,6 @@
 <listEntry value="1"/>
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.rhq.enterprise.server.plugins.url.XmlIndexParser"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="${folder_prompt:Content Directory} ${string_prompt:Package Type Name} ${string_prompt:Architecture} ${string_prompt:Resource Type Name} ${string_prompt:Resource Type Plugin}"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="${folder_prompt:Content Directory} ${string_prompt:Package Type Name:library} ${string_prompt:Architecture:noarch} ${string_prompt:Resource Type Name:&quot;JBossAS Server&quot;} ${string_prompt:Resource Type Plugin:JBossAS}"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="rhq"/>
 </launchConfiguration>

@@ -226,7 +226,20 @@ public class XmlIndexParser implements IndexParser {
     /**
      * A utility that can build an index file that contains metadata for content found
      * in a given directory.
-     * 
+     *
+     * <pre>
+     * java -cp "target\rhq-serverplugin-url-1.3.0-SNAPSHOT.jar;
+     *           ..\..\..\..\core\client-api\target\rhq-core-client-api-1.3.0-SNAPSHOT.jar;
+     *           ..\..\..\..\core\domain\target\rhq-core-domain-ejb3.jar;
+     *           %HOMEPATH%\.m2\repository\commons-logging\commons-logging\1.1.0.jboss\commons-logging-1.1.0.jboss.jar"
+     *      org.rhq.enterprise.server.plugins.url.XmlIndexParser
+     *      C:\my\content\source\directory
+     *      library
+     *      noarch
+     *      "JBossAS Server"
+     *      JBossAS
+     * </pre>
+     *
      * @param args
      */
     public static void main(String args[]) {
